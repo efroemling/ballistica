@@ -39,7 +39,10 @@ class RendererGL : public Renderer {
   class MeshDataDualTextureFullGL;
   class MeshDataSmokeFullGL;
   class MeshDataSpriteGL;
+  class MeshDataDebugTrianglesGL;
+  class MeshDataDebugLinesGL;
   class RenderTargetGL;
+  struct RenderViewDataGL;
   class FramebufferObjectGL;
   class ShaderGL;
   class FragmentShaderGL;
@@ -114,7 +117,7 @@ class RendererGL : public Renderer {
     SHD_PREMULTIPLY = 1 << 13,
     SHD_OVERLAY = 1 << 14,
     SHD_EYES = 1 << 15,
-    SHD_COLORIZE2 = 1 << 16,
+    SHD_FACING_RATIO = 1 << 16,
     SHD_HIGHER_QUALITY = 1 << 17,
     SHD_SHADOW = 1 << 18,
     SHD_GLOW = 1 << 19,
@@ -146,6 +149,7 @@ class RendererGL : public Renderer {
 
  protected:
   void DrawDebug() override;
+  void FlushDebugDraw_();
   void CheckForErrors() override;
   void GenerateCameraBufferBlurPasses() override;
   void FlipCullFace() override;
@@ -159,6 +163,12 @@ class RendererGL : public Renderer {
                                   bool depth_is_texture, bool high_quality,
                                   bool msaa, bool alpha)
       -> Object::Ref<RenderTarget> override;
+  auto NewRenderViewData() -> Object::Ref<RenderViewRendererData> override;
+  void LoadCurrentViewData() override;
+
+  /// The GL texture a texture view's world was last drawn to, or 0 if
+  /// there isn't one (nothing has drawn it yet, or the view is gone).
+  auto GetTextureViewOutputTexture(int view_id) -> GLuint;
   auto NewMeshAssetData(const MeshAsset& mesh)
       -> Object::Ref<MeshAssetRendererData> override;
   auto NewTextureData(const TextureAsset& texture)
@@ -232,6 +242,8 @@ class RendererGL : public Renderer {
   auto GLGetIntOptional(GLenum name) -> std::optional<int>;
 
  private:
+  /// What we hold for the view being drawn right now, as our own type.
+  auto view_data_gl() const -> RenderViewDataGL*;
   static auto GetFunkyDepthIssue_() -> bool;
   void CheckFunkyDepthIssue_();
   auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
@@ -266,7 +278,6 @@ class RendererGL : public Renderer {
   void SetBlend(bool b);
   void SetBlendPremult(bool b);
 
-  GraphicsQuality vignette_quality_{};
   bool blend_{};
   bool blend_premult_{};
   bool first_extension_check_{true};
@@ -284,15 +295,6 @@ class RendererGL : public Renderer {
   bool double_sided_{};
   bool invalidate_framebuffer_support_{};
   bool checked_gl_version_{};
-  int last_blur_res_count_{};
-  float last_cam_buffer_width_{};
-  float last_cam_buffer_height_{};
-  float vignette_tex_outer_r_{};
-  float vignette_tex_outer_g_{};
-  float vignette_tex_outer_b_{};
-  float vignette_tex_inner_r_{};
-  float vignette_tex_inner_g_{};
-  float vignette_tex_inner_b_{};
   float depth_range_min_{};
   float depth_range_max_{};
   GLint gl_version_major_{};
@@ -303,9 +305,6 @@ class RendererGL : public Renderer {
   GLint viewport_y_{};
   GLint viewport_width_{};
   GLint viewport_height_{};
-  GLuint vignette_tex_{};
-  millisecs_t dof_update_time_{};
-  std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
   std::vector<std::unique_ptr<ProgramGL> > shaders_;
   ProgramSimpleGL* simple_color_prog_{};
   ProgramSimpleGL* simple_tex_prog_{};
@@ -317,8 +316,7 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};
-  ProgramSimpleGL* simple_tex_mod_colorized2_prog_{};
-  ProgramSimpleGL* simple_tex_mod_colorized2_masked_prog_{};
+  ProgramSimpleGL* simple_tex_mod_colorized_masked_prog_{};
   ProgramObjectGL* obj_prog_{};
   ProgramObjectGL* obj_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_transparent_prog_{};
@@ -328,13 +326,13 @@ class RendererGL : public Renderer {
   ProgramObjectGL* obj_refl_add_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_prog_{};
   ProgramObjectGL* obj_lightshad_worldspace_prog_{};
+  ProgramObjectGL* obj_lightshad_facing_prog_{};
+  ProgramObjectGL* obj_lightshad_facing_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_prog_{};
   ProgramObjectGL* obj_refl_lightshad_worldspace_prog_{};
   ProgramObjectGL* obj_refl_lightshad_colorize_prog_{};
-  ProgramObjectGL* obj_refl_lightshad_colorize2_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_colorize_prog_{};
-  ProgramObjectGL* obj_refl_lightshad_add_colorize2_prog_{};
   ProgramSmokeGL* smoke_prog_{};
   ProgramSmokeGL* smoke_overlay_prog_{};
   ProgramSpriteGL* sprite_prog_{};
@@ -359,6 +357,13 @@ class RendererGL : public Renderer {
   int bound_textures_2d_[kMaxGLTexUnitsUsed]{};
   int bound_textures_cube_map_[kMaxGLTexUnitsUsed]{};
   std::unique_ptr<MeshDataSimpleFullGL> screen_mesh_;
+
+  // Debug-draw accumulation (kBeginDebugDraw* / kDebugDrawVertex3 /
+  // kEndDebugDraw). Verts collect here and get uploaded+drawn at End.
+  std::vector<float> debug_draw_verts_;
+  bool debug_draw_lines_{};
+  std::unique_ptr<MeshDataDebugTrianglesGL> debug_tri_mesh_;
+  std::unique_ptr<MeshDataDebugLinesGL> debug_line_mesh_;
   std::vector<MeshDataSimpleSplitGL*> recycle_mesh_datas_simple_split_;
   std::vector<MeshDataObjectSplitGL*> recycle_mesh_datas_object_split_;
   std::vector<MeshDataSimpleFullGL*> recycle_mesh_datas_simple_full_;

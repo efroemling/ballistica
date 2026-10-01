@@ -41,6 +41,8 @@ class ImageNodeType : public NodeType {
   BA_BOOL_ATTR(host_only, host_only, set_host_only);
   BA_BOOL_ATTR(front, front, set_front);
   BA_BOOL_ATTR(in_world, in_world, set_in_world);
+  // Appended (protocol 44+) so existing attr indices are untouched.
+  BA_BOOL_ATTR(flash, flash, set_flash);
 #undef BA_NODE_TYPE_CLASS
 
   ImageNodeType()
@@ -66,7 +68,8 @@ class ImageNodeType : public NodeType {
         vr_depth(this),
         host_only(this),
         front(this),
-        in_world(this) {}
+        in_world(this),
+        flash(this) {}
 };
 static NodeType* node_type{};
 
@@ -353,6 +356,12 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
                 && texture_->texture_data()->premultiplied())
                    ? alpha
                    : 1.0f;
+  // Local flash: 100ms on / 100ms off off scene time, which every
+  // viewer (host, clients, replays) advances in lockstep, so the phase
+  // matches everywhere and freezes with the sim like a timer would.
+  if (flash_ && (scene()->time() / 100) % 2 == 0) {
+    cmul *= 2.0f;
+  }
   base::MeshAsset* mesh_opaque_used = nullptr;
   if (mesh_opaque_.exists()) mesh_opaque_used = mesh_opaque_->mesh_data();
   base::MeshAsset* mesh_transparent_used = nullptr;

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import _builtinassets
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 from bauiv1lib.utils import (
     get_screen_margins,
@@ -72,8 +72,12 @@ class CoopBrowserWindow(bui.MainWindow):
         assert isinstance(self._tournament_button_count, int)
 
         self.star_tex = _classicassets.textures.star.get()
-        self.lsbt = _classicassets.meshes.level_select_button_transparent.get()
-        self.lsbo = _classicassets.meshes.level_select_button_opaque.get()
+        self.lsbt = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        self.lsbo = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
+        )
         self.a_outline_tex = _classicassets.textures.achievement_outline.get()
         self.a_outline_mesh = _classicassets.meshes.achievement_outline.get()
         self._campaign_sub_container: bui.Widget | None = None
@@ -182,12 +186,21 @@ class CoopBrowserWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # Sized to match doc-ui windows' back buttons on screen
+            # (as of 2026-09-30), centered where the old 60x50-at-1.2
+            # sat.
+            back_size = (60.0, 55.0)
+            back_scale = 0.99 if uiscale is bui.UIScale.MEDIUM else 0.76
+            back_center = (111.0, yoffs - 18.0)
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(75, yoffs - 48.0),
-                size=(60, 50),
-                scale=1.2,
+                position=(
+                    back_center[0] - 0.5 * back_size[0] * back_scale,
+                    back_center[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
@@ -352,7 +365,7 @@ class CoopBrowserWindow(bui.MainWindow):
         import bauiv1lib.account.viewer as _unused5
         import bauiv1lib.tournamentscores as _unused6
         import bauiv1lib.tournamententry as _unused7
-        import bauiv1lib.play as _unused8
+        import bauiv1lib.playdocui as _unused8
         import bauiv1lib.coop.tournamentbutton as _unused9
 
     def _update(self) -> None:
@@ -1122,7 +1135,7 @@ class CoopBrowserWindow(bui.MainWindow):
     ) -> None:
         """Run the provided game."""
         # pylint: disable=cyclic-import
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -1165,10 +1178,7 @@ class CoopBrowserWindow(bui.MainWindow):
                     on_connected=lambda: self.main_window_replace(
                         bui.CallStrict(
                             StoreUIController().create_window,
-                            dui2.Request(
-                                '/',
-                                args={'unlockreqs': required_purchases},
-                            ),
+                            sroutes.Root(unlockreqs=required_purchases),
                             origin_widget=origin_widget,
                             auxiliary_style=False,
                         ),
@@ -1189,7 +1199,7 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided tournament game."""
         # pylint: disable=too-many-return-statements
 
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
@@ -1266,10 +1276,7 @@ class CoopBrowserWindow(bui.MainWindow):
                         on_connected=lambda: self.main_window_replace(
                             bui.CallStrict(
                                 StoreUIController().create_window,
-                                dui2.Request(
-                                    '/',
-                                    args={'unlockreqs': required_purchases},
-                                ),
+                                sroutes.Root(unlockreqs=required_purchases),
                                 origin_widget=tournament_button.button,
                                 auxiliary_style=False,
                             ),

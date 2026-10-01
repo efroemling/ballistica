@@ -25,6 +25,7 @@ class PlatformWindows : public Platform {
   static auto UTF8Decode(std::string_view str) -> std::wstring;
 
   auto GetNativeStackTrace() -> NativeStackTrace* override;
+  auto GetPendingCrashRecordPath() -> std::string override;
   auto CanShowBlockingFatalErrorDialog() -> bool override;
   void BlockingFatalErrorDialog(const std::string& message) override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }

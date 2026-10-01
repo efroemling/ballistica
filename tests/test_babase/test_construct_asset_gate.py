@@ -41,7 +41,7 @@ def test_python_gate_blocks_non_builtin() -> None:
         'import babase._asset_packages as ap\n'
         # Pretend we are still in bring-up.
         'ap._g_construct_complete = False\n'
-        'ap._g_construct_apverid = "a-0.babuiltinassets.1"\n'
+        'ap._g_construct_apvernum = "a-0.babuiltinassets.1"\n'
         'try:\n'
         '    ap.check_asset_package_load("a-0.bacommonassets.1", "s/ok")\n'
         '    print("NOT-BLOCKED")\n'
@@ -61,7 +61,7 @@ def test_python_gate_allows_builtin() -> None:
     code = (
         'import babase._asset_packages as ap\n'
         'ap._g_construct_complete = False\n'
-        'ap._g_construct_apverid = "a-0.babuiltinassets.1"\n'
+        'ap._g_construct_apvernum = "a-0.babuiltinassets.1"\n'
         'ap.check_asset_package_load("a-0.babuiltinassets.1", "s/ok")\n'
         'print("ALLOWED")\n'
     )
@@ -100,7 +100,7 @@ def test_langstr_leaf_access_is_gated() -> None:
         'import babase._asset_packages as ap\n'
         'from babase._language import LangStrDir\n'
         'ap._g_construct_complete = False\n'
-        'ap._g_construct_apverid = "a-0.babuiltinassets.1"\n'
+        'ap._g_construct_apvernum = "a-0.babuiltinassets.1"\n'
         'd = LangStrDir("a-0.bacommonassets.1", {"actions": {"ok": ()}},\n'
         '               "strings")\n'
         'try:\n'
@@ -130,7 +130,7 @@ def test_simple_sound_handle_access_is_gated() -> None:
         'import babase._asset_packages as ap\n'
         'from babase._assetref import SimpleSoundHandle\n'
         'ap._g_construct_complete = False\n'
-        'ap._g_construct_apverid = "a-0.babuiltinassets.1"\n'
+        'ap._g_construct_apvernum = "a-0.babuiltinassets.1"\n'
         'try:\n'
         '    SimpleSoundHandle("a-0.baclassicassets.1", "audio/gong").get()\n'
         '    print("NOT-BLOCKED")\n'

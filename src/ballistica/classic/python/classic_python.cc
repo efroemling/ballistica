@@ -53,7 +53,7 @@ auto ClassicPython::QualifiedRefFromHandle_(const PythonRef& handle)
     -> std::string {
   // The parts are private on the Python side (nothing there may build
   // an asset path); reading them here is the sanctioned boundary.
-  return handle.GetAttr("_apverid").ValueAsString() + ":"
+  return std::to_string(handle.GetAttr("_apvernum").ValueAsInt()) + ":"
          + handle.GetAttr("_name").ValueAsString();
 }
 

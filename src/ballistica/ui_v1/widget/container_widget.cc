@@ -56,6 +56,32 @@ void ContainerWidget::SetOnOutsideClickCall(PyObject* c) {
   on_outside_click_call_ = Object::New<base::PythonContextCall>(c);
 }
 
+// The fraction of a shared single-depth slice that draw-behind children
+// get to themselves.
+const float kDrawBehindSliceFraction{0.1f};
+
+// Where in its allotted depth slice a child draws: the widget's own
+// depth range within it, and its draw-behind sliver (or everything in
+// front of that) when siblings draw behind.
+static void ChildDepthSlice(const Widget& w, float z_offs,
+                            float layer_thickness, bool any_draw_behind,
+                            float* out_z_offs, float* out_thickness) {
+  if (any_draw_behind) {
+    if (w.draw_behind()) {
+      layer_thickness *= kDrawBehindSliceFraction;
+    } else {
+      z_offs += layer_thickness * kDrawBehindSliceFraction;
+      layer_thickness *= 1.0f - kDrawBehindSliceFraction;
+    }
+  }
+
+  // Widgets can opt to use a subset of their allotted depth slice.
+  float d_min = w.depth_range_min();
+  float d_max = w.depth_range_max();
+  *out_z_offs = z_offs + layer_thickness * d_min;
+  *out_thickness = layer_thickness * (d_max - d_min);
+}
+
 void ContainerWidget::DrawChildren(base::RenderPass* pass,
                                    bool draw_transparent, float x_offset,
                                    float y_offset, float scale) {
@@ -115,6 +141,18 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
       layer_thickness = 1.0f / static_cast<float>(widgets_.size());
       layer_spacing = layer_thickness;
       base_offset = 0;
+    }
+  }
+
+  // Single-depth siblings all share one slice; any that draw behind get
+  // a sliver at its back to themselves (see Widget::set_draw_behind()).
+  bool any_draw_behind{};
+  if (single_depth_ && !single_depth_root_) {
+    for (auto&& w : widgets_) {
+      if (w->draw_behind()) {
+        any_draw_behind = true;
+        break;
+      }
     }
   }
 
@@ -202,18 +240,10 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
           c.Translate(-bg_center_x_, -bg_center_y_, 0);
         }
 
-        // Widgets can opt to use a subset of their allotted depth slice.
-        float d_min = w.depth_range_min();
-        float d_max = w.depth_range_max();
         float this_z_offs;
         float this_layer_thickness;
-        if (d_min != 0.0f || d_max != 1.0f) {
-          this_z_offs = z_offs + layer_thickness * d_min;
-          this_layer_thickness = layer_thickness * (d_max - d_min);
-        } else {
-          this_z_offs = z_offs;
-          this_layer_thickness = layer_thickness;
-        }
+        ChildDepthSlice(w, z_offs, layer_thickness, any_draw_behind,
+                        &this_z_offs, &this_layer_thickness);
         c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
         c.Scale(s, s, this_layer_thickness);
         c.Submit();
@@ -280,18 +310,10 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
           c.Translate(-bg_center_x_, -bg_center_y_, 0);
         }
 
-        // Widgets can opt to use a subset of their allotted depth slice.
-        float d_min = w.depth_range_min();
-        float d_max = w.depth_range_max();
         float this_z_offs;
         float this_layer_thickness;
-        if (d_min != 0.0f || d_max != 1.0f) {
-          this_z_offs = z_offs + layer_thickness * d_min;
-          this_layer_thickness = layer_thickness * (d_max - d_min);
-        } else {
-          this_z_offs = z_offs;
-          this_layer_thickness = layer_thickness;
-        }
+        ChildDepthSlice(w, z_offs, layer_thickness, any_draw_behind,
+                        &this_z_offs, &this_layer_thickness);
         c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
         c.Scale(s, s, this_layer_thickness);
         c.Submit();
@@ -680,8 +702,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           float cx = x;
           float cy = y;
           TransformPointToChild(&cx, &cy, ((**i)));
-          if ((**i).HandleMessage(
-                  base::WidgetMessage(m.type, nullptr, cx, cy, claimed))) {
+          base::WidgetMessage cm(m.type, nullptr, cx, cy, claimed);
+          cm.released_outside = m.released_outside;
+          if ((**i).HandleMessage(cm)) {
             claimed = true;
           }
           if (modal_children_) {
@@ -1089,11 +1112,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
-      float s = 1.0f;
-      if (transition_scale_ <= 0.9f && !transitioning_out_) {
-        float amt = transition_scale_ / 0.9f;
-        s = std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
-      }
+      float s = GetBackingGlowMult();
       // Premultiplied texture + straight faded color; premultiply rgb
       // ourselves so a faded (alpha_ < 1) background composites 'over'
       // correctly (see docs/design/premultiplied-alpha.md).
@@ -1473,7 +1492,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
   if (is_overlay_window_stack_) {
     if (widgets_.empty()) {
       // Eww this logic should be in some sort of controller.
-      g_ui_v1->root_widget()->ReselectLastSelectedWidget();
+      g_ui_v1->root_widget()->OnOverlayStackEmptied();
       return;
     }
   }

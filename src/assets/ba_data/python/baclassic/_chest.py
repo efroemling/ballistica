@@ -9,8 +9,10 @@ from bacommon.classic import (
     ClassicChestAppearance,
     CHEST_APPEARANCE_TINTS,
     CHEST_APPEARANCE_TINT_DEFAULT,
+    CHEST_APPEARANCE_COLORS,
+    CHEST_APPEARANCE_COLOR_DEFAULT,
 )
-from bascenev1 import _classicassets
+from bascenev1 import _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     import bascenev1
@@ -39,11 +41,11 @@ class ChestAppearanceDisplayInfo:
 #: declared appearance has no entry in
 #: :data:`CHEST_APPEARANCE_DISPLAY_INFOS`.
 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT = ChestAppearanceDisplayInfo(
-    texclosed=_classicassets.textures.chest_icon,
-    texclosedtint=_classicassets.textures.chest_icon_tint,
+    texclosed=_classiccatalogassets.textures.chest_icon,
+    texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
     texopen=_classicassets.textures.chest_open_icon,
     texopentint=_classicassets.textures.chest_open_icon_tint,
-    color=(1, 1, 1),
+    color=CHEST_APPEARANCE_COLOR_DEFAULT,
     tint=CHEST_APPEARANCE_TINT_DEFAULT[0],
     tint2=CHEST_APPEARANCE_TINT_DEFAULT[1],
 )
@@ -55,47 +57,47 @@ CHEST_APPEARANCE_DISPLAY_INFOS: dict[
     ClassicChestAppearance, ChestAppearanceDisplayInfo
 ] = {
     ClassicChestAppearance.L2: ChestAppearanceDisplayInfo(
-        texclosed=_classicassets.textures.chest_icon,
-        texclosedtint=_classicassets.textures.chest_icon_tint,
+        texclosed=_classiccatalogassets.textures.chest_icon,
+        texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
         texopen=_classicassets.textures.chest_open_icon,
         texopentint=_classicassets.textures.chest_open_icon_tint,
-        color=(0.8, 1.0, 0.93),
+        color=CHEST_APPEARANCE_COLORS[ClassicChestAppearance.L2],
         tint=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L2][0],
         tint2=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L2][1],
     ),
     ClassicChestAppearance.L3: ChestAppearanceDisplayInfo(
-        texclosed=_classicassets.textures.chest_icon,
-        texclosedtint=_classicassets.textures.chest_icon_tint,
+        texclosed=_classiccatalogassets.textures.chest_icon,
+        texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
         texopen=_classicassets.textures.chest_open_icon,
         texopentint=_classicassets.textures.chest_open_icon_tint,
-        color=(0.75, 0.9, 1.3),
+        color=CHEST_APPEARANCE_COLORS[ClassicChestAppearance.L3],
         tint=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L3][0],
         tint2=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L3][1],
     ),
     ClassicChestAppearance.L4: ChestAppearanceDisplayInfo(
-        texclosed=_classicassets.textures.chest_icon,
-        texclosedtint=_classicassets.textures.chest_icon_tint,
+        texclosed=_classiccatalogassets.textures.chest_icon,
+        texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
         texopen=_classicassets.textures.chest_open_icon,
         texopentint=_classicassets.textures.chest_open_icon_tint,
-        color=(0.7, 1.0, 1.4),
+        color=CHEST_APPEARANCE_COLORS[ClassicChestAppearance.L4],
         tint=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L4][0],
         tint2=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L4][1],
     ),
     ClassicChestAppearance.L5: ChestAppearanceDisplayInfo(
-        texclosed=_classicassets.textures.chest_icon,
-        texclosedtint=_classicassets.textures.chest_icon_tint,
+        texclosed=_classiccatalogassets.textures.chest_icon,
+        texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
         texopen=_classicassets.textures.chest_open_icon,
         texopentint=_classicassets.textures.chest_open_icon_tint,
-        color=(0.75, 0.5, 2.4),
+        color=CHEST_APPEARANCE_COLORS[ClassicChestAppearance.L5],
         tint=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L5][0],
         tint2=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L5][1],
     ),
     ClassicChestAppearance.L6: ChestAppearanceDisplayInfo(
-        texclosed=_classicassets.textures.chest_icon,
-        texclosedtint=_classicassets.textures.chest_icon_tint,
+        texclosed=_classiccatalogassets.textures.chest_icon,
+        texclosedtint=_classiccatalogassets.textures.chest_icon_tint,
         texopen=_classicassets.textures.chest_open_icon,
         texopentint=_classicassets.textures.chest_open_icon_tint,
-        color=(1.1, 0.8, 0.0),
+        color=CHEST_APPEARANCE_COLORS[ClassicChestAppearance.L6],
         tint=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L6][0],
         tint2=CHEST_APPEARANCE_TINTS[ClassicChestAppearance.L6][1],
     ),

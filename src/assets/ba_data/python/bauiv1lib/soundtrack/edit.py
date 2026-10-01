@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, cast, override
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
@@ -185,7 +184,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             description=_commonassets.strings.values.name,
             editable=True,
             padding=4,
-            on_return_press_call=self._do_it_with_sound,
+            on_submit_call=self._do_it_with_sound,
         )
 
         self._scrollwidget = scrollwidget = bui.scrollwidget(
@@ -554,5 +553,5 @@ class SoundtrackEditWindow(bui.MainWindow):
         self.main_window_back()
 
     def _do_it_with_sound(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._do_it()

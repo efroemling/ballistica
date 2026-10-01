@@ -183,7 +183,7 @@ def run_headless_capture(
     exec_code: str | None = None,
     env: Mapping[str, str] | None = None,
     timeout: float = 30.0,
-    udp_listener: bool = False,
+    udp: bool = False,
     stop_pattern: str | re.Pattern[str] | None = None,
     sigterm_grace: float = 5.0,
 ) -> subprocess.CompletedProcess[bytes]:
@@ -194,11 +194,11 @@ def run_headless_capture(
     this goes through ``acquire_binary``, so build-vs-prefab is
     controlled by ``BA_APP_RUN_USE_PREFAB=1`` (default: build).
 
-    By default ``BA_NO_UDP_LISTENER=1`` is exported so the binary
-    never opens a UDP socket. That sidesteps Claude Code's sandbox
-    (which blocks ``0.0.0.0`` binds) and avoids port conflicts on
-    shared CI hosts. Pass ``udp_listener=True`` if a test genuinely
-    needs the listener.
+    By default ``BA_NO_UDP=1`` is exported so the binary never opens
+    a UDP socket (and so can't send UDP either). That sidesteps Claude
+    Code's sandbox (which blocks ``0.0.0.0`` binds) and avoids port
+    conflicts on shared CI hosts. Pass ``udp=True`` if a test genuinely
+    needs UDP.
 
     If ``stop_pattern`` (str or compiled regex) is given, output is
     streamed and the process is sent SIGTERM as soon as a line
@@ -216,8 +216,8 @@ def run_headless_capture(
     env_final = dict(os.environ)
     if env is not None:
         env_final.update(env)
-    if not udp_listener:
-        env_final.setdefault('BA_NO_UDP_LISTENER', '1')
+    if not udp:
+        env_final.setdefault('BA_NO_UDP', '1')
 
     cmd = [binpath]
     if config_dir is not None:

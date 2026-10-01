@@ -2,8 +2,10 @@
 #
 """User interface related functionality."""
 
+import gc
 import os
 import time
+import types
 import logging
 import inspect
 import weakref
@@ -16,9 +18,12 @@ from efro.util import empty_weakref
 import babase
 
 import _bauiv1
+from bauiv1._viewer import ViewerRegistry
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
+    from bauiv1._viewer import Viewer
 
     from bauiv1._window import Window, MainWindow, MainWindowState
     import bauiv1
@@ -78,7 +83,28 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
 
+        #: Live pictures (little game scenes and such) shown in viewer
+        #: widgets, kept by id so they outlast the widgets showing them.
+        #:
+        #: :meta private:
+        self.viewers = ViewerRegistry()
+
+        #: Makers of the live objects behind depiction kinds that need
+        #: one (a 3d character viewer's little scene, say), by the
+        #: kind's wire type id (bacommon.depiction.DepictionTypeID
+        #: values). Each is called with the host's key and the
+        #: depiction's json and returns the viewer to show (carrying on
+        #: with the one kept under that key, if there is one). App modes
+        #: register the kinds they provide.
+        #:
+        #: :meta private:
+        self.live_depictions: dict[str, Callable[[str, str], Viewer | None]] = (
+            {}
+        )
+
         self.window_auto_recreate_suppress_count = 0
+        self._recreate_suppressing_widgets: list[bauiv1.Widget] = []
+        self._main_window_recreate_in_progress = False
 
         self._uiscale: babase.UIScale
         self._update_ui_scale()
@@ -188,6 +214,11 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self.root_ui_calls.clear()
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
+
+        # Whatever viewers were showing belongs to the outgoing
+        # app-mode, as do the live depiction kinds it provided.
+        self.viewers.clear()
+        self.live_depictions.clear()
 
         # Wipe any app-mode-supplied ui asset set (see
         # bauiv1.set_ui_asset_set). We run at every app-mode switch, so
@@ -474,9 +505,44 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         if babase.app.stringedit.active_adapter() is not None:
             return True
 
+        # Suppress while any widget registered via
+        # suppress_window_recreates_while_alive() still exists.
+        self._recreate_suppressing_widgets = [
+            w for w in self._recreate_suppressing_widgets if w
+        ]
+        if self._recreate_suppressing_widgets:
+            return True
+
         # Suppress if anything else is requesting suppression (such as
         # generic Windows that don't handle being recreated).
         return babase.app.ui_v1.window_auto_recreate_suppress_count > 0
+
+    @property
+    def main_window_recreate_in_progress(self) -> bool:
+        """Whether a main-window auto-recreate is saving/restoring now.
+
+        True while the auto-recreate mechanism (which rebuilds the main
+        window after a screen-size or ui-scale change) saves the old
+        window's state and creates its replacement. A window can check
+        this as it restores to tell a reflow of itself from
+        back-navigation: a reflow is the same ui laid out anew, so it
+        can hold things like scroll position even though its extents
+        changed.
+        """
+        return self._main_window_recreate_in_progress
+
+    def suppress_window_recreates_while_alive(
+        self, widget: bauiv1.Widget
+    ) -> None:
+        """Defer main-window auto-recreates for as long as a widget exists.
+
+        For ui living outside the main window but tied to it, such as a
+        popup menu opened from one of its buttons: a recreate replaces
+        the main window's widgets out from under it, leaving it wired to
+        dead ui. Deferred recreates run once the widget is gone,
+        including any out-transition.
+        """
+        self._recreate_suppressing_widgets.append(widget)
 
     @override
     def on_ui_scale_change(self) -> None:
@@ -493,12 +559,18 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._schedule_main_win_recreate()
 
-    def add_ui_cleanup_check(self, obj: Any, widget: bauiv1.Widget) -> None:
+    def add_ui_cleanup_check(
+        self,
+        obj: Any,
+        widget: bauiv1.Widget,
+        *,
+        context: str | Callable[[Any], str] | None = None,
+    ) -> None:
         """Checks to ensure a widget-owning object gets cleaned up properly.
 
-        This adds a check which will print an error message if the provided
-        object still exists ~5 seconds after the provided bauiv1.Widget
-        dies.
+        This adds a check which will log a warning (on the ``ba.ui``
+        logger) if the provided object still exists ~5 seconds after
+        the provided bauiv1.Widget dies.
 
         This is a good sanity check for any sort of object that wraps or
         controls a bauiv1.Widget. For instance, a 'Window' class instance
@@ -507,6 +579,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         or careless strong referencing can lead to such objects never
         getting destroyed, however, and this helps detect such cases to
         avoid memory leaks.
+
+        The warning names where the object lived so it can be tracked
+        down from a log alone. By default that is derived from the
+        widget now, while it is alive: its id and the window it is in.
+        Pass ``context`` to override: a string, or a function taking
+        the object and returning one, called at warning time (windows
+        use this to describe their current state). Don't pass a bound
+        method or closure over the object; the check holds it strongly
+        and would itself keep the object alive.
         """
         if DEBUG_UI_CLEANUP_CHECKS:
             print(f'adding uicleanup to {obj}')
@@ -522,11 +603,36 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
             widget.add_delete_callback(foobar)
 
+        if context is None:
+            context = self._describe_widget_context(widget)
+
         self._cleanupchecks.append(
             _UICleanupCheck(
-                obj=weakref.ref(obj), widget=widget, widget_death_time=None
+                obj=weakref.ref(obj),
+                widget=widget,
+                widget_death_time=None,
+                context=context,
             )
         )
+
+    def _describe_widget_context(self, widget: bauiv1.Widget) -> str:
+        """Describe a live widget by its id and the window it is in."""
+        wid = widget.id
+        desc = (
+            f"widget '{wid}'" if wid else f'{widget.get_widget_type()} widget'
+        )
+        # Name the main window if the widget lives under its container
+        # (that container itself sits under the shared ui root, so we
+        # look for it among the ancestors rather than at the top).
+        mainwindow = self.get_main_window()
+        if mainwindow is not None:
+            mainroot = mainwindow.get_root_widget()
+            ancestor = widget.parent
+            while ancestor is not None:
+                if ancestor is mainroot:
+                    return f'{desc} in {mainwindow.window_describe()}'
+                ancestor = ancestor.parent
+        return desc
 
     def auxiliary_window_activate(
         self,
@@ -725,9 +831,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # refuse — after the old window was already cleared, leaving no
         # main window at all.
         with babase.ContextRef.empty():
-            winstate = self.save_main_window_state(mainwindow)
-            self.clear_main_window(transition='instant')
-            self.restore_main_window_state(winstate)
+            self._main_window_recreate_in_progress = True
+            try:
+                winstate = self.save_main_window_state(mainwindow)
+                self.clear_main_window(transition='instant')
+                self.restore_main_window_state(winstate)
+            finally:
+                self._main_window_recreate_in_progress = False
 
         # Store the size we created this for to avoid redundant
         # future recreates.
@@ -755,21 +865,97 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 remainingchecks.append(check)
                 if not check.widget:
                     check.widget_death_time = now
+            elif now - check.widget_death_time > 5.0:
+                # Widget was already dead and it's been too long. We
+                # complain whether or not a reference cycle is involved;
+                # such objects should die deterministically with their
+                # widget (and the app runs cyclic gc only during
+                # transitions, so a cycle would linger regardless).
+                context = check.context
+                if not isinstance(context, str):
+                    context = context(obj)
+                babase.uilog.warning(
+                    '%s outlived its widget by 5s (%s). Use weakrefs or'
+                    ' otherwise break reference cycles to fix this.'
+                    ' Referrers: %s.',
+                    type(obj).__name__,
+                    context,
+                    _describe_referrers(obj),
+                )
             else:
-                # Widget was already dead; complain if its been too long.
-                if now - check.widget_death_time > 5.0:
-                    print(
-                        'WARNING:',
-                        obj,
-                        'is still alive 5 second after its Widget died;'
-                        ' you might have a memory leak. Look for circular'
-                        ' references or outside things referencing your Window'
-                        ' class instance. See efro.debug module'
-                        ' for tools that can help debug this sort of thing.',
-                    )
-                else:
-                    remainingchecks.append(check)
+                remainingchecks.append(check)
         self._cleanupchecks = remainingchecks
+
+
+def _describe_referrers(obj: Any) -> str:
+    """One line naming what refers to a leaked object.
+
+    Cycle glue is nearly always a closure or an attribute container, so
+    those are resolved one step further to the function or owner that
+    holds them; anything else is named by type. The referrer lists are
+    dropped before returning so this holds nothing alive itself.
+    """
+    descs: list[str] = []
+    referrers = gc.get_referrers(obj)
+    for ref in referrers:
+        # Our own frame(s) refer to obj; not interesting.
+        if isinstance(ref, types.FrameType):
+            continue
+        descs.append(_describe_referrer(ref, obj))
+    del referrers
+
+    counts: dict[str, int] = {}
+    for desc in descs:
+        counts[desc] = counts.get(desc, 0) + 1
+    parts = [f'{d} x{n}' if n > 1 else d for d, n in counts.items()]
+    limit = 6
+    if len(parts) > limit:
+        parts = parts[:limit] + [f'{len(parts) - limit} more']
+    return ', '.join(parts) if parts else 'none found'
+
+
+def _describe_referrer(ref: Any, obj: Any) -> str:
+    """Describe one referrer, resolving closures and attribute containers."""
+    if isinstance(ref, types.FunctionType):
+        return f'function {ref.__qualname__}'
+    if isinstance(ref, types.CellType):
+        # A function holds its closure cells through a tuple, so the
+        # function is two hops away: cell <- tuple <- function.
+        for closure in gc.get_referrers(ref):
+            if not isinstance(closure, tuple):
+                continue
+            for holder in gc.get_referrers(closure):
+                if (
+                    isinstance(holder, types.FunctionType)
+                    and holder.__closure__ is closure
+                ):
+                    return f'closure of {holder.__qualname__}'
+        return 'cell'
+    if isinstance(ref, (dict, list, tuple, set)):
+        for holder in gc.get_referrers(ref):
+            attrs = getattr(holder, '__dict__', None)
+            if not isinstance(attrs, dict):
+                continue
+            if attrs is ref:
+                return _describe_attrs_owner(holder, obj)
+            for name, val in attrs.items():
+                if val is ref:
+                    return (
+                        f'{type(ref).__name__} {type(holder).__name__}.{name}'
+                    )
+    return type(ref).__name__
+
+
+def _describe_attrs_owner(holder: Any, obj: Any) -> str:
+    """Describe an object whose ``__dict__`` refers to obj."""
+    # Name module globals outright; an unexpected one in __main__ is
+    # nearly always something a console session or automation exec
+    # left behind.
+    if isinstance(holder, types.ModuleType):
+        name = next((n for n, v in vars(holder).items() if v is obj), None)
+        if name is not None:
+            return f"global '{name}' in {holder.__name__}"
+    return f'attributes of {type(holder).__name__}'
 
 
 @dataclass
@@ -779,3 +965,8 @@ class _UICleanupCheck:
     obj: weakref.ref
     widget: bauiv1.Widget
     widget_death_time: float | None
+
+    #: Where the object lived, for the warning: a string captured at
+    #: registration, or a function of the object called at warning
+    #: time (never a bound method, which would hold the object).
+    context: str | Callable[[Any], str]

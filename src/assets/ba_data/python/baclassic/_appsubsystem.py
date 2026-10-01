@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _builtinassets
 from bauiv1 import _classicassets as uiclassicassets
+from bauiv1 import _classiccatalogassets as uicatalogassets
 import bascenev1
 from bascenev1 import _classicassets
 
@@ -27,6 +27,7 @@ from baclassic._net import MasterServerResponseType, master_server_v1_request
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
+from baclassic._cloudprofiles import CloudProfiles
 from baclassic import _input
 
 if TYPE_CHECKING:
@@ -122,6 +123,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: server didn't provide one (unknown — fall back to the
         #: legacy hacky character-list path).
         classic_purchases: list[str] | None
+        #: The account's cloud profiles, each as one cloud-composed
+        #: character json (name + icon + spaz), or ``None`` when the
+        #: master server didn't provide them (older master or
+        #: unknown) — in which case the lobby falls back to the
+        #: legacy ``player_profiles`` with the legacy-profile warning.
+        cloud_characters: list[str] | None
         expire_time: float
 
     from baclassic._music import MusicPlayMode
@@ -159,6 +166,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.tokens = 0
         self.chest_dock_full = False
         self.purchases: frozenset[str] = frozenset()
+
+        #: The primary account's cloud profiles (synced + cached).
+        self.cloud_profiles = CloudProfiles()
 
         # Main Menu.
         self.main_menu_last_news_fetch_time: float | None = None
@@ -238,6 +248,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         request: V2AuthRequest,
         player_profiles: Any,
         classic_purchases: list[str] | None,
+        cloud_characters: list[str] | None,
         token: str,
     ) -> V2AuthResponse:
         """:meta private:"""
@@ -253,6 +264,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 account_tag=request.account_tag,
                 player_profiles=player_profiles,
                 classic_purchases=classic_purchases,
+                cloud_characters=cloud_characters,
                 expire_time=now + 30.0,
             )
 
@@ -310,10 +322,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         assert isinstance(self._env['platform'], str)
         return self._env['platform']
 
-    def scene_v1_protocol_version(self) -> int:
-        """:meta private:"""
-        return bascenev1.protocol_version()
-
     @property
     def subplatform(self) -> str:
         """String for subplatform.
@@ -333,10 +341,20 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     @override
     def on_app_loading(self) -> None:
         from bascenev1lib.actor import spazappearance
+        from bascenev1lib.actor.controlsguide import (
+            ClassicControlsLocalDisplayHandler,
+        )
         from bascenev1lib import maps as stdmaps
 
         plus = babase.app.plus
         assert plus is not None
+
+        # The classic controls guide is drawn on each machine via a
+        # local-display; wire up its handler.
+        bascenev1.register_local_display_handler(
+            bascenev1.ClassicControlsLocalDisplayConfig,
+            ClassicControlsLocalDisplayHandler,
+        )
 
         env = babase.app.env
         cfg = babase.app.config
@@ -695,8 +713,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         player_count: int = 8,
         round_duration: int = 30,
         attract_mode: bool = False,
+        randomize: bool = True,
+        churn: bool = True,
     ) -> None:
-        """Run a stress test."""
+        """Run a stress test.
+
+        With ``randomize`` False the playlist plays in listed order;
+        with ``churn`` False all fake players join at once and stay
+        (both for repeatable performance A/B measurements).
+        """
         from baclassic._benchmark import run_stress_test
 
         run_stress_test(
@@ -705,6 +730,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             player_count=player_count,
             round_duration=round_duration,
             attract_mode=attract_mode,
+            randomize=randomize,
+            churn=churn,
         )
 
     def get_input_device_mapped_value(
@@ -861,7 +888,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -876,7 +903,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         babase.app.ui_v1.set_main_window(
             InventoryUIController(player_profiles_only=True).create_window(
-                dui2.Request('/'),
+                sroutes.Root(),
                 uiopenstateid='classicinventory',
                 transition=transition,
                 origin_widget=origin_widget,
@@ -890,8 +917,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            _ = uiclassicassets.meshes.level_select_button_opaque.get()
-            _ = uiclassicassets.meshes.level_select_button_transparent.get()
+            _ = uicatalogassets.meshes.level_select_button_opaque.get()
+            _ = uicatalogassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
                 _ = maptype.get_preview_texture()
         except Exception:
@@ -907,7 +934,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        _uiv1assets.audio.swish.get().play()
+        bauiv1.play_swish()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -929,7 +956,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                _uiv1assets.audio.swish.get().play()
+                bauiv1.play_swish()
 
             # Pause gameplay.
             self.pause()
@@ -953,6 +980,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         mainwindow = ui.get_main_window()
         if mainwindow is not None:
             self.saved_ui_state = ui.save_main_window_state(mainwindow)
+
+            # Whatever this state keeps 'open' (settings when we left
+            # from somewhere inside it, say) isn't showing while we're
+            # away; don't have toolbar buttons lit for it meanwhile.
+            # (invoke_main_menu_ui() wakes them when restoring.)
+            self.saved_ui_state.set_ui_open_states_dormant(True)
         else:
             self.saved_ui_state = None
 
@@ -991,6 +1024,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 else:
                     # If there's a saved ui state, restore that.
                     if self.saved_ui_state is not None:
+                        # (See save_ui_state().)
+                        self.saved_ui_state.set_ui_open_states_dormant(False)
                         app.ui_v1.restore_main_window_state(self.saved_ui_state)
                         # Kill the state now that we're back; we'll
                         # generate a new one when we leave. This keeps

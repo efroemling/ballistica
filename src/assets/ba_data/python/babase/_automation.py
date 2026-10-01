@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
 automationlog = logging.getLogger('ba.app')
 
@@ -58,6 +58,33 @@ automationlog = logging.getLogger('ba.app')
 _badev: Any = _babase
 
 
+#: While a driver's exec runs, the result lines it emits are collected
+#: here too, so they go back to the driver with the exec's own result
+#: instead of only reaching the device log (which a driver only sees
+#: with ``--log``). None when no exec is running.
+_g_exec_results: list[tuple[str, str, str]] | None = None
+
+
+def begin_exec_result_capture() -> None:
+    """Start collecting emitted result lines for a driver's exec.
+
+    :meta private:
+    """
+    global _g_exec_results  # pylint: disable=global-statement
+    _g_exec_results = []
+
+
+def end_exec_result_capture() -> list[tuple[str, str, str]]:
+    """Stop collecting and return the (tag, status, payload) results.
+
+    :meta private:
+    """
+    global _g_exec_results  # pylint: disable=global-statement
+    results = _g_exec_results or []
+    _g_exec_results = None
+    return results
+
+
 def _emit(tag: str, status: str, payload: str = '') -> None:
     """Print the standard ``[automation] <tag> <status> <payload>`` line.
 
@@ -65,7 +92,11 @@ def _emit(tag: str, status: str, payload: str = '') -> None:
     specific log level. Use ``status`` values like ``ok``, ``fail``,
     ``not_implemented``; ``payload`` is a free-form trailing string
     callers can include identifiers, timings, error messages, etc. in.
+    Lines emitted while a driver's exec runs also go back to that
+    driver as results.
     """
+    if _g_exec_results is not None:
+        _g_exec_results.append((tag, status, payload))
     if payload:
         automationlog.info('[automation] %s %s %s', tag, status, payload)
     else:
@@ -191,6 +222,7 @@ def drag_at(
     y2: float,
     *,
     steps: int = 8,
+    cancel: bool = False,
     tag: str = 'drag',
 ) -> None:
     """Synthesize a mouse drag between two virtual-screen points.
@@ -202,6 +234,12 @@ def drag_at(
     way it would to a real pointer. Same coordinate system as
     :func:`click_at` (origin bottom-left, y up).
 
+    With ``cancel`` the drag ends in a mouse-cancel instead of a
+    release: what the UI sees when the OS takes a touch gesture away
+    mid-drag (an iPad turning a drag from the top of the screen into
+    a window drag, say). Nothing should activate, and anything
+    tracking the drag should put itself back.
+
     Emits ``[automation] <tag> fail not_compiled_in`` when the build
     was made without ``BA_ENABLE_AUTOMATION``, or ``fail
     headless_mode`` when called from a headless build.
@@ -210,13 +248,20 @@ def drag_at(
         _emit(tag, 'fail', 'not_compiled_in')
         return
     try:
-        _badev.automation_drag_at_virtual(x=x, y=y, x2=x2, y2=y2, steps=steps)
+        _badev.automation_drag_at_virtual(
+            x=x, y=y, x2=x2, y2=y2, steps=steps, cancel=cancel
+        )
     except RuntimeError as exc:
         if 'headless' in str(exc).lower():
             _emit(tag, 'fail', 'headless_mode')
             return
         raise
-    _emit(tag, 'ok', f'{x:.0f},{y:.0f} -> {x2:.0f},{y2:.0f}')
+    _emit(
+        tag,
+        'ok',
+        f'{x:.0f},{y:.0f} -> {x2:.0f},{y2:.0f}'
+        + (' (canceled)' if cancel else ''),
+    )
 
 
 def mouse_button_at(
@@ -398,6 +443,51 @@ def click_at(x: float, y: float, *, tag: str = 'click') -> None:
     _emit(tag, 'ok', f'@ {x:.0f},{y:.0f}')
 
 
+def key_press(keycode: int, *, tag: str = 'key') -> None:
+    """Synthesize a key press for a BA keycode (release with key_release).
+
+    Routes through the same path OS key events take, so a keyboard
+    input device sees it: pressing a join key (13, return, works on
+    the main keyboard) in a lobby requests a player exactly like a
+    real keypress. Printable keys use their ASCII value. On platforms
+    that only create keyboard devices when a hardware keyboard is
+    attached (iOS), call :func:`ensure_keyboard` first.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``.
+    """
+    if not hasattr(_babase, 'automation_key_event'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    _badev.automation_key_event(keycode=keycode, down=True)
+    _emit(tag, 'ok', f'press {keycode}')
+
+
+def key_release(keycode: int, *, tag: str = 'key') -> None:
+    """Synthesize a key release for a BA keycode (see :func:`key_press`)."""
+    if not hasattr(_babase, 'automation_key_event'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    _badev.automation_key_event(keycode=keycode, down=False)
+    _emit(tag, 'ok', f'release {keycode}')
+
+
+def ensure_keyboard(*, tag: str = 'keyboard') -> None:
+    """Make sure keyboard input devices exist, creating them if needed.
+
+    iOS and similar only create keyboard devices when a hardware
+    keyboard connects; this forces them into existence so
+    :func:`key_press` has somewhere to land. Newly created devices
+    appear a frame later, so wait briefly before pressing keys. Emits
+    ``ok created`` or ``ok existed``.
+    """
+    if not hasattr(_babase, 'automation_ensure_keyboard'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    created = _badev.automation_ensure_keyboard()
+    _emit(tag, 'ok', 'created' if created else 'existed')
+
+
 def scroll_at(
     x: float,
     y: float,
@@ -437,3 +527,48 @@ def scroll_at(
             return
         raise
     _emit(tag, 'ok', f'@ {x:.0f},{y:.0f} d=({dx:+.2f},{dy:+.2f})')
+
+
+#: App-config key holding a registered automation device's key.
+DEVICE_KEY_CONFIG_KEY = 'Automation Device Key'
+
+_g_registration_changed_call: Callable[[], None] | None = None
+
+
+def set_registration_changed_call(call: Callable[[], None] | None) -> None:
+    """Set what to call when this device's registration changes.
+
+    Installed by the automation channel (``baplus._automationsession``)
+    so we can tell it without reaching up a layer.
+    """
+    global _g_registration_changed_call  # pylint: disable=global-statement
+    _g_registration_changed_call = call
+
+
+def automation_device_id_for_key(key: str) -> str:
+    """The non-secret automation-device id for a device key.
+
+    See :func:`bacommon.automationchannel.automation_device_id_for_key`.
+    """
+    from bacommon.automationchannel import (
+        automation_device_id_for_key as _device_id_for_key,
+    )
+
+    return _device_id_for_key(key)
+
+
+def stored_device_key() -> str | None:
+    """This device's registered automation key, if it has one.
+
+    Only meaningful in builds with automation compiled in (see
+    :func:`available`); anywhere else a stored key does nothing.
+    """
+    key = _babase.app.config.get(DEVICE_KEY_CONFIG_KEY)
+    if not isinstance(key, str) or not _is_valid_device_key(key):
+        return None
+    return key
+
+
+def _is_valid_device_key(key: str) -> bool:
+    """Whether a string is shaped like a device key (128-bit hex)."""
+    return len(key) == 32 and all(c in '0123456789abcdef' for c in key)

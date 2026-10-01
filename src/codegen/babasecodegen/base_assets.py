@@ -162,8 +162,29 @@ SPEC = BaseAssetSpec(
                 Slot(
                     name='character_icon_mask',
                     kind=Kind.TEXTURE,
-                    doc='Mask for character icons in kill messages.',
+                    doc='Round mask for character icons.',
                     default='textures.white',
+                ),
+                Slot(
+                    name='standin_icon',
+                    kind=Kind.TEXTURE,
+                    doc='Standin character icon (while real art loads).',
+                    default='textures.white',
+                ),
+                Slot(
+                    name='standin_icon_color_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Colorize mask for the standin icon.',
+                    default='textures.white',
+                ),
+                Slot(
+                    name='depiction_spinner',
+                    kind=Kind.TEXTURE,
+                    doc=(
+                        'Faded busy spinner shown while a depiction\'s art'
+                        ' loads (spun in place).'
+                    ),
+                    default='textures.soft_rect',
                 ),
             ],
         ),

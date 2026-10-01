@@ -36,6 +36,14 @@ class ConnectionToClient : public Connection {
   auto GetClassicPurchases() const -> PyObject* {
     return classic_purchases_.get();
   }
+  /// This client's account's cloud profiles as cloud-composed
+  /// character json strings (list of str), as provided by the master
+  /// server via v2-auth, or ``Py_None`` / ``nullptr`` when none were
+  /// provided (non-v2-auth connection, older master, unknown). The
+  /// lobby offers these instead of the legacy ``player_profiles``.
+  auto GetCloudCharacters() const -> PyObject* {
+    return cloud_characters_.get();
+  }
   auto build_number() const -> int { return build_number_; }
   /// Send a screen-message. ``s`` is the legacy flat/resource-json text
   /// every build understands; ``tagged``, when non-empty, is a lang-str
@@ -80,6 +88,22 @@ class ConnectionToClient : public Connection {
     assert(protocol_version_ != -1);
     return protocol_version_;
   }
+  auto PeerSupportsZstdPackets() const -> bool override {
+    // Set once the client's handshake response has claimed a version
+    // matching ours; before that (our own handshake) it's huffman.
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionZstdPackets;
+  }
+  auto PeerSupportsUnreliableParts() const -> bool override {
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionUnreliableParts;
+  }
+  auto PeerSupportsWideAcks() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionWideAcks;
+  }
+  auto PeerSupportsBigPackets() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionBigPackets;
+  }
 
   /// Protocol version the client claimed in its CLIENT_REQUEST packet, or
   /// -1 if we never saw one. Note this is client-supplied and completely
@@ -115,6 +139,7 @@ class ConnectionToClient : public Connection {
   std::string peer_hash_;
   PythonRef player_profiles_;
   PythonRef classic_purchases_;
+  PythonRef cloud_characters_;
   bool got_v1_auth_from_master_server_{};
   std::vector<millisecs_t> last_chat_times_;
   millisecs_t next_kick_vote_allow_time_{};

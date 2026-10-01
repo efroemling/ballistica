@@ -33,7 +33,7 @@ class GenericPlugin[T](BaseThing):
 
 _PKG_INIT = f"""# ba_meta require api {API}
 
-# ba_meta require asset-package acct.pkg.260101a
+# ba_meta require asset-package 4321
 """
 
 _NESTED_EXPORT = """# ba_meta export babase.Plugin
@@ -67,7 +67,7 @@ def _check_tree_results(results: ScanResults) -> None:
         'checkmod.GenericPlugin',
         'mypkg.nested.NestedPlugin',
     ]
-    assert results.asset_packages == {'acct.pkg.260101a': ['mypkg']}
+    assert results.asset_packages == {4321: ['mypkg']}
     assert results.incorrect_api_modules == ['oldapi']
     assert not results.announce_errors_occurred
 

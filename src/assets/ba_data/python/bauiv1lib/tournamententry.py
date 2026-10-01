@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 from bauiv1 import _uiv1assets
-from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -168,7 +168,7 @@ class TournamentEntryWindow(PopupWindow):
             draw_controller=btn,
             size=(80, 80),
             position=self._ticket_img_pos,
-            texture=_classicassets.textures.tickets.get(),
+            texture=_classiccatalogassets.textures.tickets.get(),
         )
         self._ticket_cost_text_position = (87 + x_offs, 88 + off_p)
         self._ticket_cost_text_position_free = (87 + x_offs, 120 + off_p)
@@ -708,7 +708,7 @@ class TournamentEntryWindow(PopupWindow):
         if ticket_count is not None and ticket_count < ticket_cost:
             _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                _classicassets.strings.profile.not_enough_tickets,
+                _uiv1assets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             # gettickets.show_get_tickets_prompt()
@@ -852,5 +852,5 @@ class TournamentEntryWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._on_cancel()

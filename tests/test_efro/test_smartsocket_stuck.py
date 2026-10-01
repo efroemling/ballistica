@@ -18,12 +18,15 @@ exactly this for half an hour, and the only thing the user saw was
 """
 
 import asyncio
+from typing import TYPE_CHECKING, override
 
 # Before the efro import on purpose: repos lay this package out
 # differently (legacy keeps efro under src/, so pylint reads efro as
 # first-party and this as third-party there), and third-party-first is
 # the order that satisfies every one of them.
 from test_efro.test_smartsocket import (
+    _FAST_POLICY,
+    _PATIENT_POLICY,
     _FakeRelay,
     _endpoint,
     _run,
@@ -31,18 +34,25 @@ from test_efro.test_smartsocket import (
     _wait_for,
 )
 
+from efro.dataclassio import dataclass_from_json
 from efro.smartsocket import (
     MAX_CONSECUTIVE_SERVE_FAILURES,
     MAX_MESSAGE_BYTES,
     MAX_PAYLOAD_BYTES,
     SS_CLOSE_BAD_FRAME,
     SS_CLOSE_RECONNECT_EXHAUSTED,
+    SS_CLOSE_RELAY_BUFFER_FULL,
     SS_CLOSE_SERVE_FAILED,
+    MsgFrame,
     SmartSocketAction,
+    SmartSocketFrame,
     SmartSocketPayloadTooLarge,
     action_for_close_code,
     framed_size,
 )
+
+if TYPE_CHECKING:
+    from test_efro.test_smartsocket import _FakeTransport
 
 
 def test_an_undecodable_frame_kills_rather_than_reconnects() -> None:
@@ -203,3 +213,111 @@ async def _an_unsendable_payload_raises_rather_than_hangs() -> None:
 
     runner.cancel()
     await asyncio.gather(runner, return_exceptions=True)
+
+
+class _FullableRelay(_FakeRelay):
+    """A relay whose resend buffer for our direction can be full.
+
+    While full it turns away the next new frame the way the real relay
+    does: closes the leg with SS_CLOSE_RELAY_BUFFER_FULL, accepting
+    and dropping nothing.
+    """
+
+    full = False
+
+    @override
+    def handle(self, transport: '_FakeTransport', raw: str) -> None:
+        frame = dataclass_from_json(SmartSocketFrame, raw)
+        if self.full and isinstance(frame, MsgFrame) and frame.seq > self.recv:
+            transport.drop(SS_CLOSE_RELAY_BUFFER_FULL, 'resend buffer full')
+            return
+        super().handle(transport, raw)
+
+
+def test_a_full_relay_buffer_resumes_gaplessly_once_drained() -> None:
+    """Turned away for a full buffer, then let in: nothing lost."""
+    _run(_a_full_relay_buffer_resumes_gaplessly_once_drained())
+
+
+async def _a_full_relay_buffer_resumes_gaplessly_once_drained() -> None:
+    relay = _FullableRelay(_PATIENT_POLICY)
+    endpoint = _endpoint(relay, [])
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+    await _send(endpoint, 'a')
+    await _wait_for(lambda: relay.recv == 1)
+
+    relay.full = True
+    await _send(endpoint, 'b')
+    await _send(endpoint, 'c')
+    # It reattaches (replaying 'b' into the same full buffer) instead
+    # of dying.
+    await _wait_for(lambda: relay.connects >= 3, timeout=15.0)
+    assert not endpoint.done
+
+    relay.full = False
+    await _wait_for(lambda: relay.recv == 3, timeout=15.0)
+    assert relay.accepted_text == ['a', 'b', 'c']
+    # The relay taking a new frame is what counts as recovery.
+    # pylint: disable-next=protected-access
+    assert endpoint._reconnect_delay == 0.5
+
+    await endpoint.end()
+    await asyncio.wait_for(runner, timeout=5.0)
+
+
+def test_a_relay_buffer_that_never_drains_is_not_retried_forever() -> None:
+    """Every attach succeeds, so only the no-reset rule bounds this."""
+    _run(_a_relay_buffer_that_never_drains_is_not_retried_forever())
+
+
+async def _a_relay_buffer_that_never_drains_is_not_retried_forever() -> None:
+    # The hello succeeds on every attempt here. Were that allowed to
+    # reset the reconnect budget (as it does for an ordinary drop),
+    # this would reattach twice a second until the session's max
+    # duration -- hours, in production.
+    relay = _FullableRelay(_FAST_POLICY)
+    endpoint = _endpoint(relay, [])
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    relay.full = True
+    await _send(endpoint, 'never lands')
+
+    await asyncio.wait_for(runner, timeout=15.0)
+    assert endpoint.close_code == SS_CLOSE_RECONNECT_EXHAUSTED
+    assert action_for_close_code(endpoint.close_code) is SmartSocketAction.DEAD
+    assert not relay.accepted_text
+    # A few slowing attempts inside the linger window, not a storm.
+    assert relay.connects <= 6
+
+
+def test_a_long_healthy_connection_can_still_resume() -> None:
+    """The reconnect budget starts at the loss, not at the hello."""
+    _run(_a_long_healthy_connection_can_still_resume())
+
+
+async def _a_long_healthy_connection_can_still_resume() -> None:
+    # The budget is 'about as long as the relay holds our slot', which
+    # is a window that opens when the connection is *lost*. Measuring
+    # it from the hello instead meant any connection that outlived
+    # its linger (2 minutes, in production) was already out of budget
+    # when it dropped, and gave up without a single attempt -- so only
+    # young sessions could ever resume. Found 2026-09-17.
+    relay = _FakeRelay(_FAST_POLICY)  # 1s linger.
+    endpoint = _endpoint(relay, [])
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+    await _send(endpoint, 'a')
+
+    await asyncio.sleep(1.5)  # Healthy for longer than the linger.
+    relay.live.drop()
+
+    await _wait_for(lambda: relay.connects == 2, timeout=10.0)
+    await _wait_for(lambda: endpoint.connected, timeout=10.0)
+    await _send(endpoint, 'b')
+    await _wait_for(lambda: relay.recv == 2)
+    assert relay.accepted_text == ['a', 'b']
+
+    await endpoint.end()
+    await asyncio.wait_for(runner, timeout=5.0)

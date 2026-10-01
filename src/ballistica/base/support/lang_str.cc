@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
@@ -104,13 +105,14 @@ static auto ParseNode_(const JsonRef& ref, int depth,
 
   if (tag == "r") {
     out->form = LangStr::Form::kResource;
-    auto apverid = ref["a"].as_string();
+    // The package is its version's numeric id (keyed here as text).
+    auto apvernum = ref["a"].as_int();
     auto name = ref["n"].as_string();
-    if (!apverid.has_value() || !name.has_value()) {
-      *error = "resource form requires string 'a' and 'n'";
+    if (!apvernum.has_value() || !name.has_value()) {
+      *error = "resource form requires int 'a' and string 'n'";
       return nullptr;
     }
-    out->apverid = *apverid;
+    out->apverid = std::to_string(*apvernum);
     out->name = *name;
     if (auto subsref = ref["s"]) {
       if (!parse_keyword_subs(subsref)) {
@@ -630,6 +632,17 @@ auto LangStr::Evaluate() const -> std::string {
   return *result;
 }
 
+// Emit a resource's package as its numeric id. (Engine keys are the id
+// as text; one that isn't numeric came from bad data, and goes out
+// as-is so a reader rejects it rather than it silently changing.)
+static void AddApverNum_(JsonObjBuilder* obj, const std::string& apverid) {
+  if (auto apvernum = AssetPackageRegistry::ApverNumFromKey(apverid)) {
+    obj->Add("a", *apvernum);
+  } else {
+    obj->Add("a", apverid);
+  }
+}
+
 static void FillObj_(JsonObjBuilder obj, const LangStr& ls) {
   auto fill_sub_obj = [](JsonObjBuilder subs, const LangStr::SubEntry& entry) {
     if (auto* strval = std::get_if<std::string>(&entry.value)) {
@@ -644,7 +657,7 @@ static void FillObj_(JsonObjBuilder obj, const LangStr& ls) {
   switch (ls.form) {
     case LangStr::Form::kResource: {
       obj.Add("t", "r");
-      obj.Add("a", ls.apverid);
+      AddApverNum_(&obj, ls.apverid);
       obj.Add("n", ls.name);
       if (!ls.subs.empty()) {
         auto subs = obj.AddObject("s");
@@ -733,7 +746,7 @@ static auto FillResourceObj_(JsonObjBuilder obj, const LangStr& ls,
     }
     case LangStr::Form::kResource: {
       obj.Add("t", "r");
-      obj.Add("a", ls.apverid);
+      AddApverNum_(&obj, ls.apverid);
       obj.Add("n", ls.name);
       if (!ls.subs.empty()) {
         auto subs = obj.AddObject("s");
@@ -772,7 +785,7 @@ static auto FillResourceObj_(JsonObjBuilder obj, const LangStr& ls,
         return false;
       }
       obj.Add("t", "r");
-      obj.Add("a", ls.apverid);
+      AddApverNum_(&obj, ls.apverid);
       obj.Add("n", name);
       if (!ls.subs.empty()) {
         auto subs = obj.AddObject("s");

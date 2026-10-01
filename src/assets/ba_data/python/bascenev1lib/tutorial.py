@@ -598,6 +598,10 @@ class Celebrate:
 
 
 class TutorialActivity(bs.Activity[Player, Team]):
+    # Our recorded input script is calibrated against the old spaz
+    # dynamics (limbs in the main sim); keep them for this activity.
+    legacy_spaz_limbs = True
+
     def __init__(self, settings: dict | None = None):
         from bascenev1lib.maps import Rampage
 

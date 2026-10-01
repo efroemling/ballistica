@@ -85,11 +85,11 @@ auto ReadReplayAssetPackages(const std::string& file_name)
   uint32_t file_id;
   uint16_t version;
   std::vector<std::string> packages;
-  bool ok =
-      fread(&file_id, sizeof(file_id), 1, file) == 1 && file_id == kBrpFileID
-      && fread(&version, sizeof(version), 1, file) == 1
-      && version <= kProtocolVersionMax && version >= kProtocolVersionClientMin
-      && ReadAssetPackageListing_(file, version, &packages);
+  bool ok = fread(&file_id, sizeof(file_id), 1, file) == 1
+            && file_id == kBrpFileID
+            && fread(&version, sizeof(version), 1, file) == 1
+            && IsJoinableHostProtocol(version)
+            && ReadAssetPackageListing_(file, version, &packages);
   fclose(file);
   if (!ok) {
     return {};
@@ -517,7 +517,7 @@ void ClientSessionReplay::OnReset(bool rewind) {
       Error("error reading version");
       return;
     }
-    if (version > kProtocolVersionMax || version < kProtocolVersionClientMin) {
+    if (!IsJoinableHostProtocol(version)) {
       g_base->ScreenMessage(
           base::BuiltinStrings::Replay::VersionError()->Evaluate(), {1, 0, 0});
       End();

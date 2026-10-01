@@ -56,7 +56,7 @@ class PluginWindow(bui.MainWindow):
         self._height = (
             900.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
+            else 520.0 if uiscale is bui.UIScale.MEDIUM else 700.0
         )
 
         # Do some fancy math to fill all available screen area up to the
@@ -66,7 +66,7 @@ class PluginWindow(bui.MainWindow):
         scale = (
             1.7
             if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 0.94 if uiscale is bui.UIScale.MEDIUM else 0.63
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.

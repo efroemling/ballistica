@@ -17,7 +17,7 @@ void PythonClassLangStr::SetupType(PyTypeObject* cls) {
   cls->tp_name = "babase.LangStr";
   cls->tp_basicsize = sizeof(PythonClassLangStr);
   cls->tp_doc =
-      "LangStr(json: str, packages: Sequence[str] | None = None,\n"
+      "LangStr(json: str, packages: Sequence[int] | None = None,\n"
       "        wrap: tuple[int, int | None, int | None] | None = None)\n"
       "\n"
       "A deferred, language-agnostic complex string (native).\n"
@@ -89,7 +89,10 @@ auto PythonClassLangStr::tp_new(PyTypeObject* type, PyObject* args,
   std::vector<std::string> packages;
   bool have_packages{packages_obj != Py_None};
   if (have_packages) {
-    packages = Python::GetStrings(packages_obj);
+    // Numeric ids; the engine keys packages by them as text.
+    for (int64_t apvernum : Python::GetInts64(packages_obj)) {
+      packages.push_back(std::to_string(apvernum));
+    }
   }
   auto parsed = LangStr::FromJson(json, have_packages ? &packages : nullptr);
   if (!parsed.has_value()) {

@@ -6,7 +6,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
-from bascenev1 import _classicassets
+from bascenev1 import _classicassets, _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -34,7 +34,7 @@ class _Entry:
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
         self._bar_tex = self._backing_tex = _classicassets.textures.bar.get()
-        self._cover_tex = _classicassets.textures.ui_atlas.get()
+        self._cover_tex = _uiv1assets.textures.ui_atlas.get()
         self._mesh = _classicassets.meshes.meter_transparent.get()
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None
@@ -178,16 +178,33 @@ class _Entry:
 
     def flash(self, countdown: bool, extra_flash: bool) -> None:
         """Flash momentarily."""
+        ticks = 10 if countdown else int(20.0 * self._flash_length)
+        if extra_flash:
+            ticks *= 4
+        # Protocol 44+ image nodes flash on their own off scene time
+        # (the 'flash' attr): two bool sets per episode instead of three
+        # color sets per 100ms tick streamed to every client. Older
+        # streams keep toggling colors from here.
+        if bs.protocol_version() >= 44:
+            self._set_flash_attr(True)
+            self._flash_timer = bs.Timer(
+                0.1 * ticks, bs.WeakCallStrict(self._set_flash_attr, False)
+            )
+            return
         self._flash_timer = bs.Timer(
             0.1, bs.WeakCallStrict(self._do_flash), repeat=True
         )
-        if countdown:
-            self._flash_counter = 10
-        else:
-            self._flash_counter = int(20.0 * self._flash_length)
-        if extra_flash:
-            self._flash_counter *= 4
+        self._flash_counter = ticks
         self._set_flash_colors(True)
+
+    def _set_flash_attr(self, flash: bool) -> None:
+        for node in (
+            self._backing.node,
+            self._bar.node,
+            self._cover.node if self._do_cover else None,
+        ):
+            if node:
+                node.flash = flash
 
     def set_position(self, position: Sequence[float]) -> None:
         """Set the entry's position."""

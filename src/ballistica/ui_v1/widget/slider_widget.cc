@@ -9,9 +9,13 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/texture_asset.h"
+#include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
@@ -54,6 +58,19 @@ constexpr float kNubPressedMult{3.0f};
 /// being on it, and how close to an endpoint counts as being at it.
 constexpr float kGridTolerance{1e-3f};
 
+/// How long after its last step a run of key/controller steps settles
+/// (fires the change call). Long enough to span a held key's repeats and
+/// a user tapping their way to a value; a run also settles at once when
+/// we lose selection or a pointer press begins.
+constexpr seconds_t kStepSettleSeconds{0.5};
+
+/// Opacity multiplier for the backing and groove while disabled.
+constexpr float kDisabledTrackOpacityScale{0.5f};
+
+/// Nub grey level and opacity while disabled.
+constexpr float kDisabledNubGrey{0.45f};
+constexpr float kDisabledNubOpacity{0.6f};
+
 /// Groove grey level. Deliberately not pure black: at zero the texture's
 /// rgb is multiplied away entirely and only its alpha silhouette survives,
 /// so the nub art's shading could not reach the groove at all.
@@ -69,8 +86,28 @@ static auto MakeRoundedMesh_(float x, float y, float w, float h, float radius)
       base::NinePatchMesh::BorderForRadius(radius, h, w));
 }
 
-SliderWidget::SliderWidget() = default;
+SliderWidget::SliderWidget() {
+  birth_time_millisecs_ =
+      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+}
+
 SliderWidget::~SliderWidget() = default;
+
+auto SliderWidget::TransitionScale_(millisecs_t current_time) const -> float {
+  if (transition_type_ != TransitionType::kScale) {
+    return 1.0f;
+  }
+  float in_progress = static_cast<float>(birth_time_millisecs_
+                                         + transition_delay_ - current_time);
+  if (in_progress <= 0.0f) {
+    return 1.0f;
+  }
+  // Fixed 150ms scale-up at the tail of the transition window
+  // (quadratic ease-out), the same curve TextWidget/ButtonWidget use.
+  constexpr float kScaleDurationMs = 150.0f;
+  float t = std::max(0.0f, 1.0f - in_progress / kScaleDurationMs);
+  return 1.0f - (1.0f - t) * (1.0f - t);
+}
 
 auto SliderWidget::NubSize_() const -> float {
   return std::min(width_, height_);
@@ -164,6 +201,70 @@ void SliderWidget::RunCall_(
 
     // Schedule this to run immediately after any current UI traversal.
     c->ScheduleInUIOperation(args);
+  }
+}
+
+void SliderWidget::OnStep_(float prev_value) {
+  if (!step_settle_timer_.exists()) {
+    step_start_value_ = prev_value;
+  }
+  RunCall_(on_drag_call_);
+
+  // Restart the quiet period. (Recreated rather than re-lengthened so the
+  // countdown provably starts over from this step.)
+  step_settle_timer_ = base::AppTimer::New(kStepSettleSeconds, false, [this] {
+    // Runs from a timer, so outside of any UI operation; give our calls
+    // one to run in.
+    base::UI::OperationContext ui_op_context;
+    SettleSteps_();
+    ui_op_context.Finish();
+  });
+}
+
+void SliderWidget::SettleSteps_() {
+  if (!step_settle_timer_.exists()) {
+    return;
+  }
+  // Note: this may be running from the timer itself; clearing it here is
+  // fine (ButtonWidget's repeat timer does the same).
+  step_settle_timer_.Clear();
+  if (value_ != step_start_value_) {
+    RunCall_(on_change_call_);
+  }
+}
+
+void SliderWidget::SetEnabled(bool val) {
+  if (val == enabled_) {
+    return;
+  }
+  enabled_ = val;
+  if (!enabled_) {
+    // Whatever was in progress ends here. A drag commits where it got
+    // to, just as a release would; a pending run of steps settles.
+    // (Callers can disable us outside of UI operations, so bring our
+    // own.)
+    base::UI::OperationContext ui_op_context;
+    if (pressed_) {
+      pressed_ = false;
+      dragging_ = false;
+      if (value_ != drag_start_value_) {
+        RunCall_(on_change_call_);
+      }
+    }
+    SettleSteps_();
+    hover_ = false;
+    ui_op_context.Finish();
+  }
+}
+
+void SliderWidget::SetSelected(bool s, SelectionCause cause) {
+  Widget::SetSelected(s, cause);
+  if (!s) {
+    // Nothing else can step us now, so there is nothing to wait for.
+    // (Callers can deselect outside of UI operations, so bring our own.)
+    base::UI::OperationContext ui_op_context;
+    SettleSteps_();
+    ui_op_context.Finish();
   }
 }
 
@@ -287,122 +388,161 @@ void SliderWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   auto* nub_tex = g_ui_v1->assets().nub.get();
 
-  // Selection glow (depth 0.05, behind everything). The ninepatch
-  // 'uniform' glow TextWidget uses for its selection highlight -- shaped
-  // to our outline rather than the older gradient blob, which only ever
-  // approximates a rectangle.
-  if (IsHierarchySelected() && g_base->ui->ShouldHighlightWidgets()) {
-    // Same pulse TextWidget's highlight runs on.
-    float m =
-        0.5f + std::abs(sinf(static_cast<float>(real_time) * 0.006467f) * 0.4f);
-    auto* tex = g_ui_v1->assets().shadow_sharp.get();
-
-    // Premultiply rgb by alpha for premultiplied textures so the glow
-    // composites 'over' under premult blend instead of adding
-    // full-brightness rgb.
-    float a = kGlowOpacity * m;
-    float cmul = tex->premultiplied() ? a : 1.0f;
-
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(0.9f * m * cmul, 1.0f * m * cmul, 0.0f, a);
-    c.SetTexture(tex);
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(extra_offs_x, extra_offs_y, 0.05f);
-      c.DrawMesh(glow_mesh_.get());
-    }
-    c.Submit();
-  }
-
-  // Backing (depth 0.1). Textured and mirrored exactly like the groove, so
-  // the whole well reads as one indented surface.
-  //
-  // Its base color is grey rather than white for two reasons: the
-  // selection multiplier needs somewhere to go (at full white it would
-  // just clamp and never visibly highlight), and the texture's rgb -- where
-  // the shading lives -- has to survive being multiplied by it.
+  // Scale-in transition: everything below scales about our center. (The
+  // transform's scope runs to the end of this function.)
+  base::EmptyComponent transition_c(pass);
+  transition_c.SetTransparent(true);
   {
-    float mult = GetMult_(real_time, false);
-
-    // Premultiply rgb by alpha for premultiplied textures so this
-    // composites 'over' under premult blend instead of adding
-    // full-brightness rgb.
-    float cmul = nub_tex->premultiplied() ? kBackingOpacity : 1.0f;
-    float c_base = kBackingColor * mult * cmul;
-
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(c_base, c_base, c_base, kBackingOpacity);
-    c.SetTexture(nub_tex);
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(width_ * 0.5f + extra_offs_x, height_ * 0.5f + extra_offs_y,
-                  0.1f);
-      // Mirrored on both axes; see the groove draw below for why this is
-      // safe and what it buys.
-      c.Scale(-1.0f, -1.0f, 1.0f);
-      c.DrawMesh(backing_mesh_.get());
+    auto transition_xf = transition_c.ScopedTransform();
+    float transition_scale =
+        TransitionScale_(pass->frame_def()->display_time_millisecs());
+    if (transition_scale != 1.0f) {
+      transition_c.Translate(width_ * 0.5f, height_ * 0.5f, 0.0f);
+      transition_c.Scale(transition_scale, transition_scale, 1.0f);
+      transition_c.Translate(-width_ * 0.5f, -height_ * 0.5f, 0.0f);
     }
-    c.Submit();
-  }
+    transition_c.Submit();
 
-  // Groove (depth 0.3, between the backing and the nub).
-  //
-  // Textured with the nub art so the two read as the same material, but
-  // flipped on both axes -- the nub's shading is lit from above, which on
-  // a groove reads as extruded; mirroring it puts the highlight on the
-  // lower edge so the groove reads as indented instead.
-  //
-  // No selection multiplier here: the groove reads as a recess rather than
-  // a lit surface, so holding it steady while the backing around it pulses
-  // is the intent.
-  if (groove_mesh_.exists()) {
-    // Premultiply rgb by alpha for premultiplied textures, as with the
-    // backing.
-    float cmul = nub_tex->premultiplied() ? kGrooveOpacity : 1.0f;
-    float c_base = kGrooveColor * cmul;
+    // Selection glow (depth 0.05, behind everything). The ninepatch
+    // 'uniform' glow TextWidget uses for its selection highlight -- shaped
+    // to our outline rather than the older gradient blob, which only ever
+    // approximates a rectangle.
+    if (IsHierarchySelected() && g_base->ui->ShouldHighlightWidgets()) {
+      // Same pulse TextWidget's highlight runs on.
+      float m =
+          0.5f
+          + std::abs(sinf(static_cast<float>(real_time) * 0.006467f) * 0.4f);
+      auto* tex = g_ui_v1->assets().shadow_sharp.get();
 
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(c_base, c_base, c_base, kGrooveOpacity);
-    c.SetTexture(nub_tex);
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(width_ * 0.5f + extra_offs_x, height_ * 0.5f + extra_offs_y,
-                  0.3f);
-      // Mirror on both axes. The mesh is centered and the pill is symmetric
-      // about both, so the silhouette is unchanged and only the texture
-      // mapping flips. Two mirrors compose to a rotation, so winding order
-      // -- and thus face culling -- is preserved.
-      c.Scale(-1.0f, -1.0f, 1.0f);
-      c.DrawMesh(groove_mesh_.get());
+      // Premultiply rgb by alpha for premultiplied textures so the glow
+      // composites 'over' under premult blend instead of adding
+      // full-brightness rgb.
+      float a = kGlowOpacity * m;
+      float cmul = tex->premultiplied() ? a : 1.0f;
+
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(0.9f * m * cmul, 1.0f * m * cmul, 0.0f, a);
+      c.SetTexture(tex);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(extra_offs_x, extra_offs_y, 0.05f);
+        c.DrawMesh(glow_mesh_.get());
+      }
+      c.Submit();
     }
-    c.Submit();
-  }
 
-  // Nub (depth 0.5, in front of everything else). Sized to our short
-  // dimension; this will become the draggable part.
-  {
-    // Held wins over the selection pulse, the same precedence
-    // ButtonWidget::GetMult uses. Note this stays lit for the whole drag
-    // even once the pointer wanders off us -- unlike a button, which
-    // un-lights when you slide off it, a slider still owns the grab.
-    float mult = pressed_ ? kNubPressedMult : GetMult_(real_time, true);
-    float nub_size = NubSize_() * kNubOverhangScale;
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(color_r_ * mult, color_g_ * mult, color_b_ * mult, 1.0f);
-    c.SetTexture(nub_tex);
+    // Backing (depth 0.1). Textured and mirrored exactly like the groove, so
+    // the whole well reads as one indented surface.
+    //
+    // Its base color is grey rather than white for two reasons: the
+    // selection multiplier needs somewhere to go (at full white it would
+    // just clamp and never visibly highlight), and the texture's rgb -- where
+    // the shading lives -- has to survive being multiplied by it.
     {
-      auto xf = c.ScopedTransform();
-      c.Translate(NubCenterX_() + 3.0f * extra_offs_x,
-                  height_ * 0.5f + 3.0f * extra_offs_y, 0.5f);
-      c.Scale(nub_size, nub_size, 0.5f);
-      c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
+      float mult = GetMult_(real_time, false);
+      float opacity =
+          kBackingOpacity * (enabled_ ? 1.0f : kDisabledTrackOpacityScale);
+
+      // Premultiply rgb by alpha for premultiplied textures so this
+      // composites 'over' under premult blend instead of adding
+      // full-brightness rgb.
+      float cmul = nub_tex->premultiplied() ? opacity : 1.0f;
+      float c_base = kBackingColor * mult * cmul;
+
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(c_base, c_base, c_base, opacity);
+      c.SetTexture(nub_tex);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(width_ * 0.5f + extra_offs_x, height_ * 0.5f + extra_offs_y,
+                    0.1f);
+        // Mirrored on both axes; see the groove draw below for why this is
+        // safe and what it buys.
+        c.Scale(-1.0f, -1.0f, 1.0f);
+        c.DrawMesh(backing_mesh_.get());
+      }
+      c.Submit();
     }
-    c.Submit();
-  }
+
+    // Groove (depth 0.3, between the backing and the nub).
+    //
+    // Textured with the nub art so the two read as the same material, but
+    // flipped on both axes -- the nub's shading is lit from above, which on
+    // a groove reads as extruded; mirroring it puts the highlight on the
+    // lower edge so the groove reads as indented instead.
+    //
+    // No selection multiplier here: the groove reads as a recess rather than
+    // a lit surface, so holding it steady while the backing around it pulses
+    // is the intent.
+    if (groove_mesh_.exists()) {
+      float opacity =
+          kGrooveOpacity * (enabled_ ? 1.0f : kDisabledTrackOpacityScale);
+
+      // Premultiply rgb by alpha for premultiplied textures, as with the
+      // backing.
+      float cmul = nub_tex->premultiplied() ? opacity : 1.0f;
+      float c_base = kGrooveColor * cmul;
+
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(c_base, c_base, c_base, opacity);
+      c.SetTexture(nub_tex);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(width_ * 0.5f + extra_offs_x, height_ * 0.5f + extra_offs_y,
+                    0.3f);
+        // Mirror on both axes. The mesh is centered and the pill is symmetric
+        // about both, so the silhouette is unchanged and only the texture
+        // mapping flips. Two mirrors compose to a rotation, so winding order
+        // -- and thus face culling -- is preserved.
+        c.Scale(-1.0f, -1.0f, 1.0f);
+        c.DrawMesh(groove_mesh_.get());
+      }
+      c.Submit();
+    }
+
+    // Nub (depth 0.5, in front of everything else). Sized to our short
+    // dimension; this will become the draggable part.
+    {
+      // Held wins over the selection pulse, the same precedence
+      // ButtonWidget::GetMult uses. Note this stays lit for the whole drag
+      // even once the pointer wanders off us -- unlike a button, which
+      // un-lights when you slide off it, a slider still owns the grab.
+      // (A disabled slider can be pressed - that selects it - but its
+      // nub doesn't light as if grabbed.)
+      float mult =
+          (pressed_ && enabled_) ? kNubPressedMult : GetMult_(real_time, true);
+      float nub_size = NubSize_() * kNubOverhangScale;
+
+      // Disabled: grey and see-through (still pulsing when selected, so
+      // selection stays visible). Premultiplied as with the backing,
+      // since this is the one case where the nub isn't opaque.
+      float r = color_r_;
+      float g = color_g_;
+      float b = color_b_;
+      float a = 1.0f;
+      if (!enabled_) {
+        r = g = b = kDisabledNubGrey;
+        a = kDisabledNubOpacity;
+      }
+      float cmul = nub_tex->premultiplied() ? a : 1.0f;
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetColor(r * mult * cmul, g * mult * cmul, b * mult * cmul, a);
+      c.SetTexture(nub_tex);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(NubCenterX_() + 3.0f * extra_offs_x,
+                    height_ * 0.5f + 3.0f * extra_offs_y, 0.5f);
+        c.Scale(nub_size, nub_size, 0.5f);
+        c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
+      }
+      c.Submit();
+    }
+  }  // End of the transition transform's scope.
+  transition_c.Submit();
 }
 
 auto SliderWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
@@ -421,7 +561,8 @@ auto SliderWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   switch (m.type) {
     case base::WidgetMessage::Type::kMouseMove: {
       bool claimed = (m.fval3 > 0.0f);
-      hover_ = claimed ? false : in_bounds(m.fval1, m.fval2);
+      // (No hover while disabled, as with ButtonWidget.)
+      hover_ = (claimed || !enabled_) ? false : in_bounds(m.fval1, m.fval2);
       if (dragging_) {
         if (SetValueFromPointerX_(m.fval1)) {
           RunCall_(on_drag_call_);
@@ -431,7 +572,24 @@ auto SliderWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       return hover_;
     }
     case base::WidgetMessage::Type::kMouseDown: {
+      // Disabled: a press still selects us (we stay selectable, so a tap
+      // should do what navigating to us does) but never drags. We still
+      // claim it, and so its release; with dragging_ off and the value
+      // untouched, the release commits nothing.
+      if (!enabled_) {
+        if (in_bounds(m.fval1, m.fval2)) {
+          GlobalSelect();
+          pressed_ = true;
+          dragging_ = false;
+          drag_start_value_ = value_;
+          return true;
+        }
+        return false;
+      }
       if (in_bounds(m.fval1, m.fval2)) {
+        // A pending run of steps is over; commit it before this drag
+        // starts measuring from our current value.
+        SettleSteps_();
         GlobalSelect();
         pressed_ = true;
         dragging_ = true;
@@ -465,6 +623,17 @@ auto SliderWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pressed_ = false;
         dragging_ = false;
 
+        // A release just outside a scroll area we sit in comes through
+        // as a cancel, but it's still the drag ending where it ended
+        // (dragged off the end of the track, say); commit it like any
+        // release.
+        if (m.released_outside) {
+          if (value_ != drag_start_value_) {
+            RunCall_(on_change_call_);
+          }
+          return true;
+        }
+
         // A cancel means the gesture was not ours after all (a parent
         // scroll-widget claiming a swipe, say), so put the value back.
         //
@@ -481,18 +650,25 @@ auto SliderWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
-    case base::WidgetMessage::Type::kMoveLeft: {
-      if (Step_(-1)) {
-        RunCall_(on_change_call_);
-      }
-      // Consumed even when we did not move, so horizontal navigation never
-      // escapes a slider; up/down is the way out.
-      return true;
-    }
+    case base::WidgetMessage::Type::kMoveLeft:
     case base::WidgetMessage::Type::kMoveRight: {
-      if (Step_(1)) {
-        RunCall_(on_change_call_);
+      int dir = m.type == base::WidgetMessage::Type::kMoveLeft ? -1 : 1;
+      float prev_value = value_;
+      if (!enabled_) {
+        // Swallowed (see below), but say no audibly.
+        g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
+      } else if (Step_(dir)) {
+        if (dragging_) {
+          // Stepped mid-drag; just part of the drag, which the release
+          // commits.
+          RunCall_(on_drag_call_);
+        } else {
+          OnStep_(prev_value);
+        }
       }
+      // Consumed even when we did not move (or are disabled), so
+      // horizontal navigation never escapes a slider; up/down is the way
+      // out.
       return true;
     }
     default:

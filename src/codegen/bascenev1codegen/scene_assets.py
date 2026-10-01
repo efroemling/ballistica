@@ -243,5 +243,223 @@ SPEC = SceneAssetSpec(
                 ),
             ],
         ),
+        Group(
+            name='builtin',
+            default_module='_builtinassets',
+            doc=(
+                'Utility art from the builtin asset package that the'
+                ' node layer leans on directly.'
+            ),
+            slots=[
+                Slot(
+                    name='black',
+                    kind=Kind.TEXTURE,
+                    doc='Solid black; an identity colorize mask.',
+                    default='textures.black',
+                ),
+            ],
+        ),
+        Group(
+            name='character_icon',
+            default_module='_classiccatalogassets',
+            doc=(
+                'What the character display node draws character icons'
+                ' with: the shared round shape mask every icon is cut'
+                ' with, and the standard-spaz standin icon it shows'
+                " whenever a definition's own icon art is not local"
+                ' (still downloading, unavailable, or not understood).'
+            ),
+            slots=[
+                Slot(
+                    name='character_icon_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Round shape mask applied to every character icon.',
+                    default='textures.character_icon_mask',
+                ),
+                Slot(
+                    name='standin_icon',
+                    kind=Kind.TEXTURE,
+                    doc='Standin (standard spaz) icon.',
+                    default='textures.neo_spaz_icon',
+                ),
+                Slot(
+                    name='standin_icon_color_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Standin icon colorize mask.',
+                    default='textures.neo_spaz_icon_color_mask',
+                ),
+            ],
+        ),
+        Group(
+            name='character_standin',
+            default_module='_classiccharacterassets',
+            doc=(
+                'The standard-spaz look a spaz node wears whenever'
+                ' it has a character id but not (yet) that'
+                " character's own art -- still downloading,"
+                ' unavailable, or not understood by this client.'
+            ),
+            slots=[
+                # ---- Textures ----
+                Slot(
+                    name='standin_color',
+                    kind=Kind.TEXTURE,
+                    doc='Standin character color map.',
+                    default='textures.neo_spaz_color',
+                ),
+                Slot(
+                    name='standin_color_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Standin character colorize mask.',
+                    default='textures.neo_spaz_color_mask',
+                ),
+                # ---- Meshes ----
+                Slot(
+                    name='standin_head',
+                    kind=Kind.MESH,
+                    doc='Standin character head mesh.',
+                    default='meshes.neo_spaz_head',
+                ),
+                Slot(
+                    name='standin_torso',
+                    kind=Kind.MESH,
+                    doc='Standin character torso mesh.',
+                    default='meshes.neo_spaz_torso',
+                ),
+                Slot(
+                    name='standin_pelvis',
+                    kind=Kind.MESH,
+                    doc='Standin character pelvis mesh.',
+                    default='meshes.neo_spaz_pelvis',
+                ),
+                Slot(
+                    name='standin_upper_arm',
+                    kind=Kind.MESH,
+                    doc='Standin character upper arm mesh.',
+                    default='meshes.neo_spaz_upper_arm',
+                ),
+                Slot(
+                    name='standin_forearm',
+                    kind=Kind.MESH,
+                    doc='Standin character forearm mesh.',
+                    default='meshes.neo_spaz_fore_arm',
+                ),
+                Slot(
+                    name='standin_hand',
+                    kind=Kind.MESH,
+                    doc='Standin character hand mesh.',
+                    default='meshes.neo_spaz_hand',
+                ),
+                Slot(
+                    name='standin_upper_leg',
+                    kind=Kind.MESH,
+                    doc='Standin character upper leg mesh.',
+                    default='meshes.neo_spaz_upper_leg',
+                ),
+                Slot(
+                    name='standin_lower_leg',
+                    kind=Kind.MESH,
+                    doc='Standin character lower leg mesh.',
+                    default='meshes.neo_spaz_lower_leg',
+                ),
+                Slot(
+                    name='standin_toes',
+                    kind=Kind.MESH,
+                    doc='Standin character toes mesh.',
+                    default='meshes.neo_spaz_toes',
+                ),
+                # ---- Sounds ----
+                Slot(
+                    name='standin_jump01',
+                    kind=Kind.SOUND,
+                    doc='Standin character jump sound 1.',
+                    default='audio.spaz_jump01',
+                ),
+                Slot(
+                    name='standin_jump02',
+                    kind=Kind.SOUND,
+                    doc='Standin character jump sound 2.',
+                    default='audio.spaz_jump02',
+                ),
+                Slot(
+                    name='standin_jump03',
+                    kind=Kind.SOUND,
+                    doc='Standin character jump sound 3.',
+                    default='audio.spaz_jump03',
+                ),
+                Slot(
+                    name='standin_jump04',
+                    kind=Kind.SOUND,
+                    doc='Standin character jump sound 4.',
+                    default='audio.spaz_jump04',
+                ),
+                Slot(
+                    name='standin_attack01',
+                    kind=Kind.SOUND,
+                    doc='Standin character attack sound 1.',
+                    default='audio.spaz_attack01',
+                ),
+                Slot(
+                    name='standin_attack02',
+                    kind=Kind.SOUND,
+                    doc='Standin character attack sound 2.',
+                    default='audio.spaz_attack02',
+                ),
+                Slot(
+                    name='standin_attack03',
+                    kind=Kind.SOUND,
+                    doc='Standin character attack sound 3.',
+                    default='audio.spaz_attack03',
+                ),
+                Slot(
+                    name='standin_attack04',
+                    kind=Kind.SOUND,
+                    doc='Standin character attack sound 4.',
+                    default='audio.spaz_attack04',
+                ),
+                Slot(
+                    name='standin_impact01',
+                    kind=Kind.SOUND,
+                    doc='Standin character impact sound 1.',
+                    default='audio.spaz_impact01',
+                ),
+                Slot(
+                    name='standin_impact02',
+                    kind=Kind.SOUND,
+                    doc='Standin character impact sound 2.',
+                    default='audio.spaz_impact02',
+                ),
+                Slot(
+                    name='standin_impact03',
+                    kind=Kind.SOUND,
+                    doc='Standin character impact sound 3.',
+                    default='audio.spaz_impact03',
+                ),
+                Slot(
+                    name='standin_impact04',
+                    kind=Kind.SOUND,
+                    doc='Standin character impact sound 4.',
+                    default='audio.spaz_impact04',
+                ),
+                Slot(
+                    name='standin_death01',
+                    kind=Kind.SOUND,
+                    doc='Standin character death sound 1.',
+                    default='audio.spaz_death01',
+                ),
+                Slot(
+                    name='standin_pickup01',
+                    kind=Kind.SOUND,
+                    doc='Standin character pickup sound 1.',
+                    default='audio.spaz_pickup01',
+                ),
+                Slot(
+                    name='standin_fall01',
+                    kind=Kind.SOUND,
+                    doc='Standin character fall sound 1.',
+                    default='audio.spaz_fall01',
+                ),
+            ],
+        ),
     ],
 )

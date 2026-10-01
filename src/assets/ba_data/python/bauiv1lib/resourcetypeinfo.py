@@ -6,8 +6,7 @@ from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import _uiv1assets
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -69,10 +68,10 @@ class ResourceTypeInfoWindow(PopupWindow):
             rdesc = (
                 _classicassets.strings.resource_type_info.tickets_description
             )
-            tex = _classicassets.textures.tickets.get()
+            tex = _classiccatalogassets.textures.tickets.get()
         elif resource_type == 'tokens':
             rdesc = _classicassets.strings.resource_type_info.tokens_description
-            tex = _classicassets.textures.coin.get()
+            tex = _classiccatalogassets.textures.coin.get()
             bwidth = 200
             bheight = 50
 
@@ -144,5 +143,5 @@ class ResourceTypeInfoWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()

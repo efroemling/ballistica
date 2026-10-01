@@ -68,6 +68,12 @@ class ImageNode : public Node {
   void OnScreenSizeChange() override;
   auto host_only() const -> bool { return host_only_; }
   void set_host_only(bool val) { host_only_ = val; }
+  /// (protocol 44+) Flash locally: while set, the draw color doubles
+  /// on a 100ms-on/100ms-off square wave keyed off scene time, so a
+  /// host sets this once per flash episode instead of streaming color
+  /// toggles (scoreboard entries were ~1.8 KB/s of those).
+  auto flash() const -> bool { return flash_; }
+  void set_flash(bool val) { flash_ = val; }
   auto front() const -> bool { return front_; }
   void set_front(bool val) { front_ = val; }
   auto in_world() const -> bool { return in_world_; }
@@ -90,6 +96,7 @@ class ImageNode : public Node {
   };
 
   bool host_only_{};
+  bool flash_{};
   bool front_{};
   bool in_world_{};
   bool absolute_scale_{true};

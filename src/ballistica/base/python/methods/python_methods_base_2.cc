@@ -16,7 +16,7 @@
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
@@ -241,7 +241,7 @@ static auto PyGetCameraPosition(PyObject* self, PyObject* args,
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
-  Camera* cam = g_base->graphics->camera();
+  GameCamera* cam = g_base->graphics->camera();
   cam->get_position(&x, &y, &z);
   return Py_BuildValue("(fff)", x, y, z);
   BA_PYTHON_CATCH;
@@ -271,7 +271,7 @@ static auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
-  Camera* cam = g_base->graphics->camera();
+  GameCamera* cam = g_base->graphics->camera();
   cam->target_smoothed(&x, &y, &z);
   return Py_BuildValue("(fff)", x, y, z);
   BA_PYTHON_CATCH;
@@ -562,7 +562,9 @@ static void WarnOnLogicThreadOSTextMeasure(const char* funcname,
             " present; this can hitch on lazy OS font loads. Measure such"
             " strings from a background thread instead, or pass"
             " suppress_logic_thread_warning=True to acknowledge the site"
-            " (reports actual stalls only). (see stack trace above;"
+            " (reports actual stalls only); acknowledged sites can call"
+            " warm_up_string_measure() ahead of time to keep their"
+            " measures from stalling. (see stack trace above;"
             " once per unique string, capped per run).");
 }
 
@@ -602,7 +604,10 @@ static auto MeasureOnLogicThreadAcked(const char* funcname,
               + std::to_string(dur / 1000) + "ms measuring '" + s
               + "' (an acknowledged call site, but this exceeded the"
                 " stall threshold; likely a cold OS font load). Consider"
-                " measuring this off-thread. (see stack trace above;"
+                " measuring this off-thread, or, if the string is known"
+                " ahead of time (when the window is built, etc.), pass it"
+                " to warm_up_string_measure() then so the font load"
+                " happens in the background. (see stack trace above;"
                 " capped per run)");
     }
   }
@@ -750,6 +755,46 @@ static PyMethodDef PyGetStringWidthDef = {
     "call site measuring OS-rendered text (foreign scripts, emoji,\n"
     "etc.); acknowledged sites warn only when a measure genuinely\n"
     "stalls (cold OS font loads) instead of on every use.\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------- warm_up_string_measure ----------------------------
+
+static auto PyWarmUpStringMeasure(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* s_obj;
+  static const char* kwlist[] = {"string", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &s_obj)) {
+    return nullptr;
+  }
+  std::string s = g_base->python->GetPyLString(s_obj);
+  assert(g_base->text_graphics);
+  // (early-outs cheaply for strings with no OS-rendered chars)
+  g_base->text_graphics->WarmUpStringAsync(s);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyWarmUpStringMeasureDef = {
+    "warm_up_string_measure",            // name
+    (PyCFunction)PyWarmUpStringMeasure,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "warm_up_string_measure(string: str) -> None\n"
+    "\n"
+    "Warm measurement of a string in the background.\n"
+    "\n"
+    "Measuring OS-rendered text (foreign scripts, emoji, etc.) for the\n"
+    "first time can stall for tens of milliseconds on lazy OS font\n"
+    "loads. Code that will later need to measure such a string on the\n"
+    "logic thread (via get_string_width() or similar) can call this\n"
+    "ahead of time - when a window is built, for example - so that\n"
+    "cost is paid on a background thread and the later measure is a\n"
+    "cache hit. Returns immediately; nearly free for strings containing\n"
+    "no OS-rendered characters.\n"
     "\n"
     ":meta private:",
 };
@@ -1302,6 +1347,32 @@ static PyMethodDef PyGetVirtualOuterRectDef = {
     "outside the regular virtual bounds may be partially obscured.",
 };
 
+// --------------------- get_auto_screen_inset_amount --------------------------
+
+static auto PyGetAutoScreenInsetAmount(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  return PyFloat_FromDouble(g_base->graphics->AutoScreenInsetAmount());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAutoScreenInsetAmountDef = {
+    "get_auto_screen_inset_amount",           // name
+    (PyCFunction)PyGetAutoScreenInsetAmount,  // method
+    METH_NOARGS,                              // flags
+
+    "get_auto_screen_inset_amount() -> float\n"
+    "\n"
+    "Return the screen-inset amount automatic mode uses here.\n"
+    "\n"
+    "Screen insets pull the virtual bounds in from the screen edges,\n"
+    "from 0 (only what the OS reports as obscured) to 1 (the max\n"
+    "margins). With the ``Screen Insets`` config value at ``Auto``, the\n"
+    "amount comes from context (TV or not, ui scale); this returns\n"
+    "that value. With it at ``Custom``, ``Custom Screen Insets`` is\n"
+    "used instead.",
+};
+
 // -------------------------------- atexit -------------------------------------
 
 static auto PyAtExit(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1392,12 +1463,12 @@ static auto ParseAssetEntryMap_(PyObject* entries_obj,
 static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* bucket_id;
   PyObject* entries_obj;
-  static const char* kwlist[] = {"apverid", "bucket_id", "entries", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
-                                   const_cast<char**>(kwlist), &apverid,
+  static const char* kwlist[] = {"apvernum", "bucket_id", "entries", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "LsO",
+                                   const_cast<char**>(kwlist), &apvernum,
                                    &bucket_id, &entries_obj)) {
     return nullptr;
   }
@@ -1405,8 +1476,8 @@ static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
   if (!ParseAssetEntryMap_(entries_obj, &entries)) {
     return nullptr;
   }
-  g_base->assets->package_registry()->RegisterBucket(apverid, bucket_id,
-                                                     std::move(entries));
+  g_base->assets->package_registry()->RegisterBucket(
+      std::to_string(apvernum), bucket_id, std::move(entries));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1416,7 +1487,7 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     (PyCFunction)PyRegisterAssetPackageBucket,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "register_asset_package_bucket(apverid: str, bucket_id: str,\n"
+    "register_asset_package_bucket(apvernum: int, bucket_id: str,\n"
     "                              entries: dict[str, dict[str, str]])"
     " -> None\n"
     "\n"
@@ -1450,17 +1521,17 @@ static auto PyRegisterAssetPackageBuckets(PyObject* self, PyObject* args,
   specs.reserve(static_cast<size_t>(count));
   for (Py_ssize_t i = 0; i < count; ++i) {
     PyObject* item = PySequence_Fast_GET_ITEM(seq.get(), i);  // (borrowed)
-    const char* apverid;
+    int64_t apvernum;
     const char* bucket_id;
     PyObject* entries_obj;
-    if (!PyArg_ParseTuple(item, "ssO", &apverid, &bucket_id, &entries_obj)) {
+    if (!PyArg_ParseTuple(item, "LsO", &apvernum, &bucket_id, &entries_obj)) {
       return nullptr;
     }
     AssetPackageRegistry::EntryMap entries;
     if (!ParseAssetEntryMap_(entries_obj, &entries)) {
       return nullptr;
     }
-    specs.emplace_back(apverid, bucket_id, std::move(entries));
+    specs.emplace_back(std::to_string(apvernum), bucket_id, std::move(entries));
   }
   g_base->assets->package_registry()->RegisterBucketsAtomic(std::move(specs));
   Py_RETURN_NONE;
@@ -1473,12 +1544,12 @@ static PyMethodDef PyRegisterAssetPackageBucketsDef = {
     METH_VARARGS | METH_KEYWORDS,                // flags
 
     "register_asset_package_buckets(\n"
-    "    buckets: Sequence[tuple[str, str, dict[str, dict[str, str]]]])"
+    "    buckets: Sequence[tuple[int, str, dict[str, dict[str, str]]]])"
     " -> None\n"
     "\n"
     "(internal) Register several asset-package buckets into the C++\n"
     "runtime registry in a single atomic swap. Each tuple is\n"
-    "``(apverid, bucket_id, entries)`` where ``entries`` maps logical\n"
+    "``(apvernum, bucket_id, entries)`` where ``entries`` maps logical\n"
     "asset paths to a part-keyed component map ``{part: CAS_hash}`` (a\n"
     "null asset maps to an empty dict). Unlike\n"
     "``register_asset_package_bucket``\n"
@@ -1520,14 +1591,15 @@ static PyMethodDef PyMarkConstructAssetsCompleteDef = {
 static auto PyGetAssetPackageConstantBlobText(PyObject* self, PyObject* args,
                                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* logical_path;
-  static const char* kwlist[] = {"apverid", "logical_path", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
-                                   const_cast<char**>(kwlist), &apverid,
+  static const char* kwlist[] = {"apvernum", "logical_path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Ls",
+                                   const_cast<char**>(kwlist), &apvernum,
                                    &logical_path)) {
     return nullptr;
   }
+  std::string apverid = std::to_string(apvernum);
   auto* registry = g_base->assets->package_registry();
   auto bucket_id = registry->LookupConstantBucketId(apverid);
   if (bucket_id.empty()) {
@@ -1554,7 +1626,7 @@ static PyMethodDef PyGetAssetPackageConstantBlobTextDef = {
     (PyCFunction)PyGetAssetPackageConstantBlobText,  // method
     METH_VARARGS | METH_KEYWORDS,                    // flags
 
-    "get_asset_package_constant_blob_text(apverid: str,\n"
+    "get_asset_package_constant_blob_text(apvernum: int,\n"
     "                                     logical_path: str) -> str | None\n"
     "\n"
     "(internal) Resolve a flavor-invariant ``constant``-bucket logical\n"
@@ -1668,13 +1740,14 @@ static PyMethodDef PyBundledAssetManifestTextDef = {
 static auto PyGetAssetPackageBucketPaths(PyObject* self, PyObject* args,
                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* kind;
-  static const char* kwlist[] = {"apverid", "kind", nullptr};
+  static const char* kwlist[] = {"apvernum", "kind", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &kind)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &kind)) {
     return nullptr;
   }
+  std::string apverid = std::to_string(apvernum);
   auto* registry = g_base->assets->package_registry();
 
   // Kind names match bacommon.assetspec.AssetBucketKind values.
@@ -1713,7 +1786,7 @@ static PyMethodDef PyGetAssetPackageBucketPathsDef = {
     (PyCFunction)PyGetAssetPackageBucketPaths,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "get_asset_package_bucket_paths(apverid: str,\n"
+    "get_asset_package_bucket_paths(apvernum: int,\n"
     "                               kind: str) -> list[str] | None\n"
     "\n"
     "(internal) Return a registered asset-package bucket's canonical\n"
@@ -1727,22 +1800,85 @@ static PyMethodDef PyGetAssetPackageBucketPathsDef = {
     "flat refs and scene_v1 wire refs; it is portable across flavors by\n"
     "the identical-key-set invariant (asset-packages D23/D24)."};
 
+// ---------------- take_wanted_asset_packages --------------------------------
+
+static auto PyTakeWantedAssetPackages(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  double max_age;
+  static const char* kwlist[] = {"max_age", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char**>(kwlist), &max_age)) {
+    return nullptr;
+  }
+  auto wanted = g_base->assets->package_registry()->TakeWanted(
+      static_cast<millisecs_t>(max_age * 1000.0));
+  PyObject* out = PyList_New(0);
+  for (auto&& entry : wanted) {
+    // Registry keys are numeric ids as text; anything else came from
+    // bad data and has no numeric id to hand back.
+    auto apvernum = AssetPackageRegistry::ApverNumFromKey(entry.first);
+    if (!apvernum.has_value()) {
+      continue;
+    }
+    PythonRef item(Py_BuildValue("(Nd)", PyLong_FromLongLong(*apvernum),
+                                 static_cast<double>(entry.second) / 1000.0),
+                   PythonRef::kSteal);
+    PyList_Append(out, item.get());
+  }
+  return out;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTakeWantedAssetPackagesDef = {
+    "take_wanted_asset_packages",            // name
+    (PyCFunction)PyTakeWantedAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "take_wanted_asset_packages(max_age: float) -> list[tuple[int, float]]\n"
+    "\n"
+    "(internal) Asset-package versions something on screen wants\n"
+    "registered (their media isn't local), as ``(apvernum, seconds since\n"
+    "last wanted)`` pairs. Entries not re-wanted within ``max_age``\n"
+    "seconds are dropped rather than returned. Feeds the background\n"
+    "acquirer in :class:`babase.AssetSubsystem`.",
+};
+
+// ---------------- asset_package_registry_generation -------------------------
+
+static auto PyAssetPackageRegistryGeneration(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  return PyLong_FromLongLong(g_base->assets->package_registry()->generation());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAssetPackageRegistryGenerationDef = {
+    "asset_package_registry_generation",            // name
+    (PyCFunction)PyAssetPackageRegistryGeneration,  // method
+    METH_NOARGS,                                    // flags
+
+    "asset_package_registry_generation() -> int\n"
+    "\n"
+    "(internal) Count of asset-package registrations so far; bumps on\n"
+    "every resolve commit.",
+};
+
 // ---------------- get_asset_package_string_count -----------------------------
 
 static auto PyGetAssetPackageStringCount(PyObject* self, PyObject* args,
                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
-  static const char* kwlist[] = {"apverid", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &apverid)) {
+  int64_t apvernum;
+  static const char* kwlist[] = {"apvernum", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "L",
+                                   const_cast<char**>(kwlist), &apvernum)) {
     return nullptr;
   }
   auto tables = g_base->assets->LangStrTablesSnapshot();
   if (!tables) {
     Py_RETURN_NONE;
   }
-  auto it = tables->packages.find(apverid);
+  auto it = tables->packages.find(std::to_string(apvernum));
   if (it == tables->packages.end()) {
     // Not loaded for the current locale. None rather than 0 so the
     // caller can tell "no language table" from "a package with no
@@ -1759,7 +1895,7 @@ static PyMethodDef PyGetAssetPackageStringCountDef = {
     (PyCFunction)PyGetAssetPackageStringCount,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "get_asset_package_string_count(apverid: str) -> int | None\n"
+    "get_asset_package_string_count(apvernum: int) -> int | None\n"
     "\n"
     "(internal) How many language-strings a loaded package holds for\n"
     "the current locale -- the size of the canonical sorted name list\n"
@@ -1850,11 +1986,12 @@ static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
   PyObject* value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(versions_obj, &pos, &key, &value)) {
-    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
-      throw Exception("Expected a dict[str, str].", PyExcType::kType);
+    if (!PyUnicode_Check(key) || !PyLong_Check(value)) {
+      throw Exception("Expected a dict[str, int].", PyExcType::kType);
     }
-    AssetNameCompat::SetPackageVersion(PyUnicode_AsUTF8(key),
-                                       PyUnicode_AsUTF8(value));
+    // Numeric ids; the engine keys packages by them as text.
+    AssetNameCompat::SetPackageVersion(
+        PyUnicode_AsUTF8(key), std::to_string(PyLong_AsLongLong(value)));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1865,9 +2002,9 @@ static PyMethodDef PySetAssetNameCompatVersionsDef = {
     (PyCFunction)PySetAssetNameCompatVersions,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "set_asset_name_compat_versions(versions: dict[str, str]) -> None\n"
+    "set_asset_name_compat_versions(versions: dict[str, int]) -> None\n"
     "\n"
-    "(internal) Register the asset-package version ids backing the\n"
+    "(internal) Register the asset-package numeric ids backing the\n"
     "legacy asset-name compat table, keyed by package key\n"
     "('builtinassets' / 'classicassets'). Until a package key is\n"
     "registered, legacy names mapping into it pass through unmapped.\n"
@@ -1959,6 +2096,8 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyBundledCasBlobBytesDef,
       PyBundledAssetManifestTextDef,
       PyGetAssetPackageBucketPathsDef,
+      PyTakeWantedAssetPackagesDef,
+      PyAssetPackageRegistryGenerationDef,
       PyGetAssetPackageStringCountDef,
       PySetAssetNameCompatVersionsDef,
       PyResolveLegacyAssetNameDef,
@@ -1981,6 +2120,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyScreenMessageDef,
       PyGetStringWidthDef,
       PyGetStringHeightDef,
+      PyWarmUpStringMeasureDef,
       PyEvaluateLstrDef,
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
@@ -1999,6 +2139,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyGetVirtualScreenSizeDef,
       PyGetVirtualSafeAreaSizeDef,
       PyGetVirtualOuterRectDef,
+      PyGetAutoScreenInsetAmountDef,
       PyAtExitDef,
   };
 }

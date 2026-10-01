@@ -44,6 +44,9 @@ class PythonClassWidget : public PythonClass {
   static auto GlobalSelect(PythonClassWidget* self) -> PyObject*;
   static auto ScrollIntoView(PythonClassWidget* self, PyObject* args,
                              PyObject* keywds) -> PyObject*;
+  static auto GetScrollState(PythonClassWidget* self) -> PyObject*;
+  static auto SetScrollOffset(PythonClassWidget* self, PyObject* args,
+                              PyObject* keywds) -> PyObject*;
   Object::WeakRef<Widget>* widget_;
   static auto nb_bool(PythonClassWidget* self) -> int;
   static PyNumberMethods as_number_;

@@ -17,6 +17,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
@@ -120,6 +121,24 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
   valid_ = true;
 }
 
+TextureAsset::TextureAsset(RenderView* view)
+    : render_view_id_(view->id()), render_view_(view) {
+  assert(g_base->InLogicThread());
+  assert(view->output() == RenderView::Output::kTexture);
+  file_name_ = "render-view-" + std::to_string(view->id());
+  valid_ = true;
+}
+
+auto TextureAsset::GetRenderView() const -> RenderView* {
+  assert(g_base->InLogicThread());
+  return render_view_;
+}
+
+void TextureAsset::ClearRenderView() {
+  assert(g_base->InLogicThread());
+  render_view_ = nullptr;
+}
+
 TextureAsset::~TextureAsset() {}
 
 auto TextureAsset::GetName() const -> std::string {
@@ -135,7 +154,7 @@ auto TextureAsset::ReResolveSource() -> bool {
   // change their underlying blob when the asset-package registry is
   // re-resolved. Text-textures and QR codes are generated in-engine, and
   // legacy bare-filename textures resolve to a fixed on-disk path.
-  if (packer_.exists() || is_qr_code_
+  if (packer_.exists() || is_qr_code_ || render_view_id_ != 0
       || file_name_.find(':') == std::string::npos) {
     return false;
   }
@@ -160,6 +179,18 @@ void TextureAsset::DoPreload() {
   // assert(g_base->graphics->has_client_context());
   // assert(g_base->graphics_server
   //        && g_base->graphics_server->texture_compression_types_are_set());
+
+  // If we're what a view draws to, we've no pixels to get ready; the
+  // renderer has them.
+  if (render_view_id_ != 0) {
+    preload_datas_.resize(1);
+
+    // Views draw over an opaque backdrop for now; should they come to
+    // leave their backdrops clear, what they hold will be
+    // premultiplied.
+    preload_datas_[0].premultiplied = true;
+    return;
+  }
 
   // Figure out which LOD should be our base level based on texture quality.
   auto texture_quality = g_base->graphics->placeholder_texture_quality();

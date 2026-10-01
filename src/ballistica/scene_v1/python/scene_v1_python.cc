@@ -32,20 +32,25 @@
 #include "ballistica/scene_v1/python/class/python_class_quat.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_depiction.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_sound.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_texture.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_timer.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_viewer.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
+#include "ballistica/scene_v1/python/class/python_class_spaz_def.h"
 #include "ballistica/scene_v1/python/methods/python_methods_assets.h"
 #include "ballistica/scene_v1/python/methods/python_methods_input.h"
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 #include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
@@ -85,6 +90,9 @@ void SceneV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassSceneTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassBaseTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassMaterial>(module);
+  PythonModuleBuilder::AddClass<PythonClassSpazDef>(module);
+  PythonModuleBuilder::AddClass<PythonClassSceneDepiction>(module);
+  PythonModuleBuilder::AddClass<PythonClassSceneViewer>(module);
   PythonModuleBuilder::AddClass<PythonClassSceneTexture>(module);
   PythonModuleBuilder::AddClass<PythonClassSceneSound>(module);
   PythonModuleBuilder::AddClass<PythonClassSceneDataAsset>(module);
@@ -327,6 +335,30 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       attr.Set(val);
       break;
     }
+    case NodeAttributeType::kSpazDef: {
+      // Don't allow dead-refs, do allow None.
+      SpazDef* val = GetPySpazDef(value_obj, false, true);
+      if (out_stream) {
+        out_stream->SetNodeAttr(attr, val);
+      }
+
+      // If something was driving this attr, disconnect it.
+      attr.DisconnectIncoming();
+      attr.Set(val);
+      break;
+    }
+    case NodeAttributeType::kDepiction: {
+      // Don't allow dead-refs, do allow None.
+      SceneDepiction* val = GetPySceneDepiction(value_obj, false, true);
+      if (out_stream) {
+        out_stream->SetNodeAttr(attr, val);
+      }
+
+      // If something was driving this attr, disconnect it.
+      attr.DisconnectIncoming();
+      attr.Set(val);
+      break;
+    }
     case NodeAttributeType::kTextureArray: {
       std::vector<SceneTexture*> vals = GetPySceneTextures(value_obj);
       if (out_stream) {
@@ -449,88 +481,112 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
                     PyExcType::kContext);
   }
 
-  Node* node = scene->NewNode(type, name, delegate_obj);
-
-  // Handle attr values fed in.
-  if (dict) {
-    if (!PyDict_Check(dict)) {
-      throw Exception("Expected dict for arg 2.", PyExcType::kType);
-    }
-    NodeType* t = node->type();
-    PyObject* key{};
-    PyObject* value{};
-    Py_ssize_t pos{};
-
-    // We want to set initial attrs in order based on their attr indices.
-    std::list<std::pair<NodeAttributeUnbound*, PyObject*>> attr_vals;
-
-    // Grab all initial attr/values and add them to a list.
-    while (PyDict_Next(dict, &pos, &key, &value)) {
-      if (!PyUnicode_Check(key)) {
-        throw Exception("Expected string key in attr dict.", PyExcType::kType);
-      }
-      try {
-        attr_vals.emplace_back(
-            t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
-      } catch (const std::exception&) {
-        g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                             "Attr not found on initial attr set: '"
-                                 + std::string(PyUnicode_AsUTF8(key)) + "' on "
-                                 + type + " node '" + name + "'");
-      }
-    }
-
-    // Run the sets in the order of attr indices.
-    attr_vals.sort(CompareAttrIndices);
-    for (auto&& i : attr_vals) {
-      try {
-        SetNodeAttr(node, i.first->name().c_str(), i.second);
-      } catch (const std::exception& e) {
-        g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                             "Exception in initial attr set for attr '"
-                                 + i.first->name() + "' on " + type + " node '"
-                                 + name + "':" + e.what());
-      }
-    }
+  // Under kProtocolVersionPackedCommands a newnode with initial attrs
+  // reaches the stream as one command: hold the AddNode / attr sets /
+  // NodeOnCreate this emits aside and pack them (or replay them as they
+  // were if anything about them is unexpected or throws).
+  SessionStream* fold_stream = scene->GetSceneStream();
+  bool fold = fold_stream != nullptr && fold_stream->CanFoldNodeCreate()
+              && dict != nullptr && PyDict_Check(dict) && PyDict_Size(dict) > 0;
+  if (fold) {
+    fold_stream->BeginFold();
   }
-
-  // If an owner was provided, set it up.
-  if (owner_obj != Py_None) {
-    // If its a node, set up a dependency at the scene level
-    // (then we just have to delete the owner node and the scene does the
-    // rest).
-    if (PythonClassNode::Check(owner_obj)) {
-      Node* owner_node = GetPyNode(owner_obj, true);
-      if (owner_node == nullptr) {
-        g_core->logging->Log(
-            LogName::kBa, LogLevel::kError,
-            "Empty node-ref passed for 'owner'; pass None if you want "
-            "no owner.");
-      } else if (owner_node->scene() != node->scene()) {
-        g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                             "Owner node is from a different scene; ignoring.");
-      } else {
-        owner_node->AddDependentNode(node);
-      }
-    } else {
-      throw Exception(
-          "Invalid node owner: " + Python::ObjToString(owner_obj) + ".",
-          PyExcType::kType);
-    }
-  }
-
-  // Lastly, call this node's OnCreate method for any final setup it may want to
-  // do.
+  Node* node{};
   try {
-    // Tell clients to do the same.
-    if (SessionStream* output_stream = scene->GetSceneStream()) {
-      output_stream->NodeOnCreate(node);
+    node = scene->NewNode(type, name, delegate_obj);
+
+    // Handle attr values fed in.
+    if (dict) {
+      if (!PyDict_Check(dict)) {
+        throw Exception("Expected dict for arg 2.", PyExcType::kType);
+      }
+      NodeType* t = node->type();
+      PyObject* key{};
+      PyObject* value{};
+      Py_ssize_t pos{};
+
+      // We want to set initial attrs in order based on their attr indices.
+      std::list<std::pair<NodeAttributeUnbound*, PyObject*>> attr_vals;
+
+      // Grab all initial attr/values and add them to a list.
+      while (PyDict_Next(dict, &pos, &key, &value)) {
+        if (!PyUnicode_Check(key)) {
+          throw Exception("Expected string key in attr dict.",
+                          PyExcType::kType);
+        }
+        try {
+          attr_vals.emplace_back(
+              t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
+        } catch (const std::exception&) {
+          g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                               "Attr not found on initial attr set: '"
+                                   + std::string(PyUnicode_AsUTF8(key))
+                                   + "' on " + type + " node '" + name + "'");
+        }
+      }
+
+      // Run the sets in the order of attr indices.
+      attr_vals.sort(CompareAttrIndices);
+      for (auto&& i : attr_vals) {
+        try {
+          SetNodeAttr(node, i.first->name().c_str(), i.second);
+        } catch (const std::exception& e) {
+          g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                               "Exception in initial attr set for attr '"
+                                   + i.first->name() + "' on " + type
+                                   + " node '" + name + "':" + e.what());
+        }
+      }
     }
-    node->OnCreate();
-  } catch (const std::exception& e) {
-    g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                         "Exception in OnCreate() for node "
-                             + ballistica::ObjToString(node) + "':" + e.what());
+
+    // If an owner was provided, set it up.
+    if (owner_obj != Py_None) {
+      // If its a node, set up a dependency at the scene level
+      // (then we just have to delete the owner node and the scene does the
+      // rest).
+      if (PythonClassNode::Check(owner_obj)) {
+        Node* owner_node = GetPyNode(owner_obj, true);
+        if (owner_node == nullptr) {
+          g_core->logging->Log(
+              LogName::kBa, LogLevel::kError,
+              "Empty node-ref passed for 'owner'; pass None if you want "
+              "no owner.");
+        } else if (owner_node->scene() != node->scene()) {
+          g_core->logging->Log(
+              LogName::kBa, LogLevel::kError,
+              "Owner node is from a different scene; ignoring.");
+        } else {
+          owner_node->AddDependentNode(node);
+        }
+      } else {
+        throw Exception(
+            "Invalid node owner: " + Python::ObjToString(owner_obj) + ".",
+            PyExcType::kType);
+      }
+    }
+
+    // Lastly, call this node's OnCreate method for any final setup it may want
+    // to do.
+    try {
+      // Tell clients to do the same.
+      if (SessionStream* output_stream = scene->GetSceneStream()) {
+        output_stream->NodeOnCreate(node);
+      }
+      node->OnCreate();
+    } catch (const std::exception& e) {
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Exception in OnCreate() for node "
+                               + ballistica::ObjToString(node)
+                               + "':" + e.what());
+    }
+  } catch (const std::exception&) {
+    if (fold) {
+      fold_stream->AbortFold();
+    }
+    throw;
+  }
+  if (fold) {
+    fold_stream->CommitFoldAddNode(node);
   }
 
   return node;
@@ -639,6 +695,22 @@ auto SceneV1Python::GetNodeAttr(Node* node, const char* attr_name)
         Py_RETURN_NONE;
       }
       return t->NewPyRef();
+      break;
+    }
+    case NodeAttributeType::kSpazDef: {
+      SpazDef* d = attr.GetAsSpazDef();
+      if (!d) {
+        Py_RETURN_NONE;
+      }
+      return d->NewPyRef();
+      break;
+    }
+    case NodeAttributeType::kDepiction: {
+      SceneDepiction* d = attr.GetAsDepiction();
+      if (!d) {
+        Py_RETURN_NONE;
+      }
+      return d->NewPyRef();
       break;
     }
     case NodeAttributeType::kSound: {
@@ -829,6 +901,50 @@ auto SceneV1Python::GetPyNodes(PyObject* o) -> std::vector<Node*> {
     vals[i] = GetPyNode(pyobjs[i]);
   }
   return vals;
+}
+
+auto SceneV1Python::GetPySpazDef(PyObject* o, bool allow_empty_ref,
+                                 bool allow_none) -> SpazDef* {
+  assert(Python::HaveGIL());
+  BA_PRECONDITION_FATAL(o != nullptr);
+
+  if (allow_none && (o == Py_None)) {
+    return nullptr;
+  }
+  if (PythonClassSpazDef::Check(o)) {
+    // This will succeed or throw its own Exception.
+    return reinterpret_cast<PythonClassSpazDef*>(o)->GetSpazDef(
+        !allow_empty_ref);
+  }
+
+  // Nothing here should have led to an unresolved Python error state.
+  assert(!PyErr_Occurred());
+
+  throw Exception(
+      "Expected a bascenev1.SpazDef; got a " + Python::ObjTypeToString(o) + ".",
+      PyExcType::kType);
+}
+
+auto SceneV1Python::GetPySceneDepiction(PyObject* o, bool allow_empty_ref,
+                                        bool allow_none) -> SceneDepiction* {
+  assert(Python::HaveGIL());
+  BA_PRECONDITION_FATAL(o != nullptr);
+
+  if (allow_none && (o == Py_None)) {
+    return nullptr;
+  }
+  if (PythonClassSceneDepiction::Check(o)) {
+    // This will succeed or throw its own Exception.
+    return reinterpret_cast<PythonClassSceneDepiction*>(o)->GetDepiction(
+        !allow_empty_ref);
+  }
+
+  // Nothing here should have led to an unresolved Python error state.
+  assert(!PyErr_Occurred());
+
+  throw Exception("Expected a bascenev1.Depiction; got a "
+                      + Python::ObjTypeToString(o) + ".",
+                  PyExcType::kType);
 }
 
 auto SceneV1Python::GetPyMaterial(PyObject* o, bool allow_empty_ref,

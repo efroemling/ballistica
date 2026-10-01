@@ -24,7 +24,7 @@ class AssetArchive;
 /// unmappable files), and *borrowed* (a span into memory owned by
 /// someone longer-lived, such as the boot-time apk mapping on
 /// Android). Movable, non-copyable. See
-/// docs/initiatives/android-apk-direct-ba-data.md for the design.
+/// docs/design/android-apk-direct-data.md for the design.
 ///
 /// Parsers consuming blobs must treat the span as byte data with no
 /// alignment guarantees (borrowed spans into archives are aligned to

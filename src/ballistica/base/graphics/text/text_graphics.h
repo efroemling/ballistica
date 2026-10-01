@@ -163,6 +163,15 @@ class TextGraphics {
   /// created at once).
   void WarmUpStringAsync(const std::string& text, bool big = false);
 
+  /// Warm, in the background, the measures carat placement needs for
+  /// an editable string: every line prefix (TextGroup::GetCaratPts()
+  /// measures the line up to the carat, and with OS-rendered chars each
+  /// such prefix is its own OS-span measure). A drawn carat merely skips
+  /// a frame on a cold one, but mapping a click to a carat position
+  /// (TextGroup::GetCaratPosAtPoint()) needs them all at once. A no-op
+  /// for text without OS-rendered chars.
+  void WarmUpCaratMeasuresAsync(const std::string& text, bool big = false);
+
   /// String-level counterpart to TryGetOSTextSpanBoundsAndWidth():
   /// returns the string's width without ever stalling the calling
   /// thread on cold OS measures. Returns empty when any of the

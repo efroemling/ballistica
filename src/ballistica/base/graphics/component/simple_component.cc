@@ -25,38 +25,27 @@ void SimpleComponent::WriteConfig() {
         assert(shadow_opacity_ == 0.0f);      // unimplemented combo
         assert(!double_sided_);               // unimplemented combo
         assert(!mask_uv2_texture_.exists());  // unimplemented combo
-        if (do_colorize_2_) {
-          if (mask_texture_.exists()) {
-            ConfigForShading(
-                ShadingType::
-                    kSimpleTextureModulatedTransparentColorized2Masked);
-            cmd_buffer_->PutInt(premult_blend);
-            cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
-                                   colorize_color_r_, colorize_color_g_,
-                                   colorize_color_b_, colorize_color2_r_,
-                                   colorize_color2_g_, colorize_color2_b_);
-            cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutTexture(colorize_texture_);
-            cmd_buffer_->PutTexture(mask_texture_);
-          } else {
-            ConfigForShading(
-                ShadingType::kSimpleTextureModulatedTransparentColorized2);
-            cmd_buffer_->PutInt(premult_blend);
-            cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
-                                   colorize_color_r_, colorize_color_g_,
-                                   colorize_color_b_, colorize_color2_r_,
-                                   colorize_color2_g_, colorize_color2_b_);
-            cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutTexture(colorize_texture_);
-          }
+        if (mask_texture_.exists()) {
+          ConfigForShading(
+              ShadingType::kSimpleTextureModulatedTransparentColorizedMasked);
+          cmd_buffer_->PutInt(premult_blend);
+          cmd_buffer_->PutFloats(
+              color_r_, color_g_, color_b_, color_a_, colorize_color_r_,
+              colorize_color_g_, colorize_color_b_, colorize_color2_r_,
+              colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
+              colorize_color3_g_, colorize_color3_b_);
+          cmd_buffer_->PutTexture(texture_);
+          cmd_buffer_->PutTexture(colorize_texture_);
+          cmd_buffer_->PutTexture(mask_texture_);
         } else {
-          assert(!mask_texture_.exists());  // unimplemented combo
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedTransparentColorized);
           cmd_buffer_->PutInt(premult_blend);
-          cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
-                                 colorize_color_r_, colorize_color_g_,
-                                 colorize_color_b_);
+          cmd_buffer_->PutFloats(
+              color_r_, color_g_, color_b_, color_a_, colorize_color_r_,
+              colorize_color_g_, colorize_color_b_, colorize_color2_r_,
+              colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
+              colorize_color3_g_, colorize_color3_b_);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(colorize_texture_);
         }
@@ -86,6 +75,8 @@ void SimpleComponent::WriteConfig() {
               cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_, flatness_);
+              cmd_buffer_->PutFloats(shadow_color_r_, shadow_color_g_,
+                                     shadow_color_b_, shadow_spread_);
               cmd_buffer_->PutTexture(texture_);
               cmd_buffer_->PutTexture(mask_uv2_texture_);
             } else {
@@ -95,6 +86,8 @@ void SimpleComponent::WriteConfig() {
               cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_);
+              cmd_buffer_->PutFloats(shadow_color_r_, shadow_color_g_,
+                                     shadow_color_b_, shadow_spread_);
               cmd_buffer_->PutTexture(texture_);
               cmd_buffer_->PutTexture(mask_uv2_texture_);
             }
@@ -133,12 +126,14 @@ void SimpleComponent::WriteConfig() {
                   // just send a black texture for that.
                   ConfigForShading(
                       ShadingType::
-                          kSimpleTextureModulatedTransparentColorized2Masked);
+                          kSimpleTextureModulatedTransparentColorizedMasked);
                   cmd_buffer_->PutInt(premult_blend);
-                  cmd_buffer_->PutFloats(
-                      color_r_, color_g_, color_b_, color_a_, colorize_color_r_,
-                      colorize_color_g_, colorize_color_b_, colorize_color2_r_,
-                      colorize_color2_g_, colorize_color2_b_);
+                  cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
+                                         colorize_color_r_, colorize_color_g_,
+                                         colorize_color_b_, colorize_color2_r_,
+                                         colorize_color2_g_, colorize_color2_b_,
+                                         colorize_color3_r_, colorize_color3_g_,
+                                         colorize_color3_b_);
                   cmd_buffer_->PutTexture(texture_);
                   cmd_buffer_->PutTexture(g_base->assets->BuiltinTexture(
                       BuiltinTextureID::kTexturesBlack));
@@ -184,33 +179,24 @@ void SimpleComponent::WriteConfig() {
     if (texture_.exists()) {
       if (colorize_texture_.exists()) {
         assert(!mask_texture_.exists());  // unimplemented combo
-        if (do_colorize_2_) {
-          ConfigForShading(ShadingType::kSimpleTextureModulatedColorized2);
-          cmd_buffer_->PutFloats(color_r_, color_g_, color_b_,
-                                 colorize_color_r_, colorize_color_g_,
-                                 colorize_color_b_, colorize_color2_r_,
-                                 colorize_color2_g_, colorize_color2_b_);
-          cmd_buffer_->PutTexture(texture_);
-          cmd_buffer_->PutTexture(colorize_texture_);
-        } else {
-          ConfigForShading(ShadingType::kSimpleTextureModulatedColorized);
-          cmd_buffer_->PutFloats(color_r_, color_g_, color_b_,
-                                 colorize_color_r_, colorize_color_g_,
-                                 colorize_color_b_);
-          cmd_buffer_->PutTexture(texture_);
-          cmd_buffer_->PutTexture(colorize_texture_);
-        }
+        ConfigForShading(ShadingType::kSimpleTextureModulatedColorized);
+        cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, colorize_color_r_,
+                               colorize_color_g_, colorize_color_b_,
+                               colorize_color2_r_, colorize_color2_g_,
+                               colorize_color2_b_, colorize_color3_r_,
+                               colorize_color3_g_, colorize_color3_b_);
+        cmd_buffer_->PutTexture(texture_);
+        cmd_buffer_->PutTexture(colorize_texture_);
       } else {
-        assert(!do_colorize_2_);  // unsupported combo
         if (mask_texture_.exists()) {
           // Currently mask functionality requires colorize too, so
           // we have to send a black texture along for that.
-          ConfigForShading(
-              ShadingType::kSimpleTextureModulatedColorized2Masked);
-          cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
-                                 colorize_color_r_, colorize_color_g_,
-                                 colorize_color_b_, colorize_color2_r_,
-                                 colorize_color2_g_, colorize_color2_b_);
+          ConfigForShading(ShadingType::kSimpleTextureModulatedColorizedMasked);
+          cmd_buffer_->PutFloats(
+              color_r_, color_g_, color_b_, color_a_, colorize_color_r_,
+              colorize_color_g_, colorize_color_b_, colorize_color2_r_,
+              colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
+              colorize_color3_g_, colorize_color3_b_);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(
               g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesBlack));

@@ -364,6 +364,23 @@ auto PythonClassInputDevice::GetClassicPurchases(PythonClassInputDevice* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassInputDevice::GetCloudCharacters(PythonClassInputDevice* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
+  if (!d) {
+    throw Exception(PyExcType::kInputDeviceNotFound);
+  }
+  // Same unknown-vs-empty distinction as get_classic_purchases.
+  PyObject* characters = d->GetCloudCharacters();
+  if (characters == nullptr || characters == Py_None) {
+    Py_RETURN_NONE;
+  }
+  Py_INCREF(characters);
+  return characters;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
                                               PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -502,6 +519,19 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "(can be used to get account names for remote players)"},
     {"get_player_profiles", (PyCFunction)GetPlayerProfiles, METH_NOARGS,
      "get_player_profiles() -> dict\n"
+     "\n"
+     "(internal)"},
+    {"get_cloud_characters", (PyCFunction)GetCloudCharacters, METH_NOARGS,
+     "get_cloud_characters() -> list[str] | None\n"
+     "\n"
+     "Return this device's account's cloud profiles, each as one\n"
+     "cloud-composed character json string, as provided by the\n"
+     "master server via v2-auth.\n"
+     "\n"
+     "Returns ``None`` when the master server isn't providing this\n"
+     "data (this device isn't connected via a v2-auth handshake, or\n"
+     "an older master-server version didn't send it), in which case\n"
+     "the lobby falls back to the legacy player profiles.\n"
      "\n"
      "(internal)"},
     {"get_classic_purchases", (PyCFunction)GetClassicPurchases, METH_NOARGS,

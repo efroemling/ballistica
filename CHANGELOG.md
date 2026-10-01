@@ -1,4 +1,23 @@
-### 1.8.0 (build 23013, api 9, 2026-09-01)
+### 1.8.0 (build 23026, api 9, 2026-10-01)
+- `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
+  text) whenever an edit is applied: a string-edit dialog closing with a value,
+  inline editing ending via return or focus leaving the widget, or the clear
+  button. Not per character, and only when the text actually changed.
+- `bauiv1.textwidget()`'s `on_return_press_call` / `invoke_return_press` args
+  are now `on_submit_call` / `invoke_submit` (the old names still work with a
+  deprecation warning until api 9 support ends; see CHANGELOG_API_VERSIONS.md).
+- Android: fixed the game staying at 60hz on devices where switching to
+  the display's fastest mode is a non-seamless mode change (many
+  ColorOS/MediaTek phones, e.g. Realme). The frame-rate vote now derives
+  the display's peak rate from all supported modes at the current
+  resolution instead of only the seamlessly-switchable ones, and also
+  requests the display mode at the window level, which some OEM display
+  policies honor where a plain surface frame-rate vote is ignored.
+- Android: the thermal frame-rate back-off now waits for the OS to report
+  severe throttling for a sustained 10 seconds before dropping to 60hz
+  (some devices report it spuriously right at launch), and when it does
+  drop on a faster-than-60hz display it now shows a one-time screen
+  message explaining why.
 - Fully implemented asset packages (more on this soon)
 - The asset-package wrapper modules bundled with the engine are now all
   private: `babase.builtinassets`, `bascenev1.builtinassets`, and
@@ -67,6 +86,20 @@
   table is restored to its historical layout (with `rotate` now after
   `fuse_length`), and a golden test now pins every node type's attr indices
   so table shifts get caught in CI. This bumps the scene-v1 protocol to 43.
+- Joining a server that runs an older version of the game now shows a
+  yellow screen-message warning that some newer characters may show up as
+  older ones there (groundwork for on-the-fly character downloads). This
+  bumps the scene-v1 protocol to 44.
+- New `bascenev1.Character`: a session-level character definition built
+  from an opaque json description and assigned to a spaz node's new
+  `character` attr. When set, the node draws, voices, and proportions
+  itself from the definition (falling back to a standard-spaz standin
+  until the definition's media is available locally), and the legacy
+  per-part mesh/texture/sound attrs, `style`, and `highlight` are ignored.
+  Definitions live and die with their references like materials do. All
+  builtin characters now spawn this way; mod-defined appearances without a
+  definition keep using the legacy explicit-media form. (Part of the
+  protocol-44 changes.)
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).
@@ -139,6 +172,13 @@
 - Android builds now access their bundled Python files and assets directly from
   their APK, which speeds up booting and eliminates the 'finishing
   install..please wait' dialog at launch.
+- Finally resurrected my old debug-draw mode from many years ago. Press F10 or
+  use the new gameplay dev-console tab to toggle it.
+- Control guides at the start of games now properly show controls for the local
+  client; not for the host.
+- You can now click to place the cursor in direct-input text boxes.
+- Game music now automatically stops playing anytime external music is playing
+  on Android 8.1+ (and upcoming iOS) devices.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

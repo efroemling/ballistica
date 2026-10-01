@@ -32,9 +32,11 @@ class TextWidget : public Widget {
   enum class GlowType : uint8_t { kGradient, kUniform };
   enum class TransitionType : uint8_t { kInLeft, kScale };
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
-  auto IsSelectable() -> bool override {
-    return (enabled_ && (editable_ || selectable_));
-  }
+  void SetSelected(bool s, SelectionCause cause) override;
+  // Note: deliberately independent of enabled_; a disabled text widget
+  // stays selectable (as a disabled ButtonWidget does) so navigation
+  // around it never changes. It just can't be used.
+  auto IsSelectable() -> bool override { return editable_ || selectable_; }
   void SetHAlign(HAlign a);
   void SetVAlign(VAlign a);
   void set_max_width(float m) { max_width_ = m; }
@@ -69,7 +71,8 @@ class TextWidget : public Widget {
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
-  void SetOnReturnPressCall(PyObject* call_tuple);
+  void SetOnSubmitCall(PyObject* call_tuple);
+  void SetOnApplyCall(PyObject* call_tuple);
   void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
@@ -89,10 +92,17 @@ class TextWidget : public Widget {
   void set_description(const std::string& d) { description_ = d; }
   auto description() const -> std::string { return description_; }
 
-  /// Run our return-press call (if any), as if enter were pressed
-  /// during inline editing. Used by string-edit adapters to honor
-  /// submit-style applies from platform edit UIs.
-  void InvokeReturnPress();
+  /// Run our submit call (if any), as if enter were pressed during
+  /// inline editing. Used by string-edit adapters to honor submit-style
+  /// applies from platform edit UIs.
+  void InvokeSubmit();
+
+  /// Treat the current text as applied: run our apply call (if any)
+  /// if the text differs from the last applied value. Called wherever
+  /// an edit stops being a draft (a string-edit dialog handing back a
+  /// value, inline editing ending, the clear button); harmless to call
+  /// when nothing changed.
+  void ApplyText();
 
   /// Semantic kind hint for string-edit UIs (a babase.StringEditKind
   /// value). Stored as a plain string; validated Python-side when a
@@ -108,6 +118,10 @@ class TextWidget : public Widget {
   void set_res_scale(float res_scale);
   void set_allow_clear_button(bool val) { allow_clear_button_ = val; }
   auto TryGetTextWidth() -> std::optional<float>;
+  /// Our text's height in its own units: one row per line (plain row
+  /// spacing; no measuring of glyph extents). Unlike width this needs
+  /// no async measure, so it's always available.
+  auto GetTextHeight() -> float;
   void OnLanguageChange() override;
   void AdapterFinished();
 
@@ -132,6 +146,16 @@ class TextWidget : public Widget {
   void InvokeStringEditor_();
   void UpdateTranslation_();
   void PrefetchTextMeasures_();
+  void CalcTextOrigin_(float l, float r, float b, float t, float* x_offset,
+                       float* y_offset, base::TextMesh::HAlign* align_h,
+                       base::TextMesh::VAlign* align_v) const;
+  void CalcMaxScales_(float* max_width_scale, float* max_height_scale) const;
+  auto CaratDisplayText_() const -> const std::string&;
+  void WarmCaratMeasures_();
+
+  /// Return the carat index nearest a widget-space point, or empty if
+  /// it can't be determined right now.
+  auto CaratPositionAtPoint_(float x, float y) -> std::optional<int>;
   void DoDrawCarat_(base::RenderPass* pass, base::TextMesh::HAlign align_h,
                     base::TextMesh::VAlign align_v, float x_offset,
                     float y_offset, float max_width_scale,
@@ -202,8 +226,14 @@ class TextWidget : public Widget {
   std::string string_edit_kind_{"default"};
   Object::Ref<base::TextGroup> text_group_;
 
+  // The text as of the last apply, so we can tell an edit from a
+  // no-op (see ApplyText()). Every non-user route to the text
+  // (SetText from Python, etc.) counts as applied without firing.
+  std::string last_applied_text_;
+
   // We keep these at the bottom so they're torn down first.
-  Object::Ref<base::PythonContextCall> on_return_press_call_;
+  Object::Ref<base::PythonContextCall> on_submit_call_;
+  Object::Ref<base::PythonContextCall> on_apply_call_;
   Object::Ref<base::PythonContextCall> on_activate_call_;
   Object::Ref<base::NinePatchMesh> highlight_mesh_;
   PythonRef string_edit_adapter_;

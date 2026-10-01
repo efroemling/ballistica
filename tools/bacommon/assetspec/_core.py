@@ -3,8 +3,9 @@
 """Core types for language-independent asset references.
 
 An asset reference is a minimal, language-independent pointer to a single
-asset within a published asset-package-version: its exact ``apverid`` plus
-the asset's logical ``name`` (e.g. ``textures/zoe_icon``). It carries no
+asset within a published asset-package-version: the version's numeric id
+(:data:`bacommon.assetpackage.ApverNum`) plus the asset's logical
+``name`` (e.g. ``textures/zoe_icon``). It carries no
 asset *data* -- the server (bamaster) only ever holds the reference; the
 client resolves the package and loads the actual asset for display.
 
@@ -15,14 +16,16 @@ identical shape but are deliberately distinct classes for that reason.
 
 These are ``@ioprepped`` so a reference can be sent directly on the wire
 (e.g. as a doc-ui-v2 field); it serializes to a small JSON snippet and the
-client resolves+renders it. The qualified engine form is ``<apverid>:<name>``
-(e.g. ``a-0.foo.260626:textures/zoe_icon``).
+client resolves+renders it. The qualified engine form is ``<apvernum>:<name>``
+(e.g. ``349:textures/zoe_icon``).
 """
 
 from dataclasses import dataclass
 from typing import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs, IO_SLOTS
+
+from bacommon.assetpackage import ApverNum
 
 # These types are created in large volume -- one per asset-package
 # wrapper access mints a spec-subclass (a ref), plus every doc-ui page,
@@ -43,7 +46,7 @@ class TextureSpec:
 
     Identity is a package version plus the texture's logical
     path within it (e.g. ``textures/zoe_icon``); the engine resolves the
-    qualified ``<apverid>:<name>`` form.
+    qualified ``<apvernum>:<name>`` form.
 
     Both parts are **private**: a spec is produced by a generated
     wrapper module and consumed as a whole, and code that reaches
@@ -52,9 +55,9 @@ class TextureSpec:
     (see the ap*get bindings), so reaching in has no destination.
     """
 
-    __slots__ = ('_apverid', '_name', *IO_SLOTS)
+    __slots__ = ('_apvernum', '_name', *IO_SLOTS)
 
-    _apverid: Annotated[str, IOAttrs('a')]
+    _apvernum: Annotated[ApverNum, IOAttrs('a')]
     _name: Annotated[str, IOAttrs('n')]
 
 
@@ -65,7 +68,7 @@ class MeshSpec:
 
     Identity is a package version plus the mesh's logical
     path within it (e.g. ``meshes/box``); the engine resolves the
-    qualified ``<apverid>:<name>`` form.
+    qualified ``<apvernum>:<name>`` form.
 
     Both parts are **private**: a spec is produced by a generated
     wrapper module and consumed as a whole, and code that reaches
@@ -74,9 +77,9 @@ class MeshSpec:
     (see the ap*get bindings), so reaching in has no destination.
     """
 
-    __slots__ = ('_apverid', '_name', *IO_SLOTS)
+    __slots__ = ('_apvernum', '_name', *IO_SLOTS)
 
-    _apverid: Annotated[str, IOAttrs('a')]
+    _apvernum: Annotated[ApverNum, IOAttrs('a')]
     _name: Annotated[str, IOAttrs('n')]
 
 
@@ -87,7 +90,7 @@ class SoundSpec:
 
     Identity is a package version plus the sound's logical
     path within it (e.g. ``audio/swish``); the engine resolves the
-    qualified ``<apverid>:<name>`` form.
+    qualified ``<apvernum>:<name>`` form.
 
     Both parts are **private**: a spec is produced by a generated
     wrapper module and consumed as a whole, and code that reaches
@@ -96,9 +99,9 @@ class SoundSpec:
     (see the ap*get bindings), so reaching in has no destination.
     """
 
-    __slots__ = ('_apverid', '_name', *IO_SLOTS)
+    __slots__ = ('_apvernum', '_name', *IO_SLOTS)
 
-    _apverid: Annotated[str, IOAttrs('a')]
+    _apvernum: Annotated[ApverNum, IOAttrs('a')]
     _name: Annotated[str, IOAttrs('n')]
 
 
@@ -109,7 +112,7 @@ class CubeMapTextureSpec:
 
     Identity is a package version plus the cube map's logical path
     within it (e.g. ``textures/reflection_sharp``); the engine
-    resolves the qualified ``<apverid>:<name>`` form.
+    resolves the qualified ``<apvernum>:<name>`` form.
 
     Both parts are **private**; see :class:`TextureSpec` for why.
 
@@ -122,9 +125,9 @@ class CubeMapTextureSpec:
     wrong-type asset at draw time.
     """
 
-    __slots__ = ('_apverid', '_name', *IO_SLOTS)
+    __slots__ = ('_apvernum', '_name', *IO_SLOTS)
 
-    _apverid: Annotated[str, IOAttrs('a')]
+    _apvernum: Annotated[ApverNum, IOAttrs('a')]
     _name: Annotated[str, IOAttrs('n')]
 
 
@@ -135,7 +138,7 @@ class CollisionMeshSpec:
 
     Identity is a package version plus the collision-mesh's logical
     path within it (e.g. ``meshes/courtyard_level_collide``); the
-    engine resolves the qualified ``<apverid>:<name>`` form.
+    engine resolves the qualified ``<apvernum>:<name>`` form.
 
     Both parts are **private**; see :class:`TextureSpec` for why.
 
@@ -146,7 +149,7 @@ class CollisionMeshSpec:
     other kind.
     """
 
-    __slots__ = ('_apverid', '_name', *IO_SLOTS)
+    __slots__ = ('_apvernum', '_name', *IO_SLOTS)
 
-    _apverid: Annotated[str, IOAttrs('a')]
+    _apvernum: Annotated[ApverNum, IOAttrs('a')]
     _name: Annotated[str, IOAttrs('n')]

@@ -84,13 +84,15 @@ static PyMethodDef PyGetSimpleSoundDef = {
 static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"apverid", "name", nullptr};
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
   {
@@ -108,13 +110,13 @@ static PyMethodDef PyApSimpleSoundGetDef = {
     (PyCFunction)PyApSimpleSoundGet,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "apsimplesoundget(apverid: str, name: str) -> SimpleSound\n"
+    "apsimplesoundget(apvernum: int, name: str) -> SimpleSound\n"
     "\n"
     "Load a simple sound from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:",
@@ -1324,20 +1326,15 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 
 static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* apverids_obj;
+  PyObject* apvernums_obj;
   const char* plural_locale;
-  if (!PyArg_ParseTuple(args, "Os", &apverids_obj, &plural_locale)) {
+  if (!PyArg_ParseTuple(args, "Os", &apvernums_obj, &plural_locale)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(apverids_obj));
+  // The engine keys packages by numeric id as text.
   std::vector<std::string> apverids;
-  int size = static_cast<int>(PyList_GET_SIZE(apverids_obj));
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(apverids_obj, i);
-    if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in apverids list.", PyExcType::kType);
-    }
-    apverids.emplace_back(PyUnicode_AsUTF8(entry));
+  for (int64_t apvernum : Python::GetInts64(apvernums_obj)) {
+    apverids.emplace_back(std::to_string(apvernum));
   }
   assert(g_base->logic);
   g_base->assets->ReloadLanguage(apverids, plural_locale);
@@ -1350,7 +1347,7 @@ static PyMethodDef PyReloadLanguageDef = {
     PyReloadLanguage,   // method
     METH_VARARGS,       // flags
 
-    "reload_language(apverids: list[str], plural_locale: str) -> None\n"
+    "reload_language(apvernums: Sequence[int], plural_locale: str) -> None\n"
     "\n"
     ":meta private:\n"
     "\n"
@@ -1711,13 +1708,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   float corner_radius;
   const char* style;
   int disabled;
-  if (!PyArg_ParseTuple(args, "sffffOsffsp", &label, &x, &y, &width, &height,
+  int sound;
+  if (!PyArg_ParseTuple(args, "sffffOsffspp", &label, &x, &y, &width, &height,
                         &call, &h_anchor, &label_scale, &corner_radius, &style,
-                        &disabled)) {
+                        &disabled, &sound)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius, style, disabled);
+                         label_scale, corner_radius, style, disabled, sound);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1739,6 +1737,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  corner_radius: float,\n"
     "  style: str,\n"
     "  disabled: bool,\n"
+    "  sound: bool,\n"
     ") -> None\n"
     "\n"
     ":meta private:",
@@ -2201,6 +2200,48 @@ static PyMethodDef PyVirtualBoundsMaxMarginsProbeDef = {
     ":meta private:",
 };
 
+// ---------------------- screen_insets_blend_probe ----------------------------
+
+static auto PyScreenInsetsBlendProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* os_obj;
+  PyObject* max_obj;
+  double amount;
+  static const char* kwlist[] = {"os_bounds", "max_bounds", "amount", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOd",
+                                   const_cast<char**>(kwlist), &os_obj,
+                                   &max_obj, &amount)) {
+    return nullptr;
+  }
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect out = Graphics::BlendScreenInsetsRect(
+      rect_from(os_obj), rect_from(max_obj), static_cast<float>(amount));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyScreenInsetsBlendProbeDef = {
+    "screen_insets_blend_probe",            // name
+    (PyCFunction)PyScreenInsetsBlendProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "screen_insets_blend_probe(os_bounds: Sequence[float],\n"
+    "  max_bounds: Sequence[float], amount: float)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------- virtual_bounds_project_probe ---------------------------
 
 static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
@@ -2358,6 +2399,63 @@ static PyMethodDef PySetDrawVirtualBoundsDef = {
     METH_VARARGS | METH_KEYWORDS,         // flags
 
     "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- get_debug_draw ---------------------------------
+
+static auto PyGetDebugDraw(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->debug_draw()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugDrawDef = {
+    "get_debug_draw",             // name
+    (PyCFunction)PyGetDebugDraw,  // method
+    METH_NOARGS,                  // flags
+
+    "get_debug_draw() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_debug_draw ---------------------------------
+
+static auto PySetDebugDraw(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_debug_draw(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugDrawDef = {
+    "set_debug_draw",              // name
+    (PyCFunction)PySetDebugDraw,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_debug_draw(value: bool) -> None\n"
+    "\n"
+    "Enable/disable engine debug drawing (the same thing F10 toggles).\n"
     "\n"
     ":meta private:",
 };
@@ -2685,15 +2783,19 @@ static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
   const char* message;
   float progress;
   const char* button_label;
-  static const char* kwlist[] = {"dialog_id", "title",        "message",
-                                 "progress",  "button_label", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "issfs", const_cast<char**>(kwlist), &dialog_id, &title,
-          &message, &progress, &button_label)) {
+  int cancel_activates_button;
+  static const char* kwlist[] = {"dialog_id",    "title",
+                                 "message",      "progress",
+                                 "button_label", "cancel_activates_button",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "issfsp",
+                                   const_cast<char**>(kwlist), &dialog_id,
+                                   &title, &message, &progress, &button_label,
+                                   &cancel_activates_button)) {
     return nullptr;
   }
   g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
-                                   button_label);
+                                   button_label, cancel_activates_button != 0);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2704,10 +2806,12 @@ static PyMethodDef PySimpleDialogUpdateDef = {
     METH_VARARGS | METH_KEYWORDS,       // flags
 
     "simpledialog_update(dialog_id: int, title: str, message: str,\n"
-    "  progress: float, button_label: str) -> None\n"
+    "  progress: float, button_label: str,\n"
+    "  cancel_activates_button: bool) -> None\n"
     "\n"
     "Set a SimpleDialog's full visible state. A negative ``progress``\n"
-    "hides the bar; an empty ``button_label`` hides the button.\n"
+    "hides the bar; an empty ``button_label`` hides the button;\n"
+    "``cancel_activates_button`` lets cancel-type input fire the button.\n"
     "\n"
     ":meta private:",
 };
@@ -2819,11 +2923,14 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetDrawVirtualSafeAreaBoundsDef,
       PyGetDrawVirtualBoundsDef,
       PySetDrawVirtualBoundsDef,
+      PyGetDebugDrawDef,
+      PySetDebugDrawDef,
       PyGetForceMaxVirtualBoundsMarginsDef,
       PySetForceMaxVirtualBoundsMarginsDef,
       PyVirtualBoundsProjectProbeDef,
       PyVirtualBoundsCalcProbeDef,
       PyVirtualBoundsMaxMarginsProbeDef,
+      PyScreenInsetsBlendProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

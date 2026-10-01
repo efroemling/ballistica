@@ -48,7 +48,6 @@ class PlatformApple : public Platform {
   void ShowGameServiceUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;
-  auto IsOSPlayingMusic() -> bool override;
   void MacMusicAppInit() override;
   auto MacMusicAppGetVolume() -> int override;
   void MacMusicAppSetVolume(int volume) override;

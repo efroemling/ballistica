@@ -31,6 +31,7 @@ from typing import TYPE_CHECKING
 import _babase
 
 from babase._asset_packages import check_asset_package_load
+from bacommon.assetpackage import ApverNum
 from bacommon.assetspec import (
     SoundSpec as _SoundSpec,
     TextureSpec as _TextureSpec,
@@ -56,8 +57,8 @@ class SimpleSoundHandle(_SoundSpec):
 
     def get(self) -> 'babase.SimpleSound':
         """Resolve and return the live engine sound for this reference."""
-        check_asset_package_load(self._apverid, self._name)
-        return _babase.apsimplesoundget(self._apverid, self._name)
+        check_asset_package_load(self._apvernum, self._name)
+        return _babase.apsimplesoundget(self._apvernum, self._name)
 
 
 class TextureHandle(_TextureSpec):
@@ -111,10 +112,12 @@ class AssetGroup:
     what its leaves' ``get()`` loads (a context-free ``SimpleSound``).
     """
 
-    __slots__ = ('_apverid', '_node', '_prefix')
+    __slots__ = ('_apvernum', '_node', '_prefix')
 
-    def __init__(self, apverid: str, node: AssetGroupTree, prefix: str) -> None:
-        self._apverid = apverid
+    def __init__(
+        self, apvernum: ApverNum, node: AssetGroupTree, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
         self._node = node
         self._prefix = prefix
 
@@ -130,23 +133,23 @@ class AssetGroup:
             raise AttributeError(name) from None
         path = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return AssetGroup(self._apverid, child, path)
-        return _make(self._apverid, path, child)
+            return AssetGroup(self._apvernum, child, path)
+        return _make(self._apvernum, path, child)
 
 
 def _make(
-    apverid: str, path: str, kind: str
+    apvernum: ApverNum, path: str, kind: str
 ) -> 'SimpleSoundHandle | TextureHandle | MeshHandle | CubeMapTextureHandle':
     """Build a single leaf reference by its kind code."""
     if kind == 's':
-        return SimpleSoundHandle(apverid, path)
+        return SimpleSoundHandle(apvernum, path)
     if kind == 't':
-        return TextureHandle(apverid, path)
+        return TextureHandle(apvernum, path)
     if kind == 'm':
-        return MeshHandle(apverid, path)
+        return MeshHandle(apvernum, path)
     if kind == 'ct':
-        return CubeMapTextureHandle(apverid, path)
-    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
+        return CubeMapTextureHandle(apvernum, path)
+    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')
 
 
 def getsimplesound(name: str) -> 'babase.SimpleSound':
@@ -183,8 +186,8 @@ def getsimplesound(name: str) -> 'babase.SimpleSound':
     return _builtinassets.audio.blank.get()
 
 
-def _split_ref(ref: str) -> tuple[str, str]:
-    """Split a qualified ``<apverid>:<name>`` ref into its two parts.
+def _split_ref(ref: str) -> tuple[ApverNum, str]:
+    """Split a qualified ``<apvernum>:<name>`` ref into its two parts.
 
     **Boundary use only.** Asset identity inside the app is a typed
     handle from a generated wrapper module; nothing here builds or
@@ -196,13 +199,18 @@ def _split_ref(ref: str) -> tuple[str, str]:
 
     New code should hold a handle and call its ``get()`` instead.
     """
-    apverid, sep, name = ref.partition(':')
+    apvernum, sep, name = ref.partition(':')
     if not sep:
         raise ValueError(
             f"Not a qualified asset-package ref: '{ref}'. Legacy bare"
             f' names load through the legacy get* calls instead.'
         )
-    return apverid, name
+    if not apvernum.isdigit():
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}' (its package"
+            f' is not a numeric id).'
+        )
+    return ApverNum(int(apvernum)), name
 
 
 def simple_sound_from_ref(ref: str) -> 'babase.SimpleSound':
@@ -210,5 +218,5 @@ def simple_sound_from_ref(ref: str) -> 'babase.SimpleSound':
 
     See ``_split_ref()`` -- boundary use only.
     """
-    apverid, assetname = _split_ref(ref)
-    return _babase.apsimplesoundget(apverid, assetname)
+    apvernum, assetname = _split_ref(ref)
+    return _babase.apsimplesoundget(apvernum, assetname)

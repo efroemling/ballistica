@@ -21,9 +21,15 @@ class DevConsoleButtonDef:
     instead for allowing basic customization.
     """
 
-    def __init__(self, name: str, call: Callable[[], Any]) -> None:
+    def __init__(
+        self, name: str, call: Callable[[], Any], *, sound: bool = True
+    ) -> None:
         self.name = name
         self.call = call
+
+        #: Whether a press plays the standard press sound; pass False
+        #: when ``call`` plays its own (see :meth:`DevConsoleTab.button`).
+        self.sound = sound
 
 
 class DevConsoleTab:
@@ -66,8 +72,14 @@ class DevConsoleTab:
             'black_bright',
         ] = 'normal',
         disabled: bool = False,
+        sound: bool = True,
     ) -> None:
-        """Add a button to the tab being refreshed."""
+        """Add a button to the tab being refreshed.
+
+        Pass ``sound=False`` for a button whose ``call`` plays its own
+        sound (a window swish, say) so the standard press sound doesn't
+        stack with it.
+        """
         assert _babase.app.devconsole.is_refreshing
         _babase.dev_console_add_button(
             label,
@@ -81,6 +93,7 @@ class DevConsoleTab:
             corner_radius,
             style,
             disabled,
+            sound,
         )
 
     def text(
@@ -157,6 +170,7 @@ class DevConsoleSubsystem:
             DevConsoleTabPython,
             DevConsoleTabAppModes,
             DevConsoleTabUI,
+            DevConsoleTabGameplay,
             DevConsoleTabLogging,
             DevConsoleTabTest,
         )
@@ -167,6 +181,7 @@ class DevConsoleSubsystem:
             DevConsoleTabEntry('Python', DevConsoleTabPython),
             DevConsoleTabEntry('AppModes', DevConsoleTabAppModes),
             DevConsoleTabEntry('UI', DevConsoleTabUI),
+            DevConsoleTabEntry('Gameplay', DevConsoleTabGameplay),
             DevConsoleTabEntry('LogLevels', DevConsoleTabLogging),
         ]
         if os.environ.get('BA_DEV_CONSOLE_TEST_TAB', '0') == '1':

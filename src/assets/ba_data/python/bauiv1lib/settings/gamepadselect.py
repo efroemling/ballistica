@@ -8,8 +8,6 @@ import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import _uiv1assets
-
 if TYPE_CHECKING:
     from typing import Any
 
@@ -111,7 +109,9 @@ class GamepadSelectWindow(bui.MainWindow):
             title_y = yoffs - 52
             v = height * 0.5 + content_height * 0.5
         else:
-            title_y = height - 50
+            # Level with the back button's center (60 tall at 0.8 scale,
+            # from height - 60).
+            title_y = height - 36
             v = height - 60 - spacing
 
         bui.textwidget(
@@ -184,7 +184,7 @@ class GamepadSelectWindow(bui.MainWindow):
         assert bui.app.classic is not None
 
         _classicassets.audio.activate_beep.get().play()
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         device = event['input_device']
         assert isinstance(device, bs.InputDevice)
 

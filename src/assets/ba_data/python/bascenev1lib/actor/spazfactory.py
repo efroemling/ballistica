@@ -242,6 +242,9 @@ class SpazFactory:
         )
 
         self.spaz_media: dict[str, Any] = {}
+        # One bs.SpazDef per appearance for this activity; see
+        # get_spaz_def().
+        self._spaz_defs: dict[str, bs.SpazDef] = {}
 
         # Lets load some basic rules.
         # (allows them to be tweaked from the master server)
@@ -315,6 +318,26 @@ class SpazFactory:
         else:
             media = self.spaz_media[character]
         return media
+
+    def get_spaz_def(self, character: str) -> bs.SpazDef:
+        """Return the shared bs.SpazDef for an appearance.
+
+        A bs.SpazDef writes its whole definition to the scene stream
+        when created and again to every late joiner's baseline, so
+        spazes share one per appearance per activity instead of
+        minting one per spawn (which was ~280 bytes per respawn).
+        Only valid for appearances that carry a character definition
+        (``character_json``); the legacy explicit-media form has none.
+        """
+        assert bs.app.classic is not None
+        char = bs.app.classic.spaz_appearances[character]
+        assert char.character_json is not None
+        cached = self._spaz_defs.get(character)
+        if cached is None:
+            spaz = bs.split_character(char.character_json).spaz
+            assert spaz is not None
+            cached = self._spaz_defs[character] = bs.SpazDef(spaz)
+        return cached
 
     @classmethod
     def get(cls) -> SpazFactory:

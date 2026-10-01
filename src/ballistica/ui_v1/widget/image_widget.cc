@@ -3,12 +3,15 @@
 #include "ballistica/ui_v1/widget/image_widget.h"
 
 #include <algorithm>
+#include <memory>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/depiction_slot.h"
 
 namespace ballistica::ui_v1 {
 
@@ -20,6 +23,52 @@ ImageWidget::~ImageWidget() = default;
 
 auto ImageWidget::GetWidth() -> float { return width_; }
 auto ImageWidget::GetHeight() -> float { return height_; }
+
+auto ImageWidget::GetDepictionSlot() -> DepictionSlot& {
+  if (!depiction_slot_) {
+    depiction_slot_ = std::make_unique<DepictionSlot>();
+  }
+  return *depiction_slot_;
+}
+
+auto ImageWidget::DrawBrightness_(millisecs_t current_time) const -> float {
+  float db = 1.0f;
+  if (Widget* draw_controller = draw_control_parent()) {
+    db *= (draw_controller_mult_
+           * draw_controller->GetDrawBrightness(current_time))
+          + (1.0f - draw_controller_mult_) * 1.0f;
+  }
+  // Direct parent only (cheap); callers parent us to the window.
+  if (match_backing_glow_) {
+    if (ContainerWidget* parent = parent_widget()) {
+      db *= parent->GetBackingGlowMult();
+    }
+  }
+  return db;
+}
+
+void ImageWidget::DrawDepiction_(base::RenderPass* pass, bool transparent,
+                                 float offs_x, float offs_y,
+                                 float transition_scale,
+                                 millisecs_t current_time) {
+  assert(depiction_slot_);
+  DepictionSlot::DrawArgs args;
+  args.owner = this;
+  args.pass = pass;
+  args.transparent = transparent;
+  args.width = width_;
+  args.height = height_;
+  args.offset_x = offs_x;
+  args.offset_y = offs_y;
+  args.scale = transition_scale;
+  args.brightness = DrawBrightness_(current_time);
+  args.opacity = opacity_;
+  if (Widget* draw_controller = draw_control_parent()) {
+    args.disabled = draw_controller->IsDrawDisabled();
+  }
+  args.mask_texture = mask_texture_.get();
+  depiction_slot_->Draw(args);
+}
 
 void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   if (opacity_ < 0.001f) {
@@ -48,6 +97,13 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     } else {
       extra_offs_x -= transition * 4.0f;
     }
+  }
+
+  // A depiction stands in for our texture.
+  if (depiction_slot_ && depiction_slot_->active()) {
+    DrawDepiction_(pass, draw_transparent, extra_offs_x, extra_offs_y,
+                   transition_scale, current_time);
+    return;
   }
 
   float l = 0;
@@ -96,13 +152,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
       }
 
-      // Draw brightness.
-      float db = 1.0f;
-      if (Widget* draw_controller = draw_control_parent()) {
-        db *= (draw_controller_mult_
-               * draw_controller->GetDrawBrightness(current_time))
-              + (1.0f - draw_controller_mult_) * 1.0f;
-      }
+      float db = DrawBrightness_(current_time);
 
       // Premultiply rgb by opacity for premultiplied textures so faded icons
       // composite 'over' under premult blend instead of staying full-brightness
@@ -215,6 +265,10 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 }
 
 auto ImageWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
+  // Only a depiction ever takes input (and only if allowed to).
+  if (depiction_slot_) {
+    return depiction_slot_->HandleMessage(m, width_, height_);
+  }
   return false;
 }
 

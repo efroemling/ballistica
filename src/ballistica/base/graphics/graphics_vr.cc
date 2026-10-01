@@ -10,8 +10,8 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
-#include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/globals_node.h"
@@ -93,7 +93,7 @@ auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
   } else if (arg == "headScale") {
     *outval = ValueTestFloat(&vr_test_head_scale_, absval, deltaval);
   } else if (arg == "vrCamOffsetY") {
-    Camera* camera = g_base->graphics->camera();
+    GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       Vector3f val = camera->vr_extra_offset();
       if (deltaval) {
@@ -105,7 +105,7 @@ auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
       *outval = camera->vr_extra_offset().y;
     }
   } else if (arg == "vrCamOffsetZ") {
-    Camera* camera = g_base->graphics->camera();
+    GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       Vector3f val = camera->vr_extra_offset();
       if (deltaval) {

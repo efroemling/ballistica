@@ -328,6 +328,7 @@ class GraphicsServer {
   // reasonable amount of time. a frame_def here *must* be rendered and
   // disposed of using the RenderFrameDef* calls.
   auto WaitForRenderFrameDef_() -> FrameDef*;
+  void UpdateRenderProfile_(double preprocess_ms, double render_ms);
 
   // Update virtual screen dimensions based on the current physical ones.
   // static void CalcVirtualRes_(float* x, float* y);
@@ -380,6 +381,14 @@ class GraphicsServer {
   // SupportsTextureCompressionTypeThreadsafe).
   std::atomic<uint32_t> texture_compression_types_atomic_{};
   int render_hold_{};
+
+  // BA_RENDER_PROFILE=1: render timing, logged every 5s.
+  bool render_profile_checked_{};
+  bool render_profile_{};
+  int render_profile_frames_{};
+  double render_profile_preprocess_ms_{};
+  double render_profile_render_ms_{};
+  seconds_t render_profile_window_start_{};
   int projection_matrix_state_{};
   int model_view_projection_matrix_state_{};
   int model_world_matrix_state_{};

@@ -138,7 +138,9 @@ SimpleDialog::SimpleDialog(int id) : id_{id} {}
 
 void SimpleDialog::SetState(const std::string& title,
                             const std::string& message, float progress,
-                            const std::string& button_label) {
+                            const std::string& button_label,
+                            bool cancel_activates_button) {
+  cancel_activates_button_ = cancel_activates_button;
   // Rebuild text-meshes only when the underlying string actually changes.
   if (title != title_) {
     title_ = title;
@@ -512,6 +514,13 @@ auto SimpleDialog::Activate() -> bool {
   }
   button_flash_end_time_ = g_core->AppTimeMillisecs() + kButtonFlashMillisecs;
   return true;
+}
+
+auto SimpleDialog::Cancel() -> bool {
+  if (!cancel_activates_button_) {
+    return false;
+  }
+  return Activate();
 }
 
 }  // namespace ballistica::base

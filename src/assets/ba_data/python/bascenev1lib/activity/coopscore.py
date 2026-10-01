@@ -139,8 +139,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self._score: int | None = settings['score']
         assert isinstance(self._score, int | None)
 
-        self._fail_message: bs.Lstr | None = settings['fail_message']
-        assert isinstance(self._fail_message, bs.Lstr | None)
+        self._fail_message: bs.Lstr | bs.LangStr | None = settings[
+            'fail_message'
+        ]
+        assert isinstance(self._fail_message, bs.Lstr | bs.LangStr | None)
 
         self._begin_time: float | None = None
 

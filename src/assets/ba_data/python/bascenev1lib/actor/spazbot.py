@@ -551,7 +551,7 @@ class SpazBot(Spaz):
                         killerplayer = self.last_player_attacked_by
                     else:
                         killerplayer = None
-                activity = self._activity()
+                activity = self.getactivity(doraise=False)
 
                 # (convert dead player refs to None)
                 if not killerplayer:

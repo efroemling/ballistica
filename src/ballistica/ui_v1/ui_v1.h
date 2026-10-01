@@ -55,6 +55,7 @@ class RootUI;
 class RootWidget;
 class StackWidget;
 class TextWidget;
+class ViewerSource;
 
 // Our feature-set's globals. Feature-sets should NEVER directly access
 // globals in another feature-set's namespace. All functionality we need
@@ -159,6 +160,10 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   /// the rare code that can run in those states must check this
   /// before touching assets().
   auto have_assets() const -> bool { return ui_assets_.complete(); }
+
+  /// Play the standard ui swish -- a random pick of the asset set's
+  /// variants, as buttons play when pressed. A no-op without assets.
+  void PlaySwish();
 
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.

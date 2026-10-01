@@ -56,13 +56,15 @@ static PyMethodDef PyGetTextureDef = {
 static auto PyApTextureGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"apverid", "name", nullptr};
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   auto qualified = std::string(apverid) + ":" + name;
   return SceneV1Context::Current().GetTexture(qualified)->NewPyRef();
   BA_PYTHON_CATCH;
@@ -73,13 +75,13 @@ static PyMethodDef PyApTextureGetDef = {
     (PyCFunction)PyApTextureGet,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "aptextureget(apverid: str, name: str) -> bascenev1.Texture\n"
+    "aptextureget(apvernum: int, name: str) -> bascenev1.Texture\n"
     "\n"
     "Load a texture from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:"};
@@ -120,13 +122,15 @@ static PyMethodDef PyGetSoundDef = {
 static auto PyApSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"apverid", "name", nullptr};
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   auto qualified = std::string(apverid) + ":" + name;
   return SceneV1Context::Current().GetSound(qualified)->NewPyRef();
   BA_PYTHON_CATCH;
@@ -137,13 +141,13 @@ static PyMethodDef PyApSoundGetDef = {
     (PyCFunction)PyApSoundGet,     // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "apsoundget(apverid: str, name: str) -> bascenev1.Sound\n"
+    "apsoundget(apvernum: int, name: str) -> bascenev1.Sound\n"
     "\n"
     "Load a sound from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:"};
@@ -215,13 +219,15 @@ static PyMethodDef PyGetMeshDef = {
 static auto PyApMeshGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"apverid", "name", nullptr};
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   auto qualified = std::string(apverid) + ":" + name;
   return SceneV1Context::Current().GetMesh(qualified)->NewPyRef();
   BA_PYTHON_CATCH;
@@ -232,13 +238,13 @@ static PyMethodDef PyApMeshGetDef = {
     (PyCFunction)PyApMeshGet,      // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "apmeshget(apverid: str, name: str) -> bascenev1.Mesh\n"
+    "apmeshget(apvernum: int, name: str) -> bascenev1.Mesh\n"
     "\n"
     "Load a mesh from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:"};
@@ -282,13 +288,15 @@ static PyMethodDef PyGetCollisionMeshDef = {
 static auto PyApCollisionMeshGet(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"apverid", "name", nullptr};
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   auto qualified = std::string(apverid) + ":" + name;
   return SceneV1Context::Current().GetCollisionMesh(qualified)->NewPyRef();
   BA_PYTHON_CATCH;
@@ -299,13 +307,13 @@ static PyMethodDef PyApCollisionMeshGetDef = {
     (PyCFunction)PyApCollisionMeshGet,  // method
     METH_VARARGS | METH_KEYWORDS,       // flags
 
-    "apcollisionmeshget(apverid: str, name: str) -> bascenev1.CollisionMesh\n"
+    "apcollisionmeshget(apvernum: int, name: str) -> bascenev1.CollisionMesh\n"
     "\n"
     "Load a collision-mesh from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:"};

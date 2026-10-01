@@ -8,6 +8,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import astroid.nodes
+from pylint.checkers import BaseChecker
 
 if TYPE_CHECKING:
     from pylint.lint import PyLinter
@@ -349,9 +350,230 @@ def var_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
     return node
 
 
+#: Top-level packages the doc-ui routes checker applies to: the
+#: first-party ballistica packages. Keying on package name (not file
+#: location) is what keeps it off of third party code: this plugin also
+#: runs on user code in the master-server's workspace checks, where
+#: hand-building doc-ui requests is perfectly valid.
+_DOCUI_ROUTES_PACKAGES = frozenset(
+    {
+        'babase',
+        'baclassic',
+        'baplus',
+        'bascenev1',
+        'bascenev1lib',
+        'bauiv1',
+        'bauiv1lib',
+        'bamaster',
+        'baserver',
+        'basn',
+    }
+)
+
+#: Modules within those allowed to touch the stringly forms: the
+#: client/server chokepoints mapping to and from routes.
+_DOCUI_ROUTES_EXEMPT = ('bauiv1lib.docui', 'bamaster.docui')
+
+_DOCUI_V2_MODULE = 'bacommon.docui.v2'
+
+#: v2 classes that bind to page state by key name; the typed forms are
+#: the row builders on ``bacommon.docui.routes.DocUIState``.
+_DOCUI_V2_INPUT_ROWS = frozenset(
+    {
+        'CheckboxRow',
+        'TextInputRow',
+        'ChoiceRow',
+        'Choice',
+        'ColorRow',
+        'SliderRow',
+        'NumberRow',
+    }
+)
+
+#: v2 classes taking page state (``sets=`` / ``state=``); the typed
+#: forms are ``DocUIState.assign()`` and ``DocUIState.encode()``.
+_DOCUI_V2_STATE_CARRIERS = frozenset({'Browse', 'Replace', 'Local', 'Page'})
+
+#: Every v2 name we track ``from bacommon.docui.v2 import X`` aliases for.
+_DOCUI_V2_TRACKED_NAMES = frozenset(
+    {'Request', 'Response'} | _DOCUI_V2_INPUT_ROWS | _DOCUI_V2_STATE_CARRIERS
+)
+
+
+class DocUIRoutesChecker(BaseChecker):
+    """Keeps first-party doc-ui code on type-safe routes and page state.
+
+    Doc-ui (v2) requests, local-actions, and page state are strings and
+    dicts on the wire, but first-party code is expected to author and
+    handle them via the dataclasses in ``bacommon.docui.routes``. This
+    flags code that hand-builds the stringly forms instead:
+    constructing ``bacommon.docui.v2.Request`` directly, naming a
+    local-action with a string, building an input row (which binds to
+    a state key by name) directly, or passing state ``sets=`` /
+    ``state=`` as dict literals.
+
+    Purely syntactic (import aliases + call shapes; no inference) and
+    inert outside a handful of packages, so as to cost effectively
+    nothing. Timing-checked when added (2026-09-20); if this ever grows
+    inference or broader scope, re-measure a cold full run.
+    """
+
+    name = 'docui-routes'
+    msgs = {
+        'W9701': (
+            'Raw doc-ui v2 Request; use a route from bacommon.docui.routes'
+            ' (route.browse(), route.replace(), etc.)',
+            'docui-raw-request',
+            'First-party doc-ui code should build requests from type-safe'
+            ' route dataclasses instead of paths and arg dicts.',
+        ),
+        'W9702': (
+            'Stringly doc-ui local-action; use a local-action class from'
+            ' bacommon.docui.routes (action.local(), action.attach())',
+            'docui-raw-local-action',
+            'First-party doc-ui code should name local-actions via'
+            ' type-safe dataclasses instead of strings.',
+        ),
+        'W9703': (
+            'Raw doc-ui input row; build it from the page state type'
+            ' (MyState.checkbox_row(lambda s: s.field), text_input_row(),'
+            ' choice_row())',
+            'docui-raw-input-row',
+            'First-party doc-ui code should bind input rows to page state'
+            ' via type-checked field lookups instead of key strings.',
+        ),
+        'W9704': (
+            'Dict literal for doc-ui page state; use'
+            ' sets=[MyState.assign(lambda s: s.field, value)] or'
+            ' state=mystate.encode()',
+            'docui-raw-state',
+            'First-party doc-ui code should express page state and'
+            ' assignments through the page state type instead of raw'
+            ' key/value dicts.',
+        ),
+    }
+
+    def __init__(self, linter: PyLinter) -> None:
+        super().__init__(linter)
+        # Names the v2 module goes by in the current module, and local
+        # names for v2 classes imported directly (local name -> v2 name).
+        self._module_aliases: set[str] = set()
+        self._name_aliases: dict[str, str] = {}
+        self._active = False
+
+    def visit_module(self, node: astroid.nodes.Module) -> None:
+        """Reset per-module state; decide if we care about this one."""
+        self._module_aliases = set()
+        self._name_aliases = {}
+        name = node.name
+        self._active = name.partition('.')[
+            0
+        ] in _DOCUI_ROUTES_PACKAGES and not any(
+            name == e or name.startswith(e + '.') for e in _DOCUI_ROUTES_EXEMPT
+        )
+
+    def visit_import(self, node: astroid.nodes.Import) -> None:
+        """Note 'import bacommon.docui.v2 as foo'."""
+        if not self._active:
+            return
+        for modname, alias in node.names:
+            # (A bare 'import bacommon.docui.v2' gets used by its full
+            # dotted name, which we match separately.)
+            if modname == _DOCUI_V2_MODULE and alias is not None:
+                self._module_aliases.add(alias)
+
+    def visit_importfrom(self, node: astroid.nodes.ImportFrom) -> None:
+        """Note 'from bacommon.docui[.v2] import ...'."""
+        if not self._active:
+            return
+        if node.modname == _DOCUI_V2_MODULE:
+            for name, alias in node.names:
+                if name in _DOCUI_V2_TRACKED_NAMES:
+                    self._name_aliases[alias or name] = name
+        elif node.modname == 'bacommon.docui':
+            for name, alias in node.names:
+                if name == 'v2':
+                    self._module_aliases.add(alias or name)
+
+    def _v2_name(self, func: astroid.nodes.NodeNG) -> str | None:
+        """The v2 class a called expression names, if any.
+
+        Recognizes ``<v2 module>.X`` (by alias or full dotted name) and
+        directly-imported ``X`` (by whatever local name it was given).
+        """
+        if isinstance(func, astroid.nodes.Name):
+            return self._name_aliases.get(func.name)
+        if not isinstance(func, astroid.nodes.Attribute):
+            return None
+        expr = func.expr
+        if isinstance(expr, astroid.nodes.Name):
+            is_v2 = expr.name in self._module_aliases
+        else:
+            is_v2 = bool(expr.as_string() == _DOCUI_V2_MODULE)
+        return func.attrname if is_v2 else None
+
+    def visit_call(self, node: astroid.nodes.Call) -> None:
+        """Look for the stringly forms being hand-built."""
+        if not self._active:
+            return
+
+        name = self._v2_name(node.func)
+        if name is None:
+            return
+
+        if name == 'Request':
+            self.add_message('docui-raw-request', node=node)
+            return
+
+        if name in _DOCUI_V2_INPUT_ROWS:
+            self.add_message('docui-raw-input-row', node=node)
+            return
+
+        if name in ('Local', 'Response'):
+            for keyword in node.keywords:
+                if keyword.arg in (
+                    'immediate_local_action',
+                    'local_action',
+                ) and not (
+                    isinstance(keyword.value, astroid.nodes.Const)
+                    and keyword.value.value is None
+                ):
+                    self.add_message('docui-raw-local-action', node=keyword)
+
+        if name in _DOCUI_V2_STATE_CARRIERS:
+            # Only literals: a variable may well hold an encode() or
+            # merge_assigns() result, which is the typed path.
+            for keyword in node.keywords:
+                if keyword.arg in ('sets', 'state') and isinstance(
+                    keyword.value, astroid.nodes.Dict
+                ):
+                    self.add_message('docui-raw-state', node=keyword)
+
+    def visit_assignattr(self, node: astroid.nodes.AssignAttr) -> None:
+        """Look for ``response.local_action = 'foo'``."""
+        if not self._active or node.attrname != 'local_action':
+            return
+
+        # Only in modules dealing in v2 doc-ui at all.
+        if not self._module_aliases and not self._name_aliases:
+            return
+
+        parent = node.parent
+        if (
+            isinstance(parent, astroid.nodes.Assign)
+            and isinstance(parent.value, astroid.nodes.Const)
+            and isinstance(parent.value.value, str)
+        ):
+            self.add_message('docui-raw-local-action', node=parent)
+
+
 def register(linter: PyLinter) -> None:
-    """Unused here - we're modifying the ast, not defining linters."""
-    del linter  # Unused.
+    """Pylint plugin entry point.
+
+    (Our ast transforms register themselves with astroid at import
+    time, below; only actual checkers need to go through here.)
+    """
+    linter.register_checker(DocUIRoutesChecker(linter))
 
 
 def register_plugins(manager: astroid.Manager) -> None:

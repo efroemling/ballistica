@@ -307,16 +307,19 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           PythonRef account_tag_ref;
           PythonRef profiles_ref;
           PythonRef classic_purchases_ref;
+          PythonRef cloud_characters_ref;
           if (result.ValueIsSequence()) {
             auto vals{result.ValueAsSequence()};
-            if (vals.size() == 4 && vals[0].ValueIsString()
+            if (vals.size() == 5 && vals[0].ValueIsString()
                 && vals[1].ValueIsString() && PyDict_Check(*vals[2])
-                && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))) {
+                && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))
+                && (vals[4].ValueIsNone() || PyList_Check(*vals[4]))) {
               valid_format = true;
               account_id_ref = vals[0];
               account_tag_ref = vals[1];
               profiles_ref = vals[2];
               classic_purchases_ref = vals[3];  // list or Py_None
+              cloud_characters_ref = vals[4];   // list or Py_None
             }
           }
           if (!valid_format) {
@@ -350,6 +353,10 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // (non-v2-auth connection). Both cases end up as None on
           // the Python side, which is what the lobby wants.
           classic_purchases_ = classic_purchases_ref;
+          // Same convention: the list of cloud-composed character json
+          // (the joiner's cloud profiles), or Py_None when the master
+          // sent none.
+          cloud_characters_ = cloud_characters_ref;
           g_core->logging->Log(
               LogName::kBaNetworking, LogLevel::kDebug, [this] {
                 return "ConnectionToClient(id=" + std::to_string(id())

@@ -504,6 +504,43 @@ auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassWidget::GetScrollState(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  auto state = w->GetScrollState();
+  if (!state) {
+    Py_RETURN_NONE;
+  }
+  return Py_BuildValue("(fff)", state->offset, state->content_extent,
+                       state->visible_extent);
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::SetScrollOffset(PythonClassWidget* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  float offset{};
+  static const char* kwlist[] = {"offset", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "f",
+                                   const_cast<char**>(kwlist), &offset)) {
+    return nullptr;
+  }
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  if (!w->SetScrollOffset(offset)) {
+    throw Exception("Widget is not a scrolling widget.", PyExcType::kType);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassWidget::Dir(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
 
@@ -601,6 +638,25 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "gliding. Use that when the scrolled content was itself just built,\n"
      "since there is then nothing on screen for the motion to read as\n"
      "movement from."},
+    {"get_scroll_state", (PyCFunction)GetScrollState, METH_NOARGS,
+     "get_scroll_state() -> tuple[float, float, float] | None\n"
+     "\n"
+     "For a scrolling widget, return (offset, content_extent,\n"
+     "visible_extent) along its scroll axis; None for other widgets.\n"
+     "\n"
+     "The offset is in the widget's own terms, meaningful only to\n"
+     ":meth:`set_scroll_offset` on the same kind of widget. The extents\n"
+     "tell whether it still means the same thing: an offset saved from\n"
+     "one widget applies to another only if both extents match."},
+    {"set_scroll_offset", (PyCFunction)SetScrollOffset,
+     METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
+     "set_scroll_offset(offset: float) -> None\n"
+     "\n"
+     "Jump a scrolling widget straight to an offset.\n"
+     "\n"
+     "Takes an offset from :meth:`get_scroll_state`; clamped to the\n"
+     "content, with no glide and any inertia stopped. Raises TypeError\n"
+     "for widgets that don't scroll."},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

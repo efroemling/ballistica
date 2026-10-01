@@ -4,6 +4,7 @@
 #define BALLISTICA_UI_V1_WIDGET_IMAGE_WIDGET_H_
 
 #include <algorithm>
+#include <memory>
 #include <string>
 
 #include "ballistica/base/assets/mesh_asset.h"
@@ -12,6 +13,10 @@
 
 namespace ballistica::ui_v1 {
 
+class DepictionSlot;
+
+/// Draws a texture in our box -- or a depiction (bacommon.depiction),
+/// shown in place of the texture while one is set (see DepictionSlot).
 class ImageWidget : public Widget {
  public:
   enum class TransitionType : uint8_t { kInLeft, kScale };
@@ -70,7 +75,29 @@ class ImageWidget : public Widget {
   void set_radial_amount(float val) { radial_amount_ = val; }
   void set_rotate(float val) { rotate_ = val; }
 
+  /// If set, our color follows our parent container's backing glow
+  /// (see ContainerWidget::GetBackingGlowMult()); for images drawn to
+  /// blend into a window backing.
+  void set_match_backing_glow(bool val) { match_backing_glow_ = val; }
+
+  /// Our depiction slot, made on first use. While it has something to
+  /// show it draws in place of our texture, our mask cutting its edges
+  /// and our opacity, tilt, transitions and draw controller applying as
+  /// host state; with its take_input set, presses go to it.
+  auto GetDepictionSlot() -> DepictionSlot&;
+
+  /// Our depiction slot if we've made one.
+  auto depiction_slot() const -> DepictionSlot* {
+    return depiction_slot_.get();
+  }
+
  private:
+  void DrawDepiction_(base::RenderPass* pass, bool transparent, float offs_x,
+                      float offs_y, float transition_scale,
+                      millisecs_t current_time);
+  auto DrawBrightness_(millisecs_t current_time) const -> float;
+
+  std::unique_ptr<DepictionSlot> depiction_slot_;
   TransitionType transition_type_{TransitionType::kInLeft};
   float tilt_scale_{1.0f};
   float transition_delay_{};
@@ -90,6 +117,7 @@ class ImageWidget : public Widget {
   float width_{50.0f};
   float height_{30.0f};
   bool has_alpha_channel_{true};
+  bool match_backing_glow_{};
   float color_red_{1.0f};
   float color_green_{1.0f};
   float color_blue_{1.0f};

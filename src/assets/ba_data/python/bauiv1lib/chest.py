@@ -12,8 +12,7 @@ import bacommon.classic
 import bacommon.legacydisplayitem as lditm
 import bauiv1 as bui
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     import datetime
@@ -21,16 +20,6 @@ if TYPE_CHECKING:
     import baclassic
 
 _g_open_voices: list[tuple[float, str, float]] = []
-
-
-def _stex(name: str) -> str:
-    """Qualified _classicassets texture ref."""
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 class ChestWindow(bui.MainWindow):
@@ -528,7 +517,7 @@ class ChestWindow(bui.MainWindow):
                             self._yoffs + bposy + bheight * 0.35,
                         ),
                         draw_controller=self._open_now_button,
-                        texture=_classicassets.textures.coin.get(),
+                        texture=_classiccatalogassets.textures.coin.get(),
                     )
                 )
                 self._open_now_texts.append(
@@ -777,7 +766,7 @@ class ChestWindow(bui.MainWindow):
         prizesettxts: list[bui.Widget]
         prizesetimgs: list[bui.Widget]
 
-        def _mkicon(img: str) -> None:
+        def _mkicon(img: bui.Texture) -> None:
             iconsize = 20.0
             nonlocal x
             nonlocal prizesetimgs
@@ -786,7 +775,7 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     size=(iconsize, iconsize),
                     position=(x, y - iconsize * 0.5),
-                    texture=bui.texture_from_ref(img),
+                    texture=img,
                     opacity=0.4,
                 )
             )
@@ -854,13 +843,13 @@ class ChestWindow(bui.MainWindow):
                 x += 5.0
                 if isinstance(item.item, lditm.Tickets):
                     _mktxt(str(item.item.count))
-                    _mkicon(_stex('tickets'))
+                    _mkicon(_classiccatalogassets.textures.tickets.get())
                 elif isinstance(item.item, lditm.PurpleTickets):
                     _mktxt(str(item.item.count))
-                    _mkicon(_stex('tickets_purple'))
+                    _mkicon(_classiccatalogassets.textures.tickets_purple.get())
                 elif isinstance(item.item, lditm.Tokens):
                     _mktxt(str(item.item.count))
-                    _mkicon(_stex('coin'))
+                    _mkicon(_classiccatalogassets.textures.coin.get())
                 else:
                     # For other cases just fall back on text desc.
                     #
@@ -905,7 +894,7 @@ class ChestWindow(bui.MainWindow):
         if user_tokens < token_payment:
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
-            _uiv1assets.audio.swish.get().play()
+            bui.play_swish()
             show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 

@@ -60,6 +60,12 @@ class Player[TeamT]:
     # their type annotations are introspectable (for docs generation).
     character: str
 
+    cloud_spaz_def: bascenev1.SpazDef | None
+    """The cloud-composed look for the cloud profile this player
+       picked, or None when they are on a legacy profile or a random
+       look. When present, ``character`` is just the legacy standin
+       appearance; spawn sites should prefer this."""
+
     actor: bascenev1.Actor | None
     """The bascenev1.Actor associated with the player."""
 
@@ -102,6 +108,7 @@ class Player[TeamT]:
         self._nodeactor: bascenev1.NodeActor | None = None
         self._sessionplayer = sessionplayer
         self.character = sessionplayer.character
+        self.cloud_spaz_def = sessionplayer.cloud_spaz_def
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
         self._team = cast(

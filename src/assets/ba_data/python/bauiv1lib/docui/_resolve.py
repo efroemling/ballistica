@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from typing import Iterator
 
     from bacommon.locale import Locale
+    from bacommon.assetpackage import ApverNum
     from bacommon.docui import DocUIRequest
     from bacommon.assetspec import (
         TextureSpec,
@@ -120,17 +121,17 @@ def resolve_packages(response: dui2.Response) -> None:
     # resource-form strings on local/legacy pages) covers everything we
     # need resolved before render — including packages the contained
     # client-effects will want later.
-    apverids: set[str] = set(response.packages)
-    collect_apverids(response.page, apverids)
-    clfx.collect_apverids(response.client_effects, apverids)
+    apvernums: set[ApverNum] = set(response.packages)
+    collect_apvernums(response.page, apvernums)
+    clfx.collect_apvernums(response.client_effects, apvernums)
 
     bui.uilog.debug(
         'docui v2 prep: resolving %d package(s) for locale %s: %s.',
-        len(apverids),
+        len(apvernums),
         locale.name,
-        sorted(apverids),
+        sorted(apvernums),
     )
-    _resolve_packages_blocking(sorted(apverids), locale)
+    _resolve_packages_blocking(sorted(apvernums), locale)
     bui.uilog.debug(
         'docui v2 prep: resolve complete for locale %s.', locale.name
     )
@@ -158,6 +159,7 @@ def deindex_response(response: dui2.Response) -> None:
 
     import babase
     import bacommon.clienteffect as clfx
+    from bacommon.docui.walk import page_actions
     from efro.dataclassio import dataclass_to_json, dataclass_from_json
 
     if not response.packages:
@@ -208,15 +210,12 @@ def deindex_response(response: dui2.Response) -> None:
         expect_digest=response.asset_index_digest,
     )
     _deindex_effects(response.client_effects)
-    for row in response.page.rows:
-        if not isinstance(row, dui2.ButtonRow):
-            continue
-        for button in row.buttons:
-            if isinstance(button.action, dui2.Local):
-                _deindex_effects(button.action.immediate_client_effects)
+    for action in page_actions(response.page):
+        if isinstance(action, dui2.Local):
+            _deindex_effects(action.immediate_client_effects)
 
 
-def package_asset_listing(apverid: str) -> list[str] | None:
+def package_asset_listing(apvernum: ApverNum) -> list[str] | None:
     """Canonical sorted logical paths for every asset in a package.
 
     The client's half of the flat-index mapping. Deliberately the union
@@ -243,7 +242,7 @@ def package_asset_listing(apverid: str) -> list[str] | None:
     out: list[str] = []
     known = False
     for kind in AssetBucketKind:
-        paths = babase.asset_package_bucket_paths(apverid, kind)
+        paths = babase.asset_package_bucket_paths(apvernum, kind)
         if paths is None:
             continue
         known = True
@@ -253,7 +252,7 @@ def package_asset_listing(apverid: str) -> list[str] | None:
     return sorted(set(out))
 
 
-def package_string_count(apverid: str) -> int | None:
+def package_string_count(apvernum: ApverNum) -> int | None:
     """Language-string count for a package, this locale.
 
     The client's half of the flat string mapping. Only the count is
@@ -262,12 +261,12 @@ def package_string_count(apverid: str) -> int | None:
     """
     import babase
 
-    return babase.asset_package_string_count(apverid)
+    return babase.asset_package_string_count(apvernum)
 
 
 def deindex_langstrs(
     page: dui2.Page,
-    packages: list[str],
+    packages: list[ApverNum],
     effects: 'list[clfx.Effect] | None' = None,
     *,
     expect_digest: str | None = None,
@@ -340,14 +339,16 @@ def _domains_agree(
     integers in place lands the failure on the existing loud paths.
 
     A payload with no digest (an older producer) is taken as agreeing;
-    the digest is a guard, not a requirement.
+    the digest is a guard, not a requirement. Producers send a prefix
+    of it (:func:`bacommon.assetspec.wire_digest`).
     """
     import bauiv1 as bui
+    from bacommon.assetspec import digest_matches
 
     if expect_digest is None:
         return True
     ours = ctx.domain_digest()
-    if ours == expect_digest:
+    if digest_matches(expect_digest, ours):
         return True
     bui.uilog.error(
         'Doc-ui %s index domain disagrees with the producer'
@@ -365,7 +366,7 @@ def _domains_agree(
 
 def deindex_assets(
     page: dui2.Page,
-    packages: list[str],
+    packages: list[ApverNum],
     effects: 'list[clfx.Effect] | None' = None,
     *,
     expect_digest: str | None = None,
@@ -429,7 +430,9 @@ def deindex_assets(
         clfx.walk_effects(effects, assetref=_convert)  # type: ignore[arg-type]
 
 
-def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
+def _resolve_packages_blocking(
+    apvernums: list[ApverNum], locale: Locale
+) -> None:
     """Run the async, logic-thread asset resolve and block until done.
 
     Called from the background prep thread; marshals the resolve onto the
@@ -439,7 +442,7 @@ def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
 
     import bauiv1 as bui
 
-    if not apverids:
+    if not apvernums:
         return
 
     done = threading.Event()
@@ -448,7 +451,7 @@ def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
     def _kick() -> None:
         async def _run() -> None:
             try:
-                await bui.app.assets.resolve(apverids, language=locale)
+                await bui.app.assets.resolve(apvernums, language=locale)
             except Exception as exc:
                 box['error'] = exc
             finally:
@@ -459,13 +462,13 @@ def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
     bui.pushcall(_kick, from_other_thread=True)
     if not done.wait(timeout=30.0):
         raise RuntimeError(
-            f'Timed out resolving doc-ui asset-packages: {apverids}.'
+            f'Timed out resolving doc-ui asset-packages: {apvernums}.'
         )
     if 'error' in box:
         raise box['error']
 
 
-def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
+def collect_apvernums(page: dui2.Page, acc: set[ApverNum]) -> None:
     """Gather every asset-package a page references into ``acc``.
 
     Covers both the packages its language-strings resolve against and
@@ -474,13 +477,13 @@ def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
     """
     from bacommon import langstr
     import bacommon.clienteffect as clfx
-    from bacommon.docui.walk import walk_page
+    from bacommon.docui.walk import walk_page, page_actions
 
     def _lstr(lstr: 'LangStrSpec | int') -> None:
         # Read-only: returning nothing leaves the slot as it is. A
         # folded index names no package of its own.
         if not isinstance(lstr, int):
-            langstr.collect_apverids(lstr, acc)
+            langstr.collect_apvernums(lstr, acc)
 
     def _ref(
         ref: 'TextureSpec | MeshSpec | int', _kind: 'AssetBucketKind'
@@ -491,21 +494,19 @@ def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
         if not isinstance(ref, int):
             # Reading identity, not building a path.
             # pylint: disable-next=protected-access
-            acc.add(ref._apverid)
+            acc.add(ref._apvernum)
 
+    # (Character decorations add nothing: their json resolves its own
+    # refs against whatever is registered and draws a standin
+    # otherwise -- a page never waits on a character's packages.)
     walk_page(page, langstr=_lstr, assetref=_ref)
 
     # Client-effects hanging off buttons reference packages too;
     # gathering them here pre-warms them during page resolve so
     # press-time runs are cache hits. They have their own walk.
-    for row in page.rows:
-        if not isinstance(row, dui2.ButtonRow):
-            continue
-        for button in row.buttons:
-            if isinstance(button.action, dui2.Local):
-                clfx.collect_apverids(
-                    button.action.immediate_client_effects, acc
-                )
+    for action in page_actions(page):
+        if isinstance(action, dui2.Local):
+            clfx.collect_apvernums(action.immediate_client_effects, acc)
 
 
 def page_langstrs(page: dui2.Page) -> 'Iterator[LangStrSpec]':

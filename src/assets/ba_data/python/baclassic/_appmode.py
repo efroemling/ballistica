@@ -12,12 +12,14 @@ from typing import TYPE_CHECKING, override
 from efro.error import CommunicationError
 import bacommon.clienteffect as clfx
 import bacommon.classic
+import bacommon.depiction
 import babase
 from babase import AppMode, AppModeConfig
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _classicassets
 from bauiv1 import _uiv1assets
+from bauiv1 import _classiccatalogassets
 from baclassic._uiassetdefaults import make_ui_asset_set
 from baclassic._baseassetdefaults import make_base_asset_set
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -25,6 +27,7 @@ from bauiv1lib.connectivity import wait_for_connectivity
 import _baclassic
 import bascenev1
 from bascenev1 import _scenev1assets
+from bascenev1 import _classiccharacterassets, _classicmapassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal, Iterable
@@ -84,6 +87,10 @@ class ClassicAppMode(AppMode):
         self._have_account_values = False
         self._have_connectivity = False
         self._current_account_id: str | None = None
+
+        # The account button's depiction json, kept with the saved
+        # account state so a launch shows it before live values arrive.
+        self._account_depiction = ''
 
         self._purchase_ui_pause: bui.RootUIUpdatePause | None = None
         self._last_tokens_value = 0
@@ -173,6 +180,11 @@ class ClassicAppMode(AppMode):
                 'classicassets': _classicassets._ASSET_PACKAGE,
                 'bauiv1assets': _uiv1assets._ASSET_PACKAGE,
                 'scenev1assets': _scenev1assets._ASSET_PACKAGE,
+                'classiccatalogassets': (_classiccatalogassets._ASSET_PACKAGE),
+                'classiccharacterassets': (
+                    _classiccharacterassets._ASSET_PACKAGE
+                ),
+                'classicmapassets': _classicmapassets._ASSET_PACKAGE,
             }
         )
 
@@ -189,6 +201,15 @@ class ClassicAppMode(AppMode):
         # itself. Supplying them here (rather than ui_v1 reaching for
         # them itself) is what lets an app-mode skin the ui.
         bui.set_ui_asset_set(config.ui_assets)
+
+        # The live depiction kinds we provide (reset at every app-mode
+        # switch; see UIV1AppSubsystem.live_depictions).
+        # pylint: disable-next=cyclic-import
+        from bascenev1lib.characterviewer import CharacterViewer
+
+        bui.app.ui_v1.live_depictions[
+            bacommon.depiction.DepictionTypeID.CHARACTER_VIEWER.value
+        ] = CharacterViewer.for_depiction
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
@@ -387,7 +408,7 @@ class ClassicAppMode(AppMode):
                 ),
                 clfx.Delay(anim_time),
                 clfx.ScreenMessageV2(
-                    message=_classicassets.strings.economy.you_got_tokens(
+                    message=_uiv1assets.strings.economy.you_got_tokens(
                         tokens=tokens
                     ).spec,
                     color=(0, 1, 0),
@@ -529,6 +550,8 @@ class ClassicAppMode(AppMode):
             self._save_account_state()
             self._current_account_id = None
 
+        classic.cloud_profiles.set_account(self._current_account_id)
+
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
             if account is None:
@@ -585,6 +608,9 @@ class ClassicAppMode(AppMode):
                 chest_3_ad_allow_time=-1.0,
                 store_style='',
             )
+            _baclassic.set_root_ui_chest_depictions(depictions=['', '', '', ''])
+            self._account_depiction = ''
+            _baclassic.set_root_ui_account_depiction(depiction='')
             self._have_account_values = False
             self._update_ui_live_state()
 
@@ -639,6 +665,10 @@ class ClassicAppMode(AppMode):
         classic.tickets = val.tickets
 
         self._target_purchases_state = val.purchases_state
+
+        classic.cloud_profiles.on_live_state(
+            val.profiles_state, val.purchases_state, val.cache_version
+        )
 
         # If they want us to ask for a review (and we haven't yet), do
         # so.
@@ -781,6 +811,18 @@ class ClassicAppMode(AppMode):
             ),
             store_style=val.store_style.value,
         )
+        _baclassic.set_root_ui_chest_depictions(
+            depictions=[
+                '' if c is None or c.depiction is None else c.depiction
+                for c in (chest0, chest1, chest2, chest3)
+            ]
+        )
+        self._account_depiction = (
+            '' if val.name_depiction is None else val.name_depiction
+        )
+        _baclassic.set_root_ui_account_depiction(
+            depiction=self._account_depiction
+        )
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
@@ -795,7 +837,7 @@ class ClassicAppMode(AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            _uiv1assets.audio.swish.get().play()
+            bui.play_swish()
 
             classic = bui.app.classic
             assert classic is not None
@@ -825,13 +867,24 @@ class ClassicAppMode(AppMode):
             logging.warning('party_icon_activate: no classic.')
 
     def _root_ui_settings_press(self) -> None:
-        from bauiv1lib.settings.allsettings import AllSettingsWindow
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.settings.allsettingsdocui import (
+            AllSettingsController,
+            Root,
+        )
 
+        bui.set_analytics_screen('Settings Window')
+
+        # Pop up an auxiliary window wherever we are in the nav stack.
         bui.app.ui_v1.auxiliary_window_activate(
-            win_type=AllSettingsWindow,
-            win_create_call=lambda: AllSettingsWindow(
-                origin_widget=bui.get_special_widget('settings_button')
+            win_type=DocUIWindow,
+            win_create_call=bui.CallStrict(
+                AllSettingsController().create_window,
+                Root(),
+                origin_widget=bui.get_special_widget('settings_button'),
+                uiopenstateid='settings',
             ),
+            win_extra_type_id=AllSettingsController.get_window_extra_type_id(),
         )
 
     def _root_ui_achievements_press(self) -> None:
@@ -865,7 +918,7 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_store_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.store import StoreUIController
@@ -881,7 +934,7 @@ class ClassicAppMode(AppMode):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui2.Request('/'),
+                    sroutes.Root(),
                     origin_widget=btn,
                     uiopenstateid='classicstore',
                 ),
@@ -929,7 +982,7 @@ class ClassicAppMode(AppMode):
         ResourceTypeInfoWindow('xp', origin_widget=btn)
 
     def _root_ui_inventory_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -939,7 +992,7 @@ class ClassicAppMode(AppMode):
             win_type=DocUIWindow,
             win_create_call=bui.CallStrict(
                 InventoryUIController().create_window,
-                dui2.Request('/'),
+                sroutes.Root(),
                 origin_widget=bui.get_special_widget('inventory_button'),
                 uiopenstateid='classicinventory',
             ),
@@ -1033,6 +1086,9 @@ class ClassicAppMode(AppMode):
         assert 'p' not in vals
         vals['p'] = list(bui.app.classic.purchases)
 
+        assert 'nd' not in vals
+        vals['nd'] = self._account_depiction
+
         cfg = bui.app.config
         cfg[self._ACCOUNT_STATE_CONFIG_KEY] = vals
         cfg.commit()
@@ -1071,20 +1127,29 @@ class ClassicAppMode(AppMode):
                 )
                 bui.app.classic.purchases = self._current_purchases
 
+        depiction = vals.get('nd')
+        if isinstance(depiction, str):
+            self._account_depiction = depiction
+            _baclassic.set_root_ui_account_depiction(depiction=depiction)
+
         _baclassic.set_account_state(vals)
 
     @override
     def get_dev_console_ui_tab_buttons(
         self,
     ) -> list[bui.DevConsoleButtonDef]:
+        # Both of these play their own sound (a swish, or an error), so
+        # skip the standard press sound rather than stacking the two.
         return [
             bui.DevConsoleButtonDef(
                 'MainWindow Template',
                 bui.WeakCallStrict(self._main_win_template_press),
+                sound=False,
             ),
             bui.DevConsoleButtonDef(
                 'DocUI Test',
                 bui.WeakCallStrict(self._doc_ui_test_v2_press),
+                sound=False,
             ),
         ]
 
@@ -1101,10 +1166,11 @@ class ClassicAppMode(AppMode):
             _builtinassets.audio.error.get().play()
             return
 
-        # Unintuitively, swish sounds come from buttons, not windows.
-        # And dev-console buttons don't make sounds. So we need to
+        # Unintuitively, swish sounds come from buttons, not windows. And
+        # our dev-console button is set not to make its own press sound
+        # (see get_dev_console_ui_tab_buttons()). So we need to
         # explicitly do so here.
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
 
         show_template_main_window()
 
@@ -1121,6 +1187,6 @@ class ClassicAppMode(AppMode):
             _builtinassets.audio.error.get().play()
             return
 
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
 
         show_test_doc_ui_v2_window()

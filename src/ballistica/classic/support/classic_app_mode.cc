@@ -36,6 +36,7 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_viewer_context.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/json_facade.h"
@@ -136,6 +137,7 @@ void ClassicAppMode::OnAppStart() { assert(g_base->InLogicThread()); }
 
 void ClassicAppMode::OnAppShutdown() {
   assert(g_base->InLogicThread());
+  CancelInternalMusicRetry_();
   connections_->Shutdown();
 }
 
@@ -217,6 +219,8 @@ void ClassicAppMode::Reset_() {
           root_ui_chest_2_unlock_tokens_, root_ui_chest_3_unlock_tokens_,
           root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
           root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
+      root_widget->SetChestDepictions(root_ui_chest_depictions_);
+      root_widget->SetAccountDepiction(root_ui_account_depiction_);
       root_widget->SetHaveLiveValues(root_ui_have_live_values_);
     }
   }
@@ -785,6 +789,10 @@ void ClassicAppMode::StepDisplayTime() {
 
   // Go ahead and prune dead ones.
   PruneSessions_();
+
+  // Scene viewers run on display time too.
+  scene_v1::SceneViewerContext::StepAllDisplayTime(
+      legacy_display_time_millisecs_inc);
 
   in_update_ = false;
 
@@ -1686,26 +1694,122 @@ void ClassicAppMode::HandleQuitOnIdle_() {
   }
 }
 
+// How often we re-try a music request that found no audio source, and how
+// long we keep at it before giving up.
+const millisecs_t kInternalMusicRetryIntervalMillisecs{250};
+const millisecs_t kInternalMusicRetryTimeoutMillisecs{30000};
+
 void ClassicAppMode::SetInternalMusic(base::SoundAsset* music, float volume,
-                                      bool loop) {
-  // Stop any playing music.
+                                      bool loop, uint32_t fade_out_millisecs) {
+  assert(g_base->InLogicThread());
+
+  // Any earlier request still waiting for a source is superseded.
+  CancelInternalMusicRetry_();
+
+  // Stop (or fade out) any playing music.
   if (internal_music_play_id_) {
-    g_base->audio->PushSourceStopSoundCall(*internal_music_play_id_);
+    if (fade_out_millisecs > 0) {
+      g_base->audio->PushSourceFadeOutCall(*internal_music_play_id_,
+                                           fade_out_millisecs);
+    } else {
+      g_base->audio->PushSourceStopSoundCall(*internal_music_play_id_);
+    }
     internal_music_play_id_.reset();
   }
   // Start any new music provided.
   if (music) {
     assert(!internal_music_play_id_);
-    base::AudioSource* s = g_base->audio->SourceBeginNew();
-    if (s) {
-      s->SetLooping(loop);
-      s->SetPositional(false);
-      s->SetGain(volume);
-      s->SetIsMusic(true);
-      internal_music_play_id_ = s->Play(music);
-      s->End();
+    if (!TryStartInternalMusic_(music, volume, loop)) {
+      // Headless builds and the null-device fallback own no sources at
+      // all; nothing to wait for there, so drop quietly.
+      if (g_base->audio->source_pool_empty()) {
+        return;
+      }
+      // Music is a one-shot request (nothing upstream re-issues it), so a
+      // dropped one means silence until the music type next changes. Keep
+      // the request and retry on a timer. This is expected only when the
+      // audio server is still opening its device at launch.
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "No audio source available for internal music '"
+                               + music->file_name() + "' (audio server ready: "
+                               + (g_base->audio->server_ready() ? "yes" : "no")
+                               + "); will retry.");
+      pending_internal_music_ =
+          PendingInternalMusic_{Object::Ref<base::SoundAsset>(music), volume,
+                                loop, g_core->AppTimeMillisecs(), 1};
+      internal_music_retry_timer_id_ = g_base->logic->NewAppTimer(
+          kInternalMusicRetryIntervalMillisecs * 1000, true,
+          NewLambdaRunnable([this] { RetryInternalMusic_(); }).get());
     }
   }
+}
+
+auto ClassicAppMode::TryStartInternalMusic_(base::SoundAsset* music,
+                                            float volume, bool loop) -> bool {
+  assert(g_base->InLogicThread());
+  assert(!internal_music_play_id_);
+  base::AudioSource* s = g_base->audio->SourceBeginNew();
+  if (!s) {
+    return false;
+  }
+  s->SetLooping(loop);
+  s->SetPositional(false);
+  s->SetGain(volume);
+  s->SetIsMusic(true);
+  internal_music_play_id_ = s->Play(music);
+  s->End();
+  return true;
+}
+
+void ClassicAppMode::RetryInternalMusic_() {
+  assert(g_base->InLogicThread());
+  assert(pending_internal_music_);
+  auto& pending = *pending_internal_music_;
+  pending.attempts++;
+  millisecs_t elapsed = g_core->AppTimeMillisecs() - pending.request_time;
+
+  if (TryStartInternalMusic_(pending.sound.get(), pending.volume,
+                             pending.loop)) {
+    // Stays at warning on purpose: every hit here is a launch where the
+    // music would have been silent without the retry. Use it to judge
+    // whether the underlying race is worth fixing at the source (having
+    // the logic thread wait on audio bring-up, etc.).
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "Internal music '" + pending.sound->file_name() + "' started on retry "
+            + std::to_string(pending.attempts) + " (" + std::to_string(elapsed)
+            + "ms after the initial request found no audio source).");
+    CancelInternalMusicRetry_();
+    return;
+  }
+  // The request may have raced a bring-up that then fell back to the null
+  // device (no sources will ever exist); stop quietly instead of giving up
+  // loudly 30s later.
+  if (g_base->audio->source_pool_empty()) {
+    CancelInternalMusicRetry_();
+    return;
+  }
+  if (elapsed > kInternalMusicRetryTimeoutMillisecs) {
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kError,
+        "Giving up on internal music '" + pending.sound->file_name()
+            + "' after " + std::to_string(pending.attempts)
+            + " attempts; no audio source became available (audio server"
+              " ready: "
+            + (g_base->audio->server_ready() ? "yes" : "no") + ").");
+    CancelInternalMusicRetry_();
+  }
+}
+
+void ClassicAppMode::CancelInternalMusicRetry_() {
+  assert(g_base->InLogicThread());
+  if (internal_music_retry_timer_id_) {
+    // Safe from within the timer's own callback; the list just marks it
+    // dead.
+    g_base->logic->DeleteAppTimer(*internal_music_retry_timer_id_);
+    internal_music_retry_timer_id_.reset();
+  }
+  pending_internal_music_.reset();
 }
 
 void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
@@ -2260,6 +2364,33 @@ void ClassicAppMode::SetRootUIChests(
           root_ui_chest_2_unlock_tokens_, root_ui_chest_3_unlock_tokens_,
           root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
           root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIChestDepictions(
+    const std::vector<std::string>& depictions) {
+  assert(g_base->InLogicThread());
+  if (depictions == root_ui_chest_depictions_) {
+    return;
+  }
+  root_ui_chest_depictions_ = depictions;
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetChestDepictions(root_ui_chest_depictions_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIAccountDepiction(const std::string& json) {
+  assert(g_base->InLogicThread());
+  if (json == root_ui_account_depiction_) {
+    return;
+  }
+  root_ui_account_depiction_ = json;
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetAccountDepiction(root_ui_account_depiction_);
     }
   }
 }

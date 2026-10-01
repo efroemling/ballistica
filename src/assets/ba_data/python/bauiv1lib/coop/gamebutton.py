@@ -7,7 +7,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from bauiv1lib.coop.browser import CoopBrowserWindow
@@ -93,7 +93,7 @@ class GameButton:
             mesh_transparent=window.lsbt,
             mesh_opaque=window.lsbo,
             texture=campaign.getlevel(levelname).preview_texture,
-            mask_texture=_classicassets.textures.map_preview_mask.get(),
+            mask_texture=_classiccatalogassets.textures.map_preview_mask.get(),
         )
 
         translated = campaign.getlevel(levelname).displayname_langstr

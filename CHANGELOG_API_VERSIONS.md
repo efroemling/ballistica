@@ -154,3 +154,13 @@ change behavior a mod may be relying on or can now take advantage of.
   `babase.clipboard_has_text()` is *not* going anywhere - platforms provide
   prompt-free ways to check for text, so it remains a synchronous call and the
   right way to decide whether to show paste UI.
+- The `on_return_press_call` and `invoke_return_press` args to
+  `bauiv1.textwidget()` are deprecated; use `on_submit_call` and
+  `invoke_submit` instead. They are the same thing under a name that fits
+  every platform: the call runs when text is *submitted*, which is an enter
+  press when editing inline but is the action key or commit button of the
+  platform's string-edit dialog on mobile, where no return key is involved
+  (and only for `string_edit_kind`s that submit; see `babase.StringEditKind`).
+  It is not a change notification; text can be edited without it ever
+  running. The old names keep working with a deprecation warning and will be
+  removed when api 9 support ends.

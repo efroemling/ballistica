@@ -24,8 +24,10 @@
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
@@ -636,6 +638,18 @@ HostSession::~HostSession() {
       }
     }
 
+    // Likewise our session-scene spaz defs and depictions.
+    for (auto&& i : spaz_defs_) {
+      if (auto* j = i.get()) {
+        j->MarkDead();
+      }
+    }
+    for (auto&& i : depictions_) {
+      if (auto* j = i.get()) {
+        j->MarkDead();
+      }
+    }
+
     // Mark all our media dead to clear it out of our output-stream cleanly.
     for (auto&& i : textures_) {
       if (auto* j = i.second.get()) {
@@ -743,6 +757,25 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
   return name_test;
 }
 
+auto HostSession::NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> {
+  if (shutting_down_) {
+    throw Exception("can't create spaz defs during session shutdown");
+  }
+  auto d(Object::New<SpazDef>(json, scene()));
+  spaz_defs_.emplace_back(d);
+  return Object::Ref<SpazDef>(d);
+}
+
+auto HostSession::NewDepiction(const std::string& json)
+    -> Object::Ref<SceneDepiction> {
+  if (shutting_down_) {
+    throw Exception("can't create depictions during session shutdown");
+  }
+  auto d(Object::New<SceneDepiction>(json, scene()));
+  depictions_.emplace_back(d);
+  return Object::Ref<SceneDepiction>(d);
+}
+
 void HostSession::DumpFullState(SessionStream* out) {
   // Our package table goes first: joining clients must have it in hand
   // before any state that could reference packages by index (and
@@ -769,6 +802,19 @@ void HostSession::DumpFullState(SessionStream* out) {
   for (auto&& i : meshes_) {
     if (SceneMesh* s = i.second.get()) {
       out->AddMesh(s);
+    }
+  }
+
+  // Spaz defs and depictions must exist before any node referencing
+  // them.
+  for (auto&& i : spaz_defs_) {
+    if (SpazDef* d = i.get()) {
+      out->AddSpazDef(d);
+    }
+  }
+  for (auto&& i : depictions_) {
+    if (SceneDepiction* d = i.get()) {
+      out->AddDepiction(d);
     }
   }
 

@@ -110,6 +110,11 @@ class Assets {
   auto GetTexture(const std::string& file_name) -> Object::Ref<TextureAsset>;
   auto GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset>;
   auto GetQRCodeTexture(const std::string& url) -> Object::Ref<TextureAsset>;
+
+  /// The texture a view drawing to a texture draws to. Views fetch
+  /// this for themselves (see RenderView::texture()); get it from the
+  /// view.
+  auto GetRenderViewTexture(RenderView* view) -> Object::Ref<TextureAsset>;
   auto GetCubeMapTexture(const std::string& file_name)
       -> Object::Ref<TextureAsset>;
   auto GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset>;
@@ -163,7 +168,8 @@ class Assets {
   }
   auto total_texture_count() const -> uint32_t {
     return static_cast<uint32_t>(textures_.size() + text_textures_.size()
-                                 + qr_textures_.size());
+                                 + qr_textures_.size()
+                                 + render_view_textures_.size());
   }
   auto total_sound_count() const -> uint32_t {
     return static_cast<uint32_t>(sounds_.size());
@@ -438,6 +444,11 @@ class Assets {
   std::unordered_map<std::string, Object::Ref<TextureAsset> > textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > text_textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > qr_textures_;
+
+  // Textures that views draw to, by view id (as a string, to match
+  // the rest).
+  std::unordered_map<std::string, Object::Ref<TextureAsset> >
+      render_view_textures_;
   std::unordered_map<std::string, Object::Ref<MeshAsset> > meshes_;
   std::unordered_map<std::string, Object::Ref<SoundAsset> > sounds_;
   std::unordered_map<std::string, Object::Ref<DataAsset> > datas_;

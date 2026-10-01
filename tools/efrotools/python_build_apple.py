@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import urllib.request
 from typing import TYPE_CHECKING
 
@@ -48,8 +49,9 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 # Both 3.13.11 and 3.14.2 have been verified on this pipeline as of
-# 2026-05-03 (all 10 slices + gather); 3.14.6 is the active version as
-# of 2026-06-12. To switch active version, change all three constants
+# 2026-05-03 (all 10 slices + gather); 3.14.7 is the active version as
+# of 2026-09-27 (macosx.x86_64 now cross-compiled; no Rosetta needed).
+# To switch active version, change all three constants
 # together (they must agree). Per-version differences in module sets
 # etc. live in ``efrotools.pybuild.patch_modules_setup`` keyed off
 # PY_VER. The BeeWare branch's Makefile pins PYTHON_VERSION exactly,
@@ -63,13 +65,13 @@ if TYPE_CHECKING:
 #   BEEWARE_BRANCH = '3.13'
 #   OPENSSL_VER = '3.0.18-1'
 PY_VER = '3.14'
-PY_VER_EXACT = '3.14.6'
+PY_VER_EXACT = '3.14.7'
 BEEWARE_BRANCH = '3.14'
 # BEEWARE_COMMIT: str | None = None  # Pin to a commit hash to override branch.
 BEEWARE_COMMIT: str | None = None
 
 # Prebuilt dep versions from beeware/cpython-apple-source-deps.
-OPENSSL_VER = '3.5.7-1'
+OPENSSL_VER = '3.5.8-1'
 LIBFFI_VER = '3.4.7-2'
 XZ_VER = '5.6.4-2'
 BZIP2_VER = '1.0.8-2'
@@ -192,7 +194,18 @@ def _fetch(url: str, cache_dir: str, cache_name: str | None = None) -> str:
     if not os.path.exists(local):
         print(f'  Downloading {url} ...')
         part = local + f'.part.{os.getpid()}'
-        urllib.request.urlretrieve(url, part)
+        # Retry truncated transfers: some proxies (the Claude Code
+        # sandbox's, notably) cut big downloads short now and then, and
+        # one flaky fetch shouldn't sink a long multi-slice build.
+        attempts = 5
+        for attempt in range(1, attempts + 1):
+            try:
+                urllib.request.urlretrieve(url, part)
+                break
+            except urllib.error.ContentTooShortError:
+                if attempt == attempts:
+                    raise
+                print(f'  Truncated download; retrying ({attempt})...')
         os.rename(part, local)
     else:
         print(f'  Using cached {fname}')
@@ -747,6 +760,27 @@ def _patch_modules_setup(pydir: str) -> None:
     patch_modules_setup(pydir, 'apple', python_version=PY_VER)
 
 
+def _patch_configure_darwin_cross_release(pydir: str) -> None:
+    """Give a macOS cross build (x86_64 on Apple Silicon) a release.
+
+    Cross-compiling, configure leaves ``ac_sys_release`` empty, so its
+    'known Darwin release' check fails and it defines _XOPEN_SOURCE --
+    hiding the BSD APIs (getpagesize and co.) a native macOS build has,
+    and failing the compile. Build and host run the same Darwin here,
+    so the build machine's ``uname -r`` is the right answer.
+    """
+    cfg = os.path.join(pydir, 'configure')
+    with open(cfg, encoding='utf-8') as f:
+        txt = f.read()
+    old = '\tac_sys_release=\n    else\n'
+    if txt.count(old) != 1:
+        raise RuntimeError('configure cross ac_sys_release line not found')
+    txt = txt.replace(old, '\tac_sys_release=`uname -r`\n    else\n')
+    with open(cfg, 'w', encoding='utf-8') as f:
+        f.write(txt)
+    print('  Patched configure cross-build ac_sys_release (macOS).')
+
+
 def _patch_configure(pydir: str) -> None:
     """Remove BeeWare's --enable-framework enforcement from configure.
 
@@ -1175,6 +1209,29 @@ def build(rootdir: str, slice_name: str) -> None:
             f'--with-openssl={openssl_prefix}',
             '--disable-test-modules',
         ]
+        if arch != platform.machine():
+            # A different arch than the build machine (x86_64 on Apple
+            # Silicon): tell configure it's a cross build, or it runs
+            # its compiled test programs -- which needs Rosetta.
+            configure_cmd += [
+                # With the Darwin release on both, as configure keys
+                # things off it (no _XOPEN_SOURCE only for known Darwin
+                # releases; without it the BSD APIs vanish).
+                f'--host={arch}-apple-darwin{uname_release}',
+                f'--build={platform.machine()}-apple-darwin{uname_release}',
+                # Checks configure can't run when cross-compiling:
+                # answered as a native macOS build finds them (the
+                # first three it won't even guess at; the rest it
+                # would guess 'no', losing computed gotos among others).
+                'ac_cv_buggy_getaddrinfo=no',
+                'ac_cv_file__dev_ptmx=yes',
+                'ac_cv_file__dev_ptc=no',
+                'ac_cv_computed_gotos=yes',
+                'ac_cv_working_tzset=yes',
+                'ac_cv_pthread_system_supported=yes',
+                'ac_cv_ffi_complex_double_supported=yes',
+            ]
+            _patch_configure_darwin_cross_release(pydir)
     else:
         configure_cmd = [
             './configure',

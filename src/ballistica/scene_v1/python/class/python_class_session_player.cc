@@ -41,14 +41,16 @@ PyNumberMethods PythonClassSessionPlayer::as_number_;
 #define ATTR_COLOR "color"
 #define ATTR_HIGHLIGHT "highlight"
 #define ATTR_CHARACTER "character"
+#define ATTR_CLOUD_SPAZ_DEF "cloud_spaz_def"
 #define ATTR_ACTIVITYPLAYER "activityplayer"
 #define ATTR_ID "id"
 #define ATTR_INPUT_DEVICE "inputdevice"
 
 // The set we expose via dir().
 static const char* extra_dir_attrs[] = {
-    ATTR_ID,        ATTR_IN_GAME,   ATTR_SESSIONTEAM,  ATTR_COLOR,
-    ATTR_HIGHLIGHT, ATTR_CHARACTER, ATTR_INPUT_DEVICE, nullptr};
+    ATTR_ID,        ATTR_IN_GAME,   ATTR_SESSIONTEAM,    ATTR_COLOR,
+    ATTR_HIGHLIGHT, ATTR_CHARACTER, ATTR_CLOUD_SPAZ_DEF, ATTR_INPUT_DEVICE,
+    nullptr};
 
 auto PythonClassSessionPlayer::type_name() -> const char* {
   return "SessionPlayer";
@@ -109,6 +111,14 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "\n"
     "    " ATTR_CHARACTER " (str):\n"
     "        The character this player has selected in their profile.\n"
+    "        For a player on a cloud profile this is the legacy standin\n"
+    "        appearance; see " ATTR_CLOUD_SPAZ_DEF ".\n"
+    "\n"
+    "    " ATTR_CLOUD_SPAZ_DEF " (bascenev1.SpazDef | None):\n"
+    "        The cloud-composed look for the cloud profile this player\n"
+    "        picked, or None when they are on a legacy profile or a\n"
+    "        random look. Sites that spawn the player prefer this when\n"
+    "        present.\n"
     "\n"
     "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
     "        The current game-specific instance for this player.\n";
@@ -285,6 +295,14 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
                       + "' without data set.");
     }
     PyObject* obj = p->GetPyCharacter();
+    Py_INCREF(obj);
+    return obj;
+  } else if (!strcmp(s, ATTR_CLOUD_SPAZ_DEF)) {
+    Player* p = self->player_->get();
+    if (!p) {
+      throw Exception(PyExcType::kSessionPlayerNotFound);
+    }
+    PyObject* obj = p->GetPyCloudSpazDef();
     Py_INCREF(obj);
     return obj;
   } else if (!strcmp(s, ATTR_COLOR)) {
@@ -624,11 +642,12 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   PyObject* character_obj;
   PyObject* color_obj;
   PyObject* highlight_obj;
-  static const char* kwlist[] = {"team", "character", "color", "highlight",
-                                 nullptr};
+  PyObject* cloud_spaz_def_obj{Py_None};
+  static const char* kwlist[] = {"team",      "character",      "color",
+                                 "highlight", "cloud_spaz_def", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO", const_cast<char**>(kwlist), &team_obj,
-          &character_obj, &color_obj, &highlight_obj)) {
+          args, keywds, "OOOO|O", const_cast<char**>(kwlist), &team_obj,
+          &character_obj, &color_obj, &highlight_obj, &cloud_spaz_def_obj)) {
     return nullptr;
   }
   Player* p = self->player_->get();
@@ -638,6 +657,7 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   p->set_has_py_data(true);
   p->SetPyTeam(team_obj);
   p->SetPyCharacter(character_obj);
+  p->SetPyCloudSpazDef(cloud_spaz_def_obj);
   p->SetPyColor(color_obj);
   p->SetPyHighlight(highlight_obj);
   Py_RETURN_NONE;
@@ -860,7 +880,8 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "be determined with relative certainty. Returns None otherwise."},
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
-     "  color: Sequence[float], highlight: Sequence[float]) -> None\n"
+     "  color: Sequence[float], highlight: Sequence[float],\n"
+     "  cloud_spaz_def: bascenev1.SpazDef | None = None) -> None\n"
      "\n"
      "(internal)"},
     {"set_icon_info", (PyCFunction)SetIconInfo, METH_VARARGS | METH_KEYWORDS,

@@ -21,6 +21,7 @@ FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 _PARITY_SCRIPT = """
 import babase
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
+from bacommon.assetpackage import ApverNum
 from bacommon.langstr import (
     LangStrSpec,
     LangStrSpecResource,
@@ -89,9 +90,9 @@ assert babase.LangStr(dataclass_to_json(missing)).evaluate().startswith(
 # Resource/indexed forms round-trip losslessly through the native
 # parse (evaluation of these awaits the native table store).
 rt_cases: list[LangStrSpec] = [
-    LangStrSpecResource('a-0.testpkg.1a2b', 'common.hello_there'),
+    LangStrSpecResource(ApverNum(101), 'common.hello_there'),
     LangStrSpecResource(
-        'a-0.testpkg.1a2b',
+        ApverNum(101),
         'common.hello_num',
         {'num': 5, 'name': LangStrSpecValue('Zoe')},
     ),

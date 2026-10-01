@@ -11,7 +11,7 @@ BombSquad scene system, so game-specific concepts are at home here.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bascenev1assets.260831
+# ba_meta require asset-package 62
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -19,9 +19,12 @@ BombSquad scene system, so game-specific concepts are at home here.
 
 from typing import TYPE_CHECKING
 
+from bacommon.assetpackage import ApverNum
+
 from bascenev1._assetref import AssetGroup
 
-_ASSET_PACKAGE = 'a-0.bascenev1assets.260831'
+# a-0.bascenev1assets.260831
+_ASSET_PACKAGE = ApverNum(62)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle

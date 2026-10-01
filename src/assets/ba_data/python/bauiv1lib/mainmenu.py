@@ -91,10 +91,10 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.account.settings as _unused5
         import bauiv1lib.credits as _unused6
         import bauiv1lib.help as _unused7
-        import bauiv1lib.settings.allsettings as _unused8
+        import bauiv1lib.settings.allsettingsdocui as _unused8
         import bauiv1lib.gather as _unused9
         import bauiv1lib.watch as _unused10
-        import bauiv1lib.play as _unused11
+        import bauiv1lib.playdocui as _unused11
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app
@@ -117,7 +117,7 @@ class MainMenuWindow(bui.MainWindow):
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            _uiv1assets.audio.swish.get().play()
+                            bui.play_swish()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(
@@ -318,7 +318,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             draw_controller=self._gather_button,
             color=(0.75, 1.0, 0.7),
@@ -415,7 +415,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             color=(0.75, 1.0, 0.7),
             draw_controller=self._watch_button,
@@ -556,8 +556,13 @@ class MainMenuWindow(bui.MainWindow):
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.play import PlayWindow
+        from bauiv1lib.playdocui import PlayController, Root
 
         self.main_window_replace(
-            lambda: PlayWindow(origin_widget=self._play_button)
+            lambda: PlayController().create_window(
+                Root(),
+                origin_widget=self._play_button,
+                auxiliary_style=False,
+            ),
+            extra_type_id=PlayController.get_window_extra_type_id(),
         )

@@ -294,6 +294,13 @@ void AudioServer::Start_() {
       event_loop()->NewTimer(kAudioProcessIntervalNormal, true,
                              NewLambdaRunnable([this] { Process_(); }).get());
 
+  // Everything below runs asynchronously to the logic thread, which can be
+  // well into its main menu by the time we finish. Sound requests made
+  // before we flip Audio::server_ready() find no sources and get dropped,
+  // so we time the device bring-up and shout if it was slow (Bluetooth
+  // routes on iOS can take seconds to activate).
+  millisecs_t start_time = g_core->AppTimeMillisecs();
+
 #if BA_ENABLE_AUDIO
 
   // Bring up OpenAL stuff.
@@ -378,6 +385,9 @@ void AudioServer::Start_() {
           "No audio devices found. Falling back to null audio device.");
       using_null_device_ = true;
       if (!g_buildconfig.platform_android()) {
+        // No sources will ever exist; mark us ready so callers don't keep
+        // waiting on a bring-up that is never coming.
+        g_base->audio->set_server_ready();
         return;
       }
     }
@@ -502,6 +512,23 @@ void AudioServer::Start_() {
              + "\n  Device: " + device_name + env_note;
     });
 
+    // Device open + context creation is the part that can stall (this is
+    // where iOS activates its audio session and negotiates the output
+    // route). Anything over a second means the logic thread has likely
+    // already tried to play sounds and had them dropped.
+    millisecs_t device_open_millisecs = g_core->AppTimeMillisecs() - start_time;
+    if (device_open_millisecs > 1000) {
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "Audio device open took " + std::to_string(device_open_millisecs)
+              + "ms; sound requests made before now were dropped (internal"
+                " music retries; see ClassicAppMode::SetInternalMusic).");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "Audio device open took "
+                               + std::to_string(device_open_millisecs) + "ms.");
+    }
+
     alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(
         alcGetProcAddress(device, "alcDevicePauseSOFT"));
     alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT_>(
@@ -618,6 +645,15 @@ void AudioServer::Start_() {
 
   last_started_playing_time_ = g_core->AppTimeSeconds();
 #endif  // BA_ENABLE_AUDIO
+
+  // Sources are claimable from here on.
+  g_base->audio->set_server_ready();
+  g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo, [this, start_time] {
+    return "Audio server ready with " + std::to_string(sources_.size())
+           + " sources ("
+           + std::to_string(g_core->AppTimeMillisecs() - start_time)
+           + "ms after audio thread start).";
+  });
 }
 
 void AudioServer::Shutdown() {

@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -165,9 +165,11 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = _classicassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
+        )
         mesh_transparent = (
-            _classicassets.meshes.level_select_button_transparent.get()
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
         )
 
         self._maps = []
@@ -209,7 +211,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = _classicassets.textures.map_preview_mask.get()
+        mask_texture = _classiccatalogassets.textures.map_preview_mask.get()
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):
@@ -292,7 +294,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -321,7 +323,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui2.Request('/'),
+                    sroutes.Root(),
                     origin_widget=self._get_more_maps_button,
                     uiopenstateid='classicstore',
                 ),

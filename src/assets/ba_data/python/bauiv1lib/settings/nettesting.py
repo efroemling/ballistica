@@ -37,7 +37,7 @@ class NetTestingWindow(bui.MainWindow):
         self._height = (
             800
             if uiscale is bui.UIScale.SMALL
-            else 550 if uiscale is bui.UIScale.MEDIUM else 650
+            else 650 if uiscale is bui.UIScale.MEDIUM else 780
         )
 
         self._printed_lines: list[str] = []
@@ -50,7 +50,7 @@ class NetTestingWindow(bui.MainWindow):
         scale = (
             1.75
             if uiscale is bui.UIScale.SMALL
-            else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.75
+            else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.64
         )
 
         # Calc screen size in our local container space and clamp to a

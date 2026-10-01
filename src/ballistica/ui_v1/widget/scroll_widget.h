@@ -17,6 +17,8 @@ class ScrollWidget : public ContainerWidget {
   void Draw(base::RenderPass* pass, bool transparent) override;
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto GetWidgetTypeName() -> std::string override { return "scroll"; }
+  auto GetScrollState() -> std::optional<ScrollState> override;
+  auto SetScrollOffset(float offset) -> bool override;
   auto set_capture_arrows(bool val) { capture_arrows_ = val; }
   void SetWidth(float w) override {
     trough_dirty_ = shadow_dirty_ = glow_dirty_ = thumb_dirty_ = true;
@@ -47,6 +49,15 @@ class ScrollWidget : public ContainerWidget {
   auto set_border_opacity(float val) { border_opacity_ = val; }
   auto border_opacity() const -> float { return border_opacity_; }
 
+  /// Hide our border (and selection glow) entirely while all our content
+  /// fits, since there is then nothing to scroll.
+  void set_hide_border_when_fits(bool val) { hide_border_when_fits_ = val; }
+
+  /// Whether to draw our scroll bar (trough and thumb) and let the mouse
+  /// grab it. Scrolling itself (wheel, touch, keys) is unaffected, and
+  /// layout is too: the space the bar would occupy stays as it was.
+  void set_scrollbar_visible(bool val) { scrollbar_visible_ = val; }
+
  protected:
   void UpdateLayout() override;
 
@@ -54,6 +65,10 @@ class ScrollWidget : public ContainerWidget {
   void ClampScrolling_(bool velocity_clamp, bool position_clamp,
                        millisecs_t current_time_millisecs);
   void UpdateScrolling_(millisecs_t current_time_millisecs);
+
+  /// Border opacity as drawn: border_opacity_, or zero when hiding it
+  /// because everything fits.
+  auto DrawnBorderOpacity_() const -> float;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
   // millisecs_t last_sub_widget_h_scroll_claim_time_{};
@@ -92,6 +107,8 @@ class ScrollWidget : public ContainerWidget {
   float outline_center_x_{};
   float outline_center_y_{};
   float border_opacity_{1.0f};
+  bool hide_border_when_fits_{};
+  bool scrollbar_visible_{true};
   float thumb_click_start_v_{};
   float thumb_click_start_child_offset_v_{};
   float scroll_bar_width_{10.0f};

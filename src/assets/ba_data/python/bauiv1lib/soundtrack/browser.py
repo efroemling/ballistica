@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, override
 import bauiv1 as bui
 from bauiv1 import _commonassets, _builtinassets
 from bauiv1 import _classicassets
-from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -384,7 +383,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
 
     def _edit_soundtrack_with_sound(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._edit_soundtrack()
 
     def _edit_soundtrack(self) -> None:

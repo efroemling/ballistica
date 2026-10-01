@@ -22,6 +22,7 @@ from bacommon.langstr import LangStrSpec
 from bacommon.assetspec import SoundSpec
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from typing import Callable
 
     from bacommon.assetspec import AssetBucketKind
@@ -42,7 +43,15 @@ if TYPE_CHECKING:
 #: First engine build carrying the v2 client-effect machinery
 #: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
 #: Servers use this to emit the right form per client build.
-V2_EFFECTS_MIN_BUILD = 22931
+#:
+#: Raised 22931 -> 23021 (2026-09-30): v2 effects now carry numeric
+#: asset-package-version ids, which earlier (unshipped 1.8 test) builds
+#: can't decode; those builds get the legacy forms instead.
+#:
+#: Raised 23021 -> 23023 (2026-10-01): producers now send short
+#: (prefix) index-domain digests, which only 23023+ accept.
+#: Then 23024 with the floors for indexed image depictions.
+V2_EFFECTS_MIN_BUILD = 23024
 
 
 class EffectTypeID(Enum):
@@ -188,7 +197,7 @@ class ScreenMessageV2(Effect):
     The message is a language-agnostic
     :class:`~bacommon.langstr.LangStrSpec`; the client resolves the referenced
     asset-package(s) in its own locale and decodes before display (see
-    :func:`collect_apverids`). Only understood by clients new enough to
+    :func:`collect_apvernums`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
     :class:`Unknown` — so gate on engine build or dual-send with a
     legacy form where the message matters.
@@ -241,7 +250,7 @@ class PlaySoundV2(Effect):
     any packaged sound via a typed
     :class:`~bacommon.assetspec.SoundSpec`; the client resolves the
     referenced asset-package before playing (see
-    :func:`collect_apverids`). Only understood by clients new enough to
+    :func:`collect_apvernums`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
     :class:`Unknown`.
     """
@@ -329,7 +338,7 @@ def walk_effects(
             assert_never(typeid)
 
 
-def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
+def collect_apvernums(effects: list[Effect], acc: set[ApverNum]) -> None:
     """Gather every asset-package-version a list of effects references.
 
     The v2 effect forms are self-describing (name-based ``LangStrSpec`` values
@@ -342,13 +351,13 @@ def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
         # A folded index resolves through its payload's manifest, which
         # the caller seeds from separately; it names no package itself.
         if not isinstance(val, int):
-            langstrmod.collect_apverids(val, acc)
+            langstrmod.collect_apvernums(val, acc)
 
     def _ref(ref: 'SoundSpec | int', _kind: 'AssetBucketKind') -> None:
         # An indexed ref resolves through its payload's manifest, which
         # the caller seeds from separately; it names no package itself.
         if not isinstance(ref, int):
-            acc.add(ref._apverid)
+            acc.add(ref._apvernum)
 
     walk_effects(effects, langstr=_lstr, assetref=_ref)
 

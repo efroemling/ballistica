@@ -51,6 +51,10 @@ class AudioStreamer : public Object {
   bool playing_{};
   bool loops_{};
   bool eof_{};
+  /// Underrun bookkeeping: how often Update() found the source stopped and
+  /// had to kick it, and when we last logged about it.
+  int restart_count_{};
+  millisecs_t last_restart_log_time_{-99999};
   ALuint buffers_[kAudioStreamBufferCount]{};
   ALuint source_{};
   std::string file_name_;

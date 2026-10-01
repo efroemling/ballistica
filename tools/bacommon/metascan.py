@@ -2,6 +2,11 @@
 #
 """Scanner for ``# ba_meta`` directives in Python source.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 Recognized directive shapes:
 
 - ``# ba_meta require api <N>`` — module-level API version
@@ -11,8 +16,8 @@ Recognized directive shapes:
   the line is parsed for validity but no filtering occurs.
 - ``# ba_meta export <TYPE>`` — export the class defined on the
   next non-blank source line under the export-type ``<TYPE>``.
-- ``# ba_meta require asset-package <ID>`` — module declares that
-  it needs the named asset-package at runtime.
+- ``# ba_meta require asset-package <NUM>`` — module declares that
+  it needs the asset-package-version with that numeric id at runtime.
 
 Other shapes are reported as malformed.
 
@@ -35,6 +40,8 @@ import importlib.machinery
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from bacommon.assetpackage import ApverNum
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
@@ -145,7 +152,7 @@ class ScanResults:
     """Final results from a meta-scan."""
 
     exports: dict[str, list[str]] = field(default_factory=dict)
-    asset_packages: dict[str, list[str]] = field(default_factory=dict)
+    asset_packages: dict[ApverNum, list[str]] = field(default_factory=dict)
     incorrect_api_modules: list[str] = field(default_factory=list)
     announce_errors_occurred: bool = False
 
@@ -503,9 +510,23 @@ class DirectoryScan:
                 and mline[1] == 'require'
                 and mline[2] == 'asset-package'
             ):
-                # 'require asset-package <ID>' — record the dependency.
-                pkg_id = mline[3]
-                results.asset_packages.setdefault(pkg_id, []).append(modulename)
+                # 'require asset-package <NUM>' — record the dependency.
+                if not mline[3].isdigit():
+                    # Pre-numeric wrappers named the version by its
+                    # string id; regenerate them to pick up the number.
+                    logging.warning(
+                        'metascan: %s:%d: asset-package requirement %r is'
+                        ' not a numeric version id; regenerate the'
+                        ' wrapper.',
+                        display,
+                        lindex + 1,
+                        mline[3],
+                    )
+                    results.announce_errors_occurred = True
+                else:
+                    results.asset_packages.setdefault(
+                        ApverNum(int(mline[3])), []
+                    ).append(modulename)
             elif len(mline) != 3 or mline[1] != 'export':
                 # No other directive shapes are recognized.
                 logging.warning(

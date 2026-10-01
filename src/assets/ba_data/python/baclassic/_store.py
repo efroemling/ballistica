@@ -14,20 +14,6 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-def _tex(name: str) -> str:
-    """Qualified _classicassets ref for a store preview texture."""
-    # Deferred; only runs post-import.
-    # pylint: disable-next=cyclic-import
-    from bascenev1 import _classicassets
-
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
-
-
 class StoreSubsystem:
     """Wrangles classic store."""
 
@@ -41,7 +27,7 @@ class StoreSubsystem:
         """Return a display name for a store item."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
-        from bascenev1 import _classicassets
+        from bascenev1 import _classicassets, _uiv1assets, _classiccatalogassets
 
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
@@ -63,11 +49,11 @@ class StoreSubsystem:
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
             return gametype.get_display_string(langstr=True)
         if item_name.startswith('icons.'):
-            return _classicassets.strings.profile.icon
+            return _uiv1assets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
-            return _classicassets.strings.coop_levels.infinite_runaround
+            return _classiccatalogassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':
-            return _classicassets.strings.coop_levels.infinite_onslaught
+            return _classiccatalogassets.strings.coop_levels.infinite_onslaught
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -136,30 +122,12 @@ class StoreSubsystem:
                 'merch': {},
                 'pro': {},
                 'maps.lake_frigid': {'map_type': maps.LakeFrigid},
-                'games.race': {
-                    'gametype': RaceGame,
-                    'previewTex': _tex('big_gpreview'),
-                },
-                'games.ninja_fight': {
-                    'gametype': NinjaFightGame,
-                    'previewTex': _tex('courtyard_preview'),
-                },
-                'games.meteor_shower': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': _tex('rampage_preview'),
-                },
-                'games.infinite_onslaught': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': _tex('rampage_preview'),
-                },
-                'games.target_practice': {
-                    'gametype': TargetPracticeGame,
-                    'previewTex': _tex('doom_shroom_preview'),
-                },
-                'games.easter_egg_hunt': {
-                    'gametype': EasterEggHuntGame,
-                    'previewTex': _tex('tower_dpreview'),
-                },
+                'games.race': {'gametype': RaceGame},
+                'games.ninja_fight': {'gametype': NinjaFightGame},
+                'games.meteor_shower': {'gametype': MeteorShowerGame},
+                'games.infinite_onslaught': {'gametype': MeteorShowerGame},
+                'games.target_practice': {'gametype': TargetPracticeGame},
+                'games.easter_egg_hunt': {'gametype': EasterEggHuntGame},
                 'icons.flag_us': {
                     'icon': babase.charstr(
                         babase.SpecialChar.FLAG_UNITED_STATES

@@ -19,13 +19,6 @@
 
 namespace ballistica::base {
 
-AppPlatformApple::AppPlatformApple() {
-  // On iOS, keep the device from falling asleep in our app
-#if BA_PLATFORM_IOS_TVOS
-  // AppleUtils::DisableIdleTimer();
-#endif
-}
-
 void AppPlatformApple::DoPurchase(const std::string& item) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchase(item);

@@ -9,7 +9,7 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260825
+# ba_meta require asset-package 133
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -17,9 +17,12 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 
 from typing import TYPE_CHECKING
 
+from bacommon.assetpackage import ApverNum
+
 from babase._language import LangStrDir
 
-_ASSET_PACKAGE = 'a-0.bacommonassets.260825'
+# a-0.bacommonassets.260825
+_ASSET_PACKAGE = ApverNum(133)
 
 if TYPE_CHECKING:
     from babase import LangStr

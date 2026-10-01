@@ -1,445 +1,443 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""UI settings functionality related to touchscreens."""
+"""Touchscreen control settings, as a doc-ui page.
 
-from typing import override
+A client-local doc-ui domain like the other settings pages: the
+settings live in typed page state mirroring the config, and each
+change is a typed local action writing it. While a window showing the
+page is up, the touch controls themselves are in editing mode, so they
+can be dragged around behind it.
+"""
 
+import weakref
+from enum import Enum
+from dataclasses import dataclass, replace
+from typing import TYPE_CHECKING, Annotated, override, assert_never
+
+from efro.dataclassio import ioprepped, IOAttrs
+import bacommon.docui.v2 as dui2
+from bacommon.docui.presets import SectionButtonSize, section_button
+from bacommon.docui.routes import (
+    DocUIRoute,
+    DocUILocalActionBase,
+    DocUIState,
+    family_members,
+)
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
-from bauiv1lib.utils import (
-    get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
-)
+from bauiv1lib.docui import TypedDocUIController
 
-import bascenev1 as bs
+if TYPE_CHECKING:
+    from typing import Literal, Callable
+
+    import bacommon.docui
+    from bacommon.docui import DocUIRequest, DocUIResponse
+    from bacommon.langstr import LangStrSpec
+
+    from bauiv1lib.docui import DocUILocalAction, DocUIWindow
 
 _tsstrs = _classicassets.strings.settings.controllers.touchscreen
 
+_MOVEMENT_KEY = 'Touch Movement Control Type'
+_ACTIONS_KEY = 'Touch Action Control Type'
+_MOVEMENT_SCALE_KEY = 'Touch Controls Scale Movement'
+_ACTIONS_SCALE_KEY = 'Touch Controls Scale Actions'
+_SWIPE_HIDDEN_KEY = 'Touch Controls Swipe Hidden'
 
-class TouchscreenSettingsWindow(bui.MainWindow):
-    """Settings window for touchscreens."""
+#: Everything Reset clears (the drag positions included).
+_RESET_KEYS = (
+    _MOVEMENT_KEY,
+    _ACTIONS_KEY,
+    'Touch Controls Scale',
+    _MOVEMENT_SCALE_KEY,
+    _ACTIONS_SCALE_KEY,
+    _SWIPE_HIDDEN_KEY,
+    'Touch DPad X',
+    'Touch DPad Y',
+    'Touch Buttons X',
+    'Touch Buttons Y',
+)
 
-    def __del__(self) -> None:
-        bs.set_touchscreen_editing(False)
+#: How often a scale-slider drag applies at most. Nothing audible
+#: accompanies an apply and the effect is visible on screen, so it
+#: tracks a drag closely.
+_SCALE_DRAG_INTERVAL = 0.1
 
-    def __init__(
+
+class MovementType(Enum):
+    """How movement is controlled (the config's values)."""
+
+    JOYSTICK = 'joystick'
+    SWIPE = 'swipe'
+
+
+class ActionType(Enum):
+    """How actions are triggered (the config's values)."""
+
+    BUTTONS = 'buttons'
+    SWIPE = 'swipe'
+
+
+class TouchscreenRoute(DocUIRoute):
+    """Family class for the touchscreen settings routes."""
+
+    @override
+    @classmethod
+    def get_route_types(cls) -> tuple[type[DocUIRoute], ...]:
+        return family_members(AnyTouchscreenRoute)
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Two explanatory lines, five rows and a button; a small-tall
+        # layout cuts off the button at medium ui-scale. (Still narrow,
+        # leaving the touch controls at the screen edges uncovered.)
+        return dui2.WindowLayout.SMALL_TALLER
+
+
+@ioprepped
+@dataclass
+class Root(TouchscreenRoute, path='/'):
+    """The touchscreen settings page."""
+
+
+AnyTouchscreenRoute = Root
+
+
+@ioprepped
+@dataclass
+class TouchscreenState(DocUIState, state_id='settings.touchscreen'):
+    """The page's values, mirroring the config."""
+
+    movement: Annotated[MovementType, IOAttrs('m')] = MovementType.SWIPE
+    movement_scale: Annotated[float, IOAttrs('ms')] = 1.0
+    actions: Annotated[ActionType, IOAttrs('a')] = ActionType.BUTTONS
+    actions_scale: Annotated[float, IOAttrs('as')] = 1.0
+    swipe_hidden: Annotated[bool, IOAttrs('sh')] = False
+
+
+#: Config key for each state field (the state's wire values are the
+#: config's). Built from typed field lookups so a renamed field fails
+#: here, not at runtime.
+_CONFIG_KEYS: dict[str, str] = {
+    TouchscreenState.key(lambda s: s.movement): _MOVEMENT_KEY,
+    TouchscreenState.key(lambda s: s.movement_scale): _MOVEMENT_SCALE_KEY,
+    TouchscreenState.key(lambda s: s.actions): _ACTIONS_KEY,
+    TouchscreenState.key(lambda s: s.actions_scale): _ACTIONS_SCALE_KEY,
+    TouchscreenState.key(lambda s: s.swipe_hidden): _SWIPE_HIDDEN_KEY,
+}
+
+
+class TouchscreenLocalAction(DocUILocalActionBase):
+    """Family class for the touchscreen settings local-actions."""
+
+    @override
+    @classmethod
+    def get_action_types(cls) -> tuple[type[DocUILocalActionBase], ...]:
+        return family_members(AnyTouchscreenLocalAction)
+
+
+@ioprepped
+@dataclass
+class ApplySetting(TouchscreenLocalAction, name='apply_setting'):
+    """Write the setting that changed (the trigger) to the config."""
+
+    #: Save to disk too (a settled value), or just apply (mid-drag).
+    commit: Annotated[bool, IOAttrs('c')] = True
+
+
+@ioprepped
+@dataclass
+class Reset(TouchscreenLocalAction, name='reset'):
+    """Put every touch control setting (and position) back to default."""
+
+
+AnyTouchscreenLocalAction = ApplySetting | Reset
+
+
+class TouchscreenSettingsController(
+    TypedDocUIController[AnyTouchscreenRoute, AnyTouchscreenLocalAction]
+):
+    """Doc-ui controller for the touchscreen settings page."""
+
+    @override
+    @classmethod
+    def get_route_type(cls) -> type[TouchscreenRoute]:
+        return TouchscreenRoute
+
+    @override
+    @classmethod
+    def get_local_action_type(cls) -> type[TouchscreenLocalAction]:
+        return TouchscreenLocalAction
+
+    @override
+    def get_window_toolbar_visibility(
         self,
+    ) -> Literal['menu_full', 'menu_minimal']:
+        # As the other settings windows: minimal mid-game.
+        return 'menu_full' if bui.in_main_menu() else 'menu_minimal'
+
+    @override
+    def create_window(
+        self,
+        request: DocUIRequest | DocUIRoute,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-    ) -> None:
-        self._r = 'configTouchscreenWindow'
-
-        bs.set_touchscreen_editing(True)
-
-        assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
-        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 780.0
-        self._height = 800.0 if uiscale is bui.UIScale.SMALL else 500.0
-
-        # Do some fancy math to fill all available screen area up to the
-        # size of our backing container. This lets us fit to the exact
-        # screen shape at small ui scale.
-        screensize = bui.get_virtual_screen_size()
-        scale = (
-            1.9
-            if uiscale is bui.UIScale.SMALL
-            else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.1
-        )
-        # Calc screen size in our local container space and clamp to a
-        # bit smaller than our container size.
-        target_width = min(self._width - 60, screensize[0] / scale)
-        target_height = min(self._height - 70, screensize[1] / scale)
-
-        # To get top/left coords, go to the center of our window and
-        # offset by half the width/height of our target area.
-        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
-
-        self._scroll_width = target_width
-        self._scroll_height = target_height - 47
-        self._scroll_bottom = yoffs - 78 - self._scroll_height
-
-        # In medium/large, sit the scroll area (and the drag-note
-        # below it) a bit closer to the title and back button.
-        if uiscale is not bui.UIScale.SMALL:
-            self._scroll_bottom += 15.0
-
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds.
-        margin_left, margin_right, margin_bottom, margin_top = (
-            get_screen_margins(scale)
-            if uiscale is bui.UIScale.SMALL
-            else (0.0, 0.0, 0.0, 0.0)
-        )
-
-        # In small ui we also extend the scroll's top edge all the way
-        # up to the top of the screen; soft blobs then keep our title
-        # legible over any content scrolled up there. Content gets
-        # padded to stay clear of the faded areas.
-        top_extend = (
-            (0.5 * self._height + 0.5 * (screensize[1] / scale))
-            - (self._scroll_bottom + self._scroll_height)
-            + margin_top
-            if uiscale is bui.UIScale.SMALL
-            else 0.0
-        )
-
-        # Extra padding above and below our content so the soft blobs
-        # fading things out at the screen's top and bottom edges don't
-        # eat into it.
-        top_pad = 15.0 if uiscale is bui.UIScale.SMALL else 0.0
-        bottom_pad = (
-            50.0 + margin_bottom if uiscale is bui.UIScale.SMALL else 0.0
-        )
-
-        # Total dead space above our content within the subcontainer
-        # (used by our layout code).
-        self._content_top_offs = top_extend + top_pad
-
-        self._sub_width = 660.0
-        self._sub_height = 360.0 + self._content_top_offs + bottom_pad
-
-        super().__init__(
-            root_widget=bui.containerwidget(
-                size=(self._width, self._height),
-                scale=scale,
-                toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
-                ),
-            ),
+        auxiliary_style: bool = True,
+        uiopenstateid: str | None = None,
+        suppress_win_extra_type_warning: bool = False,
+        layout: bacommon.docui.v2.WindowLayout | None = None,
+    ) -> DocUIWindow:
+        win = super().create_window(
+            request,
             transition=transition,
             origin_widget=origin_widget,
-            # We're affected by screen size only at small ui-scale.
-            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
+            auxiliary_style=auxiliary_style,
+            uiopenstateid=uiopenstateid,
+            suppress_win_extra_type_warning=suppress_win_extra_type_warning,
+            layout=layout,
+        )
+        _TouchEditing.hold_for(win)
+        return win
+
+    @override
+    def restore(
+        self,
+        win: DocUIWindow,
+        *,
+        last_response: DocUIResponse | None,
+        has_had_response: bool,
+    ) -> DocUIWindow:
+        win = super().restore(
+            win, last_response=last_response, has_had_response=has_had_response
+        )
+        _TouchEditing.hold_for(win)
+        return win
+
+    @override
+    def fulfill_route(self, route: AnyTouchscreenRoute) -> DocUIResponse:
+        match route:
+            case Root():
+                return _page()
+            case _:
+                assert_never(route)
+
+    @override
+    def run_local_action(
+        self, action: AnyTouchscreenLocalAction, context: DocUILocalAction
+    ) -> None:
+        match action:
+            case ApplySetting():
+                _apply_setting(context, commit=action.commit)
+            case Reset():
+                self._reset(context)
+            case _:
+                assert_never(action)
+
+    def _reset(self, context: DocUILocalAction) -> None:
+        cfg = bui.app.config
+        for key in _RESET_KEYS:
+            cfg.pop(key, None)
+        cfg.apply_and_commit()
+
+        # Re-render so the page shows the defaults we just went back to.
+        window = context.window
+        if not window.locked:
+            self.replace(window, Root().request(), is_refresh=True)
+
+
+class _TouchEditing:
+    """Keeps the touch controls in editing mode while our windows live.
+
+    Counted rather than a plain on/off: during navigation a new window
+    can be created before the one it replaces has died, and the old
+    one's cleanup must not turn editing off under the new one.
+    """
+
+    _holders = 0
+
+    @classmethod
+    def hold_for(cls, win: DocUIWindow) -> None:
+        """Keep editing on for as long as ``win`` lives."""
+        # pylint: disable=cyclic-import
+        import bascenev1 as bs
+
+        cls._holders += 1
+        if cls._holders == 1:
+            bs.set_touchscreen_editing(True)
+        weakref.finalize(win, cls._release)
+
+    @classmethod
+    def _release(cls) -> None:
+        # pylint: disable=cyclic-import
+        import bascenev1 as bs
+
+        cls._holders = max(0, cls._holders - 1)
+        if cls._holders == 0:
+            bs.set_touchscreen_editing(False)
+
+
+def _band_text(
+    text: LangStrSpec,
+    y: float,
+    *,
+    scale: float,
+    color: tuple[float, float, float, float],
+    flatness: float | None = None,
+) -> dui2.Text:
+    return dui2.Text(
+        text=text,
+        position=(0, y),
+        size=(560, 34),
+        scale=scale,
+        color=color,
+        flatness=flatness,
+    )
+
+
+def _page() -> dui2.Response:
+    """Build the page (called in a background thread)."""
+    config = bui.app.config
+    tstate = TouchscreenState
+
+    def _enum_from_config[E: Enum](etype: type[E], key: str, default: E) -> E:
+        try:
+            return etype(config.get(key, default.value))
+        except ValueError:
+            return default
+
+    state = TouchscreenState(
+        movement=_enum_from_config(
+            MovementType, _MOVEMENT_KEY, MovementType.SWIPE
+        ),
+        movement_scale=float(config.resolve(_MOVEMENT_SCALE_KEY)),
+        actions=_enum_from_config(ActionType, _ACTIONS_KEY, ActionType.BUTTONS),
+        actions_scale=float(config.resolve(_ACTIONS_SCALE_KEY)),
+        swipe_hidden=bool(config.resolve(_SWIPE_HIDDEN_KEY)),
+    )
+    apply = ApplySetting().local(default_sound=False)
+    apply_drag = ApplySetting(commit=False).local(default_sound=False)
+
+    def _scale_row(
+        field: Callable[[TouchscreenState], float], label: LangStrSpec
+    ) -> bacommon.docui.v2.SliderRow:
+        return tstate.slider_row(
+            field,
+            min_value=0.1,
+            max_value=4.0,
+            increment=0.1,
+            decimals=1,
+            label=label,
+            on_drag=apply_drag,
+            drag_interval=_SCALE_DRAG_INTERVAL,
+            on_change=apply,
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-        else:
-            btn = bui.buttonwidget(
-                parent=self._root_widget,
-                position=(55, yoffs - 59),
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
-                scale=0.8,
-                on_activate_call=self.main_window_back,
-                autoselect=True,
-            )
-            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
-                self._scroll_bottom - margin_bottom,
+    rows: list[dui2.Row] = [
+        replace(
+            tstate.choice_row(
+                lambda s: s.movement,
+                choice_label=_movement_label,
+                label=_tsstrs.movement.spec,
+                on_change=apply,
             ),
-            size=(
-                self._scroll_width + margin_left + margin_right,
-                self._scroll_height + margin_bottom + top_extend,
-            ),
-            highlight=False,
-            border_opacity=0.4,
-            center_small_content=True,
-            center_small_content_horizontally=True,
-            claims_left_right=True,
-            selection_loops_to_parent=True,
-        )
-
-        # Our scroll area extends to the screen edges; these soft blobs
-        # (plus the title and drag-note being drawn after the scroll
-        # area) keep those legible over content scrolled near them.
-        # Note that we intentionally use the original
-        # un-margin-extended scroll geometry here so the blobs coincide
-        # with that text, which doesn't move when we extend out into
-        # screen margins.
-        if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                # Nudge the blobs up so their most-opaque core covers
-                # our title area.
-                yoffs_extra=30.0,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                center=True,
-                # Nudge the blobs up a bit so their most-opaque core
-                # covers our drag-note area.
-                yoffs_extra=15.0,
-            )
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (53 if uiscale is bui.UIScale.SMALL else 35),
-            ),
-            size=(0, 0),
-            text=_tsstrs.title,
-            color=bui.app.ui_v1.title_color,
-            maxwidth=280,
-            h_align='center',
-            v_align='center',
-        )
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                (
-                    self._scroll_bottom + 30
-                    if uiscale is bui.UIScale.SMALL
-                    else self._scroll_bottom - 20
+            # How to reposition the controls (which are live behind
+            # us), and a word of encouragement for swipe controls.
+            header_height=80.0,
+            header_decorations_center=[
+                _band_text(
+                    _tsstrs.drag_controls.spec,
+                    22.0,
+                    scale=0.65,
+                    color=(1.0, 1.0, 1.0, 0.4),
                 ),
-            ),
-            size=(0, 0),
-            h_align='center',
-            v_align='center',
-            text=_tsstrs.drag_controls,
-            maxwidth=self._scroll_width * 0.8,
-            scale=0.65,
-            color=(1, 1, 1, 0.4),
+                _band_text(
+                    _tsstrs.swipe_info.spec,
+                    -12.0,
+                    scale=0.55,
+                    color=(0.0, 0.9, 0.1, 0.7),
+                    flatness=1.0,
+                ),
+            ],
+        ),
+        _scale_row(
+            lambda s: s.movement_scale, _tsstrs.movement_control_scale.spec
+        ),
+        tstate.choice_row(
+            lambda s: s.actions,
+            choice_label=_actions_label,
+            label=_tsstrs.actions.spec,
+            on_change=apply,
+        ),
+        _scale_row(
+            lambda s: s.actions_scale, _tsstrs.action_control_scale.spec
+        ),
+        tstate.checkbox_row(
+            lambda s: s.swipe_hidden,
+            label=_tsstrs.swipe_controls_hidden.spec,
+            on_change=apply,
+        ),
+    ]
+    # A lone, deliberately narrow button centered under the controls
+    # (a fill row would stretch it across the column).
+    rows.append(
+        dui2.ButtonRow(
+            center_content=True,
+            spacing_top=15.0,
+            padding_top=8.0,
+            padding_bottom=6.0,
+            buttons=[
+                section_button(
+                    _commonassets.strings.actions.reset.spec,
+                    Reset().local(),
+                    size=SectionButtonSize.MEDIUM,
+                )
+            ],
         )
+    )
+    return dui2.Response(
+        page=dui2.Page(
+            title=_tsstrs.title.spec,
+            rows=rows,
+            state=state.encode(),
+            center_vertically=True,
+        )
+    )
 
-        self._subcontainer = bui.containerwidget(
-            parent=self._scrollwidget,
-            size=(self._sub_width, self._sub_height),
-            background=False,
-            claims_left_right=True,
-            selection_loops_to_parent=True,
-        )
-        self._build_gui()
 
-    @override
-    def get_main_window_state(self) -> bui.MainWindowState:
-        # Support recreating our window for back/refresh purposes.
-        cls = type(self)
-        return bui.BasicMainWindowState(
-            create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
-            )
-        )
+def _movement_label(value: MovementType) -> LangStrSpec:
+    match value:
+        case MovementType.JOYSTICK:
+            return _tsstrs.joystick.spec
+        case MovementType.SWIPE:
+            return _tsstrs.swipe.spec
+        case _:
+            assert_never(value)
 
-    @override
-    def main_window_should_preserve_selection(self) -> bool:
-        # TODO: Wire this up.
-        return False
 
-    def _build_gui(self) -> None:
-        from bauiv1lib.config import ConfigSlider, ConfigCheckBox
-        from bauiv1lib.radiogroup import make_radio_group
+def _actions_label(value: ActionType) -> LangStrSpec:
+    match value:
+        case ActionType.BUTTONS:
+            return _tsstrs.buttons.spec
+        case ActionType.SWIPE:
+            return _tsstrs.swipe.spec
+        case _:
+            assert_never(value)
 
-        # Clear anything already there.
-        children = self._subcontainer.get_children()
-        for child in children:
-            child.delete()
-        h = 30
-        hoffs = 100
-        hoffs2 = 70
-        hoffs3 = 320
-        # (start below any top-edge extension/padding so content sits
-        # clear of the soft blobs fading things out up there).
-        v = self._sub_height - self._content_top_offs - 85
-        clr = (0.8, 0.8, 0.8, 1.0)
-        clr2 = (0.8, 0.8, 0.8)
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(self._sub_width * 0.5, v + 63),
-            size=(0, 0),
-            text=_tsstrs.swipe_info,
-            flatness=1.0,
-            color=(0, 0.9, 0.1, 0.7),
-            maxwidth=self._sub_width * 0.9,
-            scale=0.55,
-            h_align='center',
-            v_align='center',
-        )
-        cur_val = bui.app.config.get('Touch Movement Control Type', 'swipe')
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(h, v - 2),
-            size=(0, 30),
-            text=_tsstrs.movement,
-            maxwidth=190,
-            color=clr,
-            v_align='center',
-        )
-        move_joystick_cb = bui.checkboxwidget(
-            parent=self._subcontainer,
-            position=(h + hoffs + 220, v),
-            size=(170, 30),
-            text=_tsstrs.joystick,
-            maxwidth=100,
-            textcolor=clr2,
-            scale=0.9,
-        )
-        move_swipe_cb = bui.checkboxwidget(
-            parent=self._subcontainer,
-            position=(h + hoffs + 357, v),
-            size=(170, 30),
-            text=_tsstrs.swipe,
-            maxwidth=100,
-            textcolor=clr2,
-            value=False,
-            scale=0.9,
-        )
-        make_radio_group(
-            (move_joystick_cb, move_swipe_cb),
-            ('joystick', 'swipe'),
-            cur_val,
-            self._movement_changed,
-        )
-        v -= 50
-        move_scale = ConfigSlider(
-            parent=self._subcontainer,
-            position=(h, v),
-            xoffset=hoffs2 + 65,
-            width=200.0,
-            # Nothing audible accompanies an apply and the effect is
-            # visible on screen, so track a drag closely.
-            drag_apply_interval=0.1,
-            configkey='Touch Controls Scale Movement',
-            displayname=_tsstrs.movement_control_scale,
-            minval=0.1,
-            maxval=4.0,
-            increment=0.1,
-        )
-        v -= 50
-        cur_val = bui.app.config.get('Touch Action Control Type', 'buttons')
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(h, v - 2),
-            size=(0, 30),
-            text=_tsstrs.actions,
-            maxwidth=190,
-            color=clr,
-            v_align='center',
-        )
-        act_buttons_cb = bui.checkboxwidget(
-            parent=self._subcontainer,
-            position=(h + hoffs + 220, v),
-            size=(170, 30),
-            text=_tsstrs.buttons,
-            maxwidth=100,
-            textcolor=clr2,
-            scale=0.9,
-        )
-        act_swipe_cb = bui.checkboxwidget(
-            parent=self._subcontainer,
-            position=(h + hoffs + 357, v),
-            size=(170, 30),
-            text=_tsstrs.swipe,
-            maxwidth=100,
-            textcolor=clr2,
-            scale=0.9,
-        )
-        make_radio_group(
-            (act_buttons_cb, act_swipe_cb),
-            ('buttons', 'swipe'),
-            cur_val,
-            self._actions_changed,
-        )
-        v -= 50
-        act_scale = ConfigSlider(
-            parent=self._subcontainer,
-            position=(h, v),
-            xoffset=hoffs2 + 65,
-            width=200.0,
-            drag_apply_interval=0.1,
-            configkey='Touch Controls Scale Actions',
-            displayname=_tsstrs.action_control_scale,
-            minval=0.1,
-            maxval=4.0,
-            increment=0.1,
-        )
 
-        v -= 50
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(h, v - 2),
-            size=(0, 30),
-            text=_tsstrs.swipe_controls_hidden,
-            maxwidth=190,
-            color=clr,
-            v_align='center',
-        )
-
-        hide_swipe_cb = ConfigCheckBox(
-            parent=self._subcontainer,
-            position=(h + hoffs3, v),
-            size=(100, 30),
-            maxwidth=400,
-            configkey='Touch Controls Swipe Hidden',
-            displayname='',
-        )
-        v -= 65
-
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            position=(self._sub_width * 0.5 - 70, v),
-            size=(170, 60),
-            label=_commonassets.strings.actions.reset,
-            scale=0.75,
-            on_activate_call=self._reset,
-            autoselect=True,
-        )
-
-        # Wire each slider's vertical neighbors by hand. Left to itself,
-        # selection moving between a slider and a radio row lands on that
-        # row's 'swipe' option rather than its first one: CheckBoxWidget
-        # reports its center at 20% across rather than the middle, which
-        # puts 'swipe' nearer a slider's center than the option before it.
-        bui.widget(
-            edit=move_scale.slider,
-            up_widget=move_joystick_cb,
-            down_widget=act_buttons_cb,
-        )
-        bui.widget(edit=move_joystick_cb, down_widget=move_scale.slider)
-        bui.widget(edit=act_swipe_cb, up_widget=move_scale.slider)
-        bui.widget(edit=act_scale.slider, up_widget=act_buttons_cb)
-        bui.widget(edit=act_buttons_cb, down_widget=act_scale.slider)
-        bui.widget(edit=hide_swipe_cb.widget, up_widget=act_scale.slider)
-
-    def _actions_changed(self, v: str) -> None:
-        cfg = bui.app.config
-        cfg['Touch Action Control Type'] = v
+def _apply_setting(context: DocUILocalAction, *, commit: bool) -> None:
+    """Write the changed setting to the config."""
+    state = context.state(TouchscreenState)
+    if context.trigger is None or state is None:
+        return
+    key = _CONFIG_KEYS.get(context.trigger)
+    if key is None:
+        return
+    # The wire form of the value is exactly the config form.
+    cfg = bui.app.config
+    cfg[key] = state.encode()[context.trigger]
+    if commit:
         cfg.apply_and_commit()
-
-    def _movement_changed(self, v: str) -> None:
-        cfg = bui.app.config
-        cfg['Touch Movement Control Type'] = v
-        cfg.apply_and_commit()
-
-    def _reset(self) -> None:
-        cfg = bui.app.config
-        cfgkeys = [
-            'Touch Movement Control Type',
-            'Touch Action Control Type',
-            'Touch Controls Scale',
-            'Touch Controls Scale Movement',
-            'Touch Controls Scale Actions',
-            'Touch Controls Swipe Hidden',
-            'Touch DPad X',
-            'Touch DPad Y',
-            'Touch Buttons X',
-            'Touch Buttons Y',
-        ]
-        for cfgkey in cfgkeys:
-            if cfgkey in cfg:
-                del cfg[cfgkey]
-        cfg.apply_and_commit()
-        bui.apptimer(0, self._build_gui)
+    else:
+        cfg.apply()

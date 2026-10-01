@@ -21,6 +21,20 @@ from bauiv1lib.utils import (
 )
 from bauiv1lib.connectivity import wait_for_connectivity
 
+#: Our root scale at medium ui-scale (large derives from it).
+_MEDIUM_SCALE = 1.05
+
+#: Our back/close button's center outside small ui: x from our left
+#: edge, y relative to our layout's top (yoffs). Where it has always
+#: sat; the title centers on it vertically.
+_BACK_CENTER = (75.0, -29.6)
+
+#: Doc-ui windows' medium root scale over ours. Multiplying a doc-ui
+#: size (button scale, title scale) by this gives the size that looks
+#: the same on screen as theirs at medium -- and at large too, since our
+#: large root scale shrinks from medium by doc-ui's ratio.
+_DOCUI_SCALE_RATIO = 0.9 / _MEDIUM_SCALE
+
 
 class AccountSettingsWindow(bui.MainWindow):
     """Window for account related functionality."""
@@ -71,7 +85,7 @@ class AccountSettingsWindow(bui.MainWindow):
         self._height = (
             600
             if uiscale is bui.UIScale.SMALL
-            else 430 if uiscale is bui.UIScale.MEDIUM else 490
+            else 490 if uiscale is bui.UIScale.MEDIUM else 539
         )
 
         # Do some fancy math to fill all available screen area up to the
@@ -82,7 +96,13 @@ class AccountSettingsWindow(bui.MainWindow):
         scale = (
             1.9
             if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else (
+                _MEDIUM_SCALE
+                if uiscale is bui.UIScale.MEDIUM
+                # Large shrinks from medium by doc-ui's own ratio, so
+                # our chrome stays consistent with doc-ui windows.
+                else _MEDIUM_SCALE * 0.65 / 0.9
+            )
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -159,13 +179,20 @@ class AccountSettingsWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # Sized to match doc-ui windows' back/close button on screen
+            # (scale 0.88 under their root scale), keeping the center it
+            # has always had.
+            back_size = (50.0, 50.0) if auxiliary_style else (60.0, 55.0)
+            back_scale = 0.88 * _DOCUI_SCALE_RATIO
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(51, yoffs - 52.0),
-                size=(60, 56),
-                scale=0.8,
-                text_scale=1.2,
+                position=(
+                    _BACK_CENTER[0] - 0.5 * back_size[0] * back_scale,
+                    yoffs + _BACK_CENTER[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
@@ -216,8 +243,10 @@ class AccountSettingsWindow(bui.MainWindow):
                 self._scroll_height,
             )
 
-        titleyoffs = -45.0 if uiscale is bui.UIScale.SMALL else -28.0
-        titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
+        # Outside small ui, centered on the back button and sized like
+        # doc-ui windows' titles on screen (1.0 under their root scale).
+        titleyoffs = -45.0 if uiscale is bui.UIScale.SMALL else _BACK_CENTER[1]
+        titlescale = 0.7 if uiscale is bui.UIScale.SMALL else _DOCUI_SCALE_RATIO
         bui.textwidget(
             parent=self._root_widget,
             position=(

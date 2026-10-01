@@ -37,6 +37,20 @@ namespace ballistica::ui_v1 {
 
 const float kClearMargin{13.0f};
 
+// Disabled text's alpha, as a multiple of its normal alpha, and its grey,
+// as a multiple of its color's luminance (see Draw()). Drawn opaque:
+// partial transparency lets the backing's hue tint the grey.
+const float kDisabledTextAlphaScale{1.0f};
+const float kDisabledTextGreyScale{0.5f};
+
+// Disabled text's shadow strength, in place of its own: light, just
+// enough to keep dim grey legible against busy backings.
+const float kDisabledTextShadow{0.2f};
+
+// Where the carat bar is drawn relative to GetCaratPts() output.
+const float kCaratDrawOffsetX{4.0f};
+const float kCaratDrawOffsetY{17.0f};
+
 TextWidget::TextWidget() {
   // We always show our clear button except for in android when we don't
   // have a touchscreen (android-tv type situations).
@@ -53,15 +67,43 @@ TextWidget::TextWidget() {
 
 TextWidget::~TextWidget() = default;
 
-void TextWidget::SetOnReturnPressCall(PyObject* call_tuple) {
-  on_return_press_call_ = Object::New<base::PythonContextCall>(call_tuple);
+void TextWidget::SetOnSubmitCall(PyObject* call_tuple) {
+  on_submit_call_ = Object::New<base::PythonContextCall>(call_tuple);
 }
 
-void TextWidget::InvokeReturnPress() {
-  if (auto* call = on_return_press_call_.get()) {
+void TextWidget::InvokeSubmit() {
+  // Submitting implies applying.
+  ApplyText();
+  if (auto* call = on_submit_call_.get()) {
     // Schedule to run right after any current UI traversal, same as
     // an inline-editing enter press.
     call->ScheduleInUIOperation();
+  }
+}
+
+void TextWidget::SetOnApplyCall(PyObject* call_tuple) {
+  on_apply_call_ = Object::New<base::PythonContextCall>(call_tuple);
+}
+
+void TextWidget::ApplyText() {
+  if (text_raw_ == last_applied_text_) {
+    return;
+  }
+  last_applied_text_ = text_raw_;
+  if (auto* call = on_apply_call_.get()) {
+    // Runs deferred (right after any current UI traversal), so hand
+    // it the value as of now; we may be gone or changed by then.
+    auto args = PythonRef::Stolen(Py_BuildValue("(s)", text_raw_.c_str()));
+    call->ScheduleInUIOperation(args);
+  }
+}
+
+void TextWidget::SetSelected(bool s, SelectionCause cause) {
+  bool was_selected = selected();
+  Widget::SetSelected(s, cause);
+  // Focus leaving us ends any inline editing.
+  if (was_selected && !s && editable_) {
+    ApplyText();
   }
 }
 
@@ -94,11 +136,19 @@ void TextWidget::SetEditable(bool e) {
 }
 
 void TextWidget::SetEnabled(bool val) {
+  if (val == enabled_) {
+    return;
+  }
   enabled_ = val;
 
-  // Deselect us if we're selected.
-  if (!enabled_ && selected() && parent_widget()) {
-    parent_widget()->SelectWidget(nullptr);
+  // We stay selectable while disabled (see IsSelectable()); but any
+  // inline editing in progress ends here, just as losing focus ends it.
+  if (!enabled_) {
+    clear_pressed_ = pressed_ = pressed_activate_ = false;
+    mouse_over_ = clear_mouse_over_ = false;
+    if (editable_ && selected()) {
+      ApplyText();
+    }
   }
 }
 
@@ -293,7 +343,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
 
     // Clear button.
-    if (editable() && (IsHierarchySelected() || always_show_carat_)
+    if (editable() && enabled_ && (IsHierarchySelected() || always_show_carat_)
         && !text_raw_.empty() && implicit_clear_button_
         && allow_clear_button_) {
       base::SimpleComponent c(pass);
@@ -328,42 +378,9 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   float x_offset, y_offset;
-
   base::TextMesh::HAlign align_h;
   base::TextMesh::VAlign align_v;
-
-  switch (alignment_h_) {
-    case HAlign::kLeft:
-      x_offset = l;
-      align_h = base::TextMesh::HAlign::kLeft;
-      break;
-    case HAlign::kCenter:
-      x_offset = (l + r) * 0.5f;
-      align_h = base::TextMesh::HAlign::kCenter;
-      break;
-    case HAlign::kRight:
-      x_offset = r;
-      align_h = base::TextMesh::HAlign::kRight;
-      break;
-    default:
-      throw Exception("Invalid HAlign");
-  }
-  switch (alignment_v_) {
-    case VAlign::kTop:
-      y_offset = t;
-      align_v = base::TextMesh::VAlign::kTop;
-      break;
-    case VAlign::kCenter:
-      y_offset = (b + t) * 0.5f;
-      align_v = base::TextMesh::VAlign::kCenter;
-      break;
-    case VAlign::kBottom:
-      y_offset = b;
-      align_v = base::TextMesh::VAlign::kBottom;
-      break;
-    default:
-      throw Exception("Invalid VAlign");
-  }
+  CalcTextOrigin_(l, r, b, t, &x_offset, &y_offset, &align_h, &align_v);
 
   if (transition_in_progress > 0
       && transition_type_ == TransitionType::kInLeft) {
@@ -394,23 +411,12 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // FIXME: doesnt support big.
       text_height_ = g_base->text_graphics->GetStringHeight(text_translated_);
       text_group_dirty_ = false;
+      WarmCaratMeasures_();
     }
   }
 
-  // Calc scaling factors due to max width/height restrictions.
-  float max_width_scale = 1.0f;
-  float max_height_scale = 1.0f;
-  if (max_width_ > 0.0f && text_width_ > 0.0
-      && ((text_width_ * center_scale_) > max_width_)) {
-    max_width_scale = max_width_ / (text_width_ * center_scale_);
-  }
-  // Currently cant do max-height with big.
-  assert(max_height_ <= 0.0 || !big_);
-  if (max_height_ > 0.0f && text_height_ > 0.0
-      && ((text_height_ * center_scale_ * max_width_scale) > max_height_)) {
-    max_height_scale =
-        max_height_ / (text_height_ * center_scale_ * max_width_scale);
-  }
+  float max_width_scale, max_height_scale;
+  CalcMaxScales_(&max_width_scale, &max_height_scale);
 
   DoDrawText_(pass, x_offset, y_offset, max_width_scale, max_height_scale);
 
@@ -434,6 +440,117 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 }
 
+void TextWidget::CalcTextOrigin_(float l, float r, float b, float t,
+                                 float* x_offset, float* y_offset,
+                                 base::TextMesh::HAlign* align_h,
+                                 base::TextMesh::VAlign* align_v) const {
+  switch (alignment_h_) {
+    case HAlign::kLeft:
+      *x_offset = l;
+      *align_h = base::TextMesh::HAlign::kLeft;
+      break;
+    case HAlign::kCenter:
+      *x_offset = (l + r) * 0.5f;
+      *align_h = base::TextMesh::HAlign::kCenter;
+      break;
+    case HAlign::kRight:
+      *x_offset = r;
+      *align_h = base::TextMesh::HAlign::kRight;
+      break;
+    default:
+      throw Exception("Invalid HAlign");
+  }
+  switch (alignment_v_) {
+    case VAlign::kTop:
+      *y_offset = t;
+      *align_v = base::TextMesh::VAlign::kTop;
+      break;
+    case VAlign::kCenter:
+      *y_offset = (b + t) * 0.5f;
+      *align_v = base::TextMesh::VAlign::kCenter;
+      break;
+    case VAlign::kBottom:
+      *y_offset = b;
+      *align_v = base::TextMesh::VAlign::kBottom;
+      break;
+    default:
+      throw Exception("Invalid VAlign");
+  }
+}
+
+void TextWidget::CalcMaxScales_(float* max_width_scale,
+                                float* max_height_scale) const {
+  // Scaling factors due to max width/height restrictions.
+  *max_width_scale = 1.0f;
+  *max_height_scale = 1.0f;
+  if (max_width_ > 0.0f && text_width_ > 0.0
+      && ((text_width_ * center_scale_) > max_width_)) {
+    *max_width_scale = max_width_ / (text_width_ * center_scale_);
+  }
+  // Currently cant do max-height with big.
+  assert(max_height_ <= 0.0 || !big_);
+  if (max_height_ > 0.0f && text_height_ > 0.0
+      && ((text_height_ * center_scale_ * *max_width_scale) > max_height_)) {
+    *max_height_scale =
+        max_height_ / (text_height_ * center_scale_ * *max_width_scale);
+  }
+}
+
+auto TextWidget::CaratDisplayText_() const -> const std::string& {
+  // In password mode, carat positions must be computed against the
+  // masked display string (same char count; different glyph widths).
+  return password_ ? text_translated_ : text_raw_;
+}
+
+void TextWidget::WarmCaratMeasures_() {
+  // Get click-to-position measures warming for inline-edited text so
+  // they're ready before any click (see CaratPositionAtPoint_()).
+  if (!editable() || ShouldUseStringEditor_()) {
+    return;
+  }
+  g_base->text_graphics->WarmUpCaratMeasuresAsync(CaratDisplayText_(), big_);
+}
+
+auto TextWidget::CaratPositionAtPoint_(float x, float y) -> std::optional<int> {
+  // Only meaningful once we've built our text (which also gives us the
+  // widths our max-scales key off of).
+  if (!text_group_.exists() || text_group_dirty_) {
+    return {};
+  }
+
+  // Undo the draw-time transform the carat is drawn with (see Draw()
+  // and DoDrawCarat_()); we skip the tilt and transition offsets,
+  // which are small and transient.
+  float x_offset, y_offset;
+  base::TextMesh::HAlign align_h;
+  base::TextMesh::VAlign align_v;
+  CalcTextOrigin_(padding_, width_, padding_, height_, &x_offset, &y_offset,
+                  &align_h, &align_v);
+  float max_width_scale, max_height_scale;
+  CalcMaxScales_(&max_width_scale, &max_height_scale);
+  float scale{max_width_scale * max_height_scale};
+  if (scale <= 0.0f) {
+    return {};
+  }
+  const std::string& text{CaratDisplayText_()};
+  auto pos = text_group_->GetCaratPosAtPoint(
+      text, align_h, align_v, (x - x_offset) / scale - kCaratDrawOffsetX,
+      (y - y_offset) / scale - kCaratDrawOffsetY,
+      base::TextGroup::CaratHitMode::kNearestBoundary);
+  if (!pos.has_value()) {
+    // Some OS-span measure is still cold. WarmCaratMeasures_() should
+    // generally have beaten any click here, so we're curious whether
+    // this ever happens in practice. (Note: debug builds deliberately
+    // report some warm spans cold; expect this there occasionally.)
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kWarning, [&text] {
+      return "TextWidget: text measures not ready for click-to-position;"
+             " ignoring (len "
+             + std::to_string(Utils::UTF8StringLength(text.c_str())) + ").";
+    });
+  }
+  return pos;
+}
+
 void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
                              float y_offset, float max_width_scale,
                              float max_height_scale) {
@@ -445,7 +562,18 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     color_mult *= draw_controller->GetDrawBrightness(current_time);
   }
 
-  float fin_a = enabled_ ? color_a_ : 0.4f * color_a_;
+  // Disabled text goes grey, scaled from its own color's luminance (as
+  // disabled buttons' bodies do, keeping relative brightness between
+  // text elements). (It also draws flat and shadowless; see below.)
+  float fin_a = enabled_ ? color_a_ : kDisabledTextAlphaScale * color_a_;
+  float base_r{color_r_};
+  float base_g{color_g_};
+  float base_b{color_b_};
+  if (!enabled_) {
+    base_r = base_g = base_b =
+        kDisabledTextGreyScale
+        * (0.3f * color_r_ + 0.59f * color_g_ + 0.11f * color_b_);
+  }
 
   base::SimpleComponent c(pass);
   c.SetTransparent(true);
@@ -456,9 +584,9 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
   } else if (always_highlight_ && selected()) {
     color_mult *= 1.4f;
   }
-  float fin_color_r = color_r_ * color_mult;
-  float fin_color_g = color_g_ * color_mult;
-  float fin_color_b = color_b_ * color_mult;
+  float fin_color_r = base_r * color_mult;
+  float fin_color_g = base_g * color_mult;
+  float fin_color_b = base_b * color_mult;
 
   int elem_count = text_group_->GetElementCount();
   for (int e = 0; e < elem_count; e++) {
@@ -469,9 +597,13 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     }
     c.SetTexture(t2);
     c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
+    // Disabled text is drawn flat with a fixed light shadow (see
+    // kDisabledTextShadow) rather than its own: a full shadow and bevel
+    // stand out oddly against dim grey, but a little shadow keeps it
+    // legible.
     c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
                 -0.004f * text_group_->GetElementVScale(e), 0.0f,
-                shadow_ * color_a_);
+                (enabled_ ? shadow_ : kDisabledTextShadow) * color_a_);
     // Premultiply rgb by the (faded/disabled) alpha for premultiplied textures
     // so semi-transparent text composites 'over' under premult blend instead
     // of showing full-brightness rgb. Straight-alpha textures keep raw rgb.
@@ -484,7 +616,8 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     }
 
     // In VR, draw everything flat because it's generally harder to read.
-    if (g_core->vr_mode()) {
+    // (Disabled text is flat too; see the shadow above.)
+    if (g_core->vr_mode() || !enabled_) {
       c.SetFlatness(text_group_->GetElementMaxFlatness(e));
     } else {
       c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), flatness_));
@@ -515,8 +648,9 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
   // If we're actively being inline-edited, report ourself as the app's
   // live text-editing target (drives OS IME positioning/etc). Note this
   // excludes the decorative always_show_carat_ case - only a genuinely
-  // focused widget receives text input.
-  if (editable() && IsHierarchySelected() && !ShouldUseStringEditor_()) {
+  // focused widget receives text input (and a disabled one doesn't).
+  if (editable() && enabled_ && IsHierarchySelected()
+      && !ShouldUseStringEditor_()) {
     float l{0.0f}, b{0.0f}, r{width_}, t{height_};
     WidgetPointToScreen(&l, &b);
     WidgetPointToScreen(&r, &t);
@@ -528,7 +662,7 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
   millisecs_t current_time{pass->frame_def()->display_time_millisecs()};
   if (IsHierarchySelected() || always_show_carat_) {
     bool show_cursor = true;
-    if (ShouldUseStringEditor_()) {
+    if (ShouldUseStringEditor_() || !enabled_) {
       show_cursor = false;
     }
     if (show_cursor
@@ -539,12 +673,10 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         carat_position_ = str_size;
       }
       float h, v;
-      // In password mode, carat positions must be computed against the
-      // masked display string (same char count; different glyph widths).
       // (On false, some OS-span measure is still warming in the
       // background; skip the carat this frame - it blinks anyway.)
-      if (text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
-                                   align_h, align_v, carat_position_, &h, &v)) {
+      if (text_group_->GetCaratPts(CaratDisplayText_(), align_h, align_v,
+                                   carat_position_, &h, &v)) {
         base::SimpleComponent c(pass);
         c.SetPremultiplied(true);
         c.SetTransparent(true);
@@ -554,7 +686,7 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
           c.Translate(x_offset, y_offset);
           float max_width_height_scale = max_width_scale * max_height_scale;
           c.Scale(max_width_height_scale, max_width_height_scale);
-          c.Translate(h + 4, v + 17.0f);
+          c.Translate(h + kCaratDrawOffsetX, v + kCaratDrawOffsetY);
           c.Scale(6, 27);
           c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
           c.SetColor(1, 1, 1, 0);
@@ -655,6 +787,7 @@ void TextWidget::SetText(const std::string& text_in_raw) {
   }
   text_translation_dirty_ = true;
   text_raw_ = text_in;
+  last_applied_text_ = text_in;
   carat_position_ = 9999;
   PrefetchTextMeasures_();
 }
@@ -681,6 +814,14 @@ auto TextWidget::GetHeight() -> float {
 }
 
 void TextWidget::Activate() {
+  // Disabled: selectable, but nothing to activate. Where activating
+  // would have brought up an editor, say no audibly.
+  if (!enabled_) {
+    if (editable_ && ShouldUseStringEditor_()) {
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
+    }
+    return;
+  }
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
@@ -781,7 +922,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   }
 
   // If we're doing inline editing, handle clipboard paste.
-  if (editable() && !ShouldUseStringEditor_()
+  if (editable() && enabled_ && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
     if (g_base->ClipboardIsSupported()) {
       auto weak_this{Object::WeakRef<TextWidget>(this)};
@@ -796,6 +937,19 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               }
             }
           });
+    }
+  }
+
+  // Disabled inline-edited text claims keys exactly as it would when
+  // enabled (so navigation around it never changes) but acts on none.
+  if (editable() && !enabled_ && m.has_keysym && !ShouldUseStringEditor_()) {
+    switch (m.keysym.sym) {
+      case BAK_UP:
+      case BAK_DOWN:
+      case BAK_TAB:
+        return false;
+      default:
+        return true;
     }
   }
 
@@ -820,7 +974,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {
-          if (auto* call = on_return_press_call_.get()) {
+          ApplyText();
+          if (auto* call = on_submit_call_.get()) {
             claimed = true;
             // Schedule this to run immediately after any current UI traversal.
             call->ScheduleInUIOperation();
@@ -875,7 +1030,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   }
   switch (m.type) {
     case base::WidgetMessage::Type::kTextInput: {
-      if (editable()) {
+      if (editable() && enabled_) {
         if (ShouldUseStringEditor_()) {
           // Normally we shouldn't be getting direct text input events in
           // situations where we're using string editors, but it still might
@@ -894,7 +1049,9 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
     case base::WidgetMessage::Type::kMouseMove: {
-      if (!IsSelectable()) {
+      // (No hover while disabled, as with ButtonWidget.)
+      if (!IsSelectable() || !enabled_) {
+        mouse_over_ = clear_mouse_over_ = false;
         return false;
       }
       float x{ScaleAdjustedX_(m.fval1)};
@@ -921,6 +1078,22 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       auto click_count = static_cast<int>(m.fval3);
 
+      // Disabled: a press still selects us (we stay selectable, so a tap
+      // should do what navigating to us does) but nothing more - no
+      // editor, carat, activation, or tap sound. We still claim the
+      // press, and thus its release.
+      if (!enabled_) {
+        if ((x >= (-left_overlap)) && (x < (width_ + right_overlap))
+            && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
+            && parent_widget()) {
+          GlobalSelect();
+          pressed_ = true;
+          pressed_activate_ = false;
+          return true;
+        }
+        return false;
+      }
+
       // See if a click is in our clear button.
       if (editable() && (IsHierarchySelected() || always_show_carat_)
           && !text_raw_.empty() && (x >= width_ - 35)
@@ -934,18 +1107,34 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))) {
         ContainerWidget* c = parent_widget();
         if (c && IsSelectable()) {
-          // In cases where we have a keyboard, this also sets that as
-          // the ui input device. If we don't, an on-screen keyboard will
-          // likely pop up for the current input-device.
-          // FIXME: may need to test/tweak this behavior for cases where
-          //  we pop up a UI dialog for text input..
-          if (editable()) {
+          // When a click starts inline editing and we have a keyboard,
+          // make that the ui input device, since it's about to be typed
+          // on. Note this also takes the ui out of mouse/touch mode
+          // (SetMainUIInputDevice() does that on any call), which turns
+          // selection glows back on - right for inline editing, where the
+          // glow and carat show where typing lands.
+          //
+          // Not when editing goes through a string-editor dialog: typing
+          // happens in the dialog, so pointing the ui at the keyboard
+          // buys nothing, and leaving touch mode would make a tapped
+          // field glow where no other tapped widget does. (Disabled
+          // fields never get here; see above.)
+          if (editable() && !ShouldUseStringEditor_()) {
             if (base::KeyboardInput* kb = g_base->input->keyboard_input()) {
               g_base->ui->SetMainUIInputDevice(kb);
             }
           }
           GlobalSelect();
           pressed_ = true;
+
+          // With inline editing, a click places the carat.
+          if (editable_ && !ShouldUseStringEditor_()) {
+            if (auto pos = CaratPositionAtPoint_(x, y)) {
+              carat_position_ = *pos;
+              last_carat_change_time_millisecs_ = static_cast<millisecs_t>(
+                  g_base->logic->display_time() * 1000.0);
+            }
+          }
 
           // Second click (or first if we want) puts us in
           // potentially-activating-mode.
@@ -980,6 +1169,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           carat_position_ = 0;
           text_group_dirty_ = true;
           g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          ApplyText();
         }
 
         return true;
@@ -1002,8 +1192,14 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                    && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
                    && !claimed) {
           if (m.type == base::WidgetMessage::Type::kMouseUp) {
-            // With dialog-editing, a click/tap brings up our editor.
-            InvokeStringEditor_();
+            // With dialog-editing, a click/tap brings up our editor
+            // (or, disabled, says no audibly).
+            if (enabled_) {
+              InvokeStringEditor_();
+            } else {
+              g_base->audio->SafePlayBuiltinSound(
+                  base::BuiltinSoundID::kAudioError);
+            }
           }
         }
 
@@ -1098,6 +1294,11 @@ auto TextWidget::TryGetTextWidth() -> std::optional<float> {
   // Empty while OS-span measures warm in the background (they get
   // kicked here if needed); callers should stay dirty and retry.
   return g_base->text_graphics->TryGetStringWidth(text_translated_, big_);
+}
+
+auto TextWidget::GetTextHeight() -> float {
+  UpdateTranslation_();
+  return g_base->text_graphics->GetStringHeight(text_translated_);
 }
 
 void TextWidget::OnLanguageChange() {

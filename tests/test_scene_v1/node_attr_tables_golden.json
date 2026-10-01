@@ -116,6 +116,10 @@
   [
    "gravity",
    "float-array"
+  ],
+  [
+   "legacy_spaz_limbs",
+   "bool"
   ]
  ],
  "sessionglobals": [
@@ -644,6 +648,10 @@
   [
    "in_world",
    "bool"
+  ],
+  [
+   "flash",
+   "bool"
   ]
  ],
  "terrain": [
@@ -1166,6 +1174,10 @@
   [
    "pickup_release_time_ms",
    "float"
+  ],
+  [
+   "spaz_def",
+   "spaz-def"
   ]
  ],
  "region": [
@@ -1259,6 +1271,58 @@
   ],
   [
    "showsubseconds",
+   "bool"
+  ]
+ ],
+ "localdisplay": [
+  [
+   "config",
+   "string"
+  ],
+  [
+   "visible",
+   "bool"
+  ]
+ ],
+ "depictiondisplay": [
+  [
+   "depiction",
+   "depiction"
+  ],
+  [
+   "position",
+   "float-array"
+  ],
+  [
+   "scale",
+   "float-array"
+  ],
+  [
+   "opacity",
+   "float"
+  ],
+  [
+   "attach",
+   "string"
+  ],
+  [
+   "h_align",
+   "string"
+  ],
+  [
+   "v_align",
+   "string"
+  ],
+  [
+   "vr_depth",
+   "float"
+  ],
+  [
+   "host_only",
+   "bool"
+  ],
+  [
+   "front",
    "bool"
   ]
  ]

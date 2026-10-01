@@ -465,17 +465,6 @@ void PlatformApple::ShowGameServiceUI(const std::string& show,
 // #endif
 // }
 
-auto PlatformApple::IsOSPlayingMusic() -> bool {
-#if BA_XCODE_BUILD
-  // FIXME - should look into doing this properly these days, or whether
-  // this is still needed at all.
-  return false;
-  // return base::AppleUtils::IsMusicPlaying();
-#else
-  return Platform::IsOSPlayingMusic();
-#endif
-}
-
 void PlatformApple::MacMusicAppInit() {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::macMusicAppInit();

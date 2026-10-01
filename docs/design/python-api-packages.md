@@ -77,6 +77,69 @@ The rule of thumb when writing or reviewing an API-consuming tool:
 > module's public surface, regardless of where its underlying
 > object happens to live.
 
+## Marking internal api
+
+Anything that shows up in the Sphinx docs counts as public api. Some
+code has to live in a documented place even though it's ours alone:
+`bacommon` holds wire types and plumbing shared between the client
+and the servers, and `bacommon` as a whole is documented. There are
+three ways to keep such code from reading as a supported api:
+
+- **An `_underscore` module** — the docs build skips it entirely. Best
+  for implementation behind a public package's re-exports.
+- **The internal-api warning block** — for a whole documented module
+  or package that is ours alone. Its page stays in the docs but shows
+  only the module docstring: the warning, plus whatever explanation
+  surrounds it, with no members listed. (A page that says "internal,
+  don't use this" beats a missing one, which reads as broken docs.)
+  Put this exact text in the module docstring (usually right after the
+  summary line):
+
+  ```
+  .. warning::
+
+    This is an internal api and subject to change at any time. Do not use
+    it in mod code.
+  ```
+
+  Flagging a package's `__init__.py` does NOT flag its public
+  submodules, since each gets its own docs page; flag them too, or
+  make them `_underscore` modules. Since the module's members aren't
+  documented, its docstring can't link to them: write their names as
+  ``` ``literals`` ```.
+- **`:meta private:`** — for an individual function, class, or `#:`
+  attribute inside an otherwise public module. It drops out of the
+  docs entirely. (Mechanics: the `/rst-docstrings` skill.) A dataclass
+  field marked this way is also dropped from its class's rendered
+  constructor signature.
+
+How it's enforced:
+
+- **The docs build** (`batools.docs`, `src/assets/sphinx/static/conf.py`)
+  finds flagged modules via `batools.apidocs` and strips their pages
+  to the docstring. Since the docs build is strict about
+  cross-references, any public signature or docstring that refers to
+  an internal type then fails `make docs` as an unresolved reference;
+  that is the main leak detector. It also fails the build if a public
+  page would show an internal object (a re-export through `__all__`).
+  Never add internal types to `nitpick_ignore` / `nitpick_ignore_regex`
+  to quiet one of these: fix the leak (make the public thing private,
+  or the internal type public).
+- **The project check** `batools.project._checks_apidocs` (part of
+  `make update` / `update-check`, so preflight and CI) catches flag
+  mistakes early: a docstring mentioning an internal api must use the
+  exact text, every public submodule of a flagged package must be
+  flagged too, and a public module's `__all__` must not re-export a
+  name from an internal module.
+
+Note `make docs` runs only in `ballistica-internal.smoke` CI, not
+preflight; run it by hand after touching public signatures.
+
+Modules deliberately left public despite looking like plumbing:
+`bacommon.workspace` (a reference for hand-editing workspace config)
+and `bacommon.strbrief` (the `.bstr` brief tag vocabulary workspace
+authors write).
+
 ## Why not just fix `__module__`?
 
 The `efro.util` package provides a `set_canonical_module_names()`

@@ -29,6 +29,8 @@ class AppConfig {
     kSoundVolume,
     kMusicVolume,
     kGoogleVRRenderTargetScale,
+    kCustomScreenInsets,
+    kDevConsoleButtonSize,
     kLast  // Sentinel.
   };
 
@@ -50,6 +52,8 @@ class AppConfig {
     kMacControllerSubsystem,
     kDevConsoleActiveTab,
     kInsecureConnections,
+    kScreenInsets,
+    kDevConsoleButtonStyle,
     kLast  // Sentinel.
   };
 
@@ -65,11 +69,11 @@ class AppConfig {
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
+    kAllowExtremeAspectRatios,
     kUseInsecureConnections,
     kShowFPS,
     kShowPing,
     kShowDevConsoleButton,
-    kEnableTVBorder,
     kKeyboardP2Enabled,
     kEnablePackageMods,
     kChatMuted,

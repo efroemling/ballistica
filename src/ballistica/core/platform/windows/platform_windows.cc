@@ -44,6 +44,9 @@
 // correct pythonXY[_d].lib in every translation unit that includes
 // Python.h, and a hardcoded copy here just breaks Python upgrades.
 #pragma comment(lib, "DbgHelp.lib")
+// zstd game-packet compression (vendored import lib + dll; see
+// tools/pcommand zstd_windows_install).
+#pragma comment(lib, "libzstd.lib")
 
 // GUI Only Stuff.
 #if !BA_HEADLESS_BUILD
@@ -73,6 +76,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/foundation/crash_info.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
@@ -98,14 +102,68 @@ static auto GetExeDir_() -> std::wstring {
   return (pos != std::wstring::npos) ? path.substr(0, pos) : path;
 }
 
+/// Fill the fault fields of g_crash_info from an exception record.
+///
+/// Everything here is a plain read or store -- no allocation, no
+/// formatting, no locks. The module lookup uses VirtualQuery +
+/// GetModuleFileNameA, both safe to call here and both cheap.
+static void PopulateCrashInfoFault_(EXCEPTION_POINTERS* exc) {
+  g_crash_info.crash_time =
+      static_cast<uint64_t>(time(nullptr));  // NOLINT(runtime/int)
+  if (exc == nullptr || exc->ExceptionRecord == nullptr) {
+    return;
+  }
+  const EXCEPTION_RECORD* rec = exc->ExceptionRecord;
+  g_crash_info.fault_code = rec->ExceptionCode;
+  g_crash_info.fault_address =
+      reinterpret_cast<uint64_t>(rec->ExceptionAddress);
+
+  // For access violations the record carries [type, address].
+  if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION
+      && rec->NumberParameters >= 2) {
+    g_crash_info.access_type =
+        static_cast<uint32_t>(rec->ExceptionInformation[0]);
+    g_crash_info.access_address =
+        static_cast<uint64_t>(rec->ExceptionInformation[1]);
+  }
+
+  // Name the module the fault address lands in, and record its base so
+  // a report can carry module+offset (which is what archived symbols
+  // resolve against).
+  MEMORY_BASIC_INFORMATION mbi;
+  if (VirtualQuery(rec->ExceptionAddress, &mbi, sizeof(mbi)) != 0) {
+    auto module = static_cast<HMODULE>(mbi.AllocationBase);
+    g_crash_info.faulting_module_base = reinterpret_cast<uint64_t>(module);
+    char path[MAX_PATH];
+    DWORD len = GetModuleFileNameA(module, path, MAX_PATH);
+    if (len > 0 && len < MAX_PATH) {
+      // Basename only; the full path leaks a build-machine layout and
+      // adds nothing.
+      const char* base = path;
+      for (const char* p = path; *p != '\0'; ++p) {
+        if (*p == '\\' || *p == '/') {
+          base = p + 1;
+        }
+      }
+      strncpy_s(g_crash_info.faulting_module,
+                sizeof(g_crash_info.faulting_module), base, _TRUNCATE);
+    }
+  }
+}
+
 static LONG WINAPI CrashHandler_(EXCEPTION_POINTERS* exc) {
+  PopulateCrashInfoFault_(exc);
+
   SYSTEMTIME t;
   GetLocalTime(&t);
 
-  wchar_t filename[MAX_PATH];
-  swprintf_s(filename, MAX_PATH, L"%s\\crash_%04d-%02d-%02d_%02d-%02d-%02d.dmp",
+  wchar_t stem[MAX_PATH];
+  swprintf_s(stem, MAX_PATH, L"%s\\crash_%04d-%02d-%02d_%02d-%02d-%02d",
              GetExeDir_().c_str(), t.wYear, t.wMonth, t.wDay, t.wHour,
              t.wMinute, t.wSecond);
+
+  wchar_t filename[MAX_PATH];
+  swprintf_s(filename, MAX_PATH, L"%s.dmp", stem);
 
   HANDLE file = CreateFileW(filename, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
                             FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -115,13 +173,39 @@ static LONG WINAPI CrashHandler_(EXCEPTION_POINTERS* exc) {
     mdei.ExceptionPointers = exc;
     mdei.ClientPointers = FALSE;
 
+    // Carry our context inside the dump as a user stream, so the two
+    // can never get separated and offline analysis has the build,
+    // variant and renderer identity of the process that actually died.
+    MINIDUMP_USER_STREAM ustream{};
+    ustream.Type = kCrashInfoUserStreamType;
+    ustream.BufferSize = static_cast<ULONG>(sizeof(g_crash_info));
+    ustream.Buffer = &g_crash_info;
+    MINIDUMP_USER_STREAM_INFORMATION usi{};
+    usi.UserStreamCount = 1;
+    usi.UserStreamArray = &ustream;
+
     MiniDumpWriteDump(
         GetCurrentProcess(), GetCurrentProcessId(), file,
         static_cast<MINIDUMP_TYPE>(MiniDumpWithUnloadedModules
                                    | MiniDumpWithIndirectlyReferencedMemory),
-        exc ? &mdei : nullptr, nullptr, nullptr);
+        exc ? &mdei : nullptr, &usi, nullptr);
 
     CloseHandle(file);
+  }
+
+  // Also drop the same bytes beside the dump as a standalone record.
+  // The next launch submits from this rather than from the dump:
+  // reading it back is a fixed-size struct read, where pulling a user
+  // stream out of a minidump would mean parsing one in C++ for no
+  // added information.
+  wchar_t recname[MAX_PATH];
+  swprintf_s(recname, MAX_PATH, L"%s%s", stem, kCrashRecordSuffixW);
+  HANDLE recfile = CreateFileW(recname, GENERIC_WRITE, 0, nullptr,
+                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (recfile != INVALID_HANDLE_VALUE) {
+    DWORD written;
+    WriteFile(recfile, &g_crash_info, sizeof(g_crash_info), &written, nullptr);
+    CloseHandle(recfile);
   }
 
   // Let Windows' normal crash dialog appear so the tester sees something.
@@ -290,6 +374,35 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
   } catch (const std::exception&) {
     return "stack-trace construction failed.";
   }
+}
+
+auto PlatformWindows::GetPendingCrashRecordPath() -> std::string {
+  // Records sit beside the dumps our handler writes. Take the newest
+  // if several are present: a crash-looping app should report its most
+  // recent crash rather than its oldest. Older ones are cleaned up
+  // here too so they cannot accumulate forever.
+  std::wstring pattern = GetExeDir_() + L"\\crash_*" kCrashRecordSuffixW;
+  WIN32_FIND_DATAW found;
+  HANDLE handle = FindFirstFileW(pattern.c_str(), &found);
+  if (handle == INVALID_HANDLE_VALUE) {
+    return "";
+  }
+  std::vector<std::wstring> names;
+  do {
+    names.emplace_back(found.cFileName);
+  } while (FindNextFileW(handle, &found));
+  FindClose(handle);
+  if (names.empty()) {
+    return "";
+  }
+  // Names embed a sortable timestamp (crash_YYYY-MM-DD_HH-MM-SS), so
+  // lexicographic order is chronological order.
+  std::sort(names.begin(), names.end());
+  std::wstring newest = GetExeDir_() + L"\\" + names.back();
+  for (size_t i = 0; i + 1 < names.size(); ++i) {
+    DeleteFileW((GetExeDir_() + L"\\" + names[i]).c_str());
+  }
+  return UTF8Encode(newest);
 }
 
 auto PlatformWindows::GetNativeStackTrace() -> NativeStackTrace* {
@@ -1141,24 +1254,46 @@ void PlatformWindows::SetEnv(const std::string& name,
 bool PlatformWindows::GetIsStdinATerminal() { return _isatty(_fileno(stdin)); }
 
 std::string PlatformWindows::GetOSVersionString() {
-  DWORD dw_version = 0;
-  DWORD dw_major_version = 0;
-  DWORD dw_minor_version = 0;
-  DWORD dw_build = 0;
-
-  // This is deprecated, but too lazy to find replacement right now.
-  // Just hiding the warning.
-#pragma warning(disable : 4996)
-  dw_version = GetVersion();
-#pragma warning(disable : 4996)
-  dw_major_version = (DWORD)(LOBYTE(LOWORD(dw_version)));
-  dw_minor_version = (DWORD)(HIBYTE(LOWORD(dw_version)));
-  if (dw_version < 0x80000000) {
-    dw_build = (DWORD)(HIWORD(dw_version));
+  // Why RtlGetVersion rather than GetVersion/GetVersionEx: those are
+  // subject to the application-compatibility shim, which reports
+  // Windows 8 (6.2 build 9200) to any process whose manifest does not
+  // declare Windows 10 support -- ours does not. RtlGetVersion is the
+  // ntdll call underneath and reports the truth regardless. It is not in
+  // the user-mode headers, so it is looked up at runtime.
+  //
+  // The result is in the form Windows itself shows
+  // (major.minor.build.revision, e.g. 10.0.26100.4061). Note Windows 11
+  // still reports major version 10; a build of 22000 or later is how
+  // you tell it apart.
+  using RtlGetVersionFunc = LONG(WINAPI*)(PRTL_OSVERSIONINFOW);
+  HMODULE ntdll = ::GetModuleHandleW(L"ntdll.dll");
+  auto rtl_get_version = ntdll ? reinterpret_cast<RtlGetVersionFunc>(
+                                     ::GetProcAddress(ntdll, "RtlGetVersion"))
+                               : nullptr;
+  RTL_OSVERSIONINFOW info{};
+  info.dwOSVersionInfoSize = sizeof(info);
+  if (rtl_get_version == nullptr || rtl_get_version(&info) != 0) {
+    // Same value the base Platform reports when it cannot tell.
+    return "unknown";
   }
-  std::string version = std::to_string(dw_major_version) + "."
-                        + std::to_string(dw_minor_version) + " "
-                        + std::to_string(dw_build);
+
+  std::string version = std::to_string(info.dwMajorVersion) + "."
+                        + std::to_string(info.dwMinorVersion) + "."
+                        + std::to_string(info.dwBuildNumber);
+
+  // The update build revision -- the monthly-patch level -- is not in
+  // any version struct, only the registry. It is what separates two
+  // machines on the same feature release, which matters when a driver
+  // problem turns out to be fixed (or caused) by a cumulative update.
+  // Optional: the version is still useful without it.
+  DWORD ubr{};
+  DWORD ubr_size{sizeof(ubr)};
+  if (::RegGetValueW(HKEY_LOCAL_MACHINE,
+                     L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"UBR",
+                     RRF_RT_REG_DWORD, nullptr, &ubr, &ubr_size)
+      == ERROR_SUCCESS) {
+    version += "." + std::to_string(ubr);
+  }
   return version;
 }
 

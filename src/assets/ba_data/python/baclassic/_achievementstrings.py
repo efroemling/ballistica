@@ -17,7 +17,7 @@ from these tables -- a mod's -- have no authored strings.
 
 from typing import TYPE_CHECKING
 
-from bascenev1 import _classicassets
+from bascenev1 import _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -460,7 +460,7 @@ def level_name_table() -> 'dict[str, babase.LangStr]':
     The levels the built-in achievements are earned on; substituted into
     the parameterized names and full descriptions above.
     """
-    c = _classicassets.strings.coop_levels
+    c = _classiccatalogassets.strings.coop_levels
     return {
         'Infinite Onslaught': c.infinite_onslaught,
         'Infinite Runaround': c.infinite_runaround,

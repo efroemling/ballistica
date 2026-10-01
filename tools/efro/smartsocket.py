@@ -53,6 +53,26 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
 
+def _now() -> float:
+    """Monotonic 'now', as the running event loop sees it.
+
+    The same clock as :func:`time.monotonic` on a real loop. Read
+    through the loop so that tests can run this code under a
+    virtual-time loop (``efrotools.virtualtime``) with
+    production-sized windows: every timer here is an
+    :func:`asyncio.sleep`, which that loop already controls, so this
+    is the only other place time gets in. Nothing in this module may
+    call :func:`time.monotonic` directly -- a mixed clock is exactly
+    the kind of bug virtual time then cannot see.
+    """
+    try:
+        return asyncio.get_running_loop().time()
+    except RuntimeError:
+        # No loop (a sync caller poking at state). Same clock anyway
+        # outside of tests.
+        return time.monotonic()
+
+
 class SmartSocketSlot(Enum):
     """The two peer identity slots of a session.
 
@@ -372,6 +392,20 @@ SS_CLOSE_BAD_PAYLOAD = 4204  # not of the endpoint's declared type
 SS_CLOSE_SERVE_FAILED = 4205  # serving kept throwing
 SS_CLOSE_RECONNECT_EXHAUSTED = 4206  # never got back in
 
+# Relay-requested reattach (resume).
+#
+# The relay's resend buffer for our direction is full because the far
+# peer isn't draining it, so it could not accept our next frame. It
+# closes the leg rather than dropping the frame in place: within one
+# connection we never retransmit, so a silent drop would turn our next
+# frame into a seq gap. Reattaching replays from the relay's cursor. An
+# endpoint treats a hello that shows no progress after this close as
+# *not* a working connection (no budget or backoff reset), so a peer
+# that never drains costs a bounded number of slowing attempts; the
+# relay independently ends the session if the stall outlasts the
+# peer's linger.
+SS_CLOSE_RELAY_BUFFER_FULL = 4301
+
 
 # ---------------------------------------------------------------- #
 # Close-code interpretation.
@@ -571,6 +605,113 @@ class SmartSocketSendWouldDeadlock(Exception):
         self.cap = cap
 
 
+class SmartSocketAnomalyKind(Enum):
+    """Ways a session can end that no network explains.
+
+    The governing rule: "the network went away" is normal -- constant
+    on phones -- and stays at debug/info. "This should be impossible"
+    is always news. Only the second is an anomaly; reporting the first
+    would bury the signal on day one.
+    """
+
+    #: Died in the protocol-error band (bad frame, seq violation, bad
+    #: payload): one end broke the protocol, or misread it.
+    PROTOCOL_ERROR = 'protocol_error'
+
+    #: Serving a connection kept throwing (SS_CLOSE_SERVE_FAILED).
+    SERVE_FAILED = 'serve_failed'
+
+    #: Ran out of reconnect budget without making a single attempt.
+    #: (The shape of the 2026-08/09 reconnect-budget bug, which was
+    #: silent by construction: the only give-up warning was gated on
+    #: there having been failed attempts.)
+    GAVE_UP_WITHOUT_TRYING = 'gave_up_without_trying'
+
+    #: Ran out of reconnect budget while the relay was *answering* --
+    #: hellos succeeded within the very window that then expired. The
+    #: relay's full-buffer turn-away can legitimately end this way
+    #: when the far peer never drains; anything else that does is a
+    #: bug.
+    GAVE_UP_WHILE_REACHABLE = 'gave_up_while_reachable'
+
+    #: Resumed inside our own budget and were told the channel had
+    #: ended: we and the relay disagree about whether it was alive.
+    ENDED_UNDER_US = 'ended_under_us'
+
+    #: Many sessions with this label each died within seconds of
+    #: starting. Reported once per burst, not per session.
+    RAPID_CHURN = 'rapid_churn'
+
+
+@dataclass
+class SmartSocketAnomaly:
+    """One should-be-impossible ending, with what is needed to chase it.
+
+    Logged at WARNING (once per session) and handed to the endpoint's
+    ``on_anomaly`` callback, which is how a client with no log
+    shipping of its own gets these home.
+    """
+
+    kind: SmartSocketAnomalyKind
+    #: What the session was for, as its creator labeled it.
+    label: str
+    close_code: int
+    close_reason: str
+    #: Seconds since :meth:`SmartSocketEndpoint.run` started.
+    session_age: float
+    #: Seconds since the relay's last hello; None if there never was one.
+    since_hello: float | None
+    #: Dials made since the last working connection was lost.
+    attempts: int
+    #: Hellos received since the last working connection was lost.
+    hellos: int
+    unacked_bytes: int
+
+    def describe(self) -> str:
+        """The one-line form that gets logged."""
+        since = (
+            'never' if self.since_hello is None else f'{self.since_hello:.1f}s'
+        )
+        return (
+            f'{self.kind.value} label={self.label} code={self.close_code}'
+            f' reason={self.close_reason!r} age={self.session_age:.1f}s'
+            f' since_hello={since} attempts={self.attempts}'
+            f' hellos={self.hellos} unacked={self.unacked_bytes}B'
+        )
+
+
+#: Rapid-churn detection: this many sessions of one label, each dead
+#: within ``_CHURN_SESSION_SECONDS`` of starting, inside
+#: ``_CHURN_WINDOW_SECONDS``.
+_CHURN_COUNT = 5
+_CHURN_SESSION_SECONDS = 10.0
+_CHURN_WINDOW_SECONDS = 300.0
+
+#: Per-label loop times of recent short-lived deaths, and when churn
+#: was last reported for the label.
+_churn_deaths: dict[str, list[float]] = {}
+_churn_reported: dict[str, float] = {}
+
+
+def _note_short_lived_death(label: str) -> bool:
+    """Record one; True if that makes a burst worth reporting."""
+    now = _now()
+    deaths = [
+        t
+        for t in _churn_deaths.get(label, [])
+        if now - t <= _CHURN_WINDOW_SECONDS
+    ]
+    deaths.append(now)
+    _churn_deaths[label] = deaths
+    if len(deaths) < _CHURN_COUNT:
+        return False
+    last = _churn_reported.get(label)
+    if last is not None and now - last <= _CHURN_WINDOW_SECONDS:
+        return False
+    _churn_reported[label] = now
+    return True
+
+
 class SmartSocketTransport(Protocol):
     """One connection attempt's worth of plumbing.
 
@@ -636,8 +777,24 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         attach_timeout_seconds: float = 10.0,
         loss_detection_floor_seconds: float = (LOSS_DETECTION_FLOOR_SECONDS),
         logger: logging.Logger | None = None,
+        label: str = 'unlabeled',
+        on_anomaly: Callable[[SmartSocketAnomaly], None] | None = None,
     ) -> None:
         self._connect = connect
+        #: What this session is for ('bacloud', 'automation', ...);
+        #: names it in anomaly reports. An endpoint can't ask the
+        #: relay -- its channel kind lives in a token it can't read.
+        self._label = label
+        self._on_anomaly = on_anomaly
+        #: Set once an anomaly has been reported; one per session.
+        self.anomaly: SmartSocketAnomaly | None = None
+        self._started_at = 0.0
+        self._last_hello_at: float | None = None
+        #: Dials and hellos since a working connection was last lost
+        #: (or since the start). What tells 'the network is down' from
+        #: 'the relay is answering and we still can't get in'.
+        self._attempts_since_loss = 0
+        self._hellos_since_loss = 0
         self._send_type = send_type
         self._recv_type = recv_type
         self._refresh = refresh
@@ -668,6 +825,18 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self._serve_failures = 0
 
         self._transport: SmartSocketTransport | None = None
+        #: Whether :meth:`send` may transmit on the current connection.
+        #: False from the moment a connection is dialed until its
+        #: hello exchange and resume retransmit are done. A message
+        #: sent in that window is *only* buffered -- the retransmit
+        #: carries it, in order. Sending it live as well would put seq
+        #: N+1 on the wire ahead of the retransmit of everything up to
+        #: N, which the relay can only read as a gap: a
+        #: SS_CLOSE_SEQ_VIOLATION death for a session with nothing
+        #: wrong with it, on any reconnect that raced a sender. (Found
+        #: by the randomized relay test, 2026-09-17; the relay has had
+        #: the mirror-image gate, ``delivering``, all along.)
+        self._live = False
         self._next_seq = 1
         self._last_recv = 0
         self._unacked: dict[int, str] = {}
@@ -697,6 +866,17 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         #: action table -- SS_CLOSE_DETACH is a code we *send*, and
         #: reading it back as an inbound close says 'dead'.
         self._recovering = False
+        #: The relay's cursor for our sends when it closed us with
+        #: SS_CLOSE_RELAY_BUFFER_FULL, until it acks past that (else
+        #: None). While set, a successful attach doesn't count as
+        #: recovery; see :meth:`_on_hello`.
+        self._relay_full_cursor: int | None = None
+        #: Highest seq of ours the relay has told us it holds.
+        self._relay_recv = 0
+        #: Whether the current/last connection proved itself working
+        #: (see :meth:`_note_healthy`). Losing such a connection is
+        #: what opens a fresh reconnect window.
+        self._healthy = False
         self._ended = asyncio.Event()
 
     # --- caller surface ----------------------------------------
@@ -716,6 +896,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             # without ever retrying -- so a session could never
             # survive a bad first attach, only a bad later one.
             self._reset_reconnect_budget()
+            self._started_at = _now()
             while not self._stopping:
                 action = await self._run_one_connection()
                 if action is SmartSocketAction.DONE:
@@ -731,10 +912,22 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
                         self._logger.exception('smartsocket token refresh')
                         break
                     continue
-                # RESUME.
+                # RESUME. The budget is 'about as long as the relay
+                # holds our slot', a window that opens when a working
+                # connection is *lost*. (It used to be measured from
+                # the hello, so a connection that outlived its linger
+                # was out of budget the moment it dropped and gave up
+                # without one attempt.) Failed attempts since then
+                # don't reopen it.
+                if self._healthy:
+                    self._healthy = False
+                    self._reset_reconnect_budget()
+                    self._attempts_since_loss = 0
+                    self._hellos_since_loss = 0
                 if not await self._await_reconnect_slot():
                     break
         finally:
+            self._check_for_anomaly()
             self.done = True
             self._ended.set()
             # Unblock anyone waiting on buffer space; nothing will
@@ -815,7 +1008,10 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self._next_seq += 1
         self._unacked[seq] = payload
         self._unacked_bytes += len(payload)
-        await self._send_frame(MsgFrame(seq=seq, payload=payload))
+        if self._live:
+            await self._send_frame(MsgFrame(seq=seq, payload=payload))
+        # Else it rides the un-acked buffer: the resume retransmit of
+        # this connection (or the next) sends it in its turn.
 
     async def detach(self, reason: str = 'detaching') -> None:
         """Drop this connection politely, ending the session's wait.
@@ -840,6 +1036,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
 
     async def _run_one_connection(self) -> SmartSocketAction:
         """Attach, serve until the connection ends, report why."""
+        self._attempts_since_loss += 1
         try:
             self._transport = await self._connect()
         except SmartSocketClosed as exc:
@@ -886,6 +1083,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             for task in tasks:
                 task.cancel()
             self.connected = False
+            self._live = False
             self._transport = None
         # Ended by a close code rather than by throwing: whatever the
         # code says, the serving path itself worked.
@@ -912,7 +1110,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         """
         signature = f'{type(exc).__name__}: {exc}'
         if not self._connect_failures:
-            self._connect_failures_start = time.monotonic()
+            self._connect_failures_start = _now()
         self._connect_failures += 1
 
         if signature == self._connect_failure_signature:
@@ -940,7 +1138,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             'smartsocket connected after %d failed attempt(s) over %.1fs;'
             ' last failure: %s',
             self._connect_failures,
-            time.monotonic() - self._connect_failures_start,
+            _now() - self._connect_failures_start,
             self._connect_failure_signature,
         )
         self._connect_failures = 0
@@ -964,11 +1162,11 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         transport = self._transport
         assert transport is not None
         helloed = False
-        self._last_inbound = time.monotonic()
+        self._last_inbound = _now()
 
         while True:
             data = await transport.recv()
-            self._last_inbound = time.monotonic()
+            self._last_inbound = _now()
             try:
                 frame = dataclass_from_json(SmartSocketFrame, data)
             except Exception:  # pylint: disable=broad-except
@@ -1014,17 +1212,38 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         """Relay's hello: adopt policy, retransmit what it lacks."""
         if frame.policy is not None:
             self.policy = frame.policy
-        for seq in sorted(self._unacked):
-            if seq > frame.last_recv:
-                await self._send_frame(
-                    MsgFrame(seq=seq, payload=self._unacked[seq])
-                )
+        self._last_hello_at = _now()
+        self._hellos_since_loss += 1
         # Anything at or below the relay's cursor is safe with it.
         self._trim(frame.last_recv)
-        # A working connection: the budget starts over, so a long
-        # session isn't penalized for old churn.
-        self._reset_reconnect_budget()
-        self._reconnect_delay = 0.5
+        # Retransmit the rest, in order. Loop until nothing new showed
+        # up while we were awaiting -- send() keeps buffering during
+        # this -- then open the live-send gate in the same step: no
+        # await between the last check and the flip, so a live send
+        # can't overtake the retransmit. (The relay's resume replay is
+        # built the same way, for the same reason.)
+        sent_through = frame.last_recv
+        while True:
+            pending = [
+                seq for seq in sorted(self._unacked) if seq > sent_through
+            ]
+            if not pending:
+                self._live = True
+                break
+            for seq in pending:
+                payload = self._unacked.get(seq)
+                if payload is not None:
+                    await self._send_frame(MsgFrame(seq=seq, payload=payload))
+                sent_through = seq
+        if self._relay_full_cursor is None:
+            # A working connection: the budget starts over, so a long
+            # session isn't penalized for old churn. (Not so after a
+            # buffer-full close: this hello can't tell us whether the
+            # far peer has started draining, and if it hasn't the
+            # relay just closes us again -- resetting here would make
+            # that a tight loop that never gives up. The relay taking
+            # a new frame is the proof instead; see _trim.)
+            self._note_healthy()
         self.connected = True
 
     async def _on_msg(self, frame: MsgFrame) -> bool:
@@ -1032,6 +1251,26 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         if frame.seq <= self._last_recv:
             self._pending_acks += 1  # Resume overlap; ack and drop.
             return True
+        if frame.seq != self._last_recv + 1:
+            # The relay skipped ahead. Accepting this would make the
+            # frames it skipped look like duplicates when (if) they
+            # arrive, and drop them: a gap nobody is ever told about,
+            # which is the one thing this protocol exists to rule
+            # out. We can't repair it from here, so die loudly. This
+            # is always a relay bug (two found 2026-09-17, both of
+            # which this check would have turned from silent loss
+            # into a reported death).
+            self._logger.error(
+                'smartsocket: relay delivered seq %d after %d; ending the'
+                ' session rather than accept a gap.',
+                frame.seq,
+                self._last_recv,
+            )
+            await self._fail(
+                SS_CLOSE_SEQ_VIOLATION,
+                f'expected seq {self._last_recv + 1}, got {frame.seq}',
+            )
+            return False
         self._last_recv = frame.seq
         self._pending_acks += 1
         if self.on_message is None:
@@ -1060,10 +1299,83 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         return True
 
     def _trim(self, acked: int) -> None:
+        self._relay_recv = max(self._relay_recv, acked)
+        if (
+            self._relay_full_cursor is not None
+            and acked > self._relay_full_cursor
+        ):
+            # The relay accepted something new since it turned us away
+            # for a full buffer: the far peer is draining again.
+            self._relay_full_cursor = None
+            self._note_healthy()
         for seq in [s for s in self._unacked if s <= acked]:
             self._unacked_bytes -= len(self._unacked[seq])
             del self._unacked[seq]
         self._space.set()
+
+    # --- anomaly reporting -------------------------------------
+
+    def _anomaly_kind(self) -> SmartSocketAnomalyKind | None:
+        code = self.close_code
+        kinds = SmartSocketAnomalyKind
+        kind: SmartSocketAnomalyKind | None = None
+        if code == SS_CLOSE_SERVE_FAILED:
+            kind = kinds.SERVE_FAILED
+        elif code == SS_CLOSE_RECONNECT_EXHAUSTED:
+            if self._attempts_since_loss == 0:
+                kind = kinds.GAVE_UP_WITHOUT_TRYING
+            elif self._hellos_since_loss > 0:
+                kind = kinds.GAVE_UP_WHILE_REACHABLE
+            # Else the network went away and stayed away: not news.
+        elif 4200 <= code < 4300:
+            kind = kinds.PROTOCOL_ERROR
+        elif code == SS_CLOSE_CHANNEL_ENDED and self._last_hello_at is not None:
+            # We had a session, came back inside our own budget (past
+            # it we'd have given up rather than dialed), and the relay
+            # says it is gone. One of us is wrong about its lifetime.
+            kind = kinds.ENDED_UNDER_US
+        return kind
+
+    def _check_for_anomaly(self) -> None:
+        """Report, once, an ending that no network explains."""
+        if self.anomaly is not None:
+            return
+        try:
+            now = _now()
+            age = now - self._started_at
+            kind = self._anomaly_kind()
+            if (
+                kind is None
+                and age <= _CHURN_SESSION_SECONDS
+                and self.close_code not in (0, 1000)
+                and not self._stopping
+                and _note_short_lived_death(self._label)
+            ):
+                kind = SmartSocketAnomalyKind.RAPID_CHURN
+            if kind is None:
+                return
+            anomaly = SmartSocketAnomaly(
+                kind=kind,
+                label=self._label,
+                close_code=self.close_code,
+                close_reason=self.close_reason,
+                session_age=age,
+                since_hello=(
+                    None
+                    if self._last_hello_at is None
+                    else now - self._last_hello_at
+                ),
+                attempts=self._attempts_since_loss,
+                hellos=self._hellos_since_loss,
+                unacked_bytes=self._unacked_bytes,
+            )
+            self.anomaly = anomaly
+            self._logger.warning('smartsocket anomaly: %s', anomaly.describe())
+            if self._on_anomaly is not None:
+                self._on_anomaly(anomaly)
+        except Exception:  # pylint: disable=broad-except
+            # Reporting must never be what breaks a session's teardown.
+            self._logger.exception('smartsocket anomaly reporting')
 
     # --- timers ------------------------------------------------
 
@@ -1085,7 +1397,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         window = max(1.5 * interval, self._loss_detection_floor)
         while True:
             await asyncio.sleep(interval)
-            if time.monotonic() - self._last_inbound > window:
+            if _now() - self._last_inbound > window:
                 # Black-holed: the connection looks fine and is not.
                 # Tell the relay we're detaching (so it lingers rather
                 # than waiting out a ping timeout) and reattach.
@@ -1113,7 +1425,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
 
     async def _await_reconnect_slot(self) -> bool:
         """Back off before reattaching. False means give up."""
-        if time.monotonic() > self._reconnect_deadline:
+        if _now() > self._reconnect_deadline:
             # Past the point where the relay would have given up on
             # us anyway; call it rather than retry into a tombstone.
             if self._connect_failures:
@@ -1124,7 +1436,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
                     'smartsocket giving up after %d failed connect'
                     ' attempt(s) over %.1fs; last failure: %s',
                     self._connect_failures,
-                    time.monotonic() - self._connect_failures_start,
+                    _now() - self._connect_failures_start,
                     self._connect_failure_signature,
                 )
             self._note_close(
@@ -1136,10 +1448,16 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         await asyncio.sleep(delay)
         return True
 
+    def _note_healthy(self) -> None:
+        """This connection works: forget earlier reconnect churn."""
+        self._healthy = True
+        self._reset_reconnect_budget()
+        self._reconnect_delay = 0.5
+
     def _reset_reconnect_budget(self) -> None:
         # Keep trying about as long as the relay will hold our slot.
         linger = self.policy.linger_seconds if self.policy else 120.0
-        self._reconnect_deadline = time.monotonic() + linger
+        self._reconnect_deadline = _now() + linger
 
     # --- plumbing ----------------------------------------------
 
@@ -1173,6 +1491,8 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             pass
 
     def _note_close(self, code: int, reason: str) -> None:
+        if code == SS_CLOSE_RELAY_BUFFER_FULL:
+            self._relay_full_cursor = self._relay_recv
         self.close_code = code
         self.close_reason = reason
         self.connected = False

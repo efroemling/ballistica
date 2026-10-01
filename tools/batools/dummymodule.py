@@ -89,6 +89,24 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             'def getactivity(doraise: bool = True)'
             ' -> bascenev1.Activity | None:\n'
         )
+    elif sig_in == 'getlocaldisplay(doraise: bool = True) -> <varies>':
+        sig = (
+            '# Show that our return type varies based on "doraise" value:\n'
+            '@overload\n'
+            'def getlocaldisplay(doraise: Literal[True] = True) ->'
+            ' bascenev1.LocalDisplay:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            '@overload\n'
+            'def getlocaldisplay(doraise: Literal[False])'
+            ' -> bascenev1.LocalDisplay | None:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            'def getlocaldisplay(doraise: bool = True)'
+            ' -> bascenev1.LocalDisplay | None:\n'
+        )
     elif sig_in == 'getsession(doraise: bool = True) -> <varies>':
         sig = (
             '# Show that our return type varies based on "doraise" value:\n'
@@ -330,10 +348,16 @@ def _writefuncs(
                 returnstr = 'return 0.0'
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
+            elif returns == 'tuple[float, float, float] | None':
+                returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':
                 returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
+            elif returns == 'bauiv1.Viewer | None':
+                returnstr = 'return None'
             elif returns == 'bascenev1.InputDevice | None':
                 returnstr = 'return InputDevice()'
+            elif returns == 'list[bascenev1.InputDevice]':
+                returnstr = 'return [InputDevice()]'
             elif returns == 'list[bauiv1.Widget]':
                 returnstr = 'import bauiv1\nreturn [bauiv1.Widget()]'
             elif returns == 'tuple[float, ...]':
@@ -354,10 +378,14 @@ def _writefuncs(
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns == 'dict[str, list[tuple[str, str]]]':
                 returnstr = "return {'foo': [('bar', 'baz')]}"
-            elif returns == 'list[int]':
+            elif returns in {'list[int]', 'list[int] | None'}:
                 returnstr = 'return [0]'
             elif returns == 'list[tuple[float, float]]':
                 returnstr = 'return [(0.0, 0.0)]'
+            elif returns == 'list[tuple[str, float]]':
+                returnstr = "return [('blah', 0.0)]"
+            elif returns == 'list[tuple[int, float]]':
+                returnstr = 'return [(0, 0.0)]'
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -559,6 +587,8 @@ def _special_class_cases(classname: str) -> str:
             "    text: babase.Lstr | babase.LangStr | str = ''\n"
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'
+            '    spaz_def: bascenev1.SpazDef | None = None\n'
+            '    depiction: bascenev1.Depiction | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'
             '    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)\n'
             '    offset: float = 0.0\n'
@@ -567,6 +597,7 @@ def _special_class_cases(classname: str) -> str:
             '    input2: float = 0.0\n'
             '    input3: float = 0.0\n'
             '    flashing: bool = False\n'
+            '    flash: bool = False\n'
             '    scale: float | Sequence[float] = 0.0\n'  # FIXME
             '    opacity: float = 0.0\n'
             '    loop: bool = False\n'
@@ -587,6 +618,8 @@ def _special_class_cases(classname: str) -> str:
             '    pickup_before_hitbox: bool = False\n'
             '    pickup_release_time_ms: float = 0\n'
             '    host_only: bool = False\n'
+            '    visible: bool = True\n'
+            "    config: str = ''\n"
             '    premultiplied: bool = False\n'
             '    source_player: bascenev1.Player | None = None\n'
             '    mesh_opaque: bascenev1.Mesh | None = None\n'
@@ -623,6 +656,7 @@ def _special_class_cases(classname: str) -> str:
             '    use_fixed_vr_overlay: bool = False\n'
             '    #: Available on globals node.\n'
             '    allow_kick_idle_players: bool = False\n'
+            '    legacy_spaz_limbs: bool = False\n'
             '    music_continuous: bool = False\n'
             '    music_count: int = 0\n'
             '    #: Available on spaz node.\n'
@@ -985,7 +1019,11 @@ class Generator:
                 else (
                     'Any, Callable, Literal, Sequence'
                     if self.mname == '_bauiv1'
-                    else 'Any, Callable'
+                    else (
+                        'Any, Callable, Sequence'
+                        if self.mname == '_baclassic'
+                        else 'Any, Callable'
+                    )
                 )
             )
         )
@@ -998,7 +1036,9 @@ class Generator:
                 '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
-            tc_import_lines_extra += '    import babase\n    import bascenev1\n'
+            tc_import_lines_extra += (
+                '    import babase\n    import bascenev1\n    import bauiv1\n'
+            )
         elif self.mname == '_bauiv1':
             tc_import_lines_extra += (
                 '    import babase\n'

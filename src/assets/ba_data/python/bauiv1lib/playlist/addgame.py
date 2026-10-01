@@ -284,7 +284,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
 
     def _on_get_more_games_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -306,7 +306,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui2.Request('/'),
+                    sroutes.Root(),
                     origin_widget=self._get_more_games_button,
                     uiopenstateid='classicstore',
                 ),

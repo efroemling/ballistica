@@ -58,6 +58,34 @@ class GetClassicPurchasesResponse(Response):
 
 @ioprepped
 @dataclass
+class GetClassicProfilesMessage(Message):
+    """Asking for the current account's cloud profiles.
+
+    Clients send this when the ``profiles_state`` in their live account
+    data differs from the state of the profiles they have cached.
+    """
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [GetClassicProfilesResponse]
+
+
+@ioprepped
+@dataclass
+class GetClassicProfilesResponse(Response):
+    """The current account's cloud profiles."""
+
+    #: State id these profiles correspond to (compare against the live
+    #: account data's ``profiles_state``); None if unavailable.
+    profiles_state: Annotated[str | None, IOAttrs('s')]
+
+    #: One character json string per profile, composed by the cloud.
+    profiles: Annotated[list[str], IOAttrs('p')]
+
+
+@ioprepped
+@dataclass
 class GlobalProfileCheckMessage(Message):
     """Is this global profile name available?"""
 

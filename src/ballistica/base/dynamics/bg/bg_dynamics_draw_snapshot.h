@@ -43,6 +43,29 @@ class BGDynamicsDrawSnapshot {
   }
 
   // Particles.
+  /// Empty everything for reuse, keeping the vectors' capacity.
+  /// Snapshots are recycled between the logic thread and the bg
+  /// thread (BGDynamicsWorldServer::RecycleSnapshot); call this on the
+  /// thread that owns the mesh buffers at the time.
+  void Reset() {
+    rocks.clear();
+    ice.clear();
+    slime.clear();
+    metal.clear();
+    sparks.clear();
+    splinters.clear();
+    sweats.clear();
+    flag_stands.clear();
+    tendril_shadows.clear();
+    tendril_indices.Clear();
+    tendril_vertices.Clear();
+    fuse_indices.Clear();
+    fuse_vertices.Clear();
+    shadow_vertices.Clear();
+    light_vertices.Clear();
+    spark_vertices.Clear();
+  }
+
   std::vector<Matrix44f> rocks;
   std::vector<Matrix44f> ice;
   std::vector<Matrix44f> slime;

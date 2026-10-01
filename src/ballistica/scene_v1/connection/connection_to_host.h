@@ -24,6 +24,22 @@ class ConnectionToHost : public Connection {
   virtual auto GetAsUDP() -> ConnectionToHostUDP*;
   auto build_number() const -> int { return build_number_; }
   auto protocol_version() const -> int { return protocol_version_; }
+  auto PeerSupportsZstdPackets() const -> bool override {
+    // The host's version arrives in its handshake; until then we only
+    // ever send huffman (which any host decodes).
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionZstdPackets;
+  }
+  auto PeerSupportsUnreliableParts() const -> bool override {
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionUnreliableParts;
+  }
+  auto PeerSupportsWideAcks() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionWideAcks;
+  }
+  auto PeerSupportsBigPackets() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionBigPackets;
+  }
   void set_protocol_version(int val) { protocol_version_ = val; }
   auto party_name() const -> std::string {
     // FIXME should we return peer name as fallback?..

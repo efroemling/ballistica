@@ -22,6 +22,9 @@ const float kBaseVRWorldScale = 1.38f;
 const float kInvVRHeadScale = 1.0f / (kBaseVRWorldScale * kDefaultVRHeadScale);
 #endif
 
+// Backdrop for debug-draw mode (terrain visuals are skipped there).
+const Vector4f kDebugDrawClearColor{0.35f, 0.35f, 0.35f, 1.0f};
+
 // There can be only one!.. at a time.
 static bool have_renderer = false;
 
@@ -33,6 +36,18 @@ Renderer::Renderer() {
 Renderer::~Renderer() {
   assert(have_renderer);
   have_renderer = false;
+}
+
+void Renderer::CreateMainViewData() {
+  assert(!main_view_data_.exists());
+  main_view_data_ = NewRenderViewData();
+  current_view_data_ = main_view_data_.get();
+}
+
+void Renderer::ReleaseViewData() {
+  texture_view_datas_.clear();
+  current_view_data_ = nullptr;
+  main_view_data_.Clear();
 }
 
 void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
@@ -55,6 +70,11 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
     VRSyncRenderStates();
   }
 #endif  // BA_VR_BUILD
+
+  // Let go of what we hold for views that no longer exist.
+  for (int view_id : frame_def->view_destroys()) {
+    texture_view_datas_.erase(view_id);
+  }
 
   // Setup various high level stuff to match the frame_def
   // (tint colors, resolutions, etc).
@@ -87,6 +107,12 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
   // Ensure all media used by this frame_def is loaded.
   LoadMedia(frame_def);
 
+  // Views drawing to textures get drawn in full here, ahead of the
+  // main view, so their textures are ready for whatever in the main
+  // frame draws them. (This also leaves the light/shadow projection,
+  // of which there is one, set for the main view as it gets drawn.)
+  RenderTextureViews(frame_def);
+
   // Draw our light/shadow textures.
   RenderLightAndShadowPasses(frame_def);
 
@@ -114,7 +140,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   // In higher-quality modes we draw the world into the camera buffer
   // which we'll later render into the backing buffer with depth-of-field
   // and other stuff added.
-  if (camera_render_target_.exists()) {
+  if (view_data()->camera_render_target.exists()) {
     DrawWorldToCameraBuffer(frame_def);
   }
 
@@ -141,7 +167,13 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
     backing_needs_clear = true;
   }
 #endif
-  backing->DrawBegin(backing_needs_clear);
+  if (debug_draw_mode()) {
+    // Debug drawing skips terrain visuals, so give the world a neutral
+    // backdrop instead of whatever was there last.
+    backing->DrawBegin(true, kDebugDrawClearColor);
+  } else {
+    backing->DrawBegin(backing_needs_clear);
+  }
 
   bool overlays_in_3d = g_core->vr_mode();
   bool overlays_in_2d = !overlays_in_3d;
@@ -163,7 +195,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
     frame_def->overlay_pass()->Render(backing, false);
     frame_def->overlay_fixed_pass()->Render(backing, false);
   }
-  if (camera_render_target_.exists()) {
+  if (view_data()->camera_render_target.exists()) {
     UpdateDOFParams(frame_def);
     // We've already drawn the world.
     // Now just draw our blit shapes (opaque shapes which blit portions of the
@@ -187,7 +219,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   SetDrawAtEqualDepth(true);
 
   // Now draw transparent stuff back to front.
-  if (camera_render_target_.exists()) {
+  if (view_data()->camera_render_target.exists()) {
     // When copying camera buffer to the backing there's nothing transparent
     // to draw.
   } else {
@@ -432,21 +464,31 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
 
     // These render targets are dependent on screen size so they need to be
     // remade.
-    camera_render_target_.Clear();
-    camera_msaa_render_target_.Clear();
+    view_data()->camera_render_target.Clear();
+    view_data()->camera_msaa_render_target.Clear();
     backing_render_target_.Clear();
     screen_size_dirty_ = false;
   }
 
   // Update quality settings to match this frame_def.
   if (last_render_quality_ != frame_def->quality()) {
-    light_render_target_.Clear();
-    light_shadow_render_target_.Clear();
     if (g_core->vr_mode()) {
       vr_overlay_flat_render_target_.Clear();
     }
   }
   last_render_quality_ = frame_def->quality();
+
+  UpdateViewQualityAndLook(frame_def);
+}
+
+void Renderer::UpdateViewQualityAndLook(FrameDef* frame_def) {
+  // Light and shadow buffers are sized by quality.
+  if (view_data()->quality != frame_def->quality()) {
+    view_data()->light_render_target.Clear();
+    view_data()->light_shadow_render_target.Clear();
+  }
+  view_data()->quality = frame_def->quality();
+
   set_shadow_offset(Vector3f(frame_def->shadow_offset().x,
                              frame_def->shadow_offset().y,
                              frame_def->shadow_offset().z));
@@ -466,35 +508,18 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
 }
 
 void Renderer::UpdateLightAndShadowBuffers(FrameDef* frame_def) {
-  if (!light_render_target_.exists() || !light_shadow_render_target_.exists()) {
+  if (!view_data()->light_render_target.exists()
+      || !view_data()->light_shadow_render_target.exists()) {
     assert(screen_render_target_.exists());
 
     // Base shadow res on quality.
-    if (frame_def->quality() >= GraphicsQuality::kHigher) {
-      shadow_res_ = 1024;
-      // NOLINTNEXTLINE(bugprone-branch-clone)
-    } else if (frame_def->quality() >= GraphicsQuality::kHigh) {
-      shadow_res_ = 512;
-    } else if (frame_def->quality() >= GraphicsQuality::kMedium) {
-      shadow_res_ = 512;
-    } else {
-      shadow_res_ = 256;
-    }
+    view_data()->shadow_res = ShadowResForQuality(frame_def->quality());
 
     // 16 bit dithering is a bit noticeable here..
     bool high_qual = true;
-    light_render_target_ = NewFramebufferRenderTarget(
-        shadow_res_ / kLightResDiv, shadow_res_ / kLightResDiv,
-        true,       // linear_interp
-        false,      // depth
-        true,       // tex
-        false,      // depthTex
-        high_qual,  // high-quality
-        false,      // msaa
-        false       // alpha
-    );              // NOLINT(whitespace/parens)
-    light_shadow_render_target_ =
-        NewFramebufferRenderTarget(shadow_res_, shadow_res_,
+    view_data()->light_render_target =
+        NewFramebufferRenderTarget(view_data()->shadow_res / kLightResDiv,
+                                   view_data()->shadow_res / kLightResDiv,
                                    true,       // linear_interp
                                    false,      // depth
                                    true,       // tex
@@ -503,7 +528,212 @@ void Renderer::UpdateLightAndShadowBuffers(FrameDef* frame_def) {
                                    false,      // msaa
                                    false       // alpha
         );                                     // NOLINT(whitespace/parens)
+    view_data()->light_shadow_render_target = NewFramebufferRenderTarget(
+        view_data()->shadow_res, view_data()->shadow_res,
+        true,       // linear_interp
+        false,      // depth
+        true,       // tex
+        false,      // depthTex
+        high_qual,  // high-quality
+        false,      // msaa
+        false       // alpha
+    );              // NOLINT(whitespace/parens)
   }
+}
+
+auto Renderer::ShadowResForQuality(GraphicsQuality quality) -> int {
+  if (quality >= GraphicsQuality::kHigher) {
+    return 1024;
+  }
+  if (quality >= GraphicsQuality::kMedium) {
+    return 512;
+  }
+  return 256;
+}
+
+void Renderer::RenderTextureViews(FrameDef* frame_def) {
+  for (int i = 0; i < frame_def->texture_view_count(); i++) {
+    FrameDefView* fview = frame_def->texture_view(i);
+
+    // Find or create what we hold for this view and make both it and
+    // the view's share of the frame current, so that everything we
+    // call from here on is dealing with this view.
+    bool is_new{};
+    auto& data = texture_view_datas_[fview->view_id()];
+    if (!data.exists()) {
+      data = NewRenderViewData();
+      is_new = true;
+    }
+    current_view_data_ = data.get();
+    frame_def->set_current_view(fview);
+    if (is_new) {
+      LoadCurrentViewData();
+    }
+
+    UpdateViewQualityAndLook(frame_def);
+    UpdateTextureViewTargets(frame_def);
+    UpdateLightAndShadowBuffers(frame_def);
+    RenderLightAndShadowPasses(frame_def);
+    DrawWorldToTexture(frame_def);
+  }
+
+  // Back to the main view.
+  current_view_data_ = main_view_data_.get();
+  frame_def->set_current_view(frame_def->main_view());
+}
+
+void Renderer::UpdateTextureViewTargets(FrameDef* frame_def) {
+  FrameDefView* fview = frame_def->current_view();
+
+  // As with the main view, in higher-quality modes the world gets
+  // drawn to a camera buffer first so that depth-of-field and the like
+  // can be applied on its way to where it is headed. Ours is the size
+  // of our texture, and multisampled wherever the main view's is.
+  if (fview->quality() >= GraphicsQuality::kHigh) {
+    if (!view_data()->camera_render_target.exists()
+        || view_data()->camera_for_width != fview->width()
+        || view_data()->camera_for_height != fview->height()
+        || view_data()->camera_for_quality != fview->quality()) {
+      view_data()->camera_render_target.Clear();
+      view_data()->camera_for_width = fview->width();
+      view_data()->camera_for_height = fview->height();
+      view_data()->camera_for_quality = fview->quality();
+      CreateCameraRenderTargets_(fview->quality(), fview->width(),
+                                 fview->height(),
+                                 std::max(fview->width(), fview->height()));
+    }
+  } else {
+    view_data()->camera_render_target.Clear();
+    view_data()->camera_msaa_render_target.Clear();
+    view_data()->blur_res_count = 0;
+  }
+
+  if (!view_data()->output_render_target.exists()
+      || view_data()->output_width != fview->width()
+      || view_data()->output_height != fview->height()) {
+    view_data()->output_width = fview->width();
+    view_data()->output_height = fview->height();
+    view_data()->output_render_target =
+        NewFramebufferRenderTarget(fview->width(), fview->height(),
+                                   true,   // linear-interp
+                                   true,   // depth
+                                   true,   // tex
+                                   false,  // depth-tex
+                                   true,   // high-qual
+                                   false,  // msaa
+                                   false   // alpha
+        );                                 // NOLINT(whitespace/parens)
+  }
+}
+
+void Renderer::DrawWorldToTexture(FrameDef* frame_def) {
+  FrameDefView* fview = frame_def->current_view();
+  RenderTarget* target = view_data()->output_render_target.get();
+  assert(target);
+
+  if (view_data()->camera_render_target.exists()) {
+    DrawWorldToTextureThroughCamera_(frame_def);
+    return;
+  }
+
+  PushGroupMarker("Texture View Opaque Pass");
+  SetDepthWriting(true);
+  SetDepthTesting(true);
+  SetDrawAtEqualDepth(false);
+  const Vector3f& clear_color = fview->clear_color();
+  target->DrawBegin(true, clear_color.x, clear_color.y, clear_color.z, 1.0f,
+                    true);
+
+  // These passes draw upside down (see RenderPass::draws_flipped()),
+  // which turns front faces into back faces.
+  assert(frame_def->beauty_pass()->draws_flipped());
+  FlipCullFace();
+
+  // Draw opaque stuff front-to-back.
+  frame_def->beauty_pass()->Render(target, false);
+  frame_def->beauty_pass_bg()->Render(target, false);
+  PopGroupMarker();
+
+  // Draw transparent stuff back-to-front.
+  PushGroupMarker("Texture View Transparent Pass");
+  SetDepthWriting(false);
+  SetDrawAtEqualDepth(true);
+  frame_def->beauty_pass_bg()->Render(target, true);
+  frame_def->beauty_pass()->Render(target, true);
+  frame_def->overlay_3d_pass()->Render(target, true);
+  PopGroupMarker();
+
+  FlipCullFace();
+
+  // We're done with depth here.
+  InvalidateFramebuffer(false, true, false);
+  SetDrawAtEqualDepth(false);
+}
+
+void Renderer::DrawWorldToTextureThroughCamera_(FrameDef* frame_def) {
+  FrameDefView* fview = frame_def->current_view();
+  RenderTarget* target = view_data()->output_render_target.get();
+  RenderTarget* cam_target = has_camera_msaa_render_target()
+                                 ? camera_msaa_render_target()
+                                 : camera_render_target();
+  const Vector3f& clear_color = fview->clear_color();
+
+  // The world goes into the camera buffer (upside down, as everything
+  // a texture view draws is; see RenderPass::draws_flipped()).
+  PushGroupMarker("Texture View Camera Opaque Pass");
+  SetDepthWriting(true);
+  SetDepthTesting(true);
+  SetDrawAtEqualDepth(false);
+  cam_target->DrawBegin(true, clear_color.x, clear_color.y, clear_color.z, 1.0f,
+                        true);
+  assert(frame_def->beauty_pass()->draws_flipped());
+  FlipCullFace();
+
+  // Draw opaque stuff front-to-back.
+  frame_def->beauty_pass()->Render(cam_target, false);
+  frame_def->beauty_pass_bg()->Render(cam_target, false);
+  PopGroupMarker();
+
+  // Draw transparent stuff back-to-front.
+  PushGroupMarker("Texture View Camera Transparent Pass");
+  SetDepthWriting(false);
+  frame_def->beauty_pass_bg()->Render(cam_target, true);
+  frame_def->beauty_pass()->Render(cam_target, true);
+  FlipCullFace();
+
+  // If we drew into the MSAA version, blit it over to the texture version.
+  if (has_camera_msaa_render_target()) {
+    BlitBuffer(camera_msaa_render_target(), camera_render_target(),
+               true,   // Depth.
+               false,  // linear_interpolation
+               false,  // force_shader_blit
+               true    // invalidate_source
+    );                 // NOLINT(whitespace/parens)
+  }
+  GenerateCameraBufferBlurPasses();
+  PopGroupMarker();
+
+  // Then from the camera buffer to where it is headed, by way of the
+  // blit shapes (which is where depth-of-field gets applied), with
+  // anything meant to be unaffected by that drawn on top.
+  PushGroupMarker("Texture View Blit Pass");
+  SetDepthWriting(true);
+  SetDepthTesting(true);
+  target->DrawBegin(true, clear_color.x, clear_color.y, clear_color.z, 1.0f,
+                    true);
+  UpdateDOFParams(frame_def);
+  assert(frame_def->blit_pass()->draws_flipped());
+  FlipCullFace();
+  frame_def->blit_pass()->Render(target, false);
+  SetDepthWriting(false);
+  SetDrawAtEqualDepth(true);
+  frame_def->overlay_3d_pass()->Render(target, true);
+  FlipCullFace();
+  PopGroupMarker();
+
+  // We're done with depth here.
+  InvalidateFramebuffer(false, true, false);
+  SetDrawAtEqualDepth(false);
 }
 
 void Renderer::RenderLightAndShadowPasses(FrameDef* frame_def) {
@@ -535,11 +765,11 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
   // In higher-quality modes we render the world into a buffer
   // so we can do depth-of-field filtering and whatnot.
   if (frame_def->quality() >= GraphicsQuality::kHigh) {
-    if (!camera_render_target_.exists()) {
+    if (!view_data()->camera_render_target.exists()) {
       float pixel_scale_fin = std::min(1.0f, std::max(0.1f, pixel_scale_));
       // Note: offscreen content buffers represent only the screen's
-      // content region (which excludes any tv-border/aspect-limit black
-      // bars), so size off that. Note this is the full render rect and
+      // content region (which excludes any aspect-limit black bars), so
+      // size off that. Note this is the full render rect and
       // not the virtual bounds within it - the buffer has to physically
       // hold the bounds margins too, since we keep drawing out into
       // them.
@@ -556,69 +786,76 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
       int max_res =
           static_cast<int>(std::max(bounds_rect.width(), bounds_rect.height())
                            * pixel_scale_fin);
-      blur_res_count_ = 0;
-      int blur_res = max_res;
-      while (blur_res > 250) {
-        blur_res_count_++;
-        blur_res /= 2;
-      }
-
-      // Enforce a minimum.
-      if (blur_res_count_ < 4) {
-        blur_res_count_ = 4;
-      }
-
-      // We limit to a single blur pass in high-quality.
-      if (frame_def->quality() == GraphicsQuality::kHigh
-          && blur_res_count_ > 1) {
-        blur_res_count_ = 1;
-      }
-
-      // Now tweak our cam render target res so that its evenly divisible by
-      // 2 for that many levels.
-      int foo = 1;
-      for (int i = 0; i < blur_res_count_; i++) {
-        foo *= 2;
-      }
-      w = ((w % foo == 0) ? w : (w + (foo - (w % foo))));
-      h = ((h % foo == 0) ? h : (h + (foo - (h % foo))));
-      camera_render_target_ = NewFramebufferRenderTarget(w, h,
-                                                         true,  // linear-interp
-                                                         true,  // depth
-                                                         true,  // tex
-                                                         true,  // depth-tex
-                                                         false,  // high-qual
-                                                         false,  // msaa
-                                                         false   // alpha
-      );  // NOLINT(whitespace/parens)
-
-      // If screen size just changed or whatnot,
-      // update whether we should do msaa.
-      if (msaa_enabled_dirty_) {
-        UpdateMSAAEnabled_();
-        msaa_enabled_dirty_ = false;
-      }
-
-      // If we're doing msaa, also create a multi-sample version of the same.
-      // We'll draw into this and then blit it to our normal texture-backed
-      // camera-target.
-      if (IsMSAAEnabled()) {
-        camera_msaa_render_target_ =
-            NewFramebufferRenderTarget(w, h,
-                                       false,  // linear-interp
-                                       true,   // depth
-                                       false,  // tex
-                                       false,  // depth-tex
-                                       false,  // high-qual
-                                       true,   // msaa
-                                       false   // alpha
-            );                                 // NOLINT(whitespace/parens)
-      }
+      CreateCameraRenderTargets_(frame_def->quality(), w, h, max_res);
     }
   } else {
-    camera_render_target_.Clear();
-    camera_msaa_render_target_.Clear();
-    blur_res_count_ = 0;
+    view_data()->camera_render_target.Clear();
+    view_data()->camera_msaa_render_target.Clear();
+    view_data()->blur_res_count = 0;
+  }
+}
+
+void Renderer::CreateCameraRenderTargets_(GraphicsQuality quality, int w, int h,
+                                          int max_res) {
+  view_data()->blur_res_count = 0;
+  int blur_res = max_res;
+  while (blur_res > 250) {
+    view_data()->blur_res_count++;
+    blur_res /= 2;
+  }
+
+  // Enforce a minimum.
+  if (view_data()->blur_res_count < 4) {
+    view_data()->blur_res_count = 4;
+  }
+
+  // We limit to a single blur pass in high-quality.
+  if (quality == GraphicsQuality::kHigh && view_data()->blur_res_count > 1) {
+    view_data()->blur_res_count = 1;
+  }
+
+  // Now tweak our cam render target res so that its evenly divisible by
+  // 2 for that many levels.
+  int foo = 1;
+  for (int i = 0; i < view_data()->blur_res_count; i++) {
+    foo *= 2;
+  }
+  w = ((w % foo == 0) ? w : (w + (foo - (w % foo))));
+  h = ((h % foo == 0) ? h : (h + (foo - (h % foo))));
+  view_data()->camera_render_target =
+      NewFramebufferRenderTarget(w, h,
+                                 true,   // linear-interp
+                                 true,   // depth
+                                 true,   // tex
+                                 true,   // depth-tex
+                                 false,  // high-qual
+                                 false,  // msaa
+                                 false   // alpha
+      );                                 // NOLINT(whitespace/parens)
+
+  view_data()->camera_msaa_render_target.Clear();
+
+  // If screen size just changed or whatnot,
+  // update whether we should do msaa.
+  if (msaa_enabled_dirty_) {
+    UpdateMSAAEnabled_();
+    msaa_enabled_dirty_ = false;
+  }
+
+  // If we're doing msaa, also create a multi-sample version of the same.
+  // We'll draw into this and then blit it to our normal texture-backed
+  // camera-target.
+  if (IsMSAAEnabled()) {
+    view_data()->camera_msaa_render_target =
+        NewFramebufferRenderTarget(w, h,
+                                   false,  // linear-interp
+                                   true,   // depth
+                                   false,  // tex
+                                   false,  // depth-tex
+                                   false,  // high-qual
+                                   true,   // msaa
+                                   false   // alpha
+        );                                 // NOLINT(whitespace/parens)
   }
 }
 
@@ -704,7 +941,11 @@ void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
   RenderTarget* cam_target = has_camera_msaa_render_target()
                                  ? camera_msaa_render_target()
                                  : camera_render_target();
-  cam_target->DrawBegin(frame_def->needs_clear());
+  if (debug_draw_mode()) {
+    cam_target->DrawBegin(true, kDebugDrawClearColor);
+  } else {
+    cam_target->DrawBegin(frame_def->needs_clear());
+  }
 
   // Draw opaque stuff front-to-back.
   frame_def->beauty_pass()->Render(cam_target, false);
@@ -757,16 +998,16 @@ void Renderer::UpdateDOFParams(FrameDef* frame_def) {
     min_z = max_z = 0;
   }
 
-  if ((frame_def->app_time_millisecs() - dof_update_time_ > 100)) {
-    dof_update_time_ = frame_def->app_time_millisecs() - 100;
+  if ((frame_def->app_time_millisecs() - view_data()->dof_update_time > 100)) {
+    view_data()->dof_update_time = frame_def->app_time_millisecs() - 100;
   }
   float smoothing = 0.995f;
-  while (dof_update_time_ < frame_def->app_time_millisecs()) {
-    dof_update_time_++;
-    dof_near_smoothed_ =
-        smoothing * dof_near_smoothed_ + (1.0f - smoothing) * min_z;
-    dof_far_smoothed_ =
-        smoothing * dof_far_smoothed_ + (1.0f - smoothing) * max_z;
+  while (view_data()->dof_update_time < frame_def->app_time_millisecs()) {
+    view_data()->dof_update_time++;
+    view_data()->dof_near_smoothed =
+        smoothing * view_data()->dof_near_smoothed + (1.0f - smoothing) * min_z;
+    view_data()->dof_far_smoothed =
+        smoothing * view_data()->dof_far_smoothed + (1.0f - smoothing) * max_z;
   }
 }
 
@@ -780,8 +1021,12 @@ void Renderer::OnScreenSizeChange() {
 }
 
 void Renderer::Unload() {
-  light_render_target_.Clear();
-  light_shadow_render_target_.Clear();
+  // What we hold for texture views simply goes; it gets made anew
+  // when those views next come through.
+  texture_view_datas_.clear();
+
+  view_data()->light_render_target.Clear();
+  view_data()->light_shadow_render_target.Clear();
   vr_overlay_flat_render_target_.Clear();
   screen_render_target_.Clear();
   backing_render_target_.Clear();
@@ -806,9 +1051,9 @@ void Renderer::PostLoad() {
 }
 
 void Renderer::SetLight(float pitch, float heading, float tz) {
-  light_pitch_ = pitch;
-  light_heading_ = heading;
-  light_tz_ = tz;
+  view_data()->light_pitch = pitch;
+  view_data()->light_heading = heading;
+  view_data()->light_tz = tz;
 }
 
 #if BA_VR_BUILD
@@ -850,6 +1095,17 @@ auto Renderer::GetZBufferValue(RenderPass* pass, float dist) -> float {
   z = 0.5f * (z + 1.0f);
   z = kBackingDepth3 + z * (kBackingDepth4 - kBackingDepth3);
   return z;
+}
+
+auto Renderer::GetZBufferValueForDistance(RenderPass* pass, float dist)
+    -> float {
+  // Run a point that far out in front of the camera through the pass's
+  // projection to see what depth it lands at.
+  const float* m = pass->projection_matrix().m;
+  float z_view = -std::max(0.0001f, dist);
+  float z_clip = m[10] * z_view + m[14];
+  float w_clip = m[11] * z_view + m[15];
+  return GetZBufferValue(pass, w_clip != 0.0f ? z_clip / w_clip : 1.0f);
 }
 
 auto Renderer::GetAutoAndroidRes() -> std::string {

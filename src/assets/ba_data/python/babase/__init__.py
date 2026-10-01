@@ -37,7 +37,6 @@ from _babase import (
     fullscreen_control_set,
     can_display_chars,
     charstr,
-    clipboard_get_text,
     clipboard_get_text_async,
     clipboard_has_text,
     clipboard_is_supported,
@@ -53,6 +52,7 @@ from _babase import (
     Env,
     fade_screen,
     fatal_error,
+    get_auto_screen_inset_amount,
     get_display_resolution,
     get_immediate_return_code,
     get_input_idle_time,
@@ -128,8 +128,13 @@ from _babase import (
     user_agent_string,
     user_ran_commands,
     Vec3,
+    warm_up_string_measure,
     workspaces_in_use,
 )
+
+# Deprecated names deliberately kept in the public api for compat;
+# imported separately so the deprecation ignore stays targeted.
+from _babase import clipboard_get_text  # type: ignore[deprecated]
 
 from babase._accountv2 import AccountV2Handle, AccountV2Subsystem
 from babase._analytics import AnalyticsSubsystem
@@ -139,7 +144,7 @@ from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._asset_packages import (
     check_asset_package_load,
-    loaded_asset_package_apverids,
+    loaded_asset_package_apvernums,
     asset_package_bucket_paths,
     asset_package_string_count,
 )
@@ -199,20 +204,21 @@ from babase._error import (
 from babase._gc import GarbageCollectionSubsystem
 from babase._general import (
     AppTime,
-    Call,
     CallPartial,
     CallStrict,
     DisplayTime,
     Existable,
-    WeakCall,
     WeakCallPartial,
     WeakCallStrict,
     existing,
     get_type_name,
     getclass,
+    logic_thread_submit,
     storagename,
     verify_object_death,
 )
+from babase._general import Call  # type: ignore[deprecated]
+from babase._general import WeakCall  # type: ignore[deprecated]
 from babase._language import (
     LangStrDir,
     LanguageSubsystem,
@@ -227,6 +233,7 @@ from babase._logging import (
     accountlog,
     applog,
     assetmanagerlog,
+    audiolog,
     balog,
     lifecyclelog,
     netlog,
@@ -305,6 +312,7 @@ __all__ = [
     'AppTimer',
     'asset_loads_allowed',
     'assetmanagerlog',
+    'audiolog',
     'AssetSubsystem',
     'AssetResolveError',
     'atexit',
@@ -349,6 +357,7 @@ __all__ = [
     'fade_screen',
     'fatal_error',
     'GarbageCollectionSubsystem',
+    'get_auto_screen_inset_amount',
     'get_display_resolution',
     'get_immediate_return_code',
     'get_input_idle_time',
@@ -385,7 +394,7 @@ __all__ = [
     'is_xcode_build',
     'LanguageSubsystem',
     'check_asset_package_load',
-    'loaded_asset_package_apverids',
+    'loaded_asset_package_apvernums',
     'asset_package_bucket_paths',
     'asset_package_string_count',
     'LocaleSubsystem',
@@ -393,6 +402,7 @@ __all__ = [
     'LangStr',
     'LangStrDir',
     'lock_all_input',
+    'logic_thread_submit',
     'LoginAdapter',
     'LoginInfo',
     'Lstr',
@@ -490,6 +500,7 @@ __all__ = [
     'Vec3',
     'vec3validate',
     'verify_object_death',
+    'warm_up_string_measure',
     'WeakCall',
     'WeakCallPartial',
     'WeakCallStrict',

@@ -449,6 +449,29 @@ def prefab_symbols_fetch() -> None:
     fetch_prefab_symbols()
 
 
+def dump_symbols_fetch() -> None:
+    """Fetch debug symbols for the modules a Windows crash dump names.
+
+    Takes a path to a ``.dmp``. Every module in a minidump records the
+    CodeView key of its pdb, so this can fetch symbols for a build you
+    never had locally -- which is the normal case for a crash report.
+    Staged under ``build/windows-symbols/<pdb>/<key>/``, a layout a
+    debugger symbol path can point straight at. Honors ``BA_FLEET``
+    (default prod).
+    """
+    import sys
+
+    from efro.error import CleanError
+
+    from batools.dumpsymbols import stage_symbols_for_dump
+
+    args = sys.argv[2:]
+    if len(args) != 1:
+        raise CleanError('Expected exactly one arg: a path to a .dmp file.')
+
+    stage_symbols_for_dump(args[0])
+
+
 def push_ipa_to_archive() -> None:
     """Construct an ios IPA and publish it to a bamaster archive.
 

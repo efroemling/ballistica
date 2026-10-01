@@ -4,8 +4,8 @@
 
 Creates/updates/prunes ``foo.pyc`` files next to every ``foo.py``
 under a staged tree — the layout zipimport consumes when importing
-directly out of an apk/zip (see internal
-``docs/initiatives/android-apk-direct-ba-data.md``).
+directly out of an apk/zip (see
+``docs/design/android-apk-direct-data.md``).
 
 The emitted pycs use hash-based *unchecked-hash* invalidation (PEP
 552): loaded unconditionally by zipimport, immune to apk zip-timestamp

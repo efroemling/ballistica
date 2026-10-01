@@ -5,8 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _classicassets
-from bauiv1 import _uiv1assets
+from bauiv1 import _classicassets, _uiv1assets
 
 if TYPE_CHECKING:
     pass
@@ -127,6 +126,7 @@ def _scroll_fade(
         ),
         size=(blotchwidth, yscale * blotchheight),
         color=clr,
+        match_backing_glow=True,
     )
     bui.widget(edit=bimg, depth_range=(0.9, 1.0))
     bimg = bui.imagewidget(
@@ -139,6 +139,7 @@ def _scroll_fade(
         ),
         size=(blotchwidth, yscale * blotchheight),
         color=clr,
+        match_backing_glow=True,
     )
     bui.widget(edit=bimg, depth_range=(0.9, 1.0))
 
@@ -153,5 +154,6 @@ def _scroll_fade(
             ),
             size=(blotchwidth, yscale * blotchheight),
             color=clr,
+            match_backing_glow=True,
         )
         bui.widget(edit=bimg, depth_range=(0.9, 1.0))

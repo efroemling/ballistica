@@ -55,6 +55,8 @@ class BuildStager:
         # Python (for zipimport directly from the apk) and protect
         # them from our rsync delete passes.
         self.include_payload_pycs = False
+        # Bundle a pycache_prewarm payload (store builds).
+        self.include_pycache_prewarm = False
         # Suffix for staged bundle blob names; Android uses '.bablob'
         # so blobs pack uncompressed in the apk (suffix-matched gradle
         # noCompress) and get served as spans from the apk mapping.
@@ -108,8 +110,13 @@ class BuildStager:
         if self.serverdst is not None:
             self._sync_server_files()
 
-        # On windows we need to pull in some dlls and this and that (we
-        # also include a non-stripped-down set of Python libs).
+        # On windows we need to pull in some dlls and this and that,
+        # including the Python stdlib. Like the apple/android pylib
+        # sets, it ships pre-stripped: efrotools.pybuild.winprune()
+        # (run when new windows Python dists are dropped into
+        # src/assets/windows/) deletes PRUNE_LIB_NAMES from the
+        # checked-in Lib tree, so what we rsync here is already the
+        # final trimmed set.
         if self.win_extras_src is not None:
             self._sync_windows_extras()
 
@@ -134,9 +141,14 @@ class BuildStager:
         if self.include_shell_executable:
             self._sync_shell_executable()
 
+        # Store builds: bundle the pycache_prewarm payload (built
+        # from the just-staged trees, so this comes after all syncs).
+        if self.include_pycache_prewarm:
+            self._build_pycache_prewarm()
+
         # On Android, generate side-by-side .pyc files for all staged
         # Python; zipimport reads these when importing directly out of
-        # the apk (see docs/initiatives/android-apk-direct-ba-data.md).
+        # the apk (see docs/design/android-apk-direct-data.md).
         # Must run before payload-file generation so they're included
         # in its manifest.
         if self.include_payload_pycs:
@@ -202,6 +214,32 @@ class BuildStager:
         # version compared to a regular version; copying files in
         # instead of symlinking them/etc.
         self.dist_mode = extract_flag(args, '-dist')
+
+        # Store builds opt in to bundling a pycache_prewarm payload
+        # (pre-built pycs the C++ layer installs into the pycache dir
+        # before Python spins up on monolithic builds; see
+        # docs/initiatives/pyc-prewarm-bundling.md).
+        # Both store-packaging knobs can also arrive via env
+        # (BA_PYCACHE_PREWARM=1 / BA_ASSET_BUNDLE_PROFILE=<name>): the
+        # packaging Make targets (mac-archive-appstore,
+        # android-archive-*) set them so ONLY a final store package
+        # gets the payloads, while every ordinary build of the same
+        # scheme/flavor stays minimal. Xcode script phases inherit
+        # xcodebuild's env, which is how they reach the Apple staging.
+        self.include_pycache_prewarm = (
+            extract_flag(args, '-pycache-prewarm')
+            or os.environ.get('BA_PYCACHE_PREWARM') == '1'
+        )
+
+        # Store builds opt in to a richer asset-bundle profile (see
+        # batools.assetbundleprofiles); default is the minimal profile
+        # matching the build kind (chosen below once the platform is
+        # known).
+        bundle_profile_arg = extract_arg(args, '-asset-bundle-profile')
+        if bundle_profile_arg is None:
+            bundle_profile_arg = (
+                os.environ.get('BA_ASSET_BUNDLE_PROFILE') or None
+            )
 
         # Require either -debug or -release in args.
         # (or a few common variants from cmake, etc.)
@@ -277,16 +315,19 @@ class BuildStager:
             raise RuntimeError('No valid platform arg provided.')
 
         # Every staged build bundles a named asset-package profile (see
-        # batools.assetbundleprofiles): server builds (``serverdst`` set)
-        # get the headless profile, other builds the gui one. This now
-        # includes Apple Xcode builds -- their staging phase runs
-        # remotely (inside xcodebuild on the ba-apple env), so their
-        # cloud-build Make targets (_mac-cloud-build / _ios-cloud-build /
-        # _tvos-cloud-build) run `asset_bundle_build gui-minimal` on that
-        # remote env before xcodebuild, ensuring the .cache/asset_bundle
-        # tree is present when this staging phase reads it there.
-        self.asset_bundle_profile = (
-            'headless-minimal' if self.serverdst is not None else 'gui-minimal'
+        # batools.assetbundleprofiles). Default: server builds
+        # (``serverdst`` set) get the headless-minimal profile, other
+        # builds gui-minimal. Store builds pass ``-asset-bundle-profile
+        # store`` to bundle everything needed for offline play; its
+        # device-native texture flavor derives from this platform's
+        # form factor, and the value stored here is the *cache dir*
+        # name ``stage_build`` reads (``store-desktop`` etc.). Whoever
+        # invokes the build must have run ``asset_bundle_build`` for
+        # that same profile/form-factor beforehand -- e.g. Apple Xcode
+        # builds' staging phase runs inside xcodebuild (possibly on a
+        # remote env), so their Make targets assemble the bundle first.
+        self.asset_bundle_profile = self._select_asset_bundle_profile(
+            bundle_profile_arg, platform_arg
         )
 
         # Special case: running rsync to a windows drive via WSL fails
@@ -299,11 +340,37 @@ class BuildStager:
         if is_wsl_windows_build_path(self.projroot):
             self.wsl_chmod_workaround = True
 
+    def _select_asset_bundle_profile(
+        self, bundle_profile_arg: str | None, platform_arg: str
+    ) -> str:
+        """Resolve the asset-bundle cache-dir name this build stages."""
+        from batools.assetbundleprofiles import (
+            get_profile,
+            bundle_cache_dirname,
+            form_factor_for_staging_platform,
+        )
+
+        if bundle_profile_arg is None:
+            return (
+                'headless-minimal'
+                if self.serverdst is not None
+                else 'gui-minimal'
+            )
+        profile = get_profile(bundle_profile_arg)
+        return bundle_cache_dirname(
+            profile,
+            (
+                form_factor_for_staging_platform(platform_arg)
+                if profile.form_factors
+                else None
+            ),
+        )
+
     def _parse_android_args(self) -> None:
         # Android serves everything staged here directly out of the
         # apk at runtime (Python via zipimport, bundled asset blobs as
         # spans from a memory-map); nothing is extracted to disk. See
-        # docs/initiatives/android-apk-direct-ba-data.md.
+        # docs/design/android-apk-direct-data.md.
         self.dst = 'assets/ballistica_files'
         self.pylib_src_path = 'pylib-android'
         self.include_pylib = True
@@ -397,7 +464,13 @@ class BuildStager:
         # bit tidier.
         dbgsfx = '_d' if self.debug else ''
 
-        toplevelfiles: list[str] = [f'python{PYVERNODOT}{dbgsfx}.dll']
+        toplevelfiles: list[str] = [
+            f'python{PYVERNODOT}{dbgsfx}.dll',
+            # Game-packet compression (both gui and server builds);
+            # vendored from the official zstd release by
+            # `pcommand zstd_windows_install`.
+            'libzstd.dll',
+        ]
 
         if self.win_type == 'win':
             toplevelfiles += [
@@ -481,6 +554,55 @@ class BuildStager:
                 )
                 shutil.rmtree(pcachepath)
 
+    def _build_pycache_prewarm(self) -> None:
+        """Assemble the bundled pycache_prewarm payload (store builds).
+
+        Pre-built pycs + source-hash manifest, installed into the
+        pycache dir by the C++ layer before Python bring-up on
+        monolithic builds (docs/initiatives/pyc-prewarm-bundling.md).
+        Compiled at the level the shipped interpreter runs at (see
+        core_python.cc optimization_level) and guarded to the bundled
+        Python version, mirroring the android apk-pyc staging.
+        """
+        from batools._prewarmstage import build_prewarm
+
+        assert self.dst is not None
+        assert self.debug is not None
+        hostver = '.'.join(str(v) for v in sys.version_info[:2])
+        if hostver != PYVER:
+            raise RuntimeError(
+                f'Staging under Python {hostver} but the project'
+                f' bundles Python {PYVER}; prewarm .pyc files would be'
+                f' silently ignored by the bundled interpreter.'
+                f' Stage with Python {PYVER}.'
+            )
+        roots = [
+            ('app', f'{self.dst}/ba_data/python'),
+            ('site', f'{self.dst}/ba_data/python-site-packages'),
+        ]
+        # Bundled stdlib location varies (windows ships 'lib').
+        for libname in ('pylib', 'lib'):
+            if os.path.isdir(f'{self.dst}/{libname}'):
+                roots.append(('pylib', f'{self.dst}/{libname}'))
+                break
+        results = build_prewarm(
+            f'{self.dst}/ba_data/pycache_prewarm',
+            roots,
+            optimize=0 if self.debug else 1,
+        )
+        if results.errors:
+            errstr = '\n'.join(results.errors)
+            raise RuntimeError(
+                f'{len(results.errors)} error(s) building pycache'
+                f' prewarm payload:\n{errstr}'
+            )
+        print(
+            f'{Clr.BLU}Built pycache_prewarm payload:'
+            f' {Clr.BLD}{results.compiled}{Clr.RST}{Clr.BLU} pycs'
+            f' across {len(roots)} root(s).{Clr.RST}',
+            flush=True,
+        )
+
     def _sync_pylib(self) -> None:
         assert self.pylib_src_path is not None
         assert not self.pylib_src_path.endswith('/')
@@ -494,6 +616,9 @@ class BuildStager:
             '--delete-excluded',
             '--prune-empty-dirs',
         ]
+        if self.include_pycache_prewarm:
+            self._build_pycache_prewarm()
+
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the
             # deletion pass (a plain exclude wouldn't survive
@@ -539,6 +664,9 @@ class BuildStager:
             assert self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
+
+        if self.include_pycache_prewarm:
+            self._build_pycache_prewarm()
 
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the

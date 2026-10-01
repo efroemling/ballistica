@@ -37,7 +37,7 @@ class LightNode : public Node {
  private:
   auto GetVolumeLightIntensity() -> float;
 #if !BA_HEADLESS_BUILD
-  base::BGDynamicsShadow shadow_{0.2f};
+  base::BGDynamicsShadow shadow_;
   Object::Ref<base::BGDynamicsVolumeLight> volume_light_;
 #endif
   std::vector<float> position_ = {0.0f, 0.0f, 0.0f};

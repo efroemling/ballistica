@@ -42,7 +42,7 @@ from bacommon.langstr._core import (
     LangStrError,
     EncodedLangStr,
     contains_resource_form,
-    collect_apverids,
+    collect_apvernums,
 )
 from bacommon.langstr._flatindex import (
     LANGSTR_FLAT_MIN_BUILD,
@@ -94,7 +94,7 @@ __all__ = [
     'LangStrError',
     'EncodedLangStr',
     'contains_resource_form',
-    'collect_apverids',
+    'collect_apvernums',
     'LangStrDir',
     'WrapperTree',
     'convert_time_subs',

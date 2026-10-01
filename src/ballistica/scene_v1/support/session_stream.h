@@ -5,6 +5,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -13,6 +14,13 @@
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::scene_v1 {
+
+/// Append an unsigned LEB128 varint (the compact stream framing).
+void AppendVarint(std::vector<uint8_t>* out, uint32_t value);
+
+/// Whether kAddNodeWithAttrs may carry this attr-set command (must match
+/// ClientSession's value-layout table).
+auto IsPackableAttrCommand(uint8_t cmd) -> bool;
 
 // A mechanism for dumping a live session or session-creation-commands to a
 // stream of messages that can be saved to file or sent over the network.
@@ -31,6 +39,10 @@ class SessionStream : public Object, public ClientControllerInterface {
   void AddMaterial(Material* m);
   void RemoveMaterial(Material* m);
   void AddMaterialComponent(Material* m, MaterialComponent* c);
+  void AddSpazDef(SpazDef* d);
+  void RemoveSpazDef(SpazDef* d);
+  void AddDepiction(SceneDepiction* d);
+  void RemoveDepiction(SceneDepiction* d);
   void AddTexture(SceneTexture* t);
   void RemoveTexture(SceneTexture* t);
   void AddMesh(SceneMesh* t);
@@ -41,6 +53,31 @@ class SessionStream : public Object, public ClientControllerInterface {
   void RemoveData(SceneDataAsset* d);
   void AddCollisionMesh(SceneCollisionMesh* t);
   void RemoveCollisionMesh(SceneCollisionMesh* t);
+  /// (kProtocolVersionAnimCurveCommand) Fold scope for bs.animate: commands
+  /// ended while folding are held aside instead of appended;
+  /// CommitFoldAnimCurve drops them and writes one kAddAnimCurve, and
+  /// AbortFold replays them as they were (so a throw mid-animate leaves
+  /// the stream exactly as the unfolded path would have).
+  auto CanFoldAnimCurve() const -> bool {
+    return host_session_ != nullptr && fold_anim_curves_;
+  }
+  void BeginFold();
+  void AbortFold();
+  /// (kProtocolVersionPackedCommands) Fold scope for newnode(attrs):
+  /// commit writes one kAddNodeWithAttrs if the held commands are
+  /// exactly [AddNode][packable attr sets...][NodeOnCreate] for node,
+  /// else replays them as they were.
+  auto CanFoldNodeCreate() const -> bool {
+    return host_session_ != nullptr && pack_node_creates_;
+  }
+  void CommitFoldAddNode(Node* node);
+  void CommitFoldAnimCurve(Scene* scene, Node* curve, Node* globals,
+                           NodeAttributeUnbound* time_attr,
+                           NodeAttributeUnbound* in_attr,
+                           NodeAttributeUnbound* out_attr, Node* target,
+                           NodeAttributeUnbound* target_attr, int64_t offset,
+                           bool loop, const std::vector<int64_t>& times,
+                           const std::vector<float>& values);
   void ConnectNodeAttribute(Node* src_node, NodeAttributeUnbound* src_attr,
                             Node* dst_node, NodeAttributeUnbound* dst_attr);
   void NodeMessage(Node* node, const char* buffer, size_t size);
@@ -56,6 +93,8 @@ class SessionStream : public Object, public ClientControllerInterface {
   void SetNodeAttr(const NodeAttribute& attr,
                    const std::vector<Material*>& vals);
   void SetNodeAttr(const NodeAttribute& attr, SceneTexture* n);
+  void SetNodeAttr(const NodeAttribute& attr, SpazDef* d);
+  void SetNodeAttr(const NodeAttribute& attr, SceneDepiction* d);
   void SetNodeAttr(const NodeAttribute& attr,
                    const std::vector<SceneTexture*>& vals);
   void SetNodeAttr(const NodeAttribute& attr, SceneSound* n);
@@ -84,6 +123,12 @@ class SessionStream : public Object, public ClientControllerInterface {
   void EmitInputDeviceFeedback(int player_id, const std::string& json_payload);
   auto GetSoundID(SceneSound* s) -> int64_t;
   auto GetMaterialID(Material* m) -> int64_t;
+  auto GetSpazDefID(SpazDef* d) -> int64_t;
+  auto GetDepictionID(SceneDepiction* d) -> int64_t;
+
+  /// Live (non-recycled) spaz-def entries in this stream's table.
+  /// Debug/test introspection for the spaz-def churn test.
+  auto live_spaz_def_count() -> size_t;
   void ScreenMessageBottom(const std::string& val, float r, float g, float b);
   void ScreenMessageTop(const std::string& val, float r, float g, float b,
                         SceneTexture* texture, SceneTexture* tint_texture,
@@ -111,6 +156,8 @@ class SessionStream : public Object, public ClientControllerInterface {
   auto IsValidData(SceneDataAsset* val) -> bool;
   auto IsValidCollisionMesh(SceneCollisionMesh* val) -> bool;
   auto IsValidMaterial(Material* val) -> bool;
+  auto IsValidSpazDef(SpazDef* val) -> bool;
+  auto IsValidDepiction(SceneDepiction* val) -> bool;
 
   void Flush();
   void AddMessageToReplay(const std::vector<uint8_t>& message);
@@ -166,6 +213,62 @@ class SessionStream : public Object, public ClientControllerInterface {
   template <typename T>
   void Remove(T* val, std::vector<T*>* vec, std::vector<size_t>* free_indices);
 
+  // Outgoing-stream accounting (BA_STREAM_STATS; test_game_run
+  // --stream-stats): what we ship, by command type and by node type
+  // for attr/message commands, plus corrections and each client
+  // connection's wire bytes, logged every few seconds (ba.net INFO).
+  void StatsNoteCommand_();
+  void StatsMaybeLog_(millisecs_t real_time);
+  bool stats_enabled_{};
+  millisecs_t stats_last_log_time_{};
+  int64_t stats_cmd_bytes_[256]{};
+  int64_t stats_cmd_counts_[256]{};
+  // Adjacency of the per-step framing commands within a message (what
+  // an encoding-only merge could fold): time-step right after
+  // time-step, scene-step right after time-step, time-step right after
+  // scene-step. -1 = message empty.
+  int stats_prev_cmd_{-1};
+  int64_t stats_adj_ts_ts_{};
+  int64_t stats_adj_ts_step_{};
+  int64_t stats_adj_step_ts_{};
+  std::unordered_map<std::string, int64_t> stats_node_type_bytes_;
+  // "type.attr" -> (bytes, count) for the set-attr commands.
+  std::unordered_map<std::string, std::pair<int64_t, int64_t>>
+      stats_attr_bytes_;
+  int64_t stats_correction_bytes_{};
+  int64_t stats_correction_messages_{};
+  int64_t stats_shipped_bytes_{};
+  int64_t stats_shipped_messages_{};
+
+  // Protocol 45+ framing: varint command lengths and zigzag-varint
+  // integers (see kProtocolVersionCompactStream). Fixed at creation
+  // from the protocol we host.
+  bool compact_{};
+  // kProtocolVersionMergedStep: SetTime folds a trailing scene-step
+  // command into kStepSceneGraphAndTime. These track the last command
+  // appended to the unshipped message (offset, id) and the scene of the
+  // last step written; -1 = nothing to fold.
+  bool merge_steps_{};
+  bool pack_node_creates_{};
+  // The command before last_cmd_* (for the three-way time-step fold)
+  // and the delta of the last plain kBaseTimeStep written (-1 = none).
+  int prev_cmd_offset_{-1};
+  int prev_cmd_id_{-1};
+  int64_t last_cmd_stats_size_{};
+  int64_t prev_cmd_stats_size_{};
+  int64_t last_time_step_delta_{-1};
+  bool fold_anim_curves_{};
+  bool folding_{};
+  std::vector<std::vector<uint8_t>> fold_cmds_;
+  int last_cmd_offset_{-1};
+  int last_cmd_id_{-1};
+  int64_t last_step_scene_id_{-1};
+  int64_t stats_last_cmd_size_{};
+  // BA_RELIABLE_CORRECTIONS (test_game_run --reliable-corrections): keep
+  // physics corrections on the reliable stream (the A/B switch).
+  bool reliable_corrections_{};
+  void WriteInt_(int32_t value);
+
   HostSession* host_session_;
   millisecs_t next_flush_time_{};
 
@@ -180,6 +283,13 @@ class SessionStream : public Object, public ClientControllerInterface {
   bool writing_replay_{};
   millisecs_t last_physics_correction_time_{};
   millisecs_t last_send_time_{};
+  // Ship gating (see EndCommand): the foreground scene has stepped
+  // since the last ship (ships at the next time-set), or some other
+  // scene has (rides along, or ships on its own after a couple of
+  // steps' worth of base time if nothing else is shipping).
+  bool foreground_step_pending_{};
+  bool other_step_pending_{};
+  millisecs_t last_ship_base_time_{};
   millisecs_t time_{};
   std::vector<Scene*> scenes_;
   std::vector<size_t> free_indices_scene_graphs_;
@@ -187,6 +297,10 @@ class SessionStream : public Object, public ClientControllerInterface {
   std::vector<size_t> free_indices_nodes_;
   std::vector<Material*> materials_;
   std::vector<size_t> free_indices_materials_;
+  std::vector<SpazDef*> spaz_defs_;
+  std::vector<size_t> free_indices_spaz_defs_;
+  std::vector<SceneDepiction*> depictions_;
+  std::vector<size_t> free_indices_depictions_;
   std::vector<SceneTexture*> textures_;
   std::vector<size_t> free_indices_textures_;
   std::vector<SceneMesh*> meshes_;

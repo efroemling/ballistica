@@ -65,7 +65,7 @@ class WatchWindow(bui.MainWindow):
         scale = (
             1.5
             if uiscale is bui.UIScale.SMALL
-            else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.65
+            else 0.765 if uiscale is bui.UIScale.MEDIUM else 0.585
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -112,13 +112,20 @@ class WatchWindow(bui.MainWindow):
             )
             self._back_button = None
         else:
+            # Sized to match doc-ui windows' back buttons on screen (as
+            # of 2026-09-30), centered at (103, yoffs - 17) where the old
+            # 60x60-at-1.1 sat.
+            back_scale = 1.04 if uiscale is bui.UIScale.MEDIUM else 0.98
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
                 autoselect=True,
-                position=(70, self.yoffs - 50),
-                size=(60, 60),
-                scale=1.1,
+                position=(
+                    103.0 - 30.0 * back_scale,
+                    self.yoffs - 17.0 - 27.5 * back_scale,
+                ),
+                size=(60, 55),
+                scale=back_scale,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
@@ -140,7 +147,13 @@ class WatchWindow(bui.MainWindow):
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.5,
+            # (Medium/large: doc-ui windows' title size on screen, as
+            # of 2026-09-30.)
+            scale=(
+                1.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.18 if uiscale is bui.UIScale.MEDIUM else 1.11
+            ),
             h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
             text=_ws.title,
@@ -535,7 +548,7 @@ class WatchWindow(bui.MainWindow):
         )
         bui.widget(edit=cbtn, right_widget=okb)
         bui.widget(edit=okb, left_widget=cbtn)
-        bui.textwidget(edit=txt, on_return_press_call=okb.activate)
+        bui.textwidget(edit=txt, on_submit_call=okb.activate)
         bui.containerwidget(edit=cnt, cancel_button=cbtn, start_button=okb)
 
     def _rename_my_replay(self, replay: str) -> None:

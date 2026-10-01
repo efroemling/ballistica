@@ -58,6 +58,13 @@ class Player : public Object {
   auto GetPyCharacter() -> PyObject*;  // Returns a borrowed ref.
   void SetPyCharacter(PyObject* team);
 
+  /// The player's cloud look (a bascenev1.SpazDef built from the spaz
+  /// part of the cloud-composed profile they picked), or Py_None when
+  /// they are on a legacy profile / random look. Parallel to the legacy
+  /// appearance-name 'character', which stays the fallback.
+  auto GetPyCloudSpazDef() -> PyObject*;  // Returns a borrowed ref.
+  void SetPyCloudSpazDef(PyObject* spaz_def);
+
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
   void SetPyColor(PyObject* team);
 
@@ -163,6 +170,7 @@ class Player : public Object {
   // PythonRef py_actor_;
   PythonRef py_team_weak_ref_;
   PythonRef py_character_;
+  PythonRef py_cloud_spaz_def_;
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;

@@ -238,6 +238,86 @@ static PyMethodDef PyAutomationPressAtVirtualDef = {
     "size to compute the absolute coords for a given widget.\n",
 };
 
+// ------------------- automation_key_event ------------------------------------
+
+static auto PyAutomationKeyEvent(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int keycode = 0;
+  int down = 1;
+  static const char* kwlist[] = {"keycode", "down", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "i|p", const_cast<char**>(kwlist), &keycode, &down)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (down) {
+    g_base->input->PushKeyPressEventSimple(keycode);
+  } else {
+    g_base->input->PushKeyReleaseEventSimple(keycode);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationKeyEventDef = {
+    "automation_key_event",             // name
+    (PyCFunction)PyAutomationKeyEvent,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "automation_key_event(keycode: int, down: bool = True) -> None\n"
+    "\n"
+    "Synthesize a keyboard press or release for the given BA keycode.\n"
+    "Requires a build with ``BA_ENABLE_AUTOMATION`` set. Routes through\n"
+    "the same path OS key events take, so keyboard input devices,\n"
+    "player-join requests, and UI key handling all behave as with a\n"
+    "real key. Keycodes are the engine's BAK_* values (ASCII for\n"
+    "printable keys; 13 is return).\n",
+};
+
+// ---------------- automation_ensure_keyboard ---------------------------------
+
+static auto PyAutomationEnsureKeyboard(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_base->input->keyboard_input() == nullptr) {
+    g_base->input->PushCreateKeyboardInputDevices();
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationEnsureKeyboardDef = {
+    "automation_ensure_keyboard",             // name
+    (PyCFunction)PyAutomationEnsureKeyboard,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "automation_ensure_keyboard() -> bool\n"
+    "\n"
+    "Make sure keyboard input devices exist, creating them if not.\n"
+    "Platforms such as iOS only create them when a hardware keyboard\n"
+    "connects; this lets automation drive keyboard joins there. Returns\n"
+    "True if devices were created (they appear on a later frame), False\n"
+    "if they already existed. Requires ``BA_ENABLE_AUTOMATION``.\n",
+};
+
 // --------------- automation_mouse_button_at_virtual --------------------------
 
 static auto PyAutomationMouseButtonAtVirtual(PyObject* self, PyObject* args,
@@ -409,15 +489,16 @@ static auto PyAutomationDragAtVirtual(PyObject* self, PyObject* args,
   BA_PYTHON_TRY;
   int button = 1;
   int steps = 8;
+  int cancel = 0;
   double vx = 0.0;
   double vy = 0.0;
   double vx2 = 0.0;
   double vy2 = 0.0;
-  static const char* kwlist[] = {"x",     "y",      "x2",   "y2",
-                                 "steps", "button", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd|ii",
+  static const char* kwlist[] = {"x",     "y",      "x2",     "y2",
+                                 "steps", "button", "cancel", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd|iip",
                                    const_cast<char**>(kwlist), &vx, &vy, &vx2,
-                                   &vy2, &steps, &button)) {
+                                   &vy2, &steps, &button, &cancel)) {
     return nullptr;
   }
   if (g_base->automation == nullptr) {
@@ -431,7 +512,8 @@ static auto PyAutomationDragAtVirtual(PyObject* self, PyObject* args,
   }
   g_base->input->PushMouseDragAtVirtualCoords(
       button, static_cast<float>(vx), static_cast<float>(vy),
-      static_cast<float>(vx2), static_cast<float>(vy2), steps);
+      static_cast<float>(vx2), static_cast<float>(vy2), steps,
+      static_cast<bool>(cancel));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -442,10 +524,13 @@ static PyMethodDef PyAutomationDragAtVirtualDef = {
     METH_VARARGS | METH_KEYWORDS,            // flags
 
     "automation_drag_at_virtual(x: float, y: float, x2: float, y2: float,\n"
-    "                           steps: int = 8, button: int = 1) -> None\n"
+    "                           steps: int = 8, button: int = 1,\n"
+    "                           cancel: bool = False) -> None\n"
     "\n"
     "Synthesize a mouse drag: press at (x, y), ``steps`` interpolated\n"
-    "motion events towards (x2, y2), release there. Virtual-screen\n"
+    "motion events towards (x2, y2), release there -- or, with\n"
+    "``cancel``, end with a mouse-cancel there instead (what a touch\n"
+    "gesture the OS takes over mid-drag produces). Virtual-screen\n"
     "coords; routes through the normal UI dispatch path. Requires a\n"
     "build with ``BA_ENABLE_AUTOMATION`` set. Raises RuntimeError in\n"
     "headless builds (no UI to target).\n",
@@ -1716,7 +1801,7 @@ static PyMethodDef PyMacMusicAppGetPlaylistsDef = {
 static auto PyIsOSPlayingMusic(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->IsOSPlayingMusic()) {
+  if (g_core->platform->os_music_playing()) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -1731,9 +1816,11 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
 
     "is_os_playing_music() -> bool\n"
     "\n"
-    "Return whether the OS is currently playing music of some sort.\n"
+    "Return whether another app is currently playing music.\n"
     "\n"
     "Used to determine whether the app should avoid playing its own.\n"
+    "Updated live on platforms that report it (iOS, Android); changes\n"
+    "also arrive via a hook to the music subsystem.\n"
     "\n"
     ":meta private:",
 };
@@ -2296,6 +2383,8 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
 #if BA_ENABLE_AUTOMATION
       PyAutomationCaptureScreenshotDef,
       PyAutomationPressAtVirtualDef,
+      PyAutomationKeyEventDef,
+      PyAutomationEnsureKeyboardDef,
       PyAutomationScrollAtVirtualDef,
       PyAutomationUINavDef,
       PyAutomationMouseButtonAtVirtualDef,

@@ -3,7 +3,9 @@
 #include "ballistica/scene_v1/support/client_session_net.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "ballistica/base/graphics/graphics.h"
@@ -18,6 +20,7 @@
 namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
+  stats_enabled_ = getenv("BA_STREAM_STATS") != nullptr;
   // Note: replay-writing setup happens in SetConnectionToHost() — we
   // need the connection's negotiated protocol version to stamp the
   // replay, and no stream messages arrive before that wiring happens.
@@ -137,6 +140,32 @@ void ClientSessionNet::UpdateBuffering() {
         10.0f,
         std::max(0.5f, 1.0f + speed_change_aggression * to_ideal_offset));
     set_consume_rate(new_consume_rate);
+
+    // Client-side counterpart of the host's --stream-stats: how the
+    // pacing loop is doing (buffered step time, playback rate, lag
+    // estimate) every 5s.
+    if (stats_enabled_ && now - stats_last_log_time_ >= 5000) {
+      stats_last_log_time_ = now;
+      std::string unreliable;
+      if (auto* conn = connection_to_host()) {
+        auto st = conn->TakeStatsUnreliable();
+        unreliable = "; unreliable: applied " + std::to_string(st.applied)
+                     + ", reassembled " + std::to_string(st.reassembled)
+                     + " from " + std::to_string(st.parts_in) + " parts, held "
+                     + std::to_string(st.held) + ", dropped stale "
+                     + std::to_string(st.dropped_stale) + " incomplete "
+                     + std::to_string(st.dropped_incomplete);
+      }
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kInfo,
+          "client pacing: buffered " + std::to_string(base_time_buffered())
+              + "ms, run rate " + std::to_string(new_consume_rate)
+              + ", received-ahead-of-played "
+              + std::to_string(base_time_received_ - base_time()) + "ms"
+              + ", filtered delay " + std::to_string(max_delay_smoothed_)
+              + "ms, packet delay " + std::to_string(current_delay_) + "ms"
+              + unreliable);
+    }
 
     if (g_base->graphics->network_debug_info_display_enabled()) {
       // Plug display time into these graphs to get smoother looking updates.

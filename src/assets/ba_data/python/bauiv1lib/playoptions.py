@@ -9,15 +9,12 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 from bauiv1lib.popup import PopupWindow
 
 if TYPE_CHECKING:
     from typing import Any
-
-    from bauiv1lib.play import PlaylistSelectContext
 
 
 class PlayOptionsWindow(PopupWindow):
@@ -30,7 +27,7 @@ class PlayOptionsWindow(PopupWindow):
         playlist: str,
         scale_origin: tuple[float, float],
         delegate: Any = None,
-        playlist_select_context: PlaylistSelectContext | None = None,
+        select_only: bool = False,
     ):
         # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
@@ -47,7 +44,9 @@ class PlayOptionsWindow(PopupWindow):
         self._pvars = PlaylistTypeVars(sessiontype)
         self._transitioning_out = False
 
-        self._playlist_select_context = playlist_select_context
+        # Selecting a playlist for private-party hosting (OK just saves
+        # the choice) instead of running it.
+        self._select_only = select_only
 
         self._do_randomize_val = bui.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0
@@ -66,11 +65,13 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = _classicassets.meshes.level_select_button_opaque.get()
-        mesh_transparent = (
-            _classicassets.meshes.level_select_button_transparent.get()
+        mesh_opaque = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
         )
-        mask_tex = _classicassets.textures.map_preview_mask.get()
+        mesh_transparent = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = _classiccatalogassets.textures.map_preview_mask.get()
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -153,7 +154,7 @@ class PlayOptionsWindow(PopupWindow):
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
-            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.85
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.795
         )
         # Creates our _root_widget.
         super().__init__(
@@ -411,7 +412,7 @@ class PlayOptionsWindow(PopupWindow):
             autoselect=True,
             label=(
                 _commonassets.strings.actions.ok
-                if self._playlist_select_context is not None
+                if self._select_only
                 else _classicassets.strings.ui.play
             ),
         )
@@ -468,7 +469,7 @@ class PlayOptionsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:
@@ -497,7 +498,7 @@ class PlayOptionsWindow(PopupWindow):
 
         # Head back to the gather window in playlist-select mode or
         # start the game in regular mode.
-        if self._playlist_select_context is not None:
+        if self._select_only:
             if self._sessiontype is bs.FreeForAllSession:
                 typename = 'ffa'
             elif self._sessiontype is bs.DualTeamSession:

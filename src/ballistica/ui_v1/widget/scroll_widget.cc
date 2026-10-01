@@ -350,8 +350,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (x >= 0.0f && x < (width() + right_overlap) && y >= 0.0f
             && y < height()) {
           // On touch devices, touches begin scrolling, (and eventually can
-          // count as clicks if they don't move).
-          if (g_base->ui->touch_mode()) {
+          // count as clicks if they don't move). Only if we're showing less
+          // than everything though (as HScrollWidget does); otherwise the
+          // touch is just a click for our children, and dragging can't move
+          // content that has nowhere to go.
+          if (g_base->ui->touch_mode() && amount_visible_ < 1.0f) {
             touch_held_ = true;
             last_touch_held_time_ = g_core->AppTimeMillisecs();
 
@@ -396,8 +399,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             }
           }
 
-          // For mouse type devices, allow clicking on the scrollbar.
-          if (!g_base->ui->touch_mode()) {
+          // For mouse type devices, allow clicking on the scrollbar (which
+          // is only drawn when there is something to scroll).
+          if (!g_base->ui->touch_mode() && scrollbar_visible_
+              && amount_visible_ < 1.0f) {
             if (x >= width() - scroll_bar_width_ - left_overlap) {
               claimed = true;
               pass = false;
@@ -552,7 +557,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        if (g_base->ui->touch_mode()) {
+        if (g_base->ui->touch_mode() || !scrollbar_visible_) {
           hovering_thumb_ = false;
         } else {
           float s_top = height() - border_height_;
@@ -654,15 +659,18 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       // If coords are outside of our bounds, pass a mouse-cancel along for
       // anyone tracking a drag, but mark it as claimed so it doesn't
-      // actually get acted on.
+      // actually get acted on. (Flagged as a release-outside when it was
+      // one, so a drag in progress can commit rather than revert.)
       float x = m.fval1;
       float y = m.fval2;
       if (!((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
             && (y < height()))) {
         pass = false;
-        ContainerWidget::HandleMessage(
-            base::WidgetMessage(base::WidgetMessage::Type::kMouseCancel,
-                                nullptr, m.fval1, m.fval2, true));
+        base::WidgetMessage cm(base::WidgetMessage::Type::kMouseCancel, nullptr,
+                               m.fval1, m.fval2, true);
+        cm.released_outside =
+            m.type == base::WidgetMessage::Type::kMouseUp || m.released_outside;
+        ContainerWidget::HandleMessage(cm);
       }
 
       break;
@@ -685,6 +693,30 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   }
 
   return claimed;
+}
+
+auto ScrollWidget::DrawnBorderOpacity_() const -> float {
+  // (amount_visible_ is 0 with no content at all, which fits too.)
+  bool fits = amount_visible_ <= 0.0f || amount_visible_ >= 1.0f;
+  return (hide_border_when_fits_ && fits) ? 0.0f : border_opacity_;
+}
+
+auto ScrollWidget::GetScrollState() -> std::optional<ScrollState> {
+  auto i = widgets().begin();
+  float content = i == widgets().end() ? 0.0f : (**i).GetHeight();
+  return ScrollState{child_offset_v_, content,
+                     height() - 2.0f * (border_height_ + kMarginV)};
+}
+
+auto ScrollWidget::SetScrollOffset(float offset) -> bool {
+  auto state = *GetScrollState();
+  float max_offset =
+      std::max(0.0f, state.content_extent - state.visible_extent);
+  child_offset_v_ = std::clamp(offset, 0.0f, max_offset);
+  child_offset_v_smoothed_ = child_offset_v_;
+  inertia_scroll_rate_ = 0.0f;
+  MarkForUpdate();
+  return true;
 }
 
 void ScrollWidget::UpdateLayout() {
@@ -921,7 +953,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     set_simple_culling_top(b + (height() - border_height_) - 1.0f);
 
     // Scroll trough (depth 0.05 to 0.15).
-    if (explicit_bool(true)) {
+    if (scrollbar_visible_) {
       if (draw_transparent) {
         if (trough_dirty_) {
           float r2 = l + width();
@@ -966,7 +998,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   // Scroll bars.
-  if (amount_visible_ > 0 && amount_visible_ < 1) {
+  if (scrollbar_visible_ && amount_visible_ > 0 && amount_visible_ < 1) {
     // Scroll thumb at depth 0.8 - 0.9.
     {
       float sb_thumb_height = amount_visible_ * (height() - 2 * border_height_);
@@ -1053,12 +1085,12 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       outline_center_y_ = b2 - b_border + 0.5f * outline_height_;
       shadow_dirty_ = false;
     }
-    {
+    if (float border_opacity = DrawnBorderOpacity_(); border_opacity > 0.0f) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       auto* tex = g_ui_v1->assets().scroll_widget.get();
-      float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
-      c.SetColor(cmul, cmul, cmul, border_opacity_);
+      float cmul = tex->premultiplied() ? border_opacity : 1.0f;
+      c.SetColor(cmul, cmul, cmul, border_opacity);
       c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
@@ -1076,7 +1108,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                + std::abs(sinf(static_cast<float>(current_time_millisecs)
                                * 0.006467f))
                      * 0.2f)
-              * border_opacity_;
+              * DrawnBorderOpacity_();
     if (glow_dirty_) {
       float r2 = l + width();
       float l2 = l;

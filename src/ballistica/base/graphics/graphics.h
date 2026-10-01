@@ -20,14 +20,6 @@
 
 namespace ballistica::base {
 
-// Thickness of each edge's black border in tv-border mode, as a fraction
-// of window height (uniform thickness on all four edges). Note that this
-// intentionally differs from broadcast safe-area conventions (which are
-// per-dimension percentages); a uniform frame looks more deliberate, and
-// this value still covers typical (2.5-5% per edge) overscan vertically
-// and horizontally on common aspect ratios.
-const float kTVBorder = 0.035f;
-
 // Bounds our active render rect's aspect ratio is clamped to; window
 // regions beyond these get black bars so extreme window shapes can't
 // break our UI. Max matches the widest broadly-available phone aspect
@@ -65,7 +57,7 @@ const bool kVirtualBoundsBleedEnabled = true;
 // it. So this is a judgment across all of those at once -- how much
 // overhang looks right given our elements' own margins -- and not a
 // figure any single case implies.
-const float kVirtualBoundsBleed = 40.0f;
+const float kVirtualBoundsBleed = 30.0f;
 
 // Most of one edge of the active render rect we will give up to an
 // OS-reported inset. This drives camera framing and UI layout now, so
@@ -87,19 +79,27 @@ const float kDebugVirtualBoundsInsetT = 0.035f;
 // How long each config is shown for in A/B toggle mode.
 const millisecs_t kDebugVirtualBoundsABPeriod{1000};
 
-// Debug-only forced max-margin virtual bounds: the margin between the
-// virtual bounds and the virtual outer rect on each edge while the
-// mode is on, in VIRTUAL units (x applies to left and right, y to
-// bottom and top). Fixed virtual-unit values on purpose - the margin
-// UIs calibrate against must be identical on every device and window
-// shape - and sized to comfortably exceed anything OS insets produce
-// in the wild (worst current case is an iPhone notch at roughly 100
-// units pre-bleed). OS insets and the bleed are irrelevant while this
-// is on; those exist to derive reasonable bounds from hardware, where
-// this forces exact margins regardless of hardware. Toggled from the
-// dev-console UI tab.
-const float kDebugMaxVirtualBoundsMarginX = 80.0f;
-const float kDebugMaxVirtualBoundsMarginY = 40.0f;
+// Max virtual-bounds margins: the margin between the virtual bounds and
+// the virtual outer rect on each edge, in VIRTUAL units (x applies to
+// left and right, y to bottom and top). This is both the far end of the
+// screen-insets setting (an amount of 1; see Graphics::ScreenInsetAmount)
+// and what the dev-console UI tab's Max Margins toggle forces exactly -
+// the calibration target UIs are built against. Fixed virtual-unit
+// values on purpose - the margin UIs calibrate against must be
+// identical on every device and window shape - and sized to comfortably
+// exceed anything OS insets produce in the wild (worst current case is
+// an iPhone notch at roughly 100 units pre-bleed).
+const float kMaxVirtualBoundsMarginX = 80.0f;
+const float kMaxVirtualBoundsMarginY = 40.0f;
+
+// Automatic screen-inset amounts (0-1; see Graphics::ScreenInsetAmount).
+// TVs get the max, which covers overscan (typically 2.5-5% per edge)
+// with UI kept clear of the cropped region while backgrounds still
+// paint to the physical edge.
+const float kAutoScreenInsetAmountTV = 1.0f;
+const float kAutoScreenInsetAmountSmall = 0.0f;
+const float kAutoScreenInsetAmountMedium = 0.2f;
+const float kAutoScreenInsetAmountLarge = 0.2f;
 
 // Debug-only: alternate the virtual outer rect *as reported to UI
 // code* once per second between the no-margins rect (matching the
@@ -255,10 +255,6 @@ class Graphics {
     return res_y_virtual_;
   }
 
-  // Given a point in space, returns the shadow density that should be drawn
-  // into the shadow pass. Does this belong somewhere else?
-  auto GetShadowDensity(float x, float y, float z) -> float;
-
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
 
@@ -266,26 +262,6 @@ class Graphics {
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
 
   static void DrawRadialMeter(MeshIndexedSimpleFull* m, float amt);
-
-  // Ways to add a few simple component types quickly (uses particle
-  // rendering for efficient batches).
-  void DrawBlotch(const Vector3f& pos, float size, float r, float g, float b,
-                  float a) {
-    DoDrawBlotch(&blotch_indices_, &blotch_verts_, pos, size, r, g, b, a);
-  }
-
-  void DrawBlotchSoft(const Vector3f& pos, float size, float r, float g,
-                      float b, float a) {
-    DoDrawBlotch(&blotch_soft_indices_, &blotch_soft_verts_, pos, size, r, g, b,
-                 a);
-  }
-
-  // Draw a soft blotch on objects; not terrain.
-  void DrawBlotchSoftObj(const Vector3f& pos, float size, float r, float g,
-                         float b, float a) {
-    DoDrawBlotch(&blotch_soft_obj_indices_, &blotch_soft_obj_verts_, pos, size,
-                 r, g, b, a);
-  }
 
   void DrawVirtualSafeAreaBounds(RenderPass* pass);
   void DrawVirtualBounds(RenderPass* pass);
@@ -299,53 +275,61 @@ class Graphics {
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
+  /// The main view's camera, as the gameplay camera it is (for manual
+  /// control and the like). Things drawing a world should go through
+  /// their view's camera instead; see RenderView::camera().
   auto* camera() { return camera_.get(); }
   void ToggleManualCamera();
   void LocalCameraShake(float intensity);
+  /// Debug drawing: scene nodes draw rigid-body/joint guides in place of
+  /// (or on top of) their normal meshes. Toggled by F10 and the
+  /// dev-console Gameplay tab.
   void ToggleDebugDraw();
+  auto debug_draw() const {
+    assert(g_base->InLogicThread());
+    return debug_draw_;
+  }
+  void set_debug_draw(bool val);
+  /// Unit cube (edge 1, centered at origin) with flat face normals, for
+  /// debug-drawing box rigid bodies; scale by the body's dimensions.
+  /// Built lazily. Logic thread only.
+  auto debug_box_mesh() -> MeshIndexedObjectSplit*;
+  /// Unit sphere (radius 1, centered at origin) with flat faces, for
+  /// debug-drawing sphere rigid bodies; scale by radius. Built lazily.
+  /// Logic thread only.
+  auto debug_sphere_mesh() -> MeshIndexedObjectSplit*;
+  /// Unit hemisphere cap (radius 1, the z >= 0 half, open at z = 0) with
+  /// flat faces, for debug-drawing capsule bodies: scale by radius,
+  /// place at each end of the cylinder section (flip one). Built lazily.
+  /// Logic thread only.
+  auto debug_hemisphere_mesh() -> MeshIndexedObjectSplit*;
+  /// Unit open-ended cylinder (radius 1, z from -0.5 to 0.5) with flat
+  /// faces, for debug-drawing capsule bodies: scale by (radius, radius,
+  /// length). Built lazily. Logic thread only.
+  auto debug_cylinder_mesh() -> MeshIndexedObjectSplit*;
   auto network_debug_info_display_enabled() const {
     return network_debug_display_enabled_;
   }
   void ToggleNetworkDebugDisplay();
-  auto floor_reflection() const {
-    assert(g_base->InLogicThread());
-    return floor_reflection_;
-  }
-  void set_floor_reflection(bool val) {
-    assert(g_base->InLogicThread());
-    floor_reflection_ = val;
-  }
-  void set_shadow_offset(const Vector3f& val) {
-    assert(g_base->InLogicThread());
-    shadow_offset_ = val;
-  }
-  void set_shadow_scale(float x, float y) {
-    assert(g_base->InLogicThread());
-    shadow_scale_.x = x;
-    shadow_scale_.y = y;
-  }
-  void set_shadow_ortho(bool o) {
-    assert(g_base->InLogicThread());
-    shadow_ortho_ = o;
-  }
-  auto tint() const { return tint_; }
-  void set_tint(const Vector3f& val) {
-    assert(g_base->InLogicThread());
-    tint_ = val;
+
+  /// The view the main game world draws through. Anything drawing that
+  /// world sets its look (tint, shadows, etc.) here.
+  auto* main_view() const {
+    assert(main_view_.exists());
+    return main_view_.get();
   }
 
-  void set_ambient_color(const Vector3f& val) {
+  /// Called by views drawing to textures as they go away, so the
+  /// renderer can be told (by way of the next frame-def) to let go of
+  /// what it holds for them.
+  void AddRenderViewDestroy(int view_id);
+
+  /// The number of the frame-def most recently built (or being built).
+  auto frame_def_count() const -> int64_t {
     assert(g_base->InLogicThread());
-    ambient_color_ = val;
+    return frame_def_count_;
   }
-  void set_vignette_outer(const Vector3f& val) {
-    assert(g_base->InLogicThread());
-    vignette_outer_ = val;
-  }
-  void set_vignette_inner(const Vector3f& val) {
-    assert(g_base->InLogicThread());
-    vignette_inner_ = val;
-  }
+
   /// Frames rendered over the most recent one-second stats window.
   /// Updated continuously while rendering (whether or not the
   /// on-screen fps display is enabled); always 0 in headless builds.
@@ -354,32 +338,6 @@ class Graphics {
     return last_fps_;
   }
 
-  auto shadow_offset() const {
-    assert(g_base->InLogicThread());
-    return shadow_offset_;
-  }
-  auto shadow_scale() const {
-    assert(g_base->InLogicThread());
-    return shadow_scale_;
-  }
-  auto ambient_color() {
-    assert(g_base->InLogicThread());
-    return ambient_color_;
-  }
-  auto vignette_outer() const {
-    assert(g_base->InLogicThread());
-    return vignette_outer_;
-  }
-  auto vignette_inner() const {
-    assert(g_base->InLogicThread());
-    return vignette_inner_;
-  }
-  auto shadow_ortho() const {
-    assert(g_base->InLogicThread());
-    return shadow_ortho_;
-  }
-  void SetShadowRange(float lower_bottom, float lower_top, float upper_bottom,
-                      float upper_top);
   void ReleaseFadeEndCommand();
 
   // Nodes that draw flat stuff into the overlay pass should query this z
@@ -414,8 +372,8 @@ class Graphics {
 
   /// The sub-rect of the physical window that game content occupies, in
   /// pixels (bottom-left origin, y-up). Everything outside it is kept
-  /// cleared to black. Matches the full window unless tv-border mode
-  /// and/or aspect-ratio limiting is in effect.
+  /// cleared to black. Matches the full window unless aspect-ratio
+  /// limiting is in effect.
   ///
   /// Note that this governs only how far drawing *extends*; what
   /// drawing coordinates *mean* is governed by virtual_bounds_rect().
@@ -472,9 +430,9 @@ class Graphics {
   /// honoring them later is a change in one tested place.
   ///
   /// Note this *intersects* the unobscured region with the render rect
-  /// rather than insetting the rect: tv-mode's border and the
-  /// aspect clamp can already have pulled the rect in past a cutout,
-  /// and insetting again would double-count. Whichever constraint
+  /// rather than insetting the rect: the aspect clamp can already have
+  /// pulled the rect in past a cutout, and insetting again would
+  /// double-count. Whichever constraint
   /// reaches further in wins.
   ///
   /// Static and pure so the render path and its test share one
@@ -503,6 +461,19 @@ class Graphics {
                                               float base_virtual_res_x,
                                               float base_virtual_res_y,
                                               float margin_x, float margin_y)
+      -> Rect;
+
+  /// Blend virtual bounds between OS-derived and max-margin rects.
+  ///
+  /// ``amount`` 0 gives ``os_bounds`` and 1 gives ``max_bounds``, each
+  /// edge interpolated linearly in pixels. No edge ever ends up less
+  /// inset than ``os_bounds``, so a device whose obstruction reaches
+  /// past the max margins keeps its content clear of it at any amount.
+  ///
+  /// Static and pure so the render path and its test share one
+  /// implementation.
+  static auto BlendScreenInsetsRect(const Rect& os_bounds,
+                                    const Rect& max_bounds, float amount)
       -> Rect;
 
   /// Extend a frustum built for ``bounds_rect`` outward so the same
@@ -548,13 +519,10 @@ class Graphics {
     return virtual_bounds_ab_mode_;
   }
 
-  /// Calc the active render rect for a given window size and tv-border
-  /// setting: the window inset by the tv border (if enabled) and then
-  /// clamped to our min/max aspect ratios. Border is applied before the
-  /// aspect clamp since uniform-thickness borders change the inner
-  /// region's aspect.
-  static auto CalcActiveRenderRect(float res_x, float res_y, bool tv_border)
-      -> Rect;
+  /// Calc the active render rect for a given window size: the largest
+  /// centered sub-rect clamped to our min/max aspect ratios (or the
+  /// whole window when the config allows extreme aspect ratios).
+  auto CalcActiveRenderRect(float res_x, float res_y) const -> Rect;
 
   void set_internal_components_inited(bool val) {
     internal_components_inited_ = val;
@@ -664,12 +632,24 @@ class Graphics {
 
   /// Whether virtual bounds are being forced to leave fixed max
   /// margins against the virtual outer rect (a debug calibration
-  /// target; see kDebugMaxVirtualBoundsMarginX/Y).
+  /// target; see kMaxVirtualBoundsMarginX/Y).
   auto force_max_virtual_bounds_margins() const {
     assert(g_base->InLogicThread());
     return force_max_virtual_bounds_margins_;
   }
   void SetForceMaxVirtualBoundsMargins(bool val);
+
+  /// The screen-inset amount the 'Automatic' setting uses here (0-1;
+  /// see ScreenInsetAmount). Depends on whether we're on a TV and on
+  /// the current ui scale.
+  auto AutoScreenInsetAmount() const -> float;
+
+  /// How far virtual bounds are pulled in from what OS insets alone
+  /// call for, from 0 (OS-derived only) to 1 (the max margins; see
+  /// kMaxVirtualBoundsMarginX/Y). Comes from the 'Screen Insets'
+  /// config: 'Auto' uses AutoScreenInsetAmount, 'Custom' uses the
+  /// 'Custom Screen Insets' value.
+  auto ScreenInsetAmount() const -> float;
 
   auto building_frame_def() const { return building_frame_def_; }
 
@@ -681,14 +661,10 @@ class Graphics {
   virtual void DoDrawFade(FrameDef* frame_def, float amt);
   static void CalcVirtualRes_(float* x, float* y);
   void DrawBoxingGlovesTest(FrameDef* frame_def);
-  void DrawBlotches(FrameDef* frame_def);
   void DrawCursor(FrameDef* frame_def);
   void DrawFades(FrameDef* frame_def);
   void DrawDebugBuffers(RenderPass* pass);
   void UpdateAndDrawOnlyProgressBar(FrameDef* frame_def);
-  void DoDrawBlotch(std::vector<uint16_t>* indices,
-                    std::vector<VertexSprite>* verts, const Vector3f& pos,
-                    float size, float r, float g, float b, float a);
   auto GetEmptyFrameDef() -> FrameDef*;
   void InitInternalComponents(FrameDef* frame_def);
   void DrawMiscOverlays(FrameDef* frame_def);
@@ -697,6 +673,8 @@ class Graphics {
   void DrawProgressBar(RenderPass* pass, float opacity);
   void UpdateProgressBarProgress(float target);
   void UpdateInitialGraphicsSettingsSend_();
+  void UpdateRenderProfile_(double build_ms, double world_ms, double ui_ms);
+  void DrawTextureViews_(FrameDef* frame_def);
 
   int last_total_frames_rendered_{};
   int last_fps_{};
@@ -712,17 +690,21 @@ class Graphics {
   bool progress_bar_{};
   bool progress_bar_fade_in_{};
   bool debug_draw_{};
+  Object::Ref<MeshIndexedObjectSplit> debug_box_mesh_;
+  Object::Ref<MeshIndexedObjectSplit> debug_sphere_mesh_;
+  Object::Ref<MeshIndexedObjectSplit> debug_hemisphere_mesh_;
+  Object::Ref<MeshIndexedObjectSplit> debug_cylinder_mesh_;
   bool network_debug_display_enabled_{};
   bool hardware_cursor_visible_{};
   bool camera_shake_disabled_{};
   bool show_fps_{};
   bool show_ping_{};
   bool show_net_info_{};
-  bool tv_border_{};
-  bool floor_reflection_{};
+  bool screen_insets_custom_{};
+  float custom_screen_insets_{};
+  bool allow_extreme_aspect_ratios_{};
   bool building_frame_def_{};
   bool ui_covered_screen_last_frame_{};
-  bool shadow_ortho_{};
   bool fetched_overlay_node_z_depth_{};
   bool set_fade_start_on_next_draw_{};
   bool graphics_settings_dirty_{true};
@@ -737,12 +719,6 @@ class Graphics {
   VirtualBoundsABMode virtual_bounds_ab_mode_{VirtualBoundsABMode::kDisabled};
   millisecs_t virtual_bounds_ab_last_switch_time_{};
   millisecs_t virtual_outer_rect_toggle_last_switch_time_{};
-  Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
-  Vector2f shadow_scale_{1.0f, 1.0f};
-  Vector3f tint_{1.0f, 1.0f, 1.0f};
-  Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
-  Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
-  Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
   Vector3f jitter_{0.0f, 0.0f, 0.0f};
   std::string fps_string_;
   std::string ping_string_;
@@ -751,15 +727,10 @@ class Graphics {
   std::mutex frame_def_delete_list_mutex_;
   std::list<Object::Ref<PythonContextCall>> clean_frame_commands_;
   std::vector<FrameDef*> recycle_frame_defs_;
-  std::vector<uint16_t> blotch_indices_;
-  std::vector<VertexSprite> blotch_verts_;
-  std::vector<uint16_t> blotch_soft_indices_;
-  std::vector<VertexSprite> blotch_soft_verts_;
-  std::vector<uint16_t> blotch_soft_obj_indices_;
-  std::vector<VertexSprite> blotch_soft_obj_verts_;
   std::vector<FrameDef*> frame_def_delete_list_;
   std::vector<MeshData*> mesh_data_creates_;
   std::vector<MeshData*> mesh_data_destroys_;
+  std::vector<int> render_view_destroys_;
   float fade_{};
   float res_x_{256.0f};
   float res_y_{256.0f};
@@ -774,10 +745,16 @@ class Graphics {
   Rect virtual_outer_rect_{0.0f, 0.0f, 256.0f, 256.0f};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
-  float shadow_lower_bottom_{-4.0f};
-  float shadow_lower_top_{4.0f};
-  float shadow_upper_bottom_{30.0f};
-  float shadow_upper_top_{40.0f};
+
+  // BA_RENDER_PROFILE=1: frame-def build timing, logged every 5s.
+  bool render_profile_checked_{};
+  bool render_profile_{};
+  int render_profile_frames_{};
+  double render_profile_build_ms_{};
+  double render_profile_world_ms_{};
+  double render_profile_ui_ms_{};
+  seconds_t render_profile_window_start_{};
+
   seconds_t last_cursor_visibility_event_time_{};
   millisecs_t fade_start_{};
   millisecs_t fade_cancel_start_{};
@@ -798,10 +775,10 @@ class Graphics {
   Object::Ref<TextGroup> fps_text_group_;
   Object::Ref<TextGroup> ping_text_group_;
   Object::Ref<TextGroup> net_info_text_group_;
-  Object::Ref<SpriteMesh> shadow_blotch_mesh_;
-  Object::Ref<SpriteMesh> shadow_blotch_soft_mesh_;
-  Object::Ref<SpriteMesh> shadow_blotch_soft_obj_mesh_;
-  Object::Ref<Camera> camera_;
+  Object::Ref<GameCamera> camera_;
+  Object::Ref<RenderView> main_view_;
+  bool debug_texture_view_checked_{};
+  Object::Ref<DebugTextureView> debug_texture_view_;
   Object::Ref<PythonContextCall> fade_end_call_;
   Object::Ref<Snapshot<GraphicsSettings>> settings_snapshot_;
   Object::Ref<Snapshot<GraphicsClientContext>> client_context_snapshot_;

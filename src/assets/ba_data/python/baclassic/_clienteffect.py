@@ -15,6 +15,8 @@ import bauiv1
 import _baclassic
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
+
     import bacommon.clienteffect as clfx
     from bacommon.langstr import LanguageStringNameDecodeContext
 
@@ -35,18 +37,18 @@ def run_bs_client_effects(
     # refs). Those need resolving — possibly downloading — before the
     # effects can run; kick that off and run once ready. Effects with
     # no package refs run immediately as always.
-    apverids: set[str] = set()
-    clfx.collect_apverids(effects, apverids)
-    if not apverids:
+    apvernums: set[ApverNum] = set()
+    clfx.collect_apvernums(effects, apvernums)
+    if not apvernums:
         _run_effects(effects, delay=delay)
         return
     bauiv1.app.create_async_task(
-        _resolve_and_run_effects(effects, sorted(apverids), delay)
+        _resolve_and_run_effects(effects, sorted(apvernums), delay)
     )
 
 
 async def _resolve_and_run_effects(
-    effects: list[clfx.Effect], apverids: list[str], delay: float
+    effects: list[clfx.Effect], apvernums: list[ApverNum], delay: float
 ) -> None:
     """Resolve referenced asset-packages then run the effects.
 
@@ -63,19 +65,19 @@ async def _resolve_and_run_effects(
             # Client-effects are decorative — resolve at background priority
             # so they queue behind (and never delay) interactive resolves.
             await bauiv1.app.assets.resolve(
-                apverids, language=locale, background=True
+                apvernums, language=locale, background=True
             )
             loop = asyncio.get_running_loop()
             langdata = {
-                apverid: await loop.run_in_executor(
+                apvernum: await loop.run_in_executor(
                     None,
                     partial(
                         bauiv1.app.assets.get_package_language_data,
-                        apverid,
+                        apvernum,
                         locale,
                     ),
                 )
-                for apverid in apverids
+                for apvernum in apvernums
             }
     except TimeoutError as exc:
         # Fail soft; effects are decorative. This can legitimately
@@ -83,7 +85,7 @@ async def _resolve_and_run_effects(
         assetslog.info(
             'Timed out resolving asset-packages %s for client-effects'
             ' (%.0fs); skipping effects.',
-            apverids,
+            apvernums,
             _RESOLVE_TIMEOUT_SECONDS,
         )
         strip_exception_tracebacks(exc)
@@ -104,16 +106,16 @@ async def _resolve_and_run_effects(
         effects,
         delay=delay,
         decodectx=LanguageStringNameDecodeContext(
-            {apverid: data[0] for apverid, data in langdata.items()},
+            {apvernum: data[0] for apvernum, data in langdata.items()},
             locale,
             param_kinds={
-                apverid: data[1]
-                for apverid, data in langdata.items()
+                apvernum: data[1]
+                for apvernum, data in langdata.items()
                 if data[1]
             },
             components={
-                apverid: data[2]
-                for apverid, data in langdata.items()
+                apvernum: data[2]
+                for apvernum, data in langdata.items()
                 if data[2]
             },
         ),
@@ -182,7 +184,7 @@ def _run_effects(
         elif effecttype is clfx.EffectTypeID.SOUND_V2:
             assert isinstance(effect, clfx.PlaySoundV2)
             # The referenced package is resolved at this point, so the
-            # qualified '<apverid>:<name>' ref loads like any asset.
+            # qualified '<apvernum>:<name>' ref loads like any asset.
             #
             # An index reaching here means de-indexing was skipped or
             # failed -- effects can run long after their payload's

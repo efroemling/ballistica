@@ -21,7 +21,7 @@ etc.). It cannot pass loaded ``bascenev1.Texture`` objects the way
 the ui flavor passes ``bauiv1.Texture`` ones, because scene-flavor
 Python assets are *context-bound scene assets* (the streamed kind)
 while the nodes draw raw engine assets client-locally. Reading the
-private ``_apverid``/``_name`` attrs native-side is the sanctioned
+private ``_apvernum``/``_name`` attrs native-side is the sanctioned
 boundary for that (same as ``ClassicPython::QualifiedRefFromHandle_``).
 
 Every slot has a default (scene_v1's own package), so the set
@@ -58,7 +58,7 @@ class _KindInfo:
     #: C++ asset type held in the struct.
     cpptype: str
 
-    #: Assets:: accessor loading one from (apverid, name).
+    #: Assets:: accessor loading one from (package key, name).
     loader: str
 
 
@@ -365,7 +365,7 @@ def _gen_cpp_unpack(spec: SceneAssetSpec) -> str:
         '',
         '// Args arrive positionally in spec order; the Python-side',
         '// wrapper that sends them is generated from the same spec.',
-        '// Each is an asset *handle*; its private (_apverid, _name)',
+        '// Each is an asset *handle*; its private (_apvernum, _name)',
         '// parts are read here and the base-level asset loaded from',
         '// them -- the sanctioned boundary for those attrs (see',
         '// batools.scene_assets).',
@@ -396,7 +396,7 @@ def _gen_cpp_unpack(spec: SceneAssetSpec) -> str:
             '{',
             f'  PythonRef h(a{i}, PythonRef::kAcquire);',
             f'  out->{slot.name} = g_base->assets->{loader}(',
-            '      h.GetAttr("_apverid").ValueAsString(),',
+            '      std::to_string(h.GetAttr("_apvernum").ValueAsInt()),',
             '      h.GetAttr("_name").ValueAsString());',
             '}',
         ]
@@ -411,6 +411,11 @@ def _write(outpath: str, contents: str) -> None:
         with open(outpath, encoding='utf-8') as infile:
             existing = infile.read()
     if existing == contents:
+        # Leave the bytes alone (no spurious rebuilds downstream) but
+        # bump the mtime so make sees the target as newer than the
+        # spec; otherwise a spec change that leaves this output
+        # unchanged keeps it perpetually 'out of date'.
+        os.utime(outpath, None)
         return
     with open(outpath, 'w', encoding='utf-8') as outfile:
         outfile.write(contents)

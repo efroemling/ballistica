@@ -248,6 +248,7 @@ class DevConsoleTabUI(DevConsoleTab):
                     label_scale=0.6,
                     call=custom_button.call,
                     corner_radius=10.0,
+                    sound=custom_button.sound,
                 )
                 x += cbwidth + cbspacing
 
@@ -488,6 +489,42 @@ class Table[T]:
         page -= 1
         self.set_focus_entry_index(page * self._entries_per_page)
         tab.request_refresh()
+
+
+class DevConsoleTabGameplay(DevConsoleTab):
+    """Tab for debugging/testing gameplay stuff."""
+
+    @override
+    def refresh(self) -> None:
+        # Match the UI tab's button strip: one row of 40-high buttons
+        # centered horizontally.
+        bheight = 40.0
+        bwidth = 160.0
+        by = 15.0
+        xoffs = -bwidth * 0.5
+
+        debug_draw = _babase.get_debug_draw()
+        self.button(
+            'Debug Drawing ON' if debug_draw else 'Debug Drawing OFF',
+            pos=(xoffs, by),
+            size=(bwidth, bheight),
+            label_scale=0.5,
+            call=self.toggle_debug_draw,
+            style='bright' if debug_draw else 'normal',
+        )
+        self.text(
+            'Debug drawing shows rigid-body and joint guides in the scene'
+            ' (same as the F10 key).',
+            scale=0.6,
+            pos=(0, by + bheight + 20),
+            h_align='center',
+            v_align='center',
+        )
+
+    def toggle_debug_draw(self) -> None:
+        """Toggle engine debug drawing (same as the F10 key)."""
+        _babase.set_debug_draw(not _babase.get_debug_draw())
+        self.request_refresh()
 
 
 class DevConsoleTabLogging(DevConsoleTab):

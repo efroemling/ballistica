@@ -41,9 +41,9 @@ def get_game_display_name(name: str) -> babase.LangStr:
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import _classicassets
+    from bascenev1 import _classicassets, _uiv1assets, _classiccatalogassets
 
-    s = _classicassets.strings.game_names
+    s = _classiccatalogassets.strings.game_names
     entry = {
         'Assault': s.assault,
         'Capture the Flag': s.capture_the_flag,
@@ -84,9 +84,9 @@ def get_game_description(
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import _classicassets
+    from bascenev1 import _classicassets, _uiv1assets, _classiccatalogassets
 
-    gd = _classicassets.strings.game_descriptions
+    gd = _classiccatalogassets.strings.game_descriptions
     if arg is None:
         plain: dict[str, babase.LangStr] = {
             (
@@ -1159,6 +1159,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             color=color,
             highlight=highlight,
             character=player.character,
+            cloud_spaz_def=player.cloud_spaz_def,
             player=player,
         )
 

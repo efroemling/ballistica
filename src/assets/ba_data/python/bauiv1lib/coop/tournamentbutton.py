@@ -6,9 +6,8 @@ from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -34,8 +33,12 @@ class TournamentButton:
         sclx = 300
         scly = 195.0
         self.on_pressed = on_pressed
-        self.lsbt = _classicassets.meshes.level_select_button_transparent.get()
-        self.lsbo = _classicassets.meshes.level_select_button_opaque.get()
+        self.lsbt = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        self.lsbo = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
+        )
         self.allow_ads = False
         self.tournament_id: str | None = None
         self.game: str | None = None
@@ -77,7 +80,7 @@ class TournamentButton:
             mesh_opaque=self.lsbo,
             texture=_builtinassets.textures.black.get(),
             opacity=0.2,
-            mask_texture=_classicassets.textures.map_preview_mask.get(),
+            mask_texture=_classiccatalogassets.textures.map_preview_mask.get(),
         )
 
         self.lock_image = bui.imagewidget(
@@ -431,7 +434,7 @@ class TournamentButton:
         ):
             _builtinassets.audio.error.get().play()
             return
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),

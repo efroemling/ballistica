@@ -5,6 +5,7 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <cstdio>
 #include <functional>
 #include <list>
@@ -467,6 +468,16 @@ class Platform {
   /// nullptr.
   virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
+  /// Path of a crash record left by a previous run, or empty if none.
+  ///
+  /// A native crash cannot report itself, so the handler writes a
+  /// record and the next launch submits it (see
+  /// SubmitPendingCrashReport). Platforms with no crash handler return
+  /// empty, as does a platform whose handler simply did not fire.
+  /// Returning the newest when several exist is fine -- a crash-looping
+  /// app should report its latest crash, not its oldest.
+  virtual auto GetPendingCrashRecordPath() -> std::string;
+
   /// Optionally override fatal error reporting. If true is returned, default
   /// fatal error reporting will not run.
   virtual auto ReportFatalError(const std::string& message,
@@ -548,8 +559,20 @@ class Platform {
   /// for custom pumping/handling.
   virtual void RunEvents();
 
-  /// Is the OS currently playing music? (so we can avoid doing so).
-  virtual auto IsOSPlayingMusic() -> bool;
+  /// Is another app currently playing music we should yield to?
+  ///
+  /// Fed live by platform code via SetOSMusicPlaying() (iOS: the
+  /// AVAudioSession secondary-audio silence hint; Android: the
+  /// system-wide playback-config callback). Always false on platforms
+  /// that report nothing. Game music yields to it; sound effects don't.
+  /// See docs/initiatives/soundtrack-modernization.md.
+  auto os_music_playing() const -> bool { return os_music_playing_.load(); }
+
+  /// Report whether another app is playing music. Safe to call from any
+  /// thread and at any time (including before base is up); repeats of
+  /// the current value are dropped. Changes are logged and forwarded to
+  /// the logic thread for the Python music subsystem to act on.
+  void SetOSMusicPlaying(bool playing);
 
   /// Pass platform-specific misc-read-vals along to the OS (as a json
   /// string).
@@ -674,6 +697,9 @@ class Platform {
   // late OS-callback dispatches before subscriber state is torn
   // down by the shutdown cascade.
   bool network_availability_dispatch_stopped_{};
+
+  // See os_music_playing(). Written from arbitrary platform threads.
+  std::atomic<bool> os_music_playing_{};
 };
 
 }  // namespace ballistica::core

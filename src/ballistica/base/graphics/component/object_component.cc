@@ -30,6 +30,28 @@ void ObjectComponent::WriteConfig() {
   float cmul = (transparent_ && !premultiplied_ && texture_->premultiplied())
                    ? color_a_
                    : 1.0f;
+  if (facing_ratio_) {
+    assert(reflection_ == ReflectionType::kNone);     // Unsupported combo.
+    assert(light_shadow_ != LightShadowType::kNone);  // Required.
+    assert(!world_space_);                            // Unsupported combo.
+    assert(!colorize_texture_.exists());              // Unsupported combo.
+    assert(!have_color_add_);                         // Unsupported combo.
+    assert(!double_sided_);                           // Unsupported combo.
+    if (transparent_) {
+      ConfigForShading(ShadingType::kObjectLightShadowFacingRatioTransparent);
+      cmd_buffer_->PutInt(premult_blend);
+      cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
+      cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul, color_b_ * cmul,
+                             color_a_);
+      cmd_buffer_->PutTexture(texture_);
+      return;
+    }
+    ConfigForShading(ShadingType::kObjectLightShadowFacingRatio);
+    cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
+    cmd_buffer_->PutFloats(color_r_, color_g_, color_b_);
+    cmd_buffer_->PutTexture(texture_);
+    return;
+  }
   if (reflection_ == ReflectionType::kNone) {
     assert(!double_sided_);               // Unsupported combo.
     assert(!colorize_texture_.exists());  // Unsupported combo.
@@ -106,30 +128,18 @@ void ObjectComponent::WriteConfig() {
         if (colorize_texture_.exists()) {
           assert(!double_sided_);  // Unsupported combo.
           assert(!world_space_);   // Unsupported combo.
-          if (do_colorize_2_) {
-            ConfigForShading(ShadingType::kObjectReflectLightShadowColorized2);
-            cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
-            cmd_buffer_->PutFloats(
-                color_r_, color_g_, color_b_, reflection_scale_r_,
-                reflection_scale_g_, reflection_scale_b_, colorize_color_r_,
-                colorize_color_g_, colorize_color_b_, colorize_color2_r_,
-                colorize_color2_g_, colorize_color2_b_);
-            cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutTexture(colorize_texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
-          } else {
-            ConfigForShading(ShadingType::kObjectReflectLightShadowColorized);
-            cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
-            cmd_buffer_->PutFloats(color_r_, color_g_, color_b_,
-                                   reflection_scale_r_, reflection_scale_g_,
-                                   reflection_scale_b_, colorize_color_r_,
-                                   colorize_color_g_, colorize_color_b_);
-            cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutTexture(colorize_texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
-          }
+          ConfigForShading(ShadingType::kObjectReflectLightShadowColorized);
+          cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
+          cmd_buffer_->PutFloats(
+              color_r_, color_g_, color_b_, reflection_scale_r_,
+              reflection_scale_g_, reflection_scale_b_, colorize_color_r_,
+              colorize_color_g_, colorize_color_b_, colorize_color2_r_,
+              colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
+              colorize_color3_g_, colorize_color3_b_);
+          cmd_buffer_->PutTexture(texture_);
+          cmd_buffer_->PutTexture(colorize_texture_);
+          cmd_buffer_->PutCubeMapTexture(
+              Graphics::CubeMapFromReflectionType(reflection_));
         } else {
           if (double_sided_) {
             ConfigForShading(ShadingType::kObjectReflectLightShadowDoubleSided);
@@ -157,16 +167,17 @@ void ObjectComponent::WriteConfig() {
         assert(!double_sided_);  // Unsupported combo.
         assert(!world_space_);   // Unsupported config.
         if (colorize_texture_.exists()) {
-          if (do_colorize_2_) {
+          if (explicit_bool(true)) {
             ConfigForShading(
-                ShadingType::kObjectReflectLightShadowAddColorized2);
+                ShadingType::kObjectReflectLightShadowAddColorized);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
             cmd_buffer_->PutFloats(
                 color_r_, color_g_, color_b_, color_add_r_, color_add_g_,
                 color_add_b_, reflection_scale_r_, reflection_scale_g_,
                 reflection_scale_b_, colorize_color_r_, colorize_color_g_,
                 colorize_color_b_, colorize_color2_r_, colorize_color2_g_,
-                colorize_color2_b_);
+                colorize_color2_b_, colorize_color3_r_, colorize_color3_g_,
+                colorize_color3_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
             cmd_buffer_->PutCubeMapTexture(

@@ -56,7 +56,7 @@ class _KindInfo:
     #: C++ asset type held in the struct.
     cpptype: str
 
-    #: Assets:: accessor loading one from (apverid, name).
+    #: Assets:: accessor loading one from (package key, name).
     loader: str
 
     #: Boot-safe qualified-name getter used by the placeholder-restore
@@ -387,7 +387,7 @@ def _gen_cpp_unpack(spec: BaseAssetSpec) -> str:
         '// .cc files (see docs/design/codegen.md).',
         '',
         '// Args arrive positionally in spec order; each is an asset',
-        '// handle whose private (_apverid, _name) parts are read here',
+        '// handle whose private (_apvernum, _name) parts are read here',
         '// and the base-level asset loaded from them (the sanctioned',
         '// boundary for those attrs; see batools.scene_assets).',
     ]
@@ -417,7 +417,7 @@ def _gen_cpp_unpack(spec: BaseAssetSpec) -> str:
             '{',
             f'  PythonRef h(a{i}, PythonRef::kAcquire);',
             f'  out->{slot.name} = g_base->assets->{loader}(',
-            '      h.GetAttr("_apverid").ValueAsString(),',
+            '      std::to_string(h.GetAttr("_apvernum").ValueAsInt()),',
             '      h.GetAttr("_name").ValueAsString());',
             '}',
         ]
@@ -432,7 +432,7 @@ def _gen_cpp_placeholders(spec: BaseAssetSpec) -> str:
         '// a hand-written .cc. Fills every slot with its spec default',
         '// (always a builtin-package asset; load_spec enforces that)',
         '// via the boot-safe qualified-name getters. Expects a local',
-        "// 'prefix' (the builtin apverid + ':') plus 'out'. This is",
+        "// 'prefix' (the builtin package key + ':') plus 'out'. This is",
         '// what keeps the set complete before and between app-modes;',
         '// see batools.base_assets.',
     ]
@@ -450,6 +450,11 @@ def _write(outpath: str, contents: str) -> None:
         with open(outpath, encoding='utf-8') as infile:
             existing = infile.read()
     if existing == contents:
+        # Leave the bytes alone (no spurious rebuilds downstream) but
+        # bump the mtime so make sees the target as newer than the
+        # spec; otherwise a spec change that leaves this output
+        # unchanged keeps it perpetually 'out of date'.
+        os.utime(outpath, None)
         return
     with open(outpath, 'w', encoding='utf-8') as outfile:
         outfile.write(contents)

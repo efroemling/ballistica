@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260831h`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261001d`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260831h
+# ba_meta require asset-package 368
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -17,11 +17,14 @@ These are loaded at launch and always available in the C++ layer.
 
 from typing import TYPE_CHECKING
 
+from bacommon.assetpackage import ApverNum
+
 from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-_ASSET_PACKAGE = 'a-0.babuiltinassets.260831h'
+# a-0.babuiltinassets.261001d
+_ASSET_PACKAGE = ApverNum(368)
 
 if TYPE_CHECKING:
     import datetime
@@ -312,6 +315,27 @@ if TYPE_CHECKING:
                 English: "Error playing music: {music}"
             """
 
+    class StringsDeviceGroup:
+        """
+        ::
+
+            Device-state notices: messages about the hardware the game is
+            running on, such as thermal throttling.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Screen-message shown once per run on Android when the game
+        #:     deliberately drops its frame rate to 60hz because the OS reports
+        #:     severe thermal throttling; only shown on devices whose display
+        #:     would otherwise run faster than 60hz.
+        #:
+        #:     English: "Device is running hot; frame rate reduced to 60 until
+        #:     it cools."
+        thermal_frame_rate_cap: LangStr
+
     class StringsInputGroup:
         """
         ::
@@ -363,7 +387,7 @@ if TYPE_CHECKING:
         #:     game controller is detected (multiple controllers at startup use
         #:     a separate counted message).
         #:
-        #:     English: "1 controller detected."
+        #:     English: "1 game controller detected."
         controller_detected: LangStr
 
         def controller_disconnected(
@@ -383,7 +407,7 @@ if TYPE_CHECKING:
         #:
         #:     Notice that a controller works only in menus.
         #:
-        #:     English: "This controller can not be used to play; only to
+        #:     English: "This game controller can not be used to play; only to
         #:     navigate menus."
         controller_menus_only: LangStr
 
@@ -408,7 +432,7 @@ if TYPE_CHECKING:
                 connect at the same time (a single controller connecting shows a
                 different message naming that controller).
 
-                English: (one) "# controller connected." / (other) "#
+                English: (one) "# game controller connected." / (other) "# game
                 controllers connected."
             """
 
@@ -420,8 +444,8 @@ if TYPE_CHECKING:
                 game controller is detected at once (a single controller at
                 startup uses a separate message).
 
-                English: (one) "# controller detected." / (other) "# controllers
-                detected."
+                English: (one) "# game controller detected." / (other) "# game
+                controllers detected."
             """
 
         def controllers_disconnected(self, *, count: int) -> LangStr:
@@ -432,8 +456,8 @@ if TYPE_CHECKING:
                 disconnect at the same time (a single controller disconnecting
                 shows a different message naming that controller).
 
-                English: (one) "# controller disconnected." / (other) "#
-                controllers disconnected."
+                English: (one) "# game controller disconnected." / (other) "#
+                game controllers disconnected."
             """
 
         #: ::
@@ -470,7 +494,7 @@ if TYPE_CHECKING:
 
                 Notice that a controller is not supported.
 
-                English: "Sorry, the {name} controller is not supported."
+                English: "Sorry, the game controller {name} is not supported."
             """
 
         #: ::
@@ -485,8 +509,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of the VR orientation reset on Cardboard.
         #:
-        #:     English: "Use this to reset the VR orientation. To play, you'll
-        #:     need an external controller."
+        #:     English: "Use this to reset the VR orientation. To play the game
+        #:     you'll need an external game controller."
         vr_orientation_reset_cardboard: LangStr
 
     class StringsNetGroup:
@@ -596,6 +620,18 @@ if TYPE_CHECKING:
                 is likely to cause problems. Please check your time and
                 time-zone settings."
             """
+
+        #: ::
+        #:
+        #:     Yellow warning screen-message shown right after successfully
+        #:     joining a multiplayer game whose host runs an older game version
+        #:     or has v2-auth turned off; tells the player only their legacy
+        #:     profiles can be used there. Replaces the old "some new characters
+        #:     may show up as older ones" warning.
+        #:
+        #:     English: "This server is old or has v2-auth turned off; only
+        #:     legacy profiles are available."
+        host_legacy_profiles_only: LangStr
 
         #: ::
         #:
@@ -1055,6 +1091,26 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Body of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet), under the payment-pending
+        #:     title.
+        #:
+        #:     English: "Your purchase will be delivered once payment is
+        #:     confirmed."
+        payment_pending_message: LangStr
+
+        #: ::
+        #:
+        #:     Title of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet).
+        #:
+        #:     English: "Payment Pending"
+        payment_pending_title: LangStr
+
+        #: ::
+        #:
         #:     Notice that this item is already being purchased.
         #:
         #:     English: "A purchase of this item is already in progress."
@@ -1423,6 +1479,7 @@ if TYPE_CHECKING:
         account: StringsAccountGroup
         assets: StringsAssetsGroup
         audio: StringsAudioGroup
+        device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
         plugins: StringsPluginsGroup
@@ -1444,6 +1501,7 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        account_v2_icon: TextureHandle
         black: TextureHandle
         circle: TextureHandle
         circle_shadow: TextureHandle
@@ -1462,6 +1520,8 @@ if TYPE_CHECKING:
         font_small5: TextureHandle
         font_small6: TextureHandle
         font_small7: TextureHandle
+        glow_circle: TextureHandle
+        howdy: TextureHandle
         shadow: TextureHandle
         shadow_sharp: TextureHandle
         soft_rect: TextureHandle
@@ -1477,12 +1537,12 @@ if TYPE_CHECKING:
     #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 128 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 123 more). Full list in source.
+    #: The ``strings`` group - 132 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 127 more). Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 24 assets (``black``, ``circle``,
-    #: ``circle_shadow``, ``cursor``, ``font_big``, and 19 more). Full list in
+    #: The ``textures`` group - 27 assets (``account_v2_icon``, ``black``,
+    #: ``circle``, ``circle_shadow``, ``cursor``, and 22 more). Full list in
     #: source.
     textures: TexturesGroup
 
@@ -1532,6 +1592,7 @@ _TREE = {
             'signing_in': (),
         },
         'audio': {'music_play_error': ('music',)},
+        'device': {'thermal_frame_rate_cap': ()},
         'input': {
             'axis': ('number',),
             'button': ('number',),
@@ -1562,6 +1623,7 @@ _TREE = {
             'connection_failed_version_mismatch': (),
             'connection_rejected': (),
             'device_time_incorrect': ('hours',),
+            'host_legacy_profiles_only': (),
             'incompatible_newer_version_host': (),
             'incompatible_version_host': (),
             'incompatible_version_player': ('name',),
@@ -1611,6 +1673,8 @@ _TREE = {
         'store': {
             'google_play_purchases_unavailable': (),
             'google_play_services_unavailable': (),
+            'payment_pending_message': (),
+            'payment_pending_title': (),
             'purchase_already_in_progress': (),
             'purchase_not_valid': ('email',),
             'purchases_restored': (),
@@ -1657,6 +1721,7 @@ _TREE = {
         },
     },
     'textures': {
+        'account_v2_icon': 't',
         'black': 't',
         'circle': 't',
         'circle_shadow': 't',
@@ -1675,6 +1740,8 @@ _TREE = {
         'font_small5': 't',
         'font_small6': 't',
         'font_small7': 't',
+        'glow_circle': 't',
+        'howdy': 't',
         'shadow': 't',
         'shadow_sharp': 't',
         'soft_rect': 't',

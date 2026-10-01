@@ -70,6 +70,18 @@ all platforms** (`app_suspended_` false, `app_active_` true in `base.h`).
 its native running-state false and emits a benign no-op `UnsuspendApp` at
 boot; the iOS shell avoids that.)
 
+The **running** axis carries a third job: it disables the OS idle timer
+(`UIKitSupport.updateIdleTimer` → `UIApplication.isIdleTimerDisabled`) so the
+device doesn't lock during idle gameplay — someone on a gamepad, or just
+watching a match, touches nothing to reset it. This deliberately follows
+*running* rather than *active*: a notification banner or control center pull
+flips active for a moment, and the screen shouldn't start dimming for that.
+iOS only honors the flag for the frontmost app anyway, but we clear it on
+backgrounding so it never outlives its reason. (Android's equivalent is
+`FLAG_KEEP_SCREEN_ON`, set unconditionally in `BallisticaActivity.onCreate`;
+macOS needs a different mechanism *and* a different axis — see
+`mac-app-platform.md`.)
+
 Files: `app_platform/apple/{from_swift.h,from_swift.cc,UIKitSupport.swift,UIKitSceneDelegate.swift,UIKitGLViewController.swift}`.
 
 ## Audio around suspend
@@ -118,6 +130,59 @@ Two related facts worth knowing before touching this:
   callback, orientation-corrected via `windowScene.interfaceOrientation`,
   sampling stopped when backgrounded). Android's equivalent is
   `PlatformAndroid::OnGyroEvent` → `input->PushGyroEvent`.
+
+## Pointer / keyboard input (iPad)
+
+An iPad with a trackpad, mouse, or hardware keyboard flips live between
+touch and pointer behavior, mirroring Android. All of it is `#if os(iOS)`
+in `UIKitGLViewController.swift`; tvOS is untouched.
+
+"Touch vs mouse" is three independent axes — don't conflate them:
+`HasTouchScreen()` (static hardware fact; gates whether the on-screen
+`TouchInput` device exists), `UIScale` (chosen once from platform +
+screen class), and **`touch_mode`** (`base/ui/ui.{h,cc}`), the only
+dynamic one. `UI::SetTouchMode` just sets a flag; its consumers read it
+lazily each frame — `button_widget` (hover brightening) and
+`scroll_widget`/`h_scroll_widget` (drag-scroll vs scrollbar/wheel).
+
+- **Mode switch.** `from_swift::PushUsingPointingDevice(bool)` →
+  `AppAdapterApple::SetUsingPointingDevice`, a direct port of Android's
+  `PushUsingPointingDevice_`: a main-thread bool that, on change, pushes
+  `SetTouchMode(!pointing)` to the logic thread. A finger DOWN asserts
+  `false`; pointer clicks and hover assert `true`.
+- **Clicks.** Trackpad/mouse clicks arrive through `touchesBegan/...` as
+  `UITouch`es of type `.indirectPointer`. They are routed to the **mouse**
+  bridge (`from_swift::MouseDown/Moved/Up`, button 1 as on macOS), *not*
+  `PushTouchEvent` — a pointer should drive the UI cursor, never the
+  on-screen joystick. Y is flipped here (UIKit is top-left; `CocoaGLView`
+  doesn't need to). `PushUsingPointingDevice(true)` is enqueued before
+  `MouseDown`, so touch-mode is already off when the click is processed.
+- **Hover and scroll** never come through `touchesX`; `setupPointerInput()`
+  adds a `UIHoverGestureRecognizer` (→ `MouseMoved`; the analogue of
+  Android's `ACTION_HOVER_MOVE`) and a `UIPanGestureRecognizer` with
+  `allowedScrollTypesMask = .all` and `maximumNumberOfTouches = 0`
+  (indirect scrolls only — finger drags still flow through the touch
+  path). Scroll deltas mirror `CocoaGLView.scrollWheel`: `0.1` multiplier,
+  negated Y, read incrementally by zeroing the pan translation each
+  `.changed`.
+- **Scroll momentum.** The engine's scroll widget builds and decays its
+  own inertia; a brake in `scroll_widget.cc` kills the glide ~33ms after
+  the last non-momentum event unless momentum-flagged events keep
+  arriving (their *values* are discarded). macOS streams those after lift;
+  iPadOS sends nothing after the pan's `.ended`, so a `CADisplayLink`
+  heartbeat sends `SmoothScroll(0, 0, momentum=true)` for 1.5s. A new pan
+  `.began`, `.cancelled`/`.failed`, or a pointer click halts the glide by
+  sending one non-momentum event.
+- **Keyboard + controllers.** `GameControllers.shared.start()` (`GCKeyboard`
+  and `GCController` handling, shared with macOS) is called from
+  `UIKitSupport.startEngine()` after `MonolithicMain`.
+
+Two iPadOS facts to know before extending this: the trackpad is an
+*indirect pointer*, so two physical fingers are **not** delivered as two
+`UITouch`es — the system pre-classifies them into scroll / pinch /
+secondary-click, and `UITouch`-based recognizers (e.g. a two-finger tap)
+won't see trackpad taps. And the Simulator's indirect-pointer fidelity is
+not trustworthy; verify pointer work on a real device.
 
 ## The GIL-leaf-lock invariant
 
@@ -234,6 +299,20 @@ dead `#else` code paths hide in the configs you don't run.) **Always verify
 the shipping configuration (Release), not just Debug**, and prefer making
 mismatches fail at compile time (`#error` in unreachable branches) over
 letting them ship.
+
+A second Release-only failure class is plain C++, not config drift:
+**templates defined only in a `.cc`.** A header-inline function that calls
+a template whose definition lives only in a `.cc` (the 2026-09-04 case was
+`SessionStream::GetPointerCount<T>`) links fine in Debug — the `.cc`'s own
+implicit instantiation is emitted as a weak symbol other translation units
+can resolve against — but Release optimization inlines and drops that weak
+instantiation, so the link fails with `Undefined symbols for architecture
+arm64`. It surfaced as an iOS Release build failure while every Debug leg
+was green; `make cmake-build` and the Xcode Debug scheme never catch this
+class. Fix: keep such callers out of line in the same `.cc` as the
+template, or move the template definition to the header. Before calling a
+C++ change device-ready, run one Release build (`make ios-build
+IOS_CONFIGURATION=Release`, or `test_game_run --release`).
 
 Related `.pbxproj` notes: simulator builds exclude x86_64
 (`EXCLUDED_ARCHS[sdk=iphonesimulator*]` / `appletvsimulator`) since the

@@ -1,13 +1,15 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260831e`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261001`` (bascenev1).
 
-All assets for classic bombsquad.
+All assets for classic bombsquad that have no narrower home. Character bodies
+live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
+names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260831e
+# ba_meta require asset-package 358
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -15,11 +17,14 @@ All assets for classic bombsquad.
 
 from typing import TYPE_CHECKING
 
+from bacommon.assetpackage import ApverNum
+
 from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-_ASSET_PACKAGE = 'a-0.baclassicassets.260831e'
+# a-0.baclassicassets.261001
+_ASSET_PACKAGE = ApverNum(358)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -41,40 +46,8 @@ if TYPE_CHECKING:
         """
 
         achievement: SoundHandle
-        action_hero1: SoundHandle
-        action_hero2: SoundHandle
-        action_hero3: SoundHandle
-        action_hero4: SoundHandle
-        action_hero_death: SoundHandle
-        action_hero_fall: SoundHandle
-        action_hero_hit1: SoundHandle
-        action_hero_hit2: SoundHandle
         activate_beep: SoundHandle
-        agent1: SoundHandle
-        agent2: SoundHandle
-        agent3: SoundHandle
-        agent4: SoundHandle
-        agent_death: SoundHandle
-        agent_fall: SoundHandle
-        agent_hit1: SoundHandle
-        agent_hit2: SoundHandle
         alarm: SoundHandle
-        ali1: SoundHandle
-        ali2: SoundHandle
-        ali3: SoundHandle
-        ali4: SoundHandle
-        ali_death: SoundHandle
-        ali_fall: SoundHandle
-        ali_hit1: SoundHandle
-        ali_hit2: SoundHandle
-        alien1: SoundHandle
-        alien2: SoundHandle
-        alien3: SoundHandle
-        alien4: SoundHandle
-        alien_death: SoundHandle
-        alien_fall: SoundHandle
-        alien_hit1: SoundHandle
-        alien_hit2: SoundHandle
         announce_eight: SoundHandle
         announce_five: SoundHandle
         announce_four: SoundHandle
@@ -85,23 +58,7 @@ if TYPE_CHECKING:
         announce_ten: SoundHandle
         announce_three: SoundHandle
         announce_two: SoundHandle
-        assassin1: SoundHandle
-        assassin2: SoundHandle
-        assassin3: SoundHandle
-        assassin4: SoundHandle
-        assassin_death: SoundHandle
-        assassin_fall: SoundHandle
-        assassin_hit1: SoundHandle
-        assassin_hit2: SoundHandle
         aww: SoundHandle
-        bear1: SoundHandle
-        bear2: SoundHandle
-        bear3: SoundHandle
-        bear4: SoundHandle
-        bear_death: SoundHandle
-        bear_fall: SoundHandle
-        bear_hit1: SoundHandle
-        bear_hit2: SoundHandle
         bell_high: SoundHandle
         bell_low: SoundHandle
         bell_med: SoundHandle
@@ -111,45 +68,15 @@ if TYPE_CHECKING:
         bomb_drop01: SoundHandle
         bomb_drop02: SoundHandle
         bomb_roll01: SoundHandle
-        bones1: SoundHandle
-        bones2: SoundHandle
-        bones3: SoundHandle
-        bones_death: SoundHandle
-        bones_fall: SoundHandle
         boo: SoundHandle
         box_drop: SoundHandle
         boxing_bell: SoundHandle
-        bunny1: SoundHandle
-        bunny2: SoundHandle
-        bunny3: SoundHandle
-        bunny4: SoundHandle
-        bunny_death: SoundHandle
-        bunny_fall: SoundHandle
-        bunny_hit1: SoundHandle
-        bunny_hit2: SoundHandle
-        bunny_jump: SoundHandle
         cash_register2: SoundHandle
         char_select_music: SoundHandle
         cheer: SoundHandle
         cork_pop: SoundHandle
         cork_pop2: SoundHandle
-        cowboy1: SoundHandle
-        cowboy2: SoundHandle
-        cowboy3: SoundHandle
-        cowboy4: SoundHandle
-        cowboy_death: SoundHandle
-        cowboy_fall: SoundHandle
-        cowboy_hit1: SoundHandle
-        cowboy_hit2: SoundHandle
         crowd_chant: SoundHandle
-        cyborg1: SoundHandle
-        cyborg2: SoundHandle
-        cyborg3: SoundHandle
-        cyborg4: SoundHandle
-        cyborg_death: SoundHandle
-        cyborg_fall: SoundHandle
-        cyborg_hit1: SoundHandle
-        cyborg_hit2: SoundHandle
         cymbal: SoundHandle
         debris_fall: SoundHandle
         deek: SoundHandle
@@ -173,26 +100,8 @@ if TYPE_CHECKING:
         foot_impact03: SoundHandle
         forward_march_music: SoundHandle
         freeze: SoundHandle
-        frosty01: SoundHandle
-        frosty02: SoundHandle
-        frosty03: SoundHandle
-        frosty04: SoundHandle
-        frosty05: SoundHandle
-        frosty_death: SoundHandle
-        frosty_fall: SoundHandle
-        frosty_hit01: SoundHandle
-        frosty_hit02: SoundHandle
-        frosty_hit03: SoundHandle
         fuse01: SoundHandle
         gasp: SoundHandle
-        gladiator1: SoundHandle
-        gladiator2: SoundHandle
-        gladiator3: SoundHandle
-        gladiator4: SoundHandle
-        gladiator_death: SoundHandle
-        gladiator_fall: SoundHandle
-        gladiator_hit1: SoundHandle
-        gladiator_hit2: SoundHandle
         gong: SoundHandle
         grand_romp_music: SoundHandle
         gravel_skid: SoundHandle
@@ -203,115 +112,19 @@ if TYPE_CHECKING:
         impact_hard3: SoundHandle
         impact_medium: SoundHandle
         impact_medium2: SoundHandle
-        jack01: SoundHandle
-        jack02: SoundHandle
-        jack03: SoundHandle
-        jack04: SoundHandle
-        jack05: SoundHandle
-        jack06: SoundHandle
-        jack_death01: SoundHandle
-        jack_fall01: SoundHandle
-        jack_hit01: SoundHandle
-        jack_hit02: SoundHandle
-        jack_hit03: SoundHandle
-        jack_hit04: SoundHandle
-        jack_hit05: SoundHandle
-        jack_hit06: SoundHandle
-        jack_hit07: SoundHandle
-        jumpsuit1: SoundHandle
-        jumpsuit2: SoundHandle
-        jumpsuit3: SoundHandle
-        jumpsuit4: SoundHandle
-        jumpsuit_death: SoundHandle
-        jumpsuit_fall: SoundHandle
-        jumpsuit_hit1: SoundHandle
-        jumpsuit_hit2: SoundHandle
-        kronk1: SoundHandle
-        kronk10: SoundHandle
-        kronk2: SoundHandle
-        kronk3: SoundHandle
-        kronk4: SoundHandle
-        kronk5: SoundHandle
-        kronk6: SoundHandle
-        kronk7: SoundHandle
-        kronk8: SoundHandle
-        kronk9: SoundHandle
-        kronk_death: SoundHandle
-        kronk_fall: SoundHandle
         laser: SoundHandle
         laser_reverse: SoundHandle
-        mel01: SoundHandle
-        mel02: SoundHandle
-        mel03: SoundHandle
-        mel04: SoundHandle
-        mel05: SoundHandle
-        mel06: SoundHandle
-        mel07: SoundHandle
-        mel08: SoundHandle
-        mel09: SoundHandle
-        mel10: SoundHandle
-        mel_death01: SoundHandle
-        mel_fall01: SoundHandle
         menu_music: SoundHandle
         metal_hit: SoundHandle
         metal_skid: SoundHandle
         nice: SoundHandle
-        ninja_attack1: SoundHandle
-        ninja_attack2: SoundHandle
-        ninja_attack3: SoundHandle
-        ninja_attack4: SoundHandle
-        ninja_attack5: SoundHandle
-        ninja_attack6: SoundHandle
-        ninja_attack7: SoundHandle
-        ninja_death1: SoundHandle
-        ninja_fall1: SoundHandle
-        ninja_hit1: SoundHandle
-        ninja_hit2: SoundHandle
-        ninja_hit3: SoundHandle
-        ninja_hit4: SoundHandle
-        ninja_hit5: SoundHandle
-        ninja_hit6: SoundHandle
-        ninja_hit7: SoundHandle
-        ninja_hit8: SoundHandle
-        old_lady1: SoundHandle
-        old_lady2: SoundHandle
-        old_lady3: SoundHandle
-        old_lady4: SoundHandle
-        old_lady_death: SoundHandle
-        old_lady_fall: SoundHandle
-        old_lady_hit1: SoundHandle
-        old_lady_hit2: SoundHandle
         ooh: SoundHandle
-        opera_singer1: SoundHandle
-        opera_singer2: SoundHandle
-        opera_singer3: SoundHandle
-        opera_singer4: SoundHandle
-        opera_singer_death: SoundHandle
-        opera_singer_fall: SoundHandle
-        opera_singer_hit1: SoundHandle
-        opera_singer_hit2: SoundHandle
         orchestra_hit: SoundHandle
         orchestra_hit2: SoundHandle
         orchestra_hit3: SoundHandle
         orchestra_hit4: SoundHandle
         orchestra_hit_big1: SoundHandle
         orchestra_hit_big2: SoundHandle
-        penguin1: SoundHandle
-        penguin2: SoundHandle
-        penguin3: SoundHandle
-        penguin4: SoundHandle
-        penguin_death: SoundHandle
-        penguin_fall: SoundHandle
-        penguin_hit1: SoundHandle
-        penguin_hit2: SoundHandle
-        pixie1: SoundHandle
-        pixie2: SoundHandle
-        pixie3: SoundHandle
-        pixie4: SoundHandle
-        pixie_death: SoundHandle
-        pixie_fall: SoundHandle
-        pixie_hit1: SoundHandle
-        pixie_hit2: SoundHandle
         player_death: SoundHandle
         player_left: SoundHandle
         pop01: SoundHandle
@@ -325,26 +138,7 @@ if TYPE_CHECKING:
         race_beep2: SoundHandle
         ref_whistle: SoundHandle
         rev_up: SoundHandle
-        robot1: SoundHandle
-        robot2: SoundHandle
-        robot3: SoundHandle
-        robot4: SoundHandle
-        robot_death: SoundHandle
-        robot_fall: SoundHandle
-        robot_hit1: SoundHandle
-        robot_hit2: SoundHandle
         run_away_music: SoundHandle
-        santa01: SoundHandle
-        santa02: SoundHandle
-        santa03: SoundHandle
-        santa04: SoundHandle
-        santa05: SoundHandle
-        santa_death: SoundHandle
-        santa_fall: SoundHandle
-        santa_hit01: SoundHandle
-        santa_hit02: SoundHandle
-        santa_hit03: SoundHandle
-        santa_hit04: SoundHandle
         scamper01: SoundHandle
         scary_music: SoundHandle
         score: SoundHandle
@@ -358,36 +152,13 @@ if TYPE_CHECKING:
         skid01: SoundHandle
         slow_epic_music: SoundHandle
         spawn: SoundHandle
-        spaz_attack01: SoundHandle
-        spaz_attack02: SoundHandle
-        spaz_attack03: SoundHandle
-        spaz_attack04: SoundHandle
-        spaz_death01: SoundHandle
         spaz_eff: SoundHandle
-        spaz_fall01: SoundHandle
-        spaz_impact01: SoundHandle
-        spaz_impact02: SoundHandle
-        spaz_impact03: SoundHandle
-        spaz_impact04: SoundHandle
-        spaz_jump01: SoundHandle
-        spaz_jump02: SoundHandle
-        spaz_jump03: SoundHandle
-        spaz_jump04: SoundHandle
         spaz_ow: SoundHandle
-        spaz_pickup01: SoundHandle
         spaz_scream01: SoundHandle
         splatter: SoundHandle
         sports_music: SoundHandle
         sticky_impact: SoundHandle
         super_punch: SoundHandle
-        superhero1: SoundHandle
-        superhero2: SoundHandle
-        superhero3: SoundHandle
-        superhero4: SoundHandle
-        superhero_death: SoundHandle
-        superhero_fall: SoundHandle
-        superhero_hit1: SoundHandle
-        superhero_hit2: SoundHandle
         survival_music: SoundHandle
         swip: SoundHandle
         swip2: SoundHandle
@@ -400,61 +171,15 @@ if TYPE_CHECKING:
         victory_music: SoundHandle
         warn_beep: SoundHandle
         warn_beeps: SoundHandle
-        warrior1: SoundHandle
-        warrior2: SoundHandle
-        warrior3: SoundHandle
-        warrior4: SoundHandle
-        warrior_death: SoundHandle
-        warrior_fall: SoundHandle
-        warrior_hit1: SoundHandle
-        warrior_hit2: SoundHandle
         when_johnny_comes_marching_home_music: SoundHandle
-        witch1: SoundHandle
-        witch2: SoundHandle
-        witch3: SoundHandle
-        witch4: SoundHandle
-        witch_death: SoundHandle
-        witch_fall: SoundHandle
-        witch_hit1: SoundHandle
-        witch_hit2: SoundHandle
-        wizard1: SoundHandle
-        wizard2: SoundHandle
-        wizard3: SoundHandle
-        wizard4: SoundHandle
-        wizard_death: SoundHandle
-        wizard_fall: SoundHandle
-        wizard_hit1: SoundHandle
-        wizard_hit2: SoundHandle
         woo: SoundHandle
         woo2: SoundHandle
         woo3: SoundHandle
         wood_debris_fall: SoundHandle
         wow: SoundHandle
-        wrestler1: SoundHandle
-        wrestler2: SoundHandle
-        wrestler3: SoundHandle
-        wrestler4: SoundHandle
-        wrestler_death: SoundHandle
-        wrestler_fall: SoundHandle
-        wrestler_hit1: SoundHandle
-        wrestler_hit2: SoundHandle
         yeah: SoundHandle
-        zoe_attack01: SoundHandle
-        zoe_attack02: SoundHandle
-        zoe_attack03: SoundHandle
-        zoe_attack04: SoundHandle
-        zoe_death01: SoundHandle
         zoe_eff: SoundHandle
-        zoe_fall01: SoundHandle
-        zoe_impact01: SoundHandle
-        zoe_impact02: SoundHandle
-        zoe_impact03: SoundHandle
-        zoe_impact04: SoundHandle
-        zoe_jump01: SoundHandle
-        zoe_jump02: SoundHandle
-        zoe_jump03: SoundHandle
         zoe_ow: SoundHandle
-        zoe_pickup01: SoundHandle
         zoe_scream01: SoundHandle
 
     class MeshesGroup:
@@ -471,275 +196,30 @@ if TYPE_CHECKING:
         action_button_left: MeshHandle
         action_button_right: MeshHandle
         action_button_top: MeshHandle
-        action_hero_fore_arm: MeshHandle
-        action_hero_hand: MeshHandle
-        action_hero_head: MeshHandle
-        action_hero_lower_leg: MeshHandle
-        action_hero_pelvis: MeshHandle
-        action_hero_toes: MeshHandle
-        action_hero_torso: MeshHandle
-        action_hero_upper_arm: MeshHandle
-        action_hero_upper_leg: MeshHandle
-        agent_fore_arm: MeshHandle
-        agent_hand: MeshHandle
-        agent_head: MeshHandle
-        agent_lower_leg: MeshHandle
-        agent_pelvis: MeshHandle
-        agent_toes: MeshHandle
-        agent_torso: MeshHandle
-        agent_upper_arm: MeshHandle
-        agent_upper_leg: MeshHandle
-        ali_fore_arm: MeshHandle
-        ali_hand: MeshHandle
-        ali_head: MeshHandle
-        ali_lower_leg: MeshHandle
-        ali_pelvis: MeshHandle
-        ali_toes: MeshHandle
-        ali_torso: MeshHandle
-        ali_upper_arm: MeshHandle
-        ali_upper_leg: MeshHandle
-        alien_fore_arm: MeshHandle
-        alien_hand: MeshHandle
-        alien_head: MeshHandle
-        alien_lower_leg: MeshHandle
-        alien_pelvis: MeshHandle
-        alien_toes: MeshHandle
-        alien_torso: MeshHandle
-        alien_upper_arm: MeshHandle
-        alien_upper_leg: MeshHandle
-        always_land_bg: MeshHandle
-        always_land_level: MeshHandle
-        always_land_level_bottom: MeshHandle
-        always_land_level_collide: CollisionMeshHandle
-        always_land_vrfill_mound: MeshHandle
         angry_computer_transparent: MeshHandle
         arrow_back: MeshHandle
         arrow_front: MeshHandle
-        assassin_fore_arm: MeshHandle
-        assassin_hand: MeshHandle
-        assassin_head: MeshHandle
-        assassin_lower_leg: MeshHandle
-        assassin_pelvis: MeshHandle
-        assassin_toes: MeshHandle
-        assassin_torso: MeshHandle
-        assassin_upper_arm: MeshHandle
-        assassin_upper_leg: MeshHandle
-        bear_fore_arm: MeshHandle
-        bear_hand: MeshHandle
-        bear_head: MeshHandle
-        bear_lower_leg: MeshHandle
-        bear_pelvis: MeshHandle
-        bear_toes: MeshHandle
-        bear_torso: MeshHandle
-        bear_upper_arm: MeshHandle
-        bear_upper_leg: MeshHandle
-        big_g: MeshHandle
-        big_gbottom: MeshHandle
-        big_gbumper: CollisionMeshHandle
-        big_gcollide: CollisionMeshHandle
         bomb: MeshHandle
         bomb_sticky: MeshHandle
-        bones_fore_arm: MeshHandle
-        bones_hand: MeshHandle
-        bones_head: MeshHandle
-        bones_lower_leg: MeshHandle
-        bones_pelvis: MeshHandle
-        bones_toes: MeshHandle
-        bones_torso: MeshHandle
-        bones_upper_arm: MeshHandle
-        bones_upper_leg: MeshHandle
         boxing_glove: MeshHandle
-        bridgit_level_bottom: MeshHandle
-        bridgit_level_collide: CollisionMeshHandle
-        bridgit_level_railing_collide: CollisionMeshHandle
-        bridgit_level_top: MeshHandle
-        bunny_fore_arm: MeshHandle
-        bunny_hand: MeshHandle
-        bunny_head: MeshHandle
-        bunny_lower_leg: MeshHandle
-        bunny_pelvis: MeshHandle
-        bunny_toes: MeshHandle
-        bunny_torso: MeshHandle
-        bunny_upper_arm: MeshHandle
-        bunny_upper_leg: MeshHandle
         button_null: MeshHandle
-        courtyard_level: MeshHandle
-        courtyard_level_bottom: MeshHandle
-        courtyard_level_collide: CollisionMeshHandle
-        courtyard_player_wall: CollisionMeshHandle
-        cowboy_fore_arm: MeshHandle
-        cowboy_hand: MeshHandle
-        cowboy_head: MeshHandle
-        cowboy_lower_leg: MeshHandle
-        cowboy_pelvis: MeshHandle
-        cowboy_toes: MeshHandle
-        cowboy_torso: MeshHandle
-        cowboy_upper_arm: MeshHandle
-        cowboy_upper_leg: MeshHandle
-        crag_castle_level: MeshHandle
-        crag_castle_level_bottom: MeshHandle
-        crag_castle_level_bumper: CollisionMeshHandle
-        crag_castle_level_collide: CollisionMeshHandle
-        crag_castle_vrfill_mound: MeshHandle
         currency_meter: MeshHandle
         currency_plus_button: MeshHandle
-        cyborg_fore_arm: MeshHandle
-        cyborg_hand: MeshHandle
-        cyborg_head: MeshHandle
-        cyborg_lower_leg: MeshHandle
-        cyborg_pelvis: MeshHandle
-        cyborg_toes: MeshHandle
-        cyborg_torso: MeshHandle
-        cyborg_upper_arm: MeshHandle
-        cyborg_upper_leg: MeshHandle
         cylinder: MeshHandle
-        doom_shroom_bg: MeshHandle
-        doom_shroom_level: MeshHandle
-        doom_shroom_level_collide: CollisionMeshHandle
-        doom_shroom_stem: MeshHandle
-        doom_shroom_stem_collide: CollisionMeshHandle
-        doom_shroom_vrfill: MeshHandle
         egg: MeshHandle
         flag_stand: MeshHandle
-        football_stadium: MeshHandle
-        football_stadium_collide: CollisionMeshHandle
-        football_stadium_vrfill: MeshHandle
         frame_inset: MeshHandle
-        frosty_fore_arm: MeshHandle
-        frosty_hand: MeshHandle
-        frosty_head: MeshHandle
-        frosty_lower_leg: MeshHandle
-        frosty_pelvis: MeshHandle
-        frosty_toes: MeshHandle
-        frosty_torso: MeshHandle
-        frosty_upper_arm: MeshHandle
-        frosty_upper_leg: MeshHandle
-        gladiator_fore_arm: MeshHandle
-        gladiator_hand: MeshHandle
-        gladiator_head: MeshHandle
-        gladiator_lower_leg: MeshHandle
-        gladiator_pelvis: MeshHandle
-        gladiator_toes: MeshHandle
-        gladiator_torso: MeshHandle
-        gladiator_upper_arm: MeshHandle
-        gladiator_upper_leg: MeshHandle
         heart_opaque: MeshHandle
         heart_transparent: MeshHandle
-        hockey_stadium_collide: CollisionMeshHandle
-        hockey_stadium_inner: MeshHandle
-        hockey_stadium_outer: MeshHandle
-        hockey_stadium_stands: MeshHandle
         image16x1: MeshHandle
         image2x1: MeshHandle
         image2x1_vertical: MeshHandle
         image4x1: MeshHandle
         impact_bomb: MeshHandle
-        jack_fore_arm: MeshHandle
-        jack_hand: MeshHandle
-        jack_head: MeshHandle
-        jack_lower_leg: MeshHandle
-        jack_toes: MeshHandle
-        jack_torso: MeshHandle
-        jack_upper_arm: MeshHandle
-        jack_upper_leg: MeshHandle
-        jumpsuit_fore_arm: MeshHandle
-        jumpsuit_hand: MeshHandle
-        jumpsuit_head: MeshHandle
-        jumpsuit_lower_leg: MeshHandle
-        jumpsuit_pelvis: MeshHandle
-        jumpsuit_toes: MeshHandle
-        jumpsuit_torso: MeshHandle
-        jumpsuit_upper_arm: MeshHandle
-        jumpsuit_upper_leg: MeshHandle
-        kronk_fore_arm: MeshHandle
-        kronk_hand: MeshHandle
-        kronk_head: MeshHandle
-        kronk_lower_leg: MeshHandle
-        kronk_pelvis: MeshHandle
-        kronk_toes: MeshHandle
-        kronk_torso: MeshHandle
-        kronk_upper_arm: MeshHandle
-        kronk_upper_leg: MeshHandle
-        lake_frigid: MeshHandle
-        lake_frigid_collide: CollisionMeshHandle
-        lake_frigid_reflections: MeshHandle
-        lake_frigid_top: MeshHandle
-        lake_frigid_vrfill: MeshHandle
         land_mine: MeshHandle
-        level_select_button_opaque: MeshHandle
-        level_select_button_transparent: MeshHandle
         logo: MeshHandle
         logo_transparent: MeshHandle
-        mel_fore_arm: MeshHandle
-        mel_hand: MeshHandle
-        mel_head: MeshHandle
-        mel_lower_leg: MeshHandle
-        mel_toes: MeshHandle
-        mel_torso: MeshHandle
-        mel_upper_arm: MeshHandle
-        mel_upper_leg: MeshHandle
         meter_transparent: MeshHandle
-        monkey_face_level: MeshHandle
-        monkey_face_level_bottom: MeshHandle
-        monkey_face_level_bumper: CollisionMeshHandle
-        monkey_face_level_collide: CollisionMeshHandle
-        nature_background: MeshHandle
-        nature_background_collide: CollisionMeshHandle
-        nature_background_vrfill: MeshHandle
-        neo_spaz_fore_arm: MeshHandle
-        neo_spaz_hand: MeshHandle
-        neo_spaz_head: MeshHandle
-        neo_spaz_lower_leg: MeshHandle
-        neo_spaz_pelvis: MeshHandle
-        neo_spaz_toes: MeshHandle
-        neo_spaz_torso: MeshHandle
-        neo_spaz_upper_arm: MeshHandle
-        neo_spaz_upper_leg: MeshHandle
-        ninja_fore_arm: MeshHandle
-        ninja_hand: MeshHandle
-        ninja_head: MeshHandle
-        ninja_lower_leg: MeshHandle
-        ninja_pelvis: MeshHandle
-        ninja_toes: MeshHandle
-        ninja_torso: MeshHandle
-        ninja_upper_arm: MeshHandle
-        ninja_upper_leg: MeshHandle
-        old_lady_fore_arm: MeshHandle
-        old_lady_hand: MeshHandle
-        old_lady_head: MeshHandle
-        old_lady_lower_leg: MeshHandle
-        old_lady_pelvis: MeshHandle
-        old_lady_toes: MeshHandle
-        old_lady_torso: MeshHandle
-        old_lady_upper_arm: MeshHandle
-        old_lady_upper_leg: MeshHandle
-        opera_singer_fore_arm: MeshHandle
-        opera_singer_hand: MeshHandle
-        opera_singer_head: MeshHandle
-        opera_singer_lower_leg: MeshHandle
-        opera_singer_pelvis: MeshHandle
-        opera_singer_toes: MeshHandle
-        opera_singer_torso: MeshHandle
-        opera_singer_upper_arm: MeshHandle
-        opera_singer_upper_leg: MeshHandle
-        penguin_fore_arm: MeshHandle
-        penguin_hand: MeshHandle
-        penguin_head: MeshHandle
-        penguin_lower_leg: MeshHandle
-        penguin_pelvis: MeshHandle
-        penguin_toes: MeshHandle
-        penguin_torso: MeshHandle
-        penguin_upper_arm: MeshHandle
-        penguin_upper_leg: MeshHandle
-        pixie_fore_arm: MeshHandle
-        pixie_hand: MeshHandle
-        pixie_head: MeshHandle
-        pixie_lower_leg: MeshHandle
-        pixie_pelvis: MeshHandle
-        pixie_toes: MeshHandle
-        pixie_torso: MeshHandle
-        pixie_upper_arm: MeshHandle
-        pixie_upper_leg: MeshHandle
         plastic_eyes_transparent: MeshHandle
         player_lineup1_transparent: MeshHandle
         player_lineup2_transparent: MeshHandle
@@ -748,66 +228,14 @@ if TYPE_CHECKING:
         powerup: MeshHandle
         powerup_simple: MeshHandle
         puck: MeshHandle
-        rampage_bg: MeshHandle
-        rampage_bg2: MeshHandle
-        rampage_bumper: CollisionMeshHandle
-        rampage_level: MeshHandle
-        rampage_level_bottom: MeshHandle
-        rampage_level_collide: CollisionMeshHandle
-        rampage_vrfill: MeshHandle
-        robot_fore_arm: MeshHandle
-        robot_hand: MeshHandle
-        robot_head: MeshHandle
-        robot_lower_leg: MeshHandle
-        robot_pelvis: MeshHandle
-        robot_toes: MeshHandle
-        robot_torso: MeshHandle
-        robot_upper_arm: MeshHandle
-        robot_upper_leg: MeshHandle
-        roundabout_level: MeshHandle
-        roundabout_level_bottom: MeshHandle
-        roundabout_level_bumper: CollisionMeshHandle
-        roundabout_level_collide: CollisionMeshHandle
         running_shoes: MeshHandle
-        santa_fore_arm: MeshHandle
-        santa_hand: MeshHandle
-        santa_head: MeshHandle
-        santa_lower_leg: MeshHandle
-        santa_toes: MeshHandle
-        santa_torso: MeshHandle
-        santa_upper_arm: MeshHandle
-        santa_upper_leg: MeshHandle
         scroll_widget_short: MeshHandle
         shrapnel1: MeshHandle
         shrapnel_board: MeshHandle
         shrapnel_slime: MeshHandle
-        step_right_up_level: MeshHandle
-        step_right_up_level_bottom: MeshHandle
-        step_right_up_level_collide: CollisionMeshHandle
-        step_right_up_vrfill_mound: MeshHandle
-        superhero_fore_arm: MeshHandle
-        superhero_hand: MeshHandle
-        superhero_head: MeshHandle
-        superhero_lower_leg: MeshHandle
-        superhero_pelvis: MeshHandle
-        superhero_toes: MeshHandle
-        superhero_torso: MeshHandle
-        superhero_upper_arm: MeshHandle
-        superhero_upper_leg: MeshHandle
-        the_pad_bg: MeshHandle
         the_pad_bgsmall: MeshHandle
-        the_pad_level: MeshHandle
-        the_pad_level_bottom: MeshHandle
-        the_pad_level_bumper: CollisionMeshHandle
-        the_pad_level_collide: CollisionMeshHandle
         the_pad_vrfill_bottom: MeshHandle
-        the_pad_vrfill_mound: MeshHandle
         the_pad_vrfill_top: MeshHandle
-        tip_top_bg: MeshHandle
-        tip_top_level: MeshHandle
-        tip_top_level_bottom: MeshHandle
-        tip_top_level_bumper: CollisionMeshHandle
-        tip_top_level_collide: CollisionMeshHandle
         tnt: MeshHandle
         toolbar_backing: MeshHandle
         toolbar_backing_bottom: MeshHandle
@@ -816,61 +244,9 @@ if TYPE_CHECKING:
         toolbar_backing_top: MeshHandle
         toolbar_backing_top2: MeshHandle
         toolbar_backing_transparent: MeshHandle
-        tower_dlevel: MeshHandle
-        tower_dlevel_bottom: MeshHandle
-        tower_dlevel_collide: CollisionMeshHandle
         tower_dplayer_wall: CollisionMeshHandle
         trees: MeshHandle
-        warrior_fore_arm: MeshHandle
-        warrior_hand: MeshHandle
-        warrior_head: MeshHandle
-        warrior_lower_leg: MeshHandle
-        warrior_pelvis: MeshHandle
-        warrior_toes: MeshHandle
-        warrior_torso: MeshHandle
-        warrior_upper_arm: MeshHandle
-        warrior_upper_leg: MeshHandle
         window_bgblotch: MeshHandle
-        witch_fore_arm: MeshHandle
-        witch_hand: MeshHandle
-        witch_head: MeshHandle
-        witch_lower_leg: MeshHandle
-        witch_pelvis: MeshHandle
-        witch_toes: MeshHandle
-        witch_torso: MeshHandle
-        witch_upper_arm: MeshHandle
-        witch_upper_leg: MeshHandle
-        wizard_fore_arm: MeshHandle
-        wizard_hand: MeshHandle
-        wizard_head: MeshHandle
-        wizard_lower_leg: MeshHandle
-        wizard_pelvis: MeshHandle
-        wizard_toes: MeshHandle
-        wizard_torso: MeshHandle
-        wizard_upper_arm: MeshHandle
-        wizard_upper_leg: MeshHandle
-        wrestler_fore_arm: MeshHandle
-        wrestler_hand: MeshHandle
-        wrestler_head: MeshHandle
-        wrestler_lower_leg: MeshHandle
-        wrestler_pelvis: MeshHandle
-        wrestler_toes: MeshHandle
-        wrestler_torso: MeshHandle
-        wrestler_upper_arm: MeshHandle
-        wrestler_upper_leg: MeshHandle
-        zig_zag_level: MeshHandle
-        zig_zag_level_bottom: MeshHandle
-        zig_zag_level_bumper: CollisionMeshHandle
-        zig_zag_level_collide: CollisionMeshHandle
-        zoe_fore_arm: MeshHandle
-        zoe_hand: MeshHandle
-        zoe_head: MeshHandle
-        zoe_lower_leg: MeshHandle
-        zoe_pelvis: MeshHandle
-        zoe_toes: MeshHandle
-        zoe_torso: MeshHandle
-        zoe_upper_arm: MeshHandle
-        zoe_upper_leg: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -1215,7 +591,7 @@ if TYPE_CHECKING:
         #:     Full description of what an achievement requires, naming the
         #:     campaign level it applies to.
         #:
-        #:     English: "Connect 2 controllers (hardware or app)"
+        #:     English: "Connect 2 game controllers (hardware or app)"
         description_full: LangStr
 
         #: ::
@@ -1223,7 +599,7 @@ if TYPE_CHECKING:
         #:     Full description of an achievement the player has already earned,
         #:     naming the campaign level (past tense).
         #:
-        #:     English: "Connected 2 controllers (hardware or app)"
+        #:     English: "Connected 2 game controllers (hardware or app)"
         description_full_complete: LangStr
 
         #: ::
@@ -1443,7 +819,7 @@ if TYPE_CHECKING:
         #:     Full description of what an achievement requires, naming the
         #:     campaign level it applies to.
         #:
-        #:     English: "Connect a controller (hardware or app)"
+        #:     English: "Connect a game controller (hardware or app)"
         description_full: LangStr
 
         #: ::
@@ -1451,7 +827,7 @@ if TYPE_CHECKING:
         #:     Full description of an achievement the player has already earned,
         #:     naming the campaign level (past tense).
         #:
-        #:     English: "Connected a controller. (hardware or app)"
+        #:     English: "Connected a game controller (hardware or app)"
         description_full_complete: LangStr
 
         #: ::
@@ -3423,251 +2799,6 @@ if TYPE_CHECKING:
                 English: "You have been sent a {app_name} promo code:"
             """
 
-    class StringsCharactersGroup:
-        """
-        ::
-
-            Playable character display names. Mods can register their own
-            characters; those names are shown untranslated.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Translate the "Agent" title;
-        #:     keep/transliterate "Johnson".
-        #:
-        #:     English: "Agent Johnson"
-        agent_johnson: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Robot designation: keep as "B-9000"
-        #:     (transliterate letters/digits only where the script requires).
-        #:
-        #:     English: "B-9000"
-        b9000: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Bernard"
-        bernard: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. A warm, familiar granny-ish given name:
-        #:     keep/adapt "Betty" or use an equivalent common local name.
-        #:
-        #:     English: "Betty"
-        betty: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful nickname: playful
-        #:     diminutive/pet-name forms for "bones/skeleton" work well.
-        #:
-        #:     English: "Bones"
-        bones: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. playful given name; transliterate
-        #:     phonetically in non-Latin scripts, or keep an established
-        #:     cowboy-flavored rename.
-        #:
-        #:     English: "Butch"
-        butch: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's standard
-        #:     Easter-bunny term.
-        #:
-        #:     English: "Easter Bunny"
-        easter_bunny: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name: a frosty/snowy
-        #:     name-like form (playful beats a generic "snowman" where a natural
-        #:     option exists).
-        #:
-        #:     English: "Frosty"
-        frosty: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Gretel"
-        gretel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented wizardly pun name: "grumble" +
-        #:     a Gandalf/Dumbledore-style suffix. A local grumble-pun in the
-        #:     same shape is ideal; otherwise transliterate. Never a generic
-        #:     "wizard" word alone, and never an actual name from other fiction.
-        #:
-        #:     English: "Grumbledorf"
-        grumbledorf: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded. Use local name order conventions.
-        #:
-        #:     English: "Jack Morgan"
-        jack_morgan: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Kronk"
-        kronk: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. short proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Lee"
-        lee: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
-        #:     translate the meaning as a name-like form.
-        #:
-        #:     English: "Lucky"
-        lucky: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Mel"
-        mel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. a compound nickname meaning a neutral
-        #:     intermediary; a fitting localized equivalent works well.
-        #:
-        #:     English: "Middle-Man"
-        middle_man: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Pascal"
-        pascal: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. English puns pixel/pixie. Either keep
-        #:     "Pixel" (transliterated as needed) or use a fairy/sprite word
-        #:     that lands a similar double meaning.
-        #:
-        #:     English: "Pixel"
-        pixel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's traditional
-        #:     gift-bringer name.
-        #:
-        #:     English: "Santa Claus"
-        santa_claus: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Descriptive name: translate the meaning
-        #:     (snake + shadow, ninja-flavored).
-        #:
-        #:     English: "Snake Shadow"
-        snake_shadow: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. the default character and series
-        #:     mascot; transliterate phonetically, or keep an established
-        #:     playful rename.
-        #:
-        #:     English: "Spaz"
-        spaz: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Chinese locales use the official mascot
-        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
-        #:     brand).
-        #:
-        #:     English: "Taobao Mascot"
-        taobao_mascot: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Todd McBurton"
-        todd_mcburton: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Zoe"
-        zoe: LangStr
-
     class StringsChestGroup:
         """
         ::
@@ -3771,8 +2902,8 @@ if TYPE_CHECKING:
 
                 Suggestion to use a controller or the remote app.
 
-                English: "For a better experience, use a controller or install
-                {remote_app_name} on your phone or tablet."
+                English: "For a better experience, use a game controller or
+                install {remote_app_name} on your phone or tablet."
             """
 
         #: ::
@@ -4033,118 +3164,6 @@ if TYPE_CHECKING:
         #:     English: "Tournaments are disabled when Workspaces are active. To
         #:     re-enable tournaments, disable your Workspace and restart."
         tournaments_disabled_workspace: LangStr
-
-    class StringsCoopLevelsGroup:
-        """
-        ::
-
-            Names of the single-player and co-op campaign levels, including the
-            parameterized difficulty variants.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Name of the Infinite Onslaught co-op level.
-        #:
-        #:     English: "Infinite Onslaught"
-        infinite_onslaught: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Infinite Runaround co-op level.
-        #:
-        #:     English: "Infinite Runaround"
-        infinite_runaround: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Onslaught Training co-op level.
-        #:
-        #:     English: "Onslaught Training"
-        onslaught_training: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Pro Football co-op level.
-        #:
-        #:     English: "Pro Football"
-        pro_football: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Pro Onslaught co-op level.
-        #:
-        #:     English: "Pro Onslaught"
-        pro_onslaught: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Pro Runaround co-op level.
-        #:
-        #:     English: "Pro Runaround"
-        pro_runaround: LangStr
-
-        def pro_variant(self, *, game: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Name of the Pro difficulty variant of a level.
-
-                English: "Pro {game}"
-            """
-
-        #: ::
-        #:
-        #:     Name of the Rookie Football co-op level.
-        #:
-        #:     English: "Rookie Football"
-        rookie_football: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Rookie Onslaught co-op level.
-        #:
-        #:     English: "Rookie Onslaught"
-        rookie_onslaught: LangStr
-
-        #: ::
-        #:
-        #:     Name of the The Last Stand co-op level.
-        #:
-        #:     English: "The Last Stand"
-        the_last_stand: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Uber Football co-op level.
-        #:
-        #:     English: "Uber Football"
-        uber_football: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Uber Onslaught co-op level.
-        #:
-        #:     English: "Uber Onslaught"
-        uber_onslaught: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Uber Runaround co-op level.
-        #:
-        #:     English: "Uber Runaround"
-        uber_runaround: LangStr
-
-        def uber_variant(self, *, game: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Name of the Uber difficulty variant of a level.
-
-                English: "Uber {game}"
-            """
 
     class StringsCoopScoreGroup:
         """
@@ -4470,35 +3489,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Whoever invented coffee"
         whoever_invented_coffee: LangStr
-
-    class StringsEconomyGroup:
-        """
-        ::
-
-            Screen-messages about currency: grants and related notices.
-
-            See source for the full asset list.
-        """
-
-        def received_tickets(self, *, count: int) -> LangStr:
-            """
-            ::
-
-                Confirmation of how many tickets were received.
-
-                English: (one) "Received # Ticket!" / (other) "Received #
-                Tickets!"
-            """
-
-        def you_got_tokens(self, *, tokens: int) -> LangStr:
-            """
-            ::
-
-                Confirmation effect sent to game clients when tokens are
-                credited (store purchases, promo codes, and other grant flows).
-
-                English: (one) "You got # Token!" / (other) "You got # Tokens!"
-            """
 
     class StringsFileSelectorGroup:
         """
@@ -4949,570 +3939,6 @@ if TYPE_CHECKING:
                 English: "Wave {number}"
             """
 
-    class StringsGameDescriptionsGroup:
-        """
-        ::
-
-            Minigame objective descriptions shown at match start and on game
-            lists. Mods define their own; those show untranslated.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Be the chosen one for a length of time to win. Kill the
-        #:     chosen one to become it."
-        be_the_chosen_one_for_a: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Bomb as many targets as you can."
-        bomb_as_many_targets_as_you: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Carry the flag for a set length of time."
-        carry_the_flag_for_a_set: LangStr
-
-        def carry_the_flag_for_seconds(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Carry the flag for {arg1} seconds."
-            """
-
-        def carry_the_flag_for_seconds_2(
-            self, *, arg1: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Carry the flag for {arg1} seconds"
-            """
-
-        def crush_of_your_enemies(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Crush {arg1} of your enemies."
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Defeat all enemies."
-        defeat_all_enemies: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Dodge the falling bombs."
-        dodge_the_falling_bombs: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Final glorious epic slow motion battle to the death."
-        final_glorious_epic_slow_motion_battle: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Gather eggs!"
-        gather_eggs: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Get the flag to the enemy end zone."
-        get_the_flag_to_the_enemy: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "How fast can you defeat the ninjas?"
-        how_fast_can_you_defeat_the: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Kill a set number of enemies to win."
-        kill_a_set_number_of_enemies: LangStr
-
-        def kill_enemies(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Defeat {arg1} enemies"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Last one standing wins."
-        last_one_standing_wins: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "last one standing wins"
-        last_one_standing_wins_2: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Last remaining alive wins."
-        last_remaining_alive_wins: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Last team standing wins."
-        last_team_standing_wins: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "last team standing wins"
-        last_team_standing_wins_2: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Prevent enemies from reaching the exit."
-        prevent_enemies_from_reaching_the_exit: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Reach the enemy flag to score."
-        reach_the_enemy_flag_to_score: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "return 1 flag"
-        return_1_flag: LangStr
-
-        def return_flags(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Return {arg1} flags"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Return the enemy flag to score."
-        return_the_enemy_flag_to_score: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Run 1 lap."
-        run_1_lap: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "run 1 lap"
-        run_1_lap_2: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Run 1 lap. Your entire team has to finish."
-        run_1_lap_your_entire_team: LangStr
-
-        def run_laps(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Run {arg1} laps."
-            """
-
-        def run_laps_2(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Run {arg1} laps"
-            """
-
-        def run_laps_your_entire_team_has(
-            self, *, arg1: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Run {arg1} laps. Your entire team has to finish."
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Run real fast!"
-        run_real_fast: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Score a goal."
-        score_a_goal: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "score a goal"
-        score_a_goal_2: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Score a touchdown."
-        score_a_touchdown: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "score a touchdown"
-        score_a_touchdown_2: LangStr
-
-        def score_goals(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Score {arg1} goals."
-            """
-
-        def score_goals_2(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Score {arg1} goals"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Score some goals."
-        score_some_goals: LangStr
-
-        def score_touchdowns(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Score {arg1} touchdowns."
-            """
-
-        def score_touchdowns_2(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "score {arg1} touchdowns"
-            """
-
-        def secure_all_flags(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Secure all {arg1} flags."
-            """
-
-        def secure_all_flags_2(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Secure all {arg1} flags"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Secure all flags on the map to win."
-        secure_all_flags_on_the_map: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Secure the flag for a set length of time."
-        secure_the_flag_for_a_set: LangStr
-
-        def secure_the_flag_for_seconds(
-            self, *, arg1: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Secure the flag for {arg1} seconds."
-            """
-
-        def secure_the_flag_for_seconds_2(
-            self, *, arg1: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Secure the flag for {arg1} seconds"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Steal the enemy flag."
-        steal_the_enemy_flag: LangStr
-
-        def steal_the_enemy_flag_times(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Steal the enemy flag {arg1} times."
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "There can be only one."
-        there_can_be_only_one: LangStr
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "touch 1 flag"
-        touch_1_flag: LangStr
-
-        def touch_flags(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Touch {arg1} flags"
-            """
-
-        #: ::
-        #:
-        #:     Minigame objective description (start-of-match / game lists).
-        #:
-        #:     English: "Touch the enemy flag."
-        touch_the_enemy_flag: LangStr
-
-        def touch_the_enemy_flag_times(self, *, arg1: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Minigame objective description (start-of-match / game lists).
-
-                English: "Touch the enemy flag {arg1} times."
-            """
-
-    class StringsGameNamesGroup:
-        """
-        ::
-
-            Names of the competitive multiplayer minigames. Mods can add their
-            own games; those names are shown untranslated.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Name of the Assault minigame.
-        #:
-        #:     English: "Assault"
-        assault: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Capture the Flag minigame.
-        #:
-        #:     English: "Capture the Flag"
-        capture_the_flag: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Chosen One minigame.
-        #:
-        #:     English: "Chosen One"
-        chosen_one: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Conquest minigame.
-        #:
-        #:     English: "Conquest"
-        conquest: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Death Match minigame.
-        #:
-        #:     English: "Death Match"
-        death_match: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Easter Egg Hunt minigame.
-        #:
-        #:     English: "Easter Egg Hunt"
-        easter_egg_hunt: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Elimination minigame.
-        #:
-        #:     English: "Elimination"
-        elimination: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Football minigame.
-        #:
-        #:     English: "Football"
-        football: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Hockey minigame.
-        #:
-        #:     English: "Hockey"
-        hockey: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Keep Away minigame.
-        #:
-        #:     English: "Keep Away"
-        keep_away: LangStr
-
-        #: ::
-        #:
-        #:     Name of the King of the Hill minigame.
-        #:
-        #:     English: "King of the Hill"
-        king_of_the_hill: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Meteor Shower minigame.
-        #:
-        #:     English: "Meteor Shower"
-        meteor_shower: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Ninja Fight minigame.
-        #:
-        #:     English: "Ninja Fight"
-        ninja_fight: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Onslaught minigame.
-        #:
-        #:     English: "Onslaught"
-        onslaught: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Race minigame.
-        #:
-        #:     English: "Race"
-        race: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Runaround minigame.
-        #:
-        #:     English: "Runaround"
-        runaround: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Target Practice minigame.
-        #:
-        #:     English: "Target Practice"
-        target_practice: LangStr
-
-        #: ::
-        #:
-        #:     Name of the The Last Stand minigame.
-        #:
-        #:     English: "The Last Stand"
-        the_last_stand: LangStr
-
     class StringsGameSettingsGroup:
         """
         ::
@@ -5859,7 +4285,7 @@ if TYPE_CHECKING:
         #:     several players.
         #:
         #:     English: "Remember: any device in a party can have more than one
-        #:     player if you have enough controllers."
+        #:     player if you have enough game controllers."
         about_local_multiplayer_extra: LangStr
 
         #: ::
@@ -5882,8 +4308,8 @@ if TYPE_CHECKING:
                 top-controller-button glyph (both single characters).
 
                 English: "Use the {party} button at the top right to chat and
-                interact with your party. (on a controller, press {button} while
-                in a menu)"
+                interact with your party. (on a game controller, press {button}
+                while in a menu)"
             """
 
         def added_to_favorites(self, *, name: str | LangStr) -> LangStr:
@@ -6444,9 +4870,9 @@ if TYPE_CHECKING:
                 Blurb about using controllers or the remote app.
 
                 English: "{app_name} is most fun when played with family &
-                friends. Connect one or more hardware controllers or install the
-                {remote_app_name} app on phones or tablets to use them as
-                controllers."
+                friends. Connect one or more hardware game controllers or
+                install the {remote_app_name} app on phones or tablets to use
+                them as game controllers."
             """
 
     class StringsGetTokensGroup:
@@ -6580,7 +5006,7 @@ if TYPE_CHECKING:
         #:
         #:     Heading for the controllers section.
         #:
-        #:     English: "Controllers"
+        #:     English: "Game Controllers"
         controllers: LangStr
 
         def controllers_info(
@@ -6592,10 +5018,11 @@ if TYPE_CHECKING:
                 Body text for the controllers section.
 
                 English: "You can play {app_name} with friends over a network,
-                or play together on the same device if you have enough
-                controllers. It supports a variety of controllers, and you can
-                even use phones as controllers via the free '{remote_app_name}'
-                app. See Settings > Controllers for more info."
+                or play together on the same device if you have enough game
+                controllers. A variety of game controllers are supported, and
+                you can even use phones as game controllers via the free
+                '{remote_app_name}' app. See Settings > Controllers for more
+                info."
             """
 
         #: ::
@@ -7468,6 +5895,16 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Yellow warning screen-message shown once per lobby (on the local
+        #:     device) when a signed-in player's cloud profiles are unavailable,
+        #:     so the profile picker only offers legacy profiles.
+        #:
+        #:     English: "Cloud profiles are unavailable (offline?); only legacy
+        #:     profiles are available."
+        legacy_profiles_only: LangStr
+
+        #: ::
+        #:
         #:     Prompt inviting anyone to join by pressing a button.
         #:
         #:     English: "press any button to join..."
@@ -7601,135 +6038,6 @@ if TYPE_CHECKING:
         #:     English: "Test Build"
         test_build: LangStr
 
-    class StringsMapNamesGroup:
-        """
-        ::
-
-            Names of the play areas (maps) that matches are held in. Mods can
-            add their own maps; those names are shown untranslated.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Name of the Big G play area.
-        #:
-        #:     English: "Big G"
-        big_g: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Bridgit play area.
-        #:
-        #:     English: "Bridgit"
-        bridgit: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Courtyard play area.
-        #:
-        #:     English: "Courtyard"
-        courtyard: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Crag Castle play area.
-        #:
-        #:     English: "Crag Castle"
-        crag_castle: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Doom Shroom play area.
-        #:
-        #:     English: "Doom Shroom"
-        doom_shroom: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Football Stadium play area.
-        #:
-        #:     English: "Football Stadium"
-        football_stadium: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Happy Thoughts play area.
-        #:
-        #:     English: "Happy Thoughts"
-        happy_thoughts: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Hockey Stadium play area.
-        #:
-        #:     English: "Hockey Stadium"
-        hockey_stadium: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Lake Frigid play area.
-        #:
-        #:     English: "Lake Frigid"
-        lake_frigid: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Monkey Face play area.
-        #:
-        #:     English: "Monkey Face"
-        monkey_face: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Rampage play area.
-        #:
-        #:     English: "Rampage"
-        rampage: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Roundabout play area.
-        #:
-        #:     English: "Roundabout"
-        roundabout: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Step Right Up play area.
-        #:
-        #:     English: "Step Right Up"
-        step_right_up: LangStr
-
-        #: ::
-        #:
-        #:     Name of the The Pad play area.
-        #:
-        #:     English: "The Pad"
-        the_pad: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Tip Top play area.
-        #:
-        #:     English: "Tip Top"
-        tip_top: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Tower D play area.
-        #:
-        #:     English: "Tower D"
-        tower_d: LangStr
-
-        #: ::
-        #:
-        #:     Name of the Zigzag play area.
-        #:
-        #:     English: "Zigzag"
-        zigzag: LangStr
-
     class StringsMultiTeamGroup:
         """
         ::
@@ -7856,8 +6164,8 @@ if TYPE_CHECKING:
 
                 Notice explaining how to get more players in.
 
-                English: "Invite friends via {gather} or connect controllers to
-                play."
+                English: "Invite friends via {gather} or connect game
+                controllers to play multiplayer."
             """
 
         #: ::
@@ -8381,270 +6689,6 @@ if TYPE_CHECKING:
                 English: "Just {game}"
             """
 
-    class StringsProfileGroup:
-        """
-        ::
-
-            Player-profile editor strings: create/edit/delete profiles, the
-            local/global/account profile explanations, and global-name upgrade
-            flow.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Parenthetical marker labeling the account-based profile.
-        #:
-        #:     English: "(account profile)"
-        account_profile: LangStr
-
-        def account_profile_info(self, *, icons: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Explanation of what an account profile is.
-
-                English: "This profile uses your account name and icon {icons}.
-                Create custom profiles for different names or icons."
-            """
-
-        def available(self, *, name: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Status shown when a chosen global name is available.
-
-                English: "The name {name} is available."
-            """
-
-        #: ::
-        #:
-        #:     Error when trying to delete the account profile.
-        #:
-        #:     English: "You can't delete your account profile."
-        cant_delete_account_profile: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase field label for the profile character.
-        #:
-        #:     English: "character"
-        character: LangStr
-
-        def checking_availability(self, *, name: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Status shown while checking global-name availability.
-
-                English: "Checking availability for "{name}"..."
-            """
-
-        #: ::
-        #:
-        #:     Lowercase field label for profile color.
-        #:
-        #:     English: "color"
-        color: LangStr
-
-        def delete_confirm(self, *, profile: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Confirmation before deleting a named profile.
-
-                English: "Delete '{profile}'?"
-            """
-
-        #: ::
-        #:
-        #:     Button to get more player characters.
-        #:
-        #:     English: "Get More Characters..."
-        get_more_characters: LangStr
-
-        #: ::
-        #:
-        #:     Button to get more profile icons.
-        #:
-        #:     English: "Get More Icons..."
-        get_more_icons: LangStr
-
-        #: ::
-        #:
-        #:     Parenthetical marker labeling a global profile.
-        #:
-        #:     English: "(global profile)"
-        global_profile: LangStr
-
-        #: ::
-        #:
-        #:     Explanation of global profiles in the edit window.
-        #:
-        #:     English: "Global player profiles are guaranteed to have unique
-        #:     names worldwide. They also include custom icons."
-        global_profile_info: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase field label for profile highlight color.
-        #:
-        #:     English: "highlight"
-        highlight: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase field label for profile icon.
-        #:
-        #:     English: "icon"
-        icon: LangStr
-
-        def in_game_clipped_name(self, *, name: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Preview of how a profile name appears in-game (possibly
-                clipped).
-
-                English: "In-game: {name}"
-            """
-
-        #: ::
-        #:
-        #:     Parenthetical marker labeling a local profile.
-        #:
-        #:     English: "(local profile)"
-        local_profile: LangStr
-
-        #: ::
-        #:
-        #:     Explanation of local profiles in the edit window.
-        #:
-        #:     English: "Local player profiles have no icons and their names are
-        #:     not guaranteed to be unique. Upgrade to a global profile to
-        #:     reserve a unique name and add a custom icon."
-        local_profile_info: LangStr
-
-        #: ::
-        #:
-        #:     Label for the profile name input field.
-        #:
-        #:     English: "Player Name"
-        name_description: LangStr
-
-        #: ::
-        #:
-        #:     Error when the profile name field is empty.
-        #:
-        #:     English: "Name cannot be empty!"
-        name_not_empty: LangStr
-
-        #: ::
-        #:
-        #:     Error when the player lacks enough tickets for an upgrade.
-        #:
-        #:     English: "Not enough Tickets!"
-        not_enough_tickets: LangStr
-
-        #: ::
-        #:
-        #:     Error when no item is selected.
-        #:
-        #:     English: "Nothing is selected!"
-        nothing_selected: LangStr
-
-        #: ::
-        #:
-        #:     Error when a profile name is already taken.
-        #:
-        #:     English: "A profile with that name already exists."
-        profile_already_exists: LangStr
-
-        #: ::
-        #:
-        #:     Status shown while a purchase is processing.
-        #:
-        #:     English: "Purchasing..."
-        purchasing: LangStr
-
-        #: ::
-        #:
-        #:     Title of the edit-profile window.
-        #:
-        #:     English: "Edit Profile"
-        title_edit: LangStr
-
-        #: ::
-        #:
-        #:     Title of the new-profile window.
-        #:
-        #:     English: "New Profile"
-        title_new: LangStr
-
-        def unavailable(self, *, name: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Status shown when a chosen global name is taken.
-
-                English: ""{name}" is unavailable. Try another name."
-            """
-
-        #: ::
-        #:
-        #:     Explanation shown in the upgrade-to-global window.
-        #:
-        #:     English: "This will reserve your player name worldwide and allow
-        #:     you to assign a custom icon to it."
-        upgrade_profile_info: LangStr
-
-        #: ::
-        #:
-        #:     Button/title to upgrade a profile to global.
-        #:
-        #:     English: "Upgrade to Global Profile"
-        upgrade_to_global: LangStr
-
-    class StringsProfilesGroup:
-        """
-        ::
-
-            Player-profile management UI: profile lists, creation, and related
-            hints.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Single-line parenthetical hint; keep the parentheses.
-        #:
-        #:     English: "(custom player names and appearances for this account)"
-        explanation: LangStr
-
-        #: ::
-        #:
-        #:     Error screen-message when creating another player profile would
-        #:     exceed the account limit.
-        #:
-        #:     English: "Max number of profiles reached."
-        max_reached: LangStr
-
-        #: ::
-        #:
-        #:     Button label.
-        #:
-        #:     English: "New Profile"
-        new_profile: LangStr
-
-        #: ::
-        #:
-        #:     Section heading / window title for player-profile management.
-        #:
-        #:     English: "Player Profiles"
-        title: LangStr
-
     class StringsReportGroup:
         """
         ::
@@ -8874,8 +6918,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation under the always-use-internal-keyboard checkbox.
         #:
-        #:     English: "(a simple, controller-friendly on-screen keyboard for
-        #:     text editing)"
+        #:     English: "(a simple, game-controller-friendly on-screen keyboard
+        #:     for text editing)"
         always_use_internal_keyboard_description: LangStr
 
         #: ::
@@ -9179,7 +7223,7 @@ if TYPE_CHECKING:
         #:
         #:     Title of the advanced controller-setup window.
         #:
-        #:     English: "Advanced Controller Setup"
+        #:     English: "Advanced Game Controller Setup"
         advanced_title: LangStr
 
         #: ::
@@ -9202,7 +7246,7 @@ if TYPE_CHECKING:
         #:     Note that controller-setup changes apply to every controller of
         #:     the same type.
         #:
-        #:     English: "(applies to all controllers of this type)"
+        #:     English: "(applies to all game controllers of this type)"
         applies_to_all: LangStr
 
         #: ::
@@ -9242,7 +7286,7 @@ if TYPE_CHECKING:
                 Label for a numbered directional pad in the controller-setup
                 diagram (2-in-1 devices have two).
 
-                English: (one) "dpad #" / (other) "dpad #"
+                English: (one) "dpad #" / (other) "dpads #"
             """
 
         #: ::
@@ -9286,8 +7330,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation under the ignore-completely checkbox.
         #:
-        #:     English: "(prevent this controller from affecting either the game
-        #:     or menus)"
+        #:     English: "(prevent this game controller from affecting either the
+        #:     game or menus)"
         ignore_completely_description: LangStr
 
         def ignored_button(self, *, num: int) -> LangStr:
@@ -9374,14 +7418,15 @@ if TYPE_CHECKING:
         #:     2-controllers-in-1 devices.
         #:
         #:     English: "Use this to configure the second half of a
-        #:     2-controllers-in-1 device that shows up as a single controller."
+        #:     2-game-controllers-in-1 device that shows up as a single game
+        #:     controller."
         second_half: LangStr
 
         #: ::
         #:
         #:     Section title for the secondary-controller settings.
         #:
-        #:     English: "Secondary Controller"
+        #:     English: "Secondary Game Controller"
         secondary: LangStr
 
         #: ::
@@ -9404,14 +7449,14 @@ if TYPE_CHECKING:
         #:     Title of the controller-setup window (assigning buttons for one
         #:     controller type).
         #:
-        #:     English: "Controller Setup"
+        #:     English: "Game Controller Setup"
         title: LangStr
 
         #: ::
         #:
         #:     Button opening the 2-controllers-in-1 setup section.
         #:
-        #:     English: "2-in-1 Controller Setup"
+        #:     English: "2-in-1 Game Controller Setup"
         two_in_one_setup: LangStr
 
         #: ::
@@ -9425,7 +7470,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation under the menu-use-only checkbox.
         #:
-        #:     English: "(prevent this controller from actually joining a game)"
+        #:     English: "(prevent this game controller from actually joining a
+        #:     game)"
         ui_only_description: LangStr
 
         #: ::
@@ -9514,7 +7560,7 @@ if TYPE_CHECKING:
         #:
         #:     Option value: actions via on-screen buttons.
         #:
-        #:     English: "buttons"
+        #:     English: "Buttons"
         buttons: LangStr
 
         #: ::
@@ -9549,7 +7595,7 @@ if TYPE_CHECKING:
         #:
         #:     Option value: controls via swiping.
         #:
-        #:     English: "swipe"
+        #:     English: "Swipe"
         swipe: LangStr
 
         #: ::
@@ -9593,8 +7639,8 @@ if TYPE_CHECKING:
         #:
         #:     Note about controller-support variability on Android.
         #:
-        #:     English: "Note: controller support varies by device and Android
-        #:     version."
+        #:     English: "Note: game controller support varies by device and
+        #:     Android version."
         android_note: LangStr
 
         def cant_configure_device(self, *, device: str | LangStr) -> LangStr:
@@ -9611,7 +7657,7 @@ if TYPE_CHECKING:
         #:     Button/title for configuring game controllers (controllers
         #:     settings window and the controller-select window title).
         #:
-        #:     English: "Configure Controllers"
+        #:     English: "Configure Game Controllers"
         configure_controllers: LangStr
 
         def configure_in_system_settings(
@@ -9645,7 +7691,7 @@ if TYPE_CHECKING:
         #:
         #:     Button leading to info about using phones/tablets as controllers.
         #:
-        #:     English: "Mobile Devices as Controllers"
+        #:     English: "Mobile Devices as Game Controllers"
         configure_mobile: LangStr
 
         #: ::
@@ -9666,7 +7712,7 @@ if TYPE_CHECKING:
         #:
         #:     Explanation under the disable-XInput checkbox.
         #:
-        #:     English: "Allows more than 4 controllers but may not work as
+        #:     English: "Allows more than 4 game controllers but may not work as
         #:     well."
         disable_xinput_description: LangStr
 
@@ -9675,7 +7721,7 @@ if TYPE_CHECKING:
         #:     Prompt in the controller-select window; displays until a button
         #:     is pressed on the controller to be configured.
         #:
-        #:     English: "Press any button on the controller you want to
+        #:     English: "Press any button on the game controller you want to
         #:     configure..."
         press_any_button_to_configure: LangStr
 
@@ -9711,7 +7757,7 @@ if TYPE_CHECKING:
                 Explanation in the mobile-devices-as-controllers info window;
                 names the remote app and the game.
 
-                English: "To use a smart-phone or tablet as a wireless
+                English: "To use a smart-phone or tablet as a wireless game
                 controller, install the "{remote_app_name}" app on it. Any
                 number of devices can connect to a {app_name} game over Wi-Fi,
                 and it's free!"
@@ -10463,7 +8509,7 @@ if TYPE_CHECKING:
         #:     voice.
         #:
         #:     English: "Players can join and leave in the middle of most games,
-        #:     and you can also plug and unplug controllers on the fly."
+        #:     and you can also plug and unplug game controllers on the fly."
         join_leave_anytime: LangStr
 
         #: ::
@@ -10572,8 +8618,9 @@ if TYPE_CHECKING:
                 Gameplay tip shown between rounds, in the game's dry deadpan
                 voice.
 
-                English: "Short on controllers? Install the '{remote_app_name}'
-                app on your mobile devices to use them as controllers."
+                English: "If you are short on game controllers, install the
+                '{remote_app_name}' app on your mobile devices to use them as
+                game controllers."
             """
 
         #: ::
@@ -11442,18 +9489,13 @@ if TYPE_CHECKING:
         account: StringsAccountGroup
         achievements: StringsAchievementsGroup
         app_invite: StringsAppInviteGroup
-        characters: StringsCharactersGroup
         chest: StringsChestGroup
         controls: StringsControlsGroup
         coop: StringsCoopGroup
-        coop_levels: StringsCoopLevelsGroup
         coop_score: StringsCoopScoreGroup
         credits: StringsCreditsGroup
-        economy: StringsEconomyGroup
         file_selector: StringsFileSelectorGroup
         game: StringsGameGroup
-        game_descriptions: StringsGameDescriptionsGroup
-        game_names: StringsGameNamesGroup
         game_settings: StringsGameSettingsGroup
         gather: StringsGatherGroup
         get_remote: StringsGetRemoteGroup
@@ -11467,7 +9509,6 @@ if TYPE_CHECKING:
         league: StringsLeagueGroup
         lobby: StringsLobbyGroup
         main_menu: StringsMainMenuGroup
-        map_names: StringsMapNamesGroup
         multi_team: StringsMultiTeamGroup
         party: StringsPartyGroup
         party_queue: StringsPartyQueueGroup
@@ -11475,8 +9516,6 @@ if TYPE_CHECKING:
         play_modes: StringsPlayModesGroup
         play_options: StringsPlayOptionsGroup
         playlist: StringsPlaylistGroup
-        profile: StringsProfileGroup
-        profiles: StringsProfilesGroup
         report: StringsReportGroup
         resource_type_info: StringsResourceTypeInfoGroup
         score_types: StringsScoreTypesGroup
@@ -11530,56 +9569,17 @@ if TYPE_CHECKING:
         achievement_wall: TextureHandle
         achievements_icon: TextureHandle
         action_buttons: TextureHandle
-        action_hero_color: TextureHandle
-        action_hero_color_mask: TextureHandle
-        action_hero_icon: TextureHandle
-        action_hero_icon_color_mask: TextureHandle
         advanced_icon: TextureHandle
-        agent_color: TextureHandle
-        agent_color_mask: TextureHandle
-        agent_icon: TextureHandle
-        agent_icon_color_mask: TextureHandle
-        ali_color: TextureHandle
-        ali_color_mask: TextureHandle
-        ali_icon: TextureHandle
-        ali_icon_color_mask: TextureHandle
         ali_splash: TextureHandle
-        alien_color: TextureHandle
-        alien_color_mask: TextureHandle
-        alien_icon: TextureHandle
-        alien_icon_color_mask: TextureHandle
-        always_land_bgcolor: TextureHandle
-        always_land_level_color: TextureHandle
-        always_land_preview: TextureHandle
         analog_stick: TextureHandle
         arrow: TextureHandle
-        assassin_color: TextureHandle
-        assassin_color_mask: TextureHandle
-        assassin_icon: TextureHandle
-        assassin_icon_color_mask: TextureHandle
         audio_icon: TextureHandle
         bar: TextureHandle
-        bear_color: TextureHandle
-        bear_color_mask: TextureHandle
-        bear_icon: TextureHandle
-        bear_icon_color_mask: TextureHandle
         bg: TextureHandle
-        big_g: TextureHandle
-        big_gpreview: TextureHandle
         bomb_color: TextureHandle
         bomb_color_ice: TextureHandle
         bomb_sticky_color: TextureHandle
-        bones_color: TextureHandle
-        bones_color_mask: TextureHandle
-        bones_icon: TextureHandle
-        bones_icon_color_mask: TextureHandle
         boxing_gloves_color: TextureHandle
-        bridgit_level_color: TextureHandle
-        bridgit_preview: TextureHandle
-        bunny_color: TextureHandle
-        bunny_color_mask: TextureHandle
-        bunny_icon: TextureHandle
-        bunny_icon_color_mask: TextureHandle
         button_bomb: TextureHandle
         button_jump: TextureHandle
         button_pick_up: TextureHandle
@@ -11589,38 +9589,19 @@ if TYPE_CHECKING:
         ch_title_char3: TextureHandle
         ch_title_char4: TextureHandle
         ch_title_char5: TextureHandle
-        character_icon_mask: TextureHandle
-        chest_icon: TextureHandle
         chest_icon_empty: TextureHandle
         chest_icon_multi: TextureHandle
-        chest_icon_tint: TextureHandle
         chest_open_icon: TextureHandle
         chest_open_icon_tint: TextureHandle
         circle_zig_zag: TextureHandle
         clay_stroke: TextureHandle
-        coin: TextureHandle
         controller_icon: TextureHandle
-        courtyard_level_color: TextureHandle
-        courtyard_preview: TextureHandle
-        cowboy_color: TextureHandle
-        cowboy_color_mask: TextureHandle
-        cowboy_icon: TextureHandle
-        cowboy_icon_color_mask: TextureHandle
-        crag_castle_level_color: TextureHandle
-        crag_castle_preview: TextureHandle
         cross_out: TextureHandle
         cross_out_mask: TextureHandle
         cute_spaz: TextureHandle
-        cyborg_color: TextureHandle
-        cyborg_color_mask: TextureHandle
-        cyborg_icon: TextureHandle
-        cyborg_icon_color_mask: TextureHandle
         discord_icon: TextureHandle
         discord_logo: TextureHandle
         discord_server: TextureHandle
-        doom_shroom_bgcolor: TextureHandle
-        doom_shroom_level_color: TextureHandle
-        doom_shroom_preview: TextureHandle
         down_button: TextureHandle
         egg1: TextureHandle
         egg2: TextureHandle
@@ -11634,20 +9615,10 @@ if TYPE_CHECKING:
         flag_color: TextureHandle
         flag_pole_color: TextureHandle
         folder: TextureHandle
-        football_stadium: TextureHandle
-        football_stadium_preview: TextureHandle
         frame_inset: TextureHandle
-        frosty_color: TextureHandle
-        frosty_color_mask: TextureHandle
-        frosty_icon: TextureHandle
-        frosty_icon_color_mask: TextureHandle
         fuse: TextureHandle
         game_center_icon: TextureHandle
         github_logo: TextureHandle
-        gladiator_color: TextureHandle
-        gladiator_color_mask: TextureHandle
-        gladiator_icon: TextureHandle
-        gladiator_icon_color_mask: TextureHandle
         gold_pass: TextureHandle
         google_play_achievements_icon: TextureHandle
         google_play_games_icon: TextureHandle
@@ -11656,28 +9627,11 @@ if TYPE_CHECKING:
         google_plus_sign_in_button: TextureHandle
         graphics_icon: TextureHandle
         heart: TextureHandle
-        hockey_stadium: TextureHandle
-        hockey_stadium_preview: TextureHandle
         icon_onslaught: TextureHandle
         icon_runaround: TextureHandle
         impact_bomb_color: TextureHandle
         impact_bomb_color_lit: TextureHandle
         inventory_icon: TextureHandle
-        jack_color: TextureHandle
-        jack_color_mask: TextureHandle
-        jack_icon: TextureHandle
-        jack_icon_color_mask: TextureHandle
-        jumpsuit_color: TextureHandle
-        jumpsuit_color_mask: TextureHandle
-        jumpsuit_icon: TextureHandle
-        jumpsuit_icon_color_mask: TextureHandle
-        kronk: TextureHandle
-        kronk_color_mask: TextureHandle
-        kronk_icon: TextureHandle
-        kronk_icon_color_mask: TextureHandle
-        lake_frigid: TextureHandle
-        lake_frigid_preview: TextureHandle
-        lake_frigid_reflections: TextureHandle
         land_mine: TextureHandle
         land_mine_lit: TextureHandle
         leaderboards_icon: TextureHandle
@@ -11690,57 +9644,23 @@ if TYPE_CHECKING:
         log_icon: TextureHandle
         logo: TextureHandle
         logo_easter: TextureHandle
-        map_preview_mask: TextureHandle
         medal_bronze: TextureHandle
         medal_complete: TextureHandle
         medal_gold: TextureHandle
         medal_silver: TextureHandle
-        mel_color: TextureHandle
-        mel_color_mask: TextureHandle
-        mel_icon: TextureHandle
-        mel_icon_color_mask: TextureHandle
-        menu_bg: TextureHandle
         menu_icon: TextureHandle
         merch: TextureHandle
         meter: TextureHandle
-        monkey_face_level_color: TextureHandle
-        monkey_face_preview: TextureHandle
         multiplayer_examples: TextureHandle
-        nature_background_color: TextureHandle
-        neo_spaz_color: TextureHandle
-        neo_spaz_color_mask: TextureHandle
-        neo_spaz_icon: TextureHandle
-        neo_spaz_icon_color_mask: TextureHandle
         next_level_icon: TextureHandle
-        ninja_color: TextureHandle
-        ninja_color_mask: TextureHandle
-        ninja_icon: TextureHandle
-        ninja_icon_color_mask: TextureHandle
         nub: TextureHandle
         null: TextureHandle
-        old_lady_color: TextureHandle
-        old_lady_color_mask: TextureHandle
-        old_lady_icon: TextureHandle
-        old_lady_icon_color_mask: TextureHandle
-        opera_singer_color: TextureHandle
-        opera_singer_color_mask: TextureHandle
-        opera_singer_icon: TextureHandle
-        opera_singer_icon_color_mask: TextureHandle
         ouya_abutton: TextureHandle
         ouya_icon: TextureHandle
         ouya_obutton: TextureHandle
         ouya_ubutton: TextureHandle
         ouya_ybutton: TextureHandle
-        penguin_color: TextureHandle
-        penguin_color_mask: TextureHandle
-        penguin_icon: TextureHandle
-        penguin_icon_color_mask: TextureHandle
-        pixie_color: TextureHandle
-        pixie_color_mask: TextureHandle
-        pixie_icon: TextureHandle
-        pixie_icon_color_mask: TextureHandle
         player_lineup: TextureHandle
-        plus_button: TextureHandle
         powerup_bomb: TextureHandle
         powerup_curse: TextureHandle
         powerup_health: TextureHandle
@@ -11753,10 +9673,6 @@ if TYPE_CHECKING:
         powerup_sticky_bombs: TextureHandle
         puck_color: TextureHandle
         quote_bubble: TextureHandle
-        rampage_bgcolor: TextureHandle
-        rampage_bgcolor2: TextureHandle
-        rampage_level_color: TextureHandle
-        rampage_preview: TextureHandle
         reflection_char: CubeMapTextureHandle
         reflection_powerup: CubeMapTextureHandle
         reflection_sharp: CubeMapTextureHandle
@@ -11765,16 +9681,6 @@ if TYPE_CHECKING:
         reflection_soft: CubeMapTextureHandle
         replay_icon: TextureHandle
         right_button: TextureHandle
-        robot_color: TextureHandle
-        robot_color_mask: TextureHandle
-        robot_icon: TextureHandle
-        robot_icon_color_mask: TextureHandle
-        roundabout_level_color: TextureHandle
-        roundabout_preview: TextureHandle
-        santa_color: TextureHandle
-        santa_color_mask: TextureHandle
-        santa_icon: TextureHandle
-        santa_icon_color_mask: TextureHandle
         settings_icon: TextureHandle
         shadow_soft: TextureHandle
         shrapnel1_color: TextureHandle
@@ -11782,27 +9688,14 @@ if TYPE_CHECKING:
         smoke: TextureHandle
         sparks: TextureHandle
         star: TextureHandle
-        step_right_up_level_color: TextureHandle
-        step_right_up_preview: TextureHandle
         store_character: TextureHandle
         store_character_easter: TextureHandle
         store_character_xmas: TextureHandle
         store_icon: TextureHandle
-        superhero_color: TextureHandle
-        superhero_color_mask: TextureHandle
-        superhero_icon: TextureHandle
-        superhero_icon_color_mask: TextureHandle
-        the_pad_level_color: TextureHandle
-        the_pad_preview: TextureHandle
         ticket_roll: TextureHandle
         ticket_roll_big: TextureHandle
         ticket_rolls: TextureHandle
-        tickets: TextureHandle
         tickets_more: TextureHandle
-        tickets_purple: TextureHandle
-        tip_top_bgcolor: TextureHandle
-        tip_top_level_color: TextureHandle
-        tip_top_preview: TextureHandle
         tnt: TextureHandle
         tokens1: TextureHandle
         tokens2: TextureHandle
@@ -11810,97 +9703,39 @@ if TYPE_CHECKING:
         tokens4: TextureHandle
         touch_arrows: TextureHandle
         touch_arrows_actions: TextureHandle
-        tower_dlevel_color: TextureHandle
-        tower_dpreview: TextureHandle
         trees_color: TextureHandle
         trophy: TextureHandle
         tv: TextureHandle
-        ui_atlas: TextureHandle
         up_button: TextureHandle
-        vr_fill_mound: TextureHandle
-        warrior_color: TextureHandle
-        warrior_color_mask: TextureHandle
-        warrior_icon: TextureHandle
-        warrior_icon_color_mask: TextureHandle
         window_bottom_cap: TextureHandle
-        witch_color: TextureHandle
-        witch_color_mask: TextureHandle
-        witch_icon: TextureHandle
-        witch_icon_color_mask: TextureHandle
-        wizard_color: TextureHandle
-        wizard_color_mask: TextureHandle
-        wizard_icon: TextureHandle
-        wizard_icon_color_mask: TextureHandle
-        wrestler_color: TextureHandle
-        wrestler_color_mask: TextureHandle
-        wrestler_icon: TextureHandle
-        wrestler_icon_color_mask: TextureHandle
-        zig_zag_level_color: TextureHandle
-        zigzag_preview: TextureHandle
-        zoe_color: TextureHandle
-        zoe_color_mask: TextureHandle
-        zoe_icon: TextureHandle
-        zoe_icon_color_mask: TextureHandle
 
-    #: The ``audio`` group - 416 assets (``achievement``, ``action_hero1``,
-    #: ``action_hero2``, ``action_hero3``, ``action_hero4``, and 411 more). Full
+    #: The ``audio`` group - 136 assets (``achievement``, ``activate_beep``,
+    #: ``alarm``, ``announce_eight``, ``announce_five``, and 131 more). Full
     #: list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 405 assets (``achievement_outline``,
+    #: The ``meshes`` group - 56 assets (``achievement_outline``,
     #: ``action_button_bottom``, ``action_button_left``,
-    #: ``action_button_right``, ``action_button_top``, and 400 more). Full list
+    #: ``action_button_right``, ``action_button_top``, and 51 more). Full list
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1162 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1157 more). Full list in
+    #: The ``strings`` group - 1003 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``chest``, ``controls``, and 998 more). Full list in
     #: source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 337 assets (``achievement_boxer``,
+    #: The ``textures`` group - 165 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
-    #: ``achievement_empty``, ``achievement_flawless_victory``, and 332 more).
+    #: ``achievement_empty``, ``achievement_flawless_victory``, and 160 more).
     #: Full list in source.
     textures: TexturesGroup
 
 _TREE = {
     'audio': {
         'achievement': 's',
-        'action_hero1': 's',
-        'action_hero2': 's',
-        'action_hero3': 's',
-        'action_hero4': 's',
-        'action_hero_death': 's',
-        'action_hero_fall': 's',
-        'action_hero_hit1': 's',
-        'action_hero_hit2': 's',
         'activate_beep': 's',
-        'agent1': 's',
-        'agent2': 's',
-        'agent3': 's',
-        'agent4': 's',
-        'agent_death': 's',
-        'agent_fall': 's',
-        'agent_hit1': 's',
-        'agent_hit2': 's',
         'alarm': 's',
-        'ali1': 's',
-        'ali2': 's',
-        'ali3': 's',
-        'ali4': 's',
-        'ali_death': 's',
-        'ali_fall': 's',
-        'ali_hit1': 's',
-        'ali_hit2': 's',
-        'alien1': 's',
-        'alien2': 's',
-        'alien3': 's',
-        'alien4': 's',
-        'alien_death': 's',
-        'alien_fall': 's',
-        'alien_hit1': 's',
-        'alien_hit2': 's',
         'announce_eight': 's',
         'announce_five': 's',
         'announce_four': 's',
@@ -11911,23 +9746,7 @@ _TREE = {
         'announce_ten': 's',
         'announce_three': 's',
         'announce_two': 's',
-        'assassin1': 's',
-        'assassin2': 's',
-        'assassin3': 's',
-        'assassin4': 's',
-        'assassin_death': 's',
-        'assassin_fall': 's',
-        'assassin_hit1': 's',
-        'assassin_hit2': 's',
         'aww': 's',
-        'bear1': 's',
-        'bear2': 's',
-        'bear3': 's',
-        'bear4': 's',
-        'bear_death': 's',
-        'bear_fall': 's',
-        'bear_hit1': 's',
-        'bear_hit2': 's',
         'bell_high': 's',
         'bell_low': 's',
         'bell_med': 's',
@@ -11937,45 +9756,15 @@ _TREE = {
         'bomb_drop01': 's',
         'bomb_drop02': 's',
         'bomb_roll01': 's',
-        'bones1': 's',
-        'bones2': 's',
-        'bones3': 's',
-        'bones_death': 's',
-        'bones_fall': 's',
         'boo': 's',
         'box_drop': 's',
         'boxing_bell': 's',
-        'bunny1': 's',
-        'bunny2': 's',
-        'bunny3': 's',
-        'bunny4': 's',
-        'bunny_death': 's',
-        'bunny_fall': 's',
-        'bunny_hit1': 's',
-        'bunny_hit2': 's',
-        'bunny_jump': 's',
         'cash_register2': 's',
         'char_select_music': 's',
         'cheer': 's',
         'cork_pop': 's',
         'cork_pop2': 's',
-        'cowboy1': 's',
-        'cowboy2': 's',
-        'cowboy3': 's',
-        'cowboy4': 's',
-        'cowboy_death': 's',
-        'cowboy_fall': 's',
-        'cowboy_hit1': 's',
-        'cowboy_hit2': 's',
         'crowd_chant': 's',
-        'cyborg1': 's',
-        'cyborg2': 's',
-        'cyborg3': 's',
-        'cyborg4': 's',
-        'cyborg_death': 's',
-        'cyborg_fall': 's',
-        'cyborg_hit1': 's',
-        'cyborg_hit2': 's',
         'cymbal': 's',
         'debris_fall': 's',
         'deek': 's',
@@ -11999,26 +9788,8 @@ _TREE = {
         'foot_impact03': 's',
         'forward_march_music': 's',
         'freeze': 's',
-        'frosty01': 's',
-        'frosty02': 's',
-        'frosty03': 's',
-        'frosty04': 's',
-        'frosty05': 's',
-        'frosty_death': 's',
-        'frosty_fall': 's',
-        'frosty_hit01': 's',
-        'frosty_hit02': 's',
-        'frosty_hit03': 's',
         'fuse01': 's',
         'gasp': 's',
-        'gladiator1': 's',
-        'gladiator2': 's',
-        'gladiator3': 's',
-        'gladiator4': 's',
-        'gladiator_death': 's',
-        'gladiator_fall': 's',
-        'gladiator_hit1': 's',
-        'gladiator_hit2': 's',
         'gong': 's',
         'grand_romp_music': 's',
         'gravel_skid': 's',
@@ -12029,115 +9800,19 @@ _TREE = {
         'impact_hard3': 's',
         'impact_medium': 's',
         'impact_medium2': 's',
-        'jack01': 's',
-        'jack02': 's',
-        'jack03': 's',
-        'jack04': 's',
-        'jack05': 's',
-        'jack06': 's',
-        'jack_death01': 's',
-        'jack_fall01': 's',
-        'jack_hit01': 's',
-        'jack_hit02': 's',
-        'jack_hit03': 's',
-        'jack_hit04': 's',
-        'jack_hit05': 's',
-        'jack_hit06': 's',
-        'jack_hit07': 's',
-        'jumpsuit1': 's',
-        'jumpsuit2': 's',
-        'jumpsuit3': 's',
-        'jumpsuit4': 's',
-        'jumpsuit_death': 's',
-        'jumpsuit_fall': 's',
-        'jumpsuit_hit1': 's',
-        'jumpsuit_hit2': 's',
-        'kronk1': 's',
-        'kronk10': 's',
-        'kronk2': 's',
-        'kronk3': 's',
-        'kronk4': 's',
-        'kronk5': 's',
-        'kronk6': 's',
-        'kronk7': 's',
-        'kronk8': 's',
-        'kronk9': 's',
-        'kronk_death': 's',
-        'kronk_fall': 's',
         'laser': 's',
         'laser_reverse': 's',
-        'mel01': 's',
-        'mel02': 's',
-        'mel03': 's',
-        'mel04': 's',
-        'mel05': 's',
-        'mel06': 's',
-        'mel07': 's',
-        'mel08': 's',
-        'mel09': 's',
-        'mel10': 's',
-        'mel_death01': 's',
-        'mel_fall01': 's',
         'menu_music': 's',
         'metal_hit': 's',
         'metal_skid': 's',
         'nice': 's',
-        'ninja_attack1': 's',
-        'ninja_attack2': 's',
-        'ninja_attack3': 's',
-        'ninja_attack4': 's',
-        'ninja_attack5': 's',
-        'ninja_attack6': 's',
-        'ninja_attack7': 's',
-        'ninja_death1': 's',
-        'ninja_fall1': 's',
-        'ninja_hit1': 's',
-        'ninja_hit2': 's',
-        'ninja_hit3': 's',
-        'ninja_hit4': 's',
-        'ninja_hit5': 's',
-        'ninja_hit6': 's',
-        'ninja_hit7': 's',
-        'ninja_hit8': 's',
-        'old_lady1': 's',
-        'old_lady2': 's',
-        'old_lady3': 's',
-        'old_lady4': 's',
-        'old_lady_death': 's',
-        'old_lady_fall': 's',
-        'old_lady_hit1': 's',
-        'old_lady_hit2': 's',
         'ooh': 's',
-        'opera_singer1': 's',
-        'opera_singer2': 's',
-        'opera_singer3': 's',
-        'opera_singer4': 's',
-        'opera_singer_death': 's',
-        'opera_singer_fall': 's',
-        'opera_singer_hit1': 's',
-        'opera_singer_hit2': 's',
         'orchestra_hit': 's',
         'orchestra_hit2': 's',
         'orchestra_hit3': 's',
         'orchestra_hit4': 's',
         'orchestra_hit_big1': 's',
         'orchestra_hit_big2': 's',
-        'penguin1': 's',
-        'penguin2': 's',
-        'penguin3': 's',
-        'penguin4': 's',
-        'penguin_death': 's',
-        'penguin_fall': 's',
-        'penguin_hit1': 's',
-        'penguin_hit2': 's',
-        'pixie1': 's',
-        'pixie2': 's',
-        'pixie3': 's',
-        'pixie4': 's',
-        'pixie_death': 's',
-        'pixie_fall': 's',
-        'pixie_hit1': 's',
-        'pixie_hit2': 's',
         'player_death': 's',
         'player_left': 's',
         'pop01': 's',
@@ -12151,26 +9826,7 @@ _TREE = {
         'race_beep2': 's',
         'ref_whistle': 's',
         'rev_up': 's',
-        'robot1': 's',
-        'robot2': 's',
-        'robot3': 's',
-        'robot4': 's',
-        'robot_death': 's',
-        'robot_fall': 's',
-        'robot_hit1': 's',
-        'robot_hit2': 's',
         'run_away_music': 's',
-        'santa01': 's',
-        'santa02': 's',
-        'santa03': 's',
-        'santa04': 's',
-        'santa05': 's',
-        'santa_death': 's',
-        'santa_fall': 's',
-        'santa_hit01': 's',
-        'santa_hit02': 's',
-        'santa_hit03': 's',
-        'santa_hit04': 's',
         'scamper01': 's',
         'scary_music': 's',
         'score': 's',
@@ -12184,36 +9840,13 @@ _TREE = {
         'skid01': 's',
         'slow_epic_music': 's',
         'spawn': 's',
-        'spaz_attack01': 's',
-        'spaz_attack02': 's',
-        'spaz_attack03': 's',
-        'spaz_attack04': 's',
-        'spaz_death01': 's',
         'spaz_eff': 's',
-        'spaz_fall01': 's',
-        'spaz_impact01': 's',
-        'spaz_impact02': 's',
-        'spaz_impact03': 's',
-        'spaz_impact04': 's',
-        'spaz_jump01': 's',
-        'spaz_jump02': 's',
-        'spaz_jump03': 's',
-        'spaz_jump04': 's',
         'spaz_ow': 's',
-        'spaz_pickup01': 's',
         'spaz_scream01': 's',
         'splatter': 's',
         'sports_music': 's',
         'sticky_impact': 's',
         'super_punch': 's',
-        'superhero1': 's',
-        'superhero2': 's',
-        'superhero3': 's',
-        'superhero4': 's',
-        'superhero_death': 's',
-        'superhero_fall': 's',
-        'superhero_hit1': 's',
-        'superhero_hit2': 's',
         'survival_music': 's',
         'swip': 's',
         'swip2': 's',
@@ -12226,61 +9859,15 @@ _TREE = {
         'victory_music': 's',
         'warn_beep': 's',
         'warn_beeps': 's',
-        'warrior1': 's',
-        'warrior2': 's',
-        'warrior3': 's',
-        'warrior4': 's',
-        'warrior_death': 's',
-        'warrior_fall': 's',
-        'warrior_hit1': 's',
-        'warrior_hit2': 's',
         'when_johnny_comes_marching_home_music': 's',
-        'witch1': 's',
-        'witch2': 's',
-        'witch3': 's',
-        'witch4': 's',
-        'witch_death': 's',
-        'witch_fall': 's',
-        'witch_hit1': 's',
-        'witch_hit2': 's',
-        'wizard1': 's',
-        'wizard2': 's',
-        'wizard3': 's',
-        'wizard4': 's',
-        'wizard_death': 's',
-        'wizard_fall': 's',
-        'wizard_hit1': 's',
-        'wizard_hit2': 's',
         'woo': 's',
         'woo2': 's',
         'woo3': 's',
         'wood_debris_fall': 's',
         'wow': 's',
-        'wrestler1': 's',
-        'wrestler2': 's',
-        'wrestler3': 's',
-        'wrestler4': 's',
-        'wrestler_death': 's',
-        'wrestler_fall': 's',
-        'wrestler_hit1': 's',
-        'wrestler_hit2': 's',
         'yeah': 's',
-        'zoe_attack01': 's',
-        'zoe_attack02': 's',
-        'zoe_attack03': 's',
-        'zoe_attack04': 's',
-        'zoe_death01': 's',
         'zoe_eff': 's',
-        'zoe_fall01': 's',
-        'zoe_impact01': 's',
-        'zoe_impact02': 's',
-        'zoe_impact03': 's',
-        'zoe_impact04': 's',
-        'zoe_jump01': 's',
-        'zoe_jump02': 's',
-        'zoe_jump03': 's',
         'zoe_ow': 's',
-        'zoe_pickup01': 's',
         'zoe_scream01': 's',
     },
     'meshes': {
@@ -12289,275 +9876,30 @@ _TREE = {
         'action_button_left': 'm',
         'action_button_right': 'm',
         'action_button_top': 'm',
-        'action_hero_fore_arm': 'm',
-        'action_hero_hand': 'm',
-        'action_hero_head': 'm',
-        'action_hero_lower_leg': 'm',
-        'action_hero_pelvis': 'm',
-        'action_hero_toes': 'm',
-        'action_hero_torso': 'm',
-        'action_hero_upper_arm': 'm',
-        'action_hero_upper_leg': 'm',
-        'agent_fore_arm': 'm',
-        'agent_hand': 'm',
-        'agent_head': 'm',
-        'agent_lower_leg': 'm',
-        'agent_pelvis': 'm',
-        'agent_toes': 'm',
-        'agent_torso': 'm',
-        'agent_upper_arm': 'm',
-        'agent_upper_leg': 'm',
-        'ali_fore_arm': 'm',
-        'ali_hand': 'm',
-        'ali_head': 'm',
-        'ali_lower_leg': 'm',
-        'ali_pelvis': 'm',
-        'ali_toes': 'm',
-        'ali_torso': 'm',
-        'ali_upper_arm': 'm',
-        'ali_upper_leg': 'm',
-        'alien_fore_arm': 'm',
-        'alien_hand': 'm',
-        'alien_head': 'm',
-        'alien_lower_leg': 'm',
-        'alien_pelvis': 'm',
-        'alien_toes': 'm',
-        'alien_torso': 'm',
-        'alien_upper_arm': 'm',
-        'alien_upper_leg': 'm',
-        'always_land_bg': 'm',
-        'always_land_level': 'm',
-        'always_land_level_bottom': 'm',
-        'always_land_level_collide': 'c',
-        'always_land_vrfill_mound': 'm',
         'angry_computer_transparent': 'm',
         'arrow_back': 'm',
         'arrow_front': 'm',
-        'assassin_fore_arm': 'm',
-        'assassin_hand': 'm',
-        'assassin_head': 'm',
-        'assassin_lower_leg': 'm',
-        'assassin_pelvis': 'm',
-        'assassin_toes': 'm',
-        'assassin_torso': 'm',
-        'assassin_upper_arm': 'm',
-        'assassin_upper_leg': 'm',
-        'bear_fore_arm': 'm',
-        'bear_hand': 'm',
-        'bear_head': 'm',
-        'bear_lower_leg': 'm',
-        'bear_pelvis': 'm',
-        'bear_toes': 'm',
-        'bear_torso': 'm',
-        'bear_upper_arm': 'm',
-        'bear_upper_leg': 'm',
-        'big_g': 'm',
-        'big_gbottom': 'm',
-        'big_gbumper': 'c',
-        'big_gcollide': 'c',
         'bomb': 'm',
         'bomb_sticky': 'm',
-        'bones_fore_arm': 'm',
-        'bones_hand': 'm',
-        'bones_head': 'm',
-        'bones_lower_leg': 'm',
-        'bones_pelvis': 'm',
-        'bones_toes': 'm',
-        'bones_torso': 'm',
-        'bones_upper_arm': 'm',
-        'bones_upper_leg': 'm',
         'boxing_glove': 'm',
-        'bridgit_level_bottom': 'm',
-        'bridgit_level_collide': 'c',
-        'bridgit_level_railing_collide': 'c',
-        'bridgit_level_top': 'm',
-        'bunny_fore_arm': 'm',
-        'bunny_hand': 'm',
-        'bunny_head': 'm',
-        'bunny_lower_leg': 'm',
-        'bunny_pelvis': 'm',
-        'bunny_toes': 'm',
-        'bunny_torso': 'm',
-        'bunny_upper_arm': 'm',
-        'bunny_upper_leg': 'm',
         'button_null': 'm',
-        'courtyard_level': 'm',
-        'courtyard_level_bottom': 'm',
-        'courtyard_level_collide': 'c',
-        'courtyard_player_wall': 'c',
-        'cowboy_fore_arm': 'm',
-        'cowboy_hand': 'm',
-        'cowboy_head': 'm',
-        'cowboy_lower_leg': 'm',
-        'cowboy_pelvis': 'm',
-        'cowboy_toes': 'm',
-        'cowboy_torso': 'm',
-        'cowboy_upper_arm': 'm',
-        'cowboy_upper_leg': 'm',
-        'crag_castle_level': 'm',
-        'crag_castle_level_bottom': 'm',
-        'crag_castle_level_bumper': 'c',
-        'crag_castle_level_collide': 'c',
-        'crag_castle_vrfill_mound': 'm',
         'currency_meter': 'm',
         'currency_plus_button': 'm',
-        'cyborg_fore_arm': 'm',
-        'cyborg_hand': 'm',
-        'cyborg_head': 'm',
-        'cyborg_lower_leg': 'm',
-        'cyborg_pelvis': 'm',
-        'cyborg_toes': 'm',
-        'cyborg_torso': 'm',
-        'cyborg_upper_arm': 'm',
-        'cyborg_upper_leg': 'm',
         'cylinder': 'm',
-        'doom_shroom_bg': 'm',
-        'doom_shroom_level': 'm',
-        'doom_shroom_level_collide': 'c',
-        'doom_shroom_stem': 'm',
-        'doom_shroom_stem_collide': 'c',
-        'doom_shroom_vrfill': 'm',
         'egg': 'm',
         'flag_stand': 'm',
-        'football_stadium': 'm',
-        'football_stadium_collide': 'c',
-        'football_stadium_vrfill': 'm',
         'frame_inset': 'm',
-        'frosty_fore_arm': 'm',
-        'frosty_hand': 'm',
-        'frosty_head': 'm',
-        'frosty_lower_leg': 'm',
-        'frosty_pelvis': 'm',
-        'frosty_toes': 'm',
-        'frosty_torso': 'm',
-        'frosty_upper_arm': 'm',
-        'frosty_upper_leg': 'm',
-        'gladiator_fore_arm': 'm',
-        'gladiator_hand': 'm',
-        'gladiator_head': 'm',
-        'gladiator_lower_leg': 'm',
-        'gladiator_pelvis': 'm',
-        'gladiator_toes': 'm',
-        'gladiator_torso': 'm',
-        'gladiator_upper_arm': 'm',
-        'gladiator_upper_leg': 'm',
         'heart_opaque': 'm',
         'heart_transparent': 'm',
-        'hockey_stadium_collide': 'c',
-        'hockey_stadium_inner': 'm',
-        'hockey_stadium_outer': 'm',
-        'hockey_stadium_stands': 'm',
         'image16x1': 'm',
         'image2x1': 'm',
         'image2x1_vertical': 'm',
         'image4x1': 'm',
         'impact_bomb': 'm',
-        'jack_fore_arm': 'm',
-        'jack_hand': 'm',
-        'jack_head': 'm',
-        'jack_lower_leg': 'm',
-        'jack_toes': 'm',
-        'jack_torso': 'm',
-        'jack_upper_arm': 'm',
-        'jack_upper_leg': 'm',
-        'jumpsuit_fore_arm': 'm',
-        'jumpsuit_hand': 'm',
-        'jumpsuit_head': 'm',
-        'jumpsuit_lower_leg': 'm',
-        'jumpsuit_pelvis': 'm',
-        'jumpsuit_toes': 'm',
-        'jumpsuit_torso': 'm',
-        'jumpsuit_upper_arm': 'm',
-        'jumpsuit_upper_leg': 'm',
-        'kronk_fore_arm': 'm',
-        'kronk_hand': 'm',
-        'kronk_head': 'm',
-        'kronk_lower_leg': 'm',
-        'kronk_pelvis': 'm',
-        'kronk_toes': 'm',
-        'kronk_torso': 'm',
-        'kronk_upper_arm': 'm',
-        'kronk_upper_leg': 'm',
-        'lake_frigid': 'm',
-        'lake_frigid_collide': 'c',
-        'lake_frigid_reflections': 'm',
-        'lake_frigid_top': 'm',
-        'lake_frigid_vrfill': 'm',
         'land_mine': 'm',
-        'level_select_button_opaque': 'm',
-        'level_select_button_transparent': 'm',
         'logo': 'm',
         'logo_transparent': 'm',
-        'mel_fore_arm': 'm',
-        'mel_hand': 'm',
-        'mel_head': 'm',
-        'mel_lower_leg': 'm',
-        'mel_toes': 'm',
-        'mel_torso': 'm',
-        'mel_upper_arm': 'm',
-        'mel_upper_leg': 'm',
         'meter_transparent': 'm',
-        'monkey_face_level': 'm',
-        'monkey_face_level_bottom': 'm',
-        'monkey_face_level_bumper': 'c',
-        'monkey_face_level_collide': 'c',
-        'nature_background': 'm',
-        'nature_background_collide': 'c',
-        'nature_background_vrfill': 'm',
-        'neo_spaz_fore_arm': 'm',
-        'neo_spaz_hand': 'm',
-        'neo_spaz_head': 'm',
-        'neo_spaz_lower_leg': 'm',
-        'neo_spaz_pelvis': 'm',
-        'neo_spaz_toes': 'm',
-        'neo_spaz_torso': 'm',
-        'neo_spaz_upper_arm': 'm',
-        'neo_spaz_upper_leg': 'm',
-        'ninja_fore_arm': 'm',
-        'ninja_hand': 'm',
-        'ninja_head': 'm',
-        'ninja_lower_leg': 'm',
-        'ninja_pelvis': 'm',
-        'ninja_toes': 'm',
-        'ninja_torso': 'm',
-        'ninja_upper_arm': 'm',
-        'ninja_upper_leg': 'm',
-        'old_lady_fore_arm': 'm',
-        'old_lady_hand': 'm',
-        'old_lady_head': 'm',
-        'old_lady_lower_leg': 'm',
-        'old_lady_pelvis': 'm',
-        'old_lady_toes': 'm',
-        'old_lady_torso': 'm',
-        'old_lady_upper_arm': 'm',
-        'old_lady_upper_leg': 'm',
-        'opera_singer_fore_arm': 'm',
-        'opera_singer_hand': 'm',
-        'opera_singer_head': 'm',
-        'opera_singer_lower_leg': 'm',
-        'opera_singer_pelvis': 'm',
-        'opera_singer_toes': 'm',
-        'opera_singer_torso': 'm',
-        'opera_singer_upper_arm': 'm',
-        'opera_singer_upper_leg': 'm',
-        'penguin_fore_arm': 'm',
-        'penguin_hand': 'm',
-        'penguin_head': 'm',
-        'penguin_lower_leg': 'm',
-        'penguin_pelvis': 'm',
-        'penguin_toes': 'm',
-        'penguin_torso': 'm',
-        'penguin_upper_arm': 'm',
-        'penguin_upper_leg': 'm',
-        'pixie_fore_arm': 'm',
-        'pixie_hand': 'm',
-        'pixie_head': 'm',
-        'pixie_lower_leg': 'm',
-        'pixie_pelvis': 'm',
-        'pixie_toes': 'm',
-        'pixie_torso': 'm',
-        'pixie_upper_arm': 'm',
-        'pixie_upper_leg': 'm',
         'plastic_eyes_transparent': 'm',
         'player_lineup1_transparent': 'm',
         'player_lineup2_transparent': 'm',
@@ -12566,66 +9908,14 @@ _TREE = {
         'powerup': 'm',
         'powerup_simple': 'm',
         'puck': 'm',
-        'rampage_bg': 'm',
-        'rampage_bg2': 'm',
-        'rampage_bumper': 'c',
-        'rampage_level': 'm',
-        'rampage_level_bottom': 'm',
-        'rampage_level_collide': 'c',
-        'rampage_vrfill': 'm',
-        'robot_fore_arm': 'm',
-        'robot_hand': 'm',
-        'robot_head': 'm',
-        'robot_lower_leg': 'm',
-        'robot_pelvis': 'm',
-        'robot_toes': 'm',
-        'robot_torso': 'm',
-        'robot_upper_arm': 'm',
-        'robot_upper_leg': 'm',
-        'roundabout_level': 'm',
-        'roundabout_level_bottom': 'm',
-        'roundabout_level_bumper': 'c',
-        'roundabout_level_collide': 'c',
         'running_shoes': 'm',
-        'santa_fore_arm': 'm',
-        'santa_hand': 'm',
-        'santa_head': 'm',
-        'santa_lower_leg': 'm',
-        'santa_toes': 'm',
-        'santa_torso': 'm',
-        'santa_upper_arm': 'm',
-        'santa_upper_leg': 'm',
         'scroll_widget_short': 'm',
         'shrapnel1': 'm',
         'shrapnel_board': 'm',
         'shrapnel_slime': 'm',
-        'step_right_up_level': 'm',
-        'step_right_up_level_bottom': 'm',
-        'step_right_up_level_collide': 'c',
-        'step_right_up_vrfill_mound': 'm',
-        'superhero_fore_arm': 'm',
-        'superhero_hand': 'm',
-        'superhero_head': 'm',
-        'superhero_lower_leg': 'm',
-        'superhero_pelvis': 'm',
-        'superhero_toes': 'm',
-        'superhero_torso': 'm',
-        'superhero_upper_arm': 'm',
-        'superhero_upper_leg': 'm',
-        'the_pad_bg': 'm',
         'the_pad_bgsmall': 'm',
-        'the_pad_level': 'm',
-        'the_pad_level_bottom': 'm',
-        'the_pad_level_bumper': 'c',
-        'the_pad_level_collide': 'c',
         'the_pad_vrfill_bottom': 'm',
-        'the_pad_vrfill_mound': 'm',
         'the_pad_vrfill_top': 'm',
-        'tip_top_bg': 'm',
-        'tip_top_level': 'm',
-        'tip_top_level_bottom': 'm',
-        'tip_top_level_bumper': 'c',
-        'tip_top_level_collide': 'c',
         'tnt': 'm',
         'toolbar_backing': 'm',
         'toolbar_backing_bottom': 'm',
@@ -12634,61 +9924,9 @@ _TREE = {
         'toolbar_backing_top': 'm',
         'toolbar_backing_top2': 'm',
         'toolbar_backing_transparent': 'm',
-        'tower_dlevel': 'm',
-        'tower_dlevel_bottom': 'm',
-        'tower_dlevel_collide': 'c',
         'tower_dplayer_wall': 'c',
         'trees': 'm',
-        'warrior_fore_arm': 'm',
-        'warrior_hand': 'm',
-        'warrior_head': 'm',
-        'warrior_lower_leg': 'm',
-        'warrior_pelvis': 'm',
-        'warrior_toes': 'm',
-        'warrior_torso': 'm',
-        'warrior_upper_arm': 'm',
-        'warrior_upper_leg': 'm',
         'window_bgblotch': 'm',
-        'witch_fore_arm': 'm',
-        'witch_hand': 'm',
-        'witch_head': 'm',
-        'witch_lower_leg': 'm',
-        'witch_pelvis': 'm',
-        'witch_toes': 'm',
-        'witch_torso': 'm',
-        'witch_upper_arm': 'm',
-        'witch_upper_leg': 'm',
-        'wizard_fore_arm': 'm',
-        'wizard_hand': 'm',
-        'wizard_head': 'm',
-        'wizard_lower_leg': 'm',
-        'wizard_pelvis': 'm',
-        'wizard_toes': 'm',
-        'wizard_torso': 'm',
-        'wizard_upper_arm': 'm',
-        'wizard_upper_leg': 'm',
-        'wrestler_fore_arm': 'm',
-        'wrestler_hand': 'm',
-        'wrestler_head': 'm',
-        'wrestler_lower_leg': 'm',
-        'wrestler_pelvis': 'm',
-        'wrestler_toes': 'm',
-        'wrestler_torso': 'm',
-        'wrestler_upper_arm': 'm',
-        'wrestler_upper_leg': 'm',
-        'zig_zag_level': 'm',
-        'zig_zag_level_bottom': 'm',
-        'zig_zag_level_bumper': 'c',
-        'zig_zag_level_collide': 'c',
-        'zoe_fore_arm': 'm',
-        'zoe_hand': 'm',
-        'zoe_head': 'm',
-        'zoe_lower_leg': 'm',
-        'zoe_pelvis': 'm',
-        'zoe_toes': 'm',
-        'zoe_torso': 'm',
-        'zoe_upper_arm': 'm',
-        'zoe_upper_leg': 'm',
     },
     'strings': {
         'account': {
@@ -13014,32 +10252,6 @@ _TREE = {
             'where_to_enter': (),
             'you_have_been_sent_promo': ('app_name',),
         },
-        'characters': {
-            'agent_johnson': (),
-            'b9000': (),
-            'bernard': (),
-            'betty': (),
-            'bones': (),
-            'butch': (),
-            'easter_bunny': (),
-            'frosty': (),
-            'gretel': (),
-            'grumbledorf': (),
-            'jack_morgan': (),
-            'kronk': (),
-            'lee': (),
-            'lucky': (),
-            'mel': (),
-            'middle_man': (),
-            'pascal': (),
-            'pixel': (),
-            'santa_claus': (),
-            'snake_shadow': (),
-            'spaz': (),
-            'taobao_mascot': (),
-            'todd_mcburton': (),
-            'zoe': (),
-        },
         'chest': {
             'open': (),
             'open_me': (),
@@ -13088,22 +10300,6 @@ _TREE = {
             'tournaments': (),
             'tournaments_disabled_workspace': (),
         },
-        'coop_levels': {
-            'infinite_onslaught': (),
-            'infinite_runaround': (),
-            'onslaught_training': (),
-            'pro_football': (),
-            'pro_onslaught': (),
-            'pro_runaround': (),
-            'pro_variant': ('game',),
-            'rookie_football': (),
-            'rookie_onslaught': (),
-            'the_last_stand': (),
-            'uber_football': (),
-            'uber_onslaught': (),
-            'uber_runaround': (),
-            'uber_variant': ('game',),
-        },
         'coop_score': {
             'best_rating': ('rating',),
             'complete_level_to_proceed': (),
@@ -13151,10 +10347,6 @@ _TREE = {
             'thanks_especially_to': ('name',),
             'title': ('app_name',),
             'whoever_invented_coffee': (),
-        },
-        'economy': {
-            'received_tickets': ('count',),
-            'you_got_tokens': ('tokens',),
         },
         'file_selector': {
             'select_file': (),
@@ -13211,81 +10403,6 @@ _TREE = {
             'waiting_for_host': ('host',),
             'wave': (),
             'wave_number': ('number',),
-        },
-        'game_descriptions': {
-            'be_the_chosen_one_for_a': (),
-            'bomb_as_many_targets_as_you': (),
-            'carry_the_flag_for_a_set': (),
-            'carry_the_flag_for_seconds': ('arg1',),
-            'carry_the_flag_for_seconds_2': ('arg1',),
-            'crush_of_your_enemies': ('arg1',),
-            'defeat_all_enemies': (),
-            'dodge_the_falling_bombs': (),
-            'final_glorious_epic_slow_motion_battle': (),
-            'gather_eggs': (),
-            'get_the_flag_to_the_enemy': (),
-            'how_fast_can_you_defeat_the': (),
-            'kill_a_set_number_of_enemies': (),
-            'kill_enemies': ('arg1',),
-            'last_one_standing_wins': (),
-            'last_one_standing_wins_2': (),
-            'last_remaining_alive_wins': (),
-            'last_team_standing_wins': (),
-            'last_team_standing_wins_2': (),
-            'prevent_enemies_from_reaching_the_exit': (),
-            'reach_the_enemy_flag_to_score': (),
-            'return_1_flag': (),
-            'return_flags': ('arg1',),
-            'return_the_enemy_flag_to_score': (),
-            'run_1_lap': (),
-            'run_1_lap_2': (),
-            'run_1_lap_your_entire_team': (),
-            'run_laps': ('arg1',),
-            'run_laps_2': ('arg1',),
-            'run_laps_your_entire_team_has': ('arg1',),
-            'run_real_fast': (),
-            'score_a_goal': (),
-            'score_a_goal_2': (),
-            'score_a_touchdown': (),
-            'score_a_touchdown_2': (),
-            'score_goals': ('arg1',),
-            'score_goals_2': ('arg1',),
-            'score_some_goals': (),
-            'score_touchdowns': ('arg1',),
-            'score_touchdowns_2': ('arg1',),
-            'secure_all_flags': ('arg1',),
-            'secure_all_flags_2': ('arg1',),
-            'secure_all_flags_on_the_map': (),
-            'secure_the_flag_for_a_set': (),
-            'secure_the_flag_for_seconds': ('arg1',),
-            'secure_the_flag_for_seconds_2': ('arg1',),
-            'steal_the_enemy_flag': (),
-            'steal_the_enemy_flag_times': ('arg1',),
-            'there_can_be_only_one': (),
-            'touch_1_flag': (),
-            'touch_flags': ('arg1',),
-            'touch_the_enemy_flag': (),
-            'touch_the_enemy_flag_times': ('arg1',),
-        },
-        'game_names': {
-            'assault': (),
-            'capture_the_flag': (),
-            'chosen_one': (),
-            'conquest': (),
-            'death_match': (),
-            'easter_egg_hunt': (),
-            'elimination': (),
-            'football': (),
-            'hockey': (),
-            'keep_away': (),
-            'king_of_the_hill': (),
-            'meteor_shower': (),
-            'ninja_fight': (),
-            'onslaught': (),
-            'race': (),
-            'runaround': (),
-            'target_practice': (),
-            'the_last_stand': (),
         },
         'game_settings': {
             'allow_negative_scores': (),
@@ -13536,6 +10653,7 @@ _TREE = {
             'bomb': (),
             'choosing_player': (),
             'create_edit_player': (),
+            'legacy_profiles_only': (),
             'press_any_button_to_join': (),
             'press_punch_to_join': (),
             'press_to_override_character': ('buttons',),
@@ -13553,25 +10671,6 @@ _TREE = {
             'next_achievements': (),
             'quit': (),
             'test_build': (),
-        },
-        'map_names': {
-            'big_g': (),
-            'bridgit': (),
-            'courtyard': (),
-            'crag_castle': (),
-            'doom_shroom': (),
-            'football_stadium': (),
-            'happy_thoughts': (),
-            'hockey_stadium': (),
-            'lake_frigid': (),
-            'monkey_face': (),
-            'rampage': (),
-            'roundabout': (),
-            'step_right_up': (),
-            'the_pad': (),
-            'tip_top': (),
-            'tower_d': (),
-            'zigzag': (),
         },
         'multi_team': {
             'best_of_final': ('count',),
@@ -13657,42 +10756,6 @@ _TREE = {
             'playlists': (),
             'remove_game_button': (),
             'single_game_name': ('game',),
-        },
-        'profile': {
-            'account_profile': (),
-            'account_profile_info': ('icons',),
-            'available': ('name',),
-            'cant_delete_account_profile': (),
-            'character': (),
-            'checking_availability': ('name',),
-            'color': (),
-            'delete_confirm': ('profile',),
-            'get_more_characters': (),
-            'get_more_icons': (),
-            'global_profile': (),
-            'global_profile_info': (),
-            'highlight': (),
-            'icon': (),
-            'in_game_clipped_name': ('name',),
-            'local_profile': (),
-            'local_profile_info': (),
-            'name_description': (),
-            'name_not_empty': (),
-            'not_enough_tickets': (),
-            'nothing_selected': (),
-            'profile_already_exists': (),
-            'purchasing': (),
-            'title_edit': (),
-            'title_new': (),
-            'unavailable': ('name',),
-            'upgrade_profile_info': (),
-            'upgrade_to_global': (),
-        },
-        'profiles': {
-            'explanation': (),
-            'max_reached': (),
-            'new_profile': (),
-            'title': (),
         },
         'report': {
             'cheating': (),
@@ -14078,56 +11141,17 @@ _TREE = {
         'achievement_wall': 't',
         'achievements_icon': 't',
         'action_buttons': 't',
-        'action_hero_color': 't',
-        'action_hero_color_mask': 't',
-        'action_hero_icon': 't',
-        'action_hero_icon_color_mask': 't',
         'advanced_icon': 't',
-        'agent_color': 't',
-        'agent_color_mask': 't',
-        'agent_icon': 't',
-        'agent_icon_color_mask': 't',
-        'ali_color': 't',
-        'ali_color_mask': 't',
-        'ali_icon': 't',
-        'ali_icon_color_mask': 't',
         'ali_splash': 't',
-        'alien_color': 't',
-        'alien_color_mask': 't',
-        'alien_icon': 't',
-        'alien_icon_color_mask': 't',
-        'always_land_bgcolor': 't',
-        'always_land_level_color': 't',
-        'always_land_preview': 't',
         'analog_stick': 't',
         'arrow': 't',
-        'assassin_color': 't',
-        'assassin_color_mask': 't',
-        'assassin_icon': 't',
-        'assassin_icon_color_mask': 't',
         'audio_icon': 't',
         'bar': 't',
-        'bear_color': 't',
-        'bear_color_mask': 't',
-        'bear_icon': 't',
-        'bear_icon_color_mask': 't',
         'bg': 't',
-        'big_g': 't',
-        'big_gpreview': 't',
         'bomb_color': 't',
         'bomb_color_ice': 't',
         'bomb_sticky_color': 't',
-        'bones_color': 't',
-        'bones_color_mask': 't',
-        'bones_icon': 't',
-        'bones_icon_color_mask': 't',
         'boxing_gloves_color': 't',
-        'bridgit_level_color': 't',
-        'bridgit_preview': 't',
-        'bunny_color': 't',
-        'bunny_color_mask': 't',
-        'bunny_icon': 't',
-        'bunny_icon_color_mask': 't',
         'button_bomb': 't',
         'button_jump': 't',
         'button_pick_up': 't',
@@ -14137,38 +11161,19 @@ _TREE = {
         'ch_title_char3': 't',
         'ch_title_char4': 't',
         'ch_title_char5': 't',
-        'character_icon_mask': 't',
-        'chest_icon': 't',
         'chest_icon_empty': 't',
         'chest_icon_multi': 't',
-        'chest_icon_tint': 't',
         'chest_open_icon': 't',
         'chest_open_icon_tint': 't',
         'circle_zig_zag': 't',
         'clay_stroke': 't',
-        'coin': 't',
         'controller_icon': 't',
-        'courtyard_level_color': 't',
-        'courtyard_preview': 't',
-        'cowboy_color': 't',
-        'cowboy_color_mask': 't',
-        'cowboy_icon': 't',
-        'cowboy_icon_color_mask': 't',
-        'crag_castle_level_color': 't',
-        'crag_castle_preview': 't',
         'cross_out': 't',
         'cross_out_mask': 't',
         'cute_spaz': 't',
-        'cyborg_color': 't',
-        'cyborg_color_mask': 't',
-        'cyborg_icon': 't',
-        'cyborg_icon_color_mask': 't',
         'discord_icon': 't',
         'discord_logo': 't',
         'discord_server': 't',
-        'doom_shroom_bgcolor': 't',
-        'doom_shroom_level_color': 't',
-        'doom_shroom_preview': 't',
         'down_button': 't',
         'egg1': 't',
         'egg2': 't',
@@ -14182,20 +11187,10 @@ _TREE = {
         'flag_color': 't',
         'flag_pole_color': 't',
         'folder': 't',
-        'football_stadium': 't',
-        'football_stadium_preview': 't',
         'frame_inset': 't',
-        'frosty_color': 't',
-        'frosty_color_mask': 't',
-        'frosty_icon': 't',
-        'frosty_icon_color_mask': 't',
         'fuse': 't',
         'game_center_icon': 't',
         'github_logo': 't',
-        'gladiator_color': 't',
-        'gladiator_color_mask': 't',
-        'gladiator_icon': 't',
-        'gladiator_icon_color_mask': 't',
         'gold_pass': 't',
         'google_play_achievements_icon': 't',
         'google_play_games_icon': 't',
@@ -14204,28 +11199,11 @@ _TREE = {
         'google_plus_sign_in_button': 't',
         'graphics_icon': 't',
         'heart': 't',
-        'hockey_stadium': 't',
-        'hockey_stadium_preview': 't',
         'icon_onslaught': 't',
         'icon_runaround': 't',
         'impact_bomb_color': 't',
         'impact_bomb_color_lit': 't',
         'inventory_icon': 't',
-        'jack_color': 't',
-        'jack_color_mask': 't',
-        'jack_icon': 't',
-        'jack_icon_color_mask': 't',
-        'jumpsuit_color': 't',
-        'jumpsuit_color_mask': 't',
-        'jumpsuit_icon': 't',
-        'jumpsuit_icon_color_mask': 't',
-        'kronk': 't',
-        'kronk_color_mask': 't',
-        'kronk_icon': 't',
-        'kronk_icon_color_mask': 't',
-        'lake_frigid': 't',
-        'lake_frigid_preview': 't',
-        'lake_frigid_reflections': 't',
         'land_mine': 't',
         'land_mine_lit': 't',
         'leaderboards_icon': 't',
@@ -14238,57 +11216,23 @@ _TREE = {
         'log_icon': 't',
         'logo': 't',
         'logo_easter': 't',
-        'map_preview_mask': 't',
         'medal_bronze': 't',
         'medal_complete': 't',
         'medal_gold': 't',
         'medal_silver': 't',
-        'mel_color': 't',
-        'mel_color_mask': 't',
-        'mel_icon': 't',
-        'mel_icon_color_mask': 't',
-        'menu_bg': 't',
         'menu_icon': 't',
         'merch': 't',
         'meter': 't',
-        'monkey_face_level_color': 't',
-        'monkey_face_preview': 't',
         'multiplayer_examples': 't',
-        'nature_background_color': 't',
-        'neo_spaz_color': 't',
-        'neo_spaz_color_mask': 't',
-        'neo_spaz_icon': 't',
-        'neo_spaz_icon_color_mask': 't',
         'next_level_icon': 't',
-        'ninja_color': 't',
-        'ninja_color_mask': 't',
-        'ninja_icon': 't',
-        'ninja_icon_color_mask': 't',
         'nub': 't',
         'null': 't',
-        'old_lady_color': 't',
-        'old_lady_color_mask': 't',
-        'old_lady_icon': 't',
-        'old_lady_icon_color_mask': 't',
-        'opera_singer_color': 't',
-        'opera_singer_color_mask': 't',
-        'opera_singer_icon': 't',
-        'opera_singer_icon_color_mask': 't',
         'ouya_abutton': 't',
         'ouya_icon': 't',
         'ouya_obutton': 't',
         'ouya_ubutton': 't',
         'ouya_ybutton': 't',
-        'penguin_color': 't',
-        'penguin_color_mask': 't',
-        'penguin_icon': 't',
-        'penguin_icon_color_mask': 't',
-        'pixie_color': 't',
-        'pixie_color_mask': 't',
-        'pixie_icon': 't',
-        'pixie_icon_color_mask': 't',
         'player_lineup': 't',
-        'plus_button': 't',
         'powerup_bomb': 't',
         'powerup_curse': 't',
         'powerup_health': 't',
@@ -14301,10 +11245,6 @@ _TREE = {
         'powerup_sticky_bombs': 't',
         'puck_color': 't',
         'quote_bubble': 't',
-        'rampage_bgcolor': 't',
-        'rampage_bgcolor2': 't',
-        'rampage_level_color': 't',
-        'rampage_preview': 't',
         'reflection_char': 'ct',
         'reflection_powerup': 'ct',
         'reflection_sharp': 'ct',
@@ -14313,16 +11253,6 @@ _TREE = {
         'reflection_soft': 'ct',
         'replay_icon': 't',
         'right_button': 't',
-        'robot_color': 't',
-        'robot_color_mask': 't',
-        'robot_icon': 't',
-        'robot_icon_color_mask': 't',
-        'roundabout_level_color': 't',
-        'roundabout_preview': 't',
-        'santa_color': 't',
-        'santa_color_mask': 't',
-        'santa_icon': 't',
-        'santa_icon_color_mask': 't',
         'settings_icon': 't',
         'shadow_soft': 't',
         'shrapnel1_color': 't',
@@ -14330,27 +11260,14 @@ _TREE = {
         'smoke': 't',
         'sparks': 't',
         'star': 't',
-        'step_right_up_level_color': 't',
-        'step_right_up_preview': 't',
         'store_character': 't',
         'store_character_easter': 't',
         'store_character_xmas': 't',
         'store_icon': 't',
-        'superhero_color': 't',
-        'superhero_color_mask': 't',
-        'superhero_icon': 't',
-        'superhero_icon_color_mask': 't',
-        'the_pad_level_color': 't',
-        'the_pad_preview': 't',
         'ticket_roll': 't',
         'ticket_roll_big': 't',
         'ticket_rolls': 't',
-        'tickets': 't',
         'tickets_more': 't',
-        'tickets_purple': 't',
-        'tip_top_bgcolor': 't',
-        'tip_top_level_color': 't',
-        'tip_top_preview': 't',
         'tnt': 't',
         'tokens1': 't',
         'tokens2': 't',
@@ -14358,37 +11275,11 @@ _TREE = {
         'tokens4': 't',
         'touch_arrows': 't',
         'touch_arrows_actions': 't',
-        'tower_dlevel_color': 't',
-        'tower_dpreview': 't',
         'trees_color': 't',
         'trophy': 't',
         'tv': 't',
-        'ui_atlas': 't',
         'up_button': 't',
-        'vr_fill_mound': 't',
-        'warrior_color': 't',
-        'warrior_color_mask': 't',
-        'warrior_icon': 't',
-        'warrior_icon_color_mask': 't',
         'window_bottom_cap': 't',
-        'witch_color': 't',
-        'witch_color_mask': 't',
-        'witch_icon': 't',
-        'witch_icon_color_mask': 't',
-        'wizard_color': 't',
-        'wizard_color_mask': 't',
-        'wizard_icon': 't',
-        'wizard_icon_color_mask': 't',
-        'wrestler_color': 't',
-        'wrestler_color_mask': 't',
-        'wrestler_icon': 't',
-        'wrestler_icon_color_mask': 't',
-        'zig_zag_level_color': 't',
-        'zigzag_preview': 't',
-        'zoe_color': 't',
-        'zoe_color_mask': 't',
-        'zoe_icon': 't',
-        'zoe_icon_color_mask': 't',
     },
 }
 

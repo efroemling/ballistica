@@ -27,6 +27,7 @@
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
+#include "ballistica/ui_v1/widget/depiction_slot.h"
 #include "ballistica/ui_v1/widget/image_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
@@ -67,6 +68,9 @@ static const bool kShowLevels{};
 
 struct RootWidget::ChestSlot_ {
   std::string appearance;
+  // Depiction json; when set (with a chest present) the slot button
+  // shows it in place of the appearance art.
+  std::string depiction_json;
   std::string uiopentag;
   Button_* button{};
   Image_* lock_icon{};
@@ -1052,8 +1056,9 @@ void RootWidget::Setup() {
     ButtonDef_ b;
     b.h_align = 0.0f;
     b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    b.y = b.height * 0.58f - 2.0f;
+    b.width = b.height = 63.0f;
+    // Centered vertically with the other bottom-left buttons.
+    b.y = 32.0f;
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
@@ -1525,7 +1530,12 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   b.widget->set_opacity(def.opacity);
   b.widget->set_auto_select(true);
   b.widget->SetText(def.label);
-  b.widget->set_enabled(def.selectable);
+
+  // Our buttons use disabled for 'hidden' (sliding offscreen) and for
+  // purely decorative pieces (backings), so they get disabled's old
+  // meaning - no greyed look, no press claiming, no error sounds.
+  b.widget->set_disabled_toolbar_button_behavior(true);
+  b.widget->SetEnabled(def.selectable);
   b.widget->set_selectable(def.selectable);
   b.widget->set_depth_range(def.depth_min, def.depth_max);
   b.widget->set_target_extra_left(def.target_extra_left);
@@ -1963,7 +1973,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       xpos -= bwidthhalf + btn->post_buffer;
     }
   }
-  xpos = 0.0f;
+  // Nudge the bottom-left group slightly toward the screen edge.
+  xpos = -14.0f;
   float bottom_left_height{};
 
   for (auto* btn : bottom_left_buttons_) {
@@ -1981,7 +1992,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
   }
   bottom_left_height_ = bottom_left_height * base_scale_;
 
-  xpos = 0.0f;
+  // Nudge the bottom-right group slightly toward the screen edge.
+  xpos = 22.0f;
   for (auto* btn : bottom_right_buttons_) {
     auto enabled = btn->enabled;
     float bwidthhalf = btn->width * 0.5;
@@ -2065,7 +2077,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     bool selval{b.enabled && b.selectable};
     b.widget->set_selectable(selval);
-    b.widget->set_enabled(selval);
+    b.widget->SetEnabled(selval);
     b.widget->set_translate(x, y);
     b.widget->set_width(b.width);
     b.widget->set_height(b.height);
@@ -2193,6 +2205,22 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return ContainerWidget::HandleMessage(m);
 }
 
+void RootWidget::OnOverlayStackEmptied() {
+  ReselectLastSelectedWidget();
+
+  // Whatever held selection before the overlay ui went up normally gets
+  // it back above. But if selection was moved out of the overlay while
+  // it was still up (say a main-window rebuild restoring its selection
+  // under a closing popup), our 'last selected' *is* the overlay stack,
+  // and reselecting it would park selection on an empty stack with
+  // nothing highlighted and nothing to navigate. The main window stack
+  // is the right home then.
+  if (selected_widget() == overlay_stack_widget_
+      && screen_stack_widget_ != nullptr) {
+    SelectWidget(screen_stack_widget_);
+  }
+}
+
 void RootWidget::SquadPress() {
   assert(g_base->InLogicThread());
   if (squad_button_) {
@@ -2297,18 +2325,47 @@ void RootWidget::SetAccountSignInState(bool signed_in,
     assert(wb);
 
     account_button_signed_in_ = signed_in;
-    if (signed_in) {
-      w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + name);
-      w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
-      w->set_shadow(0.2f);
-      w->set_flatness(1.0f);
-    } else {
-      w->SetText("{\"r\":\"notSignedInText\"}");
-      w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
-      w->set_shadow(0.5f);
-      w->set_flatness(1.0f);
-    }
+    account_name_ = name;
+    UpdateAccountButtonLabel_();
     UpdateAccountButtonColor_();
+  }
+}
+
+void RootWidget::SetAccountDepiction(const std::string& json) {
+  if (json == account_depiction_json_) {
+    return;
+  }
+  account_depiction_json_ = json;
+  if (auto* btn = account_button_) {
+    DepictionSlot& slot{btn->widget->GetDepictionSlot()};
+    slot.set_h_align(base::DepictionHAlign::kLeft);
+    slot.SetDepiction(json);
+  }
+  UpdateAccountButtonLabel_();
+}
+
+void RootWidget::UpdateAccountButtonLabel_() {
+  if (!account_name_text_) {
+    return;
+  }
+  auto* w{account_name_text_->widget.get()};
+  assert(w);
+
+  // A depiction draws the name itself.
+  if (account_button_signed_in_ && !account_depiction_json_.empty()) {
+    w->SetText("");
+    return;
+  }
+  if (account_button_signed_in_) {
+    w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + account_name_);
+    w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
+    w->set_shadow(0.2f);
+    w->set_flatness(1.0f);
+  } else {
+    w->SetText("{\"r\":\"notSignedInText\"}");
+    w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
+    w->set_shadow(0.5f);
+    w->set_flatness(1.0f);
   }
 }
 
@@ -2784,6 +2841,18 @@ void RootWidget::SetChests(
   chest3.needs_faster_refresh = false;
 }
 
+void RootWidget::SetChestDepictions(
+    const std::vector<std::string>& depictions) {
+  for (size_t i = 0; i < chest_ids.size(); ++i) {
+    auto&& slot{chest_slots_[chest_ids[i]]};
+    const std::string& json{i < depictions.size() ? depictions[i] : ""};
+    if (json != slot.depiction_json) {
+      slot.depiction_json = json;
+      slot.live_display_dirty = true;
+    }
+  }
+}
+
 void RootWidget::OnLanguageChange() {
   ContainerWidget::OnLanguageChange();
   translations_dirty_ = true;
@@ -3000,6 +3069,24 @@ void RootWidget::UpdateChests_() {
           slot.text->widget->set_color(kChestTextColorR * mult,
                                        kChestTextColorG * mult,
                                        kChestTextColorB * mult, 1.0f);
+        }
+      }
+    }
+    // A slot with a depiction shows that in place of its appearance art
+    // (an open chest ui giving it the usual flat green).
+    {
+      bool use_depiction{!slot.appearance.empty()
+                         && !slot.depiction_json.empty()};
+      DepictionSlot& depiction{slot.button->widget->GetDepictionSlot()};
+      depiction.SetDepiction(use_depiction ? slot.depiction_json : "");
+      if (use_depiction) {
+        if (auto* tint = depiction.GetTintControl()) {
+          if (uiopen) {
+            const float green[3]{0.2f, 0.8f, 0.2f};
+            tint->SetFlatColor(green, 0.7f);
+          } else {
+            tint->ClearFlatColor();
+          }
         }
       }
     }

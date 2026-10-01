@@ -148,6 +148,15 @@ _FLEET_MASTER_HOSTS = {
     'dev': 'dev.ballistica.net',
 }
 
+#: The master server proper per fleet (the prod entry above is the
+#: node-side regional endpoint), for the one thing bacloud sends the
+#: master directly: a session anomaly report.
+_FLEET_CLIENT_LOG_URLS = {
+    'prod': 'https://www.ballistica.net/api/v1/clientlog',
+    'test': 'https://test.ballistica.net/api/v1/clientlog',
+    'dev': 'https://dev.ballistica.net/api/v1/clientlog',
+}
+
 
 def _caller_build_number() -> int:
     """The engine build number to report to bacloud (0 if unset).
@@ -708,7 +717,11 @@ class App:
         bearer = self._api_key or self._state.login_token
         attempts = 4
         for attempt in range(1, attempts + 1):
-            session = BacloudSession.open(self._server, bearer)
+            session = BacloudSession.open(
+                self._server,
+                bearer,
+                client_log_url=_FLEET_CLIENT_LOG_URLS.get(BA_FLEET),
+            )
             if session is not None:
                 self._session = session
                 return

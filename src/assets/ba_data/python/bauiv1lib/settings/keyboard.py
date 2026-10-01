@@ -40,21 +40,25 @@ class ConfigKeyboardWindow(bui.MainWindow):
             dname_raw += ' ' + self._unique_id.replace('#', 'P')
         self._displayname = bui.Lstr(translate=('inputDeviceNames', dname_raw))
         self._width = 700
+        # Room at the bottom for keyboard 1's enable-P2 checkbox (under
+        # the '...' button).
+        self._bottom_extra = 0 if self._unique_id != '#1' else 45
         if self._unique_id != '#1':
             self._height = 480
         else:
-            self._height = 375
+            self._height = 375 + self._bottom_extra
         self._spacing = 40
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+        self._base_scale = (
+            1.4
+            if uiscale is bui.UIScale.SMALL
+            else 0.91 if uiscale is bui.UIScale.MEDIUM else 0.7
+        )
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                scale=(
-                    1.4
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
+                scale=self._base_scale,
                 stack_offset=(0, 5) if uiscale is bui.UIScale.SMALL else (0, 0),
                 transition=transition,
             ),
@@ -184,28 +188,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
         h_offs = 160
         dist = 70
         d_color = (0.4, 0.4, 0.8)
-        self._capture_button(
+        d_up = self._capture_button(
             pos=(h_offs, v + 0.95 * dist),
             color=d_color,
             button='buttonUp',
             texture=_classicassets.textures.up_button.get(),
             scale=1.0,
         )
-        self._capture_button(
+        d_left = self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=d_color,
             button='buttonLeft',
             texture=_classicassets.textures.left_button.get(),
             scale=1.0,
         )
-        self._capture_button(
+        d_right = self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=d_color,
             button='buttonRight',
             texture=_classicassets.textures.right_button.get(),
             scale=1.0,
         )
-        self._capture_button(
+        d_down = self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=d_color,
             button='buttonDown',
@@ -224,34 +228,41 @@ class ConfigKeyboardWindow(bui.MainWindow):
 
         h_offs = self._width - 160
 
-        self._capture_button(
+        a_pickup = self._capture_button(
             pos=(h_offs, v + 0.95 * dist),
             color=(0.6, 0.4, 0.8),
             button='buttonPickUp',
             texture=_classicassets.textures.button_pick_up.get(),
             scale=1.0,
         )
-        self._capture_button(
+        a_punch = self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=(0.7, 0.5, 0.1),
             button='buttonPunch',
             texture=_classicassets.textures.button_punch.get(),
             scale=1.0,
         )
-        self._capture_button(
+        a_bomb = self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=(0.5, 0.2, 0.1),
             button='buttonBomb',
             texture=_classicassets.textures.button_bomb.get(),
             scale=1.0,
         )
-        self._capture_button(
+        a_jump = self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=(0.2, 0.5, 0.2),
             button='buttonJump',
             texture=_classicassets.textures.button_jump.get(),
             scale=1.0,
         )
+
+        # Autoselect guesses poorly around the side buttons of each
+        # cluster; up/down from them should hit the top/bottom one.
+        for widget in (d_left, d_right):
+            bui.widget(edit=widget, up_widget=d_up, down_widget=d_down)
+        for widget in (a_punch, a_bomb):
+            bui.widget(edit=widget, up_widget=a_pickup, down_widget=a_jump)
 
         self._more_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -260,10 +271,35 @@ class ConfigKeyboardWindow(bui.MainWindow):
             text_scale=0.9,
             color=(0.45, 0.4, 0.5),
             textcolor=(0.65, 0.6, 0.7),
-            position=(self._width * 0.5 - 65, 30),
+            position=(self._width * 0.5 - 65, 30 + self._bottom_extra),
             size=(130, 40),
             on_activate_call=self._do_more,
         )
+        bui.widget(edit=d_down, down_widget=self._more_button)
+
+        # Keyboard 1 hosts keyboard P2 (a second player on the same
+        # keyboard), which only gets keys when enabled here.
+        if self._unique_id == '#1':
+            # pylint: disable=cyclic-import
+            from bauiv1lib.config import ConfigCheckBox
+
+            p2check = ConfigCheckBox(
+                parent=self._root_widget,
+                configkey='Keyboard P2 Enabled',
+                position=(self._width * 0.5 - 110, 28),
+                size=(220, 30),
+                # NEEDS_TRANSLATION
+                displayname=bui.langstr_value('Enable Keyboard P2'),
+                scale=0.8,
+                maxwidth=200,
+            )
+            # Purple, like the '...' button above it.
+            bui.checkboxwidget(
+                edit=p2check.widget,
+                color=(0.45, 0.4, 0.5),
+                textcolor=(0.65, 0.6, 0.7),
+            )
+            bui.widget(edit=p2check.widget, up_widget=self._more_button)
 
         if is_reset:
             bui.containerwidget(
@@ -284,7 +320,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
         texture: bui.Texture,
         button: str,
         scale: float = 1.0,
-    ) -> None:
+    ) -> bui.Widget:
         base_size = 79
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -325,6 +361,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             )
 
         bui.pushcall(doit)
+        return btn
 
     def _reset(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
@@ -362,14 +399,11 @@ class ConfigKeyboardWindow(bui.MainWindow):
             _commonassets.strings.actions.reset,
         ]
 
-        uiscale = bui.app.ui_v1.uiscale
         PopupMenuWindow(
             position=self._more_button.get_screen_space_center(),
-            scale=(
-                2.3
-                if uiscale is bui.UIScale.SMALL
-                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
-            ),
+            # Sized relative to the window so it looks the same at any
+            # ui scale.
+            scale=1.25 * self._base_scale,
             width=150,
             choices=choices,
             choices_display=choices_display,

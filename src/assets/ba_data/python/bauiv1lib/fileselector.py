@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
@@ -176,12 +175,11 @@ class FileSelectorWindow(bui.MainWindow):
         self._on_entry_activated('..')
 
     def _on_back_press(self) -> None:
+        # (Disabled, and so never called, with nowhere to go back to.)
         if len(self._recent_paths) > 1:
-            _uiv1assets.audio.swish.get().play()
+            bui.play_swish()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
-        else:
-            _builtinassets.audio.error.get().play()
 
     def _on_folder_entry_activated(self) -> None:
         if self._callback is not None:
@@ -206,11 +204,11 @@ class FileSelectorWindow(bui.MainWindow):
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    _uiv1assets.audio.swish.get().play()
+                    bui.play_swish()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        _uiv1assets.audio.swish.get().play()
+                        bui.play_swish()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
@@ -271,7 +269,6 @@ class FileSelectorWindow(bui.MainWindow):
         self._RefreshThread(path, self._refresh).start()
 
     def _refresh(self, file_names: list[str], error: str | None) -> None:
-        # pylint: disable=too-many-branches
         if not self._root_widget:
             return
 
@@ -291,21 +288,11 @@ class FileSelectorWindow(bui.MainWindow):
             assert self._path is not None
             folder_name = os.path.basename(self._path)
 
-        b_color = (0.6, 0.53, 0.63)
-        b_color_disabled = (0.65, 0.65, 0.65)
-
-        if len(self._recent_paths) < 2:
-            bui.buttonwidget(
-                edit=self._back_button,
-                color=b_color_disabled,
-                textcolor=(0.5, 0.5, 0.5),
-            )
-        else:
-            bui.buttonwidget(
-                edit=self._back_button,
-                color=b_color,
-                textcolor=(0.75, 0.7, 0.8),
-            )
+        # Nowhere to go back to: disabled (greyed; a press sounds an
+        # error).
+        bui.buttonwidget(
+            edit=self._back_button, enabled=len(self._recent_paths) >= 2
+        )
 
         max_str_width = 300.0
         str_width = min(

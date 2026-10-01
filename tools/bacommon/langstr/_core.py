@@ -6,14 +6,14 @@ See ``docs/initiatives/language-string-context.md`` (ballistica-internal)
 for the full design. Three pieces:
 
 * :class:`LangStrSpec` -- a deferred, language-agnostic complex string; a
-  small multitype whose forms are :class:`LangStrSpecResource` (apverid +
+  small multitype whose forms are :class:`LangStrSpecResource` (apvernum +
   logical name + keyword substitutions), :class:`LangStrSpecValue` (a raw
   literal), and :class:`LangStrSpecResourceIndexed` (the compact
   integer-addressed projection). Substitution values are flat
   ``str``/``int`` or nested language-strings.
 * :class:`LanguageStringEncodeContext` -- turns a batch of
   :class:`LangStrSpec` values into
-  minimal, language-free encoded chunks plus the ``{pkg_int: apverid}`` map.
+  minimal, language-free encoded chunks plus the ``{pkg_int: apvernum}`` map.
 * :class:`LanguageStringDecodeContext` -- single-locale; turns an encoded
   chunk back into a flat string via :func:`bacommon.loctext.evaluate`.
 
@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, Annotated, assert_never, override
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.loctext import evaluate, LocTextError
+from bacommon.assetpackage import ApverNum
 
 if TYPE_CHECKING:
     from bacommon.locale import Locale
@@ -107,7 +108,7 @@ class LangStrSpec(IOMultiType[LangStrSpecTypeID]):
 
     The base of a small multitype: a language-string is a
     :class:`LangStrSpecResource` (an asset-package string addressed by
-    apverid + logical name -- the common authored form), a
+    apvernum + logical name -- the common authored form), a
     :class:`LangStrSpecValue` (a raw literal that needs no package), or a
     :class:`LangStrSpecResourceIndexed` (the compact integer-addressed
     projection of a resource, for contexts that carry a package-index
@@ -167,13 +168,13 @@ class LangStrSpecResource(LangStrSpec):
 
     ``subs`` maps each substitution keyword to its value -- a flat
     ``str`` / ``int`` or a nested :class:`LangStrSpec`. A no-arg string has
-    empty ``subs``. The value carries its own exact ``apverid`` (so an
+    empty ``subs``. The value carries its own exact ``apvernum`` (so an
     encode context can discover the package union from the values
     themselves) and the string's logical ``name`` (mapped to its
     integer index at encode time).
     """
 
-    apverid: Annotated[str, IOAttrs('a')]
+    apvernum: Annotated[ApverNum, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]
     subs: Annotated[
         dict[str, str | int | LangStrSpec],
@@ -234,7 +235,7 @@ class LangStrSpecValue(LangStrSpec):
 class LangStrSpecResourceIndexed(LangStrSpec):
     """The compact integer-addressed projection of a resource string.
 
-    Usable only against a context carrying the ``{pkg_int: apverid}``
+    Usable only against a context carrying the ``{pkg_int: apvernum}``
     package-index map (and package structures for positional-sub
     ordering); see ``LanguageStringDecodeContext``. Substitutions are
     positional here (canonical param order), matching the
@@ -298,10 +299,10 @@ class PackageDef:
 
     The shared source the encode/decode :class:`PackageStructure` and the
     type-safe wrapper codegen both derive from (in the real system, from an
-    apverid's resolved listing; in tests, hand-built).
+    apvernum's resolved listing; in tests, hand-built).
     """
 
-    apverid: str
+    apvernum: ApverNum
     strings: tuple[StringDef, ...]
 
 
@@ -318,7 +319,7 @@ class PackageStructure:
     def from_def(cls, pkgdef: PackageDef) -> 'PackageStructure':
         """Build the encode/decode structure from a package definition."""
         return cls(
-            pkgdef.apverid,
+            pkgdef.apvernum,
             {
                 sdef.path: tuple(name for name, _kind in sdef.params)
                 for sdef in pkgdef.strings
@@ -327,7 +328,7 @@ class PackageStructure:
 
     @classmethod
     def from_language_values(
-        cls, apverid: str, values: dict[str, str | StringSelector]
+        cls, apvernum: ApverNum, values: dict[str, str | StringSelector]
     ) -> 'PackageStructure':
         """Derive the structure from one locale's complete value set.
 
@@ -344,7 +345,7 @@ class PackageStructure:
         from bacommon.loctext import substitution_names
 
         return cls(
-            apverid,
+            apvernum,
             {
                 name: tuple(substitution_names(value))
                 for name, value in values.items()
@@ -352,14 +353,14 @@ class PackageStructure:
         )
 
     def __init__(
-        self, apverid: str, strings: dict[str, tuple[str, ...]]
+        self, apvernum: ApverNum, strings: dict[str, tuple[str, ...]]
     ) -> None:
         #: ``strings`` maps each logical name to its substitution
         #: keywords (``()`` for a no-arg string). Order of the passed
         #: keywords is ignored: positional-substitution order is
         #: canonically alphabetical, enforced here so producer- and
         #: consumer-derived structures can't disagree on it.
-        self.apverid = apverid
+        self.apvernum = apvernum
         self._names: tuple[str, ...] = tuple(sorted(strings))
         self._index: dict[str, int] = {
             name: i for i, name in enumerate(self._names)
@@ -393,35 +394,35 @@ class LanguageStringEncodeContext:
     """Encodes :class:`LangStrSpec` values into minimal language-free chunks.
 
     Built from the batch of values to send: it computes the union of
-    apverids they reference (recursively -- nested values know their own
-    apverid) and assigns each a stable integer index. :meth:`encode` then
+    apvernums they reference (recursively -- nested values know their own
+    apvernum) and assigns each a stable integer index. :meth:`encode` then
     emits ``[pkg_int, str_int, …subs]``; :attr:`package_index_map` is the
     only mapping the consumer needs (string indices resolve from the
-    content-pinned apverid itself).
+    content-pinned apvernum itself).
     """
 
     def __init__(
         self,
         lstrs: list[LangStrSpec],
-        structures: dict[str, PackageStructure],
-        also: set[str] | None = None,
+        structures: dict[ApverNum, PackageStructure],
+        also: set[ApverNum] | None = None,
     ) -> None:
         self._structures = structures
-        apverids: set[str] = set()
+        apvernums: set[ApverNum] = set()
         for lstr in lstrs:
-            self._collect(lstr, apverids)
+            self._collect(lstr, apvernums)
         # ``also`` folds in packages referenced by something other than
         # strings -- asset refs, above all -- so one manifest and one
         # package-index space serves every indexed thing in a payload
         # rather than strings having a private one.
         if also:
-            apverids |= also
-        # Sorted -> deterministic indices for a given apverid set.
-        self._pkg_index = {av: i for i, av in enumerate(sorted(apverids))}
+            apvernums |= also
+        # Sorted -> deterministic indices for a given apvernum set.
+        self._pkg_index = {av: i for i, av in enumerate(sorted(apvernums))}
 
-    def _collect(self, lstr: LangStrSpec, acc: set[str]) -> None:
+    def _collect(self, lstr: LangStrSpec, acc: set[ApverNum]) -> None:
         if isinstance(lstr, LangStrSpecResource):
-            acc.add(lstr.apverid)
+            acc.add(lstr.apvernum)
             subvals = list(lstr.subs.values())
         elif isinstance(lstr, LangStrSpecValue):
             # Literals reference no package but may nest values that do.
@@ -435,8 +436,8 @@ class LanguageStringEncodeContext:
                 self._collect(val, acc)
 
     @property
-    def package_index_map(self) -> dict[int, str]:
-        """The ``{pkg_int: apverid}`` map a decoder needs."""
+    def package_index_map(self) -> dict[int, ApverNum]:
+        """The ``{pkg_int: apvernum}`` map a decoder needs."""
         return {i: av for av, i in self._pkg_index.items()}
 
     def encode(self, lstr: LangStrSpec) -> EncodedLangStr:
@@ -446,18 +447,18 @@ class LanguageStringEncodeContext:
                 f'only resource-form language-strings can be encoded;'
                 f' got {type(lstr).__name__}.'
             )
-        pkg_int = self._pkg_index.get(lstr.apverid)
-        struct = self._structures.get(lstr.apverid)
+        pkg_int = self._pkg_index.get(lstr.apvernum)
+        struct = self._structures.get(lstr.apvernum)
         if pkg_int is None or struct is None:
             raise LangStrError(
-                f'apverid {lstr.apverid!r} is not in this encode context'
+                f'apvernum {lstr.apvernum!r} is not in this encode context'
             )
         try:
             str_int = struct.index_of(lstr.name)
             params = struct.params_of(lstr.name)
         except KeyError as exc:
             raise LangStrError(
-                f'unknown string {lstr.name!r} in {lstr.apverid}'
+                f'unknown string {lstr.name!r} in {lstr.apvernum}'
             ) from exc
         out: list[str | int | EncodedLangStr] = [pkg_int, str_int]
         for param in params:
@@ -496,18 +497,18 @@ class LanguageStringEncodeContext:
             )
         if not isinstance(lstr, LangStrSpecResource):
             raise LangStrError(f'cannot index a {type(lstr).__name__}.')
-        pkg_int = self._pkg_index.get(lstr.apverid)
-        struct = self._structures.get(lstr.apverid)
+        pkg_int = self._pkg_index.get(lstr.apvernum)
+        struct = self._structures.get(lstr.apvernum)
         if pkg_int is None or struct is None:
             raise LangStrError(
-                f'apverid {lstr.apverid!r} is not in this encode context'
+                f'apvernum {lstr.apvernum!r} is not in this encode context'
             )
         try:
             str_int = struct.index_of(lstr.name)
             params = struct.params_of(lstr.name)
         except KeyError as exc:
             raise LangStrError(
-                f'unknown string {lstr.name!r} in {lstr.apverid}'
+                f'unknown string {lstr.name!r} in {lstr.apvernum}'
             ) from exc
         subs: list[str | int | LangStrSpec] = []
         for param in params:
@@ -525,20 +526,20 @@ class LanguageStringEncodeContext:
 class LanguageStringDecodeContext:
     """Decodes chunks into flat strings for one target locale.
 
-    Holds the ``{pkg_int: apverid}`` map (from the encoder), the package
-    structures, and the per-apverid string values **for a single locale**.
+    Holds the ``{pkg_int: apvernum}`` map (from the encoder), the package
+    structures, and the per-apvernum string values **for a single locale**.
     :meth:`decode` resolves a chunk (recursively rendering nested values)
     via :func:`bacommon.loctext.evaluate`.
     """
 
     def __init__(
         self,
-        package_index_map: dict[int, str],
-        structures: dict[str, PackageStructure],
-        language: dict[str, dict[str, str | StringSelector]],
+        package_index_map: dict[int, ApverNum],
+        structures: dict[ApverNum, PackageStructure],
+        language: dict[ApverNum, dict[str, str | StringSelector]],
         locale: Locale,
     ) -> None:
-        #: ``language`` maps apverid -> {string-name: value} for ``locale``.
+        #: ``language`` maps apvernum -> {string-name: value} for ``locale``.
         self._pkg_map = package_index_map
         self._structures = structures
         self._language = language
@@ -565,24 +566,24 @@ class LanguageStringDecodeContext:
         str_int = encoded[1]
         if not isinstance(pkg_int, int) or not isinstance(str_int, int):
             raise _DecodeFail(f'non-int index in {encoded!r}')
-        apverid = self._pkg_map.get(pkg_int)
+        apvernum = self._pkg_map.get(pkg_int)
         if (
-            apverid is None
-            or apverid not in self._structures
-            or apverid not in self._language
+            apvernum is None
+            or apvernum not in self._structures
+            or apvernum not in self._language
         ):
             raise _DecodeFail(f'unknown package index {pkg_int}')
-        struct = self._structures[apverid]
+        struct = self._structures[apvernum]
         try:
             name = struct.name_of(str_int)
             params = struct.params_of(name)
         except IndexError, KeyError:
             raise _DecodeFail(
-                f'unknown string index {str_int} in {apverid}'
+                f'unknown string index {str_int} in {apvernum}'
             ) from None
-        values = self._language[apverid]
+        values = self._language[apvernum]
         if name not in values:
-            raise _DecodeFail(f'no value for {name!r} in {apverid}')
+            raise _DecodeFail(f'no value for {name!r} in {apvernum}')
         subs = encoded[2:]
         if len(subs) != len(params):
             raise _DecodeFail(
@@ -626,7 +627,7 @@ class LanguageStringDecodeContext:
             )
         if isinstance(lstr, LangStrSpecResource):
             return LangStrSpecResource(
-                lstr.apverid,
+                lstr.apvernum,
                 lstr.name,
                 {
                     key: (
@@ -639,21 +640,21 @@ class LanguageStringDecodeContext:
             )
         if not isinstance(lstr, LangStrSpecResourceIndexed):
             raise LangStrError(f'cannot convert a {type(lstr).__name__}.')
-        apverid = self._pkg_map.get(lstr.pkg)
-        if apverid is None or apverid not in self._structures:
+        apvernum = self._pkg_map.get(lstr.pkg)
+        if apvernum is None or apvernum not in self._structures:
             raise LangStrError(f'unknown package index {lstr.pkg}')
-        struct = self._structures[apverid]
+        struct = self._structures[apvernum]
         try:
             name = struct.name_of(lstr.index)
             params = struct.params_of(name)
         except (IndexError, KeyError) as exc:
             raise LangStrError(
-                f'unknown string index {lstr.index} in {apverid}'
+                f'unknown string index {lstr.index} in {apvernum}'
             ) from exc
         if len(lstr.subs) != len(params):
             raise LangStrError(f'arity mismatch for {name!r}')
         return LangStrSpecResource(
-            apverid,
+            apvernum,
             name,
             {
                 param: (
@@ -688,24 +689,24 @@ class LanguageStringDecodeContext:
         desc: str
         kwargs: dict[str, str | int] = {}
         if isinstance(lstr, LangStrSpecResourceIndexed):
-            apverid = self._pkg_map.get(lstr.pkg)
+            apvernum = self._pkg_map.get(lstr.pkg)
             if (
-                apverid is None
-                or apverid not in self._structures
-                or apverid not in self._language
+                apvernum is None
+                or apvernum not in self._structures
+                or apvernum not in self._language
             ):
                 raise _DecodeFail(f'unknown package index {lstr.pkg}')
-            struct = self._structures[apverid]
+            struct = self._structures[apvernum]
             try:
                 name = struct.name_of(lstr.index)
                 params = struct.params_of(name)
             except IndexError, KeyError:
                 raise _DecodeFail(
-                    f'unknown string index {lstr.index} in {apverid}'
+                    f'unknown string index {lstr.index} in {apvernum}'
                 ) from None
-            values = self._language[apverid]
+            values = self._language[apvernum]
             if name not in values:
-                raise _DecodeFail(f'no value for {name!r} in {apverid}')
+                raise _DecodeFail(f'no value for {name!r} in {apvernum}')
             if len(lstr.subs) != len(params):
                 raise _DecodeFail(
                     f'arity mismatch for {name!r}:'
@@ -729,13 +730,13 @@ class LanguageStringDecodeContext:
                     else sub
                 )
         elif isinstance(lstr, LangStrSpecResource):
-            resvalues = self._language.get(lstr.apverid)
+            resvalues = self._language.get(lstr.apvernum)
             if resvalues is None:
-                raise _DecodeFail(f'no values for package {lstr.apverid!r}')
+                raise _DecodeFail(f'no values for package {lstr.apvernum!r}')
             resval = resvalues.get(lstr.name)
             if resval is None:
                 raise _DecodeFail(
-                    f'no value for {lstr.name!r} in {lstr.apverid}'
+                    f'no value for {lstr.name!r} in {lstr.apvernum}'
                 )
             for key, sub in lstr.subs.items():
                 kwargs[key] = (
@@ -776,12 +777,12 @@ def contains_resource_form(lstr: LangStrSpec) -> bool:
     )
 
 
-def collect_apverids(lstr: LangStrSpec, acc: set[str]) -> None:
+def collect_apvernums(lstr: LangStrSpec, acc: set[ApverNum]) -> None:
     """Gather every asset-package-version a language-string tree
     references into ``acc``.
 
     Indexed nodes resolve against an out-of-band context so they
-    contribute no apverids themselves, but their substitution values
+    contribute no apvernums themselves, but their substitution values
     are still walked (a resource-form node can appear anywhere in a
     mixed tree).
 
@@ -792,7 +793,7 @@ def collect_apverids(lstr: LangStrSpec, acc: set[str]) -> None:
     """
     subvals: list[str | int | LangStrSpec]
     if isinstance(lstr, LangStrSpecResource):
-        acc.add(lstr.apverid)
+        acc.add(lstr.apvernum)
         subvals = list(lstr.subs.values())
     elif isinstance(lstr, LangStrSpecValue):
         subvals = list(lstr.subs.values())
@@ -802,16 +803,16 @@ def collect_apverids(lstr: LangStrSpec, acc: set[str]) -> None:
         return
     for sub in subvals:
         if isinstance(sub, LangStrSpec):
-            collect_apverids(sub, acc)
+            collect_apvernums(sub, acc)
 
 
 class LanguageStringNameDecodeContext:
     """Decodes :class:`LangStrSpec` values directly, by name, for one locale.
 
     The name-based counterpart to :class:`LanguageStringDecodeContext`: it
-    resolves an in-memory :class:`LangStrSpec` (carrying its ``apverid``, string
-    ``name``, and keyword ``subs``) straight against per-apverid per-locale
-    values -- no integer indices, package-index-map, or
+    resolves an in-memory :class:`LangStrSpec` (carrying its ``apvernum``,
+    string ``name``, and keyword ``subs``) straight against per-package
+    per-locale values -- no integer indices, package-index-map, or
     :class:`PackageStructure` needed, since the subs are self-describing
     keyword->value pairs. This is the client's primary path: resolve the
     referenced packages, gather their per-locale values, then decode each
@@ -824,26 +825,28 @@ class LanguageStringNameDecodeContext:
 
     def __init__(
         self,
-        language: dict[str, dict[str, str | StringSelector]],
+        language: dict[ApverNum, dict[str, str | StringSelector]],
         locale: Locale,
         *,
-        param_kinds: dict[str, dict[str, dict[str, str]]] | None = None,
-        components: dict[str, dict[str, str | StringSelector]] | None = None,
+        param_kinds: dict[ApverNum, dict[str, dict[str, str]]] | None = None,
+        components: (
+            dict[ApverNum, dict[str, str | StringSelector]] | None
+        ) = None,
     ) -> None:
-        #: ``language`` maps apverid -> {string-name: value} for ``locale``.
+        #: ``language`` maps apvernum -> {string-name: value} for ``locale``.
         self._language = language
         self._locale = locale
-        #: apverid -> {string-name: {param: kind}} for params the
+        #: apvernum -> {string-name: {param: kind}} for params the
         #: translated text cannot describe (a byte count renders as
         #: "1.2 GB", but the text holds only a ``{size}`` token).
         self._param_kinds = param_kinds or {}
-        #: apverid -> that package's build-embedded formatter
+        #: apvernum -> that package's build-embedded formatter
         #: components. Embedded rather than resolved cross-package, so
         #: rendering never depends on another package being present.
         self._components = components or {}
 
     def _render_param(
-        self, kindexpr: str, value: str | int, apverid: str
+        self, kindexpr: str, value: str | int, apvernum: ApverNum | None
     ) -> str:
         """Render one spec'd param value for this locale.
 
@@ -861,7 +864,7 @@ class LanguageStringNameDecodeContext:
                 kindexpr,
                 value,
                 self._locale,
-                self._components.get(apverid, {}),
+                {} if apvernum is None else self._components.get(apvernum, {}),
             )
         except _DecodeFail:
             raise
@@ -889,26 +892,26 @@ class LanguageStringNameDecodeContext:
         # Only a resource carries spec'd params; a literal has no
         # package to have declared them.
         kinds: dict[str, str] = {}
-        kindsrc = ''
+        kindsrc: ApverNum | None = None
         if isinstance(lstr, LangStrSpecValue):
             # A raw literal; the value itself is the (locale-free) text.
             value = lstr.value
             subs = lstr.subs
             desc = 'literal'
         elif isinstance(lstr, LangStrSpecResource):
-            values = self._language.get(lstr.apverid)
+            values = self._language.get(lstr.apvernum)
             if values is None:
-                raise _DecodeFail(f'no values for package {lstr.apverid!r}')
+                raise _DecodeFail(f'no values for package {lstr.apvernum!r}')
             resval = values.get(lstr.name)
             if resval is None:
                 raise _DecodeFail(
-                    f'no value for {lstr.name!r} in {lstr.apverid}'
+                    f'no value for {lstr.name!r} in {lstr.apvernum}'
                 )
             value = resval
             subs = lstr.subs
             desc = lstr.name
-            kinds = self._param_kinds.get(lstr.apverid, {}).get(lstr.name, {})
-            kindsrc = lstr.apverid
+            kinds = self._param_kinds.get(lstr.apvernum, {}).get(lstr.name, {})
+            kindsrc = lstr.apvernum
         else:
             # The indexed form needs an index context, not this one.
             raise _DecodeFail(f'cannot name-decode a {type(lstr).__name__}.')

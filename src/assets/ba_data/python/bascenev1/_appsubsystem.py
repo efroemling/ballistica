@@ -17,6 +17,15 @@ class SceneV1AppSubsystem(babase.AppSubsystem):
     instance.
     """
 
+    def __init__(self) -> None:
+        super().__init__()
+
+        # Hand the C++ layer the game-packet compression dictionary
+        # before any connection can exist.
+        from bacommon.packetzstddict import packets_dict_v1
+
+        _bascenev1.set_packet_compression_dict(packets_dict_v1())
+
     @override
     def reset(self) -> None:
         # Wipe any app-mode-supplied scene asset set (see

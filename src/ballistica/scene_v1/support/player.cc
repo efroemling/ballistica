@@ -147,6 +147,18 @@ auto Player::GetPyCharacter() -> PyObject* {
   return py_character_.exists() ? py_character_.get() : Py_None;
 }
 
+void Player::SetPyCloudSpazDef(PyObject* spaz_def) {
+  if (spaz_def != nullptr && spaz_def != Py_None) {
+    py_cloud_spaz_def_.Acquire(spaz_def);
+  } else {
+    py_cloud_spaz_def_.Release();
+  }
+}
+
+auto Player::GetPyCloudSpazDef() -> PyObject* {
+  return py_cloud_spaz_def_.exists() ? py_cloud_spaz_def_.get() : Py_None;
+}
+
 void Player::SetPyColor(PyObject* c) { py_color_.Acquire(c); }
 auto Player::GetPyColor() -> PyObject* {
   return py_color_.exists() ? py_color_.get() : Py_None;

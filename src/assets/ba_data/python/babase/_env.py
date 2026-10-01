@@ -475,6 +475,12 @@ def _do_pycache_upkeep() -> None:
     # dict of dst paths.
     for dpath, dnames, fnames in os.walk(pycdir):
         for fname in fnames:
+            # The pyc-prewarm install marker lives at the pycache root
+            # (see core/python/pyc_prewarm.cc) and must survive our
+            # pruning or store builds reinstall their payload every
+            # boot instead of once per app build.
+            if fname == 'pyc_prewarm_installed':
+                continue
             fullpath = os.path.join(dpath, fname)
             # We excluded skip_dirs when we generated entries, but its
             # still possible that stuff from those dirs has been cached

@@ -158,6 +158,30 @@ def purchase_already_in_progress_error() -> None:
         )
 
 
+def purchase_pending_notice() -> None:
+    """Tell the user a purchase they just made is awaiting payment.
+
+    Some payment methods (UPI, cash, certain bank transfers) complete
+    asynchronously; the store hands back a *pending* purchase and grants
+    nothing until the payment clears, which can take minutes. Without
+    this the purchase flow just closes with no visible result. A modal
+    :class:`~babase.SimpleDialog` rather than a screen message so it
+    can't be missed and shows in any app-mode.
+    """
+    from babase import _builtinassets
+    from babase._simpledialog import SimpleDialog
+
+    if not _babase.app.env.gui:
+        return
+    dialog = SimpleDialog(
+        title=_builtinassets.strings.store.payment_pending_title,
+        message=_builtinassets.strings.store.payment_pending_message,
+        button_label=_builtinassets.strings.ui.ok,
+        cancel_activates_button=True,
+    )
+    dialog.update(on_button=dialog.dismiss)
+
+
 def orientation_reset_cb_message() -> None:
     from babase import _builtinassets
 
@@ -390,6 +414,15 @@ def discord_sign_in_token_response(
     on_discord_sign_in_token_response(attempt_id=attempt_id, result=result)
 
 
+def wanted_asset_packages_changed() -> None:
+    """A new asset-package became wanted by something on screen.
+
+    Kicks the asset subsystem's background acquirer (character-skins
+    lazy media); see :meth:`babase.AssetSubsystem.on_wanted_packages_changed`.
+    """
+    _babase.app.assets.on_wanted_packages_changed()
+
+
 def show_client_too_old_error() -> None:
     """Called at launch if the server tells us we're too old to talk to it."""
     # If you are using an old build of the app and would like to stop
@@ -544,7 +577,7 @@ def v2_auth_request(
 
 def v2_auth_data(
     token: str,
-) -> None | tuple[str, str, dict, list[str] | None]:
+) -> None | tuple[str, str, dict, list[str] | None, list[str] | None]:
     """Look up autheneticated v2 account data via a token."""
     assert _babase.in_logic_thread()
 
@@ -563,4 +596,17 @@ def v2_auth_data(
         authdata.account_tag,
         authdata.player_profiles,
         authdata.classic_purchases,
+        authdata.cloud_characters,
     )
+
+
+def os_music_playing_changed(playing: bool) -> None:
+    """Another app started or stopped playing music.
+
+    Game music yields to it live; see the classic music subsystem's
+    ``on_os_music_playing_changed()``.
+    """
+    classic = _babase.app.classic
+    if classic is None:
+        return
+    classic.music.on_os_music_playing_changed(playing)

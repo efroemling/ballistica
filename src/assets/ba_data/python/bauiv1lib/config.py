@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal
 
 
 class ConfigCheckBox:
@@ -33,6 +33,7 @@ class ConfigCheckBox:
         autoselect: bool = True,
         value_change_call: Callable[[Any], Any] | None = None,
         check_box_id: str | None = None,
+        style: Literal['default', 'right'] | None = None,
     ):
         if displayname is None:
             displayname = configkey
@@ -50,6 +51,7 @@ class ConfigCheckBox:
             on_value_change_call=self._value_changed,
             scale=scale,
             maxwidth=maxwidth,
+            style=style,
         )
         # Complain if we outlive our checkbox.
         bui.app.ui_v1.add_ui_cleanup_check(self, self.widget)
@@ -365,14 +367,14 @@ class ConfigSlider(_NumericConfigControl):
         self._update_display()
 
     def _slider_dragged(self, value: float) -> None:
-        self._value = value
+        self._value = self._snap(value)
 
         # Updating the text is cheap, so keep it exact at every step.
         self._update_display()
         self._schedule('drag')
 
     def _slider_changed(self, value: float) -> None:
-        self._value = value
+        self._value = self._snap(value)
         self._update_display()
 
         # A settled value is saved right now, never behind a timer --
@@ -381,6 +383,15 @@ class ConfigSlider(_NumericConfigControl):
         # scheduling below is for.
         self._store_value(commit=True, run_callback=False)
         self._schedule('settled')
+
+    def _snap(self, value: float) -> float:
+        """The widget's value in the form we store (see snap_slider_value)."""
+        return bui.snap_slider_value(
+            value,
+            min_value=self._minval,
+            max_value=self._maxval,
+            increment=self._increment,
+        )
 
     def _schedule(self, action: str) -> None:
         """Run an action now, or when the interval next comes round.
@@ -411,7 +422,7 @@ class ConfigSlider(_NumericConfigControl):
             self._run_pending()
         elif self._apply_timer is None:
             self._apply_timer = bui.AppTimer(
-                due - now, bui.WeakCall(self._run_pending)
+                due - now, bui.WeakCallStrict(self._run_pending)
             )
 
     def _run_pending(self) -> None:

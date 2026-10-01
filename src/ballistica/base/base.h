@@ -56,23 +56,26 @@ class BGDynamicsServer;
 class BGDynamicsDrawSnapshot;
 class BGDynamicsEmission;
 class BGDynamicsFuse;
-struct BGDynamicsFuseData;
 class BGDynamicsHeightCache;
 class BGDynamicsShadow;
-struct BGDynamicsShadowData;
 class BGDynamicsVolumeLight;
-struct BGDynamicsVolumeLightData;
+class BGDynamicsWorld;
+class BGDynamicsWorldServer;
 class Camera;
 class ClassicSoftInterface;
 class CollisionMeshAsset;
-class CollisionCache;
+class TerrainCollider;
 class SimpleDialog;
 class DevConsole;
 class DisplayTimer;
 class Context;
 class ContextRef;
 class DataAsset;
+class DebugTextureView;
+class FixedCamera;
 class FrameDef;
+class FrameDefView;
+class GameCamera;
 class Graphics;
 class GraphicsServer;
 struct GraphicsSettings;
@@ -91,6 +94,7 @@ class MeshBufferVertexSprite;
 class MeshBufferVertexSimpleFull;
 class MeshBufferVertexSmokeFull;
 class Mesh;
+class MeshIndexedObjectSplit;
 class MeshData;
 class MeshDataClientHandle;
 class MeshIndexBuffer16;
@@ -113,6 +117,7 @@ class RenderComponent;
 class RenderCommandBuffer;
 class RenderPass;
 class RenderTarget;
+class RenderView;
 class RemoteAppServer;
 class RemoteControlInput;
 class Repeater;
@@ -150,6 +155,7 @@ enum class AssetType : uint8_t {
 enum class DrawType : uint8_t {
   kTriangles,
   kPoints,
+  kLines,
 };
 
 /// Hints to the renderer - stuff that is changed rarely should be static,
@@ -348,6 +354,8 @@ enum class TextMeshEntryType : uint8_t {
 
 enum MeshDrawFlags : uint8_t {
   kMeshDrawFlagNoReflection = 1,
+  /// Draw the mesh's indices as line pairs instead of triangles.
+  kMeshDrawFlagLines = 1 << 1,
 };
 
 enum class LightShadowType : uint8_t {
@@ -410,14 +418,12 @@ enum class ShadingType : uint8_t {
   kSimpleTexture,
   kSimpleTextureModulated,
   kSimpleTextureModulatedColorized,
-  kSimpleTextureModulatedColorized2,
-  kSimpleTextureModulatedColorized2Masked,
+  kSimpleTextureModulatedColorizedMasked,
   kSimpleTextureModulatedTransparent,
   kSimpleTextureModulatedTransFlatness,
   kSimpleTextureModulatedTransparentDoubleSided,
   kSimpleTextureModulatedTransparentColorized,
-  kSimpleTextureModulatedTransparentColorized2,
-  kSimpleTextureModulatedTransparentColorized2Masked,
+  kSimpleTextureModulatedTransparentColorizedMasked,
   kSimpleTextureModulatedTransparentShadow,
   kSimpleTexModulatedTransShadowFlatness,
   kSimpleTextureModulatedTransparentGlow,
@@ -431,13 +437,13 @@ enum class ShadingType : uint8_t {
   kObjectReflectTransparent,
   kObjectReflectAddTransparent,
   kObjectLightShadow,
+  kObjectLightShadowFacingRatio,
+  kObjectLightShadowFacingRatioTransparent,
   kObjectReflectLightShadow,
   kObjectReflectLightShadowDoubleSided,
   kObjectReflectLightShadowColorized,
-  kObjectReflectLightShadowColorized2,
   kObjectReflectLightShadowAdd,
   kObjectReflectLightShadowAddColorized,
-  kObjectReflectLightShadowAddColorized2,
   kSmoke,
   kSmokeOverlay,
   kPostProcess,
@@ -459,10 +465,11 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260831h";
+// Builtin asset-package: a-0.babuiltinassets.261001d
+inline constexpr const char* kBuiltinAssetsApvernum = "368";
 
 enum class BuiltinTextureID : uint16_t {
+  kTexturesAccountV2Icon,     // textures/account_v2_icon
   kTexturesBlack,             // textures/black
   kTexturesCircle,            // textures/circle
   kTexturesCircleShadow,      // textures/circle_shadow
@@ -481,6 +488,8 @@ enum class BuiltinTextureID : uint16_t {
   kTexturesFontSmall5,        // textures/font_small5
   kTexturesFontSmall6,        // textures/font_small6
   kTexturesFontSmall7,        // textures/font_small7
+  kTexturesGlowCircle,        // textures/glow_circle
+  kTexturesHowdy,             // textures/howdy
   kTexturesShadow,            // textures/shadow
   kTexturesShadowSharp,       // textures/shadow_sharp
   kTexturesSoftRect,          // textures/soft_rect
@@ -681,6 +690,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void PushDevConsolePrintCall(
       std::vector<core::DevConsolePrintEntry> entries) override;
+  void OnOSMusicPlayingChanged(bool playing) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;

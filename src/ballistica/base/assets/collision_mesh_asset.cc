@@ -2,13 +2,20 @@
 
 #include "ballistica/base/assets/collision_mesh_asset.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -166,6 +173,121 @@ void CollisionMeshAsset::DoUnload() {
   if (tri_mesh_data_bg_) {
     dGeomTriMeshDataDestroy(tri_mesh_data_bg_);
   }
+  debug_mesh_.Clear();
+  debug_wire_mesh_.Clear();
+}
+
+auto CollisionMeshAsset::GetDebugWireMesh() -> MeshIndexedSimpleFull* {
+  assert(g_base->InLogicThread());
+  if (debug_wire_mesh_.exists()) {
+    return debug_wire_mesh_.get();
+  }
+  size_t vert_count = vertices_.size() / 3;
+  size_t tri_count = indices_.size() / 3;
+  if (vert_count == 0 || tri_count == 0) {
+    return nullptr;
+  }
+
+  // Shared verts as-is; one line per unique edge.
+  auto verts = Object::New<MeshBuffer<VertexSimpleFull>>(vert_count);
+  for (size_t i = 0; i < vert_count; ++i) {
+    auto& v = verts->elements[i];
+    v.position[0] = static_cast<float>(vertices_[i * 3]);
+    v.position[1] = static_cast<float>(vertices_[i * 3 + 1]);
+    v.position[2] = static_cast<float>(vertices_[i * 3 + 2]);
+    v.uv[0] = v.uv[1] = 0;
+  }
+  std::unordered_set<uint64_t> seen;
+  std::vector<uint32_t> edges;
+  edges.reserve(tri_count * 6);
+  for (size_t t = 0; t < tri_count; ++t) {
+    for (size_t j = 0; j < 3; ++j) {
+      uint32_t a = indices_[t * 3 + j];
+      uint32_t b = indices_[t * 3 + (j + 1) % 3];
+      uint64_t key = (static_cast<uint64_t>(std::min(a, b)) << 32u)
+                     | static_cast<uint64_t>(std::max(a, b));
+      if (seen.insert(key).second) {
+        edges.push_back(a);
+        edges.push_back(b);
+      }
+    }
+  }
+
+  debug_wire_mesh_ = Object::New<MeshIndexedSimpleFull>();
+  if (vert_count <= 65535) {
+    auto indices = Object::New<MeshIndexBuffer16>(edges.size());
+    for (size_t i = 0; i < edges.size(); ++i) {
+      indices->elements[i] = static_cast<uint16_t>(edges[i]);
+    }
+    debug_wire_mesh_->SetIndexData(indices);
+  } else {
+    auto indices = Object::New<MeshIndexBuffer32>(edges.size(), edges.data());
+    debug_wire_mesh_->SetIndexData(indices);
+  }
+  debug_wire_mesh_->SetData(verts);
+  return debug_wire_mesh_.get();
+}
+
+auto CollisionMeshAsset::GetDebugMesh() -> MeshIndexedObjectSplit* {
+  assert(g_base->InLogicThread());
+  if (debug_mesh_.exists()) {
+    return debug_mesh_.get();
+  }
+  size_t tri_count = indices_.size() / 3;
+  if (tri_count == 0) {
+    return nullptr;
+  }
+  size_t vert_count = tri_count * 3;
+
+  auto v_static = Object::New<MeshBuffer<VertexObjectSplitStatic>>(vert_count);
+  auto v_dynamic =
+      Object::New<MeshBuffer<VertexObjectSplitDynamic>>(vert_count);
+  for (size_t t = 0; t < tri_count; ++t) {
+    Vector3f p[3];
+    for (size_t j = 0; j < 3; ++j) {
+      size_t vi = indices_[t * 3 + j];
+      assert(vi * 3 + 2 < vertices_.size());
+      p[j] = Vector3f(static_cast<float>(vertices_[vi * 3]),
+                      static_cast<float>(vertices_[vi * 3 + 1]),
+                      static_cast<float>(vertices_[vi * 3 + 2]));
+    }
+    Vector3f n = Vector3f::Cross(p[1] - p[0], p[2] - p[0]);
+    if (n.LengthSquared() > 0.0f) {
+      n = n.Normalized();
+    } else {
+      n = Vector3f(0.0f, 1.0f, 0.0f);
+    }
+    for (size_t j = 0; j < 3; ++j) {
+      auto& vs = v_static->elements[t * 3 + j];
+      vs.uv[0] = vs.uv[1] = 0;
+      auto& vd = v_dynamic->elements[t * 3 + j];
+      vd.position[0] = p[j].x;
+      vd.position[1] = p[j].y;
+      vd.position[2] = p[j].z;
+      vd.normal[0] = static_cast<int16_t>(n.x * 32767.0f);
+      vd.normal[1] = static_cast<int16_t>(n.y * 32767.0f);
+      vd.normal[2] = static_cast<int16_t>(n.z * 32767.0f);
+      vd.padding[0] = vd.padding[1] = 0;
+    }
+  }
+
+  debug_mesh_ = Object::New<MeshIndexedObjectSplit>();
+  if (vert_count <= 65535) {
+    auto indices = Object::New<MeshIndexBuffer16>(vert_count);
+    for (size_t i = 0; i < vert_count; ++i) {
+      indices->elements[i] = static_cast<uint16_t>(i);
+    }
+    debug_mesh_->SetIndexData(indices);
+  } else {
+    auto indices = Object::New<MeshIndexBuffer32>(vert_count);
+    for (size_t i = 0; i < vert_count; ++i) {
+      indices->elements[i] = static_cast<uint32_t>(i);
+    }
+    debug_mesh_->SetIndexData(indices);
+  }
+  debug_mesh_->SetStaticData(v_static);
+  debug_mesh_->SetDynamicData(v_dynamic);
+  return debug_mesh_.get();
 }
 
 auto CollisionMeshAsset::GetMeshData() -> dTriMeshDataID {

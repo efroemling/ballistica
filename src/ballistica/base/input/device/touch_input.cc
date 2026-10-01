@@ -10,7 +10,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"

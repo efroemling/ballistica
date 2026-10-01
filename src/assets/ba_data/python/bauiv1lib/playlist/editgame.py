@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -235,15 +235,19 @@ class PlaylistEditGameWindow(bui.MainWindow):
             v_align='center',
         )
 
-        mesh_trans = _classicassets.meshes.level_select_button_transparent.get()
+        mesh_trans = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=_classicassets.meshes.level_select_button_opaque.get(),
+            mesh_opaque=(
+                _classiccatalogassets.meshes
+            ).level_select_button_opaque.get(),
             mesh_transparent=mesh_trans,
-            mask_texture=_classicassets.textures.map_preview_mask.get(),
+            mask_texture=_classiccatalogassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,

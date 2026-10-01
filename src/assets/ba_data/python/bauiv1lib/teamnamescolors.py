@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _uiv1assets
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -204,7 +203,7 @@ class TeamNamesColorsWindow(PopupWindow):
             name = cast(str, bui.textwidget(query=self._color_text_fields[i]))
             if not name:
                 bui.screenmessage(
-                    _classicassets.strings.profile.name_not_empty,
+                    _uiv1assets.strings.profile.name_not_empty,
                     color=(1, 0, 0),
                 )
                 _builtinassets.audio.error.get().play()
@@ -242,7 +241,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

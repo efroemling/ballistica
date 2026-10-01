@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _uiv1assets
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 
@@ -582,7 +582,7 @@ class PartyQueueWindow(bui.Window):
         if classic.tickets < self._boost_tickets:
             _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                _classicassets.strings.profile.not_enough_tickets,
+                _uiv1assets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             return

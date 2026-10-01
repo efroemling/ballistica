@@ -41,6 +41,12 @@ const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
 
+// Python-terminal input-line text placement (bottom-relative, in
+// base-scale units).
+const float kInputTextX{15.0f};
+const float kInputTextY{14.5f};
+const float kInputTextScale{0.5f};
+
 enum class DevConsoleHAnchor_ {
   kLeft,
   kCenter,
@@ -313,10 +319,15 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   DevButtonStyle_ style;
   bool disabled;
 
+  /// Whether a press plays the standard activate sound. Off for buttons
+  /// whose calls make their own (a window swish, say), so the two don't
+  /// stack.
+  bool sound;
+
   template <typename F>
   Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
-          DevButtonStyle_ style, bool disabled, const F& lambda)
+          DevButtonStyle_ style, bool disabled, bool sound, const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -326,6 +337,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         text_scale{text_scale},
         style{style},
         disabled{disabled},
+        sound{sound},
         mesh(0.0f, 0.0f, 0.0f, width, height,
              NinePatchMesh::BorderForRadius(corner_radius, width, height),
              NinePatchMesh::BorderForRadius(corner_radius, height, width),
@@ -354,7 +366,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
-        PlayActivateSound_();
+        if (sound) {
+          PlayActivateSound_();
+        }
         if (call.exists()) {
           call.get()->Run();
         }
@@ -809,7 +823,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
                            float height, PyObject* call,
                            const char* h_anchor_str, float label_scale,
                            float corner_radius, const char* style_str,
-                           bool disabled) {
+                           bool disabled, bool sound) {
   assert(g_base->InLogicThread());
 
   auto style = ButtonStyleFromStr_(style_str);
@@ -817,7 +831,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
-      disabled, [this, callref = PythonRef::Acquired(call)] {
+      disabled, sound, [this, callref = PythonRef::Acquired(call)] {
         if (callref.get() != Py_None) {
           callref.Call();
         }
@@ -828,12 +842,12 @@ void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
   widgets_.emplace_back(std::make_unique<Button_>(
       "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
-      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
+      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false, true,
       [this] { Exec(); }));
   widgets_.emplace_back(std::make_unique<Button_>(
       "Copy History", 0.4f * bs, DevConsoleHAnchor_::kRight, -75.0f * bs,
       Height() - 18.0f * bs, 72.0f * bs, 15.0f * bs, 4.0 * bs,
-      DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
+      DevButtonStyle_::kNormal, false, true, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }
 
@@ -883,9 +897,52 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
 
   if (button == 1 && python_terminal_visible_) {
     python_terminal_pressed_ = true;
+
+    // With direct text input, a click on the input line places the
+    // carat.
+    float bs = BaseScale();
+    if (CaratShown_() && y < bottom + 32.0f * bs) {
+      if (auto pos = CaratPosAtPoint_(x, y - bottom)) {
+        carat_char_ = *pos;
+        carat_dirty_ = true;
+      }
+    }
   }
 
   return true;
+}
+
+auto DevConsole::CaratShown_() const -> bool {
+  // Where terminal input goes through the platform string-editor dialog,
+  // it draws its own blinking cursor (and two of those flashing at once
+  // looks broken), so we show none. With direct keyboard input (or no
+  // string editor) typing really does land here, so the carat stays.
+  return g_base->ui->UIHasDirectKeyboardInput()
+         || !g_base->platform->HaveStringEditor();
+}
+
+auto DevConsole::CaratPosAtPoint_(float x, float y) -> std::optional<int> {
+  // Undo the input line's draw transform (x/y bottom-relative here).
+  float bs = BaseScale();
+  float scale{kInputTextScale * bs};
+  auto pos = input_text_group_.GetCaratPosAtPoint(
+      input_string_, TextMesh::HAlign::kLeft, TextMesh::VAlign::kNone,
+      (x - kInputTextX * bs) / scale, (y - kInputTextY * bs) / scale,
+      TextGroup::CaratHitMode::kContainingChar);
+  if (!pos.has_value()) {
+    // Some OS-span measure is still cold. Our warm-up on text changes
+    // should generally have beaten any click here, so we're curious
+    // whether this ever happens in practice. (Note: debug builds
+    // deliberately report some warm spans cold; expect this there
+    // occasionally.)
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning, [this] {
+      return "DevConsole: text measures not ready for click-to-position;"
+             " ignoring (len "
+             + std::to_string(Utils::UTF8StringLength(input_string_.c_str()))
+             + ").";
+    });
+  }
+  return pos;
 }
 
 auto DevConsole::Width() -> float {
@@ -925,8 +982,7 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
     if (y > bottom) {
       // If we're not getting fed keyboard events and have a string editor
       // available, invoke it.
-      if (!g_base->ui->UIHasDirectKeyboardInput()
-          && g_base->platform->HaveStringEditor()) {
+      if (!CaratShown_()) {
         InvokeStringEditor_();
       }
     }
@@ -1621,6 +1677,11 @@ void DevConsole::Draw(FrameDef* frame_def) {
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
+      // Get click-to-position measures warming so they're ready before
+      // any click (see CaratPosAtPoint_()).
+      if (CaratShown_()) {
+        g_base->text_graphics->WarmUpCaratMeasuresAsync(input_string_);
+      }
     }
     {
       SimpleComponent c(pass);
@@ -1675,26 +1736,23 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.SetTexture(input_text_group_.GetElementTexture(e));
         {
           auto xf = c.ScopedTransform();
-          c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                      kDevConsoleZDepth);
+          c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
           c.DrawMesh(input_text_group_.GetElementMesh(e));
         }
       }
     }
 
-    // Carat. Skip it entirely on setups where terminal input goes
-    // through the platform string-editor dialog (same condition as our
-    // tap handling) - the dialog draws its own blinking cursor and two
-    // of those flashing at once looks broken. With direct keyboard
-    // input (or no string editor) typing really does land here, so the
-    // carat stays.
-    bool show_carat = g_base->ui->UIHasDirectKeyboardInput()
-                      || !g_base->platform->HaveStringEditor();
+    // Carat.
+    bool show_carat = CaratShown_();
     if (show_carat && (!carat_mesh_.exists() || carat_dirty_)) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
-      UpdateCarat_();
+      if (UpdateCarat_()) {
+        carat_dirty_ = false;
+      }
     }
     millisecs_t app_time = pass->frame_def()->app_time_millisecs();
     millisecs_t since_change = app_time - last_carat_x_change_time_;
@@ -1712,8 +1770,9 @@ void DevConsole::Draw(FrameDef* frame_def) {
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();
-        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                    kDevConsoleZDepth);
+        c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_glow_mesh_.get());
       }
@@ -1723,8 +1782,9 @@ void DevConsole::Draw(FrameDef* frame_def) {
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();
-        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                    kDevConsoleZDepth);
+        c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_mesh_.get());
       }
@@ -1879,7 +1939,7 @@ void DevConsole::ApplyPastedText_(const std::string& text_in) {
   }
 }
 
-void DevConsole::UpdateCarat_() {
+auto DevConsole::UpdateCarat_() -> bool {
   last_carat_x_change_time_ = g_core->AppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
@@ -1887,13 +1947,15 @@ void DevConsole::UpdateCarat_() {
   unichars_clamped.resize(carat_char_);
   auto clamped_str = Utils::UTF8FromUnicode(unichars_clamped);
   // Non-stalling measures: cold OS spans (e.g. just-pasted foreign
-  // text) defer to the background; we keep the previous carat pos for
-  // a beat and a subsequent update picks up the real value.
-  auto carat_x = g_base->text_graphics->TryGetStringWidth(clamped_str);
-  if (!carat_x.has_value()) {
-    return;
+  // text) defer to the background; meanwhile we keep the previous
+  // carat pos (and a stand-in width) and report incomplete so we get
+  // retried.
+  bool complete{true};
+  if (auto carat_x = g_base->text_graphics->TryGetStringWidth(clamped_str)) {
+    carat_x_ = *carat_x;
+  } else {
+    complete = false;
   }
-  carat_x_ = *carat_x;
 
   // Use a base width if we're not covering a char, and use the char's width
   // if we are.
@@ -1901,9 +1963,12 @@ void DevConsole::UpdateCarat_() {
   if (carat_char_ < static_cast<int>(unichars.size())) {
     std::vector<uint32_t> covered_char{unichars[carat_char_]};
     auto covered_char_str = Utils::UTF8FromUnicode(covered_char);
-    width = std::max(3.0f,
-                     g_base->text_graphics->TryGetStringWidth(covered_char_str)
-                         .value_or(14.0f));
+    if (auto char_width =
+            g_base->text_graphics->TryGetStringWidth(covered_char_str)) {
+      width = std::max(3.0f, *char_width);
+    } else {
+      complete = false;
+    }
   }
 
   float height = 32.0f;
@@ -1936,11 +2001,12 @@ void DevConsole::UpdateCarat_() {
   carat_mesh_ = Object::New<NinePatchMesh>(
       -x_extend + x_offset, -y_extend + y_offset, 0.0f, width_fin, height_fin,
       x_border, y_border, x_border, y_border);
+  return complete;
 }
 
 auto DevConsole::GetCaratX_() -> float {
-  if (carat_dirty_) {
-    UpdateCarat_();
+  // (Stay dirty while measures are cold so we keep retrying.)
+  if (carat_dirty_ && UpdateCarat_()) {
     carat_dirty_ = false;
   }
   return carat_x_;

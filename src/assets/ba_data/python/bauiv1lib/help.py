@@ -64,9 +64,13 @@ class HelpWindow(bui.MainWindow):
             scroll_height = target_height
             scroll_bottom = yoffs - scroll_height
         else:
+            # Title and back button (sized like doc-ui windows' on
+            # screen, as of 2026-09-30) share a band at the top; the
+            # scroll area runs from under it down to the target area's
+            # bottom.
             yoffs += 30
-            scroll_height = target_height - 36
-            scroll_bottom = yoffs - 64 - scroll_height
+            scroll_height = target_height - 16
+            scroll_bottom = yoffs - 44 - scroll_height
 
         # In small ui (where we cover the screen), extend our scroll
         # area out to cover any margins between the virtual rect and
@@ -100,12 +104,17 @@ class HelpWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # (Centered at (74, yoffs - 22), on the title.)
+            back_scale = 0.69 if uiscale is bui.UIScale.MEDIUM else 0.57
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(50, yoffs - 45),
+                position=(
+                    74.0 - 30.0 * back_scale,
+                    yoffs - 22.0 - 27.5 * back_scale,
+                ),
                 size=(60, 55),
-                scale=0.8,
+                scale=back_scale,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
                 extra_touch_border_scale=2.0,
@@ -187,13 +196,19 @@ class HelpWindow(bui.MainWindow):
             position=(
                 (sub_center_x, self._sub_height - margin_top - 20)
                 if uiscale is bui.UIScale.SMALL
-                else (width * 0.5, yoffs - 25)
+                else (width * 0.5, yoffs - 22)
             ),
             size=(0, 0),
             text=_classicassets.strings.help.title(
                 app_name=_classicassets.strings.ui.app_name
             ),
-            scale=0.9,
+            # (Medium/large: doc-ui windows' title size on screen, as
+            # of 2026-09-30.)
+            scale=(
+                0.9
+                if uiscale is bui.UIScale.SMALL
+                else 0.78 if uiscale is bui.UIScale.MEDIUM else 0.65
+            ),
             maxwidth=scroll_width * 0.7,
             color=bui.app.ui_v1.title_color,
             h_align='center',

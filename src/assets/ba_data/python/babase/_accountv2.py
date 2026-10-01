@@ -231,6 +231,8 @@ class AccountV2Subsystem:
         accompanying a failure (the native layer renders a recognized
         reason as its own localized builtin string, falling back to
         the error text otherwise).
+
+        :meta private:
         """
         import bacommon.cloud
 

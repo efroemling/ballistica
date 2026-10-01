@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, cast
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
 
@@ -208,7 +207,7 @@ class PartyWindow(bui.Window):
             on_activate_call=self._send_chat_message,
         )
 
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
         bui.widget(edit=txt, down_widget=btn)
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
@@ -644,5 +643,5 @@ class PartyWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         self.close()

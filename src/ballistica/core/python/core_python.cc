@@ -5,6 +5,7 @@
 #include <Python.h>
 #include <marshal.h>
 
+#include <chrono>
 #include <cstdio>
 #include <list>
 #include <mutex>
@@ -13,7 +14,9 @@
 #include <vector>
 
 #include "ballistica/core/generated/python_modules_monolithic.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/core/python/pyc_prewarm.h"
 #include "ballistica/core/python/pyembed.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -123,6 +126,99 @@ void CorePython::InitPython() {
   if (pycache_prefix.has_value()) {
     PyConfig_SetBytesString(&config, &config.pycache_prefix,
                             pycache_prefix->c_str());
+
+    // Monolithic-only: if a bundled pycache_prewarm payload is
+    // present, install it into the pycache_prefix dir now, before the
+    // interpreter exists, so even the earliest imports find warm pycs
+    // (see docs/initiatives/pyc-prewarm-bundling.md).
+    auto data_dir = g_core->platform->GetDataDirectoryMonolithicDefault();
+    PycPrewarmArgs pargs;
+    // Debug override for the payload location (BA_PYC_PREWARM_DIR).
+    auto prewarm_env = g_core->platform->GetEnv("BA_PYC_PREWARM_DIR");
+    pargs.prewarm_dir = prewarm_env.value_or(data_dir + BA_DIRSLASH + "ba_data"
+                                             + BA_DIRSLASH + "pycache_prewarm");
+    if (!g_core->platform->FilePathExists(pargs.prewarm_dir)) {
+      // The common case for non-store builds; debug-level only.
+      g_core->logging->Log(
+          LogName::kBaLifecycle, LogLevel::kDebug,
+          "pyc-prewarm: no payload at '" + pargs.prewarm_dir + "'.");
+    } else {
+      auto starttime = std::chrono::steady_clock::now();
+      pargs.pycache_prefix = *pycache_prefix;
+      char tagbuf[32];
+      snprintf(tagbuf, sizeof(tagbuf), "cpython-%d%d", PY_MAJOR_VERSION,
+               PY_MINOR_VERSION);
+      pargs.cache_tag = tagbuf;
+      pargs.optimize = g_buildconfig.debug_build() ? 0 : 1;
+      pargs.roots.emplace_back(
+          "app", data_dir + BA_DIRSLASH + "ba_data" + BA_DIRSLASH + "python");
+      pargs.roots.emplace_back("site", data_dir + BA_DIRSLASH + "ba_data"
+                                           + BA_DIRSLASH
+                                           + "python-site-packages");
+      // Debug override for the pylib root (BA_PYC_PREWARM_PYLIB_DIR;
+      // dev cmake builds have no bundled pylib to point at). Windows
+      // bundles its stdlib as 'lib' (see the module_search_paths
+      // setup below); other bundled-python platforms use 'pylib'.
+      auto pylib_env = g_core->platform->GetEnv("BA_PYC_PREWARM_PYLIB_DIR");
+      const char* pylib_dirname =
+          g_buildconfig.platform_windows() ? "lib" : "pylib";
+      pargs.roots.emplace_back(
+          "pylib", pylib_env.value_or(data_dir + BA_DIRSLASH + pylib_dirname));
+      // Debug override for thread-count sweeps
+      // (BA_PYC_PREWARM_THREADS).
+      auto threads_env = g_core->platform->GetEnv("BA_PYC_PREWARM_THREADS");
+      if (threads_env.has_value()) {
+        pargs.threads =
+            static_cast<int>(strtol(threads_env->c_str(), nullptr, 10));
+      }
+      // One successful install per app build; later boots cost a
+      // single small read.
+      pargs.marker = std::to_string(kEngineBuildNumber);
+
+      // This is a pure boot optimization: any failure must degrade to
+      // "compile on demand", never take the app down. InstallPycPrewarm
+      // is internally exception-safe, but wrap here too as a belt-and-
+      // suspenders guarantee for the whole pre-interpreter step.
+      PycPrewarmResult presult;
+      std::string prewarm_error;
+      try {
+        presult = InstallPycPrewarm(pargs);
+      } catch (const std::exception& exc) {
+        prewarm_error = exc.what();
+      } catch (...) {
+        prewarm_error = "unknown exception";
+      }
+      auto duration_ms = std::chrono::duration_cast<std::chrono::microseconds>(
+                             std::chrono::steady_clock::now() - starttime)
+                             .count()
+                         / 1000.0;
+      char logbuf[512];
+      if (!prewarm_error.empty()) {
+        snprintf(logbuf, sizeof(logbuf),
+                 "pyc-prewarm: aborted (%s); booting without it.",
+                 prewarm_error.c_str());
+      } else {
+        snprintf(logbuf, sizeof(logbuf),
+                 "pyc-prewarm: installed %d modified %d errored %d noop %d"
+                 " in %.1fms (dirs %.1fms).",
+                 presult.installed, presult.skipped_modified, presult.errored,
+                 static_cast<int>(presult.noop), duration_ms, presult.dirs_ms);
+        // Append a few sample error reasons so a real I/O problem is
+        // diagnosable rather than hidden behind a count.
+        for (const auto& err : presult.errors) {
+          size_t len = strlen(logbuf);
+          if (len < sizeof(logbuf) - 1) {
+            snprintf(logbuf + len, sizeof(logbuf) - len, " [%s]", err.c_str());
+          }
+        }
+      }
+      // Stash for ApplyBaEnvConfig to emit; logging directly here
+      // would be filtered (configured levels aren't applied yet this
+      // early in bring-up). Errors ride the same channel at a level
+      // ApplyBaEnvConfig picks based on whether any errored.
+      pyc_prewarm_summary = logbuf;
+      pyc_prewarm_had_error = !prewarm_error.empty() || presult.errored > 0;
+    }
   }
 
   // In cases where we bundle Python, set up all paths explicitly.

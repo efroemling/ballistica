@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, get_type_hints
 from efro.dataclassio._base import (
     parse_annotated,
     _get_origin,
+    unwrap_newtype,
     SIMPLE_TYPES,
     IOMultiType,
     DCIO_META_ATTR,
@@ -65,7 +66,7 @@ def _check_slotted_reserves_meta(cls: type) -> None:
 
 # How deep we go when prepping nested types (basically for detecting
 # recursive types)
-MAX_RECURSION = 10
+MAX_RECURSION = 20
 
 # Attr name for data we store on dataclass types that have been prepped.
 PREP_ATTR = '_DCIOPREP'
@@ -398,17 +399,19 @@ class PrepSession:
                 assert len(childtypes) in (0, 2)
 
                 # For key types we support Any, str, int,
-                # and Enums with uniform str/int values.
-                if not childtypes or childtypes[0] is typing.Any:
+                # and Enums with uniform str/int values (and NewTypes
+                # of those, handled as the type they wrap).
+                keytype = unwrap_newtype(childtypes[0]) if childtypes else None
+                if not childtypes or keytype is typing.Any:
                     # 'Any' needs no further checks (just checked
                     # per-instance).
                     pass
-                elif childtypes[0] in (str, int):
+                elif keytype in (str, int):
                     # str and int are all good as keys.
                     pass
-                elif issubclass(childtypes[0], Enum):
+                elif issubclass(keytype, Enum):
                     # Allow our usual str or int enum types as keys.
-                    self.prep_enum(childtypes[0], ioattrs=None)
+                    self.prep_enum(keytype, ioattrs=None)
                 else:
                     raise TypeError(
                         f'Dict key type {childtypes[0]} for \'{attrname}\''

@@ -1,17 +1,18 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bauiv1assets.260831a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bauiv1assets.260929`` (bauiv1).
 
 Standard ui chrome the ui_v1 widget layer draws itself with -- window backings,
-button faces, scroll furniture, the ui atlases. Supplied to ui_v1 by the active
-app-mode (see bauiv1.UIAssetSet), so an app-mode can skin the ui by supplying
-its own set instead. Free of any single game concepts; classic-specific art
-belongs in BaClassicAssets.
+button faces, scroll furniture, the ui atlases -- supplied to ui_v1 by the
+active app-mode (see bauiv1.UIAssetSet), so an app-mode can skin the ui by
+supplying its own set instead. Also holds a few classic bits server-rendered
+pages show that await a better home: plus_button, and the economy and profile
+string groups.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bauiv1assets.260831a
+# ba_meta require asset-package 293
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -19,12 +20,18 @@ belongs in BaClassicAssets.
 
 from typing import TYPE_CHECKING
 
+from bacommon.assetpackage import ApverNum
+
 from bauiv1._assetref import AssetGroup
 
-_ASSET_PACKAGE = 'a-0.bauiv1assets.260831a'
+from babase import LangStrDir
+
+# a-0.bauiv1assets.260929
+_ASSET_PACKAGE = ApverNum(293)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
+    from babase import LangStr
 
     class AudioGroup:
         """
@@ -37,7 +44,6 @@ if TYPE_CHECKING:
         """
 
         score_increase: SoundHandle
-        swish: SoundHandle
         swish2: SoundHandle
         swish3: SoundHandle
 
@@ -84,6 +90,341 @@ if TYPE_CHECKING:
         window_hsmall_vsmall_opaque: MeshHandle
         window_hsmall_vsmall_transparent: MeshHandle
 
+    class StringsEconomyGroup:
+        """
+        ::
+
+            Screen-messages about currency: grants and related notices.
+
+            See source for the full asset list.
+        """
+
+        def received_tickets(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Confirmation of how many tickets were received.
+
+                English: (one) "Received # Ticket!" / (other) "Received #
+                Tickets!"
+            """
+
+        def you_got_tokens(self, *, tokens: int) -> LangStr:
+            """
+            ::
+
+                Confirmation effect sent to game clients when tokens are
+                credited (store purchases, promo codes, and other grant flows).
+
+                English: (one) "You got # Token!" / (other) "You got # Tokens!"
+            """
+
+    class StringsProfileGroup:
+        """
+        ::
+
+            Player-profile editor strings: create/edit/delete profiles, the
+            local/global/account profile explanations, and global-name upgrade
+            flow.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling the account-based profile.
+        #:
+        #:     English: "(account profile)"
+        account_profile: LangStr
+
+        def account_profile_info(self, *, icons: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Explanation of what an account profile is.
+
+                English: "This profile uses your account name and icon {icons}.
+                Create custom profiles for different names or icons."
+            """
+
+        def available(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown when a chosen global name is available.
+
+                English: "The name {name} is available."
+            """
+
+        #: ::
+        #:
+        #:     Error when trying to delete the account profile.
+        #:
+        #:     English: "You can't delete your account profile."
+        cant_delete_account_profile: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for the profile character.
+        #:
+        #:     English: "character"
+        character: LangStr
+
+        def checking_availability(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown while checking global-name availability.
+
+                English: "Checking availability for "{name}"..."
+            """
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile color.
+        #:
+        #:     English: "color"
+        color: LangStr
+
+        def delete_confirm(self, *, profile: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation before deleting a named profile.
+
+                English: "Delete '{profile}'?"
+            """
+
+        #: ::
+        #:
+        #:     Button to get more player characters.
+        #:
+        #:     English: "Get More Characters..."
+        get_more_characters: LangStr
+
+        #: ::
+        #:
+        #:     Button to get more profile icons.
+        #:
+        #:     English: "Get More Icons..."
+        get_more_icons: LangStr
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling a global profile.
+        #:
+        #:     English: "(global profile)"
+        global_profile: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of global profiles in the edit window.
+        #:
+        #:     English: "Global player profiles are guaranteed to have unique
+        #:     names worldwide. They also include custom icons."
+        global_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile highlight color.
+        #:
+        #:     English: "highlight"
+        highlight: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile icon.
+        #:
+        #:     English: "icon"
+        icon: LangStr
+
+        def in_game_clipped_name(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Preview of how a profile name appears in-game (possibly
+                clipped).
+
+                English: "In-game: {name}"
+            """
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling a local profile.
+        #:
+        #:     English: "(local profile)"
+        local_profile: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of local profiles in the edit window.
+        #:
+        #:     English: "Local player profiles have no icons and their names are
+        #:     not guaranteed to be unique. Upgrade to a global profile to
+        #:     reserve a unique name and add a custom icon."
+        local_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Label for the profile name input field.
+        #:
+        #:     English: "Player Name"
+        name_description: LangStr
+
+        #: ::
+        #:
+        #:     Error when the profile name field is empty.
+        #:
+        #:     English: "Name cannot be empty!"
+        name_not_empty: LangStr
+
+        #: ::
+        #:
+        #:     Error when the player lacks enough tickets for an upgrade.
+        #:
+        #:     English: "Not enough Tickets!"
+        not_enough_tickets: LangStr
+
+        #: ::
+        #:
+        #:     Error when no item is selected.
+        #:
+        #:     English: "Nothing is selected!"
+        nothing_selected: LangStr
+
+        #: ::
+        #:
+        #:     Error when a profile name is already taken.
+        #:
+        #:     English: "A profile with that name already exists."
+        profile_already_exists: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while a purchase is processing.
+        #:
+        #:     English: "Purchasing..."
+        purchasing: LangStr
+
+        #: ::
+        #:
+        #:     Title of the edit-profile window.
+        #:
+        #:     English: "Edit Profile"
+        title_edit: LangStr
+
+        #: ::
+        #:
+        #:     Title of the new-profile window.
+        #:
+        #:     English: "New Profile"
+        title_new: LangStr
+
+        def unavailable(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown when a chosen global name is taken.
+
+                English: ""{name}" is unavailable. Try another name."
+            """
+
+        #: ::
+        #:
+        #:     Explanation shown in the upgrade-to-global window.
+        #:
+        #:     English: "This will reserve your player name worldwide and allow
+        #:     you to assign a custom icon to it."
+        upgrade_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Button/title to upgrade a profile to global.
+        #:
+        #:     English: "Upgrade to Global Profile"
+        upgrade_to_global: LangStr
+
+    class StringsProfilesGroup:
+        """
+        ::
+
+            Player-profile management UI: profile lists, creation, and related
+            hints.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Single-line parenthetical hint; keep the parentheses.
+        #:
+        #:     English: "(custom player names and appearances for this account)"
+        explanation: LangStr
+
+        #: ::
+        #:
+        #:     Single-line parenthetical hint under the legacy-profiles heading;
+        #:     keep the parentheses.
+        #:
+        #:     English: "(stored on this device and your legacy account; cloud
+        #:     profiles are used when available)"
+        legacy_explanation: LangStr
+
+        #: ::
+        #:
+        #:     Section heading for the locally-stored legacy player profiles on
+        #:     the inventory page (shown below or instead of the cloud
+        #:     profiles).
+        #:
+        #:     English: "Legacy Profiles"
+        legacy_title: LangStr
+
+        #: ::
+        #:
+        #:     Error screen-message when creating another player profile would
+        #:     exceed the account limit.
+        #:
+        #:     English: "Max number of profiles reached."
+        max_reached: LangStr
+
+        #: ::
+        #:
+        #:     Button label.
+        #:
+        #:     English: "New Profile"
+        new_profile: LangStr
+
+        #: ::
+        #:
+        #:     Small toggle-button label on the inventory page switching the
+        #:     profile list from legacy profiles back to cloud profiles.
+        #:
+        #:     English: "Show Cloud Profiles"
+        show_cloud_profiles: LangStr
+
+        #: ::
+        #:
+        #:     Section heading / window title for player-profile management.
+        #:
+        #:     English: "Player Profiles"
+        title: LangStr
+
+    class StringsGroup:
+        """
+        ::
+
+            Shared ui vocabulary the game and server-rendered pages (store,
+            inbox, profile editor) both show -- character, game and map names
+            and descriptions plus the profile and economy strings those pages
+            use.
+
+            See source for the full asset list.
+        """
+
+        economy: StringsEconomyGroup
+        profile: StringsProfileGroup
+        profiles: StringsProfilesGroup
+
     class TexturesGroup:
         """
         ::
@@ -102,8 +443,8 @@ if TYPE_CHECKING:
         circle_soft: TextureHandle
         glow: TextureHandle
         menu_button: TextureHandle
-        nub: TextureHandle
         page_left_right: TextureHandle
+        plus_button: TextureHandle
         scroll_widget: TextureHandle
         scroll_widget_glow: TextureHandle
         shadow_sharp: TextureHandle
@@ -129,8 +470,8 @@ if TYPE_CHECKING:
         window_hsmall_vmed: TextureHandle
         window_hsmall_vsmall: TextureHandle
 
-    #: The ``audio`` group - 4 assets (``score_increase``, ``swish``,
-    #: ``swish2``, ``swish3``). Full list in source.
+    #: The ``audio`` group - 3 assets (``score_increase``, ``swish2``,
+    #: ``swish3``). Full list in source.
     audio: AudioGroup
 
     #: The ``meshes`` group - 32 assets (``button_back_opaque``,
@@ -139,18 +480,17 @@ if TYPE_CHECKING:
     #: list in source.
     meshes: MeshesGroup
 
+    #: The ``strings`` group - 37 strings (``economy``, ``profile``,
+    #: ``profiles``, and 34 more). Full list in source.
+    strings: StringsGroup
+
     #: The ``textures`` group - 34 assets (``back_icon``, ``bomb_button``,
     #: ``button_square``, ``button_square_wide``, ``circle``, and 29 more). Full
     #: list in source.
     textures: TexturesGroup
 
 _TREE = {
-    'audio': {
-        'score_increase': 's',
-        'swish': 's',
-        'swish2': 's',
-        'swish3': 's',
-    },
+    'audio': {'score_increase': 's', 'swish2': 's', 'swish3': 's'},
     'meshes': {
         'button_back_opaque': 'm',
         'button_back_small_opaque': 'm',
@@ -185,6 +525,51 @@ _TREE = {
         'window_hsmall_vsmall_opaque': 'm',
         'window_hsmall_vsmall_transparent': 'm',
     },
+    'strings': {
+        'economy': {
+            'received_tickets': ('count',),
+            'you_got_tokens': ('tokens',),
+        },
+        'profile': {
+            'account_profile': (),
+            'account_profile_info': ('icons',),
+            'available': ('name',),
+            'cant_delete_account_profile': (),
+            'character': (),
+            'checking_availability': ('name',),
+            'color': (),
+            'delete_confirm': ('profile',),
+            'get_more_characters': (),
+            'get_more_icons': (),
+            'global_profile': (),
+            'global_profile_info': (),
+            'highlight': (),
+            'icon': (),
+            'in_game_clipped_name': ('name',),
+            'local_profile': (),
+            'local_profile_info': (),
+            'name_description': (),
+            'name_not_empty': (),
+            'not_enough_tickets': (),
+            'nothing_selected': (),
+            'profile_already_exists': (),
+            'purchasing': (),
+            'title_edit': (),
+            'title_new': (),
+            'unavailable': ('name',),
+            'upgrade_profile_info': (),
+            'upgrade_to_global': (),
+        },
+        'profiles': {
+            'explanation': (),
+            'legacy_explanation': (),
+            'legacy_title': (),
+            'max_reached': (),
+            'new_profile': (),
+            'show_cloud_profiles': (),
+            'title': (),
+        },
+    },
     'textures': {
         'back_icon': 't',
         'bomb_button': 't',
@@ -194,8 +579,8 @@ _TREE = {
         'circle_soft': 't',
         'glow': 't',
         'menu_button': 't',
-        'nub': 't',
         'page_left_right': 't',
+        'plus_button': 't',
         'scroll_widget': 't',
         'scroll_widget_glow': 't',
         'shadow_sharp': 't',
@@ -227,4 +612,5 @@ _TREE = {
 if not TYPE_CHECKING:
     audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
     meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
     textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

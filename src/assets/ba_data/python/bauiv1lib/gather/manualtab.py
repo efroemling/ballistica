@@ -12,9 +12,8 @@ from typing import TYPE_CHECKING, cast, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _uiv1assets
 from bauiv1 import _builtinassets
-from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
@@ -342,8 +341,8 @@ class ManualGatherTab(GatherTab):
         )
         bui.widget(edit=btn, right_widget=savebutton)
         bui.widget(edit=savebutton, left_widget=btn, up_widget=txt2)
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
-        bui.textwidget(edit=txt2, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
+        bui.textwidget(edit=txt2, on_submit_call=btn.activate)
         v -= 45
 
         self._check_button = bui.textwidget(
@@ -509,7 +508,7 @@ class ManualGatherTab(GatherTab):
 
     def _no_favorite_selected_error(self) -> None:
         bui.screenmessage(
-            _classicassets.strings.profile.nothing_selected, color=(1, 0, 0)
+            _uiv1assets.strings.profile.nothing_selected, color=(1, 0, 0)
         )
         _builtinassets.audio.error.get().play()
 
@@ -954,7 +953,7 @@ class ManualGatherTab(GatherTab):
         tscl = 0.85
         tspc = 25
 
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         bui.textwidget(
             parent=container,
             position=(c_width * 0.5 - 10, v2),

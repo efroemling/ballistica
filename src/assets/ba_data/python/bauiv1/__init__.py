@@ -33,7 +33,6 @@ from babase import (
     AppTimer,
     asset_loads_allowed,
     balog,
-    Call,
     CallPartial,
     CallStrict,
     DevConsoleButtonDef,
@@ -58,6 +57,7 @@ from babase import (
     do_once,
     existing,
     fade_screen,
+    get_auto_screen_inset_amount,
     get_display_resolution,
     get_input_idle_time,
     get_ip_address_type,
@@ -79,6 +79,7 @@ from babase import (
     is_browser_likely_available,
     is_xcode_build,
     lock_all_input,
+    logic_thread_submit,
     LoginAdapter,
     LoginInfo,
     LangStr,
@@ -119,20 +120,27 @@ from babase import (
     UIScale,
     unlock_all_input,
     utc_now_cloud,
-    WeakCall,
+    warm_up_string_measure,
     WeakCallPartial,
     WeakCallStrict,
     workspaces_in_use,
 )
+
+# Deprecated names deliberately kept in the public api for compat;
+# imported separately so the deprecation ignore stays targeted.
+from babase import Call  # type: ignore[deprecated]
+from babase import WeakCall  # type: ignore[deprecated]
 
 from _bauiv1 import (
     buttonwidget,
     checkboxwidget,
     columnwidget,
     containerwidget,
+    get_depiction_control,
     get_qrcode_texture,
     get_selected_widget,
     get_special_widget,
+    play_swish,
     apmeshget,
     apsoundget,
     aptextureget,
@@ -153,6 +161,7 @@ from _bauiv1 import (
     Texture,
     textwidget,
     uibounds,
+    ViewerSource,
     Widget,
     widget,
     widget_by_id,
@@ -167,12 +176,14 @@ from bauiv1._assetref import (
 )
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
+    snap_slider_value,
     uicleanupcheck,
     RootUIUpdatePause,
     UIOpenState,
 )
 from bauiv1._generated.ui_asset_set import UIAssetSet, set_ui_asset_set
 from bauiv1._appsubsystem import UIV1AppSubsystem
+from bauiv1._viewer import Viewer, ViewerRegistry
 from bauiv1._window import (
     Window,
     MainWindowState,
@@ -236,11 +247,13 @@ __all__ = [
     'do_once',
     'existing',
     'fade_screen',
+    'get_auto_screen_inset_amount',
     'get_display_resolution',
     'get_input_idle_time',
     'get_ip_address_type',
     'get_legacy_langdata',
     'get_max_graphics_quality',
+    'get_depiction_control',
     'get_qrcode_texture',
     'get_replays_dir',
     'get_selected_widget',
@@ -269,6 +282,7 @@ __all__ = [
     'is_xcode_build',
     'Keyboard',
     'lock_all_input',
+    'logic_thread_submit',
     'LoginAdapter',
     'LoginInfo',
     'LangStr',
@@ -293,6 +307,7 @@ __all__ = [
     'Permission',
     'Plugin',
     'PluginSpec',
+    'play_swish',
     'pushcall',
     'quit',
     'QuitType',
@@ -326,6 +341,7 @@ __all__ = [
     'textwidget',
     'timestring',
     'uibounds',
+    'snap_slider_value',
     'uicleanupcheck',
     'uilog',
     'UIOpenState',
@@ -333,6 +349,10 @@ __all__ = [
     'UIV1AppSubsystem',
     'unlock_all_input',
     'utc_now_cloud',
+    'Viewer',
+    'ViewerRegistry',
+    'ViewerSource',
+    'warm_up_string_measure',
     'WeakCall',
     'WeakCallPartial',
     'WeakCallStrict',

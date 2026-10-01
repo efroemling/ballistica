@@ -33,6 +33,9 @@ from bacommon.assetspec._index import (
     ASSET_INDEX_MIN_BUILD,
     AssetBucketKind,
     AssetIndexContext,
+    WIRE_DIGEST_LENGTH,
+    wire_digest,
+    digest_matches,
     AssetIndexError,
     spec_kind,
 )
@@ -48,6 +51,9 @@ __all__ = [
     'ASSET_INDEX_MIN_BUILD',
     'AssetBucketKind',
     'AssetIndexContext',
+    'WIRE_DIGEST_LENGTH',
+    'wire_digest',
+    'digest_matches',
     'AssetIndexError',
     'spec_kind',
 ]

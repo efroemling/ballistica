@@ -5,7 +5,6 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
@@ -30,8 +29,12 @@ class ConfirmWindow:
         cancel_text: str | bui.Lstr | bui.LangStr | None = None,
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
+        scale: float | None = None,
     ):
+        """Show the window.
 
+        ``scale`` overrides the window's default per-ui-scale scale.
+        """
         ui = bui.app.ui_v1
 
         # Make sure our widgets have globally unique ids.
@@ -69,9 +72,13 @@ class ConfirmWindow:
             toolbar_visibility='menu_minimal_no_back',
             parent=bui.get_special_widget('overlay_stack'),
             scale=(
-                1.9
-                if uiscale is bui.UIScale.SMALL
-                else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                scale
+                if scale is not None
+                else (
+                    1.9
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                )
             ),
             scale_origin_stack_offset=scale_origin,
             darken_behind=True,
@@ -179,7 +186,7 @@ class QuitWindow:
             ui.quit_window.delete()
             ui.quit_window = None
         if swish:
-            _uiv1assets.audio.swish.get().play()
+            bui.play_swish()
 
         # Generally Macs say Quit and other stuff says Exit
         strs = _classicassets.strings.ui

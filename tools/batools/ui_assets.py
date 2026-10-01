@@ -535,6 +535,11 @@ def _write(outpath: str, contents: str) -> None:
         with open(outpath, encoding='utf-8') as infile:
             existing = infile.read()
     if existing == contents:
+        # Leave the bytes alone (no spurious rebuilds downstream) but
+        # bump the mtime so make sees the target as newer than the
+        # spec; otherwise a spec change that leaves this output
+        # unchanged keeps it perpetually 'out of date'.
+        os.utime(outpath, None)
         return
     with open(outpath, 'w', encoding='utf-8') as outfile:
         outfile.write(contents)

@@ -64,11 +64,13 @@ class LeagueRankWindow(bui.MainWindow):
         # our scroll clamp doesn't stop short of the screen edges.
         self._width = 1630 if uiscale is bui.UIScale.SMALL else 1120
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            1000
-            if uiscale is bui.UIScale.SMALL
-            else 710 if uiscale is bui.UIScale.MEDIUM else 800
-        )
+        self._height = 1000 if uiscale is bui.UIScale.SMALL else 710
+
+        # Large ui-scale is medium's layout drawn smaller, by the same
+        # ratio doc-ui windows use between the two (root scale 0.9 vs
+        # 0.65); nothing here benefits from a bigger window. Popups we
+        # open shrink by it too, keeping their size relative to us.
+        self._large_shrink = 0.65 / 0.9 if uiscale is bui.UIScale.LARGE else 1.0
         self._r = 'coopSelectWindow'
         self._xoffs = 40
 
@@ -82,9 +84,7 @@ class LeagueRankWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.13
-            if uiscale is bui.UIScale.SMALL
-            else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
+            1.13 if uiscale is bui.UIScale.SMALL else 0.93 * self._large_shrink
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -140,12 +140,21 @@ class LeagueRankWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # Sized to match doc-ui windows' back/close button on screen
+            # (scale 0.88 under their 0.9 medium root scale; ours is
+            # 0.93), keeping the center it has always had.
+            back_size = (50.0, 50.0) if auxiliary_style else (60.0, 55.0)
+            back_scale = 0.88 * 0.9 / 0.93
+            back_center = (75.0 + x_inset + 36.0, yoffs - 27.0)
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(75 + x_inset, yoffs - 60),
-                size=(60, 55),
-                scale=1.2,
+                position=(
+                    back_center[0] - 0.5 * back_size[0] * back_scale,
+                    back_center[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 label=bui.charstr(
                     bui.SpecialChar.CLOSE
@@ -176,7 +185,8 @@ class LeagueRankWindow(bui.MainWindow):
             ),
             center_small_content=True,
             center_small_content_horizontally=True,
-            border_opacity=0.4,
+            # Outside small ui our content always fits; no outline.
+            border_opacity=0.4 if uiscale is bui.UIScale.SMALL else 0.0,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
@@ -205,15 +215,18 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
+            # (Outside small ui, centered on the back button and sized
+            # like doc-ui windows' titles on screen: 1.0 under their 0.9
+            # medium root scale; ours is 0.93.)
             position=(
                 self._width * 0.5,
-                yoffs - (55 if uiscale is bui.UIScale.SMALL else 30),
+                yoffs - (55 if uiscale is bui.UIScale.SMALL else 27),
             ),
             size=(0, 0),
             text=_classicassets.strings.league.league_rank,
             h_align='center',
             color=bui.app.ui_v1.title_color,
-            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.3,
+            scale=1.2 if uiscale is bui.UIScale.SMALL else 0.9 / 0.93,
             maxwidth=600,
             v_align='center',
         )
@@ -231,9 +244,14 @@ class LeagueRankWindow(bui.MainWindow):
             573.0 + self._margin_bottom + self._margin_top
         )
 
-        # For fullscreen scrollable, account for toolbar.
+        # For fullscreen scrollable, account for toolbar. Elsewhere, drop
+        # the empty space below our lowest content (the 'More...'
+        # button), which only small ui's full-screen layout wants; this
+        # way everything fits our scroll area without scrolling.
         if uiscale is bui.UIScale.SMALL:
             self._subcontainerheight += 53
+        else:
+            self._subcontainerheight -= 80
 
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
@@ -337,6 +355,7 @@ class LeagueRankWindow(bui.MainWindow):
             width=460,
             height=150,
             origin_widget=self._activity_mult_button,
+            scale=self._popup_scale(1.5),
         )
 
     def _on_up_to_date_bonus_press(self) -> None:
@@ -356,6 +375,7 @@ class LeagueRankWindow(bui.MainWindow):
             width=460,
             height=130,
             origin_widget=self._up_to_date_bonus_button,
+            scale=self._popup_scale(1.5),
         )
 
     def _on_trophies_press(self) -> None:
@@ -368,9 +388,21 @@ class LeagueRankWindow(bui.MainWindow):
             TrophiesWindow(
                 position=prtb.get_screen_space_center(),
                 data=info,
+                scale=self._popup_scale(1.65),
             )
         else:
             _builtinassets.audio.error.get().play()
+
+    def _popup_scale(self, medium_scale: float) -> float | None:
+        """Scale for a popup we open, given its medium ui-scale scale.
+
+        None (the popup's own default) at small ui-scale. At large it is
+        the medium scale shrunk as we are, so popups keep the same size
+        relative to us at medium and large.
+        """
+        if bui.app.ui_v1.uiscale is bui.UIScale.SMALL:
+            return None
+        return medium_scale * self._large_shrink
 
     def _on_power_ranking_query_response(
         self, data: dict[str, Any] | None
@@ -875,7 +907,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
     def _on_president_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicleaguepresidency as lroutes
 
         from bauiv1lib.league.presidency import LeaguePresidencyUIController
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -901,7 +933,7 @@ class LeagueRankWindow(bui.MainWindow):
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     LeaguePresidencyUIController().create_window,
-                    dui2.Request('/', args={'season': self._season}),
+                    lroutes.Root(season=self._season),
                     origin_widget=self._president_button,
                     auxiliary_style=False,
                 ),
@@ -1053,7 +1085,6 @@ class LeagueRankWindow(bui.MainWindow):
                 parent=self._subcontainer,
                 button_id=f'{self.main_window_id_prefix}|season',
                 position=(self._xoffs + 390, v - 45),
-                width=150,
                 button_size=(200, 50),
                 choices=season_choices,
                 on_value_change_call=bui.WeakCallPartial(
@@ -1061,6 +1092,8 @@ class LeagueRankWindow(bui.MainWindow):
                 ),
                 choices_display=season_choices_display,
                 current_choice=self._season,
+                # (Medium's default popup-menu scale.)
+                scale=self._popup_scale(1.65),
             )
             if popup_was_selected:
                 bui.containerwidget(
@@ -1378,7 +1411,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        _uiv1assets.audio.swish.get().play()
+        bui.play_swish()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

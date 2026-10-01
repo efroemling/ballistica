@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from bacommon.langstr._core import LangStrSpecResource, PackageStructure
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from bacommon.langstr._core import LangStrSpec
 
 #: A wrapper's compact runtime tree: a leaf is its ordered param-keyword
@@ -25,7 +26,9 @@ if TYPE_CHECKING:
 type WrapperTree = dict[str, 'tuple[str, ...] | WrapperTree']
 
 
-def package_structure(apverid: str, tree: WrapperTree) -> PackageStructure:
+def package_structure(
+    apvernum: ApverNum, tree: WrapperTree
+) -> PackageStructure:
     """Build a :class:`PackageStructure` from a wrapper's runtime ``_TREE``.
 
     Flattens the nested tree into the ``{logical-path: param-keywords}`` map
@@ -34,7 +37,7 @@ def package_structure(apverid: str, tree: WrapperTree) -> PackageStructure:
     """
     flat: dict[str, tuple[str, ...]] = {}
     _flatten_tree(tree, '', flat)
-    return PackageStructure(apverid, flat)
+    return PackageStructure(apvernum, flat)
 
 
 # (Module-level rather than a closure inside package_structure; a
@@ -109,8 +112,8 @@ class _LstrMaker:
 
     __slots__ = ('_apverid', '_name')
 
-    def __init__(self, apverid: str, name: str) -> None:
-        self._apverid = apverid
+    def __init__(self, apvernum: ApverNum, name: str) -> None:
+        self._apverid = apvernum
         self._name = name
 
     def __call__(
@@ -134,9 +137,9 @@ class LangStrDir:
     __slots__ = ('_apverid', '_tree', '_prefix')
 
     def __init__(
-        self, apverid: str, tree: WrapperTree, prefix: str = ''
+        self, apvernum: ApverNum, tree: WrapperTree, prefix: str = ''
     ) -> None:
-        self._apverid = apverid
+        self._apverid = apvernum
         self._tree = tree
         self._prefix = prefix
 

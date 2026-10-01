@@ -1,296 +1,380 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""UI functionality for Modding Tools."""
+"""Dev tools settings, as a doc-ui page.
 
-from typing import override
+A client-local doc-ui domain like the other settings pages: the page
+is authored here, its controls mirror the config in typed page state,
+and every control is a typed local action.
+"""
 
-# Note: import the submodule explicitly — attribute access on bare
-# `babase` only works if something else happened to import it first.
-import babase.modutils
+from dataclasses import dataclass, replace
+from enum import Enum
+from typing import TYPE_CHECKING, Annotated, override, assert_never
+
+from efro.dataclassio import ioprepped, IOAttrs
+from bacommon.langstr import LangStrSpecValue
+import bacommon.docui.v2 as dui2
+from bacommon.docui.presets import section_button
+from bacommon.docui.routes import (
+    DocUIRoute,
+    DocUILocalActionBase,
+    DocUIState,
+    PressSound,
+    family_members,
+)
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _classicassets
+from bauiv1lib.docui import TypedDocUIController
 
-from bauiv1lib.confirm import ConfirmWindow
-from bauiv1lib.config import ConfigCheckBox
-from bauiv1lib.utils import get_screen_margins, scroll_fade_top
+if TYPE_CHECKING:
+    from typing import Literal
+
+    from bacommon.docui import DocUIResponse
+    from bacommon.langstr import LangStrSpec
+
+    from bauiv1lib.docui import DocUILocalAction
 
 _devstrs = _classicassets.strings.settings.dev_tools
 
+_SHOW_BUTTON_KEY = 'Show Dev Console Button'
+_BUTTON_SIZE_KEY = 'Dev Console Button Size'
+_BUTTON_STYLE_KEY = 'Dev Console Button Style'
+_BUTTON_POS_KEYS = ('Dev Console Button Pos X', 'Dev Console Button Pos Y')
 
-class DevToolsWindow(bui.MainWindow):
-    """Window for accessing modding tools."""
+# How often a size drag re-applies the config (the button resizes live).
+_SIZE_DRAG_INTERVAL = 0.1
 
-    def __init__(
+
+class DevConsoleButtonStyle(Enum):
+    """Color scheme for the dev console button (config values)."""
+
+    GREY = 'grey'
+    GREEN = 'green'
+    PURPLE = 'purple'
+    HOWDY = 'howdy'
+
+
+class DevToolsRoute(DocUIRoute):
+    """Family class for the dev tools routes."""
+
+    @override
+    @classmethod
+    def get_route_types(cls) -> tuple[type[DocUIRoute], ...]:
+        return family_members(AnyDevToolsRoute)
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Two sections of controls: enough to want the tall form.
+        return dui2.WindowLayout.SMALL_TALLER
+
+
+@ioprepped
+@dataclass
+class Root(DevToolsRoute, path='/'):
+    """The dev tools page."""
+
+
+AnyDevToolsRoute = Root
+
+
+@ioprepped
+@dataclass
+class DevToolsState(DocUIState, state_id='settings.devtools'):
+    """The page's values, mirroring the config."""
+
+    show_dev_console_button: Annotated[bool, IOAttrs('sb')] = False
+    dev_console_button_size: Annotated[float, IOAttrs('bs')] = 1.0
+    dev_console_button_style: Annotated[
+        DevConsoleButtonStyle, IOAttrs('bt')
+    ] = DevConsoleButtonStyle.GREY
+
+
+class DevToolsLocalAction(DocUILocalActionBase):
+    """Family class for the dev tools local-actions."""
+
+    @override
+    @classmethod
+    def get_action_types(cls) -> tuple[type[DocUILocalActionBase], ...]:
+        return family_members(AnyDevToolsLocalAction)
+
+
+@ioprepped
+@dataclass
+class ApplyShowButton(DevToolsLocalAction, name='apply_show_button'):
+    """Write the show-dev-console-button setting to the config."""
+
+
+@ioprepped
+@dataclass
+class ApplyButtonSetting(DevToolsLocalAction, name='apply_button_setting'):
+    """Write the dev-console-button setting that changed to the config."""
+
+    #: Save to disk too (a settled value), or just apply (mid-drag).
+    commit: Annotated[bool, IOAttrs('c')] = True
+
+
+@ioprepped
+@dataclass
+class ResetButton(DevToolsLocalAction, name='reset_button'):
+    """Put the dev console button back to its default look and spot."""
+
+
+@ioprepped
+@dataclass
+class CreateUserSystemScripts(DevToolsLocalAction, name='create_scripts'):
+    """Copy the system scripts out to the user dir for editing."""
+
+
+@ioprepped
+@dataclass
+class DeleteUserSystemScripts(DevToolsLocalAction, name='delete_scripts'):
+    """Remove the user copy of the system scripts (after confirming)."""
+
+    @override
+    @classmethod
+    def get_press_sound(cls) -> PressSound:
+        return PressSound.SWISH
+
+
+AnyDevToolsLocalAction = (
+    ApplyShowButton
+    | ApplyButtonSetting
+    | ResetButton
+    | CreateUserSystemScripts
+    | DeleteUserSystemScripts
+)
+
+
+class DevToolsController(
+    TypedDocUIController[AnyDevToolsRoute, AnyDevToolsLocalAction]
+):
+    """Doc-ui controller for the dev tools page."""
+
+    @override
+    @classmethod
+    def get_route_type(cls) -> type[DevToolsRoute]:
+        return DevToolsRoute
+
+    @override
+    @classmethod
+    def get_local_action_type(cls) -> type[DevToolsLocalAction]:
+        return DevToolsLocalAction
+
+    @override
+    def get_window_toolbar_visibility(
         self,
-        transition: str | None = 'in_right',
-        origin_widget: bui.Widget | None = None,
-    ):
+    ) -> Literal['menu_full', 'menu_minimal']:
+        # As the other settings windows: minimal mid-game.
+        return 'menu_full' if bui.in_main_menu() else 'menu_minimal'
 
-        app = bui.app
-        assert app.classic is not None
+    @override
+    def fulfill_route(self, route: AnyDevToolsRoute) -> DocUIResponse:
+        match route:
+            case Root():
+                _preload_modules()
+                return _page()
+            case _:
+                assert_never(route)
 
-        uiscale = app.ui_v1.uiscale
-        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 670.0
-        self._height = (
-            800
-            if uiscale is bui.UIScale.SMALL
-            else 540.0 if uiscale is bui.UIScale.MEDIUM else 624.0
-        )
-        self._spacing = 32
+    @override
+    def run_local_action(
+        self, action: AnyDevToolsLocalAction, context: DocUILocalAction
+    ) -> None:
+        # Note: import the submodule explicitly -- attribute access on
+        # bare `babase` only works if something else happened to import
+        # it first.
+        import babase.modutils
 
-        # Do some fancy math to fill all available screen area up to the
-        # size of our backing container. This lets us fit to the exact
-        # screen shape at small ui scale.
-        screensize = bui.get_virtual_screen_size()
-        # Slightly reduced scale in small ui so our short list of
-        # content requires minimal scrolling on phone-ish aspects.
-        scale = (
-            1.52
-            if uiscale is bui.UIScale.SMALL
-            else 1.12 if uiscale is bui.UIScale.MEDIUM else 0.8
-        )
-        # Calc screen size in our local container space and clamp to a
-        # bit smaller than our container size.
-        target_width = min(self._width - 80, screensize[0] / scale)
-        target_height = min(self._height - 90, screensize[1] / scale)
+        match action:
+            case ApplyShowButton():
+                _apply_show_button(context)
+                # The rest of the section's controls hang their
+                # disabled-ness off this; rebuild to show it.
+                self.replace(context.window, Root().request(), is_refresh=True)
+            case ApplyButtonSetting():
+                _apply_button_setting(context, commit=action.commit)
+            case ResetButton():
+                _reset_button()
+                self.replace(context.window, Root().request(), is_refresh=True)
+            case CreateUserSystemScripts():
+                babase.modutils.create_user_system_scripts()
+            case DeleteUserSystemScripts():
+                from bauiv1lib.confirm import ConfirmWindow
 
-        # To get top/left coords, go to the center of our window and
-        # offset by half the width/height of our target area.
-        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+                ConfirmWindow(
+                    action=babase.modutils.delete_user_system_scripts,
+                    origin_widget=context.widget,
+                )
+            case _:
+                assert_never(action)
 
-        self._scroll_width = target_width
-        self._scroll_height = target_height - 35
-        self._scroll_bottom = yoffs - 64 - self._scroll_height
 
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds.
-        margin_left, margin_right, margin_bottom, margin_top = (
-            get_screen_margins(scale)
-            if uiscale is bui.UIScale.SMALL
-            else (0.0, 0.0, 0.0, 0.0)
-        )
+def _preload_modules() -> None:
+    """Import what our actions use here, off the logic thread."""
+    # pylint: disable=cyclic-import
+    import babase.modutils as _unused1
+    from bauiv1lib import confirm as _unused2
 
-        # In small ui we also extend the scroll's top edge all the way
-        # up to the top of the screen; soft blobs then keep our title
-        # legible over any content scrolled up there. Content gets
-        # padded to stay exactly where it would be with the top edge
-        # in its standard spot below the title.
-        top_extend = (
-            (0.5 * self._height + 0.5 * (screensize[1] / scale))
-            - (self._scroll_bottom + self._scroll_height)
-            + margin_top
-            if uiscale is bui.UIScale.SMALL
-            else 0.0
-        )
 
-        # A bit of extra padding above our content so the soft blobs
-        # fading things out under the title don't eat into our top
-        # checkbox when scrolled to the top.
-        top_pad = 15.0
+def _style_from_config() -> DevConsoleButtonStyle:
+    try:
+        return DevConsoleButtonStyle(bui.app.config.resolve(_BUTTON_STYLE_KEY))
+    except ValueError:
+        return DevConsoleButtonStyle.GREY
 
-        self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 390.0 + margin_bottom + top_extend + top_pad
 
-        super().__init__(
-            root_widget=bui.containerwidget(
-                size=(self._width, self._height),
-                toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+def _style_label(style: DevConsoleButtonStyle) -> LangStrSpec:
+    match style:
+        case DevConsoleButtonStyle.GREY:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Grey')
+        case DevConsoleButtonStyle.GREEN:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Green')
+        case DevConsoleButtonStyle.PURPLE:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Purple')
+        case DevConsoleButtonStyle.HOWDY:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Howdy')
+        case _:
+            assert_never(style)
+
+
+def _page() -> dui2.Response:
+    """Build the page (called in a background thread)."""
+    config = bui.app.config
+    state = DevToolsState(
+        show_dev_console_button=bool(config.resolve(_SHOW_BUTTON_KEY)),
+        dev_console_button_size=float(config.resolve(_BUTTON_SIZE_KEY)),
+        dev_console_button_style=_style_from_config(),
+    )
+    enabled = state.show_dev_console_button
+    apply = ApplyButtonSetting().local(default_sound=False)
+    apply_drag = ApplyButtonSetting(commit=False).local(default_sound=False)
+    button_rows: list[dui2.Row] = [
+        DevToolsState.checkbox_row(
+            lambda s: s.show_dev_console_button,
+            # NEEDS_TRANSLATION
+            label=LangStrSpecValue.literal('Enable'),
+            on_change=ApplyShowButton().local(default_sound=False),
+        ),
+        DevToolsState.slider_row(
+            lambda s: s.dev_console_button_size,
+            min_value=0.5,
+            max_value=4.0,
+            increment=0.1,
+            decimals=1,
+            # NEEDS_TRANSLATION
+            label=LangStrSpecValue.literal('Size'),
+            on_drag=apply_drag,
+            drag_interval=_SIZE_DRAG_INTERVAL,
+            on_change=apply,
+            disabled=not enabled,
+        ),
+        DevToolsState.choice_row(
+            lambda s: s.dev_console_button_style,
+            choice_label=_style_label,
+            # NEEDS_TRANSLATION
+            label=LangStrSpecValue.literal('Style'),
+            on_change=apply,
+            disabled=not enabled,
+        ),
+        # The reset hangs right under the controls it goes with. (Fill
+        # rows span the column as the control rows above do. Paddings
+        # reproduce the button stacks these replaced -- 8/6 there, but
+        # a scrolling row lifts its content 6 units, so effectively
+        # 2/12 -- leaving spacing unchanged.)
+        dui2.ButtonRow(
+            layout=dui2.ButtonRowLayout.FILL,
+            buttons=[
+                replace(
+                    section_button(
+                        # NEEDS_TRANSLATION
+                        LangStrSpecValue.literal('Reset'),
+                        ResetButton().local(),
+                    ),
+                    disabled=not enabled,
+                )
+            ],
+            padding_top=2.0,
+            padding_bottom=12.0,
+        ),
+    ]
+    rows: list[dui2.Row] = [
+        dui2.Section(
+            # NEEDS_TRANSLATION
+            title=LangStrSpecValue.literal('Dev Console Button'),
+            # NEEDS_TRANSLATION
+            subtitle=LangStrSpecValue.literal('<drag to reposition>'),
+            title_align=dui2.HAlign.CENTER,
+            rows=button_rows,
+        ),
+        dui2.Section(
+            # NEEDS_TRANSLATION
+            title=LangStrSpecValue.literal('User System Scripts'),
+            title_align=dui2.HAlign.CENTER,
+            rows=[
+                dui2.ButtonRow(
+                    layout=dui2.ButtonRowLayout.FILL,
+                    buttons=[
+                        section_button(
+                            # NEEDS_TRANSLATION
+                            LangStrSpecValue.literal('Create Scripts'),
+                            CreateUserSystemScripts().local(),
+                        ),
+                        section_button(
+                            # NEEDS_TRANSLATION
+                            LangStrSpecValue.literal('Delete Scripts'),
+                            DeleteUserSystemScripts().local(),
+                        ),
+                    ],
+                    padding_top=2.0,
+                    padding_bottom=12.0,
                 ),
-                scale=scale,
-            ),
-            transition=transition,
-            origin_widget=origin_widget,
-            # We're affected by screen size only at small ui-scale.
-            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
+            ],
+        ),
+    ]
+    return dui2.Response(
+        page=dui2.Page(
+            title=_devstrs.title.spec,
+            rows=rows,
+            state=state.encode(),
+            center_vertically=True,
         )
+    )
 
-        self._r = 'settingsDevTools'
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-            self._back_button = None
-        else:
-            self._back_button = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                position=(53, yoffs - 50),
-                size=(140, 60),
-                scale=0.8,
-                autoselect=True,
-                label=_commonassets.strings.actions.back,
-                button_type='back',
-                on_activate_call=self.main_window_back,
-            )
-            bui.containerwidget(
-                edit=self._root_widget, cancel_button=self._back_button
-            )
+def _apply_show_button(context: DocUILocalAction) -> None:
+    state = context.state(DevToolsState)
+    if state is None:
+        return
+    cfg = bui.app.config
+    cfg[_SHOW_BUTTON_KEY] = state.show_dev_console_button
+    cfg.apply_and_commit()
 
-        if self._back_button is not None:
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
-            )
 
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
-                self._scroll_bottom - margin_bottom,
-            ),
-            simple_culling_v=20.0,
-            highlight=False,
-            size=(
-                self._scroll_width + margin_left + margin_right,
-                self._scroll_height + margin_bottom + top_extend,
-            ),
-            selection_loops_to_parent=True,
-            center_small_content_horizontally=True,
-            border_opacity=0.4,
-        )
-        bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
-
-        # Our scroll area extends up past our title; these soft blobs
-        # (plus the title being drawn after the scroll area) keep the
-        # title legible over content scrolled up there. Note that we
-        # intentionally use the original un-margin-extended scroll
-        # geometry here so the blobs coincide with the title, which
-        # doesn't move when we extend out into screen margins.
-        if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                # Nudge the blobs up so their most-opaque core sits
-                # just above our title instead of below it.
-                yoffs_extra=20.0,
-            )
-
-        self._title_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (60 if uiscale is bui.UIScale.SMALL else 42),
-            ),
-            size=(0, 25),
-            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.0),
-            maxwidth=self._width - 200,
-            text=_devstrs.title,
-            color=app.ui_v1.title_color,
-            h_align='center',
-            v_align='center',
-        )
-        self._subcontainer = bui.containerwidget(
-            parent=self._scrollwidget,
-            size=(self._sub_width, self._sub_height),
-            background=False,
-            selection_loops_to_parent=True,
-        )
-
-        # (start below the top-edge extension plus padding so content
-        # sits just below where the soft blobs fade things out).
-        v = self._sub_height - top_extend - top_pad - 35
-        this_button_width = 410
-
-        v -= self._spacing * 1.9
-        # Keep our left edge aligned with the buttons below us no matter
-        # how wide the window gets (our sub-width tracks window width at
-        # small ui-scale). The extra 10 units visually lines the check
-        # box up with the button contents.
-        self._show_dev_console_button_check_box = ConfigCheckBox(
-            parent=self._subcontainer,
-            check_box_id=f'{self.main_window_id_prefix}|showdevsonsole',
-            position=(self._sub_width / 2 - this_button_width / 2 + 10, v + 40),
-            size=(this_button_width, 30),
-            configkey='Show Dev Console Button',
-            displayname=_devstrs.show_dev_console_button,
-            scale=1.0,
-            maxwidth=350,
-        )
-        if self._back_button is not None:
-            bui.widget(
-                edit=self._show_dev_console_button_check_box.widget,
-                up_widget=self._back_button,
-            )
-
-        v -= self._spacing * 1.2
-        self._reset_dev_console_button_position_button = bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|resetdevconsolebuttonposition',
-            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
-            size=(this_button_width, 60),
-            autoselect=True,
-            label=_devstrs.reset_button_position,
-            text_scale=1.0,
-            on_activate_call=self._reset_dev_console_button_position,
-        )
-
-        # Extra gap here so the position-reset button above reads as
-        # grouped with the dev-console-button checkbox.
-        v -= self._spacing * 3.4
-        self._create_user_system_scripts_button = bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|createusersystemscripts',
-            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
-            size=(this_button_width, 60),
-            autoselect=True,
-            label=_devstrs.create_user_system_scripts,
-            text_scale=1.0,
-            on_activate_call=babase.modutils.create_user_system_scripts,
-        )
-
-        v -= self._spacing * 2.5
-        self._delete_user_system_scripts_button = bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|deleteusersystemscripts',
-            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
-            size=(this_button_width, 60),
-            autoselect=True,
-            label=_devstrs.delete_user_system_scripts,
-            text_scale=1.0,
-            on_activate_call=lambda: ConfirmWindow(
-                action=babase.modutils.delete_user_system_scripts,
-            ),
-        )
-
-    def _reset_dev_console_button_position(self) -> None:
-        # Drop our stored custom position; applying then reverts the
-        # button to its default docked spot.
-        cfg = bui.app.config
-        cfg.pop('Dev Console Button Pos X', None)
-        cfg.pop('Dev Console Button Pos Y', None)
+def _apply_button_setting(context: DocUILocalAction, *, commit: bool) -> None:
+    """Write the changed size or style to the config."""
+    state = context.state(DevToolsState)
+    if state is None:
+        return
+    cfg = bui.app.config
+    cfg[_BUTTON_SIZE_KEY] = state.dev_console_button_size
+    cfg[_BUTTON_STYLE_KEY] = state.dev_console_button_style.value
+    if commit:
         cfg.apply_and_commit()
+    else:
+        cfg.apply()
 
-    @override
-    def get_main_window_state(self) -> bui.MainWindowState:
-        # Support recreating our window for back/refresh purposes.
-        cls = type(self)
-        return bui.BasicMainWindowState(
-            create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
-            )
-        )
 
-    @override
-    def main_window_should_preserve_selection(self) -> bool:
-        return True
-
-    def _set_uiscale(self, val: str) -> None:
-        cfg = bui.app.config
-        cfg['UI Scale'] = val
-        cfg.apply_and_commit()
-        if bui.app.ui_v1.uiscale.name != val.upper():
-            bui.screenmessage(
-                _commonassets.strings.status.must_restart,
-                color=(1.0, 0.5, 0.0),
-            )
+def _reset_button() -> None:
+    # Drop our stored size, style, and custom position; applying then
+    # reverts the button to its default look in its default docked spot.
+    cfg = bui.app.config
+    cfg.pop(_BUTTON_SIZE_KEY, None)
+    cfg.pop(_BUTTON_STYLE_KEY, None)
+    for key in _BUTTON_POS_KEYS:
+        cfg.pop(key, None)
+    cfg.apply_and_commit()

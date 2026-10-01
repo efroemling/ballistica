@@ -73,6 +73,22 @@ CHEST_APPEARANCE_TINT_DEFAULT: tuple[
     tuple[float, float, float], tuple[float, float, float]
 ] = ((1, 1, 1), (1, 1, 1))
 
+#: Base color multiplying a chest's art for each appearance (alongside
+#: :data:`CHEST_APPEARANCE_TINTS`, for the same reason: producers depict
+#: chests too).
+CHEST_APPEARANCE_COLORS: dict[
+    ClassicChestAppearance, tuple[float, float, float]
+] = {
+    ClassicChestAppearance.L2: (0.8, 1.0, 0.93),
+    ClassicChestAppearance.L3: (0.75, 0.9, 1.3),
+    ClassicChestAppearance.L4: (0.7, 1.0, 1.4),
+    ClassicChestAppearance.L5: (0.75, 0.5, 2.4),
+    ClassicChestAppearance.L6: (1.1, 0.8, 0.0),
+}
+
+#: Base color for an appearance with no entry above.
+CHEST_APPEARANCE_COLOR_DEFAULT: tuple[float, float, float] = (1, 1, 1)
+
 
 @ioprepped
 @dataclass

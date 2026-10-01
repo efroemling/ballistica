@@ -67,6 +67,12 @@ def _key(controller: 'DocUIController', request: 'DocUIRequest') -> str | None:
     ):
         return None
 
+    # Nor anything carrying page state (or fired by an input): what
+    # comes back depends on values that are the user's work in
+    # progress, which has no business being replayed.
+    if request.state is not None or request.trigger is not None:
+        return None
+
     # A controller may serve different pages from one request path
     # depending on its own state; it declares that here.
     extra = controller.get_cache_key_extra()

@@ -23,6 +23,37 @@ from batools.ui_assets import Group, Kind, Slot, UIAssetSpec
 SPEC = UIAssetSpec(
     groups=[
         Group(
+            name='character_icon',
+            default_module='_classiccatalogassets',
+            doc=(
+                'What the character widget draws character icons with:'
+                ' the shared round shape mask every icon is cut with,'
+                ' and the standard-spaz standin icon it shows whenever'
+                " a definition's own icon art is not local (still"
+                ' downloading, unavailable, or not understood).'
+            ),
+            slots=[
+                Slot(
+                    name='character_icon_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Round shape mask applied to every character icon.',
+                    default='textures.character_icon_mask',
+                ),
+                Slot(
+                    name='standin_icon',
+                    kind=Kind.TEXTURE,
+                    doc='Standin (standard spaz) icon.',
+                    default='textures.neo_spaz_icon',
+                ),
+                Slot(
+                    name='standin_icon_color_mask',
+                    kind=Kind.TEXTURE,
+                    doc='Standin icon colorize mask.',
+                    default='textures.neo_spaz_icon_color_mask',
+                ),
+            ],
+        ),
+        Group(
             name='chrome',
             default_module='_uiv1assets',
             doc=(
@@ -84,7 +115,8 @@ SPEC = UIAssetSpec(
                 name='nub',
                 kind=Kind.TEXTURE,
                 doc='Small nub marker.',
-                default='textures.nub',
+                # No art of ui_v1's own; the app-mode supplies it
+                # (classic's lives in classicassets).
             ),
             Slot(
                 name='page_left_right',
@@ -204,7 +236,8 @@ SPEC = UIAssetSpec(
                 name='ui_atlas',
                 kind=Kind.TEXTURE,
                 doc='Primary ui sprite atlas.',
-                default='textures.ui_atlas',
+                # No art of ui_v1's own; the app-mode supplies it
+                # (classic's lives in classicassets).
             ),
             Slot(
                 name='ui_atlas2',
@@ -416,7 +449,8 @@ SPEC = UIAssetSpec(
                 name='swish',
                 kind=Kind.SOUND,
                 doc='Standard widget-interaction whoosh.',
-                default='audio.swish',
+                # No art of ui_v1's own; the app-mode supplies it
+                # (classic's lives in classicassets).
             ),
             Slot(
                 name='swish2',

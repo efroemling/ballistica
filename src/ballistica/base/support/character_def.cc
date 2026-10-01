@@ -1,0 +1,654 @@
+// Released under the MIT License. See LICENSE for details.
+
+#include "ballistica/base/support/character_def.h"
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "ballistica/base/assets/asset_package_registry.h"
+#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/base.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/generic/json_facade.h"
+
+namespace ballistica::base {
+
+// Allowed spans per numeric field. Physique spans are exactly what
+// the legacy style presets covered (sim state; pushing them changes
+// gameplay); the look spans are loosened beyond legacy for future
+// characters' visual headroom. Must match BASIC_SPAZ_RANGES and
+// BASIC_ICON_RANGES in bamaster baserver/character.py; widen only
+// alongside them.
+namespace {
+
+struct Range {
+  float lo;
+  float hi;
+};
+
+const Range kRangeColor{0.0f, 1.0f};
+const Range kRangeHighlight{0.0f, 1.0f};
+const Range kRangeTorsoRadius{0.11f, 0.3f};
+const Range kRangeShoulderOffset{-0.05f, 0.03f};
+const Range kRangeThighRadius{0.04f, 0.06f};
+const Range kRangeAnkleRadius{0.045f, 0.07f};
+const Range kRangeStepSeparation{0.03f, 0.08f};
+const Range kRangeIdleArmStiffness{0.2f, 1.0f};
+const Range kRangeArmSwing{0.3f, 0.6f};
+const Range kRangeIdleSway{0.02f, 0.05f};
+const Range kRangeEyeScale{0.5f, 2.0f};
+const Range kRangeEyeOffset{-0.5f, 0.5f};
+const Range kRangeEyeColor{0.0f, 2.0f};
+const Range kRangeEyeballColor{0.0f, 1.0f};
+const Range kRangeEyelidColor{0.0f, 1.0f};
+const Range kRangeEyelidAngle{-30.0f, 30.0f};
+const Range kRangeReflectionScale{0.0f, 2.0f};
+
+void ReadFloat(const JsonRef& obj, const char* key, float* out,
+               const Range& range) {
+  if (auto val = obj[key].as_double()) {
+    *out = std::clamp(static_cast<float>(*val), range.lo, range.hi);
+  }
+}
+
+// Returns whether the key held a 3-element array (and so was applied).
+auto ReadFloat3(const JsonRef& obj, const char* key, float* out,
+                const Range& range) -> bool {
+  JsonRef arr = obj[key];
+  if (!arr.is_array() || arr.size() != 3) {
+    return false;
+  }
+  for (size_t i = 0; i < 3; ++i) {
+    if (auto val = arr[i].as_double()) {
+      out[i] = std::clamp(static_cast<float>(*val), range.lo, range.hi);
+    }
+  }
+  return true;
+}
+
+void ReadBool(const JsonRef& obj, const char* key, bool* out) {
+  if (auto val = obj[key].as_bool()) {
+    *out = *val;
+  }
+}
+
+// Wire values 'r'/'l'/'n'; anything unrecognized (including a future
+// style this build predates) falls back to kRegular by design.
+void ReadEyeStyle(const JsonRef& obj, const char* key, CharacterEyeStyle* out) {
+  auto val = obj[key].as_string();
+  if (!val) {
+    return;
+  }
+  if (*val == "l") {
+    *out = CharacterEyeStyle::kLidless;
+  } else if (*val == "n") {
+    *out = CharacterEyeStyle::kNone;
+  } else {
+    *out = CharacterEyeStyle::kRegular;
+  }
+}
+
+const Range kRangeAttachmentPosition{-0.5f, 0.5f};
+// Attachment calibration scalars get a one-time warning on
+// out-of-range values (unlike the silently-clamping numeric fields):
+// the 0-1 dial is the whole range, and modders poking at definitions
+// should learn they can't overdrive the springs.
+void ReadAttachmentScalar(const JsonRef& obj, const char* key, float* out,
+                          float lo = 0.0f, float hi = 1.0f) {
+  auto val = obj[key].as_double();
+  if (!val) {
+    return;
+  }
+  auto fval = static_cast<float>(*val);
+  if (fval < lo || fval > hi) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                "Character attachment scalar '" + std::string(key)
+                    + "' value " + std::to_string(fval)
+                    + " is outside its range; clamping. These scalars"
+                      " cannot overdrive attachment springs or bends.");
+  }
+  *out = std::clamp(fval, lo, hi);
+}
+// Per target body; matches MAX_ATTACHMENTS in the server schema.
+const size_t kMaxAttachments{10};
+
+// Segment counts are fixed per attachment type (see
+// CharacterAttachmentType); malformed entries drop the attachment.
+auto AttachmentSegmentCount(CharacterAttachmentType type) -> size_t {
+  switch (type) {
+    case CharacterAttachmentType::kLegacyPonytail2:
+    case CharacterAttachmentType::kAntenna2:
+      return 2;
+    case CharacterAttachmentType::kAntenna3:
+      return 3;
+    case CharacterAttachmentType::kAntenna4:
+      return 4;
+    default:
+      return 1;
+  }
+}
+
+// Rotation matrix from a normalized (w, x, y, z) quaternion.
+auto MatrixFromQuaternion(const float q[4]) -> Matrix44f {
+  float w = q[0], x = q[1], y = q[2], z = q[3];
+  Matrix44f m{kMatrix44fIdentity};
+  m.m[0] = 1.0f - 2.0f * (y * y + z * z);
+  m.m[1] = 2.0f * (x * y + z * w);
+  m.m[2] = 2.0f * (x * z - y * w);
+  m.m[4] = 2.0f * (x * y - z * w);
+  m.m[5] = 1.0f - 2.0f * (x * x + z * z);
+  m.m[6] = 2.0f * (y * z + x * w);
+  m.m[8] = 2.0f * (x * z + y * w);
+  m.m[9] = 2.0f * (y * z - x * w);
+  m.m[10] = 1.0f - 2.0f * (x * x + y * y);
+  return m;
+}
+
+// Parse a segment's optional draw offset. By length: 1 = uniform
+// scale, 3 = xyz scale, 6 = scale + translate, 10 = scale + translate
+// + (w, x, y, z) rotation, 16 = full column-major matrix. The short
+// forms compose scale, then rotate, then translate. Any other length
+// (a form this build predates) leaves the identity in place rather
+// than dropping the attachment.
+void ReadSegmentOffset(const JsonRef& seg,
+                       BasicSpazDef::AttachmentSegmentDef* sdef) {
+  JsonRef arr = seg["o"];
+  if (!arr.is_array()) {
+    return;
+  }
+  size_t n = arr.size();
+  if (n != 1 && n != 3 && n != 6 && n != 10 && n != 16) {
+    return;
+  }
+  float vals[16];
+  for (size_t i = 0; i < n; ++i) {
+    auto val = arr[i].as_double();
+    if (!val || !std::isfinite(*val)) {
+      return;
+    }
+    vals[i] = static_cast<float>(*val);
+  }
+  Matrix44f offset{kMatrix44fIdentity};
+  if (n == 16) {
+    for (int i = 0; i < 16; ++i) {
+      offset.m[i] = vals[i];
+    }
+  } else {
+    Vector3f scale = (n == 1) ? Vector3f{vals[0], vals[0], vals[0]}
+                              : Vector3f{vals[0], vals[1], vals[2]};
+    // Matrix44f's operator* applies its left operand first.
+    offset = Matrix44fScale(scale);
+    if (n == 10) {
+      float q[4] = {vals[6], vals[7], vals[8], vals[9]};
+      float norm =
+          std::sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+      if (norm > 0.001f) {
+        for (float& component : q) {
+          component /= norm;
+        }
+        offset = offset * MatrixFromQuaternion(q);
+      }
+    }
+    if (n >= 6) {
+      offset = offset * Matrix44fTranslate(vals[3], vals[4], vals[5]);
+    }
+  }
+  sdef->offset = offset;
+  sdef->has_offset = true;
+}
+
+// Parse one target's attachment list. Unrecognized types (a future
+// kind this build predates) and malformed entries are dropped
+// attachment-by-attachment by design.
+void ReadAttachmentList(const JsonRef& arr,
+                        std::vector<BasicSpazDef::AttachmentDef>* out) {
+  out->clear();
+  if (!arr.is_array()) {
+    return;
+  }
+  for (size_t i = 0; i < arr.size() && out->size() < kMaxAttachments; ++i) {
+    JsonRef entry = arr[i];
+    if (!entry.is_object()) {
+      continue;
+    }
+    BasicSpazDef::AttachmentDef adef;
+    auto type = entry["t"].as_string();
+    if (!type) {
+      continue;
+    }
+    if (*type == "lt") {
+      adef.type = CharacterAttachmentType::kLegacyTuftLarge;
+    } else if (*type == "mt") {
+      adef.type = CharacterAttachmentType::kLegacyTuftMedium;
+    } else if (*type == "st") {
+      adef.type = CharacterAttachmentType::kLegacyTuftSmall;
+    } else if (*type == "pt") {
+      adef.type = CharacterAttachmentType::kLegacyPonytail2;
+    } else if (*type == "an") {
+      adef.type = CharacterAttachmentType::kAntenna;
+    } else if (*type == "a2") {
+      adef.type = CharacterAttachmentType::kAntenna2;
+    } else if (*type == "a3") {
+      adef.type = CharacterAttachmentType::kAntenna3;
+    } else if (*type == "a4") {
+      adef.type = CharacterAttachmentType::kAntenna4;
+    } else if (*type == "fx") {
+      adef.type = CharacterAttachmentType::kStatic;
+    } else {
+      continue;
+    }
+    ReadFloat3(entry, "p", adef.position, kRangeAttachmentPosition);
+    ReadAttachmentScalar(entry, "k", &adef.stiffness);
+    ReadAttachmentScalar(entry, "d", &adef.damping);
+    ReadAttachmentScalar(entry, "dg", &adef.drag);
+    ReadAttachmentScalar(entry, "c", &adef.curl, -1.0f, 1.0f);
+    ReadAttachmentScalar(entry, "l", &adef.length);
+    ReadAttachmentScalar(entry, "r", &adef.radius);
+    ReadAttachmentScalar(entry, "cc", &adef.curl_change, -1.0f, 1.0f);
+    ReadAttachmentScalar(entry, "lc", &adef.length_change, -1.0f, 1.0f);
+    ReadAttachmentScalar(entry, "rc", &adef.radius_change, -1.0f, 1.0f);
+    ReadAttachmentScalar(entry, "kc", &adef.stiffness_change, -1.0f, 1.0f);
+    ReadAttachmentScalar(entry, "dc", &adef.damping_change, -1.0f, 1.0f);
+    JsonRef quat = entry["q"];
+    if (quat.is_array() && quat.size() == 4) {
+      for (size_t qi = 0; qi < 4; ++qi) {
+        if (auto val = quat[qi].as_double()) {
+          adef.rotation[qi] = static_cast<float>(*val);
+        }
+      }
+      // Normalize (identically on every peer; sim state).
+      float norm = std::sqrt(adef.rotation[0] * adef.rotation[0]
+                             + adef.rotation[1] * adef.rotation[1]
+                             + adef.rotation[2] * adef.rotation[2]
+                             + adef.rotation[3] * adef.rotation[3]);
+      if (norm < 0.001f) {
+        adef.rotation[0] = 1.0f;
+        adef.rotation[1] = adef.rotation[2] = adef.rotation[3] = 0.0f;
+      } else {
+        for (float& component : adef.rotation) {
+          component /= norm;
+        }
+      }
+    }
+    JsonRef segs = entry["s"];
+    if (!segs.is_array() || segs.size() != AttachmentSegmentCount(adef.type)) {
+      continue;
+    }
+    bool segs_ok = true;
+    for (size_t si = 0; si < segs.size(); ++si) {
+      BasicSpazDef::AttachmentSegmentDef sdef;
+      JsonRef seg = segs[si];
+      if (!seg.is_object() || !ReadPackageAssetRef(seg, "m", &sdef.mesh)) {
+        segs_ok = false;
+        break;
+      }
+      ReadPackageAssetRef(seg, "t", &sdef.texture);
+      ReadPackageAssetRef(seg, "tm", &sdef.tint_texture);
+      ReadSegmentOffset(seg, &sdef);
+      adef.segments.push_back(std::move(sdef));
+    }
+    if (!segs_ok) {
+      continue;
+    }
+    out->push_back(std::move(adef));
+  }
+  if (arr.size() > kMaxAttachments) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kDebug,
+                "Character has " + std::to_string(arr.size())
+                    + " attachments on one body; only the first "
+                    + std::to_string(kMaxAttachments) + " are used.");
+  }
+}
+
+// Parse the optional attachments dict (target key -> list). Only the
+// targets this build knows are read; anything else is ignored.
+void ReadAttachments(const JsonRef& obj, const char* key,
+                     std::vector<BasicSpazDef::AttachmentDef> (
+                         &out)[kCharacterAttachTargetCount]) {
+  for (auto& list : out) {
+    list.clear();
+  }
+  JsonRef dict = obj[key];
+  if (!dict.is_object()) {
+    return;
+  }
+  static const struct {
+    const char* key;
+    CharacterAttachTarget target;
+  } kTargets[] = {
+      {"h", CharacterAttachTarget::kHead},
+      {"t", CharacterAttachTarget::kTorso},
+      {"p", CharacterAttachTarget::kPelvis},
+  };
+  for (const auto& entry : kTargets) {
+    ReadAttachmentList(dict[entry.key], &out[static_cast<int>(entry.target)]);
+  }
+}
+
+// The basic tier of a component block: required whenever the block
+// is present. Null when the block is absent (normal) or carries no
+// basic tier (a malformed or future-only block; logged once since the
+// schema says basic always accompanies richer tiers).
+auto BasicTier(const JsonRef& block, const char* what) -> JsonRef {
+  if (!block.is_object()) {
+    return block;
+  }
+  JsonRef basic = block["b"];
+  if (!basic.is_object()) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                std::string("Character ") + what
+                    + " block has no basic tier; ignoring it.");
+  }
+  return basic;
+}
+
+auto ReadIcon(const JsonRef& basic, BasicIconDef* out) -> bool {
+  BasicIconDef d;
+  ReadPackageManifest(basic, &d.packages, &d.domain_digest);
+  if (!ReadPackageAssetRef(basic, "tx", &d.texture)
+      || !ReadPackageAssetRef(basic, "cm", &d.color_mask_texture)) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Character icon block is missing asset refs; using standin.");
+    return false;
+  }
+  ReadFloat3(basic, "cl", d.color, kRangeColor);
+  ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
+  *out = std::move(d);
+  return true;
+}
+
+auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
+  BasicSpazDef d;
+  ReadPackageManifest(basic, &d.packages, &d.domain_digest);
+
+  // Required asset refs; a definition missing any of these can't be
+  // drawn in this form.
+  bool ok = ReadPackageAssetRef(basic, "ct", &d.color_texture)
+            && ReadPackageAssetRef(basic, "cm", &d.color_mask_texture)
+            && ReadPackageAssetRef(basic, "mh", &d.head_mesh)
+            && ReadPackageAssetRef(basic, "mt", &d.torso_mesh)
+            && ReadPackageAssetRef(basic, "mua", &d.upper_arm_mesh)
+            && ReadPackageAssetRef(basic, "mul", &d.upper_leg_mesh)
+            && ReadPackageAssetRef(basic, "mll", &d.lower_leg_mesh)
+            && ReadPackageAssetRef(basic, "mto", &d.toes_mesh);
+  if (!ok) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Character spaz block is missing asset refs; using standin.");
+    return false;
+  }
+  // Optional parts, absent = never drawn: forearm/hand (a
+  // flipper-style character's upper-arm mesh is the whole limb) and
+  // pelvis (big round characters historically shipped centimeter-scale
+  // dummy pelvises just to fill the slot).
+  ReadPackageAssetRef(basic, "mfa", &d.forearm_mesh);
+  ReadPackageAssetRef(basic, "mhn", &d.hand_mesh);
+  ReadPackageAssetRef(basic, "mp", &d.pelvis_mesh);
+  // Optional wings: mesh presence is what makes a character winged;
+  // the texture alone does nothing.
+  ReadPackageAssetRef(basic, "mw", &d.wing_mesh);
+  ReadPackageAssetRef(basic, "tw", &d.wing_texture);
+  ReadPackageAssetRef(basic, "wm", &d.wing_tint_texture);
+  ReadAttachments(basic, "at", d.attachments);
+
+  ReadPackageAssetRefs(basic, "sj", &d.jump_sounds);
+  ReadPackageAssetRefs(basic, "sa", &d.attack_sounds);
+  ReadPackageAssetRefs(basic, "si", &d.impact_sounds);
+  ReadPackageAssetRefs(basic, "sd", &d.death_sounds);
+  ReadPackageAssetRefs(basic, "sp", &d.pickup_sounds);
+  ReadPackageAssetRefs(basic, "sf", &d.fall_sounds);
+
+  d.has_color = ReadFloat3(basic, "cl", d.color, kRangeColor);
+  ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
+
+  ReadFloat(basic, "tr", &d.torso_radius, kRangeTorsoRadius);
+  ReadFloat3(basic, "so", d.shoulder_offset, kRangeShoulderOffset);
+  ReadFloat(basic, "lt", &d.thigh_radius, kRangeThighRadius);
+  ReadFloat(basic, "la", &d.ankle_radius, kRangeAnkleRadius);
+  ReadFloat(basic, "ss", &d.step_separation, kRangeStepSeparation);
+  ReadFloat(basic, "ia", &d.idle_arm_stiffness, kRangeIdleArmStiffness);
+  ReadFloat(basic, "aw", &d.arm_swing, kRangeArmSwing);
+  ReadFloat(basic, "iw", &d.idle_sway, kRangeIdleSway);
+
+  ReadEyeStyle(basic, "le", &d.eye_style_left);
+  ReadEyeStyle(basic, "re", &d.eye_style_right);
+  ReadFloat(basic, "es", &d.eye_scale, kRangeEyeScale);
+  ReadFloat3(basic, "eo", d.eye_offset, kRangeEyeOffset);
+  ReadFloat3(basic, "ec", d.eye_color, kRangeEyeColor);
+  ReadFloat3(basic, "eb", d.eyeball_color, kRangeEyeballColor);
+  ReadFloat3(basic, "lc", d.eyelid_color, kRangeEyelidColor);
+  ReadFloat(basic, "ln", &d.eyelid_angle, kRangeEyelidAngle);
+  ReadFloat(basic, "rs", &d.reflection_scale, kRangeReflectionScale);
+  ReadBool(basic, "fl", &d.flippers);
+
+  *out = std::move(d);
+  return true;
+}
+
+}  // namespace
+
+CharacterDef::CharacterDef(std::string json, Form form)
+    : form_(form), json_(std::move(json)) {
+  // Parse only. Media (listing decode + asset handles) loads on the
+  // first RetryMedia() from something that displays us: a lobby
+  // builds a definition for every cloud profile of every joining
+  // player but shows one per player, so paying for media up front
+  // would be N x M resolves on the logic thread for N loads' worth
+  // of display (character-skins.md, lazy media).
+  assert(g_base->InLogicThread());
+  Parse_();
+}
+
+void CharacterDef::Parse_() {
+  auto doc = JsonDoc::Parse(json_);
+  if (!doc || !doc->root().is_object()) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Character json is not an object; using standin.");
+    return;
+  }
+  JsonRef root = doc->root();
+
+  // The part's block on its own; each read from its basic tier 'b'.
+  switch (form_) {
+    case Form::kIcon: {
+      JsonRef icon = BasicTier(root, "icon");
+      if (icon.is_object()) {
+        has_icon_ = ReadIcon(icon, &icon_);
+      }
+      break;
+    }
+    case Form::kSpaz: {
+      JsonRef spaz = BasicTier(root, "spaz");
+      if (spaz.is_object()) {
+        has_spaz_ = ReadSpaz(spaz, &spaz_);
+      }
+      break;
+    }
+  }
+}
+
+auto CharacterDef::RetryMedia() -> bool {
+  assert(g_base->InLogicThread());
+  if (has_icon_) {
+    LoadIconMedia_();
+  }
+  if (has_spaz_) {
+    LoadSpazMedia_();
+  }
+  bool changed{};
+  changed |= icon_block_.CheckPending();
+  changed |= spaz_block_.CheckPending();
+  return changed;
+}
+
+void CharacterDef::LoadIconMedia_() {
+  if (icon_block_.ready() || icon_block_.pending()) {
+    return;
+  }
+  BasicIconDef& d = icon_;
+  std::vector<MediaBlock::IndexedRef> indexed;
+  MediaBlock::NoteIndexed(&d.texture, "textures/", &indexed);
+  MediaBlock::NoteIndexed(&d.color_mask_texture, "textures/", &indexed);
+  icon_block_.Load(d.packages, d.domain_digest, indexed,
+                   {&d.texture, &d.color_mask_texture},
+                   [this, &d](MediaGetter* get) {
+                     BasicIconMedia m;
+                     m.texture = get->Texture(d.texture);
+                     m.color_mask_texture = get->Texture(d.color_mask_texture);
+                     icon_media_ = std::move(m);
+                   });
+}
+
+void CharacterDef::LoadSpazMedia_() {
+  if (spaz_block_.ready() || spaz_block_.pending()) {
+    return;
+  }
+  BasicSpazDef& d = spaz_;
+  auto note = [](CharacterAssetRef* ref, const char* prefix,
+                 std::vector<MediaBlock::IndexedRef>* out) {
+    MediaBlock::NoteIndexed(ref, prefix, out);
+  };
+  std::vector<MediaBlock::IndexedRef> indexed;
+  note(&d.color_texture, "textures/", &indexed);
+  note(&d.color_mask_texture, "textures/", &indexed);
+  note(&d.wing_texture, "textures/", &indexed);
+  note(&d.wing_tint_texture, "textures/", &indexed);
+  note(&d.head_mesh, "meshes/", &indexed);
+  note(&d.torso_mesh, "meshes/", &indexed);
+  note(&d.pelvis_mesh, "meshes/", &indexed);
+  note(&d.upper_arm_mesh, "meshes/", &indexed);
+  note(&d.forearm_mesh, "meshes/", &indexed);
+  note(&d.hand_mesh, "meshes/", &indexed);
+  note(&d.upper_leg_mesh, "meshes/", &indexed);
+  note(&d.lower_leg_mesh, "meshes/", &indexed);
+  note(&d.toes_mesh, "meshes/", &indexed);
+  note(&d.wing_mesh, "meshes/", &indexed);
+  for (auto& list : d.attachments) {
+    for (auto& attachment : list) {
+      for (auto& seg : attachment.segments) {
+        note(&seg.mesh, "meshes/", &indexed);
+        note(&seg.texture, "textures/", &indexed);
+        note(&seg.tint_texture, "textures/", &indexed);
+      }
+    }
+  }
+  for (auto* list : {&d.jump_sounds, &d.attack_sounds, &d.impact_sounds,
+                     &d.death_sounds, &d.pickup_sounds, &d.fall_sounds}) {
+    for (auto& ref : *list) {
+      note(&ref, "audio/", &indexed);
+    }
+  }
+
+  // The required list holds pointers, and the block resolves indices
+  // before checking registration, so required refs are checked by
+  // their resolved names. (Optional parts in indexed form, name still
+  // empty here, are left out -- their packages are manifest packages,
+  // which the index resolve already requires to be registered.)
+  spaz_block_.Load(d.packages, d.domain_digest, indexed, SpazRequiredRefs_(),
+                   [this, &d](MediaGetter* get) {
+                     spaz_media_ = LoadSpazMediaWith_(d, get);
+                   });
+}
+
+auto CharacterDef::SpazRequiredRefs_() const
+    -> std::vector<const CharacterAssetRef*> {
+  const BasicSpazDef& d = spaz_;
+  std::vector<const CharacterAssetRef*> refs = {
+      &d.color_texture,  &d.color_mask_texture, &d.head_mesh,
+      &d.torso_mesh,     &d.upper_arm_mesh,     &d.upper_leg_mesh,
+      &d.lower_leg_mesh, &d.toes_mesh};
+  // Optional parts join the check only when present.
+  for (const auto* opt :
+       {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh, &d.wing_mesh,
+        &d.wing_texture, &d.wing_tint_texture}) {
+    if (!opt->name.empty()) {
+      refs.push_back(opt);
+    }
+  }
+  for (const auto& list : d.attachments) {
+    for (const auto& attachment : list) {
+      for (const auto& seg : attachment.segments) {
+        for (const auto* opt : {&seg.mesh, &seg.texture, &seg.tint_texture}) {
+          if (!opt->name.empty()) {
+            refs.push_back(opt);
+          }
+        }
+      }
+    }
+  }
+  for (const auto* list : {&d.jump_sounds, &d.attack_sounds, &d.impact_sounds,
+                           &d.death_sounds, &d.pickup_sounds, &d.fall_sounds}) {
+    for (const auto& ref : *list) {
+      refs.push_back(&ref);
+    }
+  }
+  return refs;
+}
+
+auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
+    -> BasicSpazMedia {
+  BasicSpazMedia m;
+  m.color_texture = get->Texture(d.color_texture);
+  m.color_mask_texture = get->Texture(d.color_mask_texture);
+  m.head_mesh = get->Mesh(d.head_mesh);
+  m.torso_mesh = get->Mesh(d.torso_mesh);
+  if (!d.pelvis_mesh.name.empty()) {
+    m.pelvis_mesh = get->Mesh(d.pelvis_mesh);
+  }
+  m.upper_arm_mesh = get->Mesh(d.upper_arm_mesh);
+  if (!d.forearm_mesh.name.empty()) {
+    m.forearm_mesh = get->Mesh(d.forearm_mesh);
+  }
+  if (!d.hand_mesh.name.empty()) {
+    m.hand_mesh = get->Mesh(d.hand_mesh);
+  }
+  m.upper_leg_mesh = get->Mesh(d.upper_leg_mesh);
+  m.lower_leg_mesh = get->Mesh(d.lower_leg_mesh);
+  m.toes_mesh = get->Mesh(d.toes_mesh);
+  if (!d.wing_mesh.name.empty()) {
+    m.wing_mesh = get->Mesh(d.wing_mesh);
+  }
+  if (!d.wing_texture.name.empty()) {
+    m.wing_texture = get->Texture(d.wing_texture);
+  }
+  if (!d.wing_tint_texture.name.empty()) {
+    m.wing_tint_texture = get->Texture(d.wing_tint_texture);
+  }
+  for (int ti = 0; ti < kCharacterAttachTargetCount; ++ti) {
+    for (const auto& attachment : d.attachments[ti]) {
+      BasicSpazMedia::AttachmentMedia amedia;
+      for (const auto& seg : attachment.segments) {
+        BasicSpazMedia::AttachmentSegmentMedia smedia;
+        smedia.mesh = get->Mesh(seg.mesh);
+        if (!seg.texture.name.empty()) {
+          smedia.texture = get->Texture(seg.texture);
+        }
+        if (!seg.tint_texture.name.empty()) {
+          smedia.tint_texture = get->Texture(seg.tint_texture);
+        }
+        amedia.segments.push_back(std::move(smedia));
+      }
+      m.attachments[ti].push_back(std::move(amedia));
+    }
+  }
+  auto load_sounds = [get](const std::vector<CharacterAssetRef>& in,
+                           std::vector<Object::Ref<SoundAsset>>* out) {
+    for (const auto& ref : in) {
+      out->push_back(get->Sound(ref));
+    }
+  };
+  load_sounds(d.jump_sounds, &m.jump_sounds);
+  load_sounds(d.attack_sounds, &m.attack_sounds);
+  load_sounds(d.impact_sounds, &m.impact_sounds);
+  load_sounds(d.death_sounds, &m.death_sounds);
+  load_sounds(d.pickup_sounds, &m.pickup_sounds);
+  load_sounds(d.fall_sounds, &m.fall_sounds);
+  return m;
+}
+
+}  // namespace ballistica::base

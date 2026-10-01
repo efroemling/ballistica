@@ -27,6 +27,8 @@ from babase._assetsubsystem import (
 
 if TYPE_CHECKING:
     from babase import AppIntent, AppModeConfig, LangStr
+    from bacommon.assetpackage import ApverNum
+
     from babase._assetsubsystem import AssetSubsystem
 
 
@@ -122,7 +124,7 @@ class ConstructAppMode(AppMode):
 
         # Stashed resolve inputs so the dialog's Retry button can re-run.
         self._assets: AssetSubsystem | None = None
-        self._required: list[str] = []
+        self._required: list[ApverNum] = []
 
     @override
     @classmethod
@@ -196,7 +198,7 @@ class ConstructAppMode(AppMode):
         logger.info(
             'Construct-mode resolving %d asset-package(s): %s',
             len(required),
-            ', '.join(required),
+            ', '.join(str(a) for a in required),
         )
 
         # Stash inputs so the Retry button can re-run, then go.
@@ -265,7 +267,7 @@ class ConstructAppMode(AppMode):
             strip_exception_tracebacks(exc)
 
     async def _resolve_signed_in(
-        self, assets: AssetSubsystem, required: list[str]
+        self, assets: AssetSubsystem, required: list[ApverNum]
     ) -> _ResolveOutcome:
         """Resolve now that we're signed in, tolerating account-channel lag.
 
@@ -305,7 +307,7 @@ class ConstructAppMode(AppMode):
     async def _attempt(
         self,
         assets: AssetSubsystem,
-        required: list[str],
+        required: list[ApverNum],
         *,
         auth_recoverable: bool,
     ) -> _ResolveOutcome:

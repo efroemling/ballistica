@@ -5,16 +5,13 @@
 import weakref
 import logging
 from enum import Enum
-from typing import override, TYPE_CHECKING
+from typing import override
 
 from bauiv1lib.tabs import TabRow
 from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
 from bauiv1 import _classicassets
 from bauiv1 import _uiv1assets
-
-if TYPE_CHECKING:
-    from bauiv1lib.play import PlaylistSelectContext
 
 
 class GatherTab:
@@ -157,12 +154,21 @@ class GatherWindow(bui.MainWindow):
             )
             self._back_button = None
         else:
+            # Sized to match doc-ui windows' back buttons on screen
+            # (as of 2026-09-30), centered where the old 60x60-at-1.1
+            # sat.
+            back_size = (60.0, 55.0)
+            back_scale = 0.9 if uiscale is bui.UIScale.MEDIUM else 0.87
+            back_center = (103.0, yoffs - 10.0)
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(70, yoffs - 43),
-                size=(60, 60),
-                scale=1.1,
+                position=(
+                    back_center[0] - 0.5 * back_size[0] * back_scale,
+                    back_center[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
@@ -293,29 +299,29 @@ class GatherWindow(bui.MainWindow):
     def on_main_window_close(self) -> None:
         self._save_state()
 
-    def playlist_select(
-        self,
-        origin_widget: bui.Widget,
-        context: PlaylistSelectContext,
-    ) -> None:
-        """Called by the private-hosting tab to select a playlist."""
-        from bauiv1lib.play import PlayWindow
+    def playlist_select(self, origin_widget: bui.Widget) -> None:
+        """Called by the private-hosting tab to select a playlist.
+
+        Opens the play page in select mode, leading to the playlist
+        browsers' select mode; confirming a playlist there records it in
+        the config and comes back here.
+        """
+        # pylint: disable=cyclic-import
+        from bauiv1lib.playdocui import PlaySelectController, Root
 
         # Avoid redundant window spawns.
         if not self.main_window_has_control():
             return
 
-        new_window = self.main_window_replace(
-            lambda: PlayWindow(
-                origin_widget=origin_widget, playlist_select_context=context
-            )
+        ctrl = PlaySelectController
+        self.main_window_replace(
+            lambda: ctrl().create_window(
+                Root(select=True),
+                origin_widget=origin_widget,
+                auxiliary_style=False,
+            ),
+            extra_type_id=ctrl.get_window_extra_type_id(),
         )
-        assert new_window is not None
-
-        # Grab the newly-set main-window's back-state; that will lead us
-        # back here once we're done going down our main-window
-        # rabbit-hole for playlist selection.
-        context.back_state = new_window.main_window_back_state
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:

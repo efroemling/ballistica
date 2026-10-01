@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
 import bascenev1 as bs
-from bascenev1 import _classicassets
+from bascenev1 import _classicassets, _classiccatalogassets
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -823,7 +823,14 @@ class NewsDisplay:
 def _preload1() -> None:
     """Pre-load some assets a second or two into the main menu.
 
-    Helps avoid hitches later on.
+    Helps avoid hitches later on. Only meshes and textures belong here:
+    one that isn't loaded yet when first drawn gets loaded inline on the
+    graphics thread (a visible hitch). Sounds are deliberately left out;
+    one that isn't loaded when first played gets loaded inline on the
+    audio thread, which costs a few milliseconds of latency on that one
+    sound and nothing visible, while preloading all of them here was
+    ~250ms of decode work at every launch on a phone (the factories
+    load theirs when a game builds them).
     """
     for mname in [
         'plasticEyesTransparent',
@@ -837,22 +844,19 @@ def _preload1() -> None:
     ]:
         bs.getmesh(mname)
     # Asset-package textures warm up through their wrappers.
-    _ = _classicassets.textures.character_icon_mask.get()
+    _ = _classiccatalogassets.textures.character_icon_mask.get()
     _ = _classicassets.textures.player_lineup.get()
     _ = _classicassets.textures.lock.get()
     _ = _classicassets.textures.icon_runaround.get()
     _ = _classicassets.textures.icon_onslaught.get()
     _ = _classicassets.textures.bg.get()
-    from bascenev1lib.actor.powerupbox import PowerupBoxFactory
-
-    PowerupBoxFactory.get()
     bui.apptimer(0.1, _preload2)
 
 
 def _preload2() -> None:
-    # FIXME: Could integrate these loads with the classes that use them
-    #  so they don't have to redundantly call the load
-    #  (even if the actual result is cached).
+    # These mirror the meshes and textures the classic factories
+    # (PowerupBoxFactory, BombFactory, FlagFactory) load. We don't just
+    # instantiate the factories here because they load their sounds too.
     for mname in ['powerup', 'powerupSimple']:
         bs.getmesh(mname)
     _ = _classicassets.textures.powerup_bomb.get()
@@ -863,35 +867,24 @@ def _preload2() -> None:
     _ = _classicassets.textures.powerup_shield.get()
     _ = _classicassets.textures.powerup_impact_bombs.get()
     _ = _classicassets.textures.powerup_health.get()
-    _ = _classicassets.audio.powerup01.get()
-    _ = _classicassets.audio.box_drop.get()
-    _ = _classicassets.audio.boxing_bell.get()
-    _ = _classicassets.audio.score_hit01.get()
-    _ = _classicassets.audio.score_hit02.get()
-    _ = _classicassets.audio.dripity.get()
-    _ = _classicassets.audio.spawn.get()
-    _ = _classicassets.audio.gong.get()
-    from bascenev1lib.actor.bomb import BombFactory
-
-    BombFactory.get()
+    _ = _classicassets.textures.powerup_land_mines.get()
+    _ = _classicassets.textures.powerup_curse.get()
     bui.apptimer(0.1, _preload3)
 
 
 def _preload3() -> None:
-    from bascenev1lib.actor.spazfactory import SpazFactory
-
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         bs.getmesh(mname)
+    _ = _classicassets.meshes.land_mine.get()
+    _ = _classicassets.meshes.tnt.get()
     _ = _classicassets.textures.bomb_color.get()
     _ = _classicassets.textures.bomb_color_ice.get()
     _ = _classicassets.textures.bomb_sticky_color.get()
     _ = _classicassets.textures.impact_bomb_color.get()
     _ = _classicassets.textures.impact_bomb_color_lit.get()
-    _ = _classicassets.audio.freeze.get()
-    _ = _classicassets.audio.fuse01.get()
-    _ = _classicassets.audio.activate_beep.get()
-    _ = _classicassets.audio.warn_beep.get()
-    SpazFactory.get()
+    _ = _classicassets.textures.land_mine.get()
+    _ = _classicassets.textures.land_mine_lit.get()
+    _ = _classicassets.textures.tnt.get()
     bui.apptimer(0.2, _preload4)
 
 
@@ -902,13 +895,6 @@ def _preload4() -> None:
     _ = _classicassets.textures.achievement_outline.get()
     for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
         bs.getmesh(mname)
-    _ = _classicassets.audio.metal_hit.get()
-    _ = _classicassets.audio.metal_skid.get()
-    _ = _classicassets.audio.ref_whistle.get()
-    _ = _classicassets.audio.achievement.get()
-    from bascenev1lib.actor.flag import FlagFactory
-
-    FlagFactory.get()
 
 
 class MainMenuSession(bs.Session):

@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 import babase
 
 import _bauiv1
-from bauiv1 import _uiv1assets
 from bauiv1._keyboard import Keyboard
 from bauiv1._window import Window
 
@@ -97,7 +96,7 @@ class OnScreenKeyboardWindow(Window):
             position=(70, self._height - 116),
             max_chars=adapter.max_length,
             text=adapter.initial_text,
-            on_return_press_call=self._done,
+            on_submit_call=self._done,
             autoselect=True,
             size=(self._width - 140, 55),
             v_align='center',
@@ -469,8 +468,12 @@ class OnScreenKeyboardWindow(Window):
         # pylint: disable-next=cyclic-import
         from bauiv1 import _builtinassets
 
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bauiv1 import _classicassets
+
         self._adapter.cancel()
-        _uiv1assets.audio.swish.get().play()
+        _bauiv1.play_swish()
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:

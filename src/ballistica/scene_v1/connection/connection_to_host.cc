@@ -20,6 +20,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -184,8 +185,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             return "ConnectionToHost: received HANDSHAKE (host protocol "
                    + std::to_string(their_protocol_version) + ").";
           });
-      if (their_protocol_version >= kProtocolVersionClientMin
-          && their_protocol_version <= kProtocolVersionMax) {
+      if (IsJoinableHostProtocol(their_protocol_version)) {
         compatible = true;
 
         // If we are compatible, set our protocol version to match what
@@ -843,6 +843,19 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
     g_base->audio->SafePlaySound(
         g_base->assets->base_assets().gun_cocking.get());
+
+    // Our cloud profiles reach a host through v2-auth, and only hosts
+    // at the character-skin line can use what it delivers; anywhere
+    // else we are on legacy profiles (cloud-profiles D11), which must
+    // be obvious -- warn once per join. Only when signed in, though:
+    // signed out, having no cloud profiles is stating the obvious.
+    if (g_base->ui->account_signed_in()
+        && (protocol_version_ < kProtocolVersionCharacterSkins
+            || !v2_auth_global_app_instance_id_.has_value())) {
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Net::HostLegacyProfilesOnly()->Evaluate(),
+          {1.0f, 1.0f, 0.0f});
+    }
 
     printed_connect_message_ = true;
   }

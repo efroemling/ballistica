@@ -123,6 +123,8 @@ class UI {
   /// Set persistent account state info; will be provided to current and
   /// future delegates.
   void SetAccountSignInState(bool signed_in, const std::string& name);
+  /// Whether the Python layer last reported a signed-in account.
+  auto account_signed_in() const -> bool { return account_state_signed_in_; }
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
@@ -142,7 +144,8 @@ class UI {
   auto CreateSimpleDialog() -> int;
   void SetSimpleDialogState(int id, const std::string& title,
                             const std::string& message, float progress,
-                            const std::string& button_label);
+                            const std::string& button_label,
+                            bool cancel_activates_button);
   void DismissSimpleDialog(int id);
 
   /// Whether a (modal) SimpleDialog is currently up. While true, input
@@ -254,6 +257,9 @@ class UI {
   /// true (consuming the event). Routes OK/confirm from keyboard/controllers/
   /// remotes (which funnel through SendWidgetMessage) to the dialog.
   auto HandleSimpleDialogActivate_() -> bool;
+  /// Cancel counterpart: fire the top-most button-bearing SimpleDialog's
+  /// button if that dialog opted into cancel-activation; returns true if so.
+  auto HandleSimpleDialogCancel_() -> bool;
   void DispatchSimpleDialogButton_(int id, const char* source);
 
   Object::Ref<TextGroup> dev_console_button_txt_;
@@ -270,6 +276,12 @@ class UI {
   millisecs_t last_widget_input_reject_err_sound_time_{};
   Rect text_edit_rect_{};
   Rect text_edit_rect_norm_prev_{};
+  // Dev-console button look, from the config: its size as a multiple of
+  // the ui-scale default, and its color scheme.
+  enum class DevConsoleButtonStyle_ { kGrey, kGreen, kPurple, kHowdy };
+  float dev_console_button_size_scale_{1.0f};
+  DevConsoleButtonStyle_ dev_console_button_style_{
+      DevConsoleButtonStyle_::kGrey};
   // Dev-console button custom position (virtual coords; active once the
   // button has been dragged) and in-flight press/drag tracking.
   float dev_console_button_custom_x_{};
@@ -278,6 +290,12 @@ class UI {
   float dev_console_button_press_y_{};
   float dev_console_button_drag_offset_x_{};
   float dev_console_button_drag_offset_y_{};
+  // The button's position as of the current press, so a canceled drag
+  // can snap it back (the OS taking the gesture, as when a drag near
+  // the top of an iPad screen becomes a window drag).
+  float dev_console_button_pre_drag_x_{};
+  float dev_console_button_pre_drag_y_{};
+  bool dev_console_button_pre_drag_has_custom_pos_{};
   // When the dev-console button was last activated (drives its fade back
   // from the lit-up look). Starts far enough in the past to never light up
   // at launch.
@@ -296,6 +314,13 @@ class UI {
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
   bool dev_console_button_dragging_{};
+  // The pointer is over the dev-console button (mouse only; touch has
+  // no hover). Drives its hover look.
+  bool dev_console_button_hovered_{};
+  // While the button is pressed (and not yet dragging), whether the
+  // pointer is still over it (touch and mouse alike); drives its held
+  // look, as a press that drifts off lets go visually.
+  bool dev_console_button_press_over_{};
   bool dev_console_button_has_custom_pos_{};
   bool mousing_in_main_ui_{};
 };

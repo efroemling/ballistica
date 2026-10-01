@@ -345,6 +345,40 @@ auto BasePython::HmacSha256Hex(const std::string& key, const std::string& msg)
   return PyUnicode_AsUTF8(hexdigest.get());
 }
 
+auto BasePython::Sha256Hex(const std::string& data) -> std::string {
+  assert(Python::HaveGIL());
+  if (!hashlib_sha256_call_.exists()) {
+    if (hashlib_lookup_failed_) {
+      return "";
+    }
+    auto hashlib_mod = PythonRef::StolenSoft(PyImport_ImportModule("hashlib"));
+    if (!hashlib_mod.exists()) {
+      PyErr_Clear();
+      hashlib_lookup_failed_ = true;
+      return "";
+    }
+    hashlib_sha256_call_ = hashlib_mod.GetAttr("sha256");
+  }
+  // hashlib.sha256(data).hexdigest()
+  auto args = PythonRef::Stolen(Py_BuildValue(
+      "(y#)", data.c_str(), static_cast<Py_ssize_t>(data.size())));
+  PythonRef hash_obj = hashlib_sha256_call_.Call(args);
+  if (!hash_obj.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Sha256Hex: hashlib.sha256 failed.");
+    return "";
+  }
+  PythonRef hexdigest = hash_obj.GetAttr("hexdigest").Call();
+  if (!hexdigest.exists() || !PyUnicode_Check(hexdigest.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Sha256Hex: hexdigest failed.");
+    return "";
+  }
+  return PyUnicode_AsUTF8(hexdigest.get());
+}
+
 auto BasePython::MakeLangStrSpecFromJson(const std::string& json) -> PythonRef {
   assert(Python::HaveGIL());
   // Trigger the lazy class/serializer lookups (arg is irrelevant).

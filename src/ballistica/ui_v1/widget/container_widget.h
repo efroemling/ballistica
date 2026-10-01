@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -181,6 +182,17 @@ class ContainerWidget : public Widget {
   auto GetTopmostToolbarInfluencingWidget() -> Widget*;
 
   auto IsTransitioningOut() const -> bool override;
+
+  /// Color multiplier currently applied to our window backing; > 1 for
+  /// the brief glow during a scale-in, otherwise 1. Children that
+  /// masquerade as part of the backing can apply it to stay matched.
+  auto GetBackingGlowMult() const -> float {
+    if (transition_scale_ <= 0.9f && !transitioning_out_) {
+      float amt = transition_scale_ / 0.9f;
+      return std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
+    }
+    return 1.0f;
+  }
 
   auto CoversScreenOpaquely() const -> bool override;
 

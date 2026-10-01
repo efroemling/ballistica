@@ -16,6 +16,7 @@
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
+#include "ballistica/ui_v1/python/class/python_class_viewer_source.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
 
@@ -45,6 +46,7 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassUISound>(module);
   PythonModuleBuilder::AddClass<PythonClassUITexture>(module);
   PythonModuleBuilder::AddClass<PythonClassUIMesh>(module);
+  PythonModuleBuilder::AddClass<PythonClassViewerSource>(module);
   PythonModuleBuilder::AddClass<PythonClassWidget>(module);
 }
 

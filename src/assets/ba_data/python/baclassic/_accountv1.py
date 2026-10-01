@@ -67,10 +67,10 @@ class AccountV1Subsystem:
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _classicassets
+        from bascenev1 import _classicassets, _uiv1assets
 
         babase.screenmessage(
-            _classicassets.strings.economy.received_tickets(count=count),
+            _uiv1assets.strings.economy.received_tickets(count=count),
             color=(0, 1, 0),
         )
         _builtinassets.audio.cash_register.get().play()

@@ -2,7 +2,7 @@
 #
 """Provides a popup window to view achievements."""
 
-from typing import override
+from typing import TypedDict, override
 
 from bauiv1lib.utils import (
     get_screen_margins,
@@ -11,6 +11,34 @@ from bauiv1lib.utils import (
 )
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
+
+
+class _BackButtonGeometry(TypedDict):
+    position: tuple[float, float]
+    size: tuple[float, float]
+    scale: float
+
+
+def _back_button_geometry(
+    uiscale: bui.UIScale, close_style: bool, yoffs: float
+) -> _BackButtonGeometry:
+    """The window's back/close button's position/size/scale kwargs.
+
+    Sized to match doc-ui windows' back/close buttons on screen (as of
+    2026-09-30): 50x50 close / 60x55 back at 0.66 (medium) / 0.6
+    (large), centered at (68, yoffs - 30), where the old 60x60-at-0.6
+    sat.
+    """
+    size = (50.0, 50.0) if close_style else (60.0, 55.0)
+    scale = 0.66 if uiscale is bui.UIScale.MEDIUM else 0.6
+    return {
+        'position': (
+            68.0 - 0.5 * size[0] * scale,
+            yoffs - 30.0 - 0.5 * size[1] * scale,
+        ),
+        'size': size,
+        'scale': scale,
+    }
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -38,7 +66,7 @@ class AchievementsWindow(bui.MainWindow):
         self._height = (
             450
             if uiscale is bui.UIScale.SMALL
-            else 370 if uiscale is bui.UIScale.MEDIUM else 450
+            else 488 if uiscale is bui.UIScale.MEDIUM else 594
         )
 
         # Do some fancy math to fill all available screen area up to the
@@ -48,7 +76,7 @@ class AchievementsWindow(bui.MainWindow):
         scale = (
             2.4
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
+            else 1.2 if uiscale is bui.UIScale.MEDIUM else 0.96
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -112,9 +140,7 @@ class AchievementsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
                 autoselect=True,
-                position=(50, yoffs - 48),
-                size=(60, 60),
-                scale=0.6,
+                **_back_button_geometry(uiscale, auxiliary_style, yoffs),
                 label=bui.charstr(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style

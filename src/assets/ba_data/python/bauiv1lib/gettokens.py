@@ -3,6 +3,7 @@
 """UI functionality for purchasing/acquiring currency."""
 
 import time
+import logging
 from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never, override
@@ -334,7 +335,7 @@ class GetTokensWindow(bui.MainWindow):
         scale = (
             1.425
             if uiscale is bui.UIScale.SMALL
-            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.76
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -405,7 +406,11 @@ class GetTokensWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._yoffs - 42),
+            # Outside small ui, centered vertically on our back button.
+            position=(
+                self._width * 0.5,
+                self._yoffs - (42 if uiscale is bui.UIScale.SMALL else 60),
+            ),
             size=(0, 0),
             color=self._textcolor,
             flatness=0.0,
@@ -578,8 +583,6 @@ class GetTokensWindow(bui.MainWindow):
         plus = bui.app.plus
         classic = bui.app.classic
 
-        uiscale = bui.app.ui_v1.uiscale
-
         bui.textwidget(edit=self._status_text, text='')
 
         scrollheight = 280
@@ -638,36 +641,6 @@ class GetTokensWindow(bui.MainWindow):
                 scrollheight,
             ),
         )
-        tinfobtn = bui.buttonwidget(
-            parent=self._root_widget,
-            id=f'{self.main_window_id_prefix}|learnmore',
-            autoselect=True,
-            label=_commonassets.strings.actions.learn_more,
-            text_scale=0.7,
-            position=(
-                self._width * 0.5 - 75,
-                self._yoffs - 100,
-            ),
-            size=(180, 40),
-            scale=0.8,
-            color=(0.4, 0.25, 0.5),
-            textcolor=self._textcolor,
-            on_activate_call=bui.WeakCallStrict(
-                self._on_learn_more_press, response.token_info_url
-            ),
-        )
-        if uiscale is bui.UIScale.SMALL:
-            bui.widget(
-                edit=tinfobtn,
-                left_widget=bui.get_special_widget('back_button'),
-                up_widget=bui.get_special_widget('back_button'),
-            )
-
-        bui.widget(
-            edit=tinfobtn,
-            right_widget=bui.get_special_widget('tokens_meter'),
-        )
-
         x = sidepad + xfudge + self._margin_left
         bwidgets: list[bui.Widget] = []
         for i, buttondef in enumerate(buttondefs_shown):
@@ -682,7 +655,6 @@ class GetTokensWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|button{i}',
                 color=buttondef.color,
                 transition_delay=tdelay,
-                up_widget=tinfobtn,
                 parent=subcontainer,
                 size=(buttondef.width, 275),
                 position=(x, -10 + yoffs),
@@ -692,6 +664,11 @@ class GetTokensWindow(bui.MainWindow):
                 ),
             )
             bwidgets.append(btn)
+
+            # Outside small ui our back button sits in the window; up from
+            # any pack goes to it.
+            if bui.app.ui_v1.uiscale is not bui.UIScale.SMALL:
+                bui.widget(edit=btn, up_widget=self._back_button)
 
             if i == 0:
                 bui.widget(edit=btn, left_widget=self._back_button)
@@ -823,9 +800,6 @@ class GetTokensWindow(bui.MainWindow):
         """Called to make minor updates to an already shown store."""
         assert self._last_query_response is not None
 
-    def _on_learn_more_press(self, url: str) -> None:
-        bui.open_url(url)
-
 
 def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     """Show a 'not enough tokens' prompt with an option to purchase more.
@@ -885,17 +859,39 @@ def show_get_tokens_window(
         return
 
     ui = bui.app.ui_v1
+    back_state = ui.save_current_main_window_state()
+
+    # Save the outgoing window's shared state (selection, etc.) *before*
+    # we create the new window; creating it moves ui selection into it,
+    # and a save after that point would record a selection the outgoing
+    # window can't restore when we come back (so it would fall back to
+    # its default selection instead of, say, the toolbar button that
+    # brought us here). This mirrors what main_window_replace() does.
+    if prev_main_window is not None:
+        prev_main_window.main_window_save_shared_state()
+
     # Set our new main window. Note that we pass auxiliary_style=False
     # so that we get a back button instead of a close button.
     ui.set_main_window(
         GetTokensWindow(origin_widget=origin_widget, auxiliary_style=False),
         from_window=False,  # Don't check where we're coming from.
-        back_state=ui.save_current_main_window_state(),
+        back_state=back_state,
         is_auxiliary=False,
         suppress_warning=True,
         extra_type_id='',
     )
 
-    # Transition out any previous main window.
+    # Transition out any previous main window. We can't use
+    # main_window_close() here since that would re-save shared state
+    # and clobber the good save we made above, so do its parts by hand
+    # (again mirroring main_window_replace()).
     if prev_main_window is not None:
-        prev_main_window.main_window_close(transition='out_left')
+        try:
+            prev_main_window.on_main_window_close()
+        except Exception:
+            logging.exception(
+                'Error in on_main_window_close() for %s.', prev_main_window
+            )
+        prev_root = prev_main_window.get_root_widget()
+        if prev_root and not prev_root.transitioning_out:
+            bui.containerwidget(edit=prev_root, transition='out_left')

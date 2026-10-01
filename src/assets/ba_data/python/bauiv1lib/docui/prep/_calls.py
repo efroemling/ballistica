@@ -6,26 +6,82 @@ We do all layout math and bake out partial ui calls in a background
 thread so there's as little work to do in the ui thread as possible.
 """
 
-import copy
 from functools import partial
-from typing import TYPE_CHECKING, assert_never
+from typing import TYPE_CHECKING
 
-from efro.util import strict_partial
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _uiv1assets
-from bauiv1 import _commonassets
 
-from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
+from bauiv1lib.docui._layout import (
+    PAGE_BASE_BUFFER,
+    SMALL_UI_TOOLBAR_CLEARANCE,
+)
+from bauiv1lib.docui.prep._types import PagePrep, RowPrep
+from bauiv1lib.docui.prep._button import (
+    button_size,
+    button_padded_size,
+    prep_button,
+)
+from bauiv1lib.docui.prep._rowtext import (
+    page_text_center,
+    row_titles_height,
+    prep_row_titles,
+    row_footnote_height,
+    prep_row_footnote,
+)
+from bauiv1lib.docui.prep._rowbands import (
+    row_header_height,
+    row_footer_height,
+    prep_row_header,
+    prep_row_footer,
+)
+from bauiv1lib.docui.prep._staticbuttonrow import row_content_align
 
 if TYPE_CHECKING:
-    from typing import Callable, Sequence
+    from bacommon.assetpackage import ApverNum
+
+    from typing import Callable
 
     from bauiv1lib.docui.prep._types import DecorationPrep
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
+
+
+# An h-scroll widget lifts its content 6 units off its bottom edge to
+# leave room for its scrollbar (a 4 unit gap plus its 2 unit border),
+# so a button row's buttons sit that much closer to the titles above
+# than to the row's bottom. A footnote is lifted this far into that
+# zone so it reads as close to the buttons as a subtitle does (the
+# lift is 2x the offset: the subtitle side gained 6, the footnote side
+# lost 6, and 4 of the difference is left to keep the strips apart).
+# A scrolling row's bar then overlaps the footnote; accepted.
+_BUTTON_ROW_FOOTNOTE_LIFT = 8.0
+
+
+def _button_row_footnote_lift(row: dui2.ButtonRow) -> float:
+    """How far a button row's footnote is raised into its h-scroll."""
+    return 0.0 if row.footnote is None else _BUTTON_ROW_FOOTNOTE_LIFT
+
+
+def _vertical_show_buffers(
+    content_height: float, top: float, bottom: float, scroll_height: float
+) -> tuple[float, float]:
+    """A row's final (top, bottom) show-buffers, given its base ones.
+
+    Nudges what gets kept on screen when the row is selected toward
+    the scroll area's full visible height, so navigating to a row also
+    reveals some of what comes before and after it.
+    """
+    total_show_height = content_height + top + bottom
+
+    # How much to push show-height towards full available space. 1.0
+    # should lead to always perfect centering (but that might feel too
+    # aggressive).
+    amt = 0.5
+    extra = max(0.0, (scroll_height - total_show_height) * 0.5 * amt)
+    return top + extra, bottom + extra
 
 
 def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
@@ -45,27 +101,38 @@ def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
     # This is the render boundary; the spec's parts are private
     # precisely so the conversion happens here and not ad hoc.
     # pylint: disable-next=protected-access
-    return f'{ref._apverid}:{ref._name}'
+    return f'{ref._apvernum}:{ref._name}'
 
 
 def prep_page(
     page: dui2.Page,
     *,
-    packages: list[str],
+    packages: list[ApverNum],
     uiscale: bui.UIScale,
     scroll_width: float,
     scroll_height: float,
     margins: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
+    column_insets: tuple[float, float] = (0.0, 0.0),
     idprefix: str,
     immediate: bool = False,
+    transition_scale: float = 1.0,
 ) -> PagePrep:
     # pylint: disable=too-many-statements
-    """Prep a page."""
+    """Prep a page.
+
+    ``transition_scale`` multiplies every scale-in delay (0 pops the
+    page in instantly, like ``immediate``; 1 is full speed).
+    """
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
 
     import bauiv1lib.docui.prep._calls2 as prepcalls2
+    from bauiv1lib.docui.prep import _controlrows, _sections
+
+    if transition_scale <= 0.0:
+        immediate = True
+    tscale = max(0.0, min(1.0, transition_scale))
 
     def _n(lstr: 'LangStrSpec | int') -> bui.LangStr:
         """Native handle bound against this payload's package list.
@@ -81,33 +148,13 @@ def prep_page(
             )
         return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
-    # Create a filtered list of rows we know how to display.
-    page_rows_filtered: list[dui2.ButtonRow] = []
-    for pagerow in page.rows:
-        if isinstance(pagerow, dui2.ButtonRow):
-            if not pagerow.buttons:
-                pagerow = copy.deepcopy(pagerow)
-                pagerow.buttons.append(
-                    dui2.Button(
-                        label=_commonassets.strings.status.nothing_here.spec,
-                        label_color=(1, 1, 1, 0.3),
-                        size=(220, 100),
-                        label_scale=0.6,
-                        texture=_uiv1assets.textures.button_square_wide,
-                        padding_top=-8,
-                        padding_bottom=-10,
-                        color=(0.2, 0.2, 0.2, 0.15),
-                        action=dui2.Local(default_sound=False),
-                    )
-                )
-            page_rows_filtered.append(pagerow)
-    if len(page_rows_filtered) != len(page.rows):
-        bui.uilog.error('Got unknown row type(s) in doc-ui; ignoring.')
+    # The flat list of what we lay out: the rows we know how to display,
+    # with each section expanded in place into its heading, its rows and
+    # its note (sections remember which entries are their rows, for
+    # their backings).
+    page_rows_filtered, section_spans = _sections.layout_entries(page)
 
     # Ok; we've got some buttons. Build our full UI.
-    row_title_height_with_subtitle = 30.0
-    row_title_height_no_subtitle = 38.0
-    row_subtitle_height = 30.0
 
     # Screen margins our host scroll-widget extends into beyond its
     # nominal scroll-width/height (space between the virtual bounds
@@ -116,29 +163,41 @@ def prep_page(
     # content itself stays laid out within the virtual bounds.
     margin_left, margin_right, margin_bottom, margin_top = margins
 
+    # Column insets narrow where content is laid out *within* those
+    # margins (a narrow layout on a full-screen window). Button rows'
+    # h-scrolls still span the full width, but their content starts and
+    # (scrolled to its end) stops at the column's edges, like it does
+    # at screen margins.
+    col_left, col_right = column_insets
+    cmargin_left = margin_left + col_left
+    cmargin_right = margin_right + col_right
+    cmargins = (cmargin_left, cmargin_right, margin_bottom, margin_top)
+
     # Buffers for *everything*. Set bases here that look decent and
     # allow page to offset them.
-    top_buffer = 20.0 + page.padding_top + margin_top
-    bot_buffer = 20.0 + page.padding_bottom + margin_bottom
+    top_buffer = PAGE_BASE_BUFFER + page.padding_top + margin_top
+    bot_buffer = PAGE_BASE_BUFFER + page.padding_bottom + margin_bottom
     left_buffer = 10.0 + page.padding_left
     # Nudge a bit due to scrollbar.
     right_buffer = 20.0 + page.padding_right
 
-    # Extra buffers for title/headers stuff (not in h-scroll).
-    header_inset_left = 45.0
-    header_inset_right = 30.0
-
-    default_button_width = 150.0
-    default_button_height = 100.0
+    # Extra buffers for title/headers stuff (not in h-scroll): titles,
+    # labels, footnotes and controls. Sized so their text lines up with
+    # the visible edge of a button row's buttons (which sit
+    # hscrollinset + row padding into the h-scroll, and draw a few
+    # units inside their own bounds); they were 45/30, which left text
+    # ~9 units inside the buttons on each side.
+    header_inset_left = 37.0
+    header_inset_right = 22.0
 
     if uiscale is bui.UIScale.SMALL:
-        top_bar_overlap = 70
-        bot_bar_overlap = 70
+        top_bar_overlap = SMALL_UI_TOOLBAR_CLEARANCE
+        bot_bar_overlap = SMALL_UI_TOOLBAR_CLEARANCE
         top_buffer += top_bar_overlap
         bot_buffer += bot_bar_overlap
     else:
-        top_bar_overlap = 0
-        bot_bar_overlap = 0
+        top_bar_overlap = 0.0
+        bot_bar_overlap = 0.0
 
     # Should look into why this is necessary.
     fudge = 15.0
@@ -147,13 +206,12 @@ def prep_page(
     rootcall: Callable[..., bui.Widget] | None = None
     rows: list[RowPrep] = []
     width: float = scroll_width + fudge + margin_left + margin_right
-    height: float = (
-        top_buffer
-        + bot_buffer
-        + page.row_spacing * max(0, (len(page_rows_filtered) - 1))
-    )
+    # The space above each entry (see _sections.entry_gaps()).
+    gaps = _sections.entry_gaps(page_rows_filtered, page.row_spacing)
+    height: float = top_buffer + bot_buffer + sum(gaps)
     simple_culling_v: float = page.simple_culling_v
     center_vertically: bool = page.center_vertically
+    show_scrollbar: bool = page.show_scrollbar
     title: bui.LangStr = _n(page.title)
 
     # Called with root container after construction completes.
@@ -164,45 +222,167 @@ def prep_page(
     have_start_button = False
     have_selected_button = False
 
-    # Precalc basic info like dimensions for all rows.
-    for row in page_rows_filtered:
+    def _button_widget_id(button: dui2.Button) -> str:
+        """The widget id for a button: its own, or the next in line."""
+        nonlocal nextbuttonid
+        if button.widget_id is not None:
+            return f'{idprefix}|{button.widget_id}'
+        nextbuttonid += 1
+        return f'{idprefix}|button{nextbuttonid - 1}'
 
-        # assert row.buttons
+    def _note_button_flags(button: dui2.Button, widgetid: str) -> None:
+        """Act on a button's default/selected flags."""
+        nonlocal have_start_button, have_selected_button
+        if button.default:
+            if have_start_button:
+                bui.uilog.warning(
+                    'Multiple buttons flagged as default.'
+                    ' There can be only one per page.'
+                )
+            else:
+                have_start_button = True
+                root_post_calls.append(partial(_set_start_button, widgetid))
+        if button.selected:
+            if have_selected_button:
+                bui.uilog.warning(
+                    'Multiple buttons flagged as selected.'
+                    ' There can be only one per page.'
+                )
+            else:
+                have_selected_button = True
+                root_post_calls.append(partial(_set_selected_button, widgetid))
+
+    # Control rows' labels line up with row titles; their controls with
+    # the right edge of (right-aligned) buttons.
+    control_left = cmargin_left + left_buffer + header_inset_left
+    control_right = width - fudge - cmargin_right - right_buffer - 10.0
+
+    # Where every row's header/footer decoration lists are placed
+    # relative to: the left and right edges (inset like row titles) and
+    # the center of our content.
+    band_anchors_x = (
+        cmargin_left + left_buffer + header_inset_left,
+        cmargin_left + (width - cmargin_left - cmargin_right) * 0.5,
+        width - cmargin_right - right_buffer - header_inset_right,
+    )
+
+    # How far each control row's control and footnote pull together (see
+    # control_row_tucks()); measured once, used by both passes below.
+    control_tucks: dict[int, tuple[float, float]] = {}
+
+    # The column (cards center in it), and each layout entry's
+    # horizontal geometry: the above, or a card's own, plus where a
+    # button row clips (see _sections.entry_geometry()). Both passes
+    # rebind those page-wide names from it per entry.
+    column = (cmargin_left + left_buffer, width - cmargin_right - right_buffer)
+    geoms = _sections.entry_geometry(
+        page_rows_filtered,
+        section_spans,
+        base=_sections.EntryGeom(
+            cmargin_left,
+            cmargin_right,
+            control_left,
+            control_right,
+            band_anchors_x,
+            None,
+            page_text_center(
+                width=width,
+                margins=cmargins,
+                buffers=(left_buffer, right_buffer),
+            ),
+        ),
+        width=width,
+        column=column,
+    )
+
+    # Precalc basic info like dimensions for all rows.
+    for i, row in enumerate(page_rows_filtered):
+        cmargin_left, cmargin_right = (
+            geoms[i].cmargin_left,
+            geoms[i].cmargin_right,
+        )
+        control_left, control_right = (
+            geoms[i].control_left,
+            geoms[i].control_right,
+        )
+        if isinstance(row, _sections.SectionHead | _sections.SectionFoot):
+            # Text and bands only; its whole height sits outside any
+            # scrollable part, so the prep's own is zero.
+            rows.append(
+                RowPrep(
+                    width=0.0,
+                    height=0.0,
+                    titlecalls=[],
+                    hscrollcall=None,
+                    hscrolleditcall=None,
+                    hsubcall=None,
+                    buttons=[],
+                    simple_culling_h=0.0,
+                    decorations=[],
+                    is_section=True,
+                )
+            )
+            height += (
+                _sections.section_head_height(row, _n, first=i == 0)
+                if isinstance(row, _sections.SectionHead)
+                else _sections.section_foot_height(row, _n)
+            )
+            continue
+        if _controlrows.is_column_row(row):
+            titles_tuck, footnote_tuck = control_tucks[id(row)] = (
+                _controlrows.control_row_tucks(
+                    row, left=control_left, right=control_right, native=_n
+                )
+            )
+            cbheight = (
+                _controlrows.control_row_height(row)
+                + row_footnote_height(row, _n)
+                - footnote_tuck
+            )
+            rows.append(
+                RowPrep(
+                    width=0.0,
+                    height=cbheight,
+                    titlecalls=[],
+                    hscrollcall=None,
+                    hscrolleditcall=None,
+                    hsubcall=None,
+                    buttons=[],
+                    simple_culling_h=0.0,
+                    decorations=[],
+                )
+            )
+            height += cbheight + row_titles_height(row, _n) - titles_tuck
+            height += row_header_height(row) + row_footer_height(row)
+            height += row.spacing_top + row.spacing_bottom
+            continue
+
+        # Anything else is a (scrolling) row of buttons.
+        assert isinstance(row, dui2.ButtonRow)
+        padleft, padright, padtop, padbottom = row.get_padding()
         this_row_width = (
             left_buffer
             + right_buffer
-            + margin_left
-            + margin_right
-            + row.padding_left
-            + row.padding_right
+            + cmargin_left
+            + cmargin_right
+            + padleft
+            + padright
             + row.button_spacing * (len(row.buttons) - 1)
         )
         button_row_height = 30.0
         for button in row.buttons:
-            if button.size is None:
-                bwidth = default_button_width
-                bheight = default_button_height
-            else:
-                bwidth = button.size[0]
-                bheight = button.size[1]
-            bscale = button.scale
-            bwidthfull = bwidth * bscale
-            bheightfull = bheight * bscale
-            # Include button padding when calcing full needed height.
-            button_row_height = max(
-                button_row_height,
-                bheightfull
-                + (button.padding_top + button.padding_bottom) * button.scale,
-            )
-            this_row_width += (
-                bwidthfull
-                + (button.padding_left + button.padding_right) * button.scale
-            )
+            # Include button padding when calcing full needed size.
+            bwidthpadded, bheightpadded = button_padded_size(button)
+            button_row_height = max(button_row_height, bheightpadded)
+            this_row_width += bwidthpadded
+        # Clipped narrower than the page (in a section), the h-scroll
+        # loses that much from each end of its content too, so what's in
+        # it stays exactly where it would be on the page.
+        if (clip := geoms[i].clip) is not None:
+            this_row_width -= (clip[0] - hscrollinset) + (width - clip[1])
         # Note: this includes everything in the *scrollable* part of
         # the row.
-        this_row_height = (
-            row.padding_top + row.padding_bottom + button_row_height
-        )
+        this_row_height = padtop + padbottom + button_row_height
         rows.append(
             RowPrep(
                 width=this_row_width,
@@ -220,15 +400,9 @@ def prep_page(
         assert this_row_width > 0.0
 
         # Add height that is *not* part of the h-scrollable area.
-        height += row.header_height * row.header_scale
-        if row.title is not None:
-            height += (
-                row_title_height_no_subtitle
-                if row.subtitle is None
-                else row_title_height_with_subtitle
-            )
-        if row.subtitle is not None:
-            height += row_subtitle_height
+        height += row_header_height(row) + row_footer_height(row)
+        height += row_titles_height(row, _n)
+        height += row_footnote_height(row, _n) - _button_row_footnote_lift(row)
         height += this_row_height
         height += row.spacing_top + row.spacing_bottom
 
@@ -242,233 +416,334 @@ def prep_page(
     )
     y = height - top_buffer
 
+    # Section markers attach to a neighboring selectable row for
+    # navigation: a heading's height (plus the row spacing between)
+    # joins the *next* selectable row's top show-buffer, a note's the
+    # *previous* one's bottom show-buffer, so selecting that row keeps
+    # the marker in view. Base buffers are gathered on each RowPrep
+    # here and finalized after the loop, once every attachment is
+    # known.
+    pending_top_attach: float | None = None
+    last_selectable: RowPrep | None = None
+
     for i, (row, rowprep) in enumerate(
         zip(page_rows_filtered, rows, strict=True)
     ):
-        tdelaybase = 0.15 + 0.06 * i
+        tdelaybase = (0.15 + 0.06 * i) * tscale
+        geom = geoms[i]
+        cmargin_left, cmargin_right = geom.cmargin_left, geom.cmargin_right
+        cmargins = (cmargin_left, cmargin_right, margin_bottom, margin_top)
+        control_left, control_right = geom.control_left, geom.control_right
+        band_anchors_x = geom.band_anchors_x
 
+        if isinstance(row, _sections.SectionHead | _sections.SectionFoot):
+            ytop = y
+            y -= gaps[i]
+            # (Debug bounds, like every row's, leave out the row spacing
+            # above.)
+            ydebugtop = y
+            if isinstance(row, _sections.SectionHead):
+                # (The row spacing above a heading belongs to whatever
+                # came before; the one below it, to the heading.)
+                ytop = y
+                y = _sections.prep_section_head(
+                    row,
+                    rowprep,
+                    y=y,
+                    width=width,
+                    margins=cmargins,
+                    buffers=(left_buffer, right_buffer),
+                    header_insets=(header_inset_left, header_inset_right),
+                    center=geom.center,
+                    anchors_x=band_anchors_x,
+                    tdelaybase=None if immediate else tdelaybase,
+                    tscale=tscale,
+                    native=_n,
+                    packages=packages,
+                    first=i == 0,
+                )
+                # Everything from our top down to the next row's top
+                # (its row spacing included, added when we get there).
+                pending_top_attach = (pending_top_attach or 0.0) + (ytop - y)
+            else:
+                y = _sections.prep_section_foot(
+                    row,
+                    rowprep,
+                    y=y,
+                    width=width,
+                    margins=cmargins,
+                    buffers=(left_buffer, right_buffer),
+                    header_insets=(header_inset_left, header_inset_right),
+                    center=geom.center,
+                    anchors_x=band_anchors_x,
+                    tdelaybase=None if immediate else tdelaybase,
+                    tscale=tscale,
+                    native=_n,
+                    packages=packages,
+                )
+                if last_selectable is None:
+                    bui.uilog.warning(
+                        'Doc-ui Section note has no selectable row before'
+                        ' it; navigation cannot bring it into view.'
+                    )
+                else:
+                    last_selectable.show_buffer_bottom += ytop - y
+            if row.section.debug:
+                prepcalls2.prep_row_debug(
+                    (
+                        width
+                        - cmargin_left
+                        - cmargin_right
+                        - left_buffer
+                        - right_buffer,
+                        ydebugtop - y,
+                    ),
+                    (cmargin_left + left_buffer, y),
+                    None if immediate else tdelaybase,
+                    rowprep.decorations,
+                )
+            continue
+
+        # A selectable row: whatever headings gathered above it are
+        # its to keep in view, the row spacing between included.
+        if pending_top_attach is not None:
+            rowprep.show_buffer_top += pending_top_attach + gaps[i]
+            pending_top_attach = None
+        last_selectable = rowprep
+
+        if _controlrows.is_column_row(row):
+            y -= row.spacing_top
+            y -= gaps[i]
+            # Debug bounds cover the whole row: header band to footer
+            # band (not the spacing outside them).
+            ydebugtop = y
+            y = prep_row_header(
+                row,
+                rowprep,
+                y=y,
+                anchors_x=band_anchors_x,
+                tdelay=None if immediate else (tdelaybase + 0.05 * tscale),
+                packages=packages,
+            )
+            y = prep_row_titles(
+                row,
+                rowprep,
+                y=y,
+                width=width,
+                margins=cmargins,
+                buffers=(left_buffer, right_buffer),
+                header_insets=(header_inset_left, header_inset_right),
+                center=geom.center,
+                tdelaybase=None if immediate else tdelaybase,
+                tscale=tscale,
+                native=_n,
+            )
+            # Label and its surrounding text sit closer than their
+            # strips alone would put them (see control_row_tucks()).
+            titles_tuck, footnote_tuck = control_tucks[id(row)]
+            y += titles_tuck
+            y -= rowprep.height
+            footnote_height = row_footnote_height(row, _n)
+            prep_row_footnote(
+                row,
+                rowprep,
+                y=y,
+                width=width,
+                margins=cmargins,
+                buffers=(left_buffer, right_buffer),
+                header_insets=(header_inset_left, header_inset_right),
+                center=geom.center,
+                tdelaybase=None if immediate else tdelaybase,
+                tscale=tscale,
+                native=_n,
+            )
+            # A row whose control is a button (or whose contents are
+            # buttons) ids and flags them as a row of buttons would.
+            rowbuttons: list[dui2.Button] = (
+                [row.button]
+                if isinstance(row, dui2.ButtonControlRow)
+                else row.buttons if isinstance(row, dui2.ButtonRow) else []
+            )
+            buttonids: list[str] | None = None
+            if rowbuttons:
+                buttonids = []
+                for rowbutton in rowbuttons:
+                    rowbuttonid = _button_widget_id(rowbutton)
+                    _note_button_flags(rowbutton, rowbuttonid)
+                    buttonids.append(rowbuttonid)
+            # A fixed row of buttons spans what a scrolling row's content
+            # does (so switching between the two leaves its buttons where
+            # they were); all else, where control rows' contents do.
+            fixed = (
+                isinstance(row, dui2.ButtonRow)
+                and row.layout is dui2.ButtonRowLayout.FIXED
+            )
+            _controlrows.prep_control_row(
+                row,
+                rowprep,
+                left=(
+                    cmargin_left + left_buffer + hscrollinset
+                    if fixed
+                    else control_left
+                ),
+                right=(
+                    width - hscrollinset - cmargin_right - right_buffer
+                    if fixed
+                    else control_right
+                ),
+                bottom=y + footnote_height - footnote_tuck,
+                center_x=geom.center[0],
+                idprefix=idprefix,
+                # Same timing as a button row's first button.
+                tdelay=None if immediate else tdelaybase,
+                native=_n,
+                packages=packages,
+                buttonids=buttonids,
+            )
+            # Selecting the control should bring the whole row -- its
+            # header and titles above and footnote and footer below --
+            # into view, plus the page's own buffers so the top/bottom
+            # rows clear toolbars. (Finalized after the loop, with any
+            # section markers attached and a nudge toward the visible
+            # height, as button rows are.)
+            rowprep.show_buffer_top += (
+                top_buffer
+                + row_header_height(row)
+                + row_titles_height(row, _n)
+                - titles_tuck
+            )
+            rowprep.show_buffer_bottom += (
+                bot_buffer
+                + footnote_height
+                - footnote_tuck
+                + row_footer_height(row)
+            )
+            y = prep_row_footer(
+                row,
+                rowprep,
+                y=y,
+                anchors_x=band_anchors_x,
+                tdelay=None if immediate else (tdelaybase + 0.05 * tscale),
+                packages=packages,
+            )
+            rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
+            if row.debug:
+                prepcalls2.prep_row_debug(
+                    (
+                        width
+                        - cmargin_left
+                        - cmargin_right
+                        - left_buffer
+                        - right_buffer,
+                        ydebugtop - y,
+                    ),
+                    (cmargin_left + left_buffer, y),
+                    None if immediate else tdelaybase,
+                    rowprep.decorations,
+                )
+            y -= row.spacing_bottom
+            continue
+
+        # Anything else is a (scrolling) row of buttons.
+        assert isinstance(row, dui2.ButtonRow)
+        padleft, _padright, padtop, padbottom = row.get_padding()
+        content_align = row_content_align(row)
         y -= row.spacing_top
+        y -= gaps[i]
 
-        if i != 0:
-            y -= page.row_spacing
+        # Debug bounds cover the whole row: header band to footer band
+        # (not the spacing outside them).
+        ydebugtop = y
 
-        # Header decorations.
-        header_height_full = row.header_height * row.header_scale
-        y -= header_height_full
-        hdecs_l = (
-            []
-            if row.header_decorations_left is None
-            else row.header_decorations_left
-        )
-        prepcalls2.prep_decorations(
-            hdecs_l,
-            margin_left + left_buffer + header_inset_left,
-            y + header_height_full * 0.5,
-            row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.05),
+        y = prep_row_header(
+            row,
+            rowprep,
+            y=y,
+            anchors_x=band_anchors_x,
+            tdelay=None if immediate else (tdelaybase + 0.05 * tscale),
             packages=packages,
-            highlight=False,
-            out_decoration_preps=rowprep.decorations,
-        )
-        hdecs_c = (
-            []
-            if row.header_decorations_center is None
-            else row.header_decorations_center
-        )
-        prepcalls2.prep_decorations(
-            hdecs_c,
-            margin_left + (width - margin_left - margin_right) * 0.5,
-            y + header_height_full * 0.5,
-            row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.05),
-            packages=packages,
-            highlight=False,
-            out_decoration_preps=rowprep.decorations,
-        )
-        hdecs_r = (
-            []
-            if row.header_decorations_right is None
-            else row.header_decorations_right
-        )
-        prepcalls2.prep_decorations(
-            hdecs_r,
-            width - margin_right - right_buffer - header_inset_right,
-            y + header_height_full * 0.5,
-            row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.05),
-            packages=packages,
-            highlight=False,
-            out_decoration_preps=rowprep.decorations,
         )
 
-        if row.title is not None:
-            rowprep.titlecalls.append(
-                partial(
-                    bui.textwidget,
-                    position=(
-                        (
-                            margin_left
-                            + (
-                                (
-                                    width
-                                    - margin_left
-                                    - margin_right
-                                    - left_buffer
-                                    - right_buffer
-                                )
-                                * 0.5
-                            )
-                            + 7.0  # Fudge factor to match hscroll
-                            if row.center_title
-                            else (margin_left + left_buffer + header_inset_left)
-                        ),
-                        y - row_subtitle_height * 0.5,
-                    ),
-                    size=(0, 0),
-                    text=_n(row.title),
-                    color=(
-                        (0.85, 0.95, 0.89, 1.0)
-                        if row.title_color is None
-                        else row.title_color
-                    ),
-                    flatness=row.title_flatness,
-                    shadow=row.title_shadow,
-                    scale=1.0,
-                    maxwidth=(
-                        (
-                            width
-                            - margin_left
-                            - margin_right
-                            - left_buffer
-                            - right_buffer
-                        )
-                        if row.center_title
-                        else (
-                            width
-                            - margin_left
-                            - margin_right
-                            - left_buffer
-                            - right_buffer
-                            - header_inset_left
-                            - header_inset_right
-                        )
-                    ),
-                    h_align='center' if row.center_title else 'left',
-                    v_align='center',
-                    literal=True,
-                    transition_delay=(
-                        None if immediate else (tdelaybase + 0.1)
-                    ),
-                    transition_type='scale',
-                )
-            )
-            y -= (
-                row_title_height_no_subtitle
-                if row.subtitle is None
-                else row_title_height_with_subtitle
-            )
-        if row.subtitle is not None:
-            rowprep.titlecalls.append(
-                partial(
-                    bui.textwidget,
-                    position=(
-                        (
-                            margin_left
-                            + (
-                                (
-                                    width
-                                    - margin_left
-                                    - margin_right
-                                    - left_buffer
-                                    - right_buffer
-                                )
-                                * 0.5
-                            )
-                            + 7.0  # Fudge factor to match hscroll
-                            if row.center_title
-                            else (margin_left + left_buffer + header_inset_left)
-                        ),
-                        y - row_subtitle_height * 0.5,
-                    ),
-                    size=(0, 0),
-                    text=_n(row.subtitle),
-                    color=(
-                        (0.6, 0.74, 0.6)
-                        if row.subtitle_color is None
-                        else row.subtitle_color
-                    ),
-                    flatness=row.subtitle_flatness,
-                    shadow=row.subtitle_shadow,
-                    scale=0.7,
-                    maxwidth=(
-                        (
-                            width
-                            - margin_left
-                            - margin_right
-                            - left_buffer
-                            - right_buffer
-                        )
-                        if row.center_title
-                        else (
-                            width
-                            - margin_left
-                            - margin_right
-                            - left_buffer
-                            - right_buffer
-                            - header_inset_left
-                            - header_inset_right
-                        )
-                    ),
-                    h_align='center' if row.center_title else 'left',
-                    v_align='center',
-                    literal=True,
-                    transition_delay=(
-                        None if immediate else (tdelaybase + 0.2)
-                    ),
-                    transition_type='scale',
-                )
-            )
-            y -= row_subtitle_height
+        y = prep_row_titles(
+            row,
+            rowprep,
+            y=y,
+            width=width,
+            margins=cmargins,
+            buffers=(left_buffer, right_buffer),
+            header_insets=(header_inset_left, header_inset_right),
+            center=geom.center,
+            tdelaybase=None if immediate else tdelaybase,
+            tscale=tscale,
+            native=_n,
+        )
 
         y -= rowprep.height  # includes padding-top/bottom
 
+        # The footnote strip sits below the scrollable part, raised
+        # into its scrollbar zone (see _BUTTON_ROW_FOOTNOTE_LIFT).
+        footnote_height = row_footnote_height(row, _n)
+        footnote_lift = _button_row_footnote_lift(row)
+        y -= footnote_height - footnote_lift
+        prep_row_footnote(
+            row,
+            rowprep,
+            y=y,
+            width=width,
+            margins=cmargins,
+            buffers=(left_buffer, right_buffer),
+            header_insets=(header_inset_left, header_inset_right),
+            center=geom.center,
+            tdelaybase=None if immediate else tdelaybase,
+            tscale=tscale,
+            native=_n,
+        )
+        hscroll_y = y + footnote_height - footnote_lift
+
+        y = prep_row_footer(
+            row,
+            rowprep,
+            y=y,
+            anchors_x=band_anchors_x,
+            tdelay=None if immediate else (tdelaybase + 0.05 * tscale),
+            packages=packages,
+        )
+        rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
+
         if row.debug:
-            rowheightfull = (
-                rowprep.height + row.header_height * row.header_scale
-            )
-            if row.title is not None:
-                rowheightfull += (
-                    row_title_height_no_subtitle
-                    if row.subtitle is None
-                    else row_title_height_with_subtitle
-                )
-            if row.subtitle is not None:
-                rowheightfull += row_subtitle_height
             prepcalls2.prep_row_debug(
                 (
                     width
-                    - margin_left
-                    - margin_right
+                    - cmargin_left
+                    - cmargin_right
                     - left_buffer
                     - right_buffer,
-                    rowheightfull,
+                    ydebugtop - y,
                 ),
-                (margin_left + left_buffer, y),
+                (cmargin_left + left_buffer, y),
                 None if immediate else tdelaybase,
                 rowprep.decorations,
             )
 
+        # Where we clip: the page's width, or narrower in a section.
+        clip_l, clip_r = (
+            (hscrollinset, width) if geom.clip is None else geom.clip
+        )
         rowprep.hscrollcall = partial(
             bui.hscrollwidget,
-            size=(width - hscrollinset, rowprep.height),
-            position=(hscrollinset, y),
-            button_inset_left=margin_left,
-            button_inset_right=margin_right,
+            size=(clip_r - clip_l, rowprep.height),
+            position=(clip_l, hscroll_y),
+            # (Page arrows only; they stay at the screen edges even when
+            # our content is indented to a column -- or at our clip
+            # edges, when a section narrows us.)
+            button_inset_left=margin_left if geom.clip is None else 0.0,
+            button_inset_right=margin_right if geom.clip is None else 0.0,
             claims_left_right=True,
             highlight=False,
             border_opacity=0.0,
-            center_small_content=row.center_content,
+            center_small_content=content_align is dui2.HAlign.CENTER,
             simple_culling_h=row.simple_culling_h,
+            scrollbar_visible=row.show_scrollbar,
             # Have the page-left/right buttons scale in along with our
             # buttons and decorations, but only when those are actually
             # animating; otherwise (a refresh in place, a back-nav to a
@@ -476,31 +751,33 @@ def prep_page(
             # transitioning while the rest of the page simply appears.
             transition_in=not immediate,
         )
+        # Ideally we could just always use row-width, but currently that
+        # gets us right-aligned stuff when center-small-content is off.
+        hsubwidth = (
+            rowprep.width
+            if content_align is dui2.HAlign.CENTER
+            else max(clip_r - clip_l - fudge, rowprep.width)
+        )
         rowprep.hsubcall = partial(
             bui.containerwidget,
-            size=(
-                # Ideally we could just always use row-width, but
-                # currently that gets us right-aligned stuff when
-                # center-small-content is off.
-                (
-                    rowprep.width
-                    if row.center_content
-                    else max(width - hscrollinset - fudge, rowprep.width)
-                ),
-                rowprep.height,
-            ),
+            size=(hsubwidth, rowprep.height),
             background=False,
         )
-        x = margin_left + left_buffer + row.padding_left
+        # (Less whatever a narrower clip cut off our content's start, so
+        # buttons land where they would on the page.)
+        x = cmargin_left + left_buffer + padleft
+        x -= clip_l - hscrollinset
+        if content_align is dui2.HAlign.RIGHT:
+            # Shove everything over by whatever room is left. (Content
+            # at least as wide as the row has none, and simply scrolls.)
+            x += hsubwidth - rowprep.width
         # Calc height of buttons themselves (includes button padding but
         # not row padding).
-        button_row_height = (
-            rowprep.height - row.padding_top - row.padding_bottom
-        )
+        button_row_height = rowprep.height - padtop - padbottom
         bcount = len(row.buttons)
 
         # Clamp or max delay if we've got lots of buttons.
-        bdelaymax = min(0.5, 0.03 * bcount)
+        bdelaymax = min(0.5, 0.03 * bcount) * tscale
         for j, button in enumerate(row.buttons):
             # Leftmost buttons appear first; pop-in sweeps left-to-right.
             tdelayamt = j / max(1, bcount - 1)
@@ -509,184 +786,53 @@ def prep_page(
             xorig = x
             x += button.padding_left * button.scale
             bscale = button.scale
-            if button.size is None:
-                bwidth = default_button_width
-                bheight = default_button_height
-            else:
-                bwidth = button.size[0]
-                bheight = button.size[1]
-            bwidthfull = bscale * bwidth
-            bheightfull = bscale * bheight
-            # Vertically center the button plus its padding.
-            to_button_plus_padding_bottom = (
-                button_row_height
-                - (
-                    bheightfull
-                    + (button.padding_top + button.padding_bottom)
-                    * button.scale
-                )
-            ) * 0.5
-            # Move up past bottom padding to get button bottom.
+            bwidthfull = bscale * button_size(button)[0]
+            bwidthpadded, bheightpadded = button_padded_size(button)
+
+            # Vertically center the button plus its padding, then move
+            # up past bottom padding to get button bottom.
             to_button_bottom = (
-                to_button_plus_padding_bottom
-                + button.padding_bottom * button.scale
-            )
+                button_row_height - bheightpadded
+            ) * 0.5 + button.padding_bottom * button.scale
 
-            center_x = x + bwidthfull * 0.5
-            center_y = row.padding_bottom + to_button_bottom + bheightfull * 0.5
+            widgetid = _button_widget_id(button)
+            _note_button_flags(button, widgetid)
 
-            bstyle: str
-            if button.style is dui2.ButtonStyle.SQUARE:
-                bstyle = 'square'
-            elif button.style is dui2.ButtonStyle.TAB:
-                bstyle = 'tab'
-            elif button.style is dui2.ButtonStyle.SMALL:
-                bstyle = 'small'
-            elif button.style is dui2.ButtonStyle.MEDIUM:
-                bstyle = 'medium'
-            elif button.style is dui2.ButtonStyle.LARGE:
-                bstyle = 'large'
-            elif button.style is dui2.ButtonStyle.LARGER:
-                bstyle = 'larger'
-            elif button.style is dui2.ButtonStyle.BACK:
-                bstyle = 'back'
-            elif button.style is dui2.ButtonStyle.BACK_SMALL:
-                bstyle = 'backSmall'
-            elif button.style is dui2.ButtonStyle.SQUARE_WIDE:
-                bstyle = 'squareWide'
-            else:
-                assert_never(button.style)
-
-            widgetid: str
-            if button.widget_id is None:
-                widgetid = f'{idprefix}|button{nextbuttonid}'
-                nextbuttonid += 1
-            else:
-                widgetid = f'{idprefix}|{button.widget_id}'
-
-            if button.default:
-                if have_start_button:
-                    bui.uilog.warning(
-                        'Multiple buttons flagged as default.'
-                        ' There can be only one per page.'
-                    )
-                else:
-                    have_start_button = True
-                    root_post_calls.append(partial(_set_start_button, widgetid))
-            if button.selected:
-                if have_selected_button:
-                    bui.uilog.warning(
-                        'Multiple buttons flagged as selected.'
-                        ' There can be only one per page.'
-                    )
-                else:
-                    have_selected_button = True
-                    root_post_calls.append(
-                        partial(_set_selected_button, widgetid)
-                    )
-
-            show_buffer_left = button.padding_left * bscale
-            show_buffer_right = button.padding_right * bscale
-
-            # Calc the total height of what we're trying to keep on
-            # screen, and then nudge that towards the total visible
-            # height of the scroll area.
-            total_show_width = (
-                bwidth + button.padding_left + button.padding_right
-            ) * bscale
-
-            # How much to push show-height towards full available space.
-            # 1.0 should lead to always perfect centering (but that
-            # might feel too aggressive).
+            # Nudge what we try to keep on screen (the button and its
+            # padding) towards the total visible width of the scroll
+            # area. (1.0 should lead to always perfect centering, but
+            # that might feel too aggressive.)
             amt = 0.6
-            buffer_extra = max(
-                0.0, (scroll_width - total_show_width) * 0.5 * amt
-            )
-            show_buffer_left += buffer_extra
-            show_buffer_right += buffer_extra
+            buffer_extra = max(0.0, (scroll_width - bwidthpadded) * 0.5 * amt)
 
-            buttonprep = ButtonPrep(
-                buttoncall=partial(
-                    bui.buttonwidget,
-                    id=widgetid,
-                    position=(x, row.padding_bottom + to_button_bottom),
-                    size=(bwidth, bheight),
-                    scale=bscale,
-                    color=(None if button.color is None else button.color[:3]),
-                    textcolor=button.label_color,
-                    text_flatness=(button.label_flatness),
-                    text_scale=button.label_scale,
-                    button_type=bstyle,
-                    opacity=(1.0 if button.color is None else button.color[3]),
-                    label=('' if button.label is None else _n(button.label)),
-                    text_literal=True,
-                    autoselect=True,
-                    enable_sound=False,
-                    transition_delay=None if immediate else tdelay,
-                    transition_type='scale',
-                    icon_color=button.icon_color,
-                    iconscale=button.icon_scale,
-                    better_bg_fit=True,
-                ),
-                buttoneditcall=partial(
-                    bui.widget,
-                    # TODO: Calc left/right vals properly based on
-                    # our size and padding.
-                    show_buffer_left=show_buffer_left,
-                    show_buffer_right=show_buffer_right,
-                    depth_range=button.depth_range,
-                    # We explicitly assign all neighbor selection;
-                    # anything left over should go to toolbars.
-                    auto_select_toolbars_only=True,
-                ),
-                decorations=[],
-                textures={},
+            buttonprep = prep_button(
+                button,
+                position=(x, padbottom + to_button_bottom),
                 widgetid=widgetid,
-                action=button.action,
+                tdelay=None if immediate else tdelay,
+                packages=packages,
+                native=_n,
+                show_buffers_h=(
+                    button.padding_left * bscale + buffer_extra,
+                    button.padding_right * bscale + buffer_extra,
+                ),
+                disabled=button.disabled,
             )
-            if button.texture is not None:
-                buttonprep.textures['texture'] = refstr(button.texture)
-
-            if button.icon is not None:
-                buttonprep.textures['icon'] = refstr(button.icon)
 
             # With row-debug on, visualize the area we try to scroll to
             # show when each button is selected. Note that we're clamped
             # by the h-scroll here so we have to draw a separate box for
-            # the row title/subtitle.
+            # the row title/subtitle. (Drawn ahead of the button's own
+            # decorations.)
             if row.debug:
+                rowdebug: list[DecorationPrep] = []
                 prepcalls2.prep_row_debug_button(
-                    (
-                        bwidthfull
-                        + (button.padding_left + button.padding_right)
-                        * button.scale,
-                        rowprep.height,
-                    ),
+                    (bwidthpadded, rowprep.height),
                     (xorig, 0.0),
                     None if immediate else tdelay,
-                    buttonprep.decorations,
+                    rowdebug,
                 )
-
-            if button.debug:
-                prepcalls2.prep_button_debug(
-                    (bwidthfull, bheightfull),
-                    (center_x, center_y),
-                    None if immediate else tdelay,
-                    buttonprep.decorations,
-                )
-            decorations = (
-                [] if button.decorations is None else button.decorations
-            )
-            prepcalls2.prep_decorations(
-                decorations,
-                center_x,
-                center_y,
-                bscale,
-                None if immediate else tdelay,
-                packages=packages,
-                highlight=True,
-                out_decoration_preps=buttonprep.decorations,
-            )
+                buttonprep.decorations[:0] = rowdebug
 
             rowprep.buttons.append(buttonprep)
 
@@ -696,50 +842,59 @@ def prep_page(
                 + row.button_spacing
             )
 
-        # Add an edit call for our new hscroll to give it proper
-        # show-buffers.
+        # Show-buffers for our h-scroll (finalized after the loop).
 
         # Incorporate top buffer so we scroll all the way up
         # when selecting the top row (and stay clear of
         # toolbars).
-        show_buffer_top = top_buffer
-        show_buffer_bottom = bot_buffer
+        rowprep.show_buffer_top += top_buffer
+        rowprep.show_buffer_bottom += bot_buffer
 
-        # Scroll so title/subtitle is in view when selecting.
-        # Note that we don't need to account for
+        # Scroll so header/titles and footnote/footer are in view
+        # when selecting. Note that we don't need to account for
         # padding-top/bottom since the h-scroll that we're
         # applying to encompasses both.
-        show_buffer_top += row.header_height * row.header_scale
-        if row.title is not None:
-            show_buffer_top += (
-                row_title_height_no_subtitle
-                if row.subtitle is None
-                else row_title_height_with_subtitle
-            )
-        if row.subtitle is not None:
-            show_buffer_top += row_subtitle_height
+        rowprep.show_buffer_top += row_header_height(row)
+        rowprep.show_buffer_top += row_titles_height(row, _n)
+        rowprep.show_buffer_bottom += footnote_height - footnote_lift
+        rowprep.show_buffer_bottom += row_footer_height(row)
 
-        # Calc the total height of what we're trying to keep on
-        # screen, and then nudge that towards the total visible
-        # height of the scroll area.
-        total_show_height = (
-            rowprep.height + show_buffer_top + show_buffer_bottom
-        )
-        # How much to push show-height towards full available space.
-        # 1.0 should lead to always perfect centering (but that
-        # might feel too aggressive).
-        amt = 0.5
-        buffer_extra = max(0.0, (scroll_height - total_show_height) * 0.5 * amt)
-
-        show_buffer_top += buffer_extra
-        show_buffer_bottom += buffer_extra
-
-        rowprep.hscrolleditcall = partial(
-            bui.widget,
-            show_buffer_top=show_buffer_top,
-            show_buffer_bottom=show_buffer_bottom,
-        )
         y -= row.spacing_bottom
+
+    if pending_top_attach is not None:
+        bui.uilog.warning(
+            'Doc-ui Section heading has no selectable row after it;'
+            ' navigation cannot bring it into view.'
+        )
+
+    _sections.prep_section_backings(
+        section_spans,
+        rows,
+        column=column,
+        tdelay_of=None if immediate else (lambda i: (0.15 + 0.06 * i) * tscale),
+    )
+
+    # Every attachment is known now; finalize each selectable row's
+    # show-buffers: nudge what's kept on screen toward the scroll
+    # area's full visible height, and hand button rows' to their
+    # h-scrolls (control rows' go straight onto their controls).
+    for rowprep in rows:
+        if rowprep.is_section:
+            continue
+        rowprep.show_buffer_top, rowprep.show_buffer_bottom = (
+            _vertical_show_buffers(
+                rowprep.height,
+                rowprep.show_buffer_top,
+                rowprep.show_buffer_bottom,
+                scroll_height,
+            )
+        )
+        if not rowprep.is_control_row():
+            rowprep.hscrolleditcall = partial(
+                bui.widget,
+                show_buffer_top=rowprep.show_buffer_top,
+                show_buffer_bottom=rowprep.show_buffer_bottom,
+            )
 
     return PagePrep(
         rootcall=rootcall,
@@ -748,191 +903,11 @@ def prep_page(
         height=height,
         simple_culling_v=simple_culling_v,
         center_vertically=center_vertically,
+        show_scrollbar=show_scrollbar,
         title=title,
         root_post_calls=root_post_calls,
         immediate=immediate,
     )
-
-
-def prep_frames(
-    frames: Sequence[dui2.Frame],
-    *,
-    packages: list[str],
-    allow_logic_thread: bool = False,
-) -> Callable[..., None]:
-    """Prep frames for drawing into a plain container widget.
-
-    Does every bit of layout math up front and returns a single call
-    that instantiates the whole batch at once; run that on the logic
-    thread with ``parent=<container widget>``. Each frame carries its
-    own center position and scale, so placement is decided here rather
-    than at instantiate time.
-
-    This takes a *sequence* deliberately. A single-frame entry point
-    invites being called in a loop, which is the inefficient shape this
-    batching exists to avoid, so callers drawing one frame should pass
-    a one-element sequence.
-
-    Prep is meant to run off the logic thread; doing otherwise
-    reintroduces exactly the stutter the prep/instantiate split exists
-    to prevent, so it logs a warning. Pass ``allow_logic_thread`` only
-    if a caller genuinely has no other option. (Note this is unrelated
-    to ``prep_page``'s ``immediate``, which concerns transition delays.)
-    """
-    if not allow_logic_thread and bui.in_logic_thread():
-        bui.uilog.warning(
-            'prep_frames() called on the logic thread; this blocks the'
-            ' ui while it runs. Prep from a background thread, or pass'
-            ' allow_logic_thread=True if there is genuinely no option.'
-        )
-
-    # pylint: disable=cyclic-import
-    # Safe up-call; see prep_page.
-    import bauiv1lib.docui.prep._calls2 as prepcalls2
-
-    decoration_preps: list[DecorationPrep] = []
-    for frame in frames:
-        prepcalls2.prep_frame(
-            frame,
-            (0.0, 0.0),
-            1.0,
-            None,
-            decoration_preps,
-            packages=packages,
-            highlight=False,
-        )
-
-    def _instantiate(parent: bui.Widget) -> None:
-        instantiate_decorations(decoration_preps, parent=parent)
-
-    return _instantiate
-
-
-def instantiate_decorations(
-    decorations: list[DecorationPrep],
-    *,
-    parent: bui.Widget,
-    draw_controller: bui.Widget | None = None,
-) -> None:
-    """Instantiate prepped decorations under a parent widget.
-
-    The one place prepped decorations turn into live widgets. Asset
-    refs are resolved here rather than at prep time because prep
-    generally runs off the logic thread.
-
-    Decorations carry no knowledge of where they live, so ``parent``
-    fully determines that; this is what lets the same prepped
-    decorations be drawn into a doc-ui page or into any plain
-    container widget.
-
-    ``draw_controller``, when passed, is applied to decorations whose
-    ``highlight`` is set, tying their draw state to that widget (used
-    for decorations layered over a button). Decorations drawn outside
-    of a button context simply pass nothing here.
-    """
-    for decoration in decorations:
-        kwds: dict = {'parent': parent}
-        if draw_controller is not None and decoration.highlight:
-            kwds['draw_controller'] = draw_controller
-        for texarg, texname in decoration.textures.items():
-            kwds[texarg] = bui.texture_from_ref(texname)
-        for mesharg, meshname in decoration.meshes.items():
-            kwds[mesharg] = bui.mesh_from_ref(meshname)
-        decoration.call(**kwds)
-
-
-def instantiate_page_prep(
-    pageprep: PagePrep,
-    *,
-    rootwidget: bui.Widget,
-    scrollwidget: bui.Widget,
-    backbutton: bui.Widget,
-    windowbackbutton: bui.Widget | None,
-    window: DocUIWindow,
-) -> bui.Widget:
-    """Create a UI using prepped data."""
-    # pylint: disable=too-many-locals
-    outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
-
-    # Now go through and run our prepped ui calls to build our
-    # widgets, plugging in appropriate parent widgets args and
-    # whatnot as we go.
-    assert pageprep.rootcall is not None
-    subcontainer = pageprep.rootcall(parent=scrollwidget)
-    for rowprep in pageprep.rows:
-        for uicall in rowprep.titlecalls:
-            uicall(parent=subcontainer)
-        assert rowprep.hscrollcall is not None
-        hscroll = rowprep.hscrollcall(parent=subcontainer)
-        instantiate_decorations(rowprep.decorations, parent=subcontainer)
-        outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
-        assert rowprep.hsubcall is not None
-        hsub = rowprep.hsubcall(parent=hscroll)
-        for i, buttonprep in enumerate(rowprep.buttons):
-            kwds: dict = {
-                'parent': hsub,
-                'on_activate_call': strict_partial(
-                    window.controller.run_action,
-                    window,
-                    buttonprep.widgetid,
-                    buttonprep.action,
-                ),
-            }
-            for texarg, texname in buttonprep.textures.items():
-                kwds[texarg] = bui.texture_from_ref(texname)
-            btn = buttonprep.buttoncall(**kwds)
-            assert buttonprep.buttoneditcall is not None
-            buttonprep.buttoneditcall(edit=btn)
-            instantiate_decorations(
-                buttonprep.decorations, parent=hsub, draw_controller=btn
-            )
-
-            # Make sure row is scrolled so leftmost button is
-            # visible (though it kinda seems like this should happen
-            # by default).
-            if i == 0:
-                bui.containerwidget(edit=hsub, visible_child=btn)
-            outrow[1].append(btn)
-
-        outrows.append(outrow)
-        assert rowprep.hscrolleditcall is not None
-        rowprep.hscrolleditcall(edit=hscroll)
-
-    for root_post_call in pageprep.root_post_calls:
-        root_post_call(rootwidget)
-
-    # Ok; we've got all widgets. Now wire up directional nav between
-    # rows/buttons.
-
-    # Up press on any top-row button should select window back button
-    # (if there is one).
-    if outrows and windowbackbutton is not None:
-        _scroll, buttons = outrows[0]
-        for button in buttons:
-            bui.widget(edit=button, up_widget=windowbackbutton)
-    for _scroll, buttons in outrows:
-        # Left press on first button in any row should select back
-        # button (either system one or window one).
-        if buttons:
-            bui.widget(edit=buttons[0], left_widget=backbutton)
-        # Left/right presses should select neighbor button in
-        # row (when there is one).
-        for i in range(0, len(buttons) - 1):
-            leftbutton = buttons[i]
-            rightbutton = buttons[i + 1]
-            bui.widget(edit=leftbutton, right_widget=rightbutton)
-            bui.widget(edit=rightbutton, left_widget=leftbutton)
-    # Down/up presses should select next/prev row (when there is
-    # one).
-    for i in range(0, len(outrows) - 1):
-        topscroll, topbuttons = outrows[i]
-        botscroll, botbuttons = outrows[i + 1]
-        for topbutton in topbuttons:
-            bui.widget(edit=topbutton, down_widget=botscroll)
-        for botbutton in botbuttons:
-            bui.widget(edit=botbutton, up_widget=topscroll)
-
-    return subcontainer
 
 
 def _set_start_button(buttonid: str, root: bui.Widget) -> None:

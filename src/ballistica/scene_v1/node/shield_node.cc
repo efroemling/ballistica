@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/component/shield_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -50,7 +51,7 @@ ShieldNode::ShieldNode(Scene* scene)
     : Node(scene, node_type)
 #if !BA_HEADLESS_BUILD
       ,
-      shadow_(0.2f)
+      shadow_(scene->bg_dynamics_world(), 0.2f)
 #endif  // !BA_HEADLESS_BUILD
 {
   last_hurt_change_time_ = scene->time();
@@ -129,11 +130,11 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     float rs = (0.6f + hurt_rand_ * 0.05f) * radius_ * s_scale * r_scale_;
 
     // draw our light on both terrain and objects
-    g_base->graphics->DrawBlotchSoft(
+    scene()->render_view()->DrawBlotchSoft(
         Vector3f(&position_[0]), 3.4f * rs, color_[0] * brightness,
         color_[1] * brightness, color_[2] * brightness, 0.0f);
     // draw our light on both terrain and objects
-    g_base->graphics->DrawBlotchSoftObj(
+    scene()->render_view()->DrawBlotchSoftObj(
         Vector3f(&position_[0]), 3.4f * rs, color_[0] * brightness * 0.4f,
         color_[1] * brightness * 0.4f, color_[2] * brightness * 0.4f, 0.0f);
   }
@@ -220,7 +221,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
   float o = (1.0f - hurt_) * 1.0f + hurt_ * (1.0f * r * r * r);
   o *= 0.3f;
   float cx, cy, cz;
-  g_base->graphics->camera()->get_position(&cx, &cy, &cz);
+  scene()->render_view()->camera()->get_position(&cx, &cy, &cz);
   float col[4];
   col[0] = color_[0] * o;
   col[1] = color_[1] * o;

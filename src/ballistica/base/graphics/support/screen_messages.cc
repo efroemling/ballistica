@@ -160,7 +160,7 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
           } else {
             a = 1;
           }
-          a *= 0.7f;
+          a *= 0.35f;
 
           // if (vr) {
           //   a *= 0.8f;
@@ -320,6 +320,12 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
               cb *= a;
             }
             c.SetColor(cr, cg, cb, a);
+            // Full drop shadow (TextWidget's shadow 1.0), for legibility
+            // over busy game scenes.
+            c.SetShadow(-0.004f * i->GetText().GetElementUScale(e),
+                        -0.004f * i->GetText().GetElementVScale(e), 0.0f,
+                        1.0f * a);
+            c.SetMaskUV2Texture(i->GetText().GetElementMaskUV2Texture(e));
             c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
             {
               auto xf = c.ScopedTransform();

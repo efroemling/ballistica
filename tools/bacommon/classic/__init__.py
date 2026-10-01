@@ -10,6 +10,7 @@
 
 from bacommon.classic._account import (
     ClassicLiveAccountClientData,
+    ClassicPlayerProfile,
 )
 from bacommon.classic._classic import (
     TOKENS1_COUNT,
@@ -22,12 +23,16 @@ from bacommon.classic._chest import (
     ClassicChestDisplayItem,
     CHEST_APPEARANCE_TINTS,
     CHEST_APPEARANCE_TINT_DEFAULT,
+    CHEST_APPEARANCE_COLORS,
+    CHEST_APPEARANCE_COLOR_DEFAULT,
 )
 from bacommon.classic._msg import (
     GetClassicLeaguePresidentButtonInfoMessage,
     GetClassicLeaguePresidentButtonInfoResponse,
     ChestInfoMessage,
     ChestInfoResponse,
+    GetClassicProfilesMessage,
+    GetClassicProfilesResponse,
     GetClassicPurchasesMessage,
     GetClassicPurchasesResponse,
     GlobalProfileCheckMessage,
@@ -48,12 +53,17 @@ __all__ = [
     'ChestInfoMessage',
     'ChestInfoResponse',
     'ClassicLiveAccountClientData',
+    'ClassicPlayerProfile',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
     'CHEST_APPEARANCE_TINTS',
     'CHEST_APPEARANCE_TINT_DEFAULT',
+    'CHEST_APPEARANCE_COLORS',
+    'CHEST_APPEARANCE_COLOR_DEFAULT',
     'GetClassicLeaguePresidentButtonInfoMessage',
     'GetClassicLeaguePresidentButtonInfoResponse',
+    'GetClassicProfilesMessage',
+    'GetClassicProfilesResponse',
     'GetClassicPurchasesMessage',
     'GetClassicPurchasesResponse',
     'GlobalProfileCheckMessage',

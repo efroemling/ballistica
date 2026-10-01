@@ -806,6 +806,7 @@ class Session:
             character=chooser.get_character_name(),
             color=chooser.get_color(),
             highlight=chooser.get_highlight(),
+            cloud_spaz_def=chooser.get_cloud_spaz_def(),
         )
 
         self.stats.register_sessionplayer(sessionplayer)

@@ -211,6 +211,31 @@ const BigGlyphInkBounds kBigGlyphPackedUVs[64] = {
 const float kBigGlyphInkMarginFrac = 0.04f;
 const float kBigGlyphInkMarginMin = 0.002f;
 
+// Per-slot trims shaved off a packed rect's edges, in packed-atlas uv
+// (4096 texels per uv unit), applied to the quad in lockstep so the
+// remaining art stays exactly where it was. This patches over spots
+// where the packer left a rect wider than its glyph's real ink and a
+// neighbor's blob then landed inside that slack (the packed rects
+// are placed by the tightened *sampled* windows, which for glyphs the
+// legacy metrics measured generously extend past the actual ink).
+// Measured on the shipping atlas; retune (or drop) if it's repacked.
+struct BigGlyphPackedTrim {
+  int slot;
+  float left;    // added to u_min
+  float right;   // subtracted from u_max
+  float top;     // added to v_min (v is down in the atlas)
+  float bottom;  // subtracted from v_max
+};
+const BigGlyphPackedTrim kBigGlyphPackedTrims[] = {
+    // 'R': its rect runs 21 texels past its ink on the right, and the
+    // '7' was packed a texel inside that edge with its top-bar tip
+    // spilling 2 texels further still, so R's upper right showed a
+    // sliver of the 7. R's ink ends 21 texels in, the 7's begins 3
+    // texels past the edge; splitting that gap evenly leaves 9 texels
+    // of clean margin on each side.
+    {17, 0.0f, 12.0f / 4096.0f, 0.0f, 0.0f},
+};
+
 // Boot-time OS-text warm-up is currently DISABLED: we can never
 // exhaustively pre-load every script that may appear in online content
 // (player names, chat, etc.), so lazy per-script font loads need to be
@@ -658,6 +683,27 @@ TextGraphics::TextGraphics() {
             // v is flipped in glyph space: tex_min_y is the bottom.
             gt.tex_min_y = puv.v_max;
             gt.tex_max_y = puv.v_min;
+
+            // Apply any per-slot trim of the packed rect (see
+            // kBigGlyphPackedTrims), shrinking the quad by the same
+            // fraction of each axis so no remaining texel moves.
+            for (const BigGlyphPackedTrim& trim : kBigGlyphPackedTrims) {
+              if (trim.slot != c) {
+                continue;
+              }
+              float pw = gt.tex_max_x - gt.tex_min_x;
+              float ph = gt.tex_min_y - gt.tex_max_y;
+              assert(pw > 0.0f && ph > 0.0f);
+              gt.pen_offset_x += gt.x_size * (trim.left / pw);
+              gt.x_size *= (pw - trim.left - trim.right) / pw;
+              gt.tex_min_x += trim.left;
+              gt.tex_max_x -= trim.right;
+              // pen_offset_y is the quad's bottom edge.
+              gt.pen_offset_y += gt.y_size * (trim.bottom / ph);
+              gt.y_size *= (ph - trim.top - trim.bottom) / ph;
+              gt.tex_min_y -= trim.bottom;
+              gt.tex_max_y += trim.top;
+            }
           }
           g = gt;
         }
@@ -1477,6 +1523,28 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
     // (cold ones pay their font loads here, off the logic thread).
     GetStringWidth(text, big);
   });
+}
+
+void TextGraphics::WarmUpCaratMeasuresAsync(const std::string& text, bool big) {
+  if (!g_buildconfig.enable_os_font_rendering() || !HasOSChars(text)) {
+    return;
+  }
+  // One string holding each line's prefixes, one per row; a single
+  // measure walk of it then warms every prefix span.
+  std::vector<uint32_t> chars = Utils::UnicodeFromUTF8(text, "wcm3kf9a");
+  std::vector<uint32_t> prefixes;
+  size_t line_start{};
+  for (size_t i = 0; i <= chars.size(); ++i) {
+    if (i == chars.size() || chars[i] == '\n') {
+      for (size_t end = line_start + 1; end <= i; ++end) {
+        prefixes.insert(prefixes.end(), chars.begin() + line_start,
+                        chars.begin() + end);
+        prefixes.push_back('\n');
+      }
+      line_start = i + 1;
+    }
+  }
+  WarmUpStringAsync(Utils::UTF8FromUnicode(prefixes), big);
 }
 
 auto TextGraphics::TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,

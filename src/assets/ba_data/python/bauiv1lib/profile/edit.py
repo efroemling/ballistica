@@ -11,7 +11,12 @@ from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
 from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import (
+    _commonassets,
+    _classicassets,
+    _uiv1assets,
+    _classiccatalogassets,
+)
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 
@@ -108,9 +113,9 @@ class EditProfileWindow(
             position=(self._width * 0.5, height - 38 + yoffs),
             size=(0, 0),
             text=(
-                _classicassets.strings.profile.title_new
+                _uiv1assets.strings.profile.title_new
                 if existing_profile is None
-                else _classicassets.strings.profile.title_edit
+                else _uiv1assets.strings.profile.title_edit
             ),
             color=bui.app.ui_v1.title_color,
             maxwidth=290,
@@ -223,7 +228,7 @@ class EditProfileWindow(
                 h_align='center',
                 v_align='center',
             )
-            txtl = _classicassets.strings.profile.account_profile.evaluate()
+            txtl = _uiv1assets.strings.profile.account_profile.evaluate()
             b_width = min(
                 270.0,
                 bui.get_string_width(
@@ -287,7 +292,7 @@ class EditProfileWindow(
                 position=(self._width * 0.5 - 160, v - 55 - 15),
                 size=(0, 0),
                 draw_controller=btn,
-                text=_classicassets.strings.profile.icon,
+                text=_uiv1assets.strings.profile.icon,
                 scale=0.7,
                 color=bui.app.ui_v1.title_color,
                 maxwidth=120,
@@ -306,7 +311,7 @@ class EditProfileWindow(
                 v_align='center',
             )
             # FIXME hard coded strings are bad
-            txtl = _classicassets.strings.profile.global_profile.evaluate()
+            txtl = _uiv1assets.strings.profile.global_profile.evaluate()
             b_width = min(
                 240.0,
                 bui.get_string_width(
@@ -347,16 +352,16 @@ class EditProfileWindow(
                 h_align='left',
                 v_align='center',
                 max_chars=16,
-                description=_classicassets.strings.profile.name_description,
+                description=_uiv1assets.strings.profile.name_description,
                 autoselect=True,
                 editable=True,
                 padding=4,
                 color=(0.9, 0.9, 0.9, 1.0),
-                on_return_press_call=bui.CallStrict(save_button.activate),
+                on_submit_call=bui.CallStrict(save_button.activate),
             )
 
             # FIXME hard coded strings are bad
-            txtl = _classicassets.strings.profile.local_profile.evaluate()
+            txtl = _uiv1assets.strings.profile.local_profile.evaluate()
             b_width = min(
                 270.0,
                 bui.get_string_width(
@@ -442,7 +447,7 @@ class EditProfileWindow(
             position=(self._width * 0.5 - b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=_classicassets.strings.profile.color,
+            text=_uiv1assets.strings.profile.color,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -457,7 +462,9 @@ class EditProfileWindow(
             size=(b_size_2, b_size_2),
             label='',
             color=(1, 1, 1),
-            mask_texture=_classicassets.textures.character_icon_mask.get(),
+            mask_texture=(
+                _classiccatalogassets.textures
+            ).character_icon_mask.get(),
         )
         if not self._is_account_profile and not self._global:
             bui.containerwidget(
@@ -470,7 +477,7 @@ class EditProfileWindow(
             position=(self._width * 0.5, v - 80),
             size=(0, 0),
             draw_controller=btn,
-            text=_classicassets.strings.profile.character,
+            text=_uiv1assets.strings.profile.character,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=130,
@@ -514,7 +521,7 @@ class EditProfileWindow(
             position=(self._width * 0.5 + b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=_classicassets.strings.profile.highlight,
+            text=_uiv1assets.strings.profile.highlight,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -561,7 +568,7 @@ class EditProfileWindow(
         if self._is_account_profile:
             _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                _classicassets.strings.profile.cant_delete_account_profile,
+                _uiv1assets.strings.profile.cant_delete_account_profile,
                 color=(1, 0, 0),
             )
             return
@@ -569,11 +576,11 @@ class EditProfileWindow(
         if self._existing_profile is None:
             _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                _classicassets.strings.profile.nothing_selected, color=(1, 0, 0)
+                _uiv1assets.strings.profile.nothing_selected, color=(1, 0, 0)
             )
             return
         ConfirmWindow(
-            _classicassets.strings.profile.delete_confirm(
+            _uiv1assets.strings.profile.delete_confirm(
                 profile=self._existing_profile
             ),
             self._do_delete_profile,
@@ -692,9 +699,7 @@ class EditProfileWindow(
                 ]
             ]
         )
-        txtl = _classicassets.strings.profile.account_profile_info(
-            icons=icons_str
-        )
+        txtl = _uiv1assets.strings.profile.account_profile_info(icons=icons_str)
         ConfirmWindow(
             txtl,
             cancel_button=False,
@@ -707,7 +712,7 @@ class EditProfileWindow(
         """Show an explanation of local profiles."""
         from bauiv1lib.confirm import ConfirmWindow
 
-        txtl = _classicassets.strings.profile.local_profile_info
+        txtl = _uiv1assets.strings.profile.local_profile_info
         ConfirmWindow(
             txtl,
             cancel_button=False,
@@ -720,7 +725,7 @@ class EditProfileWindow(
         """Show an explanation of global profiles."""
         from bauiv1lib.confirm import ConfirmWindow
 
-        txtl = _classicassets.strings.profile.global_profile_info
+        txtl = _uiv1assets.strings.profile.global_profile_info
         ConfirmWindow(
             txtl,
             cancel_button=False,
@@ -759,7 +764,7 @@ class EditProfileWindow(
     @override
     def on_icon_picker_get_more_press(self) -> None:
         """User wants to get more icons."""
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.store import StoreUIController
 
@@ -778,7 +783,7 @@ class EditProfileWindow(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     StoreUIController().create_window,
-                    dui2.Request('/'),
+                    sroutes.Root(),
                     origin_widget=bui.get_special_widget('store_button'),
                     auxiliary_style=False,
                 ),
@@ -818,7 +823,7 @@ class EditProfileWindow(
 
     @override
     def on_character_picker_get_more_press(self) -> None:
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         from bauiv1lib.store import StoreUIController
 
@@ -835,7 +840,7 @@ class EditProfileWindow(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     StoreUIController().create_window,
-                    dui2.Request('/'),
+                    sroutes.Root(),
                     origin_widget=bui.get_special_widget('store_button'),
                     auxiliary_style=False,
                 ),
@@ -950,7 +955,7 @@ class EditProfileWindow(
             display_name = (name[:10] + '...') if len(name) > 10 else name
             bui.textwidget(
                 edit=self._clipped_name_text,
-                text=_classicassets.strings.profile.in_game_clipped_name(
+                text=_uiv1assets.strings.profile.in_game_clipped_name(
                     name=display_name
                 ),
             )
@@ -995,7 +1000,7 @@ class EditProfileWindow(
         new_name = self.getname().strip()
 
         if not new_name:
-            bui.screenmessage(_classicassets.strings.profile.name_not_empty)
+            bui.screenmessage(_uiv1assets.strings.profile.name_not_empty)
             _builtinassets.audio.error.get().play()
             return False
 
@@ -1003,7 +1008,7 @@ class EditProfileWindow(
         profiles: dict = bui.app.config.get('Player Profiles', {})
         if self._existing_profile != new_name and new_name in profiles.keys():
             bui.screenmessage(
-                _classicassets.strings.profile.profile_already_exists
+                _uiv1assets.strings.profile.profile_already_exists
             )
             _builtinassets.audio.error.get().play()
             return False

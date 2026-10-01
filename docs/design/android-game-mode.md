@@ -3,7 +3,10 @@
 **Description:** How the Android client escapes the OS's 60hz game cap and runs at native display rate, with battery-game-mode and thermal back-off layered on one frame-rate vote, plus the GameState loading-boost wiring.
 
 Shipped 2026-08-25. All device verification below was done on a Pixel
-7a (90hz panel, Android 17).
+7a (90hz panel, Android 17). A Pixel-green run proves nothing for other
+OEMs: the Pixel idles at its peak rate, so it never exercised the
+peak-selection or display-mode-request paths that the 2026-09-10 Realme
+field report broke on (see "The vote function").
 
 ## The one mental model: we vote, the platform clamps
 
@@ -27,19 +30,44 @@ That cap was why BombSquad ran 60fps on 90hz devices.
 All frame-rate inputs funnel into a single function —
 `BallisticaActivity.applyPreferredFrameRate()`:
 
-- target = display peak (max of the current mode's
-  `getAlternativeRefreshRates()` + current rate; never hardcoded);
+- target = display peak (max refresh rate over `getSupportedModes()`
+  at the current mode's resolution, plus the current rate; never
+  hardcoded). **Not** `getAlternativeRefreshRates()`: that lists only
+  *seamless* alternatives, and on devices whose 60↔120 switch is a
+  non-seamless mode change (ColorOS/MediaTek — a Realme narzo 70 Turbo
+  on Android 16 was the field report, 2026-09-10) it comes back empty,
+  so the original code voted for whatever rate the panel was idling at
+  (60) and only ever reached 120 when SystemUI's own vote dragged the
+  display up (notification shade open). Since we pass
+  `CHANGE_FRAME_RATE_ALWAYS`, non-seamless switches are permitted, so
+  the peak must be computed over the same set;
 - capped to 60 when the user chose **battery game mode**;
 - capped to 60 while our **thermal back-off** is engaged;
 - applied via `setFrameRate(target, FRAME_RATE_COMPATIBILITY_DEFAULT,
   CHANGE_FRAME_RATE_ALWAYS)` (3-arg API 31+, 2-arg API 30, no-op
-  below).
+  below);
+- **and** as a window-level mode request: `WindowManager.LayoutParams
+  .preferredDisplayModeId` set to the fastest mode at the current
+  resolution not exceeding the target (so caps pick the 60 mode).
+  Added 2026-09-10 for the Realme field report: that phone accepted
+  a 120 surface vote and kept the whole display at 60 anyway (only
+  another app's window on top pulled it to 120). The surface vote is a
+  per-layer preference some OEM display policies ignore for games; the
+  window mode request goes through display-mode arbitration, which is
+  the path most engines rely on for 120hz on those devices. Confirmed
+  on that phone the same day: with the mode request in, its report
+  showed the display at 120 within 3s of the vote and holding at +60s,
+  and the user saw 120hz in play. (Its reports also showed the OEM
+  reporting thermal SEVERE for a few seconds at every launch, which is
+  what motivated the engage dwell below.)
 
 Callers: surface creation (a `SurfaceHolder.Callback` on the
 GLSurfaceView holder, so recreation re-applies), `onResume()` (game
 mode can change while backgrounded; there is no change-callback API),
 and thermal transitions. Each application logs
-`Requested surface frame rate <N> (constraints)` at Log.v.
+`Requested surface frame rate <N> (constraints) (current R, supported
+at WxH: ...)` via BaLog at INFO on the engine's `ba` logger (so it is
+capturable by client log reports; enable `ba=INFO` to see it locally).
 
 Decisions:
 
@@ -59,12 +87,28 @@ Decisions:
 ## Thermal back-off (deliberately conservative)
 
 `PowerManager.addThermalStatusListener` (API 29+, registered in
-activity onCreate). Cap engages **immediately at SEVERE+** — not
-MODERATE, which fires too readily on some OEMs (warm pocket,
-sunlight); we only shed frames under real pressure. Recovery requires
-status to stay at **LIGHT or below for a sustained 60s dwell**; a
-bounce to MODERATE cancels the pending recovery (hysteresis — a
-status hovering at a boundary can't flap us between rates).
+activity onCreate). Cap engages once status has held at **SEVERE+ for
+a sustained 10s dwell** — not MODERATE, which fires too readily on
+some OEMs (warm pocket, sunlight); we only shed frames under real
+pressure. Recovery requires status to stay at **LIGHT or below for a
+sustained 60s dwell**; a bounce to MODERATE cancels whichever dwell is
+pending (hysteresis — a status hovering at a boundary can't flap us
+between rates). The engage dwell was added 2026-09-10 after a Realme
+narzo 70 Turbo (Android 16) reported SEVERE the instant the app
+launched and cooled to NONE within a minute; an instant cap there
+held 60hz for the whole recovery dwell on a cool phone.
+
+**Player notice.** When the cap engages, Java sends the typed-bus
+message `ThermalFrameRateCapNotice` and the engine shows the
+`babuiltinassets` string `strings/device/thermal_frame_rate_cap`
+("Device is running hot; frame rate reduced to 60 until it cools.")
+as a screen message. Gating, all Java-side: at most once per run, only
+on the engage transition (never on recovery), and only when the cap
+actually lowers our vote — i.e. the display's peak rate at the current
+resolution exceeds 60. On a 60hz panel the cap is a no-op and the
+notice would be noise. A launch that comes up already capped shows it
+too (after the engage dwell): the player expecting their 120hz panel
+deserves the same explanation whether or not they saw a drop.
 
 Why act at all when the OS already handles thermals: the OS sheds
 heat by clawing back clocks (skin-temp tiers in the vendor

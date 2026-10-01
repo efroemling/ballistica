@@ -3,13 +3,16 @@
 #include "ballistica/base/graphics/graphics.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -17,11 +20,15 @@
 #include "ballistica/base/graphics/component/sprite_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/mesh/image_mesh.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/debug_texture_view.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/graphics/support/net_graph.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/input/input.h"
@@ -32,6 +39,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/thread_cpu_time.h"
 
 namespace ballistica::base {
 
@@ -47,14 +55,14 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
     case ShadingType::kSimpleColorTransparentDoubleSided:
     case ShadingType::kObjectTransparent:
     case ShadingType::kObjectLightShadowTransparent:
+    case ShadingType::kObjectLightShadowFacingRatioTransparent:
     case ShadingType::kObjectReflectTransparent:
     case ShadingType::kObjectReflectAddTransparent:
     case ShadingType::kSimpleTextureModulatedTransparent:
     case ShadingType::kSimpleTextureModulatedTransFlatness:
     case ShadingType::kSimpleTextureModulatedTransparentDoubleSided:
     case ShadingType::kSimpleTextureModulatedTransparentColorized:
-    case ShadingType::kSimpleTextureModulatedTransparentColorized2:
-    case ShadingType::kSimpleTextureModulatedTransparentColorized2Masked:
+    case ShadingType::kSimpleTextureModulatedTransparentColorizedMasked:
     case ShadingType::kSimpleTextureModulatedTransparentShadow:
     case ShadingType::kSimpleTexModulatedTransShadowFlatness:
     case ShadingType::kSimpleTextureModulatedTransparentGlow:
@@ -68,19 +76,17 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
     case ShadingType::kSimpleColor:
     case ShadingType::kSimpleTextureModulated:
     case ShadingType::kSimpleTextureModulatedColorized:
-    case ShadingType::kSimpleTextureModulatedColorized2:
-    case ShadingType::kSimpleTextureModulatedColorized2Masked:
+    case ShadingType::kSimpleTextureModulatedColorizedMasked:
     case ShadingType::kSimpleTexture:
     case ShadingType::kObject:
     case ShadingType::kObjectReflect:
     case ShadingType::kObjectLightShadow:
+    case ShadingType::kObjectLightShadowFacingRatio:
     case ShadingType::kObjectReflectLightShadow:
     case ShadingType::kObjectReflectLightShadowDoubleSided:
     case ShadingType::kObjectReflectLightShadowColorized:
-    case ShadingType::kObjectReflectLightShadowColorized2:
     case ShadingType::kObjectReflectLightShadowAdd:
     case ShadingType::kObjectReflectLightShadowAddColorized:
-    case ShadingType::kObjectReflectLightShadowAddColorized2:
     case ShadingType::kPostProcess:
     case ShadingType::kPostProcessEyes:
     case ShadingType::kPostProcessNormalDistort:
@@ -193,12 +199,25 @@ void Graphics::ApplyAppConfig() {
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
   set_camera_shake_disabled(disable_camera_shake);
 
-  // TV-border toggles affect our active render rect and thus our virtual
-  // res; recalc all that if it changed (and we know our res).
-  bool tv_border =
-      g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
-  if (tv_border != tv_border_) {
-    tv_border_ = tv_border;
+  // Screen insets affect our virtual bounds and thus our virtual res;
+  // recalc all that if they changed (and we know our res). Anything but
+  // 'Custom' is automatic.
+  bool screen_insets_custom =
+      g_base->app_config->Resolve(AppConfig::StringID::kScreenInsets)
+      == "Custom";
+  float custom_screen_insets = std::clamp(
+      g_base->app_config->Resolve(AppConfig::FloatID::kCustomScreenInsets),
+      0.0f, 1.0f);
+  // Likewise the aspect-ratio clamp, which shapes the active render
+  // rect everything else derives from.
+  bool allow_extreme_aspect_ratios =
+      g_base->app_config->Resolve(AppConfig::BoolID::kAllowExtremeAspectRatios);
+  if (screen_insets_custom != screen_insets_custom_
+      || custom_screen_insets != custom_screen_insets_
+      || allow_extreme_aspect_ratios != allow_extreme_aspect_ratios_) {
+    screen_insets_custom_ = screen_insets_custom;
+    custom_screen_insets_ = custom_screen_insets;
+    allow_extreme_aspect_ratios_ = allow_extreme_aspect_ratios;
     if (got_screen_resolution_) {
       UpdateScreen_();
     }
@@ -429,34 +448,6 @@ void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
   c.Submit();
 }
 
-void Graphics::SetShadowRange(float lower_bottom, float lower_top,
-                              float upper_bottom, float upper_top) {
-  assert(lower_top >= lower_bottom && upper_bottom >= lower_top
-         && upper_top >= upper_bottom);
-  shadow_lower_bottom_ = lower_bottom;
-  shadow_lower_top_ = lower_top;
-  shadow_upper_bottom_ = upper_bottom;
-  shadow_upper_top_ = upper_top;
-}
-
-auto Graphics::GetShadowDensity(float x, float y, float z) -> float {
-  if (y < shadow_lower_bottom_) {
-    return 0.0f;
-  } else if (y < shadow_lower_top_) {
-    float amt =
-        (y - shadow_lower_bottom_) / (shadow_lower_top_ - shadow_lower_bottom_);
-    return amt;
-  } else if (y < shadow_upper_bottom_) {
-    return 1.0f;
-  } else if (y < shadow_upper_top_) {
-    float amt =
-        (y - shadow_upper_bottom_) / (shadow_upper_top_ - shadow_upper_bottom_);
-    return 1.0f - amt;
-  } else {
-    return 0.0f;
-  }
-}
-
 // Draw controls and things that lie on top of the action.
 void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
@@ -649,7 +640,10 @@ void Graphics::Reset() {
   fade_start_ = fade_cancel_start_ = fade_time_ = 0;
 
   if (!camera_.exists()) {
-    camera_ = Object::New<Camera>();
+    camera_ = Object::New<GameCamera>();
+  }
+  if (!main_view_.exists()) {
+    main_view_ = Object::New<RenderView>(camera_.get());
   }
 
   screenmessages->Reset();
@@ -771,21 +765,26 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
 }
 
 void Graphics::ApplyCamera(FrameDef* frame_def) {
-  camera_->Update(frame_def->display_time_elapsed_millisecs());
-  camera_->UpdatePosition();
-  camera_->ApplyToFrameDef(frame_def);
+  Camera* camera = main_view_->camera();
+  camera->Update(frame_def->display_time_elapsed_millisecs());
+  camera->UpdatePosition();
+  camera->ApplyToFrameDef(frame_def);
 }
 
 void Graphics::DrawWorld(FrameDef* frame_def) {
   assert(!g_core->HeadlessMode());
 
-  // Draw the world.
+  // Draw the world. Nodes that show bg-dynamics results (character
+  // limbs, attachments) read them while drawing, so pull the latest in
+  // first, waiting briefly for a step still in flight.
   overlay_node_z_depth_ = -0.95f;
+  BGDynamicsWorld* bg_world = g_base->bg_dynamics->main_world();
+  bg_world->AdoptResults(true);
   g_base->app_mode()->DrawWorld(frame_def);
-  g_base->bg_dynamics->Draw(frame_def);
+  bg_world->Draw(frame_def);
 
   // Lastly draw any blotches that have been building up.
-  DrawBlotches(frame_def);
+  main_view_->DrawBlotches(frame_def);
 
   // Add a few explicit things to a few passes.
   DrawBoxingGlovesTest(frame_def);
@@ -823,6 +822,21 @@ void Graphics::BuildAndPushFrameDef() {
   building_frame_def_ = true;
 
   microsecs_t app_time_microsecs = g_core->AppTimeMicrosecs();
+
+  // Under BA_RENDER_PROFILE (test_game_run --render-profile) we time
+  // how long frame-defs take to build. We count this thread's cpu time
+  // rather than wall time so that waiting on bg-dynamics results
+  // doesn't count.
+  if (!render_profile_checked_) {
+    render_profile_checked_ = true;
+    render_profile_ = (getenv("BA_RENDER_PROFILE") != nullptr);
+  }
+  auto profile_now = [this] {
+    return render_profile_ ? ThreadCPUTimeMillisecs() : 0.0;
+  };
+  double profile_start = profile_now();
+  double profile_world_ms{};
+  double profile_ui_ms{};
 
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
@@ -907,10 +921,14 @@ void Graphics::BuildAndPushFrameDef() {
       frame_def->set_needs_clear(true);
     } else {
       frame_def->set_needs_clear(!g_base->app_mode()->DoesWorldFillScreen());
+      double world_start = profile_now();
       DrawWorld(frame_def);
+      profile_world_ms = profile_now() - world_start;
     }
 
+    double ui_start = profile_now();
     DrawUI(frame_def);
+    profile_ui_ms = profile_now() - ui_start;
 
     // Let input draw anything it needs to (touch input graphics, etc).
     g_base->input->Draw(frame_def);
@@ -934,6 +952,18 @@ void Graphics::BuildAndPushFrameDef() {
 
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
+
+    // Show our test view if asked to (test_game_run
+    // --debug-texture-view).
+    if (!debug_texture_view_checked_) {
+      debug_texture_view_checked_ = true;
+      if (getenv("BA_DEBUG_TEXTURE_VIEW") != nullptr) {
+        debug_texture_view_ = Object::New<DebugTextureView>();
+      }
+    }
+    if (debug_texture_view_.exists()) {
+      debug_texture_view_->DrawToOverlay(overlay_pass);
+    }
 
     // In high-quality modes we draw a screen-quad as a catch-all for
     // blitting the world buffer to the screen (other nodes can add their
@@ -974,7 +1004,14 @@ void Graphics::BuildAndPushFrameDef() {
   // inform the app-adapter of any text-editing begin/end/moves.
   g_base->ui->ProcessTextEditReports(frame_def);
 
+  // Everything headed for the screen has been drawn, so we know which
+  // views had their textures drawn; draw those views' worlds.
+  DrawTextureViews_(frame_def);
+
   frame_def->Complete();
+
+  frame_def->set_view_destroys(render_view_destroys_);
+  render_view_destroys_.clear();
 
   // Include all mesh-data loads and unloads that have accumulated up to
   // this point the graphics thread will have to handle these before
@@ -984,21 +1021,93 @@ void Graphics::BuildAndPushFrameDef() {
   frame_def->set_mesh_data_destroys(mesh_data_destroys_);
   mesh_data_destroys_.clear();
 
+  if (render_profile_) {
+    UpdateRenderProfile_(profile_now() - profile_start, profile_world_ms,
+                         profile_ui_ms);
+  }
+
   g_base->graphics_server->EnqueueFrameDef(frame_def);
 
   // Clean up frame_defs awaiting deletion.
   ClearFrameDefDeleteList();
 
   // Clear our blotches out regardless of whether we rendered them.
-  blotch_indices_.clear();
-  blotch_verts_.clear();
-  blotch_soft_indices_.clear();
-  blotch_soft_verts_.clear();
-  blotch_soft_obj_indices_.clear();
-  blotch_soft_obj_verts_.clear();
+  main_view_->ClearBlotches();
 
   assert(building_frame_def_);
   building_frame_def_ = false;
+}
+
+void Graphics::AddRenderViewDestroy(int view_id) {
+  assert(g_base->InLogicThread());
+
+  // These go out with frame-defs, which headless never builds (nor
+  // does it have a renderer to tell).
+  if (g_core->HeadlessMode()) {
+    return;
+  }
+  render_view_destroys_.push_back(view_id);
+}
+
+void Graphics::DrawTextureViews_(FrameDef* frame_def) {
+  // Note: we go by index since drawing a view's world can in theory
+  // draw another view's texture, adding to the list as we go.
+  for (size_t i = 0; i < frame_def->wanted_views().size(); i++) {
+    RenderView* view = frame_def->wanted_views()[i].get();
+    FrameDefView* fview = frame_def->AddTextureView(view);
+    frame_def->set_current_view(fview);
+
+    Camera* camera = view->camera();
+    camera->Update(frame_def->display_time_elapsed_millisecs());
+    camera->UpdatePosition();
+    camera->ApplyToFrameDef(frame_def);
+
+    view->set_last_drawn_frame_number(frame_def->frame_number());
+    view->DrawWorld(frame_def);
+    view->DrawBlotches(frame_def);
+    view->ClearBlotches();
+
+    // As with the main view: in high-quality modes the world is drawn
+    // to a buffer first, and this is the catch-all that gets it from
+    // there to where it is headed (anything in the world with a
+    // blitter of its own has been in ahead of us).
+    if (frame_def->quality() >= GraphicsQuality::kHigh) {
+      PostProcessComponent c(frame_def->blit_pass());
+      c.DrawScreenQuad();
+      c.Submit();
+    }
+
+    frame_def->set_current_view(frame_def->main_view());
+  }
+}
+
+void Graphics::UpdateRenderProfile_(double build_ms, double world_ms,
+                                    double ui_ms) {
+  render_profile_frames_++;
+  render_profile_build_ms_ += build_ms;
+  render_profile_world_ms_ += world_ms;
+  render_profile_ui_ms_ += ui_ms;
+  seconds_t now = g_core->AppTimeSeconds();
+  if (render_profile_window_start_ == 0.0) {
+    render_profile_window_start_ = now;
+  }
+  if (now - render_profile_window_start_ < 5.0) {
+    return;
+  }
+  double frames = render_profile_frames_;
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer),
+           "render profile (logic): %d frame-defs built; cpu per"
+           " frame-def: build %.0fus (world %.0fus, ui %.0fus)",
+           render_profile_frames_, 1000.0 * render_profile_build_ms_ / frames,
+           1000.0 * render_profile_world_ms_ / frames,
+           1000.0 * render_profile_ui_ms_ / frames);
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo, buffer);
+  render_profile_frames_ = 0;
+  render_profile_build_ms_ = 0.0;
+  render_profile_world_ms_ = 0.0;
+  render_profile_ui_ms_ = 0.0;
+  render_profile_window_start_ = now;
 }
 
 void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
@@ -1276,48 +1385,6 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
   }
 }
 
-void Graphics::DrawBlotches(FrameDef* frame_def) {
-  if (!blotch_verts_.empty()) {
-    if (!shadow_blotch_mesh_.exists()) {
-      shadow_blotch_mesh_ = Object::New<SpriteMesh>();
-    }
-    shadow_blotch_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
-        blotch_indices_.size(), &blotch_indices_[0]));
-    shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
-        blotch_verts_.size(), &blotch_verts_[0]));
-    SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light.get());
-    c.DrawMesh(shadow_blotch_mesh_.get());
-    c.Submit();
-  }
-  if (!blotch_soft_verts_.empty()) {
-    if (!shadow_blotch_soft_mesh_.exists()) {
-      shadow_blotch_soft_mesh_ = Object::New<SpriteMesh>();
-    }
-    shadow_blotch_soft_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
-        blotch_soft_indices_.size(), &blotch_soft_indices_[0]));
-    shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
-        blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
-    SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light_soft.get());
-    c.DrawMesh(shadow_blotch_soft_mesh_.get());
-    c.Submit();
-  }
-  if (!blotch_soft_obj_verts_.empty()) {
-    if (!shadow_blotch_soft_obj_mesh_.exists()) {
-      shadow_blotch_soft_obj_mesh_ = Object::New<SpriteMesh>();
-    }
-    shadow_blotch_soft_obj_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
-        blotch_soft_obj_indices_.size(), &blotch_soft_obj_indices_[0]));
-    shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
-        blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
-    SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_base->assets->base_assets().light_soft.get());
-    c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
-    c.Submit();
-  }
-}
-
 void Graphics::ReturnCompletedFrameDef(FrameDef* frame_def) {
   std::scoped_lock lock(frame_def_delete_list_mutex_);
   g_base->graphics->frame_def_delete_list_.push_back(frame_def);
@@ -1385,10 +1452,216 @@ void Graphics::ToggleNetworkDebugDisplay() {
 
 void Graphics::ToggleDebugDraw() {
   assert(g_base->InLogicThread());
-  debug_draw_ = !debug_draw_;
+  set_debug_draw(!debug_draw_);
+}
+
+void Graphics::set_debug_draw(bool val) {
+  assert(g_base->InLogicThread());
+  debug_draw_ = val;
   if (g_base->graphics_server->renderer()) {
     g_base->graphics_server->renderer()->set_debug_draw_mode(debug_draw_);
   }
+}
+
+namespace {
+
+/// Append one flat triangle (3 unshared verts sharing the face normal)
+/// to object-split buffers being assembled for a debug primitive. The
+/// primitives here are all convex and centered on the origin, so the
+/// winding is flipped as needed to face outward (these draw
+/// single-sided).
+void AppendFlatTri(std::vector<VertexObjectSplitStatic>* v_static,
+                   std::vector<VertexObjectSplitDynamic>* v_dynamic,
+                   const Vector3f& p0, const Vector3f& p1, const Vector3f& p2) {
+  Vector3f n = Vector3f::Cross(p1 - p0, p2 - p0);
+  if (n.LengthSquared() > 0.0f) {
+    n = n.Normalized();
+  } else {
+    n = Vector3f(0.0f, 1.0f, 0.0f);
+  }
+  const Vector3f* pts[3] = {&p0, &p1, &p2};
+  Vector3f centroid = (p0 + p1 + p2) * (1.0f / 3.0f);
+  if (n.Dot(centroid) < 0.0f) {
+    n = -n;
+    std::swap(pts[1], pts[2]);
+  }
+  for (const Vector3f* p : pts) {
+    v_static->push_back({{0, 0}});
+    VertexObjectSplitDynamic vd{};
+    vd.position[0] = p->x;
+    vd.position[1] = p->y;
+    vd.position[2] = p->z;
+    vd.normal[0] = static_cast<int16_t>(n.x * 32767.0f);
+    vd.normal[1] = static_cast<int16_t>(n.y * 32767.0f);
+    vd.normal[2] = static_cast<int16_t>(n.z * 32767.0f);
+    v_dynamic->push_back(vd);
+  }
+}
+
+/// Build a MeshIndexedObjectSplit from assembled flat-tri buffers
+/// (sequential 16-bit indices).
+auto MakeDebugMesh(const std::vector<VertexObjectSplitStatic>& v_static_in,
+                   const std::vector<VertexObjectSplitDynamic>& v_dynamic_in)
+    -> Object::Ref<MeshIndexedObjectSplit> {
+  size_t count = v_static_in.size();
+  assert(count == v_dynamic_in.size() && count > 0 && count <= 65535);
+  auto v_static = Object::New<MeshBuffer<VertexObjectSplitStatic>>(
+      count, v_static_in.data());
+  auto v_dynamic = Object::New<MeshBuffer<VertexObjectSplitDynamic>>(
+      count, v_dynamic_in.data());
+  auto indices = Object::New<MeshIndexBuffer16>(count);
+  for (size_t i = 0; i < count; ++i) {
+    indices->elements[i] = static_cast<uint16_t>(i);
+  }
+  auto mesh = Object::New<MeshIndexedObjectSplit>();
+  mesh->SetIndexData(indices);
+  mesh->SetStaticData(v_static);
+  mesh->SetDynamicData(v_dynamic);
+  return mesh;
+}
+
+}  // namespace
+
+auto Graphics::debug_sphere_mesh() -> MeshIndexedObjectSplit* {
+  assert(g_base->InLogicThread());
+  if (debug_sphere_mesh_.exists()) {
+    return debug_sphere_mesh_.get();
+  }
+  // Lat/long sphere; every triangle gets its own verts + face normal so
+  // it shades flat. Pole rows collapse to single triangles.
+  const int stacks = 6;
+  const int slices = 12;
+  std::vector<VertexObjectSplitStatic> v_static;
+  std::vector<VertexObjectSplitDynamic> v_dynamic;
+  auto pt = [](int stack, int slice) {
+    float phi = kPi * static_cast<float>(stack) / stacks;  // 0..pi
+    float theta = 2.0f * kPi * static_cast<float>(slice) / slices;
+    return Vector3f(sinf(phi) * cosf(theta), cosf(phi),
+                    sinf(phi) * sinf(theta));
+  };
+  for (int i = 0; i < stacks; ++i) {
+    for (int j = 0; j < slices; ++j) {
+      Vector3f a = pt(i, j);
+      Vector3f b = pt(i + 1, j);
+      Vector3f c = pt(i + 1, j + 1);
+      Vector3f d = pt(i, j + 1);
+      if (i != 0) {
+        AppendFlatTri(&v_static, &v_dynamic, a, c, d);
+      }
+      if (i != stacks - 1) {
+        AppendFlatTri(&v_static, &v_dynamic, a, b, c);
+      }
+    }
+  }
+  debug_sphere_mesh_ = MakeDebugMesh(v_static, v_dynamic);
+  return debug_sphere_mesh_.get();
+}
+
+auto Graphics::debug_hemisphere_mesh() -> MeshIndexedObjectSplit* {
+  assert(g_base->InLogicThread());
+  if (debug_hemisphere_mesh_.exists()) {
+    return debug_hemisphere_mesh_.get();
+  }
+  // Top half of the debug sphere's lat/long layout, with the axis along
+  // z so it caps a z-aligned (ODE convention) capsule.
+  const int stacks = 3;  // Half of the sphere's 6.
+  const int slices = 12;
+  std::vector<VertexObjectSplitStatic> v_static;
+  std::vector<VertexObjectSplitDynamic> v_dynamic;
+  auto pt = [](int stack, int slice) {
+    float phi = 0.5f * kPi * static_cast<float>(stack) / stacks;  // 0..pi/2
+    float theta = 2.0f * kPi * static_cast<float>(slice) / slices;
+    return Vector3f(sinf(phi) * cosf(theta), sinf(phi) * sinf(theta),
+                    cosf(phi));
+  };
+  for (int i = 0; i < stacks; ++i) {
+    for (int j = 0; j < slices; ++j) {
+      Vector3f a = pt(i, j);
+      Vector3f b = pt(i + 1, j);
+      Vector3f c = pt(i + 1, j + 1);
+      Vector3f d = pt(i, j + 1);
+      if (i != 0) {
+        AppendFlatTri(&v_static, &v_dynamic, a, c, d);
+      }
+      AppendFlatTri(&v_static, &v_dynamic, a, b, c);
+    }
+  }
+  debug_hemisphere_mesh_ = MakeDebugMesh(v_static, v_dynamic);
+  return debug_hemisphere_mesh_.get();
+}
+
+auto Graphics::debug_cylinder_mesh() -> MeshIndexedObjectSplit* {
+  assert(g_base->InLogicThread());
+  if (debug_cylinder_mesh_.exists()) {
+    return debug_cylinder_mesh_.get();
+  }
+  const int slices = 12;
+  std::vector<VertexObjectSplitStatic> v_static;
+  std::vector<VertexObjectSplitDynamic> v_dynamic;
+  auto ring = [](int slice, float z) {
+    float theta = 2.0f * kPi * static_cast<float>(slice) / slices;
+    return Vector3f(cosf(theta), sinf(theta), z);
+  };
+  for (int j = 0; j < slices; ++j) {
+    Vector3f a = ring(j, 0.5f);
+    Vector3f b = ring(j, -0.5f);
+    Vector3f c = ring(j + 1, -0.5f);
+    Vector3f d = ring(j + 1, 0.5f);
+    AppendFlatTri(&v_static, &v_dynamic, a, c, d);
+    AppendFlatTri(&v_static, &v_dynamic, a, b, c);
+  }
+  debug_cylinder_mesh_ = MakeDebugMesh(v_static, v_dynamic);
+  return debug_cylinder_mesh_.get();
+}
+
+auto Graphics::debug_box_mesh() -> MeshIndexedObjectSplit* {
+  assert(g_base->InLogicThread());
+  if (debug_box_mesh_.exists()) {
+    return debug_box_mesh_.get();
+  }
+  // 6 faces x 4 unshared verts so each face carries its own normal.
+  const float h = 0.5f;
+  struct Face {
+    float n[3];
+    float u[3];  // First in-plane axis.
+    float v[3];  // Second in-plane axis.
+  };
+  const Face faces[6] = {
+      {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, {{-1, 0, 0}, {0, 0, 1}, {0, 1, 0}},
+      {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}}, {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}},
+      {{0, 0, 1}, {1, 0, 0}, {0, 1, 0}}, {{0, 0, -1}, {0, 1, 0}, {1, 0, 0}},
+  };
+  auto v_static = Object::New<MeshBuffer<VertexObjectSplitStatic>>(24);
+  auto v_dynamic = Object::New<MeshBuffer<VertexObjectSplitDynamic>>(24);
+  auto indices = Object::New<MeshIndexBuffer16>(36);
+  const float corners[4][2] = {{-1, -1}, {1, -1}, {1, 1}, {-1, 1}};
+  for (int f = 0; f < 6; ++f) {
+    const Face& face = faces[f];
+    for (int c = 0; c < 4; ++c) {
+      auto& vs = v_static->elements[f * 4 + c];
+      vs.uv[0] = vs.uv[1] = 0;
+      auto& vd = v_dynamic->elements[f * 4 + c];
+      for (int k = 0; k < 3; ++k) {
+        vd.position[k] = h * face.n[k] + h * corners[c][0] * face.u[k]
+                         + h * corners[c][1] * face.v[k];
+        vd.normal[k] = static_cast<int16_t>(face.n[k] * 32767.0f);
+      }
+      vd.padding[0] = vd.padding[1] = 0;
+    }
+    uint16_t base = static_cast<uint16_t>(f * 4);
+    uint16_t* idx = &indices->elements[f * 6];
+    idx[0] = base;
+    idx[1] = static_cast<uint16_t>(base + 1);
+    idx[2] = static_cast<uint16_t>(base + 2);
+    idx[3] = base;
+    idx[4] = static_cast<uint16_t>(base + 2);
+    idx[5] = static_cast<uint16_t>(base + 3);
+  }
+  debug_box_mesh_ = Object::New<MeshIndexedObjectSplit>();
+  debug_box_mesh_->SetIndexData(indices);
+  debug_box_mesh_->SetStaticData(v_static);
+  debug_box_mesh_->SetDynamicData(v_dynamic);
+  return debug_box_mesh_.get();
 }
 
 void Graphics::ReleaseFadeEndCommand() { fade_end_call_.Clear(); }
@@ -1396,84 +1669,6 @@ void Graphics::ReleaseFadeEndCommand() { fade_end_call_.Clear(); }
 auto Graphics::ValueTest(const std::string& arg, double* absval,
                          double* deltaval, double* outval) -> bool {
   return false;
-}
-
-void Graphics::DoDrawBlotch(std::vector<uint16_t>* indices,
-                            std::vector<VertexSprite>* verts,
-                            const Vector3f& pos, float size, float r, float g,
-                            float b, float a) {
-  assert(g_base->InLogicThread());
-  assert(indices && verts);
-
-  // Add verts.
-  assert((*verts).size() < 65536);
-  auto count = static_cast<uint16_t>((*verts).size());
-  (*verts).resize(count + 4);
-  {
-    VertexSprite& p((*verts)[count]);
-    p.position[0] = pos.x;
-    p.position[1] = pos.y;
-    p.position[2] = pos.z;
-    p.uv[0] = 0;
-    p.uv[1] = 0;
-    p.size = size;
-    p.color[0] = r;
-    p.color[1] = g;
-    p.color[2] = b;
-    p.color[3] = a;
-  }
-  {
-    VertexSprite& p((*verts)[count + 1]);
-    p.position[0] = pos.x;
-    p.position[1] = pos.y;
-    p.position[2] = pos.z;
-    p.uv[0] = 0;
-    p.uv[1] = 65535;
-    p.size = size;
-    p.color[0] = r;
-    p.color[1] = g;
-    p.color[2] = b;
-    p.color[3] = a;
-  }
-  {
-    VertexSprite& p((*verts)[count + 2]);
-    p.position[0] = pos.x;
-    p.position[1] = pos.y;
-    p.position[2] = pos.z;
-    p.uv[0] = 65535;
-    p.uv[1] = 0;
-    p.size = size;
-    p.color[0] = r;
-    p.color[1] = g;
-    p.color[2] = b;
-    p.color[3] = a;
-  }
-  {
-    VertexSprite& p((*verts)[count + 3]);
-    p.position[0] = pos.x;
-    p.position[1] = pos.y;
-    p.position[2] = pos.z;
-    p.uv[0] = 65535;
-    p.uv[1] = 65535;
-    p.size = size;
-    p.color[0] = r;
-    p.color[1] = g;
-    p.color[2] = b;
-    p.color[3] = a;
-  }
-
-  // Add indices.
-  {
-    size_t i_count = (*indices).size();
-    (*indices).resize(i_count + 6);
-    uint16_t* i = &(*indices)[i_count];
-    i[0] = count;
-    i[1] = static_cast<uint16_t>(count + 1);
-    i[2] = static_cast<uint16_t>(count + 2);
-    i[3] = static_cast<uint16_t>(count + 1);
-    i[4] = static_cast<uint16_t>(count + 3);
-    i[5] = static_cast<uint16_t>(count + 2);
-  }
 }
 
 void Graphics::DrawRadialMeter(MeshIndexedSimpleFull* m, float amt) {
@@ -1684,27 +1879,14 @@ void Graphics::CalcVirtualRes_(float* x, float* y) {
   }
 }
 
-auto Graphics::CalcActiveRenderRect(float res_x, float res_y, bool tv_border)
-    -> Rect {
+auto Graphics::CalcActiveRenderRect(float res_x, float res_y) const -> Rect {
   Rect rect{0.0f, 0.0f, res_x, res_y};
 
-  // In tv-border mode, inset all edges by a uniform thickness
-  // proportional to window height.
-  if (tv_border) {
-    float border = kTVBorder * res_y;
-    // Keep borders sane on degenerate window sizes.
-    border = std::min(border, 0.25f * std::min(res_x, res_y));
-    rect.l += border;
-    rect.r -= border;
-    rect.b += border;
-    rect.t -= border;
-  }
-
-  // Now clamp aspect ratio, keeping the largest centered sub-rect that
-  // satisfies our bounds. (Border first, then clamp: uniform borders
-  // change the inner region's aspect, so clamping must consider the
-  // post-border region.)
-  if (rect.width() > 0.0f && rect.height() > 0.0f) {
+  // Clamp aspect ratio, keeping the largest centered sub-rect that
+  // satisfies our bounds (unless the user has opted out of the clamp;
+  // the virtual res then simply follows the window's shape).
+  if (!allow_extreme_aspect_ratios_ && rect.width() > 0.0f
+      && rect.height() > 0.0f) {
     float aspect = rect.width() / rect.height();
     if (aspect < kMinAspectRatio) {
       float trim = (rect.height() - rect.width() / kMinAspectRatio) * 0.5f;
@@ -1850,6 +2032,46 @@ auto Graphics::CalcMaxMarginsVirtualBoundsRect(const Rect& render_rect,
       render_rect.r - margin_x * scale, render_rect.t - margin_y * scale};
 }
 
+auto Graphics::BlendScreenInsetsRect(const Rect& os_bounds,
+                                     const Rect& max_bounds, float amount)
+    -> Rect {
+  amount = std::clamp(amount, 0.0f, 1.0f);
+  auto lerp = [amount](float a, float b) { return a + (b - a) * amount; };
+
+  // Never give back any of what the OS asked for; a deep enough
+  // obstruction can reach past the max margins.
+  return Rect{std::max(os_bounds.l, lerp(os_bounds.l, max_bounds.l)),
+              std::max(os_bounds.b, lerp(os_bounds.b, max_bounds.b)),
+              std::min(os_bounds.r, lerp(os_bounds.r, max_bounds.r)),
+              std::min(os_bounds.t, lerp(os_bounds.t, max_bounds.t))};
+}
+
+auto Graphics::AutoScreenInsetAmount() const -> float {
+  assert(g_base->InLogicThread());
+  if (g_core->platform->IsRunningOnTV()) {
+    return kAutoScreenInsetAmountTV;
+  }
+  switch (g_base->ui->uiscale()) {
+    case UIScale::kSmall:
+      return kAutoScreenInsetAmountSmall;
+    case UIScale::kMedium:
+      return kAutoScreenInsetAmountMedium;
+    case UIScale::kLarge:
+      return kAutoScreenInsetAmountLarge;
+    case UIScale::kLast:
+      break;
+  }
+  BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+              "Unhandled uiscale in AutoScreenInsetAmount.");
+  return 0.0f;
+}
+
+auto Graphics::ScreenInsetAmount() const -> float {
+  assert(g_base->InLogicThread());
+  return screen_insets_custom_ ? custom_screen_insets_
+                               : AutoScreenInsetAmount();
+}
+
 void Graphics::SetForceMaxVirtualBoundsMargins(bool val) {
   assert(g_base->InLogicThread());
   if (val == force_max_virtual_bounds_margins_) {
@@ -1871,9 +2093,9 @@ void Graphics::SetForceMaxVirtualBoundsMargins(bool val) {
 auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
   assert(g_base->InLogicThread());
 
-  // TVs are covered by tv-mode's border, which defaults on there.
-  // Honoring an OS inset as well would compensate twice for the same
-  // overscan.
+  // TVs ignore OS insets; their automatic screen-inset amount covers
+  // overscan (see kAutoScreenInsetAmountTV), and honoring an OS inset
+  // as well would compensate twice for the same thing.
   if (g_core->platform->IsRunningOnTV()) {
     return render_rect;
   }
@@ -1894,7 +2116,7 @@ auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
 
   // Stay aware of any device out in the wild whose *applied* margins
   // (post-clamp, post-bleed) exceed the max-margins calibration target
-  // (kDebugMaxVirtualBoundsMarginX/Y) - UIs are calibrated against
+  // (kMaxVirtualBoundsMarginX/Y) - UIs are calibrated against
   // those values, so such a device would be seeing layouts nothing was
   // ever tested at.
   if (out.width() > 0.0f && out.height() > 0.0f) {
@@ -1907,10 +2129,10 @@ auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
       float margin_r = (render_rect.r - out.r) / px_per_virtual_unit;
       float margin_b = (out.b - render_rect.b) / px_per_virtual_unit;
       float margin_t = (render_rect.t - out.t) / px_per_virtual_unit;
-      if (margin_l > kDebugMaxVirtualBoundsMarginX
-          || margin_r > kDebugMaxVirtualBoundsMarginX
-          || margin_b > kDebugMaxVirtualBoundsMarginY
-          || margin_t > kDebugMaxVirtualBoundsMarginY) {
+      if (margin_l > kMaxVirtualBoundsMarginX
+          || margin_r > kMaxVirtualBoundsMarginX
+          || margin_b > kMaxVirtualBoundsMarginY
+          || margin_t > kMaxVirtualBoundsMarginY) {
         BA_LOG_ONCE(
             LogName::kBaGraphics, LogLevel::kWarning,
             "OS-derived virtual-bounds margins (l="
@@ -1919,8 +2141,8 @@ auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
                 + " t=" + std::to_string(margin_t)
                 + " virtual units) exceed the max-margins calibration"
                   " target ("
-                + std::to_string(kDebugMaxVirtualBoundsMarginX) + "/"
-                + std::to_string(kDebugMaxVirtualBoundsMarginY)
+                + std::to_string(kMaxVirtualBoundsMarginX) + "/"
+                + std::to_string(kMaxVirtualBoundsMarginY)
                 + "); UIs are not calibrated for this much margin.");
       }
     }
@@ -1948,8 +2170,8 @@ void Graphics::UpdateScreen_() {
     res_y_virtual_ = kBaseVirtualResY;
   } else {
     // Drawing extends across our active render rect (the window minus
-    // tv-borders and aspect-ratio limiting)...
-    active_render_rect_ = CalcActiveRenderRect(res_x_, res_y_, tv_border_);
+    // aspect-ratio limiting)...
+    active_render_rect_ = CalcActiveRenderRect(res_x_, res_y_);
     if (active_render_rect_.width() <= 0.0f
         || active_render_rect_.height() <= 0.0f) {
       BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
@@ -1966,19 +2188,28 @@ void Graphics::UpdateScreen_() {
     // edge.
     virtual_bounds_rect_ = CalcVirtualBoundsRect_(active_render_rect_);
 
-    // The debug knobs replace any OS-derived inset (and the bleed)
-    // rather than stacking on them: each exists to produce a known
-    // rect, and adding a device's own inset on top would make it
-    // something other than what it claims. Max-margins takes
-    // precedence over the A/B knob when both are somehow on; the
+    float base_virtual_res_x;
+    float base_virtual_res_y;
+    GetBaseVirtualRes(&base_virtual_res_x, &base_virtual_res_y);
+    Rect max_margins_rect = CalcMaxMarginsVirtualBoundsRect(
+        active_render_rect_, base_virtual_res_x, base_virtual_res_y,
+        kMaxVirtualBoundsMarginX, kMaxVirtualBoundsMarginY);
+
+    // Pull the bounds further in per the screen-insets setting.
+    float screen_inset_amount = ScreenInsetAmount();
+    if (screen_inset_amount > 0.0f) {
+      virtual_bounds_rect_ = BlendScreenInsetsRect(
+          virtual_bounds_rect_, max_margins_rect, screen_inset_amount);
+    }
+
+    // The debug knobs replace any OS-derived inset (and the bleed and
+    // screen-insets setting) rather than stacking on them: each exists
+    // to produce a known rect, and adding a device's own inset on top
+    // would make it something other than what it claims. Max-margins
+    // takes precedence over the A/B knob when both are somehow on; the
     // dev-console toggle is the more immediate intent.
     if (force_max_virtual_bounds_margins_) {
-      float base_virtual_res_x;
-      float base_virtual_res_y;
-      GetBaseVirtualRes(&base_virtual_res_x, &base_virtual_res_y);
-      virtual_bounds_rect_ = CalcMaxMarginsVirtualBoundsRect(
-          active_render_rect_, base_virtual_res_x, base_virtual_res_y,
-          kDebugMaxVirtualBoundsMarginX, kDebugMaxVirtualBoundsMarginY);
+      virtual_bounds_rect_ = max_margins_rect;
     } else if (virtual_bounds_ab_mode_ != VirtualBoundsABMode::kDisabled) {
       // Both configs share this one bounds rect; they differ only in
       // whether the render rect shrinks to meet it (A - black outside)

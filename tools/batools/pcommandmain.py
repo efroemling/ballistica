@@ -171,6 +171,7 @@ from batools.pcommands4 import (
     assetworkspace,
     cst_test,
     prefab_symbols_fetch,
+    dump_symbols_fetch,
     push_ipa_to_archive,
     push_apk_to_archive,
 )

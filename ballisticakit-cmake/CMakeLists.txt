@@ -36,6 +36,17 @@ endif() #STATIC_BUILD
 
 # Stuff applying everywhere.
 add_library(common_deps INTERFACE)
+
+# zstd, for game-packet compression (scene_v1/support/zstd_packet_codec).
+# The header is vendored (src/external/zstd, matching the 1.5.7 that our
+# embedded Apple/Android pythons carry); the library is the system one
+# that Python links (brew 'zstd' on mac, libzstd-dev on Linux; we only
+# use the stable API so any 1.4+ is fine).
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
+target_include_directories(common_deps INTERFACE
+  ${PROJECT_ROOT_DIR}/src/external/zstd/include)
+target_link_libraries(common_deps INTERFACE PkgConfig::ZSTD)
   
 # Stuff applying to all ba targets.
 add_library(ba_deps INTERFACE)
@@ -64,8 +75,6 @@ find_package(Python3 3.14 EXACT REQUIRED COMPONENTS Development)
 if(HEADLESS)
   target_compile_definitions(common_deps INTERFACE BA_HEADLESS_BUILD=1)
 else()
-  find_package(PkgConfig REQUIRED)
-  
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
   pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
   
@@ -389,27 +398,38 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/automation/automation.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
+  ${BA_SRC_ROOT}/ballistica/base/depiction/depiction.cc
+  ${BA_SRC_ROOT}/ballistica/base/depiction/depiction.h
+  ${BA_SRC_ROOT}/ballistica/base/depiction/depiction_kinds.cc
+  ${BA_SRC_ROOT}/ballistica/base/depiction/depiction_kinds.h
   ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc
   ${BA_SRC_ROOT}/ballistica/base/discord/discord.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_channel.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_character.cc
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_character.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_fuse.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_fuse.h
-  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_height_cache.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_height_cache.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_kinds.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_server.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_server.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_shadow.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_shadow.h
-  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_volume_light.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_volume_light.h
-  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h
-  ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.cc
-  ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_world.cc
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_world.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_world_server.cc
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_world_server.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/geom_transform.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/joint_fixed_ef.cc
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/joint_fixed_ef.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/terrain_collider.cc
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/terrain_collider.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/empty_component.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.h
@@ -433,6 +453,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/gl_sys_windows.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/gl_sys_windows.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/mesh/mesh_asset_data_gl.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/gl/mesh/mesh_data_debug_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/mesh/mesh_data_dual_texture_full_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/mesh/mesh_data_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/mesh/mesh_data_object_split_gl.h
@@ -449,6 +470,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/program/program_smoke_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/program/program_sprite_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/render_target_gl.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/gl/render_view_data_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/renderer_gl.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/renderer_gl.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/gl/texture_data_gl.h
@@ -492,14 +514,24 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/render_pass.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/render_target.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/render_target.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/render_view_renderer_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/renderer.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/renderer/renderer.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/area_of_interest.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/area_of_interest.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/camera.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/camera.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/debug_texture_view.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/debug_texture_view.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/depth_of_field.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/fixed_camera.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/fixed_camera.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def_view.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/frame_def_view.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/game_camera.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/game_camera.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.cc
@@ -507,8 +539,11 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_command_buffer.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_view.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_view.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/shadow_range.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_glyph_pages_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_page_map_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.cc
@@ -589,12 +624,18 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/app_timer.h
   ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.cc
   ${BA_SRC_ROOT}/ballistica/base/support/base_build_switches.h
+  ${BA_SRC_ROOT}/ballistica/base/support/character_def.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/character_def.h
   ${BA_SRC_ROOT}/ballistica/base/support/classic_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
   ${BA_SRC_ROOT}/ballistica/base/support/lang_str.cc
   ${BA_SRC_ROOT}/ballistica/base/support/lang_str.h
+  ${BA_SRC_ROOT}/ballistica/base/support/media_block.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/media_block.h
+  ${BA_SRC_ROOT}/ballistica/base/support/name_def.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/name_def.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
@@ -639,6 +680,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
+  ${BA_SRC_ROOT}/ballistica/core/python/pyc_prewarm.cc
+  ${BA_SRC_ROOT}/ballistica/core/python/pyc_prewarm.h
   ${BA_SRC_ROOT}/ballistica/core/python/pyembed.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.cc
@@ -709,6 +752,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/bomb_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/combine_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/combine_node.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/depiction_display_node.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/depiction_display_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/explosion_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/explosion_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/flag_node.cc
@@ -721,6 +766,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/image_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/light_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/light_node.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/local_display_node.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/local_display_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/locator_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/locator_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/math_node.cc
@@ -750,6 +797,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/sound_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_node.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_pose.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_pose.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/terrain_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/terrain_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/text_node.cc
@@ -773,16 +822,22 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_depiction.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_depiction.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_texture.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_viewer.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_viewer.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_session_data.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_session_data.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_session_player.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_session_player.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_spaz_def.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_spaz_def.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/methods/python_methods_assets.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/methods/python_methods_assets.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/methods/python_methods_input.cc
@@ -812,6 +867,10 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_display_context.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_display_context.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_scene_context.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_scene_context.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.cc
@@ -820,14 +879,22 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/replay_writer.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_depiction.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_depiction.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_input_device_delegate.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_input_device_delegate.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_viewer_context.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_viewer_context.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/session.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/session.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/session_stream.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/session_stream.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/spaz_def.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/spaz_def.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/zstd_packet_codec.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/zstd_packet_codec.h
   ${BA_SRC_ROOT}/ballistica/shared/ballistica.cc
   ${BA_SRC_ROOT}/ballistica/shared/ballistica.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h
@@ -836,6 +903,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_generic.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_headless.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_testbuild.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/crash_info.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/crash_info.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.cc
@@ -864,6 +933,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/thread_cpu_time.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
@@ -906,12 +976,18 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_texture.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_viewer_source.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_viewer_source.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/methods/python_methods_ui_v1.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/methods/python_methods_ui_v1.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/ui_v1_python.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/ui_v1_python.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/support/viewer_depiction.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/support/viewer_depiction.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/support/viewer_source.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/support/viewer_source.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/ui_v1.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/ui_v1.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/button_widget.cc
@@ -922,6 +998,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/column_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/container_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/container_widget.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/h_scroll_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/h_scroll_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/image_widget.cc

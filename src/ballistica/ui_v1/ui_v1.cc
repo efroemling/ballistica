@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
@@ -14,6 +15,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
+#include "ballistica/ui_v1/support/viewer_depiction.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -57,6 +59,9 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Import any other C++ feature-set-front-ends we use.
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
+
+  // The depiction kinds we draw (live viewers).
+  RegisterViewerDepictionKinds();
 
   g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_bauiv1 exec end");
@@ -496,6 +501,21 @@ auto UIV1FeatureSet::WidgetByID(const std::string& id) -> Widget* {
   assert(!vec.empty());  // Should not be holding empty vecs.
   // In the case of multiple registrations, grab the most recent.
   return vec.back();
+}
+
+void UIV1FeatureSet::PlaySwish() {
+  assert(g_base->InLogicThread());
+  if (!have_assets()) {
+    return;
+  }
+  int r = rand() % 3;  // NOLINT
+  if (r == 0) {
+    g_base->audio->PlaySound(assets().swish.get());
+  } else if (r == 1) {
+    g_base->audio->PlaySound(assets().swish2.get());
+  } else {
+    g_base->audio->PlaySound(assets().swish3.get());
+  }
 }
 
 }  // namespace ballistica::ui_v1

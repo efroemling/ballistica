@@ -20,15 +20,16 @@ from bacommon.assetspec._index import (
     AssetIndexError,
     spec_kind,
 )
+from bacommon.assetpackage import ApverNum
 
-PKG_A = 'a-0.alpha.260101'
-PKG_B = 'a-0.beta.260202'
-PKG_C = 'a-0.gamma.260303'
+PKG_A = ApverNum(1)
+PKG_B = ApverNum(2)
+PKG_C = ApverNum(3)
 
 #: Whole-package listings: every asset a package holds, sorted, of
 #: whatever kind. Deliberately mixes kinds within a package, since that
 #: is what a real listing looks like and what the single domain spans.
-_LISTINGS: dict[str, list[str]] = {
+_LISTINGS: dict[ApverNum, list[str]] = {
     PKG_A: ['meshes/box', 'textures/ant', 'textures/bee'],
     PKG_B: [],
     PKG_C: [
@@ -40,11 +41,11 @@ _LISTINGS: dict[str, list[str]] = {
 }
 
 
-def _listings(apverid: str) -> list[str] | None:
-    return _LISTINGS.get(apverid)
+def _listings(apvernum: ApverNum) -> list[str] | None:
+    return _LISTINGS.get(apvernum)
 
 
-def _ctx(packages: list[str] | None = None) -> AssetIndexContext:
+def _ctx(packages: list[ApverNum] | None = None) -> AssetIndexContext:
     return AssetIndexContext(
         [PKG_A, PKG_B, PKG_C] if packages is None else packages, _listings
     )
@@ -118,7 +119,7 @@ def test_empty_package_slice_is_skipped() -> None:
     ctx = _ctx()
     # PKG_B is empty; index 3 must land in PKG_C, not PKG_B. bisect on
     # equal offsets is the subtle part.
-    assert ctx.from_index(3, AssetBucketKind.AUDIO)._apverid == PKG_C
+    assert ctx.from_index(3, AssetBucketKind.AUDIO)._apvernum == PKG_C
 
 
 def test_package_order_changes_indices() -> None:
@@ -136,7 +137,7 @@ def test_unknown_package_raises() -> None:
     """
     ctx = _ctx()
     with pytest.raises(AssetIndexError, match='not in this manifest'):
-        ctx.to_index(TextureSpec('a-0.nope.260101', 'textures/x'))
+        ctx.to_index(TextureSpec(ApverNum(98), 'textures/x'))
 
 
 def test_unknown_asset_raises() -> None:
@@ -162,11 +163,11 @@ def test_unlistable_package_does_not_break_others() -> None:
     unknown package, not on preparing the table for a payload that
     merely mentions it.
     """
-    ctx = AssetIndexContext([PKG_A, 'a-0.unknown.260101', PKG_C], _listings)
+    ctx = AssetIndexContext([PKG_A, ApverNum(99), PKG_C], _listings)
     assert ctx.to_index(MeshSpec(PKG_A, 'meshes/box')) == 0
     assert ctx.to_index(SoundSpec(PKG_C, 'audio/swish')) == 3
     with pytest.raises(AssetIndexError, match='not found'):
-        ctx.to_index(TextureSpec('a-0.unknown.260101', 'textures/x'))
+        ctx.to_index(TextureSpec(ApverNum(99), 'textures/x'))
 
 
 def test_domain_size() -> None:

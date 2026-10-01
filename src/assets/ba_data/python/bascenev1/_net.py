@@ -12,6 +12,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass, field
 
+from bacommon.assetpackage import ApverNum
+
 import babase
 
 import _bascenev1
@@ -75,7 +77,7 @@ class HostRequirements:
     (see :func:`connect_to_party`).
     """
 
-    asset_packages: list[str] = field(default_factory=list)
+    asset_packages: list[ApverNum] = field(default_factory=list)
     password_required: bool = False
 
 
@@ -153,7 +155,12 @@ def fetch_host_requirements(
     if not isinstance(asset_packages, list):
         asset_packages = []
     return HostRequirements(
-        asset_packages=[pkg for pkg in asset_packages if isinstance(pkg, str)],
+        # Hosts advertise numeric ids as text (engine package keys).
+        asset_packages=[
+            ApverNum(int(pkg))
+            for pkg in asset_packages
+            if isinstance(pkg, str) and pkg.isdigit()
+        ],
         password_required=bool(merged.get('pw')),
     )
 
@@ -349,7 +356,7 @@ def connect_to_party(
 
 
 async def resolve_asset_packages_with_dialog(
-    asset_packages: list[str],
+    asset_packages: list[ApverNum],
     *,
     task: asyncio.Task[None] | None,
     context: str,
@@ -385,6 +392,8 @@ async def resolve_asset_packages_with_dialog(
                 progress=0.0,
                 button_label=_builtinassets.strings.ui.cancel,
                 on_button=on_cancel,
+                # (Also covers the OK the error path swaps in.)
+                cancel_activates_button=True,
             )
 
     def on_update(

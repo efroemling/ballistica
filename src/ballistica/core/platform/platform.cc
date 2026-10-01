@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <list>
 #include <mutex>
@@ -558,6 +559,11 @@ void Platform::EmitPlatformLog(std::string_view name, LogLevel level,
   // Do nothing by default.
 }
 
+auto Platform::GetPendingCrashRecordPath() -> std::string {
+  // Default: no native crash handler, so never any record.
+  return "";
+}
+
 auto Platform::ReportFatalError(const std::string& message,
                                 bool in_top_level_exception_handler) -> bool {
   // Don't override handling by default.
@@ -978,7 +984,22 @@ void Platform::MusicPlayerSetVolume(float volume) {
                        "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
-auto Platform::IsOSPlayingMusic() -> bool { return false; }
+void Platform::SetOSMusicPlaying(bool playing) {
+  if (os_music_playing_.exchange(playing) == playing) {
+    return;
+  }
+  g_core->logging->Log(
+      LogName::kBaAudio, LogLevel::kInfo,
+      playing ? "Another app started playing music; game music will yield."
+              : "Other app's music stopped; game music may resume.");
+
+  // Base may not exist yet (platforms report their initial state as early
+  // as they can); the Python side reads os_music_playing() directly when
+  // it first plays anything, so an early change needs no forwarding.
+  if (g_base_soft) {
+    g_base_soft->OnOSMusicPlayingChanged(playing);
+  }
+}
 
 void Platform::IncrementAnalyticsCount(const std::string& name, int increment) {
 }
@@ -1254,9 +1275,23 @@ void Platform::RunNetworkAvailabilityDebugToggle_() {
   // unavailable window before anything has a chance to come up.
   // Same period is used for all subsequent toggles. Initial 'false'
   // is the platform-wide default; no explicit seed needed here.
+  //
+  // BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE_SECONDS overrides the period
+  // (fractional ok) so tests can place the flip on either side of
+  // other timeouts (e.g. the transport's parked-message limit).
+  double period_seconds{5.0};
+  if (auto period_var = GetEnv("BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE_SECONDS");
+      period_var && !period_var->empty()) {
+    double parsed = std::strtod(period_var->c_str(), nullptr);
+    if (parsed > 0.0) {
+      period_seconds = parsed;
+    }
+  }
+  auto period =
+      std::chrono::milliseconds(static_cast<int64_t>(period_seconds * 1000.0));
   bool current = false;
   while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(period);
     current = !current;
     SetNetworkAvailability(current);
   }

@@ -29,7 +29,7 @@ from baclassic._chest import (
 )
 from baclassic._displayitem import (
     show_display_item,
-    display_item_frame,
+    display_item_decorations,
     depiction_assets,
 )
 from baclassic._music import MusicPlayer
@@ -44,7 +44,7 @@ __all__ = [
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',
-    'display_item_frame',
+    'display_item_decorations',
     'depiction_assets',
     'MusicPlayer',
     'reload_hooks',

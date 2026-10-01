@@ -8,6 +8,7 @@
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -198,7 +199,7 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
     }
     s *= 0.75f;
     float cx, cy, cz;
-    g_base->graphics->camera()->get_position(&cx, &cy, &cz);
+    scene()->render_view()->camera()->get_position(&cx, &cy, &cz);
     base::ObjectComponent c(frame_def->beauty_pass());
     c.SetTransparent(true);
     c.SetLightShadow(base::LightShadowType::kNone);

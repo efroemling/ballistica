@@ -5,6 +5,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -64,7 +65,8 @@ class DevConsole {
 
   void AddButton(const char* label, float x, float y, float width, float height,
                  PyObject* call, const char* h_anchor_str, float label_scale,
-                 float corner_radius, const char* style_str, bool disabled);
+                 float corner_radius, const char* style_str, bool disabled,
+                 bool sound);
   void AddText(const char* text, float x, float y, const char* h_anchor_str,
                const char* h_align_str, const char* v_align_str, float scale,
                const char* style_str);
@@ -89,7 +91,14 @@ class DevConsole {
 
   auto CaratCharValid_() -> bool;
   auto GetCaratX_() -> float;
-  void UpdateCarat_();
+  /// Rebuild carat pos/meshes; returns false if some measure was cold
+  /// (stand-in values used; retry later).
+  auto UpdateCarat_() -> bool;
+  auto CaratShown_() const -> bool;
+
+  /// Return the carat index nearest a (bottom-relative) point on the
+  /// input line, or empty if it can't be determined right now.
+  auto CaratPosAtPoint_(float x, float y) -> std::optional<int>;
   void ApplyPastedText_(const std::string& text_in);
   auto Bottom_() const -> float;
   void SubmitPythonCommand_(const std::string& command);

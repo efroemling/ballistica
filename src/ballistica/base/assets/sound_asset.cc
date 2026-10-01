@@ -31,6 +31,16 @@ namespace ballistica::base {
 
 const int kReadBufferSize = 32768;  // 32 KB buffers
 
+// Whether to cache decoded PCM on disk (LoadCachedOgg) instead of
+// decoding oggs on every load. Disabled 2026-09-29 and likely to be
+// removed soon: now that sounds load lazily a few at a time, the cache
+// saves ~1-3 ms per sound while its first-load writes add ~10%, it
+// never gets pruned (content-hash asset paths leave orphans on every
+// asset update), and its mtime check can't stat sounds served from
+// inside the Android APK (so there it rewrote files it never read).
+// Removing it also means clearing out the old <cache>/audio dir once.
+constexpr bool kUseDecodedAudioCache = false;
+
 // Decoded-PCM-size threshold above which a sound plays via the streaming
 // path instead of being fully decoded into a static buffer at preload.
 // Byte-based rather than duration-based since memory footprint is the
@@ -339,7 +349,11 @@ void SoundAsset::DoPreload() {
            + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
   });
   if (!is_streamed_) {
-    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    if (kUseDecodedAudioCache) {
+      LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    } else {
+      LoadOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    }
   }
 #endif  // BA_ENABLE_AUDIO
 }

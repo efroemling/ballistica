@@ -21,7 +21,6 @@ from bacommon.net import (
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
-from bauiv1lib.play import PlaylistSelectContext
 
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
@@ -54,7 +53,8 @@ class State:
     """Our core state that persists while the app is running."""
 
     sub_tab: SubTabType = SubTabType.JOIN
-    playlist_select_context: PlaylistSelectContext | None = None
+    #: Off selecting a playlist (so we re-select its button on return).
+    playlist_selecting: bool = False
 
 
 class PrivateGatherTab(GatherTab):
@@ -555,7 +555,7 @@ class PrivateGatherTab(GatherTab):
             autoselect=True,
         )
         bui.textwidget(
-            edit=self._join_party_code_text, on_return_press_call=btn.activate
+            edit=self._join_party_code_text, on_submit_call=btn.activate
         )
 
     def _build_host_tab(self) -> None:
@@ -687,8 +687,8 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if self._state.playlist_select_context is not None:
-                self._state.playlist_select_context = None
+            if self._state.playlist_selecting:
+                self._state.playlist_selecting = False
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
@@ -903,12 +903,8 @@ class PrivateGatherTab(GatherTab):
     def _playlist_press(self) -> None:
         assert self._host_playlist_button is not None
 
-        self._state.playlist_select_context = PlaylistSelectContext()
-
-        self.window.playlist_select(
-            origin_widget=self._host_playlist_button,
-            context=self._state.playlist_select_context,
-        )
+        self._state.playlist_selecting = True
+        self.window.playlist_select(origin_widget=self._host_playlist_button)
 
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None

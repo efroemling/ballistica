@@ -4,12 +4,14 @@
 
 # pylint: disable=too-many-lines
 
+import logging
 from typing import TYPE_CHECKING, overload
 
 from bacommon.assetspec import TextureSpec
+from bacommon.assetpackage import ApverNum
 import babase
 import bascenev1 as bs
-from bascenev1 import _classicassets
+from bascenev1 import _classiccatalogassets, _classiccharacterassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -29,7 +31,7 @@ def _character_name_table() -> dict[str, babase.LangStr]:
     Alien/Gladiator/Robot/Warrior/Witch/Wrestler -- show their own
     name untranslated.
     """
-    c = _classicassets.strings.characters
+    c = _classiccatalogassets.strings.characters
     return {
         'Kronk': c.kronk,
         'Zoe': c.zoe,
@@ -178,7 +180,7 @@ def get_appearances(
 
 
 #: An appearance's texture field. Prefer a handle off an
-#: asset-package wrapper (``_classicassets.textures.zoe_icon``); the bare
+#: asset-package wrapper (``_classiccatalogassets.textures.zoe_icon``); the bare
 #: ``str`` form is the legacy asset name, kept so existing mods keep
 #: working, and goes away when api 9 support ends.
 type TexVal = str | bs.TextureHandle
@@ -252,10 +254,10 @@ def texture_spec(val: TexVal) -> TextureSpec:
     if isinstance(val, bs.TextureHandle):
         return val
     qualified = babase.resolve_legacy_asset_name(val, 'textures')
-    apverid, sep, name = qualified.partition(':')
-    if not sep or not name:
-        return _classicassets.textures.neo_spaz_icon
-    return TextureSpec(apverid, name)
+    apvernum, sep, name = qualified.partition(':')
+    if not sep or not name or not apvernum.isdigit():
+        return _classiccatalogassets.textures.neo_spaz_icon
+    return TextureSpec(ApverNum(int(apvernum)), name)
 
 
 class Appearance:
@@ -292,6 +294,15 @@ class Appearance:
         self.default_color: tuple[float, float, float] | None = None
         self.default_highlight: tuple[float, float, float] | None = None
 
+        #: Character definition json, if this appearance has one. When
+        #: set, spazzes wearing this appearance use the definition form
+        #: (a :class:`bascenev1.SpazDef` -- its spaz part -- on the
+        #: node; see :func:`bascenev1.split_character`) and the explicit
+        #: media/style fields above are ignored; when None they use the
+        #: legacy explicit-media form. All builtin appearances have one
+        #: (see ``_spazcharacters``); mod-defined ones typically won't.
+        self.character_json: str | None = None
+
 
 def register_appearances() -> None:
     # pylint: disable=too-many-statements
@@ -302,16 +313,16 @@ def register_appearances() -> None:
 
     # Shorthands for the wrapper groups; these blocks are almost
     # entirely asset assignments and the full paths drown them out.
-    tex = _classicassets.textures
-    mesh = _classicassets.meshes
-    snd = _classicassets.audio
-
+    tex = _classiccharacterassets.textures
+    uitex = _classiccatalogassets.textures
+    mesh = _classiccharacterassets.meshes
+    snd = _classiccharacterassets.audio
     # Spaz #######################################
     a = Appearance('Spaz')
     a.color_texture = tex.neo_spaz_color
     a.color_mask_texture = tex.neo_spaz_color_mask
-    a.icon_texture = tex.neo_spaz_icon
-    a.icon_mask_texture = tex.neo_spaz_icon_color_mask
+    a.icon_texture = uitex.neo_spaz_icon
+    a.icon_mask_texture = uitex.neo_spaz_icon_color_mask
     a.head_mesh = mesh.neo_spaz_head
     a.torso_mesh = mesh.neo_spaz_torso
     a.pelvis_mesh = mesh.neo_spaz_pelvis
@@ -348,8 +359,8 @@ def register_appearances() -> None:
     a = Appearance('Zoe')
     a.color_texture = tex.zoe_color
     a.color_mask_texture = tex.zoe_color_mask
-    a.icon_texture = tex.zoe_icon
-    a.icon_mask_texture = tex.zoe_icon_color_mask
+    a.icon_texture = uitex.zoe_icon
+    a.icon_mask_texture = uitex.zoe_icon_color_mask
     a.head_mesh = mesh.zoe_head
     a.torso_mesh = mesh.zoe_torso
     a.pelvis_mesh = mesh.zoe_pelvis
@@ -387,8 +398,8 @@ def register_appearances() -> None:
     a = Appearance('Snake Shadow')
     a.color_texture = tex.ninja_color
     a.color_mask_texture = tex.ninja_color_mask
-    a.icon_texture = tex.ninja_icon
-    a.icon_mask_texture = tex.ninja_icon_color_mask
+    a.icon_texture = uitex.ninja_icon
+    a.icon_mask_texture = uitex.ninja_icon_color_mask
     a.head_mesh = mesh.ninja_head
     a.torso_mesh = mesh.ninja_torso
     a.pelvis_mesh = mesh.ninja_pelvis
@@ -440,8 +451,8 @@ def register_appearances() -> None:
     a = Appearance('Kronk')
     a.color_texture = tex.kronk
     a.color_mask_texture = tex.kronk_color_mask
-    a.icon_texture = tex.kronk_icon
-    a.icon_mask_texture = tex.kronk_icon_color_mask
+    a.icon_texture = uitex.kronk_icon
+    a.icon_mask_texture = uitex.kronk_icon_color_mask
     a.head_mesh = mesh.kronk_head
     a.torso_mesh = mesh.kronk_torso
     a.pelvis_mesh = mesh.kronk_pelvis
@@ -477,8 +488,8 @@ def register_appearances() -> None:
     a = Appearance('Mel')
     a.color_texture = tex.mel_color
     a.color_mask_texture = tex.mel_color_mask
-    a.icon_texture = tex.mel_icon
-    a.icon_mask_texture = tex.mel_icon_color_mask
+    a.icon_texture = uitex.mel_icon
+    a.icon_mask_texture = uitex.mel_icon_color_mask
     a.head_mesh = mesh.mel_head
     a.torso_mesh = mesh.mel_torso
     a.pelvis_mesh = mesh.kronk_pelvis
@@ -514,8 +525,8 @@ def register_appearances() -> None:
     a = Appearance('Jack Morgan')
     a.color_texture = tex.jack_color
     a.color_mask_texture = tex.jack_color_mask
-    a.icon_texture = tex.jack_icon
-    a.icon_mask_texture = tex.jack_icon_color_mask
+    a.icon_texture = uitex.jack_icon
+    a.icon_mask_texture = uitex.jack_icon_color_mask
     a.head_mesh = mesh.jack_head
     a.torso_mesh = mesh.jack_torso
     a.pelvis_mesh = mesh.kronk_pelvis
@@ -556,8 +567,8 @@ def register_appearances() -> None:
     a = Appearance('Santa Claus')
     a.color_texture = tex.santa_color
     a.color_mask_texture = tex.santa_color_mask
-    a.icon_texture = tex.santa_icon
-    a.icon_mask_texture = tex.santa_icon_color_mask
+    a.icon_texture = uitex.santa_icon
+    a.icon_mask_texture = uitex.santa_icon_color_mask
     a.head_mesh = mesh.santa_head
     a.torso_mesh = mesh.santa_torso
     a.pelvis_mesh = mesh.kronk_pelvis
@@ -594,8 +605,8 @@ def register_appearances() -> None:
     a = Appearance('Frosty')
     a.color_texture = tex.frosty_color
     a.color_mask_texture = tex.frosty_color_mask
-    a.icon_texture = tex.frosty_icon
-    a.icon_mask_texture = tex.frosty_icon_color_mask
+    a.icon_texture = uitex.frosty_icon
+    a.icon_mask_texture = uitex.frosty_icon_color_mask
     a.head_mesh = mesh.frosty_head
     a.torso_mesh = mesh.frosty_torso
     a.pelvis_mesh = mesh.frosty_pelvis
@@ -631,8 +642,8 @@ def register_appearances() -> None:
     a = Appearance('Bones')
     a.color_texture = tex.bones_color
     a.color_mask_texture = tex.bones_color_mask
-    a.icon_texture = tex.bones_icon
-    a.icon_mask_texture = tex.bones_icon_color_mask
+    a.icon_texture = uitex.bones_icon
+    a.icon_mask_texture = uitex.bones_icon_color_mask
     a.head_mesh = mesh.bones_head
     a.torso_mesh = mesh.bones_torso
     a.pelvis_mesh = mesh.bones_pelvis
@@ -666,8 +677,8 @@ def register_appearances() -> None:
     a = Appearance('Bernard')
     a.color_texture = tex.bear_color
     a.color_mask_texture = tex.bear_color_mask
-    a.icon_texture = tex.bear_icon
-    a.icon_mask_texture = tex.bear_icon_color_mask
+    a.icon_texture = uitex.bear_icon
+    a.icon_mask_texture = uitex.bear_icon_color_mask
     a.head_mesh = mesh.bear_head
     a.torso_mesh = mesh.bear_torso
     a.pelvis_mesh = mesh.bear_pelvis
@@ -700,8 +711,8 @@ def register_appearances() -> None:
     a = Appearance('Pascal')
     a.color_texture = tex.penguin_color
     a.color_mask_texture = tex.penguin_color_mask
-    a.icon_texture = tex.penguin_icon
-    a.icon_mask_texture = tex.penguin_icon_color_mask
+    a.icon_texture = uitex.penguin_icon
+    a.icon_mask_texture = uitex.penguin_icon_color_mask
     a.head_mesh = mesh.penguin_head
     a.torso_mesh = mesh.penguin_torso
     a.pelvis_mesh = mesh.penguin_pelvis
@@ -735,8 +746,8 @@ def register_appearances() -> None:
     a = Appearance('Taobao Mascot')
     a.color_texture = tex.ali_color
     a.color_mask_texture = tex.ali_color_mask
-    a.icon_texture = tex.ali_icon
-    a.icon_mask_texture = tex.ali_icon_color_mask
+    a.icon_texture = uitex.ali_icon
+    a.icon_mask_texture = uitex.ali_icon_color_mask
     a.head_mesh = mesh.ali_head
     a.torso_mesh = mesh.ali_torso
     a.pelvis_mesh = mesh.ali_pelvis
@@ -770,8 +781,8 @@ def register_appearances() -> None:
     a = Appearance('B-9000')
     a.color_texture = tex.cyborg_color
     a.color_mask_texture = tex.cyborg_color_mask
-    a.icon_texture = tex.cyborg_icon
-    a.icon_mask_texture = tex.cyborg_icon_color_mask
+    a.icon_texture = uitex.cyborg_icon
+    a.icon_mask_texture = uitex.cyborg_icon_color_mask
     a.head_mesh = mesh.cyborg_head
     a.torso_mesh = mesh.cyborg_torso
     a.pelvis_mesh = mesh.cyborg_pelvis
@@ -805,8 +816,8 @@ def register_appearances() -> None:
     a = Appearance('Agent Johnson')
     a.color_texture = tex.agent_color
     a.color_mask_texture = tex.agent_color_mask
-    a.icon_texture = tex.agent_icon
-    a.icon_mask_texture = tex.agent_icon_color_mask
+    a.icon_texture = uitex.agent_icon
+    a.icon_mask_texture = uitex.agent_icon_color_mask
     a.head_mesh = mesh.agent_head
     a.torso_mesh = mesh.agent_torso
     a.pelvis_mesh = mesh.agent_pelvis
@@ -840,8 +851,8 @@ def register_appearances() -> None:
     a = Appearance('Lee')
     a.color_texture = tex.jumpsuit_color
     a.color_mask_texture = tex.jumpsuit_color_mask
-    a.icon_texture = tex.jumpsuit_icon
-    a.icon_mask_texture = tex.jumpsuit_icon_color_mask
+    a.icon_texture = uitex.jumpsuit_icon
+    a.icon_mask_texture = uitex.jumpsuit_icon_color_mask
     a.head_mesh = mesh.jumpsuit_head
     a.torso_mesh = mesh.jumpsuit_torso
     a.pelvis_mesh = mesh.jumpsuit_pelvis
@@ -875,8 +886,8 @@ def register_appearances() -> None:
     a = Appearance('Todd McBurton')
     a.color_texture = tex.action_hero_color
     a.color_mask_texture = tex.action_hero_color_mask
-    a.icon_texture = tex.action_hero_icon
-    a.icon_mask_texture = tex.action_hero_icon_color_mask
+    a.icon_texture = uitex.action_hero_icon
+    a.icon_mask_texture = uitex.action_hero_icon_color_mask
     a.head_mesh = mesh.action_hero_head
     a.torso_mesh = mesh.action_hero_torso
     a.pelvis_mesh = mesh.action_hero_pelvis
@@ -913,8 +924,8 @@ def register_appearances() -> None:
     a = Appearance('Zola')
     a.color_texture = tex.assassin_color
     a.color_mask_texture = tex.assassin_color_mask
-    a.icon_texture = tex.assassin_icon
-    a.icon_mask_texture = tex.assassin_icon_color_mask
+    a.icon_texture = uitex.assassin_icon
+    a.icon_mask_texture = uitex.assassin_icon_color_mask
     a.head_mesh = mesh.assassin_head
     a.torso_mesh = mesh.assassin_torso
     a.pelvis_mesh = mesh.assassin_pelvis
@@ -948,8 +959,8 @@ def register_appearances() -> None:
     a = Appearance('Grumbledorf')
     a.color_texture = tex.wizard_color
     a.color_mask_texture = tex.wizard_color_mask
-    a.icon_texture = tex.wizard_icon
-    a.icon_mask_texture = tex.wizard_icon_color_mask
+    a.icon_texture = uitex.wizard_icon
+    a.icon_mask_texture = uitex.wizard_icon_color_mask
     a.head_mesh = mesh.wizard_head
     a.torso_mesh = mesh.wizard_torso
     a.pelvis_mesh = mesh.wizard_pelvis
@@ -983,8 +994,8 @@ def register_appearances() -> None:
     a = Appearance('Butch')
     a.color_texture = tex.cowboy_color
     a.color_mask_texture = tex.cowboy_color_mask
-    a.icon_texture = tex.cowboy_icon
-    a.icon_mask_texture = tex.cowboy_icon_color_mask
+    a.icon_texture = uitex.cowboy_icon
+    a.icon_mask_texture = uitex.cowboy_icon_color_mask
     a.head_mesh = mesh.cowboy_head
     a.torso_mesh = mesh.cowboy_torso
     a.pelvis_mesh = mesh.cowboy_pelvis
@@ -1018,8 +1029,8 @@ def register_appearances() -> None:
     a = Appearance('Witch')
     a.color_texture = tex.witch_color
     a.color_mask_texture = tex.witch_color_mask
-    a.icon_texture = tex.witch_icon
-    a.icon_mask_texture = tex.witch_icon_color_mask
+    a.icon_texture = uitex.witch_icon
+    a.icon_mask_texture = uitex.witch_icon_color_mask
     a.head_mesh = mesh.witch_head
     a.torso_mesh = mesh.witch_torso
     a.pelvis_mesh = mesh.witch_pelvis
@@ -1053,8 +1064,8 @@ def register_appearances() -> None:
     a = Appearance('Warrior')
     a.color_texture = tex.warrior_color
     a.color_mask_texture = tex.warrior_color_mask
-    a.icon_texture = tex.warrior_icon
-    a.icon_mask_texture = tex.warrior_icon_color_mask
+    a.icon_texture = uitex.warrior_icon
+    a.icon_mask_texture = uitex.warrior_icon_color_mask
     a.head_mesh = mesh.warrior_head
     a.torso_mesh = mesh.warrior_torso
     a.pelvis_mesh = mesh.warrior_pelvis
@@ -1088,8 +1099,8 @@ def register_appearances() -> None:
     a = Appearance('Middle-Man')
     a.color_texture = tex.superhero_color
     a.color_mask_texture = tex.superhero_color_mask
-    a.icon_texture = tex.superhero_icon
-    a.icon_mask_texture = tex.superhero_icon_color_mask
+    a.icon_texture = uitex.superhero_icon
+    a.icon_mask_texture = uitex.superhero_icon_color_mask
     a.head_mesh = mesh.superhero_head
     a.torso_mesh = mesh.superhero_torso
     a.pelvis_mesh = mesh.superhero_pelvis
@@ -1123,8 +1134,8 @@ def register_appearances() -> None:
     a = Appearance('Alien')
     a.color_texture = tex.alien_color
     a.color_mask_texture = tex.alien_color_mask
-    a.icon_texture = tex.alien_icon
-    a.icon_mask_texture = tex.alien_icon_color_mask
+    a.icon_texture = uitex.alien_icon
+    a.icon_mask_texture = uitex.alien_icon_color_mask
     a.head_mesh = mesh.alien_head
     a.torso_mesh = mesh.alien_torso
     a.pelvis_mesh = mesh.alien_pelvis
@@ -1158,8 +1169,8 @@ def register_appearances() -> None:
     a = Appearance('OldLady')
     a.color_texture = tex.old_lady_color
     a.color_mask_texture = tex.old_lady_color_mask
-    a.icon_texture = tex.old_lady_icon
-    a.icon_mask_texture = tex.old_lady_icon_color_mask
+    a.icon_texture = uitex.old_lady_icon
+    a.icon_mask_texture = uitex.old_lady_icon_color_mask
     a.head_mesh = mesh.old_lady_head
     a.torso_mesh = mesh.old_lady_torso
     a.pelvis_mesh = mesh.old_lady_pelvis
@@ -1193,8 +1204,8 @@ def register_appearances() -> None:
     a = Appearance('Gladiator')
     a.color_texture = tex.gladiator_color
     a.color_mask_texture = tex.gladiator_color_mask
-    a.icon_texture = tex.gladiator_icon
-    a.icon_mask_texture = tex.gladiator_icon_color_mask
+    a.icon_texture = uitex.gladiator_icon
+    a.icon_mask_texture = uitex.gladiator_icon_color_mask
     a.head_mesh = mesh.gladiator_head
     a.torso_mesh = mesh.gladiator_torso
     a.pelvis_mesh = mesh.gladiator_pelvis
@@ -1228,8 +1239,8 @@ def register_appearances() -> None:
     a = Appearance('Wrestler')
     a.color_texture = tex.wrestler_color
     a.color_mask_texture = tex.wrestler_color_mask
-    a.icon_texture = tex.wrestler_icon
-    a.icon_mask_texture = tex.wrestler_icon_color_mask
+    a.icon_texture = uitex.wrestler_icon
+    a.icon_mask_texture = uitex.wrestler_icon_color_mask
     a.head_mesh = mesh.wrestler_head
     a.torso_mesh = mesh.wrestler_torso
     a.pelvis_mesh = mesh.wrestler_pelvis
@@ -1263,8 +1274,8 @@ def register_appearances() -> None:
     a = Appearance('Gretel')
     a.color_texture = tex.opera_singer_color
     a.color_mask_texture = tex.opera_singer_color_mask
-    a.icon_texture = tex.opera_singer_icon
-    a.icon_mask_texture = tex.opera_singer_icon_color_mask
+    a.icon_texture = uitex.opera_singer_icon
+    a.icon_mask_texture = uitex.opera_singer_icon_color_mask
     a.head_mesh = mesh.opera_singer_head
     a.torso_mesh = mesh.opera_singer_torso
     a.pelvis_mesh = mesh.opera_singer_pelvis
@@ -1298,8 +1309,8 @@ def register_appearances() -> None:
     a = Appearance('Pixel')
     a.color_texture = tex.pixie_color
     a.color_mask_texture = tex.pixie_color_mask
-    a.icon_texture = tex.pixie_icon
-    a.icon_mask_texture = tex.pixie_icon_color_mask
+    a.icon_texture = uitex.pixie_icon
+    a.icon_mask_texture = uitex.pixie_icon_color_mask
     a.head_mesh = mesh.pixie_head
     a.torso_mesh = mesh.pixie_torso
     a.pelvis_mesh = mesh.pixie_pelvis
@@ -1333,8 +1344,8 @@ def register_appearances() -> None:
     a = Appearance('Robot')
     a.color_texture = tex.robot_color
     a.color_mask_texture = tex.robot_color_mask
-    a.icon_texture = tex.robot_icon
-    a.icon_mask_texture = tex.robot_icon_color_mask
+    a.icon_texture = uitex.robot_icon
+    a.icon_mask_texture = uitex.robot_icon_color_mask
     a.head_mesh = mesh.robot_head
     a.torso_mesh = mesh.robot_torso
     a.pelvis_mesh = mesh.robot_pelvis
@@ -1368,8 +1379,8 @@ def register_appearances() -> None:
     a = Appearance('Easter Bunny')
     a.color_texture = tex.bunny_color
     a.color_mask_texture = tex.bunny_color_mask
-    a.icon_texture = tex.bunny_icon
-    a.icon_mask_texture = tex.bunny_icon_color_mask
+    a.icon_texture = uitex.bunny_icon
+    a.icon_mask_texture = uitex.bunny_icon_color_mask
     a.head_mesh = mesh.bunny_head
     a.torso_mesh = mesh.bunny_torso
     a.pelvis_mesh = mesh.bunny_pelvis
@@ -1398,3 +1409,20 @@ def register_appearances() -> None:
     a.style = 'bunny'
     a.default_color = (1, 1, 1)
     a.default_highlight = (1, 0.5, 0.5)
+
+    # Every builtin appearance also carries a character definition
+    # (generated server-side; see _spazcharacters), which is what
+    # spazzes actually wear now. The explicit fields above remain for
+    # UI uses (icons) and as the legacy path for mod-defined
+    # appearances.
+    from bascenev1lib.actor._spazcharacters import CHARACTERS
+
+    assert bs.app.classic is not None
+    appearances = bs.app.classic.spaz_appearances
+    for cname, cjson in CHARACTERS.items():
+        if cname in appearances:
+            appearances[cname].character_json = cjson
+        else:
+            logging.warning(
+                'Character definition for unknown appearance %r.', cname
+            )

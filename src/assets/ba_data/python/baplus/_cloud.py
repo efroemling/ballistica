@@ -67,7 +67,9 @@ class CloudSubsystem(babase.AppSubsystem):
         #: rather than reading ``vals_transient`` from over there.
         #:
         #: (Plain literals rather than :attr: refs -- ``vals_transient``
-        #: is :meta private:, so it has no target to link to.)
+        #: is private, so it has no target to link to.)
+        #:
+        #: :meta private:
         self.on_vals_transient_changed_callbacks: CallbackSet[
             Callable[[bacommon.cloud.CloudValsTransient], None]
         ] = CallbackSet()
@@ -154,6 +156,8 @@ class CloudSubsystem(babase.AppSubsystem):
         :data:`bacommon.securedata.STATIC_DATA_PUBLIC_KEYS`)
         instead, which is what the InsecureDirective verification
         uses today.
+
+        :meta private:
         """
         if self._secure_data_reader is None:
             raise RuntimeError(
@@ -178,6 +182,24 @@ class CloudSubsystem(babase.AppSubsystem):
 
     def is_connected(self) -> bool:
         """Implementation for connected attr.
+
+        :meta private:
+        """
+        raise NotImplementedError()
+
+    def debug_drop_transport_session(
+        self, on_done: Callable[[], None], *, block_reconnect: bool = False
+    ) -> None:
+        """Close the current transport session as if the connection died.
+
+        Test hook. The transport reconnects on its own after its usual
+        backoff, unless ``block_reconnect`` is set, in which case every
+        further connect attempt fails (for the rest of the process) so
+        parked messages can be watched expiring. ``on_done`` runs in
+        the logic thread once the session is gone and before any
+        replacement can have connected (that takes a network round
+        trip), so a message sent from it is guaranteed to take the
+        no-session path and get parked.
 
         :meta private:
         """
@@ -442,6 +464,13 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
+        msg: bacommon.cloud.AutomationDeviceOnlineMessage,
+        on_response: Callable[[None | Exception], None],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
         msg: bacommon.cloud.SecureDataCheckerRequest,
         on_response: Callable[
             [bacommon.cloud.SecureDataCheckerResponse | Exception], None
@@ -472,6 +501,15 @@ class CloudSubsystem(babase.AppSubsystem):
         msg: bacommon.classic.GetClassicPurchasesMessage,
         on_response: Callable[
             [bacommon.classic.GetClassicPurchasesResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.classic.GetClassicProfilesMessage,
+        on_response: Callable[
+            [bacommon.classic.GetClassicProfilesResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -552,6 +590,8 @@ class CloudSubsystem(babase.AppSubsystem):
 
         The provided ``on_response`` call will be run in the logic thread
         and passed either the response or the error that occurred.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -595,6 +635,8 @@ class CloudSubsystem(babase.AppSubsystem):
         """Synchronously send a message to the cloud.
 
         Must be called from a background thread.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -633,6 +675,8 @@ class CloudSubsystem(babase.AppSubsystem):
         arbitrary internal thread, so use them only to hand results
         somewhere safe (such as :meth:`babase.pushcall` with
         ``from_other_thread=True``).
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -686,6 +730,8 @@ class CloudSubsystem(babase.AppSubsystem):
         """Asynchronously send a message to the cloud.
 
         Must be called from the logic thread.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
