@@ -49,8 +49,6 @@ class SessionStream : public Object, public ClientControllerInterface {
   void RemoveMesh(SceneMesh* t);
   void AddSound(SceneSound* t);
   void RemoveSound(SceneSound* t);
-  void AddData(SceneDataAsset* d);
-  void RemoveData(SceneDataAsset* d);
   void AddCollisionMesh(SceneCollisionMesh* t);
   void RemoveCollisionMesh(SceneCollisionMesh* t);
   /// (kProtocolVersionAnimCurveCommand) Fold scope for bs.animate: commands
@@ -133,7 +131,11 @@ class SessionStream : public Object, public ClientControllerInterface {
   void ScreenMessageTop(const std::string& val, float r, float g, float b,
                         SceneTexture* texture, SceneTexture* tint_texture,
                         float tint_r, float tint_g, float tint_b, float tint2_r,
-                        float tint2_g, float tint2_b);
+                        float tint2_g, float tint2_b, float tint3_r,
+                        float tint3_g, float tint3_b);
+  /// A top message with a depiction for its icon (protocol 48+).
+  void ScreenMessageTopDepiction(const std::string& val, float r, float g,
+                                 float b, SceneDepiction* depiction);
   void OnClientConnected(ConnectionToClient* c) override;
   void OnClientDisconnected(ConnectionToClient* c) override;
   auto GetOutMessage() const -> std::vector<uint8_t>;
@@ -153,7 +155,6 @@ class SessionStream : public Object, public ClientControllerInterface {
   auto IsValidTexture(SceneTexture* val) -> bool;
   auto IsValidMesh(SceneMesh* val) -> bool;
   auto IsValidSound(SceneSound* val) -> bool;
-  auto IsValidData(SceneDataAsset* val) -> bool;
   auto IsValidCollisionMesh(SceneCollisionMesh* val) -> bool;
   auto IsValidMaterial(Material* val) -> bool;
   auto IsValidSpazDef(SpazDef* val) -> bool;
@@ -307,8 +308,6 @@ class SessionStream : public Object, public ClientControllerInterface {
   std::vector<size_t> free_indices_meshes_;
   std::vector<SceneSound*> sounds_;
   std::vector<size_t> free_indices_sounds_;
-  std::vector<SceneDataAsset*> datas_;
-  std::vector<size_t> free_indices_datas_;
   std::vector<SceneCollisionMesh*> collision_meshes_;
   std::vector<size_t> free_indices_collision_meshes_;
   ReplayWriter* replay_writer_{};

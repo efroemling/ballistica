@@ -4,8 +4,10 @@
 
 import asyncio
 import logging
+import weakref
 from functools import partial
-from typing import TYPE_CHECKING, assert_never
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol, assert_never
 
 from efro.util import strict_partial, strip_exception_tracebacks
 from bacommon.logging import ClientLoggerName
@@ -26,9 +28,55 @@ _RESOLVE_TIMEOUT_SECONDS = 30.0
 
 assetslog = logging.getLogger(ClientLoggerName.ASSETS.value)
 
+#: Keyframe animations with interpolation currently running (kept here
+#: so they stay alive until done).
+_g_running_animations: set[_InterpolatedAnimation] = set()
+
+
+class EffectTarget(Protocol):
+    """Something client-effects can animate.
+
+    Implemented by whatever UI system the effects run alongside (a
+    doc-ui window's widgets, say); effects know nothing about it beyond
+    this.
+    """
+
+    def set_animation_state(
+        self,
+        *,
+        offset: tuple[float, float],
+        scale: float,
+        opacity: float | None,
+    ) -> None:
+        """Show the target offset and scaled from its rest state.
+
+        ``opacity`` is absolute; None for its resting opacity.
+        """
+
+
+class EffectTargets(Protocol):
+    """A set of animatable targets client-effects can look up by id."""
+
+    def get_target(self, target_id: str) -> EffectTarget | None:
+        """Return the target for an id, if there is a live one."""
+
+
+@dataclass
+class ClientEffectContext:
+    """What client-effects are running alongside, if anything.
+
+    Effects that need a context (animating things, say) do nothing
+    without the relevant piece.
+    """
+
+    #: Targets for ``bacommon.clienteffect.KeyframeAnimation``.
+    targets: EffectTargets | None = None
+
 
 def run_bs_client_effects(
-    effects: list[clfx.Effect], delay: float = 0.0
+    effects: list[clfx.Effect],
+    delay: float = 0.0,
+    context: ClientEffectContext | None = None,
 ) -> None:
     """Run effects."""
     import bacommon.clienteffect as clfx
@@ -37,18 +85,28 @@ def run_bs_client_effects(
     # refs). Those need resolving — possibly downloading — before the
     # effects can run; kick that off and run once ready. Effects with
     # no package refs run immediately as always.
+    # Animation targets sit at their first key's state until their
+    # animation starts; put them there now rather than after any
+    # resolve below, so something laid out to appear later doesn't
+    # flash up first.
+    if context is not None and context.targets is not None:
+        _apply_first_keys(effects, context.targets)
+
     apvernums: set[ApverNum] = set()
     clfx.collect_apvernums(effects, apvernums)
     if not apvernums:
-        _run_effects(effects, delay=delay)
+        _run_effects(effects, delay=delay, context=context)
         return
     bauiv1.app.create_async_task(
-        _resolve_and_run_effects(effects, sorted(apvernums), delay)
+        _resolve_and_run_effects(effects, sorted(apvernums), delay, context)
     )
 
 
 async def _resolve_and_run_effects(
-    effects: list[clfx.Effect], apvernums: list[ApverNum], delay: float
+    effects: list[clfx.Effect],
+    apvernums: list[ApverNum],
+    delay: float,
+    context: ClientEffectContext | None,
 ) -> None:
     """Resolve referenced asset-packages then run the effects.
 
@@ -105,6 +163,7 @@ async def _resolve_and_run_effects(
     _run_effects(
         effects,
         delay=delay,
+        context=context,
         decodectx=LanguageStringNameDecodeContext(
             {apvernum: data[0] for apvernum, data in langdata.items()},
             locale,
@@ -126,6 +185,7 @@ def _run_effects(
     effects: list[clfx.Effect],
     *,
     delay: float = 0.0,
+    context: ClientEffectContext | None = None,
     decodectx: LanguageStringNameDecodeContext | None = None,
 ) -> None:
     # pylint: disable=too-many-branches
@@ -144,15 +204,24 @@ def _run_effects(
             )
         elif effecttype is clfx.EffectTypeID.SCREEN_MESSAGE:
             assert isinstance(effect, clfx.ScreenMessage)
-            bauiv1.apptimer(
-                delay,
-                strict_partial(
-                    bauiv1.screenmessage,
-                    effect.message,
-                    color=effect.color,
-                    literal=not effect.is_lstr,
-                ),
-            )
+            if effect.is_lstr:
+                # Legacy Lstr json: servers only send this to builds
+                # predating ScreenMessageV2, so it never reaches us;
+                # drop it rather than keep a legacy-translation path.
+                logging.warning(
+                    'Ignoring legacy-lstr screen-message client-effect'
+                    ' (should not be sent to this build).'
+                )
+            else:
+                bauiv1.apptimer(
+                    delay,
+                    strict_partial(
+                        bauiv1.screenmessage,
+                        effect.message,
+                        color=effect.color,
+                        literal=True,
+                    ),
+                )
 
         elif effecttype is clfx.EffectTypeID.SCREEN_MESSAGE_V2:
             assert isinstance(effect, clfx.ScreenMessageV2)
@@ -273,6 +342,11 @@ def _run_effects(
                 ),
             )
 
+        elif effecttype is clfx.EffectTypeID.KEYFRAME_ANIMATION:
+            assert isinstance(effect, clfx.KeyframeAnimation)
+            if context is not None and context.targets is not None:
+                _run_keyframe_animation(effect, context.targets, delay)
+
         elif effecttype is clfx.EffectTypeID.UNKNOWN:
             # Server should not send us stuff we can't digest. Make
             # some noise if it happens.
@@ -289,3 +363,138 @@ def _run_effects(
     # just scheduled is free to muck with it freely.
     bauiv1.root_ui_pause_updates()
     bauiv1.apptimer(delay + 0.25, bauiv1.root_ui_resume_updates)
+
+
+def _apply_first_keys(
+    effects: list[clfx.Effect], targets: EffectTargets
+) -> None:
+    import bacommon.clienteffect as clfx
+
+    targets_ref = weakref.ref(targets)
+    for effect in effects:
+        if isinstance(effect, clfx.KeyframeAnimation) and effect.keys:
+            first = min(effect.keys, key=lambda k: k.time)
+            _apply_keyframe(
+                targets_ref,
+                effect.target,
+                first.offset,
+                first.scale,
+                first.opacity,
+            )
+
+
+def _apply_keyframe(
+    targets_ref: weakref.ref[EffectTargets],
+    target_id: str,
+    offset: tuple[float, float],
+    scale: float,
+    opacity: float | None,
+) -> None:
+    targets = targets_ref()
+    if targets is None:
+        return
+    target = targets.get_target(target_id)
+    if target is None:
+        return
+    target.set_animation_state(offset=offset, scale=scale, opacity=opacity)
+
+
+def _run_keyframe_animation(
+    effect: clfx.KeyframeAnimation, targets: EffectTargets, delay: float
+) -> None:
+    keys = sorted(effect.keys, key=lambda k: k.time)
+    if not keys:
+        return
+
+    # Look the target up afresh at every step, through a weak ref:
+    # the target set (a window, say) can rebuild or go away mid-run.
+    targets_ref = weakref.ref(targets)
+
+    if effect.linear:
+        bauiv1.apptimer(
+            delay,
+            strict_partial(
+                _InterpolatedAnimation.start, targets_ref, effect.target, keys
+            ),
+        )
+        return
+
+    # Step mode: each key's state holds from its time to the next's
+    # (and the first key's from the start).
+    for i, key in enumerate(keys):
+        bauiv1.apptimer(
+            delay + (0.0 if i == 0 else key.time),
+            strict_partial(
+                _apply_keyframe,
+                targets_ref,
+                effect.target,
+                key.offset,
+                key.scale,
+                key.opacity,
+            ),
+        )
+
+
+class _InterpolatedAnimation:
+    """A running linearly-interpolated keyframe animation."""
+
+    def __init__(
+        self,
+        targets_ref: weakref.ref[EffectTargets],
+        target_id: str,
+        keys: list[clfx.Keyframe],
+    ) -> None:
+        self._targets_ref = targets_ref
+        self._target_id = target_id
+        self._keys = keys
+        self._start_time = bauiv1.apptime()
+        self._timer: bauiv1.AppTimer | None = bauiv1.AppTimer(
+            1.0 / 60.0, self._update, repeat=True
+        )
+
+    @classmethod
+    def start(
+        cls,
+        targets_ref: weakref.ref[EffectTargets],
+        target_id: str,
+        keys: list[clfx.Keyframe],
+    ) -> None:
+        """Start running one."""
+        anim = cls(targets_ref, target_id, keys)
+        _g_running_animations.add(anim)
+        anim._update()
+
+    def _update(self) -> None:
+        keys = self._keys
+        elapsed = bauiv1.apptime() - self._start_time
+        done = elapsed >= keys[-1].time or self._targets_ref() is None
+        if elapsed <= keys[0].time:
+            state = keys[0]
+            offset, scale, opacity = state.offset, state.scale, state.opacity
+        elif done:
+            state = keys[-1]
+            offset, scale, opacity = state.offset, state.scale, state.opacity
+        else:
+            nxt = next(i for i, k in enumerate(keys) if k.time > elapsed)
+            k0, k1 = keys[nxt - 1], keys[nxt]
+            amt = (elapsed - k0.time) / max(0.0001, k1.time - k0.time)
+            offset = (
+                k0.offset[0] + (k1.offset[0] - k0.offset[0]) * amt,
+                k0.offset[1] + (k1.offset[1] - k0.offset[1]) * amt,
+            )
+            scale = k0.scale + (k1.scale - k0.scale) * amt
+            opacity = (
+                k1.opacity
+                if k0.opacity is None
+                else (
+                    k0.opacity
+                    if k1.opacity is None
+                    else k0.opacity + (k1.opacity - k0.opacity) * amt
+                )
+            )
+        _apply_keyframe(
+            self._targets_ref, self._target_id, offset, scale, opacity
+        )
+        if done:
+            self._timer = None
+            _g_running_animations.discard(self)

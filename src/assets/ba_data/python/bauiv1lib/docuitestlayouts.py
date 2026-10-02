@@ -9,6 +9,7 @@ value distance), titles and short button rows at every alignment, and
 long rows, which in a narrow column scroll within it.
 """
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from bacommon.langstr import LangStrSpecValue
@@ -83,7 +84,11 @@ def layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
 
 def _buttons(count: int) -> list[dui2.Button]:
     return [
-        dui2.Button(label=_lit(str(i + 1)), size=(120, 80))
+        dui2.Button(
+            label=_lit(str(i + 1)),
+            size=(120, 80),
+            style=dui2.ButtonStyle.SQUARE,
+        )
         for i in range(count)
     ]
 
@@ -218,6 +223,7 @@ def test_page_window_layouts(
                         dui2.Button(
                             label=_lit('Hide Debug' if debug else 'Show Debug'),
                             size=(200, 60),
+                            style=dui2.ButtonStyle.MEDIUM,
                             action=rt.WindowLayouts(debug=not debug).replace(),
                         ),
                     ],
@@ -234,10 +240,8 @@ def test_page_wide_fit(
 
     :meta private:
     """
-    # pylint: disable=cyclic-import
-    import bacommon.docui.routes.docuitest as rt
     from bauiv1lib.docui._layout import (
-        SCROLL_VISIBLE_INSET,
+        BUTTON_ROW_EDGE_INSET,
         WIDE_PAGE_ROWS_HEIGHT,
         WIDE_PAGE_WIDTH,
     )
@@ -247,25 +251,43 @@ def test_page_wide_fit(
     rowheight = WIDE_PAGE_ROWS_HEIGHT + (1.0 if route.over else -0.5)
 
     # A button row's h-scroll content is its buttons, spacing and
-    # padding plus page prep's h-scroll inset at each end; its visible
-    # extent falls short of the page width like a scroll widget's does.
-    hscroll_inset = 15.0
+    # padding plus the room its padding starts in from the column's
+    # edges; it fits when all that is no wider than the page.
     spacing = 15.0
-    rowwidth = (
-        WIDE_PAGE_WIDTH
-        - SCROLL_VISIBLE_INSET
-        + (1.0 if route.wide_over else -0.5)
-    )
+    rowwidth = WIDE_PAGE_WIDTH + (1.0 if route.wide_over else -0.5)
 
     # Square-button art draws a bit past its bounds; padding gives it
     # room inside the row so the page edges don't clip it.
     pad = 15.0
     bheight = rowheight - 2.0 * pad
-    bwidth = (rowwidth - 2.0 * hscroll_inset - 2.0 * pad - 2.0 * spacing) / 3
+    bwidth = (
+        rowwidth - 2.0 * BUTTON_ROW_EDGE_INSET - 2.0 * pad - 2.0 * spacing
+    ) / 3
+
+    # (Wider's width follows the screen, so only wide can overflow it.)
+    width_buttons: list[bacommon.docui.v2.Button] = (
+        []
+        if route.wider
+        else [
+            dui2.Button(
+                label=_lit(
+                    f'Width {rowwidth:.1f}: '
+                    + (
+                        'fits;\ntap to go 1 over'
+                        if not route.wide_over
+                        else '1 over\n(should scroll);\ntap to fit'
+                    )
+                ),
+                label_scale=0.7,
+                size=(bwidth, bheight),
+                action=replace(route, wide_over=not route.wide_over).replace(),
+            )
+        ]
+    )
 
     return dui2.Response(
         page=dui2.Page(
-            title=_lit('Wide Fit'),
+            title=_lit('Wider Fit' if route.wider else 'Wide Fit'),
             rows=[
                 dui2.ButtonRow(
                     padding_top=pad,
@@ -276,21 +298,7 @@ def test_page_wide_fit(
                     content_align=dui2.HAlign.CENTER,
                     debug=True,
                     buttons=[
-                        dui2.Button(
-                            label=_lit(
-                                f'Width {rowwidth:.1f}: '
-                                + (
-                                    'fits;\ntap to go 1 over\n(wide only)'
-                                    if not route.wide_over
-                                    else '1 over\n(should scroll);\ntap to fit'
-                                )
-                            ),
-                            label_scale=0.7,
-                            size=(bwidth, bheight),
-                            action=rt.WideFit(
-                                over=route.over, wide_over=not route.wide_over
-                            ).replace(),
-                        ),
+                        *width_buttons,
                         dui2.Button(
                             label=_lit(
                                 f'Height {rowheight:.1f}: '
@@ -302,13 +310,16 @@ def test_page_wide_fit(
                             ),
                             label_scale=0.7,
                             size=(bwidth, bheight),
-                            action=rt.WideFit(
-                                over=not route.over, wide_over=route.wide_over
+                            action=replace(
+                                route, over=not route.over
                             ).replace(),
                         ),
                         dui2.Button(
+                            # (Wider's page width follows the screen.)
                             label=_lit(
-                                f'Page {WIDE_PAGE_WIDTH:.1f}'
+                                f'Page height {WIDE_PAGE_ROWS_HEIGHT:.1f}'
+                                if route.wider
+                                else f'Page {WIDE_PAGE_WIDTH:.1f}'
                                 f' x {WIDE_PAGE_ROWS_HEIGHT:.1f}'
                             ),
                             label_scale=0.7,

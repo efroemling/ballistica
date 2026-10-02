@@ -32,13 +32,6 @@ if TYPE_CHECKING:
     from bauiv1lib.docui.prep._types import ButtonPrep, RowPrep
 
 
-# How far an h-scroll widget insets its content from its edges (its 2
-# unit border plus a 5 unit margin; see h_scroll_widget.cc). A fixed
-# row insets its buttons the same so they land where a scrolling row's
-# would.
-_HSCROLL_CONTENT_INSET = 7.0
-
-
 def row_content_align(row: dui2.ButtonRow) -> dui2.HAlign:
     """A button row's content alignment.
 
@@ -86,8 +79,6 @@ def _fixed_layout(
     are); if they don't fit, they (and the spacing between) all shrink
     together until they do.
     """
-    left += _HSCROLL_CONTENT_INSET
-    right -= _HSCROLL_CONTENT_INSET
     avail = max(1.0, right - left)
     natural = sum(button_padded_size(b)[0] for b in row.buttons)
     natural += row.button_spacing * max(0, len(row.buttons) - 1)
@@ -170,11 +161,10 @@ def prep_static_button_row(
     """Fill out prep for a static button row.
 
     ``left``/``right`` are the edges the row's padding is measured
-    from: a scrolling row's h-scroll's (less what it cuts off at a
-    narrowed column) for a fixed row, where control rows' contents
-    start/end for a fill row. ``center_x`` is where a centered fixed
-    row's buttons center. ``widgetids`` gives each button's widget id,
-    in order.
+    from: where a scrolling row's padding starts for a fixed row, where
+    control rows' contents start/end for a fill row. ``center_x`` is
+    where a centered fixed row's buttons center. ``widgetids`` gives
+    each button's widget id, in order.
 
     :meta private:
     """

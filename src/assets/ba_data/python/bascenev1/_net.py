@@ -12,7 +12,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass, field
 
-from bacommon.assetpackage import ApverNum
+from efro.util import strip_exception_tracebacks
+from bacommon.assetpackage import ApverNum, AssetPackageResolveError
 
 import babase
 
@@ -417,29 +418,77 @@ async def resolve_asset_packages_with_dialog(
             dialog.dismiss()
         netlog.info('Content download cancelled (%s).', context)
         return False
-    except Exception:
+    except Exception as exc:
         # Per the no-mid-game-downloads design, proceeding without the
         # required content would just strand us (net: at the session
         # entry check; replay: at the first missing asset) -- so fail
         # cleanly here.
-        netlog.exception('Content resolve failed (%s).', context)
+        specific = _resolve_failure_message(exc)
+        message: str | babase.LangStr
+        if specific is None:
+            netlog.exception('Content resolve failed (%s).', context)
+            message = _builtinassets.strings.net.unavailable_no_connection
+        else:
+            # An expected refusal (no access, sign-in needed, ...): say
+            # why rather than logging it as an error.
+            netlog.warning('Content resolve refused (%s): %s', context, exc)
+            message = specific
         if dialog is not None:
             dialog.update(
                 title=_builtinassets.strings.ui.error,
-                message=_builtinassets.strings.net.unavailable_no_connection,
+                message=message,
                 progress=None,
                 button_label=_builtinassets.strings.ui.ok,
                 on_button=dialog.dismiss,
             )
         else:
-            babase.screenmessage(
-                _builtinassets.strings.net.unavailable_no_connection,
-                color=(1, 0, 0),
-            )
+            babase.screenmessage(message, color=(1, 0, 0))
+        strip_exception_tracebacks(exc)
         return False
     if dialog is not None:
         dialog.dismiss()
     return True
+
+
+def _resolve_failure_message(exc: Exception) -> str | None:
+    """A specific message for an expected content-resolve refusal.
+
+    None for anything unexpected (a network failure, a server bug),
+    which gets the generic no-connection error instead.
+    """
+    if not isinstance(exc, babase.AssetResolveError) or exc.code is None:
+        return None
+
+    code = exc.code
+    pkg = exc.package
+    if pkg is not None and code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+    ):
+        # NEEDS_TRANSLATION (wording may still move).
+        pkgdesc = f"asset package '{pkg.name}' by {pkg.owner}"
+        if code is AssetPackageResolveError.ACCESS_DENIED:
+            # NEEDS_TRANSLATION
+            return (
+                f'This game uses {pkgdesc}, which your account does not'
+                f' have access to.'
+            )
+        # NEEDS_TRANSLATION
+        return (
+            f'This game uses {pkgdesc}, which needs you to be signed in'
+            f' with an account that has access to it.'
+        )
+    if code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+        AssetPackageResolveError.CLIENT_TOO_OLD,
+        AssetPackageResolveError.CONTENT,
+    ):
+        # The server's own wording (older servers name no package; it
+        # also says what to do for an outdated build or broken source
+        # content).
+        return exc.server_message
+    return None
 
 
 class _Cancelled:

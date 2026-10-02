@@ -1177,31 +1177,24 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         if not any(player.is_alive() for player in self.teams[0].players):
             self._spawn_info_text.node.text = ''
         else:
-            # DEFERRED (LangStr drain): this accumulates one nested
-            # level per dead player, which LangStr has no concatenation
-            # operator for and which would nest arbitrarily deep. Needs
-            # a multi-line list surface rather than a mechanical port.
-            text: str | bs.Lstr = ''
-            for player in self.players:
-                if not player.is_alive() and (
+            # One line per waiting player, each ending in a newline (the
+            # trailing empty item keeps the layout as it always was).
+            lines = [
+                _classicassets.strings.game.onslaught_respawn(
+                    player=player.getname(), wave=str(player.respawn_wave)
+                )
+                for player in self.players
+                if not player.is_alive()
+                and (
                     self._preset in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT]
                     or (player.respawn_wave <= len(self._waves))
-                ):
-                    rtxt = bs.Lstr(
-                        resource='onslaughtRespawnText',
-                        subs=[
-                            ('${PLAYER}', player.getname()),
-                            ('${WAVE}', str(player.respawn_wave)),
-                        ],
-                    )
-                    text = bs.Lstr(
-                        value='${A}${B}\n',
-                        subs=[
-                            ('${A}', text),
-                            ('${B}', rtxt),
-                        ],
-                    )
-            self._spawn_info_text.node.text = text
+                )
+            ]
+            self._spawn_info_text.node.text = (
+                bs.LangStr.join([*lines, bs.LangStr.from_text('')], '\n')
+                if lines
+                else ''
+            )
 
     def _respawn_players_for_wave(self) -> None:
         # Respawn applicable players.

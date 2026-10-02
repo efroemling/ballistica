@@ -7,7 +7,8 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _classicassets, _classiccatalogassets
+from bauiv1 import _classiccatalogassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from bauiv1lib.coop.browser import CoopBrowserWindow
@@ -178,7 +179,7 @@ class GameButton:
             position=(x - 8 + sclx * 0.5, y + scly * 0.5 - 20),
             size=(60, 60),
             opacity=0.0,
-            texture=_classicassets.textures.lock.get(),
+            texture=_uiv1assets.textures.lock.get(),
         )
 
         # give a quasi-random update increment to spread the load..

@@ -68,20 +68,20 @@ auto ClassicPython::ChestDisplayFromPython(const PythonRef& ref)
   out.color = base::BasePython::GetPyVector3f(ref.GetAttr("color").get());
   out.tint = base::BasePython::GetPyVector3f(ref.GetAttr("tint").get());
   out.tint2 = base::BasePython::GetPyVector3f(ref.GetAttr("tint2").get());
+  out.tint3 = base::BasePython::GetPyVector3f(ref.GetAttr("tint3").get());
 
   return out;
 }
 
-void ClassicPython::GetClassicChestDisplayInfo(const std::string& id,
-                                               std::string* texclosed,
-                                               std::string* texclosedtint,
-                                               Vector3f* color, Vector3f* tint,
-                                               Vector3f* tint2) {
+void ClassicPython::GetClassicChestDisplayInfo(
+    const std::string& id, std::string* texclosed, std::string* texclosedtint,
+    Vector3f* color, Vector3f* tint, Vector3f* tint2, Vector3f* tint3) {
   assert(texclosed);
   assert(texclosedtint);
   assert(color);
   assert(tint);
   assert(tint2);
+  assert(tint3);
   auto&& display{chest_displays_.find(id)};
   if (display != chest_displays_.end()) {
     *texclosed = display->second.texclosed;
@@ -89,12 +89,14 @@ void ClassicPython::GetClassicChestDisplayInfo(const std::string& id,
     *color = display->second.color;
     *tint = display->second.tint;
     *tint2 = display->second.tint2;
+    *tint3 = display->second.tint3;
   } else {
     *texclosed = chest_display_default_.texclosed;
     *texclosedtint = chest_display_default_.texclosedtint;
     *color = chest_display_default_.color;
     *tint = chest_display_default_.tint;
     *tint2 = chest_display_default_.tint2;
+    *tint3 = chest_display_default_.tint3;
   }
 }
 

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     import bacommon.docui.v2 as dui2
 
     from bauiv1lib.docui.prep._types import DecorationPrep
+    from bauiv1lib.docui._animtargets import DocUIAnimTargets
 
 
 def prep_decorations_for_container(
@@ -72,6 +73,8 @@ def instantiate_decorations(
     *,
     parent: bui.Widget,
     draw_controller: bui.Widget | None = None,
+    anim_targets: DocUIAnimTargets | None = None,
+    draw_behind: bool = False,
 ) -> None:
     """Instantiate prepped decorations under a parent widget.
 
@@ -88,6 +91,15 @@ def instantiate_decorations(
     ``highlight`` is set, tying their draw state to that widget (used
     for decorations layered over a button). Decorations drawn outside
     of a button context simply pass nothing here.
+
+    ``anim_targets``, when passed, gets each decoration carrying an
+    ``anim_id`` registered, so client-effects can animate it.
+
+    ``draw_behind`` puts each decoration behind its parent's other
+    children (see ``bui.widget(draw_behind=...)``): a single-depth
+    container's children share one depth slice, so where one overlaps
+    a widget meant to sit over it, draw order alone can't keep it
+    underneath.
     """
     for decoration in decorations:
         kwds: dict = {'parent': parent}
@@ -97,4 +109,12 @@ def instantiate_decorations(
             kwds[texarg] = bui.texture_from_ref(texname)
         for mesharg, meshname in decoration.meshes.items():
             kwds[mesharg] = bui.mesh_from_ref(meshname)
-        decoration.call(**kwds)
+        widget = decoration.call(**kwds)
+        if draw_behind and widget is not None:
+            bui.widget(edit=widget, draw_behind=True)
+        if (
+            anim_targets is not None
+            and decoration.anim is not None
+            and widget is not None
+        ):
+            anim_targets.register(decoration.anim, widget)

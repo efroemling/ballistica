@@ -9,6 +9,7 @@ import bacommon.docui.v2 as dui2
 
 import bauiv1 as bui
 from bauiv1 import _classiccatalogassets
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 
 if TYPE_CHECKING:
     import bacommon.depiction as bdep
@@ -120,3 +121,72 @@ def show_vis_area_bounds(
             h_align=h_align,
             v_align=v_align,
         )
+
+
+def add_toolbar_scroll_fades(
+    root: bui.Widget,
+    position: tuple[float, float],
+    size: tuple[float, float],
+    *,
+    bottom: bool,
+) -> None:
+    """Fade a full-screen scroll area's content toward the toolbars.
+
+    Along the top always; along the bottom only with ``bottom`` (a
+    minimal toolbar has nothing down there).
+    """
+    scroll_fade_top(root, position[0], position[1], size[0], size[1])
+    if bottom:
+        scroll_fade_bottom(root, position[0], position[1], size[0], size[1])
+
+
+# How the busy-spinner shown over a pressed widget (a button, an input
+# row's control) appears: invisible for this long, then a fade-in this
+# long. Quick round trips thus show nothing at all rather than the
+# one-frame flash the old instant spinner gave, while slower ones get
+# a soft appearance right where the press was. Sharper than the
+# widget's default 0.5/0.5, which the window-centered page-load
+# spinner keeps. Tuned in one place for every such spinner.
+REFRESH_SPINNER_FADE_DELAY = 0.2
+REFRESH_SPINNER_FADE_DURATION = 0.2
+
+
+def make_busy_spinner(
+    *,
+    origin_widget: bui.Widget | None,
+    spinner_positions: list[tuple[bui.Widget, tuple[float, float]]],
+    root_widget: bui.Widget,
+    window_center: tuple[float, float],
+    restored: bool,
+) -> bui.Widget:
+    """Make the spinner a doc-ui window shows while it is busy.
+
+    A press shows its spinner where the press was: in the pressed
+    widget's parent, at the spot registered for that widget if any,
+    else its center. Otherwise the spinner goes at the window's center.
+    """
+    parent = None if origin_widget is None else origin_widget.parent
+    if parent is not None:
+        assert origin_widget is not None
+        position = origin_widget.center
+        for widget, widgetposition in spinner_positions:
+            if widget == origin_widget:
+                position = widgetposition
+                break
+        return bui.spinnerwidget(
+            parent=parent,
+            position=position,
+            size=48,
+            fade_delay=REFRESH_SPINNER_FADE_DELAY,
+            fade_duration=REFRESH_SPINNER_FADE_DURATION,
+        )
+    return bui.spinnerwidget(
+        parent=root_widget,
+        position=window_center,
+        size=48,
+        # With restored windows we're likely to have stuff under the
+        # spinner. Bomb looks nicer but simple is more readable in those
+        # cases.
+        style='simple' if restored else 'bomb',
+        # (Default fade timing: this one was never instant.)
+    )

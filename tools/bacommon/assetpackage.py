@@ -3,7 +3,10 @@
 """Client-facing types related to asset packages."""
 
 from enum import Enum
-from typing import NewType
+from dataclasses import dataclass
+from typing import NewType, Annotated
+
+from efro.dataclassio import ioprepped, IOAttrs
 
 
 class AssetPackageResolveError(Enum):
@@ -43,6 +46,25 @@ class AssetPackageResolveError(Enum):
     #: clients should surface it verbatim. Old clients see this as
     #: ``INTERNAL``.
     CONTENT = 'content'
+
+
+@ioprepped
+@dataclass
+class AssetPackageDisplayInfo:
+    """Names an asset package for people (as in an error message).
+
+    Sent alongside resolve failures that are about one particular
+    package (``AUTH_REQUIRED``, ``ACCESS_DENIED``) so the client can say
+    which package it is in its own (translated) words, e.g.
+    "asset package 'foo' by efro".
+    """
+
+    #: The package's name (``foo`` in ``a-0.foo.260911``).
+    name: Annotated[str, IOAttrs('n')]
+
+    #: Its owner's display name (account tag), or their account id if
+    #: no tag could be found.
+    owner: Annotated[str, IOAttrs('o')]
 
 
 #: An asset-package-version's numeric id: a permanent int minted by the

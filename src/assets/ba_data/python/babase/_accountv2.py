@@ -220,7 +220,7 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def auth_request(
-        self, global_app_instance_id: str
+        self, global_app_instance_id: str, *, optional: bool = False
     ) -> None | tuple[bool, str, int | None]:
         """Start/process an auth request.
 
@@ -231,6 +231,10 @@ class AccountV2Subsystem:
         accompanying a failure (the native layer renders a recognized
         reason as its own localized builtin string, falling back to
         the error text otherwise).
+
+        ``optional`` (the host lets us join without auth) fails fast
+        when we couldn't get a token anyway (signed out, or not
+        connected to the cloud) rather than waiting for a connection.
 
         :meta private:
         """
@@ -260,6 +264,8 @@ class AccountV2Subsystem:
                     'You must sign in to do this.',
                     bacommon.cloud.JoinRejectReason.MUST_SIGN_IN.value,
                 )
+            if optional and not plus.cloud.connected:
+                return (False, 'Not connected.', None)
         if (
             auth_request is None
             and plus.cloud.connected

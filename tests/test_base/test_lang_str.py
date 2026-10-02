@@ -27,6 +27,7 @@ from bacommon.langstr import (
     LangStrSpecResource,
     LangStrSpecValue,
     LangStrSpecResourceIndexed,
+    LangStrSpecTimeTarget,
     LanguageStringNameDecodeContext,
 )
 from bacommon.locale import Locale
@@ -71,6 +72,53 @@ for text in ['ModGame', '100% {x} done', '{v}', '{{already}}', 'C#', 'no{']:
 ft_json = babase.LangStr.from_text('a {b} c').to_json()
 assert pyctx.decode(dataclass_from_json(LangStrSpec, ft_json)) == 'a {b} c'
 
+# babase.LangStr.join shows items one after another with a literal
+# separator; braces in the separator stay literal, items keep their own
+# subs, and the wire form decodes identically on the Python side.
+parts = ['A {x}', 'b', '{{c}}']
+joined = babase.LangStr.join(
+    [babase.LangStr.from_text(p) for p in parts], ' {sep} '
+)
+assert joined.evaluate() == ' {sep} '.join(parts), joined.evaluate()
+assert (
+    pyctx.decode(dataclass_from_json(LangStrSpec, joined.to_json()))
+    == joined.evaluate()
+)
+nested_item = babase.LangStr(
+    dataclass_to_json(LangStrSpecValue('Hi {name}', {'name': 'Bo'}))
+)
+mixed = babase.LangStr.join([nested_item, babase.LangStr.from_text('!')], '\\n')
+assert mixed.evaluate() == 'Hi Bo\\n!', mixed.evaluate()
+assert babase.LangStr.join([]).evaluate() == ''
+
+# Only language-strings go in (plain text must come via from_text).
+try:
+    babase.LangStr.join(['raw'])  # type: ignore[list-item]
+except TypeError:
+    pass
+else:
+    raise AssertionError('join accepted a plain str')
+
+# Bounded: item count and nesting depth (a result exactly at the max
+# depth is fine and evaluates on both sides; one deeper is refused).
+try:
+    babase.LangStr.join([babase.LangStr.from_text('x')] * 257)
+except ValueError:
+    pass
+else:
+    raise AssertionError('join accepted too many items')
+deep = babase.LangStr.from_text('deep')
+for _ in range(16):
+    deep = babase.LangStr.join([deep])
+assert deep.evaluate() == 'deep', deep.evaluate()
+assert pyctx.decode(dataclass_from_json(LangStrSpec, deep.to_json())) == 'deep'
+try:
+    babase.LangStr.join([deep])
+except ValueError:
+    pass
+else:
+    raise AssertionError('join exceeded max nesting depth')
+
 # LangStrSpecValue.literal is the same convention built spec-side (for
 # authoring surfaces without a native LangStr handy); both evaluators
 # must render its output verbatim.
@@ -79,6 +127,14 @@ for text in ['ModGame', '100% {x} done', '{v}', '{{already}}', 'C#', 'no{']:
     assert pyctx.decode(lit) == text, f'literal py: {text!r}'
     got = babase.LangStr(dataclass_to_json(lit)).evaluate()
     assert got == text, f'literal native: {got!r} != {text!r}'
+
+# A time target means nothing on its own (it is a duration param's
+# value); fail-visible on both sides.
+lone = LangStrSpecTimeTarget(1000)
+assert pyctx.decode(lone).startswith('LANGSTR_ERROR:')
+assert babase.LangStr(dataclass_to_json(lone)).evaluate().startswith(
+    'LANGSTR_ERROR:'
+)
 
 # Missing-substitution is fail-visible on both sides.
 missing = LangStrSpecValue('Hi {name}.')
@@ -101,6 +157,13 @@ rt_cases: list[LangStrSpec] = [
         pkg=1, index=0, subs=['x', 3, LangStrSpecResourceIndexed(pkg=0, index=2)]
     ),
     LangStrSpecValue('plain'),
+    LangStrSpecTimeTarget(1790000000123),
+    LangStrSpecResourceIndexed(
+        pkg=0, index=3, subs=[LangStrSpecTimeTarget(-5)]
+    ),
+    LangStrSpecValue(
+        'Ends {t|duration(dir=future)}', {'t': LangStrSpecTimeTarget(77)}
+    ),
 ]
 for case in rt_cases:
     json_in = dataclass_to_json(case)

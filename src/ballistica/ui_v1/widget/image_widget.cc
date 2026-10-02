@@ -24,6 +24,54 @@ ImageWidget::~ImageWidget() = default;
 auto ImageWidget::GetWidth() -> float { return width_; }
 auto ImageWidget::GetHeight() -> float { return height_; }
 
+void ImageWidget::SetNinePatch(const float* insets, const float* borders,
+                               bool tile_h, bool tile_v) {
+  nine_patch_ = true;
+  std::copy(insets, insets + 4, nine_patch_insets_);
+  std::copy(borders, borders + 4, nine_patch_borders_);
+  nine_patch_tile_h_ = tile_h;
+  nine_patch_tile_v_ = tile_v;
+  nine_patch_mesh_.Clear();
+}
+
+auto ImageWidget::NinePatchMesh_() -> base::NinePatchMesh* {
+  if (nine_patch_mesh_.exists() && nine_patch_mesh_width_ == width_
+      && nine_patch_mesh_height_ == height_) {
+    return nine_patch_mesh_.get();
+  }
+  // Borders as fractions of our size; where a pair can't fit, shrink
+  // it proportionally so the edges meet rather than overlap.
+  auto ratios = [](float lo, float hi, float size, float* out_lo,
+                   float* out_hi) {
+    lo = std::max(lo, 0.0f);
+    hi = std::max(hi, 0.0f);
+    if (size <= 0.0f) {
+      *out_lo = *out_hi = 0.0f;
+      return;
+    }
+    float shrink = (lo + hi > size) ? size / (lo + hi) : 1.0f;
+    *out_lo = lo * shrink / size;
+    *out_hi = hi * shrink / size;
+  };
+  float bl, bb, br, bt;
+  ratios(nine_patch_borders_[0], nine_patch_borders_[2], width_, &bl, &br);
+  ratios(nine_patch_borders_[1], nine_patch_borders_[3], height_, &bb, &bt);
+  base::NinePatchSourceInsets src{nine_patch_insets_[0], nine_patch_insets_[1],
+                                  nine_patch_insets_[2], nine_patch_insets_[3]};
+  // Exactly our box, centered on the origin (we translate to our
+  // center when drawing); no padding or fudge of any kind.
+  nine_patch_mesh_ = Object::New<base::NinePatchMesh>(
+      -0.5f * width_, -0.5f * height_, 0.0f, width_, height_, bl, bb, br, bt,
+      src,
+      nine_patch_tile_h_ ? base::NinePatchFill::kTileFit
+                         : base::NinePatchFill::kStretch,
+      nine_patch_tile_v_ ? base::NinePatchFill::kTileFit
+                         : base::NinePatchFill::kStretch);
+  nine_patch_mesh_width_ = width_;
+  nine_patch_mesh_height_ = height_;
+  return nine_patch_mesh_.get();
+}
+
 auto ImageWidget::GetDepictionSlot() -> DepictionSlot& {
   if (!depiction_slot_) {
     depiction_slot_ = std::make_unique<DepictionSlot>();
@@ -152,6 +200,14 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
       }
 
+      // A 9-patch takes the default quad's place (custom meshes and
+      // radial meters draw as they always have).
+      base::NinePatchMesh* nine_patch_mesh{};
+      if (nine_patch_ && !mesh_opaque_.exists() && !mesh_transparent_.exists()
+          && radial_amount_ >= 1.0f) {
+        nine_patch_mesh = NinePatchMesh_();
+      }
+
       float db = DrawBrightness_(current_time);
 
       // Premultiply rgb by opacity for premultiplied textures so faded icons
@@ -192,6 +248,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                                tint_color_blue_);
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
+            c.SetColorizeColor3(tint3_color_red_, tint3_color_green_,
+                                tint3_color_blue_);
           }
           if (rotate_ != 0.0f) {
             c.Rotate(rotate_, 0, 0, 1);
@@ -201,18 +259,25 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             auto xf = c.ScopedTransform();
             c.Translate(image_center_x_ + extra_offs_x,
                         image_center_y_ + extra_offs_y);
-            c.Scale(image_width_ * transition_scale,
-                    image_height_ * transition_scale, 1.0f);
-            if (draw_radial_opaque) {
-              if (!radial_mesh_.exists()) {
-                radial_mesh_ =
-                    Object::NewDeferred<base::MeshIndexedSimpleFull>();
-              }
-              base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
-              c.Scale(0.5f, 0.5f, 1.0f);
-              c.DrawMesh(radial_mesh_.get());
+            if (nine_patch_mesh) {
+              // Already our size; only the transition scales it.
+              c.Scale(transition_scale, transition_scale, 1.0f);
+              c.DrawMesh(nine_patch_mesh);
             } else {
-              c.DrawMeshAsset(mesh_opaque_used.get());
+              c.Scale(image_width_ * transition_scale,
+                      image_height_ * transition_scale, 1.0f);
+              if (draw_radial_opaque) {
+                if (!radial_mesh_.exists()) {
+                  radial_mesh_ =
+                      Object::NewDeferred<base::MeshIndexedSimpleFull>();
+                }
+                base::Graphics::DrawRadialMeter(&(*radial_mesh_),
+                                                radial_amount_);
+                c.Scale(0.5f, 0.5f, 1.0f);
+                c.DrawMesh(radial_mesh_.get());
+              } else {
+                c.DrawMeshAsset(mesh_opaque_used.get());
+              }
             }
           }
           c.Submit();
@@ -239,23 +304,31 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                              tint_color_blue_);
           c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                               tint2_color_blue_);
+          c.SetColorizeColor3(tint3_color_red_, tint3_color_green_,
+                              tint3_color_blue_);
         }
         c.SetMaskTexture(mask_texture_.get());
         {
           auto xf = c.ScopedTransform();
           c.Translate(image_center_x_ + extra_offs_x,
                       image_center_y_ + extra_offs_y);
-          c.Scale(image_width_ * transition_scale,
-                  image_height_ * transition_scale, 1.0f);
-          if (draw_radial_transparent) {
-            if (!radial_mesh_.exists()) {
-              radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();
-            }
-            base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
-            c.Scale(0.5f, 0.5f, 1.0f);
-            c.DrawMesh(radial_mesh_.get());
+          if (nine_patch_mesh) {
+            // Already our size; only the transition scales it.
+            c.Scale(transition_scale, transition_scale, 1.0f);
+            c.DrawMesh(nine_patch_mesh);
           } else {
-            c.DrawMeshAsset(mesh_transparent_used.get());
+            c.Scale(image_width_ * transition_scale,
+                    image_height_ * transition_scale, 1.0f);
+            if (draw_radial_transparent) {
+              if (!radial_mesh_.exists()) {
+                radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();
+              }
+              base::Graphics::DrawRadialMeter(&(*radial_mesh_), radial_amount_);
+              c.Scale(0.5f, 0.5f, 1.0f);
+              c.DrawMesh(radial_mesh_.get());
+            } else {
+              c.DrawMeshAsset(mesh_transparent_used.get());
+            }
           }
         }
         c.Submit();

@@ -28,6 +28,22 @@ namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
 
+/// How a host treats v2-auth (cloud-verified joiner identity, which is
+/// also how joiners' cloud profiles reach us).
+enum class ClientAuthMode : uint8_t {
+  /// Never offered; every joiner is unauthenticated.
+  kOff,
+  /// Offered while we can (we have a global app-instance id, i.e. we're
+  /// online); joiners that can authenticate do, anyone else (signed
+  /// out, offline, a failed request) joins unauthenticated. Lets
+  /// private/LAN parties carry cloud profiles without ever locking out
+  /// an offline game.
+  kOptional,
+  /// Required; joiners without a valid token are rejected (public
+  /// parties, dedicated servers).
+  kRequired,
+};
+
 /// One client in the party roster: a connected peer (or the host itself, with
 /// client_id == -1) plus the local players it has joined. This is the native
 /// form of what was historically a cJSON array-of-dicts; the original wire
@@ -190,12 +206,15 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_player_count() const { return public_party_player_count_; }
   void SetPublicPartyPlayerCount(int count);
   auto ShouldAnnouncePartyJoinsAndLeaves() -> bool;
+  /// Whether joiners must authenticate (ClientAuthMode::kRequired).
+  /// Per-joiner state lives on each ConnectionToClient
+  /// (v2_auth_offered() / v2_authed()); prefer that wherever a
+  /// specific connection is at hand.
   auto require_client_authentication() const {
-    return require_client_authentication_;
+    return client_auth_mode_ == ClientAuthMode::kRequired;
   }
-  void set_require_client_authentication(bool enable) {
-    require_client_authentication_ = enable;
-  }
+  auto client_auth_mode() const { return client_auth_mode_; }
+  void set_client_auth_mode(ClientAuthMode mode) { client_auth_mode_ = mode; }
 
   /// Set the asset-package-versions this app run hosts with (the launch
   /// metascan snapshot; see asset-packages.md decision #36). Call once
@@ -404,7 +423,7 @@ class ClassicAppMode : public base::AppMode {
   bool kick_idle_players_{};
   bool public_party_enabled_{};
   bool public_party_queue_enabled_{true};
-  bool require_client_authentication_{};
+  ClientAuthMode client_auth_mode_{ClientAuthMode::kOff};
   bool idle_exiting_{};
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, override
 import bauiv1 as bui
 from bauiv1 import _commonassets, _builtinassets
 from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -98,7 +99,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         h = 43 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        lock_tex = _classicassets.textures.lock.get()
+        lock_tex = _uiv1assets.textures.lock.get()
         self._lock_images: list[bui.Widget] = []
 
         scl = 1.2

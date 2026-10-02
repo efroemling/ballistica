@@ -269,6 +269,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
+  // A time-varying label (a live countdown) changes width as it ticks.
+  if (text_->IsTimeVarying()) {
+    text_width_dirty_ = true;
+  }
   if (text_width_dirty_) {
     // Empty while OS-span measures warm in the background; stay dirty
     // and keep using our previous width until the value lands (the
@@ -397,10 +401,20 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       args.owner = this;
       args.pass = pass;
       args.transparent = draw_transparent;
-      args.width = width_;
-      args.height = height_;
-      args.offset_x = extra_offs_x;
-      args.offset_y = extra_offs_y;
+      // Standing in for a custom texture, we take the box that texture
+      // draws to: without better-bg-fit that overhangs our bounds by 4%
+      // a side (see below), and art authored for it (the toolbar
+      // chests) should come out the same size either way.
+      float dep_border_x{};
+      float dep_border_y{};
+      if (texture_.exists() && !better_bg_fit_) {
+        dep_border_x = 0.04f * width_;
+        dep_border_y = 0.04f * height_;
+      }
+      args.width = width_ + 2.0f * dep_border_x;
+      args.height = height_ + 2.0f * dep_border_y;
+      args.offset_x = extra_offs_x - dep_border_x;
+      args.offset_y = extra_offs_y - dep_border_y;
       args.brightness = mult;
       args.opacity = opacity_;
       args.disabled = disabled_look;
@@ -463,6 +477,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                                tint_color_blue_);
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
+            c.SetColorizeColor3(tint3_color_red_, tint3_color_green_,
+                                tint3_color_blue_);
           }
           c.SetMaskTexture(mask_texture_.get());
         } else {

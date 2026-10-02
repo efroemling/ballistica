@@ -8,6 +8,7 @@ import copy
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -88,7 +89,7 @@ class TournamentButton:
             draw_controller=btn,
             position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
             size=(image_width * 0.3, image_width * 0.3),
-            texture=_classicassets.textures.lock.get(),
+            texture=_uiv1assets.textures.lock.get(),
             opacity=0.0,
         )
 
@@ -172,7 +173,7 @@ class TournamentButton:
                 draw_controller=btn,
                 position=(x + 360 - 20, y + scly - 140),
                 opacity=0.0,
-                texture=_classicassets.textures.tv.get(),
+                texture=_uiv1assets.textures.tv.get(),
             )
 
         x_offs += 50
@@ -671,7 +672,7 @@ class TournamentButton:
 
         txt = _commonassets.strings.compose.spaced_pair(
             first=campaign.getlevel(levelname).displayname_langstr,
-            second=_classicassets.strings.coop.player_count_abbreviated(
+            second=_classiccatalogassets.strings.coop.player_count_abbreviated(
                 count=str(max_players)
             ),
         )

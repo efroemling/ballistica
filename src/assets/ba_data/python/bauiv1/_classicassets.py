@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261001`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261002a`` (bauiv1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 358
+# ba_meta require asset-package 381
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261001
-_ASSET_PACKAGE = ApverNum(358)
+# a-0.baclassicassets.261002a
+_ASSET_PACKAGE = ApverNum(381)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -52,7 +52,6 @@ if TYPE_CHECKING:
         announce_ten: SoundHandle
         announce_three: SoundHandle
         announce_two: SoundHandle
-        aww: SoundHandle
         bell_high: SoundHandle
         bell_low: SoundHandle
         bell_med: SoundHandle
@@ -69,7 +68,6 @@ if TYPE_CHECKING:
         char_select_music: SoundHandle
         cheer: SoundHandle
         cork_pop: SoundHandle
-        cork_pop2: SoundHandle
         crowd_chant: SoundHandle
         cymbal: SoundHandle
         debris_fall: SoundHandle
@@ -95,7 +93,6 @@ if TYPE_CHECKING:
         forward_march_music: SoundHandle
         freeze: SoundHandle
         fuse01: SoundHandle
-        gasp: SoundHandle
         gong: SoundHandle
         grand_romp_music: SoundHandle
         gravel_skid: SoundHandle
@@ -111,8 +108,6 @@ if TYPE_CHECKING:
         menu_music: SoundHandle
         metal_hit: SoundHandle
         metal_skid: SoundHandle
-        nice: SoundHandle
-        ooh: SoundHandle
         orchestra_hit: SoundHandle
         orchestra_hit2: SoundHandle
         orchestra_hit3: SoundHandle
@@ -131,7 +126,6 @@ if TYPE_CHECKING:
         race_beep1: SoundHandle
         race_beep2: SoundHandle
         ref_whistle: SoundHandle
-        rev_up: SoundHandle
         run_away_music: SoundHandle
         scamper01: SoundHandle
         scary_music: SoundHandle
@@ -166,12 +160,7 @@ if TYPE_CHECKING:
         warn_beep: SoundHandle
         warn_beeps: SoundHandle
         when_johnny_comes_marching_home_music: SoundHandle
-        woo: SoundHandle
-        woo2: SoundHandle
-        woo3: SoundHandle
         wood_debris_fall: SoundHandle
-        wow: SoundHandle
-        yeah: SoundHandle
         zoe_eff: SoundHandle
         zoe_ow: SoundHandle
         zoe_scream01: SoundHandle
@@ -2792,91 +2781,6 @@ if TYPE_CHECKING:
                 English: "You have been sent a {app_name} promo code:"
             """
 
-    class StringsChestGroup:
-        """
-        ::
-
-            Chest window: open/reduce-wait controls, slot descriptions, and
-            prize odds.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Button to open a chest.
-        #:
-        #:     English: "Open"
-        open: LangStr
-
-        #: ::
-        #:
-        #:     Playful prompt on an openable chest.
-        #:
-        #:     English: "OPEN ME!"
-        open_me: LangStr
-
-        #: ::
-        #:
-        #:     Button to open a chest immediately.
-        #:
-        #:     English: "Open Now"
-        open_now: LangStr
-
-        #: ::
-        #:
-        #:     Note that the player can open a chest early.
-        #:
-        #:     English: "You have enough Tokens to open this now - you don't
-        #:     need to wait."
-        open_now_description: LangStr
-
-        #: ::
-        #:
-        #:     Heading for the prize-odds view.
-        #:
-        #:     English: "Prize Odds"
-        prize_odds: LangStr
-
-        #: ::
-        #:
-        #:     Button to reduce the wait time.
-        #:
-        #:     English: "Reduce Wait"
-        reduce_wait: LangStr
-
-        #: ::
-        #:
-        #:     Explanation of what a chest slot holds.
-        #:
-        #:     English: "This slot can hold a chest. Earn chests by playing
-        #:     campaign levels, placing in tournaments, and completing
-        #:     achievements."
-        slot_description: LangStr
-
-        def slot_number(self, *, num: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label naming a numbered chest slot.
-
-                English: "Chest Slot {num}"
-            """
-
-        #: ::
-        #:
-        #:     Button to stop open-chest reminders.
-        #:
-        #:     English: "Stop Reminding Me"
-        stop_reminding_me: LangStr
-
-        #: ::
-        #:
-        #:     Label for the time until a chest unlocks.
-        #:
-        #:     English: "Unlocks In"
-        unlocks_in: LangStr
-
     class StringsControlsGroup:
         """
         ::
@@ -3079,15 +2983,6 @@ if TYPE_CHECKING:
                 Suffix showing a value out of a total time.
 
                 English: "of {total}"
-            """
-
-        def player_count_abbreviated(self, *, count: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Abbreviated player-count badge (number + "p" for players).
-
-                English: "{count}p"
             """
 
         def power_ranking_points(self, *, number: str | LangStr) -> LangStr:
@@ -5419,45 +5314,6 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        def expired_ago(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing how long ago something expired.
-
-                English: "Expired {t} ago"
-            """
-
-        def expires_in(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing time until a message expires.
-
-                English: "Expires in {t}"
-            """
-
-        #: ::
-        #:
-        #:     Heading for final tournament standings.
-        #:
-        #:     English: "Final Standings"
-        final_standings: LangStr
-
-        #: ::
-        #:
-        #:     Notice that the app must be updated to view content.
-        #:
-        #:     English: "You must update the app to view this."
-        must_update: LangStr
-
-        #: ::
-        #:
-        #:     Placeholder when the inbox is empty.
-        #:
-        #:     English: "No messages."
-        no_messages: LangStr
-
         #: ::
         #:
         #:     Attention label on the root-UI inbox button when unopened prize
@@ -5465,13 +5321,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "You have unclaimed prizes!"
         unclaimed_prizes: LangStr
-
-        #: ::
-        #:
-        #:     Label above a prize the player won.
-        #:
-        #:     English: "Your prize:"
-        your_prize: LangStr
 
     class StringsInventoryGroup:
         """
@@ -6943,6 +6792,29 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Label for the advanced-settings row inviting players to report
+        #:     translations that could be improved.
+        #:
+        #:     English: "Help Improve Translations"
+        improve_translations: LangStr
+
+        def improve_translations_description(
+            self, *, app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Explanation under the help-improve-translations row (wrapped to
+                fit at display time).
+
+                English: "{app_name}'s non-English translations are a
+                community-supported effort. If you spot translations that are
+                broken or could be improved, please report them. Much
+                appreciated!"
+            """
+
+        #: ::
+        #:
         #:     Checkbox allowing non-TLS server connections (a
         #:     network-workaround option).
         #:
@@ -7037,6 +6909,14 @@ if TYPE_CHECKING:
 
                 English: "{app_name} Translation Editor"
             """
+
+        #: ::
+        #:
+        #:     Button on the help-improve-translations row; opens the feedback
+        #:     page.
+        #:
+        #:     English: "Feedback"
+        translation_feedback: LangStr
 
         #: ::
         #:
@@ -8768,13 +8648,6 @@ if TYPE_CHECKING:
         #:     English: "Tournament Entry"
         title: LangStr
 
-        #: ::
-        #:
-        #:     Button to watch an ad for tournament entry.
-        #:
-        #:     English: "Watch an Ad"
-        watch_an_ad: LangStr
-
     class StringsTournamentScoresGroup:
         """
         ::
@@ -9145,13 +9018,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Button label to claim a reward.
-        #:
-        #:     English: "Claim"
-        claim: LangStr
-
-        #: ::
-        #:
         #:     Generic "Demo" label.
         #:
         #:     English: "Demo"
@@ -9215,13 +9081,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Hard"
         hard: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Inbox" label.
-        #:
-        #:     English: "Inbox"
-        inbox: LangStr
 
         #: ::
         #:
@@ -9482,7 +9341,6 @@ if TYPE_CHECKING:
         account: StringsAccountGroup
         achievements: StringsAchievementsGroup
         app_invite: StringsAppInviteGroup
-        chest: StringsChestGroup
         controls: StringsControlsGroup
         coop: StringsCoopGroup
         coop_score: StringsCoopScoreGroup
@@ -9584,8 +9442,6 @@ if TYPE_CHECKING:
         ch_title_char5: TextureHandle
         chest_icon_empty: TextureHandle
         chest_icon_multi: TextureHandle
-        chest_open_icon: TextureHandle
-        chest_open_icon_tint: TextureHandle
         circle_zig_zag: TextureHandle
         clay_stroke: TextureHandle
         controller_icon: TextureHandle
@@ -9633,7 +9489,6 @@ if TYPE_CHECKING:
         light: TextureHandle
         light_sharp: TextureHandle
         light_soft: TextureHandle
-        lock: TextureHandle
         log_icon: TextureHandle
         logo: TextureHandle
         logo_easter: TextureHandle
@@ -9665,7 +9520,6 @@ if TYPE_CHECKING:
         powerup_speed: TextureHandle
         powerup_sticky_bombs: TextureHandle
         puck_color: TextureHandle
-        quote_bubble: TextureHandle
         replay_icon: TextureHandle
         right_button: TextureHandle
         settings_icon: TextureHandle
@@ -9692,12 +9546,11 @@ if TYPE_CHECKING:
         touch_arrows_actions: TextureHandle
         trees_color: TextureHandle
         trophy: TextureHandle
-        tv: TextureHandle
         up_button: TextureHandle
         window_bottom_cap: TextureHandle
 
-    #: The ``audio`` group - 136 assets (``achievement``, ``activate_beep``,
-    #: ``alarm``, ``announce_eight``, ``announce_five``, and 131 more). Full
+    #: The ``audio`` group - 125 assets (``achievement``, ``activate_beep``,
+    #: ``alarm``, ``announce_eight``, ``announce_five``, and 120 more). Full
     #: list in source.
     audio: AudioGroup
 
@@ -9707,14 +9560,14 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1003 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``chest``, ``controls``, and 998 more). Full list in
+    #: The ``strings`` group - 986 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 981 more). Full list in
     #: source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 159 assets (``achievement_boxer``,
+    #: The ``textures`` group - 154 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
-    #: ``achievement_empty``, ``achievement_flawless_victory``, and 154 more).
+    #: ``achievement_empty``, ``achievement_flawless_victory``, and 149 more).
     #: Full list in source.
     textures: TexturesGroup
 
@@ -9733,7 +9586,6 @@ _TREE = {
         'announce_ten': 's',
         'announce_three': 's',
         'announce_two': 's',
-        'aww': 's',
         'bell_high': 's',
         'bell_low': 's',
         'bell_med': 's',
@@ -9750,7 +9602,6 @@ _TREE = {
         'char_select_music': 's',
         'cheer': 's',
         'cork_pop': 's',
-        'cork_pop2': 's',
         'crowd_chant': 's',
         'cymbal': 's',
         'debris_fall': 's',
@@ -9776,7 +9627,6 @@ _TREE = {
         'forward_march_music': 's',
         'freeze': 's',
         'fuse01': 's',
-        'gasp': 's',
         'gong': 's',
         'grand_romp_music': 's',
         'gravel_skid': 's',
@@ -9792,8 +9642,6 @@ _TREE = {
         'menu_music': 's',
         'metal_hit': 's',
         'metal_skid': 's',
-        'nice': 's',
-        'ooh': 's',
         'orchestra_hit': 's',
         'orchestra_hit2': 's',
         'orchestra_hit3': 's',
@@ -9812,7 +9660,6 @@ _TREE = {
         'race_beep1': 's',
         'race_beep2': 's',
         'ref_whistle': 's',
-        'rev_up': 's',
         'run_away_music': 's',
         'scamper01': 's',
         'scary_music': 's',
@@ -9847,12 +9694,7 @@ _TREE = {
         'warn_beep': 's',
         'warn_beeps': 's',
         'when_johnny_comes_marching_home_music': 's',
-        'woo': 's',
-        'woo2': 's',
-        'woo3': 's',
         'wood_debris_fall': 's',
-        'wow': 's',
-        'yeah': 's',
         'zoe_eff': 's',
         'zoe_ow': 's',
         'zoe_scream01': 's',
@@ -10238,18 +10080,6 @@ _TREE = {
             'where_to_enter': (),
             'you_have_been_sent_promo': ('app_name',),
         },
-        'chest': {
-            'open': (),
-            'open_me': (),
-            'open_now': (),
-            'open_now_description': (),
-            'prize_odds': (),
-            'reduce_wait': (),
-            'slot_description': (),
-            'slot_number': ('num',),
-            'stop_reminding_me': (),
-            'unlocks_in': (),
-        },
         'controls': {
             'fire_tv_remote_warning': ('remote_app_name',),
             'move': (),
@@ -10275,7 +10105,6 @@ _TREE = {
             'no_achievements_remaining': (),
             'no_tournaments_in_test_build': (),
             'of_total': ('total',),
-            'player_count_abbreviated': ('count',),
             'power_ranking_points': ('number',),
             'prizes': (),
             'time_remaining': (),
@@ -10577,15 +10406,7 @@ _TREE = {
             'leave_party_confirm': (),
             'resume': (),
         },
-        'inbox': {
-            'expired_ago': ('t',),
-            'expires_in': ('t',),
-            'final_standings': (),
-            'must_update': (),
-            'no_messages': (),
-            'unclaimed_prizes': (),
-            'your_prize': (),
-        },
+        'inbox': {'unclaimed_prizes': ()},
         'inventory': {
             'only_available_online': (),
             'only_available_signed_in': (),
@@ -10776,6 +10597,8 @@ _TREE = {
                 'disable_camera_gyro': (),
                 'disable_camera_shake': (),
                 'help_translate': ('app_name',),
+                'improve_translations': (),
+                'improve_translations_description': ('app_name',),
                 'insecure_connections': (),
                 'insecure_connections_description': (),
                 'kick_idle_players': (),
@@ -10789,6 +10612,7 @@ _TREE = {
                 'title': (),
                 'translation_checking': (),
                 'translation_editor': ('app_name',),
+                'translation_feedback': (),
                 'translation_fetch_error': (),
                 'translation_inform_me': (),
                 'translation_needs_updates': (),
@@ -11005,7 +10829,6 @@ _TREE = {
             'entering': (),
             'tickets_count': ('count',),
             'title': (),
-            'watch_an_ad': (),
         },
         'tournament_scores': {'no_scores_yet': (), 'tournament_standings': ()},
         'tutorial': {
@@ -11055,7 +10878,6 @@ _TREE = {
             'activity': (),
             'app_name': (),
             'boost': (),
-            'claim': (),
             'demo': (),
             'easy': (),
             'epic_mode': (),
@@ -11065,7 +10887,6 @@ _TREE = {
             'game_center': (),
             'google_play': (),
             'hard': (),
-            'inbox': (),
             'kick': (),
             'leaderboards': (),
             'map': (),
@@ -11149,8 +10970,6 @@ _TREE = {
         'ch_title_char5': 't',
         'chest_icon_empty': 't',
         'chest_icon_multi': 't',
-        'chest_open_icon': 't',
-        'chest_open_icon_tint': 't',
         'circle_zig_zag': 't',
         'clay_stroke': 't',
         'controller_icon': 't',
@@ -11198,7 +11017,6 @@ _TREE = {
         'light': 't',
         'light_sharp': 't',
         'light_soft': 't',
-        'lock': 't',
         'log_icon': 't',
         'logo': 't',
         'logo_easter': 't',
@@ -11230,7 +11048,6 @@ _TREE = {
         'powerup_speed': 't',
         'powerup_sticky_bombs': 't',
         'puck_color': 't',
-        'quote_bubble': 't',
         'replay_icon': 't',
         'right_button': 't',
         'settings_icon': 't',
@@ -11257,7 +11074,6 @@ _TREE = {
         'touch_arrows_actions': 't',
         'trees_color': 't',
         'trophy': 't',
-        'tv': 't',
         'up_button': 't',
         'window_bottom_cap': 't',
     },

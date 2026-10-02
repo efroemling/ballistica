@@ -7,7 +7,6 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
@@ -152,8 +151,7 @@ void HScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
       float diff =
           child_offset_h_
           - (child_width
-             - std::min(child_width,
-                        (width() - 2.0f * (border_width_ + kMarginH))));
+             - std::min(child_width, (width() - 2.0f * ContentInset_())));
       if (diff > 0.0f) {
         // We've scrolled past the left edge.
         inertia_scroll_rate_ += diff * stiffness;
@@ -179,17 +177,15 @@ void HScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
   // Hard clipping if we're dragging the scrollbar.
   if (position_clamp) {
     if (child_offset_h_smoothed_
-        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
+        > child_width - (width() - 2.0f * ContentInset_())) {
       child_offset_h_smoothed_ =
-          child_width - (width() - 2.0f * (border_width_ + kMarginH));
+          child_width - (width() - 2.0f * ContentInset_());
     }
     if (child_offset_h_smoothed_ < 0.0f) {
       child_offset_h_smoothed_ = 0.0f;
     }
-    if (child_offset_h_
-        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
-      child_offset_h_ =
-          child_width - (width() - 2.0f * (border_width_ + kMarginH));
+    if (child_offset_h_ > child_width - (width() - 2.0f * ContentInset_())) {
+      child_offset_h_ = child_width - (width() - 2.0f * ContentInset_());
     }
     if (child_offset_h_ < 0.0f) {
       child_offset_h_ = 0.0f;
@@ -215,7 +211,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float target_x{m.fval1};
       float target_width{m.fval3};
 
-      float vis_width{(width() - 2.0f * (border_width_ + kMarginH))};
+      float vis_width{(width() - 2.0f * ContentInset_())};
       bool changing{};
 
       // See where we'd have to scroll to get target at left and right.
@@ -248,8 +244,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (changing) {
         // If we're moving left, stop at the end.
         {
-          float max_val = scroll_child_width
-                          - (width() - 2.0f * (border_width_ + kMarginH));
+          float max_val =
+              scroll_child_width - (width() - 2.0f * ContentInset_());
           if (child_offset_h_ > max_val) {
             child_offset_h_ = max_val;
           }
@@ -488,8 +484,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (page_left_pressed_ && in_page_left_button && !touch_is_scrolling_
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_h_ +=
-            0.95f * (width() - 2.0f * (border_width_ + kMarginH));
+        child_offset_h_ += 0.95f * (width() - 2.0f * ContentInset_());
         ClampScrolling_(false, true, -1);
         page_left_activate_time_ = g_base->logic->display_time();
         claimed = true;
@@ -499,8 +494,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (page_right_pressed_ && in_page_right_button && !touch_is_scrolling_
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_h_ -=
-            0.95f * (width() - 2.0f * (border_width_ + kMarginH));
+        child_offset_h_ -= 0.95f * (width() - 2.0f * ContentInset_());
         ClampScrolling_(false, true, -1);
         page_right_activate_time_ = g_base->logic->display_time();
         claimed = true;
@@ -714,7 +708,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             // To right of thumb (page-right).
             if (x >= sb_thumb_right) {
               smoothing_amount_ = 1.0f;  // So we can see the transition.
-              child_offset_h_ -= (width() - 2.0f * (border_width_ + kMarginH));
+              child_offset_h_ -= (width() - 2.0f * ContentInset_());
               ClampScrolling_(false, true, -1);
             } else if (x >= sb_thumb_right - sb_thumb_width) {
               // On thumb.
@@ -724,7 +718,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             } else if (x >= s_left) {
               // To left of thumb (page left).
               smoothing_amount_ = 1.0f;  // So we can see the transition.
-              child_offset_h_ += (width() - 2.0f * (border_width_ + kMarginH));
+              child_offset_h_ += (width() - 2.0f * ContentInset_());
               ClampScrolling_(false, true, -1);
             }
           }
@@ -759,7 +753,7 @@ auto HScrollWidget::GetScrollState() -> std::optional<ScrollState> {
   auto i = widgets().begin();
   float content = i == widgets().end() ? 0.0f : (**i).GetWidth();
   return ScrollState{child_offset_h_, content,
-                     width() - 2.0f * (border_width_ + kMarginH)};
+                     width() - 2.0f * ContentInset_()};
 }
 
 auto HScrollWidget::SetScrollOffset(float offset) -> bool {
@@ -786,8 +780,8 @@ void HScrollWidget::InitOffsetIfNeeded_() {
   // count from the right). Snap rather than animate; nobody has seen
   // us yet.
   float child_width = (**i).GetWidth();
-  child_offset_h_ = std::max(
-      0.0f, child_width - (width() - 2.0f * (border_width_ + kMarginH)));
+  child_offset_h_ =
+      std::max(0.0f, child_width - (width() - 2.0f * ContentInset_()));
   child_offset_h_smoothed_ = child_offset_h_;
   inertia_scroll_rate_ = 0.0f;
   offset_inited_ = true;
@@ -804,9 +798,8 @@ void HScrollWidget::UpdateLayout() {
     return;
   }
   float child_width = (**i).GetWidth();
-  child_max_offset_ =
-      child_width - (width() - 2.0f * (border_width_ + kMarginH));
-  amount_visible_ = (width() - 2.0f * (border_width_ + kMarginH)) / child_width;
+  child_max_offset_ = child_width - (width() - 2.0f * ContentInset_());
+  amount_visible_ = (width() - 2.0f * ContentInset_()) / child_width;
   if (amount_visible_ > 1.0f) {
     amount_visible_ = 1.0f;
     if (center_small_content_) {
@@ -818,10 +811,8 @@ void HScrollWidget::UpdateLayout() {
     center_offset_x_ = 0.0f;
   }
   if (mouse_held_thumb_) {
-    if (child_offset_h_
-        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
-      child_offset_h_ =
-          child_width - (width() - 2.0f * (border_width_ + kMarginH));
+    if (child_offset_h_ > child_width - (width() - 2.0f * ContentInset_())) {
+      child_offset_h_ = child_width - (width() - 2.0f * ContentInset_());
       inertia_scroll_rate_ = 0.0f;
     }
     if (child_offset_h_ < 0.0f) {
@@ -829,10 +820,9 @@ void HScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0.0f;
     }
   }
-  (**i).set_translate(width() - (border_width_ + kMarginH)
-                          + child_offset_h_smoothed_ - child_width
-                          + center_offset_x_,
-                      4.0f + border_height_);
+  (**i).set_translate(width() - ContentInset_() + child_offset_h_smoothed_
+                          - child_width + center_offset_x_,
+                      clean_layout_ ? 0.0f : 4.0f + border_height_);
   thumb_dirty_ = true;
 }
 
@@ -886,8 +876,7 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
         float diff =
             child_offset_h_
             - (child_width
-               - std::min(child_width,
-                          (width() - 2.0f * (border_width_ + kMarginH))));
+               - std::min(child_width, (width() - 2.0f * ContentInset_())));
         if (diff > 0.0f) {
           inertia_scroll_mult = inv_lerp_clamped(fade_region, 0.0f, diff);
         }
@@ -941,25 +930,8 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
   }
 }
 
-void HScrollWidget::EnsureThumbRoundMesh_(float w, float h) {
-  if (thumb_round_mesh_.exists() && thumb_round_mesh_width_ == w
-      && thumb_round_mesh_height_ == h) {
-    return;
-  }
-  thumb_round_mesh_width_ = w;
-  thumb_round_mesh_height_ = h;
-
-  // Radius of half our height makes the left and right ends exact
-  // half-circles: the top and bottom borders each come out at 0.5, so the
-  // ninepatch's middle row collapses to nothing and the two end columns
-  // are pure semicircle.
-  float radius{h * 0.5f};
-  thumb_round_mesh_ = Object::New<base::NinePatchMesh>(
-      0.0f, 0.0f, 0.0f, w, h,
-      base::NinePatchMesh::BorderForRadius(radius, w, h),
-      base::NinePatchMesh::BorderForRadius(radius, h, w),
-      base::NinePatchMesh::BorderForRadius(radius, w, h),
-      base::NinePatchMesh::BorderForRadius(radius, h, w));
+auto HScrollWidget::ContentInset_() const -> float {
+  return clean_layout_ ? 0.0f : border_width_ + kMarginH;
 }
 
 void HScrollWidget::SnapPageLeftRightButtons_() {
@@ -1055,14 +1027,16 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    auto scissor =
-        c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
-                         l + (width() - border_width_ - 0.0f),
-                         b + (height() - border_height_) - 1.0f});
+    auto scissor = c.ScopedScissor(
+        clean_layout_ ? Rect(l, b, l + width(), b + height())
+                      : Rect(l + border_width_, b + border_height_ + 1.0f,
+                             l + (width() - border_width_),
+                             b + (height() - border_height_) - 1.0f));
     c.Submit();  // Get out of the way for child drawing.
 
-    set_simple_culling_left(l + border_width_);
-    set_simple_culling_right(l + (width() - border_height_));
+    set_simple_culling_left(clean_layout_ ? l : l + border_width_);
+    set_simple_culling_right(clean_layout_ ? l + width()
+                                           : l + (width() - border_height_));
 
     // Draw all our widgets at our z level.
     DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
@@ -1233,7 +1207,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       if (g_base->ui->touch_mode()) {
         if (smooth_diff || (touch_held_ && touch_is_scrolling_)
             || std::abs(inertia_scroll_rate_) > 1.0f) {
-          last_scroll_bar_show_time_ = frame_def->display_time();
+          thumb_.Show(frame_def->display_time());
         }
       } else {
         // Hovering the thumb holds the bar visible on its own. The
@@ -1250,53 +1224,26 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             || std::abs(inertia_scroll_rate_) > 1.0f
             || (pointer_counts && mouse_over_
                 && frame_def->display_time() - last_mouse_move_time_ < 0.1f)) {
-          last_scroll_bar_show_time_ = frame_def->display_time();
+          thumb_.Show(frame_def->display_time());
         }
       }
 
-      // Fade in if we want to see the scrollbar. Start fading out a moment
-      // after we stop wanting to see it.
-      if (frame_def->display_time() - last_scroll_bar_show_time_ < 0.6f) {
-        touch_fade_ = std::min(1.5f, touch_fade_ + 2.0f * frame_duration);
-      } else {
-        touch_fade_ = std::max(0.0f, touch_fade_ - 1.5f * frame_duration);
+      thumb_.Update(frame_def->display_time(), frame_duration);
+
+      // Firm up on mouse-over and again while dragging, matching what the
+      // vertical scroll widget does.
+      float emphasis{1.0f};
+      if (mouse_held_thumb_) {
+        emphasis = 1.8f;
+      } else if (hovering_thumb_) {
+        emphasis = 1.25f;
       }
-
-      if (touch_fade_ > 0.0f && draw_transparent) {
-        // Rounded rect via a ninepatch over the circle texture. Our color
-        // is pure black, so there is no straight-vs-premultiplied rgb
-        // adjustment to make here (see
-        // docs/design/premultiplied-alpha.md) -- zero premultiplies to
-        // zero.
-        EnsureThumbRoundMesh_(thumb_rect_width_, thumb_rect_height_);
-
-        // Firm up on mouse-over and again while dragging, matching what
-        // the vertical scroll widget does. It scales its *color* by these
-        // amounts; ours is pure black, where brightening would wash it
-        // out rather than emphasize it, so we scale opacity instead.
-        float emphasis{1.0f};
-        if (mouse_held_thumb_) {
-          emphasis = 1.8f;
-        } else if (hovering_thumb_) {
-          emphasis = 1.25f;
-        }
-
-        base::SimpleComponent c(pass);
-        c.SetTransparent(draw_transparent);
-        c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * emphasis * touch_fade_));
-        c.SetTexture(g_ui_v1->assets().circle.get());
-        {
-          auto scissor =
-              c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
-                               l + (width()), b + (height() * 0.995f)});
-          auto xf = c.ScopedTransform();
-          // Ninepatch meshes span [0,w] x [0,h], so translate to the
-          // bar's lower-left rather than its center, and never scale.
-          c.Translate(thumb_rect_left_, thumb_rect_bottom_, 0.75f);
-          c.DrawMesh(thumb_round_mesh_.get());
-          c.Submit();
-        }
-      }
+      thumb_.Draw(pass, draw_transparent, thumb_rect_left_, thumb_rect_bottom_,
+                  thumb_rect_width_, thumb_rect_height_, emphasis,
+                  clean_layout_
+                      ? Rect(l, b, l + width(), b + height())
+                      : Rect(l + border_width_, b + border_height_ + 1.0f,
+                             l + width(), b + height() * 0.995f));
     }
   }
 

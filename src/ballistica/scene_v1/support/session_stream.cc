@@ -446,6 +446,8 @@ auto SessionCommandName(uint8_t cmd) -> const char* {
       return "SetNodeAttrDepiction";
     case SessionCommand::kSetNodeAttrDepictionNull:
       return "SetNodeAttrDepictionNull";
+    case SessionCommand::kScreenMessageTopDepiction:
+      return "ScreenMessageTopDepiction";
     default:
       return "?";
   }
@@ -1185,15 +1187,6 @@ auto SessionStream::IsValidSound(SceneSound* n) -> bool {
           && sounds_[n->stream_id()] == n);
 }
 
-auto SessionStream::IsValidData(SceneDataAsset* n) -> bool {
-  if (!host_session_) {
-    return true;  // We don't build lists in this mode so can't verify this.
-  }
-  return (n != nullptr && n->stream_id() >= 0
-          && n->stream_id() < static_cast<int64_t>(datas_.size())
-          && datas_[n->stream_id()] == n);
-}
-
 auto SessionStream::IsValidCollisionMesh(SceneCollisionMesh* n) -> bool {
   if (!host_session_) {
     return true;  // We don't build lists in this mode so can't verify this.
@@ -1440,30 +1433,6 @@ void SessionStream::RemoveSound(SceneSound* t) {
   assert(IsValidSound(t));
   WriteCommandInt64(SessionCommand::kRemoveSound, t->stream_id());
   Remove(t, &sounds_, &free_indices_sounds_);
-  EndCommand();
-}
-
-void SessionStream::AddData(SceneDataAsset* t) {
-  // Register an ID in host mode.
-  if (host_session_) {
-    Add(t, &datas_, &free_indices_datas_);
-  } else {
-    assert(t && t->stream_id() != -1);
-  }
-  Scene* sg = t->scene();
-  assert(IsValidScene(sg));
-  WriteCommandInt64_2(SessionCommand::kAddData, sg->stream_id(),
-                      t->stream_id());
-  // Data assets have no asset-package homes (yet), so they stay on the
-  // legacy string form; add an indexed variant if that ever changes.
-  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
-  EndCommand();
-}
-
-void SessionStream::RemoveData(SceneDataAsset* t) {
-  assert(IsValidData(t));
-  WriteCommandInt64(SessionCommand::kRemoveData, t->stream_id());
-  Remove(t, &datas_, &free_indices_datas_);
   EndCommand();
 }
 
@@ -2050,7 +2019,9 @@ void SessionStream::ScreenMessageTop(const std::string& val, float r, float g,
                                      float b, SceneTexture* texture,
                                      SceneTexture* tint_texture, float tint_r,
                                      float tint_g, float tint_b, float tint2_r,
-                                     float tint2_g, float tint2_b) {
+                                     float tint2_g, float tint2_b,
+                                     float tint3_r, float tint3_g,
+                                     float tint3_b) {
   assert(IsValidTexture(texture));
   assert(IsValidTexture(tint_texture));
   assert(IsValidScene(texture->scene()));
@@ -2058,7 +2029,9 @@ void SessionStream::ScreenMessageTop(const std::string& val, float r, float g,
   WriteCommandInt64_2(SessionCommand::kScreenMessageTop, texture->stream_id(),
                       tint_texture->stream_id());
   WriteString(val);
-  float f[9];
+  // (We only ever write at kProtocolVersionMax, which carries tint3;
+  // see kProtocolVersionTint3.)
+  float f[12];
   f[0] = r;
   f[1] = g;
   f[2] = b;
@@ -2068,13 +2041,31 @@ void SessionStream::ScreenMessageTop(const std::string& val, float r, float g,
   f[6] = tint2_r;
   f[7] = tint2_g;
   f[8] = tint2_b;
-  WriteFloats(9, f);
+  f[9] = tint3_r;
+  f[10] = tint3_g;
+  f[11] = tint3_b;
+  WriteFloats(12, f);
   EndCommand();
 }
 
 void SessionStream::ScreenMessageBottom(const std::string& val, float r,
                                         float g, float b) {
   WriteCommand(SessionCommand::kScreenMessageBottom);
+  WriteString(val);
+  float color[3];
+  color[0] = r;
+  color[1] = g;
+  color[2] = b;
+  WriteFloats(3, color);
+  EndCommand();
+}
+
+void SessionStream::ScreenMessageTopDepiction(const std::string& val, float r,
+                                              float g, float b,
+                                              SceneDepiction* depiction) {
+  assert(IsValidDepiction(depiction));
+  WriteCommandInt64(SessionCommand::kScreenMessageTopDepiction,
+                    depiction->stream_id());
   WriteString(val);
   float color[3];
   color[0] = r;

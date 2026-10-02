@@ -219,6 +219,11 @@ class Chooser:
         # shows (registered once however often the selection flips).
         self._cloud_icon_by_name: dict[str, bascenev1.Depiction] = {}
         self._cloud_icon: bascenev1.Depiction | None = None
+        # The cloud profile whose look (spaz, icon, colors) we're
+        # borrowing via the character-override button while keeping
+        # the selected profile's name; None for the profile's own look.
+        # Lasts until the profile selection changes.
+        self._cloud_look_name: str | None = None
 
         app = babase.app
         assert app.classic is not None
@@ -423,8 +428,16 @@ class Chooser:
         self._profilename = self._profilenames[self._profileindex]
         # A cloud profile carries its whole look as a composed spaz def;
         # everything else (legacy profiles, random, edit) is legacy-form.
-        self._cloud_spaz_def = self._cloud_by_name.get(self._profilename)
-        self._cloud_icon = self._cloud_icon_by_name.get(self._profilename)
+        # The look may be borrowed from another of our cloud profiles
+        # (see _cycle_cloud_look()); drop a borrow whose source is gone.
+        if (
+            self._profilename not in self._cloud_by_name
+            or self._cloud_look_name not in self._cloud_by_name
+        ):
+            self._cloud_look_name = None
+        look = self._cloud_look_name or self._profilename
+        self._cloud_spaz_def = self._cloud_by_name.get(look)
+        self._cloud_icon = self._cloud_icon_by_name.get(look)
         if self._profilename == '_edit':
             pass
         elif self._profilename == '_random':
@@ -448,8 +461,10 @@ class Chooser:
             ):
                 self._character_names.append(character)
             self._character_index = self._character_names.index(character)
+            # Colors are part of the look, so a borrowed look brings
+            # its own.
             self._color, self._highlight = get_player_profile_colors(
-                self._profilename, profiles=self._profiles
+                look, profiles=self._profiles
             )
         self._update_icon()
         self._update_text()
@@ -599,9 +614,41 @@ class Chooser:
     def get_cloud_spaz_def(self) -> bascenev1.SpazDef | None:
         """Return the selected cloud profile's composed look.
 
-        None when the selection is a legacy profile or the random look.
+        That is the profile's own look, or another of the player's
+        cloud profiles' if they've borrowed one with the
+        character-override button. None when the selection is a legacy
+        profile or the random look.
         """
         return self._cloud_spaz_def
+
+    def _cycle_cloud_look(self, step: int) -> None:
+        """Step the look of our cloud profile through our other ones.
+
+        The character-override button for cloud profiles: a cloud look
+        is a sealed, server-composed whole, so rather than swapping a
+        character inside it we borrow another of the player's profiles'
+        look (spaz, icon, colors) while keeping the selected profile's
+        name. The cycle runs in profile order and comes back around to
+        the profile's own look.
+        """
+        names = [n for n in self._profilenames if n in self._cloud_by_name]
+        if len(names) < 2:
+            # No other looks to borrow.
+            self._errorsound.play()
+            return
+        current = self._cloud_look_name or self._profilename
+        index = names.index(current) if current in names else 0
+        look = names[(index + step) % len(names)]
+        self._cloud_look_name = None if look == self._profilename else look
+        self._click_sound.play()
+        self.update_from_profile()
+
+    def get_cloud_icon(self) -> bascenev1.Depiction | None:
+        """Return the selected cloud profile's icon depiction.
+
+        None exactly when :meth:`get_cloud_spaz_def` is None.
+        """
+        return self._cloud_icon
 
     def _apply_cloud_profiles(
         self,
@@ -989,13 +1036,14 @@ class Chooser:
                     self._profileindex = (self._profileindex + msg.value) % len(
                         self._profilenames
                     )
+                    # A new profile starts out in its own look (as a
+                    # legacy character override resets here too).
+                    self._cloud_look_name = None
                     self.update_from_profile()
 
             elif msg.what == 'character':
-                if self._cloud_spaz_def is not None:
-                    # A cloud profile's look is the profile's; there is
-                    # no per-lobby character override.
-                    _builtinassets.audio.error.get().play()
+                if self._profilename in self._cloud_by_name:
+                    self._cycle_cloud_look(msg.value)
                     return
                 self._click_sound.play()
                 # update our index in our local list of characters
@@ -1124,9 +1172,11 @@ class Chooser:
             from bascenev1lib.actor import spazappearance
 
             self.icon.depiction = self._cloud_icon
-            # Roster/scoreboard icon info rides the wire as texture
-            # names; until those sites draw from the character too,
-            # advertise the standin icon in this profile's colors.
+            # In-game icon sites draw the player's icon depiction
+            # (SessionPlayer.get_icon_depiction()); the legacy icon
+            # info stays for anything still reading get_icon() (mods,
+            # mostly), so it gets the standin icon in this profile's
+            # colors.
             self._sessionplayer.set_icon_info(
                 _assetref.qualified_ref(
                     spazappearance.texture_spec(

@@ -444,6 +444,11 @@ def test_page_depictions(
         )
         return dui2.Button(
             size=size,
+            style=(
+                dui2.ButtonStyle.MEDIUM
+                if size[0] > size[1]
+                else dui2.ButtonStyle.SQUARE
+            ),
             decorations=[
                 dui2.Text(
                     text=LangStrSpecValue.literal(caption),
@@ -526,6 +531,7 @@ def test_page_depictions(
         """
         return dui2.Button(
             size=size,
+            style=dui2.ButtonStyle.MEDIUM,
             padding_top=_PRECISE_BODY_CAPTION,
             depiction=_icon(_ZOE_JSON),
             depiction_h_align=h_align,
@@ -578,7 +584,6 @@ def test_page_depictions(
     ) -> dui2.ButtonRow:
         return dui2.ButtonRow(
             debug=debug,
-            padding_left=-10,
             title=LangStrSpecValue.literal(title),
             subtitle=LangStrSpecValue.literal(subtitle),
             buttons=buttons,
@@ -586,8 +591,6 @@ def test_page_depictions(
 
     return dui2.Response(
         page=dui2.Page(
-            padding_left=20,
-            padding_right=20,
             title=LangStrSpecValue.literal('Depictions'),
             rows=[
                 _row(

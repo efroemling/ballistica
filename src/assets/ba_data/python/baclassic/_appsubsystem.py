@@ -9,13 +9,11 @@ import random
 import logging
 import weakref
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override, assert_never, final
+from typing import TYPE_CHECKING, override, final
 
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import _commonassets, _builtinassets
-from bauiv1 import _classicassets as uiclassicassets
 from bauiv1 import _classiccatalogassets as uicatalogassets
 import bascenev1
 from bascenev1 import _classicassets
@@ -42,6 +40,7 @@ if TYPE_CHECKING:
 
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
+    from baclassic._clienteffect import EffectTargets
 
 
 class ClassicAppSubsystem(babase.AppSubsystem):
@@ -105,10 +104,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         allow: bool
 
         #: A message to be shown to the client if allow is False. A
-        #: defualt rejection message will be shown if none is present
-        #: here. This will be translated using the 'serverResponses'
-        #: translation category so it can be good to use one of the
-        #: entries there if your server has multilingual users.
+        #: default (localized) rejection message is shown if this is
+        #: None. Clients show this text verbatim; it is not translated.
         error_message: str | None = None
 
     @dataclass
@@ -164,6 +161,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.gold_pass = False
         self.tickets = 0
         self.tokens = 0
+
+        #: The signed-in account's name as the cloud composes it, a
+        #: :class:`bacommon.depiction.NameDepiction` as json fed live by
+        #: the cloud (empty when signed out or not known yet). Pass it as
+        #: an image or button widget's ``depiction`` to show the name.
+        self.account_name_depiction = ''
+
         self.chest_dock_full = False
         self.purchases: frozenset[str] = frozenset()
 
@@ -1046,56 +1050,27 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @staticmethod
     def run_bs_client_effects(
-        effects: list[clfx.Effect], delay: float = 0.0
+        effects: list[clfx.Effect],
+        delay: float = 0.0,
+        targets: EffectTargets | None = None,
     ) -> None:
         """Run client effects sent from the master server.
 
-        :meta private:
-        """
-        from baclassic._clienteffect import run_bs_client_effects
-
-        run_bs_client_effects(effects, delay=delay)
-
-    @staticmethod
-    def basic_client_ui_button_label_str(
-        label: bcdlg.ButtonLabel,
-    ) -> babase.LangStr:
-        """Given a client-ui label, return a LangStr.
+        ``targets`` are things the effects may animate (a doc-ui
+        window's page, say).
 
         :meta private:
         """
-        # pylint: disable=too-many-return-statements
-        import bacommon.clouddialog.basic as bcdlg
+        from baclassic._clienteffect import (
+            run_bs_client_effects,
+            ClientEffectContext,
+        )
 
-        strs = uiclassicassets.strings.ui
-        acts = _commonassets.strings.actions
-
-        cls = bcdlg.ButtonLabel
-        if label is cls.UNKNOWN:
-            # Server should not be sending us unknown stuff; make noise
-            # if they do.
-            logging.error(
-                'Got BasicCloudDialog.ButtonLabel.UNKNOWN; should not happen.'
-            )
-            return _builtinassets.strings.ui.error
-
-        if label is cls.OK:
-            return acts.ok
-        if label is cls.APPLY:
-            return acts.apply
-        if label is cls.CANCEL:
-            return acts.cancel
-        if label is cls.ACCEPT:
-            return acts.accept
-        if label is cls.DECLINE:
-            return acts.decline
-        if label is cls.IGNORE:
-            return acts.ignore
-        if label is cls.CLAIM:
-            return strs.claim
-        if label is cls.DISCARD:
-            return acts.discard
-        assert_never(label)
+        run_bs_client_effects(
+            effects,
+            delay=delay,
+            context=(None if targets is None else ClientEffectContext(targets)),
+        )
 
     def required_purchases_for_game(self, game: str) -> list[str]:
         """Return which purchase (if any) is required for a game."""

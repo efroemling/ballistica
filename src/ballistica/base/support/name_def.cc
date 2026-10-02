@@ -3,7 +3,6 @@
 #include "ballistica/base/support/name_def.h"
 
 #include <algorithm>
-#include <array>
 #include <optional>
 #include <string>
 
@@ -29,6 +28,8 @@ const Range kRangeEdge{0.5f, 1.0f};
 const Range kRangeIconScale{0.1f, 2.0f};
 const Range kRangeTextInset{-1.0f, 1.0f};
 const Range kRangeIconEdge{0.0f, 2.0f};
+const Range kRangeTextGlow{0.0f, 4.0f};
+const Range kRangeInset{0.0f, 0.5f};
 
 void ReadFloat(const JsonRef& obj, const char* key, float* out,
                const Range& range) {
@@ -66,18 +67,30 @@ auto ReadCapsule(const JsonRef& tier) -> std::optional<CapsuleNameDef> {
   ReadColor(tier, "cc", d.capsule_color, 4);
   ReadFloat(tier, "ce", &d.capsule_edge, kRangeEdge);
   ReadPackageAssetRef(tier, "ct", &d.capsule_texture);
+  if (JsonRef insets = tier["cx"]; insets.is_array() && insets.size() == 2) {
+    for (size_t i = 0; i < 2; ++i) {
+      if (auto val = insets[i].as_double()) {
+        d.capsule_insets[i] = std::clamp(static_cast<float>(*val),
+                                         kRangeInset.lo, kRangeInset.hi);
+      }
+    }
+  }
+  if (auto fill = tier["cf"].as_double()) {
+    d.capsule_tile = (*fill == 1.0);
+  }
+  ReadPackageAssetRef(tier, "ctt", &d.capsule_tint_texture);
+  ReadColor(tier, "ctc1", d.capsule_tint_colors[0], 3);
+  ReadColor(tier, "ctc2", d.capsule_tint_colors[1], 3);
+  ReadColor(tier, "ctc3", d.capsule_tint_colors[2], 3);
   ReadPackageAssetRef(tier, "it", &d.icon_texture);
   ReadColor(tier, "ic", d.icon_color, 4);
   ReadFloat(tier, "is", &d.icon_scale, kRangeIconScale);
   ReadFloat(tier, "ie", &d.icon_edge, kRangeIconEdge);
   ReadOptionalFloat(tier, "ti", &d.text_inset, kRangeTextInset);
-  if (tier["tg"].is_array()) {
-    std::array<float, 4> glow{1.0f, 1.0f, 1.0f, 1.0f};
-    ReadColor(tier, "tg", glow.data(), 4);
-    d.text_glow = glow;
-  }
+  ReadFloat(tier, "tg", &d.text_glow, kRangeTextGlow);
   ReadPackageManifest(tier, &d.packages, &d.domain_digest);
-  for (const auto* ref : {&d.capsule_texture, &d.icon_texture}) {
+  for (const auto* ref :
+       {&d.capsule_texture, &d.capsule_tint_texture, &d.icon_texture}) {
     if (ref->index >= 0 && d.packages.empty()) {
       BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Name capsule has indexed refs but no package manifest;"

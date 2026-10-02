@@ -211,7 +211,10 @@ class Browse(Action):
     #: handing state to a different page.
     state: Annotated[dict | None, IOAttrs('st', store_default=False)] = None
 
-    #: The new window's layout.
+    #: The new window's layout. Note that the wire default is LARGE
+    #: (an omitted value has always meant LARGE, and must keep doing
+    #: so for older clients and servers), but routes' own default is
+    #: WIDE (see :meth:`bacommon.docui.routes.DocUIRoute.browse`).
     layout: Annotated[
         WindowLayout,
         IOAttrs('lo', store_default=False, enum_fallback=WindowLayout.LARGE),
@@ -258,9 +261,9 @@ class Local(Action):
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
 
     #: Client-effects to run immediately when the button is pressed.
-    #: Note that effect payloads are not yet v2-native — text in them is
-    #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
-    #: concept (see the SoundSpec followup in docs/followups.md).
+    #: Use the v2 effect forms (language-string text, asset-package
+    #: sounds); the response's package manifest covers what they
+    #: reference.
     #:
     #: :meta private:
     immediate_client_effects: Annotated[
@@ -279,6 +282,16 @@ class Local(Action):
 
     #: Values to assign into the page's state (see :attr:`Page.state`).
     sets: Annotated[dict | None, IOAttrs('ss', store_default=False)] = None
+
+    #: With :attr:`close_window`, values to assign into the state of the
+    #: page being returned to, which then refreshes with them; how a
+    #: picker opened in a window of its own hands back what was picked.
+    #: Carries the state's type id (``_t``), and is applied only if the
+    #: returned-to page's state is of that type. Build it with
+    #: :meth:`bacommon.docui.routes.DocUIState.assign_on_return`.
+    return_sets: Annotated[dict | None, IOAttrs('rs', store_default=False)] = (
+        None
+    )
 
     @override
     @classmethod
@@ -513,10 +526,41 @@ class Text(Decoration):
         TextImage | None, IOAttrs('ir', store_default=False)
     ] = None
 
+    #: Lets client-effects animate this decoration (see
+    #: ``bacommon.clienteffect.KeyframeAnimation``). Everything in
+    #: a page sharing an id animates together.
+    anim_id: Annotated[str | None, IOAttrs('ai', store_default=False)] = None
+
     @override
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
         return DecorationTypeID.TEXT
+
+
+@ioprepped
+@dataclass
+class ImageNinePatch:
+    """Draws an :class:`Image` as a 9-patch filling its box exactly.
+
+    The texture splits into corners, edges and a middle; corners keep
+    their drawn size, edges and middle fill what's between. Tint and
+    mask textures share the texture's layout.
+    """
+
+    #: Where the texture splits, as fractions of its width/height from
+    #: the left, bottom, right and top. 0.5 on each side of an axis
+    #: makes that axis's middle a single texel line.
+    insets: Annotated[tuple[float, float, float, float], IOAttrs('i')]
+
+    #: How big those edges draw, in the image's own units (as its
+    #: ``size``), same order. A pair too big for the box shrinks to fit.
+    borders: Annotated[tuple[float, float, float, float], IOAttrs('b')]
+
+    #: Repeat the horizontal (``tile_h``) or vertical (``tile_v``) middle
+    #: at the corners' scale -- fitted to a whole number of copies --
+    #: rather than stretching it. Its art must tile seamlessly.
+    tile_h: Annotated[bool, IOAttrs('th', store_default=False)] = False
+    tile_v: Annotated[bool, IOAttrs('tv', store_default=False)] = False
 
 
 @ioprepped
@@ -570,10 +614,28 @@ class Image(Decoration):
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
 
+    #: Tint through the tint texture's blue channel (as
+    #: :attr:`tint_color` is red and :attr:`tint2_color` green). Clients
+    #: before this field ignore it.
+    tint3_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('tc3', store_default=False)
+    ] = None
+
+    #: Draw as a 9-patch (see :class:`ImageNinePatch`). Clients before
+    #: this field ignore it and stretch the whole texture over the box.
+    nine_patch: Annotated[
+        ImageNinePatch | None, IOAttrs('np', store_default=False)
+    ] = None
+
     #: Show this image's bounds; useful during development. Worth
     #: having separately from the art because a texture with a
     #: transparent margin gives no clue where its box really is.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    #: Lets client-effects animate this decoration (see
+    #: ``bacommon.clienteffect.KeyframeAnimation``). Everything in
+    #: a page sharing an id animates together.
+    anim_id: Annotated[str | None, IOAttrs('ai', store_default=False)] = None
 
     @override
     @classmethod
@@ -612,6 +674,11 @@ class Depiction(Decoration):
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    #: Lets client-effects animate this decoration (see
+    #: ``bacommon.clienteffect.KeyframeAnimation``). Everything in
+    #: a page sharing an id animates together.
+    anim_id: Annotated[str | None, IOAttrs('ai', store_default=False)] = None
 
     @override
     @classmethod
@@ -734,6 +801,11 @@ class Button:
 
     #: Custom widget id. Prefixed with the window id; unique within window.
     widget_id: Annotated[str | None, IOAttrs('i', store_default=False)] = None
+
+    #: Lets client-effects animate this button (see
+    #: ``bacommon.clienteffect.KeyframeAnimation``); give its
+    #: decorations the same id to have them move with it.
+    anim_id: Annotated[str | None, IOAttrs('ai', store_default=False)] = None
 
     #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -2384,10 +2456,9 @@ class Response(DocUIResponse):
     ] = None
 
     #: Effects to run on the client when this response is initially
-    #: received (not re-run on automatic page refreshes). Note that
-    #: effect payloads are not yet v2-native — text in them is
-    #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
-    #: concept (see the SoundSpec followup in docs/followups.md).
+    #: received (not re-run on automatic page refreshes). Use the v2
+    #: effect forms (language-string text, asset-package sounds); the
+    #: response's package manifest covers what they reference.
     #:
     #: :meta private:
     client_effects: Annotated[

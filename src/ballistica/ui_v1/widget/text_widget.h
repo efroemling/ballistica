@@ -50,6 +50,12 @@ class TextWidget : public Widget {
   /// of the legacy Lstr resource-string behavior). Cleared by any
   /// subsequent SetText().
   void SetLangStr(std::shared_ptr<const base::LangStr> val);
+
+  /// Whether our text is a time-varying language-string (a live
+  /// countdown, etc.) that re-renders itself as time passes.
+  auto IsTimeVarying() const -> bool {
+    return lang_str_next_change_time_.has_value();
+  }
   void set_color(float r, float g, float b, float a) {
     color_r_ = r;
     color_g_ = g;
@@ -145,6 +151,8 @@ class TextWidget : public Widget {
   auto ShouldUseStringEditor_() const -> bool;
   void InvokeStringEditor_();
   void UpdateTranslation_();
+  void CheckLangStrTickCost_(microsecs_t start_time,
+                             base::TextureAsset* os_texture_before);
   void PrefetchTextMeasures_();
   void CalcTextOrigin_(float l, float r, float b, float t, float* x_offset,
                        float* y_offset, base::TextMesh::HAlign* align_h,
@@ -219,6 +227,11 @@ class TextWidget : public Widget {
   std::string text_raw_;
   std::string text_translated_;
   std::shared_ptr<const base::LangStr> lang_str_;
+  // When a time-varying lang_str_ (a live countdown, etc.) is next due
+  // to read differently, in app-time millisecs; empty for static text.
+  std::optional<millisecs_t> lang_str_next_change_time_;
+  // Set while a re-evaluation is one of those scheduled ticks.
+  bool lang_str_ticking_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};

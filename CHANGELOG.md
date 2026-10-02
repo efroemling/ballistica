@@ -1,4 +1,4 @@
-### 1.8.0 (build 23026, api 9, 2026-10-01)
+### 1.8.0 (build 23028, api 9, 2026-10-02)
 - `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
   text) whenever an edit is applied: a string-edit dialog closing with a value,
   inline editing ending via return or focus leaving the widget, or the clear
@@ -179,6 +179,10 @@
 - You can now click to place the cursor in direct-input text boxes.
 - Game music now automatically stops playing anytime external music is playing
   on Android 8.1+ (and upcoming iOS) devices.
+- Private/LAN parties hosted from the game now verify joiners' accounts
+  when possible (so their cloud profiles come along) without requiring it:
+  joiners who are signed out or offline, or a host that is offline, still
+  connect just as before. Public parties still require sign-in.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

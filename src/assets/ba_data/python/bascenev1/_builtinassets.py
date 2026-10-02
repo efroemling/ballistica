@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261001d`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261002b`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 368
+# ba_meta require asset-package 387
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261001d
-_ASSET_PACKAGE = ApverNum(368)
+# a-0.babuiltinassets.261002b
+_ASSET_PACKAGE = ApverNum(387)
 
 if TYPE_CHECKING:
     import datetime
@@ -896,6 +896,14 @@ if TYPE_CHECKING:
                 "{name} is chat-blocked for # seconds."
             """
 
+        #: ::
+        #:
+        #:     Error screen-message when a player sends a chat message longer
+        #:     than the host allows.
+        #:
+        #:     English: "Message is too long."
+        chat_message_too_long: LangStr
+
         def join_cooldown(self, *, seconds: int) -> LangStr:
             """
             ::
@@ -1543,8 +1551,8 @@ if TYPE_CHECKING:
     #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 132 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 127 more). Full list in source.
+    #: The ``strings`` group - 133 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 128 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 28 assets (``account_v2_icon``, ``black``,
@@ -1657,6 +1665,7 @@ _TREE = {
         },
         'session': {
             'chat_blocked': ('seconds', 'name'),
+            'chat_message_too_long': (),
             'join_cooldown': ('seconds',),
             'kick_idle_kicked': ('name',),
             'kick_idle_warning': ('seconds', 'name'),

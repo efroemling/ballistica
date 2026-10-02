@@ -4,7 +4,6 @@
 
 import json
 import asyncio
-import datetime
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
@@ -13,6 +12,7 @@ from babase._appsubsystem import AppSubsystem
 from babase._logging import applog, assetmanagerlog
 
 if TYPE_CHECKING:
+    import datetime
     from typing import Any, Callable, Sequence
 
     import babase
@@ -190,58 +190,11 @@ async def resolve_langstrs(
 class _NativeLstrMaker:
     """Callable leaf: builds a native LangStr from keyword subs."""
 
-    __slots__ = ('_apvernum', '_name', '_display_kinds')
+    __slots__ = ('_apvernum', '_name')
 
-    def __init__(
-        self,
-        apvernum: ApverNum,
-        name: str,
-        display_kinds: dict[str, str] | None = None,
-    ) -> None:
+    def __init__(self, apvernum: ApverNum, name: str) -> None:
         self._apvernum = apvernum
         self._name = name
-        self._display_kinds = display_kinds
-
-    def _format_display_sub(
-        self, key: str, val: str | int | babase.LangStr
-    ) -> str | int | babase.LangStr:
-        """Preformat one display-formatted sub value for the current locale.
-
-        The native language table substitutes plain text; it has no
-        formatter hook, so a display-formatted param (a byte count
-        rendered as "1.2 GB") gets its final text here, at LangStr
-        construction. The known trade against true display-time
-        rendering: an already-built LangStr keeps the construction
-        locale's rendering until rebuilt (the language-change cascade
-        rebuilds visible UI, so this matches how other dynamic values
-        behave). Fail-soft: any render problem falls back to the raw
-        value, so UI shows an unformatted number rather than an error.
-        """
-        from bacommon.langstr import render_display_param
-
-        assert self._display_kinds is not None
-        if isinstance(val, _babase.LangStr):
-            return val
-        try:
-            locale = _babase.app.locale.current_locale
-            return render_display_param(
-                self._display_kinds[key],
-                val,
-                locale,
-                _babase.app.assets.get_package_components_cached(
-                    self._apvernum, locale
-                ),
-            )
-        except Exception:
-            applog.warning(
-                'Error display-formatting sub %r of %s:%s; passing raw'
-                ' value through.',
-                key,
-                self._apvernum,
-                self._name,
-                exc_info=True,
-            )
-            return val
 
     def __call__(
         self,
@@ -250,40 +203,29 @@ class _NativeLstrMaker:
             str | int | babase.LangStr | datetime.datetime | datetime.timedelta
         ),
     ) -> babase.LangStr:
-        from bacommon.langstr import LangStrSpecResource, time_sub_millis
+        from bacommon.langstr import LangStrSpecResource, convert_time_subs
 
-        # Time-typed values (duration params take a timedelta or an
-        # aware datetime; the ms-int wire form is an implementation
-        # detail) convert first, sharing one ``now`` so a batch of
-        # renders can't drift. ``now`` can never shadow a real param:
-        # the brief grammar reserves the name for exactly this use.
-        converted: dict[str, str | int | babase.LangStr] = {}
-        for key, val in subs.items():
-            if isinstance(val, (datetime.datetime, datetime.timedelta)):
-                if now is None and isinstance(val, datetime.datetime):
-                    from efro.util import utc_now
-
-                    now = utc_now()
-                converted[key] = time_sub_millis(val, now)
-            else:
-                converted[key] = val
-
-        kinds = self._display_kinds
-        if kinds:
-            converted = {
-                key: (
-                    self._format_display_sub(key, val) if key in kinds else val
-                )
-                for key, val in converted.items()
-            }
+        # Display-formatted params ({size|data_size}, {t|duration})
+        # pass through raw: native evaluation formats them at display
+        # time from the kinds in the language tables. Time-typed values
+        # convert per convert_time_subs -- notably a datetime with no
+        # ``now`` stays a live moment. ``now`` can never shadow a real
+        # param: the brief grammar reserves the name for exactly this.
         return _native_from_spec(
             LangStrSpecResource(
                 self._apvernum,
                 self._name,
-                {
-                    key: (val.spec if isinstance(val, _babase.LangStr) else val)
-                    for key, val in converted.items()
-                },
+                convert_time_subs(
+                    {
+                        key: (
+                            val.spec
+                            if isinstance(val, _babase.LangStr)
+                            else val
+                        )
+                        for key, val in subs.items()
+                    },
+                    now,
+                ),
             )
         )
 
@@ -299,7 +241,7 @@ class LangStrDir:
     guarantees these strings are locally displayable).
     """
 
-    __slots__ = ('_apvernum', '_tree', '_prefix', '_display_kinds')
+    __slots__ = ('_apvernum', '_tree', '_prefix')
 
     def __init__(
         self,
@@ -308,14 +250,14 @@ class LangStrDir:
         prefix: str = '',
         display_kinds: dict[str, dict[str, str]] | None = None,
     ) -> None:
+        # ``display_kinds`` (the ``_DISPLAY_KINDS`` map generated
+        # modules bake) is no longer needed: native evaluation reads
+        # param kinds from the language tables at display time. Still
+        # accepted so already-generated modules keep working.
+        del display_kinds
         self._apvernum = apvernum
         self._tree = tree
         self._prefix = prefix
-        #: ``{leaf-path: {param: display-kind expression}}`` baked into
-        #: the generated module for display-formatted params
-        #: (``{size|data_size}``); absent on formatter-free packages
-        #: and on modules generated before this existed.
-        self._display_kinds = display_kinds
 
     def __getattr__(
         self, name: str
@@ -326,9 +268,7 @@ class LangStrDir:
             raise AttributeError(name) from None
         full = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return LangStrDir(
-                self._apvernum, child, full, display_kinds=self._display_kinds
-            )
+            return LangStrDir(self._apvernum, child, full)
         # A leaf access is the point a string actually gets read out of a
         # package, so gate it the same way loadable assets are. Strings
         # need their own check: they resolve through the native language
@@ -345,15 +285,7 @@ class LangStrDir:
             from bacommon.langstr import LangStrSpecResource
 
             return _native_from_spec(LangStrSpecResource(self._apvernum, full))
-        return _NativeLstrMaker(
-            self._apvernum,
-            full,
-            display_kinds=(
-                None
-                if self._display_kinds is None
-                else self._display_kinds.get(full)
-            ),
-        )
+        return _NativeLstrMaker(self._apvernum, full)
 
 
 def get_legacy_langdata() -> dict[str, Any]:
@@ -535,8 +467,13 @@ class LanguageSubsystem(AppSubsystem):
         # migration Step A); switching to other locales lands in Step B.
         from babase._asset_packages import loaded_asset_package_apvernums
 
-        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
-        _babase.reload_language(loaded_asset_package_apvernums(), plural_locale)
+        curlocale = _babase.app.locale.current_locale.resolved
+        _babase.reload_language(
+            loaded_asset_package_apvernums(),
+            curlocale.locale.value,
+            decimal_mark=curlocale.decimal_mark,
+            duration_separator=curlocale.duration_separator,
+        )
 
         if switched and print_change:
             # Safe up-call: babase is fully imported by the time a

@@ -14,7 +14,12 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
-from bauiv1lib.docui.prep._types import DecorationPrep, MenuPrep
+from bauiv1lib.docui.prep._types import (
+    AnimTargetKind,
+    AnimTargetPrep,
+    DecorationPrep,
+    MenuPrep,
+)
 from bauiv1lib.docui.prep._depiction import prep_depiction
 
 if TYPE_CHECKING:
@@ -217,6 +222,18 @@ def prep_text(
                 textures={},
                 meshes={},
                 highlight=highlight and text.highlight,
+                anim=(
+                    None
+                    if text.anim_id is None
+                    else AnimTargetPrep(
+                        anim_id=text.anim_id,
+                        kind=AnimTargetKind.TEXT,
+                        position=(xoffs, yoffs),
+                        scale=text.scale * bscale,
+                        opacity=1.0 if text.color is None else text.color[3],
+                        color=None if text.color is None else text.color[:3],
+                    )
+                ),
             )
         )
     # Draw square around max width/height in debug mode.
@@ -388,6 +405,20 @@ def _prep_text_with_images(
             textures={},
             meshes={},
             highlight=highlight,
+            # The text and its images all animate as the text's id
+            # (each piece about its own center).
+            anim=(
+                None
+                if text.anim_id is None
+                else AnimTargetPrep(
+                    anim_id=text.anim_id,
+                    kind=AnimTargetKind.TEXT,
+                    position=(minx + leftw * scale, centery),
+                    scale=scale,
+                    opacity=1.0 if text.color is None else text.color[3],
+                    color=None if text.color is None else text.color[:3],
+                )
+            ),
         )
     )
 
@@ -402,19 +433,20 @@ def _prep_text_with_images(
         if img is None:
             continue
         boxy = centery - _text_image_box(img)[1] * scale * 0.5
+        imgpos = (
+            boxx + (img.offset[0] - img.insets[0] * img.size[0]) * scale,
+            boxy + (img.offset[1] - img.insets[1] * img.size[1]) * scale,
+        )
+        imgsize = (img.size[0] * scale, img.size[1] * scale)
+        imgopacity = 1.0 if img.color is None else img.color[3]
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
                     bui.imagewidget,
-                    position=(
-                        boxx
-                        + (img.offset[0] - img.insets[0] * img.size[0]) * scale,
-                        boxy
-                        + (img.offset[1] - img.insets[1] * img.size[1]) * scale,
-                    ),
-                    size=(img.size[0] * scale, img.size[1] * scale),
+                    position=imgpos,
+                    size=imgsize,
                     color=None if img.color is None else img.color[:3],
-                    opacity=1.0 if img.color is None else img.color[3],
+                    opacity=imgopacity,
                     transition_delay=tdelay,
                     transition_type='scale',
                     depth_range=text.depth_range,
@@ -422,6 +454,17 @@ def _prep_text_with_images(
                 textures={'texture': _refstr(img.texture)},
                 meshes={},
                 highlight=highlight,
+                anim=(
+                    None
+                    if text.anim_id is None
+                    else AnimTargetPrep(
+                        anim_id=text.anim_id,
+                        kind=AnimTargetKind.IMAGE,
+                        position=imgpos,
+                        size=imgsize,
+                        opacity=imgopacity,
+                    )
+                ),
             )
         )
 
@@ -472,6 +515,9 @@ def prep_image(
     if image.mesh_transparent is not None:
         meshes['mesh_transparent'] = _refstr(image.mesh_transparent)
 
+    # 9-patch borders are in the image's own units, so they scale with
+    # its size.
+    npatch = image.nine_patch
     out_decoration_preps.append(
         DecorationPrep(
             call=partial(
@@ -482,6 +528,16 @@ def prep_image(
                 opacity=1.0 if image.color is None else image.color[3],
                 tint_color=image.tint_color,
                 tint2_color=image.tint2_color,
+                tint3_color=image.tint3_color,
+                nine_patch_insets=None if npatch is None else npatch.insets,
+                nine_patch_borders=(
+                    None
+                    if npatch is None
+                    else tuple(b * bscale for b in npatch.borders)
+                ),
+                nine_patch_tile=(
+                    None if npatch is None else (npatch.tile_h, npatch.tile_v)
+                ),
                 transition_delay=tdelay,
                 transition_type='scale',
                 depth_range=image.depth_range,
@@ -489,6 +545,17 @@ def prep_image(
             textures=textures,
             meshes=meshes,
             highlight=highlight and image.highlight,
+            anim=(
+                None
+                if image.anim_id is None
+                else AnimTargetPrep(
+                    anim_id=image.anim_id,
+                    kind=AnimTargetKind.IMAGE,
+                    position=(xoffsfin, yoffsfin),
+                    size=(widthfull, heightfull),
+                    opacity=1.0 if image.color is None else image.color[3],
+                )
+            ),
         )
     )
 

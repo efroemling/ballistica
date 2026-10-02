@@ -39,6 +39,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from efro.error import CommunicationError
+from efro.util import strip_exception_tracebacks
 from efro.dataclassio import (
     ioprepped,
     IOAttrs,
@@ -415,6 +416,12 @@ class CloudProfiles:
                 len(response.profiles),
             )
 
+        prev = self._cache
+        changed = (
+            prev is None
+            or prev.account_id != account_id
+            or prev.profiles != profiles
+        )
         self._cache = CloudProfilesCacheData(
             account_id=account_id,
             profiles_state=response.profiles_state,
@@ -441,6 +448,14 @@ class CloudProfiles:
             response.profiles_state,
             len(profiles),
         )
+
+        # An open lobby built its choosers from the old list; have it
+        # rebuild (the same path legacy-profile edits take). Typically
+        # this is the player having just edited a profile via the
+        # lobby's 'edit' entry. Skipped when only the state moved
+        # (re-compose with identical results).
+        if changed:
+            _notify_profiles_changed()
 
     def _get_cache_path(self) -> str:
         if self._cache_path is None:
@@ -474,6 +489,21 @@ def _valid_profiles(profiles: list[str]) -> list[str]:
         except Exception:
             pass
     return out
+
+
+def _notify_profiles_changed() -> None:
+    """Tell the foreground session (its lobby) our profiles changed."""
+    import bascenev1 as bs
+
+    try:
+        session = bs.get_foreground_host_session()
+        if session is not None:
+            session.handlemessage(bs.PlayerProfilesChangedMessage())
+    except Exception as exc:
+        babase.accountlog.exception(
+            'Error notifying session of cloud profile changes.'
+        )
+        strip_exception_tracebacks(exc)
 
 
 def _encode_cache(data: CloudProfilesCacheData) -> str:

@@ -10,6 +10,7 @@ import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
+from bauiv1 import _uiv1assets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -281,7 +282,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=_classicassets.textures.lock.get(),
+                            texture=_uiv1assets.textures.lock.get(),
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0

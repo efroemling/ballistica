@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccatalogassets.260929a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261002a`` (bascenev1).
 
 The catalog of classic content as menus and the store present it: character
 names and icons, map names and previews, game names and descriptions, co-op
@@ -13,7 +13,7 @@ wait on it.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 312
+# ba_meta require asset-package 378
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -27,12 +27,35 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccatalogassets.260929a
-_ASSET_PACKAGE = ApverNum(312)
+# a-0.baclassiccatalogassets.261002a
+_ASSET_PACKAGE = ApverNum(378)
 
 if TYPE_CHECKING:
-    from bascenev1._assetref import MeshHandle, TextureHandle
+    from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle
     from babase import LangStr
+
+    class AudioGroup:
+        """
+        ::
+
+            Sounds for presenting classic content: the chest window's open
+            sequence (rev-up, cork pop, and the cheering voice lines that greet
+            a chest popping open).
+
+            See source for the full asset list.
+        """
+
+        aww: SoundHandle
+        cork_pop2: SoundHandle
+        gasp: SoundHandle
+        nice: SoundHandle
+        ooh: SoundHandle
+        rev_up: SoundHandle
+        woo: SoundHandle
+        woo2: SoundHandle
+        woo3: SoundHandle
+        wow: SoundHandle
+        yeah: SoundHandle
 
     class MeshesGroup:
         """
@@ -290,6 +313,25 @@ if TYPE_CHECKING:
         #:
         #:     English: "Zoe"
         zoe: LangStr
+
+    class StringsCoopGroup:
+        """
+        ::
+
+            How menus present co-op levels and tournaments (player counts and
+            the like).
+
+            See source for the full asset list.
+        """
+
+        def player_count_abbreviated(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Abbreviated player-count badge (number + "p" for players).
+
+                English: "{count}p"
+            """
 
     class StringsCoopLevelsGroup:
         """
@@ -1107,6 +1149,7 @@ if TYPE_CHECKING:
         """
 
         characters: StringsCharactersGroup
+        coop: StringsCoopGroup
         coop_levels: StringsCoopLevelsGroup
         game_descriptions: StringsGameDescriptionsGroup
         game_names: StringsGameNamesGroup
@@ -1119,7 +1162,8 @@ if TYPE_CHECKING:
             Store-facing presentation art for classic content: every character
             icon and its color mask, the character icon mask, every map preview
             and the map preview mask, and the coin/ticket/chest icons display
-            items are drawn with.
+            items are drawn with. Also the opened-chest art (icon and tint mask)
+            the chest window shows a chest popping open with.
 
             See source for the full asset list.
         """
@@ -1146,6 +1190,8 @@ if TYPE_CHECKING:
         character_icon_mask: TextureHandle
         chest_icon: TextureHandle
         chest_icon_tint: TextureHandle
+        chest_open_icon: TextureHandle
+        chest_open_icon_tint: TextureHandle
         coin: TextureHandle
         courtyard_preview: TextureHandle
         cowboy_icon: TextureHandle
@@ -1210,22 +1256,39 @@ if TYPE_CHECKING:
         zoe_icon: TextureHandle
         zoe_icon_color_mask: TextureHandle
 
+    #: The ``audio`` group - 11 assets (``aww``, ``cork_pop2``, ``gasp``,
+    #: ``nice``, ``ooh``, and 6 more). Full list in source.
+    audio: AudioGroup
+
     #: The ``meshes`` group - 2 assets (``level_select_button_opaque``,
     #: ``level_select_button_transparent``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 126 strings (``characters``, ``coop_levels``,
-    #: ``game_descriptions``, ``game_names``, ``map_names``, and 121 more). Full
-    #: list in source.
+    #: The ``strings`` group - 127 strings (``characters``, ``coop``,
+    #: ``coop_levels``, ``game_descriptions``, ``game_names``, and 122 more).
+    #: Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 85 assets (``action_hero_icon``,
+    #: The ``textures`` group - 87 assets (``action_hero_icon``,
     #: ``action_hero_icon_color_mask``, ``agent_icon``,
-    #: ``agent_icon_color_mask``, ``ali_icon``, and 80 more). Full list in
+    #: ``agent_icon_color_mask``, ``ali_icon``, and 82 more). Full list in
     #: source.
     textures: TexturesGroup
 
 _TREE = {
+    'audio': {
+        'aww': 's',
+        'cork_pop2': 's',
+        'gasp': 's',
+        'nice': 's',
+        'ooh': 's',
+        'rev_up': 's',
+        'woo': 's',
+        'woo2': 's',
+        'woo3': 's',
+        'wow': 's',
+        'yeah': 's',
+    },
     'meshes': {
         'level_select_button_opaque': 'm',
         'level_select_button_transparent': 'm',
@@ -1257,6 +1320,7 @@ _TREE = {
             'todd_mcburton': (),
             'zoe': (),
         },
+        'coop': {'player_count_abbreviated': ('count',)},
         'coop_levels': {
             'infinite_onslaught': (),
             'infinite_runaround': (),
@@ -1391,6 +1455,8 @@ _TREE = {
         'character_icon_mask': 't',
         'chest_icon': 't',
         'chest_icon_tint': 't',
+        'chest_open_icon': 't',
+        'chest_open_icon_tint': 't',
         'coin': 't',
         'courtyard_preview': 't',
         'cowboy_icon': 't',
@@ -1459,6 +1525,7 @@ _TREE = {
 
 
 if not TYPE_CHECKING:
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
     meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
     textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

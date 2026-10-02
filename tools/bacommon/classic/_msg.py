@@ -33,7 +33,9 @@ class GetClassicLeaguePresidentButtonInfoMessage(Message):
 class GetClassicLeaguePresidentButtonInfoResponse(Response):
     """Here's that info about the president you asked for boss."""
 
-    # Lstr for the name shown on the button.
+    #: Display text for the name shown on the button (an account's
+    #: logo glyph + tag), shown verbatim; not an Lstr or translation key.
+    #: ``None`` when there's no president.
     name: Annotated[str | None, IOAttrs('n')]
 
 

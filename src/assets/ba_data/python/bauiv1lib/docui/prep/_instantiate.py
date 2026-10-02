@@ -15,6 +15,26 @@ if TYPE_CHECKING:
     from bauiv1lib.docui._window import DocUIWindow
 
 
+def _instantiate_row_bands(
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+) -> None:
+    """Create a (non-section) row's header/footer band decorations.
+
+    A band's art may reach behind its own row's widgets (a backdrop
+    around a button, say), so it draws behind everything else on the
+    page. The page's children share one depth slice, where overlaps
+    resolve by depth rather than draw order: without this, art laid
+    under a button tints its body. (Section backings draw behind as
+    well; equal-depth ties go by draw order, and those come first.)
+    """
+    instantiate_decorations(
+        rowprep.decorations,
+        parent=parent,
+        anim_targets=window.anim_targets,
+        draw_behind=True,
+    )
+
+
 def _instantiate_button_row(
     rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
 ) -> tuple[bui.Widget, list[bui.Widget]]:
@@ -23,9 +43,9 @@ def _instantiate_button_row(
     Returns the row's horizontal scroll widget and its buttons, left
     to right.
     """
+    _instantiate_row_bands(rowprep, parent=parent, window=window)
     assert rowprep.hscrollcall is not None
     hscroll = rowprep.hscrollcall(parent=parent)
-    instantiate_decorations(rowprep.decorations, parent=parent)
     buttons: list[bui.Widget] = []
     assert rowprep.hsubcall is not None
     hsub = rowprep.hsubcall(parent=hscroll)
@@ -57,7 +77,11 @@ def _instantiate_row(
         # neighboring row it attached to keeps it in view). The
         # decorations come first: a card's backing is among them,
         # and must sit beneath the heading's text.
-        instantiate_decorations(rowprep.decorations, parent=subcontainer)
+        instantiate_decorations(
+            rowprep.decorations,
+            parent=subcontainer,
+            anim_targets=window.anim_targets,
+        )
         for uicall in rowprep.titlecalls:
             uicall(parent=subcontainer)
         return
@@ -68,7 +92,7 @@ def _instantiate_row(
         # a '-'/'+' pair for a number row) stand in for the row's
         # 'buttons' as far as navigation goes, with the first also
         # standing in for the row itself.
-        instantiate_decorations(rowprep.decorations, parent=subcontainer)
+        _instantiate_row_bands(rowprep, parent=subcontainer, window=window)
         controls = instantiate_control_row(
             rowprep, parent=subcontainer, window=window
         )

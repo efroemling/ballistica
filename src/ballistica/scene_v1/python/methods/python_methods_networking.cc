@@ -299,14 +299,18 @@ static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
-  int version;
-  static const char* kwlist[] = {"enable", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "p", const_cast<char**>(kwlist), &enable, &version)) {
+  int optional{};
+  static const char* kwlist[] = {"enable", "optional", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p|$p",
+                                   const_cast<char**>(kwlist), &enable,
+                                   &optional)) {
     return nullptr;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->set_require_client_authentication(static_cast<bool>(enable));
+  appmode->set_client_auth_mode(!enable ? classic::ClientAuthMode::kOff
+                                : optional
+                                    ? classic::ClientAuthMode::kOptional
+                                    : classic::ClientAuthMode::kRequired);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -316,9 +320,14 @@ static PyMethodDef PySetAuthenticateClientsDef = {
     (PyCFunction)PySetAuthenticateClients,  // method
     METH_VARARGS | METH_KEYWORDS,           // flags
 
-    "set_authenticate_clients(enable: bool) -> None\n"
+    "set_authenticate_clients(enable: bool, *, optional: bool = False)"
+    " -> None\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    "With optional, auth is offered (while we're online) but not\n"
+    "required: joiners that can authenticate do, anyone else joins\n"
+    "unauthenticated. Affects connections made from then on.",
 };
 
 // ------------------------------- set_admins ----------------------------------

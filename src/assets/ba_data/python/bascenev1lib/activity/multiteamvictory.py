@@ -82,9 +82,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 self._ffa_top_player_info[1] = self._ffa_top_player_info[
                     2
                 ].getname()
-                self._ffa_top_player_info[2] = self._ffa_top_player_info[
-                    2
-                ].get_icon()
+                top_prec = self._ffa_top_player_info[2]
+                self._ffa_top_player_info[2] = (
+                    top_prec.get_icon_depiction() or top_prec.get_icon()
+                )
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
@@ -193,7 +194,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 tval += 4 * t_incr
 
                 Image(
-                    mvp.get_icon(),
+                    mvp.get_icon_depiction() or mvp.get_icon(),
                     position=(230, ts_height / 2 - 55 + 14 - 5),
                     scale=(70, 70),
                     transition=Image.Transition.IN_LEFT,
@@ -247,7 +248,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             tval += 4 * t_incr
 
             Image(
-                mvp.get_icon(),
+                mvp.get_icon_depiction() or mvp.get_icon(),
                 position=(233, ts_height / 2 - 150 - 30 - 46 + 25 + v_extra),
                 scale=(50, 50),
                 transition=Image.Transition.IN_LEFT,
@@ -300,7 +301,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             tval += 4 * t_incr
             Image(
-                mkp.get_icon(),
+                mkp.get_icon_depiction() or mkp.get_icon(),
                 position=(233, ts_height / 2 - 300 - 30 - 46 + 25 + v_extra),
                 scale=(50, 50),
                 transition=Image.Transition.IN_LEFT,
@@ -350,7 +351,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             tdelay -= 4 * t_incr
 
             Image(
-                prec.get_icon(),
+                prec.get_icon_depiction() or prec.get_icon(),
                 position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
                 scale=(30, 30),
                 transition=Image.Transition.IN_LEFT,
@@ -397,10 +398,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             offs_v = -80
             assert isinstance(self.session, bs.MultiTeamSession)
             series_length = self.session.get_ffa_series_length()
-            icon: dict | None
+            icon: bs.Depiction | dict | None
             # Pull live player info if they're still around.
             if len(team.players) == 1:
-                icon = team.players[0].get_icon()
+                icon = (
+                    team.players[0].get_icon_depiction()
+                    or team.players[0].get_icon()
+                )
                 player_name = team.players[0].getname(full=True, icon=False)
             # Otherwise use the special info we stored when we came in.
             elif (

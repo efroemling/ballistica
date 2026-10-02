@@ -43,17 +43,29 @@ class RespawnIcon:
 
         offs = offs_extra + index * -53
         icon = player.get_icon()
-        texture = icon['texture']
         h_offs = -10
         ipos = (-40 - h_offs if on_right else 40 + h_offs, -180 + offs)
-        self._image: bs.NodeActor | None = bs.NodeActor(
-            bs.newnode(
+        depiction = player.get_icon_depiction()
+        if depiction is not None:
+            inode = bs.newnode(
+                'depictiondisplay',
+                attrs={
+                    'depiction': depiction,
+                    'position': ipos,
+                    'scale': (32, 32),
+                    'opacity': 1.0,
+                    'attach': 'topRight' if on_right else 'topLeft',
+                },
+            )
+        else:
+            inode = bs.newnode(
                 'image',
                 attrs={
-                    'texture': texture,
+                    'texture': icon['texture'],
                     'tint_texture': icon['tint_texture'],
                     'tint_color': icon['tint_color'],
                     'tint2_color': icon['tint2_color'],
+                    'tint3_color': icon.get('tint3_color', (1.0, 1.0, 1.0)),
                     'mask_texture': mask_tex,
                     'position': ipos,
                     'scale': (32, 32),
@@ -62,7 +74,7 @@ class RespawnIcon:
                     'attach': 'topRight' if on_right else 'topLeft',
                 },
             )
-        )
+        self._image: bs.NodeActor | None = bs.NodeActor(inode)
 
         assert self._image
         assert self._image.node

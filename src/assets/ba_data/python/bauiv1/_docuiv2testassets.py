@@ -1,10 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.badocuiv2testassets.260911`` (bauiv1)."""
+"""Asset-package wrapper for ``a-0.badocuiv2testassets.261002`` (bauiv1)."""
 
 # ba_meta require api 9
-# ba_meta require asset-package 11
+# ba_meta require asset-package 386
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -14,12 +14,15 @@ from typing import TYPE_CHECKING
 
 from bacommon.assetpackage import ApverNum
 
+from bauiv1._assetref import AssetGroup
+
 from babase import LangStrDir
 
-# a-0.badocuiv2testassets.260911
-_ASSET_PACKAGE = ApverNum(11)
+# a-0.badocuiv2testassets.261002
+_ASSET_PACKAGE = ApverNum(386)
 
 if TYPE_CHECKING:
+    from bauiv1._assetref import TextureHandle
     from babase import LangStr
 
     class StringsCloudGroup:
@@ -613,9 +616,26 @@ if TYPE_CHECKING:
         nav: StringsNavGroup
         web: StringsWebGroup
 
+    class TexturesGroup:
+        """
+        ::
+
+            Textures for the docui-v2 test UI: test art for depictions (a
+            striped 9-patch capsule and its rgb tint texture).
+
+            See source for the full asset list.
+        """
+
+        capsule_stripes: TextureHandle
+        capsule_stripes_tint: TextureHandle
+
     #: The ``strings`` group - 70 strings (``cloud``, ``common``, ``effects``,
     #: ``items``, ``layout``, and 65 more). Full list in source.
     strings: StringsGroup
+
+    #: The ``textures`` group - 2 assets (``capsule_stripes``,
+    #: ``capsule_stripes_tint``). Full list in source.
+    textures: TexturesGroup
 
 _TREE = {
     'strings': {
@@ -703,9 +723,11 @@ _TREE = {
             'web_post': (),
             'web_test': (),
         },
-    }
+    },
+    'textures': {'capsule_stripes': 't', 'capsule_stripes_tint': 't'},
 }
 
 
 if not TYPE_CHECKING:
     strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

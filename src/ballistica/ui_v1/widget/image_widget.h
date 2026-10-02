@@ -9,6 +9,7 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 #include "ballistica/base/assets/texture_asset.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -50,6 +51,19 @@ class ImageWidget : public Widget {
     tint2_color_green_ = g;
     tint2_color_blue_ = b;
   }
+  void set_tint3_color(float r, float g, float b) {
+    tint3_color_red_ = r;
+    tint3_color_green_ = g;
+    tint3_color_blue_ = b;
+  }
+
+  /// Draw our texture as a 9-patch filling our box exactly. ``insets``
+  /// says where the texture splits (fractions of its width/height from
+  /// the left, bottom, right, and top); ``borders`` how big those
+  /// edges draw (in our own units, same order); ``tile_h``/``tile_v``
+  /// whether the middle repeats (tile-fit) rather than stretches.
+  void SetNinePatch(const float* insets, const float* borders, bool tile_h,
+                    bool tile_v);
   void set_draw_controller_mult(float val) {
     draw_controller_mult_ = std::max(0.0f, std::min(1.0f, val));
   }
@@ -97,6 +111,10 @@ class ImageWidget : public Widget {
                       millisecs_t current_time);
   auto DrawBrightness_(millisecs_t current_time) const -> float;
 
+  /// Our 9-patch mesh for the current size (built on demand), centered
+  /// on the origin and spanning exactly our box.
+  auto NinePatchMesh_() -> base::NinePatchMesh*;
+
   std::unique_ptr<DepictionSlot> depiction_slot_;
   TransitionType transition_type_{TransitionType::kInLeft};
   float tilt_scale_{1.0f};
@@ -127,10 +145,21 @@ class ImageWidget : public Widget {
   float tint2_color_red_{1.0f};
   float tint2_color_green_{1.0f};
   float tint2_color_blue_{1.0f};
+  float tint3_color_red_{1.0f};
+  float tint3_color_green_{1.0f};
+  float tint3_color_blue_{1.0f};
   float opacity_{1.0f};
   float draw_controller_mult_{1.0f};
   float flatness_{0.0f};
   float rotate_{0.0f};
+  bool nine_patch_{};
+  float nine_patch_insets_[4]{};
+  float nine_patch_borders_[4]{};
+  bool nine_patch_tile_h_{};
+  bool nine_patch_tile_v_{};
+  Object::Ref<base::NinePatchMesh> nine_patch_mesh_;
+  float nine_patch_mesh_width_{-1.0f};
+  float nine_patch_mesh_height_{-1.0f};
 };
 
 }  // namespace ballistica::ui_v1

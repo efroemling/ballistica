@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from bacommon import securedata
+    from bacommon.assetpackage import AssetPackageDisplayInfo
     from bacommon.cloud import AssetPackageBuildProgress, ResolvedFlavorManifest
     from bacommon.locale import Locale
 
@@ -267,8 +268,14 @@ class AssetResolveError(Exception):
         message: str,
         code: AssetPackageResolveError | None = None,
         server_message: str | None = None,
+        package: AssetPackageDisplayInfo | None = None,
     ) -> None:
         super().__init__(message)
+        #: The package the failure is about, when the server named one
+        #: (sign-in needed / access denied); else None. For saying which
+        #: package in the client's own words ("asset package 'foo' by
+        #: efro").
+        self.package = package
         #: The server's structured reason, when the failure came from a
         #: Tier-1 resolve response; None for client-side / transport
         #: failures. Branch on this rather than parsing the message.
@@ -774,15 +781,6 @@ class AssetSubsystem(AppSubsystem):
         self._wanted_backoff: dict[ApverNum, float] = {}
         self._wanted_wake: asyncio.Event | None = None
         self._wanted_connectivity_reg: object | None = None
-
-        # Formatter components per (apvernum, locale-value) -- the
-        # build-embedded unit words display formatters render through.
-        # A resolved package's per-locale blob is immutable, so entries
-        # can never go stale; bounded by resolved-packages x locales
-        # actually displayed (tiny).
-        self._components_cache: dict[
-            tuple[ApverNum, str], dict[str, str | StringSelector]
-        ] = {}
 
         # Pinned set: the monotonic union of every apvernum + flavor-manifest
         # hash committed into the native registry this process lifetime.
@@ -1535,25 +1533,6 @@ class AssetSubsystem(AppSubsystem):
             parse_language_components(text),
         )
 
-    def get_package_components_cached(
-        self, apvernum: ApverNum, locale: Locale
-    ) -> dict[str, 'str | StringSelector']:
-        """A resolved package's formatter components, cached per locale.
-
-        The hot-path accessor the native-wrapper runtime uses to
-        preformat display params (``{size|data_size}``) at LangStr
-        construction: first access per (package, locale) reads the
-        language blob (small, local); afterwards it is a dict hit. Safe
-        to cache indefinitely -- a resolved version's per-locale blob is
-        immutable content.
-        """
-        key = (apvernum, locale.value)
-        cached = self._components_cache.get(key)
-        if cached is None:
-            cached = self.get_package_language_data(apvernum, locale)[2]
-            self._components_cache[key] = cached
-        return cached
-
     @staticmethod
     def _reload_language() -> None:
         """(Re)build the native language string table from the registered
@@ -1569,9 +1548,15 @@ class AssetSubsystem(AppSubsystem):
         from babase._asset_packages import loaded_asset_package_apvernums
 
         # The resolved locale's wire value drives native CLDR plural
-        # selection for language-string evaluation.
-        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
-        _babase.reload_language(loaded_asset_package_apvernums(), plural_locale)
+        # selection for language-string evaluation; its number data
+        # drives native display formatting (durations, sizes).
+        resolved = _babase.app.locale.current_locale.resolved
+        _babase.reload_language(
+            loaded_asset_package_apvernums(),
+            resolved.locale.value,
+            decimal_mark=resolved.decimal_mark,
+            duration_separator=resolved.duration_separator,
+        )
 
     # ---------------------------------------------------------------------
     # Resolve internals.
@@ -2472,7 +2457,7 @@ class AssetSubsystem(AppSubsystem):
             errcls = AssetResolveError
             if code is not None:
                 errcls = _RESOLVE_ERROR_TYPES.get(code, AssetResolveError)
-            raise errcls(msg, code, response.error)
+            raise errcls(msg, code, response.error, response.error_package)
         if not response.buckets:
             raise AssetResolveError(f'{apvernum}: resolve returned no buckets.')
 

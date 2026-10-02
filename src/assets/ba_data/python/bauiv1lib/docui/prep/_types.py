@@ -7,6 +7,7 @@ pre-pass (generally run in a background thread) so that the actual calls
 made to instantiate the ui are as fast and minimal as possible.
 """
 
+from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -20,6 +21,49 @@ if TYPE_CHECKING:
     from bauiv1lib.docui._window import DocUIWindow
 
 
+class AnimTargetKind(Enum):
+    """What sort of widget an animation target is.
+
+    Decides which widget attrs an animation state maps onto.
+    """
+
+    #: An image widget (images, depictions): position is its
+    #: bottom-left corner; scaling grows its size about its center.
+    IMAGE = 'image'
+
+    #: A text widget: position is its anchor; scaling scales the text.
+    TEXT = 'text'
+
+    #: A button widget: position is its bottom-left corner, size its
+    #: unscaled size; scaling grows it about its center.
+    BUTTON = 'button'
+
+
+@dataclass
+class AnimTargetPrep:
+    """How to animate a decoration that carries an ``anim_id``.
+
+    The widget's base (as-laid-out) geometry, which animation states
+    are relative to.
+    """
+
+    anim_id: str
+    kind: AnimTargetKind
+    position: tuple[float, float]
+
+    #: Image or (unscaled) button size; unused for text.
+    size: tuple[float, float] = (0.0, 0.0)
+
+    #: Text or button scale; unused for images.
+    scale: float = 1.0
+
+    #: Base opacity (an image's, or a text color's alpha).
+    opacity: float = 1.0
+
+    #: A text's base rgb (None for the widget default).
+    color: tuple[float, float, float] | None = None
+
+
 @dataclass
 class DecorationPrep:
     """Prep for a decoration in a doc-ui."""
@@ -30,6 +74,9 @@ class DecorationPrep:
     textures: dict[str, str]
     meshes: dict[str, str]
     highlight: bool
+
+    #: Set for decorations that can be animated by client-effects.
+    anim: AnimTargetPrep | None = None
 
 
 @dataclass
@@ -58,6 +105,9 @@ class ButtonPrep:
     action: bacommon.docui.v2.Action | None
     #: Set when ``action`` is a menu.
     menu: MenuPrep | None = None
+
+    #: Set for buttons that can be animated by client-effects.
+    anim: AnimTargetPrep | None = None
 
 
 @dataclass

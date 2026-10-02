@@ -229,6 +229,8 @@ class PartyWindow(bui.Window):
             scale=0.55,
             size=(900, 13),
             text=msg,
+            # Peer-supplied text; never compile it as a resource string.
+            literal=True,
             autoselect=True,
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,

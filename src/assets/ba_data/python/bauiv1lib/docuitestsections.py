@@ -52,9 +52,9 @@ def test_page_sections(
         )
 
     # A flat translucent card the full column width, its content inset
-    # as much as rows' already is from the column, so they lay out
-    # exactly as they would without it.
-    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=37.0)
+    # as much as rows' buttons already are from the column, so they lay
+    # out exactly as they would without it.
+    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=28.0)
 
     # Inbox-message style: the slab the classic inbox draws, pinned so
     # its visible shape's edges land on the card's (and so on its
@@ -67,7 +67,7 @@ def test_page_sections(
         h_pin=(0.028, 0.032),
         v_pin=(0.074, 0.074),
         max_width=540.0,
-        content_inset=24.0,
+        content_inset=19.0,
         padding_top=14.0,
         padding_bottom=14.0,
     )
@@ -82,6 +82,7 @@ def test_page_sections(
                 dui2.Button(
                     label=_lit(label),
                     size=(190, 56) if big else (180, 40),
+                    style=dui2.ButtonStyle.MEDIUM,
                     label_scale=1.1 if big else 0.7,
                     label_color=(
                         (0.4, 1.0, 0.4, 1.0) if big else (0.6, 0.8, 0.7, 1.0)
@@ -180,6 +181,7 @@ def test_page_sections(
                                 dui2.Button(
                                     label=_lit(f'#{num}'),
                                     size=(110, 60),
+                                    style=dui2.ButtonStyle.MEDIUM,
                                     action=dui2.Local(),
                                 )
                                 for num in range(1, 11)
@@ -211,6 +213,7 @@ def test_page_sections(
                         dui2.Button(
                             label=_lit('Hide Debug' if debug else 'Show Debug'),
                             size=(200, 60),
+                            style=dui2.ButtonStyle.MEDIUM,
                             action=rt.Sections(debug=not debug).replace(),
                         ),
                     ],

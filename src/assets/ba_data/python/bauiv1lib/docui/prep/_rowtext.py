@@ -253,7 +253,7 @@ def titles_clear_rise(
     *,
     left: float,
     limit: float,
-    overlap: float,
+    clearance: float,
     native: Callable[[LangStrSpec | int], bui.LangStr],
 ) -> float:
     """How far up into a row's titles something beside them can reach.
@@ -263,8 +263,8 @@ def titles_clear_rise(
     (:func:`row_titles_height` of them), this is how far it can rise
     before it runs into title or subtitle text. It can sit beside text
     that stops short of it, all the way to the top of the titles, and
-    ``overlap`` into the strip of text that does not (strips keep some
-    spare room around their text).
+    stays ``clearance`` short of text that does not (strips keep some
+    spare room around their text, which counts toward it).
 
     :meta private:
     """
@@ -272,7 +272,7 @@ def titles_clear_rise(
     if row_text_reaches(
         row, row.subtitle, 0.7, left=left, limit=limit, native=native
     ):
-        return spacing + overlap
+        return spacing - clearance
     if row_text_reaches(
         row,
         row.title,
@@ -281,7 +281,7 @@ def titles_clear_rise(
         limit=limit,
         native=native,
     ):
-        return spacing + _row_subtitle_height(row, native) + overlap
+        return spacing + _row_subtitle_height(row, native) - clearance
     return row_titles_height(row, native)
 
 
@@ -290,7 +290,7 @@ def footnote_clear_drop(
     *,
     left: float,
     limit: float,
-    overlap: float,
+    clearance: float,
     native: Callable[[LangStrSpec | int], bui.LangStr],
 ) -> float:
     """How far down into a row's footnote something beside it can reach.
@@ -303,7 +303,7 @@ def footnote_clear_drop(
     if row_text_reaches(
         row, row.footnote, 0.7, left=left, limit=limit, native=native
     ):
-        return _row_footnote_spacing(row) + overlap
+        return _row_footnote_spacing(row) - clearance
     return row_footnote_height(row, native)
 
 
@@ -519,25 +519,6 @@ def prep_row_titles(
     return y - _row_title_spacing(row)
 
 
-def page_text_center(
-    *,
-    width: float,
-    margins: tuple[float, float, float, float],
-    buffers: tuple[float, float],
-) -> tuple[float, float]:
-    """Where centered text centers on a page, and how wide it may be.
-
-    Returns (x, maxwidth); see :func:`row_text_x_and_maxwidth`.
-
-    :meta private:
-    """
-    margin_left, margin_right = margins[0], margins[1]
-    left_buffer, right_buffer = buffers
-    innerwidth = width - margin_left - margin_right - left_buffer - right_buffer
-    # (The 7 is a fudge factor to match a scrolling row's centering.)
-    return margin_left + innerwidth * 0.5 + 7.0, innerwidth
-
-
 def row_text_x_and_maxwidth(
     align: dui2.HAlign,
     *,
@@ -550,8 +531,8 @@ def row_text_x_and_maxwidth(
     """X position and max width for a row's text given its alignment.
 
     Left- and right-aligned text sits in from the margins; centered
-    text goes where ``center`` (x, maxwidth) says: the page's (see
-    :func:`page_text_center`) or a card's own.
+    text goes where ``center`` (x, maxwidth) says: the middle of the
+    page's column, or of a card's.
 
     :meta private:
     """

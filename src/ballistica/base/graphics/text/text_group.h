@@ -83,6 +83,9 @@ class TextGroup : public Object {
 
   auto text() const -> const std::string& { return text_; }
 
+  /// The texture holding this text's OS-rendered spans, if it has any.
+  auto os_texture() const -> TextureAsset* { return os_texture_.get(); }
+
   /// Calc the carat position for the given text/carat-index. Returns
   /// false if some needed OS-span measure is still warming in the
   /// background (never stalls); skip drawing the carat that frame and

@@ -13,6 +13,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_depiction.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/player.h"
@@ -643,12 +644,20 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   PyObject* color_obj;
   PyObject* highlight_obj;
   PyObject* cloud_spaz_def_obj{Py_None};
+  PyObject* cloud_icon_obj{Py_None};
   static const char* kwlist[] = {"team",      "character",      "color",
-                                 "highlight", "cloud_spaz_def", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO|O", const_cast<char**>(kwlist), &team_obj,
-          &character_obj, &color_obj, &highlight_obj, &cloud_spaz_def_obj)) {
+                                 "highlight", "cloud_spaz_def", "cloud_icon",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOO|OO",
+                                   const_cast<char**>(kwlist), &team_obj,
+                                   &character_obj, &color_obj, &highlight_obj,
+                                   &cloud_spaz_def_obj, &cloud_icon_obj)) {
     return nullptr;
+  }
+  if (cloud_icon_obj != Py_None
+      && !PythonClassSceneDepiction::Check(cloud_icon_obj)) {
+    throw Exception("Expected a bascenev1.Depiction or None for cloud_icon.",
+                    PyExcType::kType);
   }
   Player* p = self->player_->get();
   if (!p) {
@@ -658,6 +667,7 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   p->SetPyTeam(team_obj);
   p->SetPyCharacter(character_obj);
   p->SetPyCloudSpazDef(cloud_spaz_def_obj);
+  p->SetPyCloudIcon(cloud_icon_obj);
   p->SetPyColor(color_obj);
   p->SetPyHighlight(highlight_obj);
   Py_RETURN_NONE;
@@ -674,10 +684,12 @@ auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
   }
   std::vector<float> color = p->icon_tint_color();
   std::vector<float> color2 = p->icon_tint2_color();
+  std::vector<float> color3 = p->icon_tint3_color();
   return Py_BuildValue(
-      "{sssss(fff)s(fff)}", "texture", p->icon_tex_name().c_str(),
+      "{sssss(fff)s(fff)s(fff)}", "texture", p->icon_tex_name().c_str(),
       "tint_texture", p->icon_tint_tex_name().c_str(), "tint_color", color[0],
-      color[1], color[2], "tint2_color", color2[0], color2[1], color2[2]);
+      color[1], color[2], "tint2_color", color2[0], color2[1], color2[2],
+      "tint3_color", color3[0], color3[1], color3[2]);
   BA_PYTHON_CATCH;
 }
 
@@ -690,11 +702,13 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   PyObject* tint_texture_name_obj;
   PyObject* tint_color_obj;
   PyObject* tint2_color_obj;
-  static const char* kwlist[] = {"texture", "tint_texture", "tint_color",
-                                 "tint2_color", nullptr};
+  PyObject* tint3_color_obj{Py_None};
+  static const char* kwlist[] = {"texture",     "tint_texture", "tint_color",
+                                 "tint2_color", "tint3_color",  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO", const_cast<char**>(kwlist), &texture_name_obj,
-          &tint_texture_name_obj, &tint_color_obj, &tint2_color_obj)) {
+          args, keywds, "OOOO|O", const_cast<char**>(kwlist), &texture_name_obj,
+          &tint_texture_name_obj, &tint_color_obj, &tint2_color_obj,
+          &tint3_color_obj)) {
     return nullptr;
   }
   Player* p = self->player_->get();
@@ -711,7 +725,16 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  p->SetIcon(texture_name, tint_texture_name, tint_color, tint2_color);
+  // White is the no-op for the third tint.
+  std::vector<float> tint3_color{1.0f, 1.0f, 1.0f};
+  if (tint3_color_obj != Py_None) {
+    tint3_color = Python::GetFloats(tint3_color_obj);
+    if (tint3_color.size() != 3) {
+      throw Exception("Expected 3 floats for tint3-color.", PyExcType::kValue);
+    }
+  }
+  p->SetIcon(texture_name, tint_texture_name, tint_color, tint2_color,
+             tint3_color);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -766,6 +789,20 @@ auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
   p->set_node(node);
 
   Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassSessionPlayer::GetIconDepiction(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  PyObject* obj = p->GetPyCloudIcon();
+  Py_INCREF(obj);
+  return obj;
   BA_PYTHON_CATCH;
 }
 
@@ -881,12 +918,14 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
      "  color: Sequence[float], highlight: Sequence[float],\n"
-     "  cloud_spaz_def: bascenev1.SpazDef | None = None) -> None\n"
+     "  cloud_spaz_def: bascenev1.SpazDef | None = None,\n"
+     "  cloud_icon: bascenev1.Depiction | None = None) -> None\n"
      "\n"
      "(internal)"},
     {"set_icon_info", (PyCFunction)SetIconInfo, METH_VARARGS | METH_KEYWORDS,
      "set_icon_info(texture: str, tint_texture: str,\n"
-     "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
+     "  tint_color: Sequence[float], tint2_color: Sequence[float],\n"
+     "  tint3_color: Sequence[float] | None = None) -> None\n"
      "\n"
      "(internal)\n"
      "\n"
@@ -906,8 +945,25 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Return the character's icon (images, colors, etc contained\n"
-     "in a dict."},
+     "Return the character's legacy icon (images, colors, etc contained\n"
+     "in a dict).\n"
+     "\n"
+     "Prefer :meth:`get_icon_depiction` where available; this is the\n"
+     "fallback for players without one. For a player on a cloud\n"
+     "profile it gives a standin icon in the profile's colors."},
+    {"get_icon_depiction", (PyCFunction)GetIconDepiction, METH_NOARGS,
+     "get_icon_depiction() -> bascenev1.Depiction | None\n"
+     "\n"
+     "Return the player's icon as a depiction, if they have one.\n"
+     "\n"
+     "Players on cloud profiles have one (the icon composed with\n"
+     "their profile); anyone else (legacy profiles, random looks,\n"
+     "bots) gets None and should be shown via :meth:`get_icon`. Show it\n"
+     "with a ``depictiondisplay`` node or anything else accepting a\n"
+     ":class:`~bascenev1.Depiction` (the\n"
+     ":class:`~bascenev1lib.actor.image.Image` actor,\n"
+     ":func:`~bascenev1.broadcastmessage` images). The usual pattern is\n"
+     "``player.get_icon_depiction() or player.get_icon()``."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"

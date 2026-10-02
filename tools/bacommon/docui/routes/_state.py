@@ -229,6 +229,31 @@ class DocUIState:
         )
 
     @classmethod
+    def assign_on_return(
+        cls, *assigns: DocUIStateAssign, default_sound: bool = True
+    ) -> bacommon.docui.v2.Local:
+        """Return an action closing the window, handing values back.
+
+        For a picker opened in a window of its own: the window closes
+        and the values are assigned into the state of the page returned
+        to (which must hold our state type; the client checks), which
+        then refreshes with them.
+        """
+        for assign in assigns:
+            if assign.state_type is not cls:
+                raise TypeError(
+                    f'Assign for {assign.state_type.__name__} passed to'
+                    f' {cls.__name__}.assign_on_return().'
+                )
+        values = merge_assigns(assigns) or {}
+        values[STATE_TYPE_KEY] = cls.get_state_id()
+        return dui2.Local(
+            close_window=True,
+            return_sets=values,
+            default_sound=default_sound,
+        )
+
+    @classmethod
     def checkbox_row(
         cls,
         field: Callable[[Self], bool],

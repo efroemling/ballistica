@@ -408,6 +408,11 @@ auto BuiltinStrings::Session::ChatBlocked(int64_t seconds, LangStr::Sub name)
                        {{"seconds", seconds}, {"name", std::move(name)}});
 }
 
+auto BuiltinStrings::Session::ChatMessageTooLong()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/chat_message_too_long");
+}
+
 auto BuiltinStrings::Session::JoinCooldown(int64_t seconds)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/session/join_cooldown", {{"seconds", seconds}});

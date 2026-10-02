@@ -39,13 +39,47 @@ class ClientRejection:
         #: clear on its own.
         TRANSIENT = 't'
 
+    class Reason(Enum):
+        """Why, so the client can say so in its own (localized) words.
+
+        Clients show a generic rejection for values they don't know,
+        so new reasons can be added freely.
+        """
+
+        #: Fallback for values a client doesn't recognize.
+        OTHER = 'other'
+
+        #: This build is too old; the user must update.
+        TOO_OLD = 'old'
+
+        #: Rejected, no further detail.
+        REJECTED = 'rej'
+
+        #: Temporarily unavailable; try again later.
+        UNAVAILABLE = 'unav'
+
+        #: Down for maintenance.
+        MAINTENANCE = 'maint'
+
     kind: Annotated[Kind, IOAttrs('k')]
 
-    #: Optional English text to show the user. Must be a key from the
-    #: ``serverResponses`` translation catalog (so localized
-    #: translations are already present). ``None`` means apply the
-    #: behavior silently with no user-visible message.
+    #: Legacy English text for clients that predate :attr:`reason`: a
+    #: key from the legacy ``serverResponses`` catalog. Newer clients
+    #: ignore it when :attr:`reason` is set. ``None`` (with no reason)
+    #: means apply the behavior silently with no user-visible message.
     message: Annotated[str | None, IOAttrs('m', soft_default=None)] = None
+
+    #: What to tell the user; ``None`` means say nothing. Supersedes
+    #: :attr:`message` on clients that know it.
+    reason: Annotated[
+        Reason | None,
+        IOAttrs(
+            'r',
+            soft_default=None,
+            store_default=False,
+            enum_fallback=Reason.OTHER,
+        ),
+    ] = None
 
 
 @ioprepped

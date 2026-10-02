@@ -48,7 +48,26 @@ class ClassicChestAppearance(Enum):
         assert_never(self)
 
 
-#: ``(tint, tint2)`` for depicting a chest of each appearance.
+#: A chest's tints through its tint texture's red, green, and
+#: optionally blue channels: ``(tint, tint2)`` or ``(tint, tint2,
+#: tint3)``. A missing third is white (no effect); see
+#: :func:`chest_tint3`.
+type ChestTints = (
+    tuple[tuple[float, float, float], tuple[float, float, float]]
+    | tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ]
+)
+
+
+def chest_tint3(tints: ChestTints) -> tuple[float, float, float]:
+    """Return the third tint of a :data:`ChestTints` (white if absent)."""
+    return tints[2] if len(tints) > 2 else (1.0, 1.0, 1.0)
+
+
+#: :data:`ChestTints` for depicting a chest of each appearance.
 #:
 #: Lives here rather than with the client's chest code so a *producer*
 #: can depict a chest -- under frames the producer decides how things
@@ -56,10 +75,7 @@ class ClassicChestAppearance(Enum):
 #: client's richer :class:`~baclassic.ChestAppearanceDisplayInfo` (which
 #: also carries textures the C++ layer reads) is built from these, so
 #: there is one source rather than two that can drift.
-CHEST_APPEARANCE_TINTS: dict[
-    ClassicChestAppearance,
-    tuple[tuple[float, float, float], tuple[float, float, float]],
-] = {
+CHEST_APPEARANCE_TINTS: dict[ClassicChestAppearance, ChestTints] = {
     ClassicChestAppearance.L2: ((0.65, 1.0, 0.8), (0.65, 1.0, 0.8)),
     ClassicChestAppearance.L3: ((0.7, 1, 1.9), (0.7, 1, 1.9)),
     ClassicChestAppearance.L4: ((1.4, 1.6, 2.0), (1.4, 1.6, 2.0)),
@@ -67,11 +83,9 @@ CHEST_APPEARANCE_TINTS: dict[
     ClassicChestAppearance.L6: ((2, 2, 2), (2, 2, 2)),
 }
 
-#: ``(tint, tint2)`` for an appearance with no entry above -- UNKNOWN,
+#: :data:`ChestTints` for an appearance with no entry above -- UNKNOWN,
 #: DEFAULT and L1 all rely on this.
-CHEST_APPEARANCE_TINT_DEFAULT: tuple[
-    tuple[float, float, float], tuple[float, float, float]
-] = ((1, 1, 1), (1, 1, 1))
+CHEST_APPEARANCE_TINT_DEFAULT: ChestTints = ((1, 1, 1), (1, 1, 1))
 
 #: Base color multiplying a chest's art for each appearance (alongside
 #: :data:`CHEST_APPEARANCE_TINTS`, for the same reason: producers depict

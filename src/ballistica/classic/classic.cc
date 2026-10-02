@@ -256,9 +256,9 @@ void ClassicFeatureSet::PlayMusic(const std::string& music_type,
 
 void ClassicFeatureSet::GetClassicChestDisplayInfo(
     const std::string& id, std::string* texclosed, std::string* texclosedtint,
-    Vector3f* color, Vector3f* tint, Vector3f* tint2) {
+    Vector3f* color, Vector3f* tint, Vector3f* tint2, Vector3f* tint3) {
   python->GetClassicChestDisplayInfo(id, texclosed, texclosedtint, color, tint,
-                                     tint2);
+                                     tint2, tint3);
 }
 
 }  // namespace ballistica::classic

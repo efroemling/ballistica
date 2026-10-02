@@ -87,9 +87,11 @@ struct BasicIconDef {
   CharacterAssetRef texture;
   CharacterAssetRef color_mask_texture;
   // Tints applied through the mask (red channel takes color, green
-  // takes highlight).
+  // takes highlight, blue takes highlight2 -- white, the no-op, unless
+  // set).
   float color[3]{0.5f, 0.5f, 0.5f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
+  float highlight2[3]{1.0f, 1.0f, 1.0f};
 };
 
 /// The loaded media for a BasicIconDef.
@@ -137,6 +139,8 @@ struct BasicSpazDef {
   bool has_color{false};
   float color[3]{1.0f, 1.0f, 1.0f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
+  // Through the color mask's blue channel; white (the no-op) unless set.
+  float highlight2[3]{1.0f, 1.0f, 1.0f};
   // Physique (sim state; must never depend on media).
   float torso_radius{0.15f};
   float shoulder_offset[3]{0.0f, 0.0f, 0.0f};

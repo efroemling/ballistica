@@ -159,8 +159,8 @@ def _page() -> dui2.Response:
         dui2.ButtonRow(
             center_content=True,
             spacing_top=10.0,
-            padding_top=8.0,
-            padding_bottom=6.0,
+            padding_top=2.0,
+            padding_bottom=12.0,
             buttons=[
                 replace(
                     section_button(

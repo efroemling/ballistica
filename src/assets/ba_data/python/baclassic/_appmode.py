@@ -34,7 +34,6 @@ if TYPE_CHECKING:
 
     from efro.call import CallbackRegistration
     import bacommon.cloud
-    from bauiv1lib.chest import ChestWindow
 
 
 class ClassicAppModeConfig(AppModeConfig):
@@ -609,8 +608,7 @@ class ClassicAppMode(AppMode):
                 store_style='',
             )
             _baclassic.set_root_ui_chest_depictions(depictions=['', '', '', ''])
-            self._account_depiction = ''
-            _baclassic.set_root_ui_account_depiction(depiction='')
+            self._set_account_depiction('')
             self._have_account_values = False
             self._update_ui_live_state()
 
@@ -817,11 +815,8 @@ class ClassicAppMode(AppMode):
                 for c in (chest0, chest1, chest2, chest3)
             ]
         )
-        self._account_depiction = (
+        self._set_account_depiction(
             '' if val.name_depiction is None else val.name_depiction
-        )
-        _baclassic.set_root_ui_account_depiction(
-            depiction=self._account_depiction
         )
 
         # Note that we have values and updated faded state accordingly.
@@ -903,7 +898,7 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_inbox_press(self) -> None:
-        from bauiv1lib.inbox import InboxWindow
+        from bauiv1lib.inboxui import show_inbox_window
 
         btn = bui.get_special_widget('inbox_button')
 
@@ -911,10 +906,7 @@ class ClassicAppMode(AppMode):
             return
 
         wait_for_connectivity(
-            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
-                win_type=InboxWindow,
-                win_create_call=lambda: InboxWindow(origin_widget=btn),
-            )
+            on_connected=lambda: show_inbox_window(origin_widget=btn)
         )
 
     def _root_ui_store_press(self) -> None:
@@ -1030,7 +1022,7 @@ class ClassicAppMode(AppMode):
             )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
-        from bauiv1lib.chest import ChestWindow
+        from bauiv1lib.chestui import show_chest_window
 
         widgetid: Literal[
             'chest_0_button',
@@ -1038,34 +1030,20 @@ class ClassicAppMode(AppMode):
             'chest_2_button',
             'chest_3_button',
         ]
-        winclass: type[ChestWindow]
         if index == 0:
             widgetid = 'chest_0_button'
-            winclass = ChestWindow
-            extratypeid = '0'
         elif index == 1:
             widgetid = 'chest_1_button'
-            winclass = ChestWindow
-            extratypeid = '1'
         elif index == 2:
             widgetid = 'chest_2_button'
-            winclass = ChestWindow
-            extratypeid = '2'
         elif index == 3:
             widgetid = 'chest_3_button'
-            winclass = ChestWindow
-            extratypeid = '3'
         else:
             raise RuntimeError(f'Invalid index {index}')
 
         wait_for_connectivity(
-            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
-                win_type=winclass,
-                win_create_call=lambda: winclass(
-                    index=index,
-                    origin_widget=bui.get_special_widget(widgetid),
-                ),
-                win_extra_type_id=extratypeid,
+            on_connected=lambda: show_chest_window(
+                index, origin_widget=bui.get_special_widget(widgetid)
             )
         )
 
@@ -1129,10 +1107,22 @@ class ClassicAppMode(AppMode):
 
         depiction = vals.get('nd')
         if isinstance(depiction, str):
-            self._account_depiction = depiction
-            _baclassic.set_root_ui_account_depiction(depiction=depiction)
+            self._set_account_depiction(depiction)
 
         _baclassic.set_account_state(vals)
+
+    def _set_account_depiction(self, depiction: str) -> None:
+        """Show the account name depiction (json; empty for none).
+
+        Draws the toolbar's account button with it and publishes it as
+        :attr:`baclassic.ClassicAppSubsystem.account_name_depiction` for
+        other UI (the account window) to show.
+        """
+        self._account_depiction = depiction
+        classic = bui.app.classic
+        assert classic is not None
+        classic.account_name_depiction = depiction
+        _baclassic.set_root_ui_account_depiction(depiction=depiction)
 
     @override
     def get_dev_console_ui_tab_buttons(

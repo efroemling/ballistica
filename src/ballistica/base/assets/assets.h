@@ -203,9 +203,13 @@ class Assets {
   /// is the bundled fallback flavor, so this currently always loads
   /// English (Step A of the strings migration). ``plural_locale`` is
   /// the client's *resolved* locale wire value (e.g. ``eng``), stamped
-  /// onto the language-string tables to drive CLDR plural selection.
+  /// onto the language-string tables to drive CLDR plural selection;
+  /// ``decimal_mark`` and ``duration_separator`` are its number data,
+  /// for rendering display-formatted params (durations, sizes).
   void ReloadLanguage(const std::vector<std::string>& apverids,
-                      const std::string& plural_locale);
+                      const std::string& plural_locale,
+                      const std::string& decimal_mark,
+                      const std::string& duration_separator);
 
   /// The current native language-string tables (per-apverid values for
   /// the client's locale; see LangStrTables). Immutable snapshot; any

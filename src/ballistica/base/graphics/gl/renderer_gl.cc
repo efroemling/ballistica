@@ -1292,9 +1292,14 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                 shadow_opacity;
             buffer->GetFloats(&r, &g, &b, &a, &shadow_offset_x,
                               &shadow_offset_y, &shadow_blur, &shadow_opacity);
-            float shadow_r, shadow_g, shadow_b, shadow_spread;
-            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread);
-            ProgramSimpleGL* p = simple_tex_mod_shadow_prog_;
+            float shadow_r, shadow_g, shadow_b, shadow_spread, text_glow;
+            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread,
+                              &text_glow);
+            // Text glow is its own program so plain shadowed text never
+            // runs its extra work.
+            ProgramSimpleGL* p = text_glow > 0.0f
+                                     ? simple_tex_mod_text_glow_prog_
+                                     : simple_tex_mod_shadow_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             const TextureAsset* t = buffer->GetTexture();
@@ -1305,6 +1310,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetShadowColor(shadow_r, shadow_g, shadow_b, shadow_spread);
+            if (text_glow > 0.0f) {
+              p->SetTextGlow(text_glow);
+            }
             p->SetMaskUV2Texture(t_mask);
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
@@ -1319,9 +1327,12 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             buffer->GetFloats(&r, &g, &b, &a, &shadow_offset_x,
                               &shadow_offset_y, &shadow_blur, &shadow_opacity,
                               &flatness);
-            float shadow_r, shadow_g, shadow_b, shadow_spread;
-            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread);
-            ProgramSimpleGL* p = simple_tex_mod_shadow_flatness_prog_;
+            float shadow_r, shadow_g, shadow_b, shadow_spread, text_glow;
+            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread,
+                              &text_glow);
+            ProgramSimpleGL* p = text_glow > 0.0f
+                                     ? simple_tex_mod_text_glow_flatness_prog_
+                                     : simple_tex_mod_shadow_flatness_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             const TextureAsset* t = buffer->GetTexture();
@@ -1332,6 +1343,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetShadowColor(shadow_r, shadow_g, shadow_b, shadow_spread);
+            if (text_glow > 0.0f) {
+              p->SetTextGlow(text_glow);
+            }
             p->SetMaskUV2Texture(t_mask);
             p->SetFlatness(flatness);
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
@@ -2772,6 +2786,14 @@ void RendererGL::Load() {
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW
                                     | SHD_MASK_UV2 | SHD_FLATNESS);
   RetainShader_(p);
+  p = simple_tex_mod_text_glow_prog_ =
+      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW
+                                    | SHD_TEXT_GLOW | SHD_MASK_UV2);
+  RetainShader_(p);
+  p = simple_tex_mod_text_glow_flatness_prog_ = new ProgramSimpleGL(
+      this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW | SHD_TEXT_GLOW
+                | SHD_MASK_UV2 | SHD_FLATNESS);
+  RetainShader_(p);
   p = simple_tex_mod_glow_prog_ =
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_GLOW);
   RetainShader_(p);
@@ -2975,6 +2997,8 @@ void RendererGL::Unload() {
   simple_tex_mod_flatness_prog_ = nullptr;
   simple_tex_mod_shadow_prog_ = nullptr;
   simple_tex_mod_shadow_flatness_prog_ = nullptr;
+  simple_tex_mod_text_glow_prog_ = nullptr;
+  simple_tex_mod_text_glow_flatness_prog_ = nullptr;
   simple_tex_mod_glow_prog_ = nullptr;
   simple_tex_mod_glow_maskuv2_prog_ = nullptr;
   simple_tex_mod_colorized_prog_ = nullptr;

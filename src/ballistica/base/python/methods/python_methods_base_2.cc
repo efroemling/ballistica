@@ -873,8 +873,11 @@ static PyMethodDef PySplitTextIntoLinesDef = {
     "Split text into newline-separated lines under simple constraints.\n"
     "\n"
     "Breaks only at valid line-break opportunities (determined by the\n"
-    "OS text stack where available), treating all characters as equal\n"
-    "width. Uses the fewest lines that keep every line within\n"
+    "OS text stack where available), counting East Asian wide\n"
+    "characters (CJK, kana, Hangul, full-width forms) as two\n"
+    "characters and everything else as one, so a character limit means\n"
+    "about the same width in every script. Uses the fewest lines that\n"
+    "keep every line within\n"
     "``max_chars_per_line`` (when provided) while staying between\n"
     "``min_lines`` and ``max_lines`` (None means unlimited), and\n"
     "balances line lengths within that count. So a bare\n"
@@ -890,8 +893,9 @@ static PyMethodDef PySplitTextIntoLinesDef = {
     "recovers the individual lines.\n"
     "\n"
     "This is a simple stopgap for feeding flat translated strings into\n"
-    "places expecting preformatted line counts; it knows nothing about\n"
-    "actual rendered character widths. Logic thread only.",
+    "places expecting preformatted line counts; beyond the wide-\n"
+    "character weighting it knows nothing about actual rendered\n"
+    "character widths. Logic thread only.",
 };
 
 // ----------------------------- fade_screen -----------------------------------

@@ -210,8 +210,6 @@ void AppConfig::SetupEntries_() {
       StringEntry("Touch Movement Control Type", "swipe");
   string_entries_[StringID::kGraphicsQuality] =
       StringEntry("Graphics Quality", "Auto");
-  string_entries_[StringID::kTextureQuality] =
-      StringEntry("Texture Quality", "Auto");
   string_entries_[StringID::kVerticalSync] =
       StringEntry("Vertical Sync", "Auto");
   string_entries_[StringID::kVRHeadRelativeAudio] =
@@ -279,8 +277,6 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =
       BoolEntry("Show Demos When Idle", false);
-  bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
-      BoolEntry("Show Deprecated Login Types", false);
   bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =

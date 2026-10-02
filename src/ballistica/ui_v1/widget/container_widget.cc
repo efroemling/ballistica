@@ -1121,7 +1121,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();
-        c.Translate(bg_center_x_, bg_center_y_, zoffs);
+        c.Translate(bg_center_x_ + background_offset_x_ * transition_scale_,
+                    bg_center_y_ + background_offset_y_ * transition_scale_,
+                    zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
         c.DrawMeshAsset(
             (draw_transparent ? bg_mesh_transparent_ : bg_mesh_opaque_).get());

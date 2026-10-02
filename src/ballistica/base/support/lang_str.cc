@@ -4,7 +4,10 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
+#include <cstdio>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,10 +32,39 @@ static auto IsSubKeyChar_(char c) -> bool {
   return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
 }
 
+// If a spec'd token ({name|spec...}) starts at text[i] -- the brace
+// form a literal template may use to declare a display-formatted param
+// -- return the index of its closing brace and fill name and spec;
+// otherwise return npos. The spec part admits no braces (mirrors the
+// Python literal_template_kinds pattern).
+static auto MatchSpecToken_(const std::string& text, size_t i,
+                            std::string* name, std::string* spec) -> size_t {
+  if (text[i] != '{' || i + 1 >= text.size() || !IsSubKeyStart_(text[i + 1])) {
+    return std::string::npos;
+  }
+  size_t k = i + 2;
+  while (k < text.size() && IsSubKeyChar_(text[k])) {
+    ++k;
+  }
+  if (k >= text.size() || text[k] != '|') {
+    return std::string::npos;
+  }
+  size_t close = k + 1;
+  while (close < text.size() && text[close] != '}' && text[close] != '{') {
+    ++close;
+  }
+  if (close >= text.size() || text[close] != '}') {
+    return std::string::npos;
+  }
+  *name = text.substr(i + 1, k - i - 1);
+  *spec = text.substr(k + 1, close - k - 1);
+  return close;
+}
+
 // Append each {name} substitution token found in text to names (in
-// order of appearance; duplicates kept). Escaped braces ({{ and }})
-// and other non-token brace content are skipped, matching Substitute_'s
-// scanning rules.
+// order of appearance; duplicates kept). Spec'd {name|spec} tokens
+// count as their name. Escaped braces ({{ and }}) and other non-token
+// brace content are skipped, matching Substitute_'s scanning rules.
 static void ScanSubTokens_(const std::string& text,
                            std::vector<std::string>* names) {
   size_t i = 0;
@@ -55,6 +87,13 @@ static void ScanSubTokens_(const std::string& text,
         i = k + 1;
         continue;
       }
+    }
+    std::string name, spec;
+    if (size_t close = MatchSpecToken_(text, i, &name, &spec);
+        close != std::string::npos) {
+      names->push_back(std::move(name));
+      i = close + 1;
+      continue;
     }
     ++i;
   }
@@ -184,6 +223,14 @@ static auto ParseNode_(const JsonRef& ref, int depth,
         out->subs.push_back({std::string(), std::move(*sub)});
       }
     }
+  } else if (tag == "tt") {
+    out->form = LangStr::Form::kTimeTarget;
+    auto millis = ref["m"].as_int();
+    if (!millis.has_value()) {
+      *error = "time-target form requires int 'm'";
+      return nullptr;
+    }
+    out->target_millis = *millis;
   } else {
     *error = "unrecognized type tag '" + tag + "'";
     return nullptr;
@@ -250,6 +297,50 @@ auto LangStr::MakeLiteral(std::string_view text)
   return out;
 }
 
+auto LangStr::NestingHeight() const -> int {
+  int height{};
+  for (const auto& sub : subs) {
+    if (auto* child = std::get_if<std::shared_ptr<const LangStr>>(&sub.value);
+        child && *child) {
+      height = std::max(height, 1 + (*child)->NestingHeight());
+    }
+  }
+  return height;
+}
+
+auto LangStr::Join(const std::vector<std::shared_ptr<const LangStr>>& items,
+                   std::string_view separator)
+    -> std::expected<std::shared_ptr<const LangStr>, std::string> {
+  if (items.size() > kMaxJoinItems) {
+    return std::unexpected("too many items to join ("
+                           + std::to_string(items.size()) + " > "
+                           + std::to_string(kMaxJoinItems) + ")");
+  }
+  // The separator is literal text: escape its braces exactly as
+  // MakeLiteral does so it can never form a substitution token.
+  std::string sep = MakeLiteral(separator)->value;
+  auto out = std::make_shared<LangStr>();
+  out->form = Form::kValue;
+  int child_height{-1};
+  for (size_t i = 0; i < items.size(); ++i) {
+    const auto& item = items[i];
+    if (!item) {
+      return std::unexpected("null item in join");
+    }
+    child_height = std::max(child_height, item->NestingHeight());
+    std::string key = "i" + std::to_string(i);
+    if (i > 0) {
+      out->value += sep;
+    }
+    out->value += "{" + key + "}";
+    out->subs.push_back({key, item});
+  }
+  if (child_height + 1 > kLangStrMaxNestingDepth) {
+    return std::unexpected("joined value would exceed max nesting depth");
+  }
+  return out;
+}
+
 // The substitution-argument names a table value consumes, in canonical
 // (sorted) order: for plain text its {name} tokens; for a selector its
 // pivot arg plus any tokens in its forms. Mirrors Python
@@ -280,6 +371,35 @@ static auto SubstitutionNames_(const LangStrTableValue& value)
 // against ICU, so this port inherits that verification via the shared
 // data model. Unknown locales fall back to the one-for-1 rule, matching
 // Python.
+
+// How wide a locale's text renders per counted character, relative to
+// English, as a multiplier on wrap params' max_chars_per_line: below 1
+// for scripts whose glyphs run wider (so fewer fit a line), above 1 for
+// narrower ones. Measured 2026-10-01 from the classic package's long
+// strings in every locale (rendered width per splitter column, East
+// Asian wide characters counting 2; see SplitTextIntoLines). Locales
+// within about 3% of English aren't listed. Only glyph width matters
+// here: a wordier translation simply wraps to more lines.
+static auto WrapWidthFactor_(const std::string& locale) -> float {
+  if (locale == "kazk") return 0.81f;
+  if (locale == "rusn") return 0.83f;
+  if (locale == "blrs") return 0.84f;
+  if (locale == "chn_tr" || locale == "chn_sim" || locale == "jpn") {
+    return 0.85f;
+  }
+  if (locale == "ukrn" || locale == "taml") return 0.86f;
+  if (locale == "greek") return 0.89f;
+  if (locale == "viet") return 0.95f;
+  if (locale == "mlay" || locale == "filp" || locale == "indnsn") {
+    return 0.96f;
+  }
+  if (locale == "prtg_brz" || locale == "prtg_pr") return 0.97f;
+  if (locale == "italn" || locale == "venetn") return 1.03f;
+  if (locale == "kor") return 1.05f;
+  if (locale == "pers") return 1.08f;
+  if (locale == "arabc" || locale == "hndi") return 1.10f;
+  return 1.0f;
+}
 
 static auto PluralCategory_(const std::string& locale, int64_t count)
     -> std::string {
@@ -495,10 +615,463 @@ static auto EvalSelector_(
   return Substitute_(*form, args);
 }
 
-static auto EvalNode_(const LangStr& ls, int depth)
+// --- Display formatting ------------------------------------------------------
+//
+// Native port of bacommon.langstr._format (data_size_str, duration_str,
+// format_number) so display-formatted params render at evaluation
+// time, in the current locale, with no Python involvement. Keep the
+// two in lockstep: the Python side renders the same strings server-side
+// (web pages) and its unit tests pin the expected output.
+
+// A display-kind expression split into kind + args: the blob's ``k``
+// carrier form (``millis(dir=future,maxparts=1)``) or a literal
+// template's spec form (``duration(dir=future)``); both share the
+// ``name(key=value,...)`` grammar.
+struct LangStrKindExpr_ {
+  std::string kind;
+  std::vector<std::pair<std::string, std::string>> args;
+
+  auto Arg(const char* key) const -> const std::string* {
+    for (auto&& [k, v] : args) {
+      if (k == key) {
+        return &v;
+      }
+    }
+    return nullptr;
+  }
+};
+
+static auto ParseKindExpr_(const std::string& expr)
+    -> std::expected<LangStrKindExpr_, std::string> {
+  LangStrKindExpr_ out;
+  auto paren = expr.find('(');
+  out.kind = expr.substr(0, paren);
+  if (out.kind.empty()) {
+    return std::unexpected("malformed display kind '" + expr + "'");
+  }
+  if (paren == std::string::npos) {
+    return out;
+  }
+  if (expr.back() != ')') {
+    return std::unexpected("malformed display kind '" + expr + "'");
+  }
+  std::string argsrc = expr.substr(paren + 1, expr.size() - paren - 2);
+  size_t start = 0;
+  while (start < argsrc.size()) {
+    size_t comma = argsrc.find(',', start);
+    std::string chunk = argsrc.substr(
+        start, comma == std::string::npos ? std::string::npos : comma - start);
+    auto eq = chunk.find('=');
+    if (eq == std::string::npos) {
+      return std::unexpected("malformed display kind argument '" + chunk
+                             + "' in '" + expr + "'");
+    }
+    auto trim = [](std::string s) {
+      while (!s.empty() && s.front() == ' ') {
+        s.erase(s.begin());
+      }
+      while (!s.empty() && s.back() == ' ') {
+        s.pop_back();
+      }
+      return s;
+    };
+    out.args.emplace_back(trim(chunk.substr(0, eq)),
+                          trim(chunk.substr(eq + 1)));
+    if (comma == std::string::npos) {
+      break;
+    }
+    start = comma + 1;
+  }
+  return out;
+}
+
+// A component entry, from the consuming package's own embedded
+// components first (decision D4), else from any package that embeds it
+// (unit words are identical per locale everywhere; a literal template
+// has no package of its own).
+static auto FindComponent_(const LangStrTables& tables,
+                           const LangStrPackageTable* pkg,
+                           const std::string& name)
+    -> const LangStrTableValue* {
+  if (pkg != nullptr) {
+    if (auto it = pkg->components.find(name); it != pkg->components.end()) {
+      return &it->second;
+    }
+  }
+  for (auto&& [apverid, other] : tables.packages) {
+    if (auto it = other.components.find(name); it != other.components.end()) {
+      return &it->second;
+    }
+  }
+  return nullptr;
+}
+
+static auto EvalComponent_(
+    const LangStrTables& tables, const LangStrPackageTable* pkg,
+    const std::string& name,
+    const std::unordered_map<std::string, std::string>& args)
+    -> std::expected<std::string, std::string> {
+  auto* value = FindComponent_(tables, pkg, name);
+  if (value == nullptr) {
+    return std::unexpected("no formatter component '" + name + "'");
+  }
+  if (auto* text = std::get_if<std::string>(value)) {
+    return Substitute_(*text, args);
+  }
+  return EvalSelector_(std::get<LangStrSelector>(*value), tables.plural_locale,
+                       args);
+}
+
+// Fixed decimals, then the locale's mark swapped in last on a known
+// ASCII rendering (mirrors Python format_number).
+static auto FormatNumber_(double value, int decimals,
+                          const LangStrTables& tables) -> std::string {
+  char buf[64];
+  snprintf(buf, sizeof(buf), "%.*f", decimals, value);
+  std::string text{buf};
+  if (tables.decimal_mark != ".") {
+    if (auto dot = text.find('.'); dot != std::string::npos) {
+      text.replace(dot, 1, tables.decimal_mark);
+    }
+  }
+  return text;
+}
+
+static auto DataSizeStr_(int64_t bytecount, bool compact,
+                         const LangStrTables& tables,
+                         const LangStrPackageTable* pkg)
+    -> std::expected<std::string, std::string> {
+  if (bytecount < 0) {
+    auto out = DataSizeStr_(-bytecount, compact, tables, pkg);
+    if (!out.has_value()) {
+      return out;
+    }
+    return "-" + *out;
+  }
+  if (bytecount <= 999) {
+    if (compact) {
+      return EvalComponent_(tables, pkg, "data_size/bytes_compact",
+                            {{"amount", std::to_string(bytecount)}});
+    }
+    return EvalComponent_(tables, pkg, "data_size/bytes",
+                          {{"n", std::to_string(bytecount)}});
+  }
+  static const std::pair<const char*, int64_t> kLadder[] = {
+      {"kilobytes", int64_t{1024}},
+      {"megabytes", int64_t{1024} * 1024},
+      {"gigabytes", int64_t{1024} * 1024 * 1024},
+      {"terabytes", int64_t{1024} * 1024 * 1024 * 1024},
+  };
+  constexpr size_t kLast = std::size(kLadder) - 1;
+  for (size_t i = 0; i <= kLast; ++i) {
+    auto [entry, scale] = kLadder[i];
+    double scaled = static_cast<double>(bytecount) / static_cast<double>(scale);
+    int decimals{-1};
+    if (std::round(scaled * 10.0) / 10.0 < 10.0) {
+      decimals = 1;
+    } else if (i == kLast || std::round(scaled) < 999.0) {
+      decimals = 0;
+    }
+    if (decimals >= 0) {
+      return EvalComponent_(
+          tables, pkg, std::string("data_size/") + entry,
+          {{"amount", FormatNumber_(scaled, decimals, tables)}});
+    }
+  }
+  return std::unexpected("no data-size rung");  // Unreachable.
+}
+
+// How a rendered duration steps: the size in milliseconds of its last
+// part's unit (a fraction of a unit when it shows decimals), whether
+// that part rounds (decimals) or truncates (whole units), and the size
+// of its first part's unit (below which it switches to smaller units).
+struct DurationStep_ {
+  double quantum_ms{1000.0};
+  double lead_ms{1000.0};
+  bool rounds{};
+};
+
+static auto DurationParts_(double millis, int maxparts, int decimals,
+                           const LangStrTables& tables,
+                           const LangStrPackageTable* pkg, DurationStep_* step)
+    -> std::expected<std::string, std::string>;
+
+static auto DurationStr_(int64_t millis, int maxparts, int decimals, bool clamp,
+                         const std::string& dir, const LangStrTables& tables,
+                         const LangStrPackageTable* pkg, DurationStep_* step)
+    -> std::expected<std::string, std::string> {
+  if (dir == "future") {
+    millis = std::max<int64_t>(0, millis);
+  } else if (dir == "past") {
+    millis = std::max<int64_t>(0, -millis);
+  } else if (clamp) {
+    millis = std::max<int64_t>(0, millis);
+  } else if (millis < 0) {
+    auto out =
+        DurationStr_(-millis, maxparts, decimals, false, "", tables, pkg, step);
+    if (!out.has_value()) {
+      return out;
+    }
+    return "-" + *out;
+  }
+  auto out = DurationParts_(static_cast<double>(millis), maxparts, decimals,
+                            tables, pkg, step);
+  if (out.has_value() && dir == "future") {
+    // A countdown rounds up to a whole number of its smallest unit
+    // shown ("1s" until the moment arrives, not "0s" for the whole
+    // final second). The tolerance keeps float noise in an exact
+    // multiple from costing a whole extra step.
+    double rounded =
+        std::ceil(static_cast<double>(millis) / step->quantum_ms - 1e-9)
+        * step->quantum_ms;
+    if (rounded > static_cast<double>(millis)) {
+      DurationStep_ unused;
+      out = DurationParts_(rounded, maxparts, decimals, tables, pkg, &unused);
+    }
+  }
+  return out;
+}
+
+// Render a non-negative length (mirrors Python _duration_parts),
+// filling ``step`` with how it measures.
+static auto DurationParts_(double millis, int maxparts, int decimals,
+                           const LangStrTables& tables,
+                           const LangStrPackageTable* pkg, DurationStep_* step)
+    -> std::expected<std::string, std::string> {
+  static const std::pair<const char*, int64_t> kLadder[] = {
+      {"years", int64_t{365} * 24 * 3600},
+      {"days", int64_t{24} * 3600},
+      {"hours", int64_t{3600}},
+      {"minutes", int64_t{60}},
+      {"seconds", int64_t{1}},
+  };
+  constexpr size_t kLast = std::size(kLadder) - 1;
+  double seconds = millis / 1000.0;
+  auto remainder = static_cast<int64_t>(seconds);
+  double covered{};
+  std::vector<std::string> parts;
+  for (size_t i = 0; i <= kLast; ++i) {
+    auto [entry, scale] = kLadder[i];
+    int64_t whole = remainder / scale;
+    remainder = remainder % scale;
+    double frac_total = seconds / static_cast<double>(scale)
+                        - covered / static_cast<double>(scale);
+    covered += static_cast<double>(whole * scale);
+    bool is_seconds_rung = (i == kLast);
+    // Emit once a nonzero rung starts the sequence (mid-zeros are kept:
+    // "1h 0m 32s"); the seconds rung backstops an all-zero value.
+    if (!(whole != 0 || !parts.empty() || is_seconds_rung)) {
+      continue;
+    }
+    std::string amount;
+    double unit_ms = static_cast<double>(scale) * 1000.0;
+    if (parts.empty()) {
+      step->lead_ms = unit_ms;
+    }
+    if (decimals > 0
+        && (static_cast<int>(parts.size()) >= maxparts - 1
+            || is_seconds_rung)) {
+      amount = FormatNumber_(frac_total, decimals, tables);
+      step->quantum_ms = unit_ms / std::pow(10.0, decimals);
+      step->rounds = true;
+    } else {
+      amount = std::to_string(whole);
+      step->quantum_ms = unit_ms;
+      step->rounds = false;
+    }
+    auto part = EvalComponent_(tables, pkg, std::string("duration/") + entry,
+                               {{"amount", amount}});
+    if (!part.has_value()) {
+      return part;
+    }
+    parts.push_back(std::move(*part));
+    if (static_cast<int>(parts.size()) >= maxparts) {
+      break;
+    }
+  }
+  std::string out;
+  for (size_t i = 0; i < parts.size(); ++i) {
+    if (i > 0) {
+      out += tables.duration_separator;
+    }
+    out += parts[i];
+  }
+  return out;
+}
+
+// For a live duration value (``value`` = target - now, falling by one
+// per elapsed millisecond), how many milliseconds until its rendered
+// text changes; empty if it never will (a countdown resting at zero).
+// The last part's step drives this: larger units are whole multiples
+// of smaller ones, so its boundaries are the only ones that matter,
+// and re-evaluating at each one picks up any change of units.
+static auto DurationMillisUntilChange_(int64_t value, bool clamp,
+                                       const std::string& dir,
+                                       const DurationStep_& step)
+    -> std::optional<int64_t> {
+  bool floors_negative = (dir == "future" || (dir.empty() && clamp));
+  if (floors_negative && value <= 0) {
+    return std::nullopt;  // Rests at zero from here on.
+  }
+  if (dir == "past" && value > 0) {
+    return value + 1;  // Rests at zero until the moment passes.
+  }
+  double q = step.quantum_ms;
+  if (dir == "future") {
+    // A countdown (positive here) shows its value rounded up to the
+    // step, so it next changes on reaching the step below. It can
+    // also change where its leading unit drops away and smaller units
+    // take over (exactly 1h left reads "1h 0m" with a step of minutes,
+    // but a moment later the step is seconds and it reads "59m 59s"
+    // after just one more): check in just below that point too, where
+    // the next evaluation sees the finer step.
+    auto value_d = static_cast<double>(value);
+    double k = std::ceil(value_d / q - 1e-9);
+    auto until = value - static_cast<int64_t>(std::floor((k - 1.0) * q));
+    if (value_d >= step.lead_ms) {
+      until = std::min(until, value - static_cast<int64_t>(step.lead_ms) + 1);
+    }
+    return std::max<int64_t>(1, until);
+  }
+  // Magnitude shown, and which way it moves as time passes.
+  bool shrinking = (dir != "past") && value > 0;
+  auto mag = static_cast<double>(shrinking ? value : -value);
+  // Rounded steps sit half a quantum off whole ones.
+  double offset = step.rounds ? 0.5 : 0.0;
+  double k = std::floor(mag / q + offset);
+  int64_t until;
+  if (shrinking) {
+    if (k <= 0.0) {
+      // Showing zero; next change is at the moment itself (a sign or
+      // direction flip), or never for a floored countdown.
+      if (floors_negative) {
+        return std::nullopt;
+      }
+      until = value + 1;
+    } else {
+      auto next_mag = static_cast<int64_t>(std::ceil((k - offset) * q)) - 1;
+      until = value - next_mag;
+    }
+  } else {
+    auto next_mag = static_cast<int64_t>(std::ceil((k + 1.0 - offset) * q));
+    until = next_mag - static_cast<int64_t>(mag);
+  }
+  return std::max<int64_t>(1, until);
+}
+
+// Render one display-formatted param value. ``live`` marks a value
+// measured from a time target (falling one per millisecond), for which
+// ``until_change`` receives the time until the text changes.
+static auto FormatDisplayParam_(const std::string& kindexpr, int64_t value,
+                                bool live, const LangStrTables& tables,
+                                const LangStrPackageTable* pkg,
+                                std::optional<int64_t>* until_change)
+    -> std::expected<std::string, std::string> {
+  auto expr = ParseKindExpr_(kindexpr);
+  if (!expr.has_value()) {
+    return std::unexpected(expr.error());
+  }
+  auto int_arg = [&](const char* key, int fallback) {
+    if (auto* val = expr->Arg(key)) {
+      int out{};
+      auto [ptr, ec] =
+          std::from_chars(val->data(), val->data() + val->size(), out);
+      if (ec == std::errc()) {
+        return out;
+      }
+    }
+    return fallback;
+  };
+  auto bool_arg = [&](const char* key) {
+    auto* val = expr->Arg(key);
+    return val != nullptr && *val == "true";
+  };
+  // Blobs carry the param kind; literal templates name the spec.
+  if (expr->kind == "bytes" || expr->kind == "data_size") {
+    if (live) {
+      return std::unexpected("a time target cannot fill a data-size param");
+    }
+    return DataSizeStr_(value, bool_arg("compact"), tables, pkg);
+  }
+  if (expr->kind == "millis" || expr->kind == "duration") {
+    std::string dir;
+    if (auto* val = expr->Arg("dir")) {
+      dir = *val;
+    }
+    bool clamp = bool_arg("clamp");
+    DurationStep_ step;
+    auto out =
+        DurationStr_(value, int_arg("maxparts", 2), int_arg("decimals", 0),
+                     clamp, dir, tables, pkg, &step);
+    if (out.has_value() && live) {
+      *until_change = DurationMillisUntilChange_(value, clamp, dir, step);
+    }
+    return out;
+  }
+  return std::unexpected("unknown display param kind '" + expr->kind + "'");
+}
+
+// Reduce a literal template's spec'd tokens ({t|duration(...)}) to plain
+// {t} tokens, collecting each one's spec as its display kind (mirrors
+// Python literal_template_kinds). Escaped braces pass through untouched.
+static void ExpandLiteralSpecs_(
+    const std::string& text, std::string* plain,
+    std::vector<std::pair<std::string, std::string>>* kinds) {
+  plain->clear();
+  plain->reserve(text.size());
+  size_t i = 0;
+  while (i < text.size()) {
+    if (i + 1 < text.size()
+        && ((text[i] == '{' && text[i + 1] == '{')
+            || (text[i] == '}' && text[i + 1] == '}'))) {
+      plain->append(text, i, 2);
+      i += 2;
+      continue;
+    }
+    std::string name, spec;
+    if (size_t close = MatchSpecToken_(text, i, &name, &spec);
+        close != std::string::npos) {
+      *plain += "{" + name + "}";
+      kinds->emplace_back(std::move(name), std::move(spec));
+      i = close + 1;
+      continue;
+    }
+    plain->push_back(text[i]);
+    ++i;
+  }
+}
+
+// Per-Evaluate() state shared down the recursion: one "now" for every
+// time target in a value, and the soonest text change any of them
+// reports.
+struct LangStrEvalState_ {
+  std::optional<int64_t> now_millis;
+  std::optional<int64_t> until_change;
+
+  auto NowMillis() -> int64_t {
+    if (!now_millis.has_value()) {
+      now_millis = static_cast<int64_t>(
+          std::llround(g_base->TimeSinceEpochCloudSeconds() * 1000.0));
+    }
+    return *now_millis;
+  }
+
+  void NoteChange(std::optional<int64_t> until) {
+    if (until.has_value()
+        && (!until_change.has_value() || *until < *until_change)) {
+      until_change = until;
+    }
+  }
+};
+
+static auto EvalNode_(const LangStr& ls, int depth, LangStrEvalState_* state)
     -> std::expected<std::string, std::string> {
   if (depth > kLangStrMaxNestingDepth) {
     return std::unexpected("max nesting depth exceeded");
+  }
+  if (ls.form == LangStr::Form::kTimeTarget) {
+    return std::unexpected(
+        "a time target is only meaningful as the value of a duration param");
   }
   if (ls.form == LangStr::Form::kResourceIndexed && ls.apverid.empty()) {
     // Unbound indexed values are unresolvable by design: their package
@@ -508,85 +1081,152 @@ static auto EvalNode_(const LangStr& ls, int depth)
         "indexed form requires a package-index binding to evaluate");
   }
 
-  // Evaluate substitutions first (shared by all forms). Keyword subs
-  // land in ``args``; the indexed form's positional subs (empty keys)
-  // land in ``posargs`` in order.
-  std::unordered_map<std::string, std::string> args;
-  std::vector<std::string> posargs;
-  for (auto&& entry : ls.subs) {
-    std::string evaluated;
-    if (auto* strval = std::get_if<std::string>(&entry.value)) {
-      evaluated = *strval;
-    } else if (auto* intval = std::get_if<int64_t>(&entry.value)) {
-      evaluated = std::to_string(*intval);
-    } else {
-      auto& nested = std::get<std::shared_ptr<const LangStr>>(entry.value);
-      auto sub = EvalNode_(*nested, depth + 1);
-      if (!sub.has_value()) {
-        return sub;
-      }
-      evaluated = std::move(*sub);
-    }
-    if (entry.key.empty()) {
-      posargs.push_back(std::move(evaluated));
-    } else {
-      args[entry.key] = std::move(evaluated);
-    }
-  }
-
-  if (ls.form == LangStr::Form::kValue) {
-    return Substitute_(ls.value, args);
-  }
-
-  // Resource / bound-indexed: resolve against the current native
-  // language tables.
+  // The tables are needed to resolve resources and to render any
+  // display-formatted param (locale data + unit words).
   auto tables = g_base && g_base->assets
                     ? g_base->assets->LangStrTablesSnapshot()
                     : nullptr;
-  if (!tables) {
-    return std::unexpected("no language tables loaded");
-  }
-  auto pkg = tables->packages.find(ls.apverid);
-  if (pkg == tables->packages.end()) {
-    return std::unexpected("no values for package '" + ls.apverid + "'");
-  }
+
+  // Work out the template, the name each sub fills, and which params
+  // render through a display formatter.
   const LangStrTableValue* tableval{};
-  if (ls.form == LangStr::Form::kResource) {
-    auto val = pkg->second.values.find(ls.name);
-    if (val == pkg->second.values.end()) {
-      return std::unexpected("no value for '" + ls.name + "' in " + ls.apverid);
+  const LangStrPackageTable* pkgtable{};
+  std::string literal_template;
+  std::vector<std::pair<std::string, std::string>> literal_kinds;
+  const std::vector<std::pair<std::string, std::string>>* kinds{};
+  std::vector<std::string> sub_names;
+  sub_names.reserve(ls.subs.size());
+
+  if (ls.form == LangStr::Form::kValue) {
+    ExpandLiteralSpecs_(ls.value, &literal_template, &literal_kinds);
+    kinds = &literal_kinds;
+    for (auto&& entry : ls.subs) {
+      sub_names.push_back(entry.key);
     }
-    tableval = &val->second.value;
   } else {
-    // Bound indexed: the integer index resolves via canonical
-    // sorted-name order, and its positional subs map onto the value's
-    // canonical (sorted) substitution names.
-    auto& names = pkg->second.sorted_names;
-    if (ls.index < 0 || static_cast<size_t>(ls.index) >= names.size()) {
-      return std::unexpected("unknown string index " + std::to_string(ls.index)
-                             + " in " + ls.apverid);
+    if (!tables) {
+      return std::unexpected("no language tables loaded");
     }
-    const std::string& name = names[static_cast<size_t>(ls.index)];
-    tableval = &pkg->second.values.at(name).value;
-    auto params = SubstitutionNames_(*tableval);
-    if (params.size() != posargs.size()) {
-      return std::unexpected("arity mismatch for '" + name
-                             + "': " + std::to_string(posargs.size())
-                             + " != " + std::to_string(params.size()));
+    auto pkg = tables->packages.find(ls.apverid);
+    if (pkg == tables->packages.end()) {
+      return std::unexpected("no values for package '" + ls.apverid + "'");
     }
-    for (size_t i = 0; i < params.size(); ++i) {
-      args[params[i]] = std::move(posargs[i]);
+    pkgtable = &pkg->second;
+    const LangStrTableEntry* tableentry{};
+    if (ls.form == LangStr::Form::kResource) {
+      auto val = pkgtable->values.find(ls.name);
+      if (val == pkgtable->values.end()) {
+        return std::unexpected("no value for '" + ls.name + "' in "
+                               + ls.apverid);
+      }
+      tableentry = &val->second;
+      for (auto&& entry : ls.subs) {
+        sub_names.push_back(entry.key);
+      }
+    } else {
+      // Bound indexed: the integer index resolves via canonical
+      // sorted-name order, and its positional subs map onto the value's
+      // canonical (sorted) substitution names.
+      auto& names = pkgtable->sorted_names;
+      if (ls.index < 0 || static_cast<size_t>(ls.index) >= names.size()) {
+        return std::unexpected("unknown string index "
+                               + std::to_string(ls.index) + " in "
+                               + ls.apverid);
+      }
+      const std::string& name = names[static_cast<size_t>(ls.index)];
+      tableentry = &pkgtable->values.at(name);
+      sub_names = SubstitutionNames_(tableentry->value);
+      if (sub_names.size() != ls.subs.size()) {
+        return std::unexpected("arity mismatch for '" + name
+                               + "': " + std::to_string(ls.subs.size())
+                               + " != " + std::to_string(sub_names.size()));
+      }
     }
+    tableval = &tableentry->value;
+    kinds = &tableentry->kinds;
   }
-  if (auto* text = std::get_if<std::string>(&*tableval)) {
+
+  auto kind_for = [kinds](const std::string& name) -> const std::string* {
+    for (auto&& [param, kind] : *kinds) {
+      if (param == name) {
+        return &kind;
+      }
+    }
+    return nullptr;
+  };
+
+  // Evaluate substitutions. Display-formatted params render ints and
+  // time targets through their formatter; text passes through as-is
+  // (already-rendered text from a producer that formatted it itself).
+  std::unordered_map<std::string, std::string> args;
+  for (size_t i = 0; i < ls.subs.size(); ++i) {
+    const std::string& name = sub_names[i];
+    const LangStr::Sub& sub = ls.subs[i].value;
+    const std::string* kind = kind_for(name);
+    std::string evaluated;
+    if (auto* strval = std::get_if<std::string>(&sub)) {
+      evaluated = *strval;
+    } else if (auto* intval = std::get_if<int64_t>(&sub)) {
+      if (kind == nullptr) {
+        evaluated = std::to_string(*intval);
+      } else {
+        if (!tables) {
+          return std::unexpected("no language tables loaded");
+        }
+        auto out = FormatDisplayParam_(*kind, *intval, false, *tables, pkgtable,
+                                       nullptr);
+        if (!out.has_value()) {
+          return std::unexpected("param '" + name + "': " + out.error());
+        }
+        evaluated = std::move(*out);
+      }
+    } else {
+      auto& nested = std::get<std::shared_ptr<const LangStr>>(sub);
+      if (nested->form == LangStr::Form::kTimeTarget) {
+        if (kind == nullptr) {
+          return std::unexpected("time target for '" + name
+                                 + "' needs a duration param");
+        }
+        if (!tables) {
+          return std::unexpected("no language tables loaded");
+        }
+        std::optional<int64_t> until;
+        auto out = FormatDisplayParam_(
+            *kind, nested->target_millis - state->NowMillis(), true, *tables,
+            pkgtable, &until);
+        if (!out.has_value()) {
+          return std::unexpected("param '" + name + "': " + out.error());
+        }
+        state->NoteChange(until);
+        evaluated = std::move(*out);
+      } else {
+        auto out = EvalNode_(*nested, depth + 1, state);
+        if (!out.has_value()) {
+          return out;
+        }
+        evaluated = std::move(*out);
+      }
+    }
+    args[name] = std::move(evaluated);
+  }
+
+  if (ls.form == LangStr::Form::kValue) {
+    return Substitute_(literal_template, args);
+  }
+  if (auto* text = std::get_if<std::string>(tableval)) {
     return Substitute_(*text, args);
   }
   return EvalSelector_(std::get<LangStrSelector>(*tableval),
                        tables->plural_locale, args);
 }
 
-auto LangStr::Evaluate() const -> std::string {
-  auto result = EvalNode_(*this, 0);
+auto LangStr::Evaluate(std::optional<int64_t>* millisecs_until_change) const
+    -> std::string {
+  LangStrEvalState_ state;
+  auto result = EvalNode_(*this, 0, &state);
+  if (millisecs_until_change != nullptr) {
+    *millisecs_until_change = state.until_change;
+  }
   if (!result.has_value()) {
     g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
                          "langstr evaluate: " + result.error());
@@ -625,9 +1265,22 @@ auto LangStr::Evaluate() const -> std::string {
     }
   }
   if (wrapval.has_value()) {
+    // A character budget means about the same *width* in every locale:
+    // scale it by how wide this locale's text runs (see
+    // WrapWidthFactor_).
+    int max_chars = wrapval->max_chars_per_line;
+    if (max_chars > 0) {
+      if (auto tables = g_base && g_base->assets
+                            ? g_base->assets->LangStrTablesSnapshot()
+                            : nullptr) {
+        max_chars = std::max(
+            1, static_cast<int>(
+                   std::lround(static_cast<float>(max_chars)
+                               * WrapWidthFactor_(tables->plural_locale))));
+      }
+    }
     return g_core->platform->SplitTextIntoLines(*result, wrapval->min_lines,
-                                                wrapval->max_lines,
-                                                wrapval->max_chars_per_line);
+                                                wrapval->max_lines, max_chars);
   }
   return *result;
 }
@@ -697,6 +1350,10 @@ static void FillObj_(JsonObjBuilder obj, const LangStr& ls) {
       }
       break;
     }
+    case LangStr::Form::kTimeTarget:
+      obj.Add("t", "tt");
+      obj.Add("m", ls.target_millis);
+      break;
   }
 }
 
@@ -731,6 +1388,10 @@ static auto FillResourceObj_(JsonObjBuilder obj, const LangStr& ls,
                             tables, depth + 1, error);
   };
   switch (ls.form) {
+    case LangStr::Form::kTimeTarget:
+      obj.Add("t", "tt");
+      obj.Add("m", ls.target_millis);
+      return true;
     case LangStr::Form::kValue: {
       obj.Add("t", "v");
       obj.Add("v", ls.value);
@@ -867,6 +1528,10 @@ static auto FillIndexedObj_(JsonObjBuilder obj, const LangStr& ls,
                            packages, tables, depth + 1, error);
   };
   switch (ls.form) {
+    case LangStr::Form::kTimeTarget:
+      obj.Add("t", "tt");
+      obj.Add("m", ls.target_millis);
+      return true;
     case LangStr::Form::kValue: {
       obj.Add("t", "v");
       obj.Add("v", ls.value);
@@ -1011,6 +1676,11 @@ auto LangStr::Equals(const LangStr& other) const -> bool {
         return false;
       }
       break;
+    case Form::kTimeTarget:
+      if (target_millis != other.target_millis) {
+        return false;
+      }
+      break;
   }
   for (size_t i = 0; i < subs.size(); ++i) {
     if (subs[i].key != other.subs[i].key
@@ -1045,6 +1715,9 @@ auto LangStr::Hash() const -> size_t {
     case Form::kResourceIndexed:
       HashCombine_(&seed, inthash(pkg));
       HashCombine_(&seed, inthash(index));
+      break;
+    case Form::kTimeTarget:
+      HashCombine_(&seed, inthash(target_millis));
       break;
   }
   for (auto&& entry : subs) {

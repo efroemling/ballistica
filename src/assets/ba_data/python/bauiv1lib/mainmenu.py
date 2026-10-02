@@ -436,7 +436,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=_classicassets.textures.tv.get(),
+            texture=_uiv1assets.textures.tv.get(),
         )
 
         # Credits button.

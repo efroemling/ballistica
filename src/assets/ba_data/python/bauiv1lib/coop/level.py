@@ -5,6 +5,7 @@
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _uiv1assets
 
 
 class CoopLevelLockedWindow(bui.Window):
@@ -13,7 +14,7 @@ class CoopLevelLockedWindow(bui.Window):
     def __init__(self, name: bui.LangStr, dep_name: bui.LangStr):
         width = 550.0
         height = 250.0
-        lock_tex = _classicassets.textures.lock.get()
+        lock_tex = _uiv1assets.textures.lock.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(

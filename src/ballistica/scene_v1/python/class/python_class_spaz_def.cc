@@ -183,6 +183,18 @@ auto PythonClassSpazDef::GetHighlight(PythonClassSpazDef* self, void* closure)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSpazDef::GetHighlight2(PythonClassSpazDef* self, void* closure)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const base::CharacterDef& def = self->GetSpazDef()->def();
+  if (!def.has_spaz() || !def.spaz().has_color) {
+    Py_RETURN_NONE;
+  }
+  const float* c = def.spaz().highlight2;
+  return Py_BuildValue("(fff)", c[0], c[1], c[2]);
+  BA_PYTHON_CATCH;
+}
+
 PyGetSetDef PythonClassSpazDef::tp_getsets[] = {
     {const_cast<char*>("color"), (getter)GetColor, nullptr,
      const_cast<char*>(
@@ -199,6 +211,14 @@ PyGetSetDef PythonClassSpazDef::tp_getsets[] = {
          "\n"
          "The definition's own highlight color, or None if it carries\n"
          "none."),
+     nullptr},
+    {const_cast<char*>("highlight2"), (getter)GetHighlight2, nullptr,
+     const_cast<char*>(
+         "highlight2: tuple[float, float, float] | None\n"
+         "\n"
+         "The definition's own second highlight color (its color mask's\n"
+         "blue channel; white when unset), or None if it carries no\n"
+         "colors."),
      nullptr},
     {nullptr}  // Sentinel
 };

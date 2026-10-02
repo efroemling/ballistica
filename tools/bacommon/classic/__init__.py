@@ -21,6 +21,8 @@ from bacommon.classic._classic import (
 from bacommon.classic._chest import (
     ClassicChestAppearance,
     ClassicChestDisplayItem,
+    ChestTints,
+    chest_tint3,
     CHEST_APPEARANCE_TINTS,
     CHEST_APPEARANCE_TINT_DEFAULT,
     CHEST_APPEARANCE_COLORS,
@@ -56,6 +58,8 @@ __all__ = [
     'ClassicPlayerProfile',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
+    'ChestTints',
+    'chest_tint3',
     'CHEST_APPEARANCE_TINTS',
     'CHEST_APPEARANCE_TINT_DEFAULT',
     'CHEST_APPEARANCE_COLORS',

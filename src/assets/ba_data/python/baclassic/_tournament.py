@@ -99,6 +99,7 @@ def set_tournament_prize_chest_image(
         tint_texture=chestdisplayinfo.texclosedtint.ui().get(),
         tint_color=chestdisplayinfo.tint,
         tint2_color=chestdisplayinfo.tint2,
+        tint3_color=chestdisplayinfo.tint3,
     )
 
 
@@ -138,6 +139,7 @@ def create_in_game_tournament_prize_image(
             'tint_texture': chestdisplayinfo.texclosedtint.get(),
             'tint_color': chestdisplayinfo.tint,
             'tint2_color': chestdisplayinfo.tint2,
+            'tint3_color': chestdisplayinfo.tint3,
             'mask_texture': None,
         },
         color=chestdisplayinfo.color + (1.0,),

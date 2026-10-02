@@ -261,11 +261,24 @@ class Player[TeamT]:
 
     def get_icon(self) -> dict[str, Any]:
         """
-        Returns the character's icon (images, colors, etc contained in a dict)
+        Returns the character's legacy icon (images, colors, etc contained
+        in a dict).
+
+        Prefer :meth:`get_icon_depiction` where available; see
+        :meth:`bascenev1.SessionPlayer.get_icon`.
         """
         assert self._postinited
         assert not self._expired
         return self._sessionplayer.get_icon()
+
+    def get_icon_depiction(self) -> bascenev1.Depiction | None:
+        """Return the player's icon as a depiction, if they have one.
+
+        See :meth:`bascenev1.SessionPlayer.get_icon_depiction`.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._sessionplayer.get_icon_depiction()
 
     def assigninput(
         self,

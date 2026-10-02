@@ -3787,6 +3787,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->SetColorizeColor(color_[0], color_[1], color_[2]);
     assert(highlight_.size() == 3);
     c->SetColorizeColor2(highlight_[0], highlight_[1], highlight_[2]);
+    assert(highlight2_.size() == 3);
+    c->SetColorizeColor3(highlight2_[0], highlight2_[1], highlight2_[2]);
     c->SetLightShadow(base::LightShadowType::kObject);
     c->SetAddColor(add_color[0], add_color[1], add_color[2]);
 
@@ -5107,6 +5109,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetColorizeTexture(WingTintTextureData_());
     c.SetColorizeColor(color_[0], color_[1], color_[2]);
     c.SetColorizeColor2(highlight_[0], highlight_[1], highlight_[2]);
+    c.SetColorizeColor3(highlight2_[0], highlight2_[1], highlight2_[2]);
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -6552,7 +6555,6 @@ void SpazNode::set_highlight(const std::vector<float>& vals) {
     highlight_ = vals;
   }
 }
-
 void SpazNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
     throw Exception("Expected float array of length 3 for color",
@@ -6997,6 +6999,9 @@ void SpazNode::ApplyStyle_() {
   draw_hair_ = female_hair_;
   SetDrawColor_(color_attr_);
   highlight_ = highlight_attr_;
+  // Only definitions carry a third color; legacy masks have stray blue
+  // data, so style form keeps it at white (the no-op).
+  highlight2_ = {1.0f, 1.0f, 1.0f};
 
   // Fold the legacy eye flags into the per-eye styles the draw code
   // consumes (character definitions set these directly).
@@ -7047,6 +7052,7 @@ void SpazNode::ApplyCharacterDef_() {
     SetDrawColor_({look.color[0], look.color[1], look.color[2]});
   }
   highlight_ = {look.highlight[0], look.highlight[1], look.highlight[2]};
+  highlight2_ = {look.highlight2[0], look.highlight2[1], look.highlight2[2]};
   eye_style_left_ = look.eye_style_left;
   eye_style_right_ = look.eye_style_right;
   eye_scale_ = look.eye_scale;

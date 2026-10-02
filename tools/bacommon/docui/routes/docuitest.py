@@ -28,6 +28,13 @@ class TestRoute(DocUIRoute):
     def get_route_types(cls) -> tuple[type[DocUIRoute], ...]:
         return family_members(AnyTestRoute)
 
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Test pages are dense showcases built for the full-size
+        # window.
+        return dui2.WindowLayout.LARGE
+
 
 @ioprepped
 @dataclass
@@ -86,6 +93,18 @@ class TextImages(TestRoute, path='/textimages'):
 
 @ioprepped
 @dataclass
+class LiveTimes(TestRoute, path='/livetimes'):
+    """Time-varying text (countdowns, elapsed times) that ticks itself."""
+
+
+@ioprepped
+@dataclass
+class Animation(TestRoute, path='/animation'):
+    """Decorations animated by keyframe client-effects."""
+
+
+@ioprepped
+@dataclass
 class Depictions(TestRoute, path='/depictions'):
     """Depiction tests."""
 
@@ -96,6 +115,14 @@ class Depictions(TestRoute, path='/depictions'):
 @dataclass
 class Names(TestRoute, path='/names'):
     """Name depiction tests (basic and capsule forms)."""
+
+    debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+
+@ioprepped
+@dataclass
+class NinePatch(TestRoute, path='/ninepatch'):
+    """9-patch image tests (stretched and tile-fit, tinted)."""
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
 
@@ -178,11 +205,14 @@ class WideFit(TestRoute, path='/widefit'):
 
     It should fill the page's height (wide and wider) and width (wide)
     with no scrolling, at every ui-scale; with ``over`` / ``wide_over``
-    set it's a hair taller / wider, which should scroll.
+    set it's a hair taller / wider, which should scroll. ``wider`` says
+    it's being shown in the wider layout, whose width follows the screen
+    (so there's no width to overflow).
     """
 
     over: Annotated[bool, IOAttrs('over', store_default=False)] = False
     wide_over: Annotated[bool, IOAttrs('wo', store_default=False)] = False
+    wider: Annotated[bool, IOAttrs('wdr', store_default=False)] = False
 
 
 class Flavor(Enum):
@@ -331,8 +361,11 @@ AnyTestRoute = (
     | TimedActions
     | DisplayItems
     | TextImages
+    | LiveTimes
+    | Animation
     | Depictions
     | Names
+    | NinePatch
     | EmptyPage
     | BoundsTests
     | Widgets

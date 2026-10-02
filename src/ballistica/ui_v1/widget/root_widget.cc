@@ -644,10 +644,12 @@ void RootWidget::Setup() {
     bd.h_align = 0.0f;
     bd.v_align = VAlign_::kTop;
     bd.width = 160.0f;
-    bd.height = 60.0f;
+    bd.height = 50.0f;
     bd.depth_min = 0.3f;
     bd.y = -34.0f;
-    bd.y_offs_small = 10.0f;
+    // Sits lower at small ui scale than other top-left items so its
+    // full height (name capsule glow included) stays onscreen.
+    bd.y_offs_small = 2.0f;
     bd.color_r = 1.0f;
     bd.color_g = 1.0f;
     bd.color_b = 1.0f;
@@ -2940,6 +2942,7 @@ void RootWidget::UpdateChests_() {
       slot.button->widget->SetTintTexture(nullptr);
       slot.button->widget->set_tint_color(1.0f, 1.0f, 1.0f);
       slot.button->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
+      slot.button->widget->set_tint3_color(1.0f, 1.0f, 1.0f);
 
       slot.needs_faster_refresh = false;
 
@@ -2964,14 +2967,15 @@ void RootWidget::UpdateChests_() {
       Vector3f chest_color;
       Vector3f chest_tint;
       Vector3f chest_tint2;
+      Vector3f chest_tint3;
       // Chest slots only exist under classic, which is also the only
       // thing that installs us as ui-delegate -- so classic is always
       // here by the time we draw one.
       auto* classic = g_base->classic();
       BA_PRECONDITION(classic);
-      classic->GetClassicChestDisplayInfo(slot.appearance, &chest_tex_closed,
-                                          &chest_tex_closed_tint, &chest_color,
-                                          &chest_tint, &chest_tint2);
+      classic->GetClassicChestDisplayInfo(
+          slot.appearance, &chest_tex_closed, &chest_tex_closed_tint,
+          &chest_color, &chest_tint, &chest_tint2, &chest_tint3);
       {
         base::Assets::AssetListLock lock;
         tex = g_base->assets->GetTexture(chest_tex_closed);
@@ -2992,6 +2996,8 @@ void RootWidget::UpdateChests_() {
                                             chest_tint.z);
         slot.button->widget->set_tint2_color(chest_tint2.x, chest_tint2.y,
                                              chest_tint2.z);
+        slot.button->widget->set_tint3_color(chest_tint3.x, chest_tint3.y,
+                                             chest_tint3.z);
       }
 
       auto seconds_to_unlock{

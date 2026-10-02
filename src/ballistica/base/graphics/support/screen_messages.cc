@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/depiction/depiction.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
@@ -27,7 +28,7 @@ class ScreenMessages::ScreenMessageEntry {
   ScreenMessageEntry(std::string text, bool literal, bool top_style, uint32_t c,
                      const Vector3f& color, TextureAsset* texture,
                      TextureAsset* tint_texture, const Vector3f& tint,
-                     const Vector3f& tint2)
+                     const Vector3f& tint2, const Vector3f& tint3)
       : literal(literal),
         top_style(top_style),
         creation_time(c),
@@ -36,7 +37,8 @@ class ScreenMessages::ScreenMessageEntry {
         texture(texture),
         tint_texture(tint_texture),
         tint(tint),
-        tint2(tint2) {}
+        tint2(tint2),
+        tint3(tint3) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
   void PrefetchTextMeasures();
@@ -46,12 +48,15 @@ class ScreenMessages::ScreenMessageEntry {
   Vector3f color;
   Vector3f tint;
   Vector3f tint2;
+  Vector3f tint3;
   std::string s_raw;
   std::string s_translated;
   float str_width{};
   float str_height{};
   Object::Ref<TextureAsset> texture;
   Object::Ref<TextureAsset> tint_texture;
+  /// An icon drawn by a depiction instead of the texture pair.
+  Object::Ref<Depiction> depiction;
   float v_smoothed{};
   bool translation_dirty{true};
   bool mesh_dirty{true};
@@ -421,7 +426,29 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
         last_v = i->v_smoothed;
 
         // Draw the image if they provided one.
-        if (i->texture.exists()) {
+        if (i->depiction.exists()) {
+          c.Submit();
+          i->depiction->MarkShown();
+          i->depiction->Update(g_core->AppTimeMillisecs());
+          float size = 22.0f * s_extra;
+          DepictionDrawContext context;
+          context.pass = pass;
+          context.transparent = true;
+          context.box = FitDepictionBox(
+              {h - 14.0f - size * 0.5f,
+               v_base + 10.0f + i->v_smoothed - size * 0.5f, size, size},
+              i->depiction->GetAspect(), DepictionHAlign::kCenter,
+              DepictionVAlign::kCenter);
+          context.z = kScreenMessageZDepth;
+          context.opacity = a;
+          float virtual_width = g_base->graphics->screen_virtual_width();
+          context.pixels_per_unit =
+              virtual_width > 0.0f
+                  ? g_base->graphics->virtual_bounds_rect().width()
+                        / virtual_width
+                  : 1.0f;
+          i->depiction->Draw(context);
+        } else if (i->texture.exists()) {
           c.Submit();
 
           SimpleComponent c2(pass);
@@ -431,6 +458,7 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
+            c2.SetColorizeColor3(i->tint3.x, i->tint3.y, i->tint3.z);
             c2.SetMaskTexture(
                 g_base->assets->base_assets().character_icon_mask.get());
           }
@@ -495,12 +523,10 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
   }
 }
 
-void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
-                                      const Vector3f& color, bool top,
-                                      TextureAsset* texture,
-                                      TextureAsset* tint_texture,
-                                      const Vector3f& tint,
-                                      const Vector3f& tint2) {
+void ScreenMessages::AddScreenMessage(
+    const std::string& msg, bool literal, const Vector3f& color, bool top,
+    TextureAsset* texture, TextureAsset* tint_texture, const Vector3f& tint,
+    const Vector3f& tint2, const Vector3f& tint3) {
   assert(g_base->InLogicThread());
 
   // With no renderer there is nothing to ever display OR trim these;
@@ -519,16 +545,32 @@ void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
           start_v,
           std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
     }
-    screen_messages_top_.emplace_back(m, literal, true,
-                                      g_core->AppTimeMillisecs(), color,
-                                      texture, tint_texture, tint, tint2);
+    screen_messages_top_.emplace_back(
+        m, literal, true, g_core->AppTimeMillisecs(), color, texture,
+        tint_texture, tint, tint2, tint3);
     screen_messages_top_.back().v_smoothed = start_v;
     screen_messages_top_.back().PrefetchTextMeasures();
   } else {
     screen_messages_.emplace_back(m, literal, false, g_core->AppTimeMillisecs(),
-                                  color, texture, tint_texture, tint, tint2);
+                                  color, texture, tint_texture, tint, tint2,
+                                  tint3);
     screen_messages_.back().PrefetchTextMeasures();
   }
+}
+
+void ScreenMessages::AddTopScreenMessageWithDepiction(
+    const std::string& msg, bool literal, const Vector3f& color,
+    const std::string& depiction_json) {
+  assert(g_base->InLogicThread());
+
+  // Nothing ever displays these headless (see AddScreenMessage).
+  if (g_core->HeadlessMode()) {
+    return;
+  }
+  AddScreenMessage(msg, literal, color, true);
+  // A json a machine can't draw makes the usual placeholder box.
+  screen_messages_top_.back().depiction =
+      DepictionRegistry::Create(depiction_json, DepictionHost::kScene, "");
 }
 
 void ScreenMessages::Reset() {

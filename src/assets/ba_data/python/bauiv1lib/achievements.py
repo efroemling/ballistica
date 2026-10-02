@@ -371,6 +371,7 @@ class AchievementsWindow(bui.MainWindow):
                 tint_texture=chestdisplayinfo.texclosedtint.ui().get(),
                 tint_color=chestdisplayinfo.tint,
                 tint2_color=chestdisplayinfo.tint2,
+                tint3_color=chestdisplayinfo.tint3,
             )
 
             pts = ach.power_ranking_value

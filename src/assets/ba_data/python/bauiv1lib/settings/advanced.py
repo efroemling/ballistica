@@ -162,7 +162,17 @@ class Open(AdvancedLocalAction, name='open'):
     target: Annotated[Target, IOAttrs('t')]
 
 
-AnyAdvancedLocalAction = SetLanguage | ApplySetting | Open
+@ioprepped
+@dataclass
+class SendTranslationFeedback(
+    AdvancedLocalAction, name='send_translation_feedback'
+):
+    """Report a translation that could be improved."""
+
+
+AnyAdvancedLocalAction = (
+    SetLanguage | ApplySetting | Open | SendTranslationFeedback
+)
 
 
 class AdvancedSettingsController(
@@ -207,6 +217,8 @@ class AdvancedSettingsController(
                 _apply_setting(context)
             case Open():
                 _open(action.target, context)
+            case SendTranslationFeedback():
+                bui.open_url('https://www.ballistica.net/feedback')
             case _:
                 assert_never(action)
 
@@ -345,6 +357,21 @@ def _page() -> dui2.Response:
             choices=_language_choices(),
             label=_advstrs.language.spec,
             on_change=SetLanguage().local(default_sound=False),
+        ),
+        dui2.ButtonControlRow(
+            label=_advstrs.improve_translations.spec,
+            button=dui2.Button(
+                label=_advstrs.translation_feedback.spec,
+                style=dui2.ButtonStyle.MEDIUM,
+                size=(150.0, 45.0),
+                action=SendTranslationFeedback().local(),
+            ),
+            # (Wrapped at display time by its max-chars-per-line wrap
+            # params, so each language gets however many lines it needs;
+            # the row grows to fit.)
+            footnote=_advstrs.improve_translations_description(
+                app_name=_classicassets.strings.ui.app_name
+            ).spec,
         ),
         astate.checkbox_row(
             lambda s: s.kick_idle_players,

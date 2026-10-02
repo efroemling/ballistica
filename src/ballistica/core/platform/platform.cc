@@ -737,6 +737,33 @@ auto Platform::GetTextLineBreakOffsets(const std::string& text)
   return offsets;
 }
 
+// How many columns a code point takes for line-splitting purposes: 2
+// for East Asian wide and full-width characters (which render about
+// twice as wide as Latin ones), else 1. Ranges after the common wcwidth
+// tables; close enough for balancing lines, which is all this is for.
+static auto SplitColumnsForCodePoint(uint32_t cp) -> int {
+  if (cp < 0x1100) {
+    return 1;
+  }
+  if ((cp <= 0x115F)                          // Hangul Jamo initials.
+      || (cp >= 0x2E80 && cp <= 0x303E)       // CJK radicals, punctuation.
+      || (cp >= 0x3041 && cp <= 0x33FF)       // Kana, CJK compatibility.
+      || (cp >= 0x3400 && cp <= 0x4DBF)       // CJK extension A.
+      || (cp >= 0x4E00 && cp <= 0x9FFF)       // CJK unified ideographs.
+      || (cp >= 0xA000 && cp <= 0xA4CF)       // Yi.
+      || (cp >= 0xAC00 && cp <= 0xD7A3)       // Hangul syllables.
+      || (cp >= 0xF900 && cp <= 0xFAFF)       // CJK compatibility ideographs.
+      || (cp >= 0xFE30 && cp <= 0xFE4F)       // CJK compatibility forms.
+      || (cp >= 0xFF00 && cp <= 0xFF60)       // Full-width forms.
+      || (cp >= 0xFFE0 && cp <= 0xFFE6)       // Full-width signs.
+      || (cp >= 0x1F300 && cp <= 0x1F64F)     // Emoji (pictographs, faces).
+      || (cp >= 0x1F900 && cp <= 0x1F9FF)     // Emoji (supplemental).
+      || (cp >= 0x20000 && cp <= 0x3FFFD)) {  // CJK extensions B+.
+    return 2;
+  }
+  return 1;
+}
+
 auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
                                   int max_lines, int max_chars_per_line)
     -> std::string {
@@ -760,23 +787,33 @@ auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
   int max_l = max_lines <= 0 ? seg_count
                              : std::min(std::max(max_lines, min_l), seg_count);
 
-  // Per-boundary cumulative code-point counts plus the whitespace run
+  // Per-boundary cumulative column counts plus the whitespace run
   // directly preceding each boundary, so any candidate line's visible
-  // length (code-points minus trailing whitespace) is O(1). Counting
-  // non-continuation bytes gives code-point counts; the whitespace we
-  // strip is all ASCII so byte counts suffice there.
+  // length (columns minus trailing whitespace) is O(1). Columns count
+  // East Asian wide characters as 2 (see SplitColumnsForCodePoint), so
+  // max_chars_per_line means roughly the same width in every script.
+  // The whitespace we strip is all ASCII so byte counts suffice there.
   std::vector<int> cum(bound_count);
   std::vector<int> trail_ws(bound_count);
   cum[0] = 0;
   trail_ws[0] = 0;
   for (int i = 1; i < bound_count; ++i) {
-    int cp = cum[i - 1];
-    for (int b = bounds[i - 1]; b < bounds[i]; ++b) {
-      if ((static_cast<uint8_t>(text[b]) & 0xC0) != 0x80) {
-        ++cp;
+    int cols = cum[i - 1];
+    for (int b = bounds[i - 1]; b < bounds[i];) {
+      // Decode one UTF-8 code point (the text is valid UTF-8).
+      auto lead = static_cast<uint8_t>(text[b]);
+      int len = lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+      uint32_t cp = len == 1   ? lead
+                    : len == 2 ? (lead & 0x1F)
+                    : len == 3 ? (lead & 0x0F)
+                               : (lead & 0x07);
+      for (int k = 1; k < len && b + k < bounds[i]; ++k) {
+        cp = (cp << 6) | (static_cast<uint8_t>(text[b + k]) & 0x3F);
       }
+      cols += SplitColumnsForCodePoint(cp);
+      b += len;
     }
-    cum[i] = cp;
+    cum[i] = cols;
     int ws = 0;
     for (int b = bounds[i] - 1; b >= bounds[i - 1] && is_edge_space(text[b]);
          --b) {

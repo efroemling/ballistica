@@ -1338,8 +1338,10 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           SceneTexture* texture = GetTexture(cmdvals[0]);
           SceneTexture* tint_texture = GetTexture(cmdvals[1]);
           std::string s = ReadString();
-          float f[9];
-          ReadFloats(9, f);
+          // Older streams carry no third tint; white is its no-op.
+          float f[12]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f};
+          ReadFloats(stream_protocol() >= kProtocolVersionTint3 ? 12 : 9, f);
           bool literal{};
           if (stream_protocol() >= kProtocolVersionLangStrWire
               && IsLangStrWireTagged(s)) {
@@ -1349,7 +1351,22 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           g_base->graphics->screenmessages->AddScreenMessage(
               s, literal, Vector3f(f[0], f[1], f[2]), true,
               texture->texture_data(), tint_texture->texture_data(),
-              Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]));
+              Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]),
+              Vector3f(f[9], f[10], f[11]));
+          break;
+        }
+        case SessionCommand::kScreenMessageTopDepiction: {
+          SceneDepiction* depiction = GetDepiction(ReadInt32());
+          std::string s = ReadString();
+          float f[3];
+          ReadFloats(3, f);
+          bool literal{};
+          if (IsLangStrWireTagged(s)) {
+            std::tie(s, literal) =
+                EvalLangStrWireValue_(s, asset_package_table_);
+          }
+          g_base->graphics->screenmessages->AddTopScreenMessageWithDepiction(
+              s, literal, Vector3f(f[0], f[1], f[2]), depiction->json());
           break;
         }
         case SessionCommand::kPlaySoundAtPosition: {

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bauiv1assets.260929`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bauiv1assets.261002`` (bauiv1).
 
 Standard ui chrome the ui_v1 widget layer draws itself with -- window backings,
 button faces, scroll furniture, the ui atlases -- supplied to ui_v1 by the
@@ -12,7 +12,7 @@ string groups.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 293
+# ba_meta require asset-package 379
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -26,8 +26,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.bauiv1assets.260929
-_ASSET_PACKAGE = ApverNum(293)
+# a-0.bauiv1assets.261002
+_ASSET_PACKAGE = ApverNum(379)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -94,7 +94,8 @@ if TYPE_CHECKING:
         """
         ::
 
-            Screen-messages about currency: grants and related notices.
+            Screen-messages about currency: grants and related notices. Also
+            'Watch an Ad' (rewarded-ad buttons).
 
             See source for the full asset list.
         """
@@ -108,6 +109,13 @@ if TYPE_CHECKING:
                 English: (one) "Received # Ticket!" / (other) "Received #
                 Tickets!"
             """
+
+        #: ::
+        #:
+        #:     Button to watch an ad for tournament entry.
+        #:
+        #:     English: "Watch an Ad"
+        watch_an_ad: LangStr
 
         def you_got_tokens(self, *, tokens: int) -> LangStr:
             """
@@ -442,9 +450,11 @@ if TYPE_CHECKING:
         circle: TextureHandle
         circle_soft: TextureHandle
         glow: TextureHandle
+        lock: TextureHandle
         menu_button: TextureHandle
         page_left_right: TextureHandle
         plus_button: TextureHandle
+        quote_bubble: TextureHandle
         scroll_widget: TextureHandle
         scroll_widget_glow: TextureHandle
         shadow_sharp: TextureHandle
@@ -463,6 +473,7 @@ if TYPE_CHECKING:
         spinner9: TextureHandle
         start_button: TextureHandle
         text_clear_button: TextureHandle
+        tv: TextureHandle
         ui_atlas: TextureHandle
         ui_atlas2: TextureHandle
         users_button: TextureHandle
@@ -480,12 +491,12 @@ if TYPE_CHECKING:
     #: list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 37 strings (``economy``, ``profile``,
-    #: ``profiles``, and 34 more). Full list in source.
+    #: The ``strings`` group - 38 strings (``economy``, ``profile``,
+    #: ``profiles``, and 35 more). Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 34 assets (``back_icon``, ``bomb_button``,
-    #: ``button_square``, ``button_square_wide``, ``circle``, and 29 more). Full
+    #: The ``textures`` group - 37 assets (``back_icon``, ``bomb_button``,
+    #: ``button_square``, ``button_square_wide``, ``circle``, and 32 more). Full
     #: list in source.
     textures: TexturesGroup
 
@@ -528,6 +539,7 @@ _TREE = {
     'strings': {
         'economy': {
             'received_tickets': ('count',),
+            'watch_an_ad': (),
             'you_got_tokens': ('tokens',),
         },
         'profile': {
@@ -578,9 +590,11 @@ _TREE = {
         'circle': 't',
         'circle_soft': 't',
         'glow': 't',
+        'lock': 't',
         'menu_button': 't',
         'page_left_right': 't',
         'plus_button': 't',
+        'quote_bubble': 't',
         'scroll_widget': 't',
         'scroll_widget_glow': 't',
         'shadow_sharp': 't',
@@ -599,6 +613,7 @@ _TREE = {
         'spinner9': 't',
         'start_button': 't',
         'text_clear_button': 't',
+        'tv': 't',
         'ui_atlas': 't',
         'ui_atlas2': 't',
         'users_button': 't',

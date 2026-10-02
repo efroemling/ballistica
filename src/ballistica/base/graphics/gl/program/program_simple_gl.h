@@ -53,6 +53,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       assert(shadow_params_location_ != -1);
       shadow_color_location_ = glGetUniformLocation(program(), "shadowColor");
       assert(shadow_color_location_ != -1);
+      if (flags & SHD_TEXT_GLOW) {
+        text_glow_location_ = glGetUniformLocation(program(), "textGlow");
+        assert(text_glow_location_ != -1);
+      }
     }
     if (flags & SHD_GLOW) {
       glow_params_location_ = glGetUniformLocation(program(), "glowParams");
@@ -147,6 +151,17 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
   }
 
+  /// How strong a text-glow program's neon look is (0 = none, 1 =
+  /// standard).
+  void SetTextGlow(float amount) {
+    assert(flags_ & SHD_TEXT_GLOW);
+    assert(IsBound());
+    if (amount != text_glow_) {
+      text_glow_ = amount;
+      glUniform1f(text_glow_location_, text_glow_);
+    }
+  }
+
   void SetGlow(float glow_amount, float glow_blur) {
     assert(flags_ & SHD_GLOW);
     assert(IsBound());
@@ -234,7 +249,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
            + std::to_string((flags & SHD_MASKED) != 0) + " maskedUV2:"
            + std::to_string((flags & SHD_MASK_UV2) != 0) + " depthBugTest:"
            + std::to_string((flags & SHD_DEPTH_BUG_TEST) != 0)
-           + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0);
+           + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0)
+           + " textGlow:" + std::to_string((flags & SHD_TEXT_GLOW) != 0);
   }
 
   auto GetPFlags(int flags) -> int {
@@ -328,6 +344,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
            BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow3;\n"
            "uniform " BA_GLSL_MEDIUMP "vec4 shadowParams;\n"
            "uniform " BA_GLSL_MEDIUMP "vec4 shadowColor;\n";
+    if (flags & SHD_TEXT_GLOW) {
+      s += "uniform " BA_GLSL_MEDIUMP "float textGlow;\n";
+    }
     }
     if (flags & SHD_GLOW) {
       s += "uniform " BA_GLSL_MEDIUMP "vec2 glowParams;\n";
@@ -424,6 +443,40 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         }
         s += ";\n";
 
+        if (flags & SHD_TEXT_GLOW) {
+          // Text glow (a neon look) of strength textGlow (0 = none, 1 =
+          // standard), from blurrier samples of the glyph's alpha:
+          //  * A halo: the text's own color at textGlow x a
+          //    blurrier (two mips down) alpha, max'd (not added) with
+          //    the glyph, so it spills past the edges without pushing
+          //    them toward white.
+          //  * A hot core: white added where a slightly blurrier (one
+          //    mip down) alpha runs from 0.9 to 1, so thick parts go
+          //    white-hot while edges keep the text color. The white
+          //    added scales with textGlow (full white at strength 1;
+          //    clamped above that), so lower strengths warm
+          //    evenly rather than greying. (Premultiplied texts add it
+          //    scaled by their alpha.)
+          s += "   " BA_GLSL_MEDIUMP "float glowHaloSrc = min("
+               BA_GLSL_TEXTURE2D "(colorTex, vUV, 2.0).a * textGlow,"
+               " 1.0)"
+               // Faded out toward the glyph quad's edges like shadows are,
+               // so the halo never shows the quad's outline.
+               " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a;\n"
+               "   " BA_GLSL_MEDIUMP "float glowHaloA = glowHaloSrc *"
+               " color.a;\n"
+               "   " BA_GLSL_FRAGCOLOR " = mix(vec4(" BA_GLSL_FRAGCOLOR
+               ".rgb, max(" BA_GLSL_FRAGCOLOR ".a, glowHaloA)),"
+               " max(" BA_GLSL_FRAGCOLOR ", vec4(color.rgb * glowHaloSrc,"
+               " glowHaloA)), texPremultiplied);\n"
+               "   " BA_GLSL_MEDIUMP "float glowCore = clamp(("
+               BA_GLSL_TEXTURE2D "(colorTex, vUV, 1.0).a"
+               " - 0.9) / 0.1, 0.0, 1.0) * textGlow;\n"
+               "   " BA_GLSL_FRAGCOLOR ".rgb = min(" BA_GLSL_FRAGCOLOR
+               ".rgb + vec3(glowCore * mix(1.0, " BA_GLSL_FRAGCOLOR
+               ".a, texPremultiplied)), vec3(1.0));\n";
+        }
+
         if (flags & SHD_SHADOW) {
           s += "   " BA_GLSL_MEDIUMP
                      "float shadowA = ("
@@ -500,6 +553,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   // GL zero-initializes uniforms, so black with no spread (the default)
   // needs no initial upload.
   float shadow_r_{}, shadow_g_{}, shadow_b_{}, shadow_spread_{};
+  float text_glow_{};
   float glow_amount_{}, glow_blur_{};
   float flatness_{};
   float tex_premultiplied_{};
@@ -509,6 +563,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   GLint colorize3_color_location_{};
   GLint shadow_params_location_{};
   GLint shadow_color_location_{};
+  GLint text_glow_location_{};
   GLint glow_params_location_{};
   GLint flatness_location{};
   GLint tex_premultiplied_location_{};

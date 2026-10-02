@@ -47,8 +47,8 @@ def make_ui_asset_set() -> bui.UIAssetSet:
         toolbar_backing_bottom2=msh.toolbar_backing_bottom2,
         coin=cattex.coin,
         tickets=cattex.tickets,
-        lock=tex.lock,
-        tv=tex.tv,
+        lock=uitex.lock,
+        tv=uitex.tv,
         achievements_icon=tex.achievements_icon,
         settings_icon=tex.settings_icon,
     )

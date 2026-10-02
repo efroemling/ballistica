@@ -92,13 +92,10 @@ def test_page_display_items(
 
     return dui2.Response(
         page=dui2.Page(
-            padding_left=20,
-            padding_right=20,
             title=strs.items.display_items.spec,
             rows=[
                 dui2.ButtonRow(
                     debug=debug,
-                    padding_left=-10,
                     title=strs.items.display_item_tests.spec,
                     subtitle=LangStrSpecValue.literal(
                         'top=FULL, center=COMPACT, bottom=ICON'

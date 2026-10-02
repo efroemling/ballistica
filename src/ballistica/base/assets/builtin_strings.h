@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261001d"
+// Generated from: "a-0.babuiltinassets.261002b"
 
 #include <memory>
 
@@ -578,6 +578,12 @@ class BuiltinStrings {
     /// is chat-blocked for # seconds."
     static auto ChatBlocked(int64_t seconds, LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when a player sends a chat message longer than the
+    /// host allows.
+    ///
+    /// English: "Message is too long."
+    static auto ChatMessageTooLong() -> std::shared_ptr<const LangStr>;
 
     /// Screen-message telling a recently-departed player how long until they
     /// may rejoin the game session.

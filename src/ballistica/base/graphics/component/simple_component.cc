@@ -64,7 +64,9 @@ void SimpleComponent::WriteConfig() {
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
           cmd_buffer_->PutTexture(texture_);
         } else {
-          if (shadow_opacity_ > 0.0f) {
+          // Text glow rides the shadow programs, so it selects them even
+          // with no shadow to draw.
+          if (shadow_opacity_ > 0.0f || shadow_text_glow_ > 0.0f) {
             assert(!mask_texture_.exists());  // unimplemented combo
             assert(glow_amount_ == 0.0f);     // unimplemented combo
             assert(mask_uv2_texture_.exists());
@@ -76,7 +78,8 @@ void SimpleComponent::WriteConfig() {
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_, flatness_);
               cmd_buffer_->PutFloats(shadow_color_r_, shadow_color_g_,
-                                     shadow_color_b_, shadow_spread_);
+                                     shadow_color_b_, shadow_spread_,
+                                     shadow_text_glow_);
               cmd_buffer_->PutTexture(texture_);
               cmd_buffer_->PutTexture(mask_uv2_texture_);
             } else {
@@ -87,7 +90,8 @@ void SimpleComponent::WriteConfig() {
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_);
               cmd_buffer_->PutFloats(shadow_color_r_, shadow_color_g_,
-                                     shadow_color_b_, shadow_spread_);
+                                     shadow_color_b_, shadow_spread_,
+                                     shadow_text_glow_);
               cmd_buffer_->PutTexture(texture_);
               cmd_buffer_->PutTexture(mask_uv2_texture_);
             }

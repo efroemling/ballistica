@@ -2020,6 +2020,12 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.h">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\h_scroll_widget.cc">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClCompile>

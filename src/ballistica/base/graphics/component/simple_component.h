@@ -113,9 +113,14 @@ class SimpleComponent : public RenderComponent {
   /// color defaults to black; a bright color with no offset makes a
   /// glow, and ``spread`` widens it (extra blur, as mip bias; the
   /// glyph's padding in its atlas bounds how far it can usefully go).
+  ///
+  /// ``text_glow`` > 0 draws with the text-glow shader variant instead: the
+  /// same shadow, plus the glyph's interior lifted toward white (a
+  /// neon look) at that strength (1 = standard). Its own program, used
+  /// only when > 0, so plain text never pays for it.
   void SetShadow(float offset_x, float offset_y, float blur, float opacity,
                  float r = 0.0f, float g = 0.0f, float b = 0.0f,
-                 float spread = 0.0f) {
+                 float spread = 0.0f, float text_glow = 0.0f) {
     EnsureConfiguring();
     shadow_offset_x_ = offset_x;
     shadow_offset_y_ = offset_y;
@@ -125,6 +130,7 @@ class SimpleComponent : public RenderComponent {
     shadow_color_g_ = g;
     shadow_color_b_ = b;
     shadow_spread_ = spread;
+    shadow_text_glow_ = text_glow;
   }
 
   void SetGlow(float amount, float blur) {
@@ -170,6 +176,7 @@ class SimpleComponent : public RenderComponent {
   float shadow_color_g_{};
   float shadow_color_b_{};
   float shadow_spread_{};
+  float shadow_text_glow_{};
   float glow_amount_{};
   float glow_blur_{};
   float flatness_{};

@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 47;
+const int kProtocolVersionHostMin = 48;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 47;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 47;
+const int kProtocolVersionMax = 48;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 47;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 46;
+const int kProtocolVersionDevGapMax = 47;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -360,6 +360,23 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     pre-1.8 protocols (37 and below) and the final 1.8 one are
 //     supported as a client (kProtocolVersionDevGapMin/Max, Eric,
 //     2026-10-01), so nothing above keeps decode paths for 38-46 alone.
+//
+// 48: Player icons as depictions in screen messages (cloud-profiles
+//     icon sites, 2026-10-01). kScreenMessageTopDepiction (appended
+//     last) carries a top message's icon as a session-level depiction
+//     id, so kill/score announcements show a cloud profile's own icon;
+//     kScreenMessageTop's texture pair stays for legacy icons.
+//
+//     Also under 48 -- third tint colors (2026-10-02; two parallel
+//     sessions both opened 48 before either went public, so they
+//     share it). Image nodes gain 'tint3_color' (appended so existing
+//     indices hold), and kScreenMessageTop carries a third icon tint
+//     (12 floats, was 9; kProtocolVersionTint3). Characters get theirs
+//     only from their definitions ('hl2' in spaz/icon json -- the
+//     color mask's blue channel); there is no spaz node attr, since
+//     legacy masks carry stray blue data. Every third tint defaults to
+//     white, the colorize no-op, so anything not setting one -- older
+//     hosts included -- draws exactly as before.
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.
@@ -616,6 +633,8 @@ enum class SessionCommand {
   kDynamicsCorrection,
   kScreenMessageBottom,
   kScreenMessageTop,
+  // Never written (data assets are host-only; see SceneDataAsset); kept
+  // because command values are positional.
   kAddData,
   kRemoveData,
   kCameraShake,
@@ -713,7 +732,12 @@ enum class SessionCommand {
   kAddDepiction,
   kRemoveDepiction,
   kSetNodeAttrDepiction,
-  kSetNodeAttrDepictionNull
+  kSetNodeAttrDepictionNull,
+
+  // (protocol 48+) A top screen-message whose icon is a session-level
+  // depiction (a player's cloud icon) rather than kScreenMessageTop's
+  // texture pair: (depiction-id), the message string, then its rgb.
+  kScreenMessageTopDepiction
 };
 
 enum class NodeCollideAttr {
@@ -836,6 +860,10 @@ enum NodeAttributeFlag {
 // payloads (streams below this use the legacy raw-or-resource-json
 // forms).
 const int kProtocolVersionLangStrWire = 39;
+
+// First protocol whose kScreenMessageTop carries a third icon tint
+// (12 floats rather than 9; see the 48 entry above).
+const int kProtocolVersionTint3 = 48;
 
 // (protocol 39+) First byte of the payload carried by
 // lang-str-flagged string slots (the text node's `text` attr and the

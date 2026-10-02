@@ -359,6 +359,7 @@ auto ReadIcon(const JsonRef& basic, BasicIconDef* out) -> bool {
   }
   ReadFloat3(basic, "cl", d.color, kRangeColor);
   ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
+  ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
   *out = std::move(d);
   return true;
 }
@@ -405,6 +406,7 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
 
   d.has_color = ReadFloat3(basic, "cl", d.color, kRangeColor);
   ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
+  ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
 
   ReadFloat(basic, "tr", &d.torso_radius, kRangeTorsoRadius);
   ReadFloat3(basic, "so", d.shoulder_offset, kRangeShoulderOffset);

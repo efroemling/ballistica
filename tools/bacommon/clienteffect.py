@@ -67,6 +67,7 @@ class EffectTypeID(Enum):
     CHEST_WAIT_TIME_ANIMATION = 't'
     TICKETS_ANIMATION = 'ta'
     TOKENS_ANIMATION = 'toa'
+    KEYFRAME_ANIMATION = 'ka'
 
 
 class Effect(IOMultiType[EffectTypeID]):
@@ -117,6 +118,8 @@ class Effect(IOMultiType[EffectTypeID]):
             return TicketsAnimation
         if type_id is t.TOKENS_ANIMATION:
             return TokensAnimation
+        if type_id is t.KEYFRAME_ANIMATION:
+            return KeyframeAnimation
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -168,13 +171,16 @@ class LegacyScreenMessage(Effect):
 @ioprepped
 @dataclass
 class ScreenMessage(Effect):
-    """Display a screen-message.
+    """Display a screen-message (pre-LangStr version).
 
-    Supported on engine build 22606 or newer.
+    Supported on engine build 22606 or newer; superseded by
+    :class:`ScreenMessageV2`, which is what clients that understand it
+    should get.
 
-    This version does no translation by default (expecting translation
-    to happen server-side). Pass a LangStrSpec json string and set is_lstr=True
-    for client-side translation.
+    ``message`` is shown verbatim (server-translated text). With
+    ``is_lstr`` set it is instead *legacy* Lstr json, translated
+    client-side -- a form only older clients still accept; current
+    clients drop such messages.
     """
 
     message: Annotated[str, IOAttrs('m')]
@@ -328,6 +334,7 @@ def walk_effects(
             t.CHEST_WAIT_TIME_ANIMATION,
             t.TICKETS_ANIMATION,
             t.TOKENS_ANIMATION,
+            t.KEYFRAME_ANIMATION,
         ):
             # Carry no language-agnostic strings or typed asset refs:
             # the legacy forms hold pre-localized text and bare asset
@@ -419,3 +426,57 @@ class Delay(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.DELAY
+
+
+@ioprepped
+@dataclass
+class Keyframe:
+    """One state in a :class:`KeyframeAnimation`.
+
+    Position and size are relative to the target's resting
+    (as-laid-out) state, and the defaults are that resting state.
+    """
+
+    #: Seconds from the animation's start.
+    time: Annotated[float, IOAttrs('t')]
+
+    #: Offset from the resting position, in the target's own units.
+    offset: Annotated[
+        tuple[float, float], IOAttrs('o', store_default=False)
+    ] = (0.0, 0.0)
+
+    #: Size multiplier (about the target's center where it has one).
+    scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+
+    #: Opacity, absolute rather than relative so that things laid out
+    #: invisible can be revealed; None for the target's own (resting)
+    #: opacity. Linear runs should give it on every key or none.
+    opacity: Annotated[float | None, IOAttrs('a', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
+class KeyframeAnimation(Effect):
+    """Animate something the effects are running alongside.
+
+    ``target`` names a target in whatever context the effects run in
+    (for doc-ui, a decoration's ``anim_id`` in the page the effects
+    arrived with); with no such context or target the effect does
+    nothing. Starts at the point it is reached in the effect sequence
+    (after any preceding :class:`Delay`) without delaying the effects
+    after it. Before its first key the target sits at that key's state;
+    after its last it stays at the last.
+    """
+
+    target: Annotated[str, IOAttrs('t')]
+    keys: Annotated[list[Keyframe], IOAttrs('k')]
+
+    #: Interpolate linearly between keys; otherwise each key's state
+    #: applies from its time until the next (the right choice for
+    #: jitter, and far cheaper to run).
+    linear: Annotated[bool, IOAttrs('l', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.KEYFRAME_ANIMATION

@@ -115,6 +115,7 @@ class NetScanner:
                 # Show the host's party name when they're advertising
                 # one (v2 scan responses); otherwise their player name.
                 text=host['party_name'] or host['display_string'],
+                literal=True,
                 h_align='left',
                 v_align='center',
                 corner_scale=t_scale,

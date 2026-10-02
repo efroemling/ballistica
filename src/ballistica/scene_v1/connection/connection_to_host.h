@@ -66,6 +66,14 @@ class ConnectionToHost : public Connection {
   bool prepped_{};
   std::string handshake_salt_;
   std::optional<std::string> v2_auth_global_app_instance_id_;
+  // Whether the host's v2-auth offer is optional (we may join without).
+  bool v2_auth_optional_{};
+  // Once set, our settled token decision for this connection: the
+  // token we send, or no token (an optional offer we couldn't take).
+  // Latched so every handshake-response says the same thing.
+  bool v2_auth_decided_{};
+  std::optional<std::string> v2_auth_token_;
+  millisecs_t v2_auth_start_time_{};
   // The client-session that we're driving
   Object::WeakRef<ClientSession> client_session_;
   int protocol_version_{-1};

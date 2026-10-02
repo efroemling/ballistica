@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/fading_scroll_thumb.h"
 
 namespace ballistica::ui_v1 {
 
@@ -58,6 +59,28 @@ class ScrollWidget : public ContainerWidget {
   /// layout is too: the space the bar would occupy stays as it was.
   void set_scrollbar_visible(bool val) { scrollbar_visible_ = val; }
 
+  /// Draw our scroll bar as a thin translucent thumb over our content that
+  /// fades in while wanted (scrolling, hovered, dragged) and back out after,
+  /// as HScrollWidget's does, instead of a trough and thumb of its own.
+  /// With it there is no bar to leave room for. Only the thumb itself is
+  /// grabbable (no paging by clicking the track), so content under the
+  /// rest of the bar's strip stays clickable.
+  void set_fading_scrollbar(bool val) {
+    fading_scrollbar_ = val;
+    thumb_dirty_ = true;
+  }
+
+  /// Lay our content out with none of our historical fudge offsets: it
+  /// starts right at our left edge (centered exactly when centering) and
+  /// spans our full height (no border/margin inset top and bottom),
+  /// clipped exactly to our bounds. Off by default so existing ui keeps
+  /// its layout; callers laying out against our exact bounds (doc-ui)
+  /// turn it on.
+  void set_clean_layout(bool val) {
+    clean_layout_ = val;
+    MarkForUpdate();
+  }
+
  protected:
   void UpdateLayout() override;
 
@@ -70,7 +93,21 @@ class ScrollWidget : public ContainerWidget {
   /// because everything fits.
   auto DrawnBorderOpacity_() const -> float;
 
+  /// Space our content keeps from our top and bottom edges (the
+  /// historical border-plus-margin inset; none with clean layout).
+  auto ContentMarginV_() const -> float;
+
+  /// Our fading thumb's rect in our local space for the given scroll
+  /// offset; also its track's height via ``track_height``.
+  auto FadingThumbRect_(float offset, float* track_height) const -> Rect;
+
   Object::Ref<base::AppTimer> touch_delay_timer_;
+  FadingScrollThumb thumb_;
+  seconds_t last_mouse_move_time_{};
+  seconds_t create_time_{};
+  /// Our scroll offset as of our fading thumb's last update (any change
+  /// shows it).
+  float thumb_last_offset_{};
   // millisecs_t last_sub_widget_h_scroll_claim_time_{};
   millisecs_t last_v_scroll_event_time_millisecs_{};
   millisecs_t inertia_scroll_update_time_millisecs_{};
@@ -109,6 +146,9 @@ class ScrollWidget : public ContainerWidget {
   float border_opacity_{1.0f};
   bool hide_border_when_fits_{};
   bool scrollbar_visible_{true};
+  bool fading_scrollbar_{};
+  bool clean_layout_{};
+  bool mouse_over_{};
   float thumb_click_start_v_{};
   float thumb_click_start_child_offset_v_{};
   float scroll_bar_width_{10.0f};

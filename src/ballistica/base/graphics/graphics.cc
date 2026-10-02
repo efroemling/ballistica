@@ -319,26 +319,11 @@ void Graphics::RunCleanFrameCommands() {
 }
 
 auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
-  // Texture quality.
-  TextureQualityRequest texture_quality_requested;
-  std::string texqualstr =
-      g_base->app_config->Resolve(AppConfig::StringID::kTextureQuality);
-
-  if (texqualstr == "Auto") {
-    texture_quality_requested = TextureQualityRequest::kAuto;
-  } else if (texqualstr == "High") {
-    texture_quality_requested = TextureQualityRequest::kHigh;
-  } else if (texqualstr == "Medium") {
-    texture_quality_requested = TextureQualityRequest::kMedium;
-  } else if (texqualstr == "Low") {
-    texture_quality_requested = TextureQualityRequest::kLow;
-  } else {
-    g_core->logging->Log(
-        LogName::kBaGraphics, LogLevel::kError,
-        "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
-    texture_quality_requested = TextureQualityRequest::kLow;
-  }
-  return texture_quality_requested;
+  // Texture quality is no longer user-selectable; it only ever affected
+  // legacy bare-filename textures and OS-rendered text (asset-package
+  // textures pick their quality by flavor tier instead), so everyone
+  // gets auto. Any stored 'Texture Quality' config value is ignored.
+  return TextureQualityRequest::kAuto;
 }
 
 auto Graphics::VSyncFromAppConfig() -> VSyncRequest {

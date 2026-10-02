@@ -652,6 +652,10 @@
   [
    "flash",
    "bool"
+  ],
+  [
+   "tint3_color",
+   "float-array"
   ]
  ],
  "terrain": [

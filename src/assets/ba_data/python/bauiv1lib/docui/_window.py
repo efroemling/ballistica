@@ -3,6 +3,7 @@
 """UIs provided by the cloud (similar-ish to html in concept)."""
 
 import copy
+from functools import partial
 from dataclasses import replace
 from typing import TYPE_CHECKING, override, assert_never
 
@@ -10,7 +11,9 @@ import bauiv1 as bui
 from bauiv1 import _commonassets
 
 from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
+from bauiv1lib.docui._animtargets import DocUIAnimTargets
 from bauiv1lib.docui._layout import (
+    backing_offset_x,
     SMALL_UI_SCROLL_EXTRA,
     SMALL_UI_VIEWER_INSET_V,
     SMALL_UI_VIEWER_NUDGE_X,
@@ -18,6 +21,8 @@ from bauiv1lib.docui._layout import (
     back_button_geometry,
     column_inset,
     layout_geometry,
+    resizes_with_screen,
+    title_lift,
     show_scroll_border,
     viewer_pane_width,
     window_content_drop,
@@ -26,20 +31,19 @@ from bauiv1lib.docui._layout import (
 )
 from bauiv1lib.docui._windowparts import (
     ViewerPane,
+    add_toolbar_scroll_fades,
+    make_busy_spinner,
     show_vis_area_bounds,
 )
 from bauiv1lib.docui._pagestate import DocUIPageState
+from bauiv1lib.docui._windowstate import DocUIMainWindowState
 from bauiv1lib.docui._scrollrestore import (
     page_scrollers,
     capture_scroll,
     apply_scroll,
     containing_scrollers,
 )
-from bauiv1lib.utils import (
-    get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
-)
+from bauiv1lib.utils import get_screen_margins
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -53,18 +57,13 @@ if TYPE_CHECKING:
     )
     from bauiv1lib.docui import prep
 
-# How the busy-spinner shown over a pressed widget (a button, an input
-# row's control) appears: invisible for this long, then a fade-in this
-# long. Quick round trips thus show nothing at all rather than the
-# one-frame flash the old instant spinner gave, while slower ones get
-# a soft appearance right where the press was. Sharper than the
-# widget's default 0.5/0.5, which the window-centered page-load
-# spinner keeps. Tuned in one place for every such spinner.
-REFRESH_SPINNER_FADE_DELAY = 0.2
-REFRESH_SPINNER_FADE_DURATION = 0.2
-
 # Our scroll snapshot's key in a window's shared state.
 _SCROLL_STATE_KEY = 'docui_scroll'
+
+
+def _drop(pause: bui.RootUIUpdatePause) -> None:
+    """Release a root-ui pause (by letting go of the last reference)."""
+    del pause
 
 
 class DocUIWindow(bui.MainWindow):
@@ -97,6 +96,9 @@ class DocUIWindow(bui.MainWindow):
 
         self._locked = False
 
+        # Held while we're locked (a request in flight); see lock_ui().
+        self._ui_pause: bui.RootUIUpdatePause | None = None
+
         self._restored = restored
 
         # Note: our windows and states both hold strong references to
@@ -112,6 +114,9 @@ class DocUIWindow(bui.MainWindow):
         #: different path starts scrolled to the top (see
         #: instantiate_ui()).
         self._shown_path: str | None = None
+
+        #: Our page's client-effect-animatable widgets.
+        self.anim_targets = DocUIAnimTargets()
 
         #: Where this window was scrolled to when last navigated away
         #: from, if it is coming back; applied on our first build.
@@ -159,15 +164,15 @@ class DocUIWindow(bui.MainWindow):
         # enough that we never see the window edges; only the window
         # texture covering the whole screen.
         uiscale = ui.uiscale
-        self._layout = dui2.WindowLayout.LARGE if layout is None else layout
+        self._layout = dui2.WindowLayout.WIDE if layout is None else layout
+        screensize = bui.get_virtual_screen_size()
         self._width, self._height, self._root_scale = layout_geometry(
-            self._layout, uiscale
+            self._layout, uiscale, screensize
         )
 
         # Do some fancy math to calculate our visible area; this will be
         # limited by the screen size in small mode and our backing size
         # otherwise.
-        screensize = bui.get_virtual_screen_size()
         side_insets, vertical_insets = window_insets(self._layout)
         self._vis_width = min(
             self._width - side_insets, screensize[0] / self._root_scale
@@ -258,14 +263,19 @@ class DocUIWindow(bui.MainWindow):
                     'close' if auxiliary_style else 'back'
                 ),
                 scale=self._root_scale,
+                background_offset=(
+                    backing_offset_x(self._layout, uiscale, self._width),
+                    0.0,
+                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
-            # We respond to screen size changes only at small ui-scale;
-            # in other cases we assume our window remains fully visible
-            # always (flip to windowed mode and resize the app window to
-            # confirm this).
-            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
+            # We rebuild for screen size changes when our size depends on
+            # the screen's (always at small ui-scale); otherwise we assume
+            # our window remains fully visible always.
+            refresh_on_screen_size_changes=resizes_with_screen(
+                self._layout, uiscale
+            ),
         )
         # Avoid complaints if nothing is selected under us.
         bui.widget(edit=self._root_widget, allow_preserve_selection=False)
@@ -293,6 +303,10 @@ class DocUIWindow(bui.MainWindow):
             # clutter (the audio settings page, say).
             hide_border_when_fits=True,
             center_small_content_horizontally=True,
+            # A bar fading in over content (none set aside for one), and
+            # content laid out against our exact bounds.
+            fading_scrollbar=True,
+            clean_layout=True,
             claims_left_right=True,
             # Selection-preserving needs an id on every selectable
             # widget; without one, landing here on window save warns and
@@ -301,27 +315,12 @@ class DocUIWindow(bui.MainWindow):
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
-        # With full-screen scrolling, fade content as it approaches
-        # toolbars. A minimal toolbar has nothing along the bottom, so
-        # no fade there.
         if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
+            add_toolbar_scroll_fades(
                 self._root_widget,
-                self._scroll_left,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
-        if (
-            uiscale is bui.UIScale.SMALL
-            and toolbar_visibility != 'menu_minimal'
-        ):
-            scroll_fade_bottom(
-                self._root_widget,
-                self._scroll_left,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
+                (self._scroll_left, self._scroll_bottom),
+                (self._scroll_width, self._scroll_height),
+                bottom=toolbar_visibility != 'menu_minimal',
             )
 
         # Our back button's geometry (medium/large ui-scale); the title
@@ -329,7 +328,9 @@ class DocUIWindow(bui.MainWindow):
         back_scale, back_size, back_offset = back_button_geometry(
             self._layout, close_style=auxiliary_style
         )
-        back_bottom = self._vis_top + back_offset[1]
+        back_bottom = (
+            self._vis_top + back_offset[1] + title_lift(self._layout, uiscale)
+        )
         title_y = (
             self._vis_top - 20
             if uiscale is bui.UIScale.SMALL
@@ -497,40 +498,24 @@ class DocUIWindow(bui.MainWindow):
         assert bui.in_logic_thread()
         assert not self._locked
 
-        # If a spinner-position is provided, make the spinner in our
-        # subcontainer at the provided spot (a press should show its
-        # spinner where the press was).
-        parent = None if origin_widget is None else origin_widget.parent
-        if parent is not None:
-            assert origin_widget is not None
-            position = origin_widget.center
-            for widget, widgetposition in self._spinner_positions:
-                if widget == origin_widget:
-                    position = widgetposition
-                    break
-            self._spinner = bui.spinnerwidget(
-                parent=parent,
-                position=position,
-                size=48,
-                fade_delay=REFRESH_SPINNER_FADE_DELAY,
-                fade_duration=REFRESH_SPINNER_FADE_DURATION,
-            )
-        else:
-            # Otherwise do one at the center of our window (not in our
-            # subcontainer).
-            self._spinner = bui.spinnerwidget(
-                parent=self._root_widget,
-                position=(
-                    self._vis_left + self._vis_width * 0.5,
-                    self._vis_top - self._vis_height * 0.5,
-                ),
-                size=48,
-                # With restored windows we're likely to have stuff under
-                # the spinner. Bomb looks nicer but simple is more
-                # readable in those cases.
-                style='simple' if self._restored else 'bomb',
-                # (Default fade timing: this one was never instant.)
-            )
+        self._spinner = make_busy_spinner(
+            origin_widget=origin_widget,
+            spinner_positions=self._spinner_positions,
+            root_widget=self._root_widget,
+            window_center=(
+                self._vis_left + self._vis_width * 0.5,
+                self._vis_top - self._vis_height * 0.5,
+            ),
+            restored=self._restored,
+        )
+
+        # Hold root-ui (toolbar) updates while the request is out. A
+        # request can change account values the toolbar shows (a claim
+        # granting tokens), and the server's update may reach the
+        # toolbar before our response does; without this the count
+        # would jump to its new total and then the response's effects
+        # would animate the climb all over again.
+        self._ui_pause = bui.RootUIUpdatePause()
         self._locked = True
 
     def unlock_ui(self) -> None:
@@ -542,6 +527,20 @@ class DocUIWindow(bui.MainWindow):
             self._spinner.delete()
         self._spinner = None
         self._locked = False
+
+        # Let go of our root-ui pause on the next cycle, not now: the
+        # response's client-effects run right after this and take a
+        # pause of their own, and releasing first would leave a moment
+        # for a pending toolbar update to land.
+        if self._ui_pause is not None:
+            bui.pushcall(partial(_drop, self._ui_pause))
+            self._ui_pause = None
+
+    @override
+    def on_main_window_close(self) -> None:
+        # Never let a pause outlive us (we may close mid-request).
+        self._ui_pause = None
+        super().on_main_window_close()
 
     @property
     def locked(self) -> bool:
@@ -773,6 +772,7 @@ class DocUIWindow(bui.MainWindow):
         self._shown_path = path
 
         # Clear any existing children.
+        self.anim_targets.clear()
         for child in self._scrollwidget.get_children():
             child.delete()
 
@@ -924,7 +924,6 @@ class DocUIWindow(bui.MainWindow):
         # 'ui-not-getting-cleaned-up' warnings and memory leaks.
         auxiliary_style = self._auxiliary_style
         controller = self.controller
-        request = self._request
         last_response = self._last_response
         has_had_response = self._has_had_response
         layout = self._layout
@@ -933,12 +932,12 @@ class DocUIWindow(bui.MainWindow):
         )
         suppress_win_extra_type_warning = self._suppress_win_extra_type_warning
 
-        return bui.BasicMainWindowState(
+        return DocUIMainWindowState(
             create_call=(
-                lambda transition, origin_widget: controller.restore(
+                lambda transition, origin_widget, req: controller.restore(
                     cls(
                         controller=controller,
-                        request=request,
+                        request=req,
                         transition=transition,
                         origin_widget=origin_widget,
                         auxiliary_style=auxiliary_style,
@@ -954,6 +953,7 @@ class DocUIWindow(bui.MainWindow):
                     has_had_response=has_had_response,
                 )
             ),
+            request=self._request,
             uiopenstate=self._uiopenstate,
         )
 

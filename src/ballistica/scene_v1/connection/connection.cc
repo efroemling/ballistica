@@ -479,7 +479,9 @@ void Connection::Error(const std::string& msg) {
            + msg + "'.";
   });
   if (!msg.empty()) {
-    g_base->ScreenMessage(msg, {1.0f, 0.0, 0.0f});
+    // Callers pass final display text (evaluated language-strings,
+    // possibly holding peer-chosen names): always literal.
+    g_base->ScreenMessage(msg, {1.0f, 0.0, 0.0f}, true);
   }
 }
 

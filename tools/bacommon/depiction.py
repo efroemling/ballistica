@@ -131,6 +131,13 @@ class ImageDepiction(Depiction):
         tuple[float, float, float] | None, IOAttrs('tc2', store_default=False)
     ] = None
 
+    #: Tint through the tint texture's blue channel (as
+    #: :attr:`tint_color` is red and :attr:`tint2_color` green). Clients
+    #: before this field ignore it.
+    tint3_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('tc3', store_default=False)
+    ] = None
+
     #: Packages laid out (in order) as the index domain integer texture
     #: slots index into; None when every slot is a full spec. (A plain
     #: None default rather than a list factory: a factory default breaks

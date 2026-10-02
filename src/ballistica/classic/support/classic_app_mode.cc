@@ -626,7 +626,15 @@ auto ClassicAppMode::GetSingleton() -> ClassicAppMode* {
 }
 
 ClassicAppMode::ClassicAppMode()
-    : connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
+    : connections_(std::make_unique<scene_v1::ConnectionSet>()) {
+  // GUI hosts offer auth to joiners that can use it (so private/LAN
+  // parties get cloud profiles when online) without ever requiring it.
+  // Server mode sets its own mode from its config; public parties
+  // switch to required.
+  if (!g_core->HeadlessMode()) {
+    client_auth_mode_ = ClientAuthMode::kOptional;
+  }
+}
 
 void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
                                              const SockAddr& addr) {
@@ -899,7 +907,6 @@ void ClassicAppMode::UpdateGameRoster() {
     }
 
     // Add all connected clients.
-    bool doing_v2_auth = require_client_authentication();
     for (auto&& i : connections()->connections_to_clients()) {
       if (i.second->can_communicate()) {
         GameRosterEntry entry;
@@ -931,7 +938,9 @@ void ClassicAppMode::UpdateGameRoster() {
           }
         }
         entry.client_id = i.second->id();
-        if (doing_v2_auth && !i.second->peer_public_account_id().empty()) {
+        // Only cloud-verified ids (v2-authed joiners) go on the roster.
+        if (i.second->v2_authed()
+            && !i.second->peer_public_account_id().empty()) {
           entry.account_id = i.second->peer_public_account_id();
         }
         game_roster_.push_back(std::move(entry));
@@ -1448,7 +1457,9 @@ void ClassicAppMode::LocalDisplayChatMessage(
       // (and don't have chat muted).
       if (!g_base->ui->IsPartyWindowOpen()) {
         if (!chat_muted_) {
-          g_base->ScreenMessage(final_message, {0.7f, 1.0f, 0.7f});
+          // Peer-supplied text: always literal (never compiled as a
+          // legacy resource string).
+          g_base->ScreenMessage(final_message, {0.7f, 1.0f, 0.7f}, true);
         }
       } else {
         // Party window is open - notify it that there's a new message.

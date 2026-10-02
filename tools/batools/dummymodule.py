@@ -352,7 +352,10 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':
                 returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
-            elif returns == 'bauiv1.Viewer | None':
+            elif returns in {
+                'bauiv1.Viewer | None',
+                'bascenev1.Depiction | None',
+            }:
                 returnstr = 'return None'
             elif returns == 'bascenev1.InputDevice | None':
                 returnstr = 'return InputDevice()'
@@ -386,6 +389,8 @@ def _writefuncs(
                 returnstr = "return [('blah', 0.0)]"
             elif returns == 'list[tuple[int, float]]':
                 returnstr = 'return [(0, 0.0)]'
+            elif returns == 'tuple[str, float | None]':
+                returnstr = "return ('blah', None)"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -584,6 +589,7 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
+            '    tint3_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             "    text: babase.Lstr | babase.LangStr | str = ''\n"
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'

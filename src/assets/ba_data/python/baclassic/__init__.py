@@ -33,6 +33,11 @@ from baclassic._displayitem import (
     depiction_assets,
 )
 from baclassic._music import MusicPlayer
+from baclassic._clienteffect import (
+    ClientEffectContext,
+    EffectTarget,
+    EffectTargets,
+)
 
 __all__ = [
     'ChestAppearanceDisplayInfo',
@@ -41,6 +46,9 @@ __all__ = [
     'ClassicAppMode',
     'ClassicAppModeConfig',
     'ClassicAppSubsystem',
+    'ClientEffectContext',
+    'EffectTarget',
+    'EffectTargets',
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',

@@ -173,6 +173,18 @@ auto PythonClassLangStr::Evaluate(PythonClassLangStr* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassLangStr::EvaluateTimed(PythonClassLangStr* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  std::optional<int64_t> until_change;
+  auto text = self->value()->Evaluate(&until_change);
+  if (until_change.has_value()) {
+    return Py_BuildValue("(sd)", text.c_str(),
+                         static_cast<double>(*until_change) / 1000.0);
+  }
+  return Py_BuildValue("(sO)", text.c_str(), Py_None);
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassLangStr::ToJson(PythonClassLangStr* self) -> PyObject* {
   BA_PYTHON_TRY;
   return PyUnicode_FromString(self->value()->ToJson().c_str());
@@ -202,6 +214,37 @@ auto PythonClassLangStr::FromText(PyObject* cls, PyObject* arg) -> PyObject* {
   }
   return Create(
       LangStr::MakeLiteral(std::string_view(utf8, static_cast<size_t>(size))));
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassLangStr::Join(PyObject* cls, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* items_obj{};
+  const char* separator{""};
+  static const char* kwlist[] = {"items", "separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+                                   const_cast<char**>(kwlist), &items_obj,
+                                   &separator)) {
+    return nullptr;
+  }
+  auto seq = PythonRef::Stolen(
+      PySequence_Fast(items_obj, "Expected a sequence of babase.LangStr."));
+  Py_ssize_t count = PySequence_Fast_GET_SIZE(seq.get());
+  PyObject** objs = PySequence_Fast_ITEMS(seq.get());
+  std::vector<std::shared_ptr<const LangStr>> items;
+  items.reserve(static_cast<size_t>(count));
+  for (Py_ssize_t i = 0; i < count; ++i) {
+    // Only language-strings: plain text must come in via from_text()
+    // so nothing untyped slips into the template.
+    items.push_back(FromPyObj(objs[i]).value());
+  }
+  auto joined = LangStr::Join(items, separator);
+  if (!joined.has_value()) {
+    throw Exception("Unable to join language-strings: " + joined.error(),
+                    PyExcType::kValue);
+  }
+  return Create(*joined);
   BA_PYTHON_CATCH;
 }
 
@@ -236,6 +279,19 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "that wants a :class:`~babase.LangStr`. Anything that needs\n"
      "substitutions or translation should be an authored\n"
      "asset-package entry instead, so its arguments are type-checked.\n"},
+    {"join", (PyCFunction)Join, METH_VARARGS | METH_KEYWORDS | METH_CLASS,
+     "join(items: Sequence[babase.LangStr], separator: str = '')"
+     " -> babase.LangStr\n"
+     "\n"
+     "Combine language-strings into one, shown one after another.\n"
+     "\n"
+     "``separator`` is literal text placed between items (a newline\n"
+     "for a list, say); its braces display literally. Each item keeps\n"
+     "its own translation and arguments, so a variable-length list\n"
+     "of authored entries (one line per player, ...) stays fully\n"
+     "localized. Items must be language-strings -- wrap plain text\n"
+     "with :meth:`from_text`. Raises ValueError for more than 256\n"
+     "items or a result nested too deeply.\n"},
     {"evaluate", (PyCFunction)Evaluate, METH_NOARGS,
      "evaluate() -> str\n"
      "\n"
@@ -243,6 +299,17 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "\n"
      "Fail-visible: structural problems yield a ``LANGSTR_ERROR:...``\n"
      "sentinel string (with a logged warning) rather than raising.\n"},
+    {"evaluate_timed", (PyCFunction)EvaluateTimed, METH_NOARGS,
+     "evaluate_timed() -> tuple[str, float | None]\n"
+     "\n"
+     "Evaluate, also returning how soon the text changes.\n"
+     "\n"
+     "Returns the text :meth:`evaluate` would, plus the seconds until\n"
+     "it would next read differently -- a number only for time-varying\n"
+     "strings (those holding a moment, such as a countdown), else\n"
+     "``None``. Widgets showing a language-string handle this\n"
+     "themselves; this is for code displaying the text some other\n"
+     "way, which can re-evaluate when that time comes.\n"},
     {"to_json", (PyCFunction)ToJson, METH_NOARGS,
      "to_json() -> str\n"
      "\n"

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.locale import LocaleResolved
 import bascenev1 as bs
 from bascenev1 import _classicassets, _classiccatalogassets
+from bascenev1 import _uiv1assets
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -846,7 +847,7 @@ def _preload1() -> None:
     # Asset-package textures warm up through their wrappers.
     _ = _classiccatalogassets.textures.character_icon_mask.get()
     _ = _classicassets.textures.player_lineup.get()
-    _ = _classicassets.textures.lock.get()
+    _ = _uiv1assets.textures.lock.get()
     _ = _classicassets.textures.icon_runaround.get()
     _ = _classicassets.textures.icon_onslaught.get()
     _ = _classicassets.textures.bg.get()

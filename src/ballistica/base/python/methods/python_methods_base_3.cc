@@ -1324,11 +1324,18 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 
 // ---------------------- reload_language --------------------------------------
 
-static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyReloadLanguage(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* apvernums_obj;
   const char* plural_locale;
-  if (!PyArg_ParseTuple(args, "Os", &apvernums_obj, &plural_locale)) {
+  const char* decimal_mark{"."};
+  const char* duration_separator{" "};
+  static const char* kwlist[] = {"apvernums", "plural_locale", "decimal_mark",
+                                 "duration_separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Os|$ss", const_cast<char**>(kwlist), &apvernums_obj,
+          &plural_locale, &decimal_mark, &duration_separator)) {
     return nullptr;
   }
   // The engine keys packages by numeric id as text.
@@ -1337,17 +1344,20 @@ static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
     apverids.emplace_back(std::to_string(apvernum));
   }
   assert(g_base->logic);
-  g_base->assets->ReloadLanguage(apverids, plural_locale);
+  g_base->assets->ReloadLanguage(apverids, plural_locale, decimal_mark,
+                                 duration_separator);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
 static PyMethodDef PyReloadLanguageDef = {
-    "reload_language",  // name
-    PyReloadLanguage,   // method
-    METH_VARARGS,       // flags
+    "reload_language",              // name
+    (PyCFunction)PyReloadLanguage,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "reload_language(apvernums: Sequence[int], plural_locale: str) -> None\n"
+    "reload_language(apvernums: Sequence[int], plural_locale: str,"
+    " *, decimal_mark: str = '.', duration_separator: str = ' ')"
+    " -> None\n"
     "\n"
     ":meta private:\n"
     "\n"
@@ -1355,7 +1365,9 @@ static PyMethodDef PyReloadLanguageDef = {
     "language-string tables) from the registered ``language`` buckets\n"
     "of the given asset-packages and notify subsystems of the language\n"
     "change. ``plural_locale`` is the resolved locale wire value\n"
-    "driving CLDR plural selection.",
+    "driving CLDR plural selection; ``decimal_mark`` and\n"
+    "``duration_separator`` are its number data for display-formatted\n"
+    "params (durations, sizes).",
 };
 
 // ---------------------- get_resource -----------------------------------------

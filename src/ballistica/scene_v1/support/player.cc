@@ -159,6 +159,18 @@ auto Player::GetPyCloudSpazDef() -> PyObject* {
   return py_cloud_spaz_def_.exists() ? py_cloud_spaz_def_.get() : Py_None;
 }
 
+void Player::SetPyCloudIcon(PyObject* icon) {
+  if (icon != nullptr && icon != Py_None) {
+    py_cloud_icon_.Acquire(icon);
+  } else {
+    py_cloud_icon_.Release();
+  }
+}
+
+auto Player::GetPyCloudIcon() -> PyObject* {
+  return py_cloud_icon_.exists() ? py_cloud_icon_.get() : Py_None;
+}
+
 void Player::SetPyColor(PyObject* c) { py_color_.Acquire(c); }
 auto Player::GetPyColor() -> PyObject* {
   return py_color_.exists() ? py_color_.get() : Py_None;
@@ -168,7 +180,6 @@ void Player::SetPyHighlight(PyObject* c) { py_highlight_.Acquire(c); }
 auto Player::GetPyHighlight() -> PyObject* {
   return py_highlight_.exists() ? py_highlight_.get() : Py_None;
 }
-
 void Player::SetPyActivityPlayer(PyObject* c) { py_activityplayer_.Acquire(c); }
 auto Player::GetPyActivityPlayer() -> PyObject* {
   return py_activityplayer_.exists() ? py_activityplayer_.get() : Py_None;
@@ -445,13 +456,16 @@ auto Player::GetAccountID() const -> std::string {
 void Player::SetIcon(const std::string& tex_name,
                      const std::string& tint_tex_name,
                      const std::vector<float>& tint_color,
-                     const std::vector<float>& tint2_color) {
+                     const std::vector<float>& tint2_color,
+                     const std::vector<float>& tint3_color) {
   assert(tint_color.size() == 3);
   assert(tint2_color.size() == 3);
+  assert(tint3_color.size() == 3);
   icon_tex_name_ = tex_name;
   icon_tint_tex_name_ = tint_tex_name;
   icon_tint_color_ = tint_color;
   icon_tint2_color_ = tint2_color;
+  icon_tint3_color_ = tint3_color;
   icon_set_ = true;
 }
 

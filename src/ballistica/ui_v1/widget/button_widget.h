@@ -45,6 +45,11 @@ class ButtonWidget : public Widget {
     tint2_color_green_ = g;
     tint2_color_blue_ = b;
   }
+  void set_tint3_color(float r, float g, float b) {
+    tint3_color_red_ = r;
+    tint3_color_green_ = g;
+    tint3_color_blue_ = b;
+  }
   void set_text_color(float r, float g, float b, float a) {
     text_color_r_ = r;
     text_color_g_ = g;
@@ -256,6 +261,9 @@ class ButtonWidget : public Widget {
   float tint2_color_red_{1.0f};
   float tint2_color_green_{1.0f};
   float tint2_color_blue_{1.0f};
+  float tint3_color_red_{1.0f};
+  float tint3_color_green_{1.0f};
+  float tint3_color_blue_{1.0f};
   float target_extra_right_{0.0f};
   float target_extra_left_{0.0f};
   Object::Ref<base::TextureAsset> texture_;

@@ -34,6 +34,7 @@ from bauiv1lib.docui import _bgrunner, _cache
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._menu import DocUIMenuWindow
 from bauiv1lib.docui._window import DocUIWindow
+from bauiv1lib.docui._windowstate import DocUIMainWindowState
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal
@@ -121,6 +122,7 @@ class DocUIController:
         UNDER_CONSTRUCTION = 'under_construction'
         COMMUNICATION_ERROR = 'communication'
         NEED_UPDATE = 'need_update'
+        NOT_SIGNED_IN = 'not_signed_in'
 
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         """Handle request fulfillment.
@@ -374,6 +376,72 @@ class DocUIController:
         if isinstance(response, dui2.Response):
             _resolve.check_finalization_leaks(response)
 
+    def _v2_response_error(
+        self, request: DocUIRequest, response: bacommon.docui.v2.Response
+    ) -> ErrorType | None:
+        """The error page to show in place of a v2 response, if any."""
+        import bacommon.docui.v2 as dui2
+
+        minbuild = response.minimum_engine_build
+        if minbuild is not None and minbuild > bui.app.env.engine_build_number:
+            bui.uilog.debug(
+                'doc-ui response requires engine build %d but we'
+                ' are %d; showing need-update prompt.',
+                minbuild,
+                bui.app.env.engine_build_number,
+            )
+            return self.ErrorType.NEED_UPDATE
+        if response.status is dui2.ResponseStatus.NEED_UPDATE_ERROR:
+            # The server declined us as too old without naming a build;
+            # our standard prompt covers it.
+            bui.uilog.debug(
+                'doc-ui response says we need an update; showing'
+                ' need-update prompt.'
+            )
+            return self.ErrorType.NEED_UPDATE
+        if (
+            response.status is not dui2.ResponseStatus.SUCCESS
+            and not response.page.rows
+        ):
+            # A status-only error (bamaster sends these for
+            # not-signed-in, unknown domains, and handler exceptions):
+            # it has nothing to show, so show our own error page for it
+            # rather than an empty one, and say so (for an unknown
+            # error, the cause will be in the server's log).
+            bui.uilog.warning(
+                'doc-ui %s request to %s got status-only response %s.',
+                type(self).__name__,
+                (
+                    request.path
+                    if isinstance(request, dui2.Request)
+                    else type(request).__name__
+                ),
+                response.status.name,
+            )
+            return self._status_error_type(response.status)
+        return None
+
+    @classmethod
+    def _status_error_type(
+        cls, status: bacommon.docui.v2.ResponseStatus
+    ) -> ErrorType:
+        """The error page to show for a status-only error response."""
+        import bacommon.docui.v2 as dui2
+
+        match status:
+            case dui2.ResponseStatus.NOT_SIGNED_IN_ERROR:
+                return cls.ErrorType.NOT_SIGNED_IN
+            case dui2.ResponseStatus.COMMUNICATION_ERROR:
+                return cls.ErrorType.COMMUNICATION_ERROR
+            case dui2.ResponseStatus.NEED_UPDATE_ERROR:
+                return cls.ErrorType.NEED_UPDATE
+            case (
+                dui2.ResponseStatus.UNKNOWN_ERROR | dui2.ResponseStatus.SUCCESS
+            ):
+                return cls.ErrorType.GENERIC
+            case _:
+                assert_never(status)
+
     def error_response(
         self,
         request: DocUIRequest,
@@ -414,6 +482,12 @@ class DocUIController:
         elif error_type is self.ErrorType.COMMUNICATION_ERROR:
             status_code = dui2.ResponseStatus.COMMUNICATION_ERROR
             error_msg = uistat.server_error.spec
+        elif error_type is self.ErrorType.NOT_SIGNED_IN:
+            status_code = dui2.ResponseStatus.NOT_SIGNED_IN_ERROR
+            # NEEDS_TRANSLATION: no common-package string for this yet.
+            error_msg = LangStrSpecValue.literal(
+                'You must be signed in to see this.'
+            )
         else:
             assert_never(error_type)
 
@@ -485,7 +559,7 @@ class DocUIController:
 
         The window opens at ``layout``; if not given, a route's own
         :meth:`~bacommon.docui.routes.DocUIRoute.get_window_layout`, or
-        else the standard large layout.
+        else the wide layout (the same default routes use).
         """
         import bacommon.docui.v2 as dui2
         from bacommon.docui.routes import DocUIRoute as RouteBase
@@ -496,7 +570,7 @@ class DocUIController:
             layout = (
                 request.get_window_layout()
                 if isinstance(request, RouteBase)
-                else dui2.WindowLayout.LARGE
+                else dui2.WindowLayout.WIDE
             )
         request = _as_request(request)
 
@@ -903,7 +977,14 @@ class DocUIController:
                 window.set_page_state_values(action.sets)
 
             if action.close_window:
+                if action.return_sets:
+                    self._apply_return_sets(window, action.return_sets)
                 window.main_window_back()
+            elif action.return_sets:
+                bui.uilog.warning(
+                    'Ignoring doc-ui return values on an action that'
+                    ' does not close its window.'
+                )
 
             self._run_immediate_effects_and_actions(
                 client_effects=action.immediate_client_effects,
@@ -1039,6 +1120,22 @@ class DocUIController:
         if on_change is not None:
             self.run_action(window, widgetid, on_change, trigger=key)
 
+    @staticmethod
+    def _apply_return_sets(window: DocUIWindow, values: dict) -> None:
+        """Hand values back to the doc-ui page a closing window returns to.
+
+        They go into the request that page's window is recreated with,
+        so it shows them and refreshes with them.
+        """
+        back_state = window.main_window_back_state
+        if not isinstance(back_state, DocUIMainWindowState):
+            bui.uilog.warning(
+                'Ignoring doc-ui return values; not returning to a'
+                ' doc-ui window.'
+            )
+            return
+        back_state.apply_return_sets(values)
+
     def _run_immediate_effects_and_actions(
         self,
         *,
@@ -1068,7 +1165,10 @@ class DocUIController:
             return
 
         if bui.app.classic is not None and client_effects:
-            bui.app.classic.run_bs_client_effects(client_effects)
+            # The window's targets let effects animate its page.
+            bui.app.classic.run_bs_client_effects(
+                client_effects, targets=window.anim_targets
+            )
         if local_action is not None:
             try:
                 self.local_action(
@@ -1174,27 +1274,8 @@ class DocUIController:
 
             elif responsetype is DocUIResponseTypeID.V2:
                 assert isinstance(response, dui2.Response)
-                minbuild = response.minimum_engine_build
-                if (
-                    minbuild is not None
-                    and minbuild > bui.app.env.engine_build_number
-                ):
-                    bui.uilog.debug(
-                        'doc-ui response requires engine build %d but we'
-                        ' are %d; showing need-update prompt.',
-                        minbuild,
-                        bui.app.env.engine_build_number,
-                    )
-                    error = self.ErrorType.NEED_UPDATE
-                    response = None
-                elif response.status is dui2.ResponseStatus.NEED_UPDATE_ERROR:
-                    # The server declined us as too old without naming
-                    # a build; our standard prompt covers it.
-                    bui.uilog.debug(
-                        'doc-ui response says we need an update; showing'
-                        ' need-update prompt.'
-                    )
-                    error = self.ErrorType.NEED_UPDATE
+                error = self._v2_response_error(request, response)
+                if error is not None:
                     response = None
                 else:
                     try:
@@ -1331,7 +1412,9 @@ class DocUIController:
         # back or resize a window).
         if state is _WinState.FETCHING_FRESH_REQUEST:
             if pageprep.client_effects and bui.app.classic is not None:
-                bui.app.classic.run_bs_client_effects(pageprep.client_effects)
+                bui.app.classic.run_bs_client_effects(
+                    pageprep.client_effects, targets=win.anim_targets
+                )
             if response.local_action is not None:
                 try:
                     self.local_action(

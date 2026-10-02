@@ -3,7 +3,6 @@
 #ifndef BALLISTICA_BASE_SUPPORT_NAME_DEF_H_
 #define BALLISTICA_BASE_SUPPORT_NAME_DEF_H_
 
-#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -36,8 +35,25 @@ struct CapsuleNameDef {
   float capsule_color[4]{1.0f, 1.0f, 1.0f, 1.0f};
   float capsule_edge{1.0f};
 
-  /// Drawn as a 9-patch split at its middle; a circle if absent.
+  /// Drawn as a 9-patch; a circle if absent.
   PackageAssetRef capsule_texture;
+
+  /// Where the capsule texture splits into its left end, the middle
+  /// that fills between the ends, and its right end, as fractions of
+  /// its width from each side. 0.5 each splits it at its middle (a
+  /// middle one texel wide). Vertically it always splits at its middle.
+  float capsule_insets[2]{0.5f, 0.5f};
+
+  /// Repeat the texture's middle at the ends' scale (fitted to a whole
+  /// number of copies) rather than stretching it. Its art must tile.
+  bool capsule_tile{};
+
+  /// Optional tint texture over the capsule texture (same layout):
+  /// its red, green, and blue channels say where each tint color
+  /// multiplies in. Unset tint colors are white (no effect).
+  PackageAssetRef capsule_tint_texture;
+  float capsule_tint_colors[3][3]{
+      {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f}};
 
   /// Square; absent = no icon (and no room left for one).
   PackageAssetRef icon_texture;
@@ -60,9 +76,10 @@ struct CapsuleNameDef {
   /// as the capitals stay inside the curve (see NameDepiction).
   std::optional<float> text_inset;
 
-  /// A glow around the text (RGBA; alpha = strength) in place of its
-  /// drop shadow. Unset = the usual black drop shadow.
-  std::optional<std::array<float, 4>> text_glow;
+  /// How much the text glows like neon: white-hot interiors and a soft
+  /// glow in the text's own color, in place of its drop shadow (0 =
+  /// none and a normal drop shadow, 1 = standard).
+  float text_glow{};
 
   /// Package manifest ('pk') and domain digest ('dg') for indexed
   /// texture refs (see PackageAssetRef).

@@ -17,7 +17,11 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
-from bauiv1lib.docui.prep._types import DecorationPrep
+from bauiv1lib.docui.prep._types import (
+    AnimTargetKind,
+    AnimTargetPrep,
+    DecorationPrep,
+)
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -57,6 +61,16 @@ def prep_depiction(
             textures={},
             meshes={},
             highlight=highlight and decoration.highlight,
+            anim=(
+                None
+                if decoration.anim_id is None
+                else AnimTargetPrep(
+                    anim_id=decoration.anim_id,
+                    kind=AnimTargetKind.IMAGE,
+                    position=(left, bottom),
+                    size=(width, height),
+                )
+            ),
         )
     )
 

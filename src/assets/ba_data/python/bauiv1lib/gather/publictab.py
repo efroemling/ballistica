@@ -116,6 +116,7 @@ class UIRow:
         vpos = sub_scroll_height - lineheight * index - 50
         self._name_widget = bui.textwidget(
             text=party.name,
+            literal=True,
             parent=columnwidget,
             size=(sub_scroll_width * 0.46, 20),
             position=(0 + hpos, 4 + vpos),
@@ -1458,8 +1459,8 @@ class PublicGatherTab(GatherTab):
         _classicassets.audio.shield_up.get().play()
         bs.set_public_party_enabled(True)
 
-        # In GUI builds we want to authenticate clients only when
-        # hosting public parties.
+        # Public parties require auth; private ones (the GUI default)
+        # only offer it.
         bs.set_authenticate_clients(True)
 
         self._do_status_check()
@@ -1480,9 +1481,10 @@ class PublicGatherTab(GatherTab):
         # Ditto for the password requirement.
         bs.set_host_password('')
 
-        # In GUI builds we want to authenticate clients only when
-        # hosting public parties.
-        bs.set_authenticate_clients(False)
+        # Back to the GUI default: offer auth (so joiners' cloud
+        # profiles come along) but never require it (offline/LAN
+        # parties keep working).
+        bs.set_authenticate_clients(True, optional=True)
         _classicassets.audio.shield_down.get().play()
         text = self._host_status_text
         if text:

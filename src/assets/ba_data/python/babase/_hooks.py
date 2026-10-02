@@ -562,15 +562,18 @@ def _do_start_native_repl() -> None:
 
 
 def v2_auth_request(
-    global_app_instance_id: str,
+    global_app_instance_id: str, optional: bool = False
 ) -> None | tuple[bool, str, int | None]:
     """Kick off or process v2 auth requests.
 
     Return None if no results or (success, error/token, reject-reason).
+    ``optional`` means the host lets us join without auth.
     """
     assert _babase.app.plus is not None
     out: None | tuple[bool, str, int | None] = (
-        _babase.app.plus.accounts.auth_request(global_app_instance_id)
+        _babase.app.plus.accounts.auth_request(
+            global_app_instance_id, optional=optional
+        )
     )
     return out
 

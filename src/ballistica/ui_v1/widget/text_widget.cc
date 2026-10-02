@@ -388,12 +388,25 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         transition_in_progress * 4.0f / (std::max(0.001f, center_scale_));
   }
 
+  // A time-varying language-string (a live countdown, etc.) re-evaluates
+  // when its visible text is due to change -- every frame if it shows
+  // milliseconds, once a minute if minutes are its smallest unit.
+  microsecs_t tick_start_time{-1};
+  if (lang_str_next_change_time_.has_value() && !text_translation_dirty_
+      && g_core->AppTimeMillisecs() >= *lang_str_next_change_time_) {
+    tick_start_time = g_core->AppTimeMicrosecs();
+    text_translation_dirty_ = true;
+    lang_str_ticking_ = true;
+  }
+
   // Apply subs/resources to get our actual text if need be.
   UpdateTranslation_();
 
   if (!text_group_.exists()) {
     text_group_ = Object::New<base::TextGroup>();
   }
+  base::TextureAsset* tick_os_texture_before{
+      tick_start_time >= 0 ? text_group_->os_texture() : nullptr};
   if (text_group_dirty_) {
     // Measure without stalling: cold OS-span measures happen in the
     // background, and until they land we simply stay dirty and keep
@@ -413,6 +426,9 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       text_group_dirty_ = false;
       WarmCaratMeasures_();
     }
+  }
+  if (tick_start_time >= 0) {
+    CheckLangStrTickCost_(tick_start_time, tick_os_texture_before);
   }
 
   float max_width_scale, max_height_scale;
@@ -1261,10 +1277,24 @@ void TextWidget::PrefetchTextMeasures_() {
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
+    bool ticking = lang_str_ticking_;
+    lang_str_ticking_ = false;
+    lang_str_next_change_time_.reset();
     if (lang_str_ != nullptr) {
       // Native language-strings re-evaluate against the current
       // tables (fail-visible; definition-time wrap applies inside).
-      text_translated_ = lang_str_->Evaluate();
+      // Time-varying ones also say when they next read differently.
+      std::optional<int64_t> until_change;
+      std::string text = lang_str_->Evaluate(&until_change);
+      if (until_change.has_value()) {
+        lang_str_next_change_time_ = g_core->AppTimeMillisecs() + *until_change;
+      }
+      // A scheduled tick that changed nothing visible needs no rebuild.
+      if (ticking && text == text_translated_) {
+        text_translation_dirty_ = false;
+        return;
+      }
+      text_translated_ = std::move(text);
     } else if (editable() || literal_) {
       // We don't run translations on user-editable text or text
       // marked literal.
@@ -1285,6 +1315,34 @@ void TextWidget::UpdateTranslation_() {
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
+  }
+}
+
+void TextWidget::CheckLangStrTickCost_(microsecs_t start_time,
+                                       base::TextureAsset* os_texture_before) {
+  // A tick should cost a re-evaluation and a mesh rebuild from cached
+  // glyphs: the changing parts are digits (baked glyph pages), so any
+  // OS-rendered spans (unit words in many scripts) stay identical and
+  // reuse their content-cached texture. Flag the two ways that could
+  // quietly stop being true.
+  auto elapsed = g_core->AppTimeMicrosecs() - start_time;
+  constexpr microsecs_t kSlowTickMicrosecs{1000};
+  if (elapsed > kSlowTickMicrosecs) {
+    BA_LOG_ONCE(LogName::kBaUI, LogLevel::kWarning,
+                "Time-varying text update took " + std::to_string(elapsed)
+                    + "us (text '" + text_translated_
+                    + "'); ticks should be far cheaper than that.");
+  }
+  auto* os_texture_after =
+      text_group_.exists() ? text_group_->os_texture() : nullptr;
+  if (os_texture_before != nullptr && os_texture_after != nullptr
+      && os_texture_after != os_texture_before) {
+    BA_LOG_ONCE(LogName::kBaUI, LogLevel::kWarning,
+                "Time-varying text generated a new OS text texture on a tick"
+                " (text '"
+                    + text_translated_
+                    + "'); its OS-rendered spans should stay constant as the"
+                      " time changes.");
   }
 }
 

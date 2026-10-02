@@ -125,7 +125,8 @@ class RendererGL : public Renderer {
     SHD_MASK_UV2 = 1 << 21,
     SHD_CONDITIONAL = 1 << 22,
     SHD_FLATNESS = 1 << 23,
-    SHD_DEPTH_BUG_TEST = 1 << 24
+    SHD_DEPTH_BUG_TEST = 1 << 24,
+    SHD_TEXT_GLOW = 1 << 25
   };
 
   enum VertexAttr {
@@ -313,6 +314,8 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_shadow_prog_{};
   ProgramSimpleGL* simple_tex_mod_shadow_flatness_prog_{};
+  ProgramSimpleGL* simple_tex_mod_text_glow_prog_{};
+  ProgramSimpleGL* simple_tex_mod_text_glow_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};

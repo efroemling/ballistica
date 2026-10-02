@@ -85,7 +85,21 @@ def _fixed_button(
     label: str, size: tuple[float, float] = (150.0, 50.0)
 ) -> bacommon.docui.v2.Button:
     """A do-nothing button at its own size, for fixed-row demos."""
-    return dui2.Button(label=_lit(label), size=size, action=dui2.Local())
+    return dui2.Button(
+        label=_lit(label),
+        size=size,
+        style=_style_for(size),
+        action=dui2.Local(),
+    )
+
+
+def _style_for(size: tuple[float, float]) -> dui2.ButtonStyle:
+    """Square backing for squarish buttons; medium for wide ones."""
+    return (
+        dui2.ButtonStyle.SQUARE
+        if size[0] <= size[1] * 1.5
+        else dui2.ButtonStyle.MEDIUM
+    )
 
 
 def _map_button(
@@ -98,6 +112,7 @@ def _map_button(
     # as a button (and greys like one when disabled).
     return dui2.Button(
         size=(110, 62),
+        style=dui2.ButtonStyle.MEDIUM,
         scale=scale,
         action=action,
         decorations=[
@@ -195,6 +210,7 @@ def test_page_widgets(
                             # row buffers and h-scroll insets; 540
                             # overflowed its h-scroll by 4).
                             size=(530, 290),
+                            style=dui2.ButtonStyle.MEDIUM,
                             color=(0, 0, 0, 0.25),
                             # Button labels only center; a text
                             # decoration can be left-aligned.
@@ -520,6 +536,34 @@ def test_page_widgets(
                     ),
                     debug=debug,
                 ),
+                # Extreme: a very tall button, with a title and a
+                # several-line footnote running over and under it. They
+                # keep the same clearance from the button whatever its
+                # height. (Then a short one with the same text, for
+                # contrast.)
+                *(
+                    dui2.ButtonControlRow(
+                        button=dui2.Button(
+                            label=_lit(label),
+                            style=_style_for((140.0, height)),
+                            size=(140.0, height),
+                            action=dui2.Local(),
+                        ),
+                        label=_lit('Label'),
+                        title=_lit(
+                            'A title running all the way over to the'
+                            ' button at the right, as long titles do'
+                        ),
+                        footnote=_lit(
+                            'A footnote running under the button at the'
+                            ' right.\nIt has a few lines, each of them long'
+                            ' enough to reach the button.\nThe last line'
+                            ' too, so all of it stays clear of the button.'
+                        ),
+                        debug=debug,
+                    )
+                    for label, height in (('Tall', 150.0), ('Short', 35.0))
+                ),
                 # Fill rows: one or more buttons sharing the full width
                 # control rows span, so their edges line up with the
                 # labels and controls above and below. They never scroll
@@ -737,7 +781,7 @@ def test_page_widgets(
                         dui2.Button(
                             label=_lit('...'),
                             size=(70, 60),
-                            style=dui2.ButtonStyle.MEDIUM,
+                            style=dui2.ButtonStyle.SQUARE,
                             action=_test_menu(route, state),
                         ),
                     ],

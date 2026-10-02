@@ -53,6 +53,13 @@ struct LangStrWrap {
 struct LangStrTableEntry {
   LangStrTableValue value;
   std::optional<LangStrWrap> wrap;
+  /// Display-formatted params as (param, display-kind expression)
+  /// pairs -- e.g. ("size", "bytes") or ("t", "millis(dir=future)") --
+  /// from the blob carrier's ``k`` key. The translated text holds only
+  /// a ``{name}`` token for these, so the kind is what tells evaluation
+  /// to render the value (a byte count, a duration) rather than
+  /// substitute it raw.
+  std::vector<std::pair<std::string, std::string>> kinds;
 };
 
 /// One package's language-string entries plus the canonical
@@ -79,6 +86,10 @@ struct LangStrPackageTable {
 /// Published as an immutable shared snapshot; any thread may read.
 struct LangStrTables {
   std::string plural_locale;
+  /// Locale number data for display formatting (curated locale data,
+  /// never translated content; mirrors bacommon.locale.LocaleResolved).
+  std::string decimal_mark{"."};
+  std::string duration_separator{" "};
   std::unordered_map<std::string, LangStrPackageTable> packages;
 };
 
@@ -94,6 +105,10 @@ struct LangStrTables {
 /// - **resource-indexed**: the compact integer-addressed projection of
 ///   a resource (package index + string index + positional subs); the
 ///   wire default form.
+/// - **time-target**: not a string but a substitution *value* -- a
+///   moment (UTC epoch milliseconds) for a duration-formatted param,
+///   measured against the current time at each evaluation. Values
+///   containing one are time-varying; see Evaluate().
 ///
 /// Substitution values are flat strings/ints or nested language-strings,
 /// so a value is a recursive tree; it holds tokens, not text, and only
@@ -111,6 +126,7 @@ class LangStr {
     kResource,
     kValue,
     kResourceIndexed,
+    kTimeTarget,
   };
 
   /// A substitution value: flat string, flat integer, or a nested
@@ -148,6 +164,27 @@ class LangStr {
   static auto MakeLiteral(std::string_view text)
       -> std::shared_ptr<const LangStr>;
 
+  /// Most items Join() accepts.
+  static constexpr size_t kMaxJoinItems{256};
+
+  /// Build a value form displaying ``items`` one after another, with
+  /// ``separator`` (literal text, braces escaped like MakeLiteral)
+  /// between them: a generated template (``{i0}<sep>{i1}...``) with each
+  /// item a nested substitution. The template is never caller-supplied
+  /// and every item is itself a language-string, so this adds nothing a
+  /// caller could misuse (no free-form tokens, no untyped subs) -- it is
+  /// the sanctioned way to assemble a variable-length list. Errors when
+  /// there are more than kMaxJoinItems items or the result would nest
+  /// deeper than kLangStrMaxNestingDepth.
+  static auto Join(const std::vector<std::shared_ptr<const LangStr>>& items,
+                   std::string_view separator)
+      -> std::expected<std::shared_ptr<const LangStr>, std::string>;
+
+  /// Edges from this node down to its deepest nested language-string
+  /// (0 for a node with no language-string substitutions). A value is
+  /// usable when this is at most kLangStrMaxNestingDepth.
+  auto NestingHeight() const -> int;
+
   /// Convert (recursively) to the self-describing resource form's wire
   /// JSON: bound indexed nodes become resource nodes (name + keyword
   /// subs, resolved via the current native tables); resource/value
@@ -173,10 +210,17 @@ class LangStr {
 
   /// Evaluate to flat display text. Fail-visible like the Python decode
   /// side: any structural problem (missing substitution, excessive
-  /// depth, or -- until the native table store exists -- any
-  /// resource/indexed form) yields a ``LANGSTR_ERROR:...`` sentinel
-  /// string plus a logged warning, never a crash or throw.
-  auto Evaluate() const -> std::string;
+  /// depth, an unknown package or name) yields a ``LANGSTR_ERROR:...``
+  /// sentinel string plus a logged warning, never a crash or throw.
+  ///
+  /// Display-formatted params (durations, sizes) render here, in the
+  /// current locale. When ``millisecs_until_change`` is passed it
+  /// receives how long until this text would read differently -- set
+  /// only for time-varying values (a time-target sub), and empty for
+  /// text that stays put -- so a display can re-evaluate exactly when
+  /// its visible text changes rather than polling.
+  auto Evaluate(std::optional<int64_t>* millisecs_until_change = nullptr) const
+      -> std::string;
 
   /// Serialize back to canonical wire JSON (matching the dataclassio
   /// form this was parsed from: tag-free for indexed, 's' omitted when
@@ -192,11 +236,12 @@ class LangStr {
   // Plain aggregate-style data; see the immutability convention above.
   // Only the fields relevant to `form` are meaningful.
   Form form{Form::kValue};
-  std::string apverid;  // kResource
-  std::string name;     // kResource
-  std::string value;    // kValue
-  int64_t pkg{-1};      // kResourceIndexed
-  int64_t index{-1};    // kResourceIndexed
+  std::string apverid;      // kResource
+  std::string name;         // kResource
+  std::string value;        // kValue
+  int64_t pkg{-1};          // kResourceIndexed
+  int64_t index{-1};        // kResourceIndexed
+  int64_t target_millis{};  // kTimeTarget (UTC epoch milliseconds)
   std::vector<SubEntry> subs;
 
   // Optional usage-site wrap override (applied post-eval; wins over

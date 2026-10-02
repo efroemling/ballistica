@@ -249,8 +249,8 @@ def _page(select: bool) -> dui2.Response:
                     padding_right=0.0,
                     # Enough room for the buttons' art (glow above,
                     # shadow below) so our h-scroll doesn't clip it...
-                    padding_top=12.0,
-                    padding_bottom=15.0,
+                    padding_top=6.0,
+                    padding_bottom=21.0,
                     # ...paid for out of the page's bottom buffer, as
                     # the page height is otherwise spoken for. The row
                     # also sits a bit lower than centered (space added

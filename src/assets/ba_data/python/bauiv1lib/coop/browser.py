@@ -12,6 +12,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
+from bauiv1 import _uiv1assets
 
 from bauiv1lib.utils import (
     get_screen_margins,
@@ -598,7 +599,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 selected_child=self._easy_button,
                 visible_child=self._easy_button,
             )
-        lock_tex = _classicassets.textures.lock.get()
+        lock_tex = _uiv1assets.textures.lock.get()
 
         self._hard_button = bui.buttonwidget(
             parent=parent_widget,

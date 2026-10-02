@@ -14,8 +14,10 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
 from bauiv1lib.docui._layout import (
+    BUTTON_ROW_EDGE_INSET,
     PAGE_BASE_BUFFER,
     SMALL_UI_TOOLBAR_CLEARANCE,
+    TEXT_INSET,
 )
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep
 from bauiv1lib.docui.prep._button import (
@@ -24,7 +26,6 @@ from bauiv1lib.docui.prep._button import (
     prep_button,
 )
 from bauiv1lib.docui.prep._rowtext import (
-    page_text_center,
     row_titles_height,
     prep_row_titles,
     row_footnote_height,
@@ -177,18 +178,13 @@ def prep_page(
     # allow page to offset them.
     top_buffer = PAGE_BASE_BUFFER + page.padding_top + margin_top
     bot_buffer = PAGE_BASE_BUFFER + page.padding_bottom + margin_bottom
-    left_buffer = 10.0 + page.padding_left
-    # Nudge a bit due to scrollbar.
-    right_buffer = 20.0 + page.padding_right
+    left_buffer = page.padding_left
+    right_buffer = page.padding_right
 
-    # Extra buffers for title/headers stuff (not in h-scroll): titles,
-    # labels, footnotes and controls. Sized so their text lines up with
-    # the visible edge of a button row's buttons (which sit
-    # hscrollinset + row padding into the h-scroll, and draw a few
-    # units inside their own bounds); they were 45/30, which left text
-    # ~9 units inside the buttons on each side.
-    header_inset_left = 37.0
-    header_inset_right = 22.0
+    # Where text (titles, labels, footnotes) sits in from the column's
+    # edges; the same both sides (see TEXT_INSET).
+    header_inset_left = TEXT_INSET
+    header_inset_right = TEXT_INSET
 
     if uiscale is bui.UIScale.SMALL:
         top_bar_overlap = SMALL_UI_TOOLBAR_CLEARANCE
@@ -199,13 +195,10 @@ def prep_page(
         top_bar_overlap = 0.0
         bot_bar_overlap = 0.0
 
-    # Should look into why this is necessary.
-    fudge = 15.0
-    hscrollinset = 15.0
-
     rootcall: Callable[..., bui.Widget] | None = None
     rows: list[RowPrep] = []
-    width: float = scroll_width + fudge + margin_left + margin_right
+    # (Our scroll widget lays out cleanly, so we span exactly its width.)
+    width: float = scroll_width + margin_left + margin_right
     # The space above each entry (see _sections.entry_gaps()).
     gaps = _sections.entry_gaps(page_rows_filtered, page.row_spacing)
     height: float = top_buffer + bot_buffer + sum(gaps)
@@ -252,46 +245,27 @@ def prep_page(
                 have_selected_button = True
                 root_post_calls.append(partial(_set_selected_button, widgetid))
 
-    # Control rows' labels line up with row titles; their controls with
-    # the right edge of (right-aligned) buttons.
-    control_left = cmargin_left + left_buffer + header_inset_left
-    control_right = width - fudge - cmargin_right - right_buffer - 10.0
-
-    # Where every row's header/footer decoration lists are placed
-    # relative to: the left and right edges (inset like row titles) and
-    # the center of our content.
-    band_anchors_x = (
-        cmargin_left + left_buffer + header_inset_left,
-        cmargin_left + (width - cmargin_left - cmargin_right) * 0.5,
-        width - cmargin_right - right_buffer - header_inset_right,
-    )
-
     # How far each control row's control and footnote pull together (see
     # control_row_tucks()); measured once, used by both passes below.
     control_tucks: dict[int, tuple[float, float]] = {}
 
     # The column (cards center in it), and each layout entry's
-    # horizontal geometry: the above, or a card's own, plus where a
+    # horizontal geometry: the column's, or a card's own, plus where a
     # button row clips (see _sections.entry_geometry()). Both passes
-    # rebind those page-wide names from it per entry.
+    # bind these names from it per entry.
     column = (cmargin_left + left_buffer, width - cmargin_right - right_buffer)
     geoms = _sections.entry_geometry(
         page_rows_filtered,
         section_spans,
-        base=_sections.EntryGeom(
-            cmargin_left,
-            cmargin_right,
-            control_left,
-            control_right,
-            band_anchors_x,
-            None,
-            page_text_center(
-                width=width,
-                margins=cmargins,
-                buffers=(left_buffer, right_buffer),
-            ),
+        base=_sections.column_geometry(
+            column[0],
+            column[1],
+            width=width,
+            buffers=(left_buffer, right_buffer),
+            clip=None,
         ),
         width=width,
+        buffers=(left_buffer, right_buffer),
         column=column,
     )
 
@@ -365,6 +339,7 @@ def prep_page(
             + right_buffer
             + cmargin_left
             + cmargin_right
+            + 2.0 * BUTTON_ROW_EDGE_INSET
             + padleft
             + padright
             + row.button_spacing * (len(row.buttons) - 1)
@@ -379,7 +354,7 @@ def prep_page(
         # loses that much from each end of its content too, so what's in
         # it stays exactly where it would be on the page.
         if (clip := geoms[i].clip) is not None:
-            this_row_width -= (clip[0] - hscrollinset) + (width - clip[1])
+            this_row_width -= clip[0] + (width - clip[1])
         # Note: this includes everything in the *scrollable* part of
         # the row.
         this_row_height = padtop + padbottom + button_row_height
@@ -571,25 +546,27 @@ def prep_page(
                     rowbuttonid = _button_widget_id(rowbutton)
                     _note_button_flags(rowbutton, rowbuttonid)
                     buttonids.append(rowbuttonid)
-            # A fixed row of buttons spans what a scrolling row's content
-            # does (so switching between the two leaves its buttons where
-            # they were); all else, where control rows' contents do.
-            fixed = (
-                isinstance(row, dui2.ButtonRow)
+            # A fixed row's padding is from where a scrolling row's starts
+            # (so switching between the two leaves its buttons where they
+            # were); everything else spans control rows' contents.
+            inset = (
+                BUTTON_ROW_EDGE_INSET
+                if isinstance(row, dui2.ButtonRow)
                 and row.layout is dui2.ButtonRowLayout.FIXED
+                else None
             )
             _controlrows.prep_control_row(
                 row,
                 rowprep,
                 left=(
-                    cmargin_left + left_buffer + hscrollinset
-                    if fixed
-                    else control_left
+                    control_left
+                    if inset is None
+                    else cmargin_left + left_buffer + inset
                 ),
                 right=(
-                    width - hscrollinset - cmargin_right - right_buffer
-                    if fixed
-                    else control_right
+                    control_right
+                    if inset is None
+                    else width - cmargin_right - right_buffer - inset
                 ),
                 bottom=y + footnote_height - footnote_tuck,
                 center_x=geom.center[0],
@@ -726,9 +703,7 @@ def prep_page(
             )
 
         # Where we clip: the page's width, or narrower in a section.
-        clip_l, clip_r = (
-            (hscrollinset, width) if geom.clip is None else geom.clip
-        )
+        clip_l, clip_r = (0.0, width) if geom.clip is None else geom.clip
         rowprep.hscrollcall = partial(
             bui.hscrollwidget,
             size=(clip_r - clip_l, rowprep.height),
@@ -744,6 +719,7 @@ def prep_page(
             center_small_content=content_align is dui2.HAlign.CENTER,
             simple_culling_h=row.simple_culling_h,
             scrollbar_visible=row.show_scrollbar,
+            clean_layout=True,
             # Have the page-left/right buttons scale in along with our
             # buttons and decorations, but only when those are actually
             # animating; otherwise (a refresh in place, a back-nav to a
@@ -756,7 +732,7 @@ def prep_page(
         hsubwidth = (
             rowprep.width
             if content_align is dui2.HAlign.CENTER
-            else max(clip_r - clip_l - fudge, rowprep.width)
+            else max(clip_r - clip_l, rowprep.width)
         )
         rowprep.hsubcall = partial(
             bui.containerwidget,
@@ -765,8 +741,8 @@ def prep_page(
         )
         # (Less whatever a narrower clip cut off our content's start, so
         # buttons land where they would on the page.)
-        x = cmargin_left + left_buffer + padleft
-        x -= clip_l - hscrollinset
+        x = cmargin_left + left_buffer + BUTTON_ROW_EDGE_INSET + padleft
+        x -= clip_l
         if content_align is dui2.HAlign.RIGHT:
             # Shove everything over by whatever room is left. (Content
             # at least as wide as the row has none, and simply scrolls.)

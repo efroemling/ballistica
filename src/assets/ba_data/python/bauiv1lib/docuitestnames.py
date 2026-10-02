@@ -36,10 +36,11 @@ _ACCOUNT_TEXT = (0.51, 1.0, 0.42)
 _ACCOUNT_CAPSULE = (0.25, 1.0, 0.35, 0.35)
 _ACCOUNT_BADGE = (0.43, 0.37, 0.74, 1.0)
 
-#: Tint for the white glowing-capsule art, and the text's glow (the
-#: web's dark-theme greens).
+#: Tint for the white glowing-capsule art (the web's dark-theme green)
+#: and the in-game account name's deep green text, drawn with a text
+#: glow.
 _WEB_CAPSULE = (0.2, 1.0, 0.1, 1.0)
-_WEB_TEXT_GLOW = (0.33, 1.0, 0.1, 0.5)
+_WEB_TEXT = (0.2, 1.0, 0.15)
 
 #: Dark buttons for that row, so the glows read as on the dark web
 #: page.
@@ -79,6 +80,11 @@ def test_page_names(
         height = box[1] + 2.0 * _MARGIN + _CAPTION
         return dui2.Button(
             size=(width, height),
+            style=(
+                dui2.ButtonStyle.MEDIUM
+                if width > height
+                else dui2.ButtonStyle.SQUARE
+            ),
             color=color,
             decorations=[
                 dui2.Text(
@@ -103,7 +109,6 @@ def test_page_names(
     ) -> dui2.ButtonRow:
         return dui2.ButtonRow(
             debug=debug,
-            padding_left=-10,
             title=LangStrSpecValue.literal(title),
             subtitle=LangStrSpecValue.literal(subtitle),
             buttons=buttons,
@@ -131,32 +136,107 @@ def test_page_names(
     glow_capsule = _spec(tex.glow_circle)
     v2_badge = _spec(tex.account_v2_icon)
 
-    def _web_account(text: str) -> bdep.NameDepiction:
+    def _web_account(text: str, *, glow: float = 1.0) -> bdep.NameDepiction:
         return _name(
             text,
-            _ACCOUNT_TEXT,
+            _WEB_TEXT,
             _capsule(
-                radius=2.4,
+                radius=1.6,
                 texture=glow_capsule,
                 color=_WEB_CAPSULE,
                 edge=0.8,
                 icon=v2_badge,
-                icon_scale=0.74,
-                icon_edge=1.2,
-                text_inset=0.26,
-                text_glow=_WEB_TEXT_GLOW,
+                icon_scale=0.8,
+                icon_edge=1.1,
+                text_glow=glow,
             ),
         )
 
+    # Striped test art: a greyscale capsule whose middle half tiles,
+    # and an rgb tint texture marking its bands for three colors.
+    ttex = _docuiv2testassets.textures
+    stripes = _spec(ttex.capsule_stripes)
+    stripes_tint = _spec(ttex.capsule_stripes_tint)
+
+    def _striped(
+        text: str,
+        tints: (
+            tuple[
+                tuple[float, float, float],
+                tuple[float, float, float],
+                tuple[float, float, float],
+            ]
+            | None
+        ),
+        *,
+        tile: bool = True,
+    ) -> bdep.NameDepiction:
+        return _name(
+            text,
+            (0.12, 0.1, 0.18),
+            _capsule(
+                radius=1.6,
+                texture=stripes,
+                insets=(0.25, 0.25),
+                tile=tile,
+                tint_texture=None if tints is None else stripes_tint,
+                tint_colors=tints,
+            ),
+        )
+
+    candy = ((1.0, 0.15, 0.2), (1.0, 1.0, 1.0), (1.0, 1.0, 1.0))
+    festive = ((1.0, 0.15, 0.2), (1.0, 1.0, 1.0), (0.2, 0.8, 0.3))
+    team = ((0.2, 0.4, 1.0), (1.0, 0.8, 0.2), (0.2, 0.4, 1.0))
+
     wide = (280.0, 60.0)
     tall = (110.0, 150.0)
+    glow_box = (300.0, 90.0)
 
     return dui2.Response(
         page=dui2.Page(
-            padding_left=20,
-            padding_right=20,
             title=LangStrSpecValue.literal('Names'),
             rows=[
+                _row(
+                    'Striped capsules',
+                    'Greyscale 9-patch art whose middle tiles at the'
+                    ' ends\' scale (tile-fit), tinted three colors by an'
+                    ' rgb tint texture.',
+                    [
+                        _button('untinted', _striped('efro', None), wide),
+                        _button('candy cane', _striped('efro', candy), wide),
+                        _button('festive', _striped('efro', festive), wide),
+                        _button(
+                            'team, long',
+                            _striped('A Rather Long Name', team),
+                            wide,
+                        ),
+                        _button(
+                            'stretched (no tile)',
+                            _striped('A Rather Long Name', festive, tile=False),
+                            wide,
+                        ),
+                        _button(
+                            'short',
+                            _striped('Zoe', festive),
+                            (160.0, 60.0),
+                        ),
+                    ],
+                ),
+                _row(
+                    'Text glow',
+                    'A neon look by amount (text_glow): white-hot'
+                    ' interiors and a soft glow in the text\'s own color,'
+                    ' in place of its drop shadow. 0 is plain text.',
+                    [
+                        _button(
+                            f'text glow {amount}',
+                            _web_account('efro', glow=amount),
+                            glow_box,
+                            color=_WEB_BG,
+                        )
+                        for amount in (0.0, 0.5, 1.0)
+                    ],
+                ),
                 _row(
                     'Web account look',
                     'The website\'s account name (dark theme), drawn'
@@ -540,7 +620,18 @@ def _capsule(
     icon_scale: float | None = None,
     icon_edge: float | None = None,
     text_inset: float | None = None,
-    text_glow: tuple[float, float, float, float] | None = None,
+    text_glow: float | None = None,
+    insets: tuple[float, float] | None = None,
+    tile: bool | None = None,
+    tint_texture: dict[str, Any] | None = None,
+    tint_colors: (
+        tuple[
+            tuple[float, float, float],
+            tuple[float, float, float],
+            tuple[float, float, float],
+        ]
+        | None
+    ) = None,
 ) -> dict[str, Any]:
     """A name's capsule tier (unset values take the client defaults)."""
     out: dict[str, Any] = {}
@@ -548,13 +639,19 @@ def _capsule(
         ('r', radius),
         ('cc', None if color is None else list(color)),
         ('ct', texture),
+        ('cx', None if insets is None else list(insets)),
+        ('cf', None if tile is None else (1 if tile else 0)),
+        ('ctt', tint_texture),
+        ('ctc1', None if tint_colors is None else list(tint_colors[0])),
+        ('ctc2', None if tint_colors is None else list(tint_colors[1])),
+        ('ctc3', None if tint_colors is None else list(tint_colors[2])),
         ('ce', edge),
         ('it', icon),
         ('ic', None if icon_color is None else list(icon_color)),
         ('is', icon_scale),
         ('ie', icon_edge),
         ('ti', text_inset),
-        ('tg', None if text_glow is None else list(text_glow)),
+        ('tg', text_glow),
     ):
         if val is not None:
             out[key] = val

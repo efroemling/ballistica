@@ -43,6 +43,8 @@ class ImageNodeType : public NodeType {
   BA_BOOL_ATTR(in_world, in_world, set_in_world);
   // Appended (protocol 44+) so existing attr indices are untouched.
   BA_BOOL_ATTR(flash, flash, set_flash);
+  // Appended (protocol 48+).
+  BA_FLOAT_ARRAY_ATTR(tint3_color, tint3_color, SetTint3Color);
 #undef BA_NODE_TYPE_CLASS
 
   ImageNodeType()
@@ -69,7 +71,8 @@ class ImageNodeType : public NodeType {
         host_only(this),
         front(this),
         in_world(this),
-        flash(this) {}
+        flash(this),
+        tint3_color(this) {}
 };
 static NodeType* node_type{};
 
@@ -150,6 +153,17 @@ void ImageNode::SetTint2Color(const std::vector<float>& vals) {
   tint2_red_ = tint2_color_[0];
   tint2_green_ = tint2_color_[1];
   tint2_blue_ = tint2_color_[2];
+}
+
+void ImageNode::SetTint3Color(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for tint3_color",
+                    PyExcType::kValue);
+  }
+  tint3_color_ = vals;
+  tint3_red_ = tint3_color_[0];
+  tint3_green_ = tint3_color_[1];
+  tint3_blue_ = tint3_color_[2];
 }
 
 void ImageNode::SetTintColor(const std::vector<float>& vals) {
@@ -409,6 +423,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
+      c.SetColorizeColor3(tint3_red_, tint3_green_, tint3_blue_);
     }
     c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);
@@ -437,6 +452,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
+      c.SetColorizeColor3(tint3_red_, tint3_green_, tint3_blue_);
     }
     c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);

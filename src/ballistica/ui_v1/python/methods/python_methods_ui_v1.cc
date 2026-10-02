@@ -395,6 +395,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depiction_v_align_obj{Py_None};
   PyObject* depiction_hit_area_obj{Py_None};
   PyObject* depiction_debug_obj{Py_None};
+  PyObject* tint3_color_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "id",
@@ -448,10 +449,11 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depiction_v_align",
                                  "depiction_hit_area",
                                  "depiction_debug",
+                                 "tint3_color",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds,
-          "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -466,8 +468,8 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &rotate_obj, &better_bg_fit_obj, &transition_type_obj, &query_obj,
           &on_actions_complete_call_obj, &text_h_align_obj, &accessory_obj,
           &depiction_obj, &depiction_key_obj, &depiction_h_align_obj,
-          &depiction_v_align_obj, &depiction_hit_area_obj,
-          &depiction_debug_obj))
+          &depiction_v_align_obj, &depiction_hit_area_obj, &depiction_debug_obj,
+          &tint3_color_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -683,6 +685,13 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     b->set_tint2_color(c[0], c[1], c[2]);
   }
+  if (tint3_color_obj != Py_None) {
+    std::vector<float> c = Python::GetFloats(tint3_color_obj);
+    if (c.size() != 3) {
+      throw Exception("Expected 3 floats for tint3_color.", PyExcType::kValue);
+    }
+    b->set_tint3_color(c[0], c[1], c[2]);
+  }
   if (text_flatness_obj != Py_None) {
     b->set_text_flatness(Python::GetFloat(text_flatness_obj));
   }
@@ -825,6 +834,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  depiction_v_align: Literal['top', 'center', 'bottom'] | None = None,\n"
     "  depiction_hit_area: bool | None = None,\n"
     "  depiction_debug: bool | None = None,\n"
+    "  tint3_color: Sequence[float] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
@@ -1148,6 +1158,10 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depiction_frame_color_obj{Py_None};
   PyObject* depiction_backing_color_obj{Py_None};
   PyObject* depiction_debug_obj{Py_None};
+  PyObject* tint3_color_obj{Py_None};
+  PyObject* nine_patch_insets_obj{Py_None};
+  PyObject* nine_patch_borders_obj{Py_None};
+  PyObject* nine_patch_tile_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1180,9 +1194,13 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depiction_frame_color",
                                  "depiction_backing_color",
                                  "depiction_debug",
+                                 "tint3_color",
+                                 "nine_patch_insets",
+                                 "nine_patch_borders",
+                                 "nine_patch_tile",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &color_obj, &texture_obj, &opacity_obj, &rotate_obj,
           &mesh_transparent_obj, &mesh_opaque_obj, &has_alpha_channel_obj,
@@ -1193,7 +1211,8 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &depiction_obj, &depiction_key_obj, &depiction_h_align_obj,
           &depiction_v_align_obj, &depiction_take_input_obj,
           &depiction_frame_color_obj, &depiction_backing_color_obj,
-          &depiction_debug_obj))
+          &depiction_debug_obj, &tint3_color_obj, &nine_patch_insets_obj,
+          &nine_patch_borders_obj, &nine_patch_tile_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1308,6 +1327,46 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     b->set_tint2_color(c[0], c[1], c[2]);
   }
+  if (tint3_color_obj != Py_None) {
+    std::vector<float> c = Python::GetFloats(tint3_color_obj);
+    if (c.size() != 3) {
+      throw Exception("Expected 3 floats for tint3_color.", PyExcType::kValue);
+    }
+    b->set_tint3_color(c[0], c[1], c[2]);
+  }
+  if (nine_patch_insets_obj != Py_None || nine_patch_borders_obj != Py_None
+      || nine_patch_tile_obj != Py_None) {
+    if (nine_patch_insets_obj == Py_None || nine_patch_borders_obj == Py_None) {
+      throw Exception(
+          "nine_patch_insets and nine_patch_borders must be passed together"
+          " (and with them any nine_patch_tile).",
+          PyExcType::kValue);
+    }
+    std::vector<float> insets = Python::GetFloats(nine_patch_insets_obj);
+    std::vector<float> borders = Python::GetFloats(nine_patch_borders_obj);
+    if (insets.size() != 4 || borders.size() != 4) {
+      throw Exception(
+          "Expected 4 floats each for nine_patch_insets and"
+          " nine_patch_borders.",
+          PyExcType::kValue);
+    }
+    bool tile_h{};
+    bool tile_v{};
+    if (nine_patch_tile_obj != Py_None) {
+      if (!PySequence_Check(nine_patch_tile_obj)
+          || PySequence_Size(nine_patch_tile_obj) != 2) {
+        throw Exception("Expected 2 bools for nine_patch_tile.",
+                        PyExcType::kValue);
+      }
+      auto tile_h_obj =
+          PythonRef::Stolen(PySequence_GetItem(nine_patch_tile_obj, 0));
+      auto tile_v_obj =
+          PythonRef::Stolen(PySequence_GetItem(nine_patch_tile_obj, 1));
+      tile_h = Python::GetBool(tile_h_obj.get());
+      tile_v = Python::GetBool(tile_v_obj.get());
+    }
+    b->SetNinePatch(insets.data(), borders.data(), tile_h, tile_v);
+  }
   if (tilt_scale_obj != Py_None) {
     b->set_tilt_scale(Python::GetFloat(tilt_scale_obj));
   }
@@ -1406,6 +1465,10 @@ static PyMethodDef PyImageWidgetDef = {
     "  depiction_frame_color: Sequence[float] | None = None,\n"
     "  depiction_backing_color: Sequence[float] | None = None,\n"
     "  depiction_debug: bool | None = None,\n"
+    "  tint3_color: Sequence[float] | None = None,\n"
+    "  nine_patch_insets: Sequence[float] | None = None,\n"
+    "  nine_patch_borders: Sequence[float] | None = None,\n"
+    "  nine_patch_tile: Sequence[bool] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -1418,6 +1481,17 @@ static PyMethodDef PyImageWidgetDef = {
     "parent window's backing; their color then follows the backing's\n"
     "brief glow as the window scales in (only the direct parent is\n"
     "consulted).\n"
+    "\n"
+    "Pass ``nine_patch_insets`` and ``nine_patch_borders`` together to\n"
+    "draw the texture as a 9-patch filling the image's box exactly:\n"
+    "the insets say where the texture splits into corners, edges and\n"
+    "middle (fractions of its width/height from the left, bottom,\n"
+    "right and top), the borders how big those edges draw (in the\n"
+    "image's own units, same order; a pair too big for the box shrinks\n"
+    "to fit). ``nine_patch_tile`` (horizontal, vertical) repeats the\n"
+    "middle at the corners' scale, fitted to a whole number of copies,\n"
+    "rather than stretching it; its art must tile seamlessly. Tint,\n"
+    "mask and color textures share the 9-patch's layout.\n"
     "\n"
     "An image can show a depiction -- a json-serialized\n"
     ":class:`bacommon.depiction.Depiction` (a character's icon, a name,\n"
@@ -2036,6 +2110,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* claim_outside_clicks_obj{Py_None};
   PyObject* darken_behind_obj{Py_None};
   PyObject* darken_behind_is_permanent_obj{Py_None};
+  PyObject* background_offset_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2071,10 +2146,11 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "claims_up_down",
                                  "darken_behind",
                                  "darken_behind_is_permanent",
+                                 "background_offset",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &background_obj, &selected_child_obj,
           &transition_obj, &cancel_button_obj, &start_button_obj,
@@ -2087,7 +2163,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
           &toolbar_cancel_button_style_obj, &on_select_call_obj,
           &claim_outside_clicks_obj, &claims_up_down_obj, &darken_behind_obj,
-          &darken_behind_is_permanent_obj)) {
+          &darken_behind_is_permanent_obj, &background_offset_obj)) {
     return nullptr;
   }
 
@@ -2323,6 +2399,14 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_darken_behind_is_permanent(
         Python::GetBool(darken_behind_is_permanent_obj));
   }
+  if (background_offset_obj != Py_None) {
+    auto offset = Python::GetFloats(background_offset_obj);
+    if (offset.size() != 2) {
+      throw Exception("Expected 2 floats for background_offset.",
+                      PyExcType::kValue);
+    }
+    widget->set_background_offset(offset[0], offset[1]);
+  }
 
   // Run any calls built up by UI callbacks.
   ui_op_context.Finish();
@@ -2383,13 +2467,18 @@ static PyMethodDef PyContainerWidgetDef = {
     "  claim_outside_clicks: bool | None = None,\n"
     "  claims_up_down: bool | None = None,\n"
     "  darken_behind: bool | None = None,\n"
-    "  darken_behind_is_permanent: bool | None = None) -> bauiv1.Widget\n"
+    "  darken_behind_is_permanent: bool | None = None,\n"
+    "  background_offset: Sequence[float] | None = None) -> bauiv1.Widget\n"
     "\n"
     "Create or edit a container widget.\n"
     "\n"
     "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
     "a new one is created and returned. Arguments that are not set to None\n"
-    "are applied to the Widget.",
+    "are applied to the Widget.\n"
+    "\n"
+    "'background_offset' shifts where the background art draws (x, y)\n"
+    "without moving anything else, for art whose placement doesn't suit\n"
+    "a particular window shape.",
 };
 
 // ------------------------------ rowwidget ------------------------------------
@@ -2545,6 +2634,8 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* id_obj{Py_None};
   PyObject* hide_border_when_fits_obj{Py_None};
   PyObject* scrollbar_visible_obj{Py_None};
+  PyObject* fading_scrollbar_obj{Py_None};
+  PyObject* clean_layout_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2567,17 +2658,20 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "autoselect",
                                  "hide_border_when_fits",
                                  "scrollbar_visible",
+                                 "fading_scrollbar",
+                                 "clean_layout",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &id_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &center_small_content_horizontally_obj,
           &color_obj, &highlight_obj, &border_opacity_obj,
           &simple_culling_v_obj, &selection_loops_to_parent_obj,
           &claims_left_right_obj, &claims_up_down_obj, &autoselect_obj,
-          &hide_border_when_fits_obj, &scrollbar_visible_obj))
+          &hide_border_when_fits_obj, &scrollbar_visible_obj,
+          &fading_scrollbar_obj, &clean_layout_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2630,6 +2724,12 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (scrollbar_visible_obj != Py_None) {
     widget->set_scrollbar_visible(Python::GetBool(scrollbar_visible_obj));
+  }
+  if (fading_scrollbar_obj != Py_None) {
+    widget->set_fading_scrollbar(Python::GetBool(fading_scrollbar_obj));
+  }
+  if (clean_layout_obj != Py_None) {
+    widget->set_clean_layout(Python::GetBool(clean_layout_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
@@ -2717,6 +2817,8 @@ static PyMethodDef PyScrollWidgetDef = {
     "  autoselect: bool | None = None,\n"
     "  hide_border_when_fits: bool | None = None,\n"
     "  scrollbar_visible: bool | None = None,\n"
+    "  fading_scrollbar: bool | None = None,\n"
+    "  clean_layout: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a scroll widget.\n"
@@ -2731,7 +2833,17 @@ static PyMethodDef PyScrollWidgetDef = {
     "\n"
     "With 'scrollbar_visible' False, the scroll bar (trough and thumb) is\n"
     "neither drawn nor mouse-grabbable; scrolling itself and layout are\n"
-    "unaffected.",
+    "unaffected.\n"
+    "\n"
+    "With 'fading_scrollbar', the scroll bar is a thin translucent thumb\n"
+    "drawn over the content that fades in while scrolling, hovered or\n"
+    "dragged (as horizontal scroll widgets' do) instead of a trough and\n"
+    "thumb; only the thumb itself can be grabbed.\n"
+    "\n"
+    "With 'clean_layout', content is laid out with none of the widget's\n"
+    "historical fudge offsets: it starts at the left edge (or is exactly\n"
+    "centered), spans the full height, and is clipped exactly to the\n"
+    "widget's bounds.",
 };
 
 // ---------------------------- hscrollwidget ----------------------------------
@@ -2761,6 +2873,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* button_inset_right_obj{Py_None};
   PyObject* transition_in_obj{Py_None};
   PyObject* scrollbar_visible_obj{Py_None};
+  PyObject* clean_layout_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2782,16 +2895,18 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "button_inset_right",
                                  "transition_in",
                                  "scrollbar_visible",
+                                 "clean_layout",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
           &claims_up_down_obj, &autoselect_obj, &button_inset_left_obj,
-          &button_inset_right_obj, &transition_in_obj, &scrollbar_visible_obj))
+          &button_inset_right_obj, &transition_in_obj, &scrollbar_visible_obj,
+          &clean_layout_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2840,6 +2955,9 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (scrollbar_visible_obj != Py_None) {
     widget->set_scrollbar_visible(Python::GetBool(scrollbar_visible_obj));
+  }
+  if (clean_layout_obj != Py_None) {
+    widget->set_clean_layout(Python::GetBool(clean_layout_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
@@ -2922,7 +3040,8 @@ static PyMethodDef PyHScrollWidgetDef = {
     "  button_inset_left: float | None = None,\n"
     "  button_inset_right: float | None = None,\n"
     "  transition_in: bool | None = None,\n"
-    "  scrollbar_visible: bool | None = None)  -> bauiv1.Widget\n"
+    "  scrollbar_visible: bool | None = None,\n"
+    "  clean_layout: bool | None = None)  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a horizontal scroll widget.\n"
     "\n"
@@ -2932,6 +3051,12 @@ static PyMethodDef PyHScrollWidgetDef = {
     "\n"
     "With 'scrollbar_visible' False, the scroll bar is neither drawn nor\n"
     "mouse-grabbable; scrolling itself and layout are unaffected.\n"
+    "\n"
+    "With 'clean_layout', content is laid out with none of the widget's\n"
+    "historical fudge offsets: it spans the full width (no inset at the\n"
+    "ends), sits right on the bottom edge (not lifted to clear the scroll\n"
+    "bar, which fades in over it), and is clipped exactly to the\n"
+    "widget's bounds.\n"
     "\n"
     "Set 'transition_in' to have the page-left/page-right buttons animate\n"
     "in when the widget first appears. Off by default, so they simply\n"

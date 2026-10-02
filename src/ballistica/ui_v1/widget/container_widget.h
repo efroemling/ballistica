@@ -45,6 +45,14 @@ class ContainerWidget : public Widget {
   /// snap rather than glide -- see WidgetMessage::animate.
   void ShowWidget(Widget* w, bool animate = true);
   void set_background(bool enable) { background_ = enable; }
+
+  /// Shift where our background art draws, without moving anything else
+  /// (children, input, transitions). For working around art whose
+  /// placement doesn't suit a particular window shape.
+  void set_background_offset(float x, float y) {
+    background_offset_x_ = x;
+    background_offset_y_ = y;
+  }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
   void set_darken_behind(bool val) { darken_behind_ = val; }
@@ -267,6 +275,8 @@ class ContainerWidget : public Widget {
   float transition_scale_{1.0f};
   float d_transition_scale_{};
   float bg_center_fudge_x_{};
+  float background_offset_x_{};
+  float background_offset_y_{};
   float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};

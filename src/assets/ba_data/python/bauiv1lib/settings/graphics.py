@@ -46,13 +46,24 @@ _POLL_INTERVAL = 0.5
 
 
 class Quality(Enum):
-    """Graphics/texture quality settings (their config values)."""
+    """Graphics quality settings (their config values)."""
 
     AUTO = 'Auto'
     HIGHER = 'Higher'
     HIGH = 'High'
     MEDIUM = 'Medium'
     LOW = 'Low'
+
+
+class AssetQuality(Enum):
+    """Asset quality tiers.
+
+    Display-only for now: the popup shows what's coming, with ultra
+    disabled, and writes nothing to the config.
+    """
+
+    REGULAR = 'Regular'
+    ULTRA = 'Ultra'
 
 
 class VSync(Enum):
@@ -126,7 +137,7 @@ class GraphicsState(DocUIState, state_id='settings.graphics'):
 
     fullscreen: Annotated[bool, IOAttrs('fs')] = False
     visuals: Annotated[Quality, IOAttrs('v')] = Quality.AUTO
-    textures: Annotated[Quality, IOAttrs('t')] = Quality.AUTO
+    asset_quality: Annotated[AssetQuality, IOAttrs('aq')] = AssetQuality.REGULAR
 
     #: One of the Android resolution popup's choice values (see
     #: _resolution_choices()).
@@ -151,7 +162,6 @@ class GraphicsState(DocUIState, state_id='settings.graphics'):
 #: renamed field fails here, not at runtime.
 _CONFIG_KEYS: dict[str, str] = {
     GraphicsState.key(lambda s: s.visuals): 'Graphics Quality',
-    GraphicsState.key(lambda s: s.textures): 'Texture Quality',
     GraphicsState.key(lambda s: s.vsync): 'Vertical Sync',
     GraphicsState.key(lambda s: s.show_fps): 'Show FPS',
 }
@@ -317,12 +327,6 @@ class GraphicsSettingsController(
         visuals = _enum_from_config(Quality, 'Graphics Quality', Quality.AUTO)
         if visuals in visuals_disabled:
             visuals = Quality.MEDIUM
-        texture_choices: list[Quality] = [
-            q for q in Quality if q is not Quality.HIGHER
-        ]
-        textures = _enum_from_config(Quality, 'Texture Quality', Quality.AUTO)
-        if textures not in texture_choices:
-            textures = Quality.AUTO
 
         # Android picks among discrete resolutions (a popup); other
         # modes set a scale (a slider).
@@ -350,7 +354,6 @@ class GraphicsSettingsController(
         state = GraphicsState(
             fullscreen=self._fullscreen,
             visuals=visuals,
-            textures=textures,
             resolution=resolution,
             resolution_scale=resolution_scale,
             vsync=_enum_from_config(VSync, 'Vertical Sync', VSync.AUTO),
@@ -387,12 +390,14 @@ class GraphicsSettingsController(
                 label=_gfxstrs.visuals.spec,
                 on_change=apply,
             ),
+            # Not wired up yet; shows players what's coming (ultra stays
+            # disabled until it is).
             gstate.choice_row(
-                lambda s: s.textures,
-                choice_label=_quality_label,
-                choices=texture_choices,
-                label=_gfxstrs.textures.spec,
-                on_change=apply,
+                lambda s: s.asset_quality,
+                choice_label=_asset_quality_label,
+                disabled_choices=[AssetQuality.ULTRA],
+                # NEEDS_TRANSLATION
+                label=LangStrSpecValue.literal('Asset Quality'),
             ),
         ]
         if reschoices:
@@ -506,6 +511,18 @@ def _quality_label(quality: Quality) -> LangStrSpec:
             return valstrs.medium.spec
         case Quality.LOW:
             return valstrs.low.spec
+        case _:
+            assert_never(quality)
+
+
+def _asset_quality_label(quality: AssetQuality) -> LangStrSpec:
+    match quality:
+        case AssetQuality.REGULAR:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Regular')
+        case AssetQuality.ULTRA:
+            # NEEDS_TRANSLATION
+            return LangStrSpecValue.literal('Ultra')
         case _:
             assert_never(quality)
 

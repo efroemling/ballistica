@@ -339,6 +339,10 @@ def test_walk_effects_covers_every_effect_type() -> None:
             inst = clfx.TicketsAnimation(duration=1.0, startvalue=0, endvalue=1)
         elif type_id is clfx.EffectTypeID.TOKENS_ANIMATION:
             inst = clfx.TokensAnimation(duration=1.0, startvalue=0, endvalue=1)
+        elif type_id is clfx.EffectTypeID.KEYFRAME_ANIMATION:
+            inst = clfx.KeyframeAnimation(
+                target='t', keys=[clfx.Keyframe(time=0.0)]
+            )
         else:
             inst = effect()  # Unknown takes no args.
 

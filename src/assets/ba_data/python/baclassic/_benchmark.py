@@ -210,13 +210,6 @@ def run_media_reload_benchmark() -> None:
                 ).replace('${TIME}', str(babase.apptime() - start_time_2))
             )
             babase.print_load_info()
-            if babase.app.config.resolve('Texture Quality') != 'High':
-                babase.screenmessage(
-                    babase.app.lang.get_resource(
-                        'debugWindow.reloadBenchmarkBestResultsText'
-                    ),
-                    color=(1, 1, 0),
-                )
 
         babase.add_clean_frame_callback(babase.CallStrict(doit, start_time))
 

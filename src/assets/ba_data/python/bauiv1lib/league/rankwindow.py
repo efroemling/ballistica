@@ -298,6 +298,7 @@ class LeagueRankWindow(bui.MainWindow):
             edit=self._president_name,
             color=(0.6, 0.6, 1, 0.9),
             text=response.name,
+            literal=True,
         )
 
     @override

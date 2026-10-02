@@ -755,6 +755,7 @@ class ManualGatherTab(GatherTab):
                 always_highlight=True,
                 on_select_call=bui.CallStrict(self._on_favorite_select, server),
                 on_activate_call=self._favorites_connect_button.activate,
+                literal=True,
                 text=(
                     config['Saved Servers'][server]['name']
                     if config['Saved Servers'][server]['name'] != ''

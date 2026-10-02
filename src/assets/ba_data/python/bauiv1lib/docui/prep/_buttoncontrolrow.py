@@ -43,10 +43,11 @@ _BUTTON_CONTROL_MIN_HEIGHT = 50.0
 # asks for on its left).
 _BUTTON_CONTROL_LABEL_GAP = 30.0
 
-# How far the button may reach into a strip of title, subtitle or
-# footnote text that runs over or under it. (Text that stops short of
-# the button is no obstacle; the button sits beside it.)
-_BUTTON_CONTROL_TEXT_OVERLAP = 2.0
+# How far the button keeps from title, subtitle or footnote text that
+# runs over or under it, whatever its height (as a choice row's popup
+# button does; see _controlrows._CHOICE_TEXT_CLEARANCE). Text that stops
+# short of the button is no obstacle; the button sits beside it.
+_BUTTON_CONTROL_TEXT_CLEARANCE = 6.0
 
 
 def _control_height(row: dui2.ButtonControlRow) -> float:
@@ -114,14 +115,14 @@ def button_control_row_tucks(
         row,
         left=left,
         limit=bleft,
-        overlap=_BUTTON_CONTROL_TEXT_OVERLAP,
+        clearance=_BUTTON_CONTROL_TEXT_CLEARANCE,
         native=native,
     )
     footnote_limit = bbottom + footnote_clear_drop(
         row,
         left=left,
         limit=bleft,
-        overlap=_BUTTON_CONTROL_TEXT_OVERLAP,
+        clearance=_BUTTON_CONTROL_TEXT_CLEARANCE,
         native=native,
     )
     return (

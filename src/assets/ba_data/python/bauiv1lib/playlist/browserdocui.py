@@ -30,6 +30,7 @@ from bacommon.docui.routes import (
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
+from bauiv1 import _uiv1assets
 from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
@@ -581,7 +582,7 @@ def _page(
             # ...and down into the page's bottom buffer, leaving just
             # enough for its shadow; the playlist buttons get all the
             # height this frees (see _BUTTON_SCALE).
-            padding_bottom=0.0,
+            padding_bottom=6.0,
             spacing_bottom=_CUSTOMIZE_PUSH_DOWN,
             buttons=[
                 dui2.Button(
@@ -697,7 +698,7 @@ def _preview_decos(previews: list[_Preview]) -> list[dui2.Decoration]:
             if not preview.owned:
                 out.append(
                     dui2.Image(
-                        texture=_classicassets.textures.lock,
+                        texture=_uiv1assets.textures.lock,
                         position=(h + scl * 75.0, v + scl * 10.0),
                         size=(scl * 100.0, scl * 100.0),
                         h_align=dui2.HAlign.LEFT,

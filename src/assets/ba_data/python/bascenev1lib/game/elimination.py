@@ -45,22 +45,36 @@ class Icon(bs.Actor):
             _classiccatalogassets.textures.character_icon_mask.get()
         )
 
-        icon = player.get_icon()
-        self.node = bs.newnode(
-            'image',
-            delegate=self,
-            attrs={
-                'texture': icon['texture'],
-                'tint_texture': icon['tint_texture'],
-                'tint_color': icon['tint_color'],
-                'vr_depth': 400,
-                'tint2_color': icon['tint2_color'],
-                'mask_texture': self._outline_tex,
-                'opacity': 1.0,
-                'absolute_scale': True,
-                'attach': 'bottomCenter',
-            },
-        )
+        depiction = player.get_icon_depiction()
+        if depiction is not None:
+            self.node = bs.newnode(
+                'depictiondisplay',
+                delegate=self,
+                attrs={
+                    'depiction': depiction,
+                    'vr_depth': 400,
+                    'opacity': 1.0,
+                    'attach': 'bottomCenter',
+                },
+            )
+        else:
+            icon = player.get_icon()
+            self.node = bs.newnode(
+                'image',
+                delegate=self,
+                attrs={
+                    'texture': icon['texture'],
+                    'tint_texture': icon['tint_texture'],
+                    'tint_color': icon['tint_color'],
+                    'vr_depth': 400,
+                    'tint2_color': icon['tint2_color'],
+                    'tint3_color': icon.get('tint3_color', (1.0, 1.0, 1.0)),
+                    'mask_texture': self._outline_tex,
+                    'opacity': 1.0,
+                    'absolute_scale': True,
+                    'attach': 'bottomCenter',
+                },
+            )
         self._name_text = bs.newnode(
             'text',
             owner=self.node,
@@ -125,7 +139,9 @@ class Icon(bs.Actor):
         if lives == 0:
             self._name_text.opacity = 0.2
             assert self.node
-            self.node.color = (0.7, 0.3, 0.3)
+            # (Depiction icons have no tint; the fade alone says it.)
+            if self.node.getnodetype() == 'image':
+                self.node.color = (0.7, 0.3, 0.3)
             self.node.opacity = 0.2
 
     def handle_player_spawned(self) -> None:

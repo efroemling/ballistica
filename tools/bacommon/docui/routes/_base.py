@@ -127,8 +127,16 @@ class DocUIRoute:
         :meth:`~bacommon.docui.routes.DocUIRoute.browse` uses this
         unless told otherwise, so a route whose page is best shown at
         some layout declares it once rather than at every link.
+
+        Defaults to :attr:`~bacommon.docui.v2.WindowLayout.WIDE`, which
+        is the same size at every ui-scale, so a one-off page (a
+        confirmation, a dialog) never ends up as a big mostly-empty
+        window. :attr:`~bacommon.docui.v2.WindowLayout.LARGE`, which
+        grows to fill more of the screen at medium/large ui-scale, is
+        for pages built to use that room (store listings and the
+        like), and they ask for it explicitly.
         """
-        return dui2.WindowLayout.LARGE
+        return dui2.WindowLayout.WIDE
 
     def browse(
         self,

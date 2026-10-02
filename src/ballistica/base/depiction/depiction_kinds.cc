@@ -3,7 +3,6 @@
 #include "ballistica/base/depiction/depiction_kinds.h"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <optional>
 #include <string>
@@ -59,11 +58,14 @@ class CharacterIconDepiction : public Depiction {
     TextureAsset* tint = assets.standin_icon_color_mask.get();
     float color[3] = {0.5f, 0.5f, 0.5f};
     float highlight[3] = {0.5f, 0.5f, 0.5f};
+    float highlight2[3] = {1.0f, 1.0f, 1.0f};
     if (def_.has_icon()) {
       const BasicIconDef& icon = def_.icon();
       std::copy(std::begin(icon.color), std::end(icon.color), color);
       std::copy(std::begin(icon.highlight), std::end(icon.highlight),
                 highlight);
+      std::copy(std::begin(icon.highlight2), std::end(icon.highlight2),
+                highlight2);
       if (def_.icon_media_ready()) {
         tex = def_.icon_media().texture.get();
         tint = def_.icon_media().color_mask_texture.get();
@@ -74,6 +76,7 @@ class CharacterIconDepiction : public Depiction {
     }
     context.StandardColor(color);
     context.StandardColor(highlight);
+    context.StandardColor(highlight2);
     const DepictionBox& b = context.box;
     float alpha = context.StandardOpacity();
     // Premultiplied art composites 'over' only if rgb is scaled by
@@ -88,6 +91,7 @@ class CharacterIconDepiction : public Depiction {
       c.SetColorizeTexture(tint);
       c.SetColorizeColor(color[0], color[1], color[2]);
       c.SetColorizeColor2(highlight[0], highlight[1], highlight[2]);
+      c.SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
     }
     c.SetMaskTexture(assets.character_icon_mask.get());
     {
@@ -246,7 +250,8 @@ class NameDepiction : public Depiction {
 
   void LoadCapsuleMedia_(const CapsuleNameDef& cap, millisecs_t now) {
     std::vector<const PackageAssetRef*> required;
-    for (const auto* ref : {&cap.capsule_texture, &cap.icon_texture}) {
+    for (const auto* ref :
+         {&cap.capsule_texture, &cap.capsule_tint_texture, &cap.icon_texture}) {
       if (ref->present()) {
         required.push_back(ref);
       }
@@ -259,11 +264,16 @@ class NameDepiction : public Depiction {
     CapsuleNameDef& d = *name_.capsule;
     std::vector<MediaBlock::IndexedRef> indexed;
     MediaBlock::NoteIndexed(&d.capsule_texture, "textures/", &indexed);
+    MediaBlock::NoteIndexed(&d.capsule_tint_texture, "textures/", &indexed);
     MediaBlock::NoteIndexed(&d.icon_texture, "textures/", &indexed);
     block_.Load(d.packages, d.domain_digest, indexed, required,
                 [this, &d](MediaGetter* get) {
                   if (d.capsule_texture.present()) {
                     capsule_texture_asset_ = get->Texture(d.capsule_texture);
+                  }
+                  if (d.capsule_tint_texture.present()) {
+                    capsule_tint_texture_asset_ =
+                        get->Texture(d.capsule_tint_texture);
                   }
                   if (d.icon_texture.present()) {
                     icon_texture_asset_ = get->Texture(d.icon_texture);
@@ -288,12 +298,25 @@ class NameDepiction : public Depiction {
                         const CapsuleNameDef& cap, float r) {
     // Our own art once it's here; a plain circle until then (or if we
     // have none). Only the look changes when it arrives, never sizes.
+    bool ours = cap.capsule_texture.present() && block_.ready();
     TextureAsset* tex =
-        (cap.capsule_texture.present() && block_.ready())
+        ours
             ? capsule_texture_asset_.get()
             : g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle);
     if (!tex || !tex->loaded()) {
       return;
+    }
+    // Insets, tiling, and tint describe our art; the circle has none.
+    NinePatchSourceInsets insets;
+    NinePatchFill fill{NinePatchFill::kStretch};
+    TextureAsset* tint_tex{};
+    if (ours) {
+      insets.left = cap.capsule_insets[0];
+      insets.right = cap.capsule_insets[1];
+      if (cap.capsule_tile) {
+        fill = NinePatchFill::kTileFit;
+      }
+      tint_tex = capsule_tint_texture_asset_.get();
     }
     // The art's own radius, so its edge-ratio point lands on the
     // capsule's logical edge (anything beyond -- a glow -- spills out).
@@ -302,14 +325,32 @@ class NameDepiction : public Depiction {
     float grow = art_r - r;
     float w = b.width + 2.0f * grow;
     float h = b.height + 2.0f * grow;
+    // Nothing to draw in an empty box (and the negation also catches
+    // NaN from one).
+    if (!(w > 0.0f && h > 0.0f)) {
+      return;
+    }
     float bx = NinePatchMesh::BorderForRadius(art_r, w, h);
     float by = NinePatchMesh::BorderForRadius(art_r, h, w);
     auto mesh = Object::New<NinePatchMesh>(b.x - grow, b.y - grow, context.z, w,
-                                           h, bx, by, bx, by);
+                                           h, bx, by, bx, by, insets, fill,
+                                           NinePatchFill::kStretch);
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     c.SetTexture(tex);
     SetColor_(&c, context, tex, cap.capsule_color);
+    if (tint_tex) {
+      float tints[3][3];
+      for (int i = 0; i < 3; ++i) {
+        std::copy(cap.capsule_tint_colors[i], cap.capsule_tint_colors[i] + 3,
+                  tints[i]);
+        context.StandardColor(tints[i]);
+      }
+      c.SetColorizeTexture(tint_tex);
+      c.SetColorizeColor(tints[0][0], tints[0][1], tints[0][2]);
+      c.SetColorizeColor2(tints[1][0], tints[1][1], tints[1][2]);
+      c.SetColorizeColor3(tints[2][0], tints[2][1], tints[2][2]);
+    }
     c.DrawMesh(mesh.get());
     c.Submit();
   }
@@ -337,18 +378,11 @@ class NameDepiction : public Depiction {
     c.Submit();
   }
 
-  /// Shadow opacity for a text glow of strength 1.0 (a centered shadow
-  /// mostly hides under its glyph, so it needs more than a drop
-  /// shadow's to show).
-  static constexpr float kTextGlowStrength{2.0f};
-
-  /// How far a text glow spreads past its glyphs (extra shadow blur,
-  /// as mip bias).
-  static constexpr float kTextGlowSpread{2.0f};
-
-  auto TextGlow_() const -> const std::array<float, 4>* {
+  /// How much the text glows like neon (see CapsuleNameDef::text_glow);
+  /// 0 draws plain text with its usual drop shadow.
+  auto TextGlow_() const -> float {
     const CapsuleNameDef* cap = Capsule_();
-    return (cap && cap->text_glow) ? &*cap->text_glow : nullptr;
+    return cap ? cap->text_glow : 0.0f;
   }
 
   void DrawText_(const DepictionDrawContext& context, float cx, float cy,
@@ -367,20 +401,18 @@ class NameDepiction : public Depiction {
       }
       c.SetTexture(t);
       float shadow_opacity;
-      if (const auto* glow = TextGlow_()) {
-        // A glow: the shadow in the glow's color, centered under the
-        // text.
-        float bright = context.StandardBrightness();
-        shadow_opacity = kTextGlowStrength * (*glow)[3] * alpha * alpha;
-        c.SetShadow(0.0f, 0.0f, 0.0f, shadow_opacity, (*glow)[0] * bright,
-                    (*glow)[1] * bright, (*glow)[2] * bright, kTextGlowSpread);
+      float text_glow = TextGlow_();
+      if (text_glow > 0.0f) {
+        // Glowing text: the glow is its whole surround (no shadow).
+        shadow_opacity = 0.0f;
+        c.SetShadow(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, text_glow);
       } else {
         shadow_opacity = 0.5f * alpha * alpha;
         c.SetShadow(-0.004f * text_group_.GetElementUScale(e),
                     -0.004f * text_group_.GetElementVScale(e), 0.0f,
                     shadow_opacity);
       }
-      if (shadow_opacity > 0) {
+      if (shadow_opacity > 0 || text_glow > 0) {
         c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
       } else {
         c.ClearMaskUV2Texture();
@@ -405,6 +437,7 @@ class NameDepiction : public Depiction {
   MediaBlock block_;
   MediaRetryPacer pacer_;
   Object::Ref<TextureAsset> capsule_texture_asset_;
+  Object::Ref<TextureAsset> capsule_tint_texture_asset_;
   Object::Ref<TextureAsset> icon_texture_asset_;
 };
 
@@ -446,6 +479,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
     ReadFloats(root, "c", color_, 4);
     has_tint_color_ = ReadFloats(root, "tc1", tint_color_, 3);
     has_tint2_color_ = ReadFloats(root, "tc2", tint2_color_, 3);
+    has_tint3_color_ = ReadFloats(root, "tc3", tint3_color_, 3);
     return true;
   }
 
@@ -498,9 +532,11 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
       }
       float tint[3]{tint_color_[0], tint_color_[1], tint_color_[2]};
       float tint2[3]{tint2_color_[0], tint2_color_[1], tint2_color_[2]};
+      float tint3[3]{tint3_color_[0], tint3_color_[1], tint3_color_[2]};
       context.StandardColor(color);
       context.StandardColor(tint);
       context.StandardColor(tint2);
+      context.StandardColor(tint3);
       float alpha = color_[3] * context.StandardOpacity();
       float cmul = (texture_asset_->premultiplied() ? alpha : 1.0f)
                    * context.StandardBrightness();
@@ -516,6 +552,9 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
         }
         if (has_tint2_color_) {
           c.SetColorizeColor2(tint2[0], tint2[1], tint2[2]);
+        }
+        if (has_tint3_color_) {
+          c.SetColorizeColor3(tint3[0], tint3[1], tint3[2]);
         }
       }
       if (mask_texture_asset_.exists()) {
@@ -586,8 +625,10 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   float color_[4]{1.0f, 1.0f, 1.0f, 1.0f};
   float tint_color_[3]{1.0f, 1.0f, 1.0f};
   float tint2_color_[3]{1.0f, 1.0f, 1.0f};
+  float tint3_color_[3]{1.0f, 1.0f, 1.0f};
   bool has_tint_color_{};
   bool has_tint2_color_{};
+  bool has_tint3_color_{};
   bool has_flat_{};
   float flat_rgb_[3]{1.0f, 1.0f, 1.0f};
   float flatness_{};

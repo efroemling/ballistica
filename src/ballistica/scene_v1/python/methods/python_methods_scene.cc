@@ -29,6 +29,7 @@
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_depiction.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/scene_v1.h"
@@ -37,6 +38,7 @@
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/local_display_context.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/utils.h"
@@ -884,14 +886,14 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           "messages.",
           PyExcType::kValue);
     }
-    // Native LangStrs additionally ride the message as a lang-str
-    // tagged wire value (self-describing resource refs; the message
-    // layer has no package table) so new enough clients render them in
-    // their own locale. The flat text remains for older clients.
-    std::string tagged;
-    if (base::PythonClassLangStr::Check(message_obj)) {
-      tagged = SceneV1Python::BuildLangStrWireValue(message_obj, nullptr).first;
-    }
+    // The message also rides as a lang-str tagged wire value (LangStrs
+    // as self-describing resource refs -- the message layer has no
+    // package table -- plain str as literal text, a legacy Lstr as its
+    // legacy json) so new enough clients always get the tagged form:
+    // their own locale for LangStrs, verbatim text for str. The flat
+    // text remains for older clients.
+    std::string tagged =
+        SceneV1Python::BuildLangStrWireValue(message_obj, nullptr).first;
     std::vector<int32_t> client_ids;
     if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
@@ -918,10 +920,17 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
 
     SceneTexture* texture = nullptr;
     SceneTexture* tint_texture = nullptr;
+    SceneDepiction* depiction = nullptr;
     Vector3f tint_color{1.0f, 1.0f, 1.0f};
     Vector3f tint2_color{1.0f, 1.0f, 1.0f};
+    Vector3f tint3_color{1.0f, 1.0f, 1.0f};
     if (image_obj != Py_None) {
-      if (PyDict_Check(image_obj)) {
+      if (PythonClassSceneDepiction::Check(image_obj)) {
+        if (!top) {
+          throw Exception("Depiction images require 'top'.", PyExcType::kValue);
+        }
+        depiction = SceneV1Python::GetPySceneDepiction(image_obj);
+      } else if (PyDict_Check(image_obj)) {
         PyObject* obj = PyDict_GetItemString(image_obj, "texture");
         if (!obj) {
           throw Exception("Provided image dict contains no 'texture' entry.",
@@ -949,6 +958,11 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
                           PyExcType::kValue);
         }
         tint2_color = base::BasePython::GetPyVector3f(obj);
+        // Optional (older icon dicts have none).
+        obj = PyDict_GetItemString(image_obj, "tint3_color");
+        if (obj && obj != Py_None) {
+          tint3_color = base::BasePython::GetPyVector3f(obj);
+        }
       } else {
         texture = SceneV1Python::GetPySceneTexture(image_obj);
       }
@@ -963,7 +977,20 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           message_obj, ContextRefSceneV1::FromCurrent().GetHostSession());
 
       // FIXME: for now we just do bottom messages.
-      if (texture == nullptr && !top) {
+      if (depiction != nullptr) {
+        // Scoping as for depiction node attrs: the context's own scene,
+        // or the host session's (which works in all its activities).
+        HostSession* host_session =
+            ContextRefSceneV1::FromCurrent().GetHostSession();
+        bool session_scene = host_session != nullptr
+                             && depiction->scene() == host_session->scene();
+        if (depiction->scene() != context_scene && !session_scene) {
+          throw Exception("Depiction is not from the current context_ref.",
+                          PyExcType::kContext);
+        }
+        output_stream->ScreenMessageTopDepiction(wire, color.x, color.y,
+                                                 color.z, depiction);
+      } else if (texture == nullptr && !top) {
         output_stream->ScreenMessageBottom(wire, color.x, color.y, color.z);
       } else if (top && texture != nullptr && tint_texture != nullptr) {
         if (texture->scene() != context_scene) {
@@ -976,7 +1003,8 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
         output_stream->ScreenMessageTop(
             wire, color.x, color.y, color.z, texture, tint_texture,
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
-            tint2_color.y, tint2_color.z);
+            tint2_color.y, tint2_color.z, tint3_color.x, tint3_color.y,
+            tint3_color.z);
       } else {
         g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
                              "Unhandled screenmessage output_stream case.");
@@ -984,11 +1012,16 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     // Now display it locally.
-    g_base->graphics->screenmessages->AddScreenMessage(
-        message, false, color, static_cast<bool>(top),
-        texture ? texture->texture_data() : nullptr,
-        tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
-        tint2_color);
+    if (depiction != nullptr) {
+      g_base->graphics->screenmessages->AddTopScreenMessageWithDepiction(
+          message, false, color, depiction->json());
+    } else {
+      g_base->graphics->screenmessages->AddScreenMessage(
+          message, false, color, static_cast<bool>(top),
+          texture ? texture->texture_data() : nullptr,
+          tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
+          tint2_color, tint3_color);
+    }
   }
 
   Py_RETURN_NONE;
@@ -1004,7 +1037,7 @@ static PyMethodDef PyBroadcastMessageDef = {
     "broadcastmessage(message: str | babase.Lstr | babase.LangStr,\n"
     "  color: Sequence[float] | None = None,\n"
     "  top: bool = False,\n"
-    "  image: dict[str, Any] | None = None,\n"
+    "  image: dict[str, Any] | bascenev1.Depiction | None = None,\n"
     "  log: bool = False,\n"
     "  clients: Sequence[int] | None = None,\n"
     "  transient: bool = False)"
@@ -1015,7 +1048,9 @@ static PyMethodDef PyBroadcastMessageDef = {
     "If 'top' is True, the message will go to the top message area.\n"
     "For 'top' messages, 'image' must be a dict containing 'texture'\n"
     "and 'tint_texture' textures and 'tint_color' and 'tint2_color'\n"
-    "colors. This defines an icon to display alongside the message.\n"
+    "colors and optionally a 'tint3_color', or a bascenev1.Depiction\n"
+    "(a player's get_icon_depiction(), say). This defines an icon to\n"
+    "display alongside the message.\n"
     "If 'log' is True, the message will also be submitted to the log.\n"
     "'clients' can be a list of client-ids the message should be sent\n"
     "to, or None to specify that everyone should receive it.\n"

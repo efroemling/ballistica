@@ -31,6 +31,8 @@ class ImageNode : public Node {
   void SetTintColor(const std::vector<float>& val);
   auto tint2_color() const -> std::vector<float> { return tint2_color_; }
   void SetTint2Color(const std::vector<float>& val);
+  auto tint3_color() const -> std::vector<float> { return tint3_color_; }
+  void SetTint3Color(const std::vector<float>& val);
   auto fill_screen() const -> bool { return fill_screen_; }
   void SetFillScreen(bool val);
   auto has_alpha_channel() const -> bool { return has_alpha_channel_; }
@@ -125,11 +127,15 @@ class ImageNode : public Node {
   float tint2_red_{1.0f};
   float tint2_green_{1.0f};
   float tint2_blue_{1.0f};
+  float tint3_red_{1.0f};
+  float tint3_green_{1.0f};
+  float tint3_blue_{1.0f};
   std::vector<float> scale_{1.0f, 1.0f};
   std::vector<float> position_{0.0f, 0.0f};
   std::vector<float> color_{1.0f, 1.0f, 1.0f};
   std::vector<float> tint_color_{1.0f, 1.0f, 1.0f};
   std::vector<float> tint2_color_{1.0f, 1.0f, 1.0f};
+  std::vector<float> tint3_color_{1.0f, 1.0f, 1.0f};
   Object::Ref<SceneTexture> texture_;
   Object::Ref<SceneTexture> tint_texture_;
   Object::Ref<SceneTexture> mask_texture_;

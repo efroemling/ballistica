@@ -15,7 +15,11 @@ from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
-from bauiv1lib.docui.prep._types import ButtonPrep
+from bauiv1lib.docui.prep._types import (
+    AnimTargetKind,
+    AnimTargetPrep,
+    ButtonPrep,
+)
 from bauiv1lib.docui.prep._depiction import h_align_arg, v_align_arg
 from bauiv1lib.docui.prep._calls2 import (
     prep_button_debug,
@@ -178,6 +182,18 @@ def prep_button(
             if isinstance(button.action, dui2.Menu)
             else None
         ),
+        anim=(
+            None
+            if button.anim_id is None
+            else AnimTargetPrep(
+                anim_id=button.anim_id,
+                kind=AnimTargetKind.BUTTON,
+                position=position,
+                size=(bwidth, bheight),
+                scale=bscale,
+                opacity=1.0 if button.color is None else button.color[3],
+            )
+        ),
     )
     if button.texture is not None:
         buttonprep.textures['texture'] = refstr(button.texture)
@@ -231,7 +247,12 @@ def instantiate_button(
     btn = buttonprep.buttoncall(**kwds)
     assert buttonprep.buttoneditcall is not None
     buttonprep.buttoneditcall(edit=btn)
+    if buttonprep.anim is not None:
+        window.anim_targets.register(buttonprep.anim, btn)
     instantiate_decorations(
-        buttonprep.decorations, parent=parent, draw_controller=btn
+        buttonprep.decorations,
+        parent=parent,
+        draw_controller=btn,
+        anim_targets=window.anim_targets,
     )
     return btn

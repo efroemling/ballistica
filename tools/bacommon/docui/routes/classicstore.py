@@ -68,6 +68,13 @@ class Root(StoreRoute, path='/'):
         list[str] | None, IOAttrs('unlockreqs', store_default=False)
     ] = None
 
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Big scrolling listings; showing as much as the screen allows
+        # is the point.
+        return dui2.WindowLayout.LARGE
+
 
 @ioprepped
 @dataclass
@@ -151,6 +158,57 @@ class ProfileDelete(
     profile_name: Annotated[str, IOAttrs('pn')]
 
 
+@ioprepped
+@dataclass
+class ProfileDeleteConfirm(StoreRoute, path='/profile/deleteconfirm'):
+    """(Inventory) confirm deleting a stored profile.
+
+    Replaces the editor's page in its window; its draft rides along as
+    page state, so cancelling goes back to the editor with it intact.
+    """
+
+    profile_name: Annotated[str, IOAttrs('pn')]
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Shown in the editor's window (see above).
+        return dui2.WindowLayout.VIEWER
+
+
+@ioprepped
+@dataclass
+class ProfileCharacter(StoreRoute, path='/profile/character'):
+    """(Inventory) pick the profile editor's character.
+
+    Opened from the editor, whose :class:`ProfileDraft` comes along as
+    page state; picking one hands it back to the editor (see
+    :meth:`~bacommon.docui.routes.DocUIState.assign_on_return`).
+    """
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # A long row of character buttons; show as many as we can.
+        return dui2.WindowLayout.WIDER
+
+
+@ioprepped
+@dataclass
+class ProfileGlobalUpgrade(StoreRoute, path='/profile/global'):
+    """(Inventory) upgrade a cloud profile to a global profile.
+
+    Not built yet; shows an under-construction page.
+    """
+
+    profile_name: Annotated[str, IOAttrs('pn')]
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        return dui2.WindowLayout.SMALL
+
+
 # All routes in the family.
 AnyStoreRoute = (
     Root
@@ -159,6 +217,9 @@ AnyStoreRoute = (
     | ProfileEdit
     | ProfileSave
     | ProfileDelete
+    | ProfileDeleteConfirm
+    | ProfileCharacter
+    | ProfileGlobalUpgrade
 )
 
 

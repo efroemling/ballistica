@@ -230,7 +230,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             tdelay += 0.05
             voffs -= spacing
             Image(
-                playerrec.get_icon(),
+                playerrec.get_icon_depiction() or playerrec.get_icon(),
                 position=(
                     ts_h_offs - 12 * scale,
                     ts_v_offset + (voffs + 15.0) * scale,

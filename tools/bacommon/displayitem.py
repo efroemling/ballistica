@@ -31,7 +31,7 @@ from bacommon.langstr import LangStrSpecValue
 
 if TYPE_CHECKING:
     from bacommon.assetspec import TextureSpec
-    from bacommon.classic import ClassicChestAppearance
+    from bacommon.classic import ClassicChestAppearance, ChestTints
 
 
 #: Layout boxes for the currency art beside a count, as (left, bottom,
@@ -90,18 +90,14 @@ class DepictionAssets:
     chest_icon: TextureSpec
     chest_icon_tint: TextureSpec
 
-    #: Per-appearance ``(tint, tint2)``. Appearances absent here get
-    #: :attr:`chest_tint_default` -- several of them (UNKNOWN, DEFAULT,
-    #: L1) have no entry and rely on that.
-    chest_tints: dict[
-        ClassicChestAppearance,
-        tuple[tuple[float, float, float], tuple[float, float, float]],
-    ]
+    #: Per-appearance tints (2 or 3; see
+    #: :data:`bacommon.classic.ChestTints`). Appearances absent here
+    #: get :attr:`chest_tint_default` -- several of them (UNKNOWN,
+    #: DEFAULT, L1) have no entry and rely on that.
+    chest_tints: dict[ClassicChestAppearance, ChestTints]
 
-    #: ``(tint, tint2)`` for an appearance with no entry above.
-    chest_tint_default: tuple[
-        tuple[float, float, float], tuple[float, float, float]
-    ]
+    #: Tints for an appearance with no entry above.
+    chest_tint_default: ChestTints
 
 
 @dataclass
@@ -295,21 +291,22 @@ def _chest_image(
     depth_range: tuple[float, float] | None,
 ) -> dui2.Image:
     """Return the image depicting a chest item."""
-    from bacommon.classic import ClassicChestDisplayItem
+    from bacommon.classic import ClassicChestDisplayItem, chest_tint3
 
     assert isinstance(item, ClassicChestDisplayItem)
 
-    tint, tint2 = assets.chest_tints.get(
-        item.appearance, assets.chest_tint_default
-    )
+    tints = assets.chest_tints.get(item.appearance, assets.chest_tint_default)
+    tint3 = chest_tint3(tints)
     c_size = width * (0.66 if compact else 1.05 if icon else 0.83)
     return dui2.Image(
         texture=assets.chest_icon,
         tint_texture=assets.chest_icon_tint,
         position=position,
         size=(c_size, c_size),
-        tint_color=tint,
-        tint2_color=tint2,
+        tint_color=tints[0],
+        tint2_color=tints[1],
+        # Omitted when white so older clients' payloads are unchanged.
+        tint3_color=None if tint3 == (1.0, 1.0, 1.0) else tint3,
         highlight=highlight,
         depth_range=depth_range,
     )

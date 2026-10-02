@@ -40,6 +40,8 @@ class PythonClassSpazDef : public PythonClass {
   static void tp_dealloc(PythonClassSpazDef* self);
   static auto tp_repr(PythonClassSpazDef* self) -> PyObject*;
   static auto GetColor(PythonClassSpazDef* self, void* closure) -> PyObject*;
+  static auto GetHighlight2(PythonClassSpazDef* self, void* closure)
+      -> PyObject*;
   static auto GetHighlight(PythonClassSpazDef* self, void* closure)
       -> PyObject*;
   Object::Ref<SpazDef>* spaz_def_;

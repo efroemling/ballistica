@@ -67,6 +67,19 @@ class ConnectionToClient : public Connection {
     return peer_public_account_id_;
   }
 
+  /// Whether our handshake offered this client v2-auth. Decided once,
+  /// at our first handshake send, from the app mode's ClientAuthMode
+  /// (optional mode offers it only if we have a global app-instance id
+  /// then), and fixed for the connection: the client latches whatever
+  /// our first handshake says.
+  auto v2_auth_offered() const { return v2_auth_offered_; }
+
+  /// Whether this client authenticated through v2-auth (so its peer
+  /// spec, account id, and profiles came verified from the cloud).
+  /// Always true for an accepted client when auth is required; for
+  /// optional auth, only for those that could.
+  auto v2_authed() const { return v2_authed_; }
+
   /// Return whether this client is an admin. Will only return true once their
   /// account id has been verified by the master server.
   auto IsAdmin() const -> bool;
@@ -120,6 +133,7 @@ class ConnectionToClient : public Connection {
  private:
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
+  auto ApplyV2AuthToken_(const std::string& token) -> bool;
 
   int protocol_version_;
   int client_claimed_protocol_version_{-1};
@@ -141,6 +155,11 @@ class ConnectionToClient : public Connection {
   PythonRef classic_purchases_;
   PythonRef cloud_characters_;
   bool got_v1_auth_from_master_server_{};
+  bool v2_auth_decided_{};
+  bool v2_auth_offered_{};
+  bool v2_auth_required_{};
+  bool v2_authed_{};
+  std::string v2_auth_app_instance_id_;
   std::vector<millisecs_t> last_chat_times_;
   millisecs_t next_kick_vote_allow_time_{};
   millisecs_t chat_block_time_{};

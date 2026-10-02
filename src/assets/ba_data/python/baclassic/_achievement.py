@@ -1038,6 +1038,7 @@ class Achievement:
                         'tint_texture': chestdisplayinfo.texclosedtint.get(),
                         'tint_color': chestdisplayinfo.tint,
                         'tint2_color': chestdisplayinfo.tint2,
+                        'tint3_color': chestdisplayinfo.tint3,
                         'mask_texture': None,
                     },
                     color=chestdisplayinfo.color + (0.5 if hmo else 1.0,),
@@ -1157,6 +1158,7 @@ class Achievement:
                                 ),
                                 'tint_color': chestdisplayinfo.tint,
                                 'tint2_color': chestdisplayinfo.tint2,
+                                'tint3_color': chestdisplayinfo.tint3,
                                 'mask_texture': None,
                             },
                             color=chestdisplayinfo.color

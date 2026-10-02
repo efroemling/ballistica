@@ -21,6 +21,7 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _commonassets, _uiv1assets
 
+from bauiv1lib.docui._layout import BUTTON_INSET, TEXT_INSET
 from bauiv1lib.docui.prep._controlrows import ColumnRow, is_column_row
 from bauiv1lib.docui.prep._rowbands import (
     prep_row_header,
@@ -364,10 +365,11 @@ def prep_section_backings(
 class EntryGeom:
     """Horizontal geometry for laying out one layout entry.
 
-    The page-wide values, or a card's (see :func:`entry_geometry`).
-    ``clip`` is where a button row's h-scroll clips (left and right
-    x), or None for the page-wide default; ``center`` is where centered
-    content centers.
+    Everything here derives from a column (see :func:`column_geometry`):
+    the page's, or a card's. ``clip`` is where a button row's h-scroll
+    clips (left and right x), or None for the page-wide default;
+    ``center`` is where centered content centers, and how wide centered
+    text may be.
 
     :meta private:
     """
@@ -378,10 +380,42 @@ class EntryGeom:
     control_right: float
     band_anchors_x: tuple[float, float, float]
     clip: tuple[float, float] | None
-    #: Where centered things center, and how wide centered text may
-    #: be (see :func:`~bauiv1lib.docui.prep._rowtext.page_text_center`).
-    #: A card centers everything on itself.
     center: tuple[float, float]
+
+
+def column_geometry(
+    left: float,
+    right: float,
+    *,
+    width: float,
+    buffers: tuple[float, float],
+    clip: tuple[float, float] | None,
+) -> EntryGeom:
+    """Geometry for laying out in a column from ``left`` to ``right``.
+
+    Symmetric: button rows' buttons sit
+    :data:`~bauiv1lib.docui._layout.BUTTON_INSET` in from either edge,
+    text and control rows' contents
+    :data:`~bauiv1lib.docui._layout.TEXT_INSET`, and centered things
+    center on the column.
+    ``buffers`` are the page's left and right buffers (the column's
+    margins are what remains of ``width`` outside them).
+
+    :meta private:
+    """
+    left_buffer, right_buffer = buffers
+    center = (left + right) * 0.5
+    return EntryGeom(
+        cmargin_left=left - left_buffer,
+        cmargin_right=width - right - right_buffer,
+        # Control rows' labels start where text does; their controls end
+        # at its mirror.
+        control_left=left + TEXT_INSET,
+        control_right=right - TEXT_INSET,
+        band_anchors_x=(left + TEXT_INSET, center, right - TEXT_INSET),
+        clip=clip,
+        center=(center, max(1.0, right - left - 2.0 * BUTTON_INSET)),
+    )
 
 
 def entry_geometry(
@@ -390,48 +424,32 @@ def entry_geometry(
     *,
     base: EntryGeom,
     width: float,
+    buffers: tuple[float, float],
     column: tuple[float, float],
 ) -> list[EntryGeom]:
     """Each layout entry's horizontal geometry (see :class:`EntryGeom`).
 
     ``base`` is the page-wide geometry and ``column`` the column's left
-    and right x. A card's entries (heading, rows, note) clip button rows
-    at its edges and start everything else ``content_inset`` in from
-    them; the rest get ``base``.
+    and right x. A card's entries (heading, rows, note) get the card's
+    own column -- its button rows' buttons ``content_inset`` in from its
+    edges, as the page's are
+    :data:`~bauiv1lib.docui._layout.BUTTON_INSET` in from its column --
+    and clip button rows at its edges; the rest get ``base``.
 
     :meta private:
     """
-    # The page-wide relationships between where row content starts and
-    # ends (control_left/right) and the column margins everything else
-    # derives from; a card keeps them, just with its own content edges.
-    lead = base.control_left - base.cmargin_left
-    trail = width - base.cmargin_right - base.control_right
     geoms = [base] * len(entries)
     for sec, first_row, last_row in spans:
         if sec.backing is None:
             continue
         clip_l, clip_r = card_edges(sec.backing, column)
-        content_l = clip_l + sec.backing.content_inset
-        content_r = clip_r - sec.backing.content_inset
-        cml = content_l - lead
-        cmr = width - trail - content_r
-        # The page's own centering allows for the scrollbar at its right
-        # (and the margins its rows' contents keep around them are
-        # lopsided to match); a card has neither, so everything centered
-        # in it centers on the card itself.
-        center_x = (clip_l + clip_r) * 0.5
-        geom = EntryGeom(
-            cmargin_left=cml,
-            cmargin_right=cmr,
-            control_left=content_l,
-            control_right=content_r,
-            band_anchors_x=(
-                content_l,
-                center_x,
-                base.band_anchors_x[2] + (base.cmargin_right - cmr),
-            ),
+        inset = sec.backing.content_inset
+        geom = column_geometry(
+            clip_l + inset - BUTTON_INSET,
+            clip_r - inset + BUTTON_INSET,
+            width=width,
+            buffers=buffers,
             clip=(clip_l, clip_r),
-            center=(center_x, max(1.0, content_r - content_l)),
         )
         # The heading before the rows and any note after them too.
         last = last_row + 1

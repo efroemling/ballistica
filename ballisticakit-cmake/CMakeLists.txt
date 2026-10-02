@@ -1000,6 +1000,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/container_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/fading_scroll_thumb.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/fading_scroll_thumb.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/h_scroll_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/h_scroll_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/image_widget.cc

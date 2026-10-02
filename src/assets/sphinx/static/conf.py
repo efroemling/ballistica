@@ -164,6 +164,7 @@ nitpick_ignore = [
     ('py:class', 'bs.GameTip'),
     ('py:class', 'bs.Lstr'),
     ('py:class', 'bs.Texture'),
+    ('py:class', 'bs.Depiction'),
     ('py:class', 'bs.Mesh'),
     ('py:class', 'bascenev1.Time'),
     ('py:class', 'babase.SimpleSound'),

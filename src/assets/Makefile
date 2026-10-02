@@ -425,7 +425,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/chestui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
@@ -440,6 +440,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_animtargets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_cache.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
@@ -452,6 +453,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowparts.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowstate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_button.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_buttoncontrolrow.py \
@@ -469,11 +471,15 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_staticbuttonrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestanimation.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestdepictions.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestitems.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlayouts.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlivetimes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnames.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestninepatch.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsections.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextimages.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestwidgets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
@@ -488,7 +494,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inboxui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/inventory.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
@@ -604,6 +610,8 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_base.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicinbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicleaguepresidency.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicstore.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/docuitest.py \
@@ -615,6 +623,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_flatindex.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_format.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_namedecode.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/legacydisplayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \

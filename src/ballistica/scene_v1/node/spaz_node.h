@@ -486,6 +486,9 @@ class SpazNode : public Node {
   float base_pelvis_roller_anchor_offset_{};
   std::vector<float> color_{1.0f, 1.0f, 1.0f};
   std::vector<float> highlight_{0.5f, 0.5f, 0.5f};
+  // Tints the color mask's blue channel. Only character definitions
+  // set it (highlight2); white (the colorize no-op) otherwise.
+  std::vector<float> highlight2_{1.0f, 1.0f, 1.0f};
   std::vector<float> shadow_color_{0.5f, 0.5f, 0.5f};
   Vector3f wing_pos_left_{0.0f, 0.0f, 0.0f};
   Vector3f wing_vel_left_{0.0f, 0.0f, 0.0f};

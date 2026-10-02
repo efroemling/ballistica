@@ -120,13 +120,10 @@ def test_page_text_images(
 
     return dui2.Response(
         page=dui2.Page(
-            padding_left=20,
-            padding_right=20,
             title=LangStrSpecValue.literal('Text Images'),
             rows=[
                 dui2.ButtonRow(
                     debug=debug,
-                    padding_left=-10,
                     title=LangStrSpecValue.literal('Size-to-fit'),
                     subtitle=LangStrSpecValue.literal(
                         'Same oversized count+coin in every button;'
@@ -140,7 +137,6 @@ def test_page_text_images(
                 ),
                 dui2.ButtonRow(
                     debug=debug,
-                    padding_left=-10,
                     title=LangStrSpecValue.literal('Alignment'),
                     subtitle=LangStrSpecValue.literal(
                         'Content smaller than its box, so alignment'
@@ -166,7 +162,6 @@ def test_page_text_images(
                 ),
                 dui2.ButtonRow(
                     debug=debug,
-                    padding_left=-10,
                     title=LangStrSpecValue.literal('Variations'),
                     subtitle=LangStrSpecValue.literal(
                         'Left image, both ends, a visual offset, art'

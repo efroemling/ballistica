@@ -213,7 +213,7 @@ class TournamentEntryWindow(PopupWindow):
                 draw_controller=btn,
                 size=(80, 80),
                 position=(210, 94 + off_p),
-                texture=_classicassets.textures.tv.get(),
+                texture=_uiv1assets.textures.tv.get(),
             )
 
             self._ad_text_position = (251, 88 + off_p)
@@ -235,7 +235,7 @@ class TournamentEntryWindow(PopupWindow):
                 scale=0.6,
                 # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
-                text=_classicassets.strings.tournament_entry.watch_an_ad,
+                text=_uiv1assets.strings.economy.watch_an_ad,
                 maxwidth=95,
                 color=(0, 1, 0),
             )

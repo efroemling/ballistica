@@ -17,7 +17,11 @@ from efro.message import Message, Response
 from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.analytics import AnalyticsEvent
-from bacommon.assetpackage import AssetPackageResolveError, ApverNum
+from bacommon.assetpackage import (
+    AssetPackageResolveError,
+    AssetPackageDisplayInfo,
+    ApverNum,
+)
 from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
 from bacommon.locale import Locale
@@ -647,6 +651,14 @@ class ResolveAssetPackageResponse(Response):
         ApverNum | None, IOAttrs('rn', soft_default=None)
     ]
 
+    #: The package a failure is about, for failures about one package
+    #: (``AUTH_REQUIRED`` / ``ACCESS_DENIED``) -- so the client can name
+    #: it in its own words. ``None`` otherwise, or from older servers.
+    error_package: Annotated[
+        AssetPackageDisplayInfo | None,
+        IOAttrs('ep', soft_default=None, store_default=False),
+    ] = None
+
 
 @ioprepped
 @dataclass
@@ -930,6 +942,11 @@ class JoinRejectReason(Enum):
 class AuthRequestResponse(Response):
     """Here's that access ya asked for boss."""
 
+    #: Rejection text. When :attr:`reason` is set, clients render their
+    #: own localized string for the code instead (this text is only
+    #: for older clients). When it isn't, this is free-form text (a
+    #: host's own rejection message) that clients show verbatim --
+    #: never a translation key.
     error: Annotated[str | None, IOAttrs('e')]
     token: Annotated[str | None, IOAttrs('t')]
 

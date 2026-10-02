@@ -53,7 +53,6 @@ class AccountSettingsWindow(bui.MainWindow):
         self._uiopenstate = bui.UIOpenState('accountsettings')
 
         self._sign_in_v2_proxy_button: bui.Widget | None = None
-        self._sign_in_device_button: bui.Widget | None = None
 
         self._show_legacy_unlink_button = False
 
@@ -153,11 +152,6 @@ class AccountSettingsWindow(bui.MainWindow):
 
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
-
-        # Legacy v1 device accounts available only if the user has
-        # explicitly enabled deprecated login types.
-        if bui.app.config.resolve('Show Deprecated Login Types'):
-            self._show_sign_in_buttons.append('Device')
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -417,13 +411,7 @@ class AccountSettingsWindow(bui.MainWindow):
             and not sign_in_in_progress
             and 'V2Proxy' in self._show_sign_in_buttons
         )
-        show_device_sign_in_button = (
-            v1_state == 'signed_out'
-            and not sign_in_in_progress
-            and 'Device' in self._show_sign_in_buttons
-        )
         sign_in_button_space = 70.0
-        deprecated_space = 60
 
         # Game Center currently has a single UI for everything.
         show_game_center_button = game_center_active
@@ -516,8 +504,6 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
-        if show_device_sign_in_button:
-            self._sub_height += sign_in_button_space + deprecated_space
         if show_game_center_button:
             self._sub_height += game_center_button_space
         if show_linked_accounts_text:
@@ -568,6 +554,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         self._account_name_text: bui.Widget | None
+        self._account_name_depiction: bui.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
             txt = _classicassets.strings.account.you_are_signed_in_as
@@ -593,6 +580,19 @@ class AccountSettingsWindow(bui.MainWindow):
                 color=(1, 1, 1, 1),
                 h_align='center',
                 v_align='center',
+            )
+            # The cloud-composed name (glowing capsule and all) in the
+            # same spot when we have one; the text above is the
+            # fallback.
+            name_dep_size = (self._sub_width * 0.72, 54.0)
+            self._account_name_depiction = bui.imagewidget(
+                parent=self._subcontainer,
+                position=(
+                    self._sub_center_x - name_dep_size[0] * 0.5,
+                    v - name_dep_size[1] * 0.5 - 6.0,
+                ),
+                size=name_dep_size,
+                depiction_h_align='center',
             )
 
             self._refresh_account_name_text()
@@ -655,6 +655,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         else:
             self._account_name_text = None
+            self._account_name_depiction = None
 
         if self._back_button is None:
             bbtn = bui.get_special_widget('back_button')
@@ -801,7 +802,6 @@ class AccountSettingsWindow(bui.MainWindow):
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
                 or show_discord_sign_in_button
-                or show_device_sign_in_button
                 else _classicassets.strings.account.sign_in
             )
             v2infotext: bui.Lstr | str | None = None
@@ -837,66 +837,6 @@ class AccountSettingsWindow(bui.MainWindow):
                     maxwidth=button_width * 0.9,
                     color=(0.55, 0.8, 0.5),
                 )
-            if first_selectable is None:
-                first_selectable = btn
-            bui.widget(
-                edit=btn, right_widget=bui.get_special_widget('squad_button')
-            )
-            bui.widget(edit=btn, left_widget=bbtn)
-            bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
-            self._sign_in_text = None
-
-        if show_device_sign_in_button:
-            button_width = 350
-            v -= sign_in_button_space + deprecated_space
-            self._sign_in_device_button = btn = bui.buttonwidget(
-                parent=self._subcontainer,
-                id=f'{self.main_window_id_prefix}|signindevice',
-                position=(self._sub_center_x - button_width * 0.5, v - 20),
-                autoselect=True,
-                size=(button_width, 60),
-                label='',
-                on_activate_call=lambda: self._sign_in_press('Local'),
-            )
-            bui.textwidget(
-                parent=self._subcontainer,
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                position=(self._sub_center_x, v + 60),
-                text=_commonassets.strings.values.deprecated,
-                scale=0.8,
-                maxwidth=300,
-                color=(0.6, 0.55, 0.45),
-            )
-
-            bui.textwidget(
-                parent=self._subcontainer,
-                draw_controller=btn,
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                position=(self._sub_center_x, v + 17),
-                text=_commonassets.strings.compose.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT),
-                    label=_classicassets.strings.account.sign_in_with_device,
-                ),
-                maxwidth=button_width * 0.8,
-                color=(0.75, 1.0, 0.7),
-            )
-            bui.textwidget(
-                parent=self._subcontainer,
-                draw_controller=btn,
-                h_align='center',
-                v_align='center',
-                size=(0, 0),
-                position=(self._sub_center_x, v - 4),
-                text=_classicassets.strings.account.sign_in_with_device_info,
-                flatness=1.0,
-                scale=0.57,
-                maxwidth=button_width * 0.9,
-                color=(0.55, 0.8, 0.5),
-            )
             if first_selectable is None:
                 first_selectable = btn
             bui.widget(
@@ -1296,6 +1236,19 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if self._account_name_text is None:
             return
+
+        # Show the cloud-composed name when we have one; plain text
+        # otherwise.
+        classic = bui.app.classic
+        depiction = '' if classic is None else classic.account_name_depiction
+        if self._account_name_depiction is not None:
+            bui.imagewidget(
+                edit=self._account_name_depiction, depiction=depiction
+            )
+        if depiction:
+            bui.textwidget(edit=self._account_name_text, text='')
+            return
+
         try:
             name_str = plus.get_v1_account_display_string()
         except Exception:
@@ -1364,7 +1317,7 @@ class AccountSettingsWindow(bui.MainWindow):
         # Speed UI updates along.
         bui.apptimer(0.1, bui.WeakCallStrict(self._update))
 
-    def _sign_in_press(self, login_type: str | LoginType) -> None:
+    def _sign_in_press(self, login_type: LoginType) -> None:
 
         # Any time we initiate a sign in, turn off auto-recreates for
         # the remainder of our existence. We want to make sure we stick
@@ -1380,22 +1333,9 @@ class AccountSettingsWindow(bui.MainWindow):
         # immediately.
         wait_for_connectivity(on_connected=lambda: self._sign_in(login_type))
 
-    def _sign_in(self, login_type: str | LoginType) -> None:
+    def _sign_in(self, login_type: LoginType) -> None:
         plus = bui.app.plus
         assert plus is not None
-
-        # V1 login types are strings.
-        if isinstance(login_type, str):
-            plus.sign_in_v1(login_type)
-
-            # Make note of the type account we're *wanting*
-            # to be signed in with.
-            cfg = bui.app.config
-            cfg['Auto Account State'] = login_type
-            cfg.commit()
-            self._needs_refresh = True
-            bui.apptimer(0.1, bui.WeakCallStrict(self._update))
-            return
 
         # V2 login sign-in buttons generally go through adapters.
         adapter = plus.accounts.login_adapters.get(login_type)

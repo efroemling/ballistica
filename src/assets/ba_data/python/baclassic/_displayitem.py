@@ -52,12 +52,13 @@ def depiction_assets() -> DepictionAssets:
             chest_icon=_classiccatalogassets.textures.chest_icon,
             chest_icon_tint=_classiccatalogassets.textures.chest_icon_tint,
             chest_tints={
-                appearance: (info.tint, info.tint2)
+                appearance: (info.tint, info.tint2, info.tint3)
                 for appearance, info in CHEST_APPEARANCE_DISPLAY_INFOS.items()
             },
             chest_tint_default=(
                 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint,
                 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint2,
+                CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint3,
             ),
         )
     return _g_assets
