@@ -52,6 +52,7 @@ class UIV1Python {
     kShowURLWindowCall,
     kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,
+    kGetLiveDepictionCall,
     kLast  // Sentinel; must be at end.
   };
 

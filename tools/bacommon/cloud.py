@@ -17,6 +17,11 @@ from efro.message import Message, Response
 from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.analytics import AnalyticsEvent
+from bacommon.assetpackage import (
+    AssetPackageResolveError,
+    AssetPackageDisplayInfo,
+    ApverNum,
+)
 from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
 from bacommon.locale import Locale
@@ -171,6 +176,13 @@ class LoginProxyStateQueryResponse(Response):
 
     # On success, these will be filled out.
     credentials: Annotated[str | None, IOAttrs('tk')]
+
+    # On FAIL: whether the failure is the sign-in window having
+    # expired (client took too long) rather than anything wrong with
+    # the sign-in itself. A flag rather than a State value on purpose:
+    # old clients reject unknown enum values but ignore unknown keys,
+    # so this reaches new clients without breaking old ones.
+    expired: Annotated[bool, IOAttrs('e', soft_default=False)] = False
 
 
 @ioprepped
@@ -459,41 +471,6 @@ class ResolvedFlavorManifest:
     data: Annotated[bytes, IOAttrs('d')]
 
 
-class AssetPackageResolveError(Enum):
-    """Why an asset-package resolve failed (structured for client branching).
-
-    Travels back to the client on :class:`ResolveAssetPackageResponse` so
-    the runtime can react precisely (e.g. prompt for sign-in on
-    ``AUTH_REQUIRED``) rather than parsing the human-readable ``error``
-    string.
-    """
-
-    #: Caller is unauthenticated and the version is non-public; signing in
-    #: with an account that has access may resolve it.
-    AUTH_REQUIRED = 'auth'
-    #: Caller is authenticated but lacks access to this (non-public)
-    #: version (not the owner / not on the package's dev team).
-    ACCESS_DENIED = 'access'
-    #: The requested asset-package-version id is unknown / invalid.
-    NOT_FOUND = 'notfound'
-    #: A requested dimension value was invalid (texture profile/quality,
-    #: language, etc.).
-    INVALID = 'invalid'
-    #: An internal/assemble error occurred server-side.
-    INTERNAL = 'internal'
-    #: The client build is too old to address current asset-package
-    #: manifests (which use clean source-named logical paths); the user
-    #: must update. Clients predating the build-number field also land
-    #: here.
-    CLIENT_TOO_OLD = 'tooold'
-    #: The package's own source content failed to build — a problem the
-    #: package author can fix (e.g. a malformed sound or texture file).
-    #: The human-readable ``error`` names the offending source file(s);
-    #: clients should surface it verbatim. Old clients see this as
-    #: ``INTERNAL`` via ``enum_fallback``.
-    CONTENT = 'content'
-
-
 class AssetPackageBuildPhase(Enum):
     """Coarse phase of an in-progress server-side asset-package build.
 
@@ -570,8 +547,9 @@ class ResolveAssetPackageMessage(Message):
     (which are public).
     """
 
-    #: Fully-qualified ``account.package.version`` id to resolve.
-    apverid: Annotated[str, IOAttrs('a')]
+    #: The version to resolve: its numeric id, or (older clients) its
+    #: string id (``account.package.version``).
+    apverid: Annotated[str | ApverNum, IOAttrs('a')]
 
     #: Chosen locale for the ``language`` bucket.
     language: Annotated[Locale, IOAttrs('l')]
@@ -661,6 +639,25 @@ class ResolveAssetPackageResponse(Response):
     build_progress: Annotated[
         AssetPackageBuildProgress | None, IOAttrs('bp', soft_default=None)
     ]
+
+    #: The resolved version's string id, whichever form was asked for
+    #: (``None`` on error, while building, or from older servers). For
+    #: display; machinery uses :attr:`resolved_apvernum`.
+    resolved_apverid: Annotated[str | None, IOAttrs('ra', soft_default=None)]
+
+    #: The resolved version's numeric id (``None`` on error, while
+    #: building, or from older servers).
+    resolved_apvernum: Annotated[
+        ApverNum | None, IOAttrs('rn', soft_default=None)
+    ]
+
+    #: The package a failure is about, for failures about one package
+    #: (``AUTH_REQUIRED`` / ``ACCESS_DENIED``) -- so the client can name
+    #: it in its own words. ``None`` otherwise, or from older servers.
+    error_package: Annotated[
+        AssetPackageDisplayInfo | None,
+        IOAttrs('ep', soft_default=None, store_default=False),
+    ] = None
 
 
 @ioprepped
@@ -890,6 +887,28 @@ class AnalyticsEventMessage(Message):
 
 @ioprepped
 @dataclass
+class AutomationDeviceOnlineMessage(Message):
+    """A registered automation device is offering a channel.
+
+    Sent only by automation-enabled builds holding a registered
+    automation-device key, each time they offer a fresh automation
+    channel. Lets the cloud map the device's non-secret id to where
+    it can be reached right now (the node that forwards this, plus
+    the channel id) so a driver can find it without seeing its log.
+    The key itself never travels here.
+
+    .. warning::
+
+       **Unstable, unsupported.** Part of the automation control
+       channel; may change or be removed without notice.
+    """
+
+    automation_device_id: Annotated[str, IOAttrs('d')]
+    channel_id: Annotated[str, IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
 class AuthRequestMessage(Message):
     """Request access to a server for a current account."""
 
@@ -923,6 +942,11 @@ class JoinRejectReason(Enum):
 class AuthRequestResponse(Response):
     """Here's that access ya asked for boss."""
 
+    #: Rejection text. When :attr:`reason` is set, clients render their
+    #: own localized string for the code instead (this text is only
+    #: for older clients). When it isn't, this is free-form text (a
+    #: host's own rejection message) that clients show verbatim --
+    #: never a translation key.
     error: Annotated[str | None, IOAttrs('e')]
     token: Annotated[str | None, IOAttrs('t')]
 

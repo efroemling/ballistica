@@ -138,7 +138,9 @@ SimpleDialog::SimpleDialog(int id) : id_{id} {}
 
 void SimpleDialog::SetState(const std::string& title,
                             const std::string& message, float progress,
-                            const std::string& button_label) {
+                            const std::string& button_label,
+                            bool cancel_activates_button) {
+  cancel_activates_button_ = cancel_activates_button;
   // Rebuild text-meshes only when the underlying string actually changes.
   if (title != title_) {
     title_ = title;
@@ -264,10 +266,17 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
   }
   // Title text: render at the fixed title scale, shrinking only to fit the
   // area's width (or its one-line height, for a multi-line title).
-  if (!title_.empty()) {
+  // Note: the three text blocks below measure with TryGetStringWidth
+  // and simply skip drawing while any OS-span measures are still
+  // warming in the background (their text-groups present no elements
+  // in that state anyway); since we re-measure each draw, they pop in
+  // as soon as results land.
+  if (!title_.empty()
+      && g_base->text_graphics->TryGetStringWidth(title_text_group_.text())
+             .has_value()) {
     const std::string& title = title_text_group_.text();
     float string_width =
-        std::max(0.0001f, g_base->text_graphics->GetStringWidth(title));
+        std::max(0.0001f, *g_base->text_graphics->TryGetStringWidth(title));
     float string_height =
         std::max(0.0001f, g_base->text_graphics->GetStringHeight(title));
     float text_scale = std::min({title_scale, title_area_width / string_width,
@@ -346,10 +355,12 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
     DrawBoundsRect_(frame_def, cx, message_cy, message_area_width, message_h,
                     kSimpleDialogZDepth + 0.002f);
   }
-  if (!message_.empty()) {
+  if (!message_.empty()
+      && g_base->text_graphics->TryGetStringWidth(message_text_group_.text())
+             .has_value()) {
     const std::string& message = message_text_group_.text();
     float string_width =
-        std::max(0.0001f, g_base->text_graphics->GetStringWidth(message));
+        std::max(0.0001f, *g_base->text_graphics->TryGetStringWidth(message));
     float string_height =
         std::max(0.0001f, g_base->text_graphics->GetStringHeight(message));
     float text_scale =
@@ -433,8 +444,9 @@ void SimpleDialog::DrawButton_(FrameDef* frame_def, const Button_& b,
   }
 
   // Label text (always white for readability), scaled to fit a region inset
-  // from the button edges.
-  {
+  // from the button edges. (Skipped while OS-span measures warm; see the
+  // title/message blocks.)
+  if (g_base->text_graphics->TryGetStringWidth(label->text()).has_value()) {
     float label_area_width = b.width * 0.85f;
     float label_area_height = b.height * 0.65f;
     if (bounds_mode) {
@@ -443,7 +455,7 @@ void SimpleDialog::DrawButton_(FrameDef* frame_def, const Button_& b,
     }
     const std::string& text = label->text();
     float string_width =
-        std::max(0.0001f, g_base->text_graphics->GetStringWidth(text));
+        std::max(0.0001f, *g_base->text_graphics->TryGetStringWidth(text));
     float string_height =
         std::max(0.0001f, g_base->text_graphics->GetStringHeight(text));
     float text_scale = std::min(label_area_width / string_width,
@@ -502,6 +514,13 @@ auto SimpleDialog::Activate() -> bool {
   }
   button_flash_end_time_ = g_core->AppTimeMillisecs() + kButtonFlashMillisecs;
   return true;
+}
+
+auto SimpleDialog::Cancel() -> bool {
+  if (!cancel_activates_button_) {
+    return false;
+  }
+  return Activate();
 }
 
 }  // namespace ballistica::base

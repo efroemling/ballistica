@@ -3,7 +3,7 @@
 """Flat integer indexing for asset references.
 
 A payload that already carries a manifest of asset-package-versions can
-name an asset by a single integer instead of an apverid-plus-name pair.
+name an asset by a single integer instead of a package-plus-name pair.
 The integer addresses one flat domain: every package in the manifest
 contributes its canonical sorted logical-path list -- **all** of its
 assets, whatever kind -- concatenated in manifest order.
@@ -40,9 +40,9 @@ Two properties make this work without shipping any mapping:
   language or quality flavor an end resolved -- verified in practice: a
   headless run with the null texture profile still reports all 313
   classic textures.
-* The manifest pins exact apverids, so a package's listing cannot drift
-  underneath an index -- changing the content mints a new apverid, and
-  the apverid is part of what the index resolves against.
+* The manifest pins exact package versions, so a package's listing
+  cannot drift underneath an index -- changing the content mints a new
+  version, and the version is part of what the index resolves against.
 
 Related but not identical to scene_v1's indexed wire refs (protocol
 39+, ``kAddTextureIndexed``, resolved by
@@ -66,6 +66,11 @@ makes it visible: a payload carries the producer's digest and the
 consumer refuses to de-index when its own differs.
 """
 
+# This module is the spec types' own addressing logic and lives in
+# their package; reading their private parts here is the implementation,
+# not a reach-in from outside.
+# pylint: disable=protected-access
+
 import hashlib
 from enum import Enum
 from bisect import bisect_right
@@ -79,6 +84,7 @@ from bacommon.assetspec._core import (
 )
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from typing import Callable
 
     #: Any of the four spec kinds.
@@ -87,7 +93,7 @@ if TYPE_CHECKING:
     #: Supplies a package's canonical sorted logical paths -- every
     #: asset it holds, of every kind -- or None if this end knows
     #: nothing about that package.
-    type ListingSource = Callable[[str], 'list[str] | None']
+    type ListingSource = Callable[[ApverNum], 'list[str] | None']
 
 
 #: First engine build that understands flat-indexed asset references
@@ -137,11 +143,45 @@ SPEC_KINDS: dict[type, AssetBucketKind] = {
 
 
 def spec_kind(spec: 'AnySpec') -> AssetBucketKind:
-    """Return the bucket kind a spec addresses."""
-    kind = SPEC_KINDS.get(type(spec))
-    if kind is None:
-        raise AssetIndexError(f'not an asset spec: {type(spec).__name__}')
-    return kind
+    """Return the bucket kind a spec addresses.
+
+    Accepts spec subclasses too (the client's loadable handles, e.g.
+    ``bauiv1.TextureHandle``, are specs).
+    """
+    for cls in type(spec).__mro__:
+        kind = SPEC_KINDS.get(cls)
+        if kind is not None:
+            return kind
+    raise AssetIndexError(f'not an asset spec: {type(spec).__name__}')
+
+
+#: Hex characters of a domain digest put on the wire. The digest only
+#: catches accidental mismatches (the two ends hashing different
+#: listings), never forgery, so a short prefix does nearly as well as
+#: the whole thing: 16 bits misses a given mismatch 1 time in 65536,
+#: and a logic bug mismatches on every client at once.
+WIRE_DIGEST_LENGTH = 4
+
+
+def wire_digest(digest: str) -> str:
+    """The prefix of a domain digest a producer sends.
+
+    See ``WIRE_DIGEST_LENGTH``. Consumers check it with
+    :func:`digest_matches`, which accepts any prefix at least that
+    long, so a producer may send more (or all) of it when it wants
+    more certainty.
+    """
+    return digest[:WIRE_DIGEST_LENGTH]
+
+
+def digest_matches(received: str, ours: str) -> bool:
+    """Whether a received domain digest agrees with our full one.
+
+    True when ``received`` is a prefix of ours at least
+    ``WIRE_DIGEST_LENGTH`` long (producers send a prefix; see
+    :func:`wire_digest`).
+    """
+    return len(received) >= WIRE_DIGEST_LENGTH and ours.startswith(received)
 
 
 class AssetIndexContext:
@@ -153,7 +193,9 @@ class AssetIndexContext:
     expensive part.
     """
 
-    def __init__(self, packages: list[str], listings: 'ListingSource') -> None:
+    def __init__(
+        self, packages: list[ApverNum], listings: 'ListingSource'
+    ) -> None:
         self._packages = list(packages)
         self._listings = listings
         self._offsets: list[int] | None = None
@@ -161,7 +203,7 @@ class AssetIndexContext:
         self._lookup: list[dict[str, int]] = []
 
     @property
-    def packages(self) -> list[str]:
+    def packages(self) -> list[ApverNum]:
         """The manifest's packages, in index order."""
         return list(self._packages)
 
@@ -171,8 +213,8 @@ class AssetIndexContext:
             return
         offsets: list[int] = []
         total = 0
-        for apverid in self._packages:
-            listing = self._listings(apverid)
+        for apvernum in self._packages:
+            listing = self._listings(apvernum)
             if listing is None:
                 # A package this end knows nothing about. Its slice is
                 # empty rather than an error: a payload may legitimately
@@ -197,15 +239,15 @@ class AssetIndexContext:
         self._prepare()
         assert self._offsets is not None
         try:
-            pkgidx = self._packages.index(spec.apverid)
+            pkgidx = self._packages.index(spec._apvernum)
         except ValueError:
             raise AssetIndexError(
-                f'package {spec.apverid!r} is not in this manifest'
+                f'package {spec._apvernum!r} is not in this manifest'
             ) from None
-        local = self._lookup[pkgidx].get(spec.name)
+        local = self._lookup[pkgidx].get(spec._name)
         if local is None:
             raise AssetIndexError(
-                f'asset {spec.name!r} not found in {spec.apverid}'
+                f'asset {spec._name!r} not found in {spec._apvernum}'
             )
         return self._offsets[pkgidx] + local
 
@@ -235,7 +277,7 @@ class AssetIndexContext:
                 f'asset index {index} is outside this manifest'
                 f' (total {self.domain_size()})'
             )
-        apverid = self._packages[pkgidx]
+        apvernum = self._packages[pkgidx]
         name = self._names[pkgidx][local]
 
         # The kind decides the spec type. Explicit rather than a
@@ -243,13 +285,13 @@ class AssetIndexContext:
         # result to ``Any``, and this way a new bucket kind fails here
         # at build time.
         if kind is AssetBucketKind.TEXTURES:
-            return TextureSpec(apverid=apverid, name=name)
+            return TextureSpec(apvernum, name)
         if kind is AssetBucketKind.MESHES:
-            return MeshSpec(apverid=apverid, name=name)
+            return MeshSpec(apvernum, name)
         if kind is AssetBucketKind.AUDIO:
-            return SoundSpec(apverid=apverid, name=name)
+            return SoundSpec(apvernum, name)
         if kind is AssetBucketKind.CONSTANT:
-            return CollisionMeshSpec(apverid=apverid, name=name)
+            return CollisionMeshSpec(apvernum, name)
         assert_never(kind)
 
     def domain_size(self) -> int:
@@ -280,8 +322,8 @@ class AssetIndexContext:
         """
         self._prepare()
         hasher = hashlib.sha256()
-        for apverid, names in zip(self._packages, self._names, strict=True):
-            hasher.update(apverid.encode())
+        for apvernum, names in zip(self._packages, self._names, strict=True):
+            hasher.update(str(apvernum).encode())
             hasher.update(b'\0')
             for name in names:
                 hasher.update(name.encode())
@@ -298,6 +340,6 @@ class AssetIndexContext:
         """
         self._prepare()
         return ', '.join(
-            f'{apverid}={len(names)}'
-            for apverid, names in zip(self._packages, self._names, strict=True)
+            f'{apvernum}={len(names)}'
+            for apvernum, names in zip(self._packages, self._names, strict=True)
         )

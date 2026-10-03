@@ -12,7 +12,6 @@ namespace ballistica::base {
 
 class AppPlatformApple : public AppPlatform {
  public:
-  AppPlatformApple();
   void DoPurchase(const std::string& item) override;
   void RestorePurchases() override;
   void PurchaseAck(const std::string& purchase,
@@ -31,6 +30,7 @@ class AppPlatformApple : public AppPlatform {
   auto HaveStringEditor() -> bool override;
 
  protected:
+  auto DoHasGyro() -> bool override;
   void DoInvokeStringEditor(const std::string& title, const std::string& value,
                             std::optional<int> max_chars, bool is_password,
                             const std::string& kind) override;

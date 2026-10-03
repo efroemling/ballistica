@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
     from libcst.metadata import CodeRange
 
-    from batools.assetbundleprofiles import BundlePackage
-
 
 def gen_builtin_asset_ids() -> None:
     """Generate builtin-asset C++ (id-enums, load-block, strings API).
@@ -657,202 +655,104 @@ def assetpins() -> None:
 
 
 def asset_bundle_build() -> None:
-    """Assemble a named bundle profile for the projectconfig pins.
+    """Assemble a named asset-bundle profile for the projectconfig pins.
 
-    Takes one arg: a bundle-profile name (see
-    :mod:`batools.assetbundleprofiles`). A profile names the set of
-    asset packages baked into a build, each with its texture profile /
-    quality / language. Today's profiles are ``gui-minimal`` (the
-    builtin construct package with real fallback-flavor textures) and
-    ``headless-minimal`` (same package with ``null`` textures -- same
-    wrapper-module layout, no image data); richer profiles bundling
-    additional packages (e.g. ``baclassicassets``) are added as plain data
-    in that module.
-
-    Each package's apverid is read from its projectconfig field. A
-    fully-resolved apverid is expected; the unresolved pseudo-id
-    ``<owner>.<name>.dev`` refuses with a single-tunnel "run ``make
-    assetpins-latest``" error (pin-state mutation lives exclusively in
-    ``tools/pcommand assetpins``).
-
-    Assembles every package via ``bacloud assetpackage _assemble`` and
-    writes the merged ``.cache/asset_bundle/<profile>/manifest.json``
-    plus CAS-keyed bucket manifests + data blobs under
-    ``.cache/assetdata/`` (shared across profiles for CAS dedup).
-    ``stage_build`` copies the matching profile into
-    ``<staged>/ba_data/`` based on the build target.
+    Args: a bundle-profile name (see :mod:`batools.assetbundleprofiles`)
+    plus ``--form-factor <desktop|mobile>`` for form-factor-specific
+    profiles (``store``). See ``batools._assetbundlebuild.build()``
+    for the full story.
     """
-    import os
-    import json
+    from batools._assetbundlebuild import build
 
+    build(str(pcommand.PROJROOT), pcommand.get_args())
+
+
+def gen_base_asset_set_py() -> None:
+    """Generate babase.BaseAssetSet from the base-asset spec.
+
+    Emits ``babase/_generated/base_asset_set.py`` from
+    ``src/codegen/babasecodegen/base_assets.py``. Companion to
+    ``gen_base_asset_set_cpp``; the base sibling of
+    ``gen_scene_asset_set_py``.
+    """
+    import batools.base_assets
     from efro.error import CleanError
-    from efro.terminal import Clr
-    from efrotools.project import getprojectconfig
 
-    from batools.assetpins import is_unresolved_dev
-    from batools.assetbundleprofiles import get_profile
-
-    args = pcommand.get_args()
-    if len(args) != 1:
-        raise CleanError('Expected 1 arg (bundle-profile name).')
-    profile = get_profile(args[0])
-
-    pconfig = getprojectconfig(pcommand.PROJROOT)
-
-    # Resolve each package's apverid from its projectconfig field.
-    resolved: list[tuple[str, BundlePackage]] = []
-    for pkg in profile.packages:
-        apverid = pconfig.get(pkg.projectconfig_key)
-        if not isinstance(apverid, str) or not apverid:
-            raise CleanError(
-                f"Need a string '{pkg.projectconfig_key}' value in"
-                f' projectconfig; got'
-                f' {type(apverid).__name__} value {apverid!r}.'
-            )
-        # Bare ``<owner>.<name>.dev`` is a request for the latest dev
-        # snapshot; it must be resolved before any build consumes it.
-        if is_unresolved_dev(apverid):
-            raise CleanError(
-                f"projectconfig '{pkg.projectconfig_key}' is the"
-                f' unresolved pseudo-id {apverid!r}; run `make'
-                f' assetpins-latest` to resolve it to a concrete'
-                f' devN snapshot first.'
-            )
-        resolved.append((apverid, pkg))
-
-    bundle_path = os.path.join(
-        pcommand.PROJROOT, '.cache/asset_bundle', profile.name, 'manifest.json'
-    )
-    expected_apverids = sorted(apv for apv, _ in resolved)
-
-    # Opt-in force-refetch for iterating on the server-side pipeline. The
-    # apverid-keyed early-out below treats a cache at the same apverid as
-    # current -- but a recipe/pipeline-version bump changes the built
-    # *output* (new texture blobs, etc.) WITHOUT changing the apverid, so
-    # the early-out would otherwise serve stale bundled assets. Set
-    # ``BA_ASSET_BUNDLE_FORCE_REFETCH=1`` to bypass the early-out and
-    # re-assemble (re-fetching the manifest + blobs from the server) every
-    # build, so a pipeline bump propagates into the bundled builtin assets
-    # without a manual ``.cache`` clear.
-    force_refetch = os.environ.get('BA_ASSET_BUNDLE_FORCE_REFETCH') == '1'
-
-    # Steady-state early-out: the cache already holds exactly this
-    # profile's package set at these apverids → nothing to do. (This
-    # keys on apverid only; editing a profile's flavor in place without
-    # bumping the pin needs ``BA_ASSET_BUNDLE_FORCE_REFETCH=1`` or a
-    # manual `.cache` clear.)
-    if not force_refetch and os.path.exists(bundle_path):
-        try:
-            with open(bundle_path, encoding='utf-8') as infile:
-                existing = json.load(infile)
-        except Exception:
-            existing = None
-        if isinstance(existing, dict):
-            apvs = existing.get('asset_package_versions')
-            if isinstance(apvs, dict) and sorted(apvs) == expected_apverids:
-                return
-
-    print(
-        f'{Clr.BLU}Assembling bundle profile {profile.name!r}'
-        f' ({len(resolved)} package(s))...{Clr.RST}',
-        flush=True,
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.base_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
     )
 
-    # Assemble each package and merge into one manifest. CAS blobs land
-    # in the shared .cache/assetdata; each call yields a single-package
-    # manifest whose ``asset_package_versions`` we merge here.
-    merged: dict[str, dict] = {'asset_package_versions': {}}
-    for apverid, pkg in resolved:
-        one = _assemble_one_package(apverid, pkg)
-        merged['asset_package_versions'].update(one['asset_package_versions'])
 
-    os.makedirs(os.path.dirname(bundle_path), exist_ok=True)
-    with open(bundle_path, 'w', encoding='utf-8') as outfile:
-        # indent=1: newline-delimited for readability/debuggability while
-        # staying maximally brief, matching the flavor-manifest blobs
-        # (compute_bucket_manifest_blobs). sort_keys for stable diffs.
-        # This top-level manifest is not content-addressed (stable path,
-        # only json.load-parsed), so the format is free to change.
-        json.dump(merged, outfile, indent=1, sort_keys=True)
-
-
-def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
-    """Assemble one package via bacloud; return its parsed manifest.
-
-    Blobs land in the shared ``.cache/assetdata``; the per-package
-    manifest is written to a temp path and returned parsed so the
-    caller can merge it into the profile's combined manifest.
-    """
-    import os
-    import json
-    import tempfile
-    import subprocess
-
+def gen_base_asset_set_cpp() -> None:
+    """Generate the base_asset_set .h / _unpack.inc / _placeholders.inc."""
+    import batools.base_assets
     from efro.error import CleanError
-    from batools.version import get_current_version
-    from batools.assetpins import describe_apverid_fetch_failure
 
-    tmpdir = os.path.join(pcommand.PROJROOT, 'build/tmp')
-    os.makedirs(tmpdir, exist_ok=True)
-    fd, tmppath = tempfile.mkstemp(suffix='.json', dir=tmpdir)
-    os.close(fd)
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.base_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
 
-    # Report the target build to bacloud so master picks the matching
-    # asset-manifest path-format epoch (bacloud itself can't see baenv in
-    # this subprocess context; see _caller_build_number there).
-    # get_current_version reads projectconfig.json, which is present in
-    # every asset-build cloudshell env (pcommand locates PROJROOT by it).
-    _version, build_number = get_current_version(str(pcommand.PROJROOT))
-    env = dict(os.environ)
-    env['BA_BUILD_NUMBER'] = str(build_number)
-    # Capture stderr (where bacloud reports why it failed, quoting the
-    # master server verbatim) so a failure can be explained precisely,
-    # while leaving stdout inherited so a slow build's progress lines
-    # still stream out live.
-    errtext = ''
-    try:
-        proc = subprocess.run(
-            [
-                f'{pcommand.PROJROOT}/tools/bacloud',
-                'assetpackage',
-                '_assemble',
-                apverid,
-                '--texture-profile',
-                pkg.texture_profile,
-                '--texture-tier',
-                pkg.texture_tier,
-                '--language',
-                pkg.language,
-                '--bundle-path',
-                tmppath,
-            ],
-            check=False,
-            env=env,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        errtext = proc.stderr or ''
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError(proc.returncode, 'bacloud')
-        # Succeeded, but bacloud may still have had something to say
-        # (retry notices, verbose diagnostics); don't eat it.
-        if errtext:
-            sys.stderr.write(errtext)
-        with open(tmppath, encoding='utf-8') as infile:
-            manifest: dict[str, Any] = json.load(infile)
-        return manifest
-    except Exception as exc:
-        raise CleanError(
-            describe_apverid_fetch_failure(
-                apverid,
-                action=(
-                    f'assemble package {apverid!r} (texture-profile'
-                    f' {pkg.texture_profile!r})'
-                ),
-                exc=exc,
-                output=errtext,
-            )
-        ) from exc
-    finally:
-        if os.path.exists(tmppath):
-            os.unlink(tmppath)
+
+def gen_scene_asset_set_py() -> None:
+    """Generate bascenev1.SceneV1AssetSet from the scene-asset spec.
+
+    Emits ``bascenev1/_generated/scene_asset_set.py`` from
+    ``src/codegen/bascenev1codegen/scene_assets.py``. Companion to
+    ``gen_scene_asset_set_cpp``; the scene sibling of
+    ``gen_ui_asset_set_py``.
+    """
+    import batools.scene_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.scene_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_scene_asset_set_cpp() -> None:
+    """Generate scene_asset_set.h / scene_asset_set_unpack.inc."""
+    import batools.scene_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.scene_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_ui_asset_set_py() -> None:
+    """Generate the bauiv1.UIAssetSet dataclass from the ui-asset spec.
+
+    Emits ``bauiv1/_generated/<set>.py`` from
+    ``src/codegen/bauiv1codegen/ui_assets.py``. Companion to
+    ``gen_ui_asset_set_cpp``, which emits the matching native struct and
+    the unpacker between them; generating all three from one spec is
+    what keeps a renamed or added slot from silently drifting.
+    """
+    import batools.ui_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.ui_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_ui_asset_set_cpp() -> None:
+    """Generate ui_asset_set.h / ui_asset_set_unpack.inc from spec."""
+    import batools.ui_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.ui_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )

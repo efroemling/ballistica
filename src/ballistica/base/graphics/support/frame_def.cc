@@ -11,27 +11,21 @@
 #include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
-#include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/core/core.h"
 
 namespace ballistica::base {
 
 FrameDef::FrameDef()
-    : light_pass_(new RenderPass(RenderPass::Type::kLightPass, this)),
-      light_shadow_pass_(
-          new RenderPass(RenderPass::Type::kLightShadowPass, this)),
-      beauty_pass_(new RenderPass(RenderPass::Type::kBeautyPass, this)),
-      beauty_pass_bg_(new RenderPass(RenderPass::Type::kBeautyPassBG, this)),
+    : main_view_(new FrameDefView(this)),
+      current_view_(main_view_.get()),
       overlay_pass_(new RenderPass(RenderPass::Type::kOverlayPass, this)),
       overlay_front_pass_(
           new RenderPass(RenderPass::Type::kOverlayFrontPass, this)),
-      overlay_3d_pass_(new RenderPass(RenderPass::Type::kOverlay3DPass, this)),
       vr_cover_pass_(new RenderPass(RenderPass::Type::kVRCoverPass, this)),
       overlay_fixed_pass_(
           new RenderPass(RenderPass::Type::kOverlayFixedPass, this)),
       overlay_flat_pass_(
-          new RenderPass(RenderPass::Type::kOverlayFlatPass, this)),
-      blit_pass_(new RenderPass(RenderPass::Type::kBlitPass, this)) {}
+          new RenderPass(RenderPass::Type::kOverlayFlatPass, this)) {}
 
 FrameDef::~FrameDef() { assert(g_base->InLogicThread()); }
 
@@ -79,6 +73,7 @@ void FrameDef::Reset() {
   media_components_.clear();
   meshes_.clear();
   mesh_index_sizes_.clear();
+  mesh_index_draw_counts_.clear();
   mesh_buffers_.clear();
 
   quality_ = Graphics::GraphicsQualityFromRequest(
@@ -90,22 +85,12 @@ void FrameDef::Reset() {
   // pixel_scale_ = g_base->graphics->settings()->pixel_scale;
 
   // assert(g_base->graphics->has_supports_high_quality_graphics_value());
-  orbiting_ = (g_base->graphics->camera()->mode() == CameraMode::kOrbit);
-  // tv_border_ = g_base->graphics->tv_border();
+  main_view_->Reset(g_base->graphics->main_view(), quality_);
+  current_view_ = main_view_.get();
+  texture_view_count_ = 0;
+  wanted_views_.clear();
+  view_destroys_.clear();
 
-  shadow_offset_ = g_base->graphics->shadow_offset();
-  shadow_scale_ = g_base->graphics->shadow_scale();
-  shadow_ortho_ = g_base->graphics->shadow_ortho();
-  tint_ = g_base->graphics->tint();
-  ambient_color_ = g_base->graphics->ambient_color();
-
-  vignette_outer_ = g_base->graphics->vignette_outer();
-  vignette_inner_ = g_base->graphics->vignette_inner();
-
-  light_pass_->Reset();
-  light_shadow_pass_->Reset();
-  beauty_pass_->Reset();
-  beauty_pass_bg_->Reset();
   overlay_pass_->Reset();
   overlay_front_pass_->Reset();
   if (g_core->vr_mode()) {
@@ -113,17 +98,27 @@ void FrameDef::Reset() {
     overlay_fixed_pass_->Reset();
     vr_cover_pass_->Reset();
   }
-  overlay_3d_pass_->Reset();
-  blit_pass_->Reset();
-  beauty_pass_->set_floor_reflection(g_base->graphics->floor_reflection());
+}
+
+auto FrameDef::AddTextureView(RenderView* view) -> FrameDefView* {
+  assert(g_base->InLogicThread());
+  assert(view && view->output() == RenderView::Output::kTexture);
+  if (texture_view_count_ >= static_cast<int>(texture_views_.size())) {
+    texture_views_.emplace_back(new FrameDefView(this));
+  }
+  FrameDefView* fview = texture_views_[texture_view_count_].get();
+  texture_view_count_++;
+  fview->Reset(view, quality_);
+  return fview;
 }
 
 void FrameDef::Complete() {
   assert(!defining_component_);
-  light_pass_->Complete();
-  light_shadow_pass_->Complete();
-  beauty_pass_->Complete();
-  beauty_pass_bg_->Complete();
+  assert(current_view_ == main_view_.get());
+  main_view_->Complete();
+  for (int i = 0; i < texture_view_count_; i++) {
+    texture_views_[i]->Complete();
+  }
   overlay_pass_->Complete();
   overlay_front_pass_->Complete();
   if (g_core->vr_mode()) {
@@ -131,8 +126,6 @@ void FrameDef::Complete() {
     overlay_flat_pass_->Complete();
     vr_cover_pass_->Complete();
   }
-  overlay_3d_pass_->Complete();
-  blit_pass_->Complete();
 }
 
 void FrameDef::AddMesh(Mesh* mesh) {
@@ -147,6 +140,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSimpleSplit*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->static_data());
         mesh_buffers_.emplace_back(m->dynamic_data());
@@ -158,6 +152,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedObjectSplit*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->static_data());
         mesh_buffers_.emplace_back(m->dynamic_data());
@@ -169,6 +164,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSimpleFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -179,6 +175,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedDualTextureFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -189,6 +186,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSmokeFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -199,6 +197,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<SpriteMesh*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;

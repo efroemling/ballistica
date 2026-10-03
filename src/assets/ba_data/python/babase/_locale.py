@@ -2,6 +2,7 @@
 #
 """Locale related functionality."""
 
+import time
 from typing import TYPE_CHECKING, override, assert_never
 
 from functools import cache
@@ -13,9 +14,25 @@ from babase._appsubsystem import AppSubsystem
 from babase._logging import applog
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Callable, Sequence
 
     import babase
+
+#: A language switch the user cancels after waiting at least this long
+#: is logged as a WARNING (a stalled switch worth hearing about).
+_SLOW_SWITCH_CANCEL_SECONDS = 5.0
+
+
+def _call_on_complete(
+    on_complete: Callable[[bool], None] | None, success: bool
+) -> None:
+    """Run a set_locale completion callback, containing its errors."""
+    if on_complete is None:
+        return
+    try:
+        on_complete(success)
+    except Exception:
+        applog.exception('Error in set_locale on_complete callback.')
 
 
 class LocaleSubsystem(AppSubsystem):
@@ -34,7 +51,9 @@ class LocaleSubsystem(AppSubsystem):
         # Latest-wins request queued behind the in-flight switch:
         # (locale, store_to_config). Started when the in-flight one
         # settles.
-        self._pending_switch: tuple[Locale, bool] | None = None
+        self._pending_switch: (
+            tuple[Locale, bool, Callable[[bool], None] | None] | None
+        ) = None
 
         # Calc our default locale based on the locale-tag provided by
         # the native layer.
@@ -143,7 +162,11 @@ class LocaleSubsystem(AppSubsystem):
         return self.current_locale
 
     def set_locale(
-        self, locale: Locale, *, store_to_config: bool = True
+        self,
+        locale: Locale,
+        *,
+        store_to_config: bool = True,
+        on_complete: Callable[[bool], None] | None = None,
     ) -> None:
         """Switch the active language to ``locale``.
 
@@ -156,6 +179,13 @@ class LocaleSubsystem(AppSubsystem):
         ``store_to_config`` writes the choice as an explicit ``'Lang'``
         override; pass ``False`` for the 'auto' selection (clears the
         override so the OS-default locale is followed).
+
+        ``on_complete`` is called (in the logic thread) once the request
+        is done with, with ``True`` if the switch was made and ``False``
+        if not -- the locale can't be shown, the download was cancelled
+        or failed, or a later request superseded this one while it was
+        queued. Anything showing the current language should refresh
+        from it rather than assume the switch went through.
         """
         assert _babase.in_logic_thread()
 
@@ -166,6 +196,7 @@ class LocaleSubsystem(AppSubsystem):
                 'Cannot display locale %s on this build; ignoring switch.',
                 locale.name,
             )
+            _call_on_complete(on_complete, False)
             return
         # Only one elective switch runs at a time. A request arriving
         # while a resolve is in flight (rapid F9s, double-taps in a
@@ -177,38 +208,54 @@ class LocaleSubsystem(AppSubsystem):
                 'Language switch already in progress; queueing switch to %s.',
                 locale.name,
             )
-            self._pending_switch = (locale, store_to_config)
+            # A request already waiting is superseded by this one.
+            if self._pending_switch is not None:
+                _call_on_complete(self._pending_switch[2], False)
+            self._pending_switch = (locale, store_to_config, on_complete)
             return
         self._switch_in_progress = True
         self._inflight_locale = locale
         _babase.app.create_async_task(
-            self._do_set_locale(locale, store_to_config)
+            self._do_set_locale(locale, store_to_config, on_complete)
         )
 
     async def _do_set_locale(
-        self, locale: Locale, store_to_config: bool
+        self,
+        locale: Locale,
+        store_to_config: bool,
+        on_complete: Callable[[bool], None] | None,
     ) -> None:
         """Resolve + commit a language switch (see :meth:`set_locale`)."""
+        success = False
         try:
-            await self._do_set_locale_guarded(locale, store_to_config)
+            success = await self._do_set_locale_guarded(locale, store_to_config)
         finally:
             self._switch_in_progress = False
             self._inflight_locale = None
-            # Kick off the latest queued request, if any (skipping the
-            # no-op case where we already landed on it).
+            _call_on_complete(on_complete, success)
+            # Kick off the latest queued request, if any (the no-op case
+            # where we already landed on it counts as done).
             pending = self._pending_switch
             self._pending_switch = None
-            if pending is not None and pending[0] is not self._current_locale:
-                self.set_locale(pending[0], store_to_config=pending[1])
+            if pending is not None:
+                if pending[0] is self._current_locale:
+                    _call_on_complete(pending[2], True)
+                else:
+                    self.set_locale(
+                        pending[0],
+                        store_to_config=pending[1],
+                        on_complete=pending[2],
+                    )
 
     async def _do_set_locale_guarded(
         self, locale: Locale, store_to_config: bool
-    ) -> None:
+    ) -> bool:
+        """The switch itself; returns whether it was made."""
         import asyncio
 
-        from babase import builtinassets
+        from babase import _builtinassets
         from babase._simpledialog import SimpleDialog
-        from babase._asset_packages import loaded_asset_package_apverids
+        from babase._asset_packages import loaded_asset_package_apvernums
         from babase._assetsubsystem import make_progress_reporter
 
         task = asyncio.current_task()
@@ -224,10 +271,12 @@ class LocaleSubsystem(AppSubsystem):
             nonlocal dialog
             if dialog is None and _babase.app.env.gui:
                 dialog = SimpleDialog(
-                    title=builtinassets.strings.ui.updating,
+                    title=_builtinassets.strings.ui.updating,
                     progress=0.0,
-                    button_label=builtinassets.strings.ui.cancel,
+                    button_label=_builtinassets.strings.ui.cancel,
                     on_button=on_cancel,
+                    # (Also covers the OK the error path swaps in.)
+                    cancel_activates_button=True,
                 )
 
         def on_update(
@@ -239,37 +288,56 @@ class LocaleSubsystem(AppSubsystem):
                     progress=0.0 if progress is None else progress,
                 )
 
+        start = time.monotonic()
         try:
             await _babase.app.assets.resolve(
-                loaded_asset_package_apverids(),
+                loaded_asset_package_apvernums(),
                 allow_downloads=True,
                 language=locale,
                 on_download_starting=ensure_dialog,
                 on_progress=make_progress_reporter(on_update),
+                label=f'locale switch -> {locale.value}',
             )
         except asyncio.CancelledError:
             # User hit Cancel -- bow out, leave the current locale in place.
             if dialog is not None:
                 dialog.dismiss()
-            applog.info('Language switch to %s cancelled.', locale.long_value)
-            return
+            # A cancel after a long wait means the user gave up on a
+            # stalled switch; make that one reach us (the resolve's own
+            # summary line says where the time went).
+            elapsed = time.monotonic() - start
+            (
+                applog.warning
+                if elapsed >= _SLOW_SWITCH_CANCEL_SECONDS
+                else applog.info
+            )(
+                'Language switch to %s cancelled by the user after %.1fs.',
+                locale.long_value,
+                elapsed,
+            )
+            return False
         except Exception:
             # Resolve failed -- the registry + native table are unchanged
             # on failure, so just surface the error and stay put.
-            applog.exception('Error switching to locale %s.', locale.name)
+            applog.exception(
+                'Error switching to locale %s (after %.1fs).',
+                locale.name,
+                time.monotonic() - start,
+            )
             if dialog is not None:
+                strs = _builtinassets.strings
                 dialog.update(
-                    title=builtinassets.strings.ui.error,
-                    message=builtinassets.strings.net.unavailable_no_connection,
+                    title=strs.ui.error,
+                    message=strs.net.unavailable_no_connection,
                     progress=None,
-                    button_label=builtinassets.strings.ui.ok,
+                    button_label=strs.ui.ok,
                     on_button=dialog.dismiss,
                 )
             else:
                 _babase.screenmessage(
                     'Error switching language; see log.', color=(1, 0, 0)
                 )
-            return
+            return False
 
         # Success: the registry + native string table are now the target
         # locale (the resolve rebuilt the table and fired the
@@ -294,6 +362,7 @@ class LocaleSubsystem(AppSubsystem):
             cfg.pop('Lang', None)
         cfg.commit()
         applog.info('Switched language to %s.', locale.long_value)
+        return True
 
     @staticmethod
     @cache

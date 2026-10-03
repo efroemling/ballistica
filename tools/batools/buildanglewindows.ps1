@@ -155,7 +155,18 @@ endif()
 
     }
 
-    # Copy build logs (useful for diagnosing failures).
+    Write-Host ""
+    Write-Host "ANGLE artifacts staged to: $StagingDir"
+    Write-Host ""
+
+} finally {
+    # Stage build logs BEFORE the cleanup below nukes them. This has to
+    # live in the finally: a *failed* build is exactly when the logs are
+    # wanted, and vcpkg writes the compiler output to
+    # buildtrees\angle\install-<triplet>-out.log rather than to stdout, so
+    # without this a failure leaves nothing to diagnose from (hit on
+    # 2026-09-23 -- a build error was unrecoverable because cleanup had
+    # already run).
     $LogSrc = "$VcpkgDir\buildtrees\angle"
     $LogDst = "$StagingDir\logs"
     if (Test-Path $LogSrc) {
@@ -166,11 +177,6 @@ endif()
         }
     }
 
-    Write-Host ""
-    Write-Host "ANGLE artifacts staged to: $StagingDir"
-    Write-Host ""
-
-} finally {
     # Always clean up vcpkg temp dir.
     # Use cmd.exe rd instead of Remove-Item because vcpkg's bundled cmake
     # includes HTML docs with filenames that exceed MAX_PATH (260 chars),

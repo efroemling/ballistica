@@ -34,10 +34,18 @@ inline auto GLWrapForWrapping(TextureWrapping wrapping) -> GLint {
 class RendererGL::TextureDataGL : public TextureAssetRendererData {
  public:
   TextureDataGL(const TextureAsset& texture_in, RendererGL* renderer_in)
-      : tex_media_(&texture_in), texture_(0), renderer_(renderer_in) {
+      : tex_media_(&texture_in),
+        texture_(0),
+        render_view_id_(texture_in.render_view_id()),
+        renderer_(renderer_in) {
     assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
-    glGenTextures(1, &texture_);
+
+    // Textures that views draw to belong to what the renderer holds
+    // for the view; we have none of our own in that case.
+    if (render_view_id_ == 0) {
+      glGenTextures(1, &texture_);
+    }
     BA_DEBUG_CHECK_GL_ERROR;
   }
 
@@ -45,6 +53,8 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
     if (!g_base->app_adapter->InGraphicsContext()) {
       g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
                            "TextureDataGL dying outside of graphics thread.");
+    } else if (render_view_id_ != 0) {
+      // Nothing of ours to clean up.
     } else {
       // If we're currently bound as anything, clear that out (otherwise a
       // new texture with that same ID won't be bindable).
@@ -63,11 +73,23 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
     }
   }
 
-  auto GetTexture() const -> GLuint { return texture_; }
+  auto GetTexture() const -> GLuint {
+    // If we're what a view draws to, we are whatever the renderer last
+    // drew that view's world into (looked up each time, as that gets
+    // remade when the view changes size).
+    if (render_view_id_ != 0) {
+      return renderer_->GetTextureViewOutputTexture(render_view_id_);
+    }
+    return texture_;
+  }
 
   void Load() override {
     assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
+
+    if (render_view_id_ != 0) {
+      return;
+    }
 
     if (tex_media_->texture_type() == TextureType::k2D) {
       renderer_->BindTexture_(GL_TEXTURE_2D, texture_);
@@ -363,6 +385,7 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
   const TextureAsset* tex_media_;
   RendererGL* renderer_;
   GLuint texture_;
+  int render_view_id_;
 };
 
 }  // namespace ballistica::base

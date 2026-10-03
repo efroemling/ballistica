@@ -5,6 +5,8 @@
 import logging
 import asyncio
 
+from bacommon.assetpackage import ApverNum
+
 import babase
 
 import _bascenev1
@@ -42,7 +44,9 @@ async def prepare_replay(file_name: str) -> bool:
             len(packages),
         )
         if not await resolve_asset_packages_with_dialog(
-            packages, task=asyncio.current_task(), context=f'replay {file_name}'
+            [ApverNum(pkg) for pkg in packages],
+            task=asyncio.current_task(),
+            context=f'replay {file_name}',
         ):
             return False
     return True

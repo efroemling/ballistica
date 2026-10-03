@@ -3,7 +3,7 @@
 """UI functionality for the Discord window."""
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 
 class DiscordWindow(bui.Window):
@@ -86,7 +86,7 @@ class DiscordWindow(bui.Window):
             parent=self._root_widget,
             position=(40, -15),
             size=(min_size, min_size),
-            texture=classicassets.textures.discord_server.get(),
+            texture=_classicassets.textures.discord_server.get(),
         )
 
         # Hmm should we translate this? The discord server is mostly
@@ -111,7 +111,7 @@ class DiscordWindow(bui.Window):
             position=(self._width / 2 - 30, 20),
             size=(self._width / 2 - 60, 60),
             autoselect=True,
-            label=classicassets.strings.gather.discord_join,
+            label=_classicassets.strings.gather.discord_join,
             text_scale=1.0,
             on_activate_call=bui.CallStrict(
                 bui.open_url, 'https://ballistica.net/discord'

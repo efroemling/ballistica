@@ -2,6 +2,11 @@
 #
 """bacloud's live session to a basn node.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 One SmartSocket session replaces the request-per-HTTPS-handshake
 conversation bacloud used to have. There is no mint step and no HTTPS
 request at all: the client dials ``/bacloudsession`` on the node it
@@ -24,7 +29,7 @@ never on this channel -- uploads and downloads go direct to storage
 on their own connections -- so nothing here needs to overlap.
 
 **Threading.** bacloud is synchronous and stays that way. The session
-runs an asyncio loop on its own thread and :meth:`BacloudSession.request`
+runs an asyncio loop on its own thread and ``BacloudSession.request()``
 is an ordinary blocking call, so nothing above it has to know a socket
 is involved.
 
@@ -48,6 +53,7 @@ streamcall-smartsocket.md`` ("Consumer #2").
 """
 
 import os
+import json
 import queue
 import asyncio
 import logging
@@ -73,6 +79,8 @@ from bacommon.bacloud import (
 
 if TYPE_CHECKING:
     from websockets.asyncio.client import ClientConnection
+
+    from efro.smartsocket import SmartSocketAnomaly
     from websockets.exceptions import ConnectionClosed
 
     from bacommon.bacloud import StandardRequestData
@@ -113,9 +121,17 @@ class BacloudSession:
     context is, rather than here.
     """
 
-    def __init__(self, ws_url: str, bearer: str | None) -> None:
+    def __init__(
+        self,
+        ws_url: str,
+        bearer: str | None,
+        client_log_url: str | None = None,
+    ) -> None:
         self._ws_url = ws_url
         self._bearer = bearer
+        #: Where a should-be-impossible ending gets reported (the
+        #: master's client-log endpoint), or None to keep it local.
+        self._client_log_url = client_log_url
         #: Handed to us in-band once the channel exists; presented on
         #: any reconnect. None until then, which is fine -- a first
         #: attach is the one that doesn't need it.
@@ -159,15 +175,22 @@ class BacloudSession:
         self._closed_error: str | None = None
 
     @classmethod
-    def open(cls, server: str, bearer: str | None) -> BacloudSession | None:
+    def open(
+        cls,
+        server: str,
+        bearer: str | None,
+        *,
+        client_log_url: str | None = None,
+    ) -> BacloudSession | None:
         """Open a session to ``server``, or return None.
 
         ``server`` is the host bacloud already resolved -- the same
         one its requests went to before -- so this adds no lookup and
-        no hop.
+        no hop. ``client_log_url`` is where anomalies get reported;
+        see ``_report_anomaly``.
         """
         ws_url = f'wss://{server}/bacloudsession'
-        session = cls(ws_url, bearer)
+        session = cls(ws_url, bearer, client_log_url)
         session._thread.start()
         session._ready.wait(timeout=_OPEN_TIMEOUT_SECONDS)
         if not session._ready.is_set() or session._ended.is_set():
@@ -316,6 +339,8 @@ class BacloudSession:
             recv_type=ResponseData,
             on_message=self._on_message,
             logger=_session_logger(),
+            label='bacloud',
+            on_anomaly=self._report_anomaly,
         )
         self._endpoint = endpoint
 
@@ -363,6 +388,64 @@ class BacloudSession:
                 self._ready.set()
                 return
             await asyncio.sleep(0.05)
+
+    def _report_anomaly(self, anomaly: SmartSocketAnomaly) -> None:
+        """Send a should-be-impossible ending home, best-effort.
+
+        This endpoint's logger is deliberately silent (users must not
+        see transport noise) and it runs on dev machines where nothing
+        ships logs, so without this an anomaly here would be seen by
+        nobody. A fire-and-forget POST to the master's client-log
+        endpoint from a daemon thread, with a short timeout: never
+        surfaced to the user, never allowed to delay or fail the
+        command. (Decided 2026-09-17 over a field on the next request,
+        which would have touched the wire protocol for something a
+        side channel does as well.)
+        """
+        url = self._client_log_url
+        if url is None:
+            return
+        body = json.dumps(
+            {
+                'level': 'warning',
+                'msg': f'smartsocket anomaly: {anomaly.kind.value}',
+                'ctx': {
+                    'label': anomaly.label,
+                    'code': anomaly.close_code,
+                    'reason': anomaly.close_reason,
+                    'age': f'{anomaly.session_age:.1f}',
+                    'since_hello': (
+                        'never'
+                        if anomaly.since_hello is None
+                        else f'{anomaly.since_hello:.1f}'
+                    ),
+                    'attempts': anomaly.attempts,
+                    'hellos': anomaly.hellos,
+                    'unacked': anomaly.unacked_bytes,
+                    'channel': self._channel_id or '',
+                    'bacloud_version': BACLOUD_VERSION,
+                },
+            }
+        ).encode()
+
+        def _post() -> None:
+            import urllib.request
+
+            try:
+                request = urllib.request.Request(
+                    url,
+                    data=body,
+                    headers={'Content-Type': 'application/json'},
+                    method='POST',
+                )
+                with urllib.request.urlopen(request, timeout=3.0):
+                    pass
+            except Exception:  # pylint: disable=broad-except
+                pass  # Best effort, by design.
+
+        threading.Thread(
+            target=_post, name='bacloud-anomaly-report', daemon=True
+        ).start()
 
     async def _on_message(self, response: ResponseData) -> None:
         if isinstance(response, ChunkedResponse):

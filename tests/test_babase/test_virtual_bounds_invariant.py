@@ -134,8 +134,9 @@ def _probe(
 
 def _calc(
     cases: list[tuple[str, dict]],
+    probe: str = 'virtual_bounds_calc_probe',
 ) -> dict[str, list[float]]:
-    """Run the bounds-derivation probe under the engine for each case."""
+    """Run a bounds-derivation probe under the engine for each case."""
     payload = json.dumps(list(cases))
     code = (
         'import json, _babase\n'
@@ -143,7 +144,7 @@ def _calc(
         'out = {}\n'
         'for name, kwargs in cases:\n'
         '    out[name] = list(\n'
-        '        _babase.virtual_bounds_calc_probe(**kwargs)\n'
+        f'        _babase.{probe}(**kwargs)\n'
         '    )\n'
         "print('PROBERESULT' + json.dumps(out))\n"
     )
@@ -374,6 +375,132 @@ def test_top_bottom_insets_are_ignored_for_now() -> None:
         ]
     )['tb']
     assert got == pytest.approx([0.0, 0.0, res_x, res_y], abs=0.01)
+
+
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
+def test_max_margins_are_exact_virtual_units() -> None:
+    """Forced max margins measure exactly N virtual units on every edge.
+
+    The margins are specified in virtual units while the virtual scale
+    derives from the bounds being computed; the calc solves that fixed
+    point exactly rather than approximating it. So whatever the window
+    shape or pin branch, converting the resulting pixel margins back
+    through the bounds' own virtual scale must give exactly the
+    requested values -- that constancy across devices is the whole
+    point of the mode (a stable margin target to calibrate UIs
+    against).
+    """
+    base_x, base_y = 1280.0, 720.0
+    margin_x, margin_y = 80.0, 40.0
+    cases = {
+        # Wider than the base aspect: virtual res pins height.
+        'wide': [0.0, 0.0, 2560.0, 1080.0],
+        # Narrower than the base aspect: pins width.
+        'narrow': [0.0, 0.0, 1000.0, 900.0],
+        # Offset origin (as aspect clamping produces), near the base aspect
+        # so the pin-branch choice is not a foregone conclusion.
+        'offset': [100.0, 50.0, 2148.0, 1202.0],
+    }
+    got = _calc(
+        [
+            (
+                name,
+                {
+                    'render_rect': rect,
+                    'base_res_x': base_x,
+                    'base_res_y': base_y,
+                    'margin_x': margin_x,
+                    'margin_y': margin_y,
+                },
+            )
+            for name, rect in cases.items()
+        ],
+        probe='virtual_bounds_max_margins_probe',
+    )
+    for name, rect in cases.items():
+        left, bottom, right, top = got[name]
+        bwidth = right - left
+        bheight = top - bottom
+        assert bwidth > 0.0 and bheight > 0.0
+        # Derive the virtual scale the way CalcVirtualRes_ will: pin
+        # height to the base res when the bounds are wider than the
+        # base aspect, else pin width.
+        if bwidth / bheight > base_x / base_y:
+            scale = bheight / base_y
+        else:
+            scale = bwidth / base_x
+        margins = {
+            'left': (left - rect[0]) / scale,
+            'bottom': (bottom - rect[1]) / scale,
+            'right': (rect[2] - right) / scale,
+            'top': (rect[3] - top) / scale,
+        }
+        for edge, expected in (
+            ('left', margin_x),
+            ('right', margin_x),
+            ('bottom', margin_y),
+            ('top', margin_y),
+        ):
+            assert margins[edge] == pytest.approx(expected, abs=0.01), (
+                f'case {name!r}: expected exactly {expected} virtual'
+                f' units of {edge} margin; got {margins[edge]}'
+            )
+
+
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
+def test_max_margins_zero_is_a_no_op() -> None:
+    """Zero margins hand back the render rect untouched."""
+    rect = [0.0, 0.0, 2000.0, 800.0]
+    got = _calc(
+        [
+            (
+                'zero',
+                {
+                    'render_rect': rect,
+                    'base_res_x': 1280.0,
+                    'base_res_y': 720.0,
+                    'margin_x': 0.0,
+                    'margin_y': 0.0,
+                },
+            )
+        ],
+        probe='virtual_bounds_max_margins_probe',
+    )['zero']
+    assert got == pytest.approx(rect, abs=0.01)
+
+
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
+def test_screen_insets_blend() -> None:
+    """The screen-insets blend spans OS-derived to max margins.
+
+    Amount 0 is the OS-derived rect and 1 the max-margins one, with
+    edges interpolated in between -- except that no edge ever gives back
+    any of what the OS asked for, so a cutout deeper than the max
+    margins (the left edge here) stays covered at every amount.
+    """
+    os_bounds = [300.0, 0.0, 1950.0, 1000.0]
+    max_bounds = [200.0, 50.0, 1800.0, 950.0]
+    cases = {
+        str(amount): {
+            'os_bounds': os_bounds,
+            'max_bounds': max_bounds,
+            'amount': amount,
+        }
+        for amount in (0.0, 0.5, 1.0, -1.0, 2.0)
+    }
+    got = _calc(list(cases.items()), probe='screen_insets_blend_probe')
+    assert got['0.0'] == pytest.approx(os_bounds, abs=0.01)
+    assert got['0.5'] == pytest.approx([300.0, 25.0, 1875.0, 975.0], abs=0.01)
+    assert got['1.0'] == pytest.approx([300.0, 50.0, 1800.0, 950.0], abs=0.01)
+    # Out-of-range amounts clamp.
+    assert got['-1.0'] == pytest.approx(got['0.0'], abs=0.01)
+    assert got['2.0'] == pytest.approx(got['1.0'], abs=0.01)
 
 
 @pytest.mark.skipif(

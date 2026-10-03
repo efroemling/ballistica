@@ -60,6 +60,12 @@ class Player[TeamT]:
     # their type annotations are introspectable (for docs generation).
     character: str
 
+    cloud_spaz_def: bascenev1.SpazDef | None
+    """The cloud-composed look for the cloud profile this player
+       picked, or None when they are on a legacy profile or a random
+       look. When present, ``character`` is just the legacy standin
+       appearance; spawn sites should prefer this."""
+
     actor: bascenev1.Actor | None
     """The bascenev1.Actor associated with the player."""
 
@@ -102,6 +108,7 @@ class Player[TeamT]:
         self._nodeactor: bascenev1.NodeActor | None = None
         self._sessionplayer = sessionplayer
         self.character = sessionplayer.character
+        self.cloud_spaz_def = sessionplayer.cloud_spaz_def
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
         self._team = cast(
@@ -254,11 +261,24 @@ class Player[TeamT]:
 
     def get_icon(self) -> dict[str, Any]:
         """
-        Returns the character's icon (images, colors, etc contained in a dict)
+        Returns the character's legacy icon (images, colors, etc contained
+        in a dict).
+
+        Prefer :meth:`get_icon_depiction` where available; see
+        :meth:`bascenev1.SessionPlayer.get_icon`.
         """
         assert self._postinited
         assert not self._expired
         return self._sessionplayer.get_icon()
+
+    def get_icon_depiction(self) -> bascenev1.Depiction | None:
+        """Return the player's icon as a depiction, if they have one.
+
+        See :meth:`bascenev1.SessionPlayer.get_icon_depiction`.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._sessionplayer.get_icon_depiction()
 
     def assigninput(
         self,

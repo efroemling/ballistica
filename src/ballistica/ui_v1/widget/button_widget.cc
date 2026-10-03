@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/button_widget.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -16,8 +17,42 @@
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/ui_v1/widget/depiction_slot.h"
 
 namespace ballistica::ui_v1 {
+
+/// Label margin at each side for a centered label (and at the far side of
+/// a left/right-aligned one when there is no accessory).
+/// A standard-disabled button's body grey, as a multiple of its color's
+/// luminance.
+constexpr float kDisabledBodyGreyScale{0.85f};
+
+/// A standard-disabled button's icon alpha, as a multiple of its own.
+constexpr float kDisabledIconAlphaScale{0.4f};
+
+constexpr float kTextSideMargin{15.0f};
+
+/// Room kept above and below a label; a label taller than what's left
+/// (a wrapped multi-line one, typically) shrinks to fit, as an over-wide
+/// one does sideways. Height is plain row spacing (32 per line), not
+/// glyph extents.
+constexpr float kTextVertMargin{4.0f};
+
+/// Distance from our edge to a left/right-aligned label.
+constexpr float kAlignedTextInset{20.0f};
+
+/// Gap between our right edge and an accessory glyph's area.
+constexpr float kAccessoryEdgeInset{8.0f};
+
+/// Width of the area an accessory glyph is centered in.
+constexpr float kAccessoryWidth{36.0f};
+
+/// Everything at our right end given over to an accessory; the label
+/// stops here.
+constexpr float kAccessoryRegion{kAccessoryEdgeInset + kAccessoryWidth};
+
+/// Scale an accessory glyph draws at.
+constexpr float kAccessoryScale{0.69f};
 
 ButtonWidget::ButtonWidget()
     : birth_time_millisecs_{
@@ -31,6 +66,13 @@ ButtonWidget::ButtonWidget()
 }
 
 ButtonWidget::~ButtonWidget() = default;
+
+auto ButtonWidget::GetDepictionSlot() -> DepictionSlot& {
+  if (!depiction_slot_) {
+    depiction_slot_ = std::make_unique<DepictionSlot>();
+  }
+  return *depiction_slot_;
+}
 
 void ButtonWidget::SetTextResScale(float val) { text_->set_res_scale(val); }
 
@@ -52,6 +94,31 @@ void ButtonWidget::SetText(const std::string& text_in) {
 void ButtonWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
   text_->SetLangStr(std::move(val));
   text_width_dirty_ = true;
+}
+
+void ButtonWidget::SetAccessory(Accessory val) {
+  accessory_ = val;
+  switch (val) {
+    case Accessory::kNone:
+      accessory_text_.Clear();
+      break;
+    case Accessory::kPopup:
+      accessory_text_ = Object::New<TextWidget>();
+      accessory_text_->SetLiteral(true);
+      accessory_text_->SetVAlign(TextWidget::VAlign::kCenter);
+      accessory_text_->SetHAlign(TextWidget::HAlign::kCenter);
+      accessory_text_->SetWidth(0.0f);
+      accessory_text_->SetHeight(0.0f);
+
+      accessory_text_->SetText(
+          g_base->assets->CharStr(SpecialChar::kPopupIcon));
+      break;
+  }
+}
+
+void ButtonWidget::SetTextHAlign(TextWidget::HAlign val) {
+  text_h_align_ = val;
+  text_->SetHAlign(val);
 }
 
 void ButtonWidget::SetTexture(base::TextureAsset* val) { texture_ = val; }
@@ -202,38 +269,88 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
+  // A time-varying label (a live countdown) changes width as it ticks.
+  if (text_->IsTimeVarying()) {
+    text_width_dirty_ = true;
+  }
   if (text_width_dirty_) {
-    text_width_ = text_->GetTextWidth();
-    text_width_dirty_ = false;
+    // Empty while OS-span measures warm in the background; stay dirty
+    // and keep using our previous width until the value lands (the
+    // label's own drawing defers in that state too).
+    if (auto text_width = text_->TryGetTextWidth()) {
+      text_width_ = *text_width;
+      text_width_dirty_ = false;
+    }
+    // (Height needs no measuring, so it's simply current whenever we
+    // get here.)
+    text_height_ = text_->GetTextHeight();
   }
 
   float string_scale = text_scale_;
 
   bool string_too_small_to_draw = false;
 
+  // The horizontal span our label (plus any icon) lives in. A centered
+  // label keeps its traditional margins; an aligned one hugs its edge;
+  // an accessory takes over the right end.
+  bool text_centered = text_h_align_ == TextWidget::HAlign::kCenter;
+  float text_span_l = text_centered ? kTextSideMargin : kAlignedTextInset;
+  float text_span_r =
+      width_
+      - (accessory_ != Accessory::kNone
+             ? kAccessoryRegion
+             : (text_centered ? kTextSideMargin : kAlignedTextInset));
+  float icon_width = show_icons ? 34.0f * icon_scale_ : 0.0f;
+
   // We should only need this in our transparent pass.
   float string_width;
   if (draw_transparent) {
     string_width = std::max(0.0001f, text_width_);
 
-    // Account for our icon if we have it.
-    float s_width_available = std::max(30.0f, width_ - 30);
-    if (show_icons) {
-      s_width_available -= (34.0f * icon_scale_);
-    }
-
-    if ((string_width * string_scale) > s_width_available) {
-      float squish_scale = s_width_available / (string_width * string_scale);
-      if (squish_scale < 0.2f) {
-        string_too_small_to_draw = true;
+    // Shrink the label to fit an available extent. Whatever the
+    // caller's numbers (a tiny button, an oversized icon), the
+    // available space is held positive so the scale never goes to
+    // zero or negative; a label squished past readability just
+    // stops drawing.
+    auto fit = [&string_scale, &string_too_small_to_draw](float extent,
+                                                          float available) {
+      available = std::max(1.0f, available);
+      if (extent > 0.0f && (extent * string_scale) > available) {
+        float squish_scale = available / (extent * string_scale);
+        if (squish_scale < 0.2f) {
+          string_too_small_to_draw = true;
+        }
+        string_scale *= squish_scale;
       }
-      string_scale *= squish_scale;
-    }
+    };
+
+    // Account for our icon if we have it.
+    fit(string_width, std::max(30.0f, text_span_r - text_span_l) - icon_width);
+
+    // Then the same vertically.
+    fit(text_height_, height_ - 2.0f * kTextVertMargin);
   } else {
     string_width = 0.0f;  // Shouldn't be used.
   }
 
   float mult = GetMult(current_time);
+
+  // Standard-disabled buttons draw greyed: our body goes grey at roughly
+  // its own brightness (so the default green lands near the (0.5, 0.5,
+  // 0.5) hand-rolled disabled buttons have long used), icons fade, and
+  // our label takes TextWidget's disabled look (set further down).
+  bool disabled_look = StandardDisabled_();
+  float color_r{color_red_};
+  float color_g{color_green_};
+  float color_b{color_blue_};
+  float icon_alpha{icon_color_alpha_};
+  if (disabled_look) {
+    float grey =
+        kDisabledBodyGreyScale
+        * (0.3f * color_red_ + 0.59f * color_green_ + 0.11f * color_blue_);
+    color_r = color_g = color_b = grey;
+    icon_alpha *= kDisabledIconAlphaScale;
+  }
 
   {
     float l = 0;
@@ -275,6 +392,36 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     }
 
+    // A depiction stands in for our body (texture or standard art); our
+    // label and icon still draw over it. Our transforms are already
+    // pushed, and our own look (brightness, disabled) is its host state.
+    bool draw_depiction = depiction_slot_ && depiction_slot_->active();
+    if (draw_depiction) {
+      DepictionSlot::DrawArgs args;
+      args.owner = this;
+      args.pass = pass;
+      args.transparent = draw_transparent;
+      // Standing in for a custom texture, we take the box that texture
+      // draws to: without better-bg-fit that overhangs our bounds by 4%
+      // a side (see below), and art authored for it (the toolbar
+      // chests) should come out the same size either way.
+      float dep_border_x{};
+      float dep_border_y{};
+      if (texture_.exists() && !better_bg_fit_) {
+        dep_border_x = 0.04f * width_;
+        dep_border_y = 0.04f * height_;
+      }
+      args.width = width_ + 2.0f * dep_border_x;
+      args.height = height_ + 2.0f * dep_border_y;
+      args.offset_x = extra_offs_x - dep_border_x;
+      args.offset_y = extra_offs_y - dep_border_y;
+      args.brightness = mult;
+      args.opacity = opacity_;
+      args.disabled = disabled_look;
+      args.mask_texture = mask_texture_.get();
+      depiction_slot_->Draw(args);
+    }
+
     if (do_draw_mesh) {
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
@@ -298,8 +445,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // alpha as before.
       float omul =
           (texture_.exists() && texture_->premultiplied()) ? opacity : 1.0f;
-      c.SetColor(mult * color_red_ * omul, mult * color_green_ * omul,
-                 mult * color_blue_ * omul, opacity);
+      c.SetColor(mult * color_r * omul, mult * color_g * omul,
+                 mult * color_b * omul, opacity);
       if (flatness_ != 0.0f) {
         c.SetFlatness(flatness_);
       }
@@ -316,8 +463,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // Custom button texture.
       if (texture_.exists()) {
         if (!custom_mesh.exists()) {
-          mesh =
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1);
+          mesh = g_ui_v1->assets().image1x1.get();
         } else {
           mesh = custom_mesh.get();
         }
@@ -331,6 +477,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                                tint_color_blue_);
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
+            c.SetColorizeColor3(tint3_color_red_, tint3_color_green_,
+                                tint3_color_blue_);
           }
           c.SetMaskTexture(mask_texture_.get());
         } else {
@@ -351,8 +499,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       } else {
         // Standard button texture.
-        base::BuiltinMeshID mesh_id;
-        base::BuiltinTextureID tex_id;
+        base::MeshAsset* mesh_asset;
+        base::TextureAsset* tex_asset;
 
         // Regular style means pick based on our aspect ratio.
         if (style_ == Style::kRegular) {
@@ -369,10 +517,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
         switch (style_) {
           case Style::kBack: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonBackTransparent
-                          : base::BuiltinMeshID::kMeshesButtonBackOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_back_transparent.get()
+                             : g_ui_v1->assets().button_back_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.523f;
               bg_scale_center_y = 0.46f;
@@ -388,11 +536,11 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kBackSmall: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id =
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset =
                 draw_transparent
-                    ? base::BuiltinMeshID::kMeshesButtonBackSmallTransparent
-                    : base::BuiltinMeshID::kMeshesButtonBackSmallOpaque;
+                    ? g_ui_v1->assets().button_back_small_transparent.get()
+                    : g_ui_v1->assets().button_back_small_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.624f;
               bg_scale_center_y = 0.488f;
@@ -408,10 +556,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kTab: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas2;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonTabTransparent
-                          : base::BuiltinMeshID::kMeshesButtonTabOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas2.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_tab_transparent.get()
+                             : g_ui_v1->assets().button_tab_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.5f;
@@ -427,10 +575,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kSquare: {
-            tex_id = base::BuiltinTextureID::kTexturesButtonSquare;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonSquareTransparent
-                          : base::BuiltinMeshID::kMeshesButtonSquareOpaque;
+            tex_asset = g_ui_v1->assets().button_square.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_square_transparent.get()
+                             : g_ui_v1->assets().button_square_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.521f;
               bg_scale_center_y = 0.495f;
@@ -447,8 +595,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kSquareWide: {
-            tex_id = base::BuiltinTextureID::kTexturesButtonSquareWide;
-            mesh_id = base::BuiltinMeshID::kMeshesImage1x1;
+            tex_asset = g_ui_v1->assets().button_square_wide.get();
+            mesh_asset = g_ui_v1->assets().image1x1.get();
             do_draw = draw_transparent;
 
             bg_scale_center_x = 0.505f;
@@ -460,10 +608,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kLarger: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonLargerTransparent
-                          : base::BuiltinMeshID::kMeshesButtonLargerOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_larger_transparent.get()
+                             : g_ui_v1->assets().button_larger_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.506f;
               bg_scale_center_y = 0.47f;
@@ -479,10 +627,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kLarge: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonLargeTransparent
-                          : base::BuiltinMeshID::kMeshesButtonLargeOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_large_transparent.get()
+                             : g_ui_v1->assets().button_large_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.503f;
               bg_scale_center_y = 0.452f;
@@ -498,10 +646,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kMedium: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonMediumTransparent
-                          : base::BuiltinMeshID::kMeshesButtonMediumOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_medium_transparent.get()
+                             : g_ui_v1->assets().button_medium_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.48f;
@@ -520,10 +668,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
           default: {
             assert(style_ == Style::kSmall);
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonSmallTransparent
-                          : base::BuiltinMeshID::kMeshesButtonSmallOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_small_transparent.get()
+                             : g_ui_v1->assets().button_small_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.49f;
@@ -539,10 +687,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
         }
-        c.SetTexture(g_base->assets->BuiltinTexture(tex_id));
-        mesh = g_base->assets->BuiltinMesh(mesh_id);
+        c.SetTexture(tex_asset);
+        mesh = mesh_asset;
       }
-      if (do_draw) {
+      if (do_draw && !draw_depiction) {
         if (do_draw_better_fit) {
           // This math scales properly with widget size.
           auto xf = c.ScopedTransform();
@@ -567,37 +715,34 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       if ((show_icons) && draw_transparent) {
         bool do_draw_icon = true;
         if (icon_type_ == IconType::kStart) {
-          c.SetColor(1.4f * mult * (color_red_), 1.4f * mult * (color_green_),
-                     1.4f * mult * (color_blue_), 1.0f);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesStartButton));
+          c.SetColor(1.4f * mult * color_r, 1.4f * mult * color_g,
+                     1.4f * mult * color_b, 1.0f);
+          c.SetTexture(g_ui_v1->assets().start_button.get());
         } else if (icon_type_ == IconType::kCancel) {
           if (remote_icons) {
             c.SetColor(1.0f * mult * (1.0f), 1.0f * mult * (1.0f),
                        1.0f * mult * (1.0f), 1.0f);
-            c.SetTexture(g_base->assets->BuiltinTexture(
-                base::BuiltinTextureID::kTexturesBackIcon));
+            c.SetTexture(g_ui_v1->assets().back_icon.get());
           } else {
-            c.SetColor(1.5f * mult * (color_red_), 1.5f * mult * (color_green_),
-                       1.5f * mult * (color_blue_), 1.0f);
-            c.SetTexture(g_base->assets->BuiltinTexture(
-                base::BuiltinTextureID::kTexturesBombButton));
+            c.SetColor(1.5f * mult * color_r, 1.5f * mult * color_g,
+                       1.5f * mult * color_b, 1.0f);
+            c.SetTexture(g_ui_v1->assets().bomb_button.get());
           }
         } else if (icon_.exists()) {
           // Premultiply rgb by alpha for a premultiplied icon texture so a
           // faded icon (icon_color_alpha_ < 1) composites 'over' correctly
           // (see docs/design/premultiplied-alpha.md).
-          float imul = icon_->premultiplied() ? icon_color_alpha_ : 1.0f;
+          float imul = icon_->premultiplied() ? icon_alpha : 1.0f;
           c.SetColor(icon_color_red_ * imul
-                         * (icon_tint_ * (1.7f * mult * (color_red_))
+                         * (icon_tint_ * (1.7f * mult * color_r)
                             + (1.0f - icon_tint_) * mult),
                      icon_color_green_ * imul
-                         * (icon_tint_ * (1.7f * mult * (color_green_))
+                         * (icon_tint_ * (1.7f * mult * color_g)
                             + (1.0f - icon_tint_) * mult),
                      icon_color_blue_ * imul
-                         * (icon_tint_ * (1.7f * mult * (color_blue_))
+                         * (icon_tint_ * (1.7f * mult * color_b)
                             + (1.0f - icon_tint_) * mult),
-                     icon_color_alpha_);
+                     icon_alpha);
           if (!icon_->loaded()) {
             do_draw_icon = false;
           } else {
@@ -605,17 +750,29 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           }
         } else {
           c.SetColor(1, 1, 1);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesCircle));
+          c.SetTexture(g_ui_v1->assets().circle.get());
         }
         if (do_draw_icon) {
+          // The icon sits just before the label's left edge.
+          float drawn_width = string_width * string_scale;
+          float text_left;
+          switch (text_h_align_) {
+            case TextWidget::HAlign::kLeft:
+              text_left = l + text_span_l + icon_width;
+              break;
+            case TextWidget::HAlign::kRight:
+              text_left = l + text_span_r - drawn_width;
+              break;
+            default:
+              text_left = l + (text_span_l + text_span_r) * 0.5f
+                          + icon_width * 0.5f - drawn_width * 0.5f;
+              break;
+          }
           auto xf = c.ScopedTransform();
-          c.Translate((l + r) * 0.5f + extra_offs_x
-                          - (string_width * string_scale) * 0.5f - 5.0f,
+          c.Translate(text_left - icon_width * 0.5f - 5.0f + extra_offs_x,
                       (b + t) * 0.5f + extra_offs_y, 0.001f);
           c.Scale(34.0f * icon_scale_, 34.f * icon_scale_, 1.0f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
       }
       c.Submit();
@@ -633,19 +790,29 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Scale(1, 1, 0.5f);
 
       // Special case - fudge text centering for small back buttons.
-      if (style_ == Style::kBackSmall) {
+      if (style_ == Style::kBackSmall && text_centered) {
         if (better_bg_fit_) {
           c.Translate(width_ * 0.55, height_ * 0.5f);
         } else {
           c.Translate(width_ * 0.4f, height_ * 0.48f);
         }
+        // Shift over for our icon if we have it.
+        c.Translate(icon_width * 0.5f, 0, 0);
       } else {
-        c.Translate(width_ * 0.5f, height_ * 0.5f);
-      }
-
-      // Shift over for our icon if we have it.
-      if (show_icons) {
-        c.Translate(17.0f * icon_scale_, 0, 0);
+        // Anchor per our label's alignment; an icon precedes the label.
+        float anchor_x;
+        switch (text_h_align_) {
+          case TextWidget::HAlign::kLeft:
+            anchor_x = text_span_l + icon_width;
+            break;
+          case TextWidget::HAlign::kRight:
+            anchor_x = text_span_r;
+            break;
+          default:
+            anchor_x = (text_span_l + text_span_r + icon_width) * 0.5f;
+            break;
+        }
+        c.Translate(anchor_x, height_ * 0.5f);
       }
       if (string_scale != 1.0f) {
         c.Scale(string_scale, string_scale);
@@ -655,7 +822,28 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       text_->set_color(mult * text_color_r_, mult * text_color_g_,
                        mult * text_color_b_, text_color_a_);
       text_->set_flatness(text_flatness_);
+      text_->SetEnabled(!disabled_look);
       text_->Draw(pass, draw_transparent);
+    }
+    c.Submit();
+  }
+
+  // Draw our accessory glyph centered in its region at our right end.
+  if (accessory_text_.exists()) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(
+          width_ - kAccessoryEdgeInset - kAccessoryWidth * 0.5f + extra_offs_x,
+          height_ * 0.5f + extra_offs_y, 0.5f);
+      c.Scale(kAccessoryScale, kAccessoryScale, 0.5f);
+      c.Submit();
+      accessory_text_->set_color(mult * text_color_r_, mult * text_color_g_,
+                                 mult * text_color_b_, text_color_a_);
+      accessory_text_->set_flatness(text_flatness_);
+      accessory_text_->SetEnabled(!disabled_look);
+      accessory_text_->Draw(pass, draw_transparent);
     }
     c.Submit();
   }
@@ -718,6 +906,29 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   right_overlap += target_extra_right_;
   left_overlap += target_extra_left_;
 
+  // Our whole box (plus those overlaps), or with depiction_hit_area
+  // set, just what our depiction covers (grown to a minimum size and
+  // kept within that box).
+  float hit_l{-left_overlap};
+  float hit_r{width_ + right_overlap};
+  float hit_b{-bottom_overlap};
+  float hit_t{height_ + top_overlap};
+  if (depiction_hit_area_ && depiction_slot_) {
+    if (auto content = depiction_slot_->GetContentBox(width_, height_)) {
+      float cx = content->x + content->width * 0.5f;
+      float cy = content->y + content->height * 0.5f;
+      float half_w = 0.5f * std::max(content->width, kMinDepictionHitSize);
+      float half_h = 0.5f * std::max(content->height, kMinDepictionHitSize);
+      hit_l = std::max(hit_l, cx - half_w);
+      hit_r = std::min(hit_r, cx + half_w);
+      hit_b = std::max(hit_b, cy - half_h);
+      hit_t = std::min(hit_t, cy + half_h);
+    }
+  }
+  auto in_target = [hit_l, hit_r, hit_b, hit_t](float x, float y) {
+    return x >= hit_l && x < hit_r && y >= hit_b && y < hit_t;
+  };
+
   switch (m.type) {
     case base::WidgetMessage::Type::kMouseMove: {
       auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
@@ -730,8 +941,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (pressed_) {
           claimed = true;
         }
-        hover_ = (x >= -left_overlap && x < width_ + right_overlap
-                  && y >= -bottom_overlap && y < height_ + top_overlap);
+        hover_ = in_target(x, y);
       }
       if (hover_) {
         claimed = true;
@@ -741,8 +951,23 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
     case base::WidgetMessage::Type::kMouseDown: {
       auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
-      if (enabled_ && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
-          && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))) {
+
+      // Standard-disabled: a press still selects us (we stay selectable,
+      // so a tap should do what navigating to us does) but never lights
+      // or activates us. We claim it, and so its release, which answers
+      // with an error sound. (Toolbar-behavior disabled buttons fall
+      // through below and ignore the press entirely.)
+      if (StandardDisabled_()) {
+        if (in_target(x, y)) {
+          disabled_pressed_ = true;
+          if (selectable_) {
+            GlobalSelect();
+          }
+          return true;
+        }
+        return false;
+      }
+      if (enabled_ && in_target(x, y)) {
         hover_ = true;
         pressed_ = true;
 
@@ -752,7 +977,9 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
           // If we're a repeat button we trigger immediately.
           // (waiting till mouse up sort of defeats the purpose here)
-          Activate();
+          // Not via Activate(): our actions-complete waits for the
+          // release, after any repeats.
+          DoActivate();
         }
         if (selectable_) {
           GlobalSelect();
@@ -767,6 +994,20 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       bool claimed = (m.fval3 > 0.0f);
 
+      if (claim_release_silently_) {
+        claim_release_silently_ = false;
+        return true;
+      }
+      if (disabled_pressed_) {
+        disabled_pressed_ = false;
+        if (m.type == base::WidgetMessage::Type::kMouseUp && !claimed
+            && in_target(x, y)) {
+          g_base->audio->SafePlayBuiltinSound(
+              base::BuiltinSoundID::kAudioError);
+        }
+        return true;
+      }
+
       if (pressed_) {
         pressed_ = false;
 
@@ -774,16 +1015,18 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         repeat_timer_.Clear();
 
         // For non-repeat buttons, non-claimed mouse-ups within the
-        // button region trigger the action.
+        // button region trigger the action (Activate() reports
+        // actions-complete itself).
         if (!repeat_) {
-          if (enabled_ && (x >= (0 - left_overlap))
-              && (x < (0 + width_ + right_overlap))
-              && (y >= (0 - bottom_overlap))
-              && (y < (0 + height_ + top_overlap)) && !claimed) {
+          if (enabled_ && in_target(x, y) && !claimed) {
             if (m.type == base::WidgetMessage::Type::kMouseUp) {
               Activate();
             }
           }
+        } else {
+          // A repeat button activated on the press and possibly since;
+          // the release is when its actions are complete.
+          RunActionsComplete_();
         }
         return true;  // Pressed buttons always claim mouse-ups.
       }
@@ -795,15 +1038,70 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return false;
 }
 
-void ButtonWidget::Activate() { DoActivate(); }
+void ButtonWidget::SetEnabled(bool val) {
+  // (The toolbar calls this every update, so keep the no-change case
+  // cheap.)
+  if (val == enabled_) {
+    return;
+  }
+  enabled_ = val;
+
+  // A standard-disabled button being disabled mid-press ends the press
+  // here: otherwise a held repeat-button would sound an error on every
+  // remaining repeat tick. Its actions are complete (a row may commit on
+  // that), and the release still comes to us, silently.
+  if (!enabled_ && !disabled_toolbar_button_behavior_ && pressed_) {
+    pressed_ = false;
+    hover_ = false;
+    repeat_timer_.Clear();
+    claim_release_silently_ = true;
+    base::UI::OperationContext ui_op_context;
+    RunActionsComplete_();
+    ui_op_context.Finish();
+  }
+}
+
+void ButtonWidget::Activate() {
+  // A direct activation (key/controller press, Python call) has no
+  // press sequence to wait out; its actions are complete at once.
+  DoActivate();
+  RunActionsComplete_();
+}
+
+void ButtonWidget::SetOnActionsCompleteCall(PyObject* call_obj) {
+  on_actions_complete_call_ = Object::New<base::PythonContextCall>(call_obj);
+}
+
+void ButtonWidget::RunActionsComplete_() {
+  if (!activated_since_complete_) {
+    return;
+  }
+  activated_since_complete_ = false;
+  if (auto* call = on_actions_complete_call_.get()) {
+    // Same dispatch as on_activate_call, so the two run in order.
+    if (g_base->ui->InUIOperation()) {
+      call->ScheduleInUIOperation();
+    } else {
+      call->Run();
+    }
+  }
+}
 
 void ButtonWidget::DoActivate(bool is_repeat) {
   if (!enabled_) {
-    g_core->logging->Log(
-        LogName::kBa, LogLevel::kWarning,
-        "ButtonWidget::DoActivate() called on disabled button");
+    // Standard-disabled buttons get activated like any other selectable
+    // widget (a key/controller press on one, say); say no audibly. Only
+    // toolbar-behavior ones should never be reached here.
+    if (!disabled_toolbar_button_behavior_) {
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
+    } else {
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "ButtonWidget::DoActivate() called on disabled button");
+    }
     return;
   }
+  activated_since_complete_ = true;
 
   // We don't want holding down a repeat-button to keep flashing it.
   if (!is_repeat) {
@@ -811,14 +1109,7 @@ void ButtonWidget::DoActivate(bool is_repeat) {
         static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
   }
   if (sound_enabled_) {
-    int r = rand() % 3;  // NOLINT
-    if (r == 0) {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish);
-    } else if (r == 1) {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish2);
-    } else {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish3);
-    }
+    g_ui_v1->PlaySwish();
   }
   if (auto* call = on_activate_call_.get()) {
     // If we're being activated as part of a ui-operation (a click or other

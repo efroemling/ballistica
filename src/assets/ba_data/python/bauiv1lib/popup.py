@@ -6,10 +6,13 @@ import weakref
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable, Literal
+
+# How wide a popup menu grows to fit its labels before they get
+# squished instead (what the old 230 default floor's 1.5x cap gave).
+_DEFAULT_MENU_MAX_WIDTH = 345.0
 
 
 class PopupWindow:
@@ -99,10 +102,6 @@ class PopupWindow:
             (focus_position[1] + focus_size[1] * 0.5) - (size[1] * 0.5)
         ) * scale
 
-        # NOTE: We do NOT need to suppress main-window-recreates here
-        # (like regular windows do) since we are always in the overlay
-        # stack and thus aren't affected by main-window recreation.
-
         self.root_widget = bui.containerwidget(
             transition='in_scale',
             scale=scale,
@@ -120,6 +119,13 @@ class PopupWindow:
         # Complain if we outlive our root widget.
         bui.app.ui_v1.add_ui_cleanup_check(self, self.root_widget)
 
+        # We live in the overlay stack, so main-window recreates don't
+        # touch us - but they do replace whatever opened us (a menu
+        # button and its callbacks), leaving us wired to dead ui that
+        # would quietly drop a pick. Hold them off until we're fully
+        # gone; the recreate then sees selection back where we came from.
+        bui.app.ui_v1.suppress_window_recreates_while_alive(self.root_widget)
+
     def on_popup_cancel(self) -> None:
         """Called when the popup is canceled.
 
@@ -128,14 +134,30 @@ class PopupWindow:
         """
 
 
+def popup_menu_default_scale() -> float:
+    """Scale popup menus get at the current ui-scale unless told otherwise."""
+    uiscale = bui.app.ui_v1.uiscale
+    return (
+        2.3
+        if uiscale is bui.UIScale.SMALL
+        else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+    )
+
+
 class PopupMenuWindow(PopupWindow):
-    """A menu built using popup-window functionality."""
+    """A menu built using popup-window functionality.
+
+    Pass None for ``current_choice`` for a menu with no current value
+    (a list of things to do rather than values to pick from): nothing
+    is drawn as current and selection starts at the first pickable
+    choice.
+    """
 
     def __init__(
         self,
         position: tuple[float, float],
         choices: Sequence[str],
-        current_choice: str,
+        current_choice: str | None,
         *,
         delegate: Any = None,
         width: float = 230.0,
@@ -157,17 +179,28 @@ class PopupMenuWindow(PopupWindow):
         for choice_display in choices_display:
             choices_display_fin.append(choice_display.evaluate())
 
+        # The cap is independent of the floor: a narrow floor only
+        # means short option sets get a snug menu, not that long labels
+        # get squished.
         if maxwidth is None:
-            maxwidth = width * 1.5
+            maxwidth = _DEFAULT_MENU_MAX_WIDTH
 
         self._transitioning_out = False
         self._choices = list(choices)
         self._choices_display = list(choices_display_fin)
-        self._current_choice = current_choice
         self._choices_disabled = list(choices_disabled)
         self._done_building = False
         if not choices:
             raise TypeError('Must pass at least one choice')
+
+        # The choice drawn as current (if any) vs the one selection
+        # starts on and a pick reports.
+        highlight_choice = current_choice
+        if current_choice is None:
+            current_choice = next(
+                (c for c in choices if c not in choices_disabled), choices[0]
+            )
+        self._current_choice: str = current_choice
         self._width = width
         self._scale = scale
         if len(choices) > 8:
@@ -190,7 +223,9 @@ class PopupMenuWindow(PopupWindow):
                     min(
                         maxwidth,
                         bui.get_string_width(
-                            choice_display_name, suppress_warning=True
+                            choice_display_name,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
                         ),
                     )
                     + 75,
@@ -201,7 +236,9 @@ class PopupMenuWindow(PopupWindow):
                     min(
                         maxwidth,
                         bui.get_string_width(
-                            choice_display_name, suppress_warning=True
+                            choice_display_name,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
                         ),
                     )
                     + 60,
@@ -254,7 +291,7 @@ class PopupMenuWindow(PopupWindow):
                     if inactive
                     else (
                         (0.5, 1, 0.5, 1)
-                        if choice == self._current_choice
+                        if choice == highlight_choice
                         else (0.8, 0.8, 0.8, 1.0)
                     )
                 ),
@@ -284,7 +321,7 @@ class PopupMenuWindow(PopupWindow):
             self._current_choice = self._choices[index]
 
     def _activate(self) -> None:
-        builtinassets.audio.swish.get().play()
+        bui.play_swish()
         bui.apptimer(0.05, self._transition_out)
         delegate = self._getdelegate()
         if delegate is not None:
@@ -311,7 +348,7 @@ class PopupMenuWindow(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            builtinassets.audio.swish.get().play()
+            bui.play_swish()
         self._transition_out()
 
 
@@ -332,26 +369,27 @@ class PopupMenu:
         on_value_change_call: Callable[[str], Any] | None = None,
         opening_call: Callable[[], Any] | None = None,
         closing_call: Callable[[], Any] | None = None,
-        width: float = 230.0,
+        width: float = 100.0,
         maxwidth: float | None = None,
         scale: float | None = None,
         choices_disabled: Sequence[str] | None = None,
         choices_display: Sequence[bui.Lstr | bui.LangStr] | None = None,
         button_size: tuple[float, float] = (160.0, 50.0),
         autoselect: bool = True,
+        transition_delay: float | None = None,
+        transition_type: Literal['in_left', 'scale'] | None = None,
+        better_bg_fit: bool = False,
     ):
+        # Note: 'width' is only a floor; the menu grows to fit its
+        # widest choice. The transition args and 'better_bg_fit' are
+        # handed straight to our button (see bauiv1.buttonwidget).
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
             choices_display = []
         assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
         if scale is None:
-            scale = (
-                2.3
-                if uiscale is bui.UIScale.SMALL
-                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
-            )
+            scale = popup_menu_default_scale()
         if current_choice not in choices:
             current_choice = None
         self._choices = list(choices)
@@ -380,7 +418,14 @@ class PopupMenu:
             size=self._button_size,
             scale=1.0,
             label='',
+            # Reads as a menu: choice at the left, popup indicator at
+            # the right.
+            text_h_align='left',
+            accessory='popup',
             on_activate_call=lambda: bui.apptimer(0, self._make_popup),
+            transition_delay=transition_delay,
+            transition_type=transition_type,
+            better_bg_fit=better_bg_fit,
         )
         self._on_value_change_call = None  # Don't wanna call for initial set.
         self._opening_call = opening_call
@@ -389,6 +434,18 @@ class PopupMenu:
         self.set_choice(self._current_choice)
         self._on_value_change_call = on_value_change_call
         self._window_widget: bui.Widget | None = None
+
+        # Our popup window sizes itself by measuring these strings on
+        # the logic thread. Get those measures warmed in the background
+        # now so that any lazy OS font loads they incur (foreign
+        # scripts, emoji, etc.) are hopefully done by the time someone
+        # opens us, instead of hitching the popup's appearance.
+        if len(self._choices_display) == len(self._choices):
+            for choice_display in self._choices_display:
+                bui.warm_up_string_measure(choice_display.evaluate())
+        else:
+            for choice in self._choices:
+                bui.warm_up_string_measure(choice)
 
         # Complain if we outlive our button.
         bui.app.ui_v1.add_ui_cleanup_check(self, self._button)

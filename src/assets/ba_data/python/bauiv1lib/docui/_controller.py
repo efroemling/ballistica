@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum
 import weakref
+import copy
+import time
 
 from efro.util import asserttype
 from efro.error import CleanError, CommunicationError
@@ -24,18 +26,22 @@ from bacommon.docui import (
     DocUIWebRequest,
     DocUIWebResponse,
 )
+from bacommon.docui.routes import PressSound
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
-from bauiv1lib.docui import _bgrunner
+from bauiv1lib.docui import _bgrunner, _cache
 from bauiv1lib.docui._types import DocUILocalAction
+from bauiv1lib.docui._menu import DocUIMenuWindow
 from bauiv1lib.docui._window import DocUIWindow
+from bauiv1lib.docui._windowstate import DocUIMainWindowState
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from typing import Any, Callable, Literal
 
     import bacommon.docui.v2
     from bacommon.docui import DocUIRequest, DocUIResponse
+    from bacommon.docui.routes import DocUIRoute
     from bacommon.langstr import LangStrSpec
     import bacommon.clienteffect as clfx
 
@@ -58,6 +64,50 @@ class _WinData:
     refresh_timer: bui.AppTimer | None = None
 
 
+#: How long content can take to arrive after its window appears before
+#: its scale-in transitions play at full length. Transitions exist to
+#: smooth over a wait; content arriving sooner gets proportionally
+#: quicker ones, down to none at all for content that is there at once.
+_FULL_TRANSITION_WAIT = 0.2
+
+
+def _transition_scale(shown_time: float | None) -> float:
+    """Transition-timing scale for content arriving now (see prep_page).
+
+    Measured from ``shown_time`` (a ``time.monotonic()`` value; None
+    means unknown, so full speed).
+    """
+    if shown_time is None:
+        return 1.0
+    waited = time.monotonic() - shown_time
+    scale = max(0.0, min(1.0, waited / _FULL_TRANSITION_WAIT))
+    bui.uilog.debug(
+        'Doc-ui content arrived %.3fs after its window; transition scale'
+        ' %.2f.',
+        waited,
+        scale,
+    )
+    return scale
+
+
+def _as_request(request: DocUIRequest | DocUIRoute) -> DocUIRequest:
+    """Return the wire request for something given as a request or route."""
+    from bacommon.docui.routes import DocUIRoute as RouteBase
+
+    if not isinstance(request, RouteBase):
+        return request
+    wire = request.request()
+    # A route decoded from an incoming request (a typed controller
+    # forwarding to its server, say) needs to send along the page
+    # state and trigger that came with it; route.request() alone only
+    # describes the route.
+    src = request.get_source_request()
+    if src is not None:
+        wire.state = src.state
+        wire.trigger = src.trigger
+    return wire
+
+
 class DocUIController:
     """Manages interactions between DocUI clients and servers.
 
@@ -72,6 +122,7 @@ class DocUIController:
         UNDER_CONSTRUCTION = 'under_construction'
         COMMUNICATION_ERROR = 'communication'
         NEED_UPDATE = 'need_update'
+        NOT_SIGNED_IN = 'not_signed_in'
 
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         """Handle request fulfillment.
@@ -94,6 +145,28 @@ class DocUIController:
         """
         raise NotImplementedError()
 
+    def get_local_action_press_sound(self, name: str) -> PressSound:
+        """What a button plays when pressed to run a local-action.
+
+        Given the local-action's name. The default clicks; typed
+        controllers answer per local-action type (see
+        :meth:`bacommon.docui.routes.DocUILocalActionBase.get_press_sound`).
+        """
+        del name  # Unused.
+        return PressSound.CLICK
+
+    @staticmethod
+    def _play_press_sound(sound: PressSound) -> None:
+        match sound:
+            case PressSound.CLICK:
+                _builtinassets.audio.click01.get().play()
+            case PressSound.SWISH:
+                bui.play_swish()
+            case PressSound.NONE:
+                pass
+            case _:
+                assert_never(sound)
+
     def local_action(self, action: DocUILocalAction) -> None:
         """Do something locally on behalf of the doc-ui.
 
@@ -112,13 +185,15 @@ class DocUIController:
         """
 
     def fulfill_request_web(
-        self, request: DocUIRequest, url: str
+        self, request: DocUIRequest | DocUIRoute, url: str
     ) -> DocUIResponse:
         """Fulfill a request by sending it to a webserver."""
         import bacommon.docui.v1 as dui1
         import bacommon.docui.v2 as dui2
 
         import urllib3.util
+
+        request = _as_request(request)
 
         if not isinstance(request, (dui1.Request, dui2.Request)):
             raise RuntimeError(f'Unsupported docui request: {type(request)}')
@@ -219,13 +294,15 @@ class DocUIController:
         return webresponse.doc_ui_response
 
     def fulfill_request_cloud(
-        self, request: DocUIRequest, domain: str
+        self, request: DocUIRequest | DocUIRoute, domain: str
     ) -> DocUIResponse:
         """Fulfill a request by sending it to ballistica's cloud.
 
         :meta private:
         """
         import bacommon.cloud
+
+        request = _as_request(request)
 
         bui.uilog.debug(
             'Fetching doc-ui request from cloud (domain=%r).', domain
@@ -259,10 +336,20 @@ class DocUIController:
             # Label comm-errors so we can possibly show retry buttons.
             # Expected/transient (bad network, server hiccup), so warn
             # rather than dumping a traceback.
+            # Include the cause chain: it says whether the transport
+            # had no session or lost the message in flight, which is
+            # what decides if a retry could have helped.
+            causes: list[str] = []
+            cause = exc.__cause__
+            while cause is not None and len(causes) < 3:
+                causes.append(f'{type(cause).__name__}: {cause}')
+                cause = cause.__cause__
+            causestr = ' <- '.join(causes)
             bui.uilog.warning(
-                'Communication error fetching doc-ui (domain=%r): %s',
+                'Communication error fetching doc-ui (domain=%r): %s%s',
                 domain,
                 exc,
+                f' [cause: {causestr}]' if causes else '',
             )
             return self.error_response(
                 request, self.ErrorType.COMMUNICATION_ERROR
@@ -288,6 +375,72 @@ class DocUIController:
 
         if isinstance(response, dui2.Response):
             _resolve.check_finalization_leaks(response)
+
+    def _v2_response_error(
+        self, request: DocUIRequest, response: bacommon.docui.v2.Response
+    ) -> ErrorType | None:
+        """The error page to show in place of a v2 response, if any."""
+        import bacommon.docui.v2 as dui2
+
+        minbuild = response.minimum_engine_build
+        if minbuild is not None and minbuild > bui.app.env.engine_build_number:
+            bui.uilog.debug(
+                'doc-ui response requires engine build %d but we'
+                ' are %d; showing need-update prompt.',
+                minbuild,
+                bui.app.env.engine_build_number,
+            )
+            return self.ErrorType.NEED_UPDATE
+        if response.status is dui2.ResponseStatus.NEED_UPDATE_ERROR:
+            # The server declined us as too old without naming a build;
+            # our standard prompt covers it.
+            bui.uilog.debug(
+                'doc-ui response says we need an update; showing'
+                ' need-update prompt.'
+            )
+            return self.ErrorType.NEED_UPDATE
+        if (
+            response.status is not dui2.ResponseStatus.SUCCESS
+            and not response.page.rows
+        ):
+            # A status-only error (bamaster sends these for
+            # not-signed-in, unknown domains, and handler exceptions):
+            # it has nothing to show, so show our own error page for it
+            # rather than an empty one, and say so (for an unknown
+            # error, the cause will be in the server's log).
+            bui.uilog.warning(
+                'doc-ui %s request to %s got status-only response %s.',
+                type(self).__name__,
+                (
+                    request.path
+                    if isinstance(request, dui2.Request)
+                    else type(request).__name__
+                ),
+                response.status.name,
+            )
+            return self._status_error_type(response.status)
+        return None
+
+    @classmethod
+    def _status_error_type(
+        cls, status: bacommon.docui.v2.ResponseStatus
+    ) -> ErrorType:
+        """The error page to show for a status-only error response."""
+        import bacommon.docui.v2 as dui2
+
+        match status:
+            case dui2.ResponseStatus.NOT_SIGNED_IN_ERROR:
+                return cls.ErrorType.NOT_SIGNED_IN
+            case dui2.ResponseStatus.COMMUNICATION_ERROR:
+                return cls.ErrorType.COMMUNICATION_ERROR
+            case dui2.ResponseStatus.NEED_UPDATE_ERROR:
+                return cls.ErrorType.NEED_UPDATE
+            case (
+                dui2.ResponseStatus.UNKNOWN_ERROR | dui2.ResponseStatus.SUCCESS
+            ):
+                return cls.ErrorType.GENERIC
+            case _:
+                assert_never(status)
 
     def error_response(
         self,
@@ -329,6 +482,9 @@ class DocUIController:
         elif error_type is self.ErrorType.COMMUNICATION_ERROR:
             status_code = dui2.ResponseStatus.COMMUNICATION_ERROR
             error_msg = uistat.server_error.spec
+        elif error_type is self.ErrorType.NOT_SIGNED_IN:
+            status_code = dui2.ResponseStatus.NOT_SIGNED_IN_ERROR
+            error_msg = uistat.must_sign_in_to_view.spec
         else:
             assert_never(error_type)
 
@@ -387,16 +543,40 @@ class DocUIController:
 
     def create_window(
         self,
-        request: DocUIRequest,
+        request: DocUIRequest | DocUIRoute,
         *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
         uiopenstateid: str | None = None,
         suppress_win_extra_type_warning: bool = False,
+        layout: bacommon.docui.v2.WindowLayout | None = None,
     ) -> DocUIWindow:
-        """Create a new window to handle a request."""
+        """Create a new window to handle a request.
+
+        The window opens at ``layout``; if not given, a route's own
+        :meth:`~bacommon.docui.routes.DocUIRoute.get_window_layout`, or
+        else the wide layout (the same default routes use).
+        """
+        import bacommon.docui.v2 as dui2
+        from bacommon.docui.routes import DocUIRoute as RouteBase
+
         assert bui.in_logic_thread()
+
+        if layout is None:
+            layout = (
+                request.get_window_layout()
+                if isinstance(request, RouteBase)
+                else dui2.WindowLayout.WIDE
+            )
+        request = _as_request(request)
+
+        # If we've already got this exact page for this account and
+        # locale, show it immediately instead of staring at a spinner.
+        # We still fetch a fresh copy in the background (see
+        # _apply_response), so nothing on screen is ever more than one
+        # round-trip stale.
+        cached = _cache.get(self, request)
 
         # Create a shiny new window.
         win = DocUIWindow(
@@ -407,8 +587,20 @@ class DocUIController:
             auxiliary_style=auxiliary_style,
             uiopenstateid=uiopenstateid,
             suppress_win_extra_type_warning=suppress_win_extra_type_warning,
+            layout=layout,
+            # A cache hit means content appears under the spinner, which
+            # is what both of these describe.
+            restored=cached is not None,
+            has_had_response=cached is not None,
         )
-        self._set_win_data(win, _WinData(_WinState.FETCHING_FRESH_REQUEST))
+        self._set_win_data(
+            win,
+            _WinData(
+                _WinState.FETCHING_FRESH_REQUEST
+                if cached is None
+                else _WinState.REDISPLAYING_OLD_STATE
+            ),
+        )
 
         # Lock its ui and kick off a bg task to populate it.
         win.lock_ui()
@@ -420,8 +612,14 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
+                column_insets=win.column_insets,
                 idprefix=win.main_window_id_prefix,
-                immediate=False,
+                # Cached content has no delayed appearance to soften, so
+                # snap it in rather than animating.
+                immediate=cached is not None,
+                explicit_response=cached,
+                shown_time=time.monotonic(),
             )
         )
         return win
@@ -437,6 +635,54 @@ class DocUIController:
     ) -> None:
         """Called when a window shared state is being restored."""
         del window, state  # Unused.
+
+    def get_cache_key_extra(self) -> str | None:
+        """Extra identity for response caching.
+
+        Cached responses are keyed by controller class, request,
+        account and locale. A controller whose *instance* state changes
+        what it returns for a given request must declare that state
+        here; otherwise two instances differing in it share one cache
+        entry and briefly show each other's pages.
+
+        Return ``None`` to opt out of caching entirely, which is the
+        right answer when a response depends on state that cannot be
+        summarized as a string.
+        """
+        return ''
+
+    def get_window_toolbar_visibility(
+        self,
+    ) -> Literal['menu_full', 'menu_minimal']:
+        """Which toolbar our windows show.
+
+        Everything by default. Settings-style pages reachable mid-game
+        typically return ``'menu_minimal'`` unless
+        ``bauiv1.in_main_menu()``, as the classic settings windows do.
+        """
+        return 'menu_full'
+
+    def get_page_state_poll_interval(self) -> float | None:
+        """How often to call :meth:`poll_page_state` (None = never).
+
+        For client-local pages mirroring values that can change behind
+        their back (fullscreen toggled by a hotkey, say). Polling runs
+        while a window shows a page that has state and isn't waiting on
+        a request.
+        """
+        return None
+
+    def poll_page_state(self, window: DocUIWindow) -> dict:
+        """Current values for (some of) a window's page state.
+
+        Called every :meth:`get_page_state_poll_interval` seconds. Return
+        wire-form values keyed as in the state (see
+        :meth:`bacommon.docui.routes.DocUIState.key`); any differing
+        from what the page holds are pushed into it, updating the
+        controls showing them without rebuilding anything.
+        """
+        del window  # Unused.
+        return {}
 
     @classmethod
     def get_window_extra_type_id(cls) -> str:
@@ -502,12 +748,15 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
+                column_insets=win.column_insets,
                 idprefix=win.main_window_id_prefix,
                 # If this window has had a response already, snap things
                 # in immediately with no transitions.
                 immediate=has_had_response,
                 explicit_error=explicit_error,
                 explicit_response=explicit_response,
+                shown_time=time.monotonic(),
             )
         )
         return win
@@ -520,10 +769,20 @@ class DocUIController:
         origin_widget: bui.Widget | None = None,
         is_refresh: bool = False,
     ) -> None:
-        """Kick off a request to replace existing window contents."""
+        """Kick off a request to replace existing window contents.
+
+        A refresh (``is_refresh``) saves the window's shared state first,
+        as a replace action does, so the rebuilt page comes back with
+        the same selection. Without it, a refresh kicked off directly (a
+        local action re-rendering its page, say) restores whatever was
+        saved last -- often from when the window opened.
+        """
         import bacommon.docui.v2 as dui2
 
         assert bui.in_logic_thread()
+
+        if is_refresh:
+            win.main_window_save_shared_state()
 
         win.request = request
 
@@ -591,6 +850,8 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
+                column_insets=win.column_insets,
                 idprefix=win.main_window_id_prefix,
                 immediate=True,
                 explicit_error=explicit_error,
@@ -603,8 +864,13 @@ class DocUIController:
         widgetid: str | None,
         action: bacommon.docui.v2.Action | None,
         is_timed: bool = False,
+        trigger: str | None = None,
     ) -> None:
-        """Called when a button is pressed in a doc-ui."""
+        """Called when a button is pressed in a doc-ui.
+
+        (Or when a timed action fires, or when an input row with an
+        on-change action changes; ``trigger`` is its state key then.)
+        """
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
 
@@ -612,15 +878,7 @@ class DocUIController:
 
         assert bui.in_logic_thread()
 
-        # If locked, been and tell them to try again.
-        if window.locked:
-            builtinassets.audio.error.get().play()
-            from bauiv1 import _commonassets
-
-            bui.screenmessage(
-                _commonassets.strings.status.page_refreshing_try_again,
-                color=(1, 0, 0),
-            )
+        if self._refuse_if_locked(window):
             return
 
         widget: bui.Widget | None
@@ -640,7 +898,7 @@ class DocUIController:
         # Play error beeps on buttons with no actions assigned to let
         # the user know nothing is supposed to happen.
         if action is None:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         action_type = action.get_type_id()
@@ -655,13 +913,20 @@ class DocUIController:
                 )
             else:
                 if action.default_sound:
-                    builtinassets.audio.swish.get().play()
+                    bui.play_swish()
+                browserequest = window.request_for_action(
+                    action.request,
+                    sets=action.sets,
+                    state=action.state,
+                    trigger=trigger,
+                )
                 window.main_window_replace(
                     lambda: self.create_window(
-                        action.request,
+                        browserequest,
                         origin_widget=widget,
                         auxiliary_style=False,
                         suppress_win_extra_type_warning=True,
+                        layout=action.layout,
                     )
                 )
 
@@ -671,12 +936,21 @@ class DocUIController:
             # Play default click sound only if this is coming from a
             # button.
             if widget is not None and action.default_sound:
-                builtinassets.audio.click01.get().play()
+                _builtinassets.audio.click01.get().play()
 
             # Force a state save so if our UI gets rebuilt with the same
             # IDs we'll wind up with the same selection and whatnot.
             window.main_window_save_shared_state()
-            self.replace(window, action.request, origin_widget=widget)
+            self.replace(
+                window,
+                window.request_for_action(
+                    action.request,
+                    sets=action.sets,
+                    state=action.state,
+                    trigger=trigger,
+                ),
+                origin_widget=widget,
+            )
 
         elif action_type is dui.ActionTypeID.LOCAL:
             assert isinstance(action, dui.Local)
@@ -684,13 +958,30 @@ class DocUIController:
                 if action.close_window:
                     # Always play close-window swish, even if we don't have
                     # a source button.
-                    builtinassets.audio.swish.get().play()
-                else:
-                    # Only play click sound if this is coming from a button.
-                    if widget is not None:
-                        builtinassets.audio.click01.get().play()
+                    bui.play_swish()
+                elif widget is not None:
+                    # Only play press sounds if this is coming from a
+                    # button; the local-action says which.
+                    self._play_press_sound(
+                        PressSound.CLICK
+                        if action.immediate_local_action is None
+                        else self.get_local_action_press_sound(
+                            action.immediate_local_action
+                        )
+                    )
+            window.pull_page_state_values()
+            if action.sets:
+                window.set_page_state_values(action.sets)
+
             if action.close_window:
+                if action.return_sets:
+                    self._apply_return_sets(window, action.return_sets)
                 window.main_window_back()
+            elif action.return_sets:
+                bui.uilog.warning(
+                    'Ignoring doc-ui return values on an action that'
+                    ' does not close its window.'
+                )
 
             self._run_immediate_effects_and_actions(
                 client_effects=action.immediate_client_effects,
@@ -699,14 +990,148 @@ class DocUIController:
                 widget=widget,
                 window=window,
                 is_timed=is_timed,
+                trigger=trigger,
             )
+        elif action_type is dui.ActionTypeID.MENU:
+            assert isinstance(action, dui.Menu)
+            # Menus pop up where someone pressed, and button presses
+            # come in through run_button_action(); nothing else gets
+            # to open one (timers, input rows, other menus' items).
+            bui.uilog.warning('Ignoring MENU action (only allowed on buttons).')
+
         elif action_type is dui.ActionTypeID.UNKNOWN:
             assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
         else:
             # Make sure we handle all options.
             assert_never(action_type)
+
+    def run_button_action(
+        self,
+        window: DocUIWindow,
+        widgetid: str,
+        action: bacommon.docui.v2.Action | None,
+        menu: prep.MenuPrep | None,
+    ) -> None:
+        """Called when a doc-ui button is pressed.
+
+        :meth:`run_action`, plus the one thing only a button can do:
+        pop up its menu (``menu`` being its prepped one, for a button
+        whose action is a menu).
+
+        :meta private:
+        """
+        # pylint: disable=cyclic-import
+        import bacommon.docui.v2 as dui
+
+        if not isinstance(action, dui.Menu) or menu is None:
+            self.run_action(window, widgetid, action)
+            return
+
+        assert bui.in_logic_thread()
+
+        if self._refuse_if_locked(window):
+            return
+
+        widget = bui.widget_by_id(widgetid)
+        if widget is None:
+            bui.uilog.warning(
+                'DocUI button press widget not found: %s (not expected)',
+                widgetid,
+            )
+            return
+
+        # Nothing to show.
+        if not menu.labels:
+            _builtinassets.audio.error.get().play()
+            return
+
+        if action.default_sound:
+            bui.play_swish()
+        DocUIMenuWindow(window, widgetid, widget, menu)
+
+    def _refuse_if_locked(self, window: DocUIWindow) -> bool:
+        """Tell the user to try again if a window is locked; True if so."""
+        if not window.locked:
+            return False
+        _builtinassets.audio.error.get().play()
+        from bauiv1 import _commonassets
+
+        bui.screenmessage(
+            _commonassets.strings.status.page_refreshing_try_again,
+            color=(1, 0, 0),
+        )
+        return True
+
+    def run_input_local_action(
+        self,
+        window: DocUIWindow,
+        widgetid: str,
+        key: str,
+        action: bacommon.docui.v2.Local,
+        *,
+        sets_state: bool = True,
+    ) -> None:
+        """Run an input row's local action mid-interaction.
+
+        Like :meth:`run_action` for a Local, minus the press sound and
+        the window-lock check (nothing here is a press), and with the
+        row's state key passed as the local-action's trigger.
+
+        :meta private:
+        """
+        assert bui.in_logic_thread()
+        if action.sets and sets_state:
+            window.set_page_state_values(action.sets)
+        widget = bui.widget_by_id(widgetid)
+        self._run_immediate_effects_and_actions(
+            client_effects=action.immediate_client_effects,
+            local_action=action.immediate_local_action,
+            local_action_args=action.immediate_local_action_args,
+            widget=widget,
+            window=window,
+            is_timed=False,
+            trigger=key,
+        )
+
+    def input_changed(
+        self,
+        window: DocUIWindow,
+        widgetid: str,
+        key: str,
+        value: Any,
+        on_change: bacommon.docui.v2.Action | None,
+    ) -> None:
+        """Called when an input row's value changes in a doc-ui.
+
+        :meta private:
+        """
+        assert bui.in_logic_thread()
+
+        # The row is already showing the new value; no need to push.
+        window.set_page_state_values({key: value}, push=False)
+
+        # No action means the value simply goes out with whatever this
+        # page sends next.
+        if on_change is not None:
+            self.run_action(window, widgetid, on_change, trigger=key)
+
+    @staticmethod
+    def _apply_return_sets(window: DocUIWindow, values: dict) -> None:
+        """Hand values back to the doc-ui page a closing window returns to.
+
+        They go into the request that page's window is recreated with,
+        so it shows them and refreshes with them.
+        """
+        back_state = window.main_window_back_state
+        if not isinstance(back_state, DocUIMainWindowState):
+            bui.uilog.warning(
+                'Ignoring doc-ui return values; not returning to a'
+                ' doc-ui window.'
+            )
+            return
+        back_state.apply_return_sets(values)
 
     def _run_immediate_effects_and_actions(
         self,
@@ -717,6 +1142,7 @@ class DocUIController:
         widget: bui.Widget | None,
         window: DocUIWindow,
         is_timed: bool,
+        trigger: str | None = None,
     ) -> None:
         # We don't allow timed actions to trigger immediate
         # client-effects/local-actions. It would be too easy for such
@@ -736,7 +1162,10 @@ class DocUIController:
             return
 
         if bui.app.classic is not None and client_effects:
-            bui.app.classic.run_bs_client_effects(client_effects)
+            # The window's targets let effects animate its page.
+            bui.app.classic.run_bs_client_effects(
+                client_effects, targets=window.anim_targets
+            )
         if local_action is not None:
             try:
                 self.local_action(
@@ -749,6 +1178,7 @@ class DocUIController:
                         ),
                         widget=widget,
                         window=window,
+                        trigger=trigger,
                     )
                 )
             except Exception:
@@ -773,14 +1203,21 @@ class DocUIController:
         uiscale: bui.UIScale,
         scroll_width: float,
         scroll_height: float,
+        margins: tuple[float, float, float, float],
+        column_insets: tuple[float, float],
         idprefix: str,
         immediate: bool,
         explicit_error: ErrorType | None = None,
         explicit_response: DocUIResponse | None = None,
+        shown_time: float | None = None,
     ) -> None:
         """Wrangle a request from within a background thread.
 
         This will always return a response, even on error conditions.
+
+        ``shown_time`` (a ``time.monotonic()`` value) is when the window
+        this request fills appeared; transitions are sped up for content
+        that arrives soon after it (see _transition_scale()).
         """
         # pylint: disable=cyclic-import
         import bacommon.docui.v2 as dui2
@@ -790,6 +1227,11 @@ class DocUIController:
 
         response: DocUIResponse | None = None
         error: DocUIController.ErrorType | None = None
+
+        # The de-indexed copy prep renders from. Kept distinct from
+        # `response`, which stays un-de-indexed so it can be cached and
+        # re-prepped; see _resolve.deindex_response().
+        prepresponse: dui2.Response | None = None
 
         if explicit_error is not None:
             error = explicit_error
@@ -829,33 +1271,32 @@ class DocUIController:
 
             elif responsetype is DocUIResponseTypeID.V2:
                 assert isinstance(response, dui2.Response)
-                minbuild = response.minimum_engine_build
-                if (
-                    minbuild is not None
-                    and minbuild > bui.app.env.engine_build_number
-                ):
-                    bui.uilog.debug(
-                        'doc-ui response requires engine build %d but we'
-                        ' are %d; showing need-update prompt.',
-                        minbuild,
-                        bui.app.env.engine_build_number,
-                    )
-                    error = self.ErrorType.NEED_UPDATE
+                error = self._v2_response_error(request, response)
+                if error is not None:
                     response = None
                 else:
                     try:
-                        # Resolve referenced packages in our locale and
-                        # de-index deferred effects; the page then preps
-                        # and renders natively.
+                        # Resolve referenced packages in our locale, then
+                        # de-index a throwaway copy for prep to render
+                        # from; the page then preps and renders natively.
                         from bauiv1lib.docui import _resolve
 
-                        _resolve.resolve_response(response)
+                        _resolve.resolve_packages(response)
+
+                        # De-indexing rewrites the page in place, so it
+                        # gets a copy and the wire response stays
+                        # pristine. Everything the prep hands forward
+                        # (button actions and their deferred effects)
+                        # points into the copy.
+                        prepresponse = copy.deepcopy(response)
+                        _resolve.deindex_response(prepresponse)
                     except Exception:
                         bui.uilog.exception(
                             'Error resolving v2 doc-ui response.'
                         )
                         error = self.ErrorType.GENERIC
                         response = None
+                        prepresponse = None
             elif responsetype is DocUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownDocUIResponse)
                 bui.uilog.debug(
@@ -869,19 +1310,31 @@ class DocUIController:
 
         if error is not None:
             response = self.error_response(request, error)
+            # Locally authored, so it carries no package manifest and
+            # has nothing to de-index; prep can render it directly.
+            prepresponse = asserttype(response, dui2.Response)
 
         # Currently must be v2 if it made it to here.
         assert isinstance(response, dui2.Response)
+        assert prepresponse is not None
 
         pageprep = prep.prep_page(
-            response.page,
-            packages=list(response.packages),
+            prepresponse.page,
+            packages=list(prepresponse.packages),
             uiscale=uiscale,
             scroll_width=scroll_width,
             scroll_height=scroll_height,
+            margins=margins,
+            column_insets=column_insets,
             immediate=immediate,
+            transition_scale=_transition_scale(shown_time),
             idprefix=idprefix,
         )
+
+        # Carry the de-indexed display-time effects along on the prep;
+        # the response we hand to the ui thread is un-de-indexed, so
+        # its own copies are not the runnable form.
+        pageprep.client_effects = prepresponse.client_effects
 
         # Go ahead and just push the response along with our weakref
         # back to the logic thread for handling. We could quick-out here
@@ -918,9 +1371,21 @@ class DocUIController:
         assert isinstance(response, dui2.Response)
 
         win.unlock_ui()
+
+        # The request this response answers. Grab it before
+        # set_last_response(): that adopts the page's declared state into
+        # the window's request (so refreshes send it), and a request
+        # carrying state is uncacheable -- which would keep any page
+        # declaring state out of the cache entirely.
+        answered_request = win.request
+
         win.set_last_response(
             response,
             response.status == dui2.ResponseStatus.SUCCESS,
+            redisplay=(
+                self._get_win_data(win).state
+                is _WinState.REDISPLAYING_OLD_STATE
+            ),
         )
 
         # Set the UI.
@@ -928,12 +1393,25 @@ class DocUIController:
 
         state = self._get_win_data(win).state
 
+        # Remember fresh successful fetches so the next open of this
+        # page is instant. Deliberately the un-de-indexed response --
+        # prep rendered from its own copy, and keeping this one
+        # un-de-indexed is what lets it be re-prepped later at whatever
+        # ui-scale or window size it next appears at.
+        if (
+            state is _WinState.FETCHING_FRESH_REQUEST
+            or state is _WinState.REFRESHING
+        ) and response.status is dui2.ResponseStatus.SUCCESS:
+            _cache.put(self, answered_request, response)
+
         # Run client-effects and local-actions ONLY after fresh requests
         # (don't want sounds and other actions firing when we navigate
         # back or resize a window).
         if state is _WinState.FETCHING_FRESH_REQUEST:
-            if response.client_effects and bui.app.classic is not None:
-                bui.app.classic.run_bs_client_effects(response.client_effects)
+            if pageprep.client_effects and bui.app.classic is not None:
+                bui.app.classic.run_bs_client_effects(
+                    pageprep.client_effects, targets=win.anim_targets
+                )
             if response.local_action is not None:
                 try:
                     self.local_action(

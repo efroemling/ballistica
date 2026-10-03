@@ -18,6 +18,16 @@ namespace ballistica::core {
 /// General Python support class for our feature-set.
 class CorePython {
  public:
+  /// Summary of the pre-interpreter pyc-prewarm install (if one
+  /// ran), stashed here because log lines emitted that early are
+  /// filtered before configured levels apply; CoreFeatureSet::
+  /// ApplyBaEnvConfig() emits it once logging is live.
+  std::string pyc_prewarm_summary;
+  /// Whether that summary reports a failure (an I/O error or an
+  /// aborting exception) -- drives whether it's emitted at warning
+  /// vs info level.
+  bool pyc_prewarm_had_error{};
+
   /// Specific Python objects we hold in objs_.
   enum class ObjID {
     kMainDict,

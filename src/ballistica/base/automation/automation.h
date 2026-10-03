@@ -68,6 +68,21 @@ class Automation {
   /// GraphicsServer::TryRender(); a no-op when nothing is queued.
   void RunPendingCaptures();
 
+  /// Report the app's current OS-window size. Only functions where the
+  /// app-adapter runs in a desktop window (SDL builds). Queues the query
+  /// to the main thread and returns immediately; may be called from any
+  /// thread. Emits ``[automation] <tag> ok <W>x<H>`` (logical units) or
+  /// a structured fail line.
+  void GetWindowSize(const std::string& tag);
+
+  /// Resize the app's OS window. Only functions where the app-adapter
+  /// runs in a desktop window (SDL builds) and only in windowed mode.
+  /// Queues the resize to the main thread and returns immediately; may
+  /// be called from any thread. Emits ``[automation] <tag> ok <W>x<H>``
+  /// with the size actually applied (the OS may clamp; e.g. macOS to
+  /// display bounds) or a structured fail line.
+  void SetWindowSize(int width, int height, const std::string& tag);
+
  private:
   struct PendingCapture_ {
     std::string path;

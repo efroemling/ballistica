@@ -6,20 +6,22 @@ The depiction itself lives in :mod:`bacommon.displayitem` so that one
 description of how an item looks serves both the client and the
 producer. What lives here is the client's half: lending that depiction
 the things it cannot reach on its own (see
-``bacommon.displayitem.DepictionAssets``), and drawing the result
-into a plain container widget.
-
-See ``docs/initiatives/docui-frames.md``.
+``bacommon.displayitem.DepictionAssets``), and drawing the resulting
+doc-ui decorations into a plain container widget.
 """
 
 from typing import TYPE_CHECKING
 
-import bacommon.docui.v2 as dui2
-from bacommon.displayitem import DisplayItem, DepictionAssets
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bacommon.displayitem import (
+    DisplayItem,
+    DisplayItemStyle,
+    DepictionAssets,
+)
+from bauiv1 import _builtinassets
+from bauiv1 import _classiccatalogassets
 
 if TYPE_CHECKING:
+    import bacommon.docui.v2 as dui2
     import bacommon.legacydisplayitem as lditm
     import bauiv1
 
@@ -43,39 +45,40 @@ def depiction_assets() -> DepictionAssets:
         )
 
         _g_assets = DepictionAssets(
-            white=builtinassets.textures.white,
-            coin=classicassets.textures.coin,
-            tickets=classicassets.textures.tickets,
-            tickets_purple=classicassets.textures.tickets_purple,
-            chest_icon=classicassets.textures.chest_icon,
-            chest_icon_tint=classicassets.textures.chest_icon_tint,
+            white=_builtinassets.textures.white,
+            coin=_classiccatalogassets.textures.coin,
+            tickets=_classiccatalogassets.textures.tickets,
+            tickets_purple=_classiccatalogassets.textures.tickets_purple,
+            chest_icon=_classiccatalogassets.textures.chest_icon,
+            chest_icon_tint=_classiccatalogassets.textures.chest_icon_tint,
             chest_tints={
-                appearance: (info.tint, info.tint2)
+                appearance: (info.tint, info.tint2, info.tint3)
                 for appearance, info in CHEST_APPEARANCE_DISPLAY_INFOS.items()
             },
             chest_tint_default=(
                 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint,
                 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint2,
+                CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT.tint3,
             ),
         )
     return _g_assets
 
 
-def display_item_frame(
+def display_item_decorations(
     wrapper: lditm.Wrapper,
     *,
     position: tuple[float, float],
     size: tuple[float, float],
-    style: dui2.DisplayItemStyle,
+    style: DisplayItemStyle,
     debug: bool = False,
     text_color: tuple[float, float, float] | None = None,
     depth_range: tuple[float, float] | None = None,
     highlight: bool = True,
-) -> dui2.Frame:
-    """Return a frame depicting a display-item, using client assets.
+) -> list[dui2.Decoration]:
+    """Return decorations depicting a display-item, using client assets.
 
     Convenience wrapper over
-    ``bacommon.displayitem.DisplayItem.to_frame`` for client code,
+    ``bacommon.displayitem.DisplayItem.decorations`` for client code,
     which always wants this client's own assets.
 
     :meta private:
@@ -89,7 +92,7 @@ def display_item_frame(
         highlight=highlight,
         depth_range=depth_range,
         debug=debug,
-    ).to_frame(depiction_assets())
+    ).decorations(depiction_assets())
 
 
 def show_display_item(
@@ -110,23 +113,25 @@ def show_display_item(
     # pylint: disable=cyclic-import
     # Safe up-call: bauiv1lib sits above us and is fully imported by
     # the time any ui is being built.
-    from bauiv1lib.docui.prep import prep_frames
+    from bauiv1lib.docui.prep import prep_decorations_for_container
 
     # Silent no-op if our parent ui is dead.
     if not parent:
         return
 
     # Bounds that make the 4:3 style resolve to exactly this width.
-    frame = display_item_frame(
+    decorations = display_item_decorations(
         itemwrapper,
         position=pos,
         size=(width, width * 0.75),
-        style=dui2.DisplayItemStyle.FULL,
+        style=DisplayItemStyle.FULL,
         debug=debug,
     )
 
-    # Prepping here blocks the ui thread, which is what prep_frames
+    # Prepping here blocks the ui thread, which is what the prep call
     # warns about -- but this call is synchronous ui construction with
     # no background pass to hang the work off, so the warning would be
-    # noise. See decision F8 in the initiative doc.
-    prep_frames([frame], packages=[], allow_logic_thread=True)(parent)
+    # noise.
+    prep_decorations_for_container(
+        decorations, packages=[], allow_logic_thread=True
+    )(parent)

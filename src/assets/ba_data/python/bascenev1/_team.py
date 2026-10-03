@@ -24,9 +24,9 @@ def get_default_team_display_name(name: str) -> str | babase.LangStr:
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    strs = classicassets.strings.teams
+    strs = _classicassets.strings.teams
     return {
         'Good Guys': strs.good_guys,
         'Bad Guys': strs.bad_guys,

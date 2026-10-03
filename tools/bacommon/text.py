@@ -118,3 +118,4 @@ class SpecialChar(Enum):
     POTATO = '\ue065'
     PALM_TREE = '\ue066'
     BOXING_GLOVE = '\ue067'
+    POPUP_ICON = '\ue018'

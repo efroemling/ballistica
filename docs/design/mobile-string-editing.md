@@ -62,6 +62,30 @@ Gboard draws for `IME_ACTION_SEND` — verified on an emulator). Neither
 platform allows a custom label on the key, so "Exec"-style wording is
 not achievable for code; both use the platform's "go".
 
+## Positioning: centered by default, keyboard-avoidance only when forced
+
+Both editors center their card and move it only when the keyboard
+would actually cover it — and each platform's *mechanism* for that was
+chosen the hard way (2026-08-26):
+
+- **iOS** drives its required clearance constraint straight from the
+  keyboard notifications' frame payload, NOT `keyboardLayoutGuide`.
+  The guide arms its tracking asynchronously after its view joins a
+  window, and the editor's unanimated present + immediate
+  `becomeFirstResponder` can raise the keyboard before that happens;
+  a show event the guide misses left the card sitting under the
+  keyboard until some later geometry change. A relayout nudge cannot
+  fix that (the stale state is the guide's own constraints), so the
+  notifications are the source of truth.
+- **Android** deliberately uses the *defaults*: `ADJUST_RESIZE` plus
+  stock CENTER gravity, no positioning code at all. A previous
+  insets-listener gravity flip to hug the keyboard snapped visibly on
+  every show — gravity changes are unanimated and the insets dispatch
+  lands after the keyboard's animation — and any conditional flip
+  inherits that timing problem. Centered-in-the-remaining-space is
+  smooth, and on modern phone aspect ratios the landscape strip above
+  the keyboard is short enough that centered is near the keys anyway.
+
 ## Constraints that keep the game usable
 
 - **The input lock must be the permanent flavor.** The editor takes

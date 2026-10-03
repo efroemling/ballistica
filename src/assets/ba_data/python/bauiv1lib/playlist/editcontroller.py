@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -231,7 +231,7 @@ class PlaylistEditController:
 
         assert bui.app.classic is not None
         if config is None:
-            builtinassets.audio.powerdown01.get().play()
+            _builtinassets.audio.powerdown01.get().play()
         else:
             # Make sure type is in there.
             assert self._editing_game_type is not None
@@ -247,7 +247,7 @@ class PlaylistEditController:
                 self._playlist.insert(insert_index, copy.deepcopy(config))
                 self._selected_index = insert_index
 
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
 
         # If we're adding, jump to before the add started.
         # Otherwise jump to before the edit started.

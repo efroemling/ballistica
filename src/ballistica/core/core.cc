@@ -11,6 +11,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/shared/foundation/fatal_error_report.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/runnable.h"
 
@@ -174,6 +175,27 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
 
   logging->ApplyBaEnvConfig();
 
+  // The config dir is now known (and log levels are live), so the
+  // fatal-error reporter can defer undeliverable reports there -- and
+  // send any a previous run left behind. The config dir rather than
+  // the cache dir: caches can be purged by the OS (and are deliberately
+  // chaos-deleted in dev builds), and a report must survive until the
+  // next launch.
+  SetPendingFatalReportDir(ba_env_config_dir_ + "/pending_reports");
+  SubmitPendingFatalReports();
+
+  // Now that configured log levels are live, emit the pyc-prewarm
+  // summary stashed during pre-interpreter bring-up (if any) --
+  // warning level if it reported a failure so real I/O trouble
+  // surfaces, info otherwise.
+  if (!python->pyc_prewarm_summary.empty()) {
+    logging->Log(
+        LogName::kBaLifecycle,
+        python->pyc_prewarm_had_error ? LogLevel::kWarning : LogLevel::kInfo,
+        python->pyc_prewarm_summary);
+    python->pyc_prewarm_summary.clear();
+  }
+
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
   // AND that value differs from baenv's default.
   auto standard_app_python_dir =
@@ -183,10 +205,14 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
       && *ba_env_app_python_dir_ != standard_app_python_dir;
 
   // As a sanity check, die if the data dir we were given doesn't contain a
-  // 'ba_data' dir.
-  auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
-  if (!platform->FilePathExists(fullpath)) {
-    FatalError("ba_data directory not found at '" + fullpath + "'.");
+  // 'ba_data' dir — except on platforms serving bundled assets directly
+  // out of an archive (the apk on Android), where ba_data legitimately
+  // has no on-disk presence.
+  if (!platform->GetBundledAssetsArchiveInfo().has_value()) {
+    auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
+    if (!platform->FilePathExists(fullpath)) {
+      FatalError("ba_data directory not found at '" + fullpath + "'.");
+    }
   }
 }
 

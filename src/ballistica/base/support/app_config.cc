@@ -184,8 +184,23 @@ void AppConfig::SetupEntries_() {
   float_entries_[FloatID::kGoogleVRRenderTargetScale] =
       FloatEntry("GVR Render Target Scale", gvrrts_default);
 
+  // 0-1; only used when 'Screen Insets' is 'Custom'. See
+  // Graphics::ScreenInsetAmount.
+  float_entries_[FloatID::kCustomScreenInsets] =
+      FloatEntry("Custom Screen Insets", 0.0f);
+
+  // Dev-console button size, as a multiple of its ui-scale default.
+  float_entries_[FloatID::kDevConsoleButtonSize] =
+      FloatEntry("Dev Console Button Size", 1.0f);
+
   optional_float_entries_[OptionalFloatID::kIdleExitMinutes] =
       OptionalFloatEntry("Idle Exit Minutes", std::optional<float>());
+  // Custom dev-console button center (virtual-screen coords; set by
+  // dragging the button). Unset = the default docked position.
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosX] =
+      OptionalFloatEntry("Dev Console Button Pos X", std::optional<float>());
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosY] =
+      OptionalFloatEntry("Dev Console Button Pos Y", std::optional<float>());
 
   string_entries_[StringID::kResolutionAndroid] =
       StringEntry("Resolution (Android)", "Auto");
@@ -195,8 +210,6 @@ void AppConfig::SetupEntries_() {
       StringEntry("Touch Movement Control Type", "swipe");
   string_entries_[StringID::kGraphicsQuality] =
       StringEntry("Graphics Quality", "Auto");
-  string_entries_[StringID::kTextureQuality] =
-      StringEntry("Texture Quality", "Auto");
   string_entries_[StringID::kVerticalSync] =
       StringEntry("Vertical Sync", "Auto");
   string_entries_[StringID::kVRHeadRelativeAudio] =
@@ -214,13 +227,23 @@ void AppConfig::SetupEntries_() {
   string_entries_[StringID::kInsecureConnections] =
       StringEntry("Insecure Connections", "auto");
 
+  // 'Auto' or 'Custom' (anything else acts as 'Auto'). See
+  // Graphics::ScreenInsetAmount.
+  string_entries_[StringID::kScreenInsets] =
+      StringEntry("Screen Insets", "Auto");
+
+  // 'grey', 'green', 'purple', or 'howdy' (anything else acts as 'grey'). See
+  // UI::ApplyAppConfig.
+  string_entries_[StringID::kDevConsoleButtonStyle] =
+      StringEntry("Dev Console Button Style", "grey");
+
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
 
   // Note: this gets clamped to the valid host range at use time, so
   // stored values from old configs simply snap forward when mins rise.
   int_entries_[IntID::kSceneV1HostProtocol] =
-      IntEntry("SceneV1 Host Protocol", 41);
+      IntEntry("SceneV1 Host Protocol", 46);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);
@@ -230,14 +253,17 @@ void AppConfig::SetupEntries_() {
 
   bool_entries_[BoolID::kAlwaysUseInternalKeyboard] =
       BoolEntry("Always Use Internal Keyboard", false);
+  // Skip the active render rect's aspect-ratio clamp (no black bars on
+  // extreme window shapes; UI may look broken there). See
+  // Graphics::CalcActiveRenderRect.
+  bool_entries_[BoolID::kAllowExtremeAspectRatios] =
+      BoolEntry("Allow Extreme Aspect Ratios", false);
   bool_entries_[BoolID::kUseInsecureConnections] =
       BoolEntry("Use Insecure Connections", false);
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
   bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
   bool_entries_[BoolID::kShowDevConsoleButton] =
       BoolEntry("Show Dev Console Button", false);
-  bool_entries_[BoolID::kEnableTVBorder] =
-      BoolEntry("TV Border", g_core->platform->IsRunningOnTV());
   bool_entries_[BoolID::kKeyboardP2Enabled] =
       BoolEntry("Keyboard P2 Enabled", false);
   bool_entries_[BoolID::kEnablePackageMods] =
@@ -251,8 +277,6 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =
       BoolEntry("Show Demos When Idle", false);
-  bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
-      BoolEntry("Show Deprecated Login Types", false);
   bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =

@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
@@ -14,6 +15,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
+#include "ballistica/ui_v1/support/viewer_depiction.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -58,6 +60,9 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
+  // The depiction kinds we draw (live viewers).
+  RegisterViewerDepictionKinds();
+
   g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_bauiv1 exec end");
 }
@@ -79,6 +84,23 @@ bool UIV1FeatureSet::IsMainUIVisible() {
           || (overlay_root && overlay_root->HasChildren()));
 }
 
+bool UIV1FeatureSet::UICoversScreenOpaquely() {
+  // A single fully-covering opaque window anywhere in our two window
+  // stacks covers everything, so simply OR over their direct children
+  // (this is only a handful of cheap virtual calls; no caching needed).
+  for (auto* stack : {screen_root_widget(), overlay_root_widget()}) {
+    if (stack == nullptr) {
+      continue;
+    }
+    for (auto&& widget : stack->widgets()) {
+      if (widget->CoversScreenOpaquely()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool UIV1FeatureSet::BackPressWouldNavigate() {
   auto* root = root_widget();
   return root != nullptr && root->BackPressWouldNavigate();
@@ -91,13 +113,17 @@ bool UIV1FeatureSet::IsPartyIconVisible() {
 
 void UIV1FeatureSet::SetAccountSignInState(bool signed_in,
                                            const std::string& name) {
-  assert(root_widget_.exists());
-  root_widget_->SetAccountSignInState(signed_in, name);
+  // Root widget can be legitimately absent (zombie mode).
+  if (auto* r = root_widget()) {
+    r->SetAccountSignInState(signed_in, name);
+  }
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
-  assert(root_widget_.exists());
-  root_widget_->SetSquadSizeLabel(num);
+  // Root widget can be legitimately absent (zombie mode).
+  if (auto* r = root_widget()) {
+    r->SetSquadSizeLabel(num);
+  }
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
@@ -164,7 +190,10 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
 
 auto UIV1FeatureSet::GetSelectedWidget() -> Widget* {
   assert(g_base->InLogicThread());
-  assert(root_widget_.exists());
+  // Root widget can be legitimately absent (zombie mode).
+  if (!root_widget_.exists()) {
+    return nullptr;
+  }
   Widget* w{root_widget_.get()};
 
   while (true) {
@@ -186,6 +215,23 @@ auto UIV1FeatureSet::GetSelectedWidget() -> Widget* {
 
 void UIV1FeatureSet::OnActivate() {
   assert(g_base->InLogicThread());
+
+  // The active app-mode is required to have supplied our art (it is
+  // wiped at every app-mode switch by UIV1AppSubsystem.reset(), so
+  // this can never be quietly satisfied by what a *previous* app-mode
+  // left behind). Without it we go into 'zombie' mode: complain
+  // loudly and build no widget tree, leaving the ui inert but the app
+  // alive -- a broken app-mode or plugin should not take the whole
+  // app down, and drawing code gets to keep assuming every asset
+  // member is present while widgets exist.
+  if (!ui_assets_.complete()) {
+    g_core->logging->Log(
+        LogName::kBaUI, LogLevel::kError,
+        "ui_v1 activated without its asset set; the app-mode must apply"
+        " one (bauiv1.set_ui_asset_set()) before activating. The ui will"
+        " be disabled until the next activation supplies it.");
+    return;
+  }
 
   // (Re)create our screen window stack.
   auto sw(Object::New<StackWidget>());
@@ -229,6 +275,11 @@ void UIV1FeatureSet::OnDeactivate() {
   root_widget_.Clear();
   screen_root_widget_.Clear();
   overlay_root_widget_.Clear();
+
+  // Note that we deliberately keep ui_assets_: we are deactivated and
+  // reactivated on every session reset within an app-mode, and the
+  // art's lifetime is the app-mode's, not ours. It is wiped at
+  // app-mode switches via clear_assets() (UIV1AppSubsystem.reset()).
 
   // All widgets should have unregistered their IDs by this point.
   assert(widgets_by_id_.empty());
@@ -450,6 +501,21 @@ auto UIV1FeatureSet::WidgetByID(const std::string& id) -> Widget* {
   assert(!vec.empty());  // Should not be holding empty vecs.
   // In the case of multiple registrations, grab the most recent.
   return vec.back();
+}
+
+void UIV1FeatureSet::PlaySwish() {
+  assert(g_base->InLogicThread());
+  if (!have_assets()) {
+    return;
+  }
+  int r = rand() % 3;  // NOLINT
+  if (r == 0) {
+    g_base->audio->PlaySound(assets().swish.get());
+  } else if (r == 1) {
+    g_base->audio->PlaySound(assets().swish2.get());
+  } else {
+    g_base->audio->PlaySound(assets().swish3.get());
+  }
 }
 
 }  // namespace ballistica::ui_v1

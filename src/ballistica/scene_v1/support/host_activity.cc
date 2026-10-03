@@ -24,7 +24,9 @@
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/player.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -83,6 +85,16 @@ HostActivity::~HostActivity() {
     }
   }
   for (auto&& i : materials_) {
+    if (i.exists()) {
+      i->MarkDead();
+    }
+  }
+  for (auto&& i : spaz_defs_) {
+    if (i.exists()) {
+      i->MarkDead();
+    }
+  }
+  for (auto&& i : depictions_) {
     if (i.exists()) {
       i->MarkDead();
     }
@@ -207,6 +219,27 @@ auto HostActivity::NewMaterial(const std::string& name)
   auto m(Object::New<Material>(name, scene()));
   materials_.emplace_back(m);
   return Object::Ref<Material>(m);
+}
+
+auto HostActivity::NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> {
+  if (shutting_down_) {
+    throw Exception("can't create spaz defs during activity shutdown");
+  }
+
+  auto d(Object::New<SpazDef>(json, scene()));
+  spaz_defs_.emplace_back(d);
+  return Object::Ref<SpazDef>(d);
+}
+
+auto HostActivity::NewDepiction(const std::string& json)
+    -> Object::Ref<SceneDepiction> {
+  if (shutting_down_) {
+    throw Exception("can't create depictions during activity shutdown");
+  }
+
+  auto d(Object::New<SceneDepiction>(json, scene()));
+  depictions_.emplace_back(d);
+  return Object::Ref<SceneDepiction>(d);
 }
 
 auto HostActivity::GetTexture(const std::string& name)
@@ -531,6 +564,19 @@ void HostActivity::DumpFullState(SessionStream* out) {
   for (auto&& i : materials_) {
     if (Material* m = i.get()) {
       out->AddMaterial(m);
+    }
+  }
+
+  // Likewise spaz defs and depictions must exist before the nodes
+  // referencing them.
+  for (auto&& i : spaz_defs_) {
+    if (SpazDef* d = i.get()) {
+      out->AddSpazDef(d);
+    }
+  }
+  for (auto&& i : depictions_) {
+    if (SceneDepiction* d = i.get()) {
+      out->AddDepiction(d);
     }
   }
 

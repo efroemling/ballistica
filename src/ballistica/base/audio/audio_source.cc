@@ -32,9 +32,26 @@ void AudioSource::SetIsMusic(bool val) {
   g_base->audio_server->PushSourceSetIsMusicCall(play_id_, val);
 }
 
+void AudioSource::SetListenerSpace(const AudioListenerSpace& space) {
+  assert(g_base->audio_server);
+  assert(client_queue_size_ > 0);
+  listener_space_ = space;
+  has_listener_space_ = true;
+  wants_positional_ = true;
+  g_base->audio_server->PushSourceSetPositionalCall(play_id_, false);
+  SetGain(1.0f);
+}
+
 void AudioSource::SetPositional(bool val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+
+  // With a listener of our own we always play listener-relative, and
+  // just note whether positions are world ones for us to place.
+  if (has_listener_space_) {
+    wants_positional_ = val;
+    return;
+  }
   g_base->audio_server->PushSourceSetPositionalCall(play_id_, val);
 }
 
@@ -47,12 +64,22 @@ void AudioSource::SetPosition(float x, float y, float z) {
                          "Got nan value in AudioSource::SetPosition.");
   }
 #endif
-  g_base->audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));
+  Vector3f pos{x, y, z};
+  if (has_listener_space_ && wants_positional_) {
+    const AudioListenerSpace& s{listener_space_};
+    Vector3f offs = pos - s.origin;
+    pos = Vector3f(offs.Dot(s.right) * s.pan_scale, offs.Dot(s.up),
+                   offs.Dot(s.back));
+  }
+  g_base->audio_server->PushSourceSetPositionCall(play_id_, pos);
 }
 
 void AudioSource::SetGain(float val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+  if (has_listener_space_) {
+    val *= listener_space_.gain;
+  }
   g_base->audio_server->PushSourceSetGainCall(play_id_, val);
 }
 

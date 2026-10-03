@@ -15,8 +15,8 @@ class FrameDef;
 
 /// Where on the overlay-front-pass we draw. Just under the dev-console
 /// depth (and submitted just before it) so the dev-console -- and the
-/// fade/cursor drawn above it -- layer cleanly on top of us, for both
-/// transparent and opaque geometry.
+/// screen-messages/fade/cursor drawn above it -- layer cleanly on top of
+/// us, for both transparent and opaque geometry.
 const float kSimpleDialogZDepth = kDevConsoleZDepth - 0.01f;
 
 /// A minimal core dialog, drawn end-to-end here using only babase + builtin
@@ -41,10 +41,12 @@ class SimpleDialog {
   auto has_button() const -> bool { return !button_label_.empty(); }
 
   /// Set the dialog's full visible state. ``progress`` < 0 hides the bar;
-  /// an empty ``button_label`` hides the button. Text-meshes are rebuilt only
-  /// when their strings actually change.
+  /// an empty ``button_label`` hides the button. ``cancel_activates_button``
+  /// makes cancel-type input (escape, back, controller B) fire the button
+  /// too. Text-meshes are rebuilt only when their strings actually change.
   void SetState(const std::string& title, const std::string& message,
-                float progress, const std::string& button_label);
+                float progress, const std::string& button_label,
+                bool cancel_activates_button);
 
   /// Drive a self-animating demo (cycles the progress bar from display-time).
   /// For look-iteration only; real dialogs are driven via SetState.
@@ -62,6 +64,11 @@ class SimpleDialog {
   /// Device-agnostic OK/confirm activation (keyboard/controller/remote).
   /// Returns true if the dialog had a button to fire (and thus consumed it).
   auto Activate() -> bool;
+
+  /// Device-agnostic cancel (escape, back, controller B). Fires the button
+  /// like Activate() only if the dialog opted in via
+  /// ``cancel_activates_button``; returns true if it did.
+  auto Cancel() -> bool;
 
  private:
   /// A simple rectangular button. Bounds are recomputed each Draw (so they
@@ -89,6 +96,7 @@ class SimpleDialog {
   std::string title_;
   std::string message_;
   std::string button_label_;
+  bool cancel_activates_button_{};
   float progress_{-1.0f};
   bool demo_animate_{};
   Button_ button_;

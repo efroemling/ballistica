@@ -8,6 +8,8 @@
   it in mod code.
 """
 
+# pylint: disable=protected-access
+
 import datetime
 from enum import Enum
 from dataclasses import dataclass, field
@@ -20,6 +22,7 @@ from bacommon.langstr import LangStrSpec
 from bacommon.assetspec import SoundSpec
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from typing import Callable
 
     from bacommon.assetspec import AssetBucketKind
@@ -40,7 +43,15 @@ if TYPE_CHECKING:
 #: First engine build carrying the v2 client-effect machinery
 #: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
 #: Servers use this to emit the right form per client build.
-V2_EFFECTS_MIN_BUILD = 22931
+#:
+#: Raised 22931 -> 23021 (2026-09-30): v2 effects now carry numeric
+#: asset-package-version ids, which earlier (unshipped 1.8 test) builds
+#: can't decode; those builds get the legacy forms instead.
+#:
+#: Raised 23021 -> 23023 (2026-10-01): producers now send short
+#: (prefix) index-domain digests, which only 23023+ accept.
+#: Then 23024 with the floors for indexed image depictions.
+V2_EFFECTS_MIN_BUILD = 23024
 
 
 class EffectTypeID(Enum):
@@ -56,6 +67,7 @@ class EffectTypeID(Enum):
     CHEST_WAIT_TIME_ANIMATION = 't'
     TICKETS_ANIMATION = 'ta'
     TOKENS_ANIMATION = 'toa'
+    KEYFRAME_ANIMATION = 'ka'
 
 
 class Effect(IOMultiType[EffectTypeID]):
@@ -106,6 +118,8 @@ class Effect(IOMultiType[EffectTypeID]):
             return TicketsAnimation
         if type_id is t.TOKENS_ANIMATION:
             return TokensAnimation
+        if type_id is t.KEYFRAME_ANIMATION:
+            return KeyframeAnimation
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -157,13 +171,16 @@ class LegacyScreenMessage(Effect):
 @ioprepped
 @dataclass
 class ScreenMessage(Effect):
-    """Display a screen-message.
+    """Display a screen-message (pre-LangStr version).
 
-    Supported on engine build 22606 or newer.
+    Supported on engine build 22606 or newer; superseded by
+    :class:`ScreenMessageV2`, which is what clients that understand it
+    should get.
 
-    This version does no translation by default (expecting translation
-    to happen server-side). Pass a LangStrSpec json string and set is_lstr=True
-    for client-side translation.
+    ``message`` is shown verbatim (server-translated text). With
+    ``is_lstr`` set it is instead *legacy* Lstr json, translated
+    client-side -- a form only older clients still accept; current
+    clients drop such messages.
     """
 
     message: Annotated[str, IOAttrs('m')]
@@ -186,7 +203,7 @@ class ScreenMessageV2(Effect):
     The message is a language-agnostic
     :class:`~bacommon.langstr.LangStrSpec`; the client resolves the referenced
     asset-package(s) in its own locale and decodes before display (see
-    :func:`collect_apverids`). Only understood by clients new enough to
+    :func:`collect_apvernums`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
     :class:`Unknown` — so gate on engine build or dual-send with a
     legacy form where the message matters.
@@ -239,7 +256,7 @@ class PlaySoundV2(Effect):
     any packaged sound via a typed
     :class:`~bacommon.assetspec.SoundSpec`; the client resolves the
     referenced asset-package before playing (see
-    :func:`collect_apverids`). Only understood by clients new enough to
+    :func:`collect_apvernums`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
     :class:`Unknown`.
     """
@@ -317,6 +334,7 @@ def walk_effects(
             t.CHEST_WAIT_TIME_ANIMATION,
             t.TICKETS_ANIMATION,
             t.TOKENS_ANIMATION,
+            t.KEYFRAME_ANIMATION,
         ):
             # Carry no language-agnostic strings or typed asset refs:
             # the legacy forms hold pre-localized text and bare asset
@@ -327,7 +345,7 @@ def walk_effects(
             assert_never(typeid)
 
 
-def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
+def collect_apvernums(effects: list[Effect], acc: set[ApverNum]) -> None:
     """Gather every asset-package-version a list of effects references.
 
     The v2 effect forms are self-describing (name-based ``LangStrSpec`` values
@@ -340,13 +358,13 @@ def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
         # A folded index resolves through its payload's manifest, which
         # the caller seeds from separately; it names no package itself.
         if not isinstance(val, int):
-            langstrmod.collect_apverids(val, acc)
+            langstrmod.collect_apvernums(val, acc)
 
     def _ref(ref: 'SoundSpec | int', _kind: 'AssetBucketKind') -> None:
         # An indexed ref resolves through its payload's manifest, which
         # the caller seeds from separately; it names no package itself.
         if not isinstance(ref, int):
-            acc.add(ref.apverid)
+            acc.add(ref._apvernum)
 
     walk_effects(effects, langstr=_lstr, assetref=_ref)
 
@@ -408,3 +426,57 @@ class Delay(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.DELAY
+
+
+@ioprepped
+@dataclass
+class Keyframe:
+    """One state in a :class:`KeyframeAnimation`.
+
+    Position and size are relative to the target's resting
+    (as-laid-out) state, and the defaults are that resting state.
+    """
+
+    #: Seconds from the animation's start.
+    time: Annotated[float, IOAttrs('t')]
+
+    #: Offset from the resting position, in the target's own units.
+    offset: Annotated[
+        tuple[float, float], IOAttrs('o', store_default=False)
+    ] = (0.0, 0.0)
+
+    #: Size multiplier (about the target's center where it has one).
+    scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+
+    #: Opacity, absolute rather than relative so that things laid out
+    #: invisible can be revealed; None for the target's own (resting)
+    #: opacity. Linear runs should give it on every key or none.
+    opacity: Annotated[float | None, IOAttrs('a', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
+class KeyframeAnimation(Effect):
+    """Animate something the effects are running alongside.
+
+    ``target`` names a target in whatever context the effects run in
+    (for doc-ui, a decoration's ``anim_id`` in the page the effects
+    arrived with); with no such context or target the effect does
+    nothing. Starts at the point it is reached in the effect sequence
+    (after any preceding :class:`Delay`) without delaying the effects
+    after it. Before its first key the target sits at that key's state;
+    after its last it stays at the last.
+    """
+
+    target: Annotated[str, IOAttrs('t')]
+    keys: Annotated[list[Keyframe], IOAttrs('k')]
+
+    #: Interpolate linearly between keys; otherwise each key's state
+    #: applies from its time until the next (the right choice for
+    #: jitter, and far cheaper to run).
+    linear: Annotated[bool, IOAttrs('l', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.KEYFRAME_ANIMATION

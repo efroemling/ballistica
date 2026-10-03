@@ -4,10 +4,11 @@
 
 import weakref
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import babase
 import _bascenev1
+from bascenev1._actorhost import ActorHost
 from bascenev1._messages import UNHANDLED
 
 if TYPE_CHECKING:
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     import bascenev1
 
 
-class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
+class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](ActorHost):
     """Units of execution wrangled by a :class:`bascenev1.Session`.
 
     Examples of activities include games, score-screens, cutscenes, etc.
@@ -70,6 +71,12 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
 
     #: If True, runs in slow motion and turns down sound pitch.
     slow_motion = False
+
+    #: If True, spazzes in this activity simulate their limbs in the main
+    #: sim (the older dynamics) instead of on the background-dynamics
+    #: rig. For content calibrated against the old physics, such as the
+    #: tutorial's recorded input script.
+    legacy_spaz_limbs = False
 
     #: Set this to True to inherit slow motion setting from previous
     #: activity (useful for transitions to avoid hitches).
@@ -153,19 +160,12 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
         self._has_begun = False
         self._has_ended = False
         self._activity_death_check_timer: bascenev1.AppTimer | None = None
-        self._expired = False
         self._delay_delete_players: list[PlayerT] = []
         self._delay_delete_teams: list[TeamT] = []
         self._players_that_left: list[weakref.ref[PlayerT]] = []
         self._teams_that_left: list[weakref.ref[TeamT]] = []
         self._transitioning_out = False
 
-        # A handy place to put most actors; this list is pruned of dead
-        # actors regularly and these actors are insta-killed as the activity
-        # is dying.
-        self._actor_refs: list[bascenev1.Actor] = []
-        self._actor_weak_refs: list[weakref.ref[bascenev1.Actor]] = []
-        self._last_prune_dead_actors_time = babase.apptime()
         self._prune_dead_actors_timer: bascenev1.Timer | None = None
 
         self.teams = []
@@ -197,6 +197,10 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
     def context(self) -> bascenev1.ContextRef:
         """A context-ref pointing at this activity."""
         return self._activity_data.context()
+
+    @override
+    def _get_activity(self) -> bascenev1.Activity | None:
+        return self
 
     @property
     def globalsnode(self) -> bascenev1.Node:
@@ -240,16 +244,6 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
         assert not self._expired
         assert isinstance(self._customdata, dict)
         return self._customdata
-
-    @property
-    def expired(self) -> bool:
-        """Whether the activity is expired.
-
-        An activity is set as expired when shutting down.
-        At this point no new nodes, timers, etc should be made,
-        run, etc, and the activity should be considered a 'zombie'.
-        """
-        return self._expired
 
     @property
     def playertype(self) -> type[PlayerT]:
@@ -297,31 +291,6 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
             raise RuntimeError(
                 f'destroy() called when already expired for {self}.'
             )
-
-    def retain_actor(self, actor: bascenev1.Actor) -> None:
-        """Add a strong-ref to a :class:`bascenev1.Actor` to this activity.
-
-        The reference will be lazily released once
-        :meth:`bascenev1.Actor.exists()` returns False for the actor.
-        The :meth:`bascenev1.Actor.autoretain()` method is a convenient
-        way to access this same functionality.
-        """
-        if __debug__:
-            from bascenev1._actor import Actor
-
-            assert isinstance(actor, Actor)
-        self._actor_refs.append(actor)
-
-    def add_actor_weak_ref(self, actor: bascenev1.Actor) -> None:
-        """Add a weak-ref to a :class:`bascenev1.Actor` to the activity.
-
-        (called by the :class:`bascenev1.Actor` base class)
-        """
-        if __debug__:
-            from bascenev1._actor import Actor
-
-            assert isinstance(actor, Actor)
-        self._actor_weak_refs.append(weakref.ref(actor))
 
     @property
     def session(self) -> bascenev1.Session:
@@ -413,6 +382,7 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
             # set some global values based on what the activity wants.
             glb.use_fixed_vr_overlay = self.use_fixed_vr_overlay
             glb.allow_kick_idle_players = self.allow_kick_idle_players
+            glb.legacy_spaz_limbs = self.legacy_spaz_limbs
             if self.inherits_slow_motion and prev_globals is not None:
                 glb.slow_motion = prev_globals.slow_motion
             else:
@@ -781,19 +751,6 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
         except Exception:
             logging.exception('Error expiring _activity_data for %s.', self)
 
-    def _expire_actors(self) -> None:
-        # Expire all Actors.
-        for actor_ref in self._actor_weak_refs:
-            actor = actor_ref()
-            if actor is not None:
-                babase.verify_object_death(actor)
-                try:
-                    actor.on_expire()
-                except Exception:
-                    logging.exception(
-                        'Error in Actor.on_expire() for %s.', actor_ref()
-                    )
-
     def _expire_players(self) -> None:
         # Issue warnings for any players that left the game but don't
         # get freed soon.
@@ -861,15 +818,4 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
         ]
         self._players_that_left = [
             p for p in self._players_that_left if p() is not None
-        ]
-
-    def _prune_dead_actors(self) -> None:
-        self._last_prune_dead_actors_time = babase.apptime()
-
-        # Prune our strong refs when the Actor's exists() call gives False
-        self._actor_refs = [a for a in self._actor_refs if a.exists()]
-
-        # Prune our weak refs once the Actor object has been freed.
-        self._actor_weak_refs = [
-            a for a in self._actor_weak_refs if a() is not None
         ]

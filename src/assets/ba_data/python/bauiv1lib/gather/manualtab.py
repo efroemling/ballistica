@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, cast, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets, _uiv1assets
+from bauiv1 import _builtinassets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
@@ -158,7 +158,7 @@ class ManualGatherTab(GatherTab):
                 region_height,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.manual_join_section,
+            text=_classicassets.strings.gather.manual_join_section,
             glow_type='uniform',
         )
         self._favorites_text = bui.textwidget(
@@ -180,7 +180,7 @@ class ManualGatherTab(GatherTab):
                 region_height,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.favorites,
+            text=_classicassets.strings.gather.favorites,
             glow_type='uniform',
         )
         bui.widget(edit=self._join_by_address_text, up_widget=tab_button)
@@ -220,7 +220,7 @@ class ManualGatherTab(GatherTab):
     ) -> None:
         assert self._container
         if playsound:
-            builtinassets.audio.click01.get().play()
+            _builtinassets.audio.click01.get().play()
 
         self._sub_tab = value
         active_color = (0.6, 1.0, 0.6)
@@ -275,13 +275,13 @@ class ManualGatherTab(GatherTab):
             maxwidth=130,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.manual_address,
+            text=_classicassets.strings.gather.manual_address,
         )
         txt = bui.textwidget(
             parent=self._container,
             id=f'{self._idprefix}|manualaddress',
             editable=True,
-            description=classicassets.strings.gather.manual_address,
+            description=_classicassets.strings.gather.manual_address,
             position=(c_width * 0.5 - 240 - 50, v - 30),
             text=last_addr,
             autoselect=True,
@@ -303,13 +303,13 @@ class ManualGatherTab(GatherTab):
             maxwidth=80,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.port,
+            text=_classicassets.strings.gather.port,
         )
         txt2 = bui.textwidget(
             parent=self._container,
             id=f'{self._idprefix}|manualport',
             editable=True,
-            description=classicassets.strings.gather.port,
+            description=_classicassets.strings.gather.port,
             text=str(last_port),
             autoselect=True,
             max_chars=5,
@@ -325,7 +325,7 @@ class ManualGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|manualconnect',
             size=(300, 70),
-            label=classicassets.strings.gather.connect,
+            label=_classicassets.strings.gather.connect,
             position=(c_width * 0.5 - 300, v),
             autoselect=True,
             on_activate_call=bui.CallStrict(self._connect, txt, txt2),
@@ -334,22 +334,22 @@ class ManualGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|savefavorite',
             size=(300, 70),
-            label=classicassets.strings.gather.favorites_save,
+            label=_classicassets.strings.gather.favorites_save,
             position=(c_width * 0.5 - 240 + 490 - 200, v),
             autoselect=True,
             on_activate_call=bui.CallStrict(self._save_server, txt, txt2),
         )
         bui.widget(edit=btn, right_widget=savebutton)
         bui.widget(edit=savebutton, left_widget=btn, up_widget=txt2)
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
-        bui.textwidget(edit=txt2, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
+        bui.textwidget(edit=txt2, on_submit_call=btn.activate)
         v -= 45
 
         self._check_button = bui.textwidget(
             parent=self._container,
             size=(250, 60),
             id=f'{self._idprefix}|showmyaddress',
-            text=classicassets.strings.gather.show_my_address,
+            text=_classicassets.strings.gather.show_my_address,
             v_align='center',
             h_align='center',
             click_activate=True,
@@ -508,9 +508,9 @@ class ManualGatherTab(GatherTab):
 
     def _no_favorite_selected_error(self) -> None:
         bui.screenmessage(
-            classicassets.strings.profile.nothing_selected, color=(1, 0, 0)
+            _uiv1assets.strings.profile.nothing_selected, color=(1, 0, 0)
         )
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
 
     def _on_favorites_connect_press(self) -> None:
         if self._favorite_selected is None:
@@ -593,7 +593,7 @@ class ManualGatherTab(GatherTab):
             maxwidth=60,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.manual_address,
+            text=_classicassets.strings.gather.manual_address,
         )
 
         self._party_edit_addr_text = bui.textwidget(
@@ -605,7 +605,7 @@ class ManualGatherTab(GatherTab):
                 'addr'
             ],
             editable=True,
-            description=classicassets.strings.gather.manual_address,
+            description=_classicassets.strings.gather.manual_address,
             position=(c_width * 0.2, c_height - 200),
             autoselect=True,
             maxwidth=c_width * 0.35,
@@ -621,7 +621,7 @@ class ManualGatherTab(GatherTab):
             maxwidth=45,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.port,
+            text=_classicassets.strings.gather.port,
         )
 
         self._party_edit_port_text = bui.textwidget(
@@ -633,7 +633,7 @@ class ManualGatherTab(GatherTab):
                 bui.app.config['Saved Servers'][self._favorite_selected]['port']
             ),
             editable=True,
-            description=classicassets.strings.gather.port,
+            description=_classicassets.strings.gather.port,
             position=(c_width * 0.7, c_height - 200),
             autoselect=True,
             maxwidth=c_width * 0.2,
@@ -686,7 +686,7 @@ class ManualGatherTab(GatherTab):
             # Notify about incorrect port? I'm lazy; simply leave old value.
             pass
         bui.app.config.commit()
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
         self._refresh_favorites()
 
         bui.containerwidget(
@@ -700,7 +700,7 @@ class ManualGatherTab(GatherTab):
             self._no_favorite_selected_error()
             return
         confirm.ConfirmWindow(
-            classicassets.strings.gather.delete_confirm_list(
+            _classicassets.strings.gather.delete_confirm_list(
                 list=bui.app.config['Saved Servers'][self._favorite_selected][
                     'name'
                 ]
@@ -718,7 +718,7 @@ class ManualGatherTab(GatherTab):
         del config[self._favorite_selected]
         self._favorite_selected = None
         bui.app.config.commit()
-        classicassets.audio.shield_down.get().play()
+        _classicassets.audio.shield_down.get().play()
         self._refresh_favorites()
 
     def _on_favorite_select(self, server: str) -> None:
@@ -755,6 +755,7 @@ class ManualGatherTab(GatherTab):
                 always_highlight=True,
                 on_select_call=bui.CallStrict(self._on_favorite_select, server),
                 on_activate_call=self._favorites_connect_button.activate,
+                literal=True,
                 text=(
                     config['Saved Servers'][server]['name']
                     if config['Saved Servers'][server]['name'] != ''
@@ -792,7 +793,7 @@ class ManualGatherTab(GatherTab):
         if num_of_fav == 0:
             bui.textwidget(
                 edit=self._no_parties_added_text,
-                text=classicassets.strings.gather.no_parties_added,
+                text=_classicassets.strings.gather.no_parties_added,
             )
 
     @override
@@ -812,10 +813,10 @@ class ManualGatherTab(GatherTab):
         addr = cast(str, bui.textwidget(query=textwidget))
         if addr == '':
             bui.screenmessage(
-                classicassets.strings.gather.invalid_address_error,
+                _classicassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         try:
             port = int(cast(str, bui.textwidget(query=port_textwidget)))
@@ -823,10 +824,10 @@ class ManualGatherTab(GatherTab):
             port = -1
         if port > 65535 or port < 0:
             bui.screenmessage(
-                classicassets.strings.gather.invalid_port_error,
+                _classicassets.strings.gather.invalid_port_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         _HostLookupThread(
@@ -841,10 +842,10 @@ class ManualGatherTab(GatherTab):
         addr = cast(str, bui.textwidget(query=textwidget))
         if addr == '':
             bui.screenmessage(
-                classicassets.strings.gather.invalid_address_error,
+                _classicassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         try:
             port = int(cast(str, bui.textwidget(query=port_textwidget)))
@@ -852,10 +853,10 @@ class ManualGatherTab(GatherTab):
             port = -1
         if port > 65535 or port < 0:
             bui.screenmessage(
-                classicassets.strings.gather.invalid_port_error,
+                _classicassets.strings.gather.invalid_port_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         config = bui.app.config
 
@@ -868,27 +869,27 @@ class ManualGatherTab(GatherTab):
                 'name': addr,
             }
             config.commit()
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
             bui.screenmessage(
-                classicassets.strings.gather.added_to_favorites(name=addr),
+                _classicassets.strings.gather.added_to_favorites(name=addr),
                 color=(0, 1, 0),
             )
         else:
             bui.screenmessage(
-                classicassets.strings.gather.invalid_address_error,
+                _classicassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _host_lookup_result(
         self, resolved_address: str | None, port: int
     ) -> None:
         if resolved_address is None:
             bui.screenmessage(
-                classicassets.strings.gather.unable_to_resolve_host,
+                _classicassets.strings.gather.unable_to_resolve_host,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
         else:
             # Store for later.
             config = bui.app.config
@@ -927,7 +928,7 @@ class ManualGatherTab(GatherTab):
                     bui.CallStrict(
                         _safe_set_text,
                         self._checking_state_text,
-                        classicassets.strings.gather.no_connection,
+                        _classicassets.strings.gather.no_connection,
                         False,
                     ),
                     from_other_thread=True,
@@ -937,7 +938,7 @@ class ManualGatherTab(GatherTab):
                     bui.CallStrict(
                         _safe_set_text,
                         self._checking_state_text,
-                        classicassets.strings.gather.address_fetch_error,
+                        _classicassets.strings.gather.address_fetch_error,
                         False,
                     ),
                     from_other_thread=True,
@@ -953,7 +954,7 @@ class ManualGatherTab(GatherTab):
         tscl = 0.85
         tspc = 25
 
-        builtinassets.audio.swish.get().play()
+        bui.play_swish()
         bui.textwidget(
             parent=container,
             position=(c_width * 0.5 - 10, v2),
@@ -964,7 +965,7 @@ class ManualGatherTab(GatherTab):
             flatness=1.0,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.your_local_address,
+            text=_classicassets.strings.gather.your_local_address,
         )
         self._checking_state_text = bui.textwidget(
             parent=container,
@@ -976,7 +977,7 @@ class ManualGatherTab(GatherTab):
             flatness=1.0,
             h_align='left',
             v_align='center',
-            text=classicassets.strings.gather.checking,
+            text=_classicassets.strings.gather.checking,
         )
 
         Thread(target=self._run_addr_fetch).start()
@@ -992,7 +993,7 @@ class ManualGatherTab(GatherTab):
             flatness=1.0,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.your_address_from_internet,
+            text=_classicassets.strings.gather.your_address_from_internet,
         )
 
         t_addr = bui.textwidget(
@@ -1005,7 +1006,7 @@ class ManualGatherTab(GatherTab):
             h_align='left',
             v_align='center',
             flatness=1.0,
-            text=classicassets.strings.gather.checking,
+            text=_classicassets.strings.gather.checking,
         )
         v2 -= tspc
         bui.textwidget(
@@ -1018,7 +1019,7 @@ class ManualGatherTab(GatherTab):
             flatness=1.0,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.gather.joinable_from_internet,
+            text=_classicassets.strings.gather.joinable_from_internet,
         )
 
         t_accessible = bui.textwidget(
@@ -1031,7 +1032,7 @@ class ManualGatherTab(GatherTab):
             flatness=1.0,
             h_align='left',
             v_align='center',
-            text=classicassets.strings.gather.checking,
+            text=_classicassets.strings.gather.checking,
         )
         v2 -= 28
         t_accessible_extra = bui.textwidget(
@@ -1098,13 +1099,13 @@ class ManualGatherTab(GatherTab):
             if t_addr:
                 bui.textwidget(
                     edit=t_addr,
-                    text=classicassets.strings.gather.no_connection,
+                    text=_classicassets.strings.gather.no_connection,
                     color=color_bad,
                 )
             if t_accessible:
                 bui.textwidget(
                     edit=t_accessible,
-                    text=classicassets.strings.gather.no_connection,
+                    text=_classicassets.strings.gather.no_connection,
                     color=color_bad,
                 )
             if t_accessible_extra:
@@ -1118,7 +1119,7 @@ class ManualGatherTab(GatherTab):
             if data['accessible']:
                 bui.textwidget(
                     edit=t_accessible,
-                    text=classicassets.strings.gather.joinable_yes,
+                    text=_classicassets.strings.gather.joinable_yes,
                     color=color_good,
                 )
                 if t_accessible_extra:
@@ -1128,13 +1129,13 @@ class ManualGatherTab(GatherTab):
             else:
                 bui.textwidget(
                     edit=t_accessible,
-                    text=classicassets.strings.gather.joinable_no,
+                    text=_classicassets.strings.gather.joinable_no,
                     color=color_bad,
                 )
                 if t_accessible_extra:
                     bui.textwidget(
                         edit=t_accessible_extra,
-                        text=classicassets.strings.gather.router_forwarding(
+                        text=_classicassets.strings.gather.router_forwarding(
                             port=str(bs.get_game_port())
                         ),
                         color=color_bad,

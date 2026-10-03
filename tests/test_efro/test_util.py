@@ -150,3 +150,20 @@ def test_strip_exception_tracebacks_nested_group() -> None:
             assert outer.__traceback__ is None
             assert inner.__traceback__ is None
             assert leaf.__traceback__ is None
+
+
+def test_timedelta_str_round_up() -> None:
+    """Test timedelta_str's default truncation and countdown rounding."""
+    from efro.util import timedelta_str
+
+    assert timedelta_str(0.4) == '0s'
+    assert timedelta_str(0.4, round_up=True) == '1s'
+    assert timedelta_str(0) == '0s'
+    assert timedelta_str(0, round_up=True) == '0s'
+    assert timedelta_str(252) == '4m 12s'
+    assert timedelta_str(252, round_up=True) == '4m 12s'
+    assert timedelta_str(3599.5) == '59m 59s'
+    assert timedelta_str(3599.5, round_up=True) == '1h 0m'
+    assert timedelta_str(3600.5, round_up=True) == '1h 1m'
+    assert timedelta_str(12.34, decimals=1, round_up=True) == '12.4s'
+    assert timedelta_str(-12.34, decimals=1) == '-12.3s'

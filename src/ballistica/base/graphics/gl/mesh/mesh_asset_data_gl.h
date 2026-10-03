@@ -129,6 +129,7 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
     BA_DEBUG_CHECK_GL_ERROR;
     if (elem_count_ > 0) {
       glDrawElements(GL_TRIANGLES, elem_count_, index_type_, nullptr);
+      renderer_->stats()->draw_calls++;
     }
     BA_DEBUG_CHECK_GL_ERROR;
   }

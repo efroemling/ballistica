@@ -8,26 +8,18 @@
   it in mod code.
 
 A display-item is a request -- *show this thing in this style, in these
-bounds* -- which is what it has always been. What changes here is what
-that request turns into. It can depict itself two ways:
-
-* ``DisplayItem.to_frame`` -- a :class:`~bacommon.docui.v2.Frame`
-  carrying the depiction, for clients that understand frames.
-* ``DisplayItem.to_legacy`` -- a
-  :class:`~bacommon.docui.v2.DisplayItem` decoration naming the item,
-  for clients that predate them and must derive the drawing themselves.
-
-Both describe the same picture; which one a producer sends is a
-question about the audience, not about the item. Serving the two by
-client build is the last step of the migration, not this one.
+bounds* -- which is what it has always been. It turns into plain doc-ui
+decorations (``DisplayItem.decorations``), so the client needs no
+knowledge of item types to draw one: new types need no client update.
+The same decorations draw into a doc-ui page or, via the doc-ui prep
+code, into any plain container widget.
 
 The depiction lives here rather than in either host so there is exactly
-one of it -- the whole point of the preceding work was collapsing two
-renderers into one, and a second copy on the producer side would undo
-that. What each host must supply is gathered into
-``DepictionAssets``.
+one of it, serving both the client and the master server. What each
+host must supply is gathered into ``DepictionAssets``.
 """
 
+from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
@@ -39,14 +31,40 @@ from bacommon.langstr import LangStrSpecValue
 
 if TYPE_CHECKING:
     from bacommon.assetspec import TextureSpec
-    from bacommon.classic import ClassicChestAppearance
+    from bacommon.classic import ClassicChestAppearance, ChestTints
 
 
-#: First engine build that renders doc-ui frames. Below this a
-#: producer must send the legacy display-item decoration instead and
-#: let the client derive the drawing, since a frame would arrive as an
-#: unrecognized decoration and draw nothing at all.
-FRAME_DEPICTION_MIN_BUILD = 22992
+#: Layout boxes for the currency art beside a count, as (left, bottom,
+#: right, top) fractions trimmed from each edge (see
+#: :attr:`bacommon.docui.v2.TextImage.insets`). Vertically these trim
+#: all of the art's transparent padding, so it centers on the text
+#: line; horizontally they leave 15% of the image's width as padding on
+#: each side, which is the spacing from the count (the tickets have
+#: less padding than that, hence negative insets). Based on the art's
+#: measured padding (2026-09-30: coin ~(0.17, 0.12, 0.16, 0.11),
+#: counting its faint glow as empty; tickets ~(0.08, 0.09, 0.06,
+#: 0.05)), so revisit if the art changes. They belong with the
+#: textures themselves eventually (see docs/initiatives/depictions.md).
+_COIN_INSETS = (0.02, 0.12, 0.01, 0.11)
+_TICKETS_INSETS = (-0.07, 0.09, -0.09, 0.05)
+
+
+class DisplayItemStyle(Enum):
+    """Styles a display-item can be drawn in.
+
+    :meta private:
+    """
+
+    #: Fully conveys what the item is. Draws in a 4x3 box and works
+    #: best with large-ish displays.
+    FULL = 'f'
+
+    #: Fully conveys the item, condensed into a 2x1 box for small sizes.
+    COMPACT = 'c'
+
+    #: Graphics-only representation in a 1x1 box, for use alongside a
+    #: textual description.
+    ICON = 'i'
 
 
 @dataclass(frozen=True)
@@ -55,7 +73,7 @@ class DepictionAssets:
 
     Everything here is something ``bacommon`` cannot reach on its own:
     each host keeps its asset-reference wrappers in its own place (the
-    client's ``bauiv1.classicassets``, the master server's vendored
+    client's ``bauiv1._classicassets``, the master server's vendored
     ``bamaster.assets.baclassicassets``), and the chest appearance
     colors live with the client's chest code.
 
@@ -72,27 +90,19 @@ class DepictionAssets:
     chest_icon: TextureSpec
     chest_icon_tint: TextureSpec
 
-    #: Per-appearance ``(tint, tint2)``. Appearances absent here get
-    #: :attr:`chest_tint_default` -- several of them (UNKNOWN, DEFAULT,
-    #: L1) have no entry and rely on that.
-    chest_tints: dict[
-        ClassicChestAppearance,
-        tuple[tuple[float, float, float], tuple[float, float, float]],
-    ]
+    #: Per-appearance tints (2 or 3; see
+    #: :data:`bacommon.classic.ChestTints`). Appearances absent here
+    #: get :attr:`chest_tint_default` -- several of them (UNKNOWN,
+    #: DEFAULT, L1) have no entry and rely on that.
+    chest_tints: dict[ClassicChestAppearance, ChestTints]
 
-    #: ``(tint, tint2)`` for an appearance with no entry above.
-    chest_tint_default: tuple[
-        tuple[float, float, float], tuple[float, float, float]
-    ]
+    #: Tints for an appearance with no entry above.
+    chest_tint_default: ChestTints
 
 
 @dataclass
 class DisplayItem:
     """Something to show, and how much room to use showing it.
-
-    Mirrors :class:`~bacommon.docui.v2.DisplayItem` field for field, so
-    a producer can hand either to a call site that lays out
-    decorations.
 
     :meta private:
     """
@@ -100,52 +110,20 @@ class DisplayItem:
     wrapper: lditm.Wrapper
     position: tuple[float, float]
     size: tuple[float, float]
-    style: dui2.DisplayItemStyle = dui2.DisplayItemStyle.FULL
+    style: DisplayItemStyle = DisplayItemStyle.FULL
     text_color: tuple[float, float, float] | None = None
     highlight: bool = True
     depth_range: tuple[float, float] | None = None
     debug: bool = False
 
-    def to_legacy(self) -> dui2.DisplayItem:
-        """Depict as a decoration naming the item, for older clients.
-
-        The client derives the drawing from the item type, which is
-        why it can only draw types its build already knows.
-        """
-        return dui2.DisplayItem(
-            wrapper=self.wrapper,
-            position=self.position,
-            size=self.size,
-            style=self.style,
-            text_color=self.text_color,
-            highlight=self.highlight,
-            depth_range=self.depth_range,
-            debug=self.debug,
-        )
-
-    def depict(
-        self, assets: DepictionAssets, for_build: int | None
-    ) -> dui2.Decoration:
-        """Depict for a client of this build, whichever form it reads.
-
-        ``for_build`` of None means the audience is unknown, which is
-        treated as old: the legacy decoration renders on every build,
-        while a frame sent to a client that predates them draws
-        nothing.
-        """
-        if for_build is not None and for_build >= FRAME_DEPICTION_MIN_BUILD:
-            return self.to_frame(assets)
-        return self.to_legacy()
-
-    def to_frame(self, assets: DepictionAssets) -> dui2.Frame:
-        """Depict as a frame carrying the drawing itself.
+    def decorations(self, assets: DepictionAssets) -> list[dui2.Decoration]:
+        """Depict as plain doc-ui decorations, placed at our position.
 
         An item type this producer does not recognize still gets the
-        wrapper's baked description drawn, exactly as the legacy path
-        does. Callers that would rather draw nothing should decide that
-        for themselves: these wrappers can carry types newer than the
-        code depicting them, and silently dropping one is how a reward
-        goes missing.
+        wrapper's baked description drawn. Callers that would rather
+        draw nothing should decide that for themselves: these wrappers
+        can carry types newer than the code depicting them, and
+        silently dropping one is how a reward goes missing.
         """
         item = self.wrapper.item
         itemtype = item.get_type_id()
@@ -160,9 +138,16 @@ class DisplayItem:
             width = self.size[0]
             height = width * aspect_ratio
 
+        # Everything below is authored relative to the item's center;
+        # this places it.
+        px, py = self.position
+
+        def _at(x: float, y: float) -> tuple[float, float]:
+            return (px + x, py + y)
+
         # Draw our bounds in debug mode (or if we're a test-item).
         decorations: list[dui2.Decoration] = (
-            _debug_bounds(assets, self.size, width, height)
+            _debug_bounds(assets, self.position, self.size, width, height)
             if self.debug or itemtype is lditm.ItemTypeID.TEST
             else []
         )
@@ -173,87 +158,96 @@ class DisplayItem:
                     assets,
                     item,
                     width,
+                    position=self.position,
                     compact=compact,
                     icon=icon,
+                    highlight=self.highlight,
                     depth_range=self.depth_range,
                 )
             )
-            return dui2.Frame(
-                decorations=decorations,
-                position=self.position,
-                highlight=self.highlight,
-            )
+            return decorations
 
         layout = _text_and_image_layout(
             assets, itemtype, item, width, compact=compact, icon=icon
         )
 
-        # A layout that could not place its pieces itself hands them
-        # to a sized frame, which centers and fits them client-side.
-        fitted: list[dui2.Decoration] = []
-        target = decorations if layout.fit_size is None else fitted
+        text_color = (
+            (1.0, 1.0, 1.0, 1.0)
+            if self.text_color is None
+            else (*self.text_color, 1.0)
+        )
+
+        # A count beside its currency: one text carrying its image, so
+        # the client can measure and center the pair (we can't; see
+        # _lay_out_compact_currency).
+        if layout.pair_size is not None:
+            assert layout.imgtex is not None
+            text_scale = width * layout.text_mult
+            decorations.append(
+                dui2.Text(
+                    text=_item_text(self.wrapper, layout.text),
+                    position=self.position,
+                    size=layout.pair_size,
+                    scale=text_scale,
+                    color=text_color,
+                    flatness=1.0,
+                    shadow=1.0,
+                    highlight=self.highlight,
+                    depth_range=self.depth_range,
+                    debug=self.debug,
+                    image_right=dui2.TextImage(
+                        texture=layout.imgtex,
+                        # Text units; the text's scale maps them back.
+                        size=(
+                            layout.imgsize / text_scale,
+                            layout.imgsize / text_scale,
+                        ),
+                        insets=layout.img_insets,
+                    ),
+                )
+            )
+            return decorations
 
         if layout.imgtex is not None:
-            target.append(
+            decorations.append(
                 dui2.Image(
                     texture=layout.imgtex,
-                    position=(layout.img_x_offs, layout.img_y_offs),
+                    position=_at(layout.img_x_offs, layout.img_y_offs),
                     size=(layout.imgsize, layout.imgsize),
+                    highlight=self.highlight,
                     depth_range=self.depth_range,
                 )
             )
 
         if layout.show_text:
-            target.append(
+            decorations.append(
                 dui2.Text(
                     text=_item_text(self.wrapper, layout.text),
-                    position=(layout.text_x_offs, layout.text_y_offs),
-                    # A zero max-width/height disables that constraint,
-                    # which is what the legacy path's None means.
+                    position=_at(layout.text_x_offs, layout.text_y_offs),
+                    # A zero max-width/height disables that constraint.
                     size=(layout.text_max_width or 0.0, 0.0),
                     h_align=layout.text_h_align,
                     scale=width * layout.text_mult,
-                    color=(
-                        (1.0, 1.0, 1.0, 1.0)
-                        if self.text_color is None
-                        else (*self.text_color, 1.0)
-                    ),
+                    color=text_color,
                     flatness=1.0,
                     shadow=1.0,
+                    highlight=self.highlight,
                     depth_range=self.depth_range,
                 )
             )
 
-        if layout.fit_size is not None:
-            decorations.append(
-                dui2.Frame(
-                    decorations=fitted,
-                    position=(0.0, 0.0),
-                    size=layout.fit_size,
-                    highlight=self.highlight,
-                    # Carry debug in so the fit box is visible next to
-                    # the item's own bounds, which is where you would
-                    # look to see whether centering landed.
-                    debug=self.debug,
-                )
-            )
-
-        return dui2.Frame(
-            decorations=decorations,
-            position=self.position,
-            highlight=self.highlight,
-        )
+        return decorations
 
 
-def _style_params(style: dui2.DisplayItemStyle) -> tuple[float, bool, bool]:
+def _style_params(style: DisplayItemStyle) -> tuple[float, bool, bool]:
     """Return (aspect-ratio, compact, icon) for a display-item style."""
-    if style is dui2.DisplayItemStyle.FULL:
+    if style is DisplayItemStyle.FULL:
         # Bit less tall than wide (graphic centric).
         return 0.75, False, False
-    if style is dui2.DisplayItemStyle.COMPACT:
+    if style is DisplayItemStyle.COMPACT:
         # Significantly wider (text centric).
         return 0.5, True, False
-    if style is dui2.DisplayItemStyle.ICON:
+    if style is DisplayItemStyle.ICON:
         # Square.
         return 1.0, False, True
 
@@ -263,6 +257,7 @@ def _style_params(style: dui2.DisplayItemStyle) -> tuple[float, bool, bool]:
 
 def _debug_bounds(
     assets: DepictionAssets,
+    position: tuple[float, float],
     size: tuple[float, float],
     width: float,
     height: float,
@@ -271,13 +266,13 @@ def _debug_bounds(
     return [
         dui2.Image(
             texture=assets.white,
-            position=(0.0, 0.0),
+            position=position,
             size=size,
             color=(1, 1, 0, 0.1),
         ),
         dui2.Image(
             texture=assets.white,
-            position=(0.0, 0.0),
+            position=position,
             size=(width, height),
             color=(1, 0.5, 0, 0.2),
         ),
@@ -289,26 +284,30 @@ def _chest_image(
     item: lditm.Item,
     width: float,
     *,
+    position: tuple[float, float],
     compact: bool,
     icon: bool,
+    highlight: bool,
     depth_range: tuple[float, float] | None,
 ) -> dui2.Image:
     """Return the image depicting a chest item."""
-    from bacommon.classic import ClassicChestDisplayItem
+    from bacommon.classic import ClassicChestDisplayItem, chest_tint3
 
     assert isinstance(item, ClassicChestDisplayItem)
 
-    tint, tint2 = assets.chest_tints.get(
-        item.appearance, assets.chest_tint_default
-    )
+    tints = assets.chest_tints.get(item.appearance, assets.chest_tint_default)
+    tint3 = chest_tint3(tints)
     c_size = width * (0.66 if compact else 1.05 if icon else 0.83)
     return dui2.Image(
         texture=assets.chest_icon,
         tint_texture=assets.chest_icon_tint,
-        position=(0.0, 0.0),
+        position=position,
         size=(c_size, c_size),
-        tint_color=tint,
-        tint2_color=tint2,
+        tint_color=tints[0],
+        tint2_color=tints[1],
+        # Omitted when white so older clients' payloads are unchanged.
+        tint3_color=None if tint3 == (1.0, 1.0, 1.0) else tint3,
+        highlight=highlight,
         depth_range=depth_range,
     )
 
@@ -318,6 +317,11 @@ class _Layout:
     """Where an item's image and text go, in unscaled bounds units."""
 
     imgtex: TextureSpec | None = None
+
+    #: The image's transparent margins (see
+    #: :attr:`bacommon.docui.v2.TextImage.insets`); used for the
+    #: count-beside-currency pair.
+    img_insets: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
     imgsize: float = 0.0
     img_x_offs: float = 0.0
     img_y_offs: float = 0.0
@@ -329,9 +333,10 @@ class _Layout:
     text_max_width: float | None = None
     text_h_align: dui2.HAlign = dui2.HAlign.CENTER
 
-    #: When set, wrap the image and text in a frame of this size so the
-    #: client centers and fits them (it can measure text; we cannot).
-    fit_size: tuple[float, float] | None = None
+    #: When set, draw the text with the image fixed to its right, the
+    #: pair centered and fitted in a box of this size by the client (it
+    #: can measure text; we cannot). The offsets above go unused.
+    pair_size: tuple[float, float] | None = None
 
 
 def _text_and_image_layout(
@@ -367,14 +372,17 @@ def _text_and_image_layout(
     if itemtype is lditm.ItemTypeID.TOKENS:
         assert isinstance(item, lditm.Tokens)
         out.imgtex = assets.coin
+        out.img_insets = _COIN_INSETS
         count = item.count
     elif itemtype is lditm.ItemTypeID.TICKETS:
         assert isinstance(item, lditm.Tickets)
         out.imgtex = assets.tickets
+        out.img_insets = _TICKETS_INSETS
         count = item.count
     elif itemtype is lditm.ItemTypeID.TICKETS_PURPLE:
         assert isinstance(item, lditm.PurpleTickets)
         out.imgtex = assets.tickets_purple
+        out.img_insets = _TICKETS_INSETS
         count = item.count
     elif itemtype is lditm.ItemTypeID.CHEST:
         # Answered before we are reached; naming it keeps the
@@ -405,35 +413,17 @@ def _lay_out_compact_currency(out: _Layout, width: float) -> None:
     the client knows -- a producer that had to measure could not run on
     a server at all.
 
-    So it does not centre them here. The two are authored side by side
-    in their own local coordinates and handed to a *sized* frame, which
-    measures and centres them at prep time (see
-    :attr:`bacommon.docui.v2.Frame.size`). The producer states the
-    composition; the client resolves it.
-
-    Overflow rides the same mechanism: the frame shrinks the pair to
-    fit its box, exactly as the old measuring code shrank both parts.
+    So the count is sent as a text carrying its image
+    (:attr:`bacommon.docui.v2.Text.image_right`), which the client
+    measures, centers, and shrinks to fit as one unit. The producer
+    states the composition; the client resolves it.
     """
+    # The currency art's transparent margins ride along as the image's
+    # insets (set by the caller), so the pair measures and centers on
+    # what is actually visible.
     assert out.text is not None
     out.text_mult = 0.01
-    out.fit_size = (width * 0.95, width * 0.5)
-
-    # Count first, image immediately after it, in local units. Nothing
-    # here compensates for anything: the frame centers the true extent
-    # of what it is given.
-    #
-    # The old code carried an `imgamt = 0.85` here, counting only 85%
-    # of the image when centering, because the currency art has a
-    # transparent margin and its texture box is wider than the visible
-    # coin. That made the drawn result sit fractionally off-center and
-    # the pair fractionally tighter. Both are art facts leaking into
-    # layout; if the margin ever wants correcting, the honest place is
-    # the image's declared bounds, not a constant here.
-    out.text_h_align = dui2.HAlign.RIGHT
-    out.text_x_offs = 0.0
-    out.text_max_width = None  # The frame handles fitting.
-
-    out.img_x_offs = out.imgsize * 0.5
+    out.pair_size = (width * 0.95, width * 0.5)
 
 
 def _item_text(wrapper: lditm.Wrapper, text: str | None) -> LangStrSpecValue:

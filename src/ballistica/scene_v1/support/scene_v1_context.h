@@ -77,6 +77,14 @@ class SceneV1Context : public base::Context {
   virtual auto GetCollisionMesh(const std::string& name)
       -> Object::Ref<SceneCollisionMesh>;
 
+  /// Create a material, spaz definition or depiction in our scene.
+  /// Default implementations throw context errors, for contexts with
+  /// nowhere to put such things.
+  virtual auto NewMaterial(const std::string& name) -> Object::Ref<Material>;
+  virtual auto NewSpazDef(const std::string& json) -> Object::Ref<SpazDef>;
+  virtual auto NewDepiction(const std::string& json)
+      -> Object::Ref<SceneDepiction>;
+
   /// Return the current time of a given type in milliseconds. Exceptions
   /// should be thrown for unsupported timetypes. Default implementation
   /// throws a descriptive error so can be useful to fall back on for

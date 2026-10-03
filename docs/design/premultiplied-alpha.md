@@ -67,6 +67,28 @@ button in `ui.cc`. `ObjectComponent` does the same premultiply centrally in
 its `WriteConfig` (transparent, non-`SetPremultiplied` case), so its callers
 (e.g. `terrain_node`, mesh fades) get it for free.
 
+## The masked-draw additive frame term
+
+The `SHD_MASKED` path in `program_simple_gl.h` (character icons: an icon
+texture + colorize tint + `characterIconMask`) *adds* a frame term with zero
+alpha on top of the modulated texture:
+
+```glsl
+... * vec4(vec3(mask.r), mask.a)
+    + vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)
+```
+
+Under straight blend the hardware weights all source RGB by fragment alpha at
+blend time, so that frame faded with the modulate alpha for free. Under
+premult blend (`GL_ONE`) nothing weights it — so faded icons kept a
+full-brightness frame ring until the very end (screen-message icons,
+elimination scoreboard icons; fixed 2026-08). The shader now scales the
+additive term by `mix(1.0, color.a, texPremultiplied)`, with the uniform fed
+from the masked shading types in `renderer_gl.cc` (the opaque masked case
+sets 0 explicitly since the program object is shared). Callers need no
+changes for this term — but their base `SetColor` premultiply (the convention
+above) is still required for the texture part of the draw.
+
 ## `SetPremultiplied(true)` means "I manage premult myself"
 
 Additive / glow effects (shields, explosions, the text-widget gradient

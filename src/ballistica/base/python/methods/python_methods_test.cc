@@ -45,7 +45,6 @@ static PyMethodDef PyTestObjectDef = {
 static auto PyGetTextLineBreakOffsets(PyObject* self, PyObject* args,
                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
   const char* text;
   static const char* kwlist[] = {"text", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
@@ -73,7 +72,7 @@ static PyMethodDef PyGetTextLineBreakOffsetsDef = {
     "\n"
     "Uses the OS text stack's line-break analysis (UAX #14) where\n"
     "available; falls back to simple space-based breaks elsewhere\n"
-    "(e.g. headless builds). Logic thread only.\n"
+    "(e.g. headless builds). Callable from any thread.\n"
     "\n"
     ":meta private:",
 };

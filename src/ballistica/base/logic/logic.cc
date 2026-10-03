@@ -14,6 +14,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
@@ -23,6 +24,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/crash_info.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -136,6 +138,13 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Let base know it can create the console or other asset-dependent things.
   g_base->OnAssetsAvailable();
+
+  // Warm up the OS text backend in the background so its one-time init
+  // cost doesn't hitch the first UI that measures or draws OS-rendered
+  // text. Queued behind boot-critical asset work on the assets-server
+  // loop; done long before a human can navigate anywhere text-heavy.
+  // (Currently a no-op; see kEnableOSTextWarmUp in text_graphics.cc.)
+  g_base->text_graphics->WarmUpOSText();
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
@@ -371,6 +380,12 @@ void Logic::StepDisplayTime_() {
   } else {
     UpdateDisplayTimeForFrameDraw_();
   }
+
+  // Keep the crash-context record current. Cross-platform and cheap
+  // (a few scalar stores), and this runs per frame with a gui and on a
+  // 10hz timer headless, so a crash record is never badly stale.
+  CrashInfoUpdateRuntime((g_base->app_active() ? 1u : 0u)
+                         | (g_base->app_suspended() ? 2u : 0u));
 
   // Give all our subsystems some update love.
   // Note: keep these in the same order as OnAppStart.

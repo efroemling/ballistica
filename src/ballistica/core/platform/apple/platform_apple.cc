@@ -336,7 +336,7 @@ void PlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 #endif
 }
 
-auto PlatformApple::GetTextLineBreakOffsets(const std::string& text)
+auto PlatformApple::DoGetTextLineBreakOffsets(const std::string& text)
     -> std::vector<int> {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
   // CFStringTokenizer's line-break unit gives us CoreFoundation's full
@@ -348,7 +348,7 @@ auto PlatformApple::GetTextLineBreakOffsets(const std::string& text)
       static_cast<CFIndex>(text.size()), kCFStringEncodingUTF8, false);
   if (cf_text == nullptr) {
     // Should only happen on invalid utf-8; fall back gracefully.
-    return Platform::GetTextLineBreakOffsets(text);
+    return Platform::DoGetTextLineBreakOffsets(text);
   }
   CFIndex length16 = CFStringGetLength(cf_text);
   CFLocaleRef locale = CFLocaleCopyCurrent();
@@ -375,7 +375,7 @@ auto PlatformApple::GetTextLineBreakOffsets(const std::string& text)
 #elif BA_ENABLE_OS_FONT_RENDERING
   return PangoGetTextLineBreakOffsets_(text);
 #else
-  return Platform::GetTextLineBreakOffsets(text);
+  return Platform::DoGetTextLineBreakOffsets(text);
 #endif
 }
 
@@ -465,17 +465,6 @@ void PlatformApple::ShowGameServiceUI(const std::string& show,
 // #endif
 // }
 
-auto PlatformApple::IsOSPlayingMusic() -> bool {
-#if BA_XCODE_BUILD
-  // FIXME - should look into doing this properly these days, or whether
-  // this is still needed at all.
-  return false;
-  // return base::AppleUtils::IsMusicPlaying();
-#else
-  return Platform::IsOSPlayingMusic();
-#endif
-}
-
 void PlatformApple::MacMusicAppInit() {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::macMusicAppInit();
@@ -540,8 +529,10 @@ auto PlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 auto PlatformApple::GetLegacyPlatformName() -> std::string {
 #if BA_PLATFORM_MACOS
   return "mac";
-#elif BA_PLATFORM_IOS_TVOS
+#elif BA_PLATFORM_IOS
   return "ios";
+#elif BA_PLATFORM_TVOS
+  return "tvos";
 #else
 #error FIXME
 #endif

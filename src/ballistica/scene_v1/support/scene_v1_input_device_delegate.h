@@ -62,6 +62,13 @@ class SceneV1InputDeviceDelegate : public base::InputDeviceDelegate {
   /// binding.
   virtual auto GetClassicPurchases() const -> PyObject*;
 
+  /// Returns the list of cloud-composed character json strings (the
+  /// account's cloud profiles) provided by the master server for the
+  /// account using this device, or ``nullptr`` / ``Py_None`` when
+  /// unknown (non-v2-auth connection, older master). See the
+  /// ``get_cloud_characters()`` binding.
+  virtual auto GetCloudCharacters() const -> PyObject*;
+
   // FIXME: redundant.
   virtual auto IsRemoteClient() const -> bool;
 

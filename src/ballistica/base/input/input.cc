@@ -13,7 +13,7 @@
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/device/touch_input.h"
@@ -171,7 +171,8 @@ void Input::AnnounceConnects_() {
                                 ->Evaluate());
     }
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioGunCocking);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().gun_cocking.get());
     }
   }
   newly_connected_controllers_.clear();
@@ -191,7 +192,7 @@ void Input::AnnounceDisconnects_() {
                               ->Evaluate());
   }
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioCorkPop);
+    g_base->audio->SafePlaySound(g_base->assets->base_assets().cork_pop.get());
   }
 
   newly_disconnected_controllers_.clear();
@@ -1195,21 +1196,21 @@ void Input::UpdateModKeyStates_(const BAKeysym* keysym, bool press) {
   switch (keysym->sym) {
     case BAK_LCTRL:
     case BAK_RCTRL: {
-      if (Camera* c = g_base->graphics->camera()) {
+      if (GameCamera* c = g_base->graphics->camera()) {
         c->set_ctrl_down(press);
       }
       break;
     }
     case BAK_LALT:
     case BAK_RALT: {
-      if (Camera* c = g_base->graphics->camera()) {
+      if (GameCamera* c = g_base->graphics->camera()) {
         c->set_alt_down(press);
       }
       break;
     }
     case BAK_LGUI:
     case BAK_RGUI: {
-      if (Camera* c = g_base->graphics->camera()) {
+      if (GameCamera* c = g_base->graphics->camera()) {
         c->set_cmd_down(press);
       }
       break;
@@ -1247,7 +1248,7 @@ void Input::HandleMouseScroll_(const Vector2f& amount) {
   }
   mouse_move_count_++;
 
-  Camera* camera = g_base->graphics->camera();
+  GameCamera* camera = g_base->graphics->camera();
   if (camera) {
     if (camera->manual()) {
       camera->ManualHandleMouseWheel(0.5f * amount.y);
@@ -1284,7 +1285,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
   last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
-  Camera* camera = g_base->graphics->camera();
+  GameCamera* camera = g_base->graphics->camera();
   if (!handled && camera) {
     if (camera->manual()) {
       camera->ManualHandleMouseWheel(-0.25f * velocity.y);
@@ -1344,7 +1345,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   g_base->ui->HandleMouseMotion(cursor_pos_x_, cursor_pos_y_);
 
   // Manual camera motion.
-  Camera* camera = g_base->graphics->camera();
+  GameCamera* camera = g_base->graphics->camera();
   if (camera && camera->manual()) {
     float move_h = (cursor_pos_x_ - old_cursor_pos_x)
                    / g_base->graphics->screen_virtual_width();
@@ -1401,7 +1402,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   }
 
   // Manual camera input.
-  Camera* camera = g_base->graphics->camera();
+  GameCamera* camera = g_base->graphics->camera();
   if (!handled && camera) {
     switch (button) {
       case BA_BUTTON_LEFT:
@@ -1427,7 +1428,7 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
 }
 
 static void ApplyMouseUpCancelToCamera(int button) {
-  if (Camera* camera = g_base->graphics->camera()) {
+  if (GameCamera* camera = g_base->graphics->camera()) {
     switch (button) {
       case BA_BUTTON_LEFT:
         camera->set_mouse_left_down(false);
@@ -1468,6 +1469,40 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
   g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
 }
 
+void Input::PushUINavEvent(WidgetMessage::Type type) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([type] {
+    assert(g_base->InLogicThread());
+
+    // Gather up any user code the message triggers and run it at the end,
+    // as the real navigation path does.
+    UI::OperationContext ui_op_context;
+    g_base->ui->SendWidgetMessage(WidgetMessage(type));
+    ui_op_context.Finish();
+  });
+}
+
+void Input::PushMouseButtonAtVirtualCoords(int button, float virtual_x,
+                                           float virtual_y, bool pressed) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([this, button, virtual_x, virtual_y,
+                                         pressed] {
+    assert(g_base->InLogicThread());
+
+    cursor_pos_x_ = virtual_x;
+    cursor_pos_y_ = virtual_y;
+    if (pressed) {
+      millisecs_t click_time = g_core->AppTimeMillisecs();
+      bool double_click = (click_time - last_click_time_ <= double_click_time_);
+      last_click_time_ = click_time;
+      g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_,
+                                  double_click);
+    } else {
+      g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+    }
+  });
+}
+
 void Input::PushMouseClickAtVirtualCoords(int button, float virtual_x,
                                           float virtual_y) {
   // Schedule the dispatch on the logic thread (where UI lives).
@@ -1485,6 +1520,37 @@ void Input::PushMouseClickAtVirtualCoords(int button, float virtual_x,
     g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_,
                                 double_click);
     g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+  });
+}
+
+void Input::PushMouseDragAtVirtualCoords(int button, float virtual_x,
+                                         float virtual_y, float virtual_end_x,
+                                         float virtual_end_y, int steps,
+                                         bool cancel) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([this, button, virtual_x, virtual_y,
+                                         virtual_end_x, virtual_end_y, steps,
+                                         cancel] {
+    assert(g_base->InLogicThread());
+
+    // Down at the start point, interpolated motion towards the end
+    // point, then up (or cancel) there — the same UI entry points real
+    // events use.
+    cursor_pos_x_ = virtual_x;
+    cursor_pos_y_ = virtual_y;
+    g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_, false);
+    int stepsfull = std::max(1, steps);
+    for (int i = 1; i <= stepsfull; ++i) {
+      float amt = static_cast<float>(i) / static_cast<float>(stepsfull);
+      cursor_pos_x_ = virtual_x + (virtual_end_x - virtual_x) * amt;
+      cursor_pos_y_ = virtual_y + (virtual_end_y - virtual_y) * amt;
+      g_base->ui->HandleMouseMotion(cursor_pos_x_, cursor_pos_y_);
+    }
+    if (cancel) {
+      g_base->ui->HandleMouseCancel(button, cursor_pos_x_, cursor_pos_y_);
+    } else {
+      g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+    }
   });
 }
 

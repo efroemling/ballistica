@@ -8,16 +8,16 @@ plus per-bucket manifest blobs in the CAS store
 the resolved ``logical_path → CAS hash`` mappings into the C++
 :class:`AssetPackageRegistry` via
 :func:`_babase.register_asset_package_bucket`, so subsequent
-``aptextureget(``'apverid:asset'``)``-style lookups can resolve
+``aptextureget(``'apvernum:asset'``)``-style lookups can resolve
 GIL-free in C++.
 """
 
 import json
 import logging
-import os
 from typing import TYPE_CHECKING
 
 import _babase
+from bacommon.assetpackage import ApverNum
 
 if TYPE_CHECKING:
     from typing import Any
@@ -26,18 +26,18 @@ if TYPE_CHECKING:
 
 _lifecyclelog = logging.getLogger('ba.lifecycle')
 
-# Apverids of the BUILTIN (bundled) packages, populated at startup by
+# Numeric ids of the BUILTIN (bundled) packages, populated at startup by
 # :func:`load_bundled_asset_packages` (one per bundled package).
 # Membership here means "builtin", which drives builtin-only resolve
 # semantics (bundled-fallback flavor; see ``AssetSubsystem._is_builtin``)
 # and qualified-ref construction -- so a runtime-resolved *non-builtin*
-# package must NOT land here (see ``_resolved_apverids``).
-_builtin_apverids: list[str] = []
+# package must NOT land here (see ``_resolved_apvernums``).
+_builtin_apvernums: list[ApverNum] = []
 
-# Apverids of non-builtin packages brought in by a runtime resolve
+# Numeric ids of non-builtin packages brought in by a runtime resolve
 # (``babase.App.assets.resolve``). Tracked separately so the language
 # table merges their strings too WITHOUT making them count as builtin.
-_resolved_apverids: list[str] = []
+_resolved_apvernums: list[ApverNum] = []
 
 
 # Set once construct-mode has resolved every required asset-package (see
@@ -45,8 +45,8 @@ _resolved_apverids: list[str] = []
 # itself is legitimately loadable.
 _g_construct_complete = False
 
-# The construct/builtin package's apverid, cached on first check.
-_g_construct_apverid: str | None = None
+# The construct/builtin package's apvernum, cached on first check.
+_g_construct_apvernum: ApverNum | None = None
 
 
 def mark_construct_complete() -> None:
@@ -73,7 +73,7 @@ def mark_construct_complete() -> None:
     # 'did bring-up finish?' check on: it sits on ba.lifecycle alongside
     # the rest of the boot trace, where construct-mode's own hand-off
     # log is over on ba.assetmanager.
-    _lifecyclelog.debug('Construct-mode asset gate opened.')
+    _lifecyclelog.info('Construct-mode asset gate opened.')
 
 
 def construct_assets_complete() -> bool:
@@ -87,7 +87,7 @@ def construct_assets_complete() -> bool:
     return _g_construct_complete
 
 
-def check_asset_package_load(apverid: str, path: str) -> None:
+def check_asset_package_load(apvernum: ApverNum, path: str) -> None:
     """Flag an asset load from a package that is not up yet.
 
     Before construct-mode hands off, the only package guaranteed
@@ -114,21 +114,23 @@ def check_asset_package_load(apverid: str, path: str) -> None:
     if _g_construct_complete:
         return
 
-    global _g_construct_apverid  # pylint: disable=global-statement
-    if _g_construct_apverid is None:
+    global _g_construct_apvernum  # pylint: disable=global-statement
+    if _g_construct_apvernum is None:
         # Deferred: this module is imported while babase itself is still
         # coming up, well before the wrapper is importable.
         # pylint: disable-next=cyclic-import
-        from babase import builtinassets
+        from babase import _builtinassets
 
-        _g_construct_apverid = builtinassets.__asset_package__
+        # Package identity for the construct pin, not a path.
+        # pylint: disable-next=protected-access
+        _g_construct_apvernum = _builtinassets._ASSET_PACKAGE
 
-    if apverid == _g_construct_apverid:
+    if apvernum == _g_construct_apvernum:
         return
 
     msg = (
-        f"Asset '{apverid}:{path}' loaded before construct-mode finished"
-        f' resolving asset-packages; only {_g_construct_apverid} is'
+        f"Asset '{apvernum}:{path}' loaded before construct-mode finished"
+        f' resolving asset-packages; only {_g_construct_apvernum} is'
         f' available this early. Hold the wrapper reference and load it'
         f' on first use instead.'
     )
@@ -142,35 +144,35 @@ def check_asset_package_load(apverid: str, path: str) -> None:
     _lifecyclelog.error(msg)
 
 
-def builtin_asset_package_apverids() -> list[str]:
+def builtin_asset_package_apvernums() -> list[ApverNum]:
     """Apverids of the bundled/builtin packages (registered at startup).
 
     The builtin-only set: drives ``_is_builtin`` (bundled-fallback resolve
     semantics) and qualified-ref construction. Use
-    :func:`loaded_asset_package_apverids` instead for "every loaded
+    :func:`loaded_asset_package_apvernums` instead for "every loaded
     package" (e.g. rebuilding the language table).
     """
-    return list(_builtin_apverids)
+    return list(_builtin_apvernums)
 
 
-def loaded_asset_package_apverids() -> list[str]:
-    """Return every currently-loaded apverid: builtin + runtime-resolved.
+def loaded_asset_package_apvernums() -> list[ApverNum]:
+    """Return every currently-loaded apvernum: builtin + runtime-resolved.
 
     This is the set the native language table is rebuilt from (so every
     loaded package's strings merge) and that a locale switch re-resolves.
     Builtins are populated at startup by ``load_bundled_asset_packages``;
-    runtime-resolved packages are added by ``register_resolved_apverids``
+    runtime-resolved packages are added by ``register_resolved_apvernums``
     after a successful ``resolve``. Distinct from
-    ``builtin_asset_package_apverids``, which alone must drive
+    ``builtin_asset_package_apvernums``, which alone must drive
     builtin-only behavior.
     """
-    out = list(_builtin_apverids)
-    out.extend(a for a in _resolved_apverids if a not in _builtin_apverids)
+    out = list(_builtin_apvernums)
+    out.extend(a for a in _resolved_apvernums if a not in _builtin_apvernums)
     return out
 
 
 def asset_package_bucket_paths(
-    apverid: str, kind: 'AssetBucketKind'
+    apvernum: ApverNum, kind: 'AssetBucketKind'
 ) -> list[str] | None:
     """Canonical sorted logical paths in a loaded package's bucket.
 
@@ -184,10 +186,10 @@ def asset_package_bucket_paths(
     resolve-ordering fault worth surfacing; distinguish it from ``[]``,
     a package that genuinely has no assets of that kind.
     """
-    return _babase.get_asset_package_bucket_paths(apverid, kind.value)
+    return _babase.get_asset_package_bucket_paths(apvernum, kind.value)
 
 
-def asset_package_string_count(apverid: str) -> int | None:
+def asset_package_string_count(apvernum: ApverNum) -> int | None:
     """How many language-strings a loaded package holds, this locale.
 
     The size of the canonical sorted name list that string indices
@@ -199,10 +201,10 @@ def asset_package_string_count(apverid: str) -> int | None:
     be distinguished from a package holding zero strings: treating the
     first as zero would silently shift every later package's offset.
     """
-    return _babase.get_asset_package_string_count(apverid)
+    return _babase.get_asset_package_string_count(apvernum)
 
 
-def register_resolved_apverids(apverids: list[str]) -> None:
+def register_resolved_apvernums(apvernums: list[ApverNum]) -> None:
     """Record runtime-resolved (non-builtin) packages as loaded.
 
     Called after a successful downloading/offline ``resolve`` commit so
@@ -211,10 +213,10 @@ def register_resolved_apverids(apverids: list[str]) -> None:
     reload needed). Builtins are skipped (already loaded) and duplicates
     ignored, so it's safe to pass the whole resolve batch.
     """
-    for apverid in apverids:
-        if apverid in _builtin_apverids or apverid in _resolved_apverids:
+    for apvernum in apvernums:
+        if apvernum in _builtin_apvernums or apvernum in _resolved_apvernums:
             continue
-        _resolved_apverids.append(apverid)
+        _resolved_apvernums.append(apvernum)
 
 
 def load_bundled_asset_packages() -> None:
@@ -232,39 +234,41 @@ def load_bundled_asset_packages() -> None:
     logged at debug level -- headless/server builds and tests may run without
     one.
     """
-    data_dir = _babase.app.env.data_directory
-    bundle_path = os.path.join(data_dir, 'ba_data', 'manifest.json')
-    if not os.path.isfile(bundle_path):
+    # Served natively; the manifest may live inside an archive (the
+    # apk on Android) rather than as a plain file.
+    manifest_text = _babase.bundled_asset_manifest_text()
+    if manifest_text is None:
         _lifecyclelog.debug(
-            'No bundled asset-package manifest at %s; skipping CAS init.',
-            bundle_path,
+            'No bundled asset-package manifest present; skipping CAS init.',
         )
         return
 
-    with open(bundle_path, encoding='utf-8') as infile:
-        bundle = json.load(infile)
+    bundle = json.loads(manifest_text)
 
     # The bundled packages are builtin by definition. Record them (so
     # _is_builtin and ref-construction see them) before resolving, then let
     # the AssetSubsystem register the best-local flavor of each.
-    apverids = [apverid for apverid, _ in _iter_manifest_packages(bundle)]
-    for apverid in apverids:
-        if apverid not in _builtin_apverids:
-            _builtin_apverids.append(apverid)
-    if apverids:
+    apvernums = [apvernum for apvernum, _ in _iter_manifest_packages(bundle)]
+    for apvernum in apvernums:
+        if apvernum not in _builtin_apvernums:
+            _builtin_apvernums.append(apvernum)
+    if apvernums:
         # resolve_local registers the packages' buckets (including
         # ``language/<locale>``) and rebuilds the native language string
         # table from them — so this is what actually populates the table
         # at startup (the boot-time ``setlanguage`` may have run earlier,
         # before any packages were loaded).
-        _babase.app.assets.resolve_local(apverids)
+        _babase.app.assets.resolve_local(apvernums)
 
 
 def _iter_manifest_packages(
     bundle: dict[str, Any],
-) -> list[tuple[str, dict[str, str]]]:
-    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest."""
+) -> list[tuple[ApverNum, dict[str, str]]]:
+    """Return ``(apvernum, flavor_manifests)`` pairs from a parsed manifest.
+
+    Entries are keyed by numeric id (as text, being json object keys).
+    """
     return [
-        (apverid, entry['flavor_manifests'])
-        for apverid, entry in bundle.get('asset_package_versions', {}).items()
+        (ApverNum(int(key)), entry['flavor_manifests'])
+        for key, entry in bundle.get('asset_package_versions', {}).items()
     ]

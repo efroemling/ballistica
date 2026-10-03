@@ -5,11 +5,11 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib.confirm import ConfirmWindow
 
-_plgstrs = classicassets.strings.settings.plugins
+_plgstrs = _classicassets.strings.settings.plugins
 
 
 class PluginSettingsWindow(bui.MainWindow):

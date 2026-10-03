@@ -18,7 +18,11 @@ handed to us like the console's:
   register with the node; presenting the key is what authorizes a
   driver. That is deliberately not account ownership -- test devices
   are signed out, shared, or signed into throwaway accounts, and
-  automation has to work anyway.
+  automation has to work anyway. A *registered* device instead holds
+  a persistent key (``babase._automation.register_automation_device``),
+  which also opts it in on every launch and has it report each
+  channel to the cloud, so a driver can find it by device id without
+  seeing our log (``automation-over-transport.md`` decision 14).
 - **The address is not the credential.** Knowing the channel id gets
   you nothing without the key, so a locator line in a pasted log is
   harmless on its own.
@@ -44,7 +48,7 @@ from typing import TYPE_CHECKING
 import babase
 import baenv
 
-from efro.util import break_websocket_logger_cycle
+from baplus import _automationhelpers
 from efro.dataclassio import dataclass_to_json
 from efro.smartsocket import (
     MAX_MESSAGE_BYTES,
@@ -63,7 +67,6 @@ from bacommon.automationchannel import (
     ExecCommand,
     GapEvent,
     HelloCommand,
-    HelloEvent,
     ImageFormat,
     LogEntriesEvent,
     ResultEvent,
@@ -135,6 +138,11 @@ _MAX_PENDING_ENTRIES = 400
 #: How long to wait for a capture to land on disk before giving up.
 _SCREENSHOT_TIMEOUT_SECONDS = 10.0
 
+#: How long an exec's result waits for the code to finish on the logic
+#: thread. Past this we answer anyway (noting it is still running)
+#: rather than hold the channel.
+_EXEC_RESULT_TIMEOUT_SECONDS = 10.0
+
 #: How long a shutdown waits for the channel's polite close. Short on
 #: purpose -- telling the relay we're gone is worth a moment, never
 #: worth stalling the app's exit.
@@ -147,6 +155,10 @@ _SHUTDOWN_CLOSE_TIMEOUT = 2.0
 #: being short.
 _TRANSPORT_RECHECK_SECONDS = 30.0
 
+#: How long after a key change to recycle the live channel. Long
+#: enough for a driver that delivered the change to get its result.
+_RECYCLE_DELAY_SECONDS = 3.0
+
 #: A channel that died sooner than this means something is wrong
 #: (an unreachable node) rather than a drive having finished.
 _CHANNEL_SHORT_LIFE_SECONDS = 2.0
@@ -156,13 +168,32 @@ _RECREATE_BACKOFF_MIN_SECONDS = 2.0
 _RECREATE_BACKOFF_MAX_SECONDS = 60.0
 
 
-def _make_key() -> str:
-    """Mint (or read) this run's automation key."""
-    from secrets import token_hex
+def _persistent_key() -> str | None:
+    """The standing key this device was given, if any.
+
+    Either provisioned for the run (``BA_AUTOMATION_KEY``) or stored
+    by registering the device (``register_automation_device``). A
+    persistent key is never logged or put in a locator: it outlives
+    any log line it could leak into.
+    """
+    from babase import _automation
 
     supplied = os.environ.get(_KEY_ENV_VAR)
     if supplied:
         return supplied
+    return _automation.stored_device_key()
+
+
+def _resolve_future[T](future: asyncio.Future[T], value: T) -> None:
+    """Set a future's result unless it already has one (or was dropped)."""
+    if not future.done():
+        future.set_result(value)
+
+
+def _make_ephemeral_key() -> str:
+    """Mint a per-run automation key."""
+    from secrets import token_hex
+
     # 128 bits, per decision 8.
     return token_hex(16)
 
@@ -191,6 +222,20 @@ class AutomationSessionManager:
         #: Supplied by the caller, which has the private-api access
         #: to read it (baplus may not reach ``_babase``).
         self._app_instance_id = ''
+        #: The transport's loop, which we run on; captured from its
+        #: first connect call.
+        self._loop: asyncio.AbstractEventLoop | None = None
+        #: The key the live channel was registered with, so a changed
+        #: registration can tell the channel is stale.
+        self._channel_key: str | None = None
+        #: Helper tasks we must hold references to.
+        self._aux_tasks: set[asyncio.Task] = set()
+
+        # Hear about device registration, which happens down in
+        # babase (which can't reach up to us).
+        from babase import _automation
+
+        _automation.set_registration_changed_call(self.on_registration_changed)
 
     @property
     def enabled(self) -> bool:
@@ -201,13 +246,106 @@ class AutomationSessionManager:
         how you break every public build at once): the native hooks
         are simply *absent* when automation was not compiled in, so
         ``hasattr`` is a legitimate question in any build, and the
-        env var is the runtime opt-in.
+        env var is the runtime opt-in -- as is a registered device
+        key, which is a standing opt-in given deliberately.
         """
-        if not os.environ.get(_ENABLE_ENV_VAR):
-            return False
         from babase import _automation
 
-        return _automation.available()
+        if not _automation.available():
+            return False
+        return bool(os.environ.get(_ENABLE_ENV_VAR)) or (
+            _automation.stored_device_key() is not None
+        )
+
+    def on_registration_changed(self) -> None:
+        """This device's registered key was set, replaced, or removed.
+
+        Takes effect on the live channel, not just the next one: a
+        channel only ends when a driver ends it, so leaving it alone
+        would leave the device offering (and reporting) the *old* key
+        indefinitely -- exactly what unregister-then-register did
+        before this.
+        """
+        # We run on the transport's loop, not the logic thread this is
+        # called from. No loop yet means the transport has never
+        # connected, and its first connect will start us anyway.
+        loop = self._loop
+        if loop is None:
+            return
+        loop.call_soon_threadsafe(self._apply_registration)
+
+    def _apply_registration(self) -> None:
+        """Bring our channel in line with the current key (on our loop)."""
+        idle = self._task is None or self._task.done()
+        if not self.enabled:
+            # Unregistered, and not opted in any other way: stop
+            # offering ourselves up.
+            if not idle:
+                self._hold(self._retire_channel())
+            return
+        if idle:
+            self._task = None
+            self._node_url = None
+            plus = babase.app.plus
+            if plus is None:
+                return
+            self.on_transport_connected(
+                plus.cloud.get_connected_node_base_url(), self._app_instance_id
+            )
+            return
+        if self._channel_key != self._current_key():
+            # Recycle so the next channel carries (and reports) the new
+            # key. Not at once: the registration may have arrived over
+            # this very channel (automation_drive --register-as), and
+            # that driver should get its result before we pull it.
+            self._hold(self._recycle_channel_soon())
+
+    def _current_key(self) -> str:
+        """The key the next channel will use."""
+        persistent_key = _persistent_key()
+        if persistent_key is not None:
+            return persistent_key
+        if self._key is None:
+            self._key = _make_ephemeral_key()
+        return self._key
+
+    def _hold(self, coro: Any) -> None:
+        """Run a helper task, keeping a reference so it isn't GC'd."""
+        task = asyncio.create_task(coro)
+        self._aux_tasks.add(task)
+        task.add_done_callback(self._aux_tasks.discard)
+
+    async def _recycle_channel_soon(self) -> None:
+        """End the live channel if it still has a stale key."""
+        await asyncio.sleep(_RECYCLE_DELAY_SECONDS)
+        endpoint = self._endpoint
+        if endpoint is None or self._channel_key == self._current_key():
+            return  # Already recycled (e.g. its driver ended it).
+        try:
+            await asyncio.wait_for(
+                endpoint.end('automation key changed'),
+                timeout=_SHUTDOWN_CLOSE_TIMEOUT,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.debug('automation: recycle end failed', exc_info=True)
+        # The run loop sees the channel end and offers a fresh one.
+
+    async def _retire_channel(self) -> None:
+        """Stop offering a channel at all.
+
+        Ending the channel is enough: the run loop checks ``enabled``
+        before offering another, and so winds itself up.
+        """
+        endpoint = self._endpoint
+        if endpoint is None:
+            return
+        try:
+            await asyncio.wait_for(
+                endpoint.end('automation device unregistered'),
+                timeout=_SHUTDOWN_CLOSE_TIMEOUT,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.debug('automation: retire end failed', exc_info=True)
 
     def on_transport_connected(
         self, node_base_url: str | None, app_instance_id: str
@@ -219,11 +357,14 @@ class AutomationSessionManager:
         leaving a dead locator in the log. Cheap and safe to call
         when disabled.
         """
+        # Remember these before bailing: a device registered later this
+        # run starts its channel from here without a fresh connect.
+        self._app_instance_id = app_instance_id
+        self._loop = asyncio.get_running_loop()
         if not self.enabled or node_base_url is None or self._shutting_down:
             return
 
-        self._app_instance_id = app_instance_id
-        ws_url = _ws_url_for(node_base_url)
+        ws_url = _automationhelpers.ws_url_for(node_base_url)
 
         # Before the early-out below, not after: a task that parked
         # because the transport was down is still very much running,
@@ -238,8 +379,6 @@ class AutomationSessionManager:
 
         self._stop()
         self._node_url = ws_url
-        if self._key is None:
-            self._key = _make_key()
         self._task = asyncio.create_task(self._run())
 
     def _stop(self) -> None:
@@ -308,6 +447,8 @@ class AutomationSessionManager:
         """
         backoff = _RECREATE_BACKOFF_MIN_SECONDS
         while not self._shutting_down:
+            if not self.enabled:
+                return  # Unregistered mid-run; stop offering.
             ws_url = await self._await_transport()
             if ws_url is None:
                 return  # Shutting down.
@@ -374,7 +515,11 @@ class AutomationSessionManager:
         if plus is None:
             return None
         base_url = plus.cloud.get_connected_node_base_url()
-        return None if base_url is None else _ws_url_for(base_url)
+        return (
+            None
+            if base_url is None
+            else _automationhelpers.ws_url_for(base_url)
+        )
 
     async def _run_one_channel(self, ws_url: str) -> bool:
         """Hold one channel until it dies. True if it died on its own.
@@ -384,26 +529,45 @@ class AutomationSessionManager:
         """
         from secrets import token_hex
 
-        assert self._key is not None
-        key = self._key
+        from babase import _automation
+
+        # Looked up per channel, so registering (or re-registering)
+        # takes effect with the next channel offered.
+        persistent_key = _persistent_key()
+        key = self._current_key()
+        self._channel_key = key
         channel_id = token_hex(16)
         self._channel_id = channel_id
         self._log_index = 0
         key_hash = hashlib.sha256(key.encode()).hexdigest()
 
         endpoint = SmartSocketEndpoint(
-            lambda: _connect(ws_url, channel_id, key_hash),
+            lambda: _automationhelpers.connect(ws_url, channel_id, key_hash),
             send_type=AutomationEvent,
             recv_type=AutomationCommand,
             on_message=self._on_command,
             in_flight_cap_bytes=_IN_FLIGHT_CAP_BYTES,
+            label='automation-device',
         )
         self._endpoint = endpoint
 
         # Advertise before we even know the dial worked: the locator
         # is what a human reads out of the log to drive us, and a
         # failed dial retries behind the scenes anyway.
-        _log_locator(ws_url, channel_id, key)
+        _automationhelpers.log_locator(
+            ws_url,
+            channel_id,
+            None if persistent_key is not None else key,
+            (
+                None
+                if persistent_key is None
+                else _automation.automation_device_id_for_key(persistent_key)
+            ),
+        )
+        if persistent_key is not None:
+            # A registered device tells the cloud where it is, so a
+            # driver holding the key can find it without our log.
+            _automationhelpers.report_online(persistent_key, channel_id)
 
         pump = asyncio.create_task(self._pump_log())
         try:
@@ -569,7 +733,9 @@ class AutomationSessionManager:
             # out at channel birth and was consumed by whoever was
             # attached then, so this is how every later driver learns
             # what it has reached.
-            await self._emit(_hello_event(self._app_instance_id))
+            await self._emit(
+                _automationhelpers.hello_event(self._app_instance_id)
+            )
         elif isinstance(command, ExecCommand):
             await self._handle_exec(command)
         elif isinstance(command, ScreenshotCommand):
@@ -580,18 +746,55 @@ class AutomationSessionManager:
             )
 
     async def _handle_exec(self, command: ExecCommand) -> None:
-        """Run driver-supplied code on the logic thread."""
+        """Run driver-supplied code on the logic thread.
+
+        Answers only once the code has run, with its real outcome: a
+        ``fail`` naming the exception if it raised, preceded by any
+        ``[automation]`` results it emitted. (Answering ``ok`` on
+        dispatch left a failed exec visible only in the device log.)
+        """
         babase.user_ran_commands()  # disable tourneys/etc.
-        babase.pushcall(
-            partial(_exec_code, command.code),
-            from_other_thread=True,
-            other_thread_use_fg_context=True,
+        loop = asyncio.get_running_loop()
+        done: asyncio.Future[tuple[str | None, list[tuple[str, str, str]]]] = (
+            loop.create_future()
         )
+
+        def _run() -> None:
+            outcome = _automationhelpers.exec_code(command.code)
+            try:
+                loop.call_soon_threadsafe(_resolve_future, done, outcome)
+            except RuntimeError:
+                # Our loop is gone (session shut down); nobody to tell.
+                pass
+
+        babase.pushcall(
+            _run, from_other_thread=True, other_thread_use_fg_context=True
+        )
+        summary = f'exec {len(command.code.splitlines())} line(s)'
+        finished, _pending = await asyncio.wait(
+            {done}, timeout=_EXEC_RESULT_TIMEOUT_SECONDS
+        )
+        if not finished:
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag,
+                    status='ok',
+                    payload=f'{summary}; still running after'
+                    f' {_EXEC_RESULT_TIMEOUT_SECONDS:.0f}s',
+                )
+            )
+            return
+
+        error, results = done.result()
+        for rtag, rstatus, rpayload in results:
+            await self._emit(
+                ResultEvent(tag=rtag, status=rstatus, payload=rpayload)
+            )
         await self._emit(
             ResultEvent(
                 tag=command.tag,
-                status='ok',
-                payload=f'exec {len(command.code.splitlines())} line(s)',
+                status='ok' if error is None else 'fail',
+                payload=summary if error is None else error,
             )
         )
         # Give resulting output a moment to reach the log cache so it
@@ -729,105 +932,6 @@ class AutomationSessionManager:
                 pass
             await asyncio.sleep(0.02)
         return {}
-
-
-def _exec_code(code: str) -> None:
-    """Run driver-supplied code on the logic thread.
-
-    Bare exec in this module's globals -- driver-supplied code runs
-    with the same freedom a dev-console line does.
-    """
-    try:
-        exec(code)  # pylint: disable=exec-used
-    except Exception:  # pylint: disable=broad-except
-        logger.exception('error in automation exec')
-
-
-def _hello_event(app_instance_id: str) -> HelloEvent:
-    """Describe ourselves for whoever attaches."""
-    env = babase.app.env
-    return HelloEvent(
-        build_number=env.engine_build_number,
-        platform=str(env.platform),
-        app_instance_id=app_instance_id,
-        gui=env.gui,
-    )
-
-
-def _ws_url_for(node_base_url: str) -> str:
-    """Turn the node's http base url into our attach url."""
-    if node_base_url.startswith('https://'):
-        return 'wss://' + node_base_url[len('https://') :] + '/automationdevice'
-    if node_base_url.startswith('http://'):
-        return 'ws://' + node_base_url[len('http://') :] + '/automationdevice'
-    return node_base_url + '/automationdevice'
-
-
-def _log_locator(ws_url: str, channel_id: str, key: str) -> None:
-    """Log the one string a driver needs to reach us.
-
-    A single opaque handle rather than a URL plus fields: the driver
-    side is ``connect(handle)`` and the encoding can grow without
-    teaching anyone a new line format. The ephemeral key rides inside
-    it so the logged line is a complete copy-paste; a persistent key
-    never does (it would outlive the log line it leaked into).
-    """
-    payload = {
-        'v': 1,
-        'kind': 'auto',
-        'url': ws_url,
-        'session_id': channel_id,
-    }
-    if not os.environ.get(_KEY_ENV_VAR):
-        payload['key'] = key
-    encoded = (
-        base64.urlsafe_b64encode(json.dumps(payload).encode())
-        .decode()
-        .rstrip('=')
-    )
-    # On ba.app, not our own logger: this is the one line a human has
-    # to be able to read out of the log to drive us, and ba.app is
-    # the only logger at INFO by default. (Same reason the
-    # ``[automation]`` result lines use it.) A locator on a
-    # suppressed logger is a locator nobody can find.
-    logging.getLogger('ba.app').info('automation-channel: %s', encoded)
-
-
-async def _connect(ws_url: str, channel_id: str, key_hash: str) -> Any:
-    """Dial the node for one attach.
-
-    We present our channel id and the hash of our key; the node
-    registers them on first contact and checks them on every
-    reattach, so a channel is only ever fed by whoever created it.
-    """
-    import websockets
-
-    from baplus._consolesession import _WsTransport
-
-    sock = await websockets.connect(
-        ws_url,
-        # ssl only for a wss:// node. When the transport is in insecure
-        # mode (the 'Insecure Connections' config / a server downgrade
-        # directive for a broken-TLS region) the node url comes through
-        # as ws://, and passing an ssl context to a ws:// uri raises.
-        # We mirror the transport's own scheme (see v2transport
-        # get_connected_node_base_url + its ssl=None-when-insecure).
-        ssl=(
-            babase.app.net.sslcontext if ws_url.startswith('wss://') else None
-        ),
-        subprotocols=[websockets.Subprotocol('basmartsocket')],
-        additional_headers={
-            'User-Agent': babase.user_agent_string(),
-            'X-BA-Automation-Id': channel_id,
-            'X-BA-Automation-Key-Hash': key_hash,
-        },
-        open_timeout=10.0,
-        # SmartSocket runs its own app-level ping/pong; a second
-        # liveness mechanism would only cost us garbage.
-        ping_interval=None,
-    )
-    break_websocket_logger_cycle(sock)
-    return _WsTransport(sock)
 
 
 #: Process-level singleton; an app holds at most one of these.

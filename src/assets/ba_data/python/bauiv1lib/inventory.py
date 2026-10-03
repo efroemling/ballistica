@@ -3,133 +3,252 @@
 """Provides help related ui."""
 
 import random
-
-from typing import override, TYPE_CHECKING
+from dataclasses import replace
+from typing import override, assert_never, TYPE_CHECKING
 
 from efro.util import asserttype
 import bacommon.docui.v2 as dui2
+import bacommon.docui.routes.classicstore as sroutes
 from bacommon.assetspec import TextureSpec
+from bacommon.assetpackage import ApverNum
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import (
+    _classicassets,
+    _commonassets,
+    _uiv1assets,
+    _classiccatalogassets,
+)
 
-from bauiv1lib.docui import DocUIController
+from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
     from typing import Any
 
-    from bacommon.docui import DocUIRequest, DocUIResponse
+    import bacommon.docui.v2
+    import bacommon.docui.routes.classicstore
+    from bacommon.docui import DocUIResponse
+    from bacommon.langstr import LangStrSpec
 
     from bauiv1lib.docui import DocUILocalAction, DocUIWindow
 
 
 def _tex_from_qualified(qualified: str) -> TextureSpec:
-    """Typed ref for a qualified ``<apverid>:<name>`` texture string.
+    """Typed ref for a qualified ``<apvernum>:<name>`` texture string.
 
     (Appearance texture fields carry qualified strings; docui v2 wants
     typed refs.)
     """
-    apverid, _, name = qualified.partition(':')
-    return TextureSpec(apverid, name)
+    apvernum, _, name = qualified.partition(':')
+    return TextureSpec(ApverNum(int(apvernum)), name)
 
 
-class InventoryUIController(DocUIController):
-    """DocUI setup for inventory."""
+class InventoryUIController(
+    TypedDocUIController[sroutes.AnyStoreRoute, sroutes.AnyInventoryLocalAction]
+):
+    """DocUI setup for inventory.
+
+    Player profiles come in two flavors here. *Cloud profiles* are
+    stored on the v2 master server and the server renders their rows
+    and editor into the inventory page itself. *Legacy profiles* are
+    the local-config ones (synced via the v1 account); their rows are
+    spliced in client-side so they work offline. We show cloud
+    profiles by default and switch to legacy when the user asks
+    (``show_legacy_profiles``) or when the cloud page can't be fetched.
+    """
 
     def __init__(self, player_profiles_only: bool = False) -> None:
         self._next_selected_profile: str | None = None
         self._player_profiles_only = player_profiles_only
+        self._legacy_profiles = False
 
     @override
-    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
+    @classmethod
+    def get_route_type(
+        cls,
+    ) -> type[bacommon.docui.routes.classicstore.StoreRoute]:
+        return sroutes.StoreRoute
+
+    @override
+    @classmethod
+    def get_local_action_type(
+        cls,
+    ) -> type[bacommon.docui.routes.classicstore.InventoryLocalAction]:
+        return sroutes.InventoryLocalAction
+
+    @override
+    def get_cache_key_extra(self) -> str | None:
+        # We serve entirely different pages depending on these -- from
+        # the same '/' request path -- so they have to partition the
+        # cache.
+        return (
+            f'profilesonly={self._player_profiles_only}'
+            f' legacy={self._legacy_profiles}'
+        )
+
+    @override
+    def fulfill_route(
+        self, route: bacommon.docui.routes.classicstore.AnyStoreRoute
+    ) -> DocUIResponse:
         # All local authoring here uses strings from BUNDLED packages
         # (baclassicassets/builtin) so these pages keep working offline.
-        invstrs = classicassets.strings.inventory
-        profstrs = classicassets.strings.profiles
+        invstrs = _classicassets.strings.inventory
+        profstrs = _uiv1assets.strings.profiles
 
         response: DocUIResponse
+        cloud_ok = False
 
-        # If we only want player profiles, we can skip the whole cloud
-        # request bit.
-        if self._player_profiles_only:
+        if self._player_profiles_only and self._legacy_profiles:
+            # Legacy profiles alone need no cloud at all.
             response = dui2.Response(
-                page=dui2.Page(
-                    title=invstrs.title.spec,
-                    rows=[],
-                )
+                page=dui2.Page(title=profstrs.title.spec, rows=[])
             )
         else:
-            # *Most* of our inventory comes from the cloud - we just supply
-            # profiles ourself so it works offline.
+            # The rest of our inventory (and, for new-enough servers,
+            # our cloud profiles) comes from the cloud. The root page
+            # takes flags for which flavor we want; the profile editor
+            # pages carry their own args and pass through untouched.
+            cloudroute = route
+            if isinstance(route, sroutes.Root):
+                cloudroute = replace(
+                    route,
+                    legacy_profiles=self._legacy_profiles,
+                    profiles_only=self._player_profiles_only,
+                )
             cloudresponse = self.fulfill_request_cloud(
-                request, 'classicinventory'
+                cloudroute, 'classicinventory'
             )
 
-            assert isinstance(request, dui2.Request)
             if not isinstance(cloudresponse, dui2.Response):
                 # A server that doesn't speak v2 for us; show its
                 # response as-is (no local additions).
                 return cloudresponse
             response = cloudresponse
 
-            if request.path != '/':
+            if not isinstance(route, sroutes.Root):
                 return response
 
-            signed_in = (
-                bui.app.plus is not None
-                and bui.app.plus.accounts.primary is not None
-            )
+            cloud_ok = response.status is dui2.ResponseStatus.SUCCESS
 
-            # If anything went wrong, replace the error page they sent us with
-            # a minimal 'most stuff is only available online' page.
-            if response.status is not dui2.ResponseStatus.SUCCESS:
+            # If anything went wrong, replace the error page they sent
+            # us with a minimal placeholder page saying why the rest of
+            # the inventory isn't here (or just an empty profiles page)
+            # and fall back to legacy profiles below.
+            if not cloud_ok:
+                signed_in = (
+                    bui.app.plus is not None
+                    and bui.app.plus.accounts.primary is not None
+                )
+                # Say why, by the response's status. The server declining
+                # us as too old comes first: it's definitive, and signing
+                # in wouldn't help. Then not signed in, the cloud
+                # unreachable (our own error page), or anything else.
+                status = response.status
+                ustat = _commonassets.strings.status
+                offline_msg: LangStrSpec
+                if status is dui2.ResponseStatus.NEED_UPDATE_ERROR or (
+                    response.minimum_engine_build is not None
+                    and response.minimum_engine_build
+                    > bui.app.env.engine_build_number
+                ):
+                    offline_msg = ustat.need_update.spec
+                elif (
+                    not signed_in
+                    or status is dui2.ResponseStatus.NOT_SIGNED_IN_ERROR
+                ):
+                    offline_msg = invstrs.only_available_signed_in.spec
+                elif status is dui2.ResponseStatus.COMMUNICATION_ERROR:
+                    offline_msg = invstrs.only_available_online.spec
+                else:
+                    offline_msg = ustat.error_occurred.spec
+                offline_rows: list[dui2.Row] = [
+                    dui2.ButtonRow(
+                        center_content=True,
+                        buttons=[
+                            dui2.Button(
+                                offline_msg,
+                                texture=_builtinassets.textures.white,
+                                size=(600, 100),
+                                color=(1, 1, 1, 0.0),
+                                label_scale=0.7,
+                                label_color=(1, 0.4, 0.4, 0.8),
+                            )
+                        ],
+                    ),
+                ]
                 response = dui2.Response(
                     page=dui2.Page(
-                        title=invstrs.title.spec,
-                        rows=[
-                            dui2.ButtonRow(
-                                center_content=True,
-                                buttons=[
-                                    dui2.Button(
-                                        (
-                                            invstrs.only_available_signed_in
-                                            if not signed_in
-                                            else invstrs.only_available_online
-                                        ).spec,
-                                        texture=builtinassets.textures.white,
-                                        size=(600, 100),
-                                        color=(1, 1, 1, 0.0),
-                                        label_scale=0.7,
-                                        label_color=(1, 0.4, 0.4, 0.8),
-                                    )
-                                ],
-                            ),
-                        ],
+                        title=(
+                            profstrs.title.spec
+                            if self._player_profiles_only
+                            else invstrs.title.spec
+                        ),
+                        rows=[] if self._player_profiles_only else offline_rows,
                     ),
                 )
 
-        # Wire spawn-bot actions onto any buttons the server marked
-        # (structured ids; no display-text sniffing).
-        for row in response.page.rows:
-            if isinstance(row, dui2.ButtonRow):
-                for button in row.buttons:
-                    wid = button.widget_id
-                    if wid is not None and wid.startswith('spawn_char:'):
-                        button.action = dui2.Local(
-                            immediate_local_action='spawn_bot',
-                            immediate_local_action_args={
-                                'name': wid.removeprefix('spawn_char:')
-                            },
-                        )
+        # (Spawn-bot actions on character buttons come wired up from the
+        # server these days; see bacommon.docui.routes.classicstore.)
 
-        # Now add in our profiles, which we handle locally so it is
-        # available offline.
-        response.page.rows = [
+        # Splice in our legacy profiles when they were asked for, or
+        # when the cloud page (and thus cloud profiles) is unavailable.
+        if self._legacy_profiles or not cloud_ok:
+            response.page.rows = (
+                self._get_legacy_profile_rows(show_cloud_toggle=cloud_ok)
+                + response.page.rows
+            )
+
+        return response
+
+    def _get_legacy_profile_rows(
+        self, *, show_cloud_toggle: bool
+    ) -> list[dui2.Row]:
+        """Rows for our locally-authored legacy profiles section."""
+        profstrs = _uiv1assets.strings.profiles
+
+        buttons = [
+            dui2.Button(
+                profstrs.new_profile.spec,
+                action=sroutes.NewProfile().local(),
+                icon=_uiv1assets.textures.plus_button,
+                icon_scale=1.3,
+                icon_color=(0.7, 0.6, 0.9, 1),
+                style=dui2.ButtonStyle.MEDIUM,
+                size=(210, 60),
+                scale=0.8,
+                color=(0.6, 0.5, 0.8, 1.0),
+                label_color=(1, 1, 1, 1),
+            ),
+        ]
+        if show_cloud_toggle:
+            # Small and translucent (wide-square art at 15% opacity),
+            # tinted slightly purple, so it reads as a secondary option.
+            #
+            # Keep in lockstep with the server-rendered 'Show Legacy
+            # Profiles' button (bamaster classic/profileui.py): same
+            # look, and the SAME widget_id -- selection is restored by
+            # id across the view switch (see _set_legacy_profiles), so
+            # matching ids keep the toggle selected when jumping back
+            # and forth.
+            buttons.append(
+                dui2.Button(
+                    profstrs.show_cloud_profiles.spec,
+                    action=sroutes.ShowCloudProfiles().local(),
+                    texture=_uiv1assets.textures.button_square_wide,
+                    size=(338, 70),
+                    scale=0.5,
+                    color=(0.9, 0.8, 1.0, 0.15),
+                    label_color=(0.85, 0.85, 0.9, 1),
+                    widget_id='profiles_toggle',
+                )
+            )
+
+        return [
             dui2.ButtonRow(
-                title=profstrs.title.spec,
-                subtitle=profstrs.explanation.spec,
+                title=profstrs.legacy_title.spec,
+                subtitle=profstrs.legacy_explanation.spec,
                 button_spacing=15,
                 buttons=self._get_profile_buttons(),
             ),
@@ -137,41 +256,36 @@ class InventoryUIController(DocUIController):
                 spacing_top=-15,
                 spacing_bottom=15,
                 padding_left=13,
-                buttons=[
-                    dui2.Button(
-                        profstrs.new_profile.spec,
-                        action=dui2.Local(
-                            default_sound=False,
-                            immediate_local_action='new_profile',
-                        ),
-                        icon=classicassets.textures.plus_button,
-                        icon_scale=1.3,
-                        icon_color=(0.7, 0.6, 0.9, 1),
-                        style=dui2.ButtonStyle.MEDIUM,
-                        size=(210, 60),
-                        scale=0.8,
-                        color=(0.6, 0.5, 0.8, 1.0),
-                        label_color=(1, 1, 1, 1),
-                    ),
-                ],
+                buttons=buttons,
             ),
-        ] + response.page.rows
-
-        return response
+        ]
 
     @override
-    def local_action(self, action: DocUILocalAction) -> None:
-        if action.name == 'new_profile':
-            self._new_profile(action)
-        elif action.name == 'edit_profile':
-            self._edit_profile(action)
-        elif action.name == 'spawn_bot':
-            self._spawn_bot(action)
-        else:
-            bui.screenmessage(
-                f'Invalid local-action "{action.name}".', color=(1, 0, 0)
-            )
-            builtinassets.audio.error.get().play()
+    def fulfill_unrouted_request(
+        self, request: bacommon.docui.v2.Request, error: str
+    ) -> DocUIResponse:
+        # Something newer than us from the server; let it handle it.
+        return self.fulfill_request_cloud(request, 'classicinventory')
+
+    @override
+    def run_local_action(
+        self,
+        action: bacommon.docui.routes.classicstore.AnyInventoryLocalAction,
+        context: DocUILocalAction,
+    ) -> None:
+        match action:
+            case sroutes.NewProfile():
+                self._new_profile(context)
+            case sroutes.EditProfile():
+                self._edit_profile(action, context)
+            case sroutes.SpawnBot():
+                self._spawn_bot(action)
+            case sroutes.ShowLegacyProfiles():
+                self._set_legacy_profiles(context, True)
+            case sroutes.ShowCloudProfiles():
+                self._set_legacy_profiles(context, False)
+            case _:
+                assert_never(action)
 
     @override
     def restore_window_shared_state(
@@ -179,14 +293,11 @@ class InventoryUIController(DocUIController):
     ) -> None:
         """Called when a window shared state is being restored."""
 
-        if not isinstance(window.request, dui2.Request):
-            return
-
         # If desired, set the profile button that will be selected in
         # the new window. We do this when coming back from creating a
         # new profile/etc.
         if (
-            window.request.path == '/'
+            isinstance(self.get_window_route(window), sroutes.Root)
             and self._next_selected_profile is not None
         ):
             state['selection'] = f'$(WIN)|profile.{self._next_selected_profile}'
@@ -194,6 +305,23 @@ class InventoryUIController(DocUIController):
             # Only do this once (return to normal selection save/restore
             # after).
             self._next_selected_profile = None
+
+    def _set_legacy_profiles(
+        self, action: DocUILocalAction, legacy: bool
+    ) -> None:
+        """Switch the root page between cloud and legacy profiles."""
+        self._legacy_profiles = legacy
+        # Save selection first so the rebuilt page re-selects the
+        # toggle: both flavors' toggle buttons share one widget_id
+        # ('profiles_toggle'), and the window restores selection by id
+        # once the new page is built. (The stock Replace action does
+        # this save for us; a local action has to do it itself.)
+        action.window.main_window_save_shared_state()
+        # Re-fetch the root page in the new flavor (the cache is keyed
+        # on the flavor, so this never shows the other one).
+        self.replace(
+            action.window, action.window.request, origin_widget=action.widget
+        )
 
     def _on_profile_save(self, name: str) -> None:
         # An editor we launched tells us it saved a profile.
@@ -270,19 +398,18 @@ class InventoryUIController(DocUIController):
             tcolor: Any = bui.safecolor(color, 0.4) + (1.0,)
             assert len(tcolor) == 4
 
-            appearance = spaz_appearances.get(p_info['character'])
+            # Profiles aren't guaranteed a character entry (the
+            # account profile and older/hand-edited configs can lack
+            # one); treat that like an unknown character.
+            appearance = spaz_appearances.get(p_info.get('character', 'Spaz'))
             if appearance is None:
                 appearance = spaz_appearance_default
 
             buttons.append(
                 dui2.Button(
-                    texture=builtinassets.textures.white,
+                    texture=_builtinassets.textures.white,
                     size=(145, 175),
-                    action=dui2.Local(
-                        default_sound=False,
-                        immediate_local_action='edit_profile',
-                        immediate_local_action_args={'profile': p_name},
-                    ),
+                    action=sroutes.EditProfile(profile=p_name).local(),
                     # color=(0.6, 0.5, 0.7, 1.0),
                     color=(1, 1, 1, 0.0),
                     widget_id=f'profile.{p_name}',
@@ -294,7 +421,9 @@ class InventoryUIController(DocUIController):
                             position=(0, 15),
                             size=(140, 140),
                             mask_texture=(
-                                builtinassets.textures.character_icon_mask
+                                (
+                                    _classiccatalogassets.textures
+                                ).character_icon_mask
                             ),
                             tint_texture=spazappearance.texture_spec(
                                 appearance.icon_mask_texture
@@ -324,8 +453,6 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.get().play()
-
         plus = bui.app.plus
         assert plus is not None
 
@@ -334,10 +461,10 @@ class InventoryUIController(DocUIController):
         profiles = bui.app.config.get('Player Profiles', {})
         if len(profiles) > 100:
             bui.screenmessage(
-                classicassets.strings.profiles.max_reached,
+                _uiv1assets.strings.profiles.max_reached,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         action.window.main_window_replace(
@@ -348,14 +475,15 @@ class InventoryUIController(DocUIController):
             )
         )
 
-    def _edit_profile(self, action: DocUILocalAction) -> None:
+    def _edit_profile(
+        self,
+        editaction: bacommon.docui.routes.classicstore.EditProfile,
+        action: DocUILocalAction,
+    ) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.get().play()
-
-        profile = action.args.get('profile')
-        assert isinstance(profile, str)
+        profile = editaction.profile
 
         # Play a random sound from the character.
         classic = bui.app.classic
@@ -383,17 +511,18 @@ class InventoryUIController(DocUIController):
             )
         )
 
-    def _spawn_bot(self, action: DocUILocalAction) -> None:
+    def _spawn_bot(
+        self, action: bacommon.docui.routes.classicstore.SpawnBot
+    ) -> None:
         import bascenev1 as bs
         from bascenev1lib.mainmenu import MainMenuActivity
         from bascenev1lib.actor.spazbot import DemoSpazBotSet, DemoBot
         from bascenev1lib.actor.spazappearance import get_appearances
 
-        name = action.args.get('name')
-        assert isinstance(name, str)
-        # Modern flow passes the exact internal appearance name (from
-        # the server's spawn_char widget-id markers); the legacy scan
-        # below also tolerates old Lstr-JSON display strings.
+        # Modern flow passes the exact internal appearance name; the
+        # legacy scan below also tolerates old Lstr-JSON display
+        # strings.
+        name = action.name
 
         activity = bs.get_foreground_host_activity()
         if not isinstance(activity, MainMenuActivity) or activity.map is None:

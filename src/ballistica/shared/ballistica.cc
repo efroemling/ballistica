@@ -3,6 +3,7 @@
 #include "ballistica/shared/ballistica.h"
 
 #include <chrono>
+#include <csignal>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -14,7 +15,9 @@
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
+#include "ballistica/shared/foundation/crash_info.h"
 #include "ballistica/shared/foundation/fatal_error.h"
+#include "ballistica/shared/foundation/fatal_error_report.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -51,8 +54,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22997;
-const char* kEngineVersion = "1.8.0a100";
+const int kEngineBuildNumber = 23029;
+const char* kEngineVersion = "1.8.0b2";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -66,6 +69,40 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
   try {
     auto time1 = core::Platform::TimeMonotonicMillisecs();
+
+    // Populate the crash-context record before anything that might
+    // crash. It costs a few stores and makes any fault from here on
+    // carry our build identity.
+    CrashInfoInit();
+
+#if !BA_PLATFORM_WINDOWS
+    // Parity with standard Python: DO NOT REMOVE these just because
+    // nothing seems to need them.
+    //
+    // A normal Python process ignores SIGPIPE and SIGXFSZ at startup
+    // (CPython signal_install_handlers() in Modules/signalmodule.c), so
+    // the operations that raise them fail with an error -- EPIPE /
+    // BrokenPipeError, EFBIG / OSError -- instead of silently killing the
+    // process. That only happens when Python installs its signal
+    // handlers, which isolated configs (every build bundling its own
+    // Python) don't; so we do it ourselves, putting every build at the
+    // same baseline Python code expects. (The third thing Python does
+    // there -- a SIGINT -> KeyboardInterrupt handler -- we deliberately
+    // don't: the engine handles SIGINT itself.) Windows has neither
+    // signal.
+    //
+    // SIGPIPE: a write to a socket or pipe whose peer is gone. Its default
+    // action terminates silently -- no crash report, no chance for our
+    // fatal-error reporting to run. On iOS, missing this looked like the
+    // app opening for a split second on resume and vanishing: suspension
+    // kills app sockets, and the first write to one afterwards took the
+    // whole process down (docs/followups.md, 2026-09-28).
+    signal(SIGPIPE, SIG_IGN);
+    // SIGXFSZ: a write past a file-size resource limit (setrlimit
+    // RLIMIT_FSIZE). Nothing sets one on our platforms today, but the
+    // failure mode is the same silent kill.
+    signal(SIGXFSZ, SIG_IGN);
+#endif
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
@@ -92,6 +129,12 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
+    // Now that there's a platform to ask. Recorded once rather than
+    // queried at report time: a live fatal error then never has to call
+    // into platform code from a dying process, and a crash record gets
+    // it for free.
+    CrashInfoSetOSVersion(l_core->platform->GetOSVersionString());
+
     // Test hook for the early-log drain path used by
     // FatalErrorHandling::ReportFatalError. Exercised by
     // tests/test_base/test_held_logs.py. At this point core import has
@@ -113,6 +156,14 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
         FatalError("held-log-test: triggered fatal");
       }
     }
+
+    // If a previous run died of a native crash it left a record but
+    // could not report it -- the process was dying and its state was
+    // untrusted. Now that core is up (so we have a platform to ask
+    // where records live) we submit it and clear it. Fire-and-forget
+    // on a detached thread, so a slow or unreachable server never
+    // delays a launch.
+    SubmitPendingCrashReport();
 
     auto time2 = core::Platform::TimeMonotonicMillisecs();
 

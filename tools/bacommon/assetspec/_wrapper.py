@@ -16,7 +16,12 @@ same ergonomics (``pkg.textures.zoe_icon``) work server-side where no real
 assets exist.
 """
 
+from typing import TYPE_CHECKING
+
 from bacommon.assetspec._core import TextureSpec, MeshSpec, SoundSpec
+
+if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
 #: ``dict`` value is a subdirectory and a ``str`` value is a leaf asset
@@ -34,10 +39,12 @@ class AssetGroup:
     through this class.
     """
 
-    __slots__ = ('_apverid', '_node', '_prefix')
+    __slots__ = ('_apvernum', '_node', '_prefix')
 
-    def __init__(self, apverid: str, node: AssetGroupTree, prefix: str) -> None:
-        self._apverid = apverid
+    def __init__(
+        self, apvernum: ApverNum, node: AssetGroupTree, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
         self._node = node
         self._prefix = prefix
 
@@ -50,18 +57,18 @@ class AssetGroup:
             raise AttributeError(name) from None
         path = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return AssetGroup(self._apverid, child, path)
-        return _make(self._apverid, path, child)
+            return AssetGroup(self._apvernum, child, path)
+        return _make(self._apvernum, path, child)
 
 
 def _make(
-    apverid: str, path: str, kind: str
+    apvernum: ApverNum, path: str, kind: str
 ) -> TextureSpec | MeshSpec | SoundSpec:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureSpec(apverid, path)
+        return TextureSpec(apvernum, path)
     if kind == 'm':
-        return MeshSpec(apverid, path)
+        return MeshSpec(apvernum, path)
     if kind == 's':
-        return SoundSpec(apverid, path)
-    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
+        return SoundSpec(apvernum, path)
+    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')

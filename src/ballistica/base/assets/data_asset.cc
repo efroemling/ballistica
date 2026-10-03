@@ -8,7 +8,6 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/python/core_python.h"
-#include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
@@ -35,17 +34,25 @@ void DataAsset::DoPreload() {
   // - logic thread holds GIL by default and now spins waiting on payload lock.
   // - deadlock :-(
 
-  // ...so the new plan is to simply load the file into a string in Preload()
-  // and then do the Python work in Load(). This should still avoid the nastiest
-  // IO-related hitches at least..
+  // ...so the new plan is to simply load the file contents in Preload()
+  // and then do the Python work in Load(). This should still avoid the
+  // nastiest IO-related hitches at least..
 
-  raw_input_ = Utils::FileToString(file_name_full_);
+  raw_input_ = AssetBlob::FromFile(file_name_full_);
+  if (!raw_input_.exists()) {
+    throw Exception("Error loading data file: '" + file_name_full_ + "'.");
+  }
 }
 
 void DataAsset::DoLoad() {
   assert(g_base->InLogicThread());
   assert(valid_);
-  PythonRef args(Py_BuildValue("(s)", raw_input_.c_str()), PythonRef::kSteal);
+  PythonRef args(
+      Py_BuildValue("(s#)", reinterpret_cast<const char*>(raw_input_.data()),
+                    static_cast<Py_ssize_t>(raw_input_.size())),
+      PythonRef::kSteal);
+  // Done with the raw bytes whether or not the parse succeeds.
+  raw_input_ = {};
   object_ = g_core->python->objs()
                 .Get(core::CorePython::ObjID::kJsonLoadsCall)
                 .Call(args);

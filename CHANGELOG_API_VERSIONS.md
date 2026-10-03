@@ -56,11 +56,14 @@ change behavior a mod may be relying on or can now take advantage of.
   bare sound name (`'error'`, `'shieldDown'`, ...), which only ever resolved
   while that sound's asset-package happened to be registered — so the same
   call could work or silently fail depending on when it ran. It now returns a
-  silent sound and warns. Load the sound from its asset-package wrapper
-  instead: `babase.builtinassets.audio.error.get().play()`. Sounds outside the
-  builtin package (most of the classic ones) come from that package's own
-  wrapper via `bascenev1`/`bauiv1`, and cannot be loaded before the app
-  finishes bringing assets up.
+  silent sound and warns. Load the sound through a generated asset-package
+  wrapper module for the package it lives in instead
+  (`<wrapper>.audio.error.get().play()`). Note that the engine's own bundled
+  wrapper modules are private (`_builtinassets`, `_classicassets`,
+  `_commonassets`) and not API you should depend on; generate and bundle your
+  own wrapper for whichever packages your mod uses. Sounds outside the builtin
+  package (most of the classic ones) cannot be loaded before the app finishes
+  bringing assets up.
 - `ba*.Lstr` is going away. Migrate all uses of it to the new `ba*.LangStr`
   class.
 - Engine calls that return an `Lstr` are growing a `langstr` keyword argument.
@@ -142,3 +145,22 @@ change behavior a mod may be relying on or can now take advantage of.
   will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
   with `IOAttrs(time_format='float')`.
 
+- `babase.clipboard_get_text()` is deprecated and will be removed; use the new
+  `babase.clipboard_get_text_async()` instead, which passes its result to a
+  callback: text, or `None` if no text could be fetched for any reason. On
+  some platforms (notably iOS), reading the clipboard can require the OS to
+  ask the user for permission, so a synchronous read would hang the app while
+  that prompt is up; the async form lets things keep running. Note that
+  `babase.clipboard_has_text()` is *not* going anywhere - platforms provide
+  prompt-free ways to check for text, so it remains a synchronous call and the
+  right way to decide whether to show paste UI.
+- The `on_return_press_call` and `invoke_return_press` args to
+  `bauiv1.textwidget()` are deprecated; use `on_submit_call` and
+  `invoke_submit` instead. They are the same thing under a name that fits
+  every platform: the call runs when text is *submitted*, which is an enter
+  press when editing inline but is the action key or commit button of the
+  platform's string-edit dialog on mobile, where no return key is involved
+  (and only for `string_edit_kind`s that submit; see `babase.StringEditKind`).
+  It is not a change notification; text can be edited without it ever
+  running. The old names keep working with a deprecation warning and will be
+  removed when api 9 support ends.

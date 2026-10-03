@@ -98,7 +98,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef;../../src/external/qrencode-3.4.4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/zstd/include;../../src/external/open_dynamics_engine-ef;../../src/external/qrencode-3.4.4</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -123,7 +123,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/zstd/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -148,7 +148,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/zstd/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -174,7 +174,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/zstd/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -216,6 +216,10 @@
     <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_archive.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_archive.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_blob.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_blob.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset_name_compat.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset_name_compat.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc" />
@@ -250,33 +254,46 @@
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_source.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\audio_streamer.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_streamer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\audio\ogg_blob_source.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\audio\ogg_blob_source.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\ogg_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h" />
     <ClCompile Include="..\..\src\ballistica\base\automation\automation.cc" />
     <ClInclude Include="..\..\src\ballistica\base\automation\automation.h" />
     <ClCompile Include="..\..\src\ballistica\base\base.cc" />
     <ClInclude Include="..\..\src\ballistica\base\base.h" />
+    <ClCompile Include="..\..\src\ballistica\base\depiction\depiction.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\depiction\depiction.h" />
+    <ClCompile Include="..\..\src\ballistica\base\depiction\depiction_kinds.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\depiction\depiction_kinds.h" />
     <ClCompile Include="..\..\src\ballistica\base\discord\discord.cc" />
     <ClInclude Include="..\..\src\ballistica\base\discord\discord.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics.h" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_channel.h" />
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_character.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_character.h" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_draw_snapshot.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse.h" />
-    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_fuse_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_height_cache.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_height_cache.h" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_kinds.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_server.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_server.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow.h" />
-    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_shadow_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light.h" />
-    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light_data.h" />
-    <ClCompile Include="..\..\src\ballistica\base\dynamics\collision_cache.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\dynamics\collision_cache.h" />
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_world.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_world.h" />
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_world_server.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_world_server.h" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\geom_transform.h" />
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\joint_fixed_ef.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\joint_fixed_ef.h" />
+    <ClCompile Include="..\..\src\ballistica\base\dynamics\terrain_collider.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\terrain_collider.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\empty_component.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\component\object_component.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\object_component.h" />
@@ -300,6 +317,7 @@
     <ClCompile Include="..\..\src\ballistica\base\graphics\gl\gl_sys_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\gl_sys_windows.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_asset_data_gl.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_debug_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_dual_texture_full_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\mesh\mesh_data_object_split_gl.h" />
@@ -316,6 +334,7 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_smoke_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\program\program_sprite_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\render_target_gl.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\gl\render_view_data_gl.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\renderer_gl.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\gl\texture_data_gl.h" />
@@ -359,14 +378,24 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\render_pass.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\renderer\render_target.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\render_target.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\render_view_renderer_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\renderer\renderer.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\renderer\renderer.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\area_of_interest.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\area_of_interest.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\camera.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\camera.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\debug_texture_view.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\debug_texture_view.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\depth_of_field.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\fixed_camera.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\fixed_camera.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\frame_def.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\frame_def.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\frame_def_view.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\frame_def_view.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\game_camera.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\game_camera.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_settings.cc" />
@@ -374,8 +403,12 @@
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\net_graph.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\net_graph.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\render_view.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_view.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\screen_messages.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\screen_messages.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\shadow_range.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_glyph_pages_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_graphics.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\text_graphics.h" />
@@ -455,12 +488,18 @@
     <ClInclude Include="..\..\src\ballistica\base\support\app_timer.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\base_build_switches.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\base_build_switches.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\character_def.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\character_def.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\classic_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\context.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\lang_str.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\lang_str.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\media_block.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\media_block.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\name_def.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\name_def.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\repeater.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\repeater.h" />
@@ -505,6 +544,8 @@
     <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc" />
     <ClInclude Include="..\..\src\ballistica\core\python\core_python.h" />
+    <ClCompile Include="..\..\src\ballistica\core\python\pyc_prewarm.cc" />
+    <ClInclude Include="..\..\src\ballistica\core\python\pyc_prewarm.h" />
     <ClInclude Include="..\..\src\ballistica\core\python\pyembed.h" />
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h" />
     <ClCompile Include="..\..\src\ballistica\core\support\core_config.cc" />
@@ -575,6 +616,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\bomb_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\combine_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\combine_node.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\depiction_display_node.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\depiction_display_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\explosion_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\explosion_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\flag_node.cc" />
@@ -587,6 +630,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\image_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\light_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\light_node.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\local_display_node.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\local_display_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\locator_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\locator_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\math_node.cc" />
@@ -616,6 +661,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\sound_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_node.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_pose.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_pose.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\terrain_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\terrain_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\text_node.cc" />
@@ -639,16 +686,22 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_depiction.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_depiction.h" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.h" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_viewer.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_viewer.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_data.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_data.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_player.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_session_player.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_spaz_def.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_spaz_def.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_assets.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_assets.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\methods\python_methods_input.cc" />
@@ -678,6 +731,10 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\host_session.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\huffman.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\huffman.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\local_display_context.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\local_display_context.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\local_scene_context.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\local_scene_context.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\player.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player_spec.cc" />
@@ -686,14 +743,22 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\replay_writer.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_depiction.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_depiction.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_context.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_context.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_input_device_delegate.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_input_device_delegate.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_viewer_context.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_viewer_context.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\session.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\session.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\session_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\session_stream.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\spaz_def.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\spaz_def.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\zstd_packet_codec.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\zstd_packet_codec.h" />
     <ClCompile Include="..\..\src\ballistica\shared\ballistica.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\ballistica.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_cmake.h" />
@@ -702,6 +767,8 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\crash_info.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\crash_info.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\event_loop.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\exception.cc" />
@@ -730,6 +797,7 @@
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\runnable.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\snapshot.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\generic\thread_cpu_time.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\timer_list.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\timer_list.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\utils.cc" />
@@ -772,12 +840,18 @@
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_viewer_source.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_viewer_source.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\methods\python_methods_ui_v1.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\methods\python_methods_ui_v1.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\ui_v1_python.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\ui_v1_python.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\support\viewer_depiction.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\support\viewer_depiction.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\support\viewer_source.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\support\viewer_source.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\ui_v1.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\ui_v1.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\button_widget.cc" />
@@ -788,6 +862,10 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\column_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\container_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\container_widget.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\h_scroll_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\h_scroll_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\image_widget.cc" />
@@ -798,6 +876,8 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\row_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\slider_widget.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\slider_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\stack_widget.cc" />

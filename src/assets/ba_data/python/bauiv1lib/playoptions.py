@@ -8,15 +8,14 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
+from bauiv1 import _uiv1assets
 
 from bauiv1lib.popup import PopupWindow
 
 if TYPE_CHECKING:
     from typing import Any
-
-    from bauiv1lib.play import PlaylistSelectContext
 
 
 class PlayOptionsWindow(PopupWindow):
@@ -29,7 +28,7 @@ class PlayOptionsWindow(PopupWindow):
         playlist: str,
         scale_origin: tuple[float, float],
         delegate: Any = None,
-        playlist_select_context: PlaylistSelectContext | None = None,
+        select_only: bool = False,
     ):
         # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
@@ -46,7 +45,9 @@ class PlayOptionsWindow(PopupWindow):
         self._pvars = PlaylistTypeVars(sessiontype)
         self._transitioning_out = False
 
-        self._playlist_select_context = playlist_select_context
+        # Selecting a playlist for private-party hosting (OK just saves
+        # the choice) instead of running it.
+        self._select_only = select_only
 
         self._do_randomize_val = bui.app.config.get(
             self._pvars.config_name + ' Playlist Randomize', 0
@@ -65,11 +66,13 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
-        mesh_transparent = (
-            classicassets.meshes.level_select_button_transparent.get()
+        mesh_opaque = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
         )
-        mask_tex = classicassets.textures.map_preview_mask.get()
+        mesh_transparent = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = _classiccatalogassets.textures.map_preview_mask.get()
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -152,7 +155,7 @@ class PlayOptionsWindow(PopupWindow):
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
-            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.85
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.795
         )
         # Creates our _root_widget.
         super().__init__(
@@ -223,7 +226,7 @@ class PlayOptionsWindow(PopupWindow):
                             desc = _commonassets.strings.compose.line_pair(
                                 first=descbase,
                                 second=(
-                                    classicassets.strings.play_options
+                                    _classicassets.strings.play_options
                                 ).unlock_in_store,
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
@@ -238,7 +241,7 @@ class PlayOptionsWindow(PopupWindow):
                         texture=(
                             map_tex
                             if owned
-                            else classicassets.textures.empty.get()
+                            else _classicassets.textures.empty.get()
                         ),
                         mesh_opaque=mesh_opaque if owned else None,
                         on_activate_call=bui.CallStrict(
@@ -279,7 +282,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=classicassets.textures.lock.get(),
+                            texture=_uiv1assets.textures.lock.get(),
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0
@@ -294,9 +297,9 @@ class PlayOptionsWindow(PopupWindow):
             )
             + ' Series Length',
             displayname=(
-                classicassets.strings.play_options.points_to_win
+                _classicassets.strings.play_options.points_to_win
                 if self._sessiontype is bs.FreeForAllSession
-                else classicassets.strings.play_options.series_length
+                else _classicassets.strings.play_options.series_length
             ),
             minval=1.0,
             maxval=100.0 if self._sessiontype is bs.FreeForAllSession else 99.0,
@@ -320,7 +323,7 @@ class PlayOptionsWindow(PopupWindow):
                 ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
-                label=classicassets.strings.play_options.team_names_colors,
+                label=_classicassets.strings.play_options.team_names_colors,
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
@@ -345,7 +348,7 @@ class PlayOptionsWindow(PopupWindow):
                 scale=1.0,
                 size=(250, 30),
                 autoselect=True,
-                text=classicassets.strings.play_options.shuffle_game_order,
+                text=_classicassets.strings.play_options.shuffle_game_order,
                 maxwidth=300,
                 textcolor=(0.8, 0.8, 0.8),
                 value=self._do_randomize_val,
@@ -366,7 +369,7 @@ class PlayOptionsWindow(PopupWindow):
             scale=1.0,
             size=(250, 30),
             autoselect=True,
-            text=classicassets.strings.play_options.show_tutorial,
+            text=_classicassets.strings.play_options.show_tutorial,
             maxwidth=300,
             textcolor=(0.8, 0.8, 0.8),
             value=show_tutorial,
@@ -410,8 +413,8 @@ class PlayOptionsWindow(PopupWindow):
             autoselect=True,
             label=(
                 _commonassets.strings.actions.ok
-                if self._playlist_select_context is not None
-                else classicassets.strings.ui.play
+                if self._select_only
+                else _classicassets.strings.ui.play
             ),
         )
         bui.widget(edit=self._ok_button, allow_preserve_selection=False)
@@ -467,7 +470,7 @@ class PlayOptionsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:
@@ -484,9 +487,9 @@ class PlayOptionsWindow(PopupWindow):
 
         # Disallow if we have no unlocked games.
         if not self._have_at_least_one_owned:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.play_options.no_valid_games,
+                _classicassets.strings.play_options.no_valid_games,
                 color=(1, 0, 0),
             )
             return
@@ -496,7 +499,7 @@ class PlayOptionsWindow(PopupWindow):
 
         # Head back to the gather window in playlist-select mode or
         # start the game in regular mode.
-        if self._playlist_select_context is not None:
+        if self._select_only:
             if self._sessiontype is bs.FreeForAllSession:
                 typename = 'ffa'
             elif self._sessiontype is bs.DualTeamSession:
@@ -504,7 +507,7 @@ class PlayOptionsWindow(PopupWindow):
             else:
                 raise RuntimeError('Only teams and ffa currently supported')
             cfg['Private Party Host Session Type'] = typename
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
 
             self._transition_out(transition='out_left')
             if self._delegate is not None:

@@ -7,11 +7,22 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_kinds.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
+
+/// Debug-draw tint for anything the bg-dynamics thread simulates
+/// (character limbs and attachments, debris chunks): pulls a body's
+/// role color firmly toward blue so bg and main-sim bodies tell apart
+/// at a glance while the role still shows through a little.
+inline void BGDynamicsDebugTint(float* r, float* g, float* b) {
+  *r = 0.2f + 0.35f * (*r);
+  *g = 0.35f + 0.35f * (*g);
+  *b = 1.0f;
+}
 
 enum class BGDynamicsEmitType {
   kChunks,
@@ -47,39 +58,31 @@ class BGDynamicsEmission {
   BGDynamicsTendrilType tendril_type{BGDynamicsTendrilType::kSmoke};
 };
 
-// client (logic thread) functionality for bg dynamics
+// How long a frame will wait for a bg-dynamics step still in flight
+// before drawing with the previous results
+// (BGDynamicsWorld::AdoptResults). A step normally takes well under
+// this; hitting it means the bg thread is behind, which the feed-drop
+// load shedding handles.
+const int kBGDynamicsDrawWaitMicros = 3000;
+
+/// The logic thread's way in to bg-dynamics: cosmetic physics (debris,
+/// smoke, sparks, character limbs and attachments, shadow heights)
+/// simulated on a thread of its own.
+///
+/// What gets simulated is held in worlds (BGDynamicsWorld), which
+/// share nothing with one another. We own the main one, which
+/// everything in the main game world lives in; things drawn through a
+/// view of their own (ui viewers) make themselves one to match.
 class BGDynamics {
  public:
   BGDynamics();
 
-  void Emit(const BGDynamicsEmission& def);
-  void Step(const Vector3f& cam_pos, int step_millisecs);
-
-  // can be called to inform the bg dynamics thread to kill off some
-  // smoke/chunks/etc. if rendering is chugging or whatnot.
-  void TooSlow();
-
-  // Draws the last snapshot the bg-dynamics-server has delivered to us
-  void Draw(FrameDef* frame_def);
-  void SetDebrisFriction(float val);
-  void SetDebrisKillHeight(float val);
-  /// Add a terrain to the bg-dynamics world. The transform is baked in at
-  /// add time; to move an existing terrain, remove and re-add it.
-  void AddTerrain(CollisionMeshAsset* o, const Matrix44f& transform);
-  void RemoveTerrain(CollisionMeshAsset* o);
-
-  // (sent to us by the bg dynamics server)
-  void SetDrawSnapshot(BGDynamicsDrawSnapshot* s);
+  /// The world the main game world's bg-dynamics happens in. Logic
+  /// thread only.
+  auto main_world() -> BGDynamicsWorld*;
 
  private:
-  void DrawChunks(FrameDef* frame_def, std::vector<Matrix44f>* instances,
-                  BGDynamicsChunkType chunk_type);
-  Object::Ref<SpriteMesh> lights_mesh_;
-  Object::Ref<SpriteMesh> shadows_mesh_;
-  Object::Ref<SpriteMesh> sparks_mesh_;
-  Object::Ref<MeshIndexedSmokeFull> tendrils_mesh_;
-  Object::Ref<MeshIndexedSimpleFull> fuses_mesh_;
-  std::unique_ptr<BGDynamicsDrawSnapshot> draw_snapshot_;
+  Object::Ref<BGDynamicsWorld> main_world_;
 };
 
 }  // namespace ballistica::base

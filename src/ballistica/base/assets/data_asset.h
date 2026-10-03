@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/assets/asset.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::base {
@@ -33,7 +34,7 @@ class DataAsset : public Asset {
   PythonRef object_;
   std::string file_name_;
   std::string file_name_full_;
-  std::string raw_input_;
+  AssetBlob raw_input_;
 };
 
 }  // namespace ballistica::base

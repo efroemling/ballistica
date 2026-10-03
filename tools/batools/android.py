@@ -4,6 +4,7 @@
 
 import os
 import sys
+import shutil
 import subprocess
 from typing import TYPE_CHECKING
 
@@ -90,4 +91,6 @@ def androidaddr(archive_dir: str, arch: str, addr: str) -> None:
             check=True,
         )
     finally:
-        os.system('rm -rf "' + os.path.join(rootdir, 'android_addr_tmp') + '"')
+        shutil.rmtree(
+            os.path.join(rootdir, 'android_addr_tmp'), ignore_errors=True
+        )

@@ -100,7 +100,6 @@ android:
 	@$(PCOMMAND) clean_orphaned_assets
 
 MAKE_SCRIPTS = 1
-MAKE_FONTS = 1
 MAKE_DATA = 1
 
 ASSET_TARGETS_COMMON_GUI =
@@ -119,11 +118,9 @@ ASSET_TARGETS_ANDROID =
 # until 2026-06-12; those asset kinds now live in the asset-package
 # workspaces (decision #26), so the rules are retired.)
 
-# FontData.
-ifeq ($(MAKE_FONTS),1)
-ASSET_TARGETS_COMMON_GUI += $(FONT_TARGETS)
-ASSET_TARGETS_COMMON_SERVER += $(FONT_TARGETS)
-endif
+# (FontData targets lived here until 2026-08-31; the fontSmall glyph
+# .fdata files are now baked into the binary as inline data — see
+# src/ballistica/base/graphics/text/font_glyph_pages_data.h.)
 
 # Data.
 ifeq ($(MAKE_DATA),1)
@@ -204,10 +201,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetref.py \
+  $(BUILD_DIR)/ba_data/python/babase/_assetresolvetrace.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
+  $(BUILD_DIR)/ba_data/python/babase/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloudloggercontrol.py \
   $(BUILD_DIR)/ba_data/python/babase/_commonassets.py \
@@ -220,6 +219,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_gc.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/babase/_generated/base_asset_set.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
@@ -236,7 +236,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_ui.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
-  $(BUILD_DIR)/ba_data/python/babase/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
@@ -245,9 +244,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_baseassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_cloudprofiles.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_controlpermission.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hooks.py \
@@ -258,12 +259,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_uiassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
   $(BUILD_DIR)/ba_data/python/baplus/_ads.py \
   $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_automationhelpers.py \
   $(BUILD_DIR)/ba_data/python/baplus/_automationsession.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_consolesession.py \
@@ -272,8 +275,16 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_actorhost.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_assetref.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_character.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classicassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classiccatalogassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classiccharacterassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classicmapassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
@@ -285,9 +296,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameactivity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameresults.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameutils.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_generated/scene_asset_set.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_level.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_lobby.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_localdisplay.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_map.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_messages.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_multiteamsession.py \
@@ -299,14 +313,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_replay.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_scenev1assets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_stats.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/classicassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_uiv1assets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -318,6 +332,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/multiteamscore.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/multiteamvictory.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/_spazcharacters.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/background.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/bomb.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/controlsguide.py \
@@ -338,6 +353,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/text.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/tipstext.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/zoomtext.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/characterviewer.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/game/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/game/assault.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/game/capturetheflag.py \
@@ -387,14 +403,19 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_builtinassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classiccatalogassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_generated/ui_asset_set.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_uiv1assets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_viewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
@@ -405,7 +426,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/chestui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
@@ -420,18 +441,49 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_animtargets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_cache.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_typed.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowparts.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowstate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_button.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_buttoncontrolrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_controlrows.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_decorations.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_depiction.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_instantiate.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_numberrow.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_rowbands.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_rowtext.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_sections.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_sliderrow.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_staticbuttonrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestframes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestanimation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestdepictions.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestitems.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlayouts.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlivetimes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnames.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestninepatch.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsections.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextimages.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextwrap.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestwidgets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/_gather.py \
@@ -444,7 +496,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/inbox.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/inboxui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/inventory.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/__init__.py \
@@ -457,10 +509,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/partyqueue.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/passwordprompt.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/play.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playdocui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/addgame.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/browser.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/browserdocui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/customizebrowser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/editcontroller.py \
@@ -480,7 +532,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/serverdialog.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/advanced.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettings.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/allsettingsdocui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/audio.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/benchmarks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/settings/controls.py \
@@ -532,6 +584,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/analytics.py \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetpackage.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_index.py \
@@ -551,10 +604,19 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudfilecodec.py \
   $(BUILD_DIR)/ba_data/python/bacommon/consolechannel.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/depiction.py \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/_docui.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/docui/framefit.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/presets.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_base.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicinbox.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicleaguepresidency.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicstore.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/walk.py \
@@ -563,6 +625,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_flatindex.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_format.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_namedecode.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/legacydisplayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
@@ -577,6 +640,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/basntosandbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/sandboxtobasn.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/packetzstddict.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/accounts.py \
@@ -627,7 +691,8 @@ SCRIPT_TARGETS_SO_PUBLIC_TOOLS = \
   
 
 SCRIPT_TARGETS_ZSTDDICT_PUBLIC_TOOLS = \
-  $(BUILD_DIR)/ba_data/python/bacommon/bob_v1.zstddict
+  $(BUILD_DIR)/ba_data/python/bacommon/bob_v1.zstddict \
+  $(BUILD_DIR)/ba_data/python/bacommon/packets_v1.zstddict
 
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
@@ -3335,16 +3400,6 @@ $(SCRIPT_TARGETS_PY_PRIVATE_WIN_ARM64) : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 
-FONT_TARGETS = \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall0.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall1.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall2.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall3.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall4.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall5.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall6.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall7.fdata
-
 PEM_TARGETS = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/cacert.pem
 
@@ -3412,6 +3467,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/libGLESv2.dll \
   $(BUILD_DIR)/windows/Win32/libvorbis.dll \
   $(BUILD_DIR)/windows/Win32/libvorbisfile.dll \
+  $(BUILD_DIR)/windows/Win32/libzstd.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
   $(BUILD_DIR)/windows/Win32/python.exe \
   $(BUILD_DIR)/windows/Win32/python314.dll \
@@ -3488,6 +3544,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/libGLESv2.dll \
   $(BUILD_DIR)/windows/x64/libvorbis.dll \
   $(BUILD_DIR)/windows/x64/libvorbisfile.dll \
+  $(BUILD_DIR)/windows/x64/libzstd.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \
   $(BUILD_DIR)/windows/x64/python.exe \
   $(BUILD_DIR)/windows/x64/python314.dll \
@@ -3585,10 +3642,6 @@ data: $(DATA_TARGETS)
 
 data-clean:
 	rm -rf $(BUILD_DIR)/ba_data/data
-
-fonts: $(FONT_TARGETS)
-fonts-clean:
-	rm -rf $(BUILD_DIR)/ba_data/fonts
 
 # Script targets needed per-platform (may overlap)
 SCRIPT_TARGETS_CMAKE =

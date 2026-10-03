@@ -22,6 +22,7 @@ from efro.dataclassio._base import (
     io_extra_attrs,
     _is_valid_for_codec,
     _get_origin,
+    unwrap_newtype,
     SIMPLE_TYPES,
     _raise_type_error,
     _select_union_member_type,
@@ -637,6 +638,7 @@ class _Outputter:
         # during prep). Make sure all keys match it.
         out: dict | None = {} if self._create else None
         keyanntype, valanntype = childtypes
+        keyanntype = unwrap_newtype(keyanntype)
 
         # str keys we just export directly since that's supported by json.
         if keyanntype is str:

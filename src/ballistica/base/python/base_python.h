@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/python/python_object_set.h"
 
 namespace ballistica::base {
@@ -126,6 +127,7 @@ class BasePython {
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
     kAppDevConsoleSaveTabCall,
+    kAppDevConsoleSaveButtonPositionCall,
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,
@@ -141,6 +143,9 @@ class BasePython {
     kV2AuthDataCall,
     kStartNativeReplCall,
     kSimpleDialogButtonPressCall,
+    kWantedAssetPackagesChangedCall,
+    kPurchasePendingNoticeCall,
+    kOSMusicPlayingChangedCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -213,6 +218,12 @@ class BasePython {
   auto HmacSha256Hex(const std::string& key, const std::string& msg)
       -> std::string;
 
+  /// SHA-256 of ``data`` as a lowercase hex string (via stdlib
+  /// hashlib; same rationale as HmacSha256Hex). Returns empty string on
+  /// failure (logged). Used to reproduce the Python side's index-domain
+  /// digests for self-contained wire content (character definitions).
+  auto Sha256Hex(const std::string& data) -> std::string;
+
  private:
   /// If o is a bacommon.langstr.LangStrSpec dataclass (the authoring
   /// form), parse it into a native LangStr and return it; nullopt if o
@@ -243,9 +254,11 @@ class BasePython {
   PythonRef hmac_new_call_;
   PythonRef hashlib_sha256_call_;
   bool hmac_lookup_failed_{};
+  bool hashlib_lookup_failed_{};
   bool bacommon_lang_str_lookup_failed_{};
   float last_screen_res_x_{-1.0f};
   float last_screen_res_y_{-1.0f};
+  Rect last_virtual_outer_rect_{};
 };
 
 }  // namespace ballistica::base

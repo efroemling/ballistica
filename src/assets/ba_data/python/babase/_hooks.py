@@ -75,70 +75,72 @@ def set_config_fullscreen_off() -> None:
 
 
 def not_signed_in_screen_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
-    _babase.screenmessage(builtinassets.strings.account.must_sign_in)
+    _babase.screenmessage(_builtinassets.strings.account.must_sign_in)
 
 
 def open_url_with_webbrowser_module(url: str) -> None:
     """Show a URL in the browser or print on-screen error if we can't."""
     import webbrowser
-    from babase import builtinassets
+    from babase import _builtinassets
 
     assert _babase.in_logic_thread()
     try:
         webbrowser.open(url)
     except Exception:
         logging.exception("Error displaying url '%s'.", url)
-        builtinassets.audio.error.get().play()
-        _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
+        _builtinassets.audio.error.get().play()
+        _babase.screenmessage(_builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
 def temporarily_unavailable_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            builtinassets.strings.store.unavailable_temporarily,
+            _builtinassets.strings.store.unavailable_temporarily,
             color=(1, 0, 0),
         )
 
 
 def in_progress_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            builtinassets.strings.store.transaction_in_progress,
+            _builtinassets.strings.store.transaction_in_progress,
             color=(1, 0, 0),
         )
 
 
 def error_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
-        _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
+        _builtinassets.audio.error.get().play()
+        _babase.screenmessage(_builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
 def success_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.ding.get().play()
-        _babase.screenmessage(builtinassets.strings.ui.success, color=(0, 1, 0))
+        _builtinassets.audio.ding.get().play()
+        _babase.screenmessage(
+            _builtinassets.strings.ui.success, color=(0, 1, 0)
+        )
 
 
 def purchase_not_valid_error() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            builtinassets.strings.store.purchase_not_valid(
+            _builtinassets.strings.store.purchase_not_valid(
                 email='support@froemling.net'
             ),
             color=(1, 0, 0),
@@ -146,30 +148,54 @@ def purchase_not_valid_error() -> None:
 
 
 def purchase_already_in_progress_error() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            builtinassets.strings.store.purchase_already_in_progress,
+            _builtinassets.strings.store.purchase_already_in_progress,
             color=(1, 0, 0),
         )
 
 
+def purchase_pending_notice() -> None:
+    """Tell the user a purchase they just made is awaiting payment.
+
+    Some payment methods (UPI, cash, certain bank transfers) complete
+    asynchronously; the store hands back a *pending* purchase and grants
+    nothing until the payment clears, which can take minutes. Without
+    this the purchase flow just closes with no visible result. A modal
+    :class:`~babase.SimpleDialog` rather than a screen message so it
+    can't be missed and shows in any app-mode.
+    """
+    from babase import _builtinassets
+    from babase._simpledialog import SimpleDialog
+
+    if not _babase.app.env.gui:
+        return
+    dialog = SimpleDialog(
+        title=_builtinassets.strings.store.payment_pending_title,
+        message=_builtinassets.strings.store.payment_pending_message,
+        button_label=_builtinassets.strings.ui.ok,
+        cancel_activates_button=True,
+    )
+    dialog.update(on_button=dialog.dismiss)
+
+
 def orientation_reset_cb_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.input.vr_orientation_reset_cardboard,
+        _builtinassets.strings.input.vr_orientation_reset_cardboard,
         color=(0, 1, 0),
     )
 
 
 def orientation_reset_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.input.vr_orientation_reset, color=(0, 1, 0)
+        _builtinassets.strings.input.vr_orientation_reset, color=(0, 1, 0)
     )
 
 
@@ -223,18 +249,18 @@ def launch_coop_game(name: str) -> None:
 
 
 def purchases_restored_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.store.purchases_restored, color=(0, 1, 0)
+        _builtinassets.strings.store.purchases_restored, color=(0, 1, 0)
     )
 
 
 def unavailable_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.store.unavailable, color=(1, 0, 0)
+        _builtinassets.strings.store.unavailable, color=(1, 0, 0)
     )
 
 
@@ -245,19 +271,19 @@ def set_last_ad_network(sval: str) -> None:
 
 
 def google_play_purchases_not_available_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.store.google_play_purchases_unavailable,
+        _builtinassets.strings.store.google_play_purchases_unavailable,
         color=(1, 0, 0),
     )
 
 
 def google_play_services_not_available_message() -> None:
-    from babase import builtinassets
+    from babase import _builtinassets
 
     _babase.screenmessage(
-        builtinassets.strings.store.google_play_services_unavailable,
+        _builtinassets.strings.store.google_play_services_unavailable,
         color=(1, 0, 0),
     )
 
@@ -281,17 +307,17 @@ def toggle_fullscreen() -> None:
 
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.headless:
         return
 
     # Can be called without a context; need a context for getsound.
     _babase.screenmessage(
-        builtinassets.strings.input.controller_menus_only,
+        _builtinassets.strings.input.controller_menus_only,
         color=(1, 0, 0),
     )
-    builtinassets.audio.error.get().play()
+    _builtinassets.audio.error.get().play()
 
 
 def remove_in_game_ads_message() -> None:
@@ -388,6 +414,15 @@ def discord_sign_in_token_response(
     on_discord_sign_in_token_response(attempt_id=attempt_id, result=result)
 
 
+def wanted_asset_packages_changed() -> None:
+    """A new asset-package became wanted by something on screen.
+
+    Kicks the asset subsystem's background acquirer (character-skins
+    lazy media); see :meth:`babase.AssetSubsystem.on_wanted_packages_changed`.
+    """
+    _babase.app.assets.on_wanted_packages_changed()
+
+
 def show_client_too_old_error() -> None:
     """Called at launch if the server tells us we're too old to talk to it."""
     # If you are using an old build of the app and would like to stop
@@ -402,13 +437,13 @@ def show_client_too_old_error() -> None:
     ):
         return
 
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
 
     _babase.screenmessage(
-        builtinassets.strings.net.server_unsupported,
+        _builtinassets.strings.net.server_unsupported,
         color=(1, 0, 0),
     )
 
@@ -428,14 +463,14 @@ def get_dev_console_tab_names() -> list[str]:
 
 def unsupported_controller_message(name: str) -> None:
     """Print a message when an unsupported controller is connected."""
-    from babase import builtinassets
+    from babase import _builtinassets
 
     # Ick; this can get called early in the bootstrapping process
     # before we're allowed to load assets. Guard against that.
     if _babase.asset_loads_allowed():
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
     _babase.screenmessage(
-        builtinassets.strings.input.unsupported_controller(name=name),
+        _builtinassets.strings.input.unsupported_controller(name=name),
         color=(1, 0, 0),
     )
 
@@ -443,12 +478,12 @@ def unsupported_controller_message(name: str) -> None:
 def copy_dev_console_history() -> None:
     """Copy log history from the dev console."""
     import baenv
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if not _babase.clipboard_is_supported():
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            builtinassets.strings.ui.clipboard_not_supported,
+            _builtinassets.strings.ui.clipboard_not_supported,
             color=(1, 0, 0),
         )
         return
@@ -456,7 +491,7 @@ def copy_dev_console_history() -> None:
     # This requires us to be running with a log-handler set up.
     envconfig = baenv.get_env_config()
     if envconfig.log_handler is None:
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
         _babase.screenmessage(
             'Not available; standard engine logging is not enabled.',
             color=(1, 0, 0),
@@ -474,9 +509,9 @@ def copy_dev_console_history() -> None:
 
     _babase.clipboard_set_text('\n'.join(lines))
     _babase.screenmessage(
-        builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+        _builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
     )
-    builtinassets.audio.gun_cocking.get().play()
+    _builtinassets.audio.gun_cocking.get().play()
 
 
 def start_native_repl() -> bool:
@@ -527,22 +562,25 @@ def _do_start_native_repl() -> None:
 
 
 def v2_auth_request(
-    global_app_instance_id: str,
+    global_app_instance_id: str, optional: bool = False
 ) -> None | tuple[bool, str, int | None]:
     """Kick off or process v2 auth requests.
 
     Return None if no results or (success, error/token, reject-reason).
+    ``optional`` means the host lets us join without auth.
     """
     assert _babase.app.plus is not None
     out: None | tuple[bool, str, int | None] = (
-        _babase.app.plus.accounts.auth_request(global_app_instance_id)
+        _babase.app.plus.accounts.auth_request(
+            global_app_instance_id, optional=optional
+        )
     )
     return out
 
 
 def v2_auth_data(
     token: str,
-) -> None | tuple[str, str, dict, list[str] | None]:
+) -> None | tuple[str, str, dict, list[str] | None, list[str] | None]:
     """Look up autheneticated v2 account data via a token."""
     assert _babase.in_logic_thread()
 
@@ -561,4 +599,17 @@ def v2_auth_data(
         authdata.account_tag,
         authdata.player_profiles,
         authdata.classic_purchases,
+        authdata.cloud_characters,
     )
+
+
+def os_music_playing_changed(playing: bool) -> None:
+    """Another app started or stopped playing music.
+
+    Game music yields to it live; see the classic music subsystem's
+    ``on_os_music_playing_changed()``.
+    """
+    classic = _babase.app.classic
+    if classic is None:
+        return
+    classic.music.on_os_music_playing_changed(playing)

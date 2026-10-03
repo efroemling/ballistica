@@ -17,13 +17,16 @@ from typing import TYPE_CHECKING, override
 from efro.terminal import Clr
 
 from batools.docs import get_sphinx_settings
-from sphinx.util.logging import WarningStreamHandler
+from sphinx.util.logging import WarningStreamHandler, getLogger
 
 if TYPE_CHECKING:
     from docutils import nodes
     from typing import Any
 
     from sphinx.application import Sphinx
+
+# Warnings through this count toward sphinx-build's --fail-on-warning.
+_logger = getLogger(__name__)
 
 
 def _ballistica_module_prefixes() -> tuple[str, ...]:
@@ -137,17 +140,16 @@ rst_epilog = """
 nitpicky = True
 nitpick_ignore = [
     #
-    # Stuff that is part of 'private' apis that we've intentionally
-    # hidden despite having public naming. See 'skip_prefixes' below.
-    ('py:class', 'v1prep.PagePrep'),
-    ('py:class', 'bacommon.legacydisplayitem.Wrapper'),
-    ('py:class', 'bacommon.legacydisplayitem.Item'),
-    ('py:class', 'bacommon.legacydisplayitem.ItemTypeID'),
-    # Rendered unqualified in bacloud client signatures; their module
-    # (bacommon.bacloud) is a skipped namespace, so the qualified
-    # regex below never sees these forms.
-    ('py:class', 'StandardRequestData'),
-    ('py:class', 'StandardResponseData'),
+    # NOTE: never add internal-api types (see batools.apidocs) here: a
+    # public signature failing to resolve one is exactly the leak that
+    # nitpicky mode is there to catch.
+    #
+    # Private shared base of ConfigNumberEdit/ConfigSlider; it appears in
+    # their documented signatures but is deliberately not itself public.
+    ('py:class', 'bauiv1lib.config._NumericConfigControl'),
+    # asyncio.SelectorEventLoop is an alias of this private class on
+    # unix; it shows up as efrotools.virtualtime.VirtualTimeLoop's base.
+    ('py:class', 'asyncio.unix_events._UnixSelectorEventLoop'),
     #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
@@ -162,6 +164,7 @@ nitpick_ignore = [
     ('py:class', 'bs.GameTip'),
     ('py:class', 'bs.Lstr'),
     ('py:class', 'bs.Texture'),
+    ('py:class', 'bs.Depiction'),
     ('py:class', 'bs.Mesh'),
     ('py:class', 'bascenev1.Time'),
     ('py:class', 'babase.SimpleSound'),
@@ -188,6 +191,7 @@ nitpick_ignore = [
     #
     # TypeVars have no docs.
     ('py:class', 'T'),
+    ('py:class', 'S'),
     ('py:class', 'EnumT'),
     ('py:class', 'RetT'),
     ('py:class', 'ValT'),
@@ -199,6 +203,10 @@ nitpick_ignore = [
     ('py:class', 'P'),
     ('py:class', 'SendT'),
     ('py:class', 'RecvT'),
+    ('py:class', 'RouteT'),
+    ('py:class', 'V'),
+    ('py:class', 'E'),
+    ('py:class', 'ActionT'),
     ('py:class', 'P.args'),
     ('py:class', 'P.kwargs'),
     ('py:obj', 'typing.P'),
@@ -222,6 +230,7 @@ nitpick_ignore = [
     ('py:class', 'weakref.ReferenceType'),
     #
     # Additional bs.* types not yet covered above.
+    ('py:class', 'bs.Node'),
     ('py:class', 'bs.NodeActor'),
     ('py:class', 'bs.Player'),
     ('py:class', 'bs.Timer'),
@@ -306,16 +315,18 @@ nitpick_ignore = [
 
 # Regex-based nitpick ignores for whole categories of references.
 nitpick_ignore_regex = [
-    # Types from private/skipped namespaces. Sphinx 9.x generates
-    # cross-references to these from public API signatures even though
-    # the modules themselves are excluded (see skip_prefixes below).
-    ('py:class', r'bacommon\.bacloud\..*'),
-    ('py:class', r'bacommon\.classic\..*'),
-    ('py:class', r'bacommon\.clienteffect\..*'),
-    ('py:class', r'bacommon\.cloud\..*'),
-    ('py:class', r'bacommon\.clouddialog\..*'),
-    # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
-    ('py:class', r'cdlg\..*'),
+    # (Same rule as nitpick_ignore: no internal-api types here.)
+    #
+    # Third party lint-tool types showing up in our pylint plugin's
+    # signatures/bases (nothing to cross-reference them to).
+    ('py:class', r'astroid\.nodes\..*'),
+    ('py:class', r'pylint\.checkers\..*'),
+    # Doc-ui route/local-action families each export 'Any<Family>' union
+    # aliases which show up in signatures but can't cross-ref as classes
+    # (client-local domains define theirs outside bacommon, and those
+    # surface unqualified).
+    ('py:class', r'bacommon\.docui\.routes\.\w+\.Any\w+'),
+    ('py:class', r'Any\w+(Route|LocalAction)'),
     # Truncated generic type strings that Sphinx 9.x emits as cross-reference
     # targets when processing complex type annotations such as
     # dict[str, X], list[tuple[str, ...]], Callable[[], X], Literal['a', 'b'].
@@ -460,27 +471,12 @@ def _wrangle_logging() -> None:
 _wrangle_logging()
 
 
-# Prevent docs generation for particular packages that we consider
-# 'private' despite having public naming. Note that these will still be
-# listed under their parent package's page, but the only thing visible
-# in them will be their module docstring (which should explain that they
-# are private).
+# Modules we consider 'private' despite public naming (internal-api
+# modules) aren't listed here: they carry the internal-api warning
+# block in their docstring, batools.docs strips their pages down to
+# that docstring, and skip_private_submodules() below refuses to
+# document their members anywhere else (see batools.apidocs).
 skip_prefixes = [
-    'bauiv1lib.docui.v1prep.',
-    'bacommon.legacydisplayitem.',
-    'bacommon.displayitem.',
-    # Internal plumbing; public-named only because a featureset
-    # package may not import a private bacommon module.
-    'bacommon.docui.walk.',
-    'bacommon.net.',
-    'bacommon.cloud.',
-    'bacommon.transfer.',
-    'bacommon.build.',
-    'bacommon.bacloud.',
-    'bacommon.assets.',
-    'bacommon.classic.',
-    'bacommon.clouddialog.',
-    'bacommon.clienteffect.',
     # Stdlib types injected by the docs-gen hack in
     # batools.docs (so sphinx can find forward-declared types
     # used in annotations). With autodoc's ``imported-members:
@@ -506,7 +502,7 @@ def skip_private_submodules(
 ) -> bool | None:
     """Skip submodules we consider private despite looking public."""
     # pylint: disable=too-many-positional-arguments
-    del app, options  # Unused.
+    del app  # Unused.
 
     if what == 'module' and isinstance(obj, types.ModuleType):
         fqname = obj.__name__
@@ -517,12 +513,154 @@ def skip_private_submodules(
     if any(fqname.startswith(p) for p in skip_prefixes):
         return True
 
+    # Internal-api modules' own pages list no members at all, so one of
+    # their objects here is being considered for some public page. Plain
+    # imports get dropped after this hook runs (autodoc only keeps
+    # members native to the page's module), but on a page showing
+    # imported members -- a module re-exporting via ``__all__`` -- it
+    # would really appear. That's a leak; fail the build.
+    if not skip and _from_internal_api_module(obj):
+        imported = (
+            options.get('imported-members')
+            if isinstance(options, dict)
+            else getattr(options, 'imported_members', None)
+        )
+        if not imported:
+            return True
+        _logger.warning(
+            'Internal-api object %s would appear in the public docs'
+            ' (as %r); stop exposing it publicly or mark the exposing'
+            ' module internal too (see batools.apidocs).',
+            fqname,
+            name,
+        )
+        return True
+
     return skip
+
+
+def _from_internal_api_module(obj: Any) -> bool:
+    """Whether an object lives in (or under) an internal-api module."""
+    import sys
+
+    from batools.apidocs import INTERNAL_API_WARNING
+
+    modname = getattr(obj, '__module__', None)
+    if not isinstance(modname, str):
+        return False
+    parts = modname.split('.')
+    for i in range(len(parts), 0, -1):
+        mod = sys.modules.get('.'.join(parts[:i]))
+        if INTERNAL_API_WARNING in (getattr(mod, '__doc__', None) or ''):
+            return True
+    return False
+
+
+def strip_private_dataclass_params(
+    app: Sphinx,
+    what: str,
+    name: str,
+    obj: Any,
+    options: Any,
+    signature: str | None,
+    return_annotation: str | None,
+) -> tuple[str | None, str | None] | None:
+    """Drop ``:meta private:`` fields from dataclass signatures.
+
+    A field whose ``#:`` doc comment says ``:meta private:`` is left out
+    of its class's docs, but autodoc still renders the generated
+    ``__init__`` signature with every field in it -- private types and
+    all. Drop those parameters too, so a private field stays private
+    (and its type doesn't show up as an unresolvable reference).
+    """
+    # pylint: disable=too-many-positional-arguments
+    import dataclasses
+
+    del app, name, options  # Unused.
+    if (
+        what not in ('class', 'exception')
+        or signature is None
+        or not isinstance(obj, type)
+        or not dataclasses.is_dataclass(obj)
+    ):
+        return None
+    private = _private_dataclass_fields(obj)
+    if not private:
+        return None
+    params = _split_signature_params(signature)
+    kept = [p for p in params if _signature_param_name(p) not in private]
+    if len(kept) == len(params):
+        return None
+    joined = ', '.join(kept)
+    return f'({joined})', return_annotation
+
+
+def _private_dataclass_fields(cls: type) -> set[str]:
+    """Names of a dataclass's fields documented ``:meta private:``.
+
+    Includes those inherited from dataclass bases.
+    """
+    import dataclasses
+
+    from sphinx.pycode import ModuleAnalyzer
+    from sphinx.errors import PycodeError
+
+    out: set[str] = set()
+    for base in cls.__mro__:
+        if not dataclasses.is_dataclass(base):
+            continue
+        try:
+            attr_docs = ModuleAnalyzer.for_module(
+                base.__module__
+            ).find_attr_docs()
+        except PycodeError:
+            continue
+        for (qualname, attrname), lines in attr_docs.items():
+            if qualname == base.__qualname__ and any(
+                ':meta private:' in line for line in lines
+            ):
+                out.add(attrname)
+    return out
+
+
+def _split_signature_params(signature: str) -> list[str]:
+    """Split ``'(a: X, b: dict[str, int] = {})'`` into its params."""
+    inner = signature.strip()
+    assert inner.startswith('(') and inner.endswith(')'), signature
+    inner = inner[1:-1]
+    params: list[str] = []
+    depth = 0
+    quote: str | None = None
+    current = ''
+    for char in inner:
+        if quote is not None:
+            if char == quote:
+                quote = None
+        elif char in '\'"':
+            quote = char
+        elif char in '([{':
+            depth += 1
+        elif char in ')]}':
+            depth -= 1
+        elif char == ',' and depth == 0:
+            params.append(current.strip())
+            current = ''
+            continue
+        current += char
+    if current.strip():
+        params.append(current.strip())
+    return params
+
+
+def _signature_param_name(param: str) -> str:
+    """The name in a rendered param (``'*, b: int = 1'`` style bits)."""
+    return param.lstrip('*').split(':', 1)[0].split('=', 1)[0].strip()
 
 
 def setup(app: Sphinx) -> Any:
     """Do the thing."""
     app.connect('autodoc-skip-member', skip_private_submodules)
+    app.connect('autodoc-process-signature', strip_private_dataclass_params)
     return {
         'version': '1.0',
         'parallel_read_safe': True,

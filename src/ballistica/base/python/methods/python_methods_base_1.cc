@@ -238,6 +238,203 @@ static PyMethodDef PyAutomationPressAtVirtualDef = {
     "size to compute the absolute coords for a given widget.\n",
 };
 
+// ------------------- automation_key_event ------------------------------------
+
+static auto PyAutomationKeyEvent(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int keycode = 0;
+  int down = 1;
+  static const char* kwlist[] = {"keycode", "down", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "i|p", const_cast<char**>(kwlist), &keycode, &down)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (down) {
+    g_base->input->PushKeyPressEventSimple(keycode);
+  } else {
+    g_base->input->PushKeyReleaseEventSimple(keycode);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationKeyEventDef = {
+    "automation_key_event",             // name
+    (PyCFunction)PyAutomationKeyEvent,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "automation_key_event(keycode: int, down: bool = True) -> None\n"
+    "\n"
+    "Synthesize a keyboard press or release for the given BA keycode.\n"
+    "Requires a build with ``BA_ENABLE_AUTOMATION`` set. Routes through\n"
+    "the same path OS key events take, so keyboard input devices,\n"
+    "player-join requests, and UI key handling all behave as with a\n"
+    "real key. Keycodes are the engine's BAK_* values (ASCII for\n"
+    "printable keys; 13 is return).\n",
+};
+
+// ---------------- automation_ensure_keyboard ---------------------------------
+
+static auto PyAutomationEnsureKeyboard(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_base->input->keyboard_input() == nullptr) {
+    g_base->input->PushCreateKeyboardInputDevices();
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationEnsureKeyboardDef = {
+    "automation_ensure_keyboard",             // name
+    (PyCFunction)PyAutomationEnsureKeyboard,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "automation_ensure_keyboard() -> bool\n"
+    "\n"
+    "Make sure keyboard input devices exist, creating them if not.\n"
+    "Platforms such as iOS only create them when a hardware keyboard\n"
+    "connects; this lets automation drive keyboard joins there. Returns\n"
+    "True if devices were created (they appear on a later frame), False\n"
+    "if they already existed. Requires ``BA_ENABLE_AUTOMATION``.\n",
+};
+
+// --------------- automation_mouse_button_at_virtual --------------------------
+
+static auto PyAutomationMouseButtonAtVirtual(PyObject* self, PyObject* args,
+                                             PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int button{1};
+  double vx{0.0};
+  double vy{0.0};
+  int pressed{1};
+  static const char* kwlist[] = {"button", "x", "y", "pressed", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "iddp",
+                                   const_cast<char**>(kwlist), &button, &vx,
+                                   &vy, &pressed)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseButtonAtVirtualCoords(button, static_cast<float>(vx),
+                                                static_cast<float>(vy),
+                                                static_cast<bool>(pressed));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationMouseButtonAtVirtualDef = {
+    "automation_mouse_button_at_virtual",           // name
+    (PyCFunction)PyAutomationMouseButtonAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,                   // flags
+
+    "automation_mouse_button_at_virtual(button: int, x: float, y: float,\n"
+    "                                   pressed: bool) -> None\n"
+    "\n"
+    "Synthesize one half of a mouse click at the given virtual-screen\n"
+    "coordinates. Requires a build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "Raises RuntimeError in headless builds (no UI to target).\n"
+    "\n"
+    "Unlike ``automation_press_at_virtual``, which presses and releases\n"
+    "in a single dispatch, this leaves the button held until a matching\n"
+    "released call -- so frames render while it is down. That is the\n"
+    "only way to observe a widget's *held* appearance (a pressed\n"
+    "button's glow, a slider's grabbed nub) from automation.\n"
+    "\n"
+    "Always pair a pressed call with a released one; leaving a\n"
+    "synthesized press outstanding leaves the UI thinking a button is\n"
+    "down.\n",
+};
+
+// --------------- automation_ui_nav ------------------------------------------
+
+static auto PyAutomationUINav(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* direction;
+  static const char* kwlist[] = {"direction", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &direction)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  // Synthesized input makes no sense headless (no UI to target).
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  std::string dir{direction};
+  WidgetMessage::Type type;
+  if (dir == "left") {
+    type = WidgetMessage::Type::kMoveLeft;
+  } else if (dir == "right") {
+    type = WidgetMessage::Type::kMoveRight;
+  } else if (dir == "up") {
+    type = WidgetMessage::Type::kMoveUp;
+  } else if (dir == "down") {
+    type = WidgetMessage::Type::kMoveDown;
+  } else if (dir == "activate") {
+    type = WidgetMessage::Type::kActivate;
+  } else if (dir == "cancel") {
+    type = WidgetMessage::Type::kCancel;
+  } else {
+    throw Exception("Invalid direction: '" + dir + "'.", PyExcType::kValue);
+  }
+  g_base->input->PushUINavEvent(type);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationUINavDef = {
+    "automation_ui_nav",             // name
+    (PyCFunction)PyAutomationUINav,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "automation_ui_nav(direction: str) -> None\n"
+    "\n"
+    "Synthesize a UI-navigation event -- the messages arrow keys and\n"
+    "controller d-pads produce. Direction is one of 'left', 'right',\n"
+    "'up', 'down', 'activate', 'cancel'. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set. Routes through the normal UI\n"
+    "dispatch path, so selection order, message claiming, and focus\n"
+    "chains behave as they would for real input. Raises RuntimeError\n"
+    "in headless builds (no UI to target).\n"
+    "\n"
+    "This reaches behavior no pointer synthesis can: widgets that\n"
+    "consume directional messages (sliders adjusting their value, for\n"
+    "one) are only exercisable this way.\n",
+};
+
 // --------------- automation_scroll_at_virtual -------------------------------
 
 static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
@@ -283,6 +480,153 @@ static PyMethodDef PyAutomationScrollAtVirtualDef = {
     "wheel-event sign). Cursor is moved to the target point first\n"
     "since wheel events dispatch to whatever is under the cursor.\n"
     "Raises RuntimeError in headless builds (no UI to target).\n",
+};
+
+// ----------------- automation_drag_at_virtual -------------------------------
+
+static auto PyAutomationDragAtVirtual(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int button = 1;
+  int steps = 8;
+  int cancel = 0;
+  double vx = 0.0;
+  double vy = 0.0;
+  double vx2 = 0.0;
+  double vy2 = 0.0;
+  static const char* kwlist[] = {"x",     "y",      "x2",     "y2",
+                                 "steps", "button", "cancel", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd|iip",
+                                   const_cast<char**>(kwlist), &vx, &vy, &vx2,
+                                   &vy2, &steps, &button, &cancel)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseDragAtVirtualCoords(
+      button, static_cast<float>(vx), static_cast<float>(vy),
+      static_cast<float>(vx2), static_cast<float>(vy2), steps,
+      static_cast<bool>(cancel));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationDragAtVirtualDef = {
+    "automation_drag_at_virtual",            // name
+    (PyCFunction)PyAutomationDragAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_drag_at_virtual(x: float, y: float, x2: float, y2: float,\n"
+    "                           steps: int = 8, button: int = 1,\n"
+    "                           cancel: bool = False) -> None\n"
+    "\n"
+    "Synthesize a mouse drag: press at (x, y), ``steps`` interpolated\n"
+    "motion events towards (x2, y2), release there -- or, with\n"
+    "``cancel``, end with a mouse-cancel there instead (what a touch\n"
+    "gesture the OS takes over mid-drag produces). Virtual-screen\n"
+    "coords; routes through the normal UI dispatch path. Requires a\n"
+    "build with ``BA_ENABLE_AUTOMATION`` set. Raises RuntimeError in\n"
+    "headless builds (no UI to target).\n",
+};
+
+// ----------------- automation_get_window_size -------------------------------
+
+static auto PyAutomationGetWindowSize(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* tag = "window_size";
+  static const char* kwlist[] = {"tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char**>(kwlist), &tag)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  // No OS window headless; surface as a RuntimeError so Python
+  // helpers can catch and emit a structured fail with the caller's tag.
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->automation->GetWindowSize(tag);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationGetWindowSizeDef = {
+    "automation_get_window_size",            // name
+    (PyCFunction)PyAutomationGetWindowSize,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_get_window_size(tag: str = 'window_size') -> None\n"
+    "\n"
+    "Report the app's current OS-window size. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set and an app-adapter running in a\n"
+    "desktop window (SDL builds). Fire-and-forget: the query runs on\n"
+    "the main thread and a single ``[automation] <tag> ok <W>x<H>``\n"
+    "line (logical units) or structured fail line gets logged to\n"
+    "``ba.app`` when complete. Raises RuntimeError in headless builds\n"
+    "(no OS window).\n",
+};
+
+// ----------------- automation_set_window_size -------------------------------
+
+static auto PyAutomationSetWindowSize(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int width{};
+  int height{};
+  const char* tag = "set_window_size";
+  static const char* kwlist[] = {"width", "height", "tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ii|s",
+                                   const_cast<char**>(kwlist), &width, &height,
+                                   &tag)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  if (width < 1 || height < 1) {
+    throw Exception("Invalid window size requested.", PyExcType::kValue);
+  }
+  g_base->automation->SetWindowSize(width, height, tag);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationSetWindowSizeDef = {
+    "automation_set_window_size",            // name
+    (PyCFunction)PyAutomationSetWindowSize,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_set_window_size(width: int, height: int,\n"
+    "                           tag: str = 'set_window_size') -> None\n"
+    "\n"
+    "Resize the app's OS window. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set and an app-adapter running in a\n"
+    "desktop window (SDL builds); only functions in windowed mode.\n"
+    "Fire-and-forget: the resize runs on the main thread and a single\n"
+    "``[automation] <tag> ok <W>x<H>`` line reporting the size\n"
+    "actually applied (the OS may clamp; e.g. macOS to display\n"
+    "bounds) or structured fail line (``fullscreen``,\n"
+    "``not_supported``) gets logged to ``ba.app`` when complete.\n"
+    "Raises RuntimeError in headless builds (no OS window).\n",
 };
 
 #endif  // BA_ENABLE_AUTOMATION
@@ -1457,7 +1801,7 @@ static PyMethodDef PyMacMusicAppGetPlaylistsDef = {
 static auto PyIsOSPlayingMusic(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->platform->IsOSPlayingMusic()) {
+  if (g_core->platform->os_music_playing()) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -1472,9 +1816,11 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
 
     "is_os_playing_music() -> bool\n"
     "\n"
-    "Return whether the OS is currently playing music of some sort.\n"
+    "Return whether another app is currently playing music.\n"
     "\n"
     "Used to determine whether the app should avoid playing its own.\n"
+    "Updated live on platforms that report it (iOS, Android); changes\n"
+    "also arrive via a hook to the music subsystem.\n"
     "\n"
     ":meta private:",
 };
@@ -2037,7 +2383,14 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
 #if BA_ENABLE_AUTOMATION
       PyAutomationCaptureScreenshotDef,
       PyAutomationPressAtVirtualDef,
+      PyAutomationKeyEventDef,
+      PyAutomationEnsureKeyboardDef,
       PyAutomationScrollAtVirtualDef,
+      PyAutomationUINavDef,
+      PyAutomationMouseButtonAtVirtualDef,
+      PyAutomationDragAtVirtualDef,
+      PyAutomationGetWindowSizeDef,
+      PyAutomationSetWindowSizeDef,
 #endif
       PyDiscordRequestSignInTokenDef,
       PyDiscordUpdatePresenceDef,

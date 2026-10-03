@@ -17,7 +17,7 @@ void PythonClassLangStr::SetupType(PyTypeObject* cls) {
   cls->tp_name = "babase.LangStr";
   cls->tp_basicsize = sizeof(PythonClassLangStr);
   cls->tp_doc =
-      "LangStr(json: str, packages: Sequence[str] | None = None,\n"
+      "LangStr(json: str, packages: Sequence[int] | None = None,\n"
       "        wrap: tuple[int, int | None, int | None] | None = None)\n"
       "\n"
       "A deferred, language-agnostic complex string (native).\n"
@@ -89,7 +89,10 @@ auto PythonClassLangStr::tp_new(PyTypeObject* type, PyObject* args,
   std::vector<std::string> packages;
   bool have_packages{packages_obj != Py_None};
   if (have_packages) {
-    packages = Python::GetStrings(packages_obj);
+    // Numeric ids; the engine keys packages by them as text.
+    for (int64_t apvernum : Python::GetInts64(packages_obj)) {
+      packages.push_back(std::to_string(apvernum));
+    }
   }
   auto parsed = LangStr::FromJson(json, have_packages ? &packages : nullptr);
   if (!parsed.has_value()) {
@@ -164,9 +167,44 @@ auto PythonClassLangStr::tp_hash(PythonClassLangStr* self) -> Py_hash_t {
   return hashval == -1 ? -2 : hashval;
 }
 
-auto PythonClassLangStr::Evaluate(PythonClassLangStr* self) -> PyObject* {
+/// Parse the optional ``wrap`` keyword shared by the evaluate methods.
+static auto ParseEvaluateWrapArg(PyObject* args, PyObject* keywds, bool* wrap)
+    -> bool {
+  int wrap_int{1};
+  static const char* kwlist[] = {"wrap", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|$p",
+                                   const_cast<char**>(kwlist), &wrap_int)) {
+    return false;
+  }
+  *wrap = wrap_int != 0;
+  return true;
+}
+
+auto PythonClassLangStr::Evaluate(PythonClassLangStr* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyUnicode_FromString(self->value()->Evaluate().c_str());
+  bool wrap{};
+  if (!ParseEvaluateWrapArg(args, keywds, &wrap)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(self->value()->Evaluate(nullptr, wrap).c_str());
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassLangStr::EvaluateTimed(PythonClassLangStr* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  bool wrap{};
+  if (!ParseEvaluateWrapArg(args, keywds, &wrap)) {
+    return nullptr;
+  }
+  std::optional<int64_t> until_change;
+  auto text = self->value()->Evaluate(&until_change, wrap);
+  if (until_change.has_value()) {
+    return Py_BuildValue("(sd)", text.c_str(),
+                         static_cast<double>(*until_change) / 1000.0);
+  }
+  return Py_BuildValue("(sO)", text.c_str(), Py_None);
   BA_PYTHON_CATCH;
 }
 
@@ -202,6 +240,37 @@ auto PythonClassLangStr::FromText(PyObject* cls, PyObject* arg) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassLangStr::Join(PyObject* cls, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* items_obj{};
+  const char* separator{""};
+  static const char* kwlist[] = {"items", "separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+                                   const_cast<char**>(kwlist), &items_obj,
+                                   &separator)) {
+    return nullptr;
+  }
+  auto seq = PythonRef::Stolen(
+      PySequence_Fast(items_obj, "Expected a sequence of babase.LangStr."));
+  Py_ssize_t count = PySequence_Fast_GET_SIZE(seq.get());
+  PyObject** objs = PySequence_Fast_ITEMS(seq.get());
+  std::vector<std::shared_ptr<const LangStr>> items;
+  items.reserve(static_cast<size_t>(count));
+  for (Py_ssize_t i = 0; i < count; ++i) {
+    // Only language-strings: plain text must come in via from_text()
+    // so nothing untyped slips into the template.
+    items.push_back(FromPyObj(objs[i]).value());
+  }
+  auto joined = LangStr::Join(items, separator);
+  if (!joined.has_value()) {
+    throw Exception("Unable to join language-strings: " + joined.error(),
+                    PyExcType::kValue);
+  }
+  return Create(*joined);
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassLangStr::GetSpec(PythonClassLangStr* self, void* closure)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -233,13 +302,42 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "that wants a :class:`~babase.LangStr`. Anything that needs\n"
      "substitutions or translation should be an authored\n"
      "asset-package entry instead, so its arguments are type-checked.\n"},
-    {"evaluate", (PyCFunction)Evaluate, METH_NOARGS,
-     "evaluate() -> str\n"
+    {"join", (PyCFunction)Join, METH_VARARGS | METH_KEYWORDS | METH_CLASS,
+     "join(items: Sequence[babase.LangStr], separator: str = '')"
+     " -> babase.LangStr\n"
+     "\n"
+     "Combine language-strings into one, shown one after another.\n"
+     "\n"
+     "``separator`` is literal text placed between items (a newline\n"
+     "for a list, say); its braces display literally. Each item keeps\n"
+     "its own translation and arguments, so a variable-length list\n"
+     "of authored entries (one line per player, ...) stays fully\n"
+     "localized. Items must be language-strings -- wrap plain text\n"
+     "with :meth:`from_text`. Raises ValueError for more than 256\n"
+     "items or a result nested too deeply.\n"},
+    {"evaluate", (PyCFunction)Evaluate, METH_VARARGS | METH_KEYWORDS,
+     "evaluate(*, wrap: bool = True) -> str\n"
      "\n"
      "Evaluate to flat display text in the client's locale.\n"
      "\n"
      "Fail-visible: structural problems yield a ``LANGSTR_ERROR:...``\n"
-     "sentinel string (with a logged warning) rather than raising.\n"},
+     "sentinel string (with a logged warning) rather than raising.\n"
+     "\n"
+     "Pass ``wrap=False`` to skip the string's line-wrapping hints\n"
+     "(for code wrapping the text itself); newlines in the text are\n"
+     "kept either way.\n"},
+    {"evaluate_timed", (PyCFunction)EvaluateTimed, METH_VARARGS | METH_KEYWORDS,
+     "evaluate_timed(*, wrap: bool = True) -> tuple[str, float | None]\n"
+     "\n"
+     "Evaluate, also returning how soon the text changes.\n"
+     "\n"
+     "Returns the text :meth:`evaluate` would (``wrap`` works the\n"
+     "same), plus the seconds until\n"
+     "it would next read differently -- a number only for time-varying\n"
+     "strings (those holding a moment, such as a countdown), else\n"
+     "``None``. Widgets showing a language-string handle this\n"
+     "themselves; this is for code displaying the text some other\n"
+     "way, which can re-evaluate when that time comes.\n"},
     {"to_json", (PyCFunction)ToJson, METH_NOARGS,
      "to_json() -> str\n"
      "\n"

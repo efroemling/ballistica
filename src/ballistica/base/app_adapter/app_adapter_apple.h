@@ -6,7 +6,10 @@
 #if BA_XCODE_BUILD
 
 #include <atomic>
+#include <functional>
+#include <list>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -45,8 +48,11 @@ class AppAdapterApple : public AppAdapter {
   /// Called by FromSwift (on the main thread) when the OS reports the main
   /// window entering/exiting fullscreen. We cache the value so the logic
   /// thread can read it via FullscreenControlGet without a cross-thread Swift
-  /// call. Safe to call from any thread.
-  void OnFullscreenChanged(bool fullscreen);
+  /// call. Static because macOS window state restoration can re-enter
+  /// fullscreen during launch, *before* the engine (and this adapter) exists;
+  /// a static published flag accepts the value at any time. Safe to call from
+  /// any thread.
+  static void OnFullscreenChanged(bool fullscreen);
 
   /// Called by FromSwift (on the main thread) when input indicates whether a
   /// pointing device (trackpad/mouse) or direct touch is currently being
@@ -80,6 +86,8 @@ class AppAdapterApple : public AppAdapter {
   auto DoClipboardHasText() -> bool override;
   void DoClipboardSetText(const std::string& text) override;
   auto DoClipboardGetText() -> std::string override;
+  void DoClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> completion_call) override;
   void DoNativeReviewRequest() override;
 
  private:
@@ -87,8 +95,19 @@ class AppAdapterApple : public AppAdapter {
 
   void ReloadRenderer_(const GraphicsSettings* settings);
 
+#if BA_PLATFORM_IOS
+  // Pending clipboard-read completions, appended and popped (FIFO) only
+  // in the logic thread; completion order is guaranteed to match request
+  // order since reads run on a serial queue (see uikit_pasteboard.mm).
+  std::list<std::function<void(std::optional<std::string>)>>
+      clipboard_get_text_calls_;
+#endif
+
+  // Static so Swift's fullscreen pushes (OnFullscreenChanged) can land
+  // before the adapter instance exists; see that method's comment.
+  static std::atomic<bool> fullscreen_control_value_;
+
   std::thread::id graphics_thread_{};
-  std::atomic<bool> fullscreen_control_value_{false};
   // Read+written only on the main thread (FromSwift::PushUsingPointingDevice),
   // so a plain bool suffices. Mirrors Android's using_pointing_device_.
   bool using_pointing_device_{};

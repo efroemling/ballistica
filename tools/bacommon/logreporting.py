@@ -2,11 +2,16 @@
 #
 """Shared bits for triggered client log reporting.
 
-The server hands a client a :class:`LogReportSpec` (via transient
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
+The server hands a client a ``LogReportSpec`` (via transient
 cloud-vals) describing when to trip a log report and how much
 surrounding context to ship. The client then ships the resulting
 entry range incrementally, tracking its progress with a
-:class:`LogReportWindow`.
+``LogReportWindow``.
 
 Everything here is pure logic shared by the client reporter, the
 server's ingest path, and tests; nothing engine-specific belongs in

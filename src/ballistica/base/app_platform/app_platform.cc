@@ -299,6 +299,16 @@ void AppPlatform::DoInvokeStringEditor(const std::string& title,
                        "FIXME: DoInvokeStringEditor() unimplemented");
 }
 
+auto AppPlatform::HasGyro() -> bool {
+  if (!have_gyro_value_) {
+    have_gyro_ = DoHasGyro();
+    have_gyro_value_ = true;
+  }
+  return have_gyro_;
+}
+
+auto AppPlatform::DoHasGyro() -> bool { return false; }
+
 auto AppPlatform::SupportsOpenDirExternally() -> bool { return false; }
 
 void AppPlatform::OpenDirExternally(const std::string& path) {

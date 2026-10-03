@@ -2,11 +2,43 @@
 #
 """Provides a popup window to view achievements."""
 
-from typing import override
+from typing import TypedDict, override
 
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
+
+
+class _BackButtonGeometry(TypedDict):
+    position: tuple[float, float]
+    size: tuple[float, float]
+    scale: float
+
+
+def _back_button_geometry(
+    uiscale: bui.UIScale, close_style: bool, yoffs: float
+) -> _BackButtonGeometry:
+    """The window's back/close button's position/size/scale kwargs.
+
+    Sized to match doc-ui windows' back/close buttons on screen (as of
+    2026-09-30): 50x50 close / 60x55 back at 0.66 (medium) / 0.6
+    (large), centered at (68, yoffs - 30), where the old 60x60-at-0.6
+    sat.
+    """
+    size = (50.0, 50.0) if close_style else (60.0, 55.0)
+    scale = 0.66 if uiscale is bui.UIScale.MEDIUM else 0.6
+    return {
+        'position': (
+            68.0 - 0.5 * size[0] * scale,
+            yoffs - 30.0 - 0.5 * size[1] * scale,
+        ),
+        'size': size,
+        'scale': scale,
+    }
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -34,7 +66,7 @@ class AchievementsWindow(bui.MainWindow):
         self._height = (
             450
             if uiscale is bui.UIScale.SMALL
-            else 370 if uiscale is bui.UIScale.MEDIUM else 450
+            else 488 if uiscale is bui.UIScale.MEDIUM else 594
         )
 
         # Do some fancy math to fill all available screen area up to the
@@ -44,12 +76,22 @@ class AchievementsWindow(bui.MainWindow):
         scale = (
             2.4
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
+            else 1.2 if uiscale is bui.UIScale.MEDIUM else 0.96
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
         target_width = min(self._width - 60, screensize[0] / scale)
         target_height = min(self._height - 70, screensize[1] / scale)
+
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        margin_left, margin_right, margin_bottom, margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
 
         # To get top/left coords, go to the center of our window and
         # offset by half the width/height of our target area.
@@ -63,6 +105,15 @@ class AchievementsWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             scroll_height += 30
             scroll_bottom -= 3
+
+        # Extend the scroll area out into the screen margins (content
+        # stays put; see below).
+        scroll_x = self._width * 0.5 - scroll_width * 0.5 - margin_left
+        scroll_width, scroll_height, scroll_bottom = (
+            scroll_width + margin_left + margin_right,
+            scroll_height + margin_bottom + margin_top,
+            scroll_bottom - margin_bottom,
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -89,9 +140,7 @@ class AchievementsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
                 autoselect=True,
-                position=(50, yoffs - 48),
-                size=(60, 60),
-                scale=0.6,
+                **_back_button_geometry(uiscale, auxiliary_style, yoffs),
                 label=bui.charstr(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style
@@ -111,7 +160,7 @@ class AchievementsWindow(bui.MainWindow):
             parent=self._root_widget,
             id=f'{self.main_window_id_prefix}|scroll',
             size=(scroll_width, scroll_height),
-            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
+            position=(scroll_x, scroll_bottom),
             capture_arrows=True,
             simple_culling_v=10,
             border_opacity=0.4,
@@ -129,19 +178,23 @@ class AchievementsWindow(bui.MainWindow):
         # With full-screen scrolling, fade content as it approaches
         # toolbars.
         if uiscale is bui.UIScale.SMALL:
+            # Note that we intentionally use the original
+            # un-margin-extended scroll geometry here; the fades were
+            # placed to coincide with toolbar elements, which don't
+            # move when we extend out into screen margins.
             scroll_fade_top(
                 self._root_widget,
-                self._width * 0.5 - scroll_width * 0.5,
-                scroll_bottom,
-                scroll_width,
-                scroll_height,
+                scroll_x + margin_left,
+                scroll_bottom + margin_bottom,
+                scroll_width - margin_left - margin_right,
+                scroll_height - margin_bottom - margin_top,
             )
             scroll_fade_bottom(
                 self._root_widget,
-                self._width * 0.5 - scroll_width * 0.5,
-                scroll_bottom,
-                scroll_width,
-                scroll_height,
+                scroll_x + margin_left,
+                scroll_bottom + margin_bottom,
+                scroll_width - margin_left - margin_right,
+                scroll_height - margin_bottom - margin_top,
             )
 
         # In small UI mode when the screen is narrow enough we need to
@@ -157,7 +210,7 @@ class AchievementsWindow(bui.MainWindow):
                 scale=0.6,
                 text=_commonassets.strings.compose.spaced_pair(
                     first=_commonassets.strings.compose.heading_suffix(
-                        main=classicassets.strings.ui.achievements
+                        main=_classicassets.strings.ui.achievements
                     ),
                     second=f'{num_complete}/{len(achievements)}',
                 ),
@@ -175,7 +228,7 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=classicassets.strings.account.achievement_progress(
+                text=_classicassets.strings.account.achievement_progress(
                     complete=str(num_complete),
                     total=str(len(achievements)),
                 ),
@@ -189,11 +242,17 @@ class AchievementsWindow(bui.MainWindow):
 
         incr = 36
         sub_width = scroll_width - 25
-        sub_height = 85 + len(achievements) * incr
+        sub_height = 85 + len(achievements) * incr + margin_bottom + margin_top
 
         # For fullscreen scrollable, account for toolbar.
         if uiscale is bui.UIScale.SMALL:
             sub_height += 30
+
+        # Our scroll area is widened out into the screen margins, but
+        # content should stay laid out within the virtual bounds; do
+        # our layout math against this un-widened width offset by the
+        # left margin.
+        content_width = sub_width - margin_left - margin_right
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
@@ -202,7 +261,7 @@ class AchievementsWindow(bui.MainWindow):
             background=False,
         )
 
-        basey = sub_height
+        basey = sub_height - margin_top
 
         # For fullscreen scrollable, account for toolbar.
         if uiscale is bui.UIScale.SMALL:
@@ -213,7 +272,10 @@ class AchievementsWindow(bui.MainWindow):
             complete = ach.complete
             bui.textwidget(
                 parent=self._subcontainer,
-                position=(sub_width * 0.08 - 5, basey - 20 - incr * i),
+                position=(
+                    margin_left + content_width * 0.08 - 5,
+                    basey - 20 - incr * i,
+                ),
                 maxwidth=20,
                 scale=0.5,
                 color=(0.6, 0.6, 0.7) if complete else (0.6, 0.6, 0.7, 0.2),
@@ -228,9 +290,15 @@ class AchievementsWindow(bui.MainWindow):
             bui.imagewidget(
                 parent=self._subcontainer,
                 position=(
-                    (sub_width * 0.10 + 1, basey - 20 - incr * i - 9)
+                    (
+                        margin_left + content_width * 0.10 + 1,
+                        basey - 20 - incr * i - 9,
+                    )
                     if complete
-                    else (sub_width * 0.10 - 4, basey - 20 - incr * i - 14)
+                    else (
+                        margin_left + content_width * 0.10 - 4,
+                        basey - 20 - incr * i - 14,
+                    )
                 ),
                 size=(18, 18) if complete else (27, 27),
                 opacity=1.0 if complete else 0.3,
@@ -241,17 +309,20 @@ class AchievementsWindow(bui.MainWindow):
                 bui.imagewidget(
                     parent=self._subcontainer,
                     position=(
-                        sub_width * 0.10 - 4,
+                        margin_left + content_width * 0.10 - 4,
                         basey - 25 - incr * i - 9,
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=classicassets.textures.achievement_outline.get(),
+                    texture=_classicassets.textures.achievement_outline.get(),
                 )
             bui.textwidget(
                 parent=self._subcontainer,
-                position=(sub_width * 0.19, basey - 19 - incr * i + 3),
-                maxwidth=sub_width * 0.62,
+                position=(
+                    margin_left + content_width * 0.19,
+                    basey - 19 - incr * i + 3,
+                ),
+                maxwidth=content_width * 0.62,
                 scale=0.6,
                 flatness=1.0,
                 shadow=0.0,
@@ -264,8 +335,11 @@ class AchievementsWindow(bui.MainWindow):
 
             bui.textwidget(
                 parent=self._subcontainer,
-                position=(sub_width * 0.19, basey - 19 - incr * i - 10),
-                maxwidth=sub_width * 0.62,
+                position=(
+                    margin_left + content_width * 0.19,
+                    basey - 19 - incr * i - 10,
+                ),
+                maxwidth=content_width * 0.62,
                 scale=0.4,
                 flatness=1.0,
                 shadow=0.0,
@@ -288,27 +362,31 @@ class AchievementsWindow(bui.MainWindow):
                 parent=self._subcontainer,
                 opacity=0.0 if complete else 1.0,
                 position=(
-                    sub_width * 0.92 - 40.0 - chestsize * 0.5,
+                    margin_left + content_width * 0.92 - 40.0 - chestsize * 0.5,
                     basey - 20 - incr * i - chestsize * 0.5,
                 ),
                 size=(chestsize, chestsize),
                 color=chestdisplayinfo.color,
-                texture=bui.aptextureget(chestdisplayinfo.texclosed),
-                tint_texture=bui.aptextureget(chestdisplayinfo.texclosedtint),
+                texture=chestdisplayinfo.texclosed.ui().get(),
+                tint_texture=chestdisplayinfo.texclosedtint.ui().get(),
                 tint_color=chestdisplayinfo.tint,
                 tint2_color=chestdisplayinfo.tint2,
+                tint3_color=chestdisplayinfo.tint3,
             )
 
             pts = ach.power_ranking_value
             bui.textwidget(
                 parent=self._subcontainer,
-                position=(sub_width * 0.92, basey - 20 - incr * i),
-                maxwidth=sub_width * 0.15,
+                position=(
+                    margin_left + content_width * 0.92,
+                    basey - 20 - incr * i,
+                ),
+                maxwidth=content_width * 0.15,
                 color=(0.7, 0.8, 1.0) if complete else (0.9, 0.9, 1.0, 0.3),
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.6,
-                text=classicassets.strings.coop.power_ranking_points(
+                text=_classicassets.strings.coop.power_ranking_points(
                     number=str(pts)
                 ),
                 size=(0, 0),
@@ -321,10 +399,10 @@ class AchievementsWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._subcontainer,
             position=(
-                sub_width * 1.0,
+                margin_left + content_width * 1.0,
                 basey - 20 - incr * len(achievements),
             ),
-            maxwidth=sub_width * 0.5,
+            maxwidth=content_width * 0.5,
             scale=0.7,
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
@@ -332,7 +410,7 @@ class AchievementsWindow(bui.MainWindow):
             text=_commonassets.strings.compose.spaced_pair(
                 first=_commonassets.strings.values.total,
                 second=(
-                    classicassets.strings.league
+                    _classicassets.strings.league
                 ).power_ranking_points_equals(number=str(total_pts)),
             ),
             size=(0, 0),

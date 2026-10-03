@@ -19,13 +19,6 @@
 
 namespace ballistica::base {
 
-AppPlatformApple::AppPlatformApple() {
-  // On iOS, keep the device from falling asleep in our app
-#if BA_PLATFORM_IOS_TVOS
-  // AppleUtils::DisableIdleTimer();
-#endif
-}
-
 void AppPlatformApple::DoPurchase(const std::string& item) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchase(item);
@@ -67,13 +60,22 @@ void AppPlatformApple::DoOpenURL(const std::string& url) {
 #endif  // BA_XCODE_BUILD
 }
 
+auto AppPlatformApple::DoHasGyro() -> bool {
+#if BA_XCODE_BUILD && !BA_PLATFORM_MACOS
+  return BallisticaKit::UIKitFromCpp::haveGyro();
+#else
+  // Macs have no gyro, and non-xcode apple builds have no Swift bridge to
+  // ask through.
+  return AppPlatform::DoHasGyro();
+#endif
+}
+
 auto AppPlatformApple::OverlayWebBrowserIsSupported() -> bool {
 #if BA_XCODE_BUILD
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::haveOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  return AppPlatform::OverlayWebBrowserIsSupported();
+  return BallisticaKit::UIKitFromCpp::haveOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -87,8 +89,7 @@ void AppPlatformApple::DoOverlayWebBrowserOpenURL(const std::string& url) {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::openURLInOverlayWebBrowser(url);
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::DoOverlayWebBrowserOpenURL(url);
+  BallisticaKit::UIKitFromCpp::openURLInOverlayWebBrowser(url);
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -102,8 +103,7 @@ void AppPlatformApple::DoOverlayWebBrowserClose() {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::closeOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::OverlayWebBrowserIsSupported();
+  BallisticaKit::UIKitFromCpp::closeOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else

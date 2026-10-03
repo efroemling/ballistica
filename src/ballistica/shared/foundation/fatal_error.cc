@@ -159,6 +159,13 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
     }
     core::Platform::SleepMillisecs(100);
   }
+
+  // Anything short of a confirmed send -- failed, or still in flight as
+  // we go down -- is saved for the next launch to deliver. (A send that
+  // completes after this point just means one duplicate report.)
+  if (result != 1) {
+    SavePendingFatalReport(reportmsg, tracestr);
+  }
 }
 
 void FatalErrorHandling::DoBlockingFatalErrorDialog(

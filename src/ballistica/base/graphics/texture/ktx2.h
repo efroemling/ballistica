@@ -11,6 +11,8 @@
 
 namespace ballistica::base {
 
+class AssetBlob;
+
 /// KTX 2.0 magic bytes (12 bytes): ``«KTX 20»\r\n\x1A\n`` — identifier
 /// 0xAB / "KTX 20" / 0xBB / CR LF SUB LF.
 constexpr unsigned char kKTX2Magic[12] = {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32,
@@ -60,6 +62,10 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 
 /// Load a KTX 2.0 file into the engine's mip-buffer representation.
 ///
+/// Takes an already-opened ``blob`` — the caller dispatched on its
+/// content magic, so opening again would be wasted work; ``file_name``
+/// is carried only for error messages.
+///
 /// This is the asset-package CAS texture loader. Unlike the legacy
 /// loaders (:func:`LoadDDS` / :func:`LoadKTX`), it takes **no
 /// texture-quality argument** and never skips mips: asset-package
@@ -82,9 +88,10 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 /// layout (use :func:`LoadKTX2CubeMap` for cube maps), or non-zero
 /// ``supercompressionScheme`` (BasisU/zstd not implemented for v1 —
 /// see initiative decision #12).
-void LoadKTX2(const std::string& file_name, unsigned char** buffers,
-              int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level, bool* premultiplied, TextureWrapping* wrap_h,
+void LoadKTX2(const AssetBlob& blob, const std::string& file_name,
+              unsigned char** buffers, int* widths, int* heights,
+              TextureFormat* formats, size_t* sizes, int* base_level,
+              bool* premultiplied, TextureWrapping* wrap_h,
               TextureWrapping* wrap_v);
 
 /// One face's output destination for a cube-map KTX2 load — the same
@@ -108,9 +115,10 @@ struct KTX2FaceTarget {
 /// ``GL_TEXTURE_CUBE_MAP_POSITIVE_X + i`` upload convention. Each face
 /// receives the file's full mip chain (faces within a level are tightly
 /// packed equal-size slices). Same loading rules/throws as
-/// :func:`LoadKTX2`; additionally throws if the file is not a
-/// six-face cube map.
-void LoadKTX2CubeMap(const std::string& file_name, KTX2FaceTarget* faces);
+/// :func:`LoadKTX2` (including the pre-opened ``blob``); additionally
+/// throws if the file is not a six-face cube map.
+void LoadKTX2CubeMap(const AssetBlob& blob, const std::string& file_name,
+                     KTX2FaceTarget* faces);
 
 }  // namespace ballistica::base
 

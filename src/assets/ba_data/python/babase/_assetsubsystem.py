@@ -5,7 +5,7 @@
 The runtime acquire/track/prune manager for downloadable asset packages
 (initiative: asset-packages CAS migration, Phase 4). It consumes the
 Tier-1 resolve message + Tier-2 ``/casblob`` transport (already built and
-dev-validated) and turns it into the ``app.assets.resolve([apverids])``
+dev-validated) and turns it into the ``app.assets.resolve([apvernums])``
 contract: given a set of asset-package-version ids, make every one of
 them available to the C++ asset layer — pulling any missing CAS blobs
 from the connected basn node and committing the resolved packages into
@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING, Annotated, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._assetresolvetrace import ResolveTrace, Tier1Attempt
 from babase._logging import assetmanagerlog as logger
 
 from efro.error import (
@@ -46,13 +47,13 @@ from efro.util import strip_exception_tracebacks
 from efro.dataclassio import (
     ioprepped,
     IOAttrs,
-    dataclass_from_json,
+    dataclass_from_dict,
     dataclass_to_json,
 )
+from bacommon.assetpackage import AssetPackageResolveError, ApverNum
 from bacommon.cloud import (
     ResolveAssetPackageMessage,
     ResolveAssetPackageResponse,
-    AssetPackageResolveError,
 )
 from bacommon import assetcas
 
@@ -60,7 +61,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from bacommon import securedata
-    from bacommon.cloud import AssetPackageBuildProgress
+    from bacommon.assetpackage import AssetPackageDisplayInfo
+    from bacommon.cloud import AssetPackageBuildProgress, ResolvedFlavorManifest
     from bacommon.locale import Locale
 
     from babase import LangStr
@@ -68,15 +70,15 @@ if TYPE_CHECKING:
     from babase._accountv2 import AccountV2Handle
 
 #: Accumulated resolve output: ``(register_specs, manifest_pkgs, fell_back)``
-#: where ``register_specs`` is ``[(apverid, coord, entries), ...]``,
-#: ``manifest_pkgs`` is ``{apverid: {coord: fm_hash}}`` and ``fell_back`` is
-#: ``{apverid: {desired_coord: fallback_coord}}`` — per package (an entry
-#: for *every* resolved apverid, empty when nothing fell back, so
+#: where ``register_specs`` is ``[(apvernum, coord, entries), ...]``,
+#: ``manifest_pkgs`` is ``{apvernum: {coord: fm_hash}}`` and ``fell_back`` is
+#: ``{apvernum: {desired_coord: fallback_coord}}`` — per package (an entry
+#: for *every* resolved apvernum, empty when nothing fell back, so
 #: consumers can see recoveries, not just degradations).
 _ResolveAccum = tuple[
-    list[tuple[str, str, dict[str, dict[str, str]]]],
-    dict[str, dict[str, str]],
-    dict[str, dict[str, str]],
+    list[tuple[ApverNum, str, dict[str, dict[str, str]]]],
+    dict[ApverNum, dict[str, str]],
+    dict[ApverNum, dict[str, str]],
 ]
 
 #: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
@@ -130,7 +132,7 @@ def _init_blob_download_thread() -> None:
 
 
 def _flatten_fell_back(
-    fell_back_by_pkg: dict[str, dict[str, str]],
+    fell_back_by_pkg: dict[ApverNum, dict[str, str]],
 ) -> dict[str, str]:
     """Merge per-package fell-back maps into the flat public form.
 
@@ -217,6 +219,27 @@ _FALLBACK_ASSETS_CONFIG_KEY = 'ShowingFallbackAssets'
 _QUALITY_RETRY_MIN_SECONDS = 5.0
 _QUALITY_RETRY_MAX_SECONDS = 900.0
 
+#: Background acquisition of *wanted* packages (character-skins lazy
+#: media): how long an apvernum stays wanted with nothing on screen
+#: re-noting it, and the per-package cooldowns after failures --
+#: transient ones (no node, communication trouble, server internal)
+#: back off exponentially and reset when connectivity comes up; hard
+#: ones (access denied, not found, bad content, client too old,
+#: auth required) sit out for a long while, since re-asking is an
+#: expensive way to get the same answer.
+_WANTED_MAX_AGE_SECONDS = 30.0
+_WANTED_TRANSIENT_MIN_SECONDS = 5.0
+_WANTED_TRANSIENT_MAX_SECONDS = 120.0
+_WANTED_HARD_FAIL_SECONDS = 3600.0
+#: Failure codes that are not worth retrying soon.
+_WANTED_HARD_FAIL_CODES = {
+    AssetPackageResolveError.AUTH_REQUIRED,
+    AssetPackageResolveError.ACCESS_DENIED,
+    AssetPackageResolveError.NOT_FOUND,
+    AssetPackageResolveError.INVALID,
+    AssetPackageResolveError.CONTENT,
+    AssetPackageResolveError.CLIENT_TOO_OLD,
+}
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
@@ -239,10 +262,6 @@ class AssetResolveError(Exception):
     committed to the native asset registry (some CAS blobs may have
     landed on disk as harmless garbage that a later resolve reuses or
     GC reclaims).
-
-    ``code`` carries the server's structured reason when the failure
-    came from a Tier-1 resolve response, or ``None`` for client-side /
-    transport failures.
     """
 
     def __init__(
@@ -250,11 +269,20 @@ class AssetResolveError(Exception):
         message: str,
         code: AssetPackageResolveError | None = None,
         server_message: str | None = None,
+        package: AssetPackageDisplayInfo | None = None,
     ) -> None:
         super().__init__(message)
+        #: The package the failure is about, when the server named one
+        #: (sign-in needed / access denied); else None. For saying which
+        #: package in the client's own words ("asset package 'foo' by
+        #: efro").
+        self.package = package
+        #: The server's structured reason, when the failure came from a
+        #: Tier-1 resolve response; None for client-side / transport
+        #: failures. Branch on this rather than parsing the message.
         self.code = code
         #: The server's raw human-readable error (without the client-added
-        #: ``apverid:`` prefix), when this came from a Tier-1 resolve
+        #: ``apvernum:`` prefix), when this came from a Tier-1 resolve
         #: response; else None. Lets callers surface the server's own
         #: wording (e.g. an access-denied message naming the account).
         self.server_message = server_message
@@ -265,7 +293,7 @@ class AssetAuthRequiredError(AssetResolveError):
 
     Signing in with an account that has access (and retrying) may
     succeed. Raised when the server returns
-    :attr:`~bacommon.cloud.AssetPackageResolveError.AUTH_REQUIRED`.
+    :attr:`~bacommon.assetpackage.AssetPackageResolveError.AUTH_REQUIRED`.
     """
 
 
@@ -274,7 +302,7 @@ class AssetAccessDeniedError(AssetResolveError):
 
     The account is authenticated but isn't the owner / on the package's
     dev team. Raised when the server returns
-    :attr:`~bacommon.cloud.AssetPackageResolveError.ACCESS_DENIED`.
+    :attr:`~bacommon.assetpackage.AssetPackageResolveError.ACCESS_DENIED`.
     """
 
 
@@ -283,7 +311,7 @@ class AssetClientTooOldError(AssetResolveError):
 
     The server's asset manifests use logical paths this build can't
     address; the user must update. Raised when the server returns
-    :attr:`~bacommon.cloud.AssetPackageResolveError.CLIENT_TOO_OLD`.
+    :attr:`~bacommon.assetpackage.AssetPackageResolveError.CLIENT_TOO_OLD`.
     """
 
 
@@ -294,7 +322,7 @@ class AssetContentError(AssetResolveError):
     (e.g. a malformed sound or texture file) — something the package
     author can fix. ``server_message`` names the offending source
     file(s), so surface it verbatim. Raised when the server returns
-    :attr:`~bacommon.cloud.AssetPackageResolveError.CONTENT`.
+    :attr:`~bacommon.assetpackage.AssetPackageResolveError.CONTENT`.
     """
 
 
@@ -322,6 +350,21 @@ _RESOLVE_ERROR_TYPES: dict[
 }
 
 
+def _attempt_outcome(exc: AssetResolveError) -> str:
+    """Short description of a failed Tier-1 attempt, for resolve traces.
+
+    Separates the cases a diagnosis hinges on: our own hop never got
+    through (a comm error -- no connection), versus the server answering
+    with a failure code (``INTERNAL`` being the server-side trouble that
+    retries exist for).
+    """
+    if isinstance(exc.__cause__, CommunicationError):
+        return f'comm-error ({exc.__cause__})'
+    if exc.code is not None:
+        return f'server {exc.code.name}'
+    return f'error ({exc})'
+
+
 @dataclass
 class _GcSweepStats:
     """Outcome of one GC sweep (internal)."""
@@ -336,7 +379,7 @@ class _GcSweepStats:
 
 @dataclass
 class _OneResult:
-    """Per-apverid resolve outcome (internal)."""
+    """Per-apvernum resolve outcome (internal)."""
 
     #: Chosen ``coord -> flavor-manifest hash`` to register for this package.
     coords: dict[str, str]
@@ -358,7 +401,7 @@ class _PkgManifests:
     these lets every package's fetches share one pool.
     """
 
-    apverid: str
+    apvernum: ApverNum
     #: Resolved ``coord -> flavor-manifest hash``.
     coords: dict[str, str]
     #: Every data blob the resolved flavor-manifests reference, as
@@ -374,8 +417,8 @@ class _PkgManifests:
 class ResolveResult:
     """Outcome of a successful :meth:`AssetSubsystem.resolve`."""
 
-    #: The apverids that were resolved + committed.
-    apverids: list[str]
+    #: The apvernums that were resolved + committed.
+    apvernums: list[ApverNum]
 
     #: Buckets that fell back to a different flavor than requested,
     #: as ``{desired_coord: chosen_coord}``, merged across the resolved
@@ -414,7 +457,7 @@ class ResolveProgress:
     phase: ResolvePhase = ResolvePhase.RESOLVING
 
     #: The package currently being resolved/downloaded, if any.
-    apverid: str | None = None
+    apvernum: ApverNum | None = None
 
     #: Optional human-readable status line. The allowance for the server to
     #: report what it's doing (e.g. ``'Compiling 5 assets…'``) during a
@@ -486,16 +529,16 @@ def make_progress_reporter(
     """
     # The wrapper import is function-local by convention (modules
     # never import their own top-level package at module scope).
-    from babase import builtinassets
+    from babase import _builtinassets
 
-    strs = builtinassets.strings.assets
+    strs = _builtinassets.strings.assets
 
     last_time = -1.0e9
     last_phase: ResolvePhase | None = None
-    last_apverid: str | None = None
+    last_apvernum: ApverNum | None = None
 
     def report(progress: ResolveProgress) -> None:
-        nonlocal last_time, last_phase, last_apverid
+        nonlocal last_time, last_phase, last_apvernum
         downloading = progress.phase is ResolvePhase.DOWNLOADING
         # Always let the "caught up" point through (e.g. the final X/X), even
         # under the throttle, so a quick download doesn't appear stuck at its
@@ -511,24 +554,24 @@ def make_progress_reporter(
         # throttle to avoid spamming a slow download.
         if (
             progress.phase is last_phase
-            and progress.apverid == last_apverid
+            and progress.apvernum == last_apvernum
             and now - last_time < _PROGRESS_UPDATE_INTERVAL
             and not caught_up
         ):
             logger.debug(
                 'progress: throttled update (phase=%s build=%s/%s'
-                ' blobs=%d/%d apverid=%s)',
+                ' blobs=%d/%d apvernum=%s)',
                 progress.phase.value,
                 progress.build_units_done,
                 progress.build_units_total,
                 progress.blobs_done,
                 progress.blobs_total,
-                progress.apverid,
+                progress.apvernum,
             )
             return
         last_time = now
         last_phase = progress.phase
-        last_apverid = progress.apverid
+        last_apvernum = progress.apvernum
 
         # Build the message + bar fraction for this phase. A server-provided
         # detail is an escape hatch (unused by the standard flow) and wins if
@@ -578,9 +621,9 @@ def make_progress_reporter(
             # RESOLVING with no detail: nothing to add (the display's own
             # title/initial state covers it).
             logger.debug(
-                'progress: no message for update (phase=%s apverid=%s)',
+                'progress: no message for update (phase=%s apvernum=%s)',
                 progress.phase.value,
-                progress.apverid,
+                progress.apvernum,
             )
             return
         # Diagnostic trace (DEBUG; available under ``ba.assetmanager=DEBUG``):
@@ -589,7 +632,7 @@ def make_progress_reporter(
         # logged at INFO by the on_update consumer -- the headless record.)
         logger.debug(
             'progress: update %r (phase=%s build=%s/%s'
-            ' blobs=%d/%d bytes=%d/%d apverid=%s)',
+            ' blobs=%d/%d bytes=%d/%d apvernum=%s)',
             message,
             progress.phase.value,
             progress.build_units_done,
@@ -598,7 +641,7 @@ def make_progress_reporter(
             progress.blobs_total,
             progress.bytes_done,
             progress.bytes_total,
-            progress.apverid,
+            progress.apvernum,
         )
         on_update(message, fraction)
 
@@ -636,8 +679,10 @@ class _CachedPackage:
 #: flush caches poisoned during the #35 rollout window, when servers
 #: could still hand a new client old-shape manifests that were then
 #: committed under epoch 2 (see the ingestion-time shape validation
-#: in ``_tier1_manifests``, which prevents that class going forward).
-_CACHE_MANIFEST_LAYOUT_VERSION = 3
+#: in ``_tier1_manifests``, which prevents that class going forward);
+#: 4 = packages keyed by numeric id rather than string id (numeric
+#: asset-package ids, 2026-09-30).
+_CACHE_MANIFEST_LAYOUT_VERSION = 4
 
 
 @ioprepped
@@ -650,13 +695,13 @@ class _CacheManifest:
     cache-only timestamp tables for GC.
     """
 
-    #: apverid -> cached package entry.
-    packages: Annotated[dict[str, _CachedPackage], IOAttrs('p')] = field(
+    #: Numeric id -> cached package entry.
+    packages: Annotated[dict[ApverNum, _CachedPackage], IOAttrs('p')] = field(
         default_factory=dict
     )
 
     #: Cache-only: flavor-manifest blob hash -> last-used wall-clock
-    #: seconds. Keyed by hash (a hash is shared across coords/apverids) so
+    #: seconds. Keyed by hash (a hash is shared across coords/apvernums) so
     #: GC has one timestamp per flavor-manifest blob. Consumed in step 3.
     flavor_manifest_last_used: Annotated[dict[str, float], IOAttrs('f')] = (
         field(default_factory=dict)
@@ -725,6 +770,15 @@ class AssetSubsystem(AppSubsystem):
     async :meth:`resolve`; see the module docstring for scope.
     """
 
+    @override
+    def reset(self) -> None:
+        # Restore the base asset set to its neutral placeholders (see
+        # babase.set_base_asset_set). We run at every app-mode switch,
+        # so this is what guarantees an incoming mode can never inherit
+        # the outgoing one's art; restored rather than cleared since
+        # base draws between modes too.
+        _babase.restore_base_asset_placeholders_native()
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -734,23 +788,30 @@ class AssetSubsystem(AppSubsystem):
         # loop on first use.
         self._gate = _ResolveGate()
 
-        # Formatter components per (apverid, locale-value) -- the
-        # build-embedded unit words display formatters render through.
-        # A resolved package's per-locale blob is immutable, so entries
-        # can never go stale; bounded by resolved-packages x locales
-        # actually displayed (tiny).
-        self._components_cache: dict[
-            tuple[str, str], dict[str, str | StringSelector]
-        ] = {}
+        # Where each resolve's time goes (see _assetresolvetrace): the one
+        # admitted through the gate, plus those still queued at it.
+        # Logic-thread writes; describe_activity() reads from anywhere.
+        self._active_trace: ResolveTrace | None = None
+        self._queued_traces: list[ResolveTrace] = []
 
-        # Pinned set: the monotonic union of every apverid + flavor-manifest
+        # Background acquirer for wanted packages (see _wanted_loop):
+        # per-apvernum earliest next attempt (monotonic), the transient
+        # backoff each is on, and the wake-up the native hook and
+        # connectivity changes poke.
+        self._wanted_task_active = False
+        self._wanted_next_try: dict[ApverNum, float] = {}
+        self._wanted_backoff: dict[ApverNum, float] = {}
+        self._wanted_wake: asyncio.Event | None = None
+        self._wanted_connectivity_reg: object | None = None
+
+        # Pinned set: the monotonic union of every apvernum + flavor-manifest
         # hash committed into the native registry this process lifetime.
         # Never un-pinned until exit, so once we've told the engine an asset
         # is available GC/cap can never retract it (kills the un-pin-race
         # bug class). Reachable data blobs are pinned transitively (a pinned
         # flavor-manifest is present on disk, so GC's mark enumerates its
         # data blobs). Reset each process; not persisted.
-        self._pinned_apverids: set[str] = set()
+        self._pinned_apvernums: set[ApverNum] = set()
         self._pinned_fm_hashes: set[str] = set()
 
         # Progress for the in-flight resolve. Single-in-flight (see
@@ -769,13 +830,13 @@ class AssetSubsystem(AppSubsystem):
         # (done, total) units each has reported. Aggregated into one
         # countdown; the download readout is held back until this empties
         # (see _emit_progress).
-        self._build_pending: set[str] = set()
-        self._build_units: dict[str, tuple[int, int]] = {}
+        self._build_pending: set[ApverNum] = set()
+        self._build_units: dict[ApverNum, tuple[int, int]] = {}
         # Packages not yet finished *acquiring* -- manifest resolved AND
         # blob totals registered. The phase flip waits on this rather than
         # on _build_pending, so the first download frame already knows the
         # full byte total instead of briefly reading '0 remaining'.
-        self._acquire_pending: set[str] = set()
+        self._acquire_pending: set[ApverNum] = set()
         # Data-blob hashes already claimed by some package's fetch, so two
         # packages referencing the same blob don't both download it.
         self._fetch_claimed: set[str] = set()
@@ -831,7 +892,7 @@ class AssetSubsystem(AppSubsystem):
         self._bundle_hidden = False
 
         # Which resolved packages are currently registered on fallback-
-        # quality flavors, as {apverid: {desired_coord: chosen_coord}}.
+        # quality flavors, as {apvernum: {desired_coord: chosen_coord}}.
         # Updated by every successful downloads-allowed resolve (entries
         # appear when a package falls back and clear when a later resolve
         # of that package comes back all-ideal), so the union is an
@@ -839,7 +900,7 @@ class AssetSubsystem(AppSubsystem):
         # every package resolved this session -- not just whichever set
         # the latest resolve happened to cover. Session-local; the
         # persistent half is the bool app-config flag.
-        self._fallback_apverids: dict[str, dict[str, str]] = {}
+        self._fallback_apvernums: dict[ApverNum, dict[str, str]] = {}
 
         # Whether the background full-quality retry task is alive (see
         # _ensure_quality_retry_task). Logic-thread only.
@@ -899,10 +960,14 @@ class AssetSubsystem(AppSubsystem):
         """Writable CAS root where downloaded blobs land."""
         return os.path.join(_babase.app.env.cache_directory, 'assets')
 
-    @property
-    def _bundle_assets_root(self) -> str:
-        """Bundle CAS root holding shipped blobs."""
-        return os.path.join(_babase.app.env.data_directory, 'ba_data', 'assets')
+    def _bundled_blob_size(self, filehash: str) -> int | None:
+        """Size of a blob in the bundle (shipped assets), or None.
+
+        Backed natively so it works however the platform serves its
+        bundle - plain files on most platforms, spans out of the apk
+        archive on Android. Never probe bundle paths on disk directly.
+        """
+        return _babase.bundled_cas_blob_size(filehash)
 
     @property
     def _manifest_path(self) -> str:
@@ -918,28 +983,39 @@ class AssetSubsystem(AppSubsystem):
         """Path a CAS blob would occupy in the writable root."""
         return assetcas.cas_blob_path(self._writable_assets_root, filehash)
 
-    def _locate_blob(
-        self, filehash: str, *, hide_bundle: bool = False
-    ) -> str | None:
-        """Path of a CAS blob if present (writable then bundle), else None.
+    def _blob_exists(self, filehash: str, *, hide_bundle: bool = False) -> bool:
+        """Is a CAS blob present (writable cache, then bundle)?
 
-        Existence probe used by GC's mark phase to read flavor-manifest
-        blobs and to honor "a live flavor-manifest absent on disk → drop
-        the ref". Unlike :meth:`_present` this needs no expected size.
+        Existence probe used by GC's mark phase and resolve scans.
+        Unlike :meth:`_present` this needs no expected size.
 
         ``hide_bundle`` opts a caller into the debug bundle-hiding mode
         (see :meth:`_present`); it defaults off so GC always sees the
-        real on-disk truth. GC deletes files, and a GC that believed
-        bundled blobs were missing would drop live refs.
+        real truth. GC deletes files, and a GC that believed bundled
+        blobs were missing would drop live refs.
         """
-        roots = [self._writable_assets_root]
-        if not (hide_bundle and self._bundle_hidden):
-            roots.append(self._bundle_assets_root)
-        for root in roots:
-            path = os.path.join(root, filehash[:2], filehash[2:])
-            if os.path.isfile(path):
-                return path
-        return None
+        if os.path.isfile(self._writable_blob_path(filehash)):
+            return True
+        if hide_bundle and self._bundle_hidden:
+            return False
+        return self._bundled_blob_size(filehash) is not None
+
+    def _read_blob(
+        self, filehash: str, *, hide_bundle: bool = False
+    ) -> bytes | None:
+        """Contents of a CAS blob (writable cache, then bundle), or None.
+
+        The bundle half is served natively (bundled blobs may live
+        inside an archive such as the apk); see :meth:`_blob_exists`
+        for the ``hide_bundle`` semantics.
+        """
+        path = self._writable_blob_path(filehash)
+        if os.path.isfile(path):
+            with open(path, 'rb') as infile:
+                return infile.read()
+        if hide_bundle and self._bundle_hidden:
+            return None
+        return _babase.bundled_cas_blob_bytes(filehash)
 
     # ---------------------------------------------------------------------
     # Dimensions, bucket coords, fallback policy.
@@ -1047,7 +1123,7 @@ class AssetSubsystem(AppSubsystem):
         return out
 
     def _validate_served_coords(
-        self, apverid: str, served: Iterable[str], language: Locale
+        self, apvernum: ApverNum, served: Iterable[str], language: Locale
     ) -> None:
         """Fail loudly if a resolve served a coord we can't accept.
 
@@ -1066,12 +1142,12 @@ class AssetSubsystem(AppSubsystem):
                 'Resolve for %s served unusable coord(s) %s;'
                 ' acceptable were %s. This is a server-side bug --'
                 ' only texture tier may ever be substituted.',
-                apverid,
+                apvernum,
                 sorted(bad),
                 sorted(acceptable),
             )
             raise AssetResolveError(
-                f'{apverid}: server returned unusable asset flavor(s):'
+                f'{apvernum}: server returned unusable asset flavor(s):'
                 f' {sorted(bad)}.'
             )
 
@@ -1081,7 +1157,7 @@ class AssetSubsystem(AppSubsystem):
         return _BUCKET_FALLBACKS.get(bucket)
 
     @staticmethod
-    def _is_builtin(apverid: str) -> bool:
+    def _is_builtin(apvernum: ApverNum) -> bool:
         """Is this the builtin/bootstrap package (fallback-eligible)?
 
         Fallback applies only to bundled packages — their fallback flavors
@@ -1092,33 +1168,34 @@ class AssetSubsystem(AppSubsystem):
         # Builtin-only set on purpose: a runtime-resolved non-builtin
         # package is also "loaded" (its strings merge) but is NOT
         # fallback-eligible -- it has no bundled flavor on disk.
-        from babase._asset_packages import builtin_asset_package_apverids
+        from babase._asset_packages import builtin_asset_package_apvernums
 
-        return apverid in builtin_asset_package_apverids()
+        return apvernum in builtin_asset_package_apvernums()
 
     # ---------------------------------------------------------------------
     # Public API.
 
     async def resolve(
         self,
-        apverids: list[str],
+        apvernums: list[ApverNum],
         *,
         allow_downloads: bool = True,
         on_download_starting: Callable[[], None] | None = None,
         on_progress: Callable[[ResolveProgress], None] | None = None,
         language: Locale | None = None,
         background: bool = False,
+        label: str | None = None,
     ) -> ResolveResult:
         """Make every requested asset-package-version available natively.
 
-        For each apverid, each bucket resolves to its *desired* flavor
+        For each apvernum, each bucket resolves to its *desired* flavor
         (from the active dimensions) if that flavor's blobs are present
         locally (writable cache ∪ bundle); else, when ``allow_downloads``
         is set, the desired flavor is fetched from the connected node (one
         Tier-1 resolve + parallel Tier-2 blob fetches); else, for the
         builtin/bootstrap package only, the bucket's bundled fallback
         flavor is used; otherwise the resolve fails. Only if *every*
-        requested apverid fully succeeds are they committed into the C++
+        requested apvernum fully succeeds are they committed into the C++
         registry in a single atomic swap and the cache manifest persisted;
         any failure raises :class:`AssetResolveError` and leaves the native
         registry untouched (all-or-nothing).
@@ -1142,6 +1219,11 @@ class AssetSubsystem(AppSubsystem):
         a decorative/prefetch resolve that queues behind -- and never
         blocks -- foreground (interactive) resolves; foreground is the
         default and matches all interactive/dialog-backed callers.
+
+        ``label`` names the caller (``'doc-ui page'``, ``'locale switch
+        -> deu'``, ...) in diagnostics: a slow or troubled resolve logs a
+        summary of where its time went, and :meth:`describe_activity`
+        names whatever is holding the queue.
         """
         assert _babase.in_logic_thread()
 
@@ -1151,18 +1233,37 @@ class AssetSubsystem(AppSubsystem):
         # resolves QUEUE here rather than failing.
         logger.debug(
             'resolve: requested %d package(s) (background=%s): %s.',
-            len(apverids),
+            len(apvernums),
             background,
-            apverids,
+            apvernums,
         )
-        wait_start = time.monotonic()
-        await self._gate.acquire(background=background)
+        trace = ResolveTrace(
+            label=label or '(unlabeled)',
+            apvernums=list(apvernums),
+            background=background,
+        )
+        self._queued_traces.append(trace)
+        try:
+            await self._gate.acquire(background=background)
+        except BaseException:
+            # (Cancelled while queued: the caller gave up waiting.)
+            self._queued_traces.remove(trace)
+            trace.finished('cancelled while queued')
+            self._log_trace_summary(trace)
+            raise
+        self._queued_traces.remove(trace)
+        trace.admitted()
+        trace.network_available_start, trace.transport_connected_start = (
+            self._net_state()
+        )
+        self._active_trace = trace
         logger.debug(
             'resolve: admitted (background=%s) after %.3fs wait for %s.',
             background,
-            time.monotonic() - wait_start,
-            apverids,
+            trace.queue_seconds,
+            apvernums,
         )
+        outcome = 'ok'
 
         self._progress = ResolveProgress()
         self._progress_cb = on_progress
@@ -1178,9 +1279,10 @@ class AssetSubsystem(AppSubsystem):
         self._bundle_hidden = not self._reuse_bundle and allow_downloads
         try:
             return await self._resolve(
-                apverids, allow_downloads, on_download_starting, language
+                apvernums, allow_downloads, on_download_starting, language
             )
         except Exception as exc:
+            outcome = f'failed ({type(exc).__name__}: {exc})'
             # TLS cert-verify failures against our own nodes are
             # generally either a wrong system clock or something
             # *between* us and the node (TLS-intercepting antivirus/
@@ -1188,7 +1290,17 @@ class AssetSubsystem(AppSubsystem):
             # distinguish those before the error continues upward.
             await self._maybe_log_tls_diagnostics(exc)
             raise
+        except BaseException:
+            outcome = 'cancelled'
+            raise
         finally:
+            trace.fetch_bytes = self._progress.bytes_done
+            trace.network_available_end, trace.transport_connected_end = (
+                self._net_state()
+            )
+            trace.finished(outcome)
+            self._active_trace = None
+            self._log_trace_summary(trace)
             # Tear down the per-resolve download pool (if this resolve
             # created one) so its worker threads don't outlive the batch.
             # cancel_futures drops any unstarted fetches; idle workers (the
@@ -1202,6 +1314,56 @@ class AssetSubsystem(AppSubsystem):
             self._bundle_hidden = False
             await self._gate.release()
             logger.debug('resolve: released (background=%s).', background)
+
+    def describe_activity(self) -> str:
+        """Describe what the resolve queue is doing right now.
+
+        For diagnostics -- e.g. a caller that timed out waiting on a
+        resolve can say what it was stuck behind. Safe to call from any
+        thread (a best-effort snapshot).
+        """
+        active = self._active_trace
+        queued = list(self._queued_traces)
+        avail, connected = self._net_state()
+        parts = [
+            (
+                f'running: {active.describe_now()}'
+                if active is not None
+                else 'running: nothing'
+            ),
+            f'queued: {len(queued)}'
+            + (
+                ' (' + '; '.join(t.describe_now() for t in queued) + ')'
+                if queued
+                else ''
+            ),
+            f'network available={avail}, transport connected={connected}',
+        ]
+        return '; '.join(parts) + '.'
+
+    @staticmethod
+    def _net_state() -> tuple[bool | None, bool | None]:
+        """(OS network available, cloud transport connected), if known."""
+        app = _babase.app
+        try:
+            avail: bool | None = app.net.available
+        except Exception:
+            avail = None
+        plus = app.plus
+        try:
+            connected = None if plus is None else plus.cloud.is_connected()
+        except Exception:
+            connected = None
+        return avail, connected
+
+    @staticmethod
+    def _log_trace_summary(trace: ResolveTrace) -> None:
+        """Log a slow/troubled resolve's account of where time went."""
+        level = trace.summary_level_name()
+        if level == 'WARNING':
+            logger.warning('%s', trace.summary())
+        elif level == 'INFO':
+            logger.info('%s', trace.summary())
 
     def _emit_progress(self) -> None:
         """Hand the current progress snapshot to the on_progress callback.
@@ -1225,7 +1387,7 @@ class AssetSubsystem(AppSubsystem):
                 'resolve phase -> %s at +%.2fs (%s).',
                 phase.value,
                 _babase.apptime() - self._progress_t_start,
-                self._progress.apverid or 'no package',
+                self._progress.apvernum or 'no package',
             )
         cb = self._progress_cb
         if cb is not None:
@@ -1323,7 +1485,7 @@ class AssetSubsystem(AppSubsystem):
             raise
 
     def _apply_build_progress(
-        self, apverid: str, bp: AssetPackageBuildProgress
+        self, apvernum: ApverNum, bp: AssetPackageBuildProgress
     ) -> None:
         """Reflect a server-side build-progress update into the UI.
 
@@ -1344,7 +1506,7 @@ class AssetSubsystem(AppSubsystem):
         # ever waits on here) and the identical re-polls in between at
         # DEBUG, so a multi-minute build leaves a readable progression
         # rather than one line per second of polling.
-        prev = self._build_units.get(apverid)
+        prev = self._build_units.get(apvernum)
         advanced = (
             bp.phase.value != self._progress_build_phase
             or prev is None
@@ -1356,12 +1518,12 @@ class AssetSubsystem(AppSubsystem):
         # A package that hasn't reported counts yet stays absent, which is
         # what holds the display on 'preparing'.
         if bp.units_done is not None and bp.units_total is not None:
-            self._build_units[apverid] = (bp.units_done, bp.units_total)
+            self._build_units[apvernum] = (bp.units_done, bp.units_total)
         self._progress_build_phase = bp.phase.value
         (logger.info if advanced else logger.debug)(
             'resolve build-progress %s: phase=%s units=%s/%s detail=%r'
             ' at +%.2fs.',
-            apverid,
+            apvernum,
             bp.phase.value,
             bp.units_done,
             bp.units_total,
@@ -1370,10 +1532,10 @@ class AssetSubsystem(AppSubsystem):
         )
         self._emit_progress()
 
-    def resolve_local(self, apverids: list[str]) -> ResolveResult:
+    def resolve_local(self, apvernums: list[ApverNum]) -> ResolveResult:
         """Synchronously register the best LOCAL flavor of each package.
 
-        A downloads-disabled, fully-synchronous resolve: for each apverid it
+        A downloads-disabled, fully-synchronous resolve: for each apvernum it
         registers the desired flavor when that flavor's blobs are already on
         disk (cache ∪ bundle), else -- for builtin packages -- the bundled
         fallback. No network, executor, or asyncio, so it is safe to call
@@ -1391,9 +1553,9 @@ class AssetSubsystem(AppSubsystem):
         """
         assert _babase.in_logic_thread()
         desired = self._desired_coords(_babase.app.locale.current_locale)
-        results = [self._resolve_one_local(apv, desired) for apv in apverids]
+        results = [self._resolve_one_local(apv, desired) for apv in apvernums]
         register_specs, manifest_pkgs, fell_back_by_pkg = (
-            self._accumulate_results(apverids, results)
+            self._accumulate_results(apvernums, results)
         )
         fell_back = _flatten_fell_back(fell_back_by_pkg)
         _babase.register_asset_package_buckets(register_specs)
@@ -1401,13 +1563,13 @@ class AssetSubsystem(AppSubsystem):
         self._reload_language()
         logger.info(
             'Registered %d builtin package(s) at best-local flavor%s.',
-            len(apverids),
+            len(apvernums),
             f' ({len(fell_back)} on fallback)' if fell_back else '',
         )
-        return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+        return ResolveResult(apvernums=list(apvernums), fell_back=fell_back)
 
     def get_package_strings(
-        self, apverid: str, locale: Locale
+        self, apvernum: ApverNum, locale: Locale
     ) -> dict[str, 'str | StringSelector']:
         """Per-locale language-string values for an already-resolved package.
 
@@ -1423,9 +1585,11 @@ class AssetSubsystem(AppSubsystem):
         it off the logic thread. Missing/absent data fails soft -- an empty
         map -- leaving the caller's decode to surface per-string sentinels.
         """
-        return self.get_package_language_data(apverid, locale)[0]
+        return self.get_package_language_data(apvernum, locale)[0]
 
-    def get_package_language_data(self, apverid: str, locale: Locale) -> tuple[
+    def get_package_language_data(
+        self, apvernum: ApverNum, locale: Locale
+    ) -> tuple[
         dict[str, 'str | StringSelector'],
         dict[str, dict[str, str]],
         dict[str, 'str | StringSelector'],
@@ -1452,13 +1616,13 @@ class AssetSubsystem(AppSubsystem):
 
         # The language flavor-manifest hash: downloaded packages live in the
         # cache manifest, builtin ones in the bundle manifest.
-        cached = self._load_manifest().packages.get(apverid)
+        cached = self._load_manifest().packages.get(apvernum)
         fm_hash = (
             cached.flavor_manifests.get(coord) if cached is not None else None
         )
         if fm_hash is None:
-            fm_hash = self._read_bundle_manifest().get(apverid, {}).get(coord)
-        if fm_hash is None or self._locate_blob(fm_hash) is None:
+            fm_hash = self._read_bundle_manifest().get(apvernum, {}).get(coord)
+        if fm_hash is None or not self._blob_exists(fm_hash):
             return {}, {}, {}
 
         # The blob lives at logical path 'language' part 'j.json' (the
@@ -1467,35 +1631,15 @@ class AssetSubsystem(AppSubsystem):
         blob_hash = parts.get('j.json') if parts else None
         if blob_hash is None:
             return {}, {}, {}
-        path = self._locate_blob(blob_hash)
-        if path is None:
+        data = self._read_blob(blob_hash)
+        if data is None:
             return {}, {}, {}
-        with open(path, 'rb') as infile:
-            text = infile.read().decode()
+        text = data.decode()
         return (
             parse_language_blob(text),
             parse_language_param_kinds(text),
             parse_language_components(text),
         )
-
-    def get_package_components_cached(
-        self, apverid: str, locale: Locale
-    ) -> dict[str, 'str | StringSelector']:
-        """A resolved package's formatter components, cached per locale.
-
-        The hot-path accessor the native-wrapper runtime uses to
-        preformat display params (``{size|data_size}``) at LangStr
-        construction: first access per (package, locale) reads the
-        language blob (small, local); afterwards it is a dict hit. Safe
-        to cache indefinitely -- a resolved version's per-locale blob is
-        immutable content.
-        """
-        key = (apverid, locale.value)
-        cached = self._components_cache.get(key)
-        if cached is None:
-            cached = self.get_package_language_data(apverid, locale)[2]
-            self._components_cache[key] = cached
-        return cached
 
     @staticmethod
     def _reload_language() -> None:
@@ -1509,19 +1653,25 @@ class AssetSubsystem(AppSubsystem):
         reflected in on-screen text via the resulting language-change
         cascade.
         """
-        from babase._asset_packages import loaded_asset_package_apverids
+        from babase._asset_packages import loaded_asset_package_apvernums
 
         # The resolved locale's wire value drives native CLDR plural
-        # selection for language-string evaluation.
-        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
-        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
+        # selection for language-string evaluation; its number data
+        # drives native display formatting (durations, sizes).
+        resolved = _babase.app.locale.current_locale.resolved
+        _babase.reload_language(
+            loaded_asset_package_apvernums(),
+            resolved.locale.value,
+            decimal_mark=resolved.decimal_mark,
+            duration_separator=resolved.duration_separator,
+        )
 
     # ---------------------------------------------------------------------
     # Resolve internals.
 
     async def _resolve(
         self,
-        apverids: list[str],
+        apvernums: list[ApverNum],
         allow_downloads: bool,
         on_download_starting: Callable[[], None] | None = None,
         language: Locale | None = None,
@@ -1538,13 +1688,13 @@ class AssetSubsystem(AppSubsystem):
         # so the two sides can be lined up after the fact.
         logger.info(
             'Resolving %d asset-package(s) (downloads=%s, dims=%s/%s/%s%s): %s',
-            len(apverids),
+            len(apvernums),
             allow_downloads,
             self._texture_profile,
             self._texture_tier,
             language.value,
             f', testseed={self._testseed}' if self._testseed else '',
-            ', '.join(apverids),
+            ', '.join(str(a) for a in apvernums),
         )
         t_start = _babase.apptime()
 
@@ -1553,7 +1703,7 @@ class AssetSubsystem(AppSubsystem):
         # trips, no download machinery, no network. The per-package async
         # path below is used only when something must actually be fetched.
         offline = await self._run_in_pool(
-            self._resolve_offline_sync, apverids, language
+            self._resolve_offline_sync, apvernums, language
         )
         if offline is not None:
             register_specs, manifest_pkgs, fell_back_by_pkg = offline
@@ -1565,31 +1715,46 @@ class AssetSubsystem(AppSubsystem):
             if allow_downloads and on_download_starting is not None:
                 on_download_starting()
             register_specs, manifest_pkgs, fell_back_by_pkg = (
-                await self._resolve_online(apverids, language, allow_downloads)
+                await self._resolve_online(apvernums, language, allow_downloads)
             )
             mode = 'online'
         fell_back = _flatten_fell_back(fell_back_by_pkg)
 
         # Commit point: everything resolved + landed on disk. Register all
         # buckets into native in one atomic swap, then persist the manifest.
-        _babase.register_asset_package_buckets(register_specs)
+        # The native commit runs off-thread: converting thousands of
+        # entries and building the touched packages' flat listings is
+        # real work on a weak phone, resolves now also run mid-game
+        # (background character-media acquisition), and the registry is
+        # built for concurrent registration.
+        await self._run_in_pool(
+            _babase.register_asset_package_buckets, register_specs
+        )
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
         self._pin(manifest_pkgs)
-        # Record these as loaded so _reload_language (next line) merges any
+        # Record these as loaded so _reload_language merges any
         # newly-resolved package's strings into the native table -- and a
         # later locale switch re-resolves them. Builtins are skipped.
         # pylint: disable-next=cyclic-import
-        from babase._asset_packages import register_resolved_apverids
+        from babase._asset_packages import register_resolved_apvernums
 
-        register_resolved_apverids(apverids)
-        self._reload_language()
+        register_resolved_apvernums(apvernums)
+        # Rebuilding the native string table re-reads and re-parses
+        # every loaded package's language blob on the logic thread, so
+        # only do it when this commit actually registered strings; a
+        # package with no language bucket (character art) changes
+        # nothing the table would see.
+        if any(
+            coord.startswith('language/') for _apv, coord, _e in register_specs
+        ):
+            self._reload_language()
         await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 
         logger.info(
             'Resolved %d package(s): %d bucket(s) registered%s'
             ' (%s, %.0f ms, %d blob(s)/%.1f MB downloaded).',
-            len(apverids),
+            len(apvernums),
             len(register_specs),
             f', {len(fell_back)} fell back' if fell_back else '',
             mode,
@@ -1598,10 +1763,12 @@ class AssetSubsystem(AppSubsystem):
             self._progress.bytes_done / (1024.0 * 1024.0),
         )
         self._report_flavor_quality(allow_downloads, fell_back_by_pkg)
-        return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+        return ResolveResult(apvernums=list(apvernums), fell_back=fell_back)
 
     def _report_flavor_quality(
-        self, allow_downloads: bool, fell_back_by_pkg: dict[str, dict[str, str]]
+        self,
+        allow_downloads: bool,
+        fell_back_by_pkg: dict[ApverNum, dict[str, str]],
     ) -> None:
         """Tell the player when they are (or stop being) on reduced assets.
 
@@ -1616,7 +1783,7 @@ class AssetSubsystem(AppSubsystem):
           fire on a half-finished or errored one.
 
         Degradation is tracked per package across the whole session
-        (``_fallback_apverids``): this resolve's per-package results are
+        (``_fallback_apvernums``): this resolve's per-package results are
         folded in, and the flag/messages key off the resulting *union*.
         That's what makes the all-clear honest — a clean resolve of some
         unrelated package (say, one inbox message's assets) can't declare
@@ -1639,14 +1806,14 @@ class AssetSubsystem(AppSubsystem):
             return
 
         # Fold this resolve's outcome into the session-wide picture.
-        # Every resolved apverid has an entry (possibly empty), so
+        # Every resolved apvernum has an entry (possibly empty), so
         # recoveries clear their slots here too.
-        for apverid, fell_back in fell_back_by_pkg.items():
+        for apvernum, fell_back in fell_back_by_pkg.items():
             if fell_back:
-                self._fallback_apverids[apverid] = dict(fell_back)
+                self._fallback_apvernums[apvernum] = dict(fell_back)
             else:
-                self._fallback_apverids.pop(apverid, None)
-        now_showing = bool(self._fallback_apverids)
+                self._fallback_apvernums.pop(apvernum, None)
+        now_showing = bool(self._fallback_apvernums)
 
         # Keep working toward full quality in the background whenever
         # anything is degraded -- including the steady no-transition case
@@ -1657,7 +1824,7 @@ class AssetSubsystem(AppSubsystem):
 
         # Function-local by convention (modules never import their own
         # top-level package at module scope).
-        from babase import builtinassets
+        from babase import _builtinassets
 
         cfg = _babase.app.config
         was_showing = bool(cfg.get(_FALLBACK_ASSETS_CONFIG_KEY, False))
@@ -1666,7 +1833,7 @@ class AssetSubsystem(AppSubsystem):
             # config file on every boot of a steady state.
             return
 
-        strs = builtinassets.strings.assets
+        strs = _builtinassets.strings.assets
         if now_showing:
             cfg[_FALLBACK_ASSETS_CONFIG_KEY] = True
             _babase.screenmessage(
@@ -1727,17 +1894,19 @@ class AssetSubsystem(AppSubsystem):
                 await asyncio.sleep(delay * random.uniform(0.9, 1.1))
                 if _babase.app.shutting_down:
                     return
-                targets = sorted(self._fallback_apverids)
+                targets = sorted(self._fallback_apvernums)
                 if not targets:
                     return
                 logger.info(
                     'Retrying full-quality resolve for %d degraded'
                     ' package(s): %s.',
                     len(targets),
-                    ', '.join(targets),
+                    ', '.join(str(a) for a in targets),
                 )
                 try:
-                    await self.resolve(targets, background=True)
+                    await self.resolve(
+                        targets, background=True, label='full-quality retry'
+                    )
                 except AssetResolveAbortedError:
                     return
                 except AssetResolveError as exc:
@@ -1747,20 +1916,166 @@ class AssetSubsystem(AppSubsystem):
                         exc,
                     )
                     strip_exception_tracebacks(exc)
-                if not self._fallback_apverids:
+                if not self._fallback_apvernums:
                     # The resolve's commit already handled the all-clear.
                     return
                 delay = min(delay * 2.0, _QUALITY_RETRY_MAX_SECONDS)
         finally:
             self._quality_retry_active = False
 
+    def on_wanted_packages_changed(self) -> None:
+        """A new package became wanted by something on screen.
+
+        Called from the native layer (``_hooks.wanted_asset_packages_changed``)
+        the first time a displayed character definition finds one of
+        its packages unregistered. Starts the background acquirer if
+        it isn't running and wakes it if it is.
+        """
+        assert _babase.in_logic_thread()
+        if self._wanted_wake is not None:
+            self._wanted_wake.set()
+        self._ensure_wanted_task()
+
+    def _ensure_wanted_task(self) -> None:
+        if self._wanted_task_active or _babase.app.shutting_down:
+            return
+        self._wanted_task_active = True
+        _babase.app.create_async_task(
+            self._wanted_loop(), name='asset wanted-package acquirer'
+        )
+
+    def _on_wanted_connectivity_changed(self, connected: bool) -> None:
+        """Connectivity came (back) up: transient failures get a fresh go."""
+        if not connected:
+            return
+        for apvernum in list(self._wanted_backoff):
+            self._wanted_backoff.pop(apvernum, None)
+            self._wanted_next_try.pop(apvernum, None)
+        if self._wanted_wake is not None:
+            self._wanted_wake.set()
+        self._ensure_wanted_task()
+
+    async def _wanted_loop(self) -> None:
+        """Resolve wanted packages in the background, one at a time.
+
+        Wanted packages are the ones something on screen is drawing
+        a standin for (character-skins.md, lazy media). Each attempt
+        is a normal single-package ``background=True`` resolve, so it
+        queues behind any interactive resolve and its commit bumps
+        the registry generation the holders watch -- the real art
+        shows the next frame. Success goes straight on to the next
+        candidate (most recently wanted first); failures put that
+        package on a cooldown sized by the error class. The task
+        exits once nothing is wanted (entries expire when nothing
+        re-notes them) or at shutdown.
+        """
+        try:
+            if self._wanted_wake is None:
+                self._wanted_wake = asyncio.Event()
+            self._register_wanted_connectivity()
+            while not _babase.app.shutting_down:
+                self._wanted_wake.clear()
+                wanted = [
+                    (ApverNum(apvernum), age)
+                    for apvernum, age in _babase.take_wanted_asset_packages(
+                        _WANTED_MAX_AGE_SECONDS
+                    )
+                ]
+                if not wanted:
+                    return
+                now = time.monotonic()
+                candidates = sorted(
+                    (age, apvernum)
+                    for apvernum, age in wanted
+                    # (Wanted entries can originate from json a modded
+                    # host streamed; junk ids never resolve.)
+                    if apvernum > 0
+                    and self._wanted_next_try.get(apvernum, 0.0) <= now
+                )
+                if not candidates:
+                    # Everything wanted is cooling down (or junk); wait
+                    # for the soonest cooldown, a wake, or a while.
+                    soonest = min(
+                        (
+                            self._wanted_next_try.get(apvernum, now)
+                            for apvernum, _age in wanted
+                        ),
+                        default=now,
+                    )
+                    delay = min(max(soonest - now, 0.5), 30.0)
+                    try:
+                        await asyncio.wait_for(
+                            self._wanted_wake.wait(), timeout=delay
+                        )
+                    except asyncio.TimeoutError:
+                        pass
+                    continue
+                apvernum = candidates[0][1]
+                try:
+                    await self.resolve(
+                        [apvernum], background=True, label='wanted package'
+                    )
+                except AssetResolveAbortedError:
+                    return
+                except AssetResolveError as exc:
+                    self._note_wanted_failure(apvernum, exc)
+                    strip_exception_tracebacks(exc)
+                    continue
+                self._wanted_next_try.pop(apvernum, None)
+                self._wanted_backoff.pop(apvernum, None)
+                logger.info(
+                    'Acquired wanted asset-package %s in the background.',
+                    apvernum,
+                )
+        finally:
+            self._wanted_task_active = False
+
+    def _register_wanted_connectivity(self) -> None:
+        if self._wanted_connectivity_reg is not None:
+            return
+        plus = _babase.app.plus
+        if plus is None:
+            return
+        self._wanted_connectivity_reg = (
+            plus.cloud.on_connectivity_changed_callbacks.register(
+                self._on_wanted_connectivity_changed
+            )
+        )
+
+    def _note_wanted_failure(
+        self, apvernum: ApverNum, exc: AssetResolveError
+    ) -> None:
+        now = time.monotonic()
+        if exc.code in _WANTED_HARD_FAIL_CODES:
+            delay = _WANTED_HARD_FAIL_SECONDS
+            logger.info(
+                'Wanted asset-package %s is unavailable (%s); not'
+                ' retrying for a while.',
+                apvernum,
+                exc.code.value,
+            )
+        else:
+            delay = self._wanted_backoff.get(
+                apvernum, _WANTED_TRANSIENT_MIN_SECONDS * 0.5
+            )
+            delay = min(delay * 2.0, _WANTED_TRANSIENT_MAX_SECONDS)
+            self._wanted_backoff[apvernum] = delay
+            logger.debug(
+                'Wanted asset-package %s resolve failed (%s); retrying'
+                ' in %.0fs.',
+                apvernum,
+                exc,
+                delay,
+            )
+        self._wanted_next_try[apvernum] = now + delay * random.uniform(0.9, 1.1)
+
     def _resolve_offline_sync(
-        self, apverids: list[str], language: Locale
+        self, apvernums: list[ApverNum], language: Locale
     ) -> _ResolveAccum | None:
         """Resolve the whole set from local state, in one off-thread pass.
 
         Returns the accumulated ``(register_specs, manifest_pkgs,
-        fell_back)`` when *every* desired flavor for *every* apverid is
+        fell_back)`` when *every* desired flavor for *every* apvernum is
         already complete locally (the warm path — no network, no per-package
         round-trips). Returns ``None`` if anything is missing, in which case
         the caller falls back to the per-package online path (which handles
@@ -1769,21 +2084,21 @@ class AssetSubsystem(AppSubsystem):
         """
         desired = self._desired_coords(language)
         results: list[_OneResult] = []
-        for apverid in apverids:
-            local, missing = self._scan_local(apverid, desired)
+        for apvernum in apvernums:
+            local, missing = self._scan_local(apvernum, desired)
             if missing:
                 # Not fully local; let the online path handle this set
                 # (download desired flavors / builtin fallback / fail).
                 return None
             results.append(
                 self._finalize_one(
-                    apverid, desired, local, self._is_builtin(apverid)
+                    apvernum, desired, local, self._is_builtin(apvernum)
                 )
             )
-        return self._accumulate_results(apverids, results)
+        return self._accumulate_results(apvernums, results)
 
     async def _resolve_online(
-        self, apverids: list[str], language: Locale, allow_downloads: bool
+        self, apvernums: list[ApverNum], language: Locale, allow_downloads: bool
     ) -> _ResolveAccum:
         """Resolve the set through one build pool and one download pool.
 
@@ -1813,17 +2128,17 @@ class AssetSubsystem(AppSubsystem):
         # once) so we know the full set of work before starting any of it.
         scans = await asyncio.gather(
             *[
-                self._run_in_pool(self._scan_local, apverid, desired)
-                for apverid in apverids
+                self._run_in_pool(self._scan_local, apvernum, desired)
+                for apvernum in apvernums
             ]
         )
         locals_by_id = {
-            apverid: local
-            for apverid, (local, _missing) in zip(apverids, scans)
+            apvernum: local
+            for apvernum, (local, _missing) in zip(apvernums, scans)
         }
         needs_net = [
-            apverid
-            for apverid, (_local, missing) in zip(apverids, scans)
+            apvernum
+            for apvernum, (_local, missing) in zip(apvernums, scans)
             if allow_downloads and missing
         ]
 
@@ -1841,22 +2156,22 @@ class AssetSubsystem(AppSubsystem):
             *[
                 self._run_in_pool(
                     self._finalize_one,
-                    apverid,
+                    apvernum,
                     desired,
-                    {**locals_by_id[apverid], **downloaded.get(apverid, {})},
-                    self._is_builtin(apverid),
+                    {**locals_by_id[apvernum], **downloaded.get(apvernum, {})},
+                    self._is_builtin(apvernum),
                 )
-                for apverid in apverids
+                for apvernum in apvernums
             ]
         )
-        return self._accumulate_results(apverids, list(results))
+        return self._accumulate_results(apvernums, list(results))
 
     async def _acquire_all(
-        self, apverids: list[str], language: Locale
-    ) -> dict[str, dict[str, str]]:
+        self, apvernums: list[ApverNum], language: Locale
+    ) -> dict[ApverNum, dict[str, str]]:
         """Run every package's resolve+fetch concurrently; collect coords.
 
-        Returns ``apverid -> coord->flavor-manifest-hash`` for what each
+        Returns ``apvernum -> coord->flavor-manifest-hash`` for what each
         package obtained from the server (absent/empty when a builtin
         package fell back to bundled flavors).
 
@@ -1865,28 +2180,28 @@ class AssetSubsystem(AppSubsystem):
         the rest so their tracebacks don't leave reference cycles behind
         (the same terminal-consumer duty ``_fetch_blobs`` performs).
         """
-        if not apverids:
+        if not apvernums:
             return {}
         acquired = await asyncio.gather(
-            *[self._acquire_one(apverid, language) for apverid in apverids],
+            *[self._acquire_one(apvernum, language) for apvernum in apvernums],
             return_exceptions=True,
         )
-        out: dict[str, dict[str, str]] = {}
+        out: dict[ApverNum, dict[str, str]] = {}
         first_exc: BaseException | None = None
-        for apverid, result in zip(apverids, acquired):
+        for apvernum, result in zip(apvernums, acquired):
             if isinstance(result, BaseException):
                 if first_exc is None:
                     first_exc = result
                 elif isinstance(result, Exception):
                     strip_exception_tracebacks(result)
                 continue
-            out[apverid] = result
+            out[apvernum] = result
         if first_exc is not None:
             raise first_exc
         return out
 
     async def _acquire_one(
-        self, apverid: str, language: Locale
+        self, apvernum: ApverNum, language: Locale
     ) -> dict[str, str]:
         """Resolve one package's manifests, then fetch its blobs.
 
@@ -1895,20 +2210,20 @@ class AssetSubsystem(AppSubsystem):
         pool. Returns the coords obtained from the server, or an empty map
         when the builtin package fell back to its bundled flavors.
         """
-        is_builtin = self._is_builtin(apverid)
+        is_builtin = self._is_builtin(apvernum)
         try:
-            pkg = await self._tier1_manifests_with_retries(apverid, language)
+            pkg = await self._tier1_manifests_with_retries(apvernum, language)
         except AssetResolveAbortedError:
             # App is shutting down -- not a resolve failure; don't
             # fall back to bundled, just abandon the whole resolve.
-            self._mark_build_done(apverid, acquired=True)
+            self._mark_build_done(apvernum, acquired=True)
             raise
         except AssetResolveError as exc:
             # The builtin/bootstrap package must still come up offline;
             # other packages are exact-or-fail. Log the underlying
             # reason either way (it's otherwise swallowed).
-            logger.warning('%s: online resolve failed (%s).', apverid, exc)
-            self._mark_build_done(apverid, acquired=True)
+            logger.warning('%s: online resolve failed (%s).', apvernum, exc)
+            self._mark_build_done(apvernum, acquired=True)
             if not is_builtin:
                 raise
             strip_exception_tracebacks(exc)
@@ -1917,11 +2232,11 @@ class AssetSubsystem(AppSubsystem):
         # Built, but not yet 'acquired' -- _fetch_blobs still has to
         # register this package's byte totals, and the phase must not flip
         # to downloading before it does.
-        self._mark_build_done(apverid, acquired=False)
+        self._mark_build_done(apvernum, acquired=False)
         await self._fetch_blobs(pkg)
         return pkg.coords
 
-    def _mark_build_done(self, apverid: str, *, acquired: bool) -> None:
+    def _mark_build_done(self, apvernum: ApverNum, *, acquired: bool) -> None:
         """Retire one package from the build readout.
 
         Pins its unit count at done==total rather than dropping it, so the
@@ -1930,47 +2245,49 @@ class AssetSubsystem(AppSubsystem):
         and the count would stop partway (at whatever the stragglers still
         owed) instead of reaching 0.
         """
-        units = self._build_units.get(apverid)
+        units = self._build_units.get(apvernum)
         if units is not None:
-            self._build_units[apverid] = (units[1], units[1])
-        self._build_pending.discard(apverid)
+            self._build_units[apvernum] = (units[1], units[1])
+        self._build_pending.discard(apvernum)
         if acquired:
-            self._acquire_pending.discard(apverid)
+            self._acquire_pending.discard(apvernum)
         self._emit_progress()
 
     @staticmethod
     def _accumulate_results(
-        apverids: list[str], results: list[_OneResult]
+        apvernums: list[ApverNum], results: list[_OneResult]
     ) -> _ResolveAccum:
         """Fold per-package results into the resolve accumulator.
 
         Builds ``(register_specs, manifest_pkgs, fell_back)`` from the
-        :class:`_OneResult` for each apverid. Shared by every resolve path
+        :class:`_OneResult` for each apvernum. Shared by every resolve path
         (offline fast-path, online, and the synchronous boot resolve).
         """
-        register_specs: list[tuple[str, str, dict[str, dict[str, str]]]] = []
-        manifest_pkgs: dict[str, dict[str, str]] = {}
-        fell_back: dict[str, dict[str, str]] = {}
-        for apverid, result in zip(apverids, results):
-            manifest_pkgs[apverid] = result.coords
+        register_specs: list[
+            tuple[ApverNum, str, dict[str, dict[str, str]]]
+        ] = []
+        manifest_pkgs: dict[ApverNum, dict[str, str]] = {}
+        fell_back: dict[ApverNum, dict[str, str]] = {}
+        for apvernum, result in zip(apvernums, results):
+            manifest_pkgs[apvernum] = result.coords
             for coord in result.coords:
-                register_specs.append((apverid, coord, result.entries[coord]))
-            fell_back[apverid] = result.fell_back
+                register_specs.append((apvernum, coord, result.entries[coord]))
+            fell_back[apvernum] = result.fell_back
         return register_specs, manifest_pkgs, fell_back
 
-    def _pin(self, manifest_pkgs: dict[str, dict[str, str]]) -> None:
+    def _pin(self, manifest_pkgs: dict[ApverNum, dict[str, str]]) -> None:
         """Pin resolved packages + flavor-manifest hashes (GC-/cap-immune).
 
-        Once pinned, an apverid and its flavor-manifest blobs are never
+        Once pinned, an apvernum and its flavor-manifest blobs are never
         retracted for this process lifetime. Shared by the sync + async
         resolve commits.
         """
-        for apverid, coords in manifest_pkgs.items():
-            self._pinned_apverids.add(apverid)
+        for apvernum, coords in manifest_pkgs.items():
+            self._pinned_apvernums.add(apvernum)
             self._pinned_fm_hashes.update(coords.values())
 
     def _resolve_one_local(
-        self, apverid: str, desired: dict[str, str]
+        self, apvernum: ApverNum, desired: dict[str, str]
     ) -> _OneResult:
         """Best-local resolve of one package: scan local + finalize.
 
@@ -1979,20 +2296,20 @@ class AssetSubsystem(AppSubsystem):
         only) the bundled fallback, else raises. Building block of
         :meth:`resolve_local`; ``available`` is just the local coords.
         """
-        local, _missing = self._scan_local(apverid, desired)
+        local, _missing = self._scan_local(apvernum, desired)
         return self._finalize_one(
-            apverid, desired, local, self._is_builtin(apverid)
+            apvernum, desired, local, self._is_builtin(apvernum)
         )
 
     def _scan_local(
-        self, apverid: str, desired: dict[str, str]
+        self, apvernum: ApverNum, desired: dict[str, str]
     ) -> tuple[dict[str, str], set[str]]:
         """Local coord→hash map + which desired buckets aren't fully local.
 
         Off-thread; reads the bundle + cache manifests and the referenced
         flavor-manifest blobs.
         """
-        local = self._local_coords(apverid)
+        local = self._local_coords(apvernum)
         missing: set[str] = set()
         for bucket, coord in desired.items():
             fm_hash = local.get(coord)
@@ -2002,7 +2319,7 @@ class AssetSubsystem(AppSubsystem):
 
     def _finalize_one(
         self,
-        apverid: str,
+        apvernum: ApverNum,
         desired: dict[str, str],
         available: dict[str, str],
         is_builtin: bool,
@@ -2054,12 +2371,12 @@ class AssetSubsystem(AppSubsystem):
                     fell_back[desired_coord] = fallback
                     continue
             raise AssetResolveError(
-                f'{apverid}: bucket {bucket!r}: neither the desired flavor'
+                f'{apvernum}: bucket {bucket!r}: neither the desired flavor'
                 f' ({desired_coord}) nor a usable fallback is available.'
             )
         return _OneResult(coords=coords, entries=entries, fell_back=fell_back)
 
-    def _local_coords(self, apverid: str) -> dict[str, str]:
+    def _local_coords(self, apvernum: ApverNum) -> dict[str, str]:
         """Locally-known ``coord -> flavor-manifest hash`` (bundle ∪ cache).
 
         The cache's (downloaded/ideal) hash supersedes the bundle's for a
@@ -2078,41 +2395,42 @@ class AssetSubsystem(AppSubsystem):
         checked downstream by :meth:`_scan_local` / :meth:`_finalize_one`.
         """
         coords: dict[str, str] = {}
-        coords.update(self._read_bundle_manifest().get(apverid, {}))
-        pkg = self._load_manifest().packages.get(apverid)
+        coords.update(self._read_bundle_manifest().get(apvernum, {}))
+        pkg = self._load_manifest().packages.get(apvernum)
         if pkg is not None:
             for coord, fm_hash in pkg.flavor_manifests.items():
                 if coord not in coords or self._coord_complete(fm_hash):
                     coords[coord] = fm_hash
         return coords
 
-    def _read_bundle_manifest(self) -> dict[str, dict[str, str]]:
-        """Parse the bundled ``ba_data/manifest.json`` → apverid→coords→hash."""
-        path = os.path.join(
-            _babase.app.env.data_directory, 'ba_data', 'manifest.json'
-        )
-        try:
-            with open(path, encoding='utf-8') as infile:
-                manifest = json.load(infile)
-        except FileNotFoundError:
+    def _read_bundle_manifest(self) -> dict[ApverNum, dict[str, str]]:
+        """Parse the bundled ``ba_data/manifest.json`` → apvernum→coords→hash.
+
+        Served natively (the manifest may live inside an archive such
+        as the apk); absence means the build ships no bundled CAS.
+        """
+        text = _babase.bundled_asset_manifest_text()
+        if text is None:
             return {}
+        try:
+            manifest = json.loads(text)
         except Exception as exc:
-            logger.exception('Error reading bundle manifest %s.', path)
+            logger.exception('Error parsing bundle manifest.')
             strip_exception_tracebacks(exc)
             return {}
+        # Keyed by numeric id (as text, being json object keys).
         return {
-            apv: entry.get('flavor_manifests', {})
-            for apv, entry in manifest.get('asset_package_versions', {}).items()
+            ApverNum(int(key)): entry.get('flavor_manifests', {})
+            for key, entry in manifest.get('asset_package_versions', {}).items()
         }
 
     def _coord_complete(self, fm_hash: str) -> bool:
         """Is this flavor fully present? (fm blob + all its data blobs)."""
-        fm_path = self._locate_blob(fm_hash, hide_bundle=True)
-        if fm_path is None:
+        fm_data = self._read_blob(fm_hash, hide_bundle=True)
+        if fm_data is None:
             return False
         try:
-            with open(fm_path, 'rb') as infile:
-                parsed = json.loads(infile.read())
+            parsed = json.loads(fm_data)
         except Exception as exc:
             logger.exception('Error reading flavor-manifest %s.', fm_hash)
             strip_exception_tracebacks(exc)
@@ -2129,10 +2447,9 @@ class AssetSubsystem(AppSubsystem):
         Caller must have confirmed the flavor is complete (see
         :meth:`_coord_complete`).
         """
-        fm_path = self._locate_blob(fm_hash)
-        assert fm_path is not None
-        with open(fm_path, 'rb') as infile:
-            parsed = json.loads(infile.read())
+        fm_data = self._read_blob(fm_hash)
+        assert fm_data is not None
+        parsed = json.loads(fm_data)
         # logical_path -> {part -> data-hash}. A null asset is {}.
         return {
             p: {part: comp['h'] for part, comp in info.items()}
@@ -2141,7 +2458,7 @@ class AssetSubsystem(AppSubsystem):
 
     @staticmethod
     def _validate_manifest_shape(
-        apverid: str, coord: str, parsed: dict
+        apvernum: ApverNum, coord: str, parsed: dict
     ) -> None:
         """Refuse a downloaded flavor-manifest from an older layout epoch.
 
@@ -2160,14 +2477,14 @@ class AssetSubsystem(AppSubsystem):
             for part in info:
                 if '.' not in part:
                     raise AssetResolveError(
-                        f'{apverid}: server manifest for {coord!r} is from'
+                        f'{apvernum}: server manifest for {coord!r} is from'
                         f' an older layout epoch (part {part!r}); refusing'
                         f' to ingest. The server may be mid-update; retry'
                         f' later.'
                     )
 
     async def _tier1_manifests_with_retries(
-        self, apverid: str, language: Locale
+        self, apvernum: ApverNum, language: Locale
     ) -> _PkgManifests:
         """Run :meth:`_tier1_manifests`, retrying transient failures.
 
@@ -2184,11 +2501,29 @@ class AssetSubsystem(AppSubsystem):
         attempt = 1
         max_attempts = 3
         while True:
+            trace = self._active_trace
+            start = time.monotonic()
             try:
-                return await self._tier1_manifests(apverid, language)
+                result = await self._tier1_manifests(apvernum, language)
+                if trace is not None:
+                    trace.tier1_attempts.append(
+                        Tier1Attempt(
+                            apvernum, attempt, time.monotonic() - start, 'ok'
+                        )
+                    )
+                return result
             except AssetResolveAbortedError:
                 raise
             except AssetResolveError as exc:
+                if trace is not None:
+                    trace.tier1_attempts.append(
+                        Tier1Attempt(
+                            apvernum,
+                            attempt,
+                            time.monotonic() - start,
+                            _attempt_outcome(exc),
+                        )
+                    )
                 transient = exc.code is (
                     AssetPackageResolveError.INTERNAL
                 ) or isinstance(exc.__cause__, CommunicationError)
@@ -2198,7 +2533,7 @@ class AssetSubsystem(AppSubsystem):
                 logger.info(
                     '%s: transient resolve failure'
                     ' (attempt %d of %d); retrying in %.0fs (%s).',
-                    apverid,
+                    apvernum,
                     attempt,
                     max_attempts,
                     delay,
@@ -2211,7 +2546,7 @@ class AssetSubsystem(AppSubsystem):
                 attempt += 1
 
     async def _tier1_manifests(
-        self, apverid: str, language: Locale
+        self, apvernum: ApverNum, language: Locale
     ) -> _PkgManifests:
         """One Tier-1 resolve: poll until built, write the flavor-manifests.
 
@@ -2226,6 +2561,9 @@ class AssetSubsystem(AppSubsystem):
         # after boot; wait briefly for it rather than failing a resolve
         # that raced the connection.
         await self._wait_for_node()
+        trace = self._active_trace
+        if trace is not None:
+            trace.phase = f'tier-1 resolve {apvernum}'
         # Capture the signed-in account handle on the logic thread; the
         # off-thread send enters its context so the resolve carries our
         # account (see _resolve_tier1). None → anonymous (PROD/public).
@@ -2237,14 +2575,19 @@ class AssetSubsystem(AppSubsystem):
         # after a short wait until it resolves to a manifest (or errors).
         while True:
             response = await self._run_in_pool(
-                self._resolve_tier1, apverid, language, primary
+                self._resolve_tier1, apvernum, language, primary
             )
             if response.build_progress is None:
                 break
-            self._apply_build_progress(apverid, response.build_progress)
+            self._apply_build_progress(apvernum, response.build_progress)
+            if trace is not None:
+                trace.phase = f'server building {apvernum}'
+            poll_start = time.monotonic()
             await asyncio.sleep(_BUILD_POLL_INTERVAL_SECONDS)
+            if trace is not None:
+                trace.build_poll_seconds += time.monotonic() - poll_start
         if response.error is not None:
-            msg = f'{apverid}: {response.error}'
+            msg = f'{apvernum}: {response.error}'
             code = response.error_code
             # Raise a specific subclass for the cases callers branch on
             # (e.g. construct-mode prompting for sign-in). Carry the
@@ -2252,34 +2595,25 @@ class AssetSubsystem(AppSubsystem):
             errcls = AssetResolveError
             if code is not None:
                 errcls = _RESOLVE_ERROR_TYPES.get(code, AssetResolveError)
-            raise errcls(msg, code, response.error)
+            raise errcls(msg, code, response.error, response.error_package)
         if not response.buckets:
-            raise AssetResolveError(f'{apverid}: resolve returned no buckets.')
+            raise AssetResolveError(f'{apvernum}: resolve returned no buckets.')
 
         # Reject anything substituted on a capability axis before we
         # commit a byte of it (tier substitution is expected; profile /
         # render_space substitution is a server bug).
-        self._validate_served_coords(apverid, response.buckets.keys(), language)
+        self._validate_served_coords(
+            apvernum, response.buckets.keys(), language
+        )
 
-        coords: dict[str, str] = {}
-        fm_writes: dict[str, bytes] = {}
-        data_needed: dict[str, int] = {}
-        for coord, flavor_manifest in response.buckets.items():
-            coords[coord] = flavor_manifest.hash
-            # Dedupe by hash: a flavor-manifest blob is often shared across
-            # coords (e.g. an empty 'constant' and 'language/eng').
-            if not self._present(
-                flavor_manifest.hash, len(flavor_manifest.data)
-            ):
-                fm_writes[flavor_manifest.hash] = flavor_manifest.data
-            parsed = json.loads(flavor_manifest.data)
-            self._validate_manifest_shape(apverid, coord, parsed)
-            # The manifest carries only canonical content identity (hash +
-            # size); a blob's transfer encoding is negotiated per /casblob
-            # download (see _acquire_data_blob), not recorded here.
-            for info in parsed['e'].values():
-                for comp in info.values():
-                    data_needed[comp['h']] = comp['s']
+        # Digest the served manifests off-thread: parsing a big
+        # package's flavor manifests is tens of milliseconds on a weak
+        # phone, and resolves now also run mid-game (background
+        # character-media acquisition), where a logic-thread stall is
+        # a frame hitch.
+        coords, fm_writes, data_needed = await self._run_in_pool(
+            self._digest_tier1_buckets, apvernum, response.buckets
+        )
 
         if fm_writes:
             await asyncio.gather(
@@ -2290,13 +2624,43 @@ class AssetSubsystem(AppSubsystem):
             )
 
         return _PkgManifests(
-            apverid=apverid,
+            apvernum=apvernum,
             coords=coords,
             needed=data_needed,
             # Only meaningful if something actually needs fetching; a
             # fully-local package legitimately has neither.
             token=response.token,
         )
+
+    def _digest_tier1_buckets(
+        self, apvernum: ApverNum, buckets: dict[str, ResolvedFlavorManifest]
+    ) -> tuple[dict[str, str], dict[str, bytes], dict[str, int]]:
+        """Parse a Tier-1 response's flavor manifests (pool thread).
+
+        Returns ``(coord -> fm hash, fm blobs to write, data hash ->
+        size)``. Only the filesystem-presence check and pure parsing
+        happen here; nothing touches subsystem state.
+        """
+        coords: dict[str, str] = {}
+        fm_writes: dict[str, bytes] = {}
+        data_needed: dict[str, int] = {}
+        for coord, flavor_manifest in buckets.items():
+            coords[coord] = flavor_manifest.hash
+            # Dedupe by hash: a flavor-manifest blob is often shared across
+            # coords (e.g. an empty 'constant' and 'language/eng').
+            if not self._present(
+                flavor_manifest.hash, len(flavor_manifest.data)
+            ):
+                fm_writes[flavor_manifest.hash] = flavor_manifest.data
+            parsed = json.loads(flavor_manifest.data)
+            self._validate_manifest_shape(apvernum, coord, parsed)
+            # The manifest carries only canonical content identity (hash +
+            # size); a blob's transfer encoding is negotiated per /casblob
+            # download (see _acquire_data_blob), not recorded here.
+            for info in parsed['e'].values():
+                for comp in info.values():
+                    data_needed[comp['h']] = comp['s']
+        return coords, fm_writes, data_needed
 
     async def _fetch_blobs(self, pkg: _PkgManifests) -> None:
         """Fetch whatever of one package's blobs isn't already here.
@@ -2328,17 +2692,22 @@ class AssetSubsystem(AppSubsystem):
             if h not in self._fetch_claimed and not self._present(h, s)
         ]
         if not to_fetch:
-            self._acquire_pending.discard(pkg.apverid)
+            self._acquire_pending.discard(pkg.apvernum)
             self._emit_progress()
             return
+        trace = self._active_trace
+        if trace is not None:
+            trace.phase = 'fetching blobs'
+            if trace.fetch_started_at is None:
+                trace.fetch_started_at = time.monotonic()
         if pkg.token is None:
             raise AssetResolveError(
-                f'{pkg.apverid}: resolve returned no download token.'
+                f'{pkg.apvernum}: resolve returned no download token.'
             )
         base_url = self._node_base_url()
         if base_url is None:
             raise AssetResolveError(
-                f'{pkg.apverid}: not connected to a node; cannot download.'
+                f'{pkg.apvernum}: not connected to a node; cannot download.'
             )
         token_header = self._encode_token(pkg.token)
 
@@ -2363,7 +2732,7 @@ class AssetSubsystem(AppSubsystem):
         # Totals are in; this package is fully acquired. Once the last one
         # clears, the readout flips to downloading with a complete (and
         # therefore monotonic) byte total.
-        self._acquire_pending.discard(pkg.apverid)
+        self._acquire_pending.discard(pkg.apvernum)
         self._emit_progress()
 
         # gather() surfaces only the first failure to our caller;
@@ -2406,7 +2775,7 @@ class AssetSubsystem(AppSubsystem):
 
     def _resolve_tier1(
         self,
-        apverid: str,
+        apvernum: ApverNum,
         language: Locale,
         primary: AccountV2Handle | None,
     ) -> ResolveAssetPackageResponse:
@@ -2427,7 +2796,7 @@ class AssetSubsystem(AppSubsystem):
                 'plus subsystem unavailable; cannot resolve asset packages.'
             )
         msg = ResolveAssetPackageMessage(
-            apverid=apverid,
+            apverid=apvernum,
             language=language,
             texture_profile=self._texture_profile,
             texture_tier=self._texture_tier,
@@ -2449,7 +2818,7 @@ class AssetSubsystem(AppSubsystem):
                 response = plus.cloud.send_message(msg)
         except CommunicationError as exc:
             raise AssetResolveError(
-                f'{apverid}: communication error during resolve: {exc}'
+                f'{apvernum}: communication error during resolve: {exc}'
             ) from exc
         assert isinstance(response, ResolveAssetPackageResponse)
         return response
@@ -2499,14 +2868,20 @@ class AssetSubsystem(AppSubsystem):
                 event.set()
 
         reg = plus.cloud.on_connectivity_changed_callbacks.register(_on_changed)
+        trace = self._active_trace
+        if trace is not None:
+            trace.node_wait_begin()
+        timed_out = False
         try:
             # Re-check now that we're registered, in case it connected
             # between the initial check and the registration.
             if self._node_base_url() is None:
                 await asyncio.wait_for(event.wait(), timeout=_NODE_WAIT_SECONDS)
         except asyncio.TimeoutError:
-            pass
+            timed_out = True
         finally:
+            if trace is not None:
+                trace.node_wait_end(timed_out)
             # Hold `reg` until here so the callback stays registered for the
             # whole wait; dropping it unregisters (CallbackSet is
             # weakref-based).
@@ -2627,15 +3002,16 @@ class AssetSubsystem(AppSubsystem):
         """Is this CAS blob already present at the expected size?
 
         Probes the writable cache root and (unless bundle reuse is
-        disabled for the resolve in flight) the bundle root.
+        disabled for the resolve in flight) the bundle store.
         Present-but-wrong-size counts as absent so it gets
-        refetched/overwritten. The free ``st_size`` check is a cheap catch
+        refetched/overwritten. The free size check is a cheap catch
         for external truncation/tampering, not a content proof.
         """
-        roots = [self._writable_assets_root]
-        if not self._bundle_hidden:
-            roots.append(self._bundle_assets_root)
-        return assetcas.blob_present(roots, filehash, size)
+        if assetcas.blob_present([self._writable_assets_root], filehash, size):
+            return True
+        if self._bundle_hidden:
+            return False
+        return self._bundled_blob_size(filehash) == size
 
     def _acquire_data_blob(
         self,
@@ -2724,7 +3100,26 @@ class AssetSubsystem(AppSubsystem):
         path = self._manifest_path
         try:
             with open(path, encoding='utf-8') as infile:
-                manifest = dataclass_from_json(_CacheManifest, infile.read())
+                raw = json.loads(infile.read())
+            # Check the layout epoch *before* decoding: an older epoch's
+            # manifest may not even decode under the current schema (v3
+            # keyed packages by string id), and that's an expected
+            # upgrade, not an error.
+            layout_version = raw.get('v', 1) if isinstance(raw, dict) else 1
+            if layout_version != _CACHE_MANIFEST_LAYOUT_VERSION:
+                # The cached flavor manifests were written at a different
+                # shape epoch than this build expects; drop them
+                # wholesale (packages simply re-resolve; shape-invariant
+                # data blobs stay reusable by hash and orphans get swept
+                # by GC).
+                logger.info(
+                    'Discarding asset cache manifest at layout version %s'
+                    ' (current is %d).',
+                    layout_version,
+                    _CACHE_MANIFEST_LAYOUT_VERSION,
+                )
+                return self._fresh_manifest()
+            manifest = dataclass_from_dict(_CacheManifest, raw)
         except FileNotFoundError:
             return self._fresh_manifest()
         except Exception as exc:
@@ -2732,18 +3127,6 @@ class AssetSubsystem(AppSubsystem):
                 'Error loading asset cache manifest %s; starting fresh.', path
             )
             strip_exception_tracebacks(exc)
-            return self._fresh_manifest()
-        if manifest.layout_version != _CACHE_MANIFEST_LAYOUT_VERSION:
-            # The cached flavor manifests were written at a different
-            # shape epoch than this build expects; drop them wholesale
-            # (packages simply re-resolve; shape-invariant data blobs
-            # stay reusable by hash and orphans get swept by GC).
-            logger.info(
-                'Discarding asset cache manifest at layout version %d'
-                ' (current is %d).',
-                manifest.layout_version,
-                _CACHE_MANIFEST_LAYOUT_VERSION,
-            )
             return self._fresh_manifest()
         return manifest
 
@@ -2753,7 +3136,7 @@ class AssetSubsystem(AppSubsystem):
         return _CacheManifest(layout_version=_CACHE_MANIFEST_LAYOUT_VERSION)
 
     def _commit_manifest(
-        self, manifest_pkgs: dict[str, dict[str, str]], now: float
+        self, manifest_pkgs: dict[ApverNum, dict[str, str]], now: float
     ) -> None:
         """Fold the just-resolved packages into the cache manifest + persist.
 
@@ -2763,8 +3146,8 @@ class AssetSubsystem(AppSubsystem):
         rewrites ``manifest.json``.
         """
         manifest = self._load_manifest()
-        for apverid, coords in manifest_pkgs.items():
-            manifest.packages[apverid] = _CachedPackage(
+        for apvernum, coords in manifest_pkgs.items():
+            manifest.packages[apvernum] = _CachedPackage(
                 flavor_manifests=dict(coords), last_used=now
             )
             for fm_hash in coords.values():
@@ -2901,10 +3284,10 @@ class AssetSubsystem(AppSubsystem):
 
     def _gc_survivors(
         self, manifest: _CacheManifest, cutoff: float
-    ) -> tuple[set[str], dict[str, _CachedPackage]]:
+    ) -> tuple[set[str], dict[ApverNum, _CachedPackage]]:
         """Apply the survivor rule → (live flavor-manifest hashes, packages).
 
-        An apverid entry survives iff pinned or recently used; within a
+        An apvernum entry survives iff pinned or recently used; within a
         survivor, each ``coord→hash`` ref survives iff its hash is pinned or
         recently used AND the flavor-manifest blob is still on disk
         (existence-aware: a vanished blob's ref is dropped + re-fetched
@@ -2912,10 +3295,10 @@ class AssetSubsystem(AppSubsystem):
         enumerate).
         """
         live_fm: set[str] = set(self._pinned_fm_hashes)
-        new_packages: dict[str, _CachedPackage] = {}
-        for apverid, pkg in manifest.packages.items():
+        new_packages: dict[ApverNum, _CachedPackage] = {}
+        for apvernum, pkg in manifest.packages.items():
             if not (
-                apverid in self._pinned_apverids or pkg.last_used >= cutoff
+                apvernum in self._pinned_apvernums or pkg.last_used >= cutoff
             ):
                 continue
             new_coords: dict[str, str] = {}
@@ -2925,12 +3308,12 @@ class AssetSubsystem(AppSubsystem):
                     or manifest.flavor_manifest_last_used.get(fm_hash, 0.0)
                     >= cutoff
                 )
-                if not fm_survives or self._locate_blob(fm_hash) is None:
+                if not fm_survives or not self._blob_exists(fm_hash):
                     continue
                 new_coords[coord] = fm_hash
                 live_fm.add(fm_hash)
             if new_coords:
-                new_packages[apverid] = _CachedPackage(
+                new_packages[apvernum] = _CachedPackage(
                     flavor_manifests=new_coords, last_used=pkg.last_used
                 )
         return live_fm, new_packages
@@ -2943,12 +3326,11 @@ class AssetSubsystem(AppSubsystem):
         """
         live: set[str] = set(live_fm)
         for fm_hash in live_fm:
-            fm_path = self._locate_blob(fm_hash)
-            if fm_path is None:
+            fm_data = self._read_blob(fm_hash)
+            if fm_data is None:
                 continue
             try:
-                with open(fm_path, 'rb') as infile:
-                    parsed = json.loads(infile.read())
+                parsed = json.loads(fm_data)
                 for info in parsed['e'].values():
                     for comp in info.values():
                         live.add(comp['h'])

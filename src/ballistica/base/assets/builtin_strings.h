@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260819"
+// Generated from: "a-0.babuiltinassets.261003"
 
 #include <memory>
 
@@ -25,7 +25,7 @@ namespace ballistica::base {
 /// (nested classes mirror its dir tree; classes stand in for
 /// namespaces per the one-namespace-per-featureset rule) and
 /// builds a resource-form LangStr addressing that string in the
-/// pinned builtin package (kBuiltinAssetsApverid), with any
+/// pinned builtin package (kBuiltinAssetsApvernum), with any
 /// parameters attached as keyword substitutions.
 ///
 /// The returned values hold tokens, not text: call Evaluate() at
@@ -123,6 +123,15 @@ class BuiltinStrings {
     static auto ContentErrorGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
+    /// Error screen-message shown when a corrupt game data file (e.g. an
+    /// unreadable audio file) is detected; the placeholder is the support email
+    /// address.
+    ///
+    /// English: "Corrupt file(s) detected. Please try re-installing, or email
+    /// {email}"
+    static auto CorruptFile(LangStr::Sub email)
+        -> std::shared_ptr<const LangStr>;
+
     /// Progress-dialog line shown while asset files download; updates live as
     /// the remaining count drops.
     ///
@@ -194,6 +203,18 @@ class BuiltinStrings {
         -> std::shared_ptr<const LangStr>;
   };
 
+  class Device {
+   public:
+    /// Screen-message shown once per run on Android when the game deliberately
+    /// drops its frame rate to 60hz because the OS reports severe thermal
+    /// throttling; only shown on devices whose display would otherwise run
+    /// faster than 60hz.
+    ///
+    /// English: "Device is running hot; frame rate reduced to 60 until it
+    /// cools."
+    static auto ThermalFrameRateCap() -> std::shared_ptr<const LangStr>;
+  };
+
   class Input {
    public:
     /// Short lowercase label identifying a numbered joystick axis by index;
@@ -222,7 +243,7 @@ class BuiltinStrings {
     /// controller is detected (multiple controllers at startup use a separate
     /// counted message).
     ///
-    /// English: "1 controller detected."
+    /// English: "1 game controller detected."
     static auto ControllerDetected() -> std::shared_ptr<const LangStr>;
 
     /// Transient screen-message shown when a single game controller
@@ -235,7 +256,7 @@ class BuiltinStrings {
 
     /// Notice that a controller works only in menus.
     ///
-    /// English: "This controller can not be used to play; only to navigate
+    /// English: "This game controller can not be used to play; only to navigate
     /// menus."
     static auto ControllerMenusOnly() -> std::shared_ptr<const LangStr>;
 
@@ -251,8 +272,8 @@ class BuiltinStrings {
     /// the same time (a single controller connecting shows a different message
     /// naming that controller).
     ///
-    /// English: (one) "# controller connected." / (other) "# controllers
-    /// connected."
+    /// English: (one) "# game controller connected." / (other) "# game
+    /// controllers connected."
     static auto ControllersConnected(int64_t count)
         -> std::shared_ptr<const LangStr>;
 
@@ -260,8 +281,8 @@ class BuiltinStrings {
     /// controller is detected at once (a single controller at startup uses a
     /// separate message).
     ///
-    /// English: (one) "# controller detected." / (other) "# controllers
-    /// detected."
+    /// English: (one) "# game controller detected." / (other) "# game
+    /// controllers detected."
     static auto ControllersDetected(int64_t count)
         -> std::shared_ptr<const LangStr>;
 
@@ -269,8 +290,8 @@ class BuiltinStrings {
     /// at the same time (a single controller disconnecting shows a different
     /// message naming that controller).
     ///
-    /// English: (one) "# controller disconnected." / (other) "# controllers
-    /// disconnected."
+    /// English: (one) "# game controller disconnected." / (other) "# game
+    /// controllers disconnected."
     static auto ControllersDisconnected(int64_t count)
         -> std::shared_ptr<const LangStr>;
 
@@ -297,7 +318,7 @@ class BuiltinStrings {
 
     /// Notice that a controller is not supported.
     ///
-    /// English: "Sorry, the {name} controller is not supported."
+    /// English: "Sorry, the game controller {name} is not supported."
     static auto UnsupportedController(LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
 
@@ -309,8 +330,8 @@ class BuiltinStrings {
 
     /// Explanation of the VR orientation reset on Cardboard.
     ///
-    /// English: "Use this to reset the VR orientation. To play, you'll need an
-    /// external controller."
+    /// English: "Use this to reset the VR orientation. To play the game you'll
+    /// need an external game controller."
     static auto VrOrientationResetCardboard() -> std::shared_ptr<const LangStr>;
   };
 
@@ -321,6 +342,26 @@ class BuiltinStrings {
     ///
     /// English: "Your account was rejected. Are you signed in?"
     static auto AccountRejected() -> std::shared_ptr<const LangStr>;
+
+    /// Error shown when joining a game fails because the game uses an asset
+    /// package the player's account may not use; the placeholders are the
+    /// package's name and its owner's account tag.
+    ///
+    /// English: "This game uses asset package '{package}' by {owner}, which
+    /// your account does not have access to."
+    static auto AssetPackageAccessDenied(LangStr::Sub package,
+                                         LangStr::Sub owner)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error shown when joining a game fails because the game uses an asset
+    /// package that requires signing in with an account allowed to use it; the
+    /// placeholders are the package's name and its owner's account tag.
+    ///
+    /// English: "This game uses asset package '{package}' by {owner}, which
+    /// needs you to be signed in with an account that has access to it."
+    static auto AssetPackageAuthRequired(LangStr::Sub package,
+                                         LangStr::Sub owner)
+        -> std::shared_ptr<const LangStr>;
 
     /// Generic error screen-message shown to a player whose attempt to join a
     /// party or server failed due to an authentication or server error (with no
@@ -389,6 +430,16 @@ class BuiltinStrings {
     /// settings."
     static auto DeviceTimeIncorrect(LangStr::Sub hours)
         -> std::shared_ptr<const LangStr>;
+
+    /// Yellow warning screen-message shown right after successfully joining a
+    /// multiplayer game whose host runs an older game version or has v2-auth
+    /// turned off; tells the player only their legacy profiles can be used
+    /// there. Replaces the old "some new characters may show up as older ones"
+    /// warning.
+    ///
+    /// English: "This server is old or has v2-auth turned off; only legacy
+    /// profiles are available."
+    static auto HostLegacyProfilesOnly() -> std::shared_ptr<const LangStr>;
 
     /// Screen-message when connecting fails because the host runs a NEWER game
     /// version (so updating locally will fix it).
@@ -548,6 +599,12 @@ class BuiltinStrings {
     static auto ChatBlocked(int64_t seconds, LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
 
+    /// Error screen-message when a player sends a chat message longer than the
+    /// host allows.
+    ///
+    /// English: "Message is too long."
+    static auto ChatMessageTooLong() -> std::shared_ptr<const LangStr>;
+
     /// Screen-message telling a recently-departed player how long until they
     /// may rejoin the game session.
     ///
@@ -681,6 +738,20 @@ class BuiltinStrings {
     /// may be disabled."
     static auto GooglePlayServicesUnavailable()
         -> std::shared_ptr<const LangStr>;
+
+    /// Body of the dialog shown right after an in-app purchase comes back
+    /// pending (the payment method -- e.g. UPI, cash, some bank transfers --
+    /// has not cleared yet), under the payment-pending title.
+    ///
+    /// English: "Your purchase will be delivered once payment is confirmed."
+    static auto PaymentPendingMessage() -> std::shared_ptr<const LangStr>;
+
+    /// Title of the dialog shown right after an in-app purchase comes back
+    /// pending (the payment method -- e.g. UPI, cash, some bank transfers --
+    /// has not cleared yet).
+    ///
+    /// English: "Payment Pending"
+    static auto PaymentPendingTitle() -> std::shared_ptr<const LangStr>;
 
     /// Notice that this item is already being purchased.
     ///

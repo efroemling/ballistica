@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/scene_v1/generated/scene_asset_set.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
@@ -20,6 +21,9 @@ class CoreFeatureSet;
 }
 namespace ballistica::base {
 class BaseFeatureSet;
+}
+namespace ballistica::ui_v1 {
+class UIV1FeatureSet;
 }
 
 namespace ballistica::scene_v1 {
@@ -34,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 43;
+const int kProtocolVersionHostMin = 48;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +46,27 @@ const int kProtocolVersionHostMin = 43;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 43;
+const int kProtocolVersionMax = 48;
+
+// The 1.8 development protocols (38 through the one before 1.8's
+// final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
+// on are supported (Eric, 2026-10-01); these intermediate ones' streams
+// are no longer decoded (47 redid much of what they carried), so a
+// leftover dev host or replay on one is refused like any unsupported
+// version rather than mis-decoded. Raise the max alongside
+// kProtocolVersionMax for any further bump before 1.8 ships.
+const int kProtocolVersionDevGapMin = 38;
+const int kProtocolVersionDevGapMax = 47;
+static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
+              "Every 1.8 dev protocol below the current one is in the gap.");
+
+/// Whether we can act as a client to (or play a replay of) a stream
+/// protocol.
+inline auto IsJoinableHostProtocol(int version) -> bool {
+  return version >= kProtocolVersionClientMin && version <= kProtocolVersionMax
+         && !(version >= kProtocolVersionDevGapMin
+              && version <= kProtocolVersionDevGapMax);
+}
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -165,6 +189,254 @@ const int kProtocolVersionMax = 43;
 //     attrs keep their positions. tests/test_scene_v1's golden
 //     attr-table test pins every index; a diff there means a protocol
 //     bump (or a mistake).
+//
+// 44: On-the-fly character skins (docs/initiatives/character-skins.md).
+//     Session-level Character definitions -- new kAddCharacter /
+//     kRemoveCharacter commands carrying an opaque json string, with the
+//     same add/remove/baseline lifecycle as materials -- and a new spaz-
+//     node 'character' attr of a new attr type (kCharacter, plus the
+//     kSetNodeAttrCharacter[Null] commands), appended last so no existing
+//     index moves (spaz has no subclasses so no late-index flag needed).
+//     When set it replaces the explicit mesh/texture/sound attrs, style,
+//     and highlight entirely: physique and look both come from the
+//     definition, with the app-mode-supplied standin (standard spaz)
+//     drawn until the definition's media is local. Hosts at 44+ can
+//     therefore hand a joiner any character it brings, so a client that
+//     joins a host below kProtocolVersionCharacterSkins shows a one-time
+//     yellow warning that some newer characters may render as older
+//     ones there (see ConnectionToHost). The hosting floor rises with
+//     the max as usual so every host we run is on the far side of that
+//     line.
+//
+//     Also under 44: the 'characterdisplay' node type (appended last), a 2d
+//     overlay drawing a Character's icon and/or name -- the in-scene twin
+//     of ui_v1's character widget (lobby choosers, scoreboards).
+//
+//     Also under 44 (landed before it reached public builds): the
+//     'localdisplay' node type, appended last in the node-type table so
+//     no existing type id moves. It carries a json 'config' string and a
+//     'visible' bool; every machine that receives it (host included)
+//     runs its own LocalDisplayContext -- a private stream-less scene
+//     driven by a Python bascenev1.LocalDisplay built from the config --
+//     so one streamed node yields per-machine content (the controls
+//     guide showing each player their own controller's button names).
+//
+//     Also under 44 (same reason): the spaz punch region and
+//     punch_velocity come from a synthetic fist -- a spring-damper model
+//     of the punching hand driven by the torso frame and the punch
+//     phase (SpazPose) -- instead of the lower-arm body, so nothing in
+//     gameplay reads a limb body any more (the first step toward
+//     simulating limbs on the bg-dynamics thread). Older protocols keep
+//     the arm-attached form; a scene's protocol_version() picks.
+//
+//     Also under 44 (same reason): spaz limbs live on the bg-dynamics
+//     rig instead of the main sim (no limb bodies there at all), and a
+//     globals-node bool 'legacy_spaz_limbs', appended last, lets an
+//     activity keep the old main-sim limbs for content calibrated
+//     against them (the tutorial's recorded input script).
+//
+//     Also under 44 (same reason): compact stream framing
+//     (docs/initiatives/bandwidth.md). Session-command messages were
+//     [u16 length][cmd][int32 args...] with every integer a full int32
+//     (node ids, attr indices, counts, bools, string lengths, the 8ms
+//     time delta): eleven bytes of framing around a four-byte float,
+//     nine bytes for a time step. Now the command length prefix and
+//     every integer field are LEB128 varints (integers zigzag-encoded,
+//     so small negatives stay one byte); floats and raw chars are
+//     unchanged and command ids/order are untouched. Roughly halves
+//     the command stream on an 8-bot stress test. Streams declare
+//     their protocol (handshake / replay header), so older streams
+//     still decode with the fixed layout: SessionStream::compact_ and
+//     ClientSession::compact_stream() are the two switches
+//     (kProtocolVersionCompactStream). Dev replays recorded under 44
+//     before this landed no longer play.
+//
+//     Also under 44 (same reason): zstd game-packet compression with a
+//     trained dictionary (docs/design/packet-compression.md) replaces
+//     the per-byte huffman between 44+ peers: ~0.70 vs ~0.90 on a
+//     stress test at the same CPU. Per packet, not per stream: a
+//     receiver tells raw / huffman / zstd apart from the first byte,
+//     so the handshake (sent before a peer's version is known) stays
+//     huffman and everything after switches. The dictionary is
+//     bacommon's packets_v1.zstddict; a new dictionary means a new
+//     protocol version, since both ends must hold the same bytes
+//     (kProtocolVersionZstdPackets). Older peers keep huffman.
+//
+//     Also under 44: compact physics corrections
+//     (kProtocolVersionCompactCorrections). Per body: a flag byte,
+//     position as 3 x int24 millimetres, orientation as a packed
+//     smallest-three quaternion (4 bytes), f16 for each non-zero
+//     velocity component; node ids / counts / resync lengths are
+//     varints and the per-body length prefix is gone (the flag byte
+//     fixes the size). ~36 -> ~26 bytes per moving body plus ~8 per
+//     node. Writer: Scene::GetCorrectionMessageCompact_ /
+//     RigidBody::EmbedCompact; reader: ClientSession's
+//     kDynamicsCorrection compact branch / RigidBody::ExtractCompact.
+//     Older streams keep the f32/f16 layout.
+//
+//     Also under 44: unreliable multipart packets
+//     (BA_SCENEPACKET_MESSAGE_UNRELIABLE_PART,
+//     kProtocolVersionUnreliableParts), which is what lets physics
+//     corrections go unreliable. A correction is split into <= 32
+//     parts sharing one unreliable number; the receiver keeps one
+//     partial at a time and applies a message only once every part is
+//     in (all-or-nothing: correcting some bodies but not others is a
+//     sim explosion), only after it has processed the reliable
+//     messages that preceded it, and at most 2 reliable messages
+//     (~16ms) behind. A lost part means that correction is simply
+//     superseded by the next one instead of stalling the in-order
+//     reliable stream for a resend round trip. Older peers keep
+//     reliable corrections. Dev aids: test_game_run --packet-loss N
+//     and --reliable-corrections (the A/B switch).
+//
+//     Also under 44: wide acks (kProtocolVersionWideAcks). Every game
+//     packet carries the receiver's next-wanted reliable number plus a
+//     have-bitfield for the messages after it; that field grows from 8
+//     to 32 bits (256ms of stream at 125 msgs/s instead of 64ms), so
+//     several gaps get resent in one round trip instead of one per
+//     round trip. Self-describing per packet (kPacketWideAcksFlag on
+//     the type byte), so no handshake ordering issues. Alongside, two
+//     protocol-neutral fixes: a receiver with a gap acks within 20ms
+//     instead of riding the 100ms keepalive, and a sender resends a
+//     message the peer has evidently lost (they have later ones) on a
+//     short fuse instead of the doubling backoff. Before this a client
+//     fell ~130 messages/s behind at 20% loss and was pruned.
+//
+//     Also under 44: bigger packets (kProtocolVersionBigPackets,
+//     kMaxPacketSizeBig = 1200 vs the huffman-era 700, and reliable
+//     multipart chunks sized to it instead of 480). Fewer packets per
+//     correction and per big command message; ~6% fewer packets on the
+//     8-bot stress test.
+//
+//     Also under 44: kStepSceneGraphAndTime (kProtocolVersionMergedStep)
+//     folds a scene step and the time step right behind it into one
+//     command. Encoding-only: the client runs the same two operations
+//     in the same order at the same time, and pacing sees one time
+//     step of the same delta in the same packet. ~0.5 KB/s raw on the
+//     8-bot stress test.
+//
+//     Also under 44: kAddAnimCurve (kProtocolVersionAnimCurveCommand)
+//     carries a whole bs.animate() -- node add, four attr sets,
+//     OnCreate, two connects -- as one command. The host still performs
+//     all of those itself; the writer just holds their commands aside
+//     (SessionStream::BeginFold) and writes the one command instead
+//     (or replays them if anything throws). Encoding-only.
+//
+//     Also under 44 (kProtocolVersionPackedCommands): two wire-only
+//     packings the client expands back into the original commands on
+//     receipt, so nothing downstream can tell: kTimeStepSceneGraphAndTime
+//     (the time step opening a message + the first scene step + its
+//     time step) and kAddNodeWithAttrs (newnode(attrs): add, attr sets,
+//     OnCreate).
+//
+// 45: Depictions (docs/initiatives/depictions.md). The
+//     'depictiondisplay' node type (appended last), a 2d overlay hosting a
+//     bacommon.depiction from its json string ('depiction' attr) -- the
+//     in-scene twin of ui_v1's DepictionSlot; every machine makes its
+//     own depiction from the json, so a kind it can't draw is its
+//     placeholder. A new *kind* on the stream therefore also needs a
+//     protocol bump; new tiers within a kind don't. 44's
+//     'characterdisplay' stays (it is still how 44 hosts draw), but
+//     nothing new uses it.
+//
+// 46: Numeric asset-package ids (efrohome
+//     docs/global_initiatives/numeric-package-ids.md). Packages are
+//     named by their version's numeric id everywhere on the stream --
+//     kDeclareAssetPackage, qualified asset refs ('145:textures/foo'),
+//     depiction and character json -- where 45 used string ids
+//     ('a-0.babuiltinassets.260927'). No wire shape changed; the bump
+//     just keeps the two naming schemes from ever meeting in one game.
+//
+// 47: Character parts as independent scene objects (depictions.md,
+//     2026-10-01). A character is only a delivery bundle now; the
+//     scene holds its parts. kAddSpazDef (44's kAddCharacter, same
+//     command) carries a spaz block alone rather than a whole character.
+//     New session-level depiction objects (kAddDepiction /
+//     kRemoveDepiction / kSetNodeAttrDepiction[Null],
+//     NodeAttributeType::kDepiction) let a name or icon be registered
+//     once and referenced by id from any node; depictiondisplay's
+//     'depiction' attr takes one (it took a json string at 45/46). The
+//     characterdisplay node type is gone. Also from here on: only
+//     pre-1.8 protocols (37 and below) and the final 1.8 one are
+//     supported as a client (kProtocolVersionDevGapMin/Max, Eric,
+//     2026-10-01), so nothing above keeps decode paths for 38-46 alone.
+//
+// 48: Player icons as depictions in screen messages (cloud-profiles
+//     icon sites, 2026-10-01). kScreenMessageTopDepiction (appended
+//     last) carries a top message's icon as a session-level depiction
+//     id, so kill/score announcements show a cloud profile's own icon;
+//     kScreenMessageTop's texture pair stays for legacy icons.
+//
+//     Also under 48 -- third tint colors (2026-10-02; two parallel
+//     sessions both opened 48 before either went public, so they
+//     share it). Image nodes gain 'tint3_color' (appended so existing
+//     indices hold), and kScreenMessageTop carries a third icon tint
+//     (12 floats, was 9; kProtocolVersionTint3). Characters get theirs
+//     only from their definitions ('hl2' in spaz/icon json -- the
+//     color mask's blue channel); there is no spaz node attr, since
+//     legacy masks carry stray blue data. Every third tint defaults to
+//     white, the colorize no-op, so anything not setting one -- older
+//     hosts included -- draws exactly as before.
+
+// First protocol with the compact (varint) stream framing; see the 44
+// entry above.
+const int kProtocolVersionCompactStream = 44;
+
+// First protocol whose peers compress game packets with zstd and the
+// bacommon packets_v1 dictionary (see the 44 entry above). A peer at or
+// above this gets zstd once the handshake has established its version.
+const int kProtocolVersionZstdPackets = 44;
+
+// First protocol with the compact physics-correction encoding (see the
+// 44 entry above): varint framing, int24-mm positions, packed
+// smallest-three quaternions.
+const int kProtocolVersionCompactCorrections = 44;
+
+// First protocol whose peers accept unreliable multipart packets
+// (BA_SCENEPACKET_MESSAGE_UNRELIABLE_PART; see the 44 entry above).
+// Physics corrections go unreliable to such peers.
+const int kProtocolVersionUnreliableParts = 44;
+
+// First protocol whose peers understand the 32-bit ack have-bitfield
+// (kPacketWideAcksFlag on the packet type; see the 44 entry above).
+const int kProtocolVersionWideAcks = 44;
+
+// First protocol whose peers accept packets up to kMaxPacketSizeBig
+// (the huffman-era decoder capped at kMaxPacketSize; 44+ peers decode
+// zstd/raw with no such cap). Reliable multipart chunks and unreliable
+// parts to such peers are sized to it.
+const int kProtocolVersionBigPackets = 44;
+
+// First protocol whose streams may carry kStepSceneGraphAndTime (a
+// scene step and the time step that follows it as one command).
+const int kProtocolVersionMergedStep = 44;
+
+// First protocol whose streams may carry kAddAnimCurve (a bs.animate as
+// one command; SessionStream's fold scope).
+const int kProtocolVersionAnimCurveCommand = 44;
+
+// First protocol whose streams may carry kTimeStepSceneGraphAndTime and
+// kAddNodeWithAttrs (wire-only packings expanded on receipt).
+const int kProtocolVersionPackedCommands = 44;
+
+// First protocol whose hosts can supply character skins on the fly;
+// joining anything older gets the older-host character warning.
+const int kProtocolVersionCharacterSkins = 44;
+
+// First protocol whose spaz punch region follows the synthetic fist
+// (SpazPose) rather than the lower-arm body.
+//
+// Where to gate on protocol: stream encoding/decoding, handshakes and
+// replay files key off the session/connection/file protocol they
+// already hold (ClientSession::stream_protocol, ConnectionToHost,
+// ReplayWriter); anything the *sim* does differently -- node behavior
+// like this punch change -- keys off Scene::protocol_version(), which
+// those owners stamp on every scene they create.
+const int kProtocolVersionSyntheticPunch = 44;
+// Same bump: with the punch region on the synthetic fist, the arms and
+// legs no longer feed any game logic and can live on the bg-dynamics
+// rig instead of the main sim (SpazNode::UseBgLimbs_).
+const int kProtocolVersionBgLimbs = kProtocolVersionSyntheticPunch;
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -176,9 +448,17 @@ const float kGameStepSeconds =
 // Magic numbers at the start of our file types.
 const int kBrpFileID = 83749;
 
-// Largest UDP packets we attempt to send.
-// (is there a definitive answer on what this should be?)
+// Largest UDP packets we attempt to send to legacy peers (and the
+// largest a huffman-era receiver decodes); see kMaxPacketSizeBig.
 const int kMaxPacketSize = 700;
+
+// Largest packets to kProtocolVersionBigPackets peers. 1200 bytes is the
+// widely-tested path floor (QUIC's minimum initial datagram; IPv6's
+// 1280 minimum MTU minus headers), so it avoids IP fragmentation
+// without path-MTU discovery. Compression only ever shrinks a packet
+// (raw fallback otherwise), so this bounds the wire size too. An
+// 8-player correction (~1.15 KB) fits in one packet at this size.
+const int kMaxPacketSizeBig = 1200;
 
 // Predeclare types we use throughout our FeatureSet so most headers can get
 // away with just including this header.
@@ -201,13 +481,19 @@ class SceneDataAsset;
 class Dynamics;
 class SceneV1FeatureSet;
 class GlobalsNode;
+class ZstdPacketCodec;
 class HostSession;
-struct JointFixedEF;
 class SceneV1InputDeviceDelegate;
 class MaterialAction;
 class SceneMesh;
 class HostActivity;
+class LocalDisplayContext;
+class LocalDisplayNode;
+class LocalSceneContext;
+class SceneViewerContext;
 class Material;
+class SpazDef;
+class SceneDepiction;
 class MaterialComponent;
 class MaterialConditionNode;
 class MaterialContext;
@@ -347,6 +633,8 @@ enum class SessionCommand {
   kDynamicsCorrection,
   kScreenMessageBottom,
   kScreenMessageTop,
+  // Never written (data assets are host-only; see SceneDataAsset); kept
+  // because command values are positional.
   kAddData,
   kRemoveData,
   kCameraShake,
@@ -385,7 +673,71 @@ enum class SessionCommand {
   // protocol break, because unrecognized commands cannot be skipped (see
   // ClientSession's command dispatch). See decisions D1/D2 in
   // docs/initiatives/controller-force-feedback.md.
-  kInputDeviceFeedback
+  kInputDeviceFeedback,
+
+  // (protocol 44+) Session-level spaz definitions (see
+  // docs/initiatives/character-skins.md). kAddSpazDef carries
+  // (scene-id, spaz-def-id) plus a length-prefixed json string that
+  // is parsed natively and never interpreted by the stream layer: a
+  // spaz block (44-46 called this kAddCharacter and sent whole
+  // characters); the spaz node's typed 'spaz_def' attr references one
+  // by id.
+  kAddSpazDef,
+  kRemoveSpazDef,
+  kSetNodeAttrSpazDef,
+  kSetNodeAttrSpazDefNull,
+
+  // (protocol 44+) A kStepSceneGraph immediately followed by a
+  // kBaseTimeStep, folded into one command (scene-id, step-ms): the
+  // client performs exactly those two operations in that order, so it
+  // is encoding-only (2 bytes of framing per sim step). ~96% of scene
+  // steps are directly followed by a time step, so the writer folds
+  // nearly all of them (SessionStream::SetTime).
+  kStepSceneGraphAndTime,
+
+  // (protocol 44+) One bs.animate(): the animcurve node's creation, its
+  // times/offset/values/loop, its OnCreate and the two attribute
+  // connections (globals.time -> curve.in, curve.out -> target.attr) as
+  // a single command. Ints: scene, node-type, curve id, globals id,
+  // time attr, in attr, out attr, target id, target attr, offset, loop,
+  // count, times[count]; then floats values[count]. The client performs
+  // exactly the eight operations the separate commands would have, in
+  // the same order (encoding-only; ~60% fewer raw bytes per curve).
+  kAddAnimCurve,
+
+  // (protocol 44+) A kBaseTimeStep, a kStepSceneGraph and the
+  // kBaseTimeStep after it as one command (pre-delta, scene-id,
+  // post-delta). Pure wire encoding: the client expands it back into
+  // kBaseTimeStep + kStepSceneGraphAndTime on receipt
+  // (ClientSession::ExpandPackedCommand_), so execution, pending
+  // release and pacing are byte-for-byte what the separate commands
+  // gave. Folds the time step that opens nearly every message.
+  kTimeStepSceneGraphAndTime,
+
+  // (protocol 44+) One newnode(attrs): kAddNode, its initial attr sets
+  // and kNodeOnCreate as one command: scene, type, id, count, then per
+  // attr set [cmd byte][its body minus the node id]. Also pure wire
+  // encoding, expanded on receipt into the original commands (the
+  // client re-splits the attr bodies from a per-command value layout
+  // table; only commands in that table are packed, see
+  // SessionStream::CommitFoldAddNode / kPackableAttrCommands).
+  kAddNodeWithAttrs,
+
+  // (protocol 47+) Session-level depiction objects (see
+  // docs/initiatives/depictions.md): a bacommon.depiction json
+  // registered once and referenced by id from node attrs
+  // (NodeAttributeType::kDepiction). Same shape and lifecycle as the
+  // spaz-def commands: kAddDepiction carries (scene-id, depiction-id)
+  // plus a length-prefixed json string.
+  kAddDepiction,
+  kRemoveDepiction,
+  kSetNodeAttrDepiction,
+  kSetNodeAttrDepictionNull,
+
+  // (protocol 48+) A top screen-message whose icon is a session-level
+  // depiction (a player's cloud icon) rather than kScreenMessageTop's
+  // texture pair: (depiction-id), the message string, then its rgb.
+  kScreenMessageTopDepiction
 };
 
 enum class NodeCollideAttr {
@@ -509,6 +861,10 @@ enum NodeAttributeFlag {
 // forms).
 const int kProtocolVersionLangStrWire = 39;
 
+// First protocol whose kScreenMessageTop carries a third icon tint
+// (12 floats rather than 9; see the 48 entry above).
+const int kProtocolVersionTint3 = 48;
+
 // (protocol 39+) First byte of the payload carried by
 // lang-str-flagged string slots (the text node's `text` attr and the
 // screen-message session commands). Control chars, so untagged legacy
@@ -579,7 +935,11 @@ enum class NodeAttributeType {
   kMesh,
   kMeshArray,
   kCollisionMesh,
-  kCollisionMeshArray
+  kCollisionMeshArray,
+  // (protocol 44+) A session-level SpazDef reference.
+  kSpazDef,
+  // (protocol 47+) A session-level SceneDepiction reference.
+  kDepiction
 };
 
 // Our feature-set's globals.
@@ -590,6 +950,7 @@ enum class NodeAttributeType {
 extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern SceneV1FeatureSet* g_scene_v1;
+extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 class SceneV1FeatureSet : public FeatureSetNativeComponent {
  public:
@@ -607,6 +968,28 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
   // random name for it.
   auto GetRandomName(const std::string& full_name) -> std::string;
 
+  /// The assets our node layer draws itself with, supplied by the
+  /// active app-mode (see bascenev1.set_scene_asset_set). Nodes only
+  /// exist within sessions, which only exist under an activated
+  /// app-mode, so drawing code can rely on every member being
+  /// present. Asserts in debug builds if that ordering ever breaks.
+  auto assets() -> const SceneV1AssetSet& {
+    assert(scene_assets_.complete());
+    return scene_assets_;
+  }
+
+  /// Do we currently hold a complete asset set?
+  auto have_assets() const -> bool { return scene_assets_.complete(); }
+
+  /// Supply the art for as long as the current app-mode is active.
+  /// The Python layer wipes it via clear_assets() at each app-mode
+  /// switch (SceneV1AppSubsystem.reset()), so an incoming app-mode
+  /// can never inherit the outgoing one's art.
+  void set_assets(const SceneV1AssetSet& assets) { scene_assets_ = assets; }
+
+  /// Drop any app-mode-supplied art. Called at app-mode switches.
+  void clear_assets() { scene_assets_ = SceneV1AssetSet(); }
+
   const auto& node_types_by_id() const { return node_types_by_id_; }
   const auto& node_message_types() const { return node_message_types_; }
   const auto& node_message_formats() const { return node_message_formats_; }
@@ -615,6 +998,10 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
   // Our subcomponents.
   SceneV1Python* const python;
   Huffman* const huffman;
+  // zstd game-packet codec; installed from Python at app start
+  // (bascenev1's app subsystem hands over the dictionary). Null until
+  // then, in which case connections stay on huffman.
+  ZstdPacketCodec* zstd_packets{};
 
   // FIXME: should be private.
   int session_count{};
@@ -625,6 +1012,7 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
                              const std::string& format);
 
   SceneV1FeatureSet();
+  SceneV1AssetSet scene_assets_;
   std::unordered_map<std::string, NodeType*> node_types_;
   std::unordered_map<int, NodeType*> node_types_by_id_;
   std::unordered_map<std::string, NodeMessageType> node_message_types_;
