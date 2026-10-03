@@ -298,6 +298,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameutils.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_generated/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_generated/scene_asset_set.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_healthbar.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_level.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_lobby.py \

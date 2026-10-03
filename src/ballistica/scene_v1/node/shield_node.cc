@@ -30,6 +30,9 @@ class ShieldNodeType : public NodeType {
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
   BA_BOOL_ATTR(always_show_health_bar, always_show_health_bar,
                set_always_show_health_bar);
+  // (protocol 49) Appended so existing attr indices hold; the legacy
+  // bool above stays and is consulted only while this is 0 (default).
+  BA_INT_ATTR(health_bar_display, health_bar_display, set_health_bar_display);
 #undef BA_NODE_TYPE_CLASS
 
   ShieldNodeType()
@@ -38,7 +41,8 @@ class ShieldNodeType : public NodeType {
         radius(this),
         hurt(this),
         color(this),
-        always_show_health_bar(this) {}
+        always_show_health_bar(this),
+        health_bar_display(this) {}
 };
 static NodeType* node_type{};
 
@@ -58,6 +62,21 @@ ShieldNode::ShieldNode(Scene* scene)
 }
 
 ShieldNode::~ShieldNode() = default;
+
+auto ShieldNode::EffectiveHealthBarDisplay_() const -> HealthBarDisplay {
+  switch (health_bar_display_) {
+    case static_cast<int>(HealthBarDisplay::kAfterDamage):
+      return HealthBarDisplay::kAfterDamage;
+    case static_cast<int>(HealthBarDisplay::kAlways):
+      return HealthBarDisplay::kAlways;
+    case static_cast<int>(HealthBarDisplay::kNever):
+      return HealthBarDisplay::kNever;
+    default:
+      // kDefault (or a value from a newer host we don't know).
+      return always_show_health_bar_ ? HealthBarDisplay::kAlways
+                                     : HealthBarDisplay::kAfterDamage;
+  }
+}
 
 void ShieldNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
@@ -146,7 +165,10 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     millisecs_t since_last_hurt_change =
         scene()->time() - last_hurt_change_time_;
 
-    if (since_last_hurt_change < fade_time || always_show_health_bar_) {
+    HealthBarDisplay display = EffectiveHealthBarDisplay_();
+    if (display != HealthBarDisplay::kNever
+        && (since_last_hurt_change < fade_time
+            || display == HealthBarDisplay::kAlways)) {
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
       c.SetPremultiplied(true);
@@ -155,7 +177,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         float o = 1.0f
                   - static_cast<float>(since_last_hurt_change)
                         / static_cast<float>(fade_time);
-        if (always_show_health_bar_) {
+        if (display == HealthBarDisplay::kAlways) {
           o = std::max(o, 0.5f);
         }
         o *= o;
