@@ -485,6 +485,10 @@ void PropNode::SetRotate(const std::vector<float>& vals) {
   }
 }
 
+void PropNode::SetStickiness(float val) {
+  stickiness_ = std::clamp(val, 0.01f, 10.0f);
+}
+
 void PropNode::Step() {
   if (body_type_ == BodyType::UNSET) {
     if (!reported_unset_body_type_) {
@@ -623,8 +627,16 @@ auto PropNode::CollideCallback(dContact* c, int count,
           const dReal* v;
           dBodyID b = body_->body();
           v = dBodyGetLinearVel(b);
-          dBodySetLinearVel(b, v[0] * 0.2f, v[1] * 0.2f, v[2] * 0.2f);
-          dBodySetAngularVel(b, 0, 0, 0);
+          // Fraction of velocity kept per contact step: 1.0 as
+          // stickiness approaches zero, the classic 0.2 at 1.0, 0.1 at
+          // 2.0, and 0.02 at the max of 10. Spin is killed outright
+          // from 1.0 up.
+          float s = stickiness_;
+          float keep = s <= 1.0f ? 1.0f - 0.8f * s : 0.2f / s;
+          float akeep = std::max(0.0f, 1.0f - s);
+          dBodySetLinearVel(b, v[0] * keep, v[1] * keep, v[2] * keep);
+          const dReal* av = dBodyGetAngularVel(b);
+          dBodySetAngularVel(b, av[0] * akeep, av[1] * akeep, av[2] * akeep);
         } else {
           // stick to dynamic stuff
           dBodyID b2 = opposingbody->body();
@@ -639,16 +651,18 @@ auto PropNode::CollideCallback(dContact* c, int count,
           dJointAttach(j, b1, b2);
           dJointSetFixed(j);
           dJointSetFixedSpringMode(j, 1, 1, false);
+          // Joint and attraction strengths scale with stickiness.
+          float s = stickiness_;
           if (m.mass < 0.2f) {
-            dJointSetFixedParam(j, dParamLinearStiffness, 200);
-            dJointSetFixedParam(j, dParamLinearDamping, 0.2f);
-            dJointSetFixedParam(j, dParamAngularStiffness, 200);
-            dJointSetFixedParam(j, dParamAngularDamping, 0.2f);
+            dJointSetFixedParam(j, dParamLinearStiffness, 200 * s);
+            dJointSetFixedParam(j, dParamLinearDamping, 0.2f * s);
+            dJointSetFixedParam(j, dParamAngularStiffness, 200 * s);
+            dJointSetFixedParam(j, dParamAngularDamping, 0.2f * s);
           } else {
-            dJointSetFixedParam(j, dParamLinearStiffness, 2000);
-            dJointSetFixedParam(j, dParamLinearDamping, 2);
-            dJointSetFixedParam(j, dParamAngularStiffness, 2000);
-            dJointSetFixedParam(j, dParamAngularDamping, 2);
+            dJointSetFixedParam(j, dParamLinearStiffness, 2000 * s);
+            dJointSetFixedParam(j, dParamLinearDamping, 2 * s);
+            dJointSetFixedParam(j, dParamAngularStiffness, 2000 * s);
+            dJointSetFixedParam(j, dParamAngularDamping, 2 * s);
           }
 
           // ...now attractive forces.
@@ -664,7 +678,7 @@ auto PropNode::CollideCallback(dContact* c, int count,
             const dReal* p1 = dBodyGetPosition(b1);
             const dReal* p2 = dBodyGetPosition(b2);
             dReal f2[3];
-            float stiffness = 200;
+            float stiffness = 200 * s;
             f2[0] = (p1[0] - p2[0]) * stiffness;
             f2[1] = (p1[1] - p2[1]) * stiffness;
             f2[2] = (p1[2] - p2[2]) * stiffness;

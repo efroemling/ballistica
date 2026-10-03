@@ -631,6 +631,27 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
   };                                                                      \
   Attr_##NAME NAME;
 
+// Like BA_FLOAT_ATTR but with deferred wire-index assignment; see
+// BA_FLOAT_ARRAY_ATTR_LATE.
+#define BA_FLOAT_ATTR_LATE(NAME, GETTER, SETTER)                          \
+  class Attr_##NAME : public NodeAttributeUnboundFloat {                  \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundFloat(node_type, #NAME,                     \
+                                    kNodeAttributeFlagLateIndex) {}       \
+    auto GetAsFloat(Node* node) -> float override {                       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, float val) override {                            \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
 // Defines a float attr subclass that interfaces with specific getter/setter
 // calls.
 #define BA_FLOAT_ATTR_READONLY(NAME, GETTER)                              \

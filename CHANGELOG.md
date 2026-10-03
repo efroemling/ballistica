@@ -1,4 +1,4 @@
-### 1.8.0 (build 23030, api 9, 2026-10-03)
+### 1.8.0 (build 23031, api 9, 2026-10-03)
 - Fixed bots (and other non-cloud characters) drawing with their character
   definition's highlight instead of their own (e.g. Impact Bot Pro's red
   hair showing up green). Only cloud-profile looks use character
@@ -8,6 +8,27 @@
   definition's own color/highlight instead of the `color`/`highlight`
   attrs. The `highlight` attr is now honored for definition-form spazzes,
   and the `color`/`highlight` attrs read back as set. Scene protocol 49.
+- Prop and bomb nodes gained `stickiness` (a float from 0.01 to 10.0, default
+  1.0), which scales how strongly a `sticky` node sticks to things. Scene
+  protocol 50.
+- Added a `legacy_spaz_physics` server config option (default false) which
+  gives spazzes the pre-1.8 physics (limbs and punch simulated in the main
+  sim), for servers whose players miss the 'bomb-jump' trick. Expect server
+  bandwidth to double or triple with it on. Scripts can do the same by
+  setting `babase.app.classic.legacy_spaz_physics` to True; activities
+  started while it is set are affected. Globals nodes gained
+  `legacy_spaz_punch` for this (the punch half; `legacy_spaz_limbs` is the
+  limb half).
+- Spaz nodes gained `boxing_gloves_mesh`, `boxing_gloves_color_texture`,
+  `boxing_gloves_color` (a multiply tint, default white) and
+  `boxing_gloves_scale` (default 1.0) for customizing how boxing gloves
+  look. Leaving the mesh or texture unset gives the stock gloves. The mesh is
+  the right-hand glove (the left is mirrored), and scale is visual only;
+  punch reach is unchanged.
+- `bascenev1lib.actor.image.Image.Attach` now covers all nine attach points
+  the image node supports (added `TOP_RIGHT`, `CENTER_LEFT`, `CENTER_RIGHT`,
+  `BOTTOM_LEFT` and `BOTTOM_RIGHT`), and `bascenev1lib.actor.text.Text.VAlign`
+  gained `TOP` and `BOTTOM`.
 - Fixed a spaz sharing a `bascenev1.SpazDef` with another sometimes keeping
   the stand-in look (gray hair, default eyes) after the definition's media
   finished loading.

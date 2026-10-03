@@ -664,6 +664,15 @@ class SpazNodeType : public NodeType {
   BA_BOOL_ATTR(use_spaz_def_color, use_spaz_def_color, SetUseSpazDefColor);
   BA_BOOL_ATTR(use_spaz_def_highlight, use_spaz_def_highlight,
                SetUseSpazDefHighlight);
+  // (protocol 50) Boxing-glove look overrides. Visual only: scale does
+  // not change punch reach.
+  BA_MESH_ATTR(boxing_gloves_mesh, boxing_gloves_mesh, set_boxing_gloves_mesh);
+  BA_TEXTURE_ATTR(boxing_gloves_color_texture, boxing_gloves_color_texture,
+                  set_boxing_gloves_color_texture);
+  BA_FLOAT_ARRAY_ATTR(boxing_gloves_color, boxing_gloves_color,
+                      SetBoxingGlovesColor);
+  BA_FLOAT_ATTR(boxing_gloves_scale, boxing_gloves_scale,
+                set_boxing_gloves_scale);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -752,7 +761,11 @@ class SpazNodeType : public NodeType {
         pickup_release_time_ms(this),
         spaz_def(this),
         use_spaz_def_color(this),
-        use_spaz_def_highlight(this) {}
+        use_spaz_def_highlight(this),
+        boxing_gloves_mesh(this),
+        boxing_gloves_color_texture(this),
+        boxing_gloves_color(this),
+        boxing_gloves_scale(this) {}
 };
 
 static NodeType* node_type{};
@@ -776,6 +789,13 @@ SpazNode::SpazNode(Scene* scene)
   // Limb backend, fixed for our lifetime: main-sim limb bodies, or
   // none at all with the bg rig carrying them.
   main_sim_limbs_ = !UseBgLimbs_();
+  // Likewise the punch: the old arm-attached region needs the arm
+  // bodies, so it only applies alongside main-sim limbs.
+  if (main_sim_limbs_) {
+    if (GlobalsNode* globals = this->scene()->globals_node()) {
+      legacy_punch_ = globals->legacy_spaz_punch();
+    }
+  }
 
   // Head
   body_head_ =
@@ -1981,7 +2001,7 @@ void SpazNode::Step() {
   // Feed the character rig every anchor body's transform (results come
   // back a step or two later and draw relative to the bodies).
   if (attachment_rig_) {
-    for (int ti = 0; ti < base::kCharacterAttachTargetCount; ++ti) {
+    for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
       RigidBody* body =
           AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
       if (body) {
@@ -3830,6 +3850,101 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     }
   }
 
+  // Parts may bring their own textures (definition form; see
+  // PartDrawData_). Each part's mesh comes from here, switching the
+  // component's textures only when they actually change.
+  using Part = base::CharacterBodyPart;
+  base::TextureAsset* base_texture = ColorTextureData_();
+  base::TextureAsset* base_tint_texture = ColorMaskTextureData_();
+  base::TextureAsset* cur_texture = base_texture;
+  base::TextureAsset* cur_tint_texture = base_tint_texture;
+  const PieceTint_ base_tint = BaseTint_();
+  PieceTint_ cur_tint = base_tint;
+  auto use_look = [&](base::TextureAsset* texture,
+                      base::TextureAsset* tint_texture,
+                      const PieceTint_& tint) {
+    if (!shading) {
+      return;
+    }
+    if (texture != cur_texture || tint_texture != cur_tint_texture) {
+      c->SetTexture(texture);
+      c->SetColorizeTexture(tint_texture);
+      cur_texture = texture;
+      cur_tint_texture = tint_texture;
+    }
+    if (tint != cur_tint) {
+      SetPieceTint_(c, tint);
+      cur_tint = tint;
+    }
+  };
+  const PartDraw_ base_draw{nullptr, base_texture, base_tint_texture,
+                            base_tint};
+  auto use_base_look = [&] {
+    use_look(base_texture, base_tint_texture, base_tint);
+  };
+  bool left_side = false;
+  auto part_mesh = [&](Part part) -> base::MeshAsset* {
+    PartDraw_ draw = PartDrawData_(part, left_side, base_draw);
+    if (draw.mesh) {
+      use_look(draw.texture, draw.tint_texture, draw.tint);
+    }
+    return draw.mesh;
+  };
+
+  // Static attachments on a limb (definition form): extra meshes drawn
+  // in the limb's own frame -- so on the left they mirror with it --
+  // each with its own offset. No bodies, no sim.
+  const base::BasicSpazDef* limb_def = nullptr;
+  const base::BasicSpazMedia* limb_media = nullptr;
+  if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
+    limb_def = &spaz_def_->def().spaz();
+    limb_media = &spaz_def_->def().spaz_media();
+  }
+  static_assert(
+      static_cast<int>(Part::kUpperArm)
+              == static_cast<int>(base::CharacterAttachTarget::kUpperArm)
+          && static_cast<int>(Part::kToes)
+                 == static_cast<int>(base::CharacterAttachTarget::kToes),
+      "Limb parts and their attach targets share indices.");
+  auto part_attachments = [&](Part part) {
+    if (!limb_def) {
+      return;
+    }
+    int ti = static_cast<int>(part);
+    if (left_side) {
+      // A left-side list, when given, replaces the both-sides one.
+      int left_ti = ti + base::kCharacterLimbAttachTargetCount;
+      if (limb_def->attachment_target_present[left_ti]) {
+        ti = left_ti;
+      }
+    }
+    const auto& defs = limb_def->attachments[ti];
+    const auto& medias = limb_media->attachments[ti];
+    for (size_t ai = 0; ai < defs.size() && ai < medias.size(); ++ai) {
+      const auto& segs = defs[ai].segments;
+      const auto& seg_medias = medias[ai].segments;
+      for (size_t si = 0; si < segs.size() && si < seg_medias.size(); ++si) {
+        base::MeshAsset* mesh = seg_medias[si].mesh.get();
+        if (!mesh) {
+          continue;
+        }
+        PieceTint_ tint = base_tint;
+        ApplyPieceTint_(segs[si].tint, &tint);
+        use_look(seg_medias[si].texture.exists() ? seg_medias[si].texture.get()
+                                                 : base_texture,
+                 seg_medias[si].tint_texture.exists()
+                     ? seg_medias[si].tint_texture.get()
+                     : base_tint_texture,
+                 tint);
+        auto xf = c->ScopedTransform();
+        if (segs[si].has_offset) {
+          c->MultMatrix(segs[si].offset.m);
+        }
+        c->DrawMeshAsset(mesh);
+      }
+    }
+  };
+
   // Head.
   {
     auto xf = c->ScopedTransform();
@@ -3837,10 +3952,12 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (auto* mesh = HeadMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kHead)) {
       c->DrawMeshAsset(mesh);
     }
   }
+  // Hair and attachments below expect the character's own look.
+  use_base_look();
 
   // Hair tuft 1.
   if (draw_hair_ && hair_front_right_body_.exists()) {
@@ -3914,7 +4031,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (auto* mesh = TorsoMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kTorso)) {
       c->DrawMeshAsset(mesh);
     }
   }
@@ -3926,7 +4043,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (auto* mesh = PelvisMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kPelvis)) {
       c->DrawMeshAsset(mesh);
     }
   }
@@ -3966,9 +4083,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (auto* mesh = UpperArmMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kUpperArm)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperArm);
   }
 
   // Right lower arm.
@@ -3984,8 +4102,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = ForearmMeshData_(); mesh && !flippers_) {
+      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kForearm)) {
         c->DrawMeshAsset(mesh);
+      }
+      if (!flippers_) {
+        part_attachments(Part::kForearm);
       }
     }
     if (!have_boxing_gloves_) {
@@ -3998,8 +4119,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = HandMeshData_(); mesh && !flippers_) {
+      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kHand)) {
         c->DrawMeshAsset(mesh);
+      }
+      if (!flippers_) {
+        part_attachments(Part::kHand);
       }
     }
   }
@@ -4016,9 +4140,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (auto* mesh = UpperLegMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kUpperLeg)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperLeg);
   }
 
   // Right lower leg.
@@ -4028,9 +4153,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (auto* mesh = LowerLegMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kLowerLeg)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kLowerLeg);
   }
 
   if (limb_ok[kLimbRightToes]) {
@@ -4039,12 +4165,14 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (auto* mesh = ToesMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kToes)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kToes);
   }
 
   // OK NOW LEFT SIDE LIMBS:
+  left_side = true;
   c->FlipCullFace();
 
   // Left upper arm.
@@ -4063,9 +4191,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (auto* mesh = UpperArmMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kUpperArm)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperArm);
   }
 
   // Left lower arm.
@@ -4082,8 +4211,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = ForearmMeshData_(); mesh && !flippers_) {
+      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kForearm)) {
         c->DrawMeshAsset(mesh);
+      }
+      if (!flippers_) {
+        part_attachments(Part::kForearm);
       }
     }
     if (!have_boxing_gloves_) {
@@ -4096,8 +4228,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      if (auto* mesh = HandMeshData_(); mesh && !flippers_) {
+      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kHand)) {
         c->DrawMeshAsset(mesh);
+      }
+      if (!flippers_) {
+        part_attachments(Part::kHand);
       }
     }
   }
@@ -4112,9 +4247,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->Scale(-1.0f, 1.0f, stretch);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (auto* mesh = UpperLegMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kUpperLeg)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperLeg);
   }
 
   // Lower leg.
@@ -4124,9 +4260,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->Scale(-1.0f, 1.0f, 1.0f);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (auto* mesh = LowerLegMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kLowerLeg)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kLowerLeg);
   }
 
   // Toes.
@@ -4138,13 +4275,15 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (auto* mesh = ToesMeshData_()) {
+    if (auto* mesh = part_mesh(Part::kToes)) {
       c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kToes);
   }
 
   // RESTORE CULL
   c->FlipCullFace();
+  use_base_look();
 }
 
 static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
@@ -4183,9 +4322,11 @@ void SpazNode::DrawAttachments_(base::ObjectComponent* c, bool shading,
     media = &spaz_def_->def().spaz_media();
   }
   bool textures_overridden = false;
+  const PieceTint_ base_tint = BaseTint_();
+  PieceTint_ cur_tint = base_tint;
   const base::BGDynamicsCharacterRig::Output* out =
       attachment_rig_ ? attachment_rig_->output() : nullptr;
-  for (int ti = 0; ti < base::kCharacterAttachTargetCount; ++ti) {
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
     auto& target = attachment_targets_[ti];
     if (target.defs.empty()) {
       continue;
@@ -4224,6 +4365,13 @@ void SpazNode::DrawAttachments_(base::ObjectComponent* c, bool shading,
           continue;
         }
         if (shading) {
+          // Per-segment tint colors; absent = the character's own.
+          PieceTint_ seg_tint = base_tint;
+          ApplyPieceTint_(sdef.tint, &seg_tint);
+          if (seg_tint != cur_tint) {
+            SetPieceTint_(c, seg_tint);
+            cur_tint = seg_tint;
+          }
           // Per-segment texture overrides; absent = the character's
           // own color/colorize maps, which are already bound.
           if (tex || tint) {
@@ -4255,6 +4403,9 @@ void SpazNode::DrawAttachments_(base::ObjectComponent* c, bool shading,
     // Body parts draw after us and expect the defaults.
     c->SetTexture(ColorTextureData_());
     c->SetColorizeTexture(ColorMaskTextureData_());
+  }
+  if (shading && cur_tint != base_tint) {
+    SetPieceTint_(c, base_tint);
   }
 }
 
@@ -5116,11 +5267,38 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(WingTextureData_());
-    c.SetColorizeTexture(WingTintTextureData_());
-    c.SetColorizeColor(color_[0], color_[1], color_[2]);
-    c.SetColorizeColor2(highlight_[0], highlight_[1], highlight_[2]);
-    c.SetColorizeColor3(highlight2_[0], highlight2_[1], highlight2_[2]);
+    // The left wing (drawn first) may bring its own mesh and textures
+    // in definition form; otherwise both wings share one look.
+    base::MeshAsset* wing_mesh = WingMeshData_();
+    base::TextureAsset* wing_texture = WingTextureData_();
+    base::TextureAsset* wing_tint_texture = WingTintTextureData_();
+    base::MeshAsset* left_wing_mesh = wing_mesh;
+    base::TextureAsset* left_wing_texture = wing_texture;
+    base::TextureAsset* left_wing_tint_texture = wing_tint_texture;
+    if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
+      const auto& media = spaz_def_->def().spaz_media();
+      if (media.wing_left_mesh.exists()) {
+        left_wing_mesh = media.wing_left_mesh.get();
+      }
+      if (media.wing_left_texture.exists()) {
+        left_wing_texture = media.wing_left_texture.get();
+      }
+      if (media.wing_left_tint_texture.exists()) {
+        left_wing_tint_texture = media.wing_left_tint_texture.get();
+      }
+    }
+    // Likewise tint colors: left, then the wings', then our own.
+    PieceTint_ wing_tint = BaseTint_();
+    PieceTint_ left_wing_tint = wing_tint;
+    if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
+      const auto& def = spaz_def_->def().spaz();
+      ApplyPieceTint_(def.wing_tint, &wing_tint);
+      left_wing_tint = wing_tint;
+      ApplyPieceTint_(def.wing_left_tint, &left_wing_tint);
+    }
+    c.SetTexture(left_wing_texture);
+    c.SetColorizeTexture(left_wing_tint_texture);
+    SetPieceTint_(&c, left_wing_tint);
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5199,7 +5377,15 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(WingMeshData_());
+      c.DrawMeshAsset(left_wing_mesh);
+    }
+    if (wing_texture != left_wing_texture
+        || wing_tint_texture != left_wing_tint_texture) {
+      c.SetTexture(wing_texture);
+      c.SetColorizeTexture(wing_tint_texture);
+    }
+    if (wing_tint != left_wing_tint) {
+      SetPieceTint_(&c, wing_tint);
     }
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5218,7 +5404,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(WingMeshData_());
+      c.DrawMeshAsset(wing_mesh);
     }
     c.Submit();
   }
@@ -5226,7 +5412,18 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
   // Boxing gloves.
   if (have_boxing_gloves_ && !debug_draw) {
     base::ObjectComponent c(beauty_pass);
+    // The custom tint multiplies whatever color the gloves would
+    // otherwise draw with.
+    float gr = boxing_gloves_color_[0];
+    float gg = boxing_gloves_color_[1];
+    float gb = boxing_gloves_color_[2];
+    float gscale = boxing_gloves_scale_;
+    base::MeshAsset* glove_mesh =
+        boxing_gloves_mesh_.exists()
+            ? boxing_gloves_mesh_->mesh_data()
+            : g_base->assets->base_assets().boxing_glove.get();
     if (frozen_) {
+      c.SetColor(gr, gg, gb);
       c.SetAddColor(0.1f, 0.1f, 0.4f);
       c.SetReflection(base::ReflectionType::kSharper);
       c.SetReflectionScale(1.4f, 1.4f, 1.4f);
@@ -5243,19 +5440,22 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         amt = 1.0f - (amt * amt);
         c.SetAddColor(add_color[0] + amt * 0.4f, add_color[1] + amt * 0.4f,
                       add_color[2] + amt * 0.1f);
-        c.SetColor(1.0f + amt * 6.0f, 1.0f + amt * 6.0f, 1.0f + amt * 3.0f);
+        c.SetColor((1.0f + amt * 6.0f) * gr, (1.0f + amt * 6.0f) * gg,
+                   (1.0f + amt * 3.0f) * gb);
       } else {
         c.SetAddColor(add_color[0], add_color[1], add_color[2]);
 
         if (boxing_gloves_flashing_ && render_frame_count % 6 < 2) {
-          c.SetColor(2.0f, 2.0f, 2.0f);
+          c.SetColor(2.0f * gr, 2.0f * gg, 2.0f * gb);
         } else {
-          c.SetColor(death_fade, death_fade, death_fade);
+          c.SetColor(death_fade * gr, death_fade * gg, death_fade * gb);
         }
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+    c.SetTexture(boxing_gloves_color_texture_.exists()
+                     ? boxing_gloves_color_texture_->texture_data()
+                     : g_base->assets->base_assets().boxing_gloves_color.get());
 
     Matrix44f m;
     if (LimbRenderMatrix_(kLimbLowerRightArm, &m)) {
@@ -5264,7 +5464,10 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+      if (gscale != 1.0f) {
+        c.Scale(gscale, gscale, gscale);
+      }
+      c.DrawMeshAsset(glove_mesh);
     }
 
     c.FlipCullFace();
@@ -5275,7 +5478,10 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+      if (gscale != 1.0f) {
+        c.Scale(gscale, gscale, gscale);
+      }
+      c.DrawMeshAsset(glove_mesh);
     }
     c.FlipCullFace();
     c.Submit();
@@ -6139,6 +6345,10 @@ auto SpazNode::AttachTargetBody_(base::CharacterAttachTarget target)
       return body_torso_.get();
     case base::CharacterAttachTarget::kPelvis:
       return body_pelvis_.get();
+    default:
+      // Limb targets have no anchor body; their (static) attachments
+      // draw in the limb's frame (see DrawBodyParts).
+      break;
   }
   return nullptr;
 }
@@ -6419,7 +6629,7 @@ void SpazNode::UpdateAttachments_() {
               || rig_limb_ankle_radius_ != ankle_radius_))) {
     changed = true;
   }
-  for (int ti = 0; ti < base::kCharacterAttachTargetCount; ++ti) {
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
     auto& target = attachment_targets_[ti];
     std::vector<base::BasicSpazDef::AttachmentDef> desired;
     if (CharacterForm_() && spaz_def_->def().has_spaz()) {
@@ -6446,7 +6656,7 @@ void SpazNode::UpdateAttachments_() {
   }
   base::BGDynamicsCharacterKind::Config config;
   int bodies = 0;
-  for (int ti = 0; ti < base::kCharacterAttachTargetCount; ++ti) {
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
     auto& target = attachment_targets_[ti];
     target.body_start = bodies;
     RigidBody* body =
@@ -6479,7 +6689,7 @@ void SpazNode::UpdateAttachments_() {
     }
     bodies += AppendAttachmentsToRigConfig(target.defs, ti, &config);
   }
-  config.anchor_count = base::kCharacterAttachTargetCount;
+  config.anchor_count = base::kCharacterRigAnchorCount;
   rig_has_limbs_ = false;
   if (want_limbs) {
     BuildLimbRigConfig_(&config);
@@ -6545,6 +6755,14 @@ void SpazNode::set_name(const std::string& val) {
   // measures usually land before that draw, avoiding a blank first
   // frame for the name tag. Fully async.
   g_base->text_graphics->WarmUpStringAsync(name_);
+}
+
+void SpazNode::SetBoxingGlovesColor(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for boxing_gloves_color",
+                    PyExcType::kValue);
+  }
+  boxing_gloves_color_ = vals;
 }
 
 void SpazNode::SetNameColor(const std::vector<float>& vals) {
@@ -7254,6 +7472,95 @@ auto SpazNode::RandomPickupSound_() const -> base::SoundAsset* {
   return RandomSoundData_(pickup_sounds_, {&a.standin_pickup01},
                           &base::BasicSpazMedia::pickup_sounds);
 }
+auto SpazNode::BaseTint_() const -> PieceTint_ {
+  assert(color_.size() == 3 && highlight_.size() == 3
+         && highlight2_.size() == 3);
+  return {color_.data(), highlight_.data(), highlight2_.data()};
+}
+
+void SpazNode::SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint) {
+  c->SetColorizeColor(tint.color[0], tint.color[1], tint.color[2]);
+  c->SetColorizeColor2(tint.highlight[0], tint.highlight[1], tint.highlight[2]);
+  c->SetColorizeColor3(tint.highlight2[0], tint.highlight2[1],
+                       tint.highlight2[2]);
+}
+
+void SpazNode::ApplyPieceTint_(const base::CharacterTintDef& def,
+                               PieceTint_* tint) const {
+  if (def.has_color && use_spaz_def_color_) {
+    tint->color = def.color;
+  }
+  if (def.has_highlight && use_spaz_def_highlight_) {
+    tint->highlight = def.highlight;
+  }
+  if (def.has_highlight2) {
+    tint->highlight2 = def.highlight2;
+  }
+}
+
+auto SpazNode::PartDrawData_(base::CharacterBodyPart part, bool left,
+                             const PartDraw_& base) const -> PartDraw_ {
+  PartDraw_ out{base};
+  out.mesh = nullptr;
+  switch (part) {
+    case base::CharacterBodyPart::kHead:
+      out.mesh = HeadMeshData_();
+      break;
+    case base::CharacterBodyPart::kTorso:
+      out.mesh = TorsoMeshData_();
+      break;
+    case base::CharacterBodyPart::kPelvis:
+      out.mesh = PelvisMeshData_();
+      break;
+    case base::CharacterBodyPart::kUpperArm:
+      out.mesh = UpperArmMeshData_();
+      break;
+    case base::CharacterBodyPart::kForearm:
+      out.mesh = ForearmMeshData_();
+      break;
+    case base::CharacterBodyPart::kHand:
+      out.mesh = HandMeshData_();
+      break;
+    case base::CharacterBodyPart::kUpperLeg:
+      out.mesh = UpperLegMeshData_();
+      break;
+    case base::CharacterBodyPart::kLowerLeg:
+      out.mesh = LowerLegMeshData_();
+      break;
+    case base::CharacterBodyPart::kToes:
+      out.mesh = ToesMeshData_();
+      break;
+  }
+  // Overrides exist only in definition form, once its media is in.
+  if (!CharacterForm_() || !spaz_def_->def().spaz_media_ready()) {
+    return out;
+  }
+  const auto& look =
+      spaz_def_->def().spaz_media().part_looks[static_cast<int>(part)];
+  if (look.texture.exists()) {
+    out.texture = look.texture.get();
+  }
+  if (look.tint_texture.exists()) {
+    out.tint_texture = look.tint_texture.get();
+  }
+  const auto& look_def =
+      spaz_def_->def().spaz().part_looks[static_cast<int>(part)];
+  ApplyPieceTint_(look_def.tint, &out.tint);
+  if (left) {
+    ApplyPieceTint_(look_def.left_tint, &out.tint);
+    if (look.left_mesh.exists()) {
+      out.mesh = look.left_mesh.get();
+    }
+    if (look.left_texture.exists()) {
+      out.texture = look.left_texture.get();
+    }
+    if (look.left_tint_texture.exists()) {
+      out.tint_texture = look.left_tint_texture.get();
+    }
+  }
+  return out;
+}
+
 auto SpazNode::WingMeshData_() const -> base::MeshAsset* {
   if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
     return spaz_def_->def().spaz_media().wing_mesh.get();
@@ -7371,6 +7678,11 @@ auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
 }
 
 auto SpazNode::UseSyntheticPunch_() const -> bool {
+  // An activity can ask for the old arm-attached punch along with
+  // legacy limbs (see GlobalsNode::legacy_spaz_punch).
+  if (legacy_punch_) {
+    return false;
+  }
   return scene()->protocol_version() >= kProtocolVersionSyntheticPunch;
 }
 

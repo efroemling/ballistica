@@ -220,6 +220,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # punch-grab protection added in 1.8.0.
         self.allow_punch_grab = False
 
+        # If True, activities started from this point on give their
+        # spazzes the pre-1.8 physics (limbs and punch simulated in the
+        # main sim), which the 'bomb-jump' trick depends on. Costs
+        # noticeably more bandwidth when hosting.
+        self.legacy_spaz_physics = False
+
         # UI.
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.

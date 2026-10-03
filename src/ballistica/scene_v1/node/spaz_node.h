@@ -176,6 +176,23 @@ class SpazNode : public Node {
     return use_spaz_def_highlight_;
   }
   void SetUseSpazDefHighlight(bool val);
+  // Boxing-glove look overrides; unset media means the stock gloves.
+  auto boxing_gloves_mesh() const -> SceneMesh* {
+    return boxing_gloves_mesh_.get();
+  }
+  void set_boxing_gloves_mesh(SceneMesh* val) { boxing_gloves_mesh_ = val; }
+  auto boxing_gloves_color_texture() const -> SceneTexture* {
+    return boxing_gloves_color_texture_.get();
+  }
+  void set_boxing_gloves_color_texture(SceneTexture* val) {
+    boxing_gloves_color_texture_ = val;
+  }
+  auto boxing_gloves_color() const -> std::vector<float> {
+    return boxing_gloves_color_;
+  }
+  void SetBoxingGlovesColor(const std::vector<float>& vals);
+  auto boxing_gloves_scale() const -> float { return boxing_gloves_scale_; }
+  void set_boxing_gloves_scale(float val) { boxing_gloves_scale_ = val; }
   auto GetKnockout() const -> float {
     return static_cast<float>(knockout_) / 255.0f;
   }
@@ -391,6 +408,36 @@ class SpazNode : public Node {
   auto UpperLegMeshData_() const -> base::MeshAsset*;
   auto LowerLegMeshData_() const -> base::MeshAsset*;
   auto ToesMeshData_() const -> base::MeshAsset*;
+  // Tint colors one piece of us draws with (each points at 3 floats;
+  // compared by address to spot changes between pieces).
+  struct PieceTint_ {
+    const float* color;
+    const float* highlight;
+    const float* highlight2;
+    auto operator==(const PieceTint_& other) const -> bool = default;
+  };
+  // What one body part draws with: its mesh plus color texture and
+  // tint mask, with the definition's per-part and left-side overrides
+  // applied (otherwise the part's usual mesh and the character's own
+  // textures).
+  struct PartDraw_ {
+    base::MeshAsset* mesh;
+    base::TextureAsset* texture;
+    base::TextureAsset* tint_texture;
+    PieceTint_ tint;
+  };
+  // (``base`` is our own textures and tint, fetched once per draw by
+  // the caller; its mesh is ignored.)
+  auto PartDrawData_(base::CharacterBodyPart part, bool left,
+                     const PartDraw_& base) const -> PartDraw_;
+  // The tint colors we currently draw the body with.
+  auto BaseTint_() const -> PieceTint_;
+  // Lay a definition piece's own tint colors over ``tint``. Its color
+  // and highlight count only under use_spaz_def_color/highlight (as
+  // the definition's base ones do); highlight2 has no attr, so always.
+  void ApplyPieceTint_(const base::CharacterTintDef& def,
+                       PieceTint_* tint) const;
+  static void SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint);
   auto ColorTextureData_() const -> base::TextureAsset*;
   auto ColorMaskTextureData_() const -> base::TextureAsset*;
   auto RandomJumpSound_() const -> base::SoundAsset*;
@@ -616,6 +663,10 @@ class SpazNode : public Node {
   bool hockey_{};
   bool have_boxing_gloves_{};
   bool boxing_gloves_flashing_{};
+  Object::Ref<SceneMesh> boxing_gloves_mesh_;
+  Object::Ref<SceneTexture> boxing_gloves_color_texture_;
+  std::vector<float> boxing_gloves_color_{1.0f, 1.0f, 1.0f};
+  float boxing_gloves_scale_{1.0f};
   bool frozen_{};
   bool have_thrown_{};
   bool jump_pressed_{};
@@ -681,7 +732,9 @@ class SpazNode : public Node {
     std::vector<base::BasicSpazDef::AttachmentDef> defs;
     int body_start{};
   };
-  AttachmentTarget attachment_targets_[base::kCharacterAttachTargetCount];
+  // The core-body targets only (the rig's anchors); limb targets take
+  // static attachments, which draw straight from the definition.
+  AttachmentTarget attachment_targets_[base::kCharacterRigAnchorCount];
   std::unique_ptr<base::BGDynamicsCharacterRig> attachment_rig_;
   bool rig_snap_{};
   // Whether the current rig carries bg limbs, and the physique it was
@@ -693,6 +746,10 @@ class SpazNode : public Node {
   // pointer stays null, the pose driver's limb targets feed only the
   // rig, and the punch region is always the synthetic fist.
   bool main_sim_limbs_{true};
+  // With main-sim limbs: whether the punch region rides the punching
+  // arm's body as it did before protocol 44 (fixed for our lifetime;
+  // see GlobalsNode::legacy_spaz_punch).
+  bool legacy_punch_{};
   // Dev aid (BA_BG_LIMBS_TRACE): recent main-sim limb poses relative to
   // their anchors, so the trace can score the bg rig against the pose
   // from a step or two ago (its output is that stale).

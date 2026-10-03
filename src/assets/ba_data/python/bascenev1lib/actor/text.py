@@ -36,6 +36,8 @@ class Text(bs.Actor):
 
         NONE = 'none'
         CENTER = 'center'
+        TOP = 'top'
+        BOTTOM = 'bottom'
 
     class HAttach(Enum):
         """Horizontal attach type."""

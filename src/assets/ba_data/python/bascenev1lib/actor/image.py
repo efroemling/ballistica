@@ -31,7 +31,12 @@ class Image(bs.Actor):
         CENTER = 'center'
         TOP_CENTER = 'topCenter'
         TOP_LEFT = 'topLeft'
+        TOP_RIGHT = 'topRight'
+        CENTER_LEFT = 'centerLeft'
+        CENTER_RIGHT = 'centerRight'
         BOTTOM_CENTER = 'bottomCenter'
+        BOTTOM_LEFT = 'bottomLeft'
+        BOTTOM_RIGHT = 'bottomRight'
 
     def __init__(
         self,

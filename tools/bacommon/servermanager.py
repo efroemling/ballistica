@@ -54,6 +54,12 @@ class ServerConfig:
     # 'punch-grab' technique).
     allow_punch_grab: bool = False
 
+    # BombSquad 1.8 makes spaz simulations more efficient but breaks the
+    # old bomb-jump trick. If you miss bomb jump you can turn this on;
+    # just note that your server bandwidth will double or triple because
+    # of it.
+    legacy_spaz_physics: bool = False
+
     # To be included in the public server list, your server MUST be
     # accessible via an ipv4 address. By default, the master server will
     # try to use the address your server contacts it from, but this may

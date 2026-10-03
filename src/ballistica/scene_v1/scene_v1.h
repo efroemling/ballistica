@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 49;
+const int kProtocolVersionHostMin = 50;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 49;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 49;
+const int kProtocolVersionMax = 50;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 49;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 48;
+const int kProtocolVersionDevGapMax = 49;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -393,6 +393,25 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     reworked to sit alongside the legacy 'always_show_health_bar'
 //     bool, which it defers to while 0 (DEFAULT). Unknown values count
 //     as DEFAULT.
+//
+// 50: Prop nodes (and so bombs) gain 'stickiness' (a float, clamped to
+//     0.01-10.0, default 1.0): scales how strongly a 'sticky' prop
+//     sticks. Registered late-index like 'rotate' (see 43) so bomb's
+//     'fuse_length' keeps its index. Host-side physics only; clients
+//     just carry the value, and older hosts never set it.
+//
+//     Also under 50 -- spaz nodes gain boxing-glove look overrides
+//     (appended): 'boxing_gloves_mesh', 'boxing_gloves_color_texture'
+//     (unset means the stock gloves), 'boxing_gloves_color' (a
+//     multiply tint, default white) and 'boxing_gloves_scale' (default
+//     1.0). Visual only; punch reach is unchanged.
+//
+//     Also under 50 -- globals nodes gain 'legacy_spaz_punch'
+//     (appended): spazzes created with legacy limbs under it also keep
+//     the pre-44 arm-attached punch region. With 'legacy_spaz_limbs'
+//     that is the old spaz physics in full, which the server config's
+//     'legacy_spaz_physics' turns on for every activity (for the
+//     'bomb-jump' trick, at a bandwidth cost).
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

@@ -382,7 +382,13 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](ActorHost):
             # set some global values based on what the activity wants.
             glb.use_fixed_vr_overlay = self.use_fixed_vr_overlay
             glb.allow_kick_idle_players = self.allow_kick_idle_players
-            glb.legacy_spaz_limbs = self.legacy_spaz_limbs
+            # A server can opt every activity into the full old spaz
+            # physics (legacy limbs plus the old arm-attached punch);
+            # see the 'legacy_spaz_physics' server config value.
+            classic = babase.app.classic
+            legacy_physics = classic is not None and classic.legacy_spaz_physics
+            glb.legacy_spaz_limbs = self.legacy_spaz_limbs or legacy_physics
+            glb.legacy_spaz_punch = legacy_physics
             if self.inherits_slow_motion and prev_globals is not None:
                 glb.slow_motion = prev_globals.slow_motion
             else:

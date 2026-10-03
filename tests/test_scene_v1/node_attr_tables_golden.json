@@ -120,6 +120,10 @@
   [
    "legacy_spaz_limbs",
    "bool"
+  ],
+  [
+   "legacy_spaz_punch",
+   "bool"
   ]
  ],
  "sessionglobals": [
@@ -228,6 +232,10 @@
   [
    "rotate",
    "float-array"
+  ],
+  [
+   "stickiness",
+   "float"
   ]
  ],
  "flag": [
@@ -352,6 +360,10 @@
   [
    "rotate",
    "float-array"
+  ],
+  [
+   "stickiness",
+   "float"
   ]
  ],
  "explosion": [
@@ -1194,6 +1206,22 @@
   [
    "use_spaz_def_highlight",
    "bool"
+  ],
+  [
+   "boxing_gloves_mesh",
+   "mesh"
+  ],
+  [
+   "boxing_gloves_color_texture",
+   "texture"
+  ],
+  [
+   "boxing_gloves_color",
+   "float-array"
+  ],
+  [
+   "boxing_gloves_scale",
+   "float"
   ]
  ],
  "region": [

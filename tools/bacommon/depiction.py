@@ -114,6 +114,13 @@ class ImageDepiction(Depiction):
     #: shape, and nothing shifts when it does.
     aspect: Annotated[float, IOAttrs('a', store_default=False)] = 1.0
 
+    #: Draws the image this much bigger or smaller about its box's
+    #: center, for art with glows or other extras that should spill
+    #: past where it is placed. Only the drawing changes: the box (and
+    #: so layout and what counts as a press) stays put. Clients clamp
+    #: this to 0-2; ones before this field draw at 1.
+    scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+
     color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('c', store_default=False),

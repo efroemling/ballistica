@@ -432,6 +432,7 @@ class ServerController:
         classic.ffa_series_length = self._config.ffa_series_length
 
         classic.allow_punch_grab = self._config.allow_punch_grab
+        classic.legacy_spaz_physics = self._config.legacy_spaz_physics
 
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting

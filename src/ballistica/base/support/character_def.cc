@@ -72,6 +72,18 @@ auto ReadFloat3(const JsonRef& obj, const char* key, float* out,
   return true;
 }
 
+// A piece's optional tint colors: keys are ``prefix`` + 'cl' / 'hl' /
+// 'hl2' + ``suffix`` (the base color keys, wrapped).
+void ReadTint(const JsonRef& obj, const std::string& prefix,
+              const std::string& suffix, CharacterTintDef* out) {
+  out->has_color = ReadFloat3(obj, (prefix + "cl" + suffix).c_str(), out->color,
+                              kRangeColor);
+  out->has_highlight = ReadFloat3(obj, (prefix + "hl" + suffix).c_str(),
+                                  out->highlight, kRangeHighlight);
+  out->has_highlight2 = ReadFloat3(obj, (prefix + "hl2" + suffix).c_str(),
+                                   out->highlight2, kRangeHighlight);
+}
+
 void ReadBool(const JsonRef& obj, const char* key, bool* out) {
   if (auto val = obj[key].as_bool()) {
     *out = *val;
@@ -206,7 +218,7 @@ void ReadSegmentOffset(const JsonRef& seg,
 // Parse one target's attachment list. Unrecognized types (a future
 // kind this build predates) and malformed entries are dropped
 // attachment-by-attachment by design.
-void ReadAttachmentList(const JsonRef& arr,
+void ReadAttachmentList(const JsonRef& arr, bool static_only,
                         std::vector<BasicSpazDef::AttachmentDef>* out) {
   out->clear();
   if (!arr.is_array()) {
@@ -241,6 +253,11 @@ void ReadAttachmentList(const JsonRef& arr,
     } else if (*type == "fx") {
       adef.type = CharacterAttachmentType::kStatic;
     } else {
+      continue;
+    }
+    // Limb targets take static attachments only (see
+    // CharacterAttachTarget).
+    if (static_only && adef.type != CharacterAttachmentType::kStatic) {
       continue;
     }
     ReadFloat3(entry, "p", adef.position, kRangeAttachmentPosition);
@@ -290,6 +307,7 @@ void ReadAttachmentList(const JsonRef& arr,
       }
       ReadPackageAssetRef(seg, "t", &sdef.texture);
       ReadPackageAssetRef(seg, "tm", &sdef.tint_texture);
+      ReadTint(seg, "", "", &sdef.tint);
       ReadSegmentOffset(seg, &sdef);
       adef.segments.push_back(std::move(sdef));
     }
@@ -308,11 +326,17 @@ void ReadAttachmentList(const JsonRef& arr,
 
 // Parse the optional attachments dict (target key -> list). Only the
 // targets this build knows are read; anything else is ignored.
+// (Limb target keys are the part's mesh-key suffix, 'l'-prefixed for
+// the left-side ones.)
 void ReadAttachments(const JsonRef& obj, const char* key,
                      std::vector<BasicSpazDef::AttachmentDef> (
-                         &out)[kCharacterAttachTargetCount]) {
+                         &out)[kCharacterAttachTargetCount],
+                     bool (&present)[kCharacterAttachTargetCount]) {
   for (auto& list : out) {
     list.clear();
+  }
+  for (auto& val : present) {
+    val = false;
   }
   JsonRef dict = obj[key];
   if (!dict.is_object()) {
@@ -325,9 +349,24 @@ void ReadAttachments(const JsonRef& obj, const char* key,
       {"h", CharacterAttachTarget::kHead},
       {"t", CharacterAttachTarget::kTorso},
       {"p", CharacterAttachTarget::kPelvis},
+      {"ua", CharacterAttachTarget::kUpperArm},
+      {"fa", CharacterAttachTarget::kForearm},
+      {"hn", CharacterAttachTarget::kHand},
+      {"ul", CharacterAttachTarget::kUpperLeg},
+      {"ll", CharacterAttachTarget::kLowerLeg},
+      {"to", CharacterAttachTarget::kToes},
+      {"lua", CharacterAttachTarget::kLeftUpperArm},
+      {"lfa", CharacterAttachTarget::kLeftForearm},
+      {"lhn", CharacterAttachTarget::kLeftHand},
+      {"lul", CharacterAttachTarget::kLeftUpperLeg},
+      {"lll", CharacterAttachTarget::kLeftLowerLeg},
+      {"lto", CharacterAttachTarget::kLeftToes},
   };
   for (const auto& entry : kTargets) {
-    ReadAttachmentList(dict[entry.key], &out[static_cast<int>(entry.target)]);
+    int ti = static_cast<int>(entry.target);
+    JsonRef list = dict[entry.key];
+    present[ti] = list.is_array();
+    ReadAttachmentList(list, ti >= kCharacterRigAnchorCount, &out[ti]);
   }
 }
 
@@ -364,6 +403,12 @@ auto ReadIcon(const JsonRef& basic, BasicIconDef* out) -> bool {
   return true;
 }
 
+// Wire-key suffix per CharacterBodyPart (as in each part's mesh key:
+// 'mh', 'mua', ...), and the first part that has a left/right pair.
+const char* const kBodyPartKeySuffixes[kCharacterBodyPartCount] = {
+    "h", "t", "p", "ua", "fa", "hn", "ul", "ll", "to"};
+const int kFirstPairedBodyPart = static_cast<int>(CharacterBodyPart::kUpperArm);
+
 auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   BasicSpazDef d;
   ReadPackageManifest(basic, &d.packages, &d.domain_digest);
@@ -395,7 +440,31 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   ReadPackageAssetRef(basic, "mw", &d.wing_mesh);
   ReadPackageAssetRef(basic, "tw", &d.wing_texture);
   ReadPackageAssetRef(basic, "wm", &d.wing_tint_texture);
-  ReadAttachments(basic, "at", d.attachments);
+  ReadPackageAssetRef(basic, "lmw", &d.wing_left_mesh);
+  ReadPackageAssetRef(basic, "ltw", &d.wing_left_texture);
+  ReadPackageAssetRef(basic, "lwm", &d.wing_left_tint_texture);
+  ReadTint(basic, "", "w", &d.wing_tint);
+  ReadTint(basic, "l", "w", &d.wing_left_tint);
+  // Optional per-part looks. Keys are a prefix plus the part's suffix
+  // (the one its mesh key uses): 't' texture, 'tm' tint mask, and
+  // 'cl' / 'hl' / 'hl2' tint colors; for paired parts 'lm' / 'lt' /
+  // 'ltm' and 'lcl' / 'lhl' / 'lhl2' are the left side's mesh,
+  // texture, tint mask and tint colors.
+  for (int i = 0; i < kCharacterBodyPartCount; ++i) {
+    auto& look = d.part_looks[i];
+    const std::string suffix = kBodyPartKeySuffixes[i];
+    ReadPackageAssetRef(basic, ("t" + suffix).c_str(), &look.texture);
+    ReadPackageAssetRef(basic, ("tm" + suffix).c_str(), &look.tint_texture);
+    ReadTint(basic, "", suffix, &look.tint);
+    if (i >= kFirstPairedBodyPart) {
+      ReadTint(basic, "l", suffix, &look.left_tint);
+      ReadPackageAssetRef(basic, ("lm" + suffix).c_str(), &look.left_mesh);
+      ReadPackageAssetRef(basic, ("lt" + suffix).c_str(), &look.left_texture);
+      ReadPackageAssetRef(basic, ("ltm" + suffix).c_str(),
+                          &look.left_tint_texture);
+    }
+  }
+  ReadAttachments(basic, "at", d.attachments, d.attachment_target_present);
 
   ReadPackageAssetRefs(basic, "sj", &d.jump_sounds);
   ReadPackageAssetRefs(basic, "sa", &d.attack_sounds);
@@ -536,6 +605,16 @@ void CharacterDef::LoadSpazMedia_() {
   note(&d.lower_leg_mesh, "meshes/", &indexed);
   note(&d.toes_mesh, "meshes/", &indexed);
   note(&d.wing_mesh, "meshes/", &indexed);
+  note(&d.wing_left_mesh, "meshes/", &indexed);
+  note(&d.wing_left_texture, "textures/", &indexed);
+  note(&d.wing_left_tint_texture, "textures/", &indexed);
+  for (auto& look : d.part_looks) {
+    note(&look.texture, "textures/", &indexed);
+    note(&look.tint_texture, "textures/", &indexed);
+    note(&look.left_mesh, "meshes/", &indexed);
+    note(&look.left_texture, "textures/", &indexed);
+    note(&look.left_tint_texture, "textures/", &indexed);
+  }
   for (auto& list : d.attachments) {
     for (auto& attachment : list) {
       for (auto& seg : attachment.segments) {
@@ -573,9 +652,18 @@ auto CharacterDef::SpazRequiredRefs_() const
   // Optional parts join the check only when present.
   for (const auto* opt :
        {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh, &d.wing_mesh,
-        &d.wing_texture, &d.wing_tint_texture}) {
+        &d.wing_texture, &d.wing_tint_texture, &d.wing_left_mesh,
+        &d.wing_left_texture, &d.wing_left_tint_texture}) {
     if (!opt->name.empty()) {
       refs.push_back(opt);
+    }
+  }
+  for (const auto& look : d.part_looks) {
+    for (const auto* opt : {&look.texture, &look.tint_texture, &look.left_mesh,
+                            &look.left_texture, &look.left_tint_texture}) {
+      if (!opt->name.empty()) {
+        refs.push_back(opt);
+      }
     }
   }
   for (const auto& list : d.attachments) {
@@ -626,6 +714,30 @@ auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
   }
   if (!d.wing_tint_texture.name.empty()) {
     m.wing_tint_texture = get->Texture(d.wing_tint_texture);
+  }
+  auto opt_texture = [get](const CharacterAssetRef& ref,
+                           Object::Ref<TextureAsset>* out) {
+    if (!ref.name.empty()) {
+      *out = get->Texture(ref);
+    }
+  };
+  auto opt_mesh = [get](const CharacterAssetRef& ref,
+                        Object::Ref<MeshAsset>* out) {
+    if (!ref.name.empty()) {
+      *out = get->Mesh(ref);
+    }
+  };
+  opt_mesh(d.wing_left_mesh, &m.wing_left_mesh);
+  opt_texture(d.wing_left_texture, &m.wing_left_texture);
+  opt_texture(d.wing_left_tint_texture, &m.wing_left_tint_texture);
+  for (int i = 0; i < kCharacterBodyPartCount; ++i) {
+    const auto& look = d.part_looks[i];
+    auto& lmedia = m.part_looks[i];
+    opt_texture(look.texture, &lmedia.texture);
+    opt_texture(look.tint_texture, &lmedia.tint_texture);
+    opt_mesh(look.left_mesh, &lmedia.left_mesh);
+    opt_texture(look.left_texture, &lmedia.left_texture);
+    opt_texture(look.left_tint_texture, &lmedia.left_tint_texture);
   }
   for (int ti = 0; ti < kCharacterAttachTargetCount; ++ti) {
     for (const auto& attachment : d.attachments[ti]) {

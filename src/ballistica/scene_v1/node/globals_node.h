@@ -92,6 +92,13 @@ class GlobalsNode : public Node {
   /// tutorial's recorded input script. Read at spaz creation.
   auto legacy_spaz_limbs() const -> bool { return legacy_spaz_limbs_; }
   void set_legacy_spaz_limbs(bool val) { legacy_spaz_limbs_ = val; }
+  /// Spazzes created in this activity with legacy limbs (above) also
+  /// keep the pre-protocol-44 punch: the punch region rides the end of
+  /// the punching arm's body instead of the synthetic fist. Together
+  /// the two are the old spaz physics (what the 'bomb-jump' trick
+  /// leans on). No effect without legacy limbs. Read at spaz creation.
+  auto legacy_spaz_punch() const -> bool { return legacy_spaz_punch_; }
+  void set_legacy_spaz_punch(bool val) { legacy_spaz_punch_ = val; }
   auto paused() const -> bool { return paused_; }
   void SetPaused(bool val);
   auto vr_camera_offset() const -> const std::vector<float>& {
@@ -144,6 +151,7 @@ class GlobalsNode : public Node {
   bool slow_motion_{};
   bool paused_{};
   bool legacy_spaz_limbs_{};
+  bool legacy_spaz_punch_{};
 };
 
 }  // namespace ballistica::scene_v1

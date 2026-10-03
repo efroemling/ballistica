@@ -34,18 +34,69 @@ enum class CharacterEyeStyle : uint8_t {
   kNone,
 };
 
+/// A character's body parts, for per-part look overrides (see
+/// BasicSpazDef::PartLookDef). The first three have no left/right
+/// pair.
+enum class CharacterBodyPart : uint8_t {
+  kHead,
+  kTorso,
+  kPelvis,
+  kUpperArm,
+  kForearm,
+  kHand,
+  kUpperLeg,
+  kLowerLeg,
+  kToes,
+};
+constexpr int kCharacterBodyPartCount = 9;
+
+/// Optional tint colors for one piece of a character (a body part, a
+/// wing, an attachment segment): each present one stands in for the
+/// character's own color / highlight / highlight2 on that piece.
+struct CharacterTintDef {
+  bool has_color{};
+  bool has_highlight{};
+  bool has_highlight2{};
+  float color[3]{1.0f, 1.0f, 1.0f};
+  float highlight[3]{0.5f, 0.5f, 0.5f};
+  float highlight2[3]{1.0f, 1.0f, 1.0f};
+};
+
 /// Body an attachment hangs off. Mirrors AttachTarget in bamaster
 /// baserver/character.py. Unrecognized targets in a definition are
 /// dropped silently on parse (new targets may arrive from newer
 /// servers), so this enum is also the parse-time allow-list.
+///
+/// The first three are the core bodies, which are also the character
+/// rig's anchors (kCharacterRigAnchorCount) and take any kind of
+/// attachment. The limb targets take kStatic attachments only (other
+/// kinds are dropped on parse; they would need rig support), drawn in
+/// the limb's own frame wherever its mesh draws. A plain limb target
+/// covers both sides, mirrored on the left exactly as the limb mesh
+/// is; a kLeft* target, when present in a definition (even empty),
+/// replaces it for the left side.
 enum class CharacterAttachTarget : uint8_t {
   kHead,
   kTorso,
   kPelvis,
-  kLast = kPelvis,
+  kUpperArm,
+  kForearm,
+  kHand,
+  kUpperLeg,
+  kLowerLeg,
+  kToes,
+  kLeftUpperArm,
+  kLeftForearm,
+  kLeftHand,
+  kLeftUpperLeg,
+  kLeftLowerLeg,
+  kLeftToes,
+  kLast = kLeftToes,
 };
 constexpr int kCharacterAttachTargetCount =
     static_cast<int>(CharacterAttachTarget::kLast) + 1;
+constexpr int kCharacterRigAnchorCount = 3;
+constexpr int kCharacterLimbAttachTargetCount = 6;
 
 /// Kind of attachment hanging off one of a character's bodies. The
 /// kind carries the whole physique -- capsule dims, mass, joint
@@ -126,6 +177,26 @@ struct BasicSpazDef {
   CharacterAssetRef upper_leg_mesh;
   CharacterAssetRef lower_leg_mesh;
   CharacterAssetRef toes_mesh;
+  // Optional per-part looks, indexed by CharacterBodyPart. A part's
+  // own texture / tint mask stand in for the character's color
+  // texture / color mask on that part alone (absent = the
+  // character's, so one-atlas characters just work). Paired parts
+  // can also give their left side its own mesh and textures: the
+  // left mesh is still authored as a right-side part and drawn
+  // mirrored like any other; absent = the right side's mesh, and
+  // absent left textures = the part's own (then the character's).
+  // Tint colors follow the same chain: left, then the part's, then
+  // the character's.
+  struct PartLookDef {
+    CharacterAssetRef texture;
+    CharacterAssetRef tint_texture;
+    CharacterAssetRef left_mesh;
+    CharacterAssetRef left_texture;
+    CharacterAssetRef left_tint_texture;
+    CharacterTintDef tint;
+    CharacterTintDef left_tint;
+  };
+  PartLookDef part_looks[kCharacterBodyPartCount];
   // Sounds.
   std::vector<CharacterAssetRef> jump_sounds;
   std::vector<CharacterAssetRef> attack_sounds;
@@ -171,6 +242,16 @@ struct BasicSpazDef {
   CharacterAssetRef wing_mesh;
   CharacterAssetRef wing_texture;
   CharacterAssetRef wing_tint_texture;
+  // Optional left-wing overrides, by the same rule as body parts: the
+  // mesh is authored as a right wing and mirrored; absent = the
+  // (right) wing's own mesh / texture / tint mask.
+  CharacterAssetRef wing_left_mesh;
+  CharacterAssetRef wing_left_texture;
+  CharacterAssetRef wing_left_tint_texture;
+  // Optional wing tint colors (left, then these, then the
+  // character's).
+  CharacterTintDef wing_tint;
+  CharacterTintDef wing_left_tint;
   // Attachments (hair tufts, antennas, static props), per target
   // body. Cosmetic only: simulated client-side on the bg-dynamics
   // thread and drawn relative to the target body.
@@ -180,6 +261,8 @@ struct BasicSpazDef {
     // mask (one-atlas characters just work).
     CharacterAssetRef texture;
     CharacterAssetRef tint_texture;
+    // Optional tint colors; absent = the character's own.
+    CharacterTintDef tint;
     // Draw offset applied to the mesh in the segment body's frame
     // (the target body's frame for kStatic). Identity when absent.
     Matrix44f offset{kMatrix44fIdentity};
@@ -227,6 +310,9 @@ struct BasicSpazDef {
   };
   // Indexed by CharacterAttachTarget.
   std::vector<AttachmentDef> attachments[kCharacterAttachTargetCount];
+  // Whether each target appeared in the definition at all (an empty
+  // kLeft* list still replaces the both-sides one for the left).
+  bool attachment_target_present[kCharacterAttachTargetCount]{};
   auto has_attachments() const -> bool {
     for (const auto& list : attachments) {
       if (!list.empty()) {
@@ -255,6 +341,18 @@ struct BasicSpazMedia {
   Object::Ref<MeshAsset> wing_mesh;
   Object::Ref<TextureAsset> wing_texture;
   Object::Ref<TextureAsset> wing_tint_texture;
+  Object::Ref<MeshAsset> wing_left_mesh;
+  Object::Ref<TextureAsset> wing_left_texture;
+  Object::Ref<TextureAsset> wing_left_tint_texture;
+  // Parallel to BasicSpazDef::part_looks.
+  struct PartLookMedia {
+    Object::Ref<TextureAsset> texture;
+    Object::Ref<TextureAsset> tint_texture;
+    Object::Ref<MeshAsset> left_mesh;
+    Object::Ref<TextureAsset> left_texture;
+    Object::Ref<TextureAsset> left_tint_texture;
+  };
+  PartLookMedia part_looks[kCharacterBodyPartCount];
   struct AttachmentSegmentMedia {
     Object::Ref<MeshAsset> mesh;
     Object::Ref<TextureAsset> texture;

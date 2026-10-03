@@ -476,6 +476,9 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
     if (auto aspect = root["a"].as_double(); aspect && *aspect > 0.0) {
       aspect_ = static_cast<float>(*aspect);
     }
+    if (auto scale = root["s"].as_double()) {
+      scale_ = std::clamp(static_cast<float>(*scale), 0.0f, 2.0f);
+    }
     ReadFloats(root, "c", color_, 4);
     has_tint_color_ = ReadFloats(root, "tc1", tint_color_, 3);
     has_tint2_color_ = ReadFloats(root, "tc2", tint2_color_, 3);
@@ -564,7 +567,9 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
     {
       auto xf = c.ScopedTransform();
       c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
-      c.Scale(b.width, b.height, 1.0f);
+      // Our scale grows or shrinks the drawing about the box's center;
+      // the box itself (layout, presses) is untouched.
+      c.Scale(b.width * scale_, b.height * scale_, 1.0f);
       c.DrawMeshAsset(quad);
     }
     c.Submit();
@@ -622,6 +627,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   std::vector<std::string> packages_;
   std::string domain_digest_;
   float aspect_{1.0f};
+  float scale_{1.0f};
   float color_[4]{1.0f, 1.0f, 1.0f, 1.0f};
   float tint_color_[3]{1.0f, 1.0f, 1.0f};
   float tint2_color_[3]{1.0f, 1.0f, 1.0f};

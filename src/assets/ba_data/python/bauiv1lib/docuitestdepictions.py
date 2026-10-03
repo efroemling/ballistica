@@ -329,6 +329,16 @@ def test_page_depictions(
         ('name', _name(_ZOE_JSON), (140.0, 50.0)),
         ('image (chest)', chest, _BOX),
         ('image (coin)', bdep.ImageDepiction(texture=tex.coin), _BOX),
+        (
+            'image (scale 1.5)',
+            bdep.ImageDepiction(texture=tex.coin, scale=1.5),
+            _BOX,
+        ),
+        (
+            'image (scale 0.5)',
+            bdep.ImageDepiction(texture=tex.coin, scale=0.5),
+            _BOX,
+        ),
         ('image (indexed)', _indexed_image(tex.coin), _BOX),
         (
             'viewer',
