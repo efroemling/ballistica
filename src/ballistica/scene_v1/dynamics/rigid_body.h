@@ -82,6 +82,18 @@ class RigidBody : public Object {
   auto GetEmbeddedSizeFull() -> int;
   void ExtractFull(const char** buffer);
   void EmbedFull(char** buffer);
+
+  /// Compact correction state (kProtocolVersionCompactCorrections+):
+  /// flag byte (which velocity components follow + enabled), position
+  /// as 3 x int24 millimetres, orientation as a packed smallest-three
+  /// quaternion (4 bytes), then f16 for each flagged velocity
+  /// component. Appends to out.
+  void EmbedCompact(std::vector<uint8_t>* out);
+
+  /// Read one compact body state from [*p, end) and apply it to body
+  /// (null just skips over it). Advances *p; throws on truncation.
+  static void ExtractCompact(const uint8_t** p, const uint8_t* end,
+                             RigidBody* body);
   RigidBody(int id_in, Part* part_in, Type type_in, Shape shape_in,
             uint32_t collide_type_in, uint32_t collide_mask_in,
             SceneCollisionMesh* collision_mesh_in = nullptr,
@@ -90,8 +102,21 @@ class RigidBody : public Object {
   auto body() const -> dBodyID { return body_; }
   auto geom(int i = 0) const -> dGeomID { return geoms_[i]; }
 
-  // Draw a representation of the rigid body for debugging.
-  void Draw(base::RenderPass* pass, bool shaded = true);
+  /// Draw the body's physics shape as a transparent wireframe (debug
+  /// lines) into the given pass for debug-draw mode. Handles box and
+  /// sphere shapes; returns false (drawing nothing) for others. Meant
+  /// for volumes like regions that shouldn't occlude anything.
+  auto DrawDebugWireframe(base::RenderPass* pass, float r, float g, float b,
+                          float a) -> bool;
+
+  /// Draw the body's physics shape flat-shaded (facing-ratio, object
+  /// lighting) into the given pass for debug-draw mode. Handles box,
+  /// sphere, capsule, and cylinder (sphere-ring) shapes; returns false
+  /// (drawing nothing) for trimeshes. An alpha below 1 draws the shape
+  /// translucent (for enclosing volumes that would otherwise hide the
+  /// bodies inside them).
+  auto DrawDebug(base::RenderPass* pass, float r = 1.0f, float g = 1.0f,
+                 float b = 1.0f, float a = 1.0f) -> bool;
   auto part() const -> Part* {
     assert(part_.exists());
     return part_.get();
@@ -176,6 +201,10 @@ class RigidBody : public Object {
 
   // Applies to spheres.
   auto radius() const -> float { return dimensions_[0]; }
+  auto shape() const -> Shape { return shape_; }
+  /// Shape dimensions as passed to SetDimensions (box: full lengths;
+  /// sphere: radius; capsule: radius, length).
+  auto dimensions() const -> const float* { return dimensions_; }
   auto GetTransform() -> Matrix44f;
   void UpdateBlending();
   void AddBlendOffset(float x, float y, float z);
@@ -199,6 +228,7 @@ class RigidBody : public Object {
   millisecs_t creation_time_{};
   bool can_cause_impact_damage_{};
   Dynamics* dynamics_{};
+  void DrawDebugShape_(base::RenderComponent* c);
   uint32_t collide_type_{};
   uint32_t collide_mask_{};
   std::list<Joint*> joints_;

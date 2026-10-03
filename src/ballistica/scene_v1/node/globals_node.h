@@ -16,7 +16,15 @@ class GlobalsNode : public Node {
   explicit GlobalsNode(Scene* scene);
   ~GlobalsNode() override;
   void SetAsForeground();
+
+  /// Whether we are the one globals node of the one foreground scene,
+  /// and so in charge of things there is only one of (music, the pitch
+  /// of sound, and so on).
   auto IsCurrentGlobals() const -> bool;
+
+  /// Whether we are in charge of the view our scene draws into: its
+  /// look and what its camera gets asked for.
+  auto DrivesView() const -> bool;
   auto AppTimeMillisecs() -> millisecs_t;
   auto GetTime() -> millisecs_t;
   auto GetStep() -> int64_t;
@@ -78,6 +86,12 @@ class GlobalsNode : public Node {
   void SetAllowKickIdlePlayers(bool allow);
   auto slow_motion() const -> bool { return slow_motion_; }
   void SetSlowMotion(bool val);
+  /// Spazzes created in this activity simulate their limbs in the main
+  /// sim (the pre-protocol-44 dynamics) instead of on the bg-dynamics
+  /// rig. For content calibrated against the old physics, such as the
+  /// tutorial's recorded input script. Read at spaz creation.
+  auto legacy_spaz_limbs() const -> bool { return legacy_spaz_limbs_; }
+  void set_legacy_spaz_limbs(bool val) { legacy_spaz_limbs_ = val; }
   auto paused() const -> bool { return paused_; }
   void SetPaused(bool val);
   auto vr_camera_offset() const -> const std::vector<float>& {
@@ -101,6 +115,8 @@ class GlobalsNode : public Node {
   auto camera_mode() const { return camera_mode_; }
 
  private:
+  void PushToView_();
+
   base::CameraMode camera_mode_{base::CameraMode::kFollow};
   float vr_near_clip_{4.0f};
   float debris_friction_{1.0f};
@@ -127,6 +143,7 @@ class GlobalsNode : public Node {
   bool allow_kick_idle_players_{};
   bool slow_motion_{};
   bool paused_{};
+  bool legacy_spaz_limbs_{};
 };
 
 }  // namespace ballistica::scene_v1

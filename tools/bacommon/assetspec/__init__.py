@@ -26,14 +26,34 @@ from bacommon.assetspec._core import (
     MeshSpec,
     SoundSpec,
     CollisionMeshSpec,
+    CubeMapTextureSpec,
 )
 from bacommon.assetspec._wrapper import AssetGroup, AssetGroupTree
+from bacommon.assetspec._index import (
+    ASSET_INDEX_MIN_BUILD,
+    AssetBucketKind,
+    AssetIndexContext,
+    WIRE_DIGEST_LENGTH,
+    wire_digest,
+    digest_matches,
+    AssetIndexError,
+    spec_kind,
+)
 
 __all__ = [
     'TextureSpec',
     'MeshSpec',
     'SoundSpec',
     'CollisionMeshSpec',
+    'CubeMapTextureSpec',
     'AssetGroup',
     'AssetGroupTree',
+    'ASSET_INDEX_MIN_BUILD',
+    'AssetBucketKind',
+    'AssetIndexContext',
+    'WIRE_DIGEST_LENGTH',
+    'wire_digest',
+    'digest_matches',
+    'AssetIndexError',
+    'spec_kind',
 ]

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -88,6 +88,6 @@ class TabRow[T: Enum]:
     def _tick_and_call(
         self, call: Callable[[Any], None] | None, arg: Any
     ) -> None:
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
         if call is not None:
             call(arg)

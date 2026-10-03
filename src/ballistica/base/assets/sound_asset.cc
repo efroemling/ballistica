@@ -17,8 +17,10 @@
 #endif
 #endif  // BA_ENABLE_AUDIO
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/audio/ogg_blob_source.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
@@ -28,6 +30,16 @@ namespace ballistica::base {
 #if BA_ENABLE_AUDIO
 
 const int kReadBufferSize = 32768;  // 32 KB buffers
+
+// Whether to cache decoded PCM on disk (LoadCachedOgg) instead of
+// decoding oggs on every load. Disabled 2026-09-29 and likely to be
+// removed soon: now that sounds load lazily a few at a time, the cache
+// saves ~1-3 ms per sound while its first-load writes add ~10%, it
+// never gets pruned (content-hash asset paths leave orphans on every
+// asset update), and its mtime check can't stat sounds served from
+// inside the Android APK (so there it rewrote files it never read).
+// Removing it also means clearing out the old <cache>/audio dir once.
+constexpr bool kUseDecodedAudioCache = false;
 
 // Decoded-PCM-size threshold above which a sound plays via the streaming
 // path instead of being fully decoded into a static buffer at preload.
@@ -40,22 +52,6 @@ const int kReadBufferSize = 32768;  // 32 KB buffers
 // music-streams/sounds-preload classification exactly.
 const size_t kStreamDecodedSizeThreshold = 1792 * 1024;
 
-static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
-                         void* data_source) -> size_t {
-  return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
-}
-static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
-    -> int {
-  return fseek(static_cast<FILE*>(data_source),
-               static_cast_check_fit<long>(offset), whence);  // NOLINT
-}
-static auto CallbackClose(void* data_source) -> int {
-  return fclose(static_cast<FILE*>(data_source));
-}
-static long CallbackTell(void* data_source) {  // NOLINT (vorbis uses long)
-  return ftell(static_cast<FILE*>(data_source));
-}
-
 // This function loads a .ogg file into a memory buffer and returns
 // the format and frequency.  return value is true on success or false if a
 // fallback was used
@@ -64,12 +60,10 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   int bit_stream;
   int bytes;
   char array[kReadBufferSize];  // Local fixed size array
-  FILE* f;
   bool fallback = false;
 
-  // Open for binary reading.
-  f = g_core->platform->FOpen(file_name, "rb");
-  if (f == nullptr) {
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
     fallback = true;
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
                          std::string("Can't open sound file '") + file_name
@@ -77,37 +71,35 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
-    if (f == nullptr)
+    blob = AssetBlob::FromFile(file_name);
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
   }
 
   vorbis_info* p_info;
   OggVorbis_File ogg_file;
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  OggBlobSource blob_source{&blob};
 
   // Try opening the given file
-  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kError,
         std::string("Error decoding sound file '") + file_name + "'");
 
-    fclose(f);
-
     // Attempt fallback.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
+    blob = AssetBlob::FromFile(file_name);
 
     // If fallback doesn't work, throw in the towel.
-    if (f == nullptr)
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
-    if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0)
+    blob_source = OggBlobSource{&blob};
+    if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0,
+                          OggBlobCallbacks())
+        != 0)
       throw Exception(std::string("Error decoding fallback sound file '")
                       + file_name + "'");
   }
@@ -181,20 +173,15 @@ static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
   *is_streamed = false;
   *pre_mixed = false;
 
-  FILE* f = g_core->platform->FOpen(file_name, "rb");
-  if (f == nullptr) {
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
     return false;
   }
-
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  OggBlobSource blob_source{&blob};
 
   OggVorbis_File ogg_file;
-  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    fclose(f);
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
     return false;
   }
 
@@ -334,14 +321,17 @@ void SoundAsset::DoPreload() {
 
   // Guard against non-ogg sources slipping in — but only when the path
   // visibly carries an extension. CAS blob paths are bare content
-  // hashes (no extension); the probe below handles those (and anything
-  // else that isn't really ogg-vorbis) gracefully. Match either slash
-  // flavor; Windows blob paths use backslashes and a leading '.\' which
-  // a forward-slash-only search would mistake for an extension.
+  // hashes (no extension, or the archive-serving blob suffix, which is
+  // not a content-type extension); the probe below handles those (and
+  // anything else that isn't really ogg-vorbis) gracefully. Match
+  // either slash flavor; Windows blob paths use backslashes and a
+  // leading '.\' which a forward-slash-only search would mistake for
+  // an extension.
   auto slash_pos = file_name_full_.find_last_of("/\\");
   auto base_start = slash_pos == std::string::npos ? 0 : slash_pos + 1;
   bool has_extension =
-      file_name_full_.find('.', base_start) != std::string::npos;
+      file_name_full_.find('.', base_start) != std::string::npos
+      && !file_name_full_.ends_with(kBundledCasBlobSuffix);
   if (has_extension && !strstr(file_name_full_.c_str(), ".ogg")) {
     throw Exception("Unsupported sound file (needs to end in .ogg): '"
                     + file_name_full_ + "'");
@@ -359,7 +349,11 @@ void SoundAsset::DoPreload() {
            + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
   });
   if (!is_streamed_) {
-    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    if (kUseDecodedAudioCache) {
+      LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    } else {
+      LoadOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    }
   }
 #endif  // BA_ENABLE_AUDIO
 }

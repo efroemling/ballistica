@@ -12,6 +12,9 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass, field
 
+from efro.util import strip_exception_tracebacks
+from bacommon.assetpackage import ApverNum, AssetPackageResolveError
+
 import babase
 
 import _bascenev1
@@ -75,7 +78,7 @@ class HostRequirements:
     (see :func:`connect_to_party`).
     """
 
-    asset_packages: list[str] = field(default_factory=list)
+    asset_packages: list[ApverNum] = field(default_factory=list)
     password_required: bool = False
 
 
@@ -153,7 +156,12 @@ def fetch_host_requirements(
     if not isinstance(asset_packages, list):
         asset_packages = []
     return HostRequirements(
-        asset_packages=[pkg for pkg in asset_packages if isinstance(pkg, str)],
+        # Hosts advertise numeric ids as text (engine package keys).
+        asset_packages=[
+            ApverNum(int(pkg))
+            for pkg in asset_packages
+            if isinstance(pkg, str) and pkg.isdigit()
+        ],
         password_required=bool(merged.get('pw')),
     )
 
@@ -349,7 +357,7 @@ def connect_to_party(
 
 
 async def resolve_asset_packages_with_dialog(
-    asset_packages: list[str],
+    asset_packages: list[ApverNum],
     *,
     task: asyncio.Task[None] | None,
     context: str,
@@ -369,7 +377,7 @@ async def resolve_asset_packages_with_dialog(
     # The wrapper import stays deferred: bascenev1 is fully imported by
     # the time this runs; the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import builtinassets
+    from bascenev1 import _builtinassets
 
     dialog: babase.SimpleDialog | None = None
 
@@ -381,10 +389,12 @@ async def resolve_asset_packages_with_dialog(
         nonlocal dialog
         if dialog is None and babase.app.env.gui:
             dialog = babase.SimpleDialog(
-                title=builtinassets.strings.ui.updating,
+                title=_builtinassets.strings.ui.updating,
                 progress=0.0,
-                button_label=builtinassets.strings.ui.cancel,
+                button_label=_builtinassets.strings.ui.cancel,
                 on_button=on_cancel,
+                # (Also covers the OK the error path swaps in.)
+                cancel_activates_button=True,
             )
 
     def on_update(
@@ -402,35 +412,86 @@ async def resolve_asset_packages_with_dialog(
             allow_downloads=True,
             on_download_starting=ensure_dialog,
             on_progress=babase.make_progress_reporter(on_update),
+            label='join content',
         )
     except asyncio.CancelledError:
         if dialog is not None:
             dialog.dismiss()
         netlog.info('Content download cancelled (%s).', context)
         return False
-    except Exception:
+    except Exception as exc:
         # Per the no-mid-game-downloads design, proceeding without the
         # required content would just strand us (net: at the session
         # entry check; replay: at the first missing asset) -- so fail
         # cleanly here.
-        netlog.exception('Content resolve failed (%s).', context)
+        specific = _resolve_failure_message(exc)
+        message: str | babase.LangStr
+        if specific is None:
+            netlog.exception('Content resolve failed (%s).', context)
+            message = _builtinassets.strings.net.unavailable_no_connection
+        else:
+            # An expected refusal (no access, sign-in needed, ...): say
+            # why rather than logging it as an error.
+            netlog.warning('Content resolve refused (%s): %s', context, exc)
+            message = specific
         if dialog is not None:
             dialog.update(
-                title=builtinassets.strings.ui.error,
-                message=builtinassets.strings.net.unavailable_no_connection,
+                title=_builtinassets.strings.ui.error,
+                message=message,
                 progress=None,
-                button_label=builtinassets.strings.ui.ok,
+                button_label=_builtinassets.strings.ui.ok,
                 on_button=dialog.dismiss,
             )
         else:
-            babase.screenmessage(
-                builtinassets.strings.net.unavailable_no_connection,
-                color=(1, 0, 0),
-            )
+            babase.screenmessage(message, color=(1, 0, 0))
+        strip_exception_tracebacks(exc)
         return False
     if dialog is not None:
         dialog.dismiss()
     return True
+
+
+def _resolve_failure_message(
+    exc: Exception,
+) -> str | babase.LangStr | None:
+    """A specific message for an expected content-resolve refusal.
+
+    None for anything unexpected (a network failure, a server bug),
+    which gets the generic no-connection error instead.
+    """
+    # Deferred like _resolve_with_dialog's (the cycle is structural
+    # only; bascenev1 is fully imported by the time this runs).
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import _builtinassets
+
+    if not isinstance(exc, babase.AssetResolveError) or exc.code is None:
+        return None
+
+    code = exc.code
+    pkg = exc.package
+    if pkg is not None and code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+    ):
+        netstrs = _builtinassets.strings.net
+        if code is AssetPackageResolveError.ACCESS_DENIED:
+            return netstrs.asset_package_access_denied(
+                package=pkg.name, owner=pkg.owner
+            )
+        return netstrs.asset_package_auth_required(
+            package=pkg.name, owner=pkg.owner
+        )
+    if code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+        AssetPackageResolveError.CLIENT_TOO_OLD,
+        AssetPackageResolveError.CONTENT,
+    ):
+        # The server's own wording (older servers name no package; it
+        # also says what to do for an outdated build or broken source
+        # content).
+        return exc.server_message
+    return None
 
 
 class _Cancelled:
@@ -509,10 +570,10 @@ def _interpret_probe_result(
         # by the time this runs; the cycle pylint sees is structural
         # only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import _builtinassets
 
         babase.screenmessage(
-            builtinassets.strings.net.connection_failed,
+            _builtinassets.strings.net.connection_failed,
             color=(1, 0, 0),
         )
         return None, False

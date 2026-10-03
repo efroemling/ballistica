@@ -3,14 +3,20 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_SPAZ_NODE_H_
 #define BALLISTICA_SCENE_V1_NODE_SPAZ_NODE_H_
 
+#include <initializer_list>
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/dynamics/bg/bg_dynamics_character.h"
+#include "ballistica/base/dynamics/joint_fixed_ef.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/node/spaz_pose.h"
 #include "ballistica/scene_v1/support/player.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 
 namespace ballistica::scene_v1 {
 
@@ -50,7 +56,7 @@ class SpazNode : public Node {
     area_of_interest_radius_ = val;
   }
   auto name() const -> std::string { return name_; }
-  void set_name(const std::string& val) { name_ = val; }
+  void set_name(const std::string& val);
   auto counter_text() const -> std::string { return counter_text_; }
   void set_counter_text(const std::string& val) { counter_text_ = val; }
   auto mini_billboard_1_texture() const -> SceneTexture* {
@@ -121,9 +127,12 @@ class SpazNode : public Node {
   void set_invincible(bool val) { invincible_ = val; }
   auto name_color() const -> std::vector<float> { return name_color_; }
   void SetNameColor(const std::vector<float>& vals);
-  auto highlight() const -> std::vector<float> { return highlight_; }
+  // These read back the attrs as set, not what we draw (which may be
+  // the spaz def's own; see use_spaz_def_color/highlight) -- stream
+  // dumps for late joiners rebuild nodes from these getters.
+  auto highlight() const -> std::vector<float> { return highlight_attr_; }
   void set_highlight(const std::vector<float>& vals);
-  auto color() const -> std::vector<float> { return color_; }
+  auto color() const -> std::vector<float> { return color_attr_; }
   void SetColor(const std::vector<float>& vals);
   auto hurt() const -> float { return hurt_; }
   void SetHurt(float val);
@@ -149,6 +158,24 @@ class SpazNode : public Node {
   void SetDead(bool val);
   auto style() const -> std::string { return style_; }
   void SetStyle(const std::string& val);
+
+  /// Session-level spaz definition. When set, the explicit media
+  /// attrs (meshes/textures/sounds), 'style', and 'highlight' are
+  /// ignored entirely: physique comes from the definition, and so does
+  /// the look -- or, until the definition's media is available
+  /// locally (still downloading, unavailable, or a form this client
+  /// doesn't understand), the app-mode-supplied standin character (see
+  /// SceneV1AssetSet's character_standin group). Unset (the default)
+  /// means the legacy explicit-media form. See
+  /// docs/initiatives/character-skins.md.
+  auto spaz_def() const -> SpazDef* { return spaz_def_.get(); }
+  void SetSpazDef(SpazDef* val);
+  auto use_spaz_def_color() const -> bool { return use_spaz_def_color_; }
+  void SetUseSpazDefColor(bool val);
+  auto use_spaz_def_highlight() const -> bool {
+    return use_spaz_def_highlight_;
+  }
+  void SetUseSpazDefHighlight(bool val);
   auto GetKnockout() const -> float {
     return static_cast<float>(knockout_) / 255.0f;
   }
@@ -244,19 +271,8 @@ class SpazNode : public Node {
   void set_demo_mode(bool val) { demo_mode_ = val; }
 
  private:
-  enum ShatterDamage {
-    kNeckJointBroken = 1u << 0u,
-    kPelvisJointBroken = 1u << 1u,
-    kUpperLeftLegJointBroken = 1u << 2u,
-    kUpperRightLegJointBroken = 1u << 3u,
-    kLowerLeftLegJointBroken = 1u << 4u,
-    kLowerRightLegJointBroken = 1u << 5u,
-    kUpperLeftArmJointBroken = 1u << 6u,
-    kUpperRightArmJointBroken = 1u << 7u,
-    kLowerLeftArmJointBroken = 1u << 8u,
-    kLowerRightArmJointBroken = 1u << 9u
-  };
   void PlayHurtSound();
+  void DrawDebugBodies_(base::FrameDef* frame_def);
   void DrawBodyParts(base::ObjectComponent* c, bool shading, float death_fade,
                      float death_scale, float* add_color);
   void SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
@@ -271,7 +287,7 @@ class SpazNode : public Node {
   // Create a fixed joint between two bodies.
   // The anchor is by default at the center of the first body.
   auto CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls, float ld,
-                        float as, float ad) -> JointFixedEF*;
+                        float as, float ad) -> base::JointFixedEF*;
 
   // Same but more explicit; provide anchor offsets for the two bodies.
   // This also moves the second body based on those values so the anchor
@@ -279,7 +295,7 @@ class SpazNode : public Node {
   auto CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls, float ld,
                         float as, float ad, float a1x, float a1y, float a1z,
                         float a2x, float a2y, float a2z, bool reposition = true)
-      -> JointFixedEF*;
+      -> base::JointFixedEF*;
   void Throw(bool withBombButton);
 
   // Reset to a standing, non-moving state at the given point.
@@ -299,10 +315,106 @@ class SpazNode : public Node {
   }
   void DropHeldObject();
   void ApplyTorque(float x, float y, float z);
+  // The classic Zoe hair rig (legacy female-hair style): four main-sim
+  // bodies synced host-to-client like any limb.
   void CreateHair();
   void DestroyHair();
+  // Definition attachments (hair tufts, antennas, static props). Purely
+  // cosmetic and client-local: a character with any dynamic attachment
+  // gets one bg-dynamics character rig (see
+  // docs/initiatives/bg-dynamics-channels.md) fed the head, torso and
+  // pelvis transforms every step; results draw relative to each
+  // body's current pose. The rig exists only while something dynamic
+  // hangs off the character.
+  void UpdateAttachments_();
+  // bg limbs: add this rig's arms/legs to the character rig config,
+  // driven by joint_targets_ each step.
+  void BuildLimbRigConfig_(base::BGDynamicsCharacterKind::Config* config);
+  // Which limb backend this spaz uses: the bg-dynamics rig (latest
+  // protocol) or the main-sim bodies (older servers). A dev override
+  // (BA_SPAZ_LIMBS=main|bg; test_game_run --limbs) wins for A/B tests.
+  auto UseBgLimbs_() const -> bool;
+  // The transform a limb's display mesh is drawn with (limb indices as
+  // in BuildLimbRigConfig_). bg limbs: the rig's relative pose composed
+  // onto the anchor body's current transform, or the rig's world pose
+  // once shattered (loose pieces have no anchor). Main-sim limbs: the
+  // body's transform. False when nothing is available to draw (the rig
+  // output for a fresh spaz is a step or two away).
+  auto LimbRenderMatrix_(int limb, Matrix44f* m) -> bool;
+  auto AttachTargetBody_(base::CharacterAttachTarget target) -> RigidBody*;
+  void SnapAttachments_();
+  void DrawAttachments_(base::ObjectComponent* c, bool shading,
+                        float death_scale);
   void UpdateBodiesForStyle();
+
+  // (Re)derive everything style_ and spaz_def_ drive. Style always
+  // supplies the physique (torso/leg sizes, hair bodies, gait) since
+  // that is sim state every peer must agree on from inline stream data;
+  // it supplies the look (eyes, wings, flippers, reflection...) only in
+  // the legacy form. In character form the look comes from the
+  // character -- for now always the standard-spaz standin -- and can be
+  // swapped later without touching the sim.
+  void ApplyStyle_();
+  // Character-form half of ApplyStyle_().
+  void ApplyCharacterDef_();
+  // Set the color we draw with (and the shadow color derived from it).
+  void SetDrawColor_(const std::vector<float>& vals);
+  // Derive the drawn color/highlight from attrs, flags, and def.
+  void UpdateDrawColors_();
+
+  // Effective-media resolution: what we actually draw and play. In the
+  // legacy form (no character) these read the explicit media attrs; in
+  // character form they read the definition's media once it is local,
+  // and the app-mode-supplied standin until then. Draw/audio code goes
+  // through these exclusively so the forms never mix.
+  auto CharacterForm_() const -> bool { return spaz_def_.exists(); }
+  auto MeshData_(const Object::Ref<SceneMesh>& explicit_mesh,
+                 const Object::Ref<base::MeshAsset>& standin,
+                 Object::Ref<base::MeshAsset> base::BasicSpazMedia::* def_field)
+      const -> base::MeshAsset*;
+  auto TextureData_(
+      const Object::Ref<SceneTexture>& explicit_texture,
+      const Object::Ref<base::TextureAsset>& standin,
+      Object::Ref<base::TextureAsset> base::BasicSpazMedia::* def_field) const
+      -> base::TextureAsset*;
+  auto RandomSoundData_(
+      const std::vector<Object::Ref<SceneSound> >& explicit_sounds,
+      std::initializer_list<const Object::Ref<base::SoundAsset>*> standin,
+      std::vector<Object::Ref<base::SoundAsset> > base::BasicSpazMedia::*
+          def_field) const -> base::SoundAsset*;
+  auto HeadMeshData_() const -> base::MeshAsset*;
+  auto TorsoMeshData_() const -> base::MeshAsset*;
+  auto PelvisMeshData_() const -> base::MeshAsset*;
+  auto UpperArmMeshData_() const -> base::MeshAsset*;
+  auto ForearmMeshData_() const -> base::MeshAsset*;
+  auto HandMeshData_() const -> base::MeshAsset*;
+  auto UpperLegMeshData_() const -> base::MeshAsset*;
+  auto LowerLegMeshData_() const -> base::MeshAsset*;
+  auto ToesMeshData_() const -> base::MeshAsset*;
+  auto ColorTextureData_() const -> base::TextureAsset*;
+  auto ColorMaskTextureData_() const -> base::TextureAsset*;
+  auto RandomJumpSound_() const -> base::SoundAsset*;
+  auto RandomAttackSound_() const -> base::SoundAsset*;
+  auto RandomImpactSound_() const -> base::SoundAsset*;
+  auto RandomDeathSound_() const -> base::SoundAsset*;
+  auto RandomPickupSound_() const -> base::SoundAsset*;
+  auto RandomFallSound_() const -> base::SoundAsset*;
+  auto WingMeshData_() const -> base::MeshAsset*;
+  auto WingTextureData_() const -> base::TextureAsset*;
+  auto WingTintTextureData_() const -> base::TextureAsset*;
   void UpdateJoints();
+  auto PoseJoints_() -> SpazPose::Joints;
+  // The main-sim joint behind a SpazJoint index.
+  auto SimJoint_(int joint) -> base::JointFixedEF*;
+  // Seed the joint targets from the freshly built joints (anchors, rest
+  // rotations, springs), so fields the driver never touches keep their
+  // construction-time values.
+  void InitJointTargets_();
+  // Main-sim limb backend: copy every joint target onto its joint.
+  void ApplyJointTargets_();
+  // Whether this scene's protocol puts the punch region on the synthetic
+  // fist (SpazPose) rather than the lower-arm body.
+  auto UseSyntheticPunch_() const -> bool;
 #if !BA_HEADLESS_BUILD
   class FullShadowSet;
   class SimpleShadowSet;
@@ -334,6 +446,13 @@ class SpazNode : public Node {
   std::vector<Object::Ref<SceneSound> > fall_sounds_;
   Object::WeakRef<Node> hold_node_;
   std::string style_{"spaz"};
+  Object::Ref<SpazDef> spaz_def_;
+  base::MediaRetryPacer media_retry_pacer_;
+  // Whether ApplyCharacterDef_ last applied the definition's real look
+  // (vs the standin's). Definitions are shared between nodes, so
+  // another node's retry can make the media ready without us hearing
+  // about it; Step() catches up when this lags.
+  bool character_look_applied_{};
   Object::WeakRef<Player> source_player_;
   std::string curse_timer_txt_;
   base::TextGroup curse_timer_text_group_;
@@ -383,6 +502,9 @@ class SpazNode : public Node {
   float base_pelvis_roller_anchor_offset_{};
   std::vector<float> color_{1.0f, 1.0f, 1.0f};
   std::vector<float> highlight_{0.5f, 0.5f, 0.5f};
+  // Tints the color mask's blue channel. Only character definitions
+  // set it (highlight2); white (the colorize no-op) otherwise.
+  std::vector<float> highlight2_{1.0f, 1.0f, 1.0f};
   std::vector<float> shadow_color_{0.5f, 0.5f, 0.5f};
   Vector3f wing_pos_left_{0.0f, 0.0f, 0.0f};
   Vector3f wing_vel_left_{0.0f, 0.0f, 0.0f};
@@ -448,29 +570,29 @@ class SpazNode : public Node {
   Object::Ref<RigidBody> lower_left_leg_body_;
   Object::Ref<RigidBody> left_toes_body_;
   Object::Ref<RigidBody> right_toes_body_;
-  JointFixedEF* upper_right_arm_joint_{};
-  JointFixedEF* lower_right_arm_joint_{};
-  JointFixedEF* upper_left_arm_joint_{};
-  JointFixedEF* lower_left_arm_joint_{};
-  JointFixedEF* upper_right_leg_joint_{};
-  JointFixedEF* lower_right_leg_joint_{};
-  JointFixedEF* upper_left_leg_joint_{};
-  JointFixedEF* lower_left_leg_joint_{};
-  JointFixedEF* left_toes_joint_{};
-  JointFixedEF* left_toes_joint_2_{};
-  JointFixedEF* right_toes_joint_{};
-  JointFixedEF* right_toes_joint_2_{};
-  JointFixedEF* right_leg_ik_joint_{};
-  JointFixedEF* left_leg_ik_joint_{};
-  JointFixedEF* right_arm_ik_joint_{};
-  JointFixedEF* left_arm_ik_joint_{};
+  base::JointFixedEF* upper_right_arm_joint_{};
+  base::JointFixedEF* lower_right_arm_joint_{};
+  base::JointFixedEF* upper_left_arm_joint_{};
+  base::JointFixedEF* lower_left_arm_joint_{};
+  base::JointFixedEF* upper_right_leg_joint_{};
+  base::JointFixedEF* lower_right_leg_joint_{};
+  base::JointFixedEF* upper_left_leg_joint_{};
+  base::JointFixedEF* lower_left_leg_joint_{};
+  base::JointFixedEF* left_toes_joint_{};
+  base::JointFixedEF* left_toes_joint_2_{};
+  base::JointFixedEF* right_toes_joint_{};
+  base::JointFixedEF* right_toes_joint_2_{};
+  base::JointFixedEF* right_leg_ik_joint_{};
+  base::JointFixedEF* left_leg_ik_joint_{};
+  base::JointFixedEF* right_arm_ik_joint_{};
+  base::JointFixedEF* left_arm_ik_joint_{};
   float last_stand_body_orient_x_{};
   float last_stand_body_orient_z_{};
-  JointFixedEF* neck_joint_{};
-  JointFixedEF* pelvis_joint_{};
-  JointFixedEF* roller_ball_joint_{};
+  base::JointFixedEF* neck_joint_{};
+  base::JointFixedEF* pelvis_joint_{};
+  base::JointFixedEF* roller_ball_joint_{};
   dJointID a_motor_brakes_{};
-  JointFixedEF* stand_joint_{};
+  base::JointFixedEF* stand_joint_{};
   dJointID a_motor_roller_{};
   int8_t lr_{};
   int8_t ud_{};
@@ -506,15 +628,33 @@ class SpazNode : public Node {
   bool flapping_{};
   bool holding_something_{};
   bool throwing_{};
-  bool head_back_{};
   bool female_{};
   bool female_hair_{};
   bool eyeless_{};
-  bool fat_{};
+  bool draw_hair_{};
+  // Per-eye drawing styles, the vocabulary the draw code consumes
+  // (character definitions carry these directly; the legacy style
+  // presets' eye flags fold down into them in ApplyStyle_).
+  base::CharacterEyeStyle eye_style_left_{base::CharacterEyeStyle::kRegular};
+  base::CharacterEyeStyle eye_style_right_{base::CharacterEyeStyle::kRegular};
+  // Numeric gait/physique slots (the same vocabulary a character
+  // definition carries; legacy presets fill them from their flags).
+  float thigh_radius_{0.04f};
+  float ankle_radius_{0.07f};
+  float step_separation_{0.08f};
+  float idle_arm_stiffness_{1.0f};
+  float arm_swing_{0.6f};
+  float idle_sway_{0.05f};
+  // The color/highlight attrs as set; color_/highlight_ are what we
+  // draw with (UpdateDrawColors_): the definition's own instead when
+  // in definition form with the matching use_spaz_def_* flag on.
+  std::vector<float> highlight_attr_{0.5f, 0.5f, 0.5f};
+  std::vector<float> color_attr_{1.0f, 1.0f, 1.0f};
+  bool use_spaz_def_color_{};
+  bool use_spaz_def_highlight_{};
   bool pirate_{};
   bool flippers_{};
   bool frosty_{};
-  bool dull_reflection_{};
   bool ninja_{};
   bool punch_right_{};
   bool last_hit_was_punch_{};
@@ -525,18 +665,54 @@ class SpazNode : public Node {
   float pickup_release_time_ms_{};
   base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
-  JointFixedEF* hair_front_right_joint_{};
+  base::JointFixedEF* hair_front_right_joint_{};
   Object::Ref<RigidBody> hair_front_left_body_;
-  JointFixedEF* hair_front_left_joint_{};
+  base::JointFixedEF* hair_front_left_joint_{};
   Object::Ref<RigidBody> hair_ponytail_top_body_;
-  JointFixedEF* hair_ponytail_top_joint_{};
+  base::JointFixedEF* hair_ponytail_top_joint_{};
   Object::Ref<RigidBody> hair_ponytail_bottom_body_;
-  JointFixedEF* hair_ponytail_bottom_joint_{};
+  base::JointFixedEF* hair_ponytail_bottom_joint_{};
+  // Per target body: the active definition attachments (a copy, so
+  // changes are detected) and where that body's dynamic segments start
+  // in the rig's flat body list. One rig covers the whole character
+  // (null when nothing dynamic is attached); rig_snap_ is a pending
+  // re-place request.
+  struct AttachmentTarget {
+    std::vector<base::BasicSpazDef::AttachmentDef> defs;
+    int body_start{};
+  };
+  AttachmentTarget attachment_targets_[base::kCharacterAttachTargetCount];
+  std::unique_ptr<base::BGDynamicsCharacterRig> attachment_rig_;
+  bool rig_snap_{};
+  // Whether the current rig carries bg limbs, and the physique it was
+  // built for (a style change rebuilds it).
+  bool rig_has_limbs_{};
+  // Whether this spaz has main-sim limb bodies and joints at all. False
+  // when the bg rig owns the limbs (UseBgLimbs_ at construction): then
+  // every *_arm_body_/*_leg_body_/*_toes_body_ ref and limb joint
+  // pointer stays null, the pose driver's limb targets feed only the
+  // rig, and the punch region is always the synthetic fist.
+  bool main_sim_limbs_{true};
+  // Dev aid (BA_BG_LIMBS_TRACE): recent main-sim limb poses relative to
+  // their anchors, so the trace can score the bg rig against the pose
+  // from a step or two ago (its output is that stale).
+  float limb_rel_hist_[4][10][3]{};
+  int limb_rel_hist_head_{};
+  float rig_limb_thigh_radius_{};
+  float rig_limb_ankle_radius_{};
+  // Torso radius the rig's torso twin was built with (its collision
+  // shape and mass).
+  float rig_torso_radius_{};
   float hold_hand_offset_left_[3]{};
   float hold_hand_offset_right_[3]{};
   float jolt_head_vel_[3]{0.0f, 0.0f, 0.0f};
   millisecs_t last_shatter_test_time_{};
-  float roll_amt_{};
+  // Limb/neck pose driver (run cycle, punches, holds, ...); owns the
+  // run-cycle phase that gets synced with the rig. It writes
+  // joint_targets_; backends apply those (the main sim via
+  // ApplyJointTargets_, the bg rig over its channel).
+  SpazPose pose_;
+  SpazJointTarget joint_targets_[kSpazJointCount];
   float damage_smoothed_{};
   float damage_out_{};
   float punch_dir_x_{1.0f};
@@ -574,7 +750,10 @@ class SpazNode : public Node {
   float run_gas_{};
   float hurt_{};
   float hurt_smoothed_{};
-  millisecs_t last_hurt_change_time_{};
+  // Starts long ago rather than at 0: our life bar shows for a while
+  // after a hurt change, and a spaz in a young scene (a ui viewer's, or
+  // any spawned in its first seconds) has had none.
+  millisecs_t last_hurt_change_time_{-1000000};
   millisecs_t death_time_{};
 };
 

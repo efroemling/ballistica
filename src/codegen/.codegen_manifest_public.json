@@ -1,6 +1,14 @@
 [
  "src/assets/ba_data/python/babase/_generated/__init__.py",
+ "src/assets/ba_data/python/babase/_generated/base_asset_set.py",
  "src/assets/ba_data/python/babase/_generated/enums.py",
+ "src/assets/ba_data/python/bascenev1/_generated/__init__.py",
+ "src/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py",
+ "src/assets/ba_data/python/bauiv1/_generated/__init__.py",
+ "src/assets/ba_data/python/bauiv1/_generated/ui_asset_set.py",
+ "src/ballistica/base/generated/base_asset_set.h",
+ "src/ballistica/base/generated/base_asset_set_placeholders.inc",
+ "src/ballistica/base/generated/base_asset_set_unpack.inc",
  "src/ballistica/base/generated/pyembed/binding_base.inc",
  "src/ballistica/base/generated/pyembed/binding_base_app.inc",
  "src/ballistica/classic/generated/pyembed/binding_classic.inc",
@@ -8,6 +16,10 @@
  "src/ballistica/core/generated/pyembed/env.inc",
  "src/ballistica/core/generated/python_modules_monolithic.h",
  "src/ballistica/scene_v1/generated/pyembed/binding_scene_v1.inc",
+ "src/ballistica/scene_v1/generated/scene_asset_set.h",
+ "src/ballistica/scene_v1/generated/scene_asset_set_unpack.inc",
  "src/ballistica/template_fs/generated/pyembed/binding_template_fs.inc",
- "src/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc"
+ "src/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc",
+ "src/ballistica/ui_v1/generated/ui_asset_set.h",
+ "src/ballistica/ui_v1/generated/ui_asset_set_unpack.inc"
 ]

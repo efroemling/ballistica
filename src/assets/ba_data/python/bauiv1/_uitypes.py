@@ -18,6 +18,32 @@ if TYPE_CHECKING:
     import bauiv1
 
 
+def snap_slider_value(
+    value: float, *, min_value: float, max_value: float, increment: float
+) -> float:
+    """A :func:`bauiv1.sliderwidget` value, cleaned up for storing.
+
+    The widget works in single precision and snaps to its increment
+    grid in that arithmetic, so it reports things like
+    ``0.800000011920929`` for the ``0.8`` a user picked. This returns
+    the value at the same grid point in the decimal form the user
+    would write, clamped to the range -- what config files and page
+    state should hold. Every consumer of slider values goes through
+    here so they agree on it.
+
+    An ``increment`` of zero or less means no grid; the value is
+    only clamped.
+    """
+    if increment <= 0.0:
+        snapped = value
+    else:
+        steps = round((value - min_value) / increment)
+        # (Nine decimals: past single precision's own noise but well
+        # short of double's, so the grid value comes out exact.)
+        snapped = round(min_value + steps * increment, 9)
+    return float(min(max_value, max(min_value, snapped)))
+
+
 # REMOVE WHEN API 9 SUPPORT ENDS
 def uicleanupcheck(obj: Any, widget: bauiv1.Widget) -> None:
     """
@@ -79,7 +105,7 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
     @override
     def _do_submit(self) -> None:
         if self.widget:
-            _bauiv1.textwidget(edit=self.widget, invoke_return_press=True)
+            _bauiv1.textwidget(edit=self.widget, invoke_submit=True)
 
 
 class RootUIUpdatePause:
@@ -138,11 +164,29 @@ class UIOpenState:
     tally.
     """
 
-    __slots__ = ['stateid']
+    __slots__ = ['stateid', '_dormant']
 
     def __init__(self, stateid: str) -> None:
         self.stateid = stateid
+        self._dormant = False
         _bauiv1.ui_open_state_change(self.stateid, 1)
 
+    @property
+    def dormant(self) -> bool:
+        """Whether this state is currently not counting as open."""
+        return self._dormant
+
+    def set_dormant(self, dormant: bool) -> None:
+        """Stop (or resume) counting as open while staying alive.
+
+        For states held somewhere that isn't actually showing anything,
+        such as a saved UI state waiting to be restored after a game.
+        """
+        if dormant == self._dormant:
+            return
+        self._dormant = dormant
+        _bauiv1.ui_open_state_change(self.stateid, -1 if dormant else 1)
+
     def __del__(self) -> None:
-        _bauiv1.ui_open_state_change(self.stateid, -1)
+        if not self._dormant:
+            _bauiv1.ui_open_state_change(self.stateid, -1)

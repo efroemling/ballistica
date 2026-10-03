@@ -3,6 +3,7 @@
 #include "ballistica/scene_v1/node/bomb_node.h"
 
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ode/ode_collision.h"
 #include "ode/ode_common.h"
@@ -42,7 +43,14 @@ auto BombNode::InitType() -> NodeType* {
   return node_type;
 }
 
-BombNode::BombNode(Scene* scene) : PropNode(scene, node_type) {}
+BombNode::BombNode(Scene* scene)
+    : PropNode(scene, node_type)
+#if !BA_HEADLESS_BUILD
+      ,
+      fuse_(scene->bg_dynamics_world())
+#endif  // !BA_HEADLESS_BUILD
+{
+}
 
 void BombNode::OnCreate() {
   // We can't do this in our constructor because
@@ -81,8 +89,8 @@ void BombNode::Draw(base::FrameDef* frame_def) {
   float g = 0.1f * intensity;
   float b = 0.1f * intensity;
   float a = 0.0f;
-  g_base->graphics->DrawBlotchSoft(light_translate_, s, r, g, b, a);
-  g_base->graphics->DrawBlotchSoftObj(light_translate_, s, r, g, b, a);
+  scene()->render_view()->DrawBlotchSoft(light_translate_, s, r, g, b, a);
+  scene()->render_view()->DrawBlotchSoftObj(light_translate_, s, r, g, b, a);
 #endif  // !BA_HEADLESS_BUILD
 }
 

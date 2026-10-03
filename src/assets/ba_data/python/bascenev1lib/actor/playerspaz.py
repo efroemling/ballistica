@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets, classicassets
+from bascenev1 import _builtinassets, _classicassets
 
 from bascenev1lib.actor.spaz import Spaz, PickupMessage
 
@@ -97,6 +97,7 @@ class PlayerSpaz(Spaz):
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
+        cloud_spaz_def: bs.SpazDef | None = None,
         powerups_expire: bool = True,
     ):
         """Create a spaz for the provided bascenev1.Player.
@@ -109,6 +110,7 @@ class PlayerSpaz(Spaz):
             color=color,
             highlight=highlight,
             character=character,
+            cloud_spaz_def=cloud_spaz_def,
             source_player=player,
             start_invincible=True,
             powerups_expire=powerups_expire,
@@ -264,12 +266,12 @@ class PlayerSpaz(Spaz):
                     if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
                         bs.app.classic.last_spaz_turbo_warn_time = now
                         bs.broadcastmessage(
-                            classicassets.strings.game.turbo_warning(
+                            _classicassets.strings.game.turbo_warning(
                                 name=self.node.name
                             ),
                             color=(1, 0.5, 0),
                         )
-                        builtinassets.audio.error.get().play()
+                        _builtinassets.audio.error.get().play()
         else:
             self._turbo_filter_times = {}
             self._turbo_filter_time_bucket = t_bucket
@@ -393,7 +395,7 @@ class PlayerSpaz(Spaz):
 
                 killed = not (msg.immediate or left_game_cleanly)
 
-                activity = self._activity()
+                activity = self.getactivity(doraise=False)
 
                 player = self.getplayer(bs.Player, False)
                 if not killed:
@@ -449,7 +451,7 @@ class PlayerSpaz(Spaz):
                 # Hit confirmation for whoever landed it.
                 _send_player_feedback(source_player, 'impact_dealt')
             super().handlemessage(msg)  # Augment standard behavior.
-            activity = self._activity()
+            activity = self.getactivity(doraise=False)
             if activity is not None and self._player.exists():
                 activity.handlemessage(PlayerSpazHurtMessage(self))
 

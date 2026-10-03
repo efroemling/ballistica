@@ -22,11 +22,61 @@ format is identical (``[automation] <tag> <status> <payload>`` via
 """
 
 import json
+import time
 
 import babase
 import _bauiv1
 
-from babase._automation import _badev, _emit, _evaluate_lstr_json, screenshot
+from babase._automation import _badev, _emit, _evaluate_lstr_json
+
+# The base-level helpers live in babase (headless builds have no
+# bauiv1), but a UI-driving script shouldn't need two imports: re-export
+# them so ``import bauiv1._automation as a`` reaches every helper.
+# (``a.scroll_at`` here used to be an AttributeError, which cost real
+# debugging time.)
+from babase._automation import (
+    available,
+    ping,
+    fps,
+    shutdown,
+    screenshot,
+    drag_at,
+    mouse_button_at,
+    ui_nav,
+    window_size,
+    set_window_size,
+    click_at,
+    key_press,
+    key_release,
+    ensure_keyboard,
+    scroll_at,
+)
+
+__all__ = [
+    # Ours.
+    'press_by_id',
+    'press_by_label',
+    'scroll_by_id',
+    'wait_for_widget',
+    'inspect',
+    'dump_widgets',
+    # Re-exported from babase._automation.
+    'available',
+    'ping',
+    'fps',
+    'shutdown',
+    'screenshot',
+    'drag_at',
+    'mouse_button_at',
+    'ui_nav',
+    'window_size',
+    'set_window_size',
+    'click_at',
+    'key_press',
+    'key_release',
+    'ensure_keyboard',
+    'scroll_at',
+]
 
 # Toolbar special-widget names exposed by ``bauiv1.get_special_widget``.
 # Enumerated here so automation can reach buttons outside the main-window
@@ -280,29 +330,47 @@ def wait_for_widget(
         _emit(tag, 'fail', 'specify_one_of:widget_id|label_text')
         return
 
-    import time
+    _wait_for_widget_check(
+        widget_id, label_text, timeout_seconds, tag, time.monotonic()
+    )
 
-    start = time.monotonic()
 
-    def _check() -> None:
-        if widget_id is not None:
-            found = _bauiv1.widget_by_id(widget_id) is not None
-            ident = f'id:{widget_id}'
-        else:
-            found = bool(
-                _find_widgets(predicate=lambda w: _label_text(w) == label_text)
-            )
-            ident = f'label:{label_text!r}'
+def _wait_for_widget_check(
+    widget_id: str | None,
+    label_text: str | None,
+    timeout_seconds: float,
+    tag: str,
+    start: float,
+) -> None:
+    """One poll step for :func:`wait_for_widget`; reschedules itself.
 
-        elapsed = time.monotonic() - start
-        if found:
-            _emit(tag, 'ok', f'{ident} after {elapsed:.2f}s')
-        elif elapsed >= timeout_seconds:
-            _emit(tag, 'fail', f'timeout {ident} after {elapsed:.2f}s')
-        else:
-            babase.apptimer(0.1, _check)
+    Module level rather than nested inside :func:`wait_for_widget`,
+    because a *self-recursive* nested function holds itself in its own
+    closure cell -- a reference cycle minted on every call that only a
+    cyclic-gc pass can break. Passing the state in as arguments keeps
+    the recursion cycle-free.
+    """
+    if widget_id is not None:
+        found = _bauiv1.widget_by_id(widget_id) is not None
+        ident = f'id:{widget_id}'
+    else:
+        found = bool(
+            _find_widgets(predicate=lambda w: _label_text(w) == label_text)
+        )
+        ident = f'label:{label_text!r}'
 
-    _check()
+    elapsed = time.monotonic() - start
+    if found:
+        _emit(tag, 'ok', f'{ident} after {elapsed:.2f}s')
+    elif elapsed >= timeout_seconds:
+        _emit(tag, 'fail', f'timeout {ident} after {elapsed:.2f}s')
+    else:
+        babase.apptimer(
+            0.1,
+            lambda: _wait_for_widget_check(
+                widget_id, label_text, timeout_seconds, tag, start
+            ),
+        )
 
 
 def inspect(tag: str = 'inspect') -> None:
@@ -410,8 +478,19 @@ def _label_text(widget: object) -> str:
     raw: str | None = None
     for query in (_bauiv1.textwidget, _bauiv1.buttonwidget):
         try:
-            # Cast through Any since we accept opaque widget refs.
-            raw = str(query(query=widget))  # type: ignore[arg-type]
+            # Note the empty context. UI functions refuse to run with a
+            # context set, and driver-supplied code arrives here with
+            # the foreground context in place (the automation exec
+            # pushcall passes other_thread_use_fg_context=True so that
+            # driver code can touch gameplay). Without this, BOTH
+            # queries raise and every widget reports an empty label -
+            # which silently disables press_by_label, the dump's label
+            # column, and wait_for_widget(label_text=...). This is the
+            # documented idiom for the situation; see the
+            # babase.ContextRef.empty() docs.
+            with babase.ContextRef.empty():
+                # Cast through Any since we accept opaque widget refs.
+                raw = str(query(query=widget))  # type: ignore[arg-type]
             break
         except Exception:  # pylint: disable=broad-except
             continue

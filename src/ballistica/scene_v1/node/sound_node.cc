@@ -11,6 +11,7 @@
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
 
@@ -130,7 +131,7 @@ void SoundNode::SetMusic(bool val) {
 void SoundNode::Step() {
   // If we want to start playing, do so.
   if (!playing_ && sound_.exists()) {
-    base::AudioSource* s = g_base->audio->SourceBeginNew();
+    base::AudioSource* s = scene()->NewAudioSource();
     if (s) {
       assert(position_.size() == 3);
       s->SetPosition(position_[0], position_[1], position_[2]);

@@ -116,6 +116,10 @@
   [
    "gravity",
    "float-array"
+  ],
+  [
+   "legacy_spaz_limbs",
+   "bool"
   ]
  ],
  "sessionglobals": [
@@ -392,6 +396,10 @@
   [
    "always_show_health_bar",
    "bool"
+  ],
+  [
+   "health_bar_display",
+   "int"
   ]
  ],
  "light": [
@@ -644,6 +652,14 @@
   [
    "in_world",
    "bool"
+  ],
+  [
+   "flash",
+   "bool"
+  ],
+  [
+   "tint3_color",
+   "float-array"
   ]
  ],
  "terrain": [
@@ -1166,6 +1182,18 @@
   [
    "pickup_release_time_ms",
    "float"
+  ],
+  [
+   "spaz_def",
+   "spaz-def"
+  ],
+  [
+   "use_spaz_def_color",
+   "bool"
+  ],
+  [
+   "use_spaz_def_highlight",
+   "bool"
   ]
  ],
  "region": [
@@ -1259,6 +1287,58 @@
   ],
   [
    "showsubseconds",
+   "bool"
+  ]
+ ],
+ "localdisplay": [
+  [
+   "config",
+   "string"
+  ],
+  [
+   "visible",
+   "bool"
+  ]
+ ],
+ "depictiondisplay": [
+  [
+   "depiction",
+   "depiction"
+  ],
+  [
+   "position",
+   "float-array"
+  ],
+  [
+   "scale",
+   "float-array"
+  ],
+  [
+   "opacity",
+   "float"
+  ],
+  [
+   "attach",
+   "string"
+  ],
+  [
+   "h_align",
+   "string"
+  ],
+  [
+   "v_align",
+   "string"
+  ],
+  [
+   "vr_depth",
+   "float"
+  ],
+  [
+   "host_only",
+   "bool"
+  ],
+  [
+   "front",
    "bool"
   ]
  ]

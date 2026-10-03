@@ -18,6 +18,7 @@ class TerrainNode : public Node {
   explicit TerrainNode(Scene* scene);
   ~TerrainNode() override;
   void Draw(base::FrameDef* frame_def) override;
+  void DrawDebug_(base::FrameDef* frame_def);
   auto visible_in_reflections() const -> bool {
     return visible_in_reflections_;
   }
@@ -73,6 +74,9 @@ class TerrainNode : public Node {
   /// is holding a copy of it (physics, bg-dynamics).
   void UpdateTransform_();
   SceneCollisionMesh* bg_dynamics_collision_mesh_;
+  // The bg-dynamics world we've been added to, held so it is there to
+  // be taken out of again.
+  Object::Ref<base::BGDynamicsWorld> bg_dynamics_world_;
   bool vr_only_;
   bool bumper_;
   bool affect_bg_dynamics_;

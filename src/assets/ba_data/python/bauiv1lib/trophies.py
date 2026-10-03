@@ -6,8 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib import popup
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -63,7 +62,7 @@ class TrophiesWindow(popup.PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=classicassets.strings.ui.trophies,
+            text=_classicassets.strings.ui.trophies,
             maxwidth=200,
             # color=(1, 1, 1, 0.4),
             color=bui.app.ui_v1.title_color,
@@ -114,7 +113,7 @@ class TrophiesWindow(popup.PopupWindow):
             text=_commonassets.strings.compose.spaced_pair(
                 first=_commonassets.strings.values.total,
                 second=(
-                    classicassets.strings.league
+                    _classicassets.strings.league
                 ).power_ranking_points_equals(number=str(total_pts)),
             ),
             size=(0, 0),
@@ -162,7 +161,7 @@ class TrophiesWindow(popup.PopupWindow):
                 v_align='center',
             )
 
-            txt = (classicassets.strings.league).power_ranking_points_mult(
+            txt = (_classicassets.strings.league).power_ranking_points_mult(
                 number=str(t_mult)
             )
             bui.textwidget(
@@ -192,9 +191,9 @@ class TrophiesWindow(popup.PopupWindow):
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.5,
-                text=(classicassets.strings.league).power_ranking_points_equals(
-                    number=str(this_pts)
-                ),
+                text=(
+                    _classicassets.strings.league
+                ).power_ranking_points_equals(number=str(this_pts)),
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
@@ -212,5 +211,5 @@ class TrophiesWindow(popup.PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()

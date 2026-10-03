@@ -40,6 +40,23 @@ struct WidgetMessage {
 
   Type type{};
   bool has_keysym{};
+
+  /// For kShow: whether the scroll to bring the target into view should
+  /// animate. False snaps straight to the destination -- appropriate
+  /// when the content being scrolled within was itself just built, so
+  /// there is nothing on screen for the motion to read as movement
+  /// *from*. All four float slots are spoken for by the show-rect, so
+  /// this rides as its own field.
+  bool animate{true};
+
+  /// For kMouseCancel: whether the pointer was in fact released, just
+  /// outside a scroll area (which passes such releases on as cancels so
+  /// nothing inside treats them as clicks). A widget tracking a drag can
+  /// commit it rather than reverting. False for cancels meaning the
+  /// gesture was never theirs (a scroll area claiming it as a swipe, an
+  /// OS-level cancel).
+  bool released_outside{};
+
   BAKeysym keysym{};
   float fval1{};
   float fval2{};

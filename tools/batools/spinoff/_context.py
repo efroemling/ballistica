@@ -6,6 +6,7 @@
 
 import os
 import sys
+import shutil
 import fnmatch
 import tempfile
 import subprocess
@@ -1486,7 +1487,7 @@ class SpinoffContext:
         self._validate_final_lists()
         self._handle_recache_entities()
 
-        if os.system('which colordiff > /dev/null 2>&1') == 0:
+        if shutil.which('colordiff') is not None:
             display_diff_cmd = 'colordiff'
         else:
             print(
@@ -1555,15 +1556,16 @@ class SpinoffContext:
             else:
                 diff_src_path_full = src_path_full
                 delete_file_name = None
-            result = os.system(
-                f'diff "{diff_src_path_full}" "{dst_path_full}"'
-                f' > /dev/null 2>&1'
-            )
+            result = subprocess.run(
+                ['diff', diff_src_path_full, dst_path_full],
+                capture_output=True,
+                check=False,
+            ).returncode
             if result != 0:
                 print(f'\n{dst_path}:')
-                os.system(
-                    f'{display_diff_cmd} "{dst_path_full}"'
-                    f' "{diff_src_path_full}"'
+                subprocess.run(
+                    [display_diff_cmd, dst_path_full, diff_src_path_full],
+                    check=False,
                 )
                 print('')
 

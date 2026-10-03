@@ -148,6 +148,15 @@ _FLEET_MASTER_HOSTS = {
     'dev': 'dev.ballistica.net',
 }
 
+#: The master server proper per fleet (the prod entry above is the
+#: node-side regional endpoint), for the one thing bacloud sends the
+#: master directly: a session anomaly report.
+_FLEET_CLIENT_LOG_URLS = {
+    'prod': 'https://www.ballistica.net/api/v1/clientlog',
+    'test': 'https://test.ballistica.net/api/v1/clientlog',
+    'dev': 'https://dev.ballistica.net/api/v1/clientlog',
+}
+
 
 def _caller_build_number() -> int:
     """The engine build number to report to bacloud (0 if unset).
@@ -694,21 +703,44 @@ class App:
         environments where the first does not work -- an environment
         that cannot open a WebSocket cannot run the thing these tools
         exist to build for.
+
+        Establishment is retried a few times: in prod we dial a
+        regional load-balancer, so a fresh dial re-rolls which node we
+        land on. This papers over transient per-node refusals (a node
+        mid-retirement, a just-terminated instance still in the
+        balancer for a few seconds). Safe because nothing has executed
+        yet at establishment time.
         """
         from bacommontools.bacloudsession import BacloudSession
 
         assert self._server is not None
         bearer = self._api_key or self._state.login_token
-        session = BacloudSession.open(self._server, bearer)
-        if session is None:
-            raise CleanError(
-                f'Unable to open a connection to {self._server}.\n'
-                f'{_session_failure_detail()}'
-                f'bacloud needs a working WebSocket connection, the same'
-                f' as the game itself. Check for a proxy or firewall'
-                f' blocking WebSocket traffic.'
+        attempts = 4
+        for attempt in range(1, attempts + 1):
+            session = BacloudSession.open(
+                self._server,
+                bearer,
+                client_log_url=_FLEET_CLIENT_LOG_URLS.get(BA_FLEET),
             )
-        self._session = session
+            if session is not None:
+                self._session = session
+                return
+            if attempt < attempts:
+                if VERBOSE:
+                    print(
+                        f'bacloud: session attempt {attempt} of'
+                        f' {attempts} failed; retrying...',
+                        file=sys.stderr,
+                    )
+                time.sleep(1.5)
+        raise CleanError(
+            f'Unable to open a connection to {self._server}'
+            f' ({attempts} attempts).\n'
+            f'{_session_failure_detail()}'
+            f'bacloud needs a working WebSocket connection, the same'
+            f' as the game itself. Check for a proxy or firewall'
+            f' blocking WebSocket traffic.'
+        )
 
     def _end_session(self) -> None:
         """Tell the far end we're going, if we have one."""

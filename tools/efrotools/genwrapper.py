@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 
 if __name__ == '__main__':
 
-    # pylint: disable=invalid-name
-
     from efrotools.project import (
         getprojectconfig,
         get_public_legal_notice,

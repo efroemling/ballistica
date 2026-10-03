@@ -3,8 +3,8 @@
 """UI for upgrading V1 accounts to V2."""
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 
 class V2UpgradeWindow(bui.Window):
@@ -31,7 +31,7 @@ class V2UpgradeWindow(bui.Window):
                 ),
             )
         )
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
 
         bui.textwidget(
             parent=self._root_widget,
@@ -40,7 +40,7 @@ class V2UpgradeWindow(bui.Window):
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.v2_upgrade.device_account_upgrade(
+            text=_classicassets.strings.v2_upgrade.device_account_upgrade(
                 name=login_name
             ),
             maxwidth=self._width * 0.95,

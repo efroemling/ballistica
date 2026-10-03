@@ -124,6 +124,16 @@ class AppPlatform {
   /// Must be called in the logic thread.
   void StringEditorCancel();
 
+#pragma mark DEVICE CAPABILITIES -----------------------------------------------
+
+  /// Does this device have gyroscope hardware feeding
+  /// Input::PushGyroEvent()? Lets UI hide gyro-related options on
+  /// hardware that will never produce a sample -- including phones and
+  /// tablets that simply ship without the sensor -- rather than guessing
+  /// from the platform name. The value is queried once and cached (gyro
+  /// hardware does not come and go).
+  auto HasGyro() -> bool;
+
 #pragma mark MISC --------------------------------------------------------------
 
   auto ran_base_post_init() const { return ran_base_post_init_; }
@@ -162,6 +172,11 @@ class AppPlatform {
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
 
+  /// Platforms with gyro hardware plumbing should override this. Defaults
+  /// to false, so a platform that never feeds gyro samples needs no code
+  /// here at all.
+  virtual auto DoHasGyro() -> bool;
+
   virtual ~AppPlatform();
 
  private:
@@ -169,6 +184,8 @@ class AppPlatform {
 
   bool ran_base_post_init_{};
   bool web_overlay_open_{};
+  bool have_gyro_{};
+  bool have_gyro_value_{};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
   std::deque<char> stdin_buffer_;

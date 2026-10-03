@@ -2,6 +2,7 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 
+#include <cstdio>
 #include <list>
 #include <vector>
 
@@ -16,6 +17,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
+#include "ballistica/shared/generic/thread_cpu_time.h"
 
 namespace ballistica::base {
 
@@ -86,20 +88,30 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
     renderer_->set_pixel_scale(pixel_scale);
   }
   // Note: need to look at physical/virtual res plus the active render
-  // rect here; each can change independently of the others (ui-scale
-  // changes can move virtual res alone; a tv-border toggle can move the
-  // rect alone).
+  // rect and virtual bounds here; each can change independently of the
+  // others (ui-scale changes can move virtual res alone; a tv-border
+  // toggle can move the render rect alone; a cutout-inset change can
+  // move the bounds alone).
   const Rect& arect = settings->active_render_rect;
+  const Rect& vbrect = settings->virtual_bounds_rect;
   if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y
       || res_x_virtual_ != settings->resolution_virtual.x
       || res_y_virtual_ != settings->resolution_virtual.y
       || active_render_rect_.l != arect.l || active_render_rect_.r != arect.r
-      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t) {
+      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t
+      || virtual_bounds_rect_.l != vbrect.l
+      || virtual_bounds_rect_.r != vbrect.r
+      || virtual_bounds_rect_.b != vbrect.b
+      || virtual_bounds_rect_.t != vbrect.t) {
     res_x_ = settings->resolution.x;
     res_y_ = settings->resolution.y;
     res_x_virtual_ = settings->resolution_virtual.x;
     res_y_virtual_ = settings->resolution_virtual.y;
     active_render_rect_ = arect;
+    virtual_bounds_rect_ = vbrect;
+    virtual_outer_rect_ = Graphics::CalcVirtualOuterRect(
+        active_render_rect_, virtual_bounds_rect_, res_x_virtual_,
+        res_y_virtual_);
     if (renderer_) {
       renderer_->OnScreenSizeChange();
     }
@@ -166,9 +178,24 @@ auto GraphicsServer::TryRender() -> bool {
     // Only actually render if we have a screen and aren't in a hold.
     auto target = renderer()->screen_render_target();
     if (target != nullptr && render_hold_ == 0) {
+      // Under BA_RENDER_PROFILE (test_game_run --render-profile) we
+      // time how long frames take to submit. We count this thread's
+      // cpu time rather than wall time: drawing to the screen blocks
+      // until the display wants a frame, which otherwise swamps
+      // everything else. So this is what issuing draw calls costs us,
+      // not what the gpu then spends on them.
+      if (!render_profile_checked_) {
+        render_profile_checked_ = true;
+        render_profile_ = (getenv("BA_RENDER_PROFILE") != nullptr);
+      }
+      double t0 = render_profile_ ? ThreadCPUTimeMillisecs() : 0.0;
       PreprocessRenderFrameDef(frame_def);
+      double t1 = render_profile_ ? ThreadCPUTimeMillisecs() : 0.0;
       DrawRenderFrameDef(frame_def);
       FinishRenderFrameDef(frame_def);
+      if (render_profile_) {
+        UpdateRenderProfile_(t1 - t0, ThreadCPUTimeMillisecs() - t1);
+      }
       success = true;
 
 #if BA_ENABLE_AUTOMATION
@@ -187,6 +214,51 @@ auto GraphicsServer::TryRender() -> bool {
   }
 
   return success;
+}
+
+void GraphicsServer::UpdateRenderProfile_(double preprocess_ms,
+                                          double render_ms) {
+  render_profile_frames_++;
+  render_profile_preprocess_ms_ += preprocess_ms;
+  render_profile_render_ms_ += render_ms;
+  seconds_t now = g_core->AppTimeSeconds();
+  if (render_profile_window_start_ == 0.0) {
+    render_profile_window_start_ = now;
+  }
+  seconds_t elapsed = now - render_profile_window_start_;
+  if (elapsed < 5.0) {
+    return;
+  }
+  double frames = render_profile_frames_;
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer),
+           "render profile (gfx): %d frames in %.2fs (%.1f fps); cpu per"
+           " frame: preprocess %.0fus, render %.0fus",
+           render_profile_frames_, elapsed, frames / elapsed,
+           1000.0 * render_profile_preprocess_ms_ / frames,
+           1000.0 * render_profile_render_ms_ / frames);
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo, buffer);
+
+  // Counts, which unlike the timings above are exact.
+  Renderer::Stats* stats = renderer()->stats();
+  snprintf(buffer, sizeof(buffer),
+           "render profile (counts): per frame: draws %.2f, target begins"
+           " %.2f, clears %.2f, blits %.2f; offscreen target pixels %.0f",
+           static_cast<double>(stats->draw_calls) / frames,
+           static_cast<double>(stats->target_begins) / frames,
+           static_cast<double>(stats->clears) / frames,
+           static_cast<double>(stats->blits) / frames,
+           static_cast<double>(stats->target_pixels));
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo, buffer);
+  stats->draw_calls = 0;
+  stats->target_begins = 0;
+  stats->clears = 0;
+  stats->blits = 0;
+
+  render_profile_frames_ = 0;
+  render_profile_preprocess_ms_ = 0.0;
+  render_profile_render_ms_ = 0.0;
+  render_profile_window_start_ = now;
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {

@@ -47,7 +47,7 @@ class PluginSubsystem(AppSubsystem):
 
         :meta private:
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         config_changed = False
         found_new = False
@@ -89,9 +89,9 @@ class PluginSubsystem(AppSubsystem):
         # found new ones.
         if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
-                builtinassets.strings.plugins.detected, color=(0, 1, 0)
+                _builtinassets.strings.plugins.detected, color=(0, 1, 0)
             )
-            builtinassets.audio.ding.get().play()
+            _builtinassets.audio.ding.get().play()
 
         # Ok, now go through all plugins registered in the app-config
         # that weren't covered by the meta stuff above, either creating
@@ -140,9 +140,9 @@ class PluginSubsystem(AppSubsystem):
         # later reappear. This makes it much smoother to switch between
         # users or workspaces.
         if disappeared_plugs:
-            builtinassets.audio.powerdown01.get().play()
+            _builtinassets.audio.powerdown01.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.removed(
+                _builtinassets.strings.plugins.removed(
                     count=len(disappeared_plugs)
                 ),
                 color=(1, 1, 0),
@@ -183,6 +183,20 @@ class PluginSubsystem(AppSubsystem):
                 plugin.on_app_running()
             except Exception:
                 balog.exception('Error in plugin on_app_running().')
+
+    def offer_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Give each active plugin its on_app_mode_config() call.
+
+        Errors are caught per-plugin so one broken plugin can't spoil
+        the config phase for the mode or for other plugins.
+
+        :meta private:
+        """
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_mode_config(config)
+            except Exception:
+                balog.exception('Error in plugin on_app_mode_config().')
 
     @override
     def on_app_suspend(self) -> None:
@@ -268,7 +282,7 @@ class PluginSpec:
 
     def attempt_load_if_enabled(self) -> Plugin | None:
         """Possibly load the plugin and log any errors."""
-        from babase import builtinassets
+        from babase import _builtinassets
         from babase._general import getclass
 
         assert not self.attempted_load
@@ -282,9 +296,9 @@ class PluginSpec:
         try:
             cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.class_load_error(
+                _builtinassets.strings.plugins.class_load_error(
                     plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),
@@ -299,9 +313,9 @@ class PluginSpec:
         except Exception as exc:
             from babase import _error
 
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.init_error(
+                _builtinassets.strings.plugins.init_error(
                     plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),
@@ -336,6 +350,30 @@ class Plugin:
 
         Note that a plugin's module is not even imported until this
         point, so plugin code never runs before assets are ready.
+        """
+
+    def on_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Called when an app-mode is about to become active.
+
+        ``config`` is the :class:`~babase.AppModeConfig` the incoming
+        mode built to describe how it should run; its concrete type
+        identifies the mode, so a plugin targeting a particular mode
+        checks for that mode's config type and amends what it finds::
+
+            @override
+            def on_app_mode_config(
+                self, config: babase.AppModeConfig
+            ) -> None:
+                if isinstance(config, baclassic.ClassicAppModeConfig):
+                    config.ui_assets.trophy = my_trophy_texture
+
+        By convention, only *describe* here -- mutate the config and
+        touch nothing live. The mode reads the final result as it
+        activates, so if several plugins amend the same value the last
+        writer wins.
+
+        This never fires before construct-mode completes (plugins do
+        not run at all until then), so assets are safe to load here.
         """
 
     def on_app_suspend(self) -> None:

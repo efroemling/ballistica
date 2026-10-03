@@ -269,6 +269,10 @@ auto SceneV1InputDeviceDelegate::GetClassicPurchases() const -> PyObject* {
   return nullptr;
 }
 
+auto SceneV1InputDeviceDelegate::GetCloudCharacters() const -> PyObject* {
+  return nullptr;
+}
+
 auto SceneV1InputDeviceDelegate::GetAccountName(bool full) const
     -> std::string {
   assert(g_base->InLogicThread());

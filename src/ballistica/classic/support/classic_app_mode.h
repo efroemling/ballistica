@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/base.h"
 #include "ballistica/classic/classic.h"
 #include "ballistica/scene_v1/scene_v1.h"
@@ -26,6 +27,22 @@ class JsonRef;
 namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
+
+/// How a host treats v2-auth (cloud-verified joiner identity, which is
+/// also how joiners' cloud profiles reach us).
+enum class ClientAuthMode : uint8_t {
+  /// Never offered; every joiner is unauthenticated.
+  kOff,
+  /// Offered while we can (we have a global app-instance id, i.e. we're
+  /// online); joiners that can authenticate do, anyone else (signed
+  /// out, offline, a failed request) joins unauthenticated. Lets
+  /// private/LAN parties carry cloud profiles without ever locking out
+  /// an offline game.
+  kOptional,
+  /// Required; joiners without a valid token are rejected (public
+  /// parties, dedicated servers).
+  kRequired,
+};
 
 /// One client in the party roster: a connected peer (or the host itself, with
 /// client_id == -1) plus the local players it has joined. This is the native
@@ -189,12 +206,15 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_player_count() const { return public_party_player_count_; }
   void SetPublicPartyPlayerCount(int count);
   auto ShouldAnnouncePartyJoinsAndLeaves() -> bool;
+  /// Whether joiners must authenticate (ClientAuthMode::kRequired).
+  /// Per-joiner state lives on each ConnectionToClient
+  /// (v2_auth_offered() / v2_authed()); prefer that wherever a
+  /// specific connection is at hand.
   auto require_client_authentication() const {
-    return require_client_authentication_;
+    return client_auth_mode_ == ClientAuthMode::kRequired;
   }
-  void set_require_client_authentication(bool enable) {
-    require_client_authentication_ = enable;
-  }
+  auto client_auth_mode() const { return client_auth_mode_; }
+  void set_client_auth_mode(ClientAuthMode mode) { client_auth_mode_ = mode; }
 
   /// Set the asset-package-versions this app run hosts with (the launch
   /// metascan snapshot; see asset-packages.md decision #36). Call once
@@ -220,8 +240,17 @@ class ClassicAppMode : public base::AppMode {
   auto CreateInputDeviceDelegate(base::InputDevice* device)
       -> base::InputDeviceDelegate* override;
 
+  /// Play (or, with nullptr, stop) the engine's own music track. If no
+  /// audio source is available yet (the audio server is still opening its
+  /// device, or every source is busy), the request is kept and retried on a
+  /// timer rather than dropped; see docs/followups.md "Internal music
+  /// retry" for why and for the log lines that mark it.
+  ///
+  /// With a nonzero fade_out_millisecs, any music already playing fades
+  /// out over that long before stopping instead of cutting off (used
+  /// when yielding to another app's music).
   void SetInternalMusic(base::SoundAsset* music, float volume = 1.0,
-                        bool loop = true);
+                        bool loop = true, uint32_t fade_out_millisecs = 0);
 
   // Run a cycle of host scanning (basically sending out a broadcast packet
   // to see who's out there).
@@ -294,6 +323,9 @@ class ClassicAppMode : public base::AppMode {
                            const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
   void SetRootUIStoreStyle(const char* val);
+  /// Each chest slot's depiction json (empty to draw by appearance).
+  void SetRootUIChestDepictions(const std::vector<std::string>& depictions);
+  void SetRootUIAccountDepiction(const std::string& json);
   void SetRootUIChests(
       const std::string& chest_0_appearance,
       const std::string& chest_1_appearance,
@@ -316,7 +348,22 @@ class ClassicAppMode : public base::AppMode {
                        bool inbox_count_is_max);
 
  private:
+  /// A SetInternalMusic() request that found no audio source. Retried by
+  /// RetryInternalMusic_() until it lands or times out.
+  struct PendingInternalMusic_ {
+    Object::Ref<base::SoundAsset> sound;
+    float volume{};
+    bool loop{};
+    millisecs_t request_time{};
+    int attempts{};
+  };
+
   ClassicAppMode();
+  /// Claim a source and start the music on it; false if none was available.
+  auto TryStartInternalMusic_(base::SoundAsset* music, float volume, bool loop)
+      -> bool;
+  void RetryInternalMusic_();
+  void CancelInternalMusicRetry_();
   void OnGameRosterChanged_();
   void PruneScanResults_();
   void UpdateKickVote_();
@@ -342,6 +389,8 @@ class ClassicAppMode : public base::AppMode {
   std::string host_password_;
   std::mutex host_password_mutex_;
 
+  std::vector<std::string> root_ui_chest_depictions_;
+  std::string root_ui_account_depiction_;
   std::string root_ui_chest_0_appearance_;
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
@@ -374,7 +423,7 @@ class ClassicAppMode : public base::AppMode {
   bool kick_idle_players_{};
   bool public_party_enabled_{};
   bool public_party_queue_enabled_{true};
-  bool require_client_authentication_{};
+  ClientAuthMode client_auth_mode_{ClientAuthMode::kOff};
   bool idle_exiting_{};
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};
@@ -436,6 +485,8 @@ class ClassicAppMode : public base::AppMode {
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
+  std::optional<PendingInternalMusic_> pending_internal_music_{};
+  std::optional<int> internal_music_retry_timer_id_{};
   std::optional<std::string> public_party_public_address_ipv4_{};
   std::optional<std::string> public_party_public_address_ipv6_{};
   bool root_ui_inbox_count_is_max_{};

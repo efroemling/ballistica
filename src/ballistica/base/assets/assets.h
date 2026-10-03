@@ -12,6 +12,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/generated/base_asset_set.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -109,6 +110,11 @@ class Assets {
   auto GetTexture(const std::string& file_name) -> Object::Ref<TextureAsset>;
   auto GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset>;
   auto GetQRCodeTexture(const std::string& url) -> Object::Ref<TextureAsset>;
+
+  /// The texture a view drawing to a texture draws to. Views fetch
+  /// this for themselves (see RenderView::texture()); get it from the
+  /// view.
+  auto GetRenderViewTexture(RenderView* view) -> Object::Ref<TextureAsset>;
   auto GetCubeMapTexture(const std::string& file_name)
       -> Object::Ref<TextureAsset>;
   auto GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset>;
@@ -117,12 +123,53 @@ class Assets {
   auto GetCollisionMesh(const std::string& file_name)
       -> Object::Ref<CollisionMeshAsset>;
 
+  /// Asset-package forms of the getters above, taking the package id and
+  /// logical path separately.
+  ///
+  /// This is the form generated wrapper modules use, and they always
+  /// hold the two parts apart -- so joining them in Python only for us
+  /// to validate and re-split was pure round-tripping. A qualified ref
+  /// is also never a legacy bare name, so these skip the compat lookup
+  /// the string forms have to do.
+  auto GetPackageTexture(const std::string& apverid, const std::string& name)
+      -> Object::Ref<TextureAsset>;
+  auto GetPackageMesh(const std::string& apverid, const std::string& name)
+      -> Object::Ref<MeshAsset>;
+  auto GetPackageSound(const std::string& apverid, const std::string& name)
+      -> Object::Ref<SoundAsset>;
+  auto GetPackageCollisionMesh(const std::string& apverid,
+                               const std::string& name)
+      -> Object::Ref<CollisionMeshAsset>;
+  auto GetPackageCubeMapTexture(const std::string& apverid,
+                                const std::string& name)
+      -> Object::Ref<TextureAsset>;
+
+  /// Classic-flavored art base draws itself with (debris, smoke, VR
+  /// hands, reflections), supplied by the active app-mode (see
+  /// babase.set_base_asset_set). Boot-filled with neutral builtin
+  /// placeholders and *restored* to them (never cleared) at app-mode
+  /// switches, so it is always complete -- base draws before and
+  /// between app-modes.
+  auto base_assets() -> const BaseAssetSet& {
+    assert(base_assets_.complete());
+    return base_assets_;
+  }
+  void set_base_assets(const BaseAssetSet& assets) { base_assets_ = assets; }
+  void RestoreBaseAssetPlaceholders();
+
+ private:
+  // Body of the above; caller must hold the asset-list lock (the boot
+  // path calls this from inside the builtin load, which already does).
+  void RestoreBaseAssetPlaceholdersLocked_();
+
+ public:
   auto total_mesh_count() const -> uint32_t {
     return static_cast<uint32_t>(meshes_.size());
   }
   auto total_texture_count() const -> uint32_t {
     return static_cast<uint32_t>(textures_.size() + text_textures_.size()
-                                 + qr_textures_.size());
+                                 + qr_textures_.size()
+                                 + render_view_textures_.size());
   }
   auto total_sound_count() const -> uint32_t {
     return static_cast<uint32_t>(sounds_.size());
@@ -156,9 +203,13 @@ class Assets {
   /// is the bundled fallback flavor, so this currently always loads
   /// English (Step A of the strings migration). ``plural_locale`` is
   /// the client's *resolved* locale wire value (e.g. ``eng``), stamped
-  /// onto the language-string tables to drive CLDR plural selection.
+  /// onto the language-string tables to drive CLDR plural selection;
+  /// ``decimal_mark`` and ``duration_separator`` are its number data,
+  /// for rendering display-formatted params (durations, sizes).
   void ReloadLanguage(const std::vector<std::string>& apverids,
-                      const std::string& plural_locale);
+                      const std::string& plural_locale,
+                      const std::string& decimal_mark,
+                      const std::string& duration_separator);
 
   /// The current native language-string tables (per-apverid values for
   /// the client's locale; see LangStrTables). Immutable snapshot; any
@@ -211,6 +262,13 @@ class Assets {
   /// ``<apverid>:<asset_name>`` ref.
   auto package_registry() -> AssetPackageRegistry* {
     return &package_registry_;
+  }
+
+  /// Where the bundle's asset-package manifest.json lives. May be a
+  /// path into an archive (the apk on Android); read it via
+  /// AssetBlob, never plain file IO.
+  auto bundled_asset_manifest_path() const -> const std::string& {
+    return bundled_manifest_path_;
   }
 
   /// The texture *profile* name this build should request for
@@ -310,15 +368,11 @@ class Assets {
   /// asset-load bindings (gettexture() and friends), which accept only
   /// legacy bare names: asset-package assets must load through their
   /// generated wrapper modules (which route through the private
-  /// ap*get bindings; see FailOnNonAssetPackagePath). `call_name` is
-  /// the Python-visible callable name, used in the error message.
+  /// ap*get bindings; those take the package id and logical path as
+  /// separate args, so they cannot be handed a path at all).
+  /// `call_name` is the Python-visible callable name, used in the
+  /// error message.
   static void FailOnAssetPackagePath(const char* name, const char* call_name);
-
-  /// Inverse of FailOnAssetPackagePath, for the private ap*get Python
-  /// bindings: raise a Python ValueError if `name` is *not* a
-  /// qualified asset-package path.
-  static void FailOnNonAssetPackagePath(const char* name,
-                                        const char* call_name);
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
@@ -377,12 +431,14 @@ class Assets {
   std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;
   AssetPackageRegistry package_registry_;
+  std::string bundled_manifest_path_;
 
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
   std::vector<Object::Ref<DataAsset> > system_datas_;
 
+  BaseAssetSet base_assets_;
   std::vector<Object::Ref<TextureAsset> > builtin_textures_;
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_;
@@ -392,6 +448,11 @@ class Assets {
   std::unordered_map<std::string, Object::Ref<TextureAsset> > textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > text_textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > qr_textures_;
+
+  // Textures that views draw to, by view id (as a string, to match
+  // the rest).
+  std::unordered_map<std::string, Object::Ref<TextureAsset> >
+      render_view_textures_;
   std::unordered_map<std::string, Object::Ref<MeshAsset> > meshes_;
   std::unordered_map<std::string, Object::Ref<SoundAsset> > sounds_;
   std::unordered_map<std::string, Object::Ref<DataAsset> > datas_;

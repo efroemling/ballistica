@@ -23,6 +23,22 @@ class TextureAsset : public Asset {
                         TextureMinQuality min_quality_in);
   explicit TextureAsset(const std::string& qr_url);
 
+  /// Create the texture that a view drawing to a texture draws to. We
+  /// hold no pixels of our own in this case; we stand for whatever the
+  /// renderer last drew of that view's world, so that anything able to
+  /// draw a texture can draw it.
+  explicit TextureAsset(RenderView* view);
+
+  auto GetRenderView() const -> RenderView* override;
+
+  /// The id of the view that draws to us, or 0 if we're not that kind
+  /// of texture. (Unlike the view itself, this can be asked from any
+  /// thread and keeps its value once the view is gone.)
+  auto render_view_id() const -> int { return render_view_id_; }
+
+  /// Called by our view as it goes away. Logic thread only.
+  void ClearRenderView();
+
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
@@ -55,15 +71,19 @@ class TextureAsset : public Asset {
  private:
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
+  int render_view_id_{};
+  // Not a reference; our view tells us when it goes (it holds us, so
+  // we can outlive it but not the other way around).
+  RenderView* render_view_{};
   std::string file_name_;
   std::string file_name_full_;
-  /// Explicit container type for the file at ``file_name_full_``,
-  /// when the path's suffix doesn't itself convey it (CAS blobs are
-  /// named by hash with no extension). Empty for legacy filename-on-
-  /// disk assets, in which case the loader dispatches on the path's
-  /// suffix. Values match the suffix-dispatch keys: ``.dds``,
-  /// ``.android_dds``, ``.ktx``, ``.pvr``, ``.nop``.
-  std::string container_;
+  /// Whether ``file_name_full_`` is an asset-package CAS blob (named
+  /// by content hash — bare or with the bundled transport suffix —
+  /// never by a content extension). CAS blobs dispatch on content
+  /// magic bytes at preload; legacy on-disk assets dispatch on the
+  /// path's suffix (``.dds``, ``.android_dds``, ``.ktx``, ``.pvr``,
+  /// ``.nop``).
+  bool is_cas_blob_{};
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};
   TextureMinQuality min_quality_{TextureMinQuality::kLow};

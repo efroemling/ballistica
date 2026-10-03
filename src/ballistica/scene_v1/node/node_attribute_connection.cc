@@ -64,6 +64,12 @@ void NodeAttributeConnection::Update() {
       case NodeAttributeType::kTexture:
         dst_attr->Set(dst_node.get(), src_attr->GetAsTexture(src_node_p));
         break;
+      case NodeAttributeType::kSpazDef:
+        dst_attr->Set(dst_node.get(), src_attr->GetAsSpazDef(src_node_p));
+        break;
+      case NodeAttributeType::kDepiction:
+        dst_attr->Set(dst_node.get(), src_attr->GetAsDepiction(src_node_p));
+        break;
       case NodeAttributeType::kTextureArray:
         dst_attr->Set(dst_node.get(), src_attr->GetAsTextures(src_node_p));
         break;

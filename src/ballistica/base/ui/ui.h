@@ -62,6 +62,16 @@ class UI {
   /// allowing exiting or tweaking settings.
   auto IsMainUIVisible() const -> bool;
 
+  /// Return whether the UI currently covers the entire visible screen
+  /// (the virtual outer rect) with opaque drawing - i.e. a
+  /// fully-transitioned-in opaque-backed window spanning the whole screen, as
+  /// is common in menus at small ui-scale. Consumers may use a true result to
+  /// skip rendering anything behind the UI. Deliberately conservative (false
+  /// negatives are common; true guarantees coverage), always false in
+  /// VR mode (where UI floats in 3d space and never occludes), and can
+  /// be force-disabled via the BA_DISABLE_UI_COVER_OPT=1 env var.
+  auto UICoversScreenOpaquely() const -> bool;
+
   /// Thread-safe snapshot of whether a back/menu press would navigate
   /// within the game rather than doing nothing at the top level,
   /// refreshed each display step. Exists for platforms that must decide
@@ -113,6 +123,8 @@ class UI {
   /// Set persistent account state info; will be provided to current and
   /// future delegates.
   void SetAccountSignInState(bool signed_in, const std::string& name);
+  /// Whether the Python layer last reported a signed-in account.
+  auto account_signed_in() const -> bool { return account_state_signed_in_; }
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
@@ -132,7 +144,8 @@ class UI {
   auto CreateSimpleDialog() -> int;
   void SetSimpleDialogState(int id, const std::string& title,
                             const std::string& message, float progress,
-                            const std::string& button_label);
+                            const std::string& button_label,
+                            bool cancel_activates_button);
   void DismissSimpleDialog(int id);
 
   /// Whether a (modal) SimpleDialog is currently up. While true, input
@@ -236,6 +249,7 @@ class UI {
  private:
   void RequestMainUI_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
+  void DevConsoleButtonCenter_(float* x, float* y) const;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
@@ -243,6 +257,9 @@ class UI {
   /// true (consuming the event). Routes OK/confirm from keyboard/controllers/
   /// remotes (which funnel through SendWidgetMessage) to the dialog.
   auto HandleSimpleDialogActivate_() -> bool;
+  /// Cancel counterpart: fire the top-most button-bearing SimpleDialog's
+  /// button if that dialog opted into cancel-activation; returns true if so.
+  auto HandleSimpleDialogCancel_() -> bool;
   void DispatchSimpleDialogButton_(int id, const char* source);
 
   Object::Ref<TextGroup> dev_console_button_txt_;
@@ -259,6 +276,40 @@ class UI {
   millisecs_t last_widget_input_reject_err_sound_time_{};
   Rect text_edit_rect_{};
   Rect text_edit_rect_norm_prev_{};
+  // Dev-console button look, from the config: its size as a multiple of
+  // the ui-scale default, and its color scheme.
+  enum class DevConsoleButtonStyle_ { kGrey, kGreen, kPurple, kHowdy };
+  float dev_console_button_size_scale_{1.0f};
+  DevConsoleButtonStyle_ dev_console_button_style_{
+      DevConsoleButtonStyle_::kGrey};
+  // Dev-console button custom position (active once the button has been
+  // dragged) and in-flight press/drag tracking. The position is an
+  // offset in virtual units from an anchor point on the virtual bounds:
+  // anchor x is 0/1/2 for left/center/right and anchor y is 0/1/2 for
+  // bottom/center/top, so a button parked near a corner or edge stays
+  // put relative to it as the window resizes. (Anchor 0,0 makes the
+  // offset a plain virtual coord, which is what a drag in progress and
+  // configs predating anchors use.)
+  float dev_console_button_custom_x_{};
+  float dev_console_button_custom_y_{};
+  uint8_t dev_console_button_anchor_x_{};
+  uint8_t dev_console_button_anchor_y_{};
+  uint8_t dev_console_button_pre_drag_anchor_x_{};
+  uint8_t dev_console_button_pre_drag_anchor_y_{};
+  float dev_console_button_press_x_{};
+  float dev_console_button_press_y_{};
+  float dev_console_button_drag_offset_x_{};
+  float dev_console_button_drag_offset_y_{};
+  // The button's position as of the current press, so a canceled drag
+  // can snap it back (the OS taking the gesture, as when a drag near
+  // the top of an iPad screen becomes a window drag).
+  float dev_console_button_pre_drag_x_{};
+  float dev_console_button_pre_drag_y_{};
+  bool dev_console_button_pre_drag_has_custom_pos_{};
+  // When the dev-console button was last activated (drives its fade back
+  // from the lit-up look). Starts far enough in the past to never light up
+  // at launch.
+  seconds_t dev_console_button_activate_time_{-999.0};
   seconds_t text_edit_flap_window_start_{};
   int text_edit_flap_count_{};
   TextEditSource text_edit_source_{};
@@ -272,6 +323,15 @@ class UI {
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
+  bool dev_console_button_dragging_{};
+  // The pointer is over the dev-console button (mouse only; touch has
+  // no hover). Drives its hover look.
+  bool dev_console_button_hovered_{};
+  // While the button is pressed (and not yet dragging), whether the
+  // pointer is still over it (touch and mouse alike); drives its held
+  // look, as a press that drifts off lets go visually.
+  bool dev_console_button_press_over_{};
+  bool dev_console_button_has_custom_pos_{};
   bool mousing_in_main_ui_{};
 };
 

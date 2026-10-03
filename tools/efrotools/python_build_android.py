@@ -31,21 +31,21 @@ if TYPE_CHECKING:
 # ``--out`` paths follow automatically.
 #
 # Both 3.13.12 and 3.14.4 have been verified building all 8 slices
-# end-to-end on linbeast as of 2026-05-03; 3.14.6 is the active
-# version as of 2026-06-12. To switch back:
+# end-to-end on linbeast as of 2026-05-03; 3.14.7 is the active
+# version as of 2026-09-27. To switch back:
 #   PY_VER = '3.13'
 #   PY_VER_EXACT = '3.13.12'
 PY_VER = '3.14'
-PY_VER_EXACT = '3.14.6'
+PY_VER_EXACT = '3.14.7'
 ANDROID_API_VER = 24
-OPENSSL_VER = '3.0.19'
+OPENSSL_VER = '3.0.22'
 ZLIB_VER = '1.3.2'
-XZ_VER = '5.8.2'
+XZ_VER = '5.8.4'
 ZSTD_VER = '1.5.7'
 BZIP2_VER = '1.0.8'
-LIBFFI_VER = '3.5.2'
-LIBUUID_VER: tuple[str, str] = ('2.41', '2.41')  # (minor, full)
-SQLITE_VER: tuple[str, str] = ('2026', '3510200')  # (year, autoconf id)
+LIBFFI_VER = '3.8.0'
+LIBUUID_VER: tuple[str, str] = ('2.42', '2.42.4')  # (minor, full)
+SQLITE_VER: tuple[str, str] = ('2026', '3530400')  # (year, autoconf id)
 
 # Versioned host triple used for configure --host=.
 ARCH_TARGETS: dict[str, str] = {
@@ -420,7 +420,12 @@ def _build_xz(
 ) -> None:
     """Build and install XZ (liblzma) into dep_sysroot."""
     print('Building XZ...')
-    url = f'https://tukaani.org/xz/xz-{XZ_VER}.tar.xz'
+    # GitHub releases, not tukaani.org (which stopped carrying new
+    # versions after 5.8.2).
+    url = (
+        f'https://github.com/tukaani-project/xz/releases/download/'
+        f'v{XZ_VER}/xz-{XZ_VER}.tar.xz'
+    )
     tarball = _fetch(url, cache_dir)
     srcdir = _extract(tarball, build_dir)
 

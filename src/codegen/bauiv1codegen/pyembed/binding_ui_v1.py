@@ -33,4 +33,5 @@ values = [
     _hooks.show_url_window,  # kShowURLWindowCall
     _hooks.double_transition_out_warning,  # kDoubleTransitionOutWarningCall
     TextWidgetStringEditAdapter,  # kTextWidgetStringEditAdapterClass
+    _hooks.get_live_depiction,  # kGetLiveDepictionCall
 ]

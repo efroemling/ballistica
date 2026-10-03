@@ -2,33 +2,23 @@
 #
 """Examples/tests for using DocUI to build UIs."""
 
-import time
-import copy
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, assert_never
 
-from efro.error import CleanError
+from bacommon.langstr import LangStrSpecValue
+import bacommon.docui.routes.docuitest as rt
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets, _classiccatalogassets
+from bauiv1 import _classicassets
 
-from bauiv1lib.docui import DocUIWindow, DocUIController
+from bauiv1lib.docui import DocUIWindow, TypedDocUIController
 
 if TYPE_CHECKING:
-    from bacommon.docui import DocUIRequest, DocUIResponse
+    from bacommon.docui import DocUIResponse
     import bacommon.docui.v2
-    from bacommon.langstr import LangStrSpec
+    import bacommon.docui.routes.docuitest
 
     from bauiv1lib.docui import DocUILocalAction
-
-
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    return f'{builtinassets.__asset_package__}:textures/{name}'
-
-
-def _stex(name: str) -> str:
-    """Qualified classicassets texture ref."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_v2_window() -> None:
@@ -42,77 +32,196 @@ def show_test_doc_ui_v2_window() -> None:
     from bamaster, keeping the full cloud/web resolve -> decode ->
     render paths exercised.
     """
-    import bacommon.docui.v2 as dui2
-
     bui.app.ui_v1.auxiliary_window_activate(
         win_type=DocUIWindow,
         win_create_call=bui.CallStrict(
-            TestDocUIV2Controller().create_window, dui2.Request('/')
+            TestDocUIV2Controller().create_window, rt.Root()
         ),
         win_extra_type_id=TestDocUIV2Controller.get_window_extra_type_id(),
     )
 
 
-class TestDocUIV2Controller(DocUIController):
+class TestDocUIV2Controller(
+    TypedDocUIController[rt.AnyTestRoute, rt.AnyTestLocalAction]
+):
     """Tests/demonstrations of native (v2 / l-string) docui.
 
-    Local pages are authored client-side; the ``/cloudmsgtest/*`` and
-    ``/webtest/*`` paths fetch equivalent v2 pages from bamaster.
+    Local pages are authored client-side; the web-test and
+    cloud-msg-test routes fetch equivalent v2 pages from bamaster.
     """
 
     @override
-    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
-        """Fulfill a v2 request (called in a background thread)."""
-        # pylint: disable=too-many-return-statements
-        import bacommon.docui.v2 as dui2
-
-        if not isinstance(request, dui2.Request):
-            raise CleanError('Invalid request version.')
-
-        # Handle some pages purely locally.
-        if request.path == '/':
-            return _test_v2_page_root(request)
-        if request.path == '/test2':
-            return _test_v2_page_2(request)
-        if request.path == '/slow':
-            return _test_v2_page_long(request)
-        if request.path == '/timedactions':
-            return _test_v2_page_timed_actions(request)
-        if request.path == '/displayitems':
-            return _test_v2_page_display_items(request)
-        if request.path == '/emptypage':
-            return _test_v2_page_empty(request)
-        if request.path == '/boundstests':
-            return _test_v2_bounds(request)
-
-        # Ship '/webtest/*' off to some webserver to handle.
-        if request.path.startswith('/webtest/'):
-            return self.fulfill_request_web(
-                request, 'https://www.ballistica.net/docuitest'
-            )
-
-        # Ship '/cloudmsgtest/*' through our cloud connection to handle.
-        if request.path.startswith('/cloudmsgtest/'):
-            return self.fulfill_request_cloud(request, 'docuitestv2')
-
-        raise CleanError('Invalid request path.')
+    @classmethod
+    def get_route_type(cls) -> type[bacommon.docui.routes.docuitest.TestRoute]:
+        return rt.TestRoute
 
     @override
-    def local_action(self, action: DocUILocalAction) -> None:
-        bui.screenmessage(
-            f'Would do {action.name!r} with args {action.args!r}.'
-        )
+    @classmethod
+    def get_local_action_type(
+        cls,
+    ) -> type[bacommon.docui.routes.docuitest.TestLocalAction]:
+        return rt.TestLocalAction
+
+    @override
+    def fulfill_route(
+        self, route: bacommon.docui.routes.docuitest.AnyTestRoute
+    ) -> DocUIResponse:
+        """Fulfill a route (called in a background thread)."""
+        import bacommon.docui.v2 as dui2
+
+        response = self._fulfill_route_page(route)
+
+        # No horizontal scroll bars anywhere on our test pages (page
+        # arrows and drag/wheel scrolling still carry their rows).
+        if isinstance(response, dui2.Response):
+            for row in dui2.all_rows(response.page.rows):
+                if isinstance(row, dui2.ButtonRow):
+                    row.show_scrollbar = False
+        return response
+
+    def _fulfill_route_page(
+        self, route: bacommon.docui.routes.docuitest.AnyTestRoute
+    ) -> DocUIResponse:
+        # A flat route-to-page dispatch; every case adds a branch and a
+        # return.
+        # pylint: disable=too-many-return-statements, too-many-branches
+
+        match route:
+            # Handle some pages purely locally.
+            case rt.Root():
+                return _test_v2_page_root(route)
+            case rt.Test2():
+                from bauiv1lib.docuitestsimple import test_page_2
+
+                return test_page_2()
+            case rt.Slow():
+                from bauiv1lib.docuitestsimple import test_page_long
+
+                return test_page_long()
+            case rt.TimedActions():
+                from bauiv1lib.docuitestsimple import (
+                    test_page_timed_actions,
+                )
+
+                return test_page_timed_actions(route)
+            case rt.DisplayItems():
+                from bauiv1lib.docuitestitems import test_page_display_items
+
+                return test_page_display_items(route)
+            case rt.TextImages():
+                from bauiv1lib.docuitesttextimages import (
+                    test_page_text_images,
+                )
+
+                return test_page_text_images(route)
+            case rt.LiveTimes():
+                from bauiv1lib.docuitestlivetimes import test_page_live_times
+
+                return test_page_live_times(route)
+            case rt.TextWrapping():
+                from bauiv1lib.docuitesttextwrap import (
+                    test_page_text_wrapping,
+                )
+
+                return test_page_text_wrapping(route)
+            case rt.Animation():
+                from bauiv1lib.docuitestanimation import test_page_animation
+
+                return test_page_animation()
+            case rt.Depictions():
+                from bauiv1lib.docuitestdepictions import (
+                    test_page_depictions,
+                )
+
+                return test_page_depictions(route)
+            case rt.Names():
+                from bauiv1lib.docuitestnames import test_page_names
+
+                return test_page_names(route)
+            case rt.NinePatch():
+                from bauiv1lib.docuitestninepatch import (
+                    test_page_nine_patch,
+                )
+
+                return test_page_nine_patch(route)
+            case rt.EmptyPage():
+                from bauiv1lib.docuitestsimple import test_page_empty
+
+                return test_page_empty()
+            case rt.BoundsTests():
+                from bauiv1lib.docuitestlayouts import test_page_bounds
+
+                return test_page_bounds()
+            case rt.Widgets():
+                from bauiv1lib.docuitestwidgets import test_page_widgets
+
+                return test_page_widgets(route)
+            case rt.NavTest():
+                from bauiv1lib.docuitestwidgets import test_page_nav
+
+                return test_page_nav(route)
+            case rt.WindowLayouts():
+                from bauiv1lib.docuitestlayouts import (
+                    test_page_window_layouts,
+                )
+
+                return test_page_window_layouts(route)
+            case rt.Sections():
+                from bauiv1lib.docuitestsections import test_page_sections
+
+                return test_page_sections(route)
+            case rt.WideFit():
+                from bauiv1lib.docuitestlayouts import test_page_wide_fit
+
+                return test_page_wide_fit(route)
+
+            # Ship web-tests off to some webserver to handle.
+            case rt.WebTestGet() | rt.WebTestPost():
+                return self.fulfill_request_web(
+                    route, 'https://www.ballistica.net/docuitest'
+                )
+
+            # Ship cloud-msg-tests through our cloud connection.
+            case rt.CloudMsgTestGet() | rt.CloudMsgTestPost():
+                return self.fulfill_request_cloud(route, 'docuitestv2')
+
+            case _:
+                assert_never(route)
+
+    @override
+    def run_local_action(
+        self,
+        action: bacommon.docui.routes.docuitest.AnyTestLocalAction,
+        context: DocUILocalAction,
+    ) -> None:
+        match action:
+            case rt.ShowVolume():
+                # The live value: the row wrote it to page state before
+                # firing us.
+                state = context.state(rt.WidgetTestState)
+                vol = (
+                    'unknown'
+                    if state is None
+                    else f'{round(state.volume * 100)}%'
+                )
+                bui.screenmessage(
+                    f'Volume: {vol} (trigger={context.trigger!r})'
+                )
+            case rt.TestAction():
+                bui.screenmessage(f'Would do {action!r}.')
+            case _:
+                assert_never(action)
 
 
 def _test_v2_page_root(
-    request: bacommon.docui.v2.Request,
+    route: bacommon.docui.routes.docuitest.Root,
 ) -> bacommon.docui.v2.Response:
     """Author the v2 (l-string) test root page purely on the client.
 
     The full v1 test root page, with all text authored as
     language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
     package, textures/meshes as typed refs from
-    ``builtinassets``/``classicassets``, and multi-line labels wrapped via
+    ``_builtinassets``/``_classicassets``, and multi-line labels wrapped via
     definition-time :class:`~bacommon.langstr.WrapParams` on the
     package's string definitions (decision D-t) instead of v1's
     hand-baked newlines. The client resolves the referenced packages
@@ -123,11 +232,24 @@ def _test_v2_page_root(
     import bacommon.docui.v2 as dui2
 
     from bauiv1 import _docuiv2testassets
+    from bauiv1lib.docuitestlayouts import layout_test_decos
 
     strs = _docuiv2testassets.strings
 
     # Show some specific debug bits if they ask us to.
-    debug = bool(request.args.get('debug', False))
+    debug = route.debug
+
+    # The long-row test's buttons all reload this page unchanged, to
+    # check that scroll positions survive a reload.
+    reload = route.replace()
+
+    def _long_row_button(num: int) -> bacommon.docui.v2.Button:
+        # Dev-only page, so baked literals.
+        return dui2.Button(
+            label=LangStrSpecValue.literal(str(num)),
+            size=(150, 100),
+            action=reload,
+        )
 
     response = dui2.Response(
         page=dui2.Page(
@@ -161,7 +283,7 @@ def _test_v2_page_root(
                             debug=debug,
                         ),
                         dui2.Image(
-                            texture=builtinassets.textures.nub,
+                            texture=_classicassets.textures.nub,
                             position=(0, -58 + 20),
                             size=(60, 60),
                         ),
@@ -181,12 +303,12 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.nav.browse.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/test2')),
+                            action=rt.Test2().browse(),
                         ),
                         dui2.Button(
                             label=strs.nav.replace.spec,
                             size=(120, 80),
-                            action=dui2.Replace(dui2.Request('/test2')),
+                            action=rt.Test2().replace(),
                         ),
                         dui2.Button(
                             label=strs.nav.close.spec,
@@ -196,6 +318,10 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.common.invalid_request.spec,
                             size=(120, 80),
+                            # A path with no route, to exercise error
+                            # handling; routes can't express that (by
+                            # design) so we build it by hand.
+                            # pylint: disable-next=docui-raw-request
                             action=dui2.Browse(dui2.Request('/invalidrequest')),
                         ),
                         dui2.Button(
@@ -217,7 +343,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            builtinassets.audio
+                                            _builtinassets.audio
                                         ).cash_register,
                                     ),
                                     clfx.Delay(1.0),
@@ -229,7 +355,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            builtinassets.audio
+                                            _builtinassets.audio
                                         ).cash_register,
                                     ),
                                 ]
@@ -238,24 +364,17 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.effects.response_client_effects.spec,
                             size=(120, 80),
-                            action=dui2.Browse(
-                                dui2.Request('/', args={'test_effects': True})
-                            ),
+                            action=rt.Root(test_effects=True).browse(),
                         ),
                         dui2.Button(
                             label=strs.effects.immediate_local_action.spec,
                             size=(120, 80),
-                            action=dui2.Local(
-                                immediate_local_action='testaction',
-                                immediate_local_action_args={'testparam': 123},
-                            ),
+                            action=rt.TestAction(testparam=123).local(),
                         ),
                         dui2.Button(
                             label=strs.effects.response_local_action.spec,
                             size=(120, 80),
-                            action=dui2.Browse(
-                                dui2.Request('/', args={'test_action': True})
-                            ),
+                            action=rt.Root(test_action=True).browse(),
                         ),
                     ],
                 ),
@@ -269,49 +388,84 @@ def _test_v2_page_root(
                                 else strs.common.show_debug.spec
                             ),
                             size=(120, 80),
-                            action=dui2.Replace(
-                                dui2.Request('/', args={'debug': not debug})
-                            ),
+                            action=rt.Root(debug=not debug).replace(),
                         ),
                         dui2.Button(
                             label=strs.nav.slow_browse.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/slow')),
+                            action=rt.Slow().browse(),
                         ),
                         dui2.Button(
                             label=strs.nav.slow_replace.spec,
                             size=(120, 80),
-                            action=dui2.Replace(dui2.Request('/slow')),
+                            action=rt.Slow().replace(),
                         ),
                         dui2.Button(
                             label=strs.common.timed_actions.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/timedactions')),
+                            action=rt.TimedActions().browse(),
                         ),
                         dui2.Button(
                             label=strs.web.web_get.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/webtest/get')),
+                            action=rt.WebTestGet().browse(),
                         ),
                         dui2.Button(
                             label=strs.web.web_post.spec,
                             size=(120, 80),
-                            action=dui2.Browse(
-                                dui2.Request(
-                                    '/webtest/post',
-                                    method=dui2.RequestMethod.POST,
-                                )
-                            ),
+                            action=rt.WebTestPost().browse(),
                         ),
                         dui2.Button(
                             label=strs.items.display_items.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/displayitems')),
+                            action=rt.DisplayItems().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Text Images'),
+                            size=(120, 80),
+                            action=rt.TextImages().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Live Times'),
+                            size=(120, 80),
+                            action=rt.LiveTimes().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Text Wrapping'),
+                            size=(120, 80),
+                            action=rt.TextWrapping().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Animation'),
+                            size=(120, 80),
+                            action=rt.Animation().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Depictions'),
+                            size=(120, 80),
+                            action=rt.Depictions().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Names'),
+                            size=(120, 80),
+                            action=rt.Names().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('9-Patch'),
+                            size=(120, 80),
+                            action=rt.NinePatch().browse(),
                         ),
                         dui2.Button(
                             label=strs.layout.empty_page.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/emptypage')),
+                            action=rt.EmptyPage().browse(),
                         ),
                     ],
                 ),
@@ -321,24 +475,117 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.cloud.cloud_msg_get.spec,
                             size=(120, 80),
-                            action=dui2.Browse(
-                                dui2.Request('/cloudmsgtest/get')
-                            ),
+                            action=rt.CloudMsgTestGet().browse(),
                         ),
                         dui2.Button(
                             label=strs.cloud.cloud_msg_post.spec,
                             size=(120, 80),
-                            action=dui2.Browse(
-                                dui2.Request(
-                                    '/cloudmsgtest/post',
-                                    method=dui2.RequestMethod.POST,
-                                )
-                            ),
+                            action=rt.CloudMsgTestPost().browse(),
                         ),
                         dui2.Button(
                             label=strs.layout.bounds_tests.spec,
                             size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/boundstests')),
+                            action=rt.BoundsTests().browse(),
+                        ),
+                        # Dev-only page, so baked literal labels.
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Small'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                'Widgets Small Tall'
+                            ),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL_TALL
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                'Widgets Small Taller'
+                            ),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL_TALLER
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Wide'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.WIDE
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Wider'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.WIDER
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Large'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.LARGE
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Nav Test'),
+                            size=(120, 80),
+                            action=rt.NavTest().browse(
+                                layout=dui2.WindowLayout.SMALL
+                            ),
+                        ),
+                    ],
+                ),
+                dui2.ButtonRow(
+                    # Dev-only, so baked literals. (Every layout, to see
+                    # how sections and cards behave at each width.)
+                    title=LangStrSpecValue.literal('Sections'),
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                layout.name.replace('_', ' ').title()
+                            ),
+                            size=(120, 80),
+                            action=rt.Sections().browse(layout=layout),
+                        )
+                        for layout in dui2.WindowLayout
+                    ],
+                ),
+                dui2.ButtonRow(
+                    # Dev-only, so baked literals.
+                    title=LangStrSpecValue.literal('Window Layouts'),
+                    buttons=[
+                        *(
+                            dui2.Button(
+                                label=LangStrSpecValue.literal(
+                                    layout.name.replace('_', ' ').title()
+                                ),
+                                size=(120, 80),
+                                action=rt.WindowLayouts().browse(layout=layout),
+                            )
+                            for layout in dui2.WindowLayout
+                        ),
+                        *(
+                            dui2.Button(
+                                label=LangStrSpecValue.literal(
+                                    f'{layout.name.title()} Fit'
+                                ),
+                                size=(120, 80),
+                                action=rt.WideFit(
+                                    wider=layout is dui2.WindowLayout.WIDER
+                                ).browse(layout=layout),
+                            )
+                            for layout in (
+                                dui2.WindowLayout.WIDE,
+                                dui2.WindowLayout.WIDER,
+                            )
                         ),
                     ],
                 ),
@@ -346,12 +593,11 @@ def _test_v2_page_root(
                 dui2.ButtonRow(
                     title=strs.layout.layout_tests.spec,
                     debug=debug,
-                    padding_left=5.0,
                     buttons=[
                         dui2.Button(
                             label=strs.nav.test.spec,
                             size=(180, 200),
-                            decorations=_layout_test_decos(debug),
+                            decorations=layout_test_decos(debug),
                         ),
                         dui2.Button(
                             label=strs.nav.test_two.spec,
@@ -368,21 +614,22 @@ def _test_v2_page_root(
                             scale=0.6,
                             padding_bottom=30,  # Should nudge us up.
                             debug=debug,  # Show bounds.
-                            decorations=_layout_test_decos(debug),
+                            decorations=layout_test_decos(debug),
                         ),
                         # Testing custom button images and opacity.
                         dui2.Button(
                             label=strs.nav.test_three.spec,
-                            texture=builtinassets.textures.button_square_wide,
+                            texture=_uiv1assets.textures.button_square_wide,
                             padding_left=10.0,
                             padding_right=10.0,
                             color=(1, 1, 1, 0.3),
                             size=(200, 100),
+                            style=dui2.ButtonStyle.MEDIUM,
                         ),
                         # Testing image drawing vs bounds
                         dui2.Button(
                             label=strs.layout.bounds_test.spec,
-                            texture=builtinassets.textures.white,
+                            texture=_builtinassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
                             debug=debug,
@@ -391,10 +638,16 @@ def _test_v2_page_root(
                 ),
                 dui2.ButtonRow(
                     title=strs.layout.long_row_test.spec,
-                    subtitle=strs.layout.look_a_subtitle.spec,
+                    # Dev-only page, so baked literals.
+                    subtitle=LangStrSpecValue.literal(
+                        'Look - a subtitle! - These buttons reload the page'
+                        ' - all scrolling should remain intact.'
+                    ),
+                    footnote=LangStrSpecValue.literal('Look - a footnote!'),
                     buttons=[
                         dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
                                 dui2.Text(
                                     text=strs.layout.max_width_test.spec,
@@ -419,71 +672,73 @@ def _test_v2_page_root(
                         ),
                         dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
                                 dui2.Image(
-                                    texture=classicassets.textures.zoe_icon,
+                                    texture=(
+                                        _classiccatalogassets.textures
+                                    ).zoe_icon,
                                     position=(0, 0),
                                     size=(70, 70),
                                     tint_texture=(
-                                        classicassets.textures
+                                        _classiccatalogassets.textures
                                     ).zoe_icon_color_mask,
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
                                     mask_texture=(
-                                        builtinassets.textures
+                                        _classiccatalogassets.textures
                                     ).character_icon_mask,
                                 ),
                             ],
                         ),
                         dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
                                 dui2.Image(
                                     texture=(
-                                        classicassets.textures
+                                        _classiccatalogassets.textures
                                     ).bridgit_preview,
                                     position=(0, 10),
                                     size=(120, 60),
                                     mask_texture=(
-                                        classicassets.textures.map_preview_mask
+                                        (
+                                            _classiccatalogassets.textures
+                                        ).map_preview_mask
                                     ),
                                     mesh_opaque=(
-                                        classicassets.meshes
+                                        _classiccatalogassets.meshes
                                     ).level_select_button_opaque,
                                     mesh_transparent=(
-                                        classicassets.meshes
+                                        _classiccatalogassets.meshes
                                     ).level_select_button_transparent,
                                 ),
                             ],
                         ),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
+                        *[_long_row_button(i) for i in range(1, 9)],
                         dui2.Button(
                             label=strs.common.foo.spec,
                             size=(150, 100),
                             scale=0.4,
                             padding_left=100,
                             padding_right=200,
+                            action=reload,
                         ),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
-                        dui2.Button(size=(150, 100)),
+                        *[_long_row_button(i) for i in range(9, 17)],
                     ],
                 ),
                 dui2.ButtonRow(
-                    spacing_top=-15,
                     subtitle=strs.layout.subtitle_only.spec,
+                    buttons=[
+                        dui2.Button(size=(200, 120)),
+                    ],
+                ),
+                # Same again, so a subtitle-only row can be judged
+                # against a plain button row above it as well as
+                # against a footnote.
+                dui2.ButtonRow(
+                    # Dev-only page, so a baked literal.
+                    subtitle=LangStrSpecValue.literal('Subtitle only 2'),
                     buttons=[
                         dui2.Button(size=(200, 120)),
                     ],
@@ -495,7 +750,7 @@ def _test_v2_page_root(
                             size=(300, 80),
                             style=dui2.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
-                            icon=classicassets.textures.button_punch,
+                            icon=_classicassets.textures.button_punch,
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
                         ),
@@ -520,6 +775,88 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
+                # Right-alignment tests. (Dev-only, so baked literals.)
+                dui2.ButtonRow(
+                    title=LangStrSpecValue.literal('Right Aligned Title'),
+                    subtitle=LangStrSpecValue.literal(
+                        'Testing right-aligned title, subtitle, and content'
+                    ),
+                    title_align=dui2.HAlign.RIGHT,
+                    content_align=dui2.HAlign.RIGHT,
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Right'),
+                            size=(200, 80),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            debug=debug,
+                        ),
+                    ],
+                ),
+                # Same, but with more buttons than fit; alignment only
+                # applies to rows with room to spare, so this one should
+                # simply fill its width and scroll like any other.
+                dui2.ButtonRow(
+                    title=LangStrSpecValue.literal('Right Aligned Scrolling'),
+                    subtitle=LangStrSpecValue.literal(
+                        'Too many buttons to fit; should scroll normally'
+                    ),
+                    title_align=dui2.HAlign.RIGHT,
+                    content_align=dui2.HAlign.RIGHT,
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(str(i + 1)),
+                            size=(150, 100),
+                        )
+                        for i in range(16)
+                    ],
+                    # The first row's header test, flipped upside down
+                    # as a footer.
+                    footer_height=100,
+                    footer_decorations_left=[
+                        dui2.Text(
+                            text=LangStrSpecValue.literal('Footer Left'),
+                            position=(0, -10 - 20),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=dui2.HAlign.LEFT,
+                            debug=debug,
+                        ),
+                    ],
+                    footer_decorations_center=[
+                        dui2.Image(
+                            texture=_classicassets.textures.nub,
+                            position=(0, 58 - 20),
+                            size=(60, 60),
+                        ),
+                        dui2.Text(
+                            text=strs.common.docui_reference.spec,
+                            scale=0.5,
+                            position=(0, 18 - 20),
+                            size=(600, 23),
+                            debug=debug,
+                        ),
+                        dui2.Text(
+                            text=LangStrSpecValue.literal(
+                                'Hello from a DocUI footer!'
+                            ),
+                            position=(0, -10 - 20),
+                            size=(300, 30),
+                            debug=debug,
+                        ),
+                    ],
+                    footer_decorations_right=[
+                        dui2.Text(
+                            text=LangStrSpecValue.literal('Footer Right'),
+                            position=(0, -10 - 20),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=dui2.HAlign.RIGHT,
+                            debug=debug,
+                        ),
+                    ],
+                ),
             ],
         )
     )
@@ -527,465 +864,23 @@ def _test_v2_page_root(
     # Include some client effects if they ask (the 'Response
     # ClientEffects' button). V2 effect forms; see the immediate-effects
     # note above.
-    if request.args.get('test_effects', False):
+    if route.test_effects:
         response.client_effects = [
             clfx.ScreenMessageV2(
                 message=strs.effects.response_effects_hello.spec,
                 color=(0, 1, 0),
             ),
-            clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
             clfx.Delay(1.0),
             clfx.ScreenMessageV2(
                 message=strs.effects.effect_success.spec, color=(0, 1, 0)
             ),
-            clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
         ]
 
     # Include a local-action if they ask (the 'Response LocalAction'
     # button).
-    if request.args.get('test_action', False):
-        response.local_action = 'testaction'
-        response.local_action_args = {'testparam': 234}
+    if route.test_action:
+        rt.TestAction(testparam=234).attach(response)
 
     return response
-
-
-def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
-    """Decorations for the layout-test buttons (used on two buttons)."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    strs = _docuiv2testassets.strings
-
-    return [
-        dui2.Image(
-            texture=classicassets.textures.powerup_punch,
-            position=(-70, 0),
-            size=(40, 40),
-            h_align=dui2.HAlign.LEFT,
-        ),
-        dui2.Image(
-            texture=classicassets.textures.powerup_speed,
-            position=(0, 75),
-            size=(35, 35),
-            v_align=dui2.VAlign.TOP,
-        ),
-        dui2.Text(
-            text=strs.layout.corner_tl.spec,
-            position=(-70, 75),
-            size=(50, 50),
-            h_align=dui2.HAlign.LEFT,
-            v_align=dui2.VAlign.TOP,
-            debug=debug,
-        ),
-        dui2.Text(
-            text=strs.layout.corner_tr.spec,
-            position=(70, 75),
-            size=(50, 50),
-            h_align=dui2.HAlign.RIGHT,
-            v_align=dui2.VAlign.TOP,
-            debug=debug,
-        ),
-        dui2.Text(
-            text=strs.layout.corner_bl.spec,
-            position=(-70, -75),
-            size=(50, 50),
-            h_align=dui2.HAlign.LEFT,
-            v_align=dui2.VAlign.BOTTOM,
-            debug=debug,
-        ),
-        dui2.Text(
-            text=strs.layout.corner_br.spec,
-            position=(70, -75),
-            size=(50, 50),
-            h_align=dui2.HAlign.RIGHT,
-            v_align=dui2.VAlign.BOTTOM,
-            debug=debug,
-        ),
-    ]
-
-
-def _test_v2_page_2(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """More testing (v2 mirror of the v1 '/test2' page)."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    del request  # Unused.
-
-    strs = _docuiv2testassets.strings
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=strs.nav.test_two_title.spec,
-            rows=[
-                dui2.ButtonRow(
-                    title=strs.nav.more_tests.spec,
-                    buttons=[
-                        dui2.Button(
-                            label=strs.nav.browse.spec,
-                            size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/')),
-                        ),
-                        dui2.Button(
-                            label=strs.nav.replace.spec,
-                            size=(120, 80),
-                            action=dui2.Replace(dui2.Request('/')),
-                        ),
-                        dui2.Button(
-                            label=strs.nav.close.spec,
-                            size=(120, 80),
-                            action=dui2.Local(close_window=True),
-                            selected=True,  # Testing this
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_v2_page_long(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """Testing a page that takes a bit of time to load (v2 mirror)."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    del request  # Unused.
-
-    strs = _docuiv2testassets.strings
-
-    # Simulate a slow connection or whatnot.
-    time.sleep(3.0)
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=strs.nav.test.spec,
-            center_vertically=True,
-            rows=[
-                dui2.ButtonRow(
-                    title=strs.common.that_took_a_while.spec,
-                    center_title=True,
-                    center_content=True,
-                    buttons=[
-                        dui2.Button(
-                            label=strs.common.sure_did.spec,
-                            size=(120, 80),
-                            action=dui2.Browse(dui2.Request('/')),
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_v2_page_timed_actions(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """Testing timed actions (v2 mirror of '/timedactions')."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    strs = _docuiv2testassets.strings
-
-    val = request.args.get('val')
-    if not isinstance(val, int):
-        val = 5
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=strs.nav.test.spec,
-            center_vertically=True,
-            rows=[
-                dui2.ButtonRow(
-                    title=strs.common.hello_there_num(num=str(val)).spec,
-                    subtitle=strs.common.each_change.spec,
-                    center_title=True,
-                    center_content=True,
-                    buttons=[
-                        dui2.Button(
-                            label=strs.nav.done.spec,
-                            size=(120, 80),
-                            action=dui2.Local(close_window=True),
-                            default=True,
-                        ),
-                    ],
-                ),
-            ],
-        ),
-        # Refresh this page with a countdown until we hit zero and then
-        # close the window.
-        timed_action=(
-            dui2.Replace(dui2.Request('/timedactions', args={'val': val - 1}))
-            if (val - 1) > 0
-            else dui2.Local(close_window=True)
-        ),
-        timed_action_delay=1.0,
-    )
-
-
-def _test_v2_page_empty(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """An empty page (v2 mirror of '/emptypage')."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    del request  # Unused.
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=_docuiv2testassets.strings.layout.empty_page_title.spec,
-            rows=[],
-        )
-    )
-
-
-def _test_v2_page_display_items(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """Testing display-items (v2 mirror of '/displayitems')."""
-    from bacommon.classic import ClassicChestAppearance, ClassicChestDisplayItem
-    import bacommon.displayitem as ditm
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    strs = _docuiv2testassets.strings
-
-    # Show some specific debug bits if they ask us to.
-    debug = bool(request.args.get('debug', False))
-
-    def _make_test_button(
-        scale: float,
-        wrapper: ditm.Wrapper,
-    ) -> bacommon.docui.v2.Button:
-
-        # See how this looks when unrecognized (relying on wrapper info
-        # only).
-        uwrapper = copy.deepcopy(wrapper)
-        uwrapper.item = ditm.Unknown()
-
-        return dui2.Button(
-            size=(300, 400),
-            scale=scale,
-            decorations=[
-                dui2.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui2.DisplayItemStyle.FULL,
-                    position=(-62, 100),
-                    size=(120, 120),
-                    debug=debug,
-                ),
-                dui2.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui2.DisplayItemStyle.FULL,
-                    position=(62, 100),
-                    size=(120, 120),
-                    debug=debug,
-                ),
-                dui2.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui2.DisplayItemStyle.COMPACT,
-                    position=(-55, -20),
-                    size=(80, 80),
-                    debug=debug,
-                ),
-                dui2.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui2.DisplayItemStyle.COMPACT,
-                    position=(55, -20),
-                    size=(80, 80),
-                    debug=debug,
-                ),
-                dui2.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui2.DisplayItemStyle.ICON,
-                    position=(-55, -120),
-                    size=(100, 80),
-                    debug=debug,
-                ),
-                dui2.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui2.DisplayItemStyle.ICON,
-                    position=(55, -120),
-                    size=(100, 80),
-                    debug=debug,
-                ),
-            ],
-        )
-
-    return dui2.Response(
-        page=dui2.Page(
-            padding_left=20,
-            padding_right=20,
-            title=strs.items.display_items.spec,
-            rows=[
-                dui2.ButtonRow(
-                    debug=debug,
-                    padding_left=-10,
-                    title=strs.items.display_item_tests.spec,
-                    subtitle=strs.items.display_items_sub.spec,
-                    buttons=[
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
-                        ),
-                        _make_test_button(
-                            0.47,
-                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(
-                                ClassicChestDisplayItem(
-                                    appearance=ClassicChestAppearance.L3
-                                )
-                            ),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tokens(count=3)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tokens(count=1414287)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Test()),
-                        ),
-                    ],
-                ),
-                dui2.ButtonRow(
-                    buttons=[
-                        dui2.Button(
-                            label=(
-                                strs.common.hide_debug.spec
-                                if debug
-                                else strs.common.show_debug.spec
-                            ),
-                            style=dui2.ButtonStyle.MEDIUM,
-                            size=(240, 60),
-                            color=(0.6, 0.4, 0.8, 1.0),
-                            action=dui2.Replace(
-                                dui2.Request(
-                                    request.path, args={'debug': not debug}
-                                )
-                            ),
-                        )
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_v2_bounds(
-    request: bacommon.docui.v2.Request,
-) -> bacommon.docui.v2.Response:
-    """Button-style bounds tests (v2 mirror of '/boundstests')."""
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1 import _docuiv2testassets
-
-    del request  # Unused.
-
-    strs = _docuiv2testassets.strings
-
-    def _nm(style: bacommon.docui.v2.ButtonStyle) -> LangStrSpec:
-        # Code-literal pass-through: renders the raw enum name
-        # verbatim in every locale.
-        return strs.common.code_literal(
-            text=f'{type(style).__name__}.{style.name}'
-        ).spec
-
-    def _hello_row(
-        title: LangStrSpec,
-        sizes: list[tuple[float, float]],
-        style: bacommon.docui.v2.ButtonStyle,
-        texture: bool = False,
-    ) -> bacommon.docui.v2.ButtonRow:
-        return dui2.ButtonRow(
-            title=title,
-            buttons=[
-                dui2.Button(
-                    label=strs.layout.hello.spec,
-                    size=size,
-                    style=style,
-                    texture=(builtinassets.textures.white if texture else None),
-                    color=(1, 0, 0, 0.3) if texture else None,
-                    debug=True,
-                )
-                for size in sizes
-            ],
-        )
-
-    styles = dui2.ButtonStyle
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=strs.layout.bounds_tests_title.spec,
-            rows=[
-                _hello_row(
-                    _nm(styles.SQUARE),
-                    [(300, 300), (200, 200), (100, 100)],
-                    styles.SQUARE,
-                ),
-                _hello_row(
-                    _nm(styles.SQUARE_WIDE),
-                    [(400, 200), (200, 250), (60, 100)],
-                    styles.SQUARE_WIDE,
-                ),
-                _hello_row(
-                    strs.layout.background_texture.spec,
-                    [(300, 300), (200, 200), (100, 100)],
-                    styles.SQUARE,
-                    texture=True,
-                ),
-                _hello_row(
-                    _nm(styles.TAB),
-                    [(400, 100), (200, 50), (100, 60)],
-                    styles.TAB,
-                ),
-                _hello_row(
-                    _nm(styles.LARGER),
-                    [(500, 100), (200, 50), (100, 60)],
-                    styles.LARGER,
-                ),
-                _hello_row(
-                    _nm(styles.LARGE),
-                    [(400, 100), (200, 50), (100, 60)],
-                    styles.LARGE,
-                ),
-                _hello_row(
-                    _nm(styles.MEDIUM),
-                    [(300, 100), (200, 50), (100, 60)],
-                    styles.MEDIUM,
-                ),
-                _hello_row(
-                    _nm(styles.SMALL),
-                    [(200, 100), (200, 50), (100, 60)],
-                    styles.SMALL,
-                ),
-                _hello_row(
-                    _nm(styles.BACK),
-                    [(200, 100), (200, 50), (100, 60)],
-                    styles.BACK,
-                ),
-                _hello_row(
-                    _nm(styles.BACK_SMALL),
-                    [(200, 100), (200, 50), (100, 60)],
-                    styles.BACK_SMALL,
-                ),
-            ],
-        )
-    )

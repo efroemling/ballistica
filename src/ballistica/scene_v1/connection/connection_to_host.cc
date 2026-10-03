@@ -20,6 +20,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -34,15 +35,10 @@ namespace ballistica::scene_v1 {
 // How long to go between sending out null packets for pings.
 const int kPingSendInterval = 2000;
 
-static auto MakeServerResponseJson_(const std::string& passed_str)
-    -> std::string {
-  // A {"t": ["serverResponses", <passed_str>]} object.
-  JsonBuilder builder;
-  builder.root_object().AddArray("t").Add("serverResponses").Add(passed_str);
-  std::string result = builder.Write();
-
-  return result;
-}
+// How long we wait on a v2-auth token for a host whose offer is optional
+// before joining without one (a stalled request shouldn't hold up a
+// LAN join; a normal one takes a cloud round trip).
+const millisecs_t kOptionalV2AuthTimeout = 5000;
 
 // Resolve a lang-str tagged wire value (see kLangStrWireTag*) from the
 // message layer to flat display text: the string to show plus whether
@@ -121,12 +117,14 @@ ConnectionToHost::~ConnectionToHost() {
         s = base::BuiltinStrings::Net::LeftParty(peer_spec().GetDisplayString())
                 ->Evaluate();
       }
-      g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
+      // (Evaluated text, possibly holding peer-chosen names: literal.)
+      g_base->ScreenMessage(s, {1, 0.5f, 0.0f}, true);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().cork_pop.get());
     } else {
       g_base->ScreenMessage(
           base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
-          {1, 0, 0});
+          {1, 0, 0}, true);
     }
   }
 }
@@ -183,8 +181,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             return "ConnectionToHost: received HANDSHAKE (host protocol "
                    + std::to_string(their_protocol_version) + ").";
           });
-      if (their_protocol_version >= kProtocolVersionClientMin
-          && their_protocol_version <= kProtocolVersionMax) {
+      if (IsJoinableHostProtocol(their_protocol_version)) {
         compatible = true;
 
         // If we are compatible, set our protocol version to match what
@@ -211,16 +208,19 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       // See if the server uses v2 auth.
       if (!got_v2_auth_usage_) {
-        // If server requires v2 auth, it will have a 'v2a' value in its
+        // If server offers v2 auth, it will have a 'v2a' value in its
         // handshake which is its global-app-instance-uuid. We'll ask the
         // cloud to send our account info to that app-instance and give us a
         // token we can use to identify ourself as that account to them.
+        // A 'v2o' flag beside it makes the offer optional: if we can't
+        // get a token we join without one.
         if (their_protocol_version >= 33) {
           if (auto doc = JsonDoc::Parse(std::string_view(
                   reinterpret_cast<const char*>(data.data() + 3),
                   data.size() - 3))) {
             if (auto v2a = doc->root()["v2a"].as_string()) {
               v2_auth_global_app_instance_id_ = std::string(*v2a);
+              v2_auth_optional_ = doc->root()["v2o"].as_bool().value_or(false);
             }
           }
         }
@@ -228,30 +228,43 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
           return v2_auth_global_app_instance_id_.has_value()
                      ? ("ConnectionToHost: host uses v2-auth "
-                        "(global-app-instance="
+                        + std::string(v2_auth_optional_ ? "(optional, " : "(")
+                        + "global-app-instance="
                         + *v2_auth_global_app_instance_id_ + ").")
                      : std::string(
                            "ConnectionToHost: host does not use v2-auth.");
         });
       }
 
-      std::optional<std::string> v2_auth_token;
-
       // If the server does use v2 auth, process v2-auth requests as needed
-      // and hold off on handshake-responses until something goes through.
+      // and hold off on handshake-responses until we've settled on a
+      // token (or, for an optional offer, on going without).
       assert(got_v2_auth_usage_);
-      if (v2_auth_global_app_instance_id_.has_value()) {
+      if (v2_auth_global_app_instance_id_.has_value() && !v2_auth_decided_) {
+        auto now{g_core->AppTimeMillisecs()};
+        if (v2_auth_start_time_ == 0) {
+          v2_auth_start_time_ = now;
+        }
         auto args = PythonRef::Stolen(
-            Py_BuildValue("(s)", v2_auth_global_app_instance_id_->c_str()));
+            Py_BuildValue("(sO)", v2_auth_global_app_instance_id_->c_str(),
+                          v2_auth_optional_ ? Py_True : Py_False));
         auto result = g_base->python->objs()
                           .Get(base::BasePython::ObjID::kV2AuthRequestCall)
                           .Call(args);
+        // For an optional offer anything but a token means joining
+        // without one.
+        std::optional<std::string> skip_reason;
         if (!result.exists()) {
           g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
                                "Error running v2_auth_request.");
+          skip_reason = "v2_auth_request error";
         } else {
           if (result.ValueIsNone()) {
-            // Still waiting...
+            // Still waiting... but not forever on an optional offer.
+            if (v2_auth_optional_
+                && now - v2_auth_start_time_ > kOptionalV2AuthTimeout) {
+              skip_reason = "timed out";
+            }
           } else {
             auto valid_format{false};
             if (result.ValueIsSequence()) {
@@ -264,12 +277,13 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                 auto sval{vals[1].ValueAsString()};
                 valid_format = true;
 
-                if (!success) {
+                if (!success && v2_auth_optional_) {
+                  skip_reason = "auth unavailable: " + sval;
+                } else if (!success) {
                   // Auth rejected us; show an error message and fail. If a
                   // reject-reason code came with the rejection, render our
                   // own localized string for it; otherwise show the passed
-                  // text (which can be free-form host-supplied text)
-                  // translated via the legacy server-responses mechanism.
+                  // text (free-form host-supplied text) verbatim.
                   if (!vals[2].ValueIsNone()) {
                     auto reason{static_cast<int>(vals[2].ValueAsInt())};
                     std::string msg = RejectReasonMessage_(reason);
@@ -279,16 +293,23 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                             + std::to_string(reason) + "); showing: " + msg);
                     Error(msg);
                   } else {
+                    // Free-form text (a host's V2AuthResponse
+                    // error_message): shown verbatim -- never a
+                    // translation key, never legacy Lstr json.
                     g_core->logging->Log(
                         LogName::kBaNetworking, LogLevel::kDebug,
                         "V2 auth rejected us; showing supplied text: " + sval);
-                    Error(MakeServerResponseJson_(sval));
+                    if (!errored()) {
+                      g_base->ScreenMessage(sval, {1.0f, 0.0f, 0.0f}, true);
+                    }
+                    ErrorSilent();
                   }
                   return;
                 } else {
                   // Auth accepted us! Pass along this token in our
                   // handshake-response.
-                  v2_auth_token = sval;
+                  v2_auth_token_ = sval;
+                  v2_auth_decided_ = true;
                 }
               }
             }
@@ -297,11 +318,20 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
               g_core->logging->Log(
                   LogName::kBaNetworking, LogLevel::kError,
                   "Invalid type returned from v2_auth_request.");
+              skip_reason = "invalid v2_auth_request result";
             }
           }
         }
+        if (!v2_auth_decided_ && v2_auth_optional_ && skip_reason) {
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kDebug, [&skip_reason] {
+                return "ConnectionToHost: joining without v2-auth (optional; "
+                       + *skip_reason + ").";
+              });
+          v2_auth_decided_ = true;
+        }
         // If we're still waiting on a token, go no further.
-        if (!v2_auth_token.has_value()) {
+        if (!v2_auth_decided_) {
           return;
         }
       }
@@ -323,8 +353,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         dict.Add("d", g_base->platform->GetPublicDeviceUUID());
 
         // Add v2 auth token.
-        if (v2_auth_token.has_value()) {
-          dict.Add("v2at", *v2_auth_token);
+        if (v2_auth_token_.has_value()) {
+          dict.Add("v2at", *v2_auth_token_);
         }
 
         std::string out = builder.Write();
@@ -457,10 +487,10 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         // (the host generally will pull these from the master server to
         // prevent cheating, but in some cases these are used).
 
-        if (v2_auth_global_app_instance_id_.has_value()) {
-          // Host has enabled v2-auth. Don't bother sending our profiles
-          // directly as they will be ignored anyway (host gets profiles
-          // from cloud in this case).
+        if (v2_auth_token_.has_value()) {
+          // We v2-authed. Don't bother sending our profiles directly as
+          // they will be ignored anyway (host gets profiles from cloud
+          // in this case).
         } else if (protocol_version_ >= 32) {
           // On newer hosts we send profiles as json.
           //
@@ -642,7 +672,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                                      "Join rejected by host (reason code "
                                          + std::to_string(reason)
                                          + "); showing: " + msg);
-                g_base->ScreenMessage(msg, {1, 0, 0});
+                g_base->ScreenMessage(msg, {1, 0, 0}, true);
                 break;
               }
               default:
@@ -663,9 +693,9 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
             base::BuiltinStrings::Net::PlayerJoinedParty(
                 PlayerSpec(str_buffer.data()).GetDisplayString())
                 ->Evaluate(),
-            {0.5f, 1.0f, 0.5f});
-        g_base->audio->SafePlayBuiltinSound(
-            base::BuiltinSoundID::kAudioGunCocking);
+            {0.5f, 1.0f, 0.5f}, true);
+        g_base->audio->SafePlaySound(
+            g_base->assets->base_assets().gun_cocking.get());
       }
       break;
     }
@@ -680,9 +710,9 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
             base::BuiltinStrings::Net::PlayerLeftParty(
                 PlayerSpec(&(str_buffer[0])).GetDisplayString())
                 ->Evaluate(),
-            {1, 0.5f, 0.0f});
-        g_base->audio->SafePlayBuiltinSound(
-            base::BuiltinSoundID::kAudioCorkPop);
+            {1, 0.5f, 0.0f}, true);
+        g_base->audio->SafePlaySound(
+            g_base->assets->base_assets().cork_pop.get());
       }
       break;
     }
@@ -839,8 +869,25 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
               peer_spec().GetDisplayString())
               ->Evaluate();
     }
-    g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
-    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioGunCocking);
+    // (Evaluated text holding a peer-chosen name: literal.)
+    g_base->ScreenMessage(s, {0.5f, 1, 0.5f}, true);
+    g_base->audio->SafePlaySound(
+        g_base->assets->base_assets().gun_cocking.get());
+
+    // Our cloud profiles reach a host through v2-auth (so only when we
+    // actually sent a token -- an optional offer we couldn't take
+    // counts as none), and only hosts at the character-skin line can
+    // use what it delivers; anywhere else we are on legacy profiles
+    // (cloud-profiles D11), which must
+    // be obvious -- warn once per join. Only when signed in, though:
+    // signed out, having no cloud profiles is stating the obvious.
+    if (g_base->ui->account_signed_in()
+        && (protocol_version_ < kProtocolVersionCharacterSkins
+            || !v2_auth_token_.has_value())) {
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Net::HostLegacyProfilesOnly()->Evaluate(),
+          {1.0f, 1.0f, 0.0f}, true);
+    }
 
     printed_connect_message_ = true;
   }

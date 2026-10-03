@@ -93,6 +93,24 @@ const int kAudioProcessIntervalNormal{500 * 1000};
 const int kAudioProcessIntervalFade{50 * 1000};
 const int kAudioProcessIntervalPendingLoad{1 * 1000};
 
+// How long we spend ramping master volume down before suspending the audio
+// device (and back up after unsuspending it). Without this we kill the
+// device with the mixer at full amplitude, which cuts whatever is playing
+// off mid-waveform. On iOS in particular that lands right as the OS is
+// tearing down our audio session, and the result sounds less like a click
+// and more like a moment of corrupted audio.
+const millisecs_t kSuspendFadeMillisecs{120};
+
+// How many steps we break that ramp into. OpenAL smooths gain changes
+// across each mix period, so this doesn't need to be fine grained.
+const int kSuspendFadeSteps{12};
+
+// How long we let the mixer keep running at zero gain after a suspend
+// fade-out completes, before actually stopping the device. Gives audio
+// already mixed and sitting in the backend's buffers a chance to play out
+// silently. (Same idea as the delay in our shutdown path.)
+const millisecs_t kSuspendDrainMillisecs{60};
+
 #if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 const bool kShowInUseSounds{};
 #endif
@@ -276,6 +294,13 @@ void AudioServer::Start_() {
       event_loop()->NewTimer(kAudioProcessIntervalNormal, true,
                              NewLambdaRunnable([this] { Process_(); }).get());
 
+  // Everything below runs asynchronously to the logic thread, which can be
+  // well into its main menu by the time we finish. Sound requests made
+  // before we flip Audio::server_ready() find no sources and get dropped,
+  // so we time the device bring-up and shout if it was slow (Bluetooth
+  // routes on iOS can take seconds to activate).
+  millisecs_t start_time = g_core->AppTimeMillisecs();
+
 #if BA_ENABLE_AUDIO
 
   // Bring up OpenAL stuff.
@@ -360,6 +385,9 @@ void AudioServer::Start_() {
           "No audio devices found. Falling back to null audio device.");
       using_null_device_ = true;
       if (!g_buildconfig.platform_android()) {
+        // No sources will ever exist; mark us ready so callers don't keep
+        // waiting on a bring-up that is never coming.
+        g_base->audio->set_server_ready();
         return;
       }
     }
@@ -484,6 +512,23 @@ void AudioServer::Start_() {
              + "\n  Device: " + device_name + env_note;
     });
 
+    // Device open + context creation is the part that can stall (this is
+    // where iOS activates its audio session and negotiates the output
+    // route). Anything over a second means the logic thread has likely
+    // already tried to play sounds and had them dropped.
+    millisecs_t device_open_millisecs = g_core->AppTimeMillisecs() - start_time;
+    if (device_open_millisecs > 1000) {
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "Audio device open took " + std::to_string(device_open_millisecs)
+              + "ms; sound requests made before now were dropped (internal"
+                " music retries; see ClassicAppMode::SetInternalMusic).");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "Audio device open took "
+                               + std::to_string(device_open_millisecs) + "ms.");
+    }
+
     alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(
         alcGetProcAddress(device, "alcDevicePauseSOFT"));
     alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT_>(
@@ -600,6 +645,15 @@ void AudioServer::Start_() {
 
   last_started_playing_time_ = g_core->AppTimeSeconds();
 #endif  // BA_ENABLE_AUDIO
+
+  // Sources are claimable from here on.
+  g_base->audio->set_server_ready();
+  g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo, [this, start_time] {
+    return "Audio server ready with " + std::to_string(sources_.size())
+           + " sources ("
+           + std::to_string(g_core->AppTimeMillisecs() - start_time)
+           + "ms after audio thread start).";
+  });
 }
 
 void AudioServer::Shutdown() {
@@ -671,12 +725,12 @@ void AudioServer::SetSuspended_(bool suspend) {
           LogName::kBaAudio, LogLevel::kError,
           "Got audio unsuspend request when already unsuspended.");
     } else {
-#if BA_PLATFORM_IOS_TVOS
-      // apple recommends this during audio-interruptions..
-      // http://developer.apple.com/library/ios/#documentation/Audio/Conceptual/AudioSessionProgrammingGuide/Cookbook/
-      // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
-      alcMakeContextCurrent(nullptr);
-#endif
+      // Ramp ourself down to silence before killing the device so we don't
+      // cut whatever is playing off mid-waveform. Note that this blocks
+      // this thread for a fraction of a second; the main thread is spinning
+      // waiting for us in SuspendApp() but has seconds of budget to play
+      // with, so this is a fine place to spend a bit of it.
+      FadeMasterGainForSuspend_(true);
 
       // Pause OpenAL (when supported).
 #if BA_ENABLE_AUDIO
@@ -715,16 +769,6 @@ void AudioServer::SetSuspended_(bool suspend) {
       g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
                            "Got audio suspend request when already suspended.");
     } else {
-#if BA_PLATFORM_IOS_TVOS
-      // Apple recommends this during audio-interruptions.
-      // http://developer.apple.com/library/ios/#documentation/Audio/
-      // Conceptual/AudioSessionProgrammingGuide/Cookbook/
-      // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
-#if BA_ENABLE_AUDIO
-      alcMakeContextCurrent(impl_->alc_context);  // hmm is this necessary?..
-#endif
-#endif
-
       // Resume OpenAL (when supported).
 #if BA_ENABLE_AUDIO
       if (alcDeviceResumeSOFT != nullptr) {
@@ -763,8 +807,65 @@ void AudioServer::SetSuspended_(bool suspend) {
           i->ExecStop();
         }
       }
+
+      // Lastly, ramp back up out of the silence we faded down to when we
+      // suspended. Note this happens after the stops above so anything we
+      // killed while suspended stays silent instead of blipping.
+      FadeMasterGainForSuspend_(false);
     }
   }
+}
+
+void AudioServer::FadeMasterGainForSuspend_(bool out) {
+#if BA_ENABLE_AUDIO
+  assert(g_base->InAudioThread());
+
+  // Nothing to fade if we've got no actual device.
+  if (using_null_device_ || impl_ == nullptr || impl_->alc_context == nullptr) {
+    return;
+  }
+
+  if (out) {
+    // Skip the whole thing (and the time it costs) if nothing audible is
+    // happening; a hard cut is only ugly if there's something to cut. Note
+    // that app_active_volume_ is already zero on platforms that silence
+    // audio when going inactive, which is the common case there.
+    if (app_active_volume_ <= 0.0f) {
+      return;
+    }
+    bool playing{};
+    for (auto&& i : sources_) {
+      if (i->is_actually_playing()) {
+        playing = true;
+        break;
+      }
+    }
+    if (!playing) {
+      return;
+    }
+  } else {
+    // Only ramp back up if we actually ramped down.
+    if (!master_gain_faded_) {
+      return;
+    }
+  }
+
+  auto from = out ? 1.0f : 0.0f;
+  auto to = out ? 0.0f : 1.0f;
+  for (int i = 1; i <= kSuspendFadeSteps; ++i) {
+    auto amt = static_cast<float>(i) / static_cast<float>(kSuspendFadeSteps);
+    alListenerf(AL_GAIN, from + (to - from) * amt);
+    CHECK_AL_ERROR;
+    core::Platform::SleepMillisecs(kSuspendFadeMillisecs / kSuspendFadeSteps);
+  }
+  master_gain_faded_ = out;
+
+  // Let the mixer chew on our silence for a moment before the device gets
+  // stopped out from under it.
+  if (out) {
+    core::Platform::SleepMillisecs(kSuspendDrainMillisecs);
+  }
+#endif  // BA_ENABLE_AUDIO
 }
 
 void AudioServer::PushSourceSetIsMusicCall(uint32_t play_id, bool val) {

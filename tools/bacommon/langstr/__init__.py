@@ -30,6 +30,7 @@ from bacommon.langstr._core import (
     LangStrSpecResource,
     LangStrSpecValue,
     LangStrSpecResourceIndexed,
+    LangStrSpecTimeTarget,
     LangStrSpecTypeID,
     LANGSTR_EXT_MIN_BUILD,
     MAX_NESTING_DEPTH,
@@ -38,11 +39,20 @@ from bacommon.langstr._core import (
     PackageStructure,
     LanguageStringEncodeContext,
     LanguageStringDecodeContext,
-    LanguageStringNameDecodeContext,
     LangStrError,
     EncodedLangStr,
     contains_resource_form,
-    collect_apverids,
+    collect_apvernums,
+    time_target_offset_millis,
+)
+from bacommon.langstr._namedecode import (
+    LanguageStringNameDecodeContext,
+    literal_template_kinds,
+)
+from bacommon.langstr._flatindex import (
+    LANGSTR_FLAT_MIN_BUILD,
+    LangStrFlatIndexContext,
+    LangStrIndexError,
 )
 from bacommon.langstr._wrapper import (
     LangStrDir,
@@ -74,6 +84,12 @@ __all__ = [
     'LangStrSpecResource',
     'LangStrSpecValue',
     'LangStrSpecResourceIndexed',
+    'LangStrSpecTimeTarget',
+    'literal_template_kinds',
+    'time_target_offset_millis',
+    'LANGSTR_FLAT_MIN_BUILD',
+    'LangStrFlatIndexContext',
+    'LangStrIndexError',
     'LangStrSpecTypeID',
     'LANGSTR_EXT_MIN_BUILD',
     'MAX_NESTING_DEPTH',
@@ -86,7 +102,7 @@ __all__ = [
     'LangStrError',
     'EncodedLangStr',
     'contains_resource_form',
-    'collect_apverids',
+    'collect_apvernums',
     'LangStrDir',
     'WrapperTree',
     'convert_time_subs',

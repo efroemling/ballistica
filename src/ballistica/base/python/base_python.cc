@@ -214,6 +214,7 @@ void BasePython::OnScreenSizeChange() {
 
   float screen_res_x{g_base->graphics->screen_virtual_width()};
   float screen_res_y{g_base->graphics->screen_virtual_height()};
+  Rect outer_rect{g_base->graphics->reported_virtual_outer_rect()};
 
   // This call runs for all screen sizes including the initial one. However
   // we only want to inform the Python layer of *changes*, so we only store
@@ -221,18 +222,26 @@ void BasePython::OnScreenSizeChange() {
   if (last_screen_res_x_ < 0.0) {
     last_screen_res_x_ = screen_res_x;
     last_screen_res_y_ = g_base->graphics->screen_virtual_height();
+    last_virtual_outer_rect_ = outer_rect;
     return;
   }
 
-  // Ignore any redundant values that might come through.
-  if (last_screen_res_x_ == screen_res_x
-      && last_screen_res_y_ == screen_res_y) {
+  // Ignore any redundant values that might come through. Note that the
+  // virtual outer rect can change even when virtual res doesn't (an
+  // inset appearing under a fixed bounds shape) and UI adapts to it, so
+  // it counts as a change too.
+  if (last_screen_res_x_ == screen_res_x && last_screen_res_y_ == screen_res_y
+      && last_virtual_outer_rect_.l == outer_rect.l
+      && last_virtual_outer_rect_.b == outer_rect.b
+      && last_virtual_outer_rect_.r == outer_rect.r
+      && last_virtual_outer_rect_.t == outer_rect.t) {
     return;
   }
 
   // Aight; we got a fresh, non-initial value. Store it and inform Python.
   last_screen_res_x_ = screen_res_x;
   last_screen_res_y_ = screen_res_y;
+  last_virtual_outer_rect_ = outer_rect;
 
   objs().Get(ObjID::kAppOnScreenSizeChangeCall).Call();
 }
@@ -331,6 +340,40 @@ auto BasePython::HmacSha256Hex(const std::string& key, const std::string& msg)
     PyErr_Clear();
     g_core->logging->Log(LogName::kBa, LogLevel::kError,
                          "HmacSha256Hex: hexdigest failed.");
+    return "";
+  }
+  return PyUnicode_AsUTF8(hexdigest.get());
+}
+
+auto BasePython::Sha256Hex(const std::string& data) -> std::string {
+  assert(Python::HaveGIL());
+  if (!hashlib_sha256_call_.exists()) {
+    if (hashlib_lookup_failed_) {
+      return "";
+    }
+    auto hashlib_mod = PythonRef::StolenSoft(PyImport_ImportModule("hashlib"));
+    if (!hashlib_mod.exists()) {
+      PyErr_Clear();
+      hashlib_lookup_failed_ = true;
+      return "";
+    }
+    hashlib_sha256_call_ = hashlib_mod.GetAttr("sha256");
+  }
+  // hashlib.sha256(data).hexdigest()
+  auto args = PythonRef::Stolen(Py_BuildValue(
+      "(y#)", data.c_str(), static_cast<Py_ssize_t>(data.size())));
+  PythonRef hash_obj = hashlib_sha256_call_.Call(args);
+  if (!hash_obj.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Sha256Hex: hashlib.sha256 failed.");
+    return "";
+  }
+  PythonRef hexdigest = hash_obj.GetAttr("hexdigest").Call();
+  if (!hexdigest.exists() || !PyUnicode_Check(hexdigest.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Sha256Hex: hexdigest failed.");
     return "";
   }
   return PyUnicode_AsUTF8(hexdigest.get());

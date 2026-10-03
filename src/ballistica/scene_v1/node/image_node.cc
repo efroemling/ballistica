@@ -41,6 +41,10 @@ class ImageNodeType : public NodeType {
   BA_BOOL_ATTR(host_only, host_only, set_host_only);
   BA_BOOL_ATTR(front, front, set_front);
   BA_BOOL_ATTR(in_world, in_world, set_in_world);
+  // Appended (protocol 44+) so existing attr indices are untouched.
+  BA_BOOL_ATTR(flash, flash, set_flash);
+  // Appended (protocol 48+).
+  BA_FLOAT_ARRAY_ATTR(tint3_color, tint3_color, SetTint3Color);
 #undef BA_NODE_TYPE_CLASS
 
   ImageNodeType()
@@ -66,7 +70,9 @@ class ImageNodeType : public NodeType {
         vr_depth(this),
         host_only(this),
         front(this),
-        in_world(this) {}
+        in_world(this),
+        flash(this),
+        tint3_color(this) {}
 };
 static NodeType* node_type{};
 
@@ -147,6 +153,17 @@ void ImageNode::SetTint2Color(const std::vector<float>& vals) {
   tint2_red_ = tint2_color_[0];
   tint2_green_ = tint2_color_[1];
   tint2_blue_ = tint2_color_[2];
+}
+
+void ImageNode::SetTint3Color(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for tint3_color",
+                    PyExcType::kValue);
+  }
+  tint3_color_ = vals;
+  tint3_red_ = tint3_color_[0];
+  tint3_green_ = tint3_color_[1];
+  tint3_blue_ = tint3_color_[2];
 }
 
 void ImageNode::SetTintColor(const std::vector<float>& vals) {
@@ -353,6 +370,12 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
                 && texture_->texture_data()->premultiplied())
                    ? alpha
                    : 1.0f;
+  // Local flash: 100ms on / 100ms off off scene time, which every
+  // viewer (host, clients, replays) advances in lockstep, so the phase
+  // matches everywhere and freezes with the sim like a timer would.
+  if (flash_ && (scene()->time() / 100) % 2 == 0) {
+    cmul *= 2.0f;
+  }
   base::MeshAsset* mesh_opaque_used = nullptr;
   if (mesh_opaque_.exists()) mesh_opaque_used = mesh_opaque_->mesh_data();
   base::MeshAsset* mesh_transparent_used = nullptr;
@@ -364,19 +387,20 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (!mesh_opaque_.exists() && !mesh_transparent_.exists()) {
     if (vr && fill_screen_) {
 #if BA_VR_BUILD
-      mesh_opaque_used = g_base->assets->BuiltinMesh(
-          base::BuiltinMeshID::kMeshesImage1x1VrfullScreen);
+      mesh_opaque_used = g_scene_v1->assets().image1x1_vrfull_screen.get();
 #else
       throw Exception();
 #endif  // BA_VR_BUILD
     } else {
-      base::BuiltinMeshID m =
-          fill_screen_ ? base::BuiltinMeshID::kMeshesImage1x1FullScreen
-                       : base::BuiltinMeshID::kMeshesImage1x1;
+      // (The plain 1x1 sheet stays a builtin; base shares it.)
+      base::MeshAsset* m = fill_screen_
+                               ? g_scene_v1->assets().image1x1_full_screen.get()
+                               : g_base->assets->BuiltinMesh(
+                                     base::BuiltinMeshID::kMeshesImage1x1);
       if (has_alpha_channel) {
-        mesh_transparent_used = g_base->assets->BuiltinMesh(m);
+        mesh_transparent_used = m;
       } else {
-        mesh_opaque_used = g_base->assets->BuiltinMesh(m);
+        mesh_opaque_used = m;
       }
     }
   }
@@ -399,6 +423,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
+      c.SetColorizeColor3(tint3_red_, tint3_green_, tint3_blue_);
     }
     c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);
@@ -427,6 +452,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
       c.SetColorizeColor2(tint2_red_, tint2_green_, tint2_blue_);
+      c.SetColorizeColor3(tint3_red_, tint3_green_, tint3_blue_);
     }
     c.SetMaskTexture(mask_texture_.exists() ? mask_texture_->texture_data()
                                             : nullptr);

@@ -7,12 +7,37 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
+
+/// A listener of our own for some sounds, in place of the audio
+/// system's single one (which follows the game camera). Sounds using
+/// one play listener-relative, placed where they sit relative to it.
+/// For scenes seen through a view of their own (ui viewers) so they
+/// sound as that view shows them.
+struct AudioListenerSpace {
+  Vector3f origin{0.0f, 0.0f, 0.0f};
+  Vector3f right{1.0f, 0.0f, 0.0f};
+  Vector3f up{0.0f, 1.0f, 0.0f};
+  /// Pointing back out of the view (the way it looks is -back).
+  Vector3f back{0.0f, 0.0f, 1.0f};
+  /// Scales how far to the sides sounds sit (so how widely they pan).
+  float pan_scale{1.0f};
+  /// Scales the gain of everything played.
+  float gain{1.0f};
+};
 
 // Location for sound emission (client version)
 class AudioSource {
  public:
+  /// Play relative to a listener of our own (see AudioListenerSpace):
+  /// positions given for positional play get placed relative to it,
+  /// and gains get scaled by its gain. Sources get handed out without
+  /// one.
+  void SetListenerSpace(const AudioListenerSpace& space);
+  void ClearListenerSpace() { has_listener_space_ = false; }
+
   // Sets whether a source is "music".
   // This mainly just influences which volume controls
   // affect it.
@@ -55,6 +80,11 @@ class AudioSource {
   auto play_id() const -> uint32_t { return play_id_; }
 
  private:
+  AudioListenerSpace listener_space_;
+  bool has_listener_space_{};
+  /// With a listener space: whether positional play was asked for (we
+  /// always actually play listener-relative then).
+  bool wants_positional_{true};
   std::mutex mutex_;
 #if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   millisecs_t last_lock_time_{};

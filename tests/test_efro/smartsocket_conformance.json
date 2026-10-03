@@ -1,0 +1,279 @@
+{
+    "about": [
+        "Shared conformance table for SmartSocket endpoint implementations.",
+        "Executed by tests/test_efro/test_smartsocket_conformance.py against",
+        "efro.smartsocket.SmartSocketEndpoint, and by bamaster's Node-run",
+        "tests/js/smart_socket_conformance.mjs against the compiled browser",
+        "client (bamaster_smart_socket.ts). The browser client is a",
+        "hand-maintained mirror of the Python endpoint and carried the",
+        "reconnect-budget bug for five weeks because nothing compared them;",
+        "this file is that comparison. Behavior both must share goes here.",
+        "",
+        "Each scenario is a list of steps at absolute times (seconds), run",
+        "against a scripted relay model that both drivers implement the same",
+        "way: it answers a hello with its cursor and the policy, accepts msg",
+        "frames that are next in sequence (acking each), ignores duplicates,",
+        "records a 'gap' for anything else, and answers pings. Reconnect",
+        "jitter is pinned to zero by both drivers.",
+        "",
+        "Ops: start | send {text} | push {seq,text} | drop {code} |",
+        "refuse {count} | reject {code} | silent {on} | full {on} |",
+        "hello_delay {seconds} | expect {...}.",
+        "  drop: the relay closes the live connection with a code.",
+        "  refuse: the next N dials fail outright.",
+        "  reject: the next dial is accepted, then closed with a code",
+        "    before any hello.",
+        "  silent: the relay stops answering anything (a black hole).",
+        "  full: the relay turns away any new msg frame with 4301.",
+        "  hello_delay: the relay sits on its hello reply this long.",
+        "Expect keys (all optional): connects, connects_min, connects_max",
+        "(dials the relay took at the socket level: refused dials don't",
+        "count, dials rejected with a code do),",
+        "dead (null = must be alive, else the close code), connected,",
+        "received, accepted, refreshes, anomaly (null = must be none), and",
+        "gap (default false: the relay must never see a sequence gap)."
+    ],
+    "close_code_actions": [
+        [1000, "done"],
+        [1001, "resume"],
+        [1006, "resume"],
+        [1011, "resume"],
+        [0, "resume"],
+        [3000, "resume"],
+        [3999, "resume"],
+        [4000, "dead"],
+        [4001, "refresh"],
+        [4002, "dead"],
+        [4003, "dead"],
+        [4004, "dead"],
+        [4099, "dead"],
+        [4100, "dead"],
+        [4101, "dead"],
+        [4102, "dead"],
+        [4103, "dead"],
+        [4104, "dead"],
+        [4105, "dead"],
+        [4106, "dead"],
+        [4107, "dead"],
+        [4199, "dead"],
+        [4201, "dead"],
+        [4203, "dead"],
+        [4204, "dead"],
+        [4205, "dead"],
+        [4206, "dead"],
+        [4299, "dead"],
+        [4300, "resume"],
+        [4301, "resume"],
+        [4399, "resume"],
+        [4400, "resume"],
+        [4999, "resume"]
+    ],
+    "scenarios": [
+        {
+            "name": "both_directions",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "send", "text": "a"},
+                {"t": 1, "op": "send", "text": "b"},
+                {"t": 2, "op": "push", "seq": 1, "text": "x"},
+                {"t": 2, "op": "push", "seq": 2, "text": "y"},
+                {"t": 5, "op": "expect", "connects": 1, "dead": null,
+                 "connected": true, "received": ["x", "y"],
+                 "accepted": ["a", "b"], "anomaly": null}
+            ]
+        },
+        {
+            "name": "budget_is_measured_from_the_loss_not_the_hello",
+            "why": "The 2026-08-13..09-17 bug: a connection older than its linger gave up without one attempt.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 600, "op": "drop", "code": 1006},
+                {"t": 601, "op": "send", "text": "after"},
+                {"t": 620, "op": "expect", "connects": 2, "dead": null,
+                 "connected": true, "accepted": ["after"], "anomaly": null}
+            ]
+        },
+        {
+            "name": "lost_frames_are_retransmitted_once",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "send", "text": "kept"},
+                {"t": 2, "op": "silent", "on": true},
+                {"t": 3, "op": "send", "text": "lost1"},
+                {"t": 3, "op": "send", "text": "lost2"},
+                {"t": 4, "op": "silent", "on": false},
+                {"t": 4, "op": "drop", "code": 1006},
+                {"t": 20, "op": "expect", "connects": 2, "dead": null,
+                 "accepted": ["kept", "lost1", "lost2"]}
+            ]
+        },
+        {
+            "name": "a_send_during_reattach_waits_for_the_retransmit",
+            "why": "Found by the randomized relay test 2026-09-17: a send between the dial and the relay's hello went out live, ahead of the retransmit of older lost frames, and the relay killed the session for the gap.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 2, "op": "silent", "on": true},
+                {"t": 3, "op": "send", "text": "lost1"},
+                {"t": 3, "op": "send", "text": "lost2"},
+                {"t": 4, "op": "silent", "on": false},
+                {"t": 4, "op": "hello_delay", "seconds": 5},
+                {"t": 4, "op": "drop", "code": 1006},
+                {"t": 6, "op": "send", "text": "sent-in-the-window"},
+                {"t": 30, "op": "expect", "connects": 2, "dead": null,
+                 "accepted": ["lost1", "lost2", "sent-in-the-window"],
+                 "gap": false, "anomaly": null}
+            ]
+        },
+        {
+            "name": "an_outage_inside_linger_resumes",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "refuse", "count": 6},
+                {"t": 10, "op": "drop", "code": 1006},
+                {"t": 11, "op": "send", "text": "queued"},
+                {"t": 60, "op": "expect", "connects": 2, "dead": null,
+                 "connected": true, "accepted": ["queued"], "anomaly": null}
+            ]
+        },
+        {
+            "name": "an_outage_past_linger_gives_up_quietly",
+            "why": "The network going away is normal, not an anomaly.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "refuse", "count": 100000},
+                {"t": 10, "op": "drop", "code": 1006},
+                {"t": 200, "op": "expect", "connects": 1, "dead": 4206,
+                 "anomaly": null}
+            ]
+        },
+        {
+            "name": "a_full_relay_buffer_is_bounded_and_reported",
+            "why": "4301 turn-aways must not reset the budget (that would be a loop that never gives up); running out while the relay answers is an anomaly.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "full", "on": true},
+                {"t": 2, "op": "send", "text": "x"},
+                {"t": 60, "op": "expect", "dead": null, "connects_min": 4,
+                 "connects_max": 12},
+                {"t": 200, "op": "expect", "dead": 4206,
+                 "connects_max": 40, "anomaly": "gave_up_while_reachable"}
+            ]
+        },
+        {
+            "name": "a_full_relay_buffer_that_drains_is_a_healthy_session_again",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "full", "on": true},
+                {"t": 2, "op": "send", "text": "x"},
+                {"t": 40, "op": "full", "on": false},
+                {"t": 60, "op": "expect", "dead": null, "connected": true,
+                 "accepted": ["x"]},
+                {"t": 700, "op": "drop", "code": 1006},
+                {"t": 720, "op": "expect", "dead": null, "connected": true,
+                 "anomaly": null}
+            ]
+        },
+        {
+            "name": "an_expired_token_refreshes_then_resumes",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 400, "op": "reject", "code": 4001},
+                {"t": 400, "op": "drop", "code": 1006},
+                {"t": 401, "op": "send", "text": "after"},
+                {"t": 420, "op": "expect", "connects": 3, "refreshes": 1,
+                 "dead": null, "connected": true, "accepted": ["after"]}
+            ]
+        },
+        {
+            "name": "a_policy_end_is_final",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "drop", "code": 4102},
+                {"t": 60, "op": "expect", "connects": 1, "dead": 4102,
+                 "anomaly": null}
+            ]
+        },
+        {
+            "name": "a_clean_end_is_done_and_not_an_anomaly",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "drop", "code": 1000},
+                {"t": 60, "op": "expect", "connects": 1, "dead": 1000,
+                 "anomaly": null}
+            ]
+        },
+        {
+            "name": "resuming_into_a_dead_channel_is_an_anomaly",
+            "why": "We came back inside our own budget and the relay says the channel is gone: one of us is wrong about its lifetime.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "reject", "code": 4107},
+                {"t": 10, "op": "drop", "code": 1006},
+                {"t": 60, "op": "expect", "connects": 2, "dead": 4107,
+                 "anomaly": "ended_under_us"}
+            ]
+        },
+        {
+            "name": "a_gap_from_the_relay_is_death_not_silent_loss",
+            "why": "Accepting seq 3 after 1 would make 2 look like a duplicate when it arrived. Two relay bugs found 2026-09-17 produced exactly this.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "push", "seq": 1, "text": "one"},
+                {"t": 2, "op": "push", "seq": 3, "text": "three"},
+                {"t": 10, "op": "expect", "dead": 4203, "received": ["one"],
+                 "anomaly": "protocol_error"}
+            ]
+        },
+        {
+            "name": "a_duplicate_from_the_relay_is_dropped",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 1, "op": "push", "seq": 1, "text": "one"},
+                {"t": 2, "op": "push", "seq": 1, "text": "one"},
+                {"t": 3, "op": "push", "seq": 2, "text": "two"},
+                {"t": 10, "op": "expect", "dead": null,
+                 "received": ["one", "two"]}
+            ]
+        },
+        {
+            "name": "silence_is_noticed_and_recovered_without_a_close",
+            "why": "Recovery must never depend on receiving a close: on a black-holed socket nobody is there to send one.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 100, "op": "silent", "on": true},
+                {"t": 101, "op": "send", "text": "into-the-void"},
+                {"t": 140, "op": "expect", "connects": 1, "dead": null},
+                {"t": 165, "op": "silent", "on": false},
+                {"t": 230, "op": "expect", "connects_min": 2, "dead": null,
+                 "connected": true, "accepted": ["into-the-void"]}
+            ]
+        },
+        {
+            "name": "fast_pings_do_not_shrink_the_loss_window_below_its_floor",
+            "why": "Channels ping fast for freshness reporting; a 3s ping must not mean a 4.5s hiccup cycles the connection.",
+            "policy": {"lg": 120, "pi": 3, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 50, "op": "silent", "on": true},
+                {"t": 60, "op": "silent", "on": false},
+                {"t": 80, "op": "expect", "connects": 1, "dead": null,
+                 "connected": true}
+            ]
+        }
+    ]
+}

@@ -5,6 +5,7 @@
 
 #include <sys/stat.h>
 
+#include <atomic>
 #include <cstdio>
 #include <functional>
 #include <list>
@@ -49,6 +50,17 @@ class Platform {
 
   /// fopen() supporting UTF8 strings.
   virtual auto FOpen(const char* path, const char* mode) -> FILE*;
+
+  /// Memory-map a file read-only in its entirety. On success returns
+  /// the mapped base address and stores the file's size in *size_out;
+  /// returns nullptr on failure (missing/empty file, etc.). Mapped
+  /// pages are file-backed and clean (evictable/re-faultable), unlike
+  /// heap buffers filled via reads. Release with UnmapFile().
+  virtual auto MapFileReadOnly(const std::string& path, size_t* size_out)
+      -> const void*;
+
+  /// Release a mapping made by MapFileReadOnly().
+  virtual void UnmapFile(const void* base, size_t size);
 
   /// rename() supporting UTF8 strings. For cross-platform consistency, this
   /// should also remove any file that exists at the target location first.
@@ -113,6 +125,38 @@ class Platform {
   /// be passed to pyenv as a starting point, and whatever pyenv gives us
   /// back will be our actual value.
   auto GetCacheDirectoryMonolithicDefault() -> std::optional<std::string>;
+
+  /// Optional overrides for the Python directories used in monolithic
+  /// builds (app scripts, site-packages, bundled stdlib). Default nullopt
+  /// means the standard data-dir-relative locations get used; platforms
+  /// can override to relocate Python wholesale — e.g. Android serving it
+  /// directly out of the apk via zipimport.
+  virtual auto GetAppPythonDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+  virtual auto GetSitePythonDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+  virtual auto GetPylibDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+
+  /// Info for serving bundled asset blobs directly out of an archive
+  /// (the apk on Android).
+  struct BundledAssetsArchiveInfo {
+    /// Filesystem path of the archive itself.
+    std::string archive_path;
+    /// Entry-path dir within the archive holding the CAS blobs.
+    std::string blobs_entry_dir;
+    /// Suffix the build appends to blob names in the archive (so
+    /// they can be packed uncompressed via suffix-matched rules).
+    std::string blob_suffix;
+    /// Entry path of the bundle's asset-package manifest.json.
+    std::string manifest_entry;
+  };
+
+  /// When set, bundled CAS blobs are read as spans out of the given
+  /// archive (which gets memory-mapped at bootstrap) instead of from
+  /// files under the data dir. Default is unset.
+  virtual auto GetBundledAssetsArchiveInfo()
+      -> std::optional<BundledAssetsArchiveInfo>;
 
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
@@ -203,6 +247,11 @@ class Platform {
   virtual void AndroidSetResString(const std::string& res);
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
+  /// Inform the OS whether the app is currently in a loading phase
+  /// (Android's GameState API; no-op elsewhere). The OS may boost
+  /// clocks for the duration. Safe to call from any thread.
+  virtual void SetOSGameLoadingState(bool loading);
+
 #pragma mark PERMISSIONS -------------------------------------------------------
 
   /// Request the permission asynchronously. If the permission cannot be
@@ -251,11 +300,9 @@ class Platform {
   /// 0 and text.size(), in increasing order, and always fall on utf-8
   /// sequence boundaries. Mandatory breaks (after newlines) are included
   /// as regular opportunities; callers wanting to honor them specially
-  /// should pre-split on newlines. The base implementation is a naive
-  /// space/newline breaker for platforms without OS support (headless
-  /// etc.). Logic thread only.
-  virtual auto GetTextLineBreakOffsets(const std::string& text)
-      -> std::vector<int>;
+  /// should pre-split on newlines. Callable from any thread; calls are
+  /// serialized (see DoGetTextLineBreakOffsets()).
+  auto GetTextLineBreakOffsets(const std::string& text) -> std::vector<int>;
 
   /// Split (valid utf-8) text into newline-separated lines subject to
   /// simple constraints, breaking only at opportunities reported by
@@ -271,7 +318,7 @@ class Platform {
   /// newlines recovers the individual lines). Intended as a stopgap
   /// for plugging flat translated strings into places expecting
   /// preformatted line counts until proper font-aware wrapping exists.
-  /// Logic thread only.
+  /// Callable from any thread.
   auto SplitTextIntoLines(const std::string& text, int min_lines = 1,
                           int max_lines = 0, int max_chars_per_line = 0)
       -> std::string;
@@ -419,6 +466,16 @@ class Platform {
   /// nullptr.
   virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
+  /// Path of a crash record left by a previous run, or empty if none.
+  ///
+  /// A native crash cannot report itself, so the handler writes a
+  /// record and the next launch submits it (see
+  /// SubmitPendingCrashReport). Platforms with no crash handler return
+  /// empty, as does a platform whose handler simply did not fire.
+  /// Returning the newest when several exist is fine -- a crash-looping
+  /// app should report its latest crash, not its oldest.
+  virtual auto GetPendingCrashRecordPath() -> std::string;
+
   /// Optionally override fatal error reporting. If true is returned, default
   /// fatal error reporting will not run.
   virtual auto ReportFatalError(const std::string& message,
@@ -500,8 +557,20 @@ class Platform {
   /// for custom pumping/handling.
   virtual void RunEvents();
 
-  /// Is the OS currently playing music? (so we can avoid doing so).
-  virtual auto IsOSPlayingMusic() -> bool;
+  /// Is another app currently playing music we should yield to?
+  ///
+  /// Fed live by platform code via SetOSMusicPlaying() (iOS: the
+  /// AVAudioSession secondary-audio silence hint; Android: the
+  /// system-wide playback-config callback). Always false on platforms
+  /// that report nothing. Game music yields to it; sound effects don't.
+  /// See docs/initiatives/soundtrack-modernization.md.
+  auto os_music_playing() const -> bool { return os_music_playing_.load(); }
+
+  /// Report whether another app is playing music. Safe to call from any
+  /// thread and at any time (including before base is up); repeats of
+  /// the current value are dropped. Changes are logged and forwarded to
+  /// the logic thread for the Python music subsystem to act on.
+  void SetOSMusicPlaying(bool playing);
 
   /// Pass platform-specific misc-read-vals along to the OS (as a json
   /// string).
@@ -582,6 +651,14 @@ class Platform {
   /// toggle thread runs in place of OS monitoring.
   virtual void DoStartNetworkAvailabilityMonitoring();
 
+  /// Platform implementation of GetTextLineBreakOffsets(), which holds
+  /// a lock around every call, so overrides never run concurrently and
+  /// may use shared state (Android's Java side reuses one ICU iterator,
+  /// for instance). The base implementation is a naive space/newline
+  /// breaker for platforms without OS support (headless etc.).
+  virtual auto DoGetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int>;
+
   /// Called by subclasses (and the debug toggler) to report the
   /// current network availability state. Thread-safe; callable from
   /// any thread. Logs at DEBUG and dispatches to all registered
@@ -609,6 +686,7 @@ class Platform {
   std::string cache_dir_;
   std::string replays_dir_;
 
+  std::mutex text_line_break_mutex_;
   std::mutex network_availability_mutex_;
   std::vector<NetworkAvailabilityCallback> network_availability_callbacks_;
   bool network_availability_monitoring_started_{};
@@ -626,6 +704,9 @@ class Platform {
   // late OS-callback dispatches before subscriber state is torn
   // down by the shutdown cascade.
   bool network_availability_dispatch_stopped_{};
+
+  // See os_music_playing(). Written from arbitrary platform threads.
+  std::atomic<bool> os_music_playing_{};
 };
 
 }  // namespace ballistica::core

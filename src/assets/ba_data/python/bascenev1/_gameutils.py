@@ -68,19 +68,22 @@ def animate(
     items = list(keys.items())
     items.sort()
 
-    curve = _bascenev1.newnode(
-        'animcurve',
-        owner=node,
-        name='Driving ' + str(node) + ' \'' + attr + '\'',
-    )
-
     # We take seconds but operate on milliseconds internally.
     mult = 1000
 
-    curve.times = [int(mult * time) for time, val in items]
-    curve.offset = int(_bascenev1.time() * 1000.0) + int(mult * offset)
-    curve.values = [val for time, val in items]
-    curve.loop = loop
+    # Node creation, attrs and the two connects happen natively (in the
+    # same order they used to here) so that, under protocol 44+, the
+    # whole curve reaches the stream as one command instead of eight.
+    curve = _bascenev1.animcurve(
+        node,
+        attr,
+        _get_time_globals_node(),
+        [int(mult * time) for time, val in items],
+        [val for time, val in items],
+        int(_bascenev1.time() * 1000.0) + int(mult * offset),
+        loop,
+        'Driving ' + str(node) + ' \'' + attr + '\'',
+    )
 
     # If we're not looping, set a timer to kill this curve
     # after its done its job.
@@ -90,19 +93,21 @@ def animate(
         _bascenev1.timer(
             (int(mult * items[-1][0]) + 1000) / 1000.0, curve.delete
         )
-
-    # Do the connects last so all our attrs are in place when we push initial
-    # values through.
-
-    # We operate in either activities or sessions..
-    try:
-        globalsnode = _bascenev1.getactivity().globalsnode
-    except babase.ActivityNotFoundError:
-        globalsnode = _bascenev1.getsession().sessionglobalsnode
-
-    globalsnode.connectattr('time', curve, 'in')
-    curve.connectattr('out', node, attr)
     return curve
+
+
+def _get_time_globals_node() -> bascenev1.Node:
+    """Return the node driving 'time' for animation in this context.
+
+    We operate in activities, local-displays, or sessions.
+    """
+    activity = _bascenev1.getactivity(doraise=False)
+    if activity is not None:
+        return activity.globalsnode
+    localdisplay = _bascenev1.getlocaldisplay(doraise=False)
+    if localdisplay is not None:
+        return localdisplay.globalsnode
+    return _bascenev1.getsession().sessionglobalsnode
 
 
 def animate_array(
@@ -125,11 +130,7 @@ def animate_array(
     # We take seconds but operate on milliseconds internally.
     mult = 1000
 
-    # We operate in either activities or sessions..
-    try:
-        globalsnode = _bascenev1.getactivity().globalsnode
-    except babase.ActivityNotFoundError:
-        globalsnode = _bascenev1.getsession().sessionglobalsnode
+    globalsnode = _get_time_globals_node()
 
     for i in range(size):
         curve = _bascenev1.newnode(

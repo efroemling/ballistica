@@ -163,47 +163,83 @@ typedef struct _sLocalContactData
 	int			nFlags; // 0 = filtered out, 1 = OK
 }sLocalContactData;
 
-static sLocalContactData   *gLocalContacts;
-static unsigned int			ctContacts = 0;
-
-// capsule data
-// real time data
-static dMatrix3  mCapsuleRotation;
-static dVector3   vCapsulePosition;
-static dVector3   vCapsuleAxis;
-// static data
-static dReal      vCapsuleRadius;
-static dReal      fCapsuleSize;
-
-// mesh data
-//static  dMatrix4  mHullDstPl;
-static   dMatrix3  mTriMeshRot;
-static dVector3   mTriMeshPos;
-static dVector3   vE0, vE1, vE2;
-
-// Two geom
-dxGeom*	   gCylinder;
-dxGeom*	   gTriMesh;
-
-// global collider data
-static dVector3 vNormal;
-static dReal    fBestDepth;
-static dReal    fBestCenter;
-static dReal    fBestrt;
-static int		iBestAxis;
-static dVector3 vN = {0,0,0,0};
-
-static dVector3 vV0;
-static dVector3 vV1;
-static dVector3 vV2;
-
-// ODE contact's specific
-static int iFlags;
-static dContactGeom *ContactGeoms;
-static int iStride;
-
 // Capsule lie on axis number 3 = (Z axis)
 static const int nCAPSULE_AXIS = 2;
+
+// ericf change: everything below used to be file-scope statics (with the
+// helper functions reading and writing them directly), which made
+// dCollideCCTL unsafe to run on two threads at once -- and we now collide
+// capsules against trimeshes from both the logic thread (main sim) and the
+// bg-dynamics thread. The state now lives in this object, one instance
+// stack-allocated per dCollideCCTL call, and the helpers became its
+// methods so their bodies could stay byte-for-byte what they were. See
+// docs/design/ode-fork.md.
+class dxCapsuleTriMeshQuery
+{
+public:
+	dxCapsuleTriMeshQuery() {}
+	~dxCapsuleTriMeshQuery() { delete[] gLocalContacts; }
+
+	int Collide(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int skip);
+
+private:
+	dxCapsuleTriMeshQuery(const dxCapsuleTriMeshQuery&);
+	dxCapsuleTriMeshQuery& operator=(const dxCapsuleTriMeshQuery&);
+
+	void _OptimizeLocalContacts();
+	int _ProcessLocalContacts();
+	BOOL _cldTestAxis(const dVector3 &v0,
+					  const dVector3 &v1,
+					  const dVector3 &v2,
+					  dVector3 vAxis,
+					  int iAxis,
+					  BOOL bNoFlip = FALSE);
+	BOOL _cldTestSeparatingAxesOfCapsule(const dVector3 &v0,
+										 const dVector3 &v1,
+										 const dVector3 &v2);
+	void _cldTestOneTriangleVSCCylinder(const dVector3 &v0,
+										const dVector3 &v1,
+										const dVector3 &v2);
+
+	// Local contacts data (allocated per query in Collide()).
+	sLocalContactData *gLocalContacts{};
+	unsigned int ctContacts{};
+
+	// capsule data
+	// real time data
+	dMatrix3 mCapsuleRotation{};
+	dVector3 vCapsulePosition{};
+	dVector3 vCapsuleAxis{};
+	// static data
+	dReal vCapsuleRadius{};
+	dReal fCapsuleSize{};
+
+	// mesh data
+	dMatrix3 mTriMeshRot{};
+	dVector3 mTriMeshPos{};
+	dVector3 vE0{}, vE1{}, vE2{};
+
+	// Two geom
+	dxGeom* gCylinder{};
+	dxGeom* gTriMesh{};
+
+	// global collider data
+	dVector3 vNormal{};
+	dReal fBestDepth{};
+	dReal fBestCenter{};
+	dReal fBestrt{};
+	int iBestAxis{};
+	dVector3 vN{};
+
+	dVector3 vV0{};
+	dVector3 vV1{};
+	dVector3 vV2{};
+
+	// ODE contact's specific
+	int iFlags{};
+	dContactGeom *ContactGeoms{};
+	int iStride{};
+};
 
 // Use to classify contacts to be "near" in position
 static const dReal fSameContactPositionEpsilon = REAL(0.0001); // 1e-4
@@ -248,7 +284,7 @@ inline int _IsBetter(sLocalContactData& c1,sLocalContactData& c2)
 }
 
 // iterate through gLocalContacts and filtered out "near contact"
-inline void	_OptimizeLocalContacts()
+void dxCapsuleTriMeshQuery::_OptimizeLocalContacts()
 {
 	int nContacts = ctContacts;
 
@@ -277,11 +313,10 @@ inline void	_OptimizeLocalContacts()
 	}
 }
 
-inline int	_ProcessLocalContacts()
+int dxCapsuleTriMeshQuery::_ProcessLocalContacts()
 {
 	if (ctContacts == 0)
 	{
-        delete[] gLocalContacts;
 		return 0;
 	}
 
@@ -324,7 +359,6 @@ inline int	_ProcessLocalContacts()
 	//	printf("[Info] %d contacts generated,%d  filtered.\n",ctContacts,ctContacts-nFinalContact);
 	//}
 
-    delete[] gLocalContacts;
 	return nFinalContact;
 }
 
@@ -367,12 +401,12 @@ BOOL _cldClipEdgeToPlane( dVector3 &vEpnt0, dVector3 &vEpnt1, const dVector4& pl
 		return TRUE;
 }
 
-static BOOL _cldTestAxis(const dVector3 &v0,
+BOOL dxCapsuleTriMeshQuery::_cldTestAxis(const dVector3 &v0,
 						 const dVector3 &v1,
 						 const dVector3 &v2,
 						 dVector3 vAxis,
 						 int iAxis,
-						 BOOL bNoFlip = FALSE)
+						 BOOL bNoFlip)
 {
 
 	// calculate length of separating axis vector
@@ -474,7 +508,7 @@ inline void _CalculateAxis(const dVector3& v1,
 	dCROSS(r,=,t2,v4);
 }
 
-static BOOL _cldTestSeparatingAxesOfCapsule(const dVector3 &v0,
+BOOL dxCapsuleTriMeshQuery::_cldTestSeparatingAxesOfCapsule(const dVector3 &v0,
 											const dVector3 &v1,
 											const dVector3 &v2)
 {
@@ -694,7 +728,7 @@ static BOOL _cldTestSeparatingAxesOfCapsule(const dVector3 &v0,
 }
 
 // test one mesh triangle on intersection with capsule
-static void _cldTestOneTriangleVSCCylinder( const dVector3 &v0,
+void dxCapsuleTriMeshQuery::_cldTestOneTriangleVSCCylinder( const dVector3 &v0,
 											const dVector3 &v1,
 											const dVector3 &v2 )
 {
@@ -866,7 +900,7 @@ static void _cldTestOneTriangleVSCCylinder( const dVector3 &v0,
 
 // capsule - trimesh by CroTeam
 // Ported by Nguyem Binh
-int dCollideCCTL(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int skip)
+int dxCapsuleTriMeshQuery::Collide(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int skip)
 {
 	dxTriMesh* TriMesh = (dxTriMesh*)o1;
 	gCylinder = o2;
@@ -1002,4 +1036,12 @@ int dCollideCCTL(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int s
 	 }
 
 	return _ProcessLocalContacts();
+}
+
+// capsule - trimesh by CroTeam
+// Ported by Nguyem Binh
+int dCollideCCTL(dxGeom *o1, dxGeom *o2, int flags, dContactGeom *contact, int skip)
+{
+	dxCapsuleTriMeshQuery query;
+	return query.Collide(o1, o2, flags, contact, skip);
 }

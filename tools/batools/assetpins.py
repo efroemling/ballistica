@@ -753,11 +753,11 @@ def _plan_enum_splices(
         return '', False, False
     pc_pin, pc_apverid = pc_resolved
     pc_changed = pc_apverid != pc_pin.apverid
-    # The splice embeds the pin as ``kBuiltinAssetsApverid = "<id>";``; a
-    # quoted-substring check is insensitive to clang-format wrapping
-    # (mirrors check_builtin_asset_ids in batools/project/_checks.py).
+    # The splice names the pin in a ``// Builtin asset-package: <id>``
+    # comment above ``kBuiltinAssetsApvernum`` (mirrors
+    # check_builtin_asset_ids in batools/project/_checks.py).
     base_h = (projroot / 'src/ballistica/base/base.h').read_text()
-    splice_stale = f'"{pc_apverid}"' not in base_h
+    splice_stale = f'// Builtin asset-package: {pc_apverid}\n' not in base_h
     fetch_needed = pc_changed or splice_stale
     return pc_apverid, fetch_needed, splice_stale and not pc_changed
 
@@ -844,13 +844,17 @@ def _discover_wrapper_pins(projroot: Path) -> list[Pin]:
     scanner.run()
 
     pins: list[Pin] = []
-    for apverid, modulenames in scanner.results.asset_packages.items():
+    # The scan finds wrappers by their numeric requirement; the string
+    # id (which this tool works in) comes from each one's docstring.
+    for modulenames in scanner.results.asset_packages.values():
         for modulename in modulenames:
             file_path = Path(
                 'src/assets/ba_data/python',
                 *modulename.split('.'),
             ).with_suffix('.py')
-            wrapper_type = _detect_wrapper_type(projroot / file_path)
+            apverid, wrapper_type = _detect_wrapper_identity(
+                projroot / file_path
+            )
             account, package = _account_and_package_or_bare_dev(apverid)
             pins.append(
                 Pin(
@@ -866,25 +870,25 @@ def _discover_wrapper_pins(projroot: Path) -> list[Pin]:
     return pins
 
 
-# Wrapper-type tag in the wrapper's module docstring. The
-# server emits e.g. ``"""Asset-package wrapper for ``<id>``
-# (bascenev1)."""`` as the first line of the docstring; the
-# parenthesised value is the wrapper type.
+# Identity line in the wrapper's module docstring. The server emits
+# e.g. ``"""Asset-package wrapper for ``<id>`` (bascenev1)."""`` as the
+# first line of the docstring: the version's string id, then the
+# wrapper type in parentheses.
 _RE_WRAPPER_DOCSTRING_TYPE = re.compile(
-    r'Asset-package wrapper for ``[^`]+`` \((bascenev1|bauiv1|babase)\)'
+    r'Asset-package wrapper for ``([^`]+)``\s+\((bascenev1|bauiv1|babase)\)'
 )
 
 
-def _detect_wrapper_type(path: Path) -> str:
-    """Sniff a wrapper's featureset target from its docstring.
+def _detect_wrapper_identity(path: Path) -> tuple[str, str]:
+    """Sniff a wrapper's string id and featureset target.
 
-    Server-generated wrappers carry the wrapper type in their
-    module docstring (``Asset-package wrapper for ``<id>``
-    (<wrapper_type>).``). Extracting from there is more robust
-    than parsing imports, which now live under TYPE_CHECKING +
-    function-local statements so they don't trip the project's
-    "package shouldn't import its own top-level" rule when the
-    wrapper sits inside its featureset's own package.
+    Server-generated wrappers carry both in their module docstring
+    (``Asset-package wrapper for ``<id>`` (<wrapper_type>).``); the
+    code itself runs on the version's numeric id. Extracting the type
+    from there is more robust than parsing imports, which now live
+    under TYPE_CHECKING + function-local statements so they don't trip
+    the project's "package shouldn't import its own top-level" rule
+    when the wrapper sits inside its featureset's own package.
     """
     if not path.is_file():
         raise CleanError(
@@ -895,11 +899,11 @@ def _detect_wrapper_type(path: Path) -> str:
     match = _RE_WRAPPER_DOCSTRING_TYPE.search(text)
     if match is None:
         raise CleanError(
-            f'Could not detect wrapper_type in {path};'
+            f'Could not detect the id and wrapper_type of {path};'
             f' expected an ``Asset-package wrapper for ``<id>``'
-            f' (bascenev1|bauiv1)`` docstring line.'
+            f' (bascenev1|bauiv1|babase)`` docstring line.'
         )
-    return match.group(1)
+    return match.group(1), match.group(2)
 
 
 def _account_and_package_or_bare_dev(apverid: str) -> tuple[str, str]:
@@ -1360,6 +1364,8 @@ def _compute_wrapper_write(
     a fresh version pointing at ``new_apverid``. We never hand-edit a
     wrapper. Returns ``(path, content)``; nothing is written here.
     """
+    from bacommon.metascan import get_source_api_requirement
+
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
     # The server stamps wrappers with its notion of the current
@@ -1369,9 +1375,9 @@ def _compute_wrapper_write(
     # needs a bump before wrappers can be refreshed — this is the
     # cross-repo tripwire for api version bumps.
     ourapi = get_current_api_version(str(projroot))
-    apimatch = re.search(r'# ba_meta require api (\d+)', content)
-    if apimatch is None or int(apimatch.group(1)) != ourapi:
-        found = 'no api line' if apimatch is None else apimatch.group(1)
+    wrapperapi = get_source_api_requirement(content)
+    if wrapperapi is None or wrapperapi != ourapi:
+        found = 'no single valid api line' if wrapperapi is None else wrapperapi
         raise CleanError(
             f'Fetched wrapper for {new_apverid} declares client api'
             f' {found} but this project is on api {ourapi}; bump'

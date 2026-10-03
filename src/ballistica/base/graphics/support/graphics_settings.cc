@@ -16,6 +16,7 @@ GraphicsSettings::GraphicsSettings()
       resolution_virtual{g_base->graphics->screen_virtual_width(),
                          g_base->graphics->screen_virtual_height()},
       active_render_rect{g_base->graphics->active_render_rect()},
+      virtual_bounds_rect{g_base->graphics->virtual_bounds_rect()},
       pixel_scale{std::clamp(
           g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale),
           0.1f, 1.0f)},

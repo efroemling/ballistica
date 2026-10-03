@@ -1,6 +1,6 @@
 # API Versions
 
-**Description:** How we deprecate and remove public Python API across api-version bumps — the overlapping-version lifecycle, the two migration idioms (bool-flag overloads and transitional twins), and the warning mechanics that make deprecations actually reach modders.
+**Description:** How public Python API is deprecated and removed across api-version bumps — the overlapping-version lifecycle, migration idioms, and warnings that actually reach modders.
 
 ## What this doc is (and is not)
 
@@ -12,6 +12,12 @@ This doc is the **engineering side**: *how* we stage a deprecation, which
 idiom to reach for, how warnings are emitted so they actually get seen,
 and when to switch them on. Read this before deprecating or retyping any
 public API; then add the matching bullet to the changelog.
+
+Changelog bullets (both `CHANGELOG.md` and `CHANGELOG_API_VERSIONS.md`)
+describe deltas from what has *publicly shipped*. API that was added
+and then reshaped or removed within the same unpublished stretch gets
+no entry — if unsure, check what the public `ballistica` repo last
+received.
 
 ## The lifecycle
 
@@ -153,6 +159,30 @@ Details that matter:
   without this the warnings would reach almost nobody.
 - Pair the runtime warning with a `.. deprecated::` directive in the
   docstring, naming the replacement and the version it disappears in.
+
+### Static detection (`@deprecated` + mypy)
+
+Where a whole function or class is deprecated, prefer the
+`@deprecated` decorator (PEP 702; import it from `typing_extensions`).
+It emits the same runtime `DeprecationWarning` and also marks the
+object for type checkers. Mypy's `deprecated` error code is enabled in
+the shared config, so first-party use fails `make mypy`. Three traps:
+
+- **A `TYPE_CHECKING` alias hides the marker.** If the type-checking
+  view of a name is a plain alias (`Foo: TypeAlias = functools.partial`)
+  while the decorated class lives in the `else:` branch, mypy never
+  sees the decorator. Declare a trivial decorated subclass in the
+  `TYPE_CHECKING` branch instead (see `WeakCall`/`Call` in
+  `babase/_general.py`).
+- **Importing a deprecated name is itself flagged**, and mypy reports
+  it on the first line of the import statement. A deliberate compat
+  re-export in a package facade therefore goes on its own single-line
+  import with `# type: ignore[deprecated]`, so the ignore covers that
+  one name and not a whole import block.
+- **The stdlib is covered too.** Typeshed marks things like
+  `os.system`, `datetime.utcnow`, and
+  `asyncio.set_event_loop_policy`, so a Python or stub upgrade can
+  surface new errors in code nobody touched.
 
 ## Sequencing: build the path before you light the warning
 

@@ -9,15 +9,14 @@ import random
 import logging
 import weakref
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override, assert_never, final
+from typing import TYPE_CHECKING, override, final
 
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import _commonassets, builtinassets
-from bauiv1 import classicassets as uiclassicassets
+from bauiv1 import _classiccatalogassets as uicatalogassets
 import bascenev1
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -26,6 +25,7 @@ from baclassic._net import MasterServerResponseType, master_server_v1_request
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
+from baclassic._cloudprofiles import CloudProfiles
 from baclassic import _input
 
 if TYPE_CHECKING:
@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
+    from baclassic._clienteffect import EffectTargets
 
 
 class ClassicAppSubsystem(babase.AppSubsystem):
@@ -103,10 +104,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         allow: bool
 
         #: A message to be shown to the client if allow is False. A
-        #: defualt rejection message will be shown if none is present
-        #: here. This will be translated using the 'serverResponses'
-        #: translation category so it can be good to use one of the
-        #: entries there if your server has multilingual users.
+        #: default (localized) rejection message is shown if this is
+        #: None. Clients show this text verbatim; it is not translated.
         error_message: str | None = None
 
     @dataclass
@@ -121,6 +120,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: server didn't provide one (unknown — fall back to the
         #: legacy hacky character-list path).
         classic_purchases: list[str] | None
+        #: The account's cloud profiles, each as one cloud-composed
+        #: character json (name + icon + spaz), or ``None`` when the
+        #: master server didn't provide them (older master or
+        #: unknown) — in which case the lobby falls back to the
+        #: legacy ``player_profiles`` with the legacy-profile warning.
+        cloud_characters: list[str] | None
         expire_time: float
 
     from baclassic._music import MusicPlayMode
@@ -156,8 +161,18 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.gold_pass = False
         self.tickets = 0
         self.tokens = 0
+
+        #: The signed-in account's name as the cloud composes it, a
+        #: :class:`bacommon.depiction.NameDepiction` as json fed live by
+        #: the cloud (empty when signed out or not known yet). Pass it as
+        #: an image or button widget's ``depiction`` to show the name.
+        self.account_name_depiction = ''
+
         self.chest_dock_full = False
         self.purchases: frozenset[str] = frozenset()
+
+        #: The primary account's cloud profiles (synced + cached).
+        self.cloud_profiles = CloudProfiles()
 
         # Main Menu.
         self.main_menu_last_news_fetch_time: float | None = None
@@ -237,6 +252,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         request: V2AuthRequest,
         player_profiles: Any,
         classic_purchases: list[str] | None,
+        cloud_characters: list[str] | None,
         token: str,
     ) -> V2AuthResponse:
         """:meta private:"""
@@ -252,6 +268,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 account_tag=request.account_tag,
                 player_profiles=player_profiles,
                 classic_purchases=classic_purchases,
+                cloud_characters=cloud_characters,
                 expire_time=now + 30.0,
             )
 
@@ -309,10 +326,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         assert isinstance(self._env['platform'], str)
         return self._env['platform']
 
-    def scene_v1_protocol_version(self) -> int:
-        """:meta private:"""
-        return bascenev1.protocol_version()
-
     @property
     def subplatform(self) -> str:
         """String for subplatform.
@@ -332,10 +345,20 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     @override
     def on_app_loading(self) -> None:
         from bascenev1lib.actor import spazappearance
+        from bascenev1lib.actor.controlsguide import (
+            ClassicControlsLocalDisplayHandler,
+        )
         from bascenev1lib import maps as stdmaps
 
         plus = babase.app.plus
         assert plus is not None
+
+        # The classic controls guide is drawn on each machine via a
+        # local-display; wire up its handler.
+        bascenev1.register_local_display_handler(
+            bascenev1.ClassicControlsLocalDisplayConfig,
+            ClassicControlsLocalDisplayHandler,
+        )
 
         env = babase.app.env
         cfg = babase.app.config
@@ -406,7 +429,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    classicassets.audio.ref_whistle.get().play()
+                    _classicassets.audio.ref_whistle.get().play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -414,7 +437,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     bascenev1.newnode(
                         'text',
                         attrs={
-                            'text': classicassets.strings.game.paused_by_host,
+                            'text': _classicassets.strings.game.paused_by_host,
                             'client_only': True,
                             'flatness': 1.0,
                             'h_align': 'center',
@@ -436,7 +459,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    classicassets.audio.ref_whistle.get().play()
+                    _classicassets.audio.ref_whistle.get().play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.
@@ -694,8 +717,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         player_count: int = 8,
         round_duration: int = 30,
         attract_mode: bool = False,
+        randomize: bool = True,
+        churn: bool = True,
     ) -> None:
-        """Run a stress test."""
+        """Run a stress test.
+
+        With ``randomize`` False the playlist plays in listed order;
+        with ``churn`` False all fake players join at once and stay
+        (both for repeatable performance A/B measurements).
+        """
         from baclassic._benchmark import run_stress_test
 
         run_stress_test(
@@ -704,6 +734,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             player_count=player_count,
             round_duration=round_duration,
             attract_mode=attract_mode,
+            randomize=randomize,
+            churn=churn,
         )
 
     def get_input_device_mapped_value(
@@ -860,7 +892,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
-        import bacommon.docui.v2 as dui2
+        import bacommon.docui.routes.classicstore as sroutes
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -875,7 +907,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         babase.app.ui_v1.set_main_window(
             InventoryUIController(player_profiles_only=True).create_window(
-                dui2.Request('/'),
+                sroutes.Root(),
                 uiopenstateid='classicinventory',
                 transition=transition,
                 origin_widget=origin_widget,
@@ -889,8 +921,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            _ = uiclassicassets.meshes.level_select_button_opaque.get()
-            _ = uiclassicassets.meshes.level_select_button_transparent.get()
+            _ = uicatalogassets.meshes.level_select_button_opaque.get()
+            _ = uicatalogassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
                 _ = maptype.get_preview_texture()
         except Exception:
@@ -906,7 +938,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        builtinassets.audio.swish.get().play()
+        bauiv1.play_swish()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -928,7 +960,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                builtinassets.audio.swish.get().play()
+                bauiv1.play_swish()
 
             # Pause gameplay.
             self.pause()
@@ -952,6 +984,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         mainwindow = ui.get_main_window()
         if mainwindow is not None:
             self.saved_ui_state = ui.save_main_window_state(mainwindow)
+
+            # Whatever this state keeps 'open' (settings when we left
+            # from somewhere inside it, say) isn't showing while we're
+            # away; don't have toolbar buttons lit for it meanwhile.
+            # (invoke_main_menu_ui() wakes them when restoring.)
+            self.saved_ui_state.set_ui_open_states_dormant(True)
         else:
             self.saved_ui_state = None
 
@@ -990,6 +1028,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 else:
                     # If there's a saved ui state, restore that.
                     if self.saved_ui_state is not None:
+                        # (See save_ui_state().)
+                        self.saved_ui_state.set_ui_open_states_dormant(False)
                         app.ui_v1.restore_main_window_state(self.saved_ui_state)
                         # Kill the state now that we're back; we'll
                         # generate a new one when we leave. This keeps
@@ -1010,56 +1050,27 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @staticmethod
     def run_bs_client_effects(
-        effects: list[clfx.Effect], delay: float = 0.0
+        effects: list[clfx.Effect],
+        delay: float = 0.0,
+        targets: EffectTargets | None = None,
     ) -> None:
         """Run client effects sent from the master server.
 
-        :meta private:
-        """
-        from baclassic._clienteffect import run_bs_client_effects
-
-        run_bs_client_effects(effects, delay=delay)
-
-    @staticmethod
-    def basic_client_ui_button_label_str(
-        label: bcdlg.ButtonLabel,
-    ) -> babase.LangStr:
-        """Given a client-ui label, return a LangStr.
+        ``targets`` are things the effects may animate (a doc-ui
+        window's page, say).
 
         :meta private:
         """
-        # pylint: disable=too-many-return-statements
-        import bacommon.clouddialog.basic as bcdlg
+        from baclassic._clienteffect import (
+            run_bs_client_effects,
+            ClientEffectContext,
+        )
 
-        strs = uiclassicassets.strings.ui
-        acts = _commonassets.strings.actions
-
-        cls = bcdlg.ButtonLabel
-        if label is cls.UNKNOWN:
-            # Server should not be sending us unknown stuff; make noise
-            # if they do.
-            logging.error(
-                'Got BasicCloudDialog.ButtonLabel.UNKNOWN; should not happen.'
-            )
-            return builtinassets.strings.ui.error
-
-        if label is cls.OK:
-            return acts.ok
-        if label is cls.APPLY:
-            return acts.apply
-        if label is cls.CANCEL:
-            return acts.cancel
-        if label is cls.ACCEPT:
-            return acts.accept
-        if label is cls.DECLINE:
-            return acts.decline
-        if label is cls.IGNORE:
-            return acts.ignore
-        if label is cls.CLAIM:
-            return strs.claim
-        if label is cls.DISCARD:
-            return acts.discard
-        assert_never(label)
+        run_bs_client_effects(
+            effects,
+            delay=delay,
+            context=(None if targets is None else ClientEffectContext(targets)),
+        )
 
     def required_purchases_for_game(self, game: str) -> list[str]:
         """Return which purchase (if any) is required for a game."""

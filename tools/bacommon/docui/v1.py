@@ -8,7 +8,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bacommon.clienteffect as clfx
 from bacommon.langstr import WrapParams
 from bacommon.docui._docui import (
@@ -407,7 +407,10 @@ class Image(Decoration):
 
 
 class DisplayItemStyle(Enum):
-    """Styles a display-item can be drawn in."""
+    """Styles a display-item can be drawn in.
+
+    :meta private:
+    """
 
     #: Shows graphics and/or text fully conveying what the item is. Fits
     #: in to a 4:3 box and works best with large-ish displays.
@@ -429,9 +432,15 @@ class DisplayItemStyle(Enum):
 @ioprepped
 @dataclass
 class DisplayItem(Decoration):
-    """DisplayItem decoration."""
+    """DisplayItem decoration.
 
-    wrapper: Annotated[ditm.Wrapper, IOAttrs('w')]
+    Wraps the internal legacy display-item format; superseded in
+    doc-ui v2 by plain decorations.
+
+    :meta private:
+    """
+
+    wrapper: Annotated[lditm.Wrapper, IOAttrs('w')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (

@@ -27,17 +27,12 @@
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
+#include "ballistica/ui_v1/widget/depiction_slot.h"
 #include "ballistica/ui_v1/widget/image_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
-
-// Builtin textures now live in the builtin asset-package; this builds
-// the qualified ref for one so name-based lookups find it.
-static auto BuiltinTexRef(const char* path) -> std::string {
-  return std::string(base::kBuiltinAssetsApverid) + ":textures/" + path;
-}
 
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
@@ -73,6 +68,9 @@ static const bool kShowLevels{};
 
 struct RootWidget::ChestSlot_ {
   std::string appearance;
+  // Depiction json; when set (with a chest present) the slot button
+  // shows it in place of the appearance art.
+  std::string depiction_json;
   std::string uiopentag;
   Button_* button{};
   Image_* lock_icon{};
@@ -96,9 +94,10 @@ struct RootWidget::ChestSlot_ {
 // For defining toolbar buttons.
 struct RootWidget::ButtonDef_ {
   std::string label;
-  std::string img;
-  std::string mesh_transparent;
-  std::string mesh_opaque;
+  // Assets come from the app-mode-supplied set (see
+  // bauiv1.UIAssetSet); nothing here is named by string.
+  base::TextureAsset* img{};
+  base::MeshAsset* mesh_transparent{};
   std::string widget_id;
   VAlign_ v_align{VAlign_::kTop};
   UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
@@ -192,7 +191,7 @@ struct RootWidget::ImageDef_ {
   float color_r{1.0f};
   float color_g{1.0f};
   float color_b{1.0f};
-  std::string img;
+  base::TextureAsset* img{};
 };
 
 struct RootWidget::Image_ {
@@ -275,8 +274,8 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.height = 36.0f;
     bd.y = -36.0f + 10.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "currencyMeter";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().currency_meter.get();
     bd.selectable = true;
 
     bd.color_r = kMeterColorR;
@@ -448,16 +447,16 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
       imgd.height = 54.0f;
       switch (type) {
         case MeterType_::kLevel:
-          imgd.img = "levelIcon";
+          imgd.img = g_ui_v1->assets().level_icon.get();
           break;
         case MeterType_::kTrophy:
-          imgd.img = "trophy";
+          imgd.img = g_ui_v1->assets().trophy.get();
           break;
         case MeterType_::kTokens:
-          imgd.img = "coin";
+          imgd.img = g_ui_v1->assets().coin.get();
           break;
         case MeterType_::kTickets:
-          imgd.img = "tickets";
+          imgd.img = g_ui_v1->assets().tickets.get();
           break;
         default:
           break;
@@ -506,8 +505,8 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.width = bd.height = 45.0f;
     bd.y = -36.0f + 11.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "currencyPlusButton";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().currency_plus_button.get();
     bd.color_r = kGetTokensButtonColorR;
     bd.color_g = kGetTokensButtonColorG;
     bd.color_b = kGetTokensButtonColorB;
@@ -559,7 +558,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.4f;
     bd.color_b = 0.35f;
     bd.y = -40.0f;
-    bd.img = BuiltinTexRef("nub");
+    bd.img = g_ui_v1->assets().nub.get();
     bd.call = UIV1Python::ObjID::kRootUIBackButtonPressCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
@@ -574,7 +573,9 @@ void RootWidget::Setup() {
     {
       TextDef_ td;
       td.button = b;
-      td.x = 0.0f;
+      // Nudge the icon slightly left; reads better centered now that
+      // safe-area margins tend to keep the button's left side visible.
+      td.x = -2.0f;
       td.y = 0.0f;
       td.width = bd.width * 0.9f;
       td.text = g_base->assets->CharStr(SpecialChar::kBack);
@@ -595,8 +596,8 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 256.0f;
     bd.y = -20.0f;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "toolbarBackingTop2";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_top2.get();
     bd.selectable = false;
     bd.color_r = 0.44f;
     bd.color_g = 0.41f;
@@ -619,8 +620,8 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 0.0f;
     bd.y = -20.0f;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "toolbarBackingTop2";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_top2.get();
     bd.selectable = false;
     bd.color_r = 0.44f;
     bd.color_g = 0.41f;
@@ -643,10 +644,12 @@ void RootWidget::Setup() {
     bd.h_align = 0.0f;
     bd.v_align = VAlign_::kTop;
     bd.width = 160.0f;
-    bd.height = 60.0f;
+    bd.height = 50.0f;
     bd.depth_min = 0.3f;
     bd.y = -34.0f;
-    bd.y_offs_small = 10.0f;
+    // Sits lower at small ui scale than other top-left items so its
+    // full height (name capsule glow included) stays onscreen.
+    bd.y_offs_small = 2.0f;
     bd.color_r = 1.0f;
     bd.color_g = 1.0f;
     bd.color_b = 1.0f;
@@ -690,7 +693,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
     b.y = b.height * -0.48f;
-    b.img = BuiltinTexRef("menu_button");
+    b.img = g_ui_v1->assets().menu_button.get();
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
     b.color_r = 0.3f;
     b.color_g = 0.5f;
@@ -720,7 +723,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 70.0f;
     b.y = b.height * -0.41f;
-    b.img = BuiltinTexRef("users_button");
+    b.img = g_ui_v1->assets().users_button.get();
     b.call = UIV1Python::ObjID::kRootUISquadButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
@@ -775,8 +778,8 @@ void RootWidget::Setup() {
       bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
-      bd.img = BuiltinTexRef("ui_atlas2");
-      bd.mesh_transparent = "toolbarBackingBottom2";
+      bd.img = g_ui_v1->assets().ui_atlas2.get();
+      bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_bottom2.get();
       bd.selectable = false;
       bd.color_r = 0.473f;
       bd.color_g = 0.44f;
@@ -811,7 +814,7 @@ void RootWidget::Setup() {
     b.allow_in_game = false;
 
     b.y = 44.0f;
-    b.img = "chestIconEmpty";
+    b.img = g_ui_v1->assets().chest_icon_empty.get();
     b.width = b.height = 80.0f;
     b.opacity = 1.0f;
 
@@ -842,7 +845,7 @@ void RootWidget::Setup() {
       imgd.y = -23.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "lock";
+      imgd.img = g_ui_v1->assets().lock.get();
       imgd.depth_min = 0.3f;
 
       imgd.button = chest0.button;
@@ -865,7 +868,7 @@ void RootWidget::Setup() {
       imgd.y = -27.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "tv";
+      imgd.img = g_ui_v1->assets().tv.get();
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.5f;
       imgd.color_g = 1.0f;
@@ -922,7 +925,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "logIcon";
+    b.img = g_ui_v1->assets().log_icon.get();
     b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -943,7 +946,7 @@ void RootWidget::Setup() {
       imgd.y = 24.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = BuiltinTexRef("circle");
+      imgd.img = g_ui_v1->assets().circle.get();
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.0f;
       imgd.color_g = 0.0f;
@@ -999,7 +1002,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "achievementsIcon";
+    b.img = g_ui_v1->assets().achievements_icon.get();
     b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1041,7 +1044,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "leaderboardsIcon";
+    b.img = g_ui_v1->assets().leaderboards_icon.get();
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
@@ -1055,12 +1058,13 @@ void RootWidget::Setup() {
     ButtonDef_ b;
     b.h_align = 0.0f;
     b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    b.y = b.height * 0.58f - 2.0f;
+    b.width = b.height = 63.0f;
+    // Centered vertically with the other bottom-left buttons.
+    b.y = 32.0f;
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "settingsIcon";
+    b.img = g_ui_v1->assets().settings_icon.get();
     b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1081,7 +1085,7 @@ void RootWidget::Setup() {
     b.width = b.height = 135.0f;
     // b.x = -80.0f;
     b.y = b.height * 0.45f;
-    b.img = "inventoryIcon";
+    b.img = g_ui_v1->assets().inventory_icon.get();
     b.call = UIV1Python::ObjID::kRootUIInventoryButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1107,7 +1111,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kBottom;
     b.width = b.height = 85.0f;
     b.y = b.height * 0.5f;
-    b.img = "storeIcon";
+    b.img = g_ui_v1->assets().store_icon.get();
     b.call = UIV1Python::ObjID::kRootUIStoreButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1127,7 +1131,7 @@ void RootWidget::Setup() {
     imgd.y = 50.0f;
     imgd.width = 50.0f;
     imgd.height = 50.0f;
-    imgd.img = BuiltinTexRef("white");
+    imgd.img = g_ui_v1->assets().white.get();
     // imgd.depth_min = 0.3f;
 
     imgd.button = store_button_;
@@ -1528,7 +1532,12 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   b.widget->set_opacity(def.opacity);
   b.widget->set_auto_select(true);
   b.widget->SetText(def.label);
-  b.widget->set_enabled(def.selectable);
+
+  // Our buttons use disabled for 'hidden' (sliding offscreen) and for
+  // purely decorative pieces (backings), so they get disabled's old
+  // meaning - no greyed look, no press claiming, no error sounds.
+  b.widget->set_disabled_toolbar_button_behavior(true);
+  b.widget->SetEnabled(def.selectable);
   b.widget->set_selectable(def.selectable);
   b.widget->set_depth_range(def.depth_min, def.depth_max);
   b.widget->set_target_extra_left(def.target_extra_left);
@@ -1549,18 +1558,11 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   // widgets since we'll probably outlive those outside widgets.
   b.widget->set_neighbors_locked(true);
 
-  if (!def.img.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
+  if (def.img != nullptr) {
+    b.widget->SetTexture(def.img);
   }
-  if (!def.mesh_transparent.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetMeshTransparent(
-        g_base->assets->GetMesh(def.mesh_transparent).get());
-  }
-  if (!def.mesh_opaque.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetMeshOpaque(g_base->assets->GetMesh(def.mesh_opaque).get());
+  if (def.mesh_transparent != nullptr) {
+    b.widget->SetMeshTransparent(def.mesh_transparent);
   }
   if (def.call != UIV1Python::ObjID::kEmptyCall) {
     b.widget->SetOnActivateCall(g_ui_v1->python->objs().Get(def.call).get());
@@ -1612,9 +1614,8 @@ auto RootWidget::AddImage_(const ImageDef_& def) -> RootWidget::Image_* {
   img.widget->set_width(def.width);
   img.widget->set_height(def.height);
   img.widget->set_depth_range(def.depth_min, def.depth_max);
-  if (!def.img.empty()) {
-    base::Assets::AssetListLock lock;
-    img.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
+  if (def.img != nullptr) {
+    img.widget->SetTexture(def.img);
   }
   img.widget->set_color(def.color_r, def.color_g, def.color_b);
   assert(def.button->widget.exists());
@@ -1974,7 +1975,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       xpos -= bwidthhalf + btn->post_buffer;
     }
   }
-  xpos = 0.0f;
+  // Nudge the bottom-left group slightly toward the screen edge.
+  xpos = -14.0f;
   float bottom_left_height{};
 
   for (auto* btn : bottom_left_buttons_) {
@@ -1992,7 +1994,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
   }
   bottom_left_height_ = bottom_left_height * base_scale_;
 
-  xpos = 0.0f;
+  // Nudge the bottom-right group slightly toward the screen edge.
+  xpos = 22.0f;
   for (auto* btn : bottom_right_buttons_) {
     auto enabled = btn->enabled;
     float bwidthhalf = btn->width * 0.5;
@@ -2076,7 +2079,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     bool selval{b.enabled && b.selectable};
     b.widget->set_selectable(selval);
-    b.widget->set_enabled(selval);
+    b.widget->SetEnabled(selval);
     b.widget->set_translate(x, y);
     b.widget->set_width(b.width);
     b.widget->set_height(b.height);
@@ -2204,6 +2207,22 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return ContainerWidget::HandleMessage(m);
 }
 
+void RootWidget::OnOverlayStackEmptied() {
+  ReselectLastSelectedWidget();
+
+  // Whatever held selection before the overlay ui went up normally gets
+  // it back above. But if selection was moved out of the overlay while
+  // it was still up (say a main-window rebuild restoring its selection
+  // under a closing popup), our 'last selected' *is* the overlay stack,
+  // and reselecting it would park selection on an empty stack with
+  // nothing highlighted and nothing to navigate. The main window stack
+  // is the right home then.
+  if (selected_widget() == overlay_stack_widget_
+      && screen_stack_widget_ != nullptr) {
+    SelectWidget(screen_stack_widget_);
+  }
+}
+
 void RootWidget::SquadPress() {
   assert(g_base->InLogicThread());
   if (squad_button_) {
@@ -2308,18 +2327,47 @@ void RootWidget::SetAccountSignInState(bool signed_in,
     assert(wb);
 
     account_button_signed_in_ = signed_in;
-    if (signed_in) {
-      w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + name);
-      w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
-      w->set_shadow(0.2f);
-      w->set_flatness(1.0f);
-    } else {
-      w->SetText("{\"r\":\"notSignedInText\"}");
-      w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
-      w->set_shadow(0.5f);
-      w->set_flatness(1.0f);
-    }
+    account_name_ = name;
+    UpdateAccountButtonLabel_();
     UpdateAccountButtonColor_();
+  }
+}
+
+void RootWidget::SetAccountDepiction(const std::string& json) {
+  if (json == account_depiction_json_) {
+    return;
+  }
+  account_depiction_json_ = json;
+  if (auto* btn = account_button_) {
+    DepictionSlot& slot{btn->widget->GetDepictionSlot()};
+    slot.set_h_align(base::DepictionHAlign::kLeft);
+    slot.SetDepiction(json);
+  }
+  UpdateAccountButtonLabel_();
+}
+
+void RootWidget::UpdateAccountButtonLabel_() {
+  if (!account_name_text_) {
+    return;
+  }
+  auto* w{account_name_text_->widget.get()};
+  assert(w);
+
+  // A depiction draws the name itself.
+  if (account_button_signed_in_ && !account_depiction_json_.empty()) {
+    w->SetText("");
+    return;
+  }
+  if (account_button_signed_in_) {
+    w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + account_name_);
+    w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
+    w->set_shadow(0.2f);
+    w->set_flatness(1.0f);
+  } else {
+    w->SetText("{\"r\":\"notSignedInText\"}");
+    w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
+    w->set_shadow(0.5f);
+    w->set_flatness(1.0f);
   }
 }
 
@@ -2556,8 +2604,7 @@ void RootWidget::UpdateLeagueRankDisplay_() {
         if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
           s->SetPositional(false);
           league_rank_anim_sound_play_id_ =
-              s->Play(g_base->assets->BuiltinSound(
-                  base::BuiltinSoundID::kAudioScoreIncrease));
+              s->Play(g_ui_v1->assets().score_increase.get());
           s->End();
         }
       }
@@ -2591,7 +2638,7 @@ void RootWidget::SetStoreStyle(const std::string& val) {
   if (val == "s") {
     base::Assets::AssetListLock lock;
     store_decoration_->widget->SetTexture(
-        g_base->assets->GetTexture("storeCharacterXmas").get());
+        g_ui_v1->assets().store_character_xmas.get());
     store_decoration_->visible = true;
   } else {
     // Normal style.
@@ -2796,6 +2843,18 @@ void RootWidget::SetChests(
   chest3.needs_faster_refresh = false;
 }
 
+void RootWidget::SetChestDepictions(
+    const std::vector<std::string>& depictions) {
+  for (size_t i = 0; i < chest_ids.size(); ++i) {
+    auto&& slot{chest_slots_[chest_ids[i]]};
+    const std::string& json{i < depictions.size() ? depictions[i] : ""};
+    if (json != slot.depiction_json) {
+      slot.depiction_json = json;
+      slot.live_display_dirty = true;
+    }
+  }
+}
+
 void RootWidget::OnLanguageChange() {
   ContainerWidget::OnLanguageChange();
   translations_dirty_ = true;
@@ -2874,7 +2933,7 @@ void RootWidget::UpdateChests_() {
       slot.button->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
-        tex = g_base->assets->GetTexture("chestIconEmpty");
+        tex = g_ui_v1->assets().chest_icon_empty;
       }
       slot.lock_icon->visible = false;
       slot.tv_icon->visible = false;
@@ -2883,6 +2942,7 @@ void RootWidget::UpdateChests_() {
       slot.button->widget->SetTintTexture(nullptr);
       slot.button->widget->set_tint_color(1.0f, 1.0f, 1.0f);
       slot.button->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
+      slot.button->widget->set_tint3_color(1.0f, 1.0f, 1.0f);
 
       slot.needs_faster_refresh = false;
 
@@ -2907,17 +2967,15 @@ void RootWidget::UpdateChests_() {
       Vector3f chest_color;
       Vector3f chest_tint;
       Vector3f chest_tint2;
-      if (auto* classic = g_base->classic()) {
-        classic->GetClassicChestDisplayInfo(
-            slot.appearance, &chest_tex_closed, &chest_tex_closed_tint,
-            &chest_color, &chest_tint, &chest_tint2);
-      } else {
-        chest_tex_closed = "chestIcon";
-        chest_tex_closed_tint = BuiltinTexRef("white");
-        chest_color = Vector3f{1.0f, 1.0f, 1.0f};
-        chest_tint = Vector3f{1.0f, 1.0f, 1.0f};
-        chest_tint2 = Vector3f{1.0f, 1.0f, 1.0f};
-      }
+      Vector3f chest_tint3;
+      // Chest slots only exist under classic, which is also the only
+      // thing that installs us as ui-delegate -- so classic is always
+      // here by the time we draw one.
+      auto* classic = g_base->classic();
+      BA_PRECONDITION(classic);
+      classic->GetClassicChestDisplayInfo(
+          slot.appearance, &chest_tex_closed, &chest_tex_closed_tint,
+          &chest_color, &chest_tint, &chest_tint2, &chest_tint3);
       {
         base::Assets::AssetListLock lock;
         tex = g_base->assets->GetTexture(chest_tex_closed);
@@ -2938,6 +2996,8 @@ void RootWidget::UpdateChests_() {
                                             chest_tint.z);
         slot.button->widget->set_tint2_color(chest_tint2.x, chest_tint2.y,
                                              chest_tint2.z);
+        slot.button->widget->set_tint3_color(chest_tint3.x, chest_tint3.y,
+                                             chest_tint3.z);
       }
 
       auto seconds_to_unlock{
@@ -3015,6 +3075,24 @@ void RootWidget::UpdateChests_() {
           slot.text->widget->set_color(kChestTextColorR * mult,
                                        kChestTextColorG * mult,
                                        kChestTextColorB * mult, 1.0f);
+        }
+      }
+    }
+    // A slot with a depiction shows that in place of its appearance art
+    // (an open chest ui giving it the usual flat green).
+    {
+      bool use_depiction{!slot.appearance.empty()
+                         && !slot.depiction_json.empty()};
+      DepictionSlot& depiction{slot.button->widget->GetDepictionSlot()};
+      depiction.SetDepiction(use_depiction ? slot.depiction_json : "");
+      if (use_depiction) {
+        if (auto* tint = depiction.GetTintControl()) {
+          if (uiopen) {
+            const float green[3]{0.2f, 0.8f, 0.2f};
+            tint->SetFlatColor(green, 0.7f);
+          } else {
+            tint->ClearFlatColor();
+          }
         }
       }
     }
@@ -3162,8 +3240,7 @@ void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
       chest_unlock_time_anim_sound_play_id_ =
-          s->Play(g_base->assets->BuiltinSound(
-              base::BuiltinSoundID::kAudioScoreIncrease));
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }
@@ -3184,8 +3261,8 @@ void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
   if (!tickets_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tickets_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
-          base::BuiltinSoundID::kAudioScoreIncrease));
+      tickets_anim_sound_play_id_ =
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }
@@ -3206,8 +3283,8 @@ void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
   if (!tokens_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tokens_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
-          base::BuiltinSoundID::kAudioScoreIncrease));
+      tokens_anim_sound_play_id_ =
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }

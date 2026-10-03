@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 
+#include <set>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -10,14 +11,16 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_platform/app_platform.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -238,7 +241,7 @@ static auto PyGetCameraPosition(PyObject* self, PyObject* args,
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
-  Camera* cam = g_base->graphics->camera();
+  GameCamera* cam = g_base->graphics->camera();
   cam->get_position(&x, &y, &z);
   return Py_BuildValue("(fff)", x, y, z);
   BA_PYTHON_CATCH;
@@ -268,7 +271,7 @@ static auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
   float x = 0.0f;
   float y = 0.0f;
   float z = 0.0f;
-  Camera* cam = g_base->graphics->camera();
+  GameCamera* cam = g_base->graphics->camera();
   cam->target_smoothed(&x, &y, &z);
   return Py_BuildValue("(fff)", x, y, z);
   BA_PYTHON_CATCH;
@@ -528,6 +531,89 @@ static PyMethodDef PyEvaluateLstrDef = {
     ":meta private:",
 };
 
+// Warn (once, with a traceback) when the logic thread measures text
+// containing OS-rendered chars. The OS measure can block on one-time
+// lazy per-script font loads (tens of ms for some scripts), which is a
+// frame hitch when it happens on the logic thread; such measuring
+// belongs on background threads (measurement is thread-safe).
+static void WarnOnLogicThreadOSTextMeasure(const char* funcname,
+                                           const std::string& s) {
+  // Presence-based (fires even on warm-cache measures, unlike the
+  // miss-path warning in TextGraphics): this is what catches call
+  // sites whose stall potential is hidden by another path having
+  // warmed the cache first. Goal is ZERO expected triggers — treat
+  // any sighting as a bug to fix (or, where the width is genuinely
+  // needed for logic-thread layout, acknowledge it by passing
+  // suppress_logic_thread_warning=True, which downgrades reporting to
+  // actual-stalls-only; see MeasureOnLogicThreadAcked below). Once
+  // per unique string, capped per run.
+  if (!g_base->InLogicThread()) {
+    return;
+  }
+  static std::set<std::string> s_warned_strings;
+  if (s_warned_strings.size() >= 5 || !s_warned_strings.insert(s).second) {
+    return;
+  }
+  Python::PrintStackTrace();
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kWarning,
+      std::string(funcname)
+          + " called on the logic thread with OS-rendered characters"
+            " present; this can hitch on lazy OS font loads. Measure such"
+            " strings from a background thread instead, or pass"
+            " suppress_logic_thread_warning=True to acknowledge the site"
+            " (reports actual stalls only); acknowledged sites can call"
+            " warm_up_string_measure() ahead of time to keep their"
+            " measures from stalling. (see stack trace above;"
+            " once per unique string, capped per run).");
+}
+
+/// A sync logic-thread stall past this is reported even for
+/// acknowledged (suppress_warning=True) measure calls; below it they
+/// stay quiet. Set to catch font-load-scale stalls (tens of ms)
+/// while ignoring routine measures.
+constexpr microsecs_t kAckedMeasureStallWarnThreshold{5000};
+
+/// Run a measure func for an acknowledged logic-thread call site:
+/// suppresses the presence/miss warnings but times the measure and
+/// reports (capped per run) if it genuinely stalled. Keeps
+/// acknowledged sites quiet in the common warm case while worst
+/// offenders still surface from the field.
+template <typename F>
+static auto MeasureOnLogicThreadAcked(const char* funcname,
+                                      const std::string& s, F&& measure)
+    -> float {
+  if (!g_base->InLogicThread()) {
+    return measure();
+  }
+  microsecs_t start = g_core->AppTimeMicrosecs();
+  float result;
+  {
+    TextGraphics::ScopedSyncMeasureAck ack;
+    result = measure();
+  }
+  microsecs_t dur = g_core->AppTimeMicrosecs() - start;
+  if (dur >= kAckedMeasureStallWarnThreshold) {
+    static int s_warn_count{};
+    if (s_warn_count < 5) {
+      s_warn_count++;
+      Python::PrintStackTrace();
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kWarning,
+          std::string(funcname) + " stalled the logic thread for "
+              + std::to_string(dur / 1000) + "ms measuring '" + s
+              + "' (an acknowledged call site, but this exceeded the"
+                " stall threshold; likely a cold OS font load). Consider"
+                " measuring this off-thread, or, if the string is known"
+                " ahead of time (when the window is built, etc.), pass it"
+                " to warm_up_string_measure() then so the font load"
+                " happens in the background. (see stack trace above;"
+                " capped per run)");
+    }
+  }
+  return result;
+}
+
 // --------------------------- get_string_height -------------------------------
 
 static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
@@ -535,11 +621,13 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_TRY;
   std::string s;
   int suppress_warning = 0;
+  int suppress_logic_thread_warning = 0;
   PyObject* s_obj;
-  static const char* kwlist[] = {"string", "suppress_warning", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|i",
-                                   const_cast<char**>(kwlist), &s_obj,
-                                   &suppress_warning)) {
+  static const char* kwlist[] = {"string", "suppress_warning",
+                                 "suppress_logic_thread_warning", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ii", const_cast<char**>(kwlist), &s_obj,
+          &suppress_warning, &suppress_logic_thread_warning)) {
     return nullptr;
   }
   if (!suppress_warning) {
@@ -556,7 +644,31 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
 #endif
   assert(g_base->graphics);
-  return Py_BuildValue("f", g_base->text_graphics->GetStringHeight(s));
+  float height;
+  if (TextGraphics::HasOSChars(s)) {
+    auto measure = [&s] {
+      // Release the GIL while measuring: this is callable from
+      // background threads (doc-ui prep etc.) and a cold measure can
+      // block for milliseconds-plus on a lazy OS font load, which must
+      // not stall logic-thread Python meanwhile. (Glyph-only measures
+      // above skip this; they're pure math and the GIL round-trip
+      // would outweigh them.)
+      float val;
+      Py_BEGIN_ALLOW_THREADS;
+      val = g_base->text_graphics->GetStringHeight(s);
+      Py_END_ALLOW_THREADS;
+      return val;
+    };
+    if (suppress_logic_thread_warning) {
+      height = MeasureOnLogicThreadAcked("get_string_height()", s, measure);
+    } else {
+      WarnOnLogicThreadOSTextMeasure("get_string_height()", s);
+      height = measure();
+    }
+  } else {
+    height = g_base->text_graphics->GetStringHeight(s);
+  }
+  return Py_BuildValue("f", height);
   BA_PYTHON_CATCH;
 }
 
@@ -565,10 +677,13 @@ static PyMethodDef PyGetStringHeightDef = {
     (PyCFunction)PyGetStringHeight,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "get_string_height(string: str, suppress_warning: bool = False) -> "
-    "float\n"
+    "get_string_height(string: str, suppress_warning: bool = False,\n"
+    "  suppress_logic_thread_warning: bool = False) -> float\n"
     "\n"
     "Given a string, returns its height with the standard small app font.\n"
+    "\n"
+    "Pass suppress_logic_thread_warning=True to acknowledge a logic-thread\n"
+    "call site measuring OS-rendered text; see get_string_width.\n"
     "\n"
     ":meta private:",
 };
@@ -581,10 +696,12 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   std::string s;
   PyObject* s_obj;
   int suppress_warning = 0;
-  static const char* kwlist[] = {"string", "suppress_warning", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|i",
-                                   const_cast<char**>(kwlist), &s_obj,
-                                   &suppress_warning)) {
+  int suppress_logic_thread_warning = 0;
+  static const char* kwlist[] = {"string", "suppress_warning",
+                                 "suppress_logic_thread_warning", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ii", const_cast<char**>(kwlist), &s_obj,
+          &suppress_warning, &suppress_logic_thread_warning)) {
     return nullptr;
   }
   if (!suppress_warning) {
@@ -601,7 +718,26 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
 #endif
   assert(g_base->graphics);
-  return Py_BuildValue("f", g_base->text_graphics->GetStringWidth(s));
+  float strwidth;
+  if (TextGraphics::HasOSChars(s)) {
+    auto measure = [&s] {
+      // Release the GIL while measuring (see PyGetStringHeight for why).
+      float val;
+      Py_BEGIN_ALLOW_THREADS;
+      val = g_base->text_graphics->GetStringWidth(s);
+      Py_END_ALLOW_THREADS;
+      return val;
+    };
+    if (suppress_logic_thread_warning) {
+      strwidth = MeasureOnLogicThreadAcked("get_string_width()", s, measure);
+    } else {
+      WarnOnLogicThreadOSTextMeasure("get_string_width()", s);
+      strwidth = measure();
+    }
+  } else {
+    strwidth = g_base->text_graphics->GetStringWidth(s);
+  }
+  return Py_BuildValue("f", strwidth);
   BA_PYTHON_CATCH;
 }
 
@@ -610,10 +746,107 @@ static PyMethodDef PyGetStringWidthDef = {
     (PyCFunction)PyGetStringWidth,  // method
     METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "get_string_width(string: str, suppress_warning: bool = False) -> "
-    "float\n"
+    "get_string_width(string: str, suppress_warning: bool = False,\n"
+    "  suppress_logic_thread_warning: bool = False) -> float\n"
     "\n"
     "Given a string, returns its width in the standard small app font.\n"
+    "\n"
+    "Pass suppress_logic_thread_warning=True to acknowledge a logic-thread\n"
+    "call site measuring OS-rendered text (foreign scripts, emoji,\n"
+    "etc.); acknowledged sites warn only when a measure genuinely\n"
+    "stalls (cold OS font loads) instead of on every use.\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------------- wrap_text -----------------------------------
+
+static auto PyWrapText(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  // Measuring OS-rendered text cold can block for tens of ms, and long
+  // text measures a lot of it; this belongs on background threads.
+  BA_PRECONDITION(!g_base->InLogicThread());
+  const char* text;
+  float width;
+  float scale{1.0f};
+  int big{};
+  static const char* kwlist[] = {"text", "width", "scale", "big", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sf|fp",
+                                   const_cast<char**>(kwlist), &text, &width,
+                                   &scale, &big)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(width > 0.0f && scale > 0.0f);
+  assert(g_base->text_graphics);
+  std::string text_s{text};
+  std::string result;
+  {
+    // Pure C++ (plus OS calls) from here; let other Python run.
+    Python::ScopedInterpreterLockRelease gil_release;
+    result = g_base->text_graphics->WrapString(text_s, width / scale, big != 0);
+  }
+  return PyUnicode_FromStringAndSize(result.c_str(),
+                                     static_cast<Py_ssize_t>(result.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyWrapTextDef = {
+    "wrap_text",                   // name
+    (PyCFunction)PyWrapText,       // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "wrap_text(text: str, width: float, scale: float = 1.0,\n"
+    "  big: bool = False) -> str\n"
+    "\n"
+    "Word-wrap text to fit a width; returns newline-separated lines.\n"
+    "\n"
+    "Lines fit ``width`` when drawn by a text widget at ``scale`` (and\n"
+    "``big``, matching the widget's), measured with the engine's own\n"
+    "text measure, so the widget never needs to shrink them. Breaks\n"
+    "only where the OS's line-break rules allow (existing newlines\n"
+    "stay hard breaks) and fills each line as full as it will go\n"
+    "before starting the next. Background threads only.\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------- warm_up_string_measure ----------------------------
+
+static auto PyWarmUpStringMeasure(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* s_obj;
+  static const char* kwlist[] = {"string", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &s_obj)) {
+    return nullptr;
+  }
+  std::string s = g_base->python->GetPyLString(s_obj);
+  assert(g_base->text_graphics);
+  // (early-outs cheaply for strings with no OS-rendered chars)
+  g_base->text_graphics->WarmUpStringAsync(s);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyWarmUpStringMeasureDef = {
+    "warm_up_string_measure",            // name
+    (PyCFunction)PyWarmUpStringMeasure,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "warm_up_string_measure(string: str) -> None\n"
+    "\n"
+    "Warm measurement of a string in the background.\n"
+    "\n"
+    "Measuring OS-rendered text (foreign scripts, emoji, etc.) for the\n"
+    "first time can stall for tens of milliseconds on lazy OS font\n"
+    "loads. Code that will later need to measure such a string on the\n"
+    "logic thread (via get_string_width() or similar) can call this\n"
+    "ahead of time - when a window is built, for example - so that\n"
+    "cost is paid on a background thread and the later measure is a\n"
+    "cache hit. Returns immediately; nearly free for strings containing\n"
+    "no OS-rendered characters.\n"
     "\n"
     ":meta private:",
 };
@@ -656,7 +889,6 @@ static PyMethodDef PyCanDisplayCharsDef = {
 static auto PySplitTextIntoLines(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
   const char* text;
   int min_lines{1};
   PyObject* max_lines_obj{Py_None};
@@ -692,8 +924,11 @@ static PyMethodDef PySplitTextIntoLinesDef = {
     "Split text into newline-separated lines under simple constraints.\n"
     "\n"
     "Breaks only at valid line-break opportunities (determined by the\n"
-    "OS text stack where available), treating all characters as equal\n"
-    "width. Uses the fewest lines that keep every line within\n"
+    "OS text stack where available), counting East Asian wide\n"
+    "characters (CJK, kana, Hangul, full-width forms) as two\n"
+    "characters and everything else as one, so a character limit means\n"
+    "about the same width in every script. Uses the fewest lines that\n"
+    "keep every line within\n"
     "``max_chars_per_line`` (when provided) while staying between\n"
     "``min_lines`` and ``max_lines`` (None means unlimited), and\n"
     "balances line lengths within that count. So a bare\n"
@@ -709,8 +944,9 @@ static PyMethodDef PySplitTextIntoLinesDef = {
     "recovers the individual lines.\n"
     "\n"
     "This is a simple stopgap for feeding flat translated strings into\n"
-    "places expecting preformatted line counts; it knows nothing about\n"
-    "actual rendered character widths. Logic thread only.",
+    "places expecting preformatted line counts; beyond the wide-\n"
+    "character weighting it knows nothing about actual rendered\n"
+    "character widths. Callable from any thread.",
 };
 
 // ----------------------------- fade_screen -----------------------------------
@@ -987,6 +1223,28 @@ static PyMethodDef PySupportsMaxFPSDef = {
     ":meta private:\n",
 };
 
+// ---------------------------- get_last_fps -----------------------------------
+
+static auto PyGetLastFPS(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  return PyLong_FromLong(g_base->graphics->last_fps());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetLastFPSDef = {
+    "get_last_fps",             // name
+    (PyCFunction)PyGetLastFPS,  // method
+    METH_NOARGS,                // flags
+
+    "get_last_fps() -> int\n"
+    "\n"
+    "(internal) Frames rendered over the most recent one-second stats\n"
+    "window -- the same value the in-game 'Show FPS' display shows,\n"
+    "tracked whether or not that display is enabled. Always 0 in\n"
+    "headless builds, which render no frames. Logic thread only.\n",
+};
+
 // ---------------------- supports_unicode_display -----------------------------
 
 static auto PySupportsUnicodeDisplay(PyObject* self) -> PyObject* {
@@ -1115,6 +1373,61 @@ static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
     "Return the size of the area on screen that will always be visible.",
 };
 
+// ------------------------ get_virtual_outer_rect -----------------------------
+
+static auto PyGetVirtualOuterRect(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  Rect rect{g_base->graphics->reported_virtual_outer_rect()};
+  return Py_BuildValue("(ffff)", rect.l, rect.b, rect.r, rect.t);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualOuterRectDef = {
+    "get_virtual_outer_rect",            // name
+    (PyCFunction)PyGetVirtualOuterRect,  // method
+    METH_NOARGS,                         // flags
+
+    "get_virtual_outer_rect() -> tuple[float, float, float, float]\n"
+    "\n"
+    "Return the full visible drawing area in virtual coords.\n"
+    "\n"
+    "Returns the left, bottom, right, and top edges of the active render\n"
+    "rect expressed in virtual coordinates. This equals (0, 0, virtual-\n"
+    "res-x, virtual-res-y) unless the virtual bounds are inset to dodge\n"
+    "camera cutouts or the like, in which case left/bottom may be\n"
+    "negative and right/top may exceed the virtual res. Use this to\n"
+    "extend visuals to the edge of the visible area; note that content\n"
+    "outside the regular virtual bounds may be partially obscured.",
+};
+
+// --------------------- get_auto_screen_inset_amount --------------------------
+
+static auto PyGetAutoScreenInsetAmount(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  return PyFloat_FromDouble(g_base->graphics->AutoScreenInsetAmount());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAutoScreenInsetAmountDef = {
+    "get_auto_screen_inset_amount",           // name
+    (PyCFunction)PyGetAutoScreenInsetAmount,  // method
+    METH_NOARGS,                              // flags
+
+    "get_auto_screen_inset_amount() -> float\n"
+    "\n"
+    "Return the screen-inset amount automatic mode uses here.\n"
+    "\n"
+    "Screen insets pull the virtual bounds in from the screen edges,\n"
+    "from 0 (only what the OS reports as obscured) to 1 (the max\n"
+    "margins). With the ``Screen Insets`` config value at ``Auto``, the\n"
+    "amount comes from context (TV or not, ui scale); this returns\n"
+    "that value. With it at ``Custom``, ``Custom Screen Insets`` is\n"
+    "used instead.",
+};
+
 // -------------------------------- atexit -------------------------------------
 
 static auto PyAtExit(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1205,12 +1518,12 @@ static auto ParseAssetEntryMap_(PyObject* entries_obj,
 static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* bucket_id;
   PyObject* entries_obj;
-  static const char* kwlist[] = {"apverid", "bucket_id", "entries", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
-                                   const_cast<char**>(kwlist), &apverid,
+  static const char* kwlist[] = {"apvernum", "bucket_id", "entries", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "LsO",
+                                   const_cast<char**>(kwlist), &apvernum,
                                    &bucket_id, &entries_obj)) {
     return nullptr;
   }
@@ -1218,8 +1531,8 @@ static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
   if (!ParseAssetEntryMap_(entries_obj, &entries)) {
     return nullptr;
   }
-  g_base->assets->package_registry()->RegisterBucket(apverid, bucket_id,
-                                                     std::move(entries));
+  g_base->assets->package_registry()->RegisterBucket(
+      std::to_string(apvernum), bucket_id, std::move(entries));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1229,7 +1542,7 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     (PyCFunction)PyRegisterAssetPackageBucket,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "register_asset_package_bucket(apverid: str, bucket_id: str,\n"
+    "register_asset_package_bucket(apvernum: int, bucket_id: str,\n"
     "                              entries: dict[str, dict[str, str]])"
     " -> None\n"
     "\n"
@@ -1263,17 +1576,17 @@ static auto PyRegisterAssetPackageBuckets(PyObject* self, PyObject* args,
   specs.reserve(static_cast<size_t>(count));
   for (Py_ssize_t i = 0; i < count; ++i) {
     PyObject* item = PySequence_Fast_GET_ITEM(seq.get(), i);  // (borrowed)
-    const char* apverid;
+    int64_t apvernum;
     const char* bucket_id;
     PyObject* entries_obj;
-    if (!PyArg_ParseTuple(item, "ssO", &apverid, &bucket_id, &entries_obj)) {
+    if (!PyArg_ParseTuple(item, "LsO", &apvernum, &bucket_id, &entries_obj)) {
       return nullptr;
     }
     AssetPackageRegistry::EntryMap entries;
     if (!ParseAssetEntryMap_(entries_obj, &entries)) {
       return nullptr;
     }
-    specs.emplace_back(apverid, bucket_id, std::move(entries));
+    specs.emplace_back(std::to_string(apvernum), bucket_id, std::move(entries));
   }
   g_base->assets->package_registry()->RegisterBucketsAtomic(std::move(specs));
   Py_RETURN_NONE;
@@ -1286,12 +1599,12 @@ static PyMethodDef PyRegisterAssetPackageBucketsDef = {
     METH_VARARGS | METH_KEYWORDS,                // flags
 
     "register_asset_package_buckets(\n"
-    "    buckets: Sequence[tuple[str, str, dict[str, dict[str, str]]]])"
+    "    buckets: Sequence[tuple[int, str, dict[str, dict[str, str]]]])"
     " -> None\n"
     "\n"
     "(internal) Register several asset-package buckets into the C++\n"
     "runtime registry in a single atomic swap. Each tuple is\n"
-    "``(apverid, bucket_id, entries)`` where ``entries`` maps logical\n"
+    "``(apvernum, bucket_id, entries)`` where ``entries`` maps logical\n"
     "asset paths to a part-keyed component map ``{part: CAS_hash}`` (a\n"
     "null asset maps to an empty dict). Unlike\n"
     "``register_asset_package_bucket``\n"
@@ -1307,6 +1620,9 @@ static auto PyMarkConstructAssetsComplete(PyObject* self, PyObject* args)
     -> PyObject* {
   BA_PYTHON_TRY;
   g_base->assets->package_registry()->SetConstructComplete();
+  // Bring-up is done from the OS's perspective; end any loading-phase
+  // power boost (Android GameState; no-op elsewhere).
+  g_core->platform->SetOSGameLoadingState(false);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1325,19 +1641,20 @@ static PyMethodDef PyMarkConstructAssetsCompleteDef = {
     "``babase._asset_packages.mark_construct_complete()`` so the native\n"
     "and Python gates open together."};
 
-// ---------------- get_asset_package_constant_blob_path -----------------------
+// ---------------- get_asset_package_constant_blob_text -----------------------
 
-static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
+static auto PyGetAssetPackageConstantBlobText(PyObject* self, PyObject* args,
                                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* apverid;
+  int64_t apvernum;
   const char* logical_path;
-  static const char* kwlist[] = {"apverid", "logical_path", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
-                                   const_cast<char**>(kwlist), &apverid,
+  static const char* kwlist[] = {"apvernum", "logical_path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Ls",
+                                   const_cast<char**>(kwlist), &apvernum,
                                    &logical_path)) {
     return nullptr;
   }
+  std::string apverid = std::to_string(apvernum);
   auto* registry = g_base->assets->package_registry();
   auto bucket_id = registry->LookupConstantBucketId(apverid);
   if (bucket_id.empty()) {
@@ -1348,25 +1665,365 @@ static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
   if (hash.empty()) {
     Py_RETURN_NONE;
   }
-  return PyUnicode_FromString(registry->CasBlobPath(hash).c_str());
+  // Read via AssetBlob so bundled blobs served out of an archive
+  // (the apk on Android) work; the path may not be a plain file.
+  auto blob = AssetBlob::FromFile(registry->CasBlobPath(hash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                     static_cast<Py_ssize_t>(blob.size()));
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
-    "get_asset_package_constant_blob_path",          // name
-    (PyCFunction)PyGetAssetPackageConstantBlobPath,  // method
+static PyMethodDef PyGetAssetPackageConstantBlobTextDef = {
+    "get_asset_package_constant_blob_text",          // name
+    (PyCFunction)PyGetAssetPackageConstantBlobText,  // method
     METH_VARARGS | METH_KEYWORDS,                    // flags
 
-    "get_asset_package_constant_blob_path(apverid: str,\n"
+    "get_asset_package_constant_blob_text(apvernum: int,\n"
     "                                     logical_path: str) -> str | None\n"
     "\n"
     "(internal) Resolve a flavor-invariant ``constant``-bucket logical\n"
-    "path in a registered asset-package to its on-disk CAS blob path.\n"
-    "Returns the path, or ``None`` if the package isn't registered, has\n"
-    "no constant bucket, or doesn't carry that logical path. The blob is\n"
-    "the JSON (``j.json``) component. The returned path is where the\n"
-    "blob should live (writable CAS root, else bundle root); a caller\n"
-    "must still handle a genuine ``open()`` failure."};
+    "path in a registered asset-package and return its CAS blob's\n"
+    "contents as text. Returns ``None`` if the package isn't registered,\n"
+    "has no constant bucket, doesn't carry that logical path, or the\n"
+    "blob is unreadable. The blob is the JSON (``j.json``) component.\n"
+    "Contents (not a path) are returned since bundled blobs may live\n"
+    "inside an archive rather than as plain files."};
+
+// ---------------- bundled_cas_blob_size --------------------------------------
+
+static auto PyBundledCasBlobSize(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* filehash;
+  static const char* kwlist[] = {"filehash", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &filehash)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto blob = AssetBlob::FromFile(registry->BundledCasBlobPath(filehash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyLong_FromSize_t(blob.size());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledCasBlobSizeDef = {
+    "bundled_cas_blob_size",            // name
+    (PyCFunction)PyBundledCasBlobSize,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "bundled_cas_blob_size(filehash: str) -> int | None\n"
+    "\n"
+    "(internal) Size of a CAS blob in the *bundle* (shipped assets),\n"
+    "or None if the bundle doesn't carry it. Backed by the platform's\n"
+    "bundle store - plain files on most platforms, spans out of the\n"
+    "apk archive on Android - so use this rather than probing bundle\n"
+    "paths on disk. Cheap (a map/index lookup; no data read)."};
+
+// ---------------- bundled_cas_blob_bytes -------------------------------------
+
+static auto PyBundledCasBlobBytes(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* filehash;
+  static const char* kwlist[] = {"filehash", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &filehash)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto blob = AssetBlob::FromFile(registry->BundledCasBlobPath(filehash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                   static_cast<Py_ssize_t>(blob.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledCasBlobBytesDef = {
+    "bundled_cas_blob_bytes",            // name
+    (PyCFunction)PyBundledCasBlobBytes,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "bundled_cas_blob_bytes(filehash: str) -> bytes | None\n"
+    "\n"
+    "(internal) Contents of a CAS blob from the *bundle* (shipped\n"
+    "assets), or None if the bundle doesn't carry it. See\n"
+    ":meth:`bundled_cas_blob_size` for why this exists (bundled blobs\n"
+    "may live inside an archive rather than as plain files)."};
+
+// ---------------- bundled_asset_manifest_text --------------------------------
+
+static auto PyBundledAssetManifestText(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  auto blob =
+      AssetBlob::FromFile(g_base->assets->bundled_asset_manifest_path());
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                     static_cast<Py_ssize_t>(blob.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledAssetManifestTextDef = {
+    "bundled_asset_manifest_text",            // name
+    (PyCFunction)PyBundledAssetManifestText,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "bundled_asset_manifest_text() -> str | None\n"
+    "\n"
+    "(internal) Contents of the bundle's asset-package manifest\n"
+    "(``ba_data/manifest.json``), or None if this build ships none.\n"
+    "Served natively since the manifest may live inside an archive\n"
+    "(the apk on Android) rather than as a plain file."};
+
+// ---------------- get_asset_package_bucket_paths -----------------------------
+
+static auto PyGetAssetPackageBucketPaths(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int64_t apvernum;
+  const char* kind;
+  static const char* kwlist[] = {"apvernum", "kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &kind)) {
+    return nullptr;
+  }
+  std::string apverid = std::to_string(apvernum);
+  auto* registry = g_base->assets->package_registry();
+
+  // Kind names match bacommon.assetspec.AssetBucketKind values.
+  std::string kindstr{kind};
+  std::string bucket_id;
+  if (kindstr == "textures") {
+    bucket_id = registry->LookupTextureBucketId(apverid);
+  } else if (kindstr == "meshes") {
+    bucket_id = registry->LookupMeshBucketId(apverid);
+  } else if (kindstr == "audio") {
+    bucket_id = registry->LookupAudioBucketId(apverid);
+  } else if (kindstr == "constant") {
+    bucket_id = registry->LookupConstantBucketId(apverid);
+  } else {
+    throw Exception("Invalid asset bucket kind: '" + kindstr + "'.",
+                    PyExcType::kValue);
+  }
+  if (bucket_id.empty()) {
+    // Not registered, or no bucket of this kind. None rather than an
+    // empty list: the caller needs to tell "package absent" (which may
+    // be a resolve-ordering bug) from "package has no textures".
+    Py_RETURN_NONE;
+  }
+  auto keys = registry->BucketLogicalPathsSorted(apverid, bucket_id);
+  PyObject* out = PyList_New(0);
+  for (auto&& key : keys) {
+    PythonRef keyobj(PyUnicode_FromString(key.c_str()), PythonRef::kSteal);
+    PyList_Append(out, keyobj.get());
+  }
+  return out;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageBucketPathsDef = {
+    "get_asset_package_bucket_paths",           // name
+    (PyCFunction)PyGetAssetPackageBucketPaths,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "get_asset_package_bucket_paths(apvernum: int,\n"
+    "                               kind: str) -> list[str] | None\n"
+    "\n"
+    "(internal) Return a registered asset-package bucket's canonical\n"
+    "sorted logical-path list. ``kind`` is a\n"
+    "``bacommon.assetspec.AssetBucketKind`` value (``textures``,\n"
+    "``meshes``, ``audio``, ``constant``). Returns ``None`` if the\n"
+    "package isn't registered or has no bucket of that kind -- which a\n"
+    "caller must distinguish from an empty list.\n"
+    "\n"
+    "This is the list integer asset indices address, both for doc-ui\n"
+    "flat refs and scene_v1 wire refs; it is portable across flavors by\n"
+    "the identical-key-set invariant (asset-packages D23/D24)."};
+
+// ---------------- take_wanted_asset_packages --------------------------------
+
+static auto PyTakeWantedAssetPackages(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  double max_age;
+  static const char* kwlist[] = {"max_age", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char**>(kwlist), &max_age)) {
+    return nullptr;
+  }
+  auto wanted = g_base->assets->package_registry()->TakeWanted(
+      static_cast<millisecs_t>(max_age * 1000.0));
+  PyObject* out = PyList_New(0);
+  for (auto&& entry : wanted) {
+    // Registry keys are numeric ids as text; anything else came from
+    // bad data and has no numeric id to hand back.
+    auto apvernum = AssetPackageRegistry::ApverNumFromKey(entry.first);
+    if (!apvernum.has_value()) {
+      continue;
+    }
+    PythonRef item(Py_BuildValue("(Nd)", PyLong_FromLongLong(*apvernum),
+                                 static_cast<double>(entry.second) / 1000.0),
+                   PythonRef::kSteal);
+    PyList_Append(out, item.get());
+  }
+  return out;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTakeWantedAssetPackagesDef = {
+    "take_wanted_asset_packages",            // name
+    (PyCFunction)PyTakeWantedAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "take_wanted_asset_packages(max_age: float) -> list[tuple[int, float]]\n"
+    "\n"
+    "(internal) Asset-package versions something on screen wants\n"
+    "registered (their media isn't local), as ``(apvernum, seconds since\n"
+    "last wanted)`` pairs. Entries not re-wanted within ``max_age``\n"
+    "seconds are dropped rather than returned. Feeds the background\n"
+    "acquirer in :class:`babase.AssetSubsystem`.",
+};
+
+// ---------------- asset_package_registry_generation -------------------------
+
+static auto PyAssetPackageRegistryGeneration(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  return PyLong_FromLongLong(g_base->assets->package_registry()->generation());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAssetPackageRegistryGenerationDef = {
+    "asset_package_registry_generation",            // name
+    (PyCFunction)PyAssetPackageRegistryGeneration,  // method
+    METH_NOARGS,                                    // flags
+
+    "asset_package_registry_generation() -> int\n"
+    "\n"
+    "(internal) Count of asset-package registrations so far; bumps on\n"
+    "every resolve commit.",
+};
+
+// ---------------- get_asset_package_string_count -----------------------------
+
+static auto PyGetAssetPackageStringCount(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int64_t apvernum;
+  static const char* kwlist[] = {"apvernum", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "L",
+                                   const_cast<char**>(kwlist), &apvernum)) {
+    return nullptr;
+  }
+  auto tables = g_base->assets->LangStrTablesSnapshot();
+  if (!tables) {
+    Py_RETURN_NONE;
+  }
+  auto it = tables->packages.find(std::to_string(apvernum));
+  if (it == tables->packages.end()) {
+    // Not loaded for the current locale. None rather than 0 so the
+    // caller can tell "no language table" from "a package with no
+    // strings" -- the first would silently shift every later offset.
+    Py_RETURN_NONE;
+  }
+  return PyLong_FromLong(
+      static_cast<long>(it->second.sorted_names.size()));  // NOLINT
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageStringCountDef = {
+    "get_asset_package_string_count",           // name
+    (PyCFunction)PyGetAssetPackageStringCount,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "get_asset_package_string_count(apvernum: int) -> int | None\n"
+    "\n"
+    "(internal) How many language-strings a loaded package holds for\n"
+    "the current locale -- the size of the canonical sorted name list\n"
+    "that string indices address. ``None`` if the package has no\n"
+    "language table loaded, which a caller must distinguish from a\n"
+    "package holding zero strings.\n"
+    "\n"
+    "Used to fold a flat wire index back into the (package, string)\n"
+    "pair the native decoder consumes; only the count is needed, since\n"
+    "the names themselves stay native."};
+
+// ---------------------- set_base_asset_set -----------------------------------
+
+static auto BaseAssetSetFromPyArgs(PyObject* args, BaseAssetSet* out) -> bool {
+#include "ballistica/base/generated/base_asset_set_unpack.inc"
+}
+
+static auto PySetBaseAssetSet(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  BaseAssetSet assets;
+  if (!BaseAssetSetFromPyArgs(args, &assets)) {
+    return nullptr;
+  }
+  assert(assets.complete());
+  g_base->assets->set_base_assets(assets);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetBaseAssetSetDef = {
+    "set_base_asset_set_native",     // name
+    (PyCFunction)PySetBaseAssetSet,  // method
+    METH_VARARGS,                    // flags
+
+    "set_base_asset_set_native(*args: bacommon.assetspec.TextureSpec"
+    " | bacommon.assetspec.CubeMapTextureSpec"
+    " | bacommon.assetspec.MeshSpec"
+    " | bacommon.assetspec.SoundSpec) -> None\n"
+    "\n"
+    "(internal) Supply the classic-flavored art base draws with.\n"
+    "\n"
+    "Do not call this directly -- babase.set_base_asset_set() is the\n"
+    "entry point. Args arrive positionally in spec order; both sides\n"
+    "are generated from src/codegen/babasecodegen/base_assets.py, so\n"
+    "they cannot drift.",
+};
+
+// ------------------- restore_base_asset_placeholders
+// --------------------------
+
+static auto PyRestoreBaseAssetPlaceholders(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->assets->RestoreBaseAssetPlaceholders();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRestoreBaseAssetPlaceholdersDef = {
+    "restore_base_asset_placeholders_native",     // name
+    (PyCFunction)PyRestoreBaseAssetPlaceholders,  // method
+    METH_NOARGS,                                  // flags
+
+    "restore_base_asset_placeholders_native() -> None\n"
+    "\n"
+    "(internal) Restore the base asset set to neutral placeholders.\n"
+    "\n"
+    "Called by the asset app-subsystem's reset() at app-mode switches\n"
+    "-- restored rather than cleared, since base draws between modes.",
+};
 
 // ---------------- set_asset_name_compat_versions -----------------------------
 
@@ -1384,11 +2041,12 @@ static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
   PyObject* value;
   Py_ssize_t pos = 0;
   while (PyDict_Next(versions_obj, &pos, &key, &value)) {
-    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
-      throw Exception("Expected a dict[str, str].", PyExcType::kType);
+    if (!PyUnicode_Check(key) || !PyLong_Check(value)) {
+      throw Exception("Expected a dict[str, int].", PyExcType::kType);
     }
-    AssetNameCompat::SetPackageVersion(PyUnicode_AsUTF8(key),
-                                       PyUnicode_AsUTF8(value));
+    // Numeric ids; the engine keys packages by them as text.
+    AssetNameCompat::SetPackageVersion(
+        PyUnicode_AsUTF8(key), std::to_string(PyLong_AsLongLong(value)));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1399,14 +2057,16 @@ static PyMethodDef PySetAssetNameCompatVersionsDef = {
     (PyCFunction)PySetAssetNameCompatVersions,  // method
     METH_VARARGS | METH_KEYWORDS,               // flags
 
-    "set_asset_name_compat_versions(versions: dict[str, str]) -> None\n"
+    "set_asset_name_compat_versions(versions: dict[str, int]) -> None\n"
     "\n"
-    "(internal) Register the asset-package version ids backing the\n"
+    "(internal) Register the asset-package numeric ids backing the\n"
     "legacy asset-name compat table, keyed by package key\n"
     "('builtinassets' / 'classicassets'). Until a package key is\n"
     "registered, legacy names mapping into it pass through unmapped.\n"
     "Called at classic-app-mode activation with values sourced from\n"
-    "the asset-package wrapper modules."};
+    "the asset-package wrapper modules. Raises an Exception for an\n"
+    "unrecognized package key (these are fixed table keys, not\n"
+    "wrapper module names)."};
 
 // ---------------- resolve_legacy_asset_name ----------------------------------
 
@@ -1481,10 +2141,19 @@ static PyMethodDef PyPreferredTextureProfileDef = {
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PySetBaseAssetSetDef,
+      PyRestoreBaseAssetPlaceholdersDef,
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
       PyMarkConstructAssetsCompleteDef,
-      PyGetAssetPackageConstantBlobPathDef,
+      PyGetAssetPackageConstantBlobTextDef,
+      PyBundledCasBlobSizeDef,
+      PyBundledCasBlobBytesDef,
+      PyBundledAssetManifestTextDef,
+      PyGetAssetPackageBucketPathsDef,
+      PyTakeWantedAssetPackagesDef,
+      PyAssetPackageRegistryGenerationDef,
+      PyGetAssetPackageStringCountDef,
       PySetAssetNameCompatVersionsDef,
       PyResolveLegacyAssetNameDef,
       PyPreferredTextureProfileDef,
@@ -1505,7 +2174,9 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFadeScreenDef,
       PyScreenMessageDef,
       PyGetStringWidthDef,
+      PyWrapTextDef,
       PyGetStringHeightDef,
+      PyWarmUpStringMeasureDef,
       PyEvaluateLstrDef,
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
@@ -1514,6 +2185,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
       PySupportsMaxFPSDef,
+      PyGetLastFPSDef,
       PySupportsUnicodeDisplayDef,
       PyShowProgressBarDef,
       PyFullscreenControlKeyShortcutDef,
@@ -1522,6 +2194,8 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetAccountSignInStateDef,
       PyGetVirtualScreenSizeDef,
       PyGetVirtualSafeAreaSizeDef,
+      PyGetVirtualOuterRectDef,
+      PyGetAutoScreenInsetAmountDef,
       PyAtExitDef,
   };
 }

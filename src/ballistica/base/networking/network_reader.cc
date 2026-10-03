@@ -420,16 +420,19 @@ void NetworkReader::OpenSockets_() {
   // This needs to be locked during any socket-descriptor changes/writes.
   std::scoped_lock lock(sd_mutex_);
 
-  // Opt out of the inbound-UDP listener entirely. sd4_/sd6_ stay -1,
-  // so the read loop polls nothing and reject-incoming is a no-op.
-  // For test processes that only exercise outbound connections —
-  // avoids port-conflict fatals on shared CI hosts, OS firewall
-  // prompts, and wasted fds. Different from BA_BIND_LOOPBACK_ONLY,
-  // which still opens a listener bound to 127.0.0.1.
-  auto no_listener_env_var = g_core->platform->GetEnv("BA_NO_UDP_LISTENER");
-  if (no_listener_env_var && *no_listener_env_var == "1") {
+  // Opt out of engine UDP entirely. sd4_/sd6_ stay -1, so nothing is
+  // received *or sent* (SendTo() drops everything): no joining or
+  // hosting games, no LAN discovery, no remote app. For test processes
+  // that only use the cloud (TCP/HTTP) -- and that must open no socket
+  // at all, as under a sandbox denying non-loopback binds. Test runs
+  // that just want to avoid port conflicts should use BA_UDP_PORT=0
+  // instead (an ephemeral port; UDP still works). Different from
+  // BA_BIND_LOOPBACK_ONLY, which still opens sockets bound to
+  // 127.0.0.1.
+  auto no_udp_env_var = g_core->platform->GetEnv("BA_NO_UDP");
+  if (no_udp_env_var && *no_udp_env_var == "1") {
     g_core->logging->Log(LogName::kBaNetworking, LogLevel::kInfo,
-                         "BA_NO_UDP_LISTENER set; skipping UDP listener.");
+                         "BA_NO_UDP set; opening no UDP sockets.");
     return;
   }
 
@@ -437,13 +440,12 @@ void NetworkReader::OpenSockets_() {
   int print_port_unavailable = false;
   int initial_requested_port = port4_;
 
-  // If we're headless then we die if our requested port(s) are unavailable;
-  // we're useless otherwise. But we now allow overriding this behavior via
-  // env var for cases where we use headless builds for data crunching.
-  auto suppress_env_var =
-      g_core->platform->GetEnv("BA_SUPPRESS_HEADLESS_PORT_IN_USE_ERROR");
-  auto suppress_headless_port_in_use_error =
-      (suppress_env_var && *suppress_env_var == "1");
+  // If we're headless then we die if our requested port(s) are
+  // unavailable; we're useless otherwise. An ephemeral request (port 0;
+  // see BA_UDP_PORT) has no particular port to insist on, so it never
+  // dies over one. (Headless runs that need no UDP at all -- data
+  // crunching and the like -- should set BA_NO_UDP.)
+  auto die_if_port_unavailable = g_core->HeadlessMode() && port4_ != 0;
 
   // Bind UDP sockets to loopback instead of INADDR_ANY/in6addr_any
   // when requested. Intended for sandboxed test runs where binds on
@@ -474,7 +476,7 @@ void NetworkReader::OpenSockets_() {
     serv_addr.sin_port = htons(port4_);  // NOLINT
     result = ::bind(sd4_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result != 0) {
-      if (g_core->HeadlessMode() && !suppress_headless_port_in_use_error) {
+      if (die_if_port_unavailable) {
         FatalError("Unable to bind to requested udp port "
                    + std::to_string(port4_) + " (ipv4)");
       }
@@ -535,7 +537,7 @@ void NetworkReader::OpenSockets_() {
     result = ::bind(sd6_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 
     if (result != 0) {
-      if (g_core->HeadlessMode() && !suppress_headless_port_in_use_error) {
+      if (die_if_port_unavailable) {
         FatalError("Unable to bind to requested udp port "
                    + std::to_string(port6_) + " (ipv6)");
       }

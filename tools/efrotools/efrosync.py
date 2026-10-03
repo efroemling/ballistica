@@ -658,7 +658,11 @@ def _apply_pending(ctx: _SyncContext) -> None:
             )
         else:
             for dst_path in ps.dst_paths:
-                shutil.copy2(ps.source_path, dst_path)
+                # Contents only (not copy2's metadata): a synced file
+                # should look freshly edited, mtime and all, so mtime-
+                # driven tools (make, mypy's incremental cache) see the
+                # change. Existing files keep their own mode.
+                shutil.copyfile(ps.source_path, dst_path)
             new_mtimes = {p: os.path.getmtime(p) for p in ps.current_hashes}
             ctx.state.files[ps.skey] = FileStateEntry(
                 synced_hash=ps.new_hash, mtimes=new_mtimes
@@ -756,6 +760,29 @@ def efrosync_main() -> None:
     from efro.error import CleanError
 
     args = sys.argv[2:]
+
+    if '--help' in args or '-h' in args:
+        print(
+            'Usage: efrosync [--check | --dry-run]\n'
+            '\n'
+            'Sync shared files across local sibling repos.\n'
+            '\n'
+            '  (no args)   Format all projects and sync (mutating).\n'
+            '  --check     Report out-of-sync files; writes nothing.\n'
+            '  --dry-run   Show what a sync would do (still formats\n'
+            '              projects and writes sync state).\n'
+            '  -h, --help  Show this help and exit.'
+        )
+        return
+
+    # Refuse anything unrecognized rather than falling through to a
+    # real (mutating) sync.
+    unknown = [a for a in args if a not in ('--dry-run', '--check')]
+    if unknown:
+        raise CleanError(
+            f'Unrecognized argument(s): {' '.join(unknown)}.'
+            ' Run with --help for usage.'
+        )
 
     dry_run = '--dry-run' in args
     check = '--check' in args

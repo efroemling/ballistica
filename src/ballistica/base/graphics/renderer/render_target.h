@@ -37,11 +37,18 @@ class RenderTarget : public Object {
 
   /// The region of this target that game content occupies (pixels,
   /// bottom-left origin). For the screen target this can be an inset
-  /// sub-rect (tv-border mode / aspect-ratio limiting); everything
+  /// sub-rect (aspect-ratio limiting); everything
   /// outside it is kept cleared to black. For offscreen targets it is
   /// always the full target.
   auto content_rect() const -> Rect;
   auto content_rect_is_full() const -> bool;
+
+  /// The sub-region of this target that our virtual coord system maps
+  /// onto (pixels, bottom-left origin) - content_rect() inset by the
+  /// virtual-bounds margins. Equal to content_rect() unless the bounds
+  /// are inset. Drawing is NOT confined to this; it just establishes
+  /// what virtual coords mean. See Graphics::virtual_bounds_rect.
+  auto virtual_bounds_content_rect() const -> Rect;
   auto GetScissorScaleX() const -> float;
   auto GetScissorScaleY() const -> float;
   auto GetScissorX(float x) const -> float;

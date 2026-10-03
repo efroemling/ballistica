@@ -57,11 +57,17 @@ def is_browser_likely_available() -> bool:
     platform = app.classic.platform
     hastouchscreen = _babase.hastouchscreen()
 
-    # If we're on a vr device or an android device with no touchscreen,
-    # assume no browser.
-    # FIXME: Might not be the case anymore; should make this definable
-    #  at the platform level.
-    if app.env.vr or (platform == 'android' and not hastouchscreen):
+    # If we're on a TV, a vr device, or an android device with no
+    # touchscreen, assume no browser. The TV case is a platform-level
+    # signal (see Platform::IsRunningOnTV) and covers both tvOS -- where
+    # there is no browser at all to hand a url off to -- and Android TV.
+    # FIXME: The remaining two are still guesses; should make this
+    #  definable at the platform level too.
+    if (
+        app.env.tv
+        or app.env.vr
+        or (platform == 'android' and not hastouchscreen)
+    ):
         return False
 
     # Anywhere else assume we've got one.
@@ -77,19 +83,19 @@ def should_submit_debug_info() -> bool:
 
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
-    from babase import builtinassets
+    from babase import _builtinassets
 
     if _babase.app.env.gui:
         _babase.apptimer(
             2.0,
             lambda: _babase.screenmessage(
-                _babase.app.lang.get_resource(
-                    'internal.corruptFileText'
-                ).replace('${EMAIL}', 'support@froemling.net'),
+                _builtinassets.strings.assets.corrupt_file(
+                    email='support@froemling.net'
+                ),
                 color=(1, 0, 0),
             ),
         )
-        _babase.apptimer(2.0, builtinassets.audio.error.get().play)
+        _babase.apptimer(2.0, _builtinassets.audio.error.get().play)
 
 
 _tb_held_files: list[TextIO] = []

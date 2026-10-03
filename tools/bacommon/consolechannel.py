@@ -2,10 +2,15 @@
 #
 """Payload types for the cloud-console SmartSocket channel kind.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 One root pair per channel kind (see the hierarchy-per-contract rule
 in ``streamcall-smartsocket.md``): commands go up from the console as
-:class:`ConsoleCommand`, everything it displays comes back down as
-:class:`ConsoleEvent`. The relay never decodes either -- a new event
+``ConsoleCommand``, everything it displays comes back down as
+``ConsoleEvent``. The relay never decodes either -- a new event
 type must never require a basn rollout.
 
 Payloads here are pure data. In particular they carry log entries and

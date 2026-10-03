@@ -94,14 +94,14 @@ class _MacMusicAppThread(threading.Thread):
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         def do_print() -> None:
             babase.apptimer(
                 0.5,
                 babase.CallStrict(
                     babase.screenmessage,
-                    classicassets.strings.soundtrack.using_music_app,
+                    _classicassets.strings.soundtrack.using_music_app,
                     (0, 1, 0),
                 ),
             )

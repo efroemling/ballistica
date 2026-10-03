@@ -1,572 +1,693 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Provides UI for graphics settings."""
+"""Graphics settings, as a doc-ui page.
 
-from typing import TYPE_CHECKING, cast, override
+A client-local doc-ui domain like the audio and advanced settings: the
+page is authored here, its controls keep their values in typed page
+state mirroring the config, and each change is a typed local action
+that writes the config.
 
-from bauiv1lib.popup import PopupMenu
-from bauiv1lib.config import ConfigCheckBox
+Fullscreen is the odd one out: it can change behind the page's back (a
+hotkey, the OS window controls), so the controller polls it (see
+:meth:`GraphicsSettingsController.poll_page_state`). Its native calls
+are logic-thread-only while pages are built in the background, so the
+controller keeps what the page build needs cached.
+"""
+
+from enum import Enum
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, override, assert_never
+
+from efro.dataclassio import ioprepped, IOAttrs
+import bacommon.docui.v2 as dui2
+from bacommon.docui.routes import (
+    DocUIRoute,
+    DocUILocalActionBase,
+    DocUIState,
+    family_members,
+)
+from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Literal
+
+    from bacommon.docui import DocUIResponse
+    from bacommon.langstr import LangStrSpec
+
+    from bauiv1lib.docui import DocUILocalAction, DocUIWindow
+
+_gfxstrs = _classicassets.strings.settings.graphics
+
+#: How often (seconds) to re-check values that change behind our back.
+_POLL_INTERVAL = 0.5
 
 
-_gfxstrs = classicassets.strings.settings.graphics
+class Quality(Enum):
+    """Graphics quality settings (their config values)."""
+
+    AUTO = 'Auto'
+    HIGHER = 'Higher'
+    HIGH = 'High'
+    MEDIUM = 'Medium'
+    LOW = 'Low'
 
 
-class GraphicsSettingsWindow(bui.MainWindow):
-    """Window for graphics settings."""
+class AssetQuality(Enum):
+    """Asset quality tiers.
 
-    def __init__(
+    Display-only for now: the popup shows what's coming, with ultra
+    disabled, and writes nothing to the config.
+    """
+
+    REGULAR = 'Regular'
+    ULTRA = 'Ultra'
+
+
+class VSync(Enum):
+    """Vertical-sync settings (their config values)."""
+
+    AUTO = 'Auto'
+    ALWAYS = 'Always'
+    NEVER = 'Never'
+
+
+class ScreenInsets(Enum):
+    """Screen-insets settings (their config values)."""
+
+    AUTO = 'Auto'
+    CUSTOM = 'Custom'
+
+
+class ResolutionMode(Enum):
+    """What the resolution control sets on this platform."""
+
+    #: Sets ``Resolution (Android)`` to Auto, Native, or an HD standard.
+    ANDROID = 'android'
+
+    #: Sets ``GVR Render Target Scale`` (cardboard VR) on a slider.
+    CARDBOARD = 'cardboard'
+
+    #: Sets ``Screen Pixel Scale`` on a slider (for systems that can't
+    #: set a resolution directly).
+    PIXEL_SCALE = 'pixel_scale'
+
+
+#: Step size for the resolution-scale slider.
+_RESOLUTION_SCALE_INCREMENT = 0.05
+
+#: How often a resolution-scale drag applies at most (each apply
+#: reallocates render targets).
+_RESOLUTION_DRAG_INTERVAL = 0.25
+
+#: Step size for the custom screen-insets slider.
+_SCREEN_INSETS_INCREMENT = 0.05
+
+
+class GraphicsRoute(DocUIRoute):
+    """Family class for the graphics settings routes."""
+
+    @override
+    @classmethod
+    def get_route_types(cls) -> tuple[type[DocUIRoute], ...]:
+        return family_members(AnyGraphicsRoute)
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # A list of options; tall rather than wide.
+        return dui2.WindowLayout.SMALL_TALL
+
+
+@ioprepped
+@dataclass
+class Root(GraphicsRoute, path='/'):
+    """The graphics settings page."""
+
+
+AnyGraphicsRoute = Root
+
+
+@ioprepped
+@dataclass
+class GraphicsState(DocUIState, state_id='settings.graphics'):
+    """The page's values, mirroring the config."""
+
+    fullscreen: Annotated[bool, IOAttrs('fs')] = False
+    visuals: Annotated[Quality, IOAttrs('v')] = Quality.AUTO
+    asset_quality: Annotated[AssetQuality, IOAttrs('aq')] = AssetQuality.REGULAR
+
+    #: One of the Android resolution popup's choice values (see
+    #: _resolution_choices()).
+    resolution: Annotated[str, IOAttrs('r')] = ''
+
+    #: The resolution slider's scale, for the scale-based modes (see
+    #: _scale_range()).
+    resolution_scale: Annotated[float, IOAttrs('rs')] = 1.0
+    vsync: Annotated[VSync, IOAttrs('vs')] = VSync.AUTO
+
+    #: As typed; cleaned up and written by ApplyMaxFps.
+    max_fps: Annotated[str, IOAttrs('mf')] = ''
+    show_fps: Annotated[bool, IOAttrs('sf')] = False
+    screen_insets: Annotated[ScreenInsets, IOAttrs('si')] = ScreenInsets.AUTO
+
+    #: 0-1; see ApplyScreenInsets for how it relates to screen_insets.
+    custom_screen_insets: Annotated[float, IOAttrs('csi')] = 0.0
+
+
+#: Config key for each state field that is a plain config mirror (its
+#: wire value is its config value). Built from typed field lookups so a
+#: renamed field fails here, not at runtime.
+_CONFIG_KEYS: dict[str, str] = {
+    GraphicsState.key(lambda s: s.visuals): 'Graphics Quality',
+    GraphicsState.key(lambda s: s.vsync): 'Vertical Sync',
+    GraphicsState.key(lambda s: s.show_fps): 'Show FPS',
+}
+
+
+class GraphicsLocalAction(DocUILocalActionBase):
+    """Family class for the graphics settings local-actions."""
+
+    @override
+    @classmethod
+    def get_action_types(cls) -> tuple[type[DocUILocalActionBase], ...]:
+        return family_members(AnyGraphicsLocalAction)
+
+
+@ioprepped
+@dataclass
+class ApplySetting(GraphicsLocalAction, name='apply_setting'):
+    """Write the setting that changed (the trigger) to the config."""
+
+
+@ioprepped
+@dataclass
+class ApplyFullscreen(GraphicsLocalAction, name='apply_fullscreen'):
+    """Set fullscreen to what the page's state holds."""
+
+
+@ioprepped
+@dataclass
+class ApplyResolution(GraphicsLocalAction, name='apply_resolution'):
+    """Write the resolution setting in its platform's form."""
+
+
+@ioprepped
+@dataclass
+class ApplyMaxFps(GraphicsLocalAction, name='apply_max_fps'):
+    """Clean up and write the typed max-fps value."""
+
+
+@ioprepped
+@dataclass
+class ApplyScreenInsets(GraphicsLocalAction, name='apply_screen_insets'):
+    """Write the screen-insets settings (mode and custom amount).
+
+    Switching modes either way resets the custom amount to what
+    automatic uses, so switching to custom doesn't jump and switching
+    to automatic shows its amount. The custom-amount slider is disabled
+    under automatic, so the page rebuilds on each mode switch.
+    """
+
+
+AnyGraphicsLocalAction = (
+    ApplySetting
+    | ApplyFullscreen
+    | ApplyResolution
+    | ApplyMaxFps
+    | ApplyScreenInsets
+)
+
+
+class GraphicsSettingsController(
+    TypedDocUIController[AnyGraphicsRoute, AnyGraphicsLocalAction]
+):
+    """Doc-ui controller for the graphics settings page."""
+
+    def __init__(self) -> None:
+        assert bui.in_logic_thread()
+        # The fullscreen calls are logic-thread-only; grab what page
+        # builds (in the background) need now, and keep the value itself
+        # current from our poll and our own changes.
+        self._fullscreen_available = bui.fullscreen_control_available()
+        self._fullscreen_shortcut = (
+            bui.fullscreen_control_key_shortcut()
+            if self._fullscreen_available
+            else None
+        )
+        self._fullscreen = (
+            bui.fullscreen_control_get()
+            if self._fullscreen_available
+            else False
+        )
+
+    @override
+    @classmethod
+    def get_route_type(cls) -> type[GraphicsRoute]:
+        return GraphicsRoute
+
+    @override
+    @classmethod
+    def get_local_action_type(cls) -> type[GraphicsLocalAction]:
+        return GraphicsLocalAction
+
+    @override
+    def get_window_toolbar_visibility(
         self,
-        transition: str | None = 'in_right',
-        origin_widget: bui.Widget | None = None,
-    ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
-
-        self._r = 'graphicsSettingsWindow'
-        app = bui.app
-        assert app.classic is not None
-
-        spacing = 32
-        self._have_selected_child = False
-        uiscale = app.ui_v1.uiscale
-        width = 1200 if uiscale is bui.UIScale.SMALL else 450.0
-        height = 900 if uiscale is bui.UIScale.SMALL else 302.0
-        self._max_fps_dirty = False
-        self._last_max_fps_set_time = bui.apptime()
-        self._last_max_fps_str = ''
-
-        self._show_fullscreen = False
-        fullscreen_spacing_top = spacing * 0.2
-        fullscreen_spacing = spacing * 1.2
-        if bui.fullscreen_control_available():
-            self._show_fullscreen = True
-            height += fullscreen_spacing + fullscreen_spacing_top
-
-        show_vsync = bui.supports_vsync()
-        show_tv_mode = not bui.app.env.vr
-
-        show_max_fps = bui.supports_max_fps()
-        if show_max_fps:
-            height += 60
-
-        show_resolution = True
-        if app.env.vr:
-            show_resolution = (
-                app.classic.platform == 'android'
-                and app.classic.subplatform == 'cardboard'
-            )
-        assert bui.app.classic is not None
-
-        # Do some fancy math to fill all available screen area up to the
-        # size of our backing container. This lets us fit to the exact
-        # screen shape at small ui scale.
-        screensize = bui.get_virtual_screen_size()
-        scale = (
-            1.6
-            if uiscale is bui.UIScale.SMALL
-            else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
-        )
-        popup_menu_scale = scale * 1.2
-
-        # Calc screen size in our local container space and clamp to a
-        # bit smaller than our container size.
-        # target_width = min(width - 80, screensize[0] / scale)
-        target_height = min(height - 80, screensize[1] / scale)
-
-        # To get top/left coords, go to the center of our window and
-        # offset by half the width/height of our target area.
-        yoffs = 0.5 * height + 0.5 * target_height + 35.0
-
-        super().__init__(
-            root_widget=bui.containerwidget(
-                size=(width, height),
-                scale=scale,
-                toolbar_visibility=(
-                    'menu_full' if bui.in_main_menu() else 'menu_minimal'
-                ),
-            ),
-            transition=transition,
-            origin_widget=origin_widget,
-            # We're affected by screen size only at small ui-scale.
-            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
-        )
-
-        # Center most of our content in the middle of the window.
-        v = height * 0.5 + (100 if show_max_fps else 85)
-        h_offs = width * 0.5 - 220
-
-        if uiscale is bui.UIScale.SMALL:
-            v += 30.0
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-            back_button = None
-        else:
-            back_button = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                position=(35, yoffs - 50),
-                size=(60, 60),
-                scale=0.8,
-                text_scale=1.2,
-                autoselect=True,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
-                on_activate_call=self.main_window_back,
-            )
-            bui.containerwidget(
-                edit=self._root_widget, cancel_button=back_button
-            )
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                width * 0.5,
-                yoffs - (53 if uiscale is bui.UIScale.SMALL else 25),
-            ),
-            size=(0, 0),
-            text=_gfxstrs.title,
-            color=bui.app.ui_v1.title_color,
-            h_align='center',
-            v_align='center',
-        )
-
-        self._fullscreen_checkbox: bui.Widget | None = None
-        if self._show_fullscreen:
-            v -= fullscreen_spacing_top
-            # Fullscreen control does not necessarily talk to the
-            # app config so we have to wrangle it manually instead of
-            # using a config-checkbox.
-            label = _gfxstrs.fullscreen
-
-            # Show keyboard shortcut alongside the control if they
-            # provide one.
-            shortcut = bui.fullscreen_control_key_shortcut()
-            if shortcut is not None:
-                label = _gfxstrs.fullscreen_shortcut_format(
-                    name=label, shortcut=shortcut
-                )
-            self._fullscreen_checkbox = bui.checkboxwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|fullscreen',
-                position=(h_offs + 100, v),
-                value=bui.fullscreen_control_get(),
-                on_value_change_call=bui.fullscreen_control_set,
-                maxwidth=250,
-                size=(300, 30),
-                text=label,
-            )
-
-            if not self._have_selected_child:
-                bui.containerwidget(
-                    edit=self._root_widget,
-                    selected_child=self._fullscreen_checkbox,
-                )
-                self._have_selected_child = True
-            v -= fullscreen_spacing
-
-        self._selected_color = (0.5, 1, 0.5, 1)
-        self._unselected_color = (0.7, 0.7, 0.7, 1)
-
-        # Quality
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(h_offs + 60, v),
-            size=(160, 25),
-            text=_gfxstrs.visuals,
-            color=bui.app.ui_v1.heading_color,
-            scale=0.65,
-            maxwidth=150,
-            h_align='center',
-            v_align='center',
-        )
-        PopupMenu(
-            parent=self._root_widget,
-            button_id=f'{self.main_window_id_prefix}|graphicsquality',
-            position=(h_offs + 60, v - 50),
-            width=150,
-            scale=popup_menu_scale,
-            choices=['Auto', 'Higher', 'High', 'Medium', 'Low'],
-            choices_disabled=(
-                ['Higher', 'High']
-                if bui.get_max_graphics_quality() == 'Medium'
-                else []
-            ),
-            choices_display=[
-                _commonassets.strings.values.auto,
-                _commonassets.strings.values.higher,
-                _commonassets.strings.values.high,
-                _commonassets.strings.values.medium,
-                _commonassets.strings.values.low,
-            ],
-            current_choice=bui.app.config.resolve('Graphics Quality'),
-            on_value_change_call=self._set_quality,
-        )
-
-        # Texture controls
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(h_offs + 230, v),
-            size=(160, 25),
-            text=_gfxstrs.textures,
-            color=bui.app.ui_v1.heading_color,
-            scale=0.65,
-            maxwidth=150,
-            h_align='center',
-            v_align='center',
-        )
-        textures_popup = PopupMenu(
-            parent=self._root_widget,
-            button_id=f'{self.main_window_id_prefix}|texturequality',
-            position=(h_offs + 230, v - 50),
-            width=150,
-            scale=popup_menu_scale,
-            choices=['Auto', 'High', 'Medium', 'Low'],
-            choices_display=[
-                _commonassets.strings.values.auto,
-                _commonassets.strings.values.high,
-                _commonassets.strings.values.medium,
-                _commonassets.strings.values.low,
-            ],
-            current_choice=bui.app.config.resolve('Texture Quality'),
-            on_value_change_call=self._set_textures,
-        )
-        bui.widget(
-            edit=textures_popup.get_button(),
-            right_widget=bui.get_special_widget('squad_button'),
-        )
-        v -= 80
-
-        resolution_popup: PopupMenu | None = None
-
-        if show_resolution:
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(h_offs + 60, v),
-                size=(160, 25),
-                text=_gfxstrs.resolution,
-                color=bui.app.ui_v1.heading_color,
-                scale=0.65,
-                maxwidth=150,
-                h_align='center',
-                v_align='center',
-            )
-
-            # On standard android we have 'Auto', 'Native', and a few HD
-            # standards.
-            if app.classic.platform == 'android':
-                # on cardboard/daydream android we have a few
-                # render-target-scale options
-                if app.classic.subplatform == 'cardboard':
-                    rawval = bui.app.config.resolve('GVR Render Target Scale')
-                    current_res_cardboard = (
-                        str(min(100, max(10, int(round(rawval * 100.0))))) + '%'
-                    )
-                    resolution_popup = PopupMenu(
-                        parent=self._root_widget,
-                        button_id=f'{self.main_window_id_prefix}|resolution',
-                        position=(h_offs + 60, v - 50),
-                        width=120,
-                        scale=popup_menu_scale,
-                        choices=['100%', '75%', '50%', '35%'],
-                        current_choice=current_res_cardboard,
-                        on_value_change_call=self._set_gvr_render_target_scale,
-                    )
-                else:
-                    native_res = bui.get_display_resolution()
-                    assert native_res is not None
-                    choices = ['Auto', 'Native']
-                    choices_display: list[bui.Lstr | bui.LangStr] = [
-                        _commonassets.strings.values.auto,
-                        _gfxstrs.native,
-                    ]
-                    for res in [1440, 1080, 960, 720, 480]:
-                        if native_res[1] >= res:
-                            res_str = f'{res}p'
-                            choices.append(res_str)
-                            choices_display.append(
-                                bui.LangStr.from_text(res_str)
-                            )
-                    current_res_android = bui.app.config.resolve(
-                        'Resolution (Android)'
-                    )
-                    resolution_popup = PopupMenu(
-                        parent=self._root_widget,
-                        button_id=f'{self.main_window_id_prefix}|resolution',
-                        position=(h_offs + 60, v - 50),
-                        width=120,
-                        scale=popup_menu_scale,
-                        choices=choices,
-                        choices_display=choices_display,
-                        current_choice=current_res_android,
-                        on_value_change_call=self._set_android_res,
-                    )
-            else:
-                # If we're on a system that doesn't allow setting resolution,
-                # set pixel-scale instead.
-                current_res = bui.get_display_resolution()
-                if current_res is None:
-                    rawval = bui.app.config.resolve('Screen Pixel Scale')
-                    current_res2 = (
-                        str(min(100, max(10, int(round(rawval * 100.0))))) + '%'
-                    )
-                    resolution_popup = PopupMenu(
-                        parent=self._root_widget,
-                        button_id=f'{self.main_window_id_prefix}|resolution',
-                        position=(h_offs + 60, v - 50),
-                        width=120,
-                        scale=popup_menu_scale,
-                        choices=['100%', '88%', '75%', '63%', '50%'],
-                        current_choice=current_res2,
-                        on_value_change_call=self._set_pixel_scale,
-                    )
-                else:
-                    raise RuntimeError(
-                        'obsolete code path; discrete resolutions'
-                        ' no longer supported'
-                    )
-        if resolution_popup is not None:
-            bui.widget(
-                edit=resolution_popup.get_button(),
-                left_widget=back_button,
-            )
-
-        vsync_popup: PopupMenu | None = None
-        if show_vsync:
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(h_offs + 230, v),
-                size=(160, 25),
-                text=_gfxstrs.vertical_sync,
-                color=bui.app.ui_v1.heading_color,
-                scale=0.65,
-                maxwidth=150,
-                h_align='center',
-                v_align='center',
-            )
-            vsync_popup = PopupMenu(
-                parent=self._root_widget,
-                button_id=f'{self.main_window_id_prefix}|vsync',
-                position=(h_offs + 230, v - 50),
-                width=150,
-                scale=popup_menu_scale,
-                choices=['Auto', 'Always', 'Never'],
-                choices_display=[
-                    _commonassets.strings.values.auto,
-                    _commonassets.strings.values.always,
-                    _commonassets.strings.values.never,
-                ],
-                current_choice=bui.app.config.resolve('Vertical Sync'),
-                on_value_change_call=self._set_vsync,
-            )
-            if resolution_popup is not None:
-                bui.widget(
-                    edit=vsync_popup.get_button(),
-                    left_widget=resolution_popup.get_button(),
-                )
-
-        if resolution_popup is not None and vsync_popup is not None:
-            bui.widget(
-                edit=resolution_popup.get_button(),
-                right_widget=vsync_popup.get_button(),
-            )
-
-        v -= 90
-        self._max_fps_text: bui.Widget | None = None
-        if show_max_fps:
-            v -= 5
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(h_offs + 155, v + 10),
-                size=(0, 0),
-                text=_gfxstrs.max_fps,
-                color=bui.app.ui_v1.heading_color,
-                scale=0.9,
-                maxwidth=90,
-                h_align='right',
-                v_align='center',
-            )
-
-            max_fps_str = str(bui.app.config.resolve('Max FPS'))
-            self._last_max_fps_str = max_fps_str
-            self._max_fps_text = bui.textwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|maxfps',
-                position=(h_offs + 170, v - 5),
-                size=(105, 30),
-                text=max_fps_str,
-                max_chars=5,
-                editable=True,
-                h_align='left',
-                v_align='center',
-                on_return_press_call=self._on_max_fps_return_press,
-            )
-            v -= 45
-
-        if self._max_fps_text is not None and resolution_popup is not None:
-            bui.widget(
-                edit=resolution_popup.get_button(),
-                down_widget=self._max_fps_text,
-            )
-            bui.widget(
-                edit=self._max_fps_text,
-                up_widget=resolution_popup.get_button(),
-            )
-
-        fpsc = ConfigCheckBox(
-            parent=self._root_widget,
-            check_box_id=f'{self.main_window_id_prefix}|showfps',
-            position=(h_offs + 69, v - 6),
-            size=(210, 30),
-            scale=0.86,
-            configkey='Show FPS',
-            displayname=_gfxstrs.show_fps,
-            maxwidth=130,
-        )
-        if self._max_fps_text is not None:
-            bui.widget(
-                edit=self._max_fps_text,
-                down_widget=fpsc.widget,
-            )
-            bui.widget(
-                edit=fpsc.widget,
-                up_widget=self._max_fps_text,
-            )
-
-        if show_tv_mode:
-            tvc = ConfigCheckBox(
-                parent=self._root_widget,
-                check_box_id=f'{self.main_window_id_prefix}|tvborder',
-                position=(h_offs + 240, v - 6),
-                size=(210, 30),
-                scale=0.86,
-                configkey='TV Border',
-                displayname=_gfxstrs.tv_border,
-                maxwidth=130,
-            )
-            bui.widget(edit=fpsc.widget, right_widget=tvc.widget)
-            bui.widget(edit=tvc.widget, left_widget=fpsc.widget)
-
-        v -= spacing
-
-        # Make a timer to update our controls in case the config changes
-        # under us.
-        self._update_timer = bui.AppTimer(
-            0.25, bui.WeakCallStrict(self._update_controls), repeat=True
-        )
+    ) -> Literal['menu_full', 'menu_minimal']:
+        # As the other settings windows: minimal mid-game.
+        return 'menu_full' if bui.in_main_menu() else 'menu_minimal'
 
     @override
-    def get_main_window_state(self) -> bui.MainWindowState:
-        # Support recreating our window for back/refresh purposes.
-        cls = type(self)
-        return bui.BasicMainWindowState(
-            create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
-            )
-        )
+    def get_page_state_poll_interval(self) -> float | None:
+        return _POLL_INTERVAL if self._fullscreen_available else None
 
     @override
-    def main_window_should_preserve_selection(self) -> bool:
-        return True
+    def poll_page_state(self, window: DocUIWindow) -> dict:
+        del window  # Unused.
+        self._fullscreen = bui.fullscreen_control_get()
+        return {GraphicsState.key(lambda s: s.fullscreen): self._fullscreen}
 
     @override
-    def on_main_window_close(self) -> None:
-        self._apply_max_fps()
+    def fulfill_route(self, route: AnyGraphicsRoute) -> DocUIResponse:
+        match route:
+            case Root():
+                return self._page()
+            case _:
+                assert_never(route)
 
-    def _set_quality(self, quality: str) -> None:
-        cfg = bui.app.config
-        cfg['Graphics Quality'] = quality
-        cfg.apply_and_commit()
+    @override
+    def run_local_action(
+        self, action: AnyGraphicsLocalAction, context: DocUILocalAction
+    ) -> None:
+        match action:
+            case ApplySetting():
+                _apply_setting(context)
+            case ApplyFullscreen():
+                self._apply_fullscreen(context)
+            case ApplyResolution():
+                _apply_resolution(context)
+            case ApplyMaxFps():
+                _apply_max_fps(context)
+            case ApplyScreenInsets():
+                if _apply_screen_insets(context):
+                    # The mode changed, which is what the custom slider's
+                    # disabled-ness hangs off; rebuild to show it. (A
+                    # switch that also changes the insets reflows the
+                    # window, which refreshes too; that's harmless.)
+                    self.replace(
+                        context.window, Root().request(), is_refresh=True
+                    )
+            case _:
+                assert_never(action)
 
-    def _set_textures(self, val: str) -> None:
-        cfg = bui.app.config
-        cfg['Texture Quality'] = val
-        cfg.apply_and_commit()
-
-    def _set_android_res(self, val: str) -> None:
-        cfg = bui.app.config
-        cfg['Resolution (Android)'] = val
-        cfg.apply_and_commit()
-
-    def _set_pixel_scale(self, res: str) -> None:
-        cfg = bui.app.config
-        cfg['Screen Pixel Scale'] = float(res[:-1]) / 100.0
-        cfg.apply_and_commit()
-
-    def _set_gvr_render_target_scale(self, res: str) -> None:
-        cfg = bui.app.config
-        cfg['GVR Render Target Scale'] = float(res[:-1]) / 100.0
-        cfg.apply_and_commit()
-
-    def _set_vsync(self, val: str) -> None:
-        cfg = bui.app.config
-        cfg['Vertical Sync'] = val
-        cfg.apply_and_commit()
-
-    def _on_max_fps_return_press(self) -> None:
-        self._apply_max_fps()
-        bui.containerwidget(
-            edit=self._root_widget, selected_child=cast(bui.Widget, 0)
-        )
-
-    def _apply_max_fps(self) -> None:
-        if not self._max_fps_dirty or not self._max_fps_text:
+    def _apply_fullscreen(self, context: DocUILocalAction) -> None:
+        state = context.state(GraphicsState)
+        if state is None or not self._fullscreen_available:
             return
+        self._fullscreen = state.fullscreen
+        bui.fullscreen_control_set(state.fullscreen)
 
-        val: Any = bui.textwidget(query=self._max_fps_text)
-        assert isinstance(val, str)
-        # If there's a broken value, replace it with the default.
-        try:
-            ival = int(val)
-        except ValueError:
-            ival = bui.app.config.default_value('Max FPS')
-        assert isinstance(ival, int)
+    def _page(self) -> dui2.Response:
+        """Build the page (called in a background thread)."""
+        config = bui.app.config
+        gstate = GraphicsState
+        apply = ApplySetting().local(default_sound=False)
 
-        # Clamp to reasonable limits (allow -1 to mean no max).
-        if ival != -1:
-            ival = max(10, ival)
-            ival = min(99999, ival)
+        # A device capped at medium quality shows anything higher
+        # greyed out; a stored higher setting shows as the medium it
+        # gets.
+        visuals_disabled: list[Quality] = (
+            [Quality.HIGHER, Quality.HIGH]
+            if bui.get_max_graphics_quality() == 'Medium'
+            else []
+        )
+        visuals = _enum_from_config(Quality, 'Graphics Quality', Quality.AUTO)
+        if visuals in visuals_disabled:
+            visuals = Quality.MEDIUM
 
-        # Store it to the config.
-        cfg = bui.app.config
-        cfg['Max FPS'] = ival
-        cfg.apply_and_commit()
-
-        # Update the display if we changed the value.
-        if str(ival) != val:
-            bui.textwidget(edit=self._max_fps_text, text=str(ival))
-
-        self._max_fps_dirty = False
-
-    def _update_controls(self) -> None:
-        if self._max_fps_text is not None:
-            # Keep track of when the max-fps value changes. Once it
-            # remains stable for a few moments, apply it.
-            val: Any = bui.textwidget(query=self._max_fps_text)
-            assert isinstance(val, str)
-            if val != self._last_max_fps_str:
-                # Oop; it changed. Note the time and the fact that we'll
-                # need to apply it at some point.
-                self._max_fps_dirty = True
-                self._last_max_fps_str = val
-                self._last_max_fps_set_time = bui.apptime()
-            else:
-                # If its been stable long enough, apply it.
-                if (
-                    self._max_fps_dirty
-                    and bui.apptime() - self._last_max_fps_set_time > 1.0
-                ):
-                    self._apply_max_fps()
-
-        if self._show_fullscreen:
-            # Keep the fullscreen checkbox up to date with the current value.
-            bui.checkboxwidget(
-                edit=self._fullscreen_checkbox,
-                value=bui.fullscreen_control_get(),
+        # Android picks among discrete resolutions (a popup); other
+        # modes set a scale (a slider).
+        resmode = _resolution_mode()
+        reschoices = (
+            _resolution_choices() if resmode is ResolutionMode.ANDROID else []
+        )
+        resolution = ''
+        if reschoices:
+            resolution = str(config.resolve('Resolution (Android)'))
+            if resolution not in {c[0] for c in reschoices}:
+                resolution = reschoices[0][0]
+        scalerange = None if resmode is None else _scale_range(resmode)
+        resolution_scale = 1.0
+        if resmode is not None and scalerange is not None:
+            key = _scale_config_key(resmode)
+            assert key is not None
+            resolution_scale = bui.snap_slider_value(
+                float(config.resolve(key)),
+                min_value=scalerange[0],
+                max_value=scalerange[1],
+                increment=_RESOLUTION_SCALE_INCREMENT,
             )
+
+        state = GraphicsState(
+            fullscreen=self._fullscreen,
+            visuals=visuals,
+            resolution=resolution,
+            resolution_scale=resolution_scale,
+            vsync=_enum_from_config(VSync, 'Vertical Sync', VSync.AUTO),
+            max_fps=str(config.resolve('Max FPS')),
+            show_fps=bool(config.resolve('Show FPS')),
+            screen_insets=_enum_from_config(
+                ScreenInsets, 'Screen Insets', ScreenInsets.AUTO
+            ),
+            custom_screen_insets=_snap_screen_insets(
+                float(config.resolve('Custom Screen Insets'))
+            ),
+        )
+
+        rows: list[dui2.Row] = []
+        if self._fullscreen_available:
+            label: LangStrSpec = _gfxstrs.fullscreen.spec
+            if self._fullscreen_shortcut is not None:
+                label = _gfxstrs.fullscreen_shortcut_format(
+                    name=_gfxstrs.fullscreen,
+                    shortcut=self._fullscreen_shortcut,
+                ).spec
+            rows.append(
+                gstate.checkbox_row(
+                    lambda s: s.fullscreen,
+                    label=label,
+                    on_change=ApplyFullscreen().local(default_sound=False),
+                )
+            )
+        rows += [
+            gstate.choice_row(
+                lambda s: s.visuals,
+                choice_label=_quality_label,
+                disabled_choices=visuals_disabled,
+                label=_gfxstrs.visuals.spec,
+                on_change=apply,
+            ),
+            # Not wired up yet; shows players what's coming (ultra stays
+            # disabled until it is).
+            gstate.choice_row(
+                lambda s: s.asset_quality,
+                choice_label=_asset_quality_label,
+                disabled_choices=[AssetQuality.ULTRA],
+                label=_gfxstrs.asset_quality.spec,
+            ),
+        ]
+        if reschoices:
+            rows.append(
+                gstate.choice_row(
+                    lambda s: s.resolution,
+                    choices=reschoices,
+                    label=_gfxstrs.resolution.spec,
+                    on_change=ApplyResolution().local(default_sound=False),
+                )
+            )
+        elif scalerange is not None:
+            # Applied live while dragging, so the effect shows as it
+            # changes; 5% steps and the drag throttle keep render-target
+            # reallocations infrequent.
+            apply_res = ApplyResolution().local(default_sound=False)
+            rows.append(
+                gstate.slider_row(
+                    lambda s: s.resolution_scale,
+                    min_value=scalerange[0],
+                    max_value=scalerange[1],
+                    increment=_RESOLUTION_SCALE_INCREMENT,
+                    as_percent=True,
+                    label=_gfxstrs.resolution.spec,
+                    on_drag=apply_res,
+                    drag_interval=_RESOLUTION_DRAG_INTERVAL,
+                    on_change=apply_res,
+                )
+            )
+        if bui.supports_vsync():
+            rows.append(
+                gstate.choice_row(
+                    lambda s: s.vsync,
+                    choice_label=_vsync_label,
+                    label=_gfxstrs.vertical_sync.spec,
+                    on_change=apply,
+                )
+            )
+        if bui.supports_max_fps():
+            rows.append(
+                gstate.text_input_row(
+                    lambda s: s.max_fps,
+                    label=_gfxstrs.max_fps.spec,
+                    max_chars=5,
+                    on_change=ApplyMaxFps().local(default_sound=False),
+                )
+            )
+        rows.append(
+            gstate.checkbox_row(
+                lambda s: s.show_fps,
+                label=_gfxstrs.show_fps.spec,
+                on_change=apply,
+            )
+        )
+        # Virtual bounds don't apply in VR (the UI lives on an overlay).
+        if not bui.app.env.vr:
+            apply_insets = ApplyScreenInsets().local(default_sound=False)
+            rows += [
+                gstate.choice_row(
+                    lambda s: s.screen_insets,
+                    choice_label=_screen_insets_label,
+                    label=_gfxstrs.screen_insets.spec,
+                    on_change=apply_insets,
+                ),
+                # Applied only once settled (no on_drag): changing insets
+                # reflows the UI, which would pull the slider out from
+                # under an in-progress drag. Disabled under automatic,
+                # which doesn't use it.
+                gstate.slider_row(
+                    lambda s: s.custom_screen_insets,
+                    min_value=0.0,
+                    max_value=1.0,
+                    increment=_SCREEN_INSETS_INCREMENT,
+                    as_percent=True,
+                    label=_gfxstrs.custom_screen_insets.spec,
+                    on_change=apply_insets,
+                    disabled=state.screen_insets is ScreenInsets.AUTO,
+                ),
+            ]
+
+        return dui2.Response(
+            page=dui2.Page(
+                title=_gfxstrs.title.spec,
+                rows=rows,
+                state=state.encode(),
+                center_vertically=True,
+            )
+        )
+
+
+def _enum_from_config[E: Enum](enumtype: type[E], key: str, fallback: E) -> E:
+    """A config string value as its enum; the fallback if unrecognized."""
+    try:
+        return enumtype(bui.app.config.resolve(key))
+    except ValueError:
+        return fallback
+
+
+def _quality_label(quality: Quality) -> LangStrSpec:
+    valstrs = _commonassets.strings.values
+    match quality:
+        case Quality.AUTO:
+            return valstrs.auto.spec
+        case Quality.HIGHER:
+            return valstrs.higher.spec
+        case Quality.HIGH:
+            return valstrs.high.spec
+        case Quality.MEDIUM:
+            return valstrs.medium.spec
+        case Quality.LOW:
+            return valstrs.low.spec
+        case _:
+            assert_never(quality)
+
+
+def _asset_quality_label(quality: AssetQuality) -> LangStrSpec:
+    match quality:
+        case AssetQuality.REGULAR:
+            return _gfxstrs.asset_quality_regular.spec
+        case AssetQuality.ULTRA:
+            return _gfxstrs.asset_quality_ultra.spec
+        case _:
+            assert_never(quality)
+
+
+def _vsync_label(vsync: VSync) -> LangStrSpec:
+    valstrs = _commonassets.strings.values
+    match vsync:
+        case VSync.AUTO:
+            return valstrs.auto.spec
+        case VSync.ALWAYS:
+            return valstrs.always.spec
+        case VSync.NEVER:
+            return valstrs.never.spec
+        case _:
+            assert_never(vsync)
+
+
+def _screen_insets_label(insets: ScreenInsets) -> LangStrSpec:
+    match insets:
+        case ScreenInsets.AUTO:
+            return _gfxstrs.screen_insets_automatic.spec
+        case ScreenInsets.CUSTOM:
+            return _commonassets.strings.values.custom.spec
+        case _:
+            assert_never(insets)
+
+
+def _snap_screen_insets(value: float) -> float:
+    """A screen-insets amount as the slider can show it."""
+    return bui.snap_slider_value(
+        value, min_value=0.0, max_value=1.0, increment=_SCREEN_INSETS_INCREMENT
+    )
+
+
+def _resolution_mode() -> ResolutionMode | None:
+    """What the resolution control sets here (None: no control)."""
+    app = bui.app
+    assert app.classic is not None
+    cardboard = (
+        app.classic.platform == 'android'
+        and app.classic.subplatform == 'cardboard'
+    )
+    if app.env.vr and not cardboard:
+        return None
+    if app.classic.platform == 'android':
+        return ResolutionMode.CARDBOARD if cardboard else ResolutionMode.ANDROID
+    # Only systems that can't set a resolution directly get a control
+    # (a pixel-scale one); discrete resolutions are no longer supported.
+    if bui.get_display_resolution() is None:
+        return ResolutionMode.PIXEL_SCALE
+    return None
+
+
+def _scale_range(mode: ResolutionMode) -> tuple[float, float] | None:
+    """A scale-based mode's slider (min, max); None for other modes.
+
+    The same limits the old percentage popups offered.
+    """
+    match mode:
+        case ResolutionMode.CARDBOARD:
+            return 0.35, 1.0
+        case ResolutionMode.PIXEL_SCALE:
+            return 0.5, 1.0
+        case ResolutionMode.ANDROID:
+            return None
+        case _:
+            assert_never(mode)
+
+
+def _scale_config_key(mode: ResolutionMode) -> str | None:
+    """The float config key a scale-based mode sets."""
+    match mode:
+        case ResolutionMode.CARDBOARD:
+            return 'GVR Render Target Scale'
+        case ResolutionMode.PIXEL_SCALE:
+            return 'Screen Pixel Scale'
+        case ResolutionMode.ANDROID:
+            return None
+        case _:
+            assert_never(mode)
+
+
+def _resolution_choices() -> list[tuple[str, LangStrSpec]]:
+    """The Android resolution popup's choices."""
+    native_res = bui.get_display_resolution()
+    assert native_res is not None
+    choices: list[tuple[str, LangStrSpec]] = [
+        ('Auto', _commonassets.strings.values.auto.spec),
+        ('Native', _gfxstrs.native.spec),
+    ]
+    for res in [1440, 1080, 960, 720, 480]:
+        if native_res[1] >= res:
+            choices.append((f'{res}p', LangStrSpecValue.literal(f'{res}p')))
+    return choices
+
+
+def _apply_setting(context: DocUILocalAction) -> None:
+    """Write the changed setting to the config, as ConfigCheckBox would."""
+    state = context.state(GraphicsState)
+    if context.trigger is None or state is None:
+        return
+    key = _CONFIG_KEYS.get(context.trigger)
+    if key is None:
+        return
+    # The wire form of the value is exactly the config form (bools; the
+    # enums' string values).
+    cfg = bui.app.config
+    cfg[key] = state.encode()[context.trigger]
+    cfg.apply_and_commit()
+
+
+def _apply_resolution(context: DocUILocalAction) -> None:
+    state = context.state(GraphicsState)
+    mode = _resolution_mode()
+    if state is None or mode is None:
+        return
+    cfg = bui.app.config
+    key = _scale_config_key(mode)
+    if key is None:
+        cfg['Resolution (Android)'] = state.resolution
+    else:
+        cfg[key] = state.resolution_scale
+    cfg.apply_and_commit()
+
+
+def _apply_screen_insets(context: DocUILocalAction) -> bool:
+    """Write the screen-insets settings; return whether the mode changed."""
+    state = context.state(GraphicsState)
+    if context.trigger is None or state is None:
+        return False
+    mode_key = GraphicsState.key(lambda s: s.screen_insets)
+    amount_key = GraphicsState.key(lambda s: s.custom_screen_insets)
+    amount = state.custom_screen_insets
+    mode_changed = context.trigger == mode_key
+    if mode_changed:
+        # The slider follows automatic's amount across mode flips:
+        # picking custom starts from what automatic was using (so
+        # nothing jumps), and picking automatic shows what it is using.
+        # (Snapped so the slider can show it exactly.)
+        amount = _snap_screen_insets(bui.get_auto_screen_inset_amount())
+        context.window.set_page_state_values({amount_key: amount})
+    elif context.trigger != amount_key:
+        return False
+    cfg = bui.app.config
+    cfg['Screen Insets'] = state.screen_insets.value
+    cfg['Custom Screen Insets'] = amount
+    cfg.apply_and_commit()
+    return mode_changed
+
+
+def _apply_max_fps(context: DocUILocalAction) -> None:
+    """Clean up the typed max-fps value, write it, and show the result."""
+    state = context.state(GraphicsState)
+    if state is None:
+        return
+    cfg = bui.app.config
+    try:
+        ival = int(state.max_fps)
+    except ValueError:
+        # A broken value gets the default.
+        ival = int(cfg.default_value('Max FPS'))
+
+    # Clamp to reasonable limits (-1 means no max).
+    if ival != -1:
+        ival = min(99999, max(10, ival))
+    cfg['Max FPS'] = ival
+    cfg.apply_and_commit()
+
+    # Show what was actually applied if that isn't what was typed.
+    if str(ival) != state.max_fps:
+        context.window.set_page_state_values(
+            {GraphicsState.key(lambda s: s.max_fps): str(ival)}
+        )

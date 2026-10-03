@@ -2,9 +2,8 @@
 #
 """Functionality related to dynamic discoverability of classes."""
 
-import time
 import logging
-from threading import Thread
+from threading import Thread, Event
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -43,6 +42,9 @@ class MetadataSubsystem:
 
         # Results populated once scan is complete.
         self.scanresults: ScanResults | None = None
+
+        # Set (after scanresults is in place) when the scan completes.
+        self._scan_results_ready = Event()
 
         self._scan_complete_cb: Callable[[], None] | None = None
 
@@ -157,14 +159,10 @@ class MetadataSubsystem:
 
             # Now wait a bit for the scan to complete. Eventually error
             # though if it doesn't.
-            starttime = time.time()
-            while self.scanresults is None:
-                time.sleep(0.05)
-                if time.time() - starttime > 10.0:
-                    raise TimeoutError(
-                        'timeout waiting for meta scan to complete.'
-                    )
+            if not self._scan_results_ready.wait(timeout=10.0):
+                raise TimeoutError('timeout waiting for meta scan to complete.')
 
+        assert self.scanresults is not None
         return self.scanresults
 
     def _run_scan_in_bg(self) -> None:
@@ -178,14 +176,17 @@ class MetadataSubsystem:
             logging.exception('metascan: Error running scan in bg.')
             results = ScanResults(announce_errors_occurred=True)
 
-        # Place results and tell the logic thread they're ready.
+        # Place results and tell the logic thread they're ready. Note
+        # that scanresults must be fully in place before we set the
+        # event; waiters read it as soon as they wake.
         self.scanresults = results
+        self._scan_results_ready.set()
         lifecyclelog.debug('meta-scan bg thread done')
         _babase.pushcall(self._handle_scan_results, from_other_thread=True)
 
     def _handle_scan_results(self) -> None:
         """Called in the logic thread with results of a completed scan."""
-        from babase import builtinassets
+        from babase import _builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -198,13 +199,13 @@ class MetadataSubsystem:
         # mention that specifically.
         if results.incorrect_api_modules:
             if len(results.incorrect_api_modules) > 1:
-                msg = builtinassets.strings.scripts.modules_need_update(
+                msg = _builtinassets.strings.scripts.modules_need_update(
                     path=results.incorrect_api_modules[0],
                     count=len(results.incorrect_api_modules) - 1,
                     api=str(_babase.app.env.api_version),
                 )
             else:
-                msg = builtinassets.strings.scripts.module_needs_update(
+                msg = _builtinassets.strings.scripts.module_needs_update(
                     path=results.incorrect_api_modules[0],
                     api=str(_babase.app.env.api_version),
                 )
@@ -215,12 +216,12 @@ class MetadataSubsystem:
         # they may want to look at.
         if results.announce_errors_occurred:
             _babase.screenmessage(
-                builtinassets.strings.scripts.scan_error, color=(1, 0, 0)
+                _builtinassets.strings.scripts.scan_error, color=(1, 0, 0)
             )
             do_play_error_sound = True
 
         if do_play_error_sound:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
         # Let the game know we're done.
         assert self._scan_complete_cb is not None

@@ -24,11 +24,13 @@ and never assume logic-thread context without checking.
 """
 
 from bauiv1lib.docui._controller import DocUIController
+from bauiv1lib.docui._typed import TypedDocUIController
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._window import DocUIWindow
 
 __all__ = [
     'DocUIController',
+    'TypedDocUIController',
     'DocUIWindow',
     'DocUILocalAction',
 ]

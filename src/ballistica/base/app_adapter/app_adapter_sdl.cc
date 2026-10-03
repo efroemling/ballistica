@@ -146,6 +146,12 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
 #endif
 
+  // On macOS, keep the menu bar reachable (mouse to top of screen) in
+  // fullscreen Spaces we enter via SDL_SetWindowFullscreen(), matching
+  // what the window's own fullscreen button gives. SDL's default hides it
+  // for programmatic fullscreen only. (Ignored on other platforms.)
+  SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_MENU_VISIBILITY, "1");
+
   // We provide our own main() (SDL_MAIN_HANDLED; see min_sdl.h), so tell SDL
   // that startup happened properly before we init.
   SDL_SetMainReady();
@@ -244,7 +250,7 @@ static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
 
 auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
   auto img = Assets::LoadBundledFallbackTextureRGBA(
-      std::string(kBuiltinAssetsApverid) + ":textures/cursor");
+      std::string(kBuiltinAssetsApvernum) + ":textures/cursor");
   if (!img.has_value() || img->mips.empty()) {
     return nullptr;
   }
@@ -408,7 +414,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
     // Draw.
     auto draw_start_time{g_core->AppTimeMicrosecs()};
     LogEventProcessingTime_(draw_start_time - cycle_start_time, event_count);
-    if (!hidden_ && TryRender()) {
+    if (!WindowIsInvisible_() && TryRender()) {
       SDL_GL_SwapWindow(sdl_window_);
     }
 
@@ -462,10 +468,22 @@ auto AppAdapterSDL::TryRender() -> bool {
   }
 }
 
+void AppAdapterSDL::UpdateAppActive_() {
+  // Either condition alone means we're not visible, so both have to clear
+  // before we go active again (hiding an already-minimized window and then
+  // unhiding it must not resume play).
+  auto active{!hidden_ && !minimized_};
+  if (active == app_active_) {
+    return;
+  }
+  app_active_ = active;
+  g_base->SetAppActive(active);
+}
+
 void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
-  // Special case: if we're hidden, we simply sleep for a long bit; no fancy
-  // timing.
-  if (hidden_) {
+  // Special case: if nothing we draw can be seen (ordered out or
+  // minimized), we simply sleep for a long bit; no fancy timing.
+  if (WindowIsInvisible_()) {
     g_core->platform->SleepSeconds(0.1);
     return;
   }
@@ -791,20 +809,13 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
     }
 
-    case SDL_EVENT_WINDOW_MAXIMIZED: {
-      if (g_buildconfig.platform_macos() && !fullscreen_) {
-        // Special case: on Mac, we wind up here if someone fullscreens
-        // our window via the window widget. This *basically* is the
-        // same thing as setting fullscreen through sdl, so we want to
-        // treat this as if we've changed the setting ourself. We write
-        // it to the config so that UIs can poll for it and pick up the
-        // change. We don't do this on other platforms where a maximized
-        // window is more distinctly different than a fullscreen one.
-        // Though I guess some Linux window managers have a fullscreen
-        // function so theoretically we should there. Le sigh.
-        // TODO(ericf): SDL3 has dedicated SDL_EVENT_WINDOW_ENTER/
-        // LEAVE_FULLSCREEN events now; consider switching to those for a
-        // cleaner signal once this is verified on a real Mac.
+    case SDL_EVENT_WINDOW_ENTER_FULLSCREEN: {
+      // Fullscreen changes we make ourself have already updated
+      // fullscreen_, so this only acts on ones initiated outside of us
+      // (the Mac window widget, a window-manager fullscreen command, etc.).
+      // Those we treat as if the user had changed the setting; writing it
+      // to the config lets UIs poll for it and pick up the change.
+      if (!fullscreen_) {
         fullscreen_ = true;
         g_base->logic->event_loop()->PushCall([] {
           g_base->python->objs()
@@ -815,9 +826,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
     }
 
-    case SDL_EVENT_WINDOW_RESTORED:
-      if (g_buildconfig.platform_macos() && fullscreen_) {
-        // See note above about Mac fullscreen.
+    case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN: {
+      // See note above.
+      if (fullscreen_) {
         fullscreen_ = false;
         g_base->logic->event_loop()->PushCall([] {
           g_base->python->objs()
@@ -826,28 +837,63 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         });
       }
       break;
+    }
+
+    case SDL_EVENT_WINDOW_RESTORED: {
+      // Note this event is overloaded: besides un-minimizing it also
+      // arrives when un-maximizing (and on Mac when leaving fullscreen).
+      // The minimized_ guard is what keeps those cases from reporting a
+      // bogus active-change.
+      if (minimized_) {
+        minimized_ = false;
+        UpdateAppActive_();
+      }
+      break;
+    }
 
     case SDL_EVENT_WINDOW_MINIMIZED:
+      // A window sitting in the dock/taskbar is as invisible as a hidden
+      // one, so it feeds the same 'Active' state -- otherwise a game
+      // plays on behind it. Note we can't lean on WINDOW_HIDDEN for this:
+      // SDL's cocoa backend deliberately suppresses HIDDEN while
+      // miniaturized (SDL_cocoawindow.m, the 'visible' KVO observer is
+      // guarded with ![nswindow isMiniaturized]), so minimize delivers
+      // *only* this event. Un-minimizing there delivers both SHOWN and
+      // RESTORED, which is why both flags are tracked separately rather
+      // than as one 'visible' bool.
+      if (!minimized_) {
+        minimized_ = true;
+        UpdateAppActive_();
+      }
       break;
 
     case SDL_EVENT_WINDOW_HIDDEN: {
       // We plug this into the app's overall 'Active' state so it can
       // pause stuff or throttle down processing or whatever else.
       if (!hidden_) {
-        g_base->SetAppActive(false);
+        hidden_ = true;
+        UpdateAppActive_();
       }
       // Also note that we are *completely* hidden, so we can totally
       // stop drawing ('Inactive' app state does not imply this in and
       // of itself).
-      hidden_ = true;
       break;
     }
 
     case SDL_EVENT_WINDOW_SHOWN: {
-      if (hidden_) {
-        g_base->SetAppActive(true);
+      // A window that has become visible is by definition not minimized
+      // either, so clear both. That matters because these flags now gate
+      // *rendering* and not just app-active: if some backend were to
+      // report a minimize without a matching RESTORED, a minimized_ that
+      // never cleared would leave us permanently not drawing. Cocoa
+      // happens to deliver SHOWN alongside RESTORED when un-minimizing
+      // (its 'visible' KVO has no isMiniaturized guard on that branch),
+      // so this is a real second path there rather than dead code.
+      if (hidden_ || minimized_) {
+        hidden_ = false;
+        minimized_ = false;
+        UpdateAppActive_();
       }
-      hidden_ = false;
       break;
     }
 
@@ -1443,6 +1489,31 @@ auto AppAdapterSDL::FullscreenControlKeyShortcut() const
   // Let's mention Alt+Enter which seems like it might be more commonly used
   return "Alt+Enter";
 };
+
+auto AppAdapterSDL::GetWindowSize(int* width, int* height) -> bool {
+  assert(g_core->InMainThread());
+  assert(width && height);
+  if (sdl_window_ == nullptr) {
+    return false;
+  }
+  return SDL_GetWindowSize(sdl_window_, width, height);
+}
+
+auto AppAdapterSDL::SetWindowSize(int width, int height) -> bool {
+  assert(g_core->InMainThread());
+  // Resizing only makes sense in windowed mode; a fullscreen window's
+  // size is owned by the display.
+  if (sdl_window_ == nullptr || fullscreen_) {
+    return false;
+  }
+  if (!SDL_SetWindowSize(sdl_window_, width, height)) {
+    return false;
+  }
+  // Window ops can apply asynchronously on some platforms; sync so a
+  // follow-up GetWindowSize() reflects the size actually applied.
+  SDL_SyncWindow(sdl_window_);
+  return true;
+}
 
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
 auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }

@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -43,11 +43,10 @@ RegionNode::RegionNode(Scene* scene)
     : Node(scene, node_type), part_(this, false) {}
 
 void RegionNode::Draw(base::FrameDef* frame_def) {
-  if (g_base->graphics_server->renderer()->debug_draw_mode()) {
-    // if (frame_def->renderer()->debug_draw_mode()) {
-    if (body_.exists()) {
-      body_->Draw(frame_def->beauty_pass(), false);
-    }
+  if (g_base->graphics->debug_draw() && body_.exists()) {
+    // Regions are trigger volumes; show them as see-through outlines so
+    // they don't hide what's inside them.
+    body_->DrawDebugWireframe(frame_def->beauty_pass(), 1.0f, 1.0f, 0.3f, 0.6f);
   }
 }
 

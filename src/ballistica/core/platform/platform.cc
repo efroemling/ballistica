@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <list>
 #include <mutex>
@@ -18,6 +19,7 @@
 
 #if !BA_PLATFORM_WINDOWS
 #include <dirent.h>
+#include <sys/mman.h>
 #endif
 #include <fcntl.h>
 
@@ -312,6 +314,45 @@ auto Platform::FilePathExists(const std::string& name) -> bool {
   return (Stat(name.c_str(), &buffer) == 0);
 }
 
+auto Platform::MapFileReadOnly(const std::string& path, size_t* size_out)
+    -> const void* {
+  assert(size_out);
+// This default implementation covers non-windows platforms.
+#if BA_PLATFORM_WINDOWS
+  throw Exception();
+#else
+  int fd = open(path.c_str(), O_RDONLY);
+  if (fd < 0) {
+    return nullptr;
+  }
+  struct BA_STAT stats {};
+  if (fstat(fd, &stats) != 0 || stats.st_size <= 0) {
+    // (mmap of a zero-length file fails anyway; report empty files
+    // as unmappable and let callers fall back to plain reads.)
+    close(fd);
+    return nullptr;
+  }
+  auto size = static_cast<size_t>(stats.st_size);
+  void* base = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+  // The mapping (if we got one) keeps the file alive from here.
+  close(fd);
+  if (base == MAP_FAILED) {
+    return nullptr;
+  }
+  *size_out = size;
+  return base;
+#endif
+}
+
+void Platform::UnmapFile(const void* base, size_t size) {
+// This default implementation covers non-windows platforms.
+#if BA_PLATFORM_WINDOWS
+  throw Exception();
+#else
+  munmap(const_cast<void*>(base), size);
+#endif
+}
+
 auto Platform::GetSocketErrorString() -> std::string {
   // On default platforms we just look at errno.
   return GetErrnoString();
@@ -518,6 +559,11 @@ void Platform::EmitPlatformLog(std::string_view name, LogLevel level,
   // Do nothing by default.
 }
 
+auto Platform::GetPendingCrashRecordPath() -> std::string {
+  // Default: no native crash handler, so never any record.
+  return "";
+}
+
 auto Platform::ReportFatalError(const std::string& message,
                                 bool in_top_level_exception_handler) -> bool {
   // Don't override handling by default.
@@ -545,6 +591,26 @@ void Platform::BlockingFatalErrorDialog(const std::string& message) {
 auto Platform::DoGetDataDirectoryMonolithicDefault() -> std::string {
   // By default, look for ba_data and whatnot where we are now.
   return ".";
+}
+
+auto Platform::GetAppPythonDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetSitePythonDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetPylibDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetBundledAssetsArchiveInfo()
+    -> std::optional<BundledAssetsArchiveInfo> {
+  return {};
 }
 
 void Platform::SetEnv(const std::string& name, const std::string& value) {
@@ -657,6 +723,16 @@ void Platform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 
 auto Platform::GetTextLineBreakOffsets(const std::string& text)
     -> std::vector<int> {
+  // Implementations are only known thread-safe call-by-call (Android
+  // shares one Java iterator; the others make fresh OS analyzers each
+  // call but nothing promises that stays true), and calls are cheap
+  // (microseconds), so one coarse lock is the simple guarantee.
+  std::scoped_lock lock(text_line_break_mutex_);
+  return DoGetTextLineBreakOffsets(text);
+}
+
+auto Platform::DoGetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
   // Naive fallback: allow a line to begin wherever a non-space follows a
   // space or newline. (Real OS implementations give full UAX #14.)
   std::vector<int> offsets;
@@ -669,6 +745,33 @@ auto Platform::GetTextLineBreakOffsets(const std::string& text)
     }
   }
   return offsets;
+}
+
+// How many columns a code point takes for line-splitting purposes: 2
+// for East Asian wide and full-width characters (which render about
+// twice as wide as Latin ones), else 1. Ranges after the common wcwidth
+// tables; close enough for balancing lines, which is all this is for.
+static auto SplitColumnsForCodePoint(uint32_t cp) -> int {
+  if (cp < 0x1100) {
+    return 1;
+  }
+  if ((cp <= 0x115F)                          // Hangul Jamo initials.
+      || (cp >= 0x2E80 && cp <= 0x303E)       // CJK radicals, punctuation.
+      || (cp >= 0x3041 && cp <= 0x33FF)       // Kana, CJK compatibility.
+      || (cp >= 0x3400 && cp <= 0x4DBF)       // CJK extension A.
+      || (cp >= 0x4E00 && cp <= 0x9FFF)       // CJK unified ideographs.
+      || (cp >= 0xA000 && cp <= 0xA4CF)       // Yi.
+      || (cp >= 0xAC00 && cp <= 0xD7A3)       // Hangul syllables.
+      || (cp >= 0xF900 && cp <= 0xFAFF)       // CJK compatibility ideographs.
+      || (cp >= 0xFE30 && cp <= 0xFE4F)       // CJK compatibility forms.
+      || (cp >= 0xFF00 && cp <= 0xFF60)       // Full-width forms.
+      || (cp >= 0xFFE0 && cp <= 0xFFE6)       // Full-width signs.
+      || (cp >= 0x1F300 && cp <= 0x1F64F)     // Emoji (pictographs, faces).
+      || (cp >= 0x1F900 && cp <= 0x1F9FF)     // Emoji (supplemental).
+      || (cp >= 0x20000 && cp <= 0x3FFFD)) {  // CJK extensions B+.
+    return 2;
+  }
+  return 1;
 }
 
 auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
@@ -694,23 +797,33 @@ auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
   int max_l = max_lines <= 0 ? seg_count
                              : std::min(std::max(max_lines, min_l), seg_count);
 
-  // Per-boundary cumulative code-point counts plus the whitespace run
+  // Per-boundary cumulative column counts plus the whitespace run
   // directly preceding each boundary, so any candidate line's visible
-  // length (code-points minus trailing whitespace) is O(1). Counting
-  // non-continuation bytes gives code-point counts; the whitespace we
-  // strip is all ASCII so byte counts suffice there.
+  // length (columns minus trailing whitespace) is O(1). Columns count
+  // East Asian wide characters as 2 (see SplitColumnsForCodePoint), so
+  // max_chars_per_line means roughly the same width in every script.
+  // The whitespace we strip is all ASCII so byte counts suffice there.
   std::vector<int> cum(bound_count);
   std::vector<int> trail_ws(bound_count);
   cum[0] = 0;
   trail_ws[0] = 0;
   for (int i = 1; i < bound_count; ++i) {
-    int cp = cum[i - 1];
-    for (int b = bounds[i - 1]; b < bounds[i]; ++b) {
-      if ((static_cast<uint8_t>(text[b]) & 0xC0) != 0x80) {
-        ++cp;
+    int cols = cum[i - 1];
+    for (int b = bounds[i - 1]; b < bounds[i];) {
+      // Decode one UTF-8 code point (the text is valid UTF-8).
+      auto lead = static_cast<uint8_t>(text[b]);
+      int len = lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+      uint32_t cp = len == 1   ? lead
+                    : len == 2 ? (lead & 0x1F)
+                    : len == 3 ? (lead & 0x0F)
+                               : (lead & 0x07);
+      for (int k = 1; k < len && b + k < bounds[i]; ++k) {
+        cp = (cp << 6) | (static_cast<uint8_t>(text[b + k]) & 0x3F);
       }
+      cols += SplitColumnsForCodePoint(cp);
+      b += len;
     }
-    cum[i] = cp;
+    cum[i] = cols;
     int ws = 0;
     for (int b = bounds[i] - 1; b >= bounds[i - 1] && is_edge_space(text[b]);
          --b) {
@@ -854,6 +967,8 @@ void Platform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
 
+void Platform::SetOSGameLoadingState(bool loading) {}
+
 auto Platform::GetDeviceV1AccountID() -> std::string {
   if (g_core->HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();
@@ -916,7 +1031,22 @@ void Platform::MusicPlayerSetVolume(float volume) {
                        "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
-auto Platform::IsOSPlayingMusic() -> bool { return false; }
+void Platform::SetOSMusicPlaying(bool playing) {
+  if (os_music_playing_.exchange(playing) == playing) {
+    return;
+  }
+  g_core->logging->Log(
+      LogName::kBaAudio, LogLevel::kInfo,
+      playing ? "Another app started playing music; game music will yield."
+              : "Other app's music stopped; game music may resume.");
+
+  // Base may not exist yet (platforms report their initial state as early
+  // as they can); the Python side reads os_music_playing() directly when
+  // it first plays anything, so an early change needs no forwarding.
+  if (g_base_soft) {
+    g_base_soft->OnOSMusicPlayingChanged(playing);
+  }
+}
 
 void Platform::IncrementAnalyticsCount(const std::string& name, int increment) {
 }
@@ -1192,9 +1322,23 @@ void Platform::RunNetworkAvailabilityDebugToggle_() {
   // unavailable window before anything has a chance to come up.
   // Same period is used for all subsequent toggles. Initial 'false'
   // is the platform-wide default; no explicit seed needed here.
+  //
+  // BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE_SECONDS overrides the period
+  // (fractional ok) so tests can place the flip on either side of
+  // other timeouts (e.g. the transport's parked-message limit).
+  double period_seconds{5.0};
+  if (auto period_var = GetEnv("BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE_SECONDS");
+      period_var && !period_var->empty()) {
+    double parsed = std::strtod(period_var->c_str(), nullptr);
+    if (parsed > 0.0) {
+      period_seconds = parsed;
+    }
+  }
+  auto period =
+      std::chrono::milliseconds(static_cast<int64_t>(period_seconds * 1000.0));
   bool current = false;
   while (true) {
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(period);
     current = !current;
     SetNetworkAvailability(current);
   }

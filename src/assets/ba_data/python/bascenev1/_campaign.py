@@ -103,7 +103,7 @@ def init_campaigns() -> None:
     # (bauiv1 deferred alongside these: the ui feature-set is not a
     # dependency of ours, and level previews are the only thing here
     # that needs it.)
-    from bauiv1 import classicassets as uiclassicassets
+    from bauiv1 import _classiccatalogassets as uicatalogassets
 
     from bascenev1._level import Level
     from bascenev1lib.game.onslaught import OnslaughtGame
@@ -116,8 +116,7 @@ def init_campaigns() -> None:
     from bascenev1lib.game.easteregghunt import EasterEggHuntGame
     from bascenev1lib.game.ninjafight import NinjaFightGame
 
-    uitex = uiclassicassets.textures
-
+    uitex = uicatalogassets.textures
     # TODO: Campaigns should be load-on-demand; not all imported at launch
     #  like this.
 
@@ -161,7 +160,7 @@ def init_campaigns() -> None:
                     'Pro Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'pro_easy'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Uber Onslaught',
@@ -179,7 +178,7 @@ def init_campaigns() -> None:
                     'Uber Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'uber_easy'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
             ],
         )
@@ -224,7 +223,7 @@ def init_campaigns() -> None:
                     'Pro Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'pro'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Uber Onslaught',
@@ -242,7 +241,7 @@ def init_campaigns() -> None:
                     'Uber Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'uber'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'The Last Stand',
@@ -270,21 +269,21 @@ def init_campaigns() -> None:
                     'Infinite Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'endless'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Race',
                     displayname='${GAME}',
                     gametype=RaceGame,
                     settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 0},
-                    preview_texture=uitex.big_gpreview,
+                    preview_texture=uitex.big_g_preview,
                 ),
                 Level(
                     'Pro Race',
                     displayname='Pro ${GAME}',
                     gametype=RaceGame,
                     settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 1000},
-                    preview_texture=uitex.big_gpreview,
+                    preview_texture=uitex.big_g_preview,
                 ),
                 Level(
                     'Lake Frigid Race',
@@ -317,14 +316,14 @@ def init_campaigns() -> None:
                     displayname='${GAME}',
                     gametype=RunaroundGame,
                     settings={'preset': 'tournament'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Uber Runaround',
                     displayname='Uber ${GAME}',
                     gametype=RunaroundGame,
                     settings={'preset': 'tournament_uber'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'The Last Stand',
@@ -345,7 +344,7 @@ def init_campaigns() -> None:
                     displayname='Infinite Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'endless_tournament'},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Target Practice',
@@ -384,14 +383,14 @@ def init_campaigns() -> None:
                     displayname='${GAME}',
                     gametype=EasterEggHuntGame,
                     settings={},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     'Pro Easter Egg Hunt',
                     displayname='Pro ${GAME}',
                     gametype=EasterEggHuntGame,
                     settings={'Pro Mode': True},
-                    preview_texture=uitex.tower_dpreview,
+                    preview_texture=uitex.tower_d_preview,
                 ),
                 Level(
                     name='Ninja Fight',  # (unique id not seen by player)

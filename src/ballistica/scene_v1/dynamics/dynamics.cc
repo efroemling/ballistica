@@ -2,12 +2,16 @@
 
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 
+#include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
 #include <unordered_map>
 #include <utility>
 
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
-#include "ballistica/base/dynamics/collision_cache.h"
+#include "ballistica/base/dynamics/terrain_collider.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -17,6 +21,7 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ode/ode_collision_kernel.h"
 #include "ode/ode_collision_util.h"
+#include "ode/ode_objects.h"
 
 namespace ballistica::scene_v1 {
 
@@ -137,7 +142,7 @@ class Dynamics::Impl_ {
 
 Dynamics::Dynamics(Scene* scene_in)
     : scene_(scene_in),
-      collision_cache_(std::make_unique<base::CollisionCache>()),
+      terrain_collider_(std::make_unique<base::TerrainCollider>()),
       impl_(std::make_unique<Impl_>(this)) {
   ResetODE_();
 }
@@ -188,17 +193,17 @@ void Dynamics::AddTrimesh(dGeomID g) {
   g->recomputeAABB();
   g->gflags &= (~(GEOM_DIRTY | GEOM_AABB_BAD));  // NOLINT
 
-  // Update our collision cache.
-  collision_cache_->SetGeoms(trimeshes_);
+  // Update our terrain collider.
+  terrain_collider_->SetTerrainGeoms(trimeshes_);
 }
 
 void Dynamics::MarkTrimeshMoved(dGeomID g) {
   assert(dGeomGetClass(g) == dTriMeshClass);
 
-  // Our collision-cache is built from trimesh bounds, so it has to be
+  // Our terrain collider keeps combined trimesh bounds, so it has to be
   // rebuilt when one moves. (The geom's own AABB is recalced lazily by ODE
   // the next time anyone asks for it, so there's nothing to do there.)
-  collision_cache_->SetGeoms(trimeshes_);
+  terrain_collider_->SetTerrainGeoms(trimeshes_);
 }
 
 void Dynamics::RemoveTrimesh(dGeomID g) {
@@ -207,8 +212,8 @@ void Dynamics::RemoveTrimesh(dGeomID g) {
     if ((*i) == g) {
       trimeshes_.erase(i);
 
-      // Update our collision cache.
-      collision_cache_->SetGeoms(trimeshes_);
+      // Update our terrain collider.
+      terrain_collider_->SetTerrainGeoms(trimeshes_);
       return;
     }
   }
@@ -458,10 +463,7 @@ void Dynamics::ProcessCollision_() {
   dSpaceCollide(ode_space_, this, &DoCollideCallback_);
 
   // Collide our trimeshes against everything.
-  collision_cache_->CollideAgainstSpace(ode_space_, this, &DoCollideCallback_);
-
-  // Do a bit of precalc each cycle.
-  collision_cache_->Precalc();
+  terrain_collider_->CollideSpace(ode_space_, this, &DoCollideCallback_);
 
   // Now go through our list of currently-colliding stuff,
   // setting parts' currently-colliding-with lists
@@ -525,9 +527,70 @@ void Dynamics::Process() {
   in_process_ = true;
   // Update this once so we can recycle results.
   real_time_ = g_core->AppTimeMillisecs();
+  if (!profile_checked_) {
+    profile_checked_ = true;
+    profile_ = (getenv("BA_DYNAMICS_PROFILE") != nullptr);
+  }
+  if (!profile_) {
+    ProcessCollision_();
+    dWorldQuickStep(ode_world_, kGameStepSeconds);
+    dJointGroupEmpty(ode_contact_group_);
+    in_process_ = false;
+    return;
+  }
+
+  // Profiling: time the collision pass (broad + narrow phase plus our
+  // material/contact bookkeeping) against the world step (island
+  // solve), and log the split every 5 seconds.
+  using Clock = std::chrono::steady_clock;
+  auto ms = [](Clock::time_point a, Clock::time_point b) {
+    return std::chrono::duration<double, std::milli>(b - a).count();
+  };
+  auto t0 = Clock::now();
   ProcessCollision_();
+  auto t1 = Clock::now();
   dWorldQuickStep(ode_world_, kGameStepSeconds);
+  auto t2 = Clock::now();
+  // Body/joint counts while contact joints are still attached.
+  profile_bodies_max_ = std::max(profile_bodies_max_, ode_world_->nb);
+  profile_joints_max_ = std::max(profile_joints_max_, ode_world_->nj);
   dJointGroupEmpty(ode_contact_group_);
+  auto t3 = Clock::now();
+  profile_collide_ms_ += ms(t0, t1);
+  profile_step_ms_ += ms(t1, t2);
+  profile_other_ms_ += ms(t2, t3);
+  profile_contacts_ += collision_count_;
+  profile_steps_++;
+  if (profile_steps_ >= 300) {
+    double total = profile_collide_ms_ + profile_step_ms_ + profile_other_ms_;
+    auto cs = terrain_collider_->TakeStats();
+    char buf[768];
+    snprintf(buf, sizeof(buf),
+             "dynamics profile: %d steps: collide %.1fms (%.0fus/step,"
+             " %.0f%%), worldstep %.1fms (%.0fus/step, %.0f%%), cleanup"
+             " %.1fms; total %.0fus/step; max bodies %d, max joints"
+             " (incl contacts) %d, contacts/step %.1f; terrain:"
+             " %.1f queries/step, bounds-out %.0f%%, full %.1f/step"
+             " (%.0fus/step)",
+             profile_steps_, profile_collide_ms_,
+             1000.0 * profile_collide_ms_ / profile_steps_,
+             100.0 * profile_collide_ms_ / std::max(total, 1e-9),
+             profile_step_ms_, 1000.0 * profile_step_ms_ / profile_steps_,
+             100.0 * profile_step_ms_ / std::max(total, 1e-9),
+             profile_other_ms_, 1000.0 * total / profile_steps_,
+             profile_bodies_max_, profile_joints_max_,
+             static_cast<double>(profile_contacts_) / profile_steps_,
+             static_cast<double>(cs.queries) / profile_steps_,
+             100.0 * static_cast<double>(cs.bounds_outs)
+                 / std::max<double>(static_cast<double>(cs.queries), 1.0),
+             static_cast<double>(cs.full_tests) / profile_steps_,
+             1000.0 * cs.full_ms / profile_steps_);
+    g_core->logging->Log(LogName::kBa, LogLevel::kInfo, buf);
+    profile_collide_ms_ = profile_step_ms_ = profile_other_ms_ = 0.0;
+    profile_steps_ = 0;
+    profile_contacts_ = 0;
+    profile_bodies_max_ = profile_joints_max_ = 0;
+  }
   in_process_ = false;
 }
 
@@ -885,8 +948,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
 
                 if (volume > 1) volume = 1;
                 assert(i.sound.exists());
-                if (base::AudioSource* source =
-                        g_base->audio->SourceBeginNew()) {
+                if (base::AudioSource* source = scene_->NewAudioSource()) {
                   source->SetGain(volume * i.volume);
                   source->SetPosition(apx, apy, apz);
                   source->Play(i.sound->GetSoundData());
@@ -929,8 +991,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                 } else if (real_time - p1->last_skid_sound_time() >= 250
                            || real_time - p2->last_skid_sound_time() > 250) {
                   assert(i.sound.exists());
-                  if (base::AudioSource* source =
-                          g_base->audio->SourceBeginNew()) {
+                  if (base::AudioSource* source = scene_->NewAudioSource()) {
                     source->SetLooping(true);
                     source->SetGain(volume * i.volume);
                     source->SetPosition(apx, apy, apz);
@@ -981,8 +1042,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                 } else if (real_time - p1->last_roll_sound_time() >= 250
                            || real_time - p2->last_roll_sound_time() > 250) {
                   assert(i.sound.exists());
-                  if (base::AudioSource* source =
-                          g_base->audio->SourceBeginNew()) {
+                  if (base::AudioSource* source = scene_->NewAudioSource()) {
                     source->SetLooping(true);
                     source->SetGain(volume * i.volume);
                     source->SetPosition(apx, apy, apz);
@@ -1028,7 +1088,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
     if (play_collide_sounds) {
       for (auto&& i : cc1->connect_sounds) {
         assert(i.sound.exists());
-        if (base::AudioSource* source = g_base->audio->SourceBeginNew()) {
+        if (base::AudioSource* source = scene_->NewAudioSource()) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);
           source->Play(i.sound->GetSoundData());
@@ -1037,7 +1097,7 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
       }
       for (auto&& i : cc2->connect_sounds) {
         assert(i.sound.exists());
-        if (base::AudioSource* source = g_base->audio->SourceBeginNew()) {
+        if (base::AudioSource* source = scene_->NewAudioSource()) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);
           source->Play(i.sound->GetSoundData());

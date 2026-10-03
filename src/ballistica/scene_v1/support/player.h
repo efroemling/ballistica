@@ -58,12 +58,24 @@ class Player : public Object {
   auto GetPyCharacter() -> PyObject*;  // Returns a borrowed ref.
   void SetPyCharacter(PyObject* team);
 
+  /// The player's cloud look (a bascenev1.SpazDef built from the spaz
+  /// part of the cloud-composed profile they picked), or Py_None when
+  /// they are on a legacy profile / random look. Parallel to the legacy
+  /// appearance-name 'character', which stays the fallback.
+  auto GetPyCloudSpazDef() -> PyObject*;  // Returns a borrowed ref.
+  void SetPyCloudSpazDef(PyObject* spaz_def);
+
+  /// The player's cloud icon (a bascenev1.Depiction of the icon part of
+  /// the same cloud-composed profile), or Py_None alongside a Py_None
+  /// cloud spaz def. The legacy icon info stays the fallback.
+  auto GetPyCloudIcon() -> PyObject*;  // Returns a borrowed ref.
+  void SetPyCloudIcon(PyObject* icon);
+
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
   void SetPyColor(PyObject* team);
 
   auto GetPyHighlight() -> PyObject*;  // Returns a borrowed ref.
   void SetPyHighlight(PyObject* team);
-
   auto GetPyActivityPlayer() -> PyObject*;  // Returns a borrowed ref.
   void SetPyActivityPlayer(PyObject* team);
 
@@ -91,7 +103,8 @@ class Player : public Object {
 
   void SetIcon(const std::string& tex_name, const std::string& tint_tex_name,
                const std::vector<float>& tint_color,
-               const std::vector<float>& tint2_color);
+               const std::vector<float>& tint2_color,
+               const std::vector<float>& tint3_color);
 
   auto icon_tex_name() const -> const std::string& {
     BA_PRECONDITION(icon_set_);
@@ -109,6 +122,10 @@ class Player : public Object {
     BA_PRECONDITION(icon_set_);
     return icon_tint2_color_;
   }
+  auto icon_tint3_color() const -> const std::vector<float>& {
+    BA_PRECONDITION(icon_set_);
+    return icon_tint3_color_;
+  }
   void set_accepted(bool value) { accepted_ = value; }
   auto time_out() const -> millisecs_t { return time_out_; }
   void set_time_out(millisecs_t value) { time_out_ = value; }
@@ -124,6 +141,7 @@ class Player : public Object {
   std::string icon_tint_tex_name_;
   std::vector<float> icon_tint_color_;
   std::vector<float> icon_tint2_color_;
+  std::vector<float> icon_tint3_color_{1.0f, 1.0f, 1.0f};
   Object::WeakRef<HostSession> host_session_;
   Object::WeakRef<HostActivity> host_activity_;
   Object::WeakRef<Node> node_;
@@ -163,6 +181,8 @@ class Player : public Object {
   // PythonRef py_actor_;
   PythonRef py_team_weak_ref_;
   PythonRef py_character_;
+  PythonRef py_cloud_spaz_def_;
+  PythonRef py_cloud_icon_;
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;

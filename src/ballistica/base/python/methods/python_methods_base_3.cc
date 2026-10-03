@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
+#include <cmath>
 #include <list>
 #include <optional>
 #include <string>
@@ -17,6 +18,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
+#include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
@@ -25,6 +27,8 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/python/python.h"
 #include "external/monocypher/monocypher-ed25519.h"
 
@@ -80,18 +84,21 @@ static PyMethodDef PyGetSimpleSoundDef = {
 static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
-  Assets::FailOnNonAssetPackagePath(name, "apsimplesoundget");
   {
     Assets::AssetListLock lock;
-    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    Object::Ref<SoundAsset> sound =
+        g_base->assets->GetPackageSound(apverid, name);
     return PythonClassSimpleSound::Create(sound.get());
   }
   Py_RETURN_NONE;
@@ -103,13 +110,13 @@ static PyMethodDef PyApSimpleSoundGetDef = {
     (PyCFunction)PyApSimpleSoundGet,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "apsimplesoundget(name: str) -> SimpleSound\n"
+    "apsimplesoundget(apvernum: int, name: str) -> SimpleSound\n"
     "\n"
     "Load a simple sound from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:",
@@ -267,6 +274,37 @@ static PyMethodDef PyHasTouchScreenDef = {
     ":meta private:",
 };
 
+// -------------------------------- hasgyro ------------------------------------
+
+static auto PyHasGyro(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->platform->HasGyro()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHasGyroDef = {
+    "hasgyro",                     // name
+    (PyCFunction)PyHasGyro,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "hasgyro() -> bool\n"
+    "\n"
+    "Return whether gyroscope hardware is present on the current device.\n"
+    "\n"
+    "Prefer this over testing platform names when gating gyro-related\n"
+    "functionality; plenty of phones and tablets ship without the sensor,\n"
+    "and TV devices never have one.",
+};
+
 // ------------------------- clipboard_is_supported ----------------------------
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
@@ -346,10 +384,17 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 // --------------------------- clipboard_get_text ------------------------------
 
+// REMOVE WHEN API 9 SUPPORT ENDS
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+  if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                   "clipboard_get_text() will be removed when api 9 support"
+                   " ends; use clipboard_get_text_async() instead.",
+                   1)
+      == -1) {
+    return nullptr;
+  }
   return PyUnicode_FromString(g_base->ClipboardGetText().c_str());
-  Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
@@ -363,7 +408,63 @@ static PyMethodDef PyClipboardGetTextDef = {
     "Return text currently on the system clipboard.\n"
     "\n"
     "Ensure that :meth:`~babase.clipboard_has_text()` returns True before\n"
-    "calling this function.",
+    "calling this function.\n"
+    "\n"
+    ".. deprecated:: 1.8.0\n"
+    "   Use :meth:`~babase.clipboard_get_text_async()`.\n"
+    "   Will be removed when api 9 support ends.",
+};
+
+// ------------------------ clipboard_get_text_async ---------------------------
+
+static auto PyClipboardGetTextAsync(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  PyObject* call_obj{};
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  if (!PyCallable_Check(call_obj)) {
+    throw Exception("Object is not callable.", PyExcType::kType);
+  }
+
+  // Wrap their callable in a context-call so it runs in the context
+  // that kicked this off, and hand it over to the engine's async fetch.
+  auto context_call{Object::New<PythonContextCall>(call_obj)};
+  g_base->ClipboardGetTextAsync(
+      [context_call](std::optional<std::string> text) {
+        assert(g_base->InLogicThread());
+        PythonRef callargs(text ? Py_BuildValue("(s)", text->c_str())
+                                : Py_BuildValue("(O)", Py_None),
+                           PythonRef::kSteal);
+        context_call->Run(callargs);
+      });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClipboardGetTextAsyncDef = {
+    "clipboard_get_text_async",            // name
+    (PyCFunction)PyClipboardGetTextAsync,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "clipboard_get_text_async(call: Callable[[str | None], None]) -> None\n"
+    "\n"
+    "Fetch text from the system clipboard asynchronously.\n"
+    "\n"
+    "The provided callback will be run in the logic thread and passed\n"
+    "the fetched text, or None if no text could be fetched for any\n"
+    "reason (clipboard unsupported on this build, no text present,\n"
+    "access denied by the OS, etc.).\n"
+    "\n"
+    "On some platforms, fetching clipboard contents can require\n"
+    "the OS to ask the user for permission; the async nature of this\n"
+    "call allows the app to keep running normally while that happens.\n"
+    "Note that in such cases the callback may not run until the user\n"
+    "responds (or may never run at all).",
 };
 
 // ------------------------------ setup_sigint ---------------------------------
@@ -1223,35 +1324,40 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 
 // ---------------------- reload_language --------------------------------------
 
-static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyReloadLanguage(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* apverids_obj;
+  PyObject* apvernums_obj;
   const char* plural_locale;
-  if (!PyArg_ParseTuple(args, "Os", &apverids_obj, &plural_locale)) {
+  const char* decimal_mark{"."};
+  const char* duration_separator{" "};
+  static const char* kwlist[] = {"apvernums", "plural_locale", "decimal_mark",
+                                 "duration_separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Os|$ss", const_cast<char**>(kwlist), &apvernums_obj,
+          &plural_locale, &decimal_mark, &duration_separator)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(apverids_obj));
+  // The engine keys packages by numeric id as text.
   std::vector<std::string> apverids;
-  int size = static_cast<int>(PyList_GET_SIZE(apverids_obj));
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(apverids_obj, i);
-    if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in apverids list.", PyExcType::kType);
-    }
-    apverids.emplace_back(PyUnicode_AsUTF8(entry));
+  for (int64_t apvernum : Python::GetInts64(apvernums_obj)) {
+    apverids.emplace_back(std::to_string(apvernum));
   }
   assert(g_base->logic);
-  g_base->assets->ReloadLanguage(apverids, plural_locale);
+  g_base->assets->ReloadLanguage(apverids, plural_locale, decimal_mark,
+                                 duration_separator);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
 static PyMethodDef PyReloadLanguageDef = {
-    "reload_language",  // name
-    PyReloadLanguage,   // method
-    METH_VARARGS,       // flags
+    "reload_language",              // name
+    (PyCFunction)PyReloadLanguage,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "reload_language(apverids: list[str], plural_locale: str) -> None\n"
+    "reload_language(apvernums: Sequence[int], plural_locale: str,"
+    " *, decimal_mark: str = '.', duration_separator: str = ' ')"
+    " -> None\n"
     "\n"
     ":meta private:\n"
     "\n"
@@ -1259,7 +1365,9 @@ static PyMethodDef PyReloadLanguageDef = {
     "language-string tables) from the registered ``language`` buckets\n"
     "of the given asset-packages and notify subsystems of the language\n"
     "change. ``plural_locale`` is the resolved locale wire value\n"
-    "driving CLDR plural selection.",
+    "driving CLDR plural selection; ``decimal_mark`` and\n"
+    "``duration_separator`` are its number data for display-formatted\n"
+    "params (durations, sizes).",
 };
 
 // ---------------------- get_resource -----------------------------------------
@@ -1612,13 +1720,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   float corner_radius;
   const char* style;
   int disabled;
-  if (!PyArg_ParseTuple(args, "sffffOsffsp", &label, &x, &y, &width, &height,
+  int sound;
+  if (!PyArg_ParseTuple(args, "sffffOsffspp", &label, &x, &y, &width, &height,
                         &call, &h_anchor, &label_scale, &corner_radius, &style,
-                        &disabled)) {
+                        &disabled, &sound)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius, style, disabled);
+                         label_scale, corner_radius, style, disabled, sound);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1640,6 +1749,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  corner_radius: float,\n"
     "  style: str,\n"
     "  disabled: bool,\n"
+    "  sound: bool,\n"
     ") -> None\n"
     "\n"
     ":meta private:",
@@ -2010,6 +2120,414 @@ static PyMethodDef PyGetDrawVirtualSafeAreaBoundsDef = {
     ":meta private:",
 };
 
+// --------------------- virtual_bounds_calc_probe -----------------------------
+
+static auto PyVirtualBoundsCalcProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double res_x;
+  double res_y;
+  double inset_l = 0.0;
+  double inset_r = 0.0;
+  double inset_b = 0.0;
+  double inset_t = 0.0;
+  double bleed = 0.0;
+  static const char* kwlist[] = {"render_rect", "res_x",   "res_y",
+                                 "inset_l",     "inset_r", "inset_b",
+                                 "inset_t",     "bleed",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odd|ddddd", const_cast<char**>(kwlist), &render_obj,
+          &res_x, &res_y, &inset_l, &inset_r, &inset_b, &inset_t, &bleed)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(res_x),
+      static_cast<float>(res_y), static_cast<float>(inset_l),
+      static_cast<float>(inset_r), static_cast<float>(inset_b),
+      static_cast<float>(inset_t), static_cast<float>(bleed));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsCalcProbeDef = {
+    "virtual_bounds_calc_probe",            // name
+    (PyCFunction)PyVirtualBoundsCalcProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "virtual_bounds_calc_probe(render_rect: Sequence[float], res_x: float,\n"
+    "  res_y: float, inset_l: float = 0.0, inset_r: float = 0.0,\n"
+    "  inset_b: float = 0.0, inset_t: float = 0.0, bleed: float = 0.0)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------ virtual_bounds_max_margins_probe -------------------------
+
+static auto PyVirtualBoundsMaxMarginsProbe(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double base_res_x;
+  double base_res_y;
+  double margin_x;
+  double margin_y;
+  static const char* kwlist[] = {"render_rect", "base_res_x", "base_res_y",
+                                 "margin_x",    "margin_y",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odddd", const_cast<char**>(kwlist), &render_obj,
+          &base_res_x, &base_res_y, &margin_x, &margin_y)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcMaxMarginsVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(base_res_x),
+      static_cast<float>(base_res_y), static_cast<float>(margin_x),
+      static_cast<float>(margin_y));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsMaxMarginsProbeDef = {
+    "virtual_bounds_max_margins_probe",           // name
+    (PyCFunction)PyVirtualBoundsMaxMarginsProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
+
+    "virtual_bounds_max_margins_probe(render_rect: Sequence[float],\n"
+    "  base_res_x: float, base_res_y: float, margin_x: float,\n"
+    "  margin_y: float) -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- screen_insets_blend_probe ----------------------------
+
+static auto PyScreenInsetsBlendProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* os_obj;
+  PyObject* max_obj;
+  double amount;
+  static const char* kwlist[] = {"os_bounds", "max_bounds", "amount", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOd",
+                                   const_cast<char**>(kwlist), &os_obj,
+                                   &max_obj, &amount)) {
+    return nullptr;
+  }
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect out = Graphics::BlendScreenInsetsRect(
+      rect_from(os_obj), rect_from(max_obj), static_cast<float>(amount));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyScreenInsetsBlendProbeDef = {
+    "screen_insets_blend_probe",            // name
+    (PyCFunction)PyScreenInsetsBlendProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "screen_insets_blend_probe(os_bounds: Sequence[float],\n"
+    "  max_bounds: Sequence[float], amount: float)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------- virtual_bounds_project_probe ---------------------------
+
+static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  PyObject* bounds_obj;
+  PyObject* points_obj;
+  double fov_y = 60.0;
+  double near_val = 4.0;
+  double far_val = 1000.0;
+  static const char* kwlist[] = {"render_rect", "bounds_rect", "points",
+                                 "fov_y",       "near_val",    "far_val",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "OOO|ddd", const_cast<char**>(kwlist), &render_obj,
+          &bounds_obj, &points_obj, &fov_y, &near_val, &far_val)) {
+    return nullptr;
+  }
+
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect render_rect = rect_from(render_obj);
+  Rect bounds_rect = rect_from(bounds_obj);
+
+  // Compose for the bounds: symmetric frustum at the bounds' aspect,
+  // exactly as the aspect-derived branch of RenderPass::SetFrustum
+  // does.
+  float aspect = bounds_rect.height() > 0.0f
+                     ? bounds_rect.width() / bounds_rect.height()
+                     : 1.0f;
+  float y = static_cast<float>(near_val
+                               * tan((fov_y / 2.0) * 3.14159265358979 / 180.0));
+  float x = y * aspect;
+  float l = x;
+  float r = x;
+  float b = y;
+  float t = y;
+
+  // ..then extend out to the render rect. Same function the renderer
+  // uses, so this cannot drift from what actually gets drawn.
+  Graphics::ExtendFrustumToRenderRect(render_rect, bounds_rect, &l, &r, &b, &t);
+  Matrix44f proj = Matrix44fFrustum(-l, r, -b, t, static_cast<float>(near_val),
+                                    static_cast<float>(far_val));
+
+  // Project each eye-space point and map to window pixels through the
+  // render rect, which is what the viewport is set to.
+  PyObject* out = PyList_New(0);
+  PyObject* pts_fast = PySequence_Fast(points_obj, "Expected a sequence.");
+  if (pts_fast == nullptr) {
+    Py_DECREF(out);
+    return nullptr;
+  }
+  Py_ssize_t npts = PySequence_Fast_GET_SIZE(pts_fast);
+  for (Py_ssize_t i = 0; i < npts; ++i) {
+    auto pt = Python::GetFloats(PySequence_Fast_GET_ITEM(pts_fast, i));
+    if (pt.size() != 3) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Expected 3 values per point.", PyExcType::kValue);
+    }
+    float px_clip =
+        pt[0] * proj.m[0] + pt[1] * proj.m[4] + pt[2] * proj.m[8] + proj.m[12];
+    float py_clip =
+        pt[0] * proj.m[1] + pt[1] * proj.m[5] + pt[2] * proj.m[9] + proj.m[13];
+    float w_clip =
+        pt[0] * proj.m[3] + pt[1] * proj.m[7] + pt[2] * proj.m[11] + proj.m[15];
+    if (w_clip == 0.0f) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Degenerate projection for point.", PyExcType::kValue);
+    }
+    float px =
+        render_rect.l + (px_clip / w_clip * 0.5f + 0.5f) * render_rect.width();
+    float py =
+        render_rect.b + (py_clip / w_clip * 0.5f + 0.5f) * render_rect.height();
+    PyObject* pair = Py_BuildValue("(ff)", px, py);
+    PyList_Append(out, pair);
+    Py_DECREF(pair);
+  }
+  Py_DECREF(pts_fast);
+  return out;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsProjectProbeDef = {
+    "virtual_bounds_project_probe",            // name
+    (PyCFunction)PyVirtualBoundsProjectProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "virtual_bounds_project_probe(render_rect: Sequence[float],\n"
+    "  bounds_rect: Sequence[float], points: Sequence[Sequence[float]],\n"
+    "  fov_y: float = 60.0, near_val: float = 4.0,\n"
+    "  far_val: float = 1000.0) -> list[tuple[float, float]]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- get_draw_virtual_bounds ------------------------------
+
+static auto PyGetDrawVirtualBounds(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->draw_virtual_bounds()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDrawVirtualBoundsDef = {
+    "get_draw_virtual_bounds",            // name
+    (PyCFunction)PyGetDrawVirtualBounds,  // method
+    METH_NOARGS,                          // flags
+
+    "get_draw_virtual_bounds() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- set_draw_virtual_bounds ------------------------------
+
+static auto PySetDrawVirtualBounds(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_draw_virtual_bounds(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDrawVirtualBoundsDef = {
+    "set_draw_virtual_bounds",            // name
+    (PyCFunction)PySetDrawVirtualBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- get_debug_draw ---------------------------------
+
+static auto PyGetDebugDraw(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->debug_draw()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugDrawDef = {
+    "get_debug_draw",             // name
+    (PyCFunction)PyGetDebugDraw,  // method
+    METH_NOARGS,                  // flags
+
+    "get_debug_draw() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_debug_draw ---------------------------------
+
+static auto PySetDebugDraw(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_debug_draw(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugDrawDef = {
+    "set_debug_draw",              // name
+    (PyCFunction)PySetDebugDraw,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_debug_draw(value: bool) -> None\n"
+    "\n"
+    "Enable/disable engine debug drawing (the same thing F10 toggles).\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- get_force_max_virtual_bounds_margins -----------------------
+
+static auto PyGetForceMaxVirtualBoundsMargins(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  if (g_base->graphics->force_max_virtual_bounds_margins()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetForceMaxVirtualBoundsMarginsDef = {
+    "get_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PyGetForceMaxVirtualBoundsMargins,  // method
+    METH_NOARGS,                                     // flags
+
+    "get_force_max_virtual_bounds_margins() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- set_force_max_virtual_bounds_margins -----------------------
+
+static auto PySetForceMaxVirtualBoundsMargins(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->SetForceMaxVirtualBoundsMargins(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetForceMaxVirtualBoundsMarginsDef = {
+    "set_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PySetForceMaxVirtualBoundsMargins,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "set_force_max_virtual_bounds_margins(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------------- get_initial_app_config ---------------------------
 
 static auto PyGetInitialAppConfig(PyObject* self) -> PyObject* {
@@ -2277,15 +2795,19 @@ static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
   const char* message;
   float progress;
   const char* button_label;
-  static const char* kwlist[] = {"dialog_id", "title",        "message",
-                                 "progress",  "button_label", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "issfs", const_cast<char**>(kwlist), &dialog_id, &title,
-          &message, &progress, &button_label)) {
+  int cancel_activates_button;
+  static const char* kwlist[] = {"dialog_id",    "title",
+                                 "message",      "progress",
+                                 "button_label", "cancel_activates_button",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "issfsp",
+                                   const_cast<char**>(kwlist), &dialog_id,
+                                   &title, &message, &progress, &button_label,
+                                   &cancel_activates_button)) {
     return nullptr;
   }
   g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
-                                   button_label);
+                                   button_label, cancel_activates_button != 0);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2296,10 +2818,12 @@ static PyMethodDef PySimpleDialogUpdateDef = {
     METH_VARARGS | METH_KEYWORDS,       // flags
 
     "simpledialog_update(dialog_id: int, title: str, message: str,\n"
-    "  progress: float, button_label: str) -> None\n"
+    "  progress: float, button_label: str,\n"
+    "  cancel_activates_button: bool) -> None\n"
     "\n"
     "Set a SimpleDialog's full visible state. A negative ``progress``\n"
-    "hides the bar; an empty ``button_label`` hides the button.\n"
+    "hides the bar; an empty ``button_label`` hides the button;\n"
+    "``cancel_activates_button`` lets cancel-type input fire the button.\n"
     "\n"
     ":meta private:",
 };
@@ -2341,6 +2865,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardHasTextDef,
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
+      PyClipboardGetTextAsyncDef,
       PyDoOnceDef,
       PyVerifyEd25519Def,
       PyGetAppDef,
@@ -2384,6 +2909,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSimpleSoundDef,
       PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
+      PyHasGyroDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,
@@ -2407,6 +2933,16 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyRequestMainUIDef,
       PyGetDrawVirtualSafeAreaBoundsDef,
       PySetDrawVirtualSafeAreaBoundsDef,
+      PyGetDrawVirtualBoundsDef,
+      PySetDrawVirtualBoundsDef,
+      PyGetDebugDrawDef,
+      PySetDebugDrawDef,
+      PyGetForceMaxVirtualBoundsMarginsDef,
+      PySetForceMaxVirtualBoundsMarginsDef,
+      PyVirtualBoundsProjectProbeDef,
+      PyVirtualBoundsCalcProbeDef,
+      PyVirtualBoundsMaxMarginsProbeDef,
+      PyScreenInsetsBlendProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

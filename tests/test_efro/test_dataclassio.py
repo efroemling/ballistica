@@ -13,6 +13,7 @@ from typing import (
     Any,
     Sequence,
     Annotated,
+    NewType,
     assert_type,
     assert_never,
     override,
@@ -3105,3 +3106,44 @@ def test_type_disjoint_union_recursive() -> None:
         's': {'player': 'Bo', 'count': 5, 'how': {'n': 'salute', 's': {}}},
     }
     assert dataclass_from_dict(_DJUnionRecursive, wire) == obj
+
+
+_NTNum = NewType('_NTNum', int)
+
+
+@ioprepped
+@dataclass
+class _NewTypeFields:
+    a: Annotated[_NTNum, IOAttrs('a')]
+    b: Annotated[str | _NTNum, IOAttrs('b')]
+    c: Annotated[list[_NTNum], IOAttrs('c')]
+    d: Annotated[_NTNum | None, IOAttrs('d')] = None
+
+
+def test_newtype() -> None:
+    """NewType fields store and load as the type they wrap."""
+    obj = _NewTypeFields(a=_NTNum(3), b=_NTNum(4), c=[_NTNum(5)], d=_NTNum(6))
+    wire = dataclass_to_dict(obj)
+    assert wire == {'a': 3, 'b': 4, 'c': [5], 'd': 6}
+    assert dataclass_from_dict(_NewTypeFields, wire) == obj
+    assert dataclass_from_dict(
+        _NewTypeFields, {'a': 1, 'b': 'x', 'c': []}
+    ) == _NewTypeFields(a=_NTNum(1), b='x', c=[])
+
+    # Still type-checked as the wrapped type.
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_NewTypeFields, {'a': 'nope', 'b': 1, 'c': []})
+
+
+@ioprepped
+@dataclass
+class _NewTypeKeys:
+    d: Annotated[dict[_NTNum, str], IOAttrs('d')]
+
+
+def test_newtype_dict_keys() -> None:
+    """NewType dict keys work as the key type they wrap."""
+    obj = _NewTypeKeys(d={_NTNum(3): 'x'})
+    wire = dataclass_to_dict(obj)
+    assert wire == {'d': {'3': 'x'}}
+    assert dataclass_from_dict(_NewTypeKeys, wire) == obj

@@ -28,6 +28,8 @@ class AnalyticsSubsystem:
         """Submit an event.
 
         Should only be called from the logic thread.
+
+        :meta private:
         """
 
         if not _babase.in_logic_thread():

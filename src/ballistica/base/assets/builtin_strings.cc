@@ -22,7 +22,7 @@ static auto MakeResource_(const char* name,
     -> std::shared_ptr<const LangStr> {
   auto out = std::make_shared<LangStr>();
   out->form = LangStr::Form::kResource;
-  out->apverid = kBuiltinAssetsApverid;
+  out->apverid = kBuiltinAssetsApvernum;
   out->name = name;
   out->subs = std::move(subs);
   return out;
@@ -89,6 +89,12 @@ auto BuiltinStrings::Assets::ContentErrorGuidance(LangStr::Sub detail)
                        {{"detail", std::move(detail)}});
 }
 
+auto BuiltinStrings::Assets::CorruptFile(LangStr::Sub email)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/corrupt_file",
+                       {{"email", std::move(email)}});
+}
+
 auto BuiltinStrings::Assets::DownloadingAssets(int64_t count)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/downloading_assets", {{"count", count}});
@@ -132,6 +138,11 @@ auto BuiltinStrings::Audio::MusicPlayError(LangStr::Sub music)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/audio/music_play_error",
                        {{"music", std::move(music)}});
+}
+
+auto BuiltinStrings::Device::ThermalFrameRateCap()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/device/thermal_frame_rate_cap");
 }
 
 auto BuiltinStrings::Input::Axis(LangStr::Sub number)
@@ -223,6 +234,22 @@ auto BuiltinStrings::Net::AccountRejected() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/account_rejected");
 }
 
+auto BuiltinStrings::Net::AssetPackageAccessDenied(LangStr::Sub package,
+                                                   LangStr::Sub owner)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/net/asset_package_access_denied",
+      {{"package", std::move(package)}, {"owner", std::move(owner)}});
+}
+
+auto BuiltinStrings::Net::AssetPackageAuthRequired(LangStr::Sub package,
+                                                   LangStr::Sub owner)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/net/asset_package_auth_required",
+      {{"package", std::move(package)}, {"owner", std::move(owner)}});
+}
+
 auto BuiltinStrings::Net::AuthError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/auth_error");
 }
@@ -271,6 +298,11 @@ auto BuiltinStrings::Net::DeviceTimeIncorrect(LangStr::Sub hours)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/device_time_incorrect",
                        {{"hours", std::move(hours)}});
+}
+
+auto BuiltinStrings::Net::HostLegacyProfilesOnly()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/host_legacy_profiles_only");
 }
 
 auto BuiltinStrings::Net::IncompatibleNewerVersionHost()
@@ -392,6 +424,11 @@ auto BuiltinStrings::Session::ChatBlocked(int64_t seconds, LangStr::Sub name)
                        {{"seconds", seconds}, {"name", std::move(name)}});
 }
 
+auto BuiltinStrings::Session::ChatMessageTooLong()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/chat_message_too_long");
+}
+
 auto BuiltinStrings::Session::JoinCooldown(int64_t seconds)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/session/join_cooldown", {{"seconds", seconds}});
@@ -496,6 +533,16 @@ auto BuiltinStrings::Store::GooglePlayPurchasesUnavailable()
 auto BuiltinStrings::Store::GooglePlayServicesUnavailable()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/store/google_play_services_unavailable");
+}
+
+auto BuiltinStrings::Store::PaymentPendingMessage()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/payment_pending_message");
+}
+
+auto BuiltinStrings::Store::PaymentPendingTitle()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/payment_pending_title");
 }
 
 auto BuiltinStrings::Store::PurchaseAlreadyInProgress()

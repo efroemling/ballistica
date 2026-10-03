@@ -671,6 +671,20 @@ def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
     return False
 
 
+def unwrap_newtype(anntype: Any) -> Any:
+    """Return the type a ``typing.NewType`` wraps (or ``anntype`` as-is).
+
+    dataclassio stores and loads a NewType exactly as its underlying
+    type (a ``NewType('Foo', int)`` is a plain int on the wire), so
+    anything inspecting annotations resolves NewTypes through this.
+
+    :meta private:
+    """
+    while isinstance(anntype, typing.NewType):
+        anntype = anntype.__supertype__
+    return anntype
+
+
 def _get_origin(anntype: Any) -> Any:
     """Given a type annotation, return its origin or itself if there is none.
 
@@ -678,7 +692,12 @@ def _get_origin(anntype: Any) -> Any:
     None. This lets us use the same code path for handling typing.List
     that we do for handling list, which is good since they can be used
     interchangeably in annotations.
+
+    A ``typing.NewType`` is treated as the type it wraps (a
+    ``NewType('Foo', int)`` field stores and loads as a plain int); it
+    exists only to keep values distinct for type-checkers.
     """
+    anntype = unwrap_newtype(anntype)
     origin = typing.get_origin(anntype)
     return anntype if origin is None else origin
 

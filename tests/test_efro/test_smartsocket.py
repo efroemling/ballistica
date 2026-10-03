@@ -16,6 +16,12 @@ grow a dependency on connection continuity -- that would foreclose
 the poll-mode intermediary later.
 """
 
+# One module per module under test, as its siblings here do: a
+# recovery matrix reads as one table, and splitting it hides which
+# rows exist. (Also a file synced across six repos, where adding one
+# is not a drive-by.)
+# pylint: disable=too-many-lines
+
 import asyncio
 import logging
 from enum import Enum
@@ -40,6 +46,7 @@ from efro.smartsocket import (
     SmartSocketEndpoint,
     SmartSocketFrame,
     SmartSocketPayloadTooLarge,
+    SmartSocketSendWouldDeadlock,
     SmartSocketChannelPolicy,
     SmartSocketEndpointPolicy,
     SmartSocketSlot,
@@ -133,6 +140,10 @@ class _FakeRelay:
         self.refuse_count = 0
         #: Stop answering (a black hole; the connection looks fine).
         self.silent = False
+        #: Make every connection throw once it is past its hello, so
+        #: each attach fails the same way -- a deterministic fault,
+        #: not a flaky one.
+        self.throw_after_hello = False
         self.transports: list[_FakeTransport] = []
 
     async def connect(self) -> '_FakeTransport':
@@ -205,12 +216,18 @@ class _FakeTransport:
         self.closed_code: int | None = None
         self.closed_reason = ''
         self.push_seq = 0
+        #: Whether this connection has handed over its hello yet.
+        self.served_hello = False
 
     def deliver(self, frame: SmartSocketFrame) -> None:
         """Queue a frame for the endpoint to read."""
         if self._relay.silent:
             return
         self._inbox.put_nowait(dataclass_to_json(frame))
+
+    def deliver_raw(self, data: str) -> None:
+        """Queue bytes that are not a decodable frame at all."""
+        self._inbox.put_nowait(data)
 
     async def send(self, data: str) -> None:
         """Endpoint -> relay."""
@@ -225,6 +242,11 @@ class _FakeTransport:
                 raise SmartSocketClosed(self.closed_code, self.closed_reason)
             data = await self._inbox.get()
             if data:
+                if self._relay.throw_after_hello and self.served_hello:
+                    # Not a SmartSocketClosed: an *unexpected* error,
+                    # which is the path that used to resume forever.
+                    raise RuntimeError('scripted serve failure')
+                self.served_hello = True
                 return data
             # Empty is the wakeup a close pushes; loop to raise.
 
@@ -763,6 +785,118 @@ async def _send_rejects_a_payload_bigger_than_the_buffer() -> None:
     # The session is unharmed: a normal message still goes through.
     assert not endpoint.done
     await _send(endpoint, 'ok')
+
+    runner.cancel()
+    await asyncio.gather(runner, return_exceptions=True)
+
+
+def test_a_handler_blocking_on_its_own_acks_raises() -> None:
+    """The one wait that could never end fails instead of hanging."""
+    _run(_a_handler_blocking_on_its_own_acks_raises())
+
+
+async def _a_handler_blocking_on_its_own_acks_raises() -> None:
+    # A message handler runs on the reader loop, which is also the
+    # only consumer of inbound acks. So a handler whose sends add up
+    # past the in-flight cap is waiting for acks nobody is left to
+    # read -- a permanent wedge, and one the per-message size guard
+    # cannot see. It must raise.
+    relay = _FakeRelay()
+
+    cap = len(dataclass_to_json(_Text(text='x' * 60))) + 10
+    caught: list[BaseException] = []
+    endpoint: SmartSocketEndpoint[_Payload, _Payload]
+
+    async def _on_message(message: _Payload) -> None:
+        del message  # Unused.
+        try:
+            # Fills the buffer, then asks for space that only this
+            # very handler's return could ever produce.
+            await _send(endpoint, 'x' * 60)
+            await _send(endpoint, 'y' * 60)
+        except Exception as exc:  # pylint: disable=broad-except
+            caught.append(exc)
+
+    endpoint = SmartSocketEndpoint(
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        on_message=_on_message,
+        in_flight_cap_bytes=cap,
+        attach_timeout_seconds=0.5,
+    )
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    relay.push('go')
+    # No acks from here on, so the handler's first send stays
+    # in-flight and its second has nowhere to go. Set after the push
+    # so the message itself still arrives; there is no await between,
+    # so the reader cannot have run yet.
+    relay.silent = True
+
+    await _wait_for(lambda: bool(caught))
+    exc = caught[0]
+    assert isinstance(exc, SmartSocketSendWouldDeadlock)
+    assert exc.cap == cap
+
+    # A usage error, not a transport one: the session is still up.
+    assert not endpoint.done
+
+    runner.cancel()
+    await asyncio.gather(runner, return_exceptions=True)
+
+
+def test_sending_during_a_dispatch_from_elsewhere_still_waits() -> None:
+    """Only the handler's own send is the unbreakable wait."""
+    _run(_sending_during_a_dispatch_from_elsewhere_still_waits())
+
+
+async def _sending_during_a_dispatch_from_elsewhere_still_waits() -> None:
+    # A background sender that fills the buffer while a handler
+    # happens to be running has a reader loop to un-block it as soon
+    # as that handler returns. Raising there would turn ordinary
+    # back-pressure into a failure, so the check is scoped to the
+    # dispatching task rather than to 'a dispatch is in progress'.
+    relay = _FakeRelay()
+
+    cap = len(dataclass_to_json(_Text(text='x' * 60))) + 10
+    released = asyncio.Event()
+    endpoint: SmartSocketEndpoint[_Payload, _Payload]
+
+    async def _on_message(message: _Payload) -> None:
+        del message  # Unused.
+        await released.wait()
+
+    endpoint = SmartSocketEndpoint(
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        on_message=_on_message,
+        in_flight_cap_bytes=cap,
+        attach_timeout_seconds=0.5,
+    )
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    relay.push('hold')
+    relay.silent = True
+    await asyncio.sleep(0.05)  # Let the handler take the loop.
+
+    await _send(endpoint, 'x' * 60)  # Fills the buffer.
+    blocked = asyncio.ensure_future(_send(endpoint, 'y' * 60))
+    await asyncio.sleep(0.1)
+    assert not blocked.done(), 'an outside send should wait, not raise'
+
+    # And it really is waiting on acks, not wedged: hand it the ack
+    # the silent stretch swallowed, let the handler go, and it
+    # completes. (The relay only acks what it receives, and the
+    # blocked send is the thing that hasn't arrived, so the ack has
+    # to come from here.)
+    relay.silent = False
+    relay.live.deliver(AckFrame(recv=relay.recv))
+    released.set()
+    await asyncio.wait_for(blocked, timeout=5.0)
 
     runner.cancel()
     await asyncio.gather(runner, return_exceptions=True)

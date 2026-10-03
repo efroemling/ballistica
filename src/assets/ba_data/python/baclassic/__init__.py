@@ -19,7 +19,7 @@ designed in a more modular way.
 import logging
 
 from _baclassic import reload_hooks
-from baclassic._appmode import ClassicAppMode
+from baclassic._appmode import ClassicAppMode, ClassicAppModeConfig
 from baclassic._appsubsystem import ClassicAppSubsystem
 from baclassic._achievement import Achievement, AchievementSubsystem
 from baclassic._chest import (
@@ -27,18 +27,33 @@ from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
     CHEST_APPEARANCE_DISPLAY_INFOS,
 )
-from baclassic._displayitem import show_display_item
+from baclassic._displayitem import (
+    show_display_item,
+    display_item_decorations,
+    depiction_assets,
+)
 from baclassic._music import MusicPlayer
+from baclassic._clienteffect import (
+    ClientEffectContext,
+    EffectTarget,
+    EffectTargets,
+)
 
 __all__ = [
     'ChestAppearanceDisplayInfo',
     'CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT',
     'CHEST_APPEARANCE_DISPLAY_INFOS',
     'ClassicAppMode',
+    'ClassicAppModeConfig',
     'ClassicAppSubsystem',
+    'ClientEffectContext',
+    'EffectTarget',
+    'EffectTargets',
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',
+    'display_item_decorations',
+    'depiction_assets',
     'MusicPlayer',
     'reload_hooks',
 ]

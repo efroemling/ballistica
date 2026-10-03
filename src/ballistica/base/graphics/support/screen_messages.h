@@ -24,9 +24,17 @@ class ScreenMessages {
                         TextureAsset* texture = nullptr,
                         TextureAsset* tint_texture = nullptr,
                         const Vector3f& tint = {1, 1, 1},
-                        const Vector3f& tint2 = {1, 1, 1});
+                        const Vector3f& tint2 = {1, 1, 1},
+                        const Vector3f& tint3 = {1, 1, 1});
 
-  void DrawMiscOverlays(FrameDef* frame_def);
+  /// Add a top screen-message whose icon is a depiction (a
+  /// bacommon.depiction json; a player's cloud icon, say). Must be
+  /// called from the logic thread.
+  void AddTopScreenMessageWithDepiction(const std::string& msg, bool literal,
+                                        const Vector3f& color,
+                                        const std::string& depiction_json);
+
+  void Draw(FrameDef* frame_def);
   void Reset();
 
  private:

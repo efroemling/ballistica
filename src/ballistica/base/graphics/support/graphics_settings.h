@@ -27,6 +27,11 @@ struct GraphicsSettings {
   // bottom-left origin); anything outside it is kept cleared to black.
   // See Graphics::CalcActiveRenderRect.
   Rect active_render_rect;
+  // Sub-rect of the active render rect that the virtual coordinate
+  // system maps onto (pixels, bottom-left origin). Does NOT clip;
+  // drawing continues out to the render rect edge. See
+  // Graphics::virtual_bounds_rect.
+  Rect virtual_bounds_rect;
   float pixel_scale;
   GraphicsQualityRequest graphics_quality;
   TextureQualityRequest texture_quality;

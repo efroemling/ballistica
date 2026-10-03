@@ -5,7 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
-from bascenev1 import _commonassets, classicassets
+from bascenev1 import _commonassets, _classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -44,9 +44,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         )
         assert bs.app.classic is not None
         if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
-            sval = classicassets.strings.game.press_any_key_button_play_again
+            sval = _classicassets.strings.game.press_any_key_button_play_again
         else:
-            sval = classicassets.strings.game.press_any_button_play_again
+            sval = _classicassets.strings.game.press_any_button_play_again
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
@@ -82,9 +82,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 self._ffa_top_player_info[1] = self._ffa_top_player_info[
                     2
                 ].getname()
-                self._ffa_top_player_info[2] = self._ffa_top_player_info[
-                    2
-                ].get_icon()
+                top_prec = self._ffa_top_player_info[2]
+                self._ffa_top_player_info[2] = (
+                    top_prec.get_icon_depiction() or top_prec.get_icon()
+                )
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
@@ -104,7 +105,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
             txt = _commonassets.strings.compose.heading_suffix(
-                main=classicassets.strings.multi_team.first_to_final(
+                main=_classicassets.strings.multi_team.first_to_final(
                     count=str(session.get_ffa_series_length())
                 )
             )
@@ -118,13 +119,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  with a wording that works everywhere.
             if always_use_first_to:
                 txt = _commonassets.strings.compose.heading_suffix(
-                    main=classicassets.strings.multi_team.first_to_final(
+                    main=_classicassets.strings.multi_team.first_to_final(
                         count=str(session.get_series_length() / 2 + 1)
                     )
                 )
             else:
                 txt = _commonassets.strings.compose.heading_suffix(
-                    main=classicassets.strings.multi_team.best_of_final(
+                    main=_classicassets.strings.multi_team.best_of_final(
                         count=str(session.get_series_length())
                     )
                 )
@@ -150,7 +151,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         if not self._is_ffa:
             Text(
-                classicassets.strings.multi_team.games_to(
+                _classicassets.strings.multi_team.games_to(
                     wincount=str(win_score), losecount=str(lose_score)
                 ),
                 color=(0.5, 0.5, 0.5, 1.0),
@@ -181,7 +182,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    classicassets.strings.multi_team.most_valuable_player,
+                    _classicassets.strings.multi_team.most_valuable_player,
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -193,7 +194,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 tval += 4 * t_incr
 
                 Image(
-                    mvp.get_icon(),
+                    mvp.get_icon_depiction() or mvp.get_icon(),
                     position=(230, ts_height / 2 - 55 + 14 - 5),
                     scale=(70, 70),
                     transition=Image.Transition.IN_LEFT,
@@ -222,7 +223,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                classicassets.strings.multi_team.most_violent_player,
+                _classicassets.strings.multi_team.most_violent_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -233,7 +234,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             Text(
                 _commonassets.strings.compose.parenthesized(
-                    note=classicassets.strings.multi_team.kills_tally(
+                    note=_classicassets.strings.multi_team.kills_tally(
                         count=str(most_kills)
                     )
                 ),
@@ -247,7 +248,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             tval += 4 * t_incr
 
             Image(
-                mvp.get_icon(),
+                mvp.get_icon_depiction() or mvp.get_icon(),
                 position=(233, ts_height / 2 - 150 - 30 - 46 + 25 + v_extra),
                 scale=(50, 50),
                 transition=Image.Transition.IN_LEFT,
@@ -276,7 +277,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                classicassets.strings.multi_team.most_destroyed_player,
+                _classicassets.strings.multi_team.most_destroyed_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -287,7 +288,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             Text(
                 _commonassets.strings.compose.parenthesized(
-                    note=classicassets.strings.multi_team.deaths_tally(
+                    note=_classicassets.strings.multi_team.deaths_tally(
                         count=str(most_killed)
                     )
                 ),
@@ -300,7 +301,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             tval += 4 * t_incr
             Image(
-                mkp.get_icon(),
+                mkp.get_icon_depiction() or mkp.get_icon(),
                 position=(233, ts_height / 2 - 300 - 30 - 46 + 25 + v_extra),
                 scale=(50, 50),
                 transition=Image.Transition.IN_LEFT,
@@ -322,7 +323,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            classicassets.strings.game.final_scores,
+            _classicassets.strings.game.final_scores,
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -350,7 +351,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             tdelay -= 4 * t_incr
 
             Image(
-                prec.get_icon(),
+                prec.get_icon_depiction() or prec.get_icon(),
                 position=(ts_h_offs - 72, ts_height / 2 + v_offs + 15),
                 scale=(30, 30),
                 transition=Image.Transition.IN_LEFT,
@@ -397,10 +398,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             offs_v = -80
             assert isinstance(self.session, bs.MultiTeamSession)
             series_length = self.session.get_ffa_series_length()
-            icon: dict | None
+            icon: bs.Depiction | dict | None
             # Pull live player info if they're still around.
             if len(team.players) == 1:
-                icon = team.players[0].get_icon()
+                icon = (
+                    team.players[0].get_icon_depiction()
+                    or team.players[0].get_icon()
+                )
                 player_name = team.players[0].getname(full=True, icon=False)
             # Otherwise use the special info we stored when we came in.
             elif (
@@ -437,7 +441,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # here purely because translation coverage differed
         # between them; the opening phrase itself is identical, so
         # the ported entry is shared.
-        wins_text = classicassets.strings.multi_team.wins_the_series_intro
+        wins_text = _classicassets.strings.multi_team.wins_the_series_intro
 
         ZoomText(
             wins_text,
@@ -448,7 +452,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            classicassets.strings.multi_team.series,
+            _classicassets.strings.multi_team.series,
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

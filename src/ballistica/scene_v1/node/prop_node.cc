@@ -9,8 +9,10 @@
 
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
@@ -41,11 +43,15 @@ auto PropNode::InitType() -> NodeType* {
 
 PropNode::PropNode(Scene* scene, NodeType* override_node_type)
     : Node(scene, override_node_type ? override_node_type : node_type),
-      part_(this) {}
+#if !BA_HEADLESS_BUILD
+      shadow_(scene->bg_dynamics_world()),
+#endif  // !BA_HEADLESS_BUILD
+      part_(this) {
+}
 
 PropNode::~PropNode() {
   if (area_of_interest_) {
-    g_base->graphics->camera()->DeleteAreaOfInterest(
+    scene()->render_view()->camera()->DeleteAreaOfInterest(
         static_cast<base::AreaOfInterest*>(area_of_interest_));
   }
 }
@@ -94,10 +100,11 @@ void PropNode::SetIsAreaOfInterest(bool val) {
     // either make one or kill the one we had
     if (val) {
       assert(area_of_interest_ == nullptr);
-      area_of_interest_ = g_base->graphics->camera()->NewAreaOfInterest(false);
+      area_of_interest_ =
+          scene()->render_view()->camera()->NewAreaOfInterest(false);
     } else {
       assert(area_of_interest_ != nullptr);
-      g_base->graphics->camera()->DeleteAreaOfInterest(
+      scene()->render_view()->camera()->DeleteAreaOfInterest(
           static_cast<base::AreaOfInterest*>(area_of_interest_));
       area_of_interest_ = nullptr;
     }
@@ -124,7 +131,10 @@ void PropNode::Draw(base::FrameDef* frame_def) {
   if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
     c.SetColor(1.2f, 1.2f, 1.2f);
   }
-  {
+  if (g_base->graphics->debug_draw()
+      && body_->DrawDebug(frame_def->beauty_pass())) {
+    // Debug drawing: drew the physics shape instead of the display mesh.
+  } else {
     auto xf = c.ScopedTransform();
     body_->ApplyToRenderComponent(&c);
     float s = mesh_scale_ * extra_mesh_scale_;
@@ -157,8 +167,8 @@ void PropNode::Draw(base::FrameDef* frame_def) {
         float rs = shadow_size_ * mesh_scale_ * extra_mesh_scale_ * s_scale;
         float d =
             (quality == base::GraphicsQuality::kLow ? 1.1f : 0.8f) * s_density;
-        g_base->graphics->DrawBlotch(Vector3f(pos), rs * 2.0f, 0.22f * d,
-                                     0.16f * d, 0.10f * d, d);
+        scene()->render_view()->DrawBlotch(Vector3f(pos), rs * 2.0f, 0.22f * d,
+                                           0.16f * d, 0.10f * d, d);
       }
 
       if (quality > base::GraphicsQuality::kLow) {
@@ -493,7 +503,8 @@ void PropNode::Step() {
   body_->UpdateBlending();
 
   // on happy thoughts, keep us on the 2d plane..
-  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.exists()) {
+  if (scene()->render_view()->camera()->happy_thoughts_mode()
+      && body_.exists()) {
     dBodyID b;
     const dReal *p, *v;
     b = body_->body();

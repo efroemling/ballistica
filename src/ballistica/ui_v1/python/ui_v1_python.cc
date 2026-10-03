@@ -16,6 +16,7 @@
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
+#include "ballistica/ui_v1/python/class/python_class_viewer_source.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 #include "ballistica/ui_v1/python/methods/python_methods_ui_v1.h"
 
@@ -45,6 +46,7 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassUISound>(module);
   PythonModuleBuilder::AddClass<PythonClassUITexture>(module);
   PythonModuleBuilder::AddClass<PythonClassUIMesh>(module);
+  PythonModuleBuilder::AddClass<PythonClassViewerSource>(module);
   PythonModuleBuilder::AddClass<PythonClassWidget>(module);
 }
 
@@ -89,7 +91,9 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   BA_PRECONDITION(string_edit_adapter_instance);
 
   base::ScopedSetContext ssc(nullptr);
-  g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish);
+  if (g_ui_v1->have_assets()) {
+    g_base->audio->PlaySound(g_ui_v1->assets().swish.get());
+  }
 
   PythonRef args(Py_BuildValue("(O)", string_edit_adapter_instance),
                  PythonRef::kSteal);
@@ -122,7 +126,9 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
     }
   }
 
-  g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish);
+  if (g_ui_v1->have_assets()) {
+    g_base->audio->PlaySound(g_ui_v1->assets().swish.get());
+  }
   auto py_enum = g_base->python->PyQuitType(quit_type);
   auto args = PythonRef::Stolen(Py_BuildValue("(O)", py_enum.get()));
   objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);

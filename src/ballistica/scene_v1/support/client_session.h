@@ -46,6 +46,8 @@ class ClientSession : public Session {
   auto GetMesh(int id) const -> SceneMesh*;
   auto GetCollisionMesh(int id) const -> SceneCollisionMesh*;
   auto GetMaterial(int id) const -> Material*;
+  auto GetSpazDef(int id) const -> SpazDef*;
+  auto GetDepiction(int id) const -> SceneDepiction*;
   auto GetSound(int id) const -> SceneSound*;
 
   auto base_time_buffered() const { return base_time_buffered_; }
@@ -77,6 +79,12 @@ class ClientSession : public Session {
   auto materials() const -> const std::vector<Object::Ref<Material>>& {
     return materials_;
   }
+  auto spaz_defs() const -> const std::vector<Object::Ref<SpazDef>>& {
+    return spaz_defs_;
+  }
+  auto depictions() const -> const std::vector<Object::Ref<SceneDepiction>>& {
+    return depictions_;
+  }
   /// The stream's declared asset-package table (index -> apverid),
   /// received up front with each baseline (see
   /// SessionCommand::kDeclareAssetPackage). Wire asset/string refs
@@ -90,6 +98,11 @@ class ClientSession : public Session {
   /// stamped protocol for replays). Drives per-protocol ingest
   /// branches (e.g. lang-str-tagged vs legacy string payloads).
   auto stream_protocol() const -> int { return stream_protocol_; }
+  /// Protocol 45+ streams use varint command lengths and zigzag-varint
+  /// integers (kProtocolVersionCompactStream).
+  auto compact_stream() const -> bool {
+    return stream_protocol_ >= kProtocolVersionCompactStream;
+  }
   void set_stream_protocol(int val) { stream_protocol_ = val; }
 
   auto commands() const -> const std::list<std::vector<uint8_t>>& {
@@ -127,6 +140,9 @@ class ClientSession : public Session {
  private:
   void ClearSessionObjs();
   void AddCommand(const std::vector<uint8_t>& command);
+  /// kProtocolVersionPackedCommands: expand a wire-only packed command
+  /// back into the original commands and AddCommand each.
+  void ExpandPackedCommand_(const std::vector<uint8_t>& command);
 
   /// Resolve a compact indexed asset ref (see the kAdd*Indexed
   /// commands) to its qualified ``apverid:logical/path`` name via the
@@ -145,6 +161,7 @@ class ClientSession : public Session {
 
   auto ReadByte() -> uint8_t;
   auto ReadInt32() -> int32_t;
+  auto ReadVarint_() -> uint32_t;
   void ReadInt32_2(int32_t* vals);
   void ReadInt32_3(int32_t* vals);
   void ReadInt32_4(int32_t* vals);
@@ -182,6 +199,8 @@ class ClientSession : public Session {
   std::vector<Object::Ref<SceneSound>> sounds_;
   std::vector<Object::Ref<SceneCollisionMesh>> collision_meshes_;
   std::vector<Object::Ref<Material>> materials_;
+  std::vector<Object::Ref<SpazDef>> spaz_defs_;
+  std::vector<Object::Ref<SceneDepiction>> depictions_;
 };
 
 }  // namespace ballistica::scene_v1

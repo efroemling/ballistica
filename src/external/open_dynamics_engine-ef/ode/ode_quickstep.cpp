@@ -861,7 +861,15 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 		// solve the LCP problem and get lambda and invM*constraint_force
 		IFTIMING (dTimerNow ("solving LCP problem");)
 		dRealAllocaArray (cforce,nb*6);
-		SOR_LCP (m,nb,J,jb,body,invI,lambda,cforce,rhs,lo,hi,cfm,findex,&world->qs);
+		// (ballistica) per-island iteration count: the largest per-body
+		// hint in this island, else the world's.
+		dxQuickStepParameters qs = world->qs;
+		for (i=0; i<nb; i++) {
+			if (body[i]->solver_iterations > qs.num_iterations) {
+				qs.num_iterations = body[i]->solver_iterations;
+			}
+		}
+		SOR_LCP (m,nb,J,jb,body,invI,lambda,cforce,rhs,lo,hi,cfm,findex,&qs);
 
         // ERICF TEST
         {

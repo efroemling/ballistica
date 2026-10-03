@@ -291,13 +291,13 @@ class MultiTeamSession(Session):
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import cameraflash
         from bascenev1._messages import CelebrateMessage
 
-        _bascenev1.timer(delay, classicassets.audio.boxing_bell.get().play)
+        _bascenev1.timer(delay, _classicassets.audio.boxing_bell.get().play)
 
         if announce_winning_team:
             winning_sessionteam = results.winning_sessionteam
@@ -312,7 +312,7 @@ class MultiTeamSession(Session):
 
                 # The legacy player-vs-team split existed only
                 # for translation coverage; the text is identical.
-                wins_text = classicassets.strings.multi_team.wins(
+                wins_text = _classicassets.strings.multi_team.wins(
                     name=winning_sessionteam.name
                 )
                 activity.show_zoom_message(
