@@ -189,6 +189,7 @@
  "ba_data/python/bascenev1/_gameutils.py",
  "ba_data/python/bascenev1/_generated/__init__.py",
  "ba_data/python/bascenev1/_generated/scene_asset_set.py",
+ "ba_data/python/bascenev1/_healthbar.py",
  "ba_data/python/bascenev1/_hooks.py",
  "ba_data/python/bascenev1/_level.py",
  "ba_data/python/bascenev1/_lobby.py",

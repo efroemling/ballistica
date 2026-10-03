@@ -396,6 +396,10 @@
   [
    "always_show_health_bar",
    "bool"
+  ],
+  [
+   "health_bar_display",
+   "int"
   ]
  ],
  "light": [

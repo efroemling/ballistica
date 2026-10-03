@@ -25,20 +25,31 @@ class ShieldNode : public Node {
   void SetHurt(float val);
   auto color() const -> std::vector<float> { return color_; }
   void SetColor(const std::vector<float>& vals);
-  // show_health_bar: 0 = disabled, 1 = briefly (default), 2 = always
-  auto show_health_bar() const -> int {
-    return static_cast<int>(health_bar_mode_);
+  auto always_show_health_bar() const -> bool {
+    return always_show_health_bar_;
   }
-  void set_show_health_bar(int val) {
-    health_bar_mode_ = static_cast<HealthBarMode>(val);
-  }
+  void set_always_show_health_bar(bool val) { always_show_health_bar_ = val; }
+  auto health_bar_display() const -> int { return health_bar_display_; }
+  void set_health_bar_display(int val) { health_bar_display_ = val; }
 
  private:
-  enum class HealthBarMode { kDisabled = 0, kBriefly = 1, kAlways = 2 };
+  // Values for the health_bar_display attr (mirrors Python's
+  // bascenev1.HealthBarDisplay).
+  enum class HealthBarDisplay {
+    kDefault = 0,  // Defer to always_show_health_bar.
+    kAfterDamage = 1,
+    kAlways = 2,
+    kNever = 3,
+  };
+  // What to draw, derived purely from the two attrs' current values.
+  // Unknown values (from newer hosts) count as kDefault.
+  auto EffectiveHealthBarDisplay_() const -> HealthBarDisplay;
 #if !BA_HEADLESS_BUILD
   base::BGDynamicsShadow shadow_;
 #endif  // BA_HEADLESS_BUILD
-  HealthBarMode health_bar_mode_ = HealthBarMode::kBriefly;
+  bool always_show_health_bar_{};
+  // Stored as the raw attr value so it reads back exactly as set.
+  int health_bar_display_{};
   float hurt_smoothed_ = 1.0f;
   millisecs_t last_hurt_change_time_ = 0;
   float d_r_scale_ = 0.0f;

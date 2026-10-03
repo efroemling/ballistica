@@ -219,6 +219,7 @@ from bascenev1._gameutils import (
     show_damage_count,
     Time,
 )
+from bascenev1._healthbar import HealthBarDisplay
 from bascenev1._level import Level
 from bascenev1._lobby import Lobby, Chooser, JoinInfo
 from bascenev1._map import (
@@ -440,6 +441,7 @@ __all__ = [
     'gettexture',
     'have_connected_clients',
     'have_touchscreen_input',
+    'HealthBarDisplay',
     'HitMessage',
     'fetch_host_requirements',
     'HostInfo',
