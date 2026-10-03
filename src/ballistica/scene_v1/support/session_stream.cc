@@ -1497,14 +1497,14 @@ void SessionStream::AddSpazDef(SpazDef* d) {
     Add(d, &spaz_defs_, &free_indices_spaz_defs_);
     // Every live definition costs its json on the stream and in every
     // late joiner's baseline; game code is expected to reuse one per
-    // appearance (SpazFactory.get_spaz_def), so a pile-up means
+    // look (the session player's cloud_spaz_def), so a pile-up means
     // something is minting them per spawn.
     size_t live = spaz_defs_.size() - free_indices_spaz_defs_.size();
     if (live > kLiveSpazDefsWarnThreshold) {
       BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                   "Session stream has " + std::to_string(live)
-                      + " live spaz defs; are they being cached per"
-                        " appearance? (see SpazFactory.get_spaz_def)");
+                      + " live spaz defs; are they being minted per"
+                        " spawn instead of reused per look?");
     }
   } else {
     assert(d && d->stream_id() != -1);

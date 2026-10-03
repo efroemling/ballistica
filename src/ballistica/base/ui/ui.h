@@ -282,10 +282,20 @@ class UI {
   float dev_console_button_size_scale_{1.0f};
   DevConsoleButtonStyle_ dev_console_button_style_{
       DevConsoleButtonStyle_::kGrey};
-  // Dev-console button custom position (virtual coords; active once the
-  // button has been dragged) and in-flight press/drag tracking.
+  // Dev-console button custom position (active once the button has been
+  // dragged) and in-flight press/drag tracking. The position is an
+  // offset in virtual units from an anchor point on the virtual bounds:
+  // anchor x is 0/1/2 for left/center/right and anchor y is 0/1/2 for
+  // bottom/center/top, so a button parked near a corner or edge stays
+  // put relative to it as the window resizes. (Anchor 0,0 makes the
+  // offset a plain virtual coord, which is what a drag in progress and
+  // configs predating anchors use.)
   float dev_console_button_custom_x_{};
   float dev_console_button_custom_y_{};
+  uint8_t dev_console_button_anchor_x_{};
+  uint8_t dev_console_button_anchor_y_{};
+  uint8_t dev_console_button_pre_drag_anchor_x_{};
+  uint8_t dev_console_button_pre_drag_anchor_y_{};
   float dev_console_button_press_x_{};
   float dev_console_button_press_y_{};
   float dev_console_button_drag_offset_x_{};

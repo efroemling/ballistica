@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 48;
+const int kProtocolVersionHostMin = 49;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 48;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 48;
+const int kProtocolVersionMax = 49;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 48;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 47;
+const int kProtocolVersionDevGapMax = 48;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -377,6 +377,22 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     legacy masks carry stray blue data. Every third tint defaults to
 //     white, the colorize no-op, so anything not setting one -- older
 //     hosts included -- draws exactly as before.
+//
+// 49: Spaz-def colors as an explicit choice (character-skins.md,
+//     2026-10-03). Spaz nodes gain 'use_spaz_def_color' and
+//     'use_spaz_def_highlight' (appended, default false): when on, a
+//     definition-form spaz draws its definition's own color/highlight;
+//     otherwise the color/highlight attrs, which now apply to highlight
+//     too (48 ignored the highlight attr in definition form). The
+//     color/highlight getters now read back the attrs rather than the
+//     drawn values, so late-joiner dumps reproduce the node exactly
+//     (48 baked whatever the host was drawing into the attr).
+//
+//     Also under 49 -- shield nodes gain 'health_bar_display' (an int,
+//     appended; bascenev1.HealthBarDisplay), from community PR #966
+//     reworked to sit alongside the legacy 'always_show_health_bar'
+//     bool, which it defers to while 0 (DEFAULT). Unknown values count
+//     as DEFAULT.
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

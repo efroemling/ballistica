@@ -455,6 +455,12 @@ void CharacterDef::Parse_() {
   }
   JsonRef root = doc->root();
 
+  // An empty block is a deliberate request for the standin (e.g. a
+  // viewer showing the standard spaz), not malformed input.
+  if (root.size() == 0) {
+    return;
+  }
+
   // The part's block on its own; each read from its basic tier 'b'.
   switch (form_) {
     case Form::kIcon: {

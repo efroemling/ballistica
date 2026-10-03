@@ -53,6 +53,7 @@ class AppConfig {
     kInsecureConnections,
     kScreenInsets,
     kDevConsoleButtonStyle,
+    kDevConsoleButtonAnchor,
     kLast  // Sentinel.
   };
 

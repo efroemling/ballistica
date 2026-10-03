@@ -4,7 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-import logging
 from typing import TYPE_CHECKING, overload
 
 from bacommon.assetspec import TextureSpec
@@ -293,15 +292,6 @@ class Appearance:
         self.style = 'spaz'
         self.default_color: tuple[float, float, float] | None = None
         self.default_highlight: tuple[float, float, float] | None = None
-
-        #: Character definition json, if this appearance has one. When
-        #: set, spazzes wearing this appearance use the definition form
-        #: (a :class:`bascenev1.SpazDef` -- its spaz part -- on the
-        #: node; see :func:`bascenev1.split_character`) and the explicit
-        #: media/style fields above are ignored; when None they use the
-        #: legacy explicit-media form. All builtin appearances have one
-        #: (see ``_spazcharacters``); mod-defined ones typically won't.
-        self.character_json: str | None = None
 
 
 def register_appearances() -> None:
@@ -1409,20 +1399,3 @@ def register_appearances() -> None:
     a.style = 'bunny'
     a.default_color = (1, 1, 1)
     a.default_highlight = (1, 0.5, 0.5)
-
-    # Every builtin appearance also carries a character definition
-    # (generated server-side; see _spazcharacters), which is what
-    # spazzes actually wear now. The explicit fields above remain for
-    # UI uses (icons) and as the legacy path for mod-defined
-    # appearances.
-    from bascenev1lib.actor._spazcharacters import CHARACTERS
-
-    assert bs.app.classic is not None
-    appearances = bs.app.classic.spaz_appearances
-    for cname, cjson in CHARACTERS.items():
-        if cname in appearances:
-            appearances[cname].character_json = cjson
-        else:
-            logging.warning(
-                'Character definition for unknown appearance %r.', cname
-            )

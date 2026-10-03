@@ -75,6 +75,14 @@ static const float kDevConsoleButtonHowdyScale = 1.1f;
 static const float kDevConsoleButtonHowdyHoverBrightness = 1.15f;
 static const float kDevConsoleButtonHowdyHeldBrightness = 1.3f;
 
+// Config names for the dev-console button's anchor point, indexed
+// [anchor-y][anchor-x] (y: bottom/center/top; x: left/center/right). The
+// dead center is not an anchor.
+static const char* const kDevConsoleButtonAnchorNames[3][3] = {
+    {"bottom_left", "bottom", "bottom_right"},
+    {"left", nullptr, "right"},
+    {"top_left", "top", "top_right"}};
+
 /// Flip to true to spin up a placeholder SimpleDialog at boot (with a
 /// self-animating progress bar) for iterating on the dialog's looks without a
 /// live asset resolve. Must stay false in committed code.
@@ -296,7 +304,10 @@ void UI::ApplyAppConfig() {
                             : DevConsoleButtonStyle_::kGrey;
   }
 
-  // Custom dragged position for the button (both coords or nothing).
+  // Custom dragged position for the button (both coords or nothing): an
+  // offset from the named anchor point. An absent or unrecognized anchor
+  // means bottom-left, which reads positions saved before anchors
+  // existed (plain virtual coords) as they were meant.
   auto btnx = g_base->app_config->Resolve(
       AppConfig::OptionalFloatID::kDevConsoleButtonPosX);
   auto btny = g_base->app_config->Resolve(
@@ -305,6 +316,19 @@ void UI::ApplyAppConfig() {
     dev_console_button_has_custom_pos_ = true;
     dev_console_button_custom_x_ = *btnx;
     dev_console_button_custom_y_ = *btny;
+    dev_console_button_anchor_x_ = 0;
+    dev_console_button_anchor_y_ = 0;
+    auto anchor = g_base->app_config->Resolve(
+        AppConfig::StringID::kDevConsoleButtonAnchor);
+    for (uint8_t ay = 0; ay < 3; ++ay) {
+      for (uint8_t ax = 0; ax < 3; ++ax) {
+        const char* name = kDevConsoleButtonAnchorNames[ay][ax];
+        if (name != nullptr && anchor == name) {
+          dev_console_button_anchor_x_ = ax;
+          dev_console_button_anchor_y_ = ay;
+        }
+      }
+    }
   } else {
     dev_console_button_has_custom_pos_ = false;
   }
@@ -438,6 +462,8 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
             dev_console_button_has_custom_pos_;
         dev_console_button_pre_drag_x_ = dev_console_button_custom_x_;
         dev_console_button_pre_drag_y_ = dev_console_button_custom_y_;
+        dev_console_button_pre_drag_anchor_x_ = dev_console_button_anchor_x_;
+        dev_console_button_pre_drag_anchor_y_ = dev_console_button_anchor_y_;
       }
       handled = true;
     }
@@ -498,11 +524,39 @@ void UI::HandleMouseUp(int button, float x, float y) {
       // persists its new position. Store the *clamped* position (what
       // the user actually sees) rather than the raw drag point.
       dev_console_button_dragging_ = false;
-      DevConsoleButtonCenter_(&dev_console_button_custom_x_,
-                              &dev_console_button_custom_y_);
-      PythonRef args(Py_BuildValue("(ff)", dev_console_button_custom_x_,
-                                   dev_console_button_custom_y_),
-                     PythonRef::kSteal);
+      float centerx, centery;
+      DevConsoleButtonCenter_(&centerx, &centery);
+
+      // Anchor to whichever corner or edge midpoint of the virtual bounds
+      // is nearest, storing our offset from it; the button then holds
+      // its spot relative to that point as the window resizes.
+      float vwidth = g_base->graphics->screen_virtual_width();
+      float vheight = g_base->graphics->screen_virtual_height();
+      float best_dist_sq{-1.0f};
+      for (uint8_t ay = 0; ay < 3; ++ay) {
+        for (uint8_t ax = 0; ax < 3; ++ax) {
+          if (kDevConsoleButtonAnchorNames[ay][ax] == nullptr) {
+            continue;
+          }
+          float diffx = centerx - vwidth * 0.5f * static_cast<float>(ax);
+          float diffy = centery - vheight * 0.5f * static_cast<float>(ay);
+          float dist_sq = diffx * diffx + diffy * diffy;
+          if (best_dist_sq < 0.0f || dist_sq < best_dist_sq) {
+            best_dist_sq = dist_sq;
+            dev_console_button_anchor_x_ = ax;
+            dev_console_button_anchor_y_ = ay;
+            dev_console_button_custom_x_ = diffx;
+            dev_console_button_custom_y_ = diffy;
+          }
+        }
+      }
+      PythonRef args(
+          Py_BuildValue(
+              "(ffs)", dev_console_button_custom_x_,
+              dev_console_button_custom_y_,
+              kDevConsoleButtonAnchorNames[dev_console_button_anchor_y_]
+                                          [dev_console_button_anchor_x_]),
+          PythonRef::kSteal);
       g_base->python->objs()
           .Get(BasePython::ObjID::kAppDevConsoleSaveButtonPositionCall)
           .Call(args);
@@ -540,6 +594,8 @@ void UI::HandleMouseCancel(int button, float x, float y) {
           dev_console_button_pre_drag_has_custom_pos_;
       dev_console_button_custom_x_ = dev_console_button_pre_drag_x_;
       dev_console_button_custom_y_ = dev_console_button_pre_drag_y_;
+      dev_console_button_anchor_x_ = dev_console_button_pre_drag_anchor_x_;
+      dev_console_button_anchor_y_ = dev_console_button_pre_drag_anchor_y_;
     }
   }
 }
@@ -708,7 +764,11 @@ void UI::HandleMouseMotion(float x, float y) {
       }
     }
     if (dev_console_button_dragging_) {
+      // The button follows the pointer while dragging (plain virtual
+      // coords, so anchor 0,0); it picks its real anchor when dropped.
       dev_console_button_has_custom_pos_ = true;
+      dev_console_button_anchor_x_ = 0;
+      dev_console_button_anchor_y_ = 0;
       dev_console_button_custom_x_ = x + dev_console_button_drag_offset_x_;
       dev_console_button_custom_y_ = y + dev_console_button_drag_offset_y_;
       // Motion belongs to the button while dragging it.
@@ -1085,8 +1145,11 @@ void UI::DevConsoleButtonCenter_(float* x, float* y) const {
   float vheight = g_base->graphics->screen_virtual_height();
   float bszh = DevConsoleButtonSize_() * 0.5f;
   if (dev_console_button_has_custom_pos_) {
-    *x = dev_console_button_custom_x_;
-    *y = dev_console_button_custom_y_;
+    // An offset from our anchor point on the virtual bounds.
+    *x = vwidth * 0.5f * static_cast<float>(dev_console_button_anchor_x_)
+         + dev_console_button_custom_x_;
+    *y = vheight * 0.5f * static_cast<float>(dev_console_button_anchor_y_)
+         + dev_console_button_custom_y_;
   } else {
     // Default: docked at the right edge, 75% of the way up. Virtual
     // coords span the virtual *bounds* (which cutout insets already

@@ -659,6 +659,11 @@ class SpazNodeType : public NodeType {
   BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
   // (protocol 44) Appended last per the standing wire-index rule.
   BA_SPAZ_DEF_ATTR(spaz_def, spaz_def, SetSpazDef);
+  // (protocol 49) Draw the spaz def's own color/highlight instead of
+  // the color/highlight attrs (definition form only).
+  BA_BOOL_ATTR(use_spaz_def_color, use_spaz_def_color, SetUseSpazDefColor);
+  BA_BOOL_ATTR(use_spaz_def_highlight, use_spaz_def_highlight,
+               SetUseSpazDefHighlight);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -745,7 +750,9 @@ class SpazNodeType : public NodeType {
         behavior_version(this),
         pickup_before_hitbox(this),
         pickup_release_time_ms(this),
-        spaz_def(this) {}
+        spaz_def(this),
+        use_spaz_def_color(this),
+        use_spaz_def_highlight(this) {}
 };
 
 static NodeType* node_type{};
@@ -1958,11 +1965,15 @@ void SpazNode::Step() {
   // acquisition landed), plus on a slow cadence to keep the missing
   // packages noted as wanted; physique never changes here, only the
   // look fields ApplyCharacterDef_ derives (character-skins.md).
-  if (spaz_def_.exists() && spaz_def_->def().has_spaz()
-      && !spaz_def_->def().spaz_media_ready()) {
-    auto now = static_cast<millisecs_t>(scene()->time());
-    if (media_retry_pacer_.Due(spaz_def_->def().media_pending(), now)
-        && spaz_def_->RetryMedia()) {
+  if (spaz_def_.exists() && spaz_def_->def().has_spaz()) {
+    if (!spaz_def_->def().spaz_media_ready()) {
+      auto now = static_cast<millisecs_t>(scene()->time());
+      if (media_retry_pacer_.Due(spaz_def_->def().media_pending(), now)
+          && spaz_def_->RetryMedia()) {
+        ApplyCharacterDef_();
+      }
+    } else if (!character_look_applied_) {
+      // Another node sharing our definition landed its media.
       ApplyCharacterDef_();
     }
   }
@@ -6550,19 +6561,44 @@ void SpazNode::set_highlight(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   highlight_attr_ = vals;
-  // In character form the definition owns highlight.
-  if (!CharacterForm_()) {
-    highlight_ = vals;
-  }
+  UpdateDrawColors_();
 }
+
 void SpazNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
     throw Exception("Expected float array of length 3 for color",
                     PyExcType::kValue);
   }
   color_attr_ = vals;
-  color_attr_set_ = true;
-  SetDrawColor_(vals);
+  UpdateDrawColors_();
+}
+
+void SpazNode::SetUseSpazDefColor(bool val) {
+  use_spaz_def_color_ = val;
+  UpdateDrawColors_();
+}
+
+void SpazNode::SetUseSpazDefHighlight(bool val) {
+  use_spaz_def_highlight_ = val;
+  UpdateDrawColors_();
+}
+
+void SpazNode::UpdateDrawColors_() {
+  // The definition's own colors count only once its real look is
+  // applied; until then (and in legacy form) the attrs are drawn.
+  const base::BasicSpazDef* look = (CharacterForm_() && character_look_applied_)
+                                       ? &spaz_def_->def().spaz()
+                                       : nullptr;
+  if (look && use_spaz_def_color_ && look->has_color) {
+    SetDrawColor_({look->color[0], look->color[1], look->color[2]});
+  } else {
+    SetDrawColor_(color_attr_);
+  }
+  if (look && use_spaz_def_highlight_) {
+    highlight_ = {look->highlight[0], look->highlight[1], look->highlight[2]};
+  } else {
+    highlight_ = highlight_attr_;
+  }
 }
 
 void SpazNode::SetDrawColor_(const std::vector<float>& vals) {
@@ -6997,8 +7033,7 @@ void SpazNode::ApplyStyle_() {
   arm_swing_ = female_ ? 0.3f : 0.6f;
   idle_sway_ = female_ ? 0.02f : 0.05f;
   draw_hair_ = female_hair_;
-  SetDrawColor_(color_attr_);
-  highlight_ = highlight_attr_;
+  UpdateDrawColors_();
   // Only definitions carry a third color; legacy masks have stray blue
   // data, so style form keeps it at white (the no-op).
   highlight2_ = {1.0f, 1.0f, 1.0f};
@@ -7029,6 +7064,7 @@ void SpazNode::ApplyCharacterDef_() {
   const bool look_ready =
       spaz_def_->def().has_spaz() && spaz_def_->def().spaz_media_ready();
   const base::BasicSpazDef& look = look_ready ? d : kStandardSpaz;
+  character_look_applied_ = look_ready;
 
   // Physique.
   torso_radius_ = d.torso_radius;
@@ -7045,13 +7081,9 @@ void SpazNode::ApplyCharacterDef_() {
   arm_swing_ = d.arm_swing;
   idle_sway_ = d.idle_sway;
 
-  // Look. Our color attr, once set, overrides the definition's color.
-  if (color_attr_set_ || !look.has_color) {
-    SetDrawColor_(color_attr_);
-  } else {
-    SetDrawColor_({look.color[0], look.color[1], look.color[2]});
-  }
-  highlight_ = {look.highlight[0], look.highlight[1], look.highlight[2]};
+  // Look. Color and highlight come from our attrs unless the
+  // use_spaz_def_* flags ask for the definition's own.
+  UpdateDrawColors_();
   highlight2_ = {look.highlight2[0], look.highlight2[1], look.highlight2[2]};
   eye_style_left_ = look.eye_style_left;
   eye_style_right_ = look.eye_style_right;

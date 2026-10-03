@@ -333,7 +333,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/multiteamscore.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/multiteamvictory.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/_spazcharacters.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/background.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/bomb.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/actor/controlsguide.py \

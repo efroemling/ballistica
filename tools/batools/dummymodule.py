@@ -720,6 +720,10 @@ def _special_class_cases(classname: str) -> str:
             '    billboard_cross_out: bool = False\n'
             '    #: Available on spaz node.\n'
             '    billboard_opacity: float = 0.0\n'
+            '    #: Available on spaz node.\n'
+            '    use_spaz_def_color: bool = False\n'
+            '    #: Available on spaz node.\n'
+            '    use_spaz_def_highlight: bool = False\n'
             '    slow_motion: bool = False\n'
             "    music: str = ''\n"
             '    vr_camera_offset: Sequence[float] = (0.0, 0.0, 0.0)\n'

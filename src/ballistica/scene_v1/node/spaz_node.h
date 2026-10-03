@@ -127,9 +127,12 @@ class SpazNode : public Node {
   void set_invincible(bool val) { invincible_ = val; }
   auto name_color() const -> std::vector<float> { return name_color_; }
   void SetNameColor(const std::vector<float>& vals);
-  auto highlight() const -> std::vector<float> { return highlight_; }
+  // These read back the attrs as set, not what we draw (which may be
+  // the spaz def's own; see use_spaz_def_color/highlight) -- stream
+  // dumps for late joiners rebuild nodes from these getters.
+  auto highlight() const -> std::vector<float> { return highlight_attr_; }
   void set_highlight(const std::vector<float>& vals);
-  auto color() const -> std::vector<float> { return color_; }
+  auto color() const -> std::vector<float> { return color_attr_; }
   void SetColor(const std::vector<float>& vals);
   auto hurt() const -> float { return hurt_; }
   void SetHurt(float val);
@@ -167,6 +170,12 @@ class SpazNode : public Node {
   /// docs/initiatives/character-skins.md.
   auto spaz_def() const -> SpazDef* { return spaz_def_.get(); }
   void SetSpazDef(SpazDef* val);
+  auto use_spaz_def_color() const -> bool { return use_spaz_def_color_; }
+  void SetUseSpazDefColor(bool val);
+  auto use_spaz_def_highlight() const -> bool {
+    return use_spaz_def_highlight_;
+  }
+  void SetUseSpazDefHighlight(bool val);
   auto GetKnockout() const -> float {
     return static_cast<float>(knockout_) / 255.0f;
   }
@@ -350,6 +359,8 @@ class SpazNode : public Node {
   void ApplyCharacterDef_();
   // Set the color we draw with (and the shadow color derived from it).
   void SetDrawColor_(const std::vector<float>& vals);
+  // Derive the drawn color/highlight from attrs, flags, and def.
+  void UpdateDrawColors_();
 
   // Effective-media resolution: what we actually draw and play. In the
   // legacy form (no character) these read the explicit media attrs; in
@@ -437,6 +448,11 @@ class SpazNode : public Node {
   std::string style_{"spaz"};
   Object::Ref<SpazDef> spaz_def_;
   base::MediaRetryPacer media_retry_pacer_;
+  // Whether ApplyCharacterDef_ last applied the definition's real look
+  // (vs the standin's). Definitions are shared between nodes, so
+  // another node's retry can make the media ready without us hearing
+  // about it; Step() catches up when this lags.
+  bool character_look_applied_{};
   Object::WeakRef<Player> source_player_;
   std::string curse_timer_txt_;
   base::TextGroup curse_timer_text_group_;
@@ -629,14 +645,13 @@ class SpazNode : public Node {
   float idle_arm_stiffness_{1.0f};
   float arm_swing_{0.6f};
   float idle_sway_{0.05f};
-  // The highlight attr as set; highlight_ is what we draw with (the
-  // definition's in character form).
+  // The color/highlight attrs as set; color_/highlight_ are what we
+  // draw with (UpdateDrawColors_): the definition's own instead when
+  // in definition form with the matching use_spaz_def_* flag on.
   std::vector<float> highlight_attr_{0.5f, 0.5f, 0.5f};
-  // The color attr as set, and whether it has been; color_ is what we
-  // draw with (in character form the definition's color until the
-  // attr is set, which then overrides it).
   std::vector<float> color_attr_{1.0f, 1.0f, 1.0f};
-  bool color_attr_set_{};
+  bool use_spaz_def_color_{};
+  bool use_spaz_def_highlight_{};
   bool pirate_{};
   bool flippers_{};
   bool frosty_{};

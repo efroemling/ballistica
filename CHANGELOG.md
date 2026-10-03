@@ -1,4 +1,21 @@
-### 1.8.0 (build 23029, api 9, 2026-10-02)
+### 1.8.0 (build 23030, api 9, 2026-10-03)
+- Fixed bots (and other non-cloud characters) drawing with their character
+  definition's highlight instead of their own (e.g. Impact Bot Pro's red
+  hair showing up green). Only cloud-profile looks use character
+  definitions now; everything else uses the classic appearance path.
+- Spaz nodes gained `use_spaz_def_color` and `use_spaz_def_highlight`
+  (default False): when set, a spaz wearing a `bascenev1.SpazDef` draws the
+  definition's own color/highlight instead of the `color`/`highlight`
+  attrs. The `highlight` attr is now honored for definition-form spazzes,
+  and the `color`/`highlight` attrs read back as set. Scene protocol 49.
+- Fixed a spaz sharing a `bascenev1.SpazDef` with another sometimes keeping
+  the stand-in look (gray hair, default eyes) after the definition's media
+  finished loading.
+- Shield nodes gained `health_bar_display`, a `bascenev1.HealthBarDisplay`
+  value (`DEFAULT`, `AFTER_DAMAGE`, `ALWAYS`, `NEVER`) controlling when
+  their health bar shows; `DEFAULT` defers to the existing
+  `always_show_health_bar`, which keeps working. Based on a community PR
+  (#966) by anasdhaoidi.
 - `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
   text) whenever an edit is applied: a string-edit dialog closing with a value,
   inline editing ending via return or focus leaving the widget, or the clear

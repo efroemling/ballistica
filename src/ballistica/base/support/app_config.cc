@@ -236,6 +236,8 @@ void AppConfig::SetupEntries_() {
   // UI::ApplyAppConfig.
   string_entries_[StringID::kDevConsoleButtonStyle] =
       StringEntry("Dev Console Button Style", "grey");
+  string_entries_[StringID::kDevConsoleButtonAnchor] =
+      StringEntry("Dev Console Button Anchor", "");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);

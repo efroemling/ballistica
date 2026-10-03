@@ -247,12 +247,10 @@ class CharacterViewer(bui.Viewer):
         Pass None for the standard one.
         """
         if spaz_json is None:
-            classic = bs.app.classic
-            assert classic is not None
-            character_json = classic.spaz_appearances['Spaz'].character_json
-            assert character_json is not None
-            spaz_json = bs.split_character(character_json).spaz
-            assert spaz_json is not None
+            # A definition with no spaz block is the engine's standard
+            # spaz (the standin) in every respect; the client carries
+            # no character json of its own (cloud-profiles D11).
+            spaz_json = '{}'
 
         # Nothing to do if that's who we're showing.
         if self._spaz and spaz_json == self._spaz_json:
@@ -269,14 +267,15 @@ class CharacterViewer(bui.Viewer):
                 self._spaz.spaz_def = self._spaz_def
                 return
 
-            # No color attrs: the definition alone decides how our
-            # character looks, colors included (set, they would
-            # override it).
+            # The definition alone decides how our character looks,
+            # colors included.
             self._spaz = bs.newnode(
                 'spaz',
                 attrs={
                     'behavior_version': 2,
                     'spaz_def': self._spaz_def,
+                    'use_spaz_def_color': True,
+                    'use_spaz_def_highlight': True,
                     'materials': [self._spaz_material],
                     'roller_materials': [self._roller_material],
                     'is_area_of_interest': False,

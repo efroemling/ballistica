@@ -1186,6 +1186,14 @@
   [
    "spaz_def",
    "spaz-def"
+  ],
+  [
+   "use_spaz_def_color",
+   "bool"
+  ],
+  [
+   "use_spaz_def_highlight",
+   "bool"
   ]
  ],
  "region": [

@@ -224,7 +224,6 @@
  "ba_data/python/bascenev1lib/activity/multiteamscore.py",
  "ba_data/python/bascenev1lib/activity/multiteamvictory.py",
  "ba_data/python/bascenev1lib/actor/__init__.py",
- "ba_data/python/bascenev1lib/actor/_spazcharacters.py",
  "ba_data/python/bascenev1lib/actor/background.py",
  "ba_data/python/bascenev1lib/actor/bomb.py",
  "ba_data/python/bascenev1lib/actor/controlsguide.py",

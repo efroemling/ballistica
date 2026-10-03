@@ -136,18 +136,15 @@ class Spaz(bs.Actor):
         # session-level bs.SpazDef built from an opaque definition; the
         # node draws, voices, and proportions itself from it) or the
         # legacy explicit-media form (every mesh/texture/sound named
-        # individually plus a style preset). A cloud look (a player's
-        # cloud profile, composed by the master server) always takes the
-        # definition form; otherwise builtin appearances carry a
-        # definition and mod-defined ones generally use the legacy form.
+        # individually plus a style preset). Only a cloud look (a
+        # player's cloud profile, composed by the master server) takes
+        # the definition form; everything else -- bots, offline play,
+        # players with no cloud look -- wears the legacy form (the
+        # client carries no character json of its own; cloud-profiles
+        # D11).
         media_attrs: dict[str, Any]
-        appearance = classic.spaz_appearances[character]
         if cloud_spaz_def is not None:
             media_attrs = {'spaz_def': cloud_spaz_def}
-        elif appearance.character_json is not None:
-            media_attrs = {
-                'spaz_def': factory.get_spaz_def(character),
-            }
         else:
             media = factory.get_media(character)
             media_attrs = {

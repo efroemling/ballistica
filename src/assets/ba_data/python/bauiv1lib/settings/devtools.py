@@ -38,7 +38,11 @@ _devstrs = _classicassets.strings.settings.dev_tools
 _SHOW_BUTTON_KEY = 'Show Dev Console Button'
 _BUTTON_SIZE_KEY = 'Dev Console Button Size'
 _BUTTON_STYLE_KEY = 'Dev Console Button Style'
-_BUTTON_POS_KEYS = ('Dev Console Button Pos X', 'Dev Console Button Pos Y')
+_BUTTON_POS_KEYS = (
+    'Dev Console Button Pos X',
+    'Dev Console Button Pos Y',
+    'Dev Console Button Anchor',
+)
 
 # How often a size drag re-applies the config (the button resizes live).
 _SIZE_DRAG_INTERVAL = 0.1

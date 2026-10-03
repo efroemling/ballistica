@@ -40,19 +40,14 @@ import babase
 import bascenev1 as bs
 import _bascenev1
 
-
-def _spaz(character_json: str) -> str:
-    spaz = bs.split_character(character_json).spaz
-    assert spaz is not None
-    return spaz
+# An empty spaz block is the standin; lifetimes don't care about looks
+# (and the client carries no character json of its own to borrow).
+_SPAZ_JSON = '{{}}'
 
 
 def _churn() -> None:
-    from bascenev1lib.actor._spazcharacters import CHARACTERS
-
     act = bs.get_foreground_host_activity()
     assert act is not None
-    names = sorted(CHARACTERS)
     problems: list[str] = []
     with act.context:
         baseline = _bascenev1.get_spaz_def_count()
@@ -62,9 +57,8 @@ def _churn() -> None:
         for cycle in range({_CYCLES}):
             chars = []
             nodes = []
-            for i in range({_PER_CYCLE}):
-                name = names[(cycle * {_PER_CYCLE} + i) % len(names)]
-                char = bs.SpazDef(_spaz(CHARACTERS[name]))
+            for _i in range({_PER_CYCLE}):
+                char = bs.SpazDef(_SPAZ_JSON)
                 node = bs.newnode('spaz', attrs={{'spaz_def': char}})
                 # Read-back must hand out a live wrapper for the same
                 # native object even though ours is still alive.
@@ -100,7 +94,7 @@ def _churn() -> None:
         # One more: a node created and deleted while the Python ref is
         # gone before the node is (the actor's normal shape).
         node = bs.newnode(
-            'spaz', attrs={{'spaz_def': bs.SpazDef(_spaz(CHARACTERS['Spaz']))}}
+            'spaz', attrs={{'spaz_def': bs.SpazDef(_SPAZ_JSON)}}
         )
         gc.collect()
         if _bascenev1.get_spaz_def_count() != baseline + 1:
