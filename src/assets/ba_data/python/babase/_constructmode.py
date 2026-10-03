@@ -328,6 +328,7 @@ class ConstructAppMode(AppMode):
                 allow_downloads=True,
                 on_download_starting=self._on_download_starting,
                 on_progress=make_progress_reporter(self._on_resolve_progress),
+                label='construct-mode',
             )
             return _ResolveOutcome.SUCCESS
         except AssetAuthRequiredError as exc:

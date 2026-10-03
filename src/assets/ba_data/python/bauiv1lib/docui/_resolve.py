@@ -451,7 +451,9 @@ def _resolve_packages_blocking(
     def _kick() -> None:
         async def _run() -> None:
             try:
-                await bui.app.assets.resolve(apvernums, language=locale)
+                await bui.app.assets.resolve(
+                    apvernums, language=locale, label='doc-ui page'
+                )
             except Exception as exc:
                 box['error'] = exc
             finally:
@@ -461,8 +463,12 @@ def _resolve_packages_blocking(
 
     bui.pushcall(_kick, from_other_thread=True)
     if not done.wait(timeout=30.0):
+        # Say what the (serialized) resolve queue was busy with; a
+        # timeout here usually means waiting behind someone else's
+        # resolve, not trouble with these packages.
         raise RuntimeError(
             f'Timed out resolving doc-ui asset-packages: {apvernums}.'
+            f' Resolve queue: {bui.app.assets.describe_activity()}'
         )
     if 'error' in box:
         raise box['error']

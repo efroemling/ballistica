@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261002b"
+// Generated from: "a-0.babuiltinassets.261003"
 
 #include <memory>
 
@@ -342,6 +342,26 @@ class BuiltinStrings {
     ///
     /// English: "Your account was rejected. Are you signed in?"
     static auto AccountRejected() -> std::shared_ptr<const LangStr>;
+
+    /// Error shown when joining a game fails because the game uses an asset
+    /// package the player's account may not use; the placeholders are the
+    /// package's name and its owner's account tag.
+    ///
+    /// English: "This game uses asset package '{package}' by {owner}, which
+    /// your account does not have access to."
+    static auto AssetPackageAccessDenied(LangStr::Sub package,
+                                         LangStr::Sub owner)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error shown when joining a game fails because the game uses an asset
+    /// package that requires signing in with an account allowed to use it; the
+    /// placeholders are the package's name and its owner's account tag.
+    ///
+    /// English: "This game uses asset package '{package}' by {owner}, which
+    /// needs you to be signed in with an account that has access to it."
+    static auto AssetPackageAuthRequired(LangStr::Sub package,
+                                         LangStr::Sub owner)
+        -> std::shared_ptr<const LangStr>;
 
     /// Generic error screen-message shown to a player whose attempt to join a
     /// party or server failed due to an authentication or server error (with no

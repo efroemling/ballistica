@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261002b`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261003`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 387
+# ba_meta require asset-package 390
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261002b
-_ASSET_PACKAGE = ApverNum(387)
+# a-0.babuiltinassets.261003
+_ASSET_PACKAGE = ApverNum(390)
 
 if TYPE_CHECKING:
     import datetime
@@ -530,6 +530,36 @@ if TYPE_CHECKING:
         #:
         #:     English: "Your account was rejected. Are you signed in?"
         account_rejected: LangStr
+
+        def asset_package_access_denied(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package the player's account may not use; the placeholders
+                are the package's name and its owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which your account does not have access to."
+            """
+
+        def asset_package_auth_required(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package that requires signing in with an account allowed
+                to use it; the placeholders are the package's name and its
+                owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which needs you to be signed in with an account that has access
+                to it."
+            """
 
         #: ::
         #:
@@ -1545,8 +1575,8 @@ if TYPE_CHECKING:
     #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 133 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 128 more). Full list in source.
+    #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 130 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 27 assets (``account_v2_icon``, ``black``,
@@ -1621,6 +1651,8 @@ _TREE = {
         },
         'net': {
             'account_rejected': (),
+            'asset_package_access_denied': ('package', 'owner'),
+            'asset_package_auth_required': ('package', 'owner'),
             'auth_error': (),
             'connected_to_game': ('name',),
             'connected_to_party': ('name',),

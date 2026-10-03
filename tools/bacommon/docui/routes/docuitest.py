@@ -99,6 +99,14 @@ class LiveTimes(TestRoute, path='/livetimes'):
 
 @ioprepped
 @dataclass
+class TextWrapping(TestRoute, path='/textwrapping'):
+    """Titles, subtitles and footnotes word-wrapped to their columns."""
+
+    debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+
+@ioprepped
+@dataclass
 class Animation(TestRoute, path='/animation'):
     """Decorations animated by keyframe client-effects."""
 
@@ -362,6 +370,7 @@ AnyTestRoute = (
     | DisplayItems
     | TextImages
     | LiveTimes
+    | TextWrapping
     | Animation
     | Depictions
     | Names

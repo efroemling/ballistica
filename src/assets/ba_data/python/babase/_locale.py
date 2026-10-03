@@ -2,6 +2,7 @@
 #
 """Locale related functionality."""
 
+import time
 from typing import TYPE_CHECKING, override, assert_never
 
 from functools import cache
@@ -16,6 +17,10 @@ if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
 
     import babase
+
+#: A language switch the user cancels after waiting at least this long
+#: is logged as a WARNING (a stalled switch worth hearing about).
+_SLOW_SWITCH_CANCEL_SECONDS = 5.0
 
 
 def _call_on_complete(
@@ -283,6 +288,7 @@ class LocaleSubsystem(AppSubsystem):
                     progress=0.0 if progress is None else progress,
                 )
 
+        start = time.monotonic()
         try:
             await _babase.app.assets.resolve(
                 loaded_asset_package_apvernums(),
@@ -290,17 +296,34 @@ class LocaleSubsystem(AppSubsystem):
                 language=locale,
                 on_download_starting=ensure_dialog,
                 on_progress=make_progress_reporter(on_update),
+                label=f'locale switch -> {locale.value}',
             )
         except asyncio.CancelledError:
             # User hit Cancel -- bow out, leave the current locale in place.
             if dialog is not None:
                 dialog.dismiss()
-            applog.info('Language switch to %s cancelled.', locale.long_value)
+            # A cancel after a long wait means the user gave up on a
+            # stalled switch; make that one reach us (the resolve's own
+            # summary line says where the time went).
+            elapsed = time.monotonic() - start
+            (
+                applog.warning
+                if elapsed >= _SLOW_SWITCH_CANCEL_SECONDS
+                else applog.info
+            )(
+                'Language switch to %s cancelled by the user after %.1fs.',
+                locale.long_value,
+                elapsed,
+            )
             return False
         except Exception:
             # Resolve failed -- the registry + native table are unchanged
             # on failure, so just surface the error and stay put.
-            applog.exception('Error switching to locale %s.', locale.name)
+            applog.exception(
+                'Error switching to locale %s (after %.1fs).',
+                locale.name,
+                time.monotonic() - start,
+            )
             if dialog is not None:
                 strs = _builtinassets.strings
                 dialog.update(

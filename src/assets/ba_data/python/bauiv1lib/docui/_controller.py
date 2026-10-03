@@ -484,10 +484,7 @@ class DocUIController:
             error_msg = uistat.server_error.spec
         elif error_type is self.ErrorType.NOT_SIGNED_IN:
             status_code = dui2.ResponseStatus.NOT_SIGNED_IN_ERROR
-            # NEEDS_TRANSLATION: no common-package string for this yet.
-            error_msg = LangStrSpecValue.literal(
-                'You must be signed in to see this.'
-            )
+            error_msg = uistat.must_sign_in_to_view.spec
         else:
             assert_never(error_type)
 

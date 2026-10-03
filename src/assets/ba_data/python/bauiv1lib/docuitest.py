@@ -118,6 +118,12 @@ class TestDocUIV2Controller(
                 from bauiv1lib.docuitestlivetimes import test_page_live_times
 
                 return test_page_live_times(route)
+            case rt.TextWrapping():
+                from bauiv1lib.docuitesttextwrap import (
+                    test_page_text_wrapping,
+                )
+
+                return test_page_text_wrapping(route)
             case rt.Animation():
                 from bauiv1lib.docuitestanimation import test_page_animation
 
@@ -242,7 +248,6 @@ def _test_v2_page_root(
         return dui2.Button(
             label=LangStrSpecValue.literal(str(num)),
             size=(150, 100),
-            style=dui2.ButtonStyle.SQUARE,
             action=reload,
         )
 
@@ -298,25 +303,21 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.nav.browse.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Test2().browse(),
                         ),
                         dui2.Button(
                             label=strs.nav.replace.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Test2().replace(),
                         ),
                         dui2.Button(
                             label=strs.nav.close.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=dui2.Local(close_window=True),
                         ),
                         dui2.Button(
                             label=strs.common.invalid_request.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             # A path with no route, to exercise error
                             # handling; routes can't express that (by
                             # design) so we build it by hand.
@@ -326,7 +327,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.effects.immediate_client_effects.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=dui2.Local(
                                 # V2 effect forms: l-string text decoded
                                 # in the client's locale + a typed sound
@@ -364,19 +364,16 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.effects.response_client_effects.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Root(test_effects=True).browse(),
                         ),
                         dui2.Button(
                             label=strs.effects.immediate_local_action.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.TestAction(testparam=123).local(),
                         ),
                         dui2.Button(
                             label=strs.effects.response_local_action.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Root(test_action=True).browse(),
                         ),
                     ],
@@ -391,78 +388,72 @@ def _test_v2_page_root(
                                 else strs.common.show_debug.spec
                             ),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Root(debug=not debug).replace(),
                         ),
                         dui2.Button(
                             label=strs.nav.slow_browse.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Slow().browse(),
                         ),
                         dui2.Button(
                             label=strs.nav.slow_replace.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Slow().replace(),
                         ),
                         dui2.Button(
                             label=strs.common.timed_actions.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.TimedActions().browse(),
                         ),
                         dui2.Button(
                             label=strs.web.web_get.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.WebTestGet().browse(),
                         ),
                         dui2.Button(
                             label=strs.web.web_post.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.WebTestPost().browse(),
                         ),
                         dui2.Button(
                             label=strs.items.display_items.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.DisplayItems().browse(),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Text Images'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.TextImages().browse(),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Live Times'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.LiveTimes().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Text Wrapping'),
+                            size=(120, 80),
+                            action=rt.TextWrapping().browse(),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Animation'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Animation().browse(),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Depictions'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Depictions().browse(),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Names'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Names().browse(),
                         ),
                         dui2.Button(
@@ -474,7 +465,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.layout.empty_page.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.EmptyPage().browse(),
                         ),
                     ],
@@ -485,26 +475,22 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.cloud.cloud_msg_get.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.CloudMsgTestGet().browse(),
                         ),
                         dui2.Button(
                             label=strs.cloud.cloud_msg_post.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.CloudMsgTestPost().browse(),
                         ),
                         dui2.Button(
                             label=strs.layout.bounds_tests.spec,
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.BoundsTests().browse(),
                         ),
                         # Dev-only page, so baked literal labels.
                         dui2.Button(
                             label=LangStrSpecValue.literal('Widgets Small'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.SMALL
                             ),
@@ -514,7 +500,6 @@ def _test_v2_page_root(
                                 'Widgets Small Tall'
                             ),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.SMALL_TALL
                             ),
@@ -524,7 +509,6 @@ def _test_v2_page_root(
                                 'Widgets Small Taller'
                             ),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.SMALL_TALLER
                             ),
@@ -532,7 +516,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=LangStrSpecValue.literal('Widgets Wide'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.WIDE
                             ),
@@ -540,7 +523,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=LangStrSpecValue.literal('Widgets Wider'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.WIDER
                             ),
@@ -548,7 +530,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=LangStrSpecValue.literal('Widgets Large'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Widgets().browse(
                                 layout=dui2.WindowLayout.LARGE
                             ),
@@ -556,7 +537,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=LangStrSpecValue.literal('Nav Test'),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.NavTest().browse(
                                 layout=dui2.WindowLayout.SMALL
                             ),
@@ -573,7 +553,6 @@ def _test_v2_page_root(
                                 layout.name.replace('_', ' ').title()
                             ),
                             size=(120, 80),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=rt.Sections().browse(layout=layout),
                         )
                         for layout in dui2.WindowLayout
@@ -589,7 +568,6 @@ def _test_v2_page_root(
                                     layout.name.replace('_', ' ').title()
                                 ),
                                 size=(120, 80),
-                                style=dui2.ButtonStyle.SQUARE,
                                 action=rt.WindowLayouts().browse(layout=layout),
                             )
                             for layout in dui2.WindowLayout
@@ -600,7 +578,6 @@ def _test_v2_page_root(
                                     f'{layout.name.title()} Fit'
                                 ),
                                 size=(120, 80),
-                                style=dui2.ButtonStyle.SQUARE,
                                 action=rt.WideFit(
                                     wider=layout is dui2.WindowLayout.WIDER
                                 ).browse(layout=layout),
@@ -655,7 +632,6 @@ def _test_v2_page_root(
                             texture=_builtinassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                             debug=debug,
                         ),
                     ],
@@ -671,7 +647,6 @@ def _test_v2_page_root(
                     buttons=[
                         dui2.Button(
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=reload,
                             decorations=[
                                 dui2.Text(
@@ -697,7 +672,6 @@ def _test_v2_page_root(
                         ),
                         dui2.Button(
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=reload,
                             decorations=[
                                 dui2.Image(
@@ -719,7 +693,6 @@ def _test_v2_page_root(
                         ),
                         dui2.Button(
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                             action=reload,
                             decorations=[
                                 dui2.Image(
@@ -746,7 +719,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.common.foo.spec,
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                             scale=0.4,
                             padding_left=100,
                             padding_right=200,
@@ -758,9 +730,7 @@ def _test_v2_page_root(
                 dui2.ButtonRow(
                     subtitle=strs.layout.subtitle_only.spec,
                     buttons=[
-                        dui2.Button(
-                            size=(200, 120), style=dui2.ButtonStyle.MEDIUM
-                        ),
+                        dui2.Button(size=(200, 120)),
                     ],
                 ),
                 # Same again, so a subtitle-only row can be judged
@@ -770,9 +740,7 @@ def _test_v2_page_root(
                     # Dev-only page, so a baked literal.
                     subtitle=LangStrSpecValue.literal('Subtitle only 2'),
                     buttons=[
-                        dui2.Button(
-                            size=(200, 120), style=dui2.ButtonStyle.MEDIUM
-                        ),
+                        dui2.Button(size=(200, 120)),
                     ],
                 ),
                 dui2.ButtonRow(
@@ -803,7 +771,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=strs.common.hello_there.spec,
                             size=(200, 120),
-                            style=dui2.ButtonStyle.MEDIUM,
                             color=(0.7, 0.7, 0.9, 1),
                         ),
                     ],
@@ -841,7 +808,6 @@ def _test_v2_page_root(
                         dui2.Button(
                             label=LangStrSpecValue.literal(str(i + 1)),
                             size=(150, 100),
-                            style=dui2.ButtonStyle.SQUARE,
                         )
                         for i in range(16)
                     ],

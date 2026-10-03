@@ -1,4 +1,4 @@
-### 1.8.0 (build 23028, api 9, 2026-10-02)
+### 1.8.0 (build 23029, api 9, 2026-10-02)
 - `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
   text) whenever an edit is applied: a string-edit dialog closing with a value,
   inline editing ending via return or focus leaving the widget, or the clear

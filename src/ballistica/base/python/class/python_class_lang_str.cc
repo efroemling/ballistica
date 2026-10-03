@@ -167,16 +167,39 @@ auto PythonClassLangStr::tp_hash(PythonClassLangStr* self) -> Py_hash_t {
   return hashval == -1 ? -2 : hashval;
 }
 
-auto PythonClassLangStr::Evaluate(PythonClassLangStr* self) -> PyObject* {
+/// Parse the optional ``wrap`` keyword shared by the evaluate methods.
+static auto ParseEvaluateWrapArg(PyObject* args, PyObject* keywds, bool* wrap)
+    -> bool {
+  int wrap_int{1};
+  static const char* kwlist[] = {"wrap", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|$p",
+                                   const_cast<char**>(kwlist), &wrap_int)) {
+    return false;
+  }
+  *wrap = wrap_int != 0;
+  return true;
+}
+
+auto PythonClassLangStr::Evaluate(PythonClassLangStr* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  return PyUnicode_FromString(self->value()->Evaluate().c_str());
+  bool wrap{};
+  if (!ParseEvaluateWrapArg(args, keywds, &wrap)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(self->value()->Evaluate(nullptr, wrap).c_str());
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassLangStr::EvaluateTimed(PythonClassLangStr* self) -> PyObject* {
+auto PythonClassLangStr::EvaluateTimed(PythonClassLangStr* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
+  bool wrap{};
+  if (!ParseEvaluateWrapArg(args, keywds, &wrap)) {
+    return nullptr;
+  }
   std::optional<int64_t> until_change;
-  auto text = self->value()->Evaluate(&until_change);
+  auto text = self->value()->Evaluate(&until_change, wrap);
   if (until_change.has_value()) {
     return Py_BuildValue("(sd)", text.c_str(),
                          static_cast<double>(*until_change) / 1000.0);
@@ -292,19 +315,24 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "localized. Items must be language-strings -- wrap plain text\n"
      "with :meth:`from_text`. Raises ValueError for more than 256\n"
      "items or a result nested too deeply.\n"},
-    {"evaluate", (PyCFunction)Evaluate, METH_NOARGS,
-     "evaluate() -> str\n"
+    {"evaluate", (PyCFunction)Evaluate, METH_VARARGS | METH_KEYWORDS,
+     "evaluate(*, wrap: bool = True) -> str\n"
      "\n"
      "Evaluate to flat display text in the client's locale.\n"
      "\n"
      "Fail-visible: structural problems yield a ``LANGSTR_ERROR:...``\n"
-     "sentinel string (with a logged warning) rather than raising.\n"},
-    {"evaluate_timed", (PyCFunction)EvaluateTimed, METH_NOARGS,
-     "evaluate_timed() -> tuple[str, float | None]\n"
+     "sentinel string (with a logged warning) rather than raising.\n"
+     "\n"
+     "Pass ``wrap=False`` to skip the string's line-wrapping hints\n"
+     "(for code wrapping the text itself); newlines in the text are\n"
+     "kept either way.\n"},
+    {"evaluate_timed", (PyCFunction)EvaluateTimed, METH_VARARGS | METH_KEYWORDS,
+     "evaluate_timed(*, wrap: bool = True) -> tuple[str, float | None]\n"
      "\n"
      "Evaluate, also returning how soon the text changes.\n"
      "\n"
-     "Returns the text :meth:`evaluate` would, plus the seconds until\n"
+     "Returns the text :meth:`evaluate` would (``wrap`` works the\n"
+     "same), plus the seconds until\n"
      "it would next read differently -- a number only for time-varying\n"
      "strings (those holding a moment, such as a countdown), else\n"
      "``None``. Widgets showing a language-string handle this\n"

@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING, Annotated, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._assetresolvetrace import ResolveTrace, Tier1Attempt
 from babase._logging import assetmanagerlog as logger
 
 from efro.error import (
@@ -347,6 +348,21 @@ _RESOLVE_ERROR_TYPES: dict[
     AssetPackageResolveError.CLIENT_TOO_OLD: AssetClientTooOldError,
     AssetPackageResolveError.CONTENT: AssetContentError,
 }
+
+
+def _attempt_outcome(exc: AssetResolveError) -> str:
+    """Short description of a failed Tier-1 attempt, for resolve traces.
+
+    Separates the cases a diagnosis hinges on: our own hop never got
+    through (a comm error -- no connection), versus the server answering
+    with a failure code (``INTERNAL`` being the server-side trouble that
+    retries exist for).
+    """
+    if isinstance(exc.__cause__, CommunicationError):
+        return f'comm-error ({exc.__cause__})'
+    if exc.code is not None:
+        return f'server {exc.code.name}'
+    return f'error ({exc})'
 
 
 @dataclass
@@ -772,6 +788,12 @@ class AssetSubsystem(AppSubsystem):
         # loop on first use.
         self._gate = _ResolveGate()
 
+        # Where each resolve's time goes (see _assetresolvetrace): the one
+        # admitted through the gate, plus those still queued at it.
+        # Logic-thread writes; describe_activity() reads from anywhere.
+        self._active_trace: ResolveTrace | None = None
+        self._queued_traces: list[ResolveTrace] = []
+
         # Background acquirer for wanted packages (see _wanted_loop):
         # per-apvernum earliest next attempt (monotonic), the transient
         # backoff each is on, and the wake-up the native hook and
@@ -1162,6 +1184,7 @@ class AssetSubsystem(AppSubsystem):
         on_progress: Callable[[ResolveProgress], None] | None = None,
         language: Locale | None = None,
         background: bool = False,
+        label: str | None = None,
     ) -> ResolveResult:
         """Make every requested asset-package-version available natively.
 
@@ -1196,6 +1219,11 @@ class AssetSubsystem(AppSubsystem):
         a decorative/prefetch resolve that queues behind -- and never
         blocks -- foreground (interactive) resolves; foreground is the
         default and matches all interactive/dialog-backed callers.
+
+        ``label`` names the caller (``'doc-ui page'``, ``'locale switch
+        -> deu'``, ...) in diagnostics: a slow or troubled resolve logs a
+        summary of where its time went, and :meth:`describe_activity`
+        names whatever is holding the queue.
         """
         assert _babase.in_logic_thread()
 
@@ -1209,14 +1237,33 @@ class AssetSubsystem(AppSubsystem):
             background,
             apvernums,
         )
-        wait_start = time.monotonic()
-        await self._gate.acquire(background=background)
+        trace = ResolveTrace(
+            label=label or '(unlabeled)',
+            apvernums=list(apvernums),
+            background=background,
+        )
+        self._queued_traces.append(trace)
+        try:
+            await self._gate.acquire(background=background)
+        except BaseException:
+            # (Cancelled while queued: the caller gave up waiting.)
+            self._queued_traces.remove(trace)
+            trace.finished('cancelled while queued')
+            self._log_trace_summary(trace)
+            raise
+        self._queued_traces.remove(trace)
+        trace.admitted()
+        trace.network_available_start, trace.transport_connected_start = (
+            self._net_state()
+        )
+        self._active_trace = trace
         logger.debug(
             'resolve: admitted (background=%s) after %.3fs wait for %s.',
             background,
-            time.monotonic() - wait_start,
+            trace.queue_seconds,
             apvernums,
         )
+        outcome = 'ok'
 
         self._progress = ResolveProgress()
         self._progress_cb = on_progress
@@ -1235,6 +1282,7 @@ class AssetSubsystem(AppSubsystem):
                 apvernums, allow_downloads, on_download_starting, language
             )
         except Exception as exc:
+            outcome = f'failed ({type(exc).__name__}: {exc})'
             # TLS cert-verify failures against our own nodes are
             # generally either a wrong system clock or something
             # *between* us and the node (TLS-intercepting antivirus/
@@ -1242,7 +1290,17 @@ class AssetSubsystem(AppSubsystem):
             # distinguish those before the error continues upward.
             await self._maybe_log_tls_diagnostics(exc)
             raise
+        except BaseException:
+            outcome = 'cancelled'
+            raise
         finally:
+            trace.fetch_bytes = self._progress.bytes_done
+            trace.network_available_end, trace.transport_connected_end = (
+                self._net_state()
+            )
+            trace.finished(outcome)
+            self._active_trace = None
+            self._log_trace_summary(trace)
             # Tear down the per-resolve download pool (if this resolve
             # created one) so its worker threads don't outlive the batch.
             # cancel_futures drops any unstarted fetches; idle workers (the
@@ -1256,6 +1314,56 @@ class AssetSubsystem(AppSubsystem):
             self._bundle_hidden = False
             await self._gate.release()
             logger.debug('resolve: released (background=%s).', background)
+
+    def describe_activity(self) -> str:
+        """Describe what the resolve queue is doing right now.
+
+        For diagnostics -- e.g. a caller that timed out waiting on a
+        resolve can say what it was stuck behind. Safe to call from any
+        thread (a best-effort snapshot).
+        """
+        active = self._active_trace
+        queued = list(self._queued_traces)
+        avail, connected = self._net_state()
+        parts = [
+            (
+                f'running: {active.describe_now()}'
+                if active is not None
+                else 'running: nothing'
+            ),
+            f'queued: {len(queued)}'
+            + (
+                ' (' + '; '.join(t.describe_now() for t in queued) + ')'
+                if queued
+                else ''
+            ),
+            f'network available={avail}, transport connected={connected}',
+        ]
+        return '; '.join(parts) + '.'
+
+    @staticmethod
+    def _net_state() -> tuple[bool | None, bool | None]:
+        """(OS network available, cloud transport connected), if known."""
+        app = _babase.app
+        try:
+            avail: bool | None = app.net.available
+        except Exception:
+            avail = None
+        plus = app.plus
+        try:
+            connected = None if plus is None else plus.cloud.is_connected()
+        except Exception:
+            connected = None
+        return avail, connected
+
+    @staticmethod
+    def _log_trace_summary(trace: ResolveTrace) -> None:
+        """Log a slow/troubled resolve's account of where time went."""
+        level = trace.summary_level_name()
+        if level == 'WARNING':
+            logger.warning('%s', trace.summary())
+        elif level == 'INFO':
+            logger.info('%s', trace.summary())
 
     def _emit_progress(self) -> None:
         """Hand the current progress snapshot to the on_progress callback.
@@ -1796,7 +1904,9 @@ class AssetSubsystem(AppSubsystem):
                     ', '.join(str(a) for a in targets),
                 )
                 try:
-                    await self.resolve(targets, background=True)
+                    await self.resolve(
+                        targets, background=True, label='full-quality retry'
+                    )
                 except AssetResolveAbortedError:
                     return
                 except AssetResolveError as exc:
@@ -1902,7 +2012,9 @@ class AssetSubsystem(AppSubsystem):
                     continue
                 apvernum = candidates[0][1]
                 try:
-                    await self.resolve([apvernum], background=True)
+                    await self.resolve(
+                        [apvernum], background=True, label='wanted package'
+                    )
                 except AssetResolveAbortedError:
                     return
                 except AssetResolveError as exc:
@@ -2389,11 +2501,29 @@ class AssetSubsystem(AppSubsystem):
         attempt = 1
         max_attempts = 3
         while True:
+            trace = self._active_trace
+            start = time.monotonic()
             try:
-                return await self._tier1_manifests(apvernum, language)
+                result = await self._tier1_manifests(apvernum, language)
+                if trace is not None:
+                    trace.tier1_attempts.append(
+                        Tier1Attempt(
+                            apvernum, attempt, time.monotonic() - start, 'ok'
+                        )
+                    )
+                return result
             except AssetResolveAbortedError:
                 raise
             except AssetResolveError as exc:
+                if trace is not None:
+                    trace.tier1_attempts.append(
+                        Tier1Attempt(
+                            apvernum,
+                            attempt,
+                            time.monotonic() - start,
+                            _attempt_outcome(exc),
+                        )
+                    )
                 transient = exc.code is (
                     AssetPackageResolveError.INTERNAL
                 ) or isinstance(exc.__cause__, CommunicationError)
@@ -2431,6 +2561,9 @@ class AssetSubsystem(AppSubsystem):
         # after boot; wait briefly for it rather than failing a resolve
         # that raced the connection.
         await self._wait_for_node()
+        trace = self._active_trace
+        if trace is not None:
+            trace.phase = f'tier-1 resolve {apvernum}'
         # Capture the signed-in account handle on the logic thread; the
         # off-thread send enters its context so the resolve carries our
         # account (see _resolve_tier1). None → anonymous (PROD/public).
@@ -2447,7 +2580,12 @@ class AssetSubsystem(AppSubsystem):
             if response.build_progress is None:
                 break
             self._apply_build_progress(apvernum, response.build_progress)
+            if trace is not None:
+                trace.phase = f'server building {apvernum}'
+            poll_start = time.monotonic()
             await asyncio.sleep(_BUILD_POLL_INTERVAL_SECONDS)
+            if trace is not None:
+                trace.build_poll_seconds += time.monotonic() - poll_start
         if response.error is not None:
             msg = f'{apvernum}: {response.error}'
             code = response.error_code
@@ -2557,6 +2695,11 @@ class AssetSubsystem(AppSubsystem):
             self._acquire_pending.discard(pkg.apvernum)
             self._emit_progress()
             return
+        trace = self._active_trace
+        if trace is not None:
+            trace.phase = 'fetching blobs'
+            if trace.fetch_started_at is None:
+                trace.fetch_started_at = time.monotonic()
         if pkg.token is None:
             raise AssetResolveError(
                 f'{pkg.apvernum}: resolve returned no download token.'
@@ -2725,14 +2868,20 @@ class AssetSubsystem(AppSubsystem):
                 event.set()
 
         reg = plus.cloud.on_connectivity_changed_callbacks.register(_on_changed)
+        trace = self._active_trace
+        if trace is not None:
+            trace.node_wait_begin()
+        timed_out = False
         try:
             # Re-check now that we're registered, in case it connected
             # between the initial check and the registration.
             if self._node_base_url() is None:
                 await asyncio.wait_for(event.wait(), timeout=_NODE_WAIT_SECONDS)
         except asyncio.TimeoutError:
-            pass
+            timed_out = True
         finally:
+            if trace is not None:
+                trace.node_wait_end(timed_out)
             # Hold `reg` until here so the callback stays registered for the
             # whole wait; dropping it unregisters (CallbackSet is
             # weakref-based).

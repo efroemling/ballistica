@@ -759,6 +759,58 @@ static PyMethodDef PyGetStringWidthDef = {
     ":meta private:",
 };
 
+// ------------------------------- wrap_text -----------------------------------
+
+static auto PyWrapText(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  // Measuring OS-rendered text cold can block for tens of ms, and long
+  // text measures a lot of it; this belongs on background threads.
+  BA_PRECONDITION(!g_base->InLogicThread());
+  const char* text;
+  float width;
+  float scale{1.0f};
+  int big{};
+  static const char* kwlist[] = {"text", "width", "scale", "big", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sf|fp",
+                                   const_cast<char**>(kwlist), &text, &width,
+                                   &scale, &big)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(width > 0.0f && scale > 0.0f);
+  assert(g_base->text_graphics);
+  std::string text_s{text};
+  std::string result;
+  {
+    // Pure C++ (plus OS calls) from here; let other Python run.
+    Python::ScopedInterpreterLockRelease gil_release;
+    result = g_base->text_graphics->WrapString(text_s, width / scale, big != 0);
+  }
+  return PyUnicode_FromStringAndSize(result.c_str(),
+                                     static_cast<Py_ssize_t>(result.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyWrapTextDef = {
+    "wrap_text",                   // name
+    (PyCFunction)PyWrapText,       // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "wrap_text(text: str, width: float, scale: float = 1.0,\n"
+    "  big: bool = False) -> str\n"
+    "\n"
+    "Word-wrap text to fit a width; returns newline-separated lines.\n"
+    "\n"
+    "Lines fit ``width`` when drawn by a text widget at ``scale`` (and\n"
+    "``big``, matching the widget's), measured with the engine's own\n"
+    "text measure, so the widget never needs to shrink them. Breaks\n"
+    "only where the OS's line-break rules allow (existing newlines\n"
+    "stay hard breaks) and fills each line as full as it will go\n"
+    "before starting the next. Background threads only.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------------- warm_up_string_measure ----------------------------
 
 static auto PyWarmUpStringMeasure(PyObject* self, PyObject* args,
@@ -837,7 +889,6 @@ static PyMethodDef PyCanDisplayCharsDef = {
 static auto PySplitTextIntoLines(PyObject* self, PyObject* args,
                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
   const char* text;
   int min_lines{1};
   PyObject* max_lines_obj{Py_None};
@@ -895,7 +946,7 @@ static PyMethodDef PySplitTextIntoLinesDef = {
     "This is a simple stopgap for feeding flat translated strings into\n"
     "places expecting preformatted line counts; beyond the wide-\n"
     "character weighting it knows nothing about actual rendered\n"
-    "character widths. Logic thread only.",
+    "character widths. Callable from any thread.",
 };
 
 // ----------------------------- fade_screen -----------------------------------
@@ -2123,6 +2174,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFadeScreenDef,
       PyScreenMessageDef,
       PyGetStringWidthDef,
+      PyWrapTextDef,
       PyGetStringHeightDef,
       PyWarmUpStringMeasureDef,
       PyEvaluateLstrDef,

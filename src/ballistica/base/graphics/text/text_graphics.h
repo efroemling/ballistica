@@ -196,6 +196,21 @@ class TextGraphics {
   void BreakUpString(const char* text, float width,
                      std::vector<std::string>* v);
 
+  /// Word-wrap (valid utf-8) text so every line measures at most
+  /// max_width by GetStringWidth() -- the same measure a text widget
+  /// uses, so a widget drawing the result at scale s fits a column of
+  /// max_width * s without shrinking. Breaks only at the OS's UAX #14
+  /// line-break opportunities (existing newlines are kept as hard
+  /// breaks) and fills each line as full as it will go before starting
+  /// the next (greedy fill, so only the last line runs short). A
+  /// single unbreakable run wider than max_width is split between
+  /// characters. Returns the lines joined with newlines, with
+  /// whitespace stripped at line edges. Measures OS-rendered text with
+  /// the blocking measure, so a cold one can take tens of ms; meant for
+  /// background threads.
+  auto WrapString(const std::string& text, float max_width, bool big = false)
+      -> std::string;
+
   // Some chars we allow the OS to draw in some cases but draw ourselves in
   // others (to minimize the amount of switching back and forth).
   static auto IsOSDrawableAscii(int val) -> bool {

@@ -219,8 +219,12 @@ class LangStr {
   /// only for time-varying values (a time-target sub), and empty for
   /// text that stays put -- so a display can re-evaluate exactly when
   /// its visible text changes rather than polling.
-  auto Evaluate(std::optional<int64_t>* millisecs_until_change = nullptr) const
-      -> std::string;
+  ///
+  /// Pass ``apply_wrap`` false to skip line-wrapping (a usage-site
+  /// ``wrap`` or the definition-time hint), for callers that wrap the
+  /// text themselves; newlines in the text itself are kept either way.
+  auto Evaluate(std::optional<int64_t>* millisecs_until_change = nullptr,
+                bool apply_wrap = true) const -> std::string;
 
   /// Serialize back to canonical wire JSON (matching the dataclassio
   /// form this was parsed from: tag-free for indexed, 's' omitted when

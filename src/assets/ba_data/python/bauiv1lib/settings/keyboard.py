@@ -288,8 +288,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 configkey='Keyboard P2 Enabled',
                 position=(self._width * 0.5 - 110, 28),
                 size=(220, 30),
-                # NEEDS_TRANSLATION
-                displayname=bui.langstr_value('Enable Keyboard P2'),
+                displayname=_kbstrs.enable_keyboard_p2,
                 scale=0.8,
                 maxwidth=200,
             )

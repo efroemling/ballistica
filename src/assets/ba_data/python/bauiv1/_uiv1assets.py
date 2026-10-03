@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bauiv1assets.261002`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bauiv1assets.261003`` (bauiv1).
 
 Standard ui chrome the ui_v1 widget layer draws itself with -- window backings,
 button faces, scroll furniture, the ui atlases -- supplied to ui_v1 by the
@@ -12,7 +12,7 @@ string groups.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 379
+# ba_meta require asset-package 393
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -26,8 +26,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.bauiv1assets.261002
-_ASSET_PACKAGE = ApverNum(379)
+# a-0.bauiv1assets.261003
+_ASSET_PACKAGE = ApverNum(393)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -178,6 +178,13 @@ if TYPE_CHECKING:
         #:     English: "character"
         character: LangStr
 
+        #: ::
+        #:
+        #:     Field label in the profile editor for the profile's character.
+        #:
+        #:     English: "Character"
+        character_label: LangStr
+
         def checking_availability(self, *, name: str | LangStr) -> LangStr:
             """
             ::
@@ -189,10 +196,24 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Title of the profile editor's character picker.
+        #:
+        #:     English: "Choose Character"
+        choose_character: LangStr
+
+        #: ::
+        #:
         #:     Lowercase field label for profile color.
         #:
         #:     English: "color"
         color: LangStr
+
+        #: ::
+        #:
+        #:     Field label in the profile editor for the profile's main color.
+        #:
+        #:     English: "Color"
+        color_label: LangStr
 
         def delete_confirm(self, *, profile: str | LangStr) -> LangStr:
             """
@@ -202,6 +223,21 @@ if TYPE_CHECKING:
 
                 English: "Delete '{profile}'?"
             """
+
+        #: ::
+        #:
+        #:     Button (and menu entry) deleting the player profile being edited.
+        #:
+        #:     English: "Delete Profile"
+        delete_profile: LangStr
+
+        #: ::
+        #:
+        #:     Question heading the delete-confirmation box, shown above the
+        #:     profile being deleted.
+        #:
+        #:     English: "Delete this profile?"
+        delete_this_profile: LangStr
 
         #: ::
         #:
@@ -241,10 +277,25 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Field label in the profile editor for the profile's highlight
+        #:     (accent) color.
+        #:
+        #:     English: "Highlight"
+        highlight_label: LangStr
+
+        #: ::
+        #:
         #:     Lowercase field label for profile icon.
         #:
         #:     English: "icon"
         icon: LangStr
+
+        #: ::
+        #:
+        #:     Field label in the profile editor for the profile's icon.
+        #:
+        #:     English: "Icon"
+        icon_label: LangStr
 
         def in_game_clipped_name(self, *, name: str | LangStr) -> LangStr:
             """
@@ -313,6 +364,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Purchasing..."
         purchasing: LangStr
+
+        #: ::
+        #:
+        #:     Button in the profile editor filling in a randomly generated
+        #:     player name.
+        #:
+        #:     English: "Random Name"
+        random_name: LangStr
 
         #: ::
         #:
@@ -412,6 +471,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Small toggle-button label on the inventory page switching the
+        #:     profile list from cloud profiles to legacy profiles.
+        #:
+        #:     English: "Show Legacy Profiles"
+        show_legacy_profiles: LangStr
+
+        #: ::
+        #:
         #:     Section heading / window title for player-profile management.
         #:
         #:     English: "Player Profiles"
@@ -491,8 +558,8 @@ if TYPE_CHECKING:
     #: list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 38 strings (``economy``, ``profile``,
-    #: ``profiles``, and 35 more). Full list in source.
+    #: The ``strings`` group - 47 strings (``economy``, ``profile``,
+    #: ``profiles``, and 44 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 37 assets (``back_icon``, ``bomb_button``,
@@ -548,15 +615,22 @@ _TREE = {
             'available': ('name',),
             'cant_delete_account_profile': (),
             'character': (),
+            'character_label': (),
             'checking_availability': ('name',),
+            'choose_character': (),
             'color': (),
+            'color_label': (),
             'delete_confirm': ('profile',),
+            'delete_profile': (),
+            'delete_this_profile': (),
             'get_more_characters': (),
             'get_more_icons': (),
             'global_profile': (),
             'global_profile_info': (),
             'highlight': (),
+            'highlight_label': (),
             'icon': (),
+            'icon_label': (),
             'in_game_clipped_name': ('name',),
             'local_profile': (),
             'local_profile_info': (),
@@ -566,6 +640,7 @@ _TREE = {
             'nothing_selected': (),
             'profile_already_exists': (),
             'purchasing': (),
+            'random_name': (),
             'title_edit': (),
             'title_new': (),
             'unavailable': ('name',),
@@ -579,6 +654,7 @@ _TREE = {
             'max_reached': (),
             'new_profile': (),
             'show_cloud_profiles': (),
+            'show_legacy_profiles': (),
             'title': (),
         },
     },

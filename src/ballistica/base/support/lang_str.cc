@@ -1220,8 +1220,8 @@ static auto EvalNode_(const LangStr& ls, int depth, LangStrEvalState_* state)
                        tables->plural_locale, args);
 }
 
-auto LangStr::Evaluate(std::optional<int64_t>* millisecs_until_change) const
-    -> std::string {
+auto LangStr::Evaluate(std::optional<int64_t>* millisecs_until_change,
+                       bool apply_wrap) const -> std::string {
   LangStrEvalState_ state;
   auto result = EvalNode_(*this, 0, &state);
   if (millisecs_until_change != nullptr) {
@@ -1231,6 +1231,9 @@ auto LangStr::Evaluate(std::optional<int64_t>* millisecs_until_change) const
     g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
                          "langstr evaluate: " + result.error());
     return "LANGSTR_ERROR:" + result.error();
+  }
+  if (!apply_wrap) {
+    return *result;
   }
 
   // Apply line-wrapping (decision D-t): a usage-site override on this

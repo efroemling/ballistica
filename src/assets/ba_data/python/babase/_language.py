@@ -153,7 +153,10 @@ async def resolve_langstrs(
     # timeout=None => no limit.
     async with asyncio.timeout(timeout):
         await _babase.app.assets.resolve(
-            ordered, language=locale, background=background
+            ordered,
+            language=locale,
+            background=background,
+            label='language-strings',
         )
         loop = asyncio.get_running_loop()
         langdata = {

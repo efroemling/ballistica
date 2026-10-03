@@ -723,6 +723,16 @@ void Platform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 
 auto Platform::GetTextLineBreakOffsets(const std::string& text)
     -> std::vector<int> {
+  // Implementations are only known thread-safe call-by-call (Android
+  // shares one Java iterator; the others make fresh OS analyzers each
+  // call but nothing promises that stays true), and calls are cheap
+  // (microseconds), so one coarse lock is the simple guarantee.
+  std::scoped_lock lock(text_line_break_mutex_);
+  return DoGetTextLineBreakOffsets(text);
+}
+
+auto Platform::DoGetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
   // Naive fallback: allow a line to begin wherever a non-space follows a
   // space or newline. (Real OS implementations give full UAX #14.)
   std::vector<int> offsets;

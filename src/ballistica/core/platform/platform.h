@@ -300,11 +300,9 @@ class Platform {
   /// 0 and text.size(), in increasing order, and always fall on utf-8
   /// sequence boundaries. Mandatory breaks (after newlines) are included
   /// as regular opportunities; callers wanting to honor them specially
-  /// should pre-split on newlines. The base implementation is a naive
-  /// space/newline breaker for platforms without OS support (headless
-  /// etc.). Logic thread only.
-  virtual auto GetTextLineBreakOffsets(const std::string& text)
-      -> std::vector<int>;
+  /// should pre-split on newlines. Callable from any thread; calls are
+  /// serialized (see DoGetTextLineBreakOffsets()).
+  auto GetTextLineBreakOffsets(const std::string& text) -> std::vector<int>;
 
   /// Split (valid utf-8) text into newline-separated lines subject to
   /// simple constraints, breaking only at opportunities reported by
@@ -320,7 +318,7 @@ class Platform {
   /// newlines recovers the individual lines). Intended as a stopgap
   /// for plugging flat translated strings into places expecting
   /// preformatted line counts until proper font-aware wrapping exists.
-  /// Logic thread only.
+  /// Callable from any thread.
   auto SplitTextIntoLines(const std::string& text, int min_lines = 1,
                           int max_lines = 0, int max_chars_per_line = 0)
       -> std::string;
@@ -653,6 +651,14 @@ class Platform {
   /// toggle thread runs in place of OS monitoring.
   virtual void DoStartNetworkAvailabilityMonitoring();
 
+  /// Platform implementation of GetTextLineBreakOffsets(), which holds
+  /// a lock around every call, so overrides never run concurrently and
+  /// may use shared state (Android's Java side reuses one ICU iterator,
+  /// for instance). The base implementation is a naive space/newline
+  /// breaker for platforms without OS support (headless etc.).
+  virtual auto DoGetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int>;
+
   /// Called by subclasses (and the debug toggler) to report the
   /// current network availability state. Thread-safe; callable from
   /// any thread. Logs at DEBUG and dispatches to all registered
@@ -680,6 +686,7 @@ class Platform {
   std::string cache_dir_;
   std::string replays_dir_;
 
+  std::mutex text_line_break_mutex_;
   std::mutex network_availability_mutex_;
   std::vector<NetworkAvailabilityCallback> network_availability_callbacks_;
   bool network_availability_monitoring_started_{};

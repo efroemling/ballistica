@@ -6,6 +6,7 @@ We do all layout math and bake out partial ui calls in a background
 thread so there's as little work to do in the ui thread as possible.
 """
 
+from dataclasses import replace
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,7 @@ from bauiv1lib.docui.prep._rowtext import (
     prep_row_titles,
     row_footnote_height,
     prep_row_footnote,
+    wrap_row_texts,
 )
 from bauiv1lib.docui.prep._rowbands import (
     row_header_height,
@@ -268,6 +270,48 @@ def prep_page(
         buffers=(left_buffer, right_buffer),
         column=column,
     )
+
+    # Word-wrap every row's and section's title/subtitle/footnote to the
+    # width its text widget gets, swapping in copies (the page itself
+    # may be cached and shared). Everything below then just sees text
+    # with more lines: strip heights grow to fit. A section's heading
+    # and note share one wrapped copy.
+    wrapped_sections: dict[int, dui2.Section] = {}
+    for i, entry in enumerate(page_rows_filtered):
+        geom = geoms[i]
+        text_margins = (
+            geom.cmargin_left,
+            geom.cmargin_right,
+            margin_bottom,
+            margin_top,
+        )
+        if isinstance(entry, _sections.SectionHead | _sections.SectionFoot):
+            sec = wrapped_sections.get(id(entry.section))
+            if sec is None:
+                sec = wrapped_sections[id(entry.section)] = (
+                    _sections.wrap_section_texts(
+                        entry.section,
+                        width=width,
+                        margins=text_margins,
+                        buffers=(left_buffer, right_buffer),
+                        header_insets=(header_inset_left, header_inset_right),
+                        center=geom.center,
+                        native=_n,
+                        where=f'Section (layout entry {i})',
+                    )
+                )
+            page_rows_filtered[i] = replace(entry, section=sec)
+        else:
+            page_rows_filtered[i] = wrap_row_texts(
+                entry,
+                width=width,
+                margins=text_margins,
+                buffers=(left_buffer, right_buffer),
+                header_insets=(header_inset_left, header_inset_right),
+                center=geom.center,
+                native=_n,
+                where=f'{type(entry).__name__} (layout entry {i})',
+            )
 
     # Precalc basic info like dimensions for all rows.
     for i, row in enumerate(page_rows_filtered):

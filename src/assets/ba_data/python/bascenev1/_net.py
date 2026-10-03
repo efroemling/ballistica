@@ -412,6 +412,7 @@ async def resolve_asset_packages_with_dialog(
             allow_downloads=True,
             on_download_starting=ensure_dialog,
             on_progress=babase.make_progress_reporter(on_update),
+            label='join content',
         )
     except asyncio.CancelledError:
         if dialog is not None:
@@ -450,12 +451,19 @@ async def resolve_asset_packages_with_dialog(
     return True
 
 
-def _resolve_failure_message(exc: Exception) -> str | None:
+def _resolve_failure_message(
+    exc: Exception,
+) -> str | babase.LangStr | None:
     """A specific message for an expected content-resolve refusal.
 
     None for anything unexpected (a network failure, a server bug),
     which gets the generic no-connection error instead.
     """
+    # Deferred like _resolve_with_dialog's (the cycle is structural
+    # only; bascenev1 is fully imported by the time this runs).
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import _builtinassets
+
     if not isinstance(exc, babase.AssetResolveError) or exc.code is None:
         return None
 
@@ -465,18 +473,13 @@ def _resolve_failure_message(exc: Exception) -> str | None:
         AssetPackageResolveError.ACCESS_DENIED,
         AssetPackageResolveError.AUTH_REQUIRED,
     ):
-        # NEEDS_TRANSLATION (wording may still move).
-        pkgdesc = f"asset package '{pkg.name}' by {pkg.owner}"
+        netstrs = _builtinassets.strings.net
         if code is AssetPackageResolveError.ACCESS_DENIED:
-            # NEEDS_TRANSLATION
-            return (
-                f'This game uses {pkgdesc}, which your account does not'
-                f' have access to.'
+            return netstrs.asset_package_access_denied(
+                package=pkg.name, owner=pkg.owner
             )
-        # NEEDS_TRANSLATION
-        return (
-            f'This game uses {pkgdesc}, which needs you to be signed in'
-            f' with an account that has access to it.'
+        return netstrs.asset_package_auth_required(
+            package=pkg.name, owner=pkg.owner
         )
     if code in (
         AssetPackageResolveError.ACCESS_DENIED,

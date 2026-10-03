@@ -123,7 +123,10 @@ async def _resolve_and_run_effects(
             # Client-effects are decorative — resolve at background priority
             # so they queue behind (and never delay) interactive resolves.
             await bauiv1.app.assets.resolve(
-                apvernums, language=locale, background=True
+                apvernums,
+                language=locale,
+                background=True,
+                label='client-effects',
             )
             loop = asyncio.get_running_loop()
             langdata = {

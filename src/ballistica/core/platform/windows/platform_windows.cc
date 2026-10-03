@@ -1918,11 +1918,11 @@ class LineBreakAnalysis_ final : public IDWriteTextAnalysisSource,
   std::vector<DWRITE_LINE_BREAKPOINT> breakpoints_;
 };
 
-auto PlatformWindows::GetTextLineBreakOffsets(const std::string& text)
+auto PlatformWindows::DoGetTextLineBreakOffsets(const std::string& text)
     -> std::vector<int> {
   std::call_once(g_font_factories_init_flag, InitFontFactories_);
   if (!g_dwrite_factory) {
-    return Platform::GetTextLineBreakOffsets(text);
+    return Platform::DoGetTextLineBreakOffsets(text);
   }
   std::wstring wtext = UTF8Decode(text);
   if (wtext.empty()) {
@@ -1932,7 +1932,7 @@ auto PlatformWindows::GetTextLineBreakOffsets(const std::string& text)
   IDWriteTextAnalyzer* analyzer = nullptr;
   HRESULT hr = g_dwrite_factory->CreateTextAnalyzer(&analyzer);
   if (FAILED(hr) || !analyzer) {
-    return Platform::GetTextLineBreakOffsets(text);
+    return Platform::DoGetTextLineBreakOffsets(text);
   }
 
   auto length16 = static_cast<UINT32>(wtext.size());
@@ -1940,7 +1940,7 @@ auto PlatformWindows::GetTextLineBreakOffsets(const std::string& text)
   hr = analyzer->AnalyzeLineBreakpoints(&analysis, 0, length16, &analysis);
   analyzer->Release();
   if (FAILED(hr)) {
-    return Platform::GetTextLineBreakOffsets(text);
+    return Platform::DoGetTextLineBreakOffsets(text);
   }
 
   // A new line may begin after any code unit whose break-condition-after

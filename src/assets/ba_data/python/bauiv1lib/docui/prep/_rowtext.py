@@ -9,9 +9,11 @@ row-specific prep in :mod:`bauiv1lib.docui.prep._calls` and
 them.
 """
 
+from dataclasses import replace
 from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
+from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
@@ -31,6 +33,9 @@ type TitledRow = dui2.ButtonRow | dui2.AnyControlRow
 #: and its spacing from a control row's label) scales along with it.
 _ROW_TITLE_SCALE = 1.15
 
+#: Row subtitle and footnote text scale.
+_ROW_SUBTITLE_SCALE = 0.7
+
 #: Row title flatness and shadow when a row doesn't specify them (half
 #: flat, full shadow; labels and button text use text-widget defaults
 #: of fully shaded, half shadow).
@@ -39,8 +44,8 @@ _ROW_TITLE_SHADOW = 1.0
 
 # Vertical space a row's title/subtitle take: a single-line strip,
 # plus this much per additional line of text (title at
-# _ROW_TITLE_SCALE, subtitle at 0.7). A title alone sits a bit lower
-# than one with a subtitle under it.
+# _ROW_TITLE_SCALE, subtitle at _ROW_SUBTITLE_SCALE). A title alone
+# sits a bit lower than one with a subtitle under it.
 _ROW_TITLE_HEIGHT_WITH_SUBTITLE = 30.0 * _ROW_TITLE_SCALE
 _ROW_TITLE_HEIGHT_NO_SUBTITLE = 38.0 * _ROW_TITLE_SCALE
 _ROW_TITLE_LINE_HEIGHT = 30.0 * _ROW_TITLE_SCALE
@@ -76,6 +81,102 @@ _SUBTITLE_LAST_LINE_TO_BOTTOM = _ROW_SUBTITLE_HEIGHT * 0.5
 _FOOTNOTE_TOP_TO_FIRST_LINE = _ROW_SUBTITLE_LINE_HEIGHT * 0.5
 
 
+#: Time-varying texts already warned about in wrapped fields (see
+#: :func:`wrapped_text`), so each warns once per run.
+_warned_live_texts: set[str] = set()
+
+
+def wrapped_text(
+    text: LangStrSpec,
+    *,
+    maxwidth: float,
+    scale: float,
+    native: Callable[[LangStrSpec | int], bui.LangStr],
+    where: str,
+) -> LangStrSpec:
+    """Word-wrap a row/section text to fit its column.
+
+    Evaluates in the current language ignoring the string's own
+    line-wrapping hints (we wrap it here instead; the two would
+    compound) and wraps to ``maxwidth`` at ``scale``, the text widget's
+    own values, so it never needs to shrink. Time-varying text
+    (countdowns and such) can't be wrapped once up front, so it comes
+    back as-is -- a single line, squished to fit as before -- with a
+    once-per-text warning naming ``where`` it is. Measures text, so
+    call from a background thread (as prep runs).
+
+    :meta private:
+    """
+    flat, until_change = native(text).evaluate_timed(wrap=False)
+    if until_change is not None:
+        if flat not in _warned_live_texts:
+            _warned_live_texts.add(flat)
+            bui.uilog.warning(
+                'Doc-ui %s holds time-varying text (%r); wrapping skipped.'
+                ' Wrapped fields (titles, subtitles, footnotes) want text'
+                ' that stays put.',
+                where,
+                flat,
+            )
+        return text
+    return LangStrSpecValue.literal(bui.wrap_text(flat, maxwidth, scale))
+
+
+def wrap_row_texts(
+    row: TitledRow,
+    *,
+    width: float,
+    margins: tuple[float, float, float, float],
+    buffers: tuple[float, float],
+    header_insets: tuple[float, float],
+    center: tuple[float, float],
+    native: Callable[[LangStrSpec | int], bui.LangStr],
+    where: str,
+) -> TitledRow:
+    """A copy of a row with its title/subtitle/footnote wrapped.
+
+    Each is wrapped to the width and scale its text widget gets (see
+    :func:`prep_row_titles` and :func:`prep_row_footnote`, which take
+    the same geometry), so everything downstream -- strip heights,
+    reach checks, the widgets -- just sees text with more lines. The
+    row itself (likely shared with a cached page) is left alone.
+
+    :meta private:
+    """
+    if row.title is None and row.subtitle is None and row.footnote is None:
+        return row
+    _x, maxwidth = row_text_x_and_maxwidth(
+        row_title_align(row),
+        width=width,
+        margins=margins,
+        buffers=buffers,
+        header_insets=header_insets,
+        center=center,
+    )
+
+    def _wrap(
+        text: LangStrSpec | int | None, scale: float, field: str
+    ) -> LangStrSpec | int | None:
+        # (Indices are unfolded before prep; native() rejects any that
+        # aren't, so leave that to it.)
+        if text is None or isinstance(text, int):
+            return text
+        return wrapped_text(
+            text,
+            maxwidth=maxwidth,
+            scale=scale,
+            native=native,
+            where=f'{where} {field}',
+        )
+
+    return replace(
+        row,
+        title=_wrap(row.title, _ROW_TITLE_SCALE, 'title'),
+        subtitle=_wrap(row.subtitle, _ROW_SUBTITLE_SCALE, 'subtitle'),
+        footnote=_wrap(row.footnote, _ROW_SUBTITLE_SCALE, 'footnote'),
+    )
+
+
 def control_width(
     avail: float, *, label_want: float, control_want: float
 ) -> float:
@@ -109,9 +210,11 @@ def line_count(
 ) -> int:
     """How many lines a row text renders as.
 
-    Only explicit line breaks count; the widgets never wrap on their
-    own (over-long lines squish to fit). Evaluated in the current
-    language; a switch re-renders the page, so strips follow the text.
+    Only line breaks in the text count; the widgets never wrap on
+    their own, but prep wraps row and section text to its column up
+    front (see :func:`wrap_row_texts`), so those breaks are already
+    in it. Evaluated in the current language; a switch re-renders the
+    page, so strips follow the text.
 
     :meta private:
     """
@@ -270,7 +373,12 @@ def titles_clear_rise(
     """
     spacing = _row_title_spacing(row)
     if row_text_reaches(
-        row, row.subtitle, 0.7, left=left, limit=limit, native=native
+        row,
+        row.subtitle,
+        _ROW_SUBTITLE_SCALE,
+        left=left,
+        limit=limit,
+        native=native,
     ):
         return spacing - clearance
     if row_text_reaches(
@@ -301,7 +409,12 @@ def footnote_clear_drop(
     :meta private:
     """
     if row_text_reaches(
-        row, row.footnote, 0.7, left=left, limit=limit, native=native
+        row,
+        row.footnote,
+        _ROW_SUBTITLE_SCALE,
+        left=left,
+        limit=limit,
+        native=native,
     ):
         return _row_footnote_spacing(row) - clearance
     return row_footnote_height(row, native)
@@ -358,7 +471,7 @@ def prep_row_footnote(
             ),
             flatness=row.subtitle_flatness,
             shadow=row.subtitle_shadow,
-            scale=0.7,
+            scale=_ROW_SUBTITLE_SCALE,
             maxwidth=max(1.0, maxwidth),
             h_align=title_align.name.lower(),
             v_align='center',
@@ -376,9 +489,9 @@ def row_titles_height(
 ) -> float:
     """Total vertical space a row's title + subtitle take (0 for none).
 
-    Each grows with its text's explicit line breaks (the widgets never
-    wrap on their own; over-long lines squish to fit), evaluated in
-    the current language. A language switch re-renders the page, so
+    Each grows with its text's line breaks (including those prep's
+    wrapping added; see :func:`line_count`), evaluated in the current
+    language. A language switch re-renders the page, so
     the strips follow the text. Includes the row's ``spacing_title``
     gap below them when there is either.
 
@@ -504,7 +617,7 @@ def prep_row_titles(
                 ),
                 flatness=row.subtitle_flatness,
                 shadow=row.subtitle_shadow,
-                scale=0.7,
+                scale=_ROW_SUBTITLE_SCALE,
                 maxwidth=maxwidth,
                 h_align=h_align,
                 v_align='center',

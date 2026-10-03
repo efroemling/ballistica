@@ -130,6 +130,7 @@ from _babase import (
     Vec3,
     warm_up_string_measure,
     workspaces_in_use,
+    wrap_text,
 )
 
 # Deprecated names deliberately kept in the public api for compat;
@@ -507,6 +508,7 @@ __all__ = [
     'WidgetNotFoundError',
     'workspaces_in_use',
     'WorkspaceSubsystem',
+    'wrap_text',
     'DEFAULT_REQUEST_TIMEOUT_SECONDS',
 ]
 

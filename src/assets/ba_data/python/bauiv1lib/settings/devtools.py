@@ -12,7 +12,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs
-from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
 from bacommon.docui.presets import section_button
 from bacommon.docui.routes import (
@@ -23,7 +22,7 @@ from bacommon.docui.routes import (
     family_members,
 )
 import bauiv1 as bui
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _commonassets
 from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
@@ -227,17 +226,13 @@ def _style_from_config() -> DevConsoleButtonStyle:
 def _style_label(style: DevConsoleButtonStyle) -> LangStrSpec:
     match style:
         case DevConsoleButtonStyle.GREY:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Grey')
+            return _devstrs.style_grey.spec
         case DevConsoleButtonStyle.GREEN:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Green')
+            return _devstrs.style_green.spec
         case DevConsoleButtonStyle.PURPLE:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Purple')
+            return _devstrs.style_purple.spec
         case DevConsoleButtonStyle.HOWDY:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Howdy')
+            return _devstrs.style_howdy.spec
         case _:
             assert_never(style)
 
@@ -256,8 +251,7 @@ def _page() -> dui2.Response:
     button_rows: list[dui2.Row] = [
         DevToolsState.checkbox_row(
             lambda s: s.show_dev_console_button,
-            # NEEDS_TRANSLATION
-            label=LangStrSpecValue.literal('Enable'),
+            label=_devstrs.enable.spec,
             on_change=ApplyShowButton().local(default_sound=False),
         ),
         DevToolsState.slider_row(
@@ -266,8 +260,7 @@ def _page() -> dui2.Response:
             max_value=4.0,
             increment=0.1,
             decimals=1,
-            # NEEDS_TRANSLATION
-            label=LangStrSpecValue.literal('Size'),
+            label=_devstrs.size.spec,
             on_drag=apply_drag,
             drag_interval=_SIZE_DRAG_INTERVAL,
             on_change=apply,
@@ -276,8 +269,7 @@ def _page() -> dui2.Response:
         DevToolsState.choice_row(
             lambda s: s.dev_console_button_style,
             choice_label=_style_label,
-            # NEEDS_TRANSLATION
-            label=LangStrSpecValue.literal('Style'),
+            label=_devstrs.style.spec,
             on_change=apply,
             disabled=not enabled,
         ),
@@ -291,8 +283,7 @@ def _page() -> dui2.Response:
             buttons=[
                 replace(
                     section_button(
-                        # NEEDS_TRANSLATION
-                        LangStrSpecValue.literal('Reset'),
+                        _commonassets.strings.actions.reset.spec,
                         ResetButton().local(),
                     ),
                     disabled=not enabled,
@@ -304,29 +295,24 @@ def _page() -> dui2.Response:
     ]
     rows: list[dui2.Row] = [
         dui2.Section(
-            # NEEDS_TRANSLATION
-            title=LangStrSpecValue.literal('Dev Console Button'),
-            # NEEDS_TRANSLATION
-            subtitle=LangStrSpecValue.literal('<drag to reposition>'),
+            title=_devstrs.dev_console_button.spec,
+            subtitle=_devstrs.drag_to_reposition.spec,
             title_align=dui2.HAlign.CENTER,
             rows=button_rows,
         ),
         dui2.Section(
-            # NEEDS_TRANSLATION
-            title=LangStrSpecValue.literal('User System Scripts'),
+            title=_devstrs.user_system_scripts.spec,
             title_align=dui2.HAlign.CENTER,
             rows=[
                 dui2.ButtonRow(
                     layout=dui2.ButtonRowLayout.FILL,
                     buttons=[
                         section_button(
-                            # NEEDS_TRANSLATION
-                            LangStrSpecValue.literal('Create Scripts'),
+                            _devstrs.create_scripts.spec,
                             CreateUserSystemScripts().local(),
                         ),
                         section_button(
-                            # NEEDS_TRANSLATION
-                            LangStrSpecValue.literal('Delete Scripts'),
+                            _devstrs.delete_scripts.spec,
                             DeleteUserSystemScripts().local(),
                         ),
                     ],

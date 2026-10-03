@@ -201,6 +201,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetref.py \
+  $(BUILD_DIR)/ba_data/python/babase/_assetresolvetrace.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
@@ -481,6 +482,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsections.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextimages.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextwrap.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestwidgets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \

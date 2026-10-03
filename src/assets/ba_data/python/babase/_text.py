@@ -139,7 +139,7 @@ def run_line_break_selftest(iterations: int = 500) -> None:
     implemented), sanity-checks the returned offsets, logs each result
     with break opportunities rendered as ``|``, and reports average
     per-call time. Logs at warning level so results show up under
-    default log levels on all platforms. Logic thread only.
+    default log levels on all platforms. Callable from any thread.
     """
     samples: list[tuple[str, str]] = [
         ('english', 'Hello there world, how are you today?'),
@@ -209,3 +209,81 @@ def run_line_break_selftest(iterations: int = 500) -> None:
         'line-break-selftest: complete; %d problem(s).',
         problems,
     )
+
+
+def run_wrap_text_selftest() -> None:
+    """Exercise text wrapping; log results, fit checks, and timing.
+
+    Wraps sample strings in various scripts at several widths and
+    scales, checks every resulting line against the width (measured
+    the way a text widget measures it), and logs each wrap with lines
+    separated by ``|``, plus raw sample widths (for comparing measures
+    across builds) and per-call timing. Logs at warning level so
+    results show up under default log levels on all platforms.
+    Background threads only (as is the wrapping itself).
+    """
+    samples: list[tuple[str, str]] = [
+        (
+            'english',
+            'The quick brown fox jumps over the lazy dog while the cat'
+            ' watches from a sunny windowsill nearby.',
+        ),
+        ('english-short', 'Hello there'),
+        ('newlines', 'First paragraph here.\n\nThird line after a blank.'),
+        (
+            'long-word',
+            'Supercalifragilisticexpialidocious is quite a long word.',
+        ),
+        ('japanese', '日本語のテキストは、ほとんどの場所で改行できます。'),
+        ('chinese', '这是一个中文句子，可以在大多数字符之间换行。'),
+        ('korean', '한국어 텍스트는 공백에서 줄바꿈됩니다.'),
+        ('thai', 'ภาษาไทยไม่มีช่องว่างระหว่างคำแต่ต้องตัดคำให้ถูกต้อง'),
+        ('mixed-scripts', 'Player Bob说了hello แล้วก็ไป home and then left.'),
+        ('emoji', 'Nice 🎉🎊 party 🥳 time with everybody!'),
+        ('empty', ''),
+    ]
+    logger = logging.getLogger('ba.gfx')
+    logger.warning('wrap-text-selftest: starting.')
+
+    def _width(text: str) -> float:
+        return _babase.get_string_width(text, suppress_warning=True)
+
+    for name, text in samples:
+        logger.warning('wrap-text-selftest: width %s: %.3f', name, _width(text))
+
+    problems = 0
+    for width, scale in [(600.0, 1.0), (300.0, 1.0), (300.0, 0.5)]:
+        for name, text in samples:
+            wrapped = _babase.wrap_text(text, width, scale)
+            lines = wrapped.split('\n')
+            widest = max(_width(line) for line in lines) * scale
+            fits = widest <= width
+            # Wrapping must only add breaks, never lose text.
+            same_text = ''.join(wrapped.split()) == ''.join(text.split())
+            if not fits or not same_text:
+                problems += 1
+            logger.warning(
+                'wrap-text-selftest: %s @%g/%g: %d line(s), widest %.1f%s%s:'
+                ' %s',
+                name,
+                width,
+                scale,
+                len(lines),
+                widest,
+                '' if fits else ' (OVERFLOW)',
+                '' if same_text else ' (TEXT CHANGED)',
+                ' | '.join(lines),
+            )
+
+    para = ' '.join(text for _name, text in samples)
+    iterations = 20
+    start = time.monotonic()
+    for _ in range(iterations):
+        _babase.wrap_text(para, 300.0)
+    duration = time.monotonic() - start
+    logger.warning(
+        'wrap-text-selftest: timing paragraph (%d chars): %.1f us per call.',
+        len(para),
+        duration / iterations * 1_000_000,
+    )
+    logger.warning('wrap-text-selftest: complete; %d problem(s).', problems)

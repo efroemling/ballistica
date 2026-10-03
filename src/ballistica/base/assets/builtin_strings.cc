@@ -234,6 +234,22 @@ auto BuiltinStrings::Net::AccountRejected() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/account_rejected");
 }
 
+auto BuiltinStrings::Net::AssetPackageAccessDenied(LangStr::Sub package,
+                                                   LangStr::Sub owner)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/net/asset_package_access_denied",
+      {{"package", std::move(package)}, {"owner", std::move(owner)}});
+}
+
+auto BuiltinStrings::Net::AssetPackageAuthRequired(LangStr::Sub package,
+                                                   LangStr::Sub owner)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/net/asset_package_auth_required",
+      {{"package", std::move(package)}, {"owner", std::move(owner)}});
+}
+
 auto BuiltinStrings::Net::AuthError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/auth_error");
 }

@@ -63,8 +63,10 @@ class PythonClassLangStr : public PythonClass {
   static auto Join(PyObject* cls, PyObject* args, PyObject* keywds)
       -> PyObject*;
   static auto GetSpec(PythonClassLangStr* self, void* closure) -> PyObject*;
-  static auto Evaluate(PythonClassLangStr* self) -> PyObject*;
-  static auto EvaluateTimed(PythonClassLangStr* self) -> PyObject*;
+  static auto Evaluate(PythonClassLangStr* self, PyObject* args,
+                       PyObject* keywds) -> PyObject*;
+  static auto EvaluateTimed(PythonClassLangStr* self, PyObject* args,
+                            PyObject* keywds) -> PyObject*;
   static auto ToJson(PythonClassLangStr* self) -> PyObject*;
   static auto ToResourceJson(PythonClassLangStr* self) -> PyObject*;
 

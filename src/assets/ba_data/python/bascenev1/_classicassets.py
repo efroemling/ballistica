@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261002a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261003`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 381
+# ba_meta require asset-package 392
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261002a
-_ASSET_PACKAGE = ApverNum(381)
+# a-0.baclassicassets.261003
+_ASSET_PACKAGE = ApverNum(392)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -6758,6 +6758,21 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Checkbox label in Advanced settings letting the game use very
+        #:     wide or very tall screen shapes instead of limiting them.
+        #:
+        #:     English: "Allow Extreme Aspect Ratios"
+        allow_extreme_aspect_ratios: LangStr
+
+        #: ::
+        #:
+        #:     Small note under the Allow Extreme Aspect Ratios checkbox.
+        #:
+        #:     English: "Some things will look janky. But you do you."
+        allow_extreme_aspect_ratios_description: LangStr
+
+        #: ::
+        #:
         #:     Checkbox forcing the in-game on-screen keyboard for text entry.
         #:
         #:     English: "Always Use Internal Keyboard"
@@ -7396,6 +7411,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Checkbox label in keyboard settings turning on a second player on
+        #:     the same keyboard.
+        #:
+        #:     English: "Enable Keyboard P2"
+        enable_keyboard_p2: LangStr
+
+        #: ::
+        #:
         #:     Note in the second-keyboard-player config about hardware keypress
         #:     limits.
         #:
@@ -7662,6 +7685,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Button under the User System Scripts heading creating the local
+        #:     editable copy of the system scripts.
+        #:
+        #:     English: "Create Scripts"
+        create_scripts: LangStr
+
+        #: ::
+        #:
         #:     Button copying system scripts into the user scripts dir for
         #:     modding.
         #:
@@ -7670,10 +7701,42 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Button under the User System Scripts heading deleting the local
+        #:     editable copy of the system scripts.
+        #:
+        #:     English: "Delete Scripts"
+        delete_scripts: LangStr
+
+        #: ::
+        #:
         #:     Button deleting the user copy of system scripts.
         #:
         #:     English: "Delete User System Scripts"
         delete_user_system_scripts: LangStr
+
+        #: ::
+        #:
+        #:     Heading of the Dev Tools section configuring the on-screen button
+        #:     that opens the developer console.
+        #:
+        #:     English: "Dev Console Button"
+        dev_console_button: LangStr
+
+        #: ::
+        #:
+        #:     Hint under the Dev Console Button heading: the button can be
+        #:     dragged around the screen to move it. Shown in angle brackets as
+        #:     an aside.
+        #:
+        #:     English: "<drag to reposition>"
+        drag_to_reposition: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox label turning the on-screen dev console button on.
+        #:
+        #:     English: "Enable"
+        enable: LangStr
 
         #: ::
         #:
@@ -7692,11 +7755,63 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Slider label setting how big the on-screen dev console button is.
+        #:
+        #:     English: "Size"
+        size: LangStr
+
+        #: ::
+        #:
+        #:     Choice label picking the look of the on-screen dev console
+        #:     button.
+        #:
+        #:     English: "Style"
+        style: LangStr
+
+        #: ::
+        #:
+        #:     Dev console button style choice: a green button.
+        #:
+        #:     English: "Green"
+        style_green: LangStr
+
+        #: ::
+        #:
+        #:     Dev console button style choice: a grey button.
+        #:
+        #:     English: "Grey"
+        style_grey: LangStr
+
+        #: ::
+        #:
+        #:     Dev console button style choice: a whimsical cowboy-themed
+        #:     button.
+        #:
+        #:     English: "Howdy"
+        style_howdy: LangStr
+
+        #: ::
+        #:
+        #:     Dev console button style choice: a purple button.
+        #:
+        #:     English: "Purple"
+        style_purple: LangStr
+
+        #: ::
+        #:
         #:     Title of the dev-tools window; also labels the button leading
         #:     there.
         #:
         #:     English: "Dev Tools"
         title: LangStr
+
+        #: ::
+        #:
+        #:     Heading of the Dev Tools section for managing a local editable
+        #:     copy of the app's built-in system scripts.
+        #:
+        #:     English: "User System Scripts"
+        user_system_scripts: LangStr
 
     class StringsSettingsGraphicsGroup:
         """
@@ -7707,6 +7822,36 @@ if TYPE_CHECKING:
 
             See source for the full asset list.
         """
+
+        #: ::
+        #:
+        #:     Label for the graphics setting choosing the quality level of the
+        #:     game's downloaded art (textures and the like).
+        #:
+        #:     English: "Asset Quality"
+        asset_quality: LangStr
+
+        #: ::
+        #:
+        #:     Asset Quality choice: the standard quality level.
+        #:
+        #:     English: "Regular"
+        asset_quality_regular: LangStr
+
+        #: ::
+        #:
+        #:     Asset Quality choice: the highest quality level.
+        #:
+        #:     English: "Ultra"
+        asset_quality_ultra: LangStr
+
+        #: ::
+        #:
+        #:     Label for the slider setting the amount of screen inset by hand
+        #:     (used when Screen Insets is set to Custom).
+        #:
+        #:     English: "Custom Screen Insets"
+        custom_screen_insets: LangStr
 
         #: ::
         #:
@@ -7747,6 +7892,22 @@ if TYPE_CHECKING:
         #:
         #:     English: "Resolution"
         resolution: LangStr
+
+        #: ::
+        #:
+        #:     Label for the graphics setting controlling how far the game keeps
+        #:     its content in from the screen edges (to avoid notches, rounded
+        #:     corners or overscanning TVs).
+        #:
+        #:     English: "Screen Insets"
+        screen_insets: LangStr
+
+        #: ::
+        #:
+        #:     Screen Insets choice: let the game pick the insets itself.
+        #:
+        #:     English: "Automatic"
+        screen_insets_automatic: LangStr
 
         #: ::
         #:
@@ -9573,8 +9734,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 986 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 981 more). Full list in
+    #: The ``strings`` group - 1007 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1002 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10606,6 +10767,8 @@ _TREE = {
         },
         'settings': {
             'advanced': {
+                'allow_extreme_aspect_ratios': (),
+                'allow_extreme_aspect_ratios_description': (),
                 'always_use_internal_keyboard': (),
                 'always_use_internal_keyboard_description': (),
                 'disable_camera_gyro': (),
@@ -10693,6 +10856,7 @@ _TREE = {
                 },
                 'keyboard': {
                     'configuring': ('device',),
+                    'enable_keyboard_p2': (),
                     'keyboard2_note': (),
                     'press_any_key': (),
                 },
@@ -10726,18 +10890,36 @@ _TREE = {
                 'title': (),
             },
             'dev_tools': {
+                'create_scripts': (),
                 'create_user_system_scripts': (),
+                'delete_scripts': (),
                 'delete_user_system_scripts': (),
+                'dev_console_button': (),
+                'drag_to_reposition': (),
+                'enable': (),
                 'reset_button_position': (),
                 'show_dev_console_button': (),
+                'size': (),
+                'style': (),
+                'style_green': (),
+                'style_grey': (),
+                'style_howdy': (),
+                'style_purple': (),
                 'title': (),
+                'user_system_scripts': (),
             },
             'graphics': {
+                'asset_quality': (),
+                'asset_quality_regular': (),
+                'asset_quality_ultra': (),
+                'custom_screen_insets': (),
                 'fullscreen': (),
                 'fullscreen_shortcut_format': ('name', 'shortcut'),
                 'max_fps': (),
                 'native': (),
                 'resolution': (),
+                'screen_insets': (),
+                'screen_insets_automatic': (),
                 'show_fps': (),
                 'textures': (),
                 'title': (),

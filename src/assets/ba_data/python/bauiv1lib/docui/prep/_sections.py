@@ -13,7 +13,7 @@ selectable row for navigation.
 """
 
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -29,7 +29,11 @@ from bauiv1lib.docui.prep._rowbands import (
     row_header_height,
     row_footer_height,
 )
-from bauiv1lib.docui.prep._rowtext import line_count, row_text_x_and_maxwidth
+from bauiv1lib.docui.prep._rowtext import (
+    line_count,
+    row_text_x_and_maxwidth,
+    wrapped_text,
+)
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
@@ -44,6 +48,9 @@ if TYPE_CHECKING:
 #: heading reads as a level above the rows' own titles.
 _SECTION_TITLE_SCALE = 1.35
 
+#: Section subtitle and footnote text scale (a row subtitle's).
+_SECTION_SUBTITLE_SCALE = 0.7
+
 #: Row-title flatness/shadow, which section titles share.
 _SECTION_TITLE_FLATNESS = 0.5
 _SECTION_TITLE_SHADOW = 1.0
@@ -52,7 +59,7 @@ _SECTION_TITLE_SHADOW = 1.0
 #: much per extra line (the text sits centered in each line's strip).
 _SECTION_TITLE_LINE_HEIGHT = 30.0 * _SECTION_TITLE_SCALE
 
-#: The same for a subtitle (row-subtitle scale, 0.7).
+#: The same for a subtitle (at _SECTION_SUBTITLE_SCALE).
 _SECTION_SUBTITLE_LINE_HEIGHT = 22.0
 #: A subtitle strip's spare room below its last line.
 _SECTION_SUBTITLE_PADDING_BOTTOM = 8.0
@@ -481,6 +488,62 @@ def _subtitle_height(
     )
 
 
+def wrap_section_texts(
+    sec: dui2.Section,
+    *,
+    width: float,
+    margins: tuple[float, float, float, float],
+    buffers: tuple[float, float],
+    header_insets: tuple[float, float],
+    center: tuple[float, float],
+    native: Callable[[LangStrSpec | int], bui.LangStr],
+    where: str,
+) -> dui2.Section:
+    """A copy of a section with its title/subtitle/footnote wrapped.
+
+    The section counterpart to
+    :func:`~bauiv1lib.docui.prep._rowtext.wrap_row_texts`: each text is
+    wrapped to the width and scale its widget gets in
+    :func:`prep_section_head` / :func:`prep_section_foot`, which take
+    the same geometry. The section itself is left alone.
+
+    :meta private:
+    """
+    if sec.title is None and sec.subtitle is None and sec.footnote is None:
+        return sec
+    align = dui2.HAlign.LEFT if sec.title_align is None else sec.title_align
+    _x, maxwidth = row_text_x_and_maxwidth(
+        align,
+        width=width,
+        margins=margins,
+        buffers=buffers,
+        header_insets=header_insets,
+        center=center,
+    )
+
+    def _wrap(
+        text: LangStrSpec | int | None, scale: float, field: str
+    ) -> LangStrSpec | int | None:
+        # (Indices are unfolded before prep; native() rejects any that
+        # aren't, so leave that to it.)
+        if text is None or isinstance(text, int):
+            return text
+        return wrapped_text(
+            text,
+            maxwidth=maxwidth,
+            scale=scale,
+            native=native,
+            where=f'{where} {field}',
+        )
+
+    return replace(
+        sec,
+        title=_wrap(sec.title, _SECTION_TITLE_SCALE, 'title'),
+        subtitle=_wrap(sec.subtitle, _SECTION_SUBTITLE_SCALE, 'subtitle'),
+        footnote=_wrap(sec.footnote, _SECTION_SUBTITLE_SCALE, 'footnote'),
+    )
+
+
 def section_head_height(
     head: SectionHead,
     native: Callable[[LangStrSpec | int], bui.LangStr],
@@ -643,7 +706,7 @@ def prep_section_head(
                 ),
                 flatness=row.subtitle_flatness,
                 shadow=row.subtitle_shadow,
-                scale=0.7,
+                scale=_SECTION_SUBTITLE_SCALE,
                 maxwidth=maxwidth,
                 h_align=h_align,
                 v_align='center',
@@ -711,7 +774,7 @@ def prep_section_foot(
                 ),
                 flatness=row.footnote_flatness,
                 shadow=row.footnote_shadow,
-                scale=0.7,
+                scale=_SECTION_SUBTITLE_SCALE,
                 maxwidth=maxwidth,
                 h_align=align.name.lower(),
                 v_align='center',

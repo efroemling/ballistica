@@ -124,6 +124,7 @@ from babase import (
     WeakCallPartial,
     WeakCallStrict,
     workspaces_in_use,
+    wrap_text,
 )
 
 # Deprecated names deliberately kept in the public api for compat;
@@ -361,6 +362,7 @@ __all__ = [
     'Widget',
     'Window',
     'workspaces_in_use',
+    'wrap_text',
 ]
 
 # Sanity check: we want to keep ballistica's dependencies and

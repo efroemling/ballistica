@@ -1635,8 +1635,19 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
 
   *complete = true;
 
-  // even if they ask for the big font, their string might not support it...
-  big = (big && TextGraphics::HaveBigChars(text));
+  // Even if they ask for the big font, their string might not support
+  // it. (Same test as HaveBigChars(), but scanning in place: the text
+  // is known valid, so no sanitizing copy or decoded vector needed.)
+  if (big) {
+    for (const char* b = text; *b != 0;) {
+      uint32_t val = Utils::GetUTF8Value(b);
+      Utils::AdvanceUTF8(&b);
+      if (GetBigGlyphIndex(val) == -1 && val != '\n' && val != '\r') {
+        big = false;
+        break;
+      }
+    }
+  }
 
   float char_width = 32.0f;
   const char* t = text;
@@ -1644,15 +1655,19 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
   float max_line_length = 0;
 
   // We have the OS render some chars, broken into single-line spans.
-  std::vector<uint32_t> os_span;
+  // A span is always a contiguous run of the input, so we track it as
+  // a byte range rather than collecting and re-encoding code points.
+  // (null when no span is in progress)
+  const char* os_span_begin{};
 
-  // Tally an os-span's width into line_length. In allow-defer mode a
-  // cold span contributes nothing but flips 'complete' off (a
-  // background measure gets kicked; note we keep walking so ALL of the
-  // string's cold spans get their measures in flight in one pass).
-  auto tally_span = [&] {
-    std::string s = Utils::UTF8FromUnicode(os_span);
-    os_span.clear();
+  // Tally the os-span ending at span_end into line_length. In
+  // allow-defer mode a cold span contributes nothing but flips
+  // 'complete' off (a background measure gets kicked; note we keep
+  // walking so ALL of the string's cold spans get their measures in
+  // flight in one pass).
+  auto tally_span = [&](const char* span_end) {
+    std::string s(os_span_begin, span_end);
+    os_span_begin = nullptr;
     if (allow_defer) {
       Rect r;
       float width{};
@@ -1669,8 +1684,8 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
   while (*t != 0) {
     if (*t == '\n') {
       // Add/reset os-span.
-      if (!os_span.empty()) {
-        tally_span();
+      if (os_span_begin) {
+        tally_span(t);
       }
       if (line_length > max_line_length) {
         max_line_length = line_length;
@@ -1678,30 +1693,31 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
       line_length = 0;
       t++;
     } else {
+      const char* char_begin = t;
       uint32_t val = Utils::GetUTF8Value(t);
       Utils::AdvanceUTF8(&t);
       // Special case: if we're already doing an OS-span, tack certain
       // chars onto it instead of switching back to glyph mode.
       // (to reduce the number of times we switch back and forth)
-      if (TextGraphics::IsOSDrawableAscii(val) && !os_span.empty()) {
-        os_span.push_back(val);
+      if (TextGraphics::IsOSDrawableAscii(val) && os_span_begin) {
+        // (already part of the span's byte range)
       } else if (const Glyph* g = GetGlyph(val, big)) {
         // If we *had* been building a span, add its length.
-        if (!os_span.empty()) {
-          tally_span();
+        if (os_span_begin) {
+          tally_span(char_begin);
         }
         line_length += char_width * g->advance;
       } else {
-        // Add to os-span.
-        if (g_buildconfig.enable_os_font_rendering()) {
-          os_span.push_back(val);
+        // Add to os-span (starting one if needed).
+        if (g_buildconfig.enable_os_font_rendering() && !os_span_begin) {
+          os_span_begin = char_begin;
         }
       }
     }
   }
   // Tally final span if there is one.
-  if (!os_span.empty()) {
-    tally_span();
+  if (os_span_begin) {
+    tally_span(t);
   }
   // Check last line.
   if (line_length > max_line_length) {
@@ -1778,6 +1794,201 @@ void TextGraphics::BreakUpString(const char* text, float width,
       }
     }
   }
+}
+
+// Wrapped lines stay this fraction under the requested width, so float
+// noise in a text widget's own fit check never trips its shrink-to-fit.
+constexpr float kWrapWidthMargin{0.995f};
+
+// How many times WrapString re-fits after measured lines come out wider
+// than their summed segment widths predicted.
+constexpr int kWrapMaxRefits{4};
+
+static auto IsWrapSpace(char c) -> bool { return c == ' ' || c == '\t'; }
+
+namespace {
+
+// One run of a paragraph between line-break opportunities: a line may
+// begin at `begin`. Trailing whitespace (content_end..end) vanishes
+// when a line ends here.
+struct WrapSegment {
+  size_t begin{};
+  size_t content_end{};
+  size_t end{};
+  float content_width{};
+  float full_width{};
+};
+
+}  // namespace
+
+// Split [begin, end) of text (no trailing whitespace) into runs at
+// code-point boundaries, each fitting max_width where possible (at
+// least one code point per run). Only for unbreakable runs too wide
+// for any line; can split a grapheme cluster, which is acceptable for
+// something this rare.
+static void SplitWideWrapSegment(TextGraphics* tg, const std::string& text,
+                                 size_t begin, size_t end, float max_width,
+                                 bool big, std::vector<WrapSegment>* out) {
+  size_t chunk_begin{begin};
+  float chunk_width{};
+  const char* base = text.c_str();
+  const char* p = base + begin;
+  while (static_cast<size_t>(p - base) < end) {
+    const char* next = p;
+    Utils::AdvanceUTF8(&next);
+    auto next_off = static_cast<size_t>(next - base);
+    float width = tg->GetStringWidth(
+        text.substr(chunk_begin, next_off - chunk_begin), big);
+    auto p_off = static_cast<size_t>(p - base);
+    if (width > max_width && p_off > chunk_begin) {
+      out->push_back({chunk_begin, p_off, p_off, chunk_width, chunk_width});
+      chunk_begin = p_off;
+      width = tg->GetStringWidth(text.substr(p_off, next_off - p_off), big);
+    }
+    chunk_width = width;
+    p = next;
+  }
+  if (end > chunk_begin) {
+    out->push_back({chunk_begin, end, end, chunk_width, chunk_width});
+  }
+}
+
+// Fit segments into lines of at most max_width by greedy fill: each
+// line takes as many segments as fit (always at least one, so a lone
+// too-wide segment still gets a line). Returns the index of the first
+// segment of each line.
+static auto FitWrapLines(const std::vector<WrapSegment>& segs, float max_width)
+    -> std::vector<size_t> {
+  std::vector<size_t> starts;
+  size_t n = segs.size();
+  size_t i{};
+  while (i < n) {
+    starts.push_back(i);
+    // The line's width so far, plus the trailing whitespace that
+    // only counts once another segment follows it.
+    double width = segs[i].content_width;
+    double trailing = segs[i].full_width - segs[i].content_width;
+    size_t j = i + 1;
+    while (j < n && width + trailing + segs[j].content_width <= max_width) {
+      width += trailing + segs[j].content_width;
+      trailing = segs[j].full_width - segs[j].content_width;
+      ++j;
+    }
+    i = j;
+  }
+  return starts;
+}
+
+static auto WrapParagraph(TextGraphics* tg, const std::string& para,
+                          float max_width, bool big) -> std::string {
+  // Strip the paragraph's edges.
+  size_t first{};
+  while (first < para.size() && IsWrapSpace(para[first])) {
+    ++first;
+  }
+  size_t last{para.size()};
+  while (last > first && IsWrapSpace(para[last - 1])) {
+    --last;
+  }
+  if (first == last) {
+    return "";
+  }
+  std::string text = para.substr(first, last - first);
+
+  // Fast out for the common case: text that already fits takes one
+  // measure (the same one a text widget makes) instead of a line-break
+  // analysis plus a measure per segment.
+  if (tg->GetStringWidth(text, big) <= max_width) {
+    return text;
+  }
+
+  std::vector<size_t> bounds{0};
+  for (int off : g_core->platform->GetTextLineBreakOffsets(text)) {
+    if (off > static_cast<int>(bounds.back())
+        && off < static_cast<int>(text.size())) {
+      bounds.push_back(static_cast<size_t>(off));
+    }
+  }
+  bounds.push_back(text.size());
+
+  std::vector<WrapSegment> segs;
+  for (size_t b = 0; b + 1 < bounds.size(); ++b) {
+    size_t begin = bounds[b];
+    size_t end = bounds[b + 1];
+    size_t content_end = end;
+    while (content_end > begin && IsWrapSpace(text[content_end - 1])) {
+      --content_end;
+    }
+    float content_width =
+        tg->GetStringWidth(text.substr(begin, content_end - begin), big);
+    if (content_width > max_width) {
+      SplitWideWrapSegment(tg, text, begin, content_end, max_width, big, &segs);
+      segs.back().end = end;
+    } else {
+      segs.push_back({begin, content_end, end, content_width, content_width});
+    }
+    if (end > content_end) {
+      segs.back().full_width +=
+          tg->GetStringWidth(text.substr(content_end, end - content_end), big);
+    }
+  }
+
+  // Summed segment widths can be a hair off the joined line's real
+  // width (OS-text shaping across a segment edge, etc.), so measure the
+  // chosen lines and re-fit tighter if any overflow.
+  float fit_width{max_width};
+  std::vector<std::string> lines;
+  for (int attempt = 0; attempt < kWrapMaxRefits; ++attempt) {
+    std::vector<size_t> starts = FitWrapLines(segs, fit_width);
+    lines.clear();
+    float widest{};
+    for (size_t l = 0; l < starts.size(); ++l) {
+      size_t seg_end = l + 1 < starts.size() ? starts[l + 1] : segs.size();
+      size_t begin = segs[starts[l]].begin;
+      size_t end = segs[seg_end - 1].content_end;
+      lines.push_back(text.substr(begin, end - begin));
+      // (lone segments can't be narrowed by re-fitting; skip them)
+      if (seg_end - starts[l] > 1) {
+        widest = std::max(widest, tg->GetStringWidth(lines.back(), big));
+      }
+    }
+    if (widest <= max_width) {
+      break;
+    }
+    fit_width *= max_width / widest;
+  }
+
+  std::string result;
+  for (size_t l = 0; l < lines.size(); ++l) {
+    if (l > 0) {
+      result += '\n';
+    }
+    result += lines[l];
+  }
+  return result;
+}
+
+auto TextGraphics::WrapString(const std::string& text, float max_width,
+                              bool big) -> std::string {
+  assert(Utils::IsValidUTF8(text));
+  float width = max_width * kWrapWidthMargin;
+  std::string result;
+  size_t para_begin{};
+  while (true) {
+    size_t para_end = text.find('\n', para_begin);
+    bool is_last = para_end == std::string::npos;
+    if (is_last) {
+      para_end = text.size();
+    }
+    result += WrapParagraph(
+        this, text.substr(para_begin, para_end - para_begin), width, big);
+    if (is_last) {
+      break;
+    }
+    result += '\n';
+    para_begin = para_end + 1;
+  }
+  return result;
 }
 
 }  // namespace ballistica::base

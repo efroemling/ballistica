@@ -47,7 +47,7 @@ virtual void* CreateTextTexture(int width, int height,
                                 const std::vector<float>& widths, float scale);
 virtual uint8_t* GetTextTextureData(void* tex);
 virtual void FreeTextTexture(void* tex);
-virtual std::vector<int> GetTextLineBreakOffsets(const std::string& text);
+virtual std::vector<int> DoGetTextLineBreakOffsets(const std::string& text);
 ```
 
 The graphics layer measures text (`GetTextBoundsAndWidth`), bin-packs the
@@ -59,9 +59,19 @@ render them all into one texture (`CreateTextTexture`), reads the pixels back
 rendering): it returns utf-8 byte offsets where a new line may begin, per
 the OS text stack's Unicode UAX #14 analysis — including dictionary-based
 word segmentation for Thai and friends — so the engine never ships Unicode
-break tables or word dictionaries. Logic thread only (unlike measuring,
-which is callable from any thread — see "Threading" below). The
-base-class fallback (headless etc.) breaks at spaces/newlines only.
+break tables or word dictionaries. Callable from any thread (since
+2026-10-02): the public non-virtual `GetTextLineBreakOffsets()` holds one
+mutex around the protected `DoGetTextLineBreakOffsets()` that platforms
+override, so implementations never run concurrently and may keep shared
+state. Android needs it (one shared ICU `BreakIterator` on the Java side,
+whose method is also `synchronized`); the others build fresh analyzers per
+call and are covered as insurance. Calls are microseconds, so the lock
+costs nothing measurable. An override must never call the public wrapper
+(self-deadlock); fall back via `Platform::DoGetTextLineBreakOffsets()`. On
+Android, an off-thread call attaches the thread to the JVM; `GetEnv()`
+detaches threads it attached when they exit (unregistered, they leak a
+zombie `java.lang.Thread` each — measured on API 29/37). The base-class
+fallback (headless etc.) breaks at spaces/newlines only.
 Per-backend sources: CFStringTokenizer's `kCFStringTokenizerUnitLineBreak`
 (Apple Xcode builds), `android.icu.text.BreakIterator.getLineInstance` over
 sync JNI (Android), `IDWriteTextAnalyzer::AnalyzeLineBreakpoints` (Windows),
@@ -75,7 +85,8 @@ golden-test exact offsets cross-platform.
 First real consumer: `Platform::SplitTextIntoLines()` (exposed as
 `babase.split_text_into_lines()`), a constraint-based splitter
 (min/max lines, max chars per line) that treats characters as equal
-width and picks the most balanced break set via a small DP. It exists
+width and picks the most balanced break set via a small DP; callable
+from any thread, like the call it builds on. It exists
 to feed flat new-style translations into places expecting preformatted
 line counts (the legacy translations baked in hard line breaks); a
 proper font-aware wrapping text widget supersedes it eventually.

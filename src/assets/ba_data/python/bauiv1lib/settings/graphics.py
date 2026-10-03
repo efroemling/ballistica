@@ -396,8 +396,7 @@ class GraphicsSettingsController(
                 lambda s: s.asset_quality,
                 choice_label=_asset_quality_label,
                 disabled_choices=[AssetQuality.ULTRA],
-                # NEEDS_TRANSLATION
-                label=LangStrSpecValue.literal('Asset Quality'),
+                label=_gfxstrs.asset_quality.spec,
             ),
         ]
         if reschoices:
@@ -459,8 +458,7 @@ class GraphicsSettingsController(
                 gstate.choice_row(
                     lambda s: s.screen_insets,
                     choice_label=_screen_insets_label,
-                    # NEEDS_TRANSLATION
-                    label=LangStrSpecValue.literal('Screen Insets'),
+                    label=_gfxstrs.screen_insets.spec,
                     on_change=apply_insets,
                 ),
                 # Applied only once settled (no on_drag): changing insets
@@ -473,8 +471,7 @@ class GraphicsSettingsController(
                     max_value=1.0,
                     increment=_SCREEN_INSETS_INCREMENT,
                     as_percent=True,
-                    # NEEDS_TRANSLATION
-                    label=LangStrSpecValue.literal('Custom Screen Insets'),
+                    label=_gfxstrs.custom_screen_insets.spec,
                     on_change=apply_insets,
                     disabled=state.screen_insets is ScreenInsets.AUTO,
                 ),
@@ -518,11 +515,9 @@ def _quality_label(quality: Quality) -> LangStrSpec:
 def _asset_quality_label(quality: AssetQuality) -> LangStrSpec:
     match quality:
         case AssetQuality.REGULAR:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Regular')
+            return _gfxstrs.asset_quality_regular.spec
         case AssetQuality.ULTRA:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Ultra')
+            return _gfxstrs.asset_quality_ultra.spec
         case _:
             assert_never(quality)
 
@@ -543,11 +538,9 @@ def _vsync_label(vsync: VSync) -> LangStrSpec:
 def _screen_insets_label(insets: ScreenInsets) -> LangStrSpec:
     match insets:
         case ScreenInsets.AUTO:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Automatic')
+            return _gfxstrs.screen_insets_automatic.spec
         case ScreenInsets.CUSTOM:
-            # NEEDS_TRANSLATION
-            return LangStrSpecValue.literal('Custom')
+            return _commonassets.strings.values.custom.spec
         case _:
             assert_never(insets)
 

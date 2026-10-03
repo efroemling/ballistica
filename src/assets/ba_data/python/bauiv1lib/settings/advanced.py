@@ -423,12 +423,8 @@ def _page() -> dui2.Response:
     rows.append(
         astate.checkbox_row(
             lambda s: s.allow_extreme_aspect_ratios,
-            # NEEDS_TRANSLATION
-            label=LangStrSpecValue.literal('Allow Extreme Aspect Ratios'),
-            footnote=LangStrSpecValue.literal(
-                # NEEDS_TRANSLATION
-                'Some things will look janky. But you do you.'
-            ),
+            label=_advstrs.allow_extreme_aspect_ratios.spec,
+            footnote=_advstrs.allow_extreme_aspect_ratios_description.spec,
             on_change=apply,
         )
     )
