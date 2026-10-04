@@ -599,7 +599,8 @@ class Celebrate:
 
 class TutorialActivity(bs.Activity[Player, Team]):
     # Our recorded input script is calibrated against the old spaz
-    # dynamics (limbs in the main sim); keep them for this activity.
+    # physics (limbs in the main sim, punches at the end of the arm);
+    # keep them for this activity.
     legacy_spaz_limbs = True
 
     def __init__(self, settings: dict | None = None):

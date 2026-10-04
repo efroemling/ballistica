@@ -120,10 +120,6 @@
   [
    "legacy_spaz_limbs",
    "bool"
-  ],
-  [
-   "legacy_spaz_punch",
-   "bool"
   ]
  ],
  "sessionglobals": [

@@ -86,19 +86,15 @@ class GlobalsNode : public Node {
   void SetAllowKickIdlePlayers(bool allow);
   auto slow_motion() const -> bool { return slow_motion_; }
   void SetSlowMotion(bool val);
-  /// Spazzes created in this activity simulate their limbs in the main
-  /// sim (the pre-protocol-44 dynamics) instead of on the bg-dynamics
-  /// rig. For content calibrated against the old physics, such as the
-  /// tutorial's recorded input script. Read at spaz creation.
+  /// Spazzes created in this activity get the pre-protocol-44 spaz
+  /// physics in full: limbs simulated in the main sim instead of on
+  /// the bg-dynamics rig, and the punch region riding the end of the
+  /// punching arm's body instead of the synthetic fist. For content
+  /// calibrated against the old physics (the tutorial's recorded input
+  /// script) and for servers keeping the 'bomb-jump' trick (the
+  /// 'legacy_spaz_physics' server config value). Read at spaz creation.
   auto legacy_spaz_limbs() const -> bool { return legacy_spaz_limbs_; }
   void set_legacy_spaz_limbs(bool val) { legacy_spaz_limbs_ = val; }
-  /// Spazzes created in this activity with legacy limbs (above) also
-  /// keep the pre-protocol-44 punch: the punch region rides the end of
-  /// the punching arm's body instead of the synthetic fist. Together
-  /// the two are the old spaz physics (what the 'bomb-jump' trick
-  /// leans on). No effect without legacy limbs. Read at spaz creation.
-  auto legacy_spaz_punch() const -> bool { return legacy_spaz_punch_; }
-  void set_legacy_spaz_punch(bool val) { legacy_spaz_punch_ = val; }
   auto paused() const -> bool { return paused_; }
   void SetPaused(bool val);
   auto vr_camera_offset() const -> const std::vector<float>& {
@@ -151,7 +147,6 @@ class GlobalsNode : public Node {
   bool slow_motion_{};
   bool paused_{};
   bool legacy_spaz_limbs_{};
-  bool legacy_spaz_punch_{};
 };
 
 }  // namespace ballistica::scene_v1

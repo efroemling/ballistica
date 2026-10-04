@@ -748,7 +748,7 @@ class SpazNode : public Node {
   bool main_sim_limbs_{true};
   // With main-sim limbs: whether the punch region rides the punching
   // arm's body as it did before protocol 44 (fixed for our lifetime;
-  // see GlobalsNode::legacy_spaz_punch).
+  // see GlobalsNode::legacy_spaz_limbs).
   bool legacy_punch_{};
   // Dev aid (BA_BG_LIMBS_TRACE): recent main-sim limb poses relative to
   // their anchors, so the trace can score the bg rig against the pose

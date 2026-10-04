@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 50;
+const int kProtocolVersionHostMin = 51;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 50;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 50;
+const int kProtocolVersionMax = 51;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 50;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 49;
+const int kProtocolVersionDevGapMax = 50;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -412,6 +412,14 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     that is the old spaz physics in full, which the server config's
 //     'legacy_spaz_physics' turns on for every activity (for the
 //     'bomb-jump' trick, at a bandwidth cost).
+//
+// 51: The globals-node 'legacy_spaz_punch' attr 50 added is gone
+//     again (it was the last attr, so no other index moves; the bump
+//     fences off 50 builds that would send it). 'legacy_spaz_limbs'
+//     now means the old spaz physics in full: spazzes created under
+//     it get main-sim limbs AND the pre-44 arm-attached punch region.
+//     That changes the tutorial (back to the punch its recorded input
+//     was calibrated against) and is what 'legacy_spaz_physics' sets.
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

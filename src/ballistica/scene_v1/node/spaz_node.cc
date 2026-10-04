@@ -789,11 +789,13 @@ SpazNode::SpazNode(Scene* scene)
   // Limb backend, fixed for our lifetime: main-sim limb bodies, or
   // none at all with the bg rig carrying them.
   main_sim_limbs_ = !UseBgLimbs_();
-  // Likewise the punch: the old arm-attached region needs the arm
-  // bodies, so it only applies alongside main-sim limbs.
+  // Likewise the punch: an activity asking for legacy limbs gets the
+  // old arm-attached punch region with them (the old spaz physics in
+  // full). It needs the arm bodies, so never without main-sim limbs.
+  // (A BA_SPAZ_LIMBS=main dev override alone leaves the punch as is.)
   if (main_sim_limbs_) {
     if (GlobalsNode* globals = this->scene()->globals_node()) {
-      legacy_punch_ = globals->legacy_spaz_punch();
+      legacy_punch_ = globals->legacy_spaz_limbs();
     }
   }
 
@@ -7679,7 +7681,7 @@ auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
 
 auto SpazNode::UseSyntheticPunch_() const -> bool {
   // An activity can ask for the old arm-attached punch along with
-  // legacy limbs (see GlobalsNode::legacy_spaz_punch).
+  // legacy limbs (see GlobalsNode::legacy_spaz_limbs).
   if (legacy_punch_) {
     return false;
   }

@@ -72,10 +72,11 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](ActorHost):
     #: If True, runs in slow motion and turns down sound pitch.
     slow_motion = False
 
-    #: If True, spazzes in this activity simulate their limbs in the main
-    #: sim (the older dynamics) instead of on the background-dynamics
-    #: rig. For content calibrated against the old physics, such as the
-    #: tutorial's recorded input script.
+    #: If True, spazzes in this activity get the older (pre-1.8) spaz
+    #: physics: limbs simulated in the main sim instead of on the
+    #: background-dynamics rig, and punches placed at the end of the
+    #: punching arm. For content calibrated against the old physics,
+    #: such as the tutorial's recorded input script.
     legacy_spaz_limbs = False
 
     #: Set this to True to inherit slow motion setting from previous
@@ -382,13 +383,12 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](ActorHost):
             # set some global values based on what the activity wants.
             glb.use_fixed_vr_overlay = self.use_fixed_vr_overlay
             glb.allow_kick_idle_players = self.allow_kick_idle_players
-            # A server can opt every activity into the full old spaz
-            # physics (legacy limbs plus the old arm-attached punch);
-            # see the 'legacy_spaz_physics' server config value.
+            # A server can opt every activity into the old spaz
+            # physics; see the 'legacy_spaz_physics' server config
+            # value.
             classic = babase.app.classic
             legacy_physics = classic is not None and classic.legacy_spaz_physics
             glb.legacy_spaz_limbs = self.legacy_spaz_limbs or legacy_physics
-            glb.legacy_spaz_punch = legacy_physics
             if self.inherits_slow_motion and prev_globals is not None:
                 glb.slow_motion = prev_globals.slow_motion
             else:

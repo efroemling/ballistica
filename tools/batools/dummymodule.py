@@ -664,7 +664,6 @@ def _special_class_cases(classname: str) -> str:
             '    #: Available on globals node.\n'
             '    allow_kick_idle_players: bool = False\n'
             '    legacy_spaz_limbs: bool = False\n'
-            '    legacy_spaz_punch: bool = False\n'
             '    music_continuous: bool = False\n'
             '    music_count: int = 0\n'
             '    #: Available on spaz node.\n'
