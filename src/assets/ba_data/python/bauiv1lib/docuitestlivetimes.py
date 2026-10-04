@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     import bacommon.docui.v2
     import bacommon.docui.routes.docuitest
 
-# NEEDS_TRANSLATION: dev-only test page; every label here is a literal.
+# Dev-only test page: every label here is a literal on purpose (it is
+# never translated).
 
 
 def test_page_live_times(

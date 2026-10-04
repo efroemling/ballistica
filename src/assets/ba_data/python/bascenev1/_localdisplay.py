@@ -248,6 +248,10 @@ class LocalDisplay(ActorHost):
     display exactly as they would to an activity, and are expired when
     the node dies.
 
+    Only display-style actors make sense here (text, images,
+    animation). Anything that reaches for players, shared objects or
+    materials belongs to an activity and will not work in a display.
+
     Instances are created by the engine; don't instantiate these
     directly.
     """
@@ -263,6 +267,10 @@ class LocalDisplay(ActorHost):
 
         with self._context:
             # A lightweight time source for bs.animate() and friends.
+            # Note that a sessionglobals node also switches its scene
+            # to the fixed vr overlay, so in vr our content sits at
+            # the fixed session position instead of following the
+            # activity's setting.
             self._globalsnode = _bascenev1.newnode('sessionglobals')
             self._prune_dead_actors_timer = _bascenev1.Timer(
                 5.17, self._prune_dead_actors, repeat=True

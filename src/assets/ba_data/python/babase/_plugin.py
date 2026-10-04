@@ -372,6 +372,10 @@ class Plugin:
         activates, so if several plugins amend the same value the last
         writer wins.
 
+        Only the config is passed, not the mode itself; that is
+        deliberate, to keep plugins amending the description rather
+        than reaching into a mode that is not active yet.
+
         This never fires before construct-mode completes (plugins do
         not run at all until then), so assets are safe to load here.
         """

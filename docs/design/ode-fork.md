@@ -1,6 +1,6 @@
 # The ODE fork and its threading contract
 
-**Description:** Thread-safety rules for our maintained ODE fork, which runs two worlds on two threads — no mutable statics in colliders, per-mesh Opcode state, thread-confined worlds.
+**Description:** Thread-safety rules for our maintained ODE fork, whose worlds run on two threads at once — no mutable statics in colliders, per-mesh Opcode state, thread-confined worlds.
 
 ## What the fork is
 

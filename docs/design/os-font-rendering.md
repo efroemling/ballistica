@@ -82,14 +82,36 @@ sync JNI (Android), `IDWriteTextAnalyzer::AnalyzeLineBreakpoints` (Windows),
 in Thai word choices (ICU vs libthai dictionaries) — cosmetic; don't
 golden-test exact offsets cross-platform.
 
-First real consumer: `Platform::SplitTextIntoLines()` (exposed as
-`babase.split_text_into_lines()`), a constraint-based splitter
+The break offsets have two consumers.
+
+`Platform::SplitTextIntoLines()` (exposed as
+`babase.split_text_into_lines()`) is a constraint-based splitter
 (min/max lines, max chars per line) that treats characters as equal
 width and picks the most balanced break set via a small DP; callable
 from any thread, like the call it builds on. It exists
 to feed flat new-style translations into places expecting preformatted
-line counts (the legacy translations baked in hard line breaks); a
-proper font-aware wrapping text widget supersedes it eventually.
+line counts (the legacy translations baked in hard line breaks).
+
+`TextGraphics::WrapString()` (exposed as `babase.wrap_text()` /
+`bauiv1.wrap_text()`) is the width-exact wrapper: it breaks only at
+those OS-provided opportunities but measures each candidate line with
+the engine's own `GetStringWidth()`, the same measure a text widget
+uses, so a widget drawing the result at the given scale fits its
+column without shrinking. It fills lines greedily (only the last runs
+short), keeps existing newlines as hard breaks, splits an unbreakable
+run wider than the column between characters, and returns text that
+already fits untouched after a single measure. Its OS measures are the
+blocking kind, so the Python call is restricted to background threads.
+Doc-ui page layout is its consumer today; other text still goes
+through the character-count splitter above.
+
+Wrapping deliberately does not hand whole paragraphs to the OS's
+layout engine (CoreText framesetting, Android `StaticLayout`, and
+their kin). The OS would measure every character with its own fonts,
+but the engine draws its core character set from its own baked glyph
+pages, so OS-chosen breaks would not match what is drawn. Taking only
+break *opportunities* from the OS and measuring with the engine keeps
+the two consistent.
 
 ## Per-platform implementations
 

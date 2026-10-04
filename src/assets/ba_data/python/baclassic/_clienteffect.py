@@ -97,8 +97,17 @@ def run_bs_client_effects(
     if not apvernums:
         _run_effects(effects, delay=delay, context=context)
         return
+    # Hold root-ui live updates from right now, not just from once the
+    # resolve finishes: the caller is often handing over a hold of its
+    # own (a doc-ui request in flight) that ends as soon as we return,
+    # and the live values the effects are about to animate are
+    # frequently already waiting. _run_effects() takes its own timed
+    # hold, so this one only needs to last until then.
+    pause = bauiv1.RootUIUpdatePause()
     bauiv1.app.create_async_task(
-        _resolve_and_run_effects(effects, sorted(apvernums), delay, context)
+        _resolve_and_run_effects(
+            effects, sorted(apvernums), delay, context, pause
+        )
     )
 
 
@@ -107,12 +116,28 @@ async def _resolve_and_run_effects(
     apvernums: list[ApverNum],
     delay: float,
     context: ClientEffectContext | None,
+    pause: bauiv1.RootUIUpdatePause,
 ) -> None:
     """Resolve referenced asset-packages then run the effects.
 
     Runs as a logic-thread async task; the per-locale string reads do
-    blocking file IO so they hop through the loop's executor.
+    blocking file IO so they hop through the loop's executor. Holds
+    ``pause`` until the effects are running (or skipped).
     """
+    try:
+        await _resolve_and_run_effects_unheld(
+            effects, apvernums, delay, context
+        )
+    finally:
+        del pause
+
+
+async def _resolve_and_run_effects_unheld(
+    effects: list[clfx.Effect],
+    apvernums: list[ApverNum],
+    delay: float,
+    context: ClientEffectContext | None,
+) -> None:
     from bacommon.langstr import LanguageStringNameDecodeContext
 
     assert bauiv1.in_logic_thread()

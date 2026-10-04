@@ -69,6 +69,21 @@ class AppModeConfig:
     live; values take effect when the mode activates and reads them.
     That convention is what makes configs safe for mode subclasses
     and plugins to amend.
+
+    Configs are deliberately owned by their mode rather than being
+    one framework-wide object with a part per subsystem: the mode
+    that builds a config is also the one that consumes it, so the
+    framework never needs to know what any particular config holds
+    and nothing has to be registered to apply one.
+
+    When writing a config type, make any value that has no sensible
+    default a required constructor argument of whatever object holds
+    it, and leave everything a plain mutable attribute afterward.
+    That way a type checker catches a mode that forgets a required
+    value, while subclasses and plugins can still reassign anything.
+    Prefer holding cheap descriptions (asset handles rather than
+    loaded assets, for example) so that building a config stays free
+    of side effects and replaced defaults are never loaded.
     """
 
 

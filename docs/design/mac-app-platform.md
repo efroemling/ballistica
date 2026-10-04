@@ -98,6 +98,15 @@ Transient deactivations (Spotlight, Mission Control) do briefly release the
 assertion. That's harmless — the idle timer runs in minutes, and the input
 that summoned Spotlight resets it — and not worth adding hysteresis for.
 
+## The cmake/SDL mac build stays vanilla
+
+The cmake/SDL Mac build uses SDL exactly as Windows/Linux do;
+Mac-specific polish belongs in the Xcode (Cocoa) builds. Three Mac cases
+in `app_adapter_sdl.cc` are sanctioned and stay: the 0.35 mouse-wheel
+multiplier, the GL 4.1 Core profile request on the desktop-GL fallback
+(when ANGLE isn't bundled), and the bundled-ANGLE dylib path hints
+(`SetAngleLibPaths_()`).
+
 ## Verifying lifecycle changes
 
 Both axes are observable from outside the process, so check them rather

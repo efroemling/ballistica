@@ -2,6 +2,7 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_viewer.h"
 
+#include <cmath>
 #include <string>
 
 #include "ballistica/base/assets/texture_asset.h"
@@ -287,6 +288,25 @@ auto PythonClassSceneViewer::SetCameraShake(PythonClassSceneViewer* self,
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSceneViewer::SetCameraTiltOrbit(PythonClassSceneViewer* self,
+                                                PyObject* args,
+                                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  float amount;
+  static const char* kwlist[] = {"amount", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "f",
+                                   const_cast<char**>(kwlist), &amount)) {
+    return nullptr;
+  }
+  if (!std::isfinite(amount)) {
+    throw Exception("amount must be finite.", PyExcType::kValue);
+  }
+  self->GetViewer()->camera()->set_tilt_orbit(amount);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassSceneViewer::SetDepthOfField(PythonClassSceneViewer* self,
                                              PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -393,6 +413,19 @@ PyMethodDef PythonClassSceneViewer::tp_methods[] = {
      "per second of spin; 0 turns shake off. Stiffness and damping\n"
      "shape the spring: stiffer wobbles faster, more damping settles\n"
      "sooner. Still while camera shake is disabled."},
+    {"set_camera_tilt_orbit", (PyCFunction)SetCameraTiltOrbit,
+     METH_VARARGS | METH_KEYWORDS,
+     "set_camera_tilt_orbit(amount: float) -> None\n"
+     "\n"
+     "Swing the camera around its target as the device turns.\n"
+     "\n"
+     "On devices with a gyro, turning the device turns the view of\n"
+     "what the camera looks at with it, the camera keeping its\n"
+     "distance and aim. Amount scales the turn: 1.0 turns the camera\n"
+     "as far as the device turned, 0.0 (the default) not at all. The\n"
+     "turn eases back to center over a couple of seconds once the\n"
+     "device holds still. Nothing happens while camera gyro is\n"
+     "disabled."},
     {"set_depth_of_field", (PyCFunction)SetDepthOfField,
      METH_VARARGS | METH_KEYWORDS,
      "set_depth_of_field(focus: tuple[float, float] | None,\n"

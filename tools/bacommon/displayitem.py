@@ -74,8 +74,7 @@ class DepictionAssets:
     Everything here is something ``bacommon`` cannot reach on its own:
     each host keeps its asset-reference wrappers in its own place (the
     client's ``bauiv1._classicassets``, the master server's vendored
-    ``bamaster.assets.baclassicassets``), and the chest appearance
-    colors live with the client's chest code.
+    ``bamaster.assets.baclassicassets``).
 
     Making these parameters rather than imports is what lets one
     depiction serve both hosts. Note there is deliberately nothing here
@@ -291,10 +290,18 @@ def _chest_image(
     depth_range: tuple[float, float] | None,
 ) -> dui2.Image:
     """Return the image depicting a chest item."""
-    from bacommon.classic import ClassicChestDisplayItem, chest_tint3
+    from bacommon.classic import (
+        CHEST_APPEARANCE_COLORS,
+        CHEST_APPEARANCE_COLOR_DEFAULT,
+        ClassicChestDisplayItem,
+        chest_tint3,
+    )
 
     assert isinstance(item, ClassicChestDisplayItem)
 
+    color = CHEST_APPEARANCE_COLORS.get(
+        item.appearance, CHEST_APPEARANCE_COLOR_DEFAULT
+    )
     tints = assets.chest_tints.get(item.appearance, assets.chest_tint_default)
     tint3 = chest_tint3(tints)
     c_size = width * (0.66 if compact else 1.05 if icon else 0.83)
@@ -303,6 +310,9 @@ def _chest_image(
         tint_texture=assets.chest_icon_tint,
         position=position,
         size=(c_size, c_size),
+        # Without the base color every chest reads as a low-level one
+        # tinted slightly differently.
+        color=(*color, 1.0),
         tint_color=tints[0],
         tint2_color=tints[1],
         # Omitted when white so older clients' payloads are unchanged.

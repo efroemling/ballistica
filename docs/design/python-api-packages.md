@@ -1,6 +1,6 @@
 # Python API Packages
 
-**Description:** Feature-set Python packages (babase, bauiv1, ...) are curated API surfaces that re-export shared names; API-walking tools must honor __all__, not __module__.
+**Description:** Feature-set Python packages are curated API surfaces that re-export shared names; tools honor __all__, and ours-alone modules carry the internal-api marker.
 
 The Python packages exposed by feature-sets — `babase`, `bauiv1`,
 `bascenev1`, `baclassic`, `baplus`, `bauiv1lib`, `bascenev1lib`,

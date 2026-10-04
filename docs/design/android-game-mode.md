@@ -1,6 +1,6 @@
 # Android Game Mode & Frame Rate Governance
 
-**Description:** How the Android client escapes the OS's 60hz game cap and runs at native display rate, with battery-game-mode and thermal back-off layered on one frame-rate vote, plus the GameState loading-boost wiring.
+**Description:** How the Android client escapes the OS's 60hz game cap to run at native display rate, with battery mode and thermal back-off expressed through one frame-rate vote.
 
 Shipped 2026-08-25. All device verification below was done on a Pixel
 7a (90hz panel, Android 17). A Pixel-green run proves nothing for other

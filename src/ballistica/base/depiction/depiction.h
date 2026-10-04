@@ -34,11 +34,16 @@ struct DepictionBox {
   float height{};
 };
 
-/// Contain-fit a depiction's aspect (width / height) into a host's box
-/// by alignment. No aspect means the depiction has no shape of its own
-/// and takes the whole box. The one place alignment math happens, so
-/// no kind (and no host) does its own.
-auto FitDepictionBox(const DepictionBox& box, std::optional<float> aspect,
+class Depiction;
+
+/// Fit a depiction's shape into a host's box by alignment: contain-fit
+/// at its aspect (width / height), except that a box narrower than
+/// that but no narrower than its minimum aspect is taken whole (the
+/// depiction squeezes itself to fit; see Depiction::GetMinAspect). No
+/// aspect means the depiction has no shape of its own and takes the
+/// whole box. The one place alignment math happens, so no kind (and no
+/// host) does its own.
+auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
                      DepictionHAlign h_align, DepictionVAlign v_align)
     -> DepictionBox;
 
@@ -128,6 +133,13 @@ class Depiction : public Object {
 
   /// The shape we want (width / height), or none to fill the box.
   virtual auto GetAspect() const -> std::optional<float>;
+
+  /// The narrowest shape (width / height) we can squeeze to while
+  /// keeping the box's full height, for kinds that can give up width
+  /// without shrinking (a capsule name compresses its text); in boxes
+  /// narrower still we shrink at this aspect. Never more than
+  /// GetAspect. None (the default) means we never squeeze.
+  virtual auto GetMinAspect() const -> std::optional<float>;
 
   /// The part of ``box`` (our fitted box; see FitDepictionBox) we
   /// actually cover, for hosts that hit-test against what is drawn

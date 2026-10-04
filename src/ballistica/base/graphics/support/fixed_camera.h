@@ -64,8 +64,24 @@ class FixedCamera : public Camera {
   void SetShake(float strength, float stiffness, float damping,
                 float poke_interval_min, float poke_interval_max);
 
+  /// Swing around our target as the device itself turns (from its gyro;
+  /// see Input::tilt()), so that turning the device turns our view of
+  /// what we're pointed at with it. Amount scales the turn: 1 turns us
+  /// as far as the device turned, 0 (the default) not at all. Like the
+  /// ui's tilt, the turn eases back to center over a couple of seconds
+  /// once the device holds still, and is nothing on devices without a
+  /// gyro or while camera gyro is disabled.
+  auto tilt_orbit() const -> float { return tilt_orbit_; }
+  void set_tilt_orbit(float val) { tilt_orbit_ = val; }
+
  private:
   void StepShake_(FrameDef* frame_def);
+
+  /// Our position swung around our target by the device's turn (see
+  /// set_tilt_orbit()).
+  auto TiltedPosition_() const -> Vector3f;
+
+  float tilt_orbit_{};
 
   // Shake settings.
   float shake_strength_{};

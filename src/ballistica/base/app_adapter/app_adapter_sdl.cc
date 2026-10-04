@@ -578,7 +578,7 @@ void AppAdapterSDL::DoExitMainThreadEventLoop() {
 // Convert real SDL input types to the engine's native BA types. The BA
 // types were mirrored from SDL (identical values + field meanings), so
 // these are straight field copies; they exist so nothing past this adapter
-// ever sees an SDL type. See docs/initiatives/sdl-type-decoupling.md.
+// ever sees an SDL type. See docs/design/sdl-builds.md.
 
 static auto SDLKeyEventToBA_(const SDL_KeyboardEvent& k) -> BAKeysym {
   // SDL3 removed SDL_Keysym and flattened its fields onto the key event.

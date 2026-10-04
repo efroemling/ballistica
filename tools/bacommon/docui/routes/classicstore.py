@@ -103,13 +103,14 @@ class ProfileDraft(DocUIState, state_id='classic.profile_draft'):
     Page state for the editor and its save: what the user has composed
     so far. A request with no draft at all (the first visit) gets one
     built from the stored profile, or fresh defaults when creating; an
-    empty name or character means the same for that field.
+    empty name, character or icon means the same for that field.
     """
 
     color: Annotated[tuple[float, float, float], IOAttrs('cl')]
     highlight: Annotated[tuple[float, float, float], IOAttrs('h')]
     name: Annotated[str, IOAttrs('n')] = ''
     character: Annotated[str, IOAttrs('c')] = ''
+    icon: Annotated[str, IOAttrs('i', store_default=False)] = ''
 
 
 @ioprepped
@@ -195,10 +196,29 @@ class ProfileCharacter(StoreRoute, path='/profile/character'):
 
 @ioprepped
 @dataclass
-class ProfileGlobalUpgrade(StoreRoute, path='/profile/global'):
-    """(Inventory) upgrade a cloud profile to a global profile.
+class ProfileIcon(StoreRoute, path='/profile/icon'):
+    """(Inventory) pick the profile editor's icon.
 
-    Not built yet; shows an under-construction page.
+    Works as :class:`ProfileCharacter` does: the editor's
+    :class:`ProfileDraft` comes along as page state and the pick is
+    handed back to it.
+    """
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # A long row of icon buttons; show as many as we can.
+        return dui2.WindowLayout.WIDER
+
+
+@ioprepped
+@dataclass
+class ProfileGlobalUpgrade(StoreRoute, path='/profile/global'):
+    """(Inventory) offer to upgrade a cloud profile to a global one.
+
+    Says whether the name can be had and what it costs. Like
+    :class:`ProfileDeleteConfirm`, it replaces the editor's page in
+    its window with the editor's draft riding along as page state.
     """
 
     profile_name: Annotated[str, IOAttrs('pn')]
@@ -206,7 +226,22 @@ class ProfileGlobalUpgrade(StoreRoute, path='/profile/global'):
     @override
     @classmethod
     def get_window_layout(cls) -> dui2.WindowLayout:
-        return dui2.WindowLayout.SMALL
+        # Shown in the editor's window (see above).
+        return dui2.WindowLayout.VIEWER
+
+
+@ioprepped
+@dataclass
+class ProfileGlobalUpgradeBuy(
+    StoreRoute, path='/profile/global/buy', method=dui2.RequestMethod.POST
+):
+    """(Inventory) upgrade a cloud profile to a global one."""
+
+    profile_name: Annotated[str, IOAttrs('pn')]
+
+    #: The price the offer page showed; a changed price is refused
+    #: rather than silently charged.
+    ticket_cost: Annotated[int, IOAttrs('tc')]
 
 
 # All routes in the family.
@@ -219,7 +254,9 @@ AnyStoreRoute = (
     | ProfileDelete
     | ProfileDeleteConfirm
     | ProfileCharacter
+    | ProfileIcon
     | ProfileGlobalUpgrade
+    | ProfileGlobalUpgradeBuy
 )
 
 

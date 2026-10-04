@@ -77,7 +77,8 @@ def _fixed_layout(
     Buttons keep their own sizes, aligned in the row as its content
     alignment says (centered ones on ``center_x``, as centered titles
     are); if they don't fit, they (and the spacing between) all shrink
-    together until they do.
+    together until they do. The row's ``content_offset`` then shifts
+    them as a group, short of the row's edges.
     """
     avail = max(1.0, right - left)
     natural = sum(button_padded_size(b)[0] for b in row.buttons)
@@ -101,6 +102,9 @@ def _fixed_layout(
             x = left + avail - used
         case _:
             assert_never(align)
+    # Shift the group as a whole, keeping it within the row.
+    if row.content_offset:
+        x = max(left, min(x + row.content_offset, left + avail - used))
     out: list[tuple[dui2.Button, float]] = []
     for button in buttons:
         out.append((button, x + button.padding_left * button.scale))

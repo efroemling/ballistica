@@ -343,7 +343,13 @@ class Menu(Action):
 
 
 class HAlign(Enum):
-    """Horizontal alignment."""
+    """Horizontal alignment.
+
+    Fields of this type carry an ``enum_fallback`` (each field's own
+    default; ``LEFT`` for the optional row alignments), so a value
+    added here later decodes as that on builds predating it instead
+    of failing the whole response.
+    """
 
     LEFT = 'l'
     CENTER = 'c'
@@ -351,7 +357,12 @@ class HAlign(Enum):
 
 
 class VAlign(Enum):
-    """Vertical alignment."""
+    """Vertical alignment.
+
+    Fields of this type carry an ``enum_fallback`` (``CENTER``), so a
+    value added here later decodes as that on builds predating it
+    instead of failing the whole response.
+    """
 
     TOP = 't'
     CENTER = 'c'
@@ -498,12 +509,12 @@ class Text(Decoration):
     size: Annotated[tuple[float, float], IOAttrs('i')]
 
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
-    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
-        HAlign.CENTER
-    )
-    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
-        VAlign.CENTER
-    )
+    h_align: Annotated[
+        HAlign, IOAttrs('ha', store_default=False, enum_fallback=HAlign.CENTER)
+    ] = HAlign.CENTER
+    v_align: Annotated[
+        VAlign, IOAttrs('va', store_default=False, enum_fallback=VAlign.CENTER)
+    ] = VAlign.CENTER
     color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('c', store_default=False),
@@ -587,12 +598,12 @@ class Image(Decoration):
         tuple[float, float, float, float] | None,
         IOAttrs('c', store_default=False),
     ] = None
-    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
-        HAlign.CENTER
-    )
-    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
-        VAlign.CENTER
-    )
+    h_align: Annotated[
+        HAlign, IOAttrs('ha', store_default=False, enum_fallback=HAlign.CENTER)
+    ] = HAlign.CENTER
+    v_align: Annotated[
+        VAlign, IOAttrs('va', store_default=False, enum_fallback=VAlign.CENTER)
+    ] = VAlign.CENTER
     tint_texture: Annotated[
         TextureSpec | int | None, IOAttrs('tt', store_default=False)
     ] = None
@@ -661,12 +672,12 @@ class Depiction(Decoration):
     depiction: Annotated[bacommon.depiction.Depiction, IOAttrs('dp')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
-    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
-        HAlign.CENTER
-    )
-    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
-        VAlign.CENTER
-    )
+    h_align: Annotated[
+        HAlign, IOAttrs('ha', store_default=False, enum_fallback=HAlign.CENTER)
+    ] = HAlign.CENTER
+    v_align: Annotated[
+        VAlign, IOAttrs('va', store_default=False, enum_fallback=VAlign.CENTER)
+    ] = VAlign.CENTER
 
     #: Whether to follow the button this decorates -- brightening as
     #: it's hovered, pressed, or selected, and drawing faded and greyed
@@ -687,7 +698,12 @@ class Depiction(Decoration):
 
 
 class ButtonStyle(Enum):
-    """Styles a button can be."""
+    """Styles a button can be.
+
+    :attr:`Button.style` carries an ``enum_fallback`` (``SQUARE``), so
+    a style added here later draws as a square button on builds
+    predating it instead of failing the whole response.
+    """
 
     SQUARE = 'q'
     TAB = 't'
@@ -742,9 +758,10 @@ class Button:
     decorations: Annotated[
         list[Decoration] | None, IOAttrs('c', store_default=False)
     ] = None
-    style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
-        ButtonStyle.SQUARE
-    )
+    style: Annotated[
+        ButtonStyle,
+        IOAttrs('y', store_default=False, enum_fallback=ButtonStyle.SQUARE),
+    ] = ButtonStyle.SQUARE
     default: Annotated[bool, IOAttrs('df', store_default=False)] = False
     selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
 
@@ -782,10 +799,10 @@ class Button:
         IOAttrs('dp', store_default=False),
     ] = None
     depiction_h_align: Annotated[
-        HAlign, IOAttrs('dha', store_default=False)
+        HAlign, IOAttrs('dha', store_default=False, enum_fallback=HAlign.CENTER)
     ] = HAlign.CENTER
     depiction_v_align: Annotated[
-        VAlign, IOAttrs('dva', store_default=False)
+        VAlign, IOAttrs('dva', store_default=False, enum_fallback=VAlign.CENTER)
     ] = VAlign.CENTER
 
     #: With a :attr:`depiction`, have mouse and touch land on the
@@ -888,7 +905,12 @@ class UnknownRow(Row):
 
 
 class ButtonRowLayout(Enum):
-    """How a :class:`ButtonRow` handles the row's width."""
+    """How a :class:`ButtonRow` handles the row's width.
+
+    :attr:`ButtonRow.layout` carries an ``enum_fallback`` (``SCROLL``),
+    so a layout added here later scrolls on builds predating it
+    instead of failing the whole response.
+    """
 
     #: Buttons at their own sizes in a strip that scrolls sideways when
     #: they don't all fit. The strip clips what it holds (vertically
@@ -926,9 +948,12 @@ class ButtonRow(Row):
 
     #: How the buttons use the row's width. Builds older than this field
     #: always scroll.
-    layout: Annotated[ButtonRowLayout, IOAttrs('lo', store_default=False)] = (
-        ButtonRowLayout.SCROLL
-    )
+    layout: Annotated[
+        ButtonRowLayout,
+        IOAttrs(
+            'lo', store_default=False, enum_fallback=ButtonRowLayout.SCROLL
+        ),
+    ] = ButtonRowLayout.SCROLL
 
     #: Height of an optional band above the row (above its title too)
     #: holding free-form, non-interactive decorations; 0 for none. Each
@@ -1052,14 +1077,28 @@ class ButtonRow(Row):
     #: field ignore it (and thus left-align unless ``center_content`` is
     #: also set).
     content_align: Annotated[
-        HAlign | None, IOAttrs('ca', store_default=False)
+        HAlign | None,
+        IOAttrs('ca', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
+
+    #: Shifts a ``FIXED`` row's buttons sideways as a group (positive
+    #: is right). They lay out exactly as they otherwise would -- same
+    #: order, spacing and shrink-to-fit -- and then the whole group
+    #: moves this far, but never past the row's edges (it slides back
+    #: in instead). Centered content thus centers on the row's center
+    #: plus this offset: the same point header and footer decorations
+    #: at that x are placed from, which is the way to line a button up
+    #: with band art regardless of the layout's width or insets.
+    #: Ignored by ``SCROLL`` and ``FILL`` rows. Builds older than this
+    #: field ignore it.
+    content_offset: Annotated[float, IOAttrs('cxo', store_default=False)] = 0.0
 
     #: Horizontal alignment of the title and subtitle. Overrides
     #: ``center_title`` when set; same older-build caveat as
     #: ``content_align``.
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: If things disappear when scrolling left/right, turn this up
@@ -1172,7 +1211,8 @@ class CheckboxRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -1318,7 +1358,8 @@ class TextInputRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -1465,7 +1506,8 @@ class ChoiceRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -1594,7 +1636,8 @@ class ColorRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -1743,7 +1786,8 @@ class SliderRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -1884,7 +1928,8 @@ class NumberRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -2008,7 +2053,8 @@ class ButtonControlRow(Row):
         float | None, IOAttrs('ss', store_default=False)
     ] = None
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: Small explanatory text drawn below the row's content, aligned
@@ -2209,7 +2255,8 @@ class Section(Row):
     #: See :attr:`ButtonRow.title_align`; the footnote follows it too.
     #: Left by default.
     title_align: Annotated[
-        HAlign | None, IOAttrs('ta', store_default=False)
+        HAlign | None,
+        IOAttrs('ta', store_default=False, enum_fallback=HAlign.LEFT),
     ] = None
 
     #: The note under the section's rows (drawn like a subtitle).

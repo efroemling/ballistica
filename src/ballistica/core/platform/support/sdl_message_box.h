@@ -15,7 +15,7 @@ namespace ballistica::core {
 /// macOS) call this from their BlockingFatalErrorDialog() overrides; it is
 /// a no-op in non-SDL builds. (xcode macOS uses a native Cocoa dialog
 /// instead; this is the 'option 3' interim until/unless those platforms
-/// grow native dialogs too — see docs/initiatives/sdl-type-decoupling.md.)
+/// grow native dialogs too — see docs/design/sdl-builds.md.)
 void ShowSDLFatalErrorDialog(const std::string& message);
 
 }  // namespace ballistica::core

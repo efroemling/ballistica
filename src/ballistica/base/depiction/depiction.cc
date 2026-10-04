@@ -18,20 +18,27 @@
 
 namespace ballistica::base {
 
-auto FitDepictionBox(const DepictionBox& box, std::optional<float> aspect,
+auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
                      DepictionHAlign h_align, DepictionVAlign v_align)
     -> DepictionBox {
   float width = box.width;
   float height = box.height;
+  std::optional<float> aspect = depiction.GetAspect();
   if (aspect.has_value() && *aspect > 0.0f && box.width > 0.0f
       && box.height > 0.0f) {
-    if (box.width / box.height > *aspect) {
+    std::optional<float> min_aspect = depiction.GetMinAspect();
+    float squeezed = (min_aspect.has_value() && *min_aspect > 0.0f)
+                         ? std::min(*min_aspect, *aspect)
+                         : *aspect;
+    float box_aspect = box.width / box.height;
+    if (box_aspect > *aspect) {
       height = box.height;
       width = box.height * *aspect;
-    } else {
+    } else if (box_aspect < squeezed) {
       width = box.width;
-      height = box.width / *aspect;
+      height = box.width / squeezed;
     }
+    // (Otherwise the box is between our two shapes: take it whole.)
   }
   DepictionBox out{box.x, box.y, width, height};
   switch (h_align) {
@@ -92,6 +99,10 @@ Depiction::Depiction(std::string type_id)
 Depiction::~Depiction() = default;
 
 auto Depiction::GetAspect() const -> std::optional<float> {
+  return std::nullopt;
+}
+
+auto Depiction::GetMinAspect() const -> std::optional<float> {
   return std::nullopt;
 }
 

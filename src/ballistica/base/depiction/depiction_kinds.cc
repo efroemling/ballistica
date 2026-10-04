@@ -117,7 +117,10 @@ class CharacterIconDepiction : public Depiction {
 ///   default), with an optional square icon covering the capsule's left
 ///   end; the text sits against the icon (or reaches into the left
 ///   end) and reaches into the right end, by the icon edge and text
-///   inset. The whole capsule is the shape fitted to the box.
+///   inset. The whole capsule is the shape fitted to the box; in a box
+///   too narrow for it, the capsule keeps the box's height (and the
+///   icon its size) and only the text shrinks to fit, down to
+///   kMinTextShrink of its size, past which everything shrinks.
 ///
 /// Our shape is known once our text is measured (in the background
 /// for cold OS-drawn text); until then we report none and draw nothing,
@@ -141,9 +144,18 @@ class NameDepiction : public Depiction {
     }
     if (const CapsuleNameDef* cap = Capsule_()) {
       float r = CapsuleRadius_(*cap);
-      return Layout_(*cap).length / (2.0f * r);
+      return Layout_(*cap, *width_).length / (2.0f * r);
     }
     return std::max(*width_, 1.0f) / kTextHeight;
+  }
+
+  auto GetMinAspect() const -> std::optional<float> override {
+    const CapsuleNameDef* cap = Capsule_();
+    if (!width_ || !cap) {
+      return std::nullopt;
+    }
+    float r = CapsuleRadius_(*cap);
+    return Layout_(*cap, *width_ * kMinTextShrink).length / (2.0f * r);
   }
 
   void Update(millisecs_t now) override {
@@ -172,8 +184,19 @@ class NameDepiction : public Depiction {
       if (has_icon) {
         DrawIcon_(context, *cap, r);
       }
-      float text_left = b.x + Layout_(*cap).text_left * scale;
-      DrawText_(context, text_left + *width_ * scale * 0.5f, b.y + r, scale);
+      // A box narrower than our natural length (see GetMinAspect)
+      // shrinks the text to fit what's left between the ends (still
+      // centered on the capsule's midline).
+      CapsuleLayout layout = Layout_(*cap, *width_);
+      float shrink{1.0f};
+      float length = b.width / scale;
+      if (length < layout.length && *width_ > 0.0f) {
+        shrink = std::clamp((*width_ - (layout.length - length)) / *width_,
+                            0.0f, 1.0f);
+      }
+      float text_left = b.x + layout.text_left * scale;
+      DrawText_(context, text_left + *width_ * shrink * scale * 0.5f, b.y + r,
+                scale * shrink);
       return;
     }
     DrawText_(context, b.x + b.width * 0.5f, b.y + b.height * 0.5f,
@@ -189,6 +212,10 @@ class NameDepiction : public Depiction {
   /// percent). The capsule's unit: fixed, never measured per string, so
   /// capsules don't resize from name to name.
   static constexpr float kCapHeight{21.0f};
+
+  /// How small a capsule's text may shrink within it (a fraction of
+  /// its size) before the whole capsule shrinks instead.
+  static constexpr float kMinTextShrink{0.4f};
 
   auto Capsule_() const -> const CapsuleNameDef* {
     return name_.capsule ? &*name_.capsule : nullptr;
@@ -229,18 +256,19 @@ class NameDepiction : public Depiction {
   };
 
   /// Where the text starts and how long the capsule is, at text scale
-  /// 1: the left end (up to the icon's edge point -- its center at the
-  /// left cap's center, out by its scaled half-size times its edge -- or
-  /// a cap less its inset), the text, then the right cap less its
-  /// inset. Never shorter than a circle; text too short for that is
+  /// 1, for text ``text_width`` wide: the left end (up to the icon's edge point
+  /// -- its center at the left cap's center, out by its scaled half-size times
+  /// its edge -- or a cap less its inset), the text, then the right cap less
+  /// its inset. Never shorter than a circle; text too short for that is
   /// centered in the room.
-  auto Layout_(const CapsuleNameDef& cap) const -> CapsuleLayout {
+  static auto Layout_(const CapsuleNameDef& cap, float text_width)
+      -> CapsuleLayout {
     float r = CapsuleRadius_(cap);
     float end = r * (1.0f - TextInset_(cap));
     float left = cap.icon_texture.present()
                      ? r * (1.0f + cap.icon_scale * cap.icon_edge)
                      : end;
-    float length = left + std::max(*width_, 0.0f) + end;
+    float length = left + std::max(text_width, 0.0f) + end;
     float min_length = 2.0f * r;
     if (length < min_length) {
       return {left + (min_length - length) * 0.5f, min_length};
@@ -391,6 +419,10 @@ class NameDepiction : public Depiction {
     float rgb[3]{name_.basic.color[0], name_.basic.color[1],
                  name_.basic.color[2]};
     context.StandardColor(rgb);
+    // Glyphs with colors of their own (icon chars) keep them, as they do
+    // in text widgets.
+    float rgb_plain[3]{1.0f, 1.0f, 1.0f};
+    context.StandardColor(rgb_plain);
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     int elem_count = text_group_.GetElementCount();
@@ -419,7 +451,8 @@ class NameDepiction : public Depiction {
       }
       float cmul =
           (t->premultiplied() ? alpha : 1.0f) * context.StandardBrightness();
-      c.SetColor(rgb[0] * cmul, rgb[1] * cmul, rgb[2] * cmul, alpha);
+      const float* ergb = text_group_.GetElementCanColor(e) ? rgb : rgb_plain;
+      c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
       c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e), 1.0f));
       {
         auto xf = c.ScopedTransform();

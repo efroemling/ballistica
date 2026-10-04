@@ -46,6 +46,8 @@ class PythonClassSceneViewer : public PythonClass {
                        PyObject* keywds) -> PyObject*;
   static auto SetCameraShake(PythonClassSceneViewer* self, PyObject* args,
                              PyObject* keywds) -> PyObject*;
+  static auto SetCameraTiltOrbit(PythonClassSceneViewer* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject*;
   static auto SetDepthOfField(PythonClassSceneViewer* self, PyObject* args,
                               PyObject* keywds) -> PyObject*;
   static auto Shutdown(PythonClassSceneViewer* self) -> PyObject*;

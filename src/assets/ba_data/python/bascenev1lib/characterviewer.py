@@ -177,6 +177,10 @@ class CharacterViewer(bui.Viewer):
             poke_interval_max=1.0,
         )
 
+        # Turning the device turns our view of the character with it
+        # (a fraction as far; a full turn's worth is too much).
+        self._viewer.set_camera_tilt_orbit(0.2)
+
         # Our character stands about 4.65 out from the camera. It and
         # whatever it holds or wears stay sharp; the ground running up
         # to it and away behind it goes soft.

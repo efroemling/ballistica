@@ -208,7 +208,12 @@ def _run_pcommand(sysargv: list[str]) -> None:
         elif sysargv[1] in _g_funcs:
             _g_funcs[sysargv[1]]()
         else:
-            raise CleanError(f"Unknown pcommand '{sysargv[1]}'.")
+            raise CleanError(
+                f"Unknown pcommand '{sysargv[1]}' in project"
+                f" '{os.path.basename(os.getcwd())}'. Wrong repo? (Bash cwd"
+                ' persists across calls; cd or use an absolute'
+                ' tools/pcommand path.)'
+            )
 
     if show_help:
         clientprint(

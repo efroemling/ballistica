@@ -1,6 +1,6 @@
 # Scene Stream on the Wire
 
-**Description:** How a hosting session's scene stream is framed, folded, and delivered under protocol 44, the fold-scope rule that keeps it logic-neutral, and the tooling that measures it.
+**Description:** How a hosting session's scene stream is framed, folded and delivered to 1.8 peers, and the fold-scope rule that keeps those encodings logic-neutral.
 
 ## The model this must not disturb
 

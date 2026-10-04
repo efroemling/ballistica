@@ -180,6 +180,12 @@ report is a fatal-error report carrying an extra `crash` block.
 | Modded signals, `core_alive` | Same | Mirrored as the app runs. `core_alive` answers the fatal channel's `coregone` question as of the fault, not as of sending |
 | Fault code, fault address, faulting module + base, access type/address, crash time | The crash handler | Module + offset is the useful half: it survives ASLR and is what archived symbols resolve against |
 
+**Coupling:** `GetOSVersionString()` is also hashed into
+`AppPlatform::GetPublicDeviceUUID()`, so any change to that string's
+*format* on a platform re-rolls every user's public device UUID there.
+(The 2026-09-25 Windows switch to `RtlGetVersion` did exactly this
+once.)
+
 ### What leaves the machine
 
 Only the record, converted to JSON: about 600 bytes, and bounded at
@@ -393,3 +399,27 @@ Known states no channel covers:
   (see [Deferred delivery](#deferred-delivery)); a deferred report or a
   native crash record whose next-launch send fails is still lost, and
   a fatal error before the config dir is known can't be deferred.
+- **A process killed by a signal no engine code sees** (Apple). No
+  `.ips`, no live or `DEFERRED:` fatal report. See "When nothing
+  reports" below.
+
+### When nothing reports: read the device system log (Apple)
+
+An app that "opens for a split second then vanishes" with no crash
+report and no fatal report died of something the engine never saw; the
+device's system log names it.
+
+1. Collect (needs root; use the full path, since zsh's builtin `log`
+   shadows it): `sudo /usr/bin/log collect --device-udid <UDID> --last
+   1h --output <path>.logarchive` (UDIDs: `xcrun devicectl list
+   devices`).
+2. Read: `/usr/bin/log show --archive <path> --predicate 'eventMessage
+   CONTAINS[c] "ballisticakit"' --style compact`, then look for launchd
+   `exited due to <SIGNAL>` / SpringBoard `Process exited`.
+
+The archive keeps only persisted levels (engine WARNING+ yes,
+INFO/DEBUG no) and rotates within hours on a busy phone, so collect
+right away. `.ips` files come separately via `xcrun devicectl device
+copy from --domain-type systemCrashLogs`. Precedent: SIGPIPE,
+2026-09-28 (bundled Python is init'd isolated, so nothing ignored
+SIGPIPE; fixed by `signal(SIGPIPE, SIG_IGN)` in `MonolithicMain`).

@@ -202,6 +202,55 @@ def screenshot(path: str, tag: str = 'screenshot') -> None:
     _badev.automation_capture_screenshot(path=abs_path, tag=tag)
 
 
+def screenshot_sequence(
+    path: str,
+    count: int,
+    interval: float,
+    *,
+    delay: float = 0.0,
+    tag: str = 'screenshot_sequence',
+) -> None:
+    """Capture a timed run of screenshots, for checking animations.
+
+    Takes ``count`` captures ``interval`` seconds apart (app time),
+    starting ``delay`` seconds from now, into the directory ``path``
+    (resolved as :func:`screenshot` resolves paths) as
+    ``0000.jpg``, ``0001.jpg``, ... Starting with no delay and then
+    triggering an animation in the same exec puts frame 0 at the
+    trigger.
+
+    Each capture lands on the next frame rendered after its timer,
+    so spacing jitters by up to a frame; ``ffmpeg -framerate N -i
+    %04d.jpg`` or a contact sheet of them reads the motion fine.
+    Emits ``[automation] <tag> ok <count> <dir>`` once all are
+    scheduled (captures report their own lines as ``<tag>``).
+    """
+    import os
+
+    import babase
+
+    if not hasattr(_babase, 'automation_capture_screenshot'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    if count < 1 or interval <= 0.0 or delay < 0.0:
+        _emit(tag, 'fail', 'bad_args')
+        return
+    dirpath = (
+        path
+        if os.path.isabs(path)
+        else os.path.join(_automation_screenshots_dir(), path)
+    )
+    os.makedirs(dirpath, exist_ok=True)
+    for i in range(count):
+        babase.apptimer(
+            delay + i * interval,
+            babase.CallStrict(
+                screenshot, os.path.join(dirpath, f'{i:04d}.jpg'), tag=tag
+            ),
+        )
+    _emit(tag, 'ok', f'{count} {dirpath}')
+
+
 def _automation_screenshots_dir() -> str:
     """Dir a relative screenshot path resolves under.
 

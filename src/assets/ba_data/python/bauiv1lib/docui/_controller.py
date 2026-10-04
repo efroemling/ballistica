@@ -63,6 +63,13 @@ class _WinData:
     state: _WinState
     refresh_timer: bui.AppTimer | None = None
 
+    #: Held while a fresh request is out, so live root-ui values (a
+    #: toolbar meter getting a server push) can't jump ahead of what
+    #: the response's effects animate. Running those effects takes its
+    #: own pause through their end, so this one just has to cover the
+    #: round trip; it goes when the window's state moves on.
+    root_ui_pause: bui.RootUIUpdatePause | None = None
+
 
 #: How long content can take to arrive after its window appears before
 #: its scale-in transitions play at full length. Transitions exist to
@@ -829,16 +836,25 @@ class DocUIController:
         if bui.app.shutting_down:
             return
 
+        state = (
+            _WinState.ERRORED
+            if explicit_error is not None
+            else (
+                _WinState.REFRESHING
+                if is_refresh
+                else _WinState.FETCHING_FRESH_REQUEST
+            )
+        )
         self._set_win_data(
             win,
             _WinData(
-                _WinState.ERRORED
-                if explicit_error is not None
-                else (
-                    _WinState.REFRESHING
-                    if is_refresh
-                    else _WinState.FETCHING_FRESH_REQUEST
-                )
+                state,
+                # Only fresh requests run their response's effects.
+                root_ui_pause=(
+                    bui.RootUIUpdatePause()
+                    if state is _WinState.FETCHING_FRESH_REQUEST
+                    else None
+                ),
             ),
         )
         win.lock_ui(origin_widget)

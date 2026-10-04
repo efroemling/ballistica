@@ -54,9 +54,8 @@ auto DepictionSlot::GetContentBox(float width, float height) const
   if (!depiction_.exists()) {
     return std::nullopt;
   }
-  return depiction_->GetContentBox(
-      base::FitDepictionBox({0.0f, 0.0f, width, height},
-                            depiction_->GetAspect(), h_align_, v_align_));
+  return depiction_->GetContentBox(base::FitDepictionBox(
+      {0.0f, 0.0f, width, height}, *depiction_, h_align_, v_align_));
 }
 
 /// Physical pixels per unit of a widget's own space, as settled on
@@ -170,7 +169,7 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   base::DepictionBox box =
       ScaledBox(base::FitDepictionBox(
                     {args.offset_x, args.offset_y, args.width, args.height},
-                    depiction_->GetAspect(), h_align_, v_align_),
+                    *depiction_, h_align_, v_align_),
                 args.scale);
 
   base::DepictionDrawContext context;

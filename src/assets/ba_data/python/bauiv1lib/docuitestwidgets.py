@@ -667,6 +667,65 @@ def test_page_widgets(
                     footnote=_lit('Eight 150-wide buttons, shrunk to fit.'),
                     debug=debug,
                 ),
+                # Content offset: the group shifts from the row's center
+                # -- the same point band decorations are placed from --
+                # so a button lines up under band art at the same x
+                # whatever the layout's width or insets.
+                dui2.ButtonRow(
+                    layout=dui2.ButtonRowLayout.FIXED,
+                    center_content=True,
+                    content_offset=-200.0,
+                    header_height=40.0,
+                    header_decorations_center=[
+                        dui2.Text(
+                            text=_lit('x=-200'),
+                            position=(-200.0, 9.0),
+                            size=(150.0, 20.0),
+                            scale=0.6,
+                            color=(1.0, 1.0, 1.0, 0.5),
+                            debug=debug,
+                        ),
+                        dui2.Text(
+                            text=_lit('▼'),
+                            position=(-200.0, -9.0),
+                            size=(30.0, 20.0),
+                            scale=0.7,
+                            color=(1.0, 1.0, 1.0, 0.5),
+                            debug=debug,
+                        ),
+                    ],
+                    buttons=[_fixed_button('Offset -200', (180.0, 40.0))],
+                    footnote=_lit(
+                        'content_offset=-200: centered under band art'
+                        ' at x=-200.'
+                    ),
+                    debug=debug,
+                ),
+                dui2.ButtonRow(
+                    layout=dui2.ButtonRowLayout.FIXED,
+                    center_content=True,
+                    content_offset=150.0,
+                    buttons=[
+                        _fixed_button('Group', (120.0, 40.0)),
+                        _fixed_button('Shifted', (120.0, 40.0)),
+                    ],
+                    footnote=_lit(
+                        'Two buttons, content_offset=150: they move as a'
+                        ' group, spacing unchanged.'
+                    ),
+                    debug=debug,
+                ),
+                dui2.ButtonRow(
+                    layout=dui2.ButtonRowLayout.FIXED,
+                    center_content=True,
+                    content_offset=5000.0,
+                    buttons=[_fixed_button('Clamped', (150.0, 40.0))],
+                    footnote=_lit(
+                        'content_offset=5000: slides back in at the'
+                        ' right edge rather than leaving the row.'
+                    ),
+                    debug=debug,
+                ),
                 # Control rows get the same spacing and header/footer
                 # bands button rows do. (The typed-state helpers don't
                 # take these, so they get set on what the helpers

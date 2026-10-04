@@ -260,7 +260,7 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
   context.transparent = true;
   context.box = base::FitDepictionBox(
       {center_x_ - width_ * 0.5f, center_y_ - height_ * 0.5f, width_, height_},
-      depiction_->GetAspect(), h_align_, v_align_);
+      *depiction_, h_align_, v_align_);
   context.z = vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth();
   context.opacity = std::max(0.0f, opacity_);
   // Overlay units are virtual screen units.

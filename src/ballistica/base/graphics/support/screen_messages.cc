@@ -437,7 +437,7 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
           context.box = FitDepictionBox(
               {h - 14.0f - size * 0.5f,
                v_base + 10.0f + i->v_smoothed - size * 0.5f, size, size},
-              i->depiction->GetAspect(), DepictionHAlign::kCenter,
+              *i->depiction, DepictionHAlign::kCenter,
               DepictionVAlign::kCenter);
           context.z = kScreenMessageZDepth;
           context.opacity = a;

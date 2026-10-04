@@ -20,7 +20,8 @@ import bacommon.docui.v2 as dui2
 if TYPE_CHECKING:
     import bacommon.docui.v2
 
-# NEEDS_TRANSLATION: dev-only test page; every label here is a literal.
+# Dev-only test page: every label here is a literal on purpose (it is
+# never translated).
 
 
 def _shake_keys(duration: float) -> list[clfx.Keyframe]:
