@@ -19,10 +19,9 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
     import bacommon.docui.v2 as dui2
-    from bacommon.langstr import LangStrSpec
 
     from bauiv1lib.docui._window import DocUIWindow
-    from bauiv1lib.docui.prep._types import RowPrep
+    from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 NUMBER_HEIGHT = 50.0
 
@@ -57,7 +56,7 @@ def prep_number_row(
     bottom: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a number row.
 

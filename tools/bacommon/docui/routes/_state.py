@@ -697,8 +697,10 @@ def _field_is_optional(statetype: type[DocUIState], key: str) -> bool:
 
 
 def _check_on_change(on_change: bacommon.docui.v2.Action | None) -> None:
-    if isinstance(on_change, (dui2.Browse, dui2.Menu)):
-        raise ValueError('on_change actions cannot open windows or menus.')
+    if isinstance(on_change, (dui2.Browse, dui2.Menu, dui2.PopupText)):
+        raise ValueError(
+            'on_change actions cannot open windows, menus or popups.'
+        )
 
 
 def validate_page_state(page: bacommon.docui.v2.Page) -> None:

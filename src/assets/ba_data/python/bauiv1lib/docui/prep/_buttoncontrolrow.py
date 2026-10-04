@@ -30,10 +30,9 @@ if TYPE_CHECKING:
     from typing import Callable
 
     import bacommon.docui.v2 as dui2
-    from bacommon.langstr import LangStrSpec
 
     from bauiv1lib.docui._window import DocUIWindow
-    from bauiv1lib.docui.prep._types import RowPrep
+    from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 # A button control row is never shorter than the other control rows,
 # so a small button's row lines up with its neighbors.
@@ -93,7 +92,7 @@ def button_control_row_tucks(
     *,
     left: float,
     right: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> tuple[float, float]:
     """Limit a button control row's tucks to what its button allows.
 
@@ -141,7 +140,7 @@ def prep_button_control_row(
     widgetid: str,
     tdelay: float | None,
     packages: list[ApverNum],
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a button control row.
 

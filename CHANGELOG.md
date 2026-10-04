@@ -1,4 +1,4 @@
-### 1.8.0 (build 23034, api 9, 2026-10-04)
+### 1.8.0 (build 23035, api 9, 2026-10-04)
 - Fixed bots (and other non-cloud characters) drawing with their character
   definition's highlight instead of their own (e.g. Impact Bot Pro's red
   hair showing up green). Only cloud-profile looks use character

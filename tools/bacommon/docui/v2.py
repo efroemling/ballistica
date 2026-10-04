@@ -95,6 +95,7 @@ class ActionTypeID(Enum):
     REPLACE = 'r'
     LOCAL = 'l'
     MENU = 'm'
+    POPUP_TEXT = 'pt'
     UNKNOWN = 'u'
 
 
@@ -119,6 +120,8 @@ class Action(IOMultiType[ActionTypeID]):
             return Local
         if type_id is t.MENU:
             return Menu
+        if type_id is t.POPUP_TEXT:
+            return PopupText
         if type_id is t.UNKNOWN:
             return UnknownAction
         assert_never(type_id)
@@ -340,6 +343,34 @@ class Menu(Action):
     @classmethod
     def get_type_id(cls) -> ActionTypeID:
         return ActionTypeID.MENU
+
+
+@ioprepped
+@dataclass
+class PopupText(Action):
+    """Pop up a bit of text at the button, with an ok button to close it.
+
+    For informational text (a small '?' button explaining something,
+    say). The popup is sized to fit the text, which wraps to a
+    client-chosen maximum width. A press of its ok button or anywhere
+    outside it closes it.
+
+    Like a :class:`Menu`, only a press can open one: a button's, or a
+    menu item's (the popup then comes from the menu's button). One
+    arriving anywhere else an action can go (an input row's
+    ``on_change``, a timed action) is ignored. Clients predating this
+    type see an unknown action.
+    """
+
+    text: Annotated[LangStrSpec | int, IOAttrs('t')]
+
+    #: Plays a swish.
+    default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.POPUP_TEXT
 
 
 class HAlign(Enum):

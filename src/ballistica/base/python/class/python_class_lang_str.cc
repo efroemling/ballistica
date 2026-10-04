@@ -314,7 +314,11 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "of authored entries (one line per player, ...) stays fully\n"
      "localized. Items must be language-strings -- wrap plain text\n"
      "with :meth:`from_text`. Raises ValueError for more than 256\n"
-     "items or a result nested too deeply.\n"},
+     "items or a result nested too deeply.\n"
+     "\n"
+     "Server code (or anything without a native language-string) can\n"
+     "build the same thing in spec form with\n"
+     ":meth:`bacommon.langstr.LangStrSpecValue.join`.\n"},
     {"evaluate", (PyCFunction)Evaluate, METH_VARARGS | METH_KEYWORDS,
      "evaluate(*, wrap: bool = True) -> str\n"
      "\n"

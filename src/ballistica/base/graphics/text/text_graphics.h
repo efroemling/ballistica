@@ -22,6 +22,13 @@ namespace ballistica::base {
 const int kTextMaxUnicodeVal = 999999;
 const float kTextRowHeight = 32.0f;
 
+/// Nominal capital-letter height at text scale 1 (the baked Latin
+/// glyphs'; OS-drawn text shares their em size, so lands within a few
+/// percent). Fixed, never measured per string, so things sized by it
+/// don't change from string to string. Much less than kTextRowHeight,
+/// which includes room for descenders, accents and line spacing.
+const float kTextCapHeight = 21.0f;
+
 constexpr int kFontExtrasRows{5};
 constexpr int kFontExtrasColumns{5};
 constexpr int kFontExtrasPages{5};

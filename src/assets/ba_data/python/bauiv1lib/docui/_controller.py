@@ -33,6 +33,7 @@ from bauiv1 import _builtinassets
 from bauiv1lib.docui import _bgrunner, _cache
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._menu import DocUIMenuWindow
+from bauiv1lib.docui._popuptext import DocUIPopupTextWindow
 from bauiv1lib.docui._window import DocUIWindow
 from bauiv1lib.docui._windowstate import DocUIMainWindowState
 
@@ -1015,6 +1016,16 @@ class DocUIController:
             # to open one (timers, input rows, other menus' items).
             bui.uilog.warning('Ignoring MENU action (only allowed on buttons).')
 
+        elif action_type is dui.ActionTypeID.POPUP_TEXT:
+            assert isinstance(action, dui.PopupText)
+            # As with menus: presses (buttons' and menu items') come in
+            # elsewhere with their text prepped; nothing else gets to
+            # pop one up.
+            bui.uilog.warning(
+                'Ignoring POPUP_TEXT action (only allowed on buttons'
+                ' and menu items).'
+            )
+
         elif action_type is dui.ActionTypeID.UNKNOWN:
             assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
@@ -1028,22 +1039,30 @@ class DocUIController:
         window: DocUIWindow,
         widgetid: str,
         action: bacommon.docui.v2.Action | None,
-        menu: prep.MenuPrep | None,
+        popup: prep.MenuPrep | prep.PopupTextPrep | None,
     ) -> None:
         """Called when a doc-ui button is pressed.
 
-        :meth:`run_action`, plus the one thing only a button can do:
-        pop up its menu (``menu`` being its prepped one, for a button
-        whose action is a menu).
+        :meth:`run_action`, plus the things only a press can do: pop up
+        a menu or text (``popup`` being the prepped one, for a button
+        whose action is one of those).
 
         :meta private:
         """
         # pylint: disable=cyclic-import
         import bacommon.docui.v2 as dui
+        from bauiv1lib.docui.prep import MenuPrep, PopupTextPrep
 
-        if not isinstance(action, dui.Menu) or menu is None:
+        if isinstance(action, dui.PopupText) and isinstance(
+            popup, PopupTextPrep
+        ):
+            self._show_popup_text(widgetid, action, popup)
+            return
+
+        if not isinstance(action, dui.Menu) or not isinstance(popup, MenuPrep):
             self.run_action(window, widgetid, action)
             return
+        menu = popup
 
         assert bui.in_logic_thread()
 
@@ -1066,6 +1085,32 @@ class DocUIController:
         if action.default_sound:
             bui.play_swish()
         DocUIMenuWindow(window, widgetid, widget, menu)
+
+    def _show_popup_text(
+        self,
+        widgetid: str,
+        action: bacommon.docui.v2.PopupText,
+        popup: prep.PopupTextPrep,
+    ) -> None:
+        """Pop up a popup-text action's text from a pressed button.
+
+        (A menu's button, if the press was a menu item pick.) Unlike
+        other actions this works while the window is locked: it only
+        shows text, touching neither the page nor its state.
+        """
+        assert bui.in_logic_thread()
+
+        widget = bui.widget_by_id(widgetid)
+        if widget is None:
+            bui.uilog.warning(
+                'DocUI button press widget not found: %s (not expected)',
+                widgetid,
+            )
+            return
+
+        if action.default_sound:
+            bui.play_swish()
+        DocUIPopupTextWindow(widget, popup)
 
     def _refuse_if_locked(self, window: DocUIWindow) -> bool:
         """Tell the user to try again if a window is locked; True if so."""

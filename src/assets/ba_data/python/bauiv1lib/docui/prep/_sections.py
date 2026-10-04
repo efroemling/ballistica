@@ -34,6 +34,7 @@ from bauiv1lib.docui.prep._rowtext import (
     row_text_x_and_maxwidth,
     wrapped_text,
 )
+from bauiv1lib.docui.prep._types import NO_WRAP
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
@@ -42,7 +43,7 @@ if TYPE_CHECKING:
 
     from bacommon.langstr import LangStrSpec
 
-    from bauiv1lib.docui.prep._types import RowPrep
+    from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 #: Section title text scale: larger than a row title's (1.15), so a
 #: heading reads as a level above the rows' own titles.
@@ -469,7 +470,7 @@ def entry_geometry(
 
 def _title_height(
     sec: dui2.Section,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     if sec.title is None:
         return 0.0
@@ -478,7 +479,7 @@ def _title_height(
 
 def _subtitle_height(
     sec: dui2.Section,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     if sec.subtitle is None:
         return 0.0
@@ -496,7 +497,7 @@ def wrap_section_texts(
     buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     where: str,
 ) -> dui2.Section:
     """A copy of a section with its title/subtitle/footnote wrapped.
@@ -546,7 +547,7 @@ def wrap_section_texts(
 
 def section_head_height(
     head: SectionHead,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     *,
     first: bool,
 ) -> float:
@@ -573,7 +574,7 @@ def section_head_height(
 
 def section_foot_height(
     foot: SectionFoot,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     """Total vertical space a section note takes.
 
@@ -615,7 +616,7 @@ def prep_section_head(
     anchors_x: tuple[float, float, float],
     tdelaybase: float | None,
     tscale: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     packages: list[ApverNum],
     first: bool,
 ) -> float:
@@ -660,7 +661,7 @@ def prep_section_head(
                 bui.textwidget,
                 position=(text_x, y - height * 0.5),
                 size=(0, 0),
-                text=native(row.title),
+                text=native(row.title, wrap=NO_WRAP),
                 # Row-title coloring (brighter than labels), at the
                 # larger section scale.
                 color=(
@@ -698,7 +699,7 @@ def prep_section_head(
                 bui.textwidget,
                 position=(text_x, y - text_height * 0.5),
                 size=(0, 0),
-                text=native(row.subtitle),
+                text=native(row.subtitle, wrap=NO_WRAP),
                 color=(
                     (0.6, 0.74, 0.6)
                     if row.subtitle_color is None
@@ -734,7 +735,7 @@ def prep_section_foot(
     anchors_x: tuple[float, float, float],
     tdelaybase: float | None,
     tscale: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     packages: list[ApverNum],
 ) -> float:
     """Prep a section note below ``y``; return the new y.
@@ -766,7 +767,7 @@ def prep_section_foot(
                 bui.textwidget,
                 position=(text_x, y - text_height * 0.5),
                 size=(0, 0),
-                text=native(row.footnote),
+                text=native(row.footnote, wrap=NO_WRAP),
                 color=(
                     (0.6, 0.74, 0.6)
                     if row.footnote_color is None

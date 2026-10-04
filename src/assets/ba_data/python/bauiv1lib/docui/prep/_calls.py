@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
     from typing import Callable
 
-    from bauiv1lib.docui.prep._types import DecorationPrep
+    from bauiv1lib.docui.prep._types import DecorationPrep, WrapOverride
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
@@ -137,19 +137,23 @@ def prep_page(
         immediate = True
     tscale = max(0.0, min(1.0, transition_scale))
 
-    def _n(lstr: 'LangStrSpec | int') -> bui.LangStr:
+    def _n(
+        lstr: 'LangStrSpec | int', *, wrap: 'WrapOverride | None' = None
+    ) -> bui.LangStr:
         """Native handle bound against this payload's package list.
 
         Accepts a folded index only to reject it: indices are unfolded
         during resolve, so one arriving here means that step was
-        skipped or failed.
+        skipped or failed. (See :class:`NativeLangStrFn` for ``wrap``.)
         """
         if isinstance(lstr, int):
             raise RuntimeError(
                 f'Unfolded language-string index {lstr} reached render;'
                 f' the page was not resolved, or unfolding failed.'
             )
-        return bui.LangStr(dataclass_to_json(lstr), packages=packages)
+        return bui.LangStr(
+            dataclass_to_json(lstr), packages=packages, wrap=wrap
+        )
 
     # The flat list of what we lay out: the rows we know how to display,
     # with each section expanded in place into its heading, its rows and

@@ -204,14 +204,10 @@ class NameDepiction : public Depiction {
   }
 
  private:
-  /// A line of small text is this tall at scale 1.
+  /// A basic-tier name's box height at text scale 1: the text's row
+  /// height (kTextRowHeight, 32) plus padding around it. (Capsules are
+  /// sized in cap heights instead, kTextCapHeight being their unit.)
   static constexpr float kTextHeight{40.0f};
-
-  /// Nominal capital-letter height at scale 1 (the baked Latin glyphs';
-  /// OS-drawn text shares their em size, so lands within a few
-  /// percent). The capsule's unit: fixed, never measured per string, so
-  /// capsules don't resize from name to name.
-  static constexpr float kCapHeight{21.0f};
 
   /// How small a capsule's text may shrink within it (a fraction of
   /// its size) before the whole capsule shrinks instead.
@@ -223,7 +219,7 @@ class NameDepiction : public Depiction {
 
   /// The capsule's radius at text scale 1 (radius 1.0 = cap height).
   static auto CapsuleRadius_(const CapsuleNameDef& cap) -> float {
-    return cap.radius * kCapHeight * 0.5f;
+    return cap.radius * kTextCapHeight * 0.5f;
   }
 
   /// Room kept between the capitals and the curve when the text inset

@@ -14,6 +14,7 @@ handles that re-evaluate on language changes) and assets as typed refs.
 from bauiv1lib.docui.prep._types import (
     DecorationPrep,
     MenuPrep,
+    PopupTextPrep,
     ButtonPrep,
     ButtonControlPrep,
     CheckboxPrep,
@@ -43,6 +44,7 @@ from bauiv1lib.docui.prep._calls2 import (
 __all__ = [
     'DecorationPrep',
     'MenuPrep',
+    'PopupTextPrep',
     'ButtonPrep',
     'ButtonControlPrep',
     'CheckboxPrep',

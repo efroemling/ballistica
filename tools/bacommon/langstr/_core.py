@@ -34,6 +34,7 @@ from bacommon.assetpackage import ApverNum
 
 if TYPE_CHECKING:
     import datetime
+    from typing import Sequence
 
     from bacommon.locale import Locale
     from bacommon.loctext import StringSelector
@@ -44,6 +45,10 @@ logger = logging.getLogger(__name__)
 #: data is untrusted, so the recursive decode paths refuse trees deeper
 #: than this (fail-visible) instead of recursing unboundedly.
 MAX_NESTING_DEPTH = 16
+
+#: Most items :meth:`LangStrSpecValue.join` accepts (as for the native
+#: :meth:`babase.LangStr.join`).
+MAX_JOIN_ITEMS = 256
 
 
 @ioprepped
@@ -247,6 +252,40 @@ class LangStrSpecValue(LangStrSpec):
         """
         return cls(text.replace('{', '{{').replace('}', '}}'))
 
+    @classmethod
+    def join(
+        cls, items: Sequence[LangStrSpec], separator: str = ''
+    ) -> LangStrSpecValue:
+        """Return a spec showing ``items`` one after another.
+
+        ``separator`` is literal text placed between items (a newline
+        for a list, say); its braces display literally, and it is the
+        same in every locale. Each item keeps its own translation and
+        arguments, so a variable-length list of authored entries (one
+        line per player, ...) stays fully localized. Items must be
+        language-strings -- wrap plain text with :meth:`literal`.
+
+        The spec counterpart of the native :meth:`babase.LangStr.join`,
+        building exactly what it does: a generated template
+        (``{i0}<separator>{i1}...``) with each item a nested
+        substitution. Raises ValueError for more than
+        ``MAX_JOIN_ITEMS`` (256) items or a result nested deeper than
+        ``MAX_NESTING_DEPTH``.
+        """
+        if len(items) > MAX_JOIN_ITEMS:
+            raise ValueError(
+                f'Too many items to join ({len(items)} > {MAX_JOIN_ITEMS}).'
+            )
+        sep = cls.literal(separator).value
+        keys = [f'i{i}' for i in range(len(items))]
+        out = cls(
+            sep.join(f'{{{key}}}' for key in keys),
+            dict(zip(keys, items, strict=True)),
+        )
+        if _nesting_height(out) > MAX_NESTING_DEPTH:
+            raise ValueError('Joined value would exceed max nesting depth.')
+        return out
+
     @override
     @classmethod
     def get_type_id(cls) -> LangStrSpecTypeID:
@@ -320,6 +359,37 @@ class LangStrSpecTimeTarget(LangStrSpec):
     @classmethod
     def get_type_id(cls) -> LangStrSpecTypeID:
         return LangStrSpecTypeID.TIME_TARGET
+
+
+def _nesting_height(spec: LangStrSpec) -> int:
+    """Edges from ``spec`` down to its deepest nested language-string.
+
+    0 for one with no language-string substitutions; mirrors the native
+    ``LangStr::NestingHeight()``.
+    """
+    typeid = spec.get_type_id()
+    subvals: list[str | int | LangStrSpec]
+    if typeid is LangStrSpecTypeID.RESOURCE:
+        assert isinstance(spec, LangStrSpecResource)
+        subvals = list(spec.subs.values())
+    elif typeid is LangStrSpecTypeID.VALUE:
+        assert isinstance(spec, LangStrSpecValue)
+        subvals = list(spec.subs.values())
+    elif typeid is LangStrSpecTypeID.RESOURCE_INDEXED:
+        assert isinstance(spec, LangStrSpecResourceIndexed)
+        subvals = spec.subs
+    elif typeid is LangStrSpecTypeID.TIME_TARGET:
+        subvals = []
+    else:
+        assert_never(typeid)
+    return max(
+        (
+            1 + _nesting_height(val)
+            for val in subvals
+            if isinstance(val, LangStrSpec)
+        ),
+        default=0,
+    )
 
 
 def time_target_offset_millis(

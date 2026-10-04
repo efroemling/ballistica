@@ -19,8 +19,11 @@ from bauiv1lib.docui.prep._types import (
     AnimTargetPrep,
     DecorationPrep,
     MenuPrep,
+    NO_WRAP,
+    PopupTextPrep,
 )
 from bauiv1lib.docui.prep._depiction import prep_depiction
+from bauiv1lib.docui.prep._rowtext import wrapped_text
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
@@ -30,10 +33,18 @@ if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
+    from bauiv1lib.docui.prep._types import WrapOverride
 
 
-def _native(lstr: 'LangStrSpec | int', packages: list[ApverNum]) -> bui.LangStr:
+def _native(
+    lstr: 'LangStrSpec | int',
+    packages: list[ApverNum],
+    *,
+    wrap: WrapOverride | None = None,
+) -> bui.LangStr:
     """Native handle bound against a payload's package list.
+
+    ``wrap``, if given, overrides the string's own wrap hints.
 
     Accepts the folded index form only to reject it: indices are
     unfolded during resolve (``_resolve.deindex_langstrs``), so one
@@ -45,7 +56,7 @@ def _native(lstr: 'LangStrSpec | int', packages: list[ApverNum]) -> bui.LangStr:
             f'Unfolded language-string index {lstr} reached render; the'
             f' page was not resolved, or unfolding failed.'
         )
-    return bui.LangStr(dataclass_to_json(lstr), packages=packages)
+    return bui.LangStr(dataclass_to_json(lstr), packages=packages, wrap=wrap)
 
 
 def _btex(name: str) -> str:
@@ -739,4 +750,65 @@ def prep_menu(menu: dui2.Menu, packages: list[ApverNum]) -> MenuPrep:
         labels=labels,
         disabled=[item.disabled for item in menu.items],
         actions=[item.action for item in menu.items],
+        popup_texts=[
+            (
+                prep_popup_text(item.action, packages)
+                if isinstance(item.action, dui2.PopupText)
+                else None
+            )
+            for item in menu.items
+        ],
     )
+
+
+#: Popup-text text scale, and the width it wraps to at that scale (in
+#: the popup's own units; the popup itself scales per ui-scale).
+POPUP_TEXT_SCALE = 0.8
+_POPUP_TEXT_WRAP_WIDTH = 480.0
+
+#: The tallest popup text gets (about 14 lines); anything taller is
+#: squished to fit rather than growing the popup without bound.
+_POPUP_TEXT_MAX_HEIGHT = 400.0
+
+
+def prep_popup_text(
+    action: dui2.PopupText, packages: list[ApverNum]
+) -> PopupTextPrep:
+    """Prep the text popup a button with a popup-text action shows."""
+
+    def _nat(
+        text: LangStrSpec | int, *, wrap: WrapOverride | None = None
+    ) -> bui.LangStr:
+        return _native(text, packages, wrap=wrap)
+
+    # Index-form text reaching here is rejected by _native(), so it's
+    # safe to hand wrapped_text() only the spec form.
+    text = action.text
+    if not isinstance(text, int):
+        text = wrapped_text(
+            text,
+            maxwidth=_POPUP_TEXT_WRAP_WIDTH,
+            scale=POPUP_TEXT_SCALE,
+            native=_nat,
+            where='popup-text',
+        )
+
+    # We do our own wrapping, so the string's own wrap hints must never
+    # apply on top of it. Wrapped text comes back from wrapped_text()
+    # as a hint-free literal, but time-varying text comes back as-is,
+    # hints and all; this usage-site override turns them off for that
+    # case, both for display and for our measuring below.
+    native = _nat(text, wrap=NO_WRAP)
+    flat = native.evaluate()
+    width = bui.get_string_width(flat, suppress_warning=True) * POPUP_TEXT_SCALE
+    height = (
+        bui.get_string_height(flat, suppress_warning=True) * POPUP_TEXT_SCALE
+    )
+
+    # Text taller than our cap gets squished to fit it, which shrinks
+    # it uniformly, so it needs proportionally less width too.
+    if height > _POPUP_TEXT_MAX_HEIGHT:
+        width *= _POPUP_TEXT_MAX_HEIGHT / height
+        height = _POPUP_TEXT_MAX_HEIGHT
+
+    return PopupTextPrep(text=native, width=width, height=height)

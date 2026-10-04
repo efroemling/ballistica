@@ -448,6 +448,8 @@ def test_every_action_type_is_handled() -> None:
             action = actiontype(request=dui2.Request('/'))
         elif actiontype is dui2.Menu:
             action = dui2.Menu(items=[dui2.MenuItem(label=_res('item'))])
+        elif actiontype is dui2.PopupText:
+            action = dui2.PopupText(text=_res('info'))
         else:
             action = actiontype()
         page = dui2.Page(
@@ -459,6 +461,42 @@ def test_every_action_type_is_handled() -> None:
             ],
         )
         walk_page(page, langstr=lambda s: None, assetref=lambda r, k: None)
+
+
+def test_popup_text_is_walked() -> None:
+    """Popup text is visited, on a button and in a menu item."""
+    page = dui2.Page(
+        title=_res('t'),
+        rows=[
+            dui2.ButtonRow(
+                buttons=[
+                    dui2.Button(
+                        size=(1, 1),
+                        action=dui2.PopupText(text=_res('onbutton')),
+                    ),
+                    dui2.Button(
+                        size=(1, 1),
+                        action=dui2.Menu(
+                            items=[
+                                dui2.MenuItem(
+                                    label=_res('item'),
+                                    action=dui2.PopupText(text=_res('initem')),
+                                )
+                            ]
+                        ),
+                    ),
+                ]
+            )
+        ],
+    )
+    seen: list[LangStrSpec | int] = []
+
+    def _visit(val: LangStrSpec | int) -> None:
+        seen.append(val)
+
+    walk_page(page, langstr=_visit)
+    assert _res('onbutton') in seen
+    assert _res('initem') in seen
 
 
 def test_menu_wire_round_trip() -> None:

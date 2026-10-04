@@ -59,6 +59,13 @@ LARGE_SCREEN_WIDTH_FRACTION = 0.98
 #: screen.
 SMALL_UI_ROOT_SCALE = 1.45
 
+#: Popups (menus, popup text) relative to the windows they pop up
+#: from, the same at every ui-scale so they stay in proportion with
+#: page content. This is what the generic popup-menu scale gives at
+#: small ui-scale; that generic scale shrinks relative to doc-ui
+#: windows at medium/large, which is why we don't use it.
+_POPUP_TO_ROOT_SCALE = 2.3 / SMALL_UI_ROOT_SCALE
+
 #: The shortest the virtual screen gets (16:9 and wider screens; taller
 #: ones get more height).
 MIN_VIRTUAL_SCREEN_HEIGHT = 720.0
@@ -466,6 +473,30 @@ def resizes_with_screen(
             assert_never(layout)
 
 
+def root_scale(uiscale: bui.UIScale) -> float:
+    """Every layout's root scale at a ui-scale."""
+    match uiscale:
+        case bui.UIScale.SMALL:
+            return SMALL_UI_ROOT_SCALE
+        case bui.UIScale.MEDIUM:
+            return 0.9
+        case bui.UIScale.LARGE:
+            return 0.65
+        case _:
+            assert_never(uiscale)
+
+
+def popup_scale(uiscale: bui.UIScale | None = None) -> float:
+    """Scale for doc-ui popups (menus, popup text) at a ui-scale.
+
+    In proportion with doc-ui windows at every ui-scale. Defaults to
+    the current ui-scale.
+    """
+    if uiscale is None:
+        uiscale = bui.app.ui_v1.uiscale
+    return root_scale(uiscale) * _POPUP_TO_ROOT_SCALE
+
+
 def layout_geometry(
     layout: dui2.WindowLayout,
     uiscale: bui.UIScale,
@@ -490,13 +521,14 @@ def layout_geometry(
     and width (:data:`LARGE_SCREEN_HEIGHT_FRACTION`,
     :data:`LARGE_SCREEN_WIDTH_FRACTION`).
     """
+    scale = root_scale(uiscale)
     match uiscale:
         case bui.UIScale.SMALL:
-            return 1400.0, 1200.0, SMALL_UI_ROOT_SCALE
+            return 1400.0, 1200.0, scale
         case bui.UIScale.MEDIUM:
-            width, height, scale = 1214.0, _MEDIUM_HEIGHT, 0.9
+            width, height = 1214.0, _MEDIUM_HEIGHT
         case bui.UIScale.LARGE:
-            width, height, scale = 1641.0, 985.0, 0.65
+            width, height = 1641.0, 985.0
         case _:
             assert_never(uiscale)
     match layout:

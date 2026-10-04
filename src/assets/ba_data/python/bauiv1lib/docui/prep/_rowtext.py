@@ -17,12 +17,12 @@ from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
-if TYPE_CHECKING:
-    from typing import Callable
+from bauiv1lib.docui.prep._types import NO_WRAP
 
+if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
 
-    from bauiv1lib.docui.prep._types import RowPrep
+    from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 #: Row types carrying a title/subtitle/footnote (all of them, at
 #: present).
@@ -91,7 +91,7 @@ def wrapped_text(
     *,
     maxwidth: float,
     scale: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     where: str,
 ) -> LangStrSpec:
     """Word-wrap a row/section text to fit its column.
@@ -99,11 +99,14 @@ def wrapped_text(
     Evaluates in the current language ignoring the string's own
     line-wrapping hints (we wrap it here instead; the two would
     compound) and wraps to ``maxwidth`` at ``scale``, the text widget's
-    own values, so it never needs to shrink. Time-varying text
+    own values, so it never needs to shrink. Wrapped text comes back
+    as a literal, with no hints of its own. Time-varying text
     (countdowns and such) can't be wrapped once up front, so it comes
-    back as-is -- a single line, squished to fit as before -- with a
-    once-per-text warning naming ``where`` it is. Measures text, so
-    call from a background thread (as prep runs).
+    back as-is, with a once-per-text warning naming ``where`` it is;
+    it still carries its hints then, so callers must display (and
+    measure) results with ``wrap=NO_WRAP``, which leaves it a single
+    line, squished to fit. Measures text, so call from a background
+    thread (as prep runs).
 
     :meta private:
     """
@@ -113,8 +116,8 @@ def wrapped_text(
             _warned_live_texts.add(flat)
             bui.uilog.warning(
                 'Doc-ui %s holds time-varying text (%r); wrapping skipped.'
-                ' Wrapped fields (titles, subtitles, footnotes) want text'
-                ' that stays put.',
+                ' Wrapped fields (titles, subtitles, footnotes, popup'
+                ' text) want text that stays put.',
                 where,
                 flat,
             )
@@ -130,7 +133,7 @@ def wrap_row_texts(
     buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     where: str,
 ) -> TitledRow:
     """A copy of a row with its title/subtitle/footnote wrapped.
@@ -205,9 +208,7 @@ def label_want_width(label: bui.LangStr | None) -> float:
     return bui.get_string_width(label.evaluate(), suppress_warning=True)
 
 
-def line_count(
-    text: LangStrSpec | int, native: Callable[[LangStrSpec | int], bui.LangStr]
-) -> int:
+def line_count(text: LangStrSpec | int, native: NativeLangStrFn) -> int:
     """How many lines a row text renders as.
 
     Only line breaks in the text count; the widgets never wrap on
@@ -218,12 +219,10 @@ def line_count(
 
     :meta private:
     """
-    return native(text).evaluate().count('\n') + 1
+    return native(text, wrap=NO_WRAP).evaluate().count('\n') + 1
 
 
-def _row_title_height(
-    row: TitledRow, native: Callable[[LangStrSpec | int], bui.LangStr]
-) -> float:
+def _row_title_height(row: TitledRow, native: NativeLangStrFn) -> float:
     """Vertical space a row's title takes (0 for none)."""
     if row.title is None:
         return 0.0
@@ -235,9 +234,7 @@ def _row_title_height(
     return base + _ROW_TITLE_LINE_HEIGHT * (line_count(row.title, native) - 1)
 
 
-def _row_subtitle_height(
-    row: TitledRow, native: Callable[[LangStrSpec | int], bui.LangStr]
-) -> float:
+def _row_subtitle_height(row: TitledRow, native: NativeLangStrFn) -> float:
     """Vertical space a row's subtitle takes (0 for none)."""
     if row.subtitle is None:
         return 0.0
@@ -246,9 +243,7 @@ def _row_subtitle_height(
     )
 
 
-def row_footnote_height(
-    row: TitledRow, native: Callable[[LangStrSpec | int], bui.LangStr]
-) -> float:
+def row_footnote_height(row: TitledRow, native: NativeLangStrFn) -> float:
     """Vertical space a row's footnote takes (0 for none).
 
     Grows with the text's line count like the title and subtitle do
@@ -328,7 +323,7 @@ def row_text_reaches(
     *,
     left: float,
     limit: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> bool:
     """Whether a row's title/subtitle/footnote text reaches ``limit``.
 
@@ -346,7 +341,7 @@ def row_text_reaches(
     if row_title_align(row) is not dui2.HAlign.LEFT:
         return True
     textwidth = bui.get_string_width(
-        native(text).evaluate(), suppress_warning=True
+        native(text, wrap=NO_WRAP).evaluate(), suppress_warning=True
     )
     return left + scale * textwidth > limit
 
@@ -357,7 +352,7 @@ def titles_clear_rise(
     left: float,
     limit: float,
     clearance: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     """How far up into a row's titles something beside them can reach.
 
@@ -399,7 +394,7 @@ def footnote_clear_drop(
     left: float,
     limit: float,
     clearance: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     """How far down into a row's footnote something beside it can reach.
 
@@ -432,7 +427,7 @@ def prep_row_footnote(
     center: tuple[float, float],
     tdelaybase: float | None,
     tscale: float = 1.0,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Prep a row's footnote text (if any) in the strip above ``y``.
 
@@ -463,7 +458,7 @@ def prep_row_footnote(
             bui.textwidget,
             position=(title_x, text_top - text_height * 0.5),
             size=(0, 0),
-            text=native(row.footnote),
+            text=native(row.footnote, wrap=NO_WRAP),
             color=(
                 (0.6, 0.74, 0.6)
                 if row.subtitle_color is None
@@ -484,9 +479,7 @@ def prep_row_footnote(
     )
 
 
-def row_titles_height(
-    row: TitledRow, native: Callable[[LangStrSpec | int], bui.LangStr]
-) -> float:
+def row_titles_height(row: TitledRow, native: NativeLangStrFn) -> float:
     """Total vertical space a row's title + subtitle take (0 for none).
 
     Each grows with its text's line breaks (including those prep's
@@ -540,7 +533,7 @@ def prep_row_titles(
     center: tuple[float, float],
     tdelaybase: float | None,
     tscale: float = 1.0,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     """Prep a row's title/subtitle text (if any); return the new y.
 
@@ -572,7 +565,7 @@ def prep_row_titles(
                 bui.textwidget,
                 position=(title_x, y - text_height * 0.5),
                 size=(0, 0),
-                text=native(row.title),
+                text=native(row.title, wrap=NO_WRAP),
                 # A touch brighter and bigger than control-row labels and
                 # button text, so titles read as headings over them.
                 color=(
@@ -609,7 +602,7 @@ def prep_row_titles(
                 bui.textwidget,
                 position=(title_x, y - subtitle_height * 0.5),
                 size=(0, 0),
-                text=native(row.subtitle),
+                text=native(row.subtitle, wrap=NO_WRAP),
                 color=(
                     (0.6, 0.74, 0.6)
                     if row.subtitle_color is None

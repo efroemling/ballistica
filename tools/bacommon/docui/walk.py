@@ -303,6 +303,10 @@ def walk_page(
                 for item in act.items:
                     item.label = _lstr(item.label)
 
+            elif acttypeid is dui2.ActionTypeID.POPUP_TEXT:
+                assert isinstance(act, dui2.PopupText)
+                act.text = _lstr(act.text)
+
             elif (
                 acttypeid is dui2.ActionTypeID.BROWSE
                 or acttypeid is dui2.ActionTypeID.REPLACE

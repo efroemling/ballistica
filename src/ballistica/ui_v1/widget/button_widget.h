@@ -209,6 +209,10 @@ class ButtonWidget : public Widget {
   }
   auto RotatePointToLocal(float x, float y) const -> std::pair<float, float>;
 
+  /// Scale for our accessory glyph and its region: 1 except on short
+  /// better-bg-fit buttons, which shrink it to keep room for the label.
+  auto AccessoryScale_() const -> float;
+
   IconType icon_type_{};
   Accessory accessory_{};
   TextWidget::HAlign text_h_align_{TextWidget::HAlign::kCenter};

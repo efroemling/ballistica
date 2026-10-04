@@ -9,16 +9,45 @@ made to instantiate the ui are as fast and minimal as possible.
 
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from typing import Callable
 
     import bacommon.docui.v2
     import bacommon.clienteffect
+    from bacommon.langstr import LangStrSpec
     import bauiv1
 
     from bauiv1lib.docui._window import DocUIWindow
+
+
+#: A usage-site line-wrap override for a native language-string
+#: (min-lines, max-lines, max-chars-per-line; see
+#: :class:`babase.LangStr`).
+type WrapOverride = tuple[int, int | None, int | None]
+
+#: The override turning a string's own wrap hints off, for text we
+#: wrap ourselves: exactly one "line", which the splitter returns as
+#: the whole text (explicit newlines included; only edge whitespace is
+#: trimmed). Pinning max-lines to 1 also keeps the splitter's
+#: line-count search trivial; leaving it unlimited would search every
+#: count up to the number of break opportunities.
+NO_WRAP: WrapOverride = (1, 1, None)
+
+
+class NativeLangStrFn(Protocol):
+    """Makes native handles for a payload's language-strings.
+
+    Bound against the payload's package list. Pass ``wrap`` to
+    override the string's own wrap hints -- :data:`NO_WRAP` for text
+    prep wraps itself (row and section titles, subtitles and
+    footnotes; popup text).
+    """
+
+    def __call__(
+        self, lstr: LangStrSpec | int, /, *, wrap: WrapOverride | None = None
+    ) -> bauiv1.LangStr: ...
 
 
 class AnimTargetKind(Enum):
@@ -91,6 +120,24 @@ class MenuPrep:
     #: Which items show greyed out and can't be picked.
     disabled: list[bool]
     actions: list[bacommon.docui.v2.Action | None]
+    #: Set for items whose action pops up text.
+    popup_texts: list[PopupTextPrep | None]
+
+
+@dataclass
+class PopupTextPrep:
+    """Prep for the text popup a doc-ui popup-text action shows.
+
+    The text is wrapped and measured here, in prep (wrapping is for
+    background threads only), so the popup can size itself to it.
+    """
+
+    #: Native handle for the (wrapped) text.
+    text: bauiv1.LangStr
+    #: The space the text gets, in the popup's own units: its measured
+    #: size, except that height is capped (the text squishes to fit).
+    width: float
+    height: float
 
 
 @dataclass
@@ -103,8 +150,8 @@ class ButtonPrep:
     textures: dict[str, str]
     widgetid: str
     action: bacommon.docui.v2.Action | None
-    #: Set when ``action`` is a menu.
-    menu: MenuPrep | None = None
+    #: What ``action`` pops up, when it is a menu or popup text.
+    popup: MenuPrep | PopupTextPrep | None = None
 
     #: Set for buttons that can be animated by client-effects.
     anim: AnimTargetPrep | None = None

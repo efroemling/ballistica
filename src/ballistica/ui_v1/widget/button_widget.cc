@@ -11,6 +11,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
@@ -21,8 +22,6 @@
 
 namespace ballistica::ui_v1 {
 
-/// Label margin at each side for a centered label (and at the far side of
-/// a left/right-aligned one when there is no accessory).
 /// A standard-disabled button's body grey, as a multiple of its color's
 /// luminance.
 constexpr float kDisabledBodyGreyScale{0.85f};
@@ -30,15 +29,32 @@ constexpr float kDisabledBodyGreyScale{0.85f};
 /// A standard-disabled button's icon alpha, as a multiple of its own.
 constexpr float kDisabledIconAlphaScale{0.4f};
 
+/// Label margin at each side for a centered label, without better-bg-fit
+/// (legacy buttons; these fit their labels sideways only, at a fixed
+/// margin, as they always have).
 constexpr float kTextSideMargin{15.0f};
 
-/// Room kept above and below a label; a label taller than what's left
-/// (a wrapped multi-line one, typically) shrinks to fit, as an over-wide
-/// one does sideways. Height is plain row spacing (32 per line), not
-/// glyph extents.
-constexpr float kTextVertMargin{4.0f};
+/// With better-bg-fit (doc-ui buttons), every label margin is a fixed
+/// amount or a fraction of our size along its axis, whichever is
+/// smaller. Our backing art stretches to our size on each axis, so its
+/// visible edge does too: the fraction keeps small buttons' labels clear
+/// of it without eating most of their space, and the fixed amounts keep
+/// normal and large buttons as they were (and aligned labels in buttons
+/// of differing widths lined up). A label wider or taller than what's
+/// left shrinks to fit. A label's height for this counts row spacing
+/// (32 per line) for all but its last line, and just a capital letter's
+/// height for that (base::kTextCapHeight): row spacing's room for
+/// descenders and accents is what the margin is for, and counting it in
+/// full squashes short single-line labels in small buttons for nothing.
+/// (So the vertical fraction is the larger: it must hold those, which
+/// hang about a third of a cap height beyond the capitals.)
+constexpr float kFitTextMarginFraction{0.1f};
+constexpr float kFitTextVertMarginFraction{0.2f};
+constexpr float kFitTextSideMargin{20.0f};
+constexpr float kFitTextVertMargin{12.0f};
 
-/// Distance from our edge to a left/right-aligned label.
+/// Distance from our edge to a left/right-aligned label (with
+/// better-bg-fit, at most kFitTextMarginFraction of our width).
 constexpr float kAlignedTextInset{20.0f};
 
 /// Gap between our right edge and an accessory glyph's area.
@@ -53,6 +69,19 @@ constexpr float kAccessoryRegion{kAccessoryEdgeInset + kAccessoryWidth};
 
 /// Scale an accessory glyph draws at.
 constexpr float kAccessoryScale{0.69f};
+
+/// With better-bg-fit, buttons shorter than this shrink their accessory
+/// (glyph and region together) in proportion, so a small popup-menu
+/// button keeps room for its label; taller ones get it at full size.
+/// (Doc-ui choice-row buttons are this tall.)
+constexpr float kAccessoryFullSizeHeight{46.0f};
+
+auto ButtonWidget::AccessoryScale_() const -> float {
+  if (!better_bg_fit_) {
+    return 1.0f;
+  }
+  return std::clamp(height_ / kAccessoryFullSizeHeight, 0.0f, 1.0f);
+}
 
 ButtonWidget::ButtonWidget()
     : birth_time_millisecs_{
@@ -291,15 +320,22 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   bool string_too_small_to_draw = false;
 
   // The horizontal span our label (plus any icon) lives in. A centered
-  // label keeps its traditional margins; an aligned one hugs its edge;
-  // an accessory takes over the right end.
+  // label keeps its margins; an aligned one hugs its edge; an accessory
+  // takes over the right end. With better-bg-fit, each is capped at a
+  // fraction of our width and the accessory shrinks on short buttons
+  // (see kFitTextMarginFraction and kAccessoryFullSizeHeight).
   bool text_centered = text_h_align_ == TextWidget::HAlign::kCenter;
-  float text_span_l = text_centered ? kTextSideMargin : kAlignedTextInset;
-  float text_span_r =
-      width_
-      - (accessory_ != Accessory::kNone
-             ? kAccessoryRegion
-             : (text_centered ? kTextSideMargin : kAlignedTextInset));
+  float width_cap = width_ * kFitTextMarginFraction;
+  float side_margin = better_bg_fit_ ? std::min(kFitTextSideMargin, width_cap)
+                                     : kTextSideMargin;
+  float aligned_inset = better_bg_fit_ ? std::min(kAlignedTextInset, width_cap)
+                                       : kAlignedTextInset;
+  float accessory_scale = AccessoryScale_();
+  float text_span_l = text_centered ? side_margin : aligned_inset;
+  float text_span_r = width_
+                      - (accessory_ != Accessory::kNone
+                             ? kAccessoryRegion * accessory_scale
+                             : (text_centered ? side_margin : aligned_inset));
   float icon_width = show_icons ? 34.0f * icon_scale_ : 0.0f;
 
   // We should only need this in our transparent pass.
@@ -324,11 +360,20 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     };
 
-    // Account for our icon if we have it.
-    fit(string_width, std::max(30.0f, text_span_r - text_span_l) - icon_width);
-
-    // Then the same vertically.
-    fit(text_height_, height_ - 2.0f * kTextVertMargin);
+    if (better_bg_fit_) {
+      // Sideways, accounting for our icon if we have it; then the same
+      // vertically (see kFitTextMarginFraction).
+      fit(string_width, text_span_r - text_span_l - icon_width);
+      float vert_margin =
+          std::min(kFitTextVertMargin, height_ * kFitTextVertMarginFraction);
+      fit(text_height_ - base::kTextRowHeight + base::kTextCapHeight,
+          height_ - 2.0f * vert_margin);
+    } else {
+      // Legacy: sideways only, accounting for our icon if we have it,
+      // and never squeezing below a fixed minimum span.
+      fit(string_width,
+          std::max(30.0f, text_span_r - text_span_l) - icon_width);
+    }
   } else {
     string_width = 0.0f;  // Shouldn't be used.
   }
@@ -834,10 +879,14 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(draw_transparent);
     {
       auto xf = c.ScopedTransform();
+      float accessory_scale = AccessoryScale_();
       c.Translate(
-          width_ - kAccessoryEdgeInset - kAccessoryWidth * 0.5f + extra_offs_x,
+          width_
+              - (kAccessoryEdgeInset + kAccessoryWidth * 0.5f) * accessory_scale
+              + extra_offs_x,
           height_ * 0.5f + extra_offs_y, 0.5f);
-      c.Scale(kAccessoryScale, kAccessoryScale, 0.5f);
+      c.Scale(kAccessoryScale * accessory_scale,
+              kAccessoryScale * accessory_scale, 0.5f);
       c.Submit();
       accessory_text_->set_color(mult * text_color_r_, mult * text_color_g_,
                                  mult * text_color_b_, text_color_a_);

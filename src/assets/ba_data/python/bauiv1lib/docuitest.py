@@ -157,7 +157,7 @@ class TestDocUIV2Controller(
 
                 return test_page_widgets(route)
             case rt.NavTest():
-                from bauiv1lib.docuitestwidgets import test_page_nav
+                from bauiv1lib.docuitestnav import test_page_nav
 
                 return test_page_nav(route)
             case rt.WindowLayouts():

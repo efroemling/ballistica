@@ -448,6 +448,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popuptext.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_typed.py \
@@ -478,6 +479,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlayouts.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlivetimes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnames.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnav.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestninepatch.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsections.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \

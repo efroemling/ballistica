@@ -14,6 +14,15 @@ if TYPE_CHECKING:
     import bacommon.docui.routes.docuitest
 
 
+_POPUP_SHORT = 'Popup text explains things; this is popup text.'
+_POPUP_LONG = (
+    'A longer bit of popup text, to show that it wraps. The popup sizes'
+    ' itself to whatever its text needs, up to a maximum width, past'
+    ' which the text wraps onto more lines and the popup grows taller'
+    ' instead.\n\nExplicit line breaks work too.'
+)
+
+
 def _lit(text: str) -> LangStrSpecValue:
     # A dev-only page, so baked literals throughout.
     return LangStrSpecValue.literal(text)
@@ -160,6 +169,10 @@ def _test_menu(
             dui2.MenuItem(
                 label=_lit('Show a Message (local-action)'),
                 action=rt.TestAction(testparam=345).local(),
+            ),
+            dui2.MenuItem(
+                label=_lit("What's This? (popup text)"),
+                action=dui2.PopupText(text=_lit(_POPUP_SHORT)),
             ),
             dui2.MenuItem(
                 label=_lit('Not Available (disabled)'),
@@ -845,6 +858,58 @@ def test_page_widgets(
                         ),
                     ],
                 ),
+                # Popup text: a press pops up the text at the button,
+                # sized to fit it, with an ok button. A small '?' is
+                # the intended use; the long one shows wrapping.
+                dui2.ButtonRow(
+                    title=_lit('Popup text buttons'),
+                    footnote=_lit('Ok or a press outside the popup closes it.'),
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=_lit('?'),
+                            size=(60, 60),
+                            style=dui2.ButtonStyle.SQUARE,
+                            action=dui2.PopupText(text=_lit(_POPUP_SHORT)),
+                        ),
+                        dui2.Button(
+                            label=_lit('Long Text'),
+                            size=(200, 60),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            action=dui2.PopupText(text=_lit(_POPUP_LONG)),
+                        ),
+                        # Past the height cap; squishes to fit.
+                        dui2.Button(
+                            label=_lit('Huge Text'),
+                            size=(200, 60),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            action=dui2.PopupText(
+                                text=_lit('\n\n'.join([_POPUP_LONG] * 6))
+                            ),
+                        ),
+                    ],
+                ),
+                # Small buttons, where label margins are fractions of
+                # the button's size (capped at fixed amounts on bigger
+                # ones) so labels keep a usable share of the space.
+                dui2.ButtonRow(
+                    title=_lit('Small buttons'),
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=_lit(label),
+                            size=size,
+                            style=_style_for(size),
+                            action=dui2.Local(),
+                        )
+                        for label, size in [
+                            ('?', (24.0, 24.0)),
+                            ('OK', (40.0, 24.0)),
+                            ('Small Label', (80.0, 24.0)),
+                            ('Two\nLines', (60.0, 36.0)),
+                        ]
+                    ],
+                ),
                 dui2.ButtonRow(
                     content_align=dui2.HAlign.RIGHT,
                     footnote=_lit(
@@ -893,89 +958,5 @@ def test_page_widgets(
                     ],
                 ),
             ],
-        )
-    )
-
-
-def _kind_name(kind: bacommon.docui.routes.docuitest.ControlRowKind) -> str:
-    return kind.name.replace('_', ' ').title()
-
-
-def test_page_nav(
-    route: bacommon.docui.routes.docuitest.NavTest,
-) -> bacommon.docui.v2.Response:
-    """A button row, then one control row of the route's kind, last."""
-    # pylint: disable=cyclic-import
-    import bacommon.docui.routes.docuitest as rt
-
-    wstate = rt.WidgetTestState
-    arrived = route.get_state(wstate)
-    state = wstate() if arrived is None else arrived
-    kind = route.kind
-    kinds = list(rt.ControlRowKind)
-
-    row: dui2.Row
-    match kind:
-        case rt.ControlRowKind.CHECKBOX:
-            row = wstate.checkbox_row(lambda s: s.plain, label=_lit('Checkbox'))
-        case rt.ControlRowKind.TEXT_INPUT:
-            row = wstate.text_input_row(
-                lambda s: s.text_short, label=_lit('Text')
-            )
-        case rt.ControlRowKind.CHOICE:
-            row = wstate.choice_row(
-                lambda s: s.flavor,
-                choice_label=_flavor_label,
-                label=_lit('Choice'),
-            )
-        case rt.ControlRowKind.SLIDER:
-            row = wstate.slider_row(
-                lambda s: s.volume,
-                min_value=0.0,
-                max_value=1.0,
-                increment=0.05,
-                as_percent=True,
-                label=_lit('Slider'),
-            )
-        case rt.ControlRowKind.NUMBER:
-            row = wstate.number_row(
-                lambda s: s.series_length,
-                min_value=1.0,
-                max_value=21.0,
-                increment=2.0,
-                label=_lit('Number'),
-            )
-        case rt.ControlRowKind.COLOR:
-            row = wstate.color_row(lambda s: s.tint, label=_lit('Color'))
-        case rt.ControlRowKind.BUTTON:
-            row = dui2.ButtonControlRow(
-                button=_map_button(route.replace()),
-                label=_lit('Button Control'),
-            )
-        case _:
-            assert_never(kind)
-
-    return dui2.Response(
-        page=dui2.Page(
-            title=_lit(f'Nav Test: {_kind_name(kind)}'),
-            state=state.encode(),
-            # Kind switchers in rows of three (six in one row overflow a
-            # small layout), then the row under test, last.
-            rows=[
-                dui2.ButtonRow(
-                    center_content=True,
-                    buttons=[
-                        dui2.Button(
-                            label=_lit(_kind_name(k)),
-                            size=(140, 50),
-                            style=dui2.ButtonStyle.MEDIUM,
-                            action=rt.NavTest(kind=k).replace(),
-                        )
-                        for k in kinds[i : i + 3]
-                    ],
-                )
-                for i in range(0, len(kinds), 3)
-            ]
-            + [row],
         )
     )

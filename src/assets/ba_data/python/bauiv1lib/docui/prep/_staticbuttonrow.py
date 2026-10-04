@@ -22,14 +22,15 @@ from bauiv1lib.docui.prep._button import (
 )
 
 if TYPE_CHECKING:
-    from typing import Callable
-
     from bacommon.assetpackage import ApverNum
-    from bacommon.langstr import LangStrSpec
     import bauiv1 as bui
 
     from bauiv1lib.docui._window import DocUIWindow
-    from bauiv1lib.docui.prep._types import ButtonPrep, RowPrep
+    from bauiv1lib.docui.prep._types import (
+        ButtonPrep,
+        NativeLangStrFn,
+        RowPrep,
+    )
 
 
 def row_content_align(row: dui2.ButtonRow) -> dui2.HAlign:
@@ -160,7 +161,7 @@ def prep_static_button_row(
     widgetids: list[str],
     tdelay: float | None,
     packages: list[ApverNum],
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a static button row.
 

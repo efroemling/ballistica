@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
+from bauiv1lib.docui._layout import popup_scale
 from bauiv1lib.docui.prep._types import (
     CheckboxPrep,
     TextInputPrep,
@@ -57,10 +58,8 @@ if TYPE_CHECKING:
 
     from typing import Any, Callable, Sequence, TypeGuard
 
-    from bacommon.langstr import LangStrSpec
-
     from bauiv1lib.docui._window import DocUIWindow
-    from bauiv1lib.docui.prep._types import RowPrep
+    from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 CHECKBOX_HEIGHT = 50.0
 
@@ -84,7 +83,7 @@ def prep_checkbox_row(
     bottom: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a checkbox row.
 
@@ -188,7 +187,7 @@ def prep_text_input_row(
     bottom: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a text-input row.
 
@@ -359,7 +358,7 @@ def _choice_button_left(
     *,
     left: float,
     right: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> float:
     """Where a choice row's popup button starts.
 
@@ -402,7 +401,7 @@ def prep_choice_row(
     bottom: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a choice row.
 
@@ -521,6 +520,8 @@ def instantiate_choice_row(
         ],
         current_choice=key,
         on_value_change_call=_picked,
+        # (In proportion with doc-ui windows, like our other popups.)
+        scale=popup_scale(),
         **prep.menu_kwargs,
     )
     button = menu.get_button()
@@ -561,7 +562,7 @@ def prep_color_row(
     bottom: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> None:
     """Fill out prep for a color row.
 
@@ -721,6 +722,8 @@ def instantiate_color_row(
             position=button.get_screen_space_center(),
             initial_color=current,
             delegate=_ColorRowPicker(window, prep, button, current),
+            # (In proportion with doc-ui windows, like our other popups.)
+            scale=popup_scale(),
         )
 
     bui.buttonwidget(edit=button, on_activate_call=_pick)
@@ -777,7 +780,7 @@ def control_row_tucks(
     *,
     left: float,
     right: float,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
 ) -> tuple[float, float]:
     """How far a control row's control and footnote pull together.
 
@@ -841,7 +844,7 @@ def prep_control_row(
     center_x: float,
     idprefix: str,
     tdelay: float | None,
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     packages: list[ApverNum],
     buttonids: list[str] | None,
 ) -> None:

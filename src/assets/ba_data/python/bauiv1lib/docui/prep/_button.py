@@ -25,16 +25,14 @@ from bauiv1lib.docui.prep._calls2 import (
     prep_button_debug,
     prep_decorations,
     prep_menu,
+    prep_popup_text,
 )
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
 
-    from typing import Callable
-
-    from bacommon.langstr import LangStrSpec
-
     from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui.prep._types import NativeLangStrFn
 
 #: Size of a button that doesn't give one.
 _DEFAULT_BUTTON_SIZE = (150.0, 100.0)
@@ -111,7 +109,7 @@ def prep_button(
     widgetid: str,
     tdelay: float | None,
     packages: list[ApverNum],
-    native: Callable[[LangStrSpec | int], bui.LangStr],
+    native: NativeLangStrFn,
     show_buffers_h: tuple[float, float] | None,
     disabled: bool,
 ) -> ButtonPrep:
@@ -177,10 +175,14 @@ def prep_button(
         textures={},
         widgetid=widgetid,
         action=button.action,
-        menu=(
+        popup=(
             prep_menu(button.action, packages)
             if isinstance(button.action, dui2.Menu)
-            else None
+            else (
+                prep_popup_text(button.action, packages)
+                if isinstance(button.action, dui2.PopupText)
+                else None
+            )
         ),
         anim=(
             None
@@ -239,7 +241,7 @@ def instantiate_button(
             window,
             buttonprep.widgetid,
             buttonprep.action,
-            buttonprep.menu,
+            buttonprep.popup,
         ),
     }
     for texarg, texname in buttonprep.textures.items():

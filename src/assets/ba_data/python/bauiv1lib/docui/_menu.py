@@ -10,7 +10,8 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
-from bauiv1lib.popup import PopupMenuWindow, popup_menu_default_scale
+from bauiv1lib.popup import PopupMenuWindow
+from bauiv1lib.docui._layout import popup_scale
 
 if TYPE_CHECKING:
     from bauiv1lib.popup import PopupWindow
@@ -38,6 +39,7 @@ class DocUIMenuWindow(PopupMenuWindow):
         self._widgetid = widgetid
         self._button = button
         self._actions = menu.actions
+        self._popup_texts = menu.popup_texts
 
         # Menus key their choices by string; ours are item indices.
         keys = [str(i) for i in range(len(menu.labels))]
@@ -50,7 +52,7 @@ class DocUIMenuWindow(PopupMenuWindow):
             delegate=self,
             # A floor; the menu grows to fit its labels.
             width=100.0,
-            scale=popup_menu_default_scale(),
+            scale=popup_scale(),
             choices_disabled=[
                 k for k, off in zip(keys, menu.disabled, strict=True) if off
             ],
@@ -72,6 +74,19 @@ class DocUIMenuWindow(PopupMenuWindow):
             return
 
         action = self._actions[int(choice)]
+
+        # Text pops up from our button, as if it had been pressed with
+        # this action. (A pick already made the menu's sound.)
+        popup_text = self._popup_texts[int(choice)]
+        if isinstance(action, dui2.PopupText) and popup_text is not None:
+            self._button.global_select()
+            window.controller.run_button_action(
+                window,
+                self._widgetid,
+                replace(action, default_sound=False),
+                popup_text,
+            )
+            return
 
         if isinstance(action, dui2.Menu):
             bui.uilog.warning(
