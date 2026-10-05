@@ -610,17 +610,41 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
     case TextureFormat::kASTC_4x4:
       return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
       break;
-    case TextureFormat::kASTC_6x6:
-      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
-      break;
-    case TextureFormat::kASTC_8x8:
-      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+    case TextureFormat::kASTC_5x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
       break;
     case TextureFormat::kASTC_5x5:
       return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
       break;
+    case TextureFormat::kASTC_6x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+      break;
+    case TextureFormat::kASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x5:
+      return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+      break;
+    case TextureFormat::kASTC_8x6:
+      return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+      break;
+    case TextureFormat::kASTC_10x5:
+      return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+      break;
+    case TextureFormat::kASTC_10x6:
+      return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+      break;
+    case TextureFormat::kASTC_10x8:
+      return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+      break;
     case TextureFormat::kASTC_10x10:
       return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      break;
+    case TextureFormat::kASTC_12x10:
+      return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
       break;
     case TextureFormat::kASTC_12x12:
       return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;

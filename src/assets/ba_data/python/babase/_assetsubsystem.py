@@ -2497,9 +2497,23 @@ class AssetSubsystem(AppSubsystem):
         what the node reports for comm errors on *its* hop). Structured
         outcomes that a retry can't change (auth/access/too-old/content
         errors, unknown ids, bad dimensions) surface immediately.
+
+        The attempt budget covers a *stall*, not the whole build: a
+        failure that arrives after the server's build visibly advanced
+        since our previous failure starts the count over. A long cold
+        build on a struggling server can drop several polls along the
+        way without being in any real trouble, and giving up on it
+        throws away a build that is still getting somewhere (seen
+        2026-10-05 against an overloaded dev server). A hard ceiling on
+        total attempts keeps this finite whatever the server reports.
         """
         attempt = 1
         max_attempts = 3
+        total_attempts = 0
+        max_total_attempts = 30
+        # Units the server had reported done as of our last failure;
+        # None until we've had one.
+        done_at_last_failure: int | None = None
         while True:
             trace = self._active_trace
             start = time.monotonic()
@@ -2527,7 +2541,22 @@ class AssetSubsystem(AppSubsystem):
                 transient = exc.code is (
                     AssetPackageResolveError.INTERNAL
                 ) or isinstance(exc.__cause__, CommunicationError)
-                if not transient or attempt >= max_attempts:
+                total_attempts += 1
+                units = self._build_units.get(apvernum)
+                done = units[0] if units is not None else 0
+                if (
+                    done_at_last_failure is not None
+                    and done > done_at_last_failure
+                ):
+                    # The build moved since we last failed; this is a
+                    # fresh stall, not the same one continuing.
+                    attempt = 1
+                done_at_last_failure = done
+                if (
+                    not transient
+                    or attempt >= max_attempts
+                    or total_attempts >= max_total_attempts
+                ):
                     raise
                 delay = 2.0 * attempt
                 logger.info(

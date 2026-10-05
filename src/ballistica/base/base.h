@@ -287,13 +287,22 @@ enum class TextureFormat : uint8_t {
   kETC2_RGBA,
   kBC7,
   // ASTC LDR (mobile_v1 profile). One enum per block size the server
-  // can emit (the full square ladder the per-texture quality search
-  // picks from); each maps to a distinct GL internal format.
+  // can emit (every 2D block size ASTC defines; the ladder the
+  // per-texture quality search picks from); each maps to a distinct GL
+  // internal format.
   kASTC_4x4,
+  kASTC_5x4,
   kASTC_5x5,
+  kASTC_6x5,
   kASTC_6x6,
+  kASTC_8x5,
+  kASTC_8x6,
   kASTC_8x8,
+  kASTC_10x5,
+  kASTC_10x6,
+  kASTC_10x8,
   kASTC_10x10,
+  kASTC_12x10,
   kASTC_12x12,
 };
 

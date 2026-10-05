@@ -381,6 +381,10 @@ class AccountSettingsWindow(bui.MainWindow):
                     )
                     via_lines.append(f'{icontxt}StinkBobble')
 
+        # Extra room above the via lines so they clear the account
+        # name's capsule, which is taller than plain name text.
+        via_top_space = 14.0 if via_lines else 0.0
+
         show_sign_in_benefits = not self._v1_signed_in
         sign_in_benefits_space = 80.0
 
@@ -493,7 +497,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
-        self._sub_height += via_space * len(via_lines)
+        self._sub_height += via_top_space + via_space * len(via_lines)
         if show_signing_in_text:
             self._sub_height += signing_in_text_space
         if show_google_play_sign_in_button:
@@ -597,7 +601,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
             self._refresh_account_name_text()
 
-            v -= signed_in_as_space * 0.4
+            v -= signed_in_as_space * 0.4 + via_top_space
 
             for via in via_lines:
                 v -= via_space * 0.1
@@ -610,9 +614,26 @@ class AccountSettingsWindow(bui.MainWindow):
                     )
                     * sscale
                 )
+                # Center the line as a whole ('(via' + name + ')')
+                # under the account name; the '(via' side is wider
+                # than the ')' side, so the name itself sits a bit
+                # right of center.
+                pscale = 0.5
+                pgap = 3.0
+                prefix = '(' + _commonassets.strings.values.via.evaluate()
+                pwidth, cwidth = (
+                    bui.get_string_width(
+                        s,
+                        suppress_warning=True,
+                        suppress_logic_thread_warning=True,
+                    )
+                    * pscale
+                    for s in (prefix, ')')
+                )
+                via_x = self._sub_center_x + (pwidth + pgap - cwidth) * 0.5
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_center_x, v),
+                    position=(via_x, v),
                     size=(0, 0),
                     text=via,
                     scale=sscale,
@@ -624,14 +645,12 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_center_x - swidth * 0.5 - 5, v),
+                    position=(via_x - swidth * 0.5 - pgap, v),
                     size=(0, 0),
                     # Layout fragment: the open-paren pairs with a
                     # close-paren widget placed separately.
-                    text=bui.langstr_value(
-                        '(' + _commonassets.strings.values.via.evaluate()
-                    ),
-                    scale=0.5,
+                    text=bui.langstr_value(prefix),
+                    scale=pscale,
                     color=(0.4, 0.6, 0.4, 0.5),
                     flatness=1.0,
                     shadow=0.0,
@@ -640,14 +659,14 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_center_x + swidth * 0.5 + 10, v),
+                    position=(via_x + swidth * 0.5, v),
                     size=(0, 0),
                     text=')',
-                    scale=0.5,
+                    scale=pscale,
                     color=(0.4, 0.6, 0.4, 0.5),
                     flatness=1.0,
                     shadow=0.0,
-                    h_align='right',
+                    h_align='left',
                     v_align='center',
                 )
 

@@ -726,14 +726,31 @@ class AstcBlockSize(Enum):
     ``texture_quality`` set to ``CUSTOM``; otherwise the blanket
     ``LOW``/``DEFAULT``/``HIGH`` map to a value in this range
     (``LOW`` = ``TWELVE_BY_TWELVE``, ``HIGH`` = ``FOUR_BY_FOUR``).
+
+    This is every 2D block size ASTC defines. Every block is 128 bits
+    whatever its shape, so bits per texel is ``128 / (width * height)``
+    and the non-square sizes are simply finer steps along the same
+    size/quality scale.
+
+    **Members are ordered from highest quality (most bits per texel)
+    to lowest; keep them that way.** The automatic quality search
+    walks them in definition order as its ladder.
     """
 
-    FOUR_BY_FOUR = '4x4'
-    FIVE_BY_FIVE = '5x5'
-    SIX_BY_SIX = '6x6'
-    EIGHT_BY_EIGHT = '8x8'
-    TEN_BY_TEN = '10x10'
-    TWELVE_BY_TWELVE = '12x12'
+    FOUR_BY_FOUR = '4x4'  # 8.00 bpp
+    FIVE_BY_FOUR = '5x4'  # 6.40
+    FIVE_BY_FIVE = '5x5'  # 5.12
+    SIX_BY_FIVE = '6x5'  # 4.27
+    SIX_BY_SIX = '6x6'  # 3.56
+    EIGHT_BY_FIVE = '8x5'  # 3.20
+    EIGHT_BY_SIX = '8x6'  # 2.67
+    TEN_BY_FIVE = '10x5'  # 2.56
+    TEN_BY_SIX = '10x6'  # 2.13
+    EIGHT_BY_EIGHT = '8x8'  # 2.00
+    TEN_BY_EIGHT = '10x8'  # 1.60
+    TEN_BY_TEN = '10x10'  # 1.28
+    TWELVE_BY_TEN = '12x10'  # 1.07
+    TWELVE_BY_TWELVE = '12x12'  # 0.89
 
 
 class Bc7Rdo(Enum):
@@ -757,6 +774,39 @@ class Bc7Rdo(Enum):
     FOUR = '4'
 
 
+class AstcEffort(Enum):
+    """How hard the ASTC encoder works per block (its search preset).
+
+    More effort = better quality at the same block size (so the same
+    output size), paid for in build time only. Consulted only when an
+    :class:`AstcSettings` has its ``texture_quality`` set to ``CUSTOM``;
+    otherwise the texture tier picks it (regular = ``MEDIUM``, ultra =
+    ``THOROUGH``).
+    """
+
+    FASTEST = 'fastest'
+    FAST = 'fast'
+    MEDIUM = 'medium'
+    THOROUGH = 'thorough'
+    VERY_THOROUGH = 'verythorough'
+
+
+class Bc7Effort(Enum):
+    """How hard the BC7 encoder works per block (its 'uber' level).
+
+    More effort = better quality at the same size, paid for in build
+    time only. Consulted only when a :class:`Bc7Settings` has its
+    ``texture_quality`` set to ``CUSTOM``; otherwise the texture tier
+    picks it (regular = ``TWO``, ultra = ``FOUR``).
+    """
+
+    ZERO = '0'
+    ONE = '1'
+    TWO = '2'
+    THREE = '3'
+    FOUR = '4'
+
+
 @ioprepped
 @dataclass
 class AstcSettings:
@@ -764,9 +814,16 @@ class AstcSettings:
 
     Consulted only when the texture's top-level ``texture_quality`` is
     ``CUSTOM``. Its own ``texture_quality`` may in turn be ``CUSTOM``
-    to use the explicit ``block_size``; otherwise ``LOW``/``DEFAULT``/
-    ``HIGH`` map to the encoder's block-size range. Fully defaulted so
-    a texture never has to store it explicitly.
+    to use explicit values; otherwise ``LOW``/``DEFAULT``/``HIGH``
+    select an automatic quality target, the same way at every texture
+    tier. Fully defaulted so a texture never has to store it
+    explicitly.
+
+    The explicit values come in two independent sets, one per texture
+    tier: ``block_size``/``effort`` for regular and
+    ``ultra_block_size``/``ultra_effort`` for ultra. The ultra set
+    defaults to maximum quality, so hand-tuning the regular values can
+    never leave ultra looking worse than regular by accident.
     """
 
     texture_quality: Annotated[
@@ -777,6 +834,18 @@ class AstcSettings:
         AstcBlockSize.SIX_BY_SIX
     )
 
+    effort: Annotated[AstcEffort, IOAttrs('ef', store_default=False)] = (
+        AstcEffort.MEDIUM
+    )
+
+    ultra_block_size: Annotated[
+        AstcBlockSize, IOAttrs('ubs', store_default=False)
+    ] = AstcBlockSize.FOUR_BY_FOUR
+
+    ultra_effort: Annotated[AstcEffort, IOAttrs('uef', store_default=False)] = (
+        AstcEffort.THOROUGH
+    )
+
 
 @ioprepped
 @dataclass
@@ -785,9 +854,14 @@ class Bc7Settings:
 
     Consulted only when the texture's top-level ``texture_quality`` is
     ``CUSTOM``. Its own ``texture_quality`` may in turn be ``CUSTOM``
-    to use the explicit ``rdo`` lambda; otherwise ``LOW``/``DEFAULT``/
-    ``HIGH`` map to the encoder's RDO range. Fully defaulted so a
-    texture never has to store it explicitly.
+    to use explicit values; otherwise ``LOW``/``DEFAULT``/``HIGH``
+    select an automatic quality target, the same way at every texture
+    tier. Fully defaulted so a texture never has to store it
+    explicitly.
+
+    As with :class:`AstcSettings`, the explicit values come in a
+    regular set (``rdo``/``effort``) and an independent ultra set
+    (``ultra_rdo``/``ultra_effort``) that defaults to maximum quality.
     """
 
     texture_quality: Annotated[
@@ -795,6 +869,18 @@ class Bc7Settings:
     ] = TextureQuality.DEFAULT
 
     rdo: Annotated[Bc7Rdo, IOAttrs('rdo', store_default=False)] = Bc7Rdo.ONE
+
+    effort: Annotated[Bc7Effort, IOAttrs('ef', store_default=False)] = (
+        Bc7Effort.TWO
+    )
+
+    ultra_rdo: Annotated[Bc7Rdo, IOAttrs('urdo', store_default=False)] = (
+        Bc7Rdo.OFF
+    )
+
+    ultra_effort: Annotated[Bc7Effort, IOAttrs('uef', store_default=False)] = (
+        Bc7Effort.FOUR
+    )
 
 
 class TextureWrapping(Enum):
@@ -901,18 +987,23 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
         resolved result, only drops dead data so ``store_default=False``
         can strip it from workspace.json. Resolution consults the
         per-format settings only when the top-level ``texture_quality``
-        is ``CUSTOM``, and a format's explicit ``block_size``/``rdo`` only
-        when that format's own ``texture_quality`` is ``CUSTOM`` -- so
-        anything outside those paths is unused and gets cleared here.
+        is ``CUSTOM``, and a format's explicit values (both tiers' sets)
+        only when that format's own ``texture_quality`` is ``CUSTOM`` --
+        so anything outside those paths is unused and gets cleared here.
         """
         astc_defaults = AstcSettings()
         bc7_defaults = Bc7Settings()
 
-        # A non-CUSTOM format quality ignores the explicit value: clear it.
+        # A non-CUSTOM format quality ignores the explicit values: clear
+        # them (i.e. keep nothing but the quality itself).
         if self.astc_settings.texture_quality is not TextureQuality.CUSTOM:
-            self.astc_settings.block_size = astc_defaults.block_size
+            self.astc_settings = AstcSettings(
+                texture_quality=self.astc_settings.texture_quality
+            )
         if self.bc7_settings.texture_quality is not TextureQuality.CUSTOM:
-            self.bc7_settings.rdo = bc7_defaults.rdo
+            self.bc7_settings = Bc7Settings(
+                texture_quality=self.bc7_settings.texture_quality
+            )
 
         # Both formats on the same non-CUSTOM blanket value is identical to
         # just setting the top-level knob: collapse to it.
