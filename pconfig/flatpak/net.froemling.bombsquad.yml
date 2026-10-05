@@ -1,11 +1,11 @@
 app-id: net.froemling.bombsquad
 runtime: org.freedesktop.Platform
-# Stable runtime. It ships Python 3.13, and bombsquad requires exactly
-# 3.14, so we build our own Python via the module below. Once a stable
-# runtime ships Python 3.14 (26.08+, ~Aug 2026), the Python module can
-# be dropped. (A prior attempt pinned the unstable 'master' runtime for
-# its Python 3.14, but master runtimes aren't installable from flathub
-# and their dev remote is unreliable -- see docs/followups.md.)
+# Stable runtime. 26.08 ships the Python 3.14 that bombsquad requires
+# (see ballisticakit-cmake/CMakeLists.txt), so the Python module below
+# stays commented out; re-enable it if we ever have to target a runtime
+# that is behind. (A prior attempt pinned the unstable 'master' runtime
+# for its Python 3.14, but master runtimes aren't installable from
+# flathub and their dev remote is unreliable.)
 runtime-version: "26.08"
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
@@ -22,12 +22,20 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
-  # The stable runtime's python (3.13) is older than what bombsquad
-  # requires (exactly 3.14; see ballisticakit-cmake/CMakeLists.txt), so
-  # build our own into /app. Headers/bin are cleaned from the final app
-  # but libpython + the stdlib under /app/lib stay (the game embeds
-  # python). No PGO/LTO (--enable-optimizations/--with-lto) -- this is
-  # a nightly debug canary and those add ~20min per build.
+  # uv plus a wheel for every package in
+  # pconfig/requirements_build_lock.txt, so the module below can create
+  # the project venv with no network access. Generated from our
+  # lockfile by `make flatpak-build-env`; do not edit by hand.
+  - python-build-env.yml
+
+  # Fallback for a runtime whose python is older than the exact 3.14
+  # bombsquad requires: build our own into /app. Headers/bin are
+  # cleaned from the final app but libpython + the stdlib under
+  # /app/lib stay (the game embeds python). No PGO/LTO
+  # (--enable-optimizations/--with-lto) -- this is a nightly debug
+  # canary and those add ~20min per build. Re-enabling it needs no
+  # other change: /app/bin precedes /usr/bin on the build PATH, so uv
+  # picks up that interpreter when it creates the venv.
 
   # - name: Python
   #   sources:
@@ -65,21 +73,23 @@ modules:
   #       url: https://github.com/libsdl-org/SDL
   #       tag: release-2.32.8
 
-  # rsync is required by bombsquad's build system to stage files for the flatpak build
-  # we can remove this in flathub version since we cannot access internet during the build
-
-  # - name: rsync
-  #   buildsystem: autotools
-  #   config-opts:
-  #     - --prefix=${FLATPAK_DEST}
-  #     - --disable-debug
-  #     - --disable-locale
-  #   sources:
-  #     - type: archive
-  #       url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
-  #       sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
-  #   cleanup:
-  #     - "*"
+  # rsync is not in the SDK, and the build system requires it: pcommand
+  # checkenv insists on it, and the staging steps use it to assemble
+  # build/cmake/*/staged. It is built from a pinned source archive,
+  # which works offline -- flatpak-builder fetches declared sources
+  # outside the build sandbox -- and cleaned out of the finished app.
+  - name: rsync
+    buildsystem: autotools
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --disable-debug
+      - --disable-locale
+    sources:
+      - type: archive
+        url: https://download.samba.org/pub/rsync/src/rsync-3.5.1.tar.gz
+        sha256: c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
+    cleanup:
+      - "*"
 
   - name: bombsquad
     buildsystem: simple
@@ -90,20 +100,24 @@ modules:
         - --share=network
       env:
         CMAKE_BUILD_TYPE: "Release"
+        # Build the project venv against *this* sandbox's interpreter,
+        # from the wheels the python-build-env module staged. A venv
+        # cannot be carried in from the host: its bin/python symlink,
+        # its pyvenv.cfg 'home' key and every script shebang name the
+        # absolute path of the interpreter that created it.
+        VENV_LOCK: pconfig/requirements_build_lock.txt
+        UV_OFFLINE: "1"
+        UV_FIND_LINKS: /app/share/python-build-env/wheels
+        UV_PYTHON_DOWNLOADS: never
+        UV_CACHE_DIR: .cache/uv
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
-      # Install uv into /app/bin (already on build PATH) so subsequent
-      # ``make env`` / ``make cmake-build`` can build the project venv.
-      - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/bin INSTALLER_NO_MODIFY_PATH=1 sh
-      # we need to fix .venv/bin/python3.14 which is a symlink to system python
-      # of the machine the venv was created on, and then update the venv to fix
-      # all the shebangs according to the current build env (python3.14 here is
-      # the one our Python module built into /app/bin, which is on PATH)
-      - rm -f .venv/bin/python3.14
-      - ln -s /app/bin/python3.14 .venv/bin/python3.14
-      - python3.14 -m venv --upgrade .venv
-      # Get rid of tools/pcommand and similar with wrong shebangs
+      # .venv is excluded from the sources below, so this creates it
+      # from scratch against the runtime's python3.14 and installs into
+      # it from the staged wheels. The generated tools/pcommand and
+      # friends carry the host's shebangs, so clear them out first and
+      # let `make env` regenerate them for this venv.
       - make env-clean
       - make cmake-build
       - mv build/cmake/*/ballisticakit build/cmake/*/staged/
@@ -117,6 +131,15 @@ modules:
     sources:
       - type: dir
         path: ./../../
+        skip:
+          # A venv is tied to the absolute path of the interpreter that
+          # built it, so the host's is useless here; it gets rebuilt in
+          # the sandbox instead.
+          - .venv
+          # flatpak-builder's own scratch space, which lives inside the
+          # project; copying it into the build would be circular.
+          - .cache/flatpak
+          - build/flatpak
 
       # - type: archive
       #   url: { ARCHIVE_URL }

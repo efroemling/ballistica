@@ -1,0 +1,28 @@
+# Root packages needed to *build* the app, as opposed to developing it.
+#
+# requirements.txt covers the whole dev environment: linters, type
+# checkers, test runners, docs tooling. A packaging build (the flatpak
+# and flathub ones, currently) runs none of that, and vendoring it all
+# for an offline build would mean fetching hundreds of megabytes per
+# build. So this file names the roots of the subset that the build
+# itself reaches.
+#
+# Names only, no versions: versions and hashes are taken from
+# requirements_lock.txt so that stays the single place anything is
+# pinned. Everything these roots pull in is derived from the lockfile's
+# own '# via' annotations.
+#
+# `make flatpak-build-env` turns this into requirements_build_lock.txt
+# plus pconfig/flatpak/python-build-env.yml. Both are committed; if a
+# build ever dies on a missing import, add its package here and
+# regenerate.
+
+cryptography       # bacommon.securedata, via the asset/bacloud path
+filelock           # efrotools.pcommandbatch, imported on every pcommand
+libcst             # codegen
+python-daemon      # efrotools.pcommandbatch daemon mode
+requests           # efro.error, efrocache downloads
+tomlkit            # batools.build (checkenv and friends)
+typing_extensions  # used throughout efro/batools
+urllib3            # bacommon.assetcas, efro.error
+websockets         # bacommontools.bacloud sessions

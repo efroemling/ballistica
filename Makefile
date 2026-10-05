@@ -1538,6 +1538,14 @@ flatpak-linux: env
 flatpak-generate-flathub-manifest:
 	$(PCOMMAND) generate_flathub_manifest
 
+# Regenerate the offline Python build environment the flatpak builds
+# use: pconfig/requirements_build_lock.txt and the flatpak-builder
+# module that supplies uv plus a wheel for each of its packages. Both
+# outputs are committed; run this (and commit the result) after
+# changing pconfig/requirements.txt or pconfig/requirements_build.txt.
+flatpak-build-env: env
+	$(PCOMMAND) generate_flatpak_build_env
+
 flatpak-clean:
 	rm build/flatpak -rf
 	rm build/flathub -rf
@@ -1643,6 +1651,15 @@ SKIP_ENV_CHECKS ?= 0
 
 VENV_PYTHON ?= python3.14
 
+# Lockfile the project venv is installed from. Override this to build a
+# reduced venv; the flatpak/flathub packaging builds set it to
+# pconfig/requirements_build_lock.txt, which carries only what compiling
+# the app actually reaches and so can be vendored for an offline build.
+# A venv built that way is deliberately missing the linters, type
+# checkers and test tooling, so `make check`/`make test` will not run
+# against it.
+VENV_LOCK ?= pconfig/requirements_lock.txt
+
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading venvs in place will never uninstall
 # stuff, after switching the venv's installer (e.g. pip → uv), or after
@@ -1705,7 +1722,7 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
 # install packages should go through ``uv pip install`` rather
 # than ``.venv/bin/pip``.
 .venv/.efro_venv_complete: \
-      pconfig/requirements_lock.txt \
+      $(VENV_LOCK) \
       tools/efrotools/pyver.py \
       .venv/bin/$(VENV_PYTHON) \
       .venv/.efro_venv_state_$(VENV_STATE)
@@ -1724,7 +1741,7 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
  && rm -rf .venv && uv venv --python $(VENV_PYTHON) .venv \
  && touch .venv/.efro_venv_state_$(VENV_STATE))
 	uv pip install --python .venv/bin/$(VENV_PYTHON) --require-hashes \
- -r pconfig/requirements_lock.txt
+ -r $(VENV_LOCK)
 	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
 	@echo Project virtual environment for $(VENV_PYTHON) at .venv is ready to use.
 

@@ -86,6 +86,19 @@ def remove_docker_images() -> None:
     batools.docker.docker_remove_images()
 
 
+def generate_flatpak_build_env() -> None:
+    """Regenerate the offline Python build env used by flatpak builds.
+
+    Rewrites pconfig/requirements_build_lock.txt and
+    pconfig/flatpak/python-build-env.yml from the main lockfile. Needs
+    network access (it reads PyPI file metadata); the outputs are
+    committed so the builds themselves stay offline.
+    """
+    import batools.flatpakbuildenv
+
+    batools.flatpakbuildenv.generate(str(pcommand.PROJROOT))
+
+
 # pylint: disable=too-many-locals,too-many-statements
 def generate_flathub_manifest() -> None:
     """Generate a Flathub manifest for Ballistica and push to submodule.
@@ -153,6 +166,9 @@ def generate_flathub_manifest() -> None:
         'net.froemling.bombsquad.metainfo.xml',
         'net.froemling.bombsquad.desktop',
         'net.froemling.bombsquad.releases.xml',
+        # Referenced by the manifest as a module; without it the
+        # flathub build has no uv and no wheels to install from.
+        'python-build-env.yml',
     ]
 
     for filename in files_to_copy:

@@ -163,6 +163,7 @@ from batools.pcommands3 import (
     save_docker_images,
     remove_docker_images,
     generate_flathub_manifest,
+    generate_flatpak_build_env,
     gen_pyembed,
     require_unsandboxed,
 )

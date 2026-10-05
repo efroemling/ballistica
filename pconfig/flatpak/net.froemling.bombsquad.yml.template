@@ -16,10 +16,17 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
-  # We are currently using org.freedesktop.Sdk version 26.08
-  # which provides python3.13 required by bombsquad
-  # if this ever changes then enable this python module to build
-  # the required python locally
+  # uv plus a wheel for every package in
+  # pconfig/requirements_build_lock.txt, so the module below can create
+  # the project venv with no network access. Generated from our
+  # lockfile by `make flatpak-build-env`; do not edit by hand.
+  - python-build-env.yml
+
+  # org.freedesktop.Sdk 26.08 provides the python3.14 bombsquad
+  # requires. If we ever have to target a runtime that is behind,
+  # enable this module to build the required python locally; nothing
+  # else needs changing, since /app/bin precedes /usr/bin on the build
+  # PATH and uv will pick that interpreter up when creating the venv.
 
   # - name: Python
   #   sources:
@@ -61,21 +68,23 @@ modules:
   #       url: https://github.com/libsdl-org/SDL
   #       tag: release-2.32.8
 
-  # rsync is required by bombsquad's build system to stage files for the flatpak build
-  # we can remove this in flathub version since we cannot access internet during the build
-
-  # - name: rsync
-  #   buildsystem: autotools
-  #   config-opts:
-  #     - --prefix=${FLATPAK_DEST}
-  #     - --disable-debug
-  #     - --disable-locale
-  #   sources:
-  #     - type: archive
-  #       url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
-  #       sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
-  #   cleanup:
-  #     - "*"
+  # rsync is not in the SDK, and the build system requires it: pcommand
+  # checkenv insists on it, and the staging steps use it to assemble
+  # build/cmake/*/staged. It is built from a pinned source archive,
+  # which works offline -- flatpak-builder fetches declared sources
+  # outside the build sandbox -- and cleaned out of the finished app.
+  - name: rsync
+    buildsystem: autotools
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --disable-debug
+      - --disable-locale
+    sources:
+      - type: archive
+        url: https://download.samba.org/pub/rsync/src/rsync-3.5.1.tar.gz
+        sha256: c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
+    cleanup:
+      - "*"
 
   - name: bombsquad
     buildsystem: simple
@@ -86,24 +95,32 @@ modules:
         - --share=network
       env:
         CMAKE_BUILD_TYPE: "Release"
+        # Build the project venv against *this* sandbox's interpreter,
+        # from the wheels the python-build-env module staged. A venv
+        # cannot be carried in from the host: its bin/python symlink,
+        # its pyvenv.cfg 'home' key and every script shebang name the
+        # absolute path of the interpreter that created it.
+        VENV_LOCK: pconfig/requirements_build_lock.txt
+        UV_OFFLINE: "1"
+        UV_FIND_LINKS: /app/share/python-build-env/wheels
+        UV_PYTHON_DOWNLOADS: never
+        UV_CACHE_DIR: .cache/uv
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
-      # we need to fix .venv/bin/python3.13 which is a symlink to system python
-      # of the machine the venv was created on, and then update the venv to fix
-      # all the shebangs according to the current build env
-      - rm -f .venv/bin/python3.13
-      - ln -s /usr/bin/python3.13 .venv/bin/python3.13
-      - python3.13 -m venv --upgrade .venv
-      # Get rid of tools/pcommand and similar with wrong shebangs
+      # The source archive carries no .venv, so this creates one from
+      # scratch against the runtime's python3.14 and installs into it
+      # from the staged wheels. The generated tools/pcommand and
+      # friends carry the release builder's shebangs, so clear them out
+      # first and let `make env` regenerate them for this venv.
       - make env-clean
       - make cmake-build
       - mv build/cmake/*/ballisticakit build/cmake/*/staged/
       - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
       - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
-      - install -Dm644 config/flatpak/net.froemling.bombsquad.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
-      - install -Dm644 config/flatpak/net.froemling.bombsquad.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 config/flatpak/net.froemling.bombsquad.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
       - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
     sources:
