@@ -6,7 +6,7 @@ runtime: org.freedesktop.Platform
 # be dropped. (A prior attempt pinned the unstable 'master' runtime for
 # its Python 3.14, but master runtimes aren't installable from flathub
 # and their dev remote is unreliable -- see docs/followups.md.)
-runtime-version: "25.08"
+runtime-version: "26.08"
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
 finish-args:
@@ -19,7 +19,7 @@ finish-args:
   - --persist=.ballisticakit
 
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm20
+  - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
   # The stable runtime's python (3.13) is older than what bombsquad
@@ -29,24 +29,24 @@ modules:
   # python). No PGO/LTO (--enable-optimizations/--with-lto) -- this is
   # a nightly debug canary and those add ~20min per build.
 
-  - name: Python
-    sources:
-      - type: archive
-        url: https://www.python.org/ftp/python/3.14.6/Python-3.14.6.tar.xz
-        sha256: 143b1dddefaec3bd2e21e3b839b34a2b7fb9842272883c576420d605e9f30c63
-    config-opts:
-      - --prefix=${FLATPAK_DEST}
-      - --enable-shared
-      - --with-computed-gotos
-      - --enable-ipv6
-      - --with-system-expat
-      - --enable-loadable-sqlite-extensions
-      - --without-ensurepip
-    cleanup:
-      - /bin
-      - /include
-      - /lib/pkgconfig
-      - /share
+  # - name: Python
+  #   sources:
+  #     - type: archive
+  #       url: https://www.python.org/ftp/python/3.14.6/Python-3.14.6.tar.xz
+  #       sha256: 143b1dddefaec3bd2e21e3b839b34a2b7fb9842272883c576420d605e9f30c63
+  #   config-opts:
+  #     - --prefix=${FLATPAK_DEST}
+  #     - --enable-shared
+  #     - --with-computed-gotos
+  #     - --enable-ipv6
+  #     - --with-system-expat
+  #     - --enable-loadable-sqlite-extensions
+  #     - --without-ensurepip
+  #   cleanup:
+  #     - /bin
+  #     - /include
+  #     - /lib/pkgconfig
+  #     - /share
 
   # SDL2 is already provided by the runtime
 
@@ -68,24 +68,24 @@ modules:
   # rsync is required by bombsquad's build system to stage files for the flatpak build
   # we can remove this in flathub version since we cannot access internet during the build
 
-  - name: rsync
-    buildsystem: autotools
-    config-opts:
-      - --prefix=${FLATPAK_DEST}
-      - --disable-debug
-      - --disable-locale
-    sources:
-      - type: archive
-        url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
-        sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
-    cleanup:
-      - "*"
+  # - name: rsync
+  #   buildsystem: autotools
+  #   config-opts:
+  #     - --prefix=${FLATPAK_DEST}
+  #     - --disable-debug
+  #     - --disable-locale
+  #   sources:
+  #     - type: archive
+  #       url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
+  #       sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
+  #   cleanup:
+  #     - "*"
 
   - name: bombsquad
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/llvm20/bin
-      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      append-path: /usr/lib/sdk/llvm22/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
       build-args:
         - --share=network
       env:

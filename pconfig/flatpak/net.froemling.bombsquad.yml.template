@@ -1,6 +1,6 @@
 app-id: net.froemling.bombsquad
 runtime: org.freedesktop.Platform
-runtime-version: "25.08"
+runtime-version: "26.08"
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
 finish-args:
@@ -13,10 +13,10 @@ finish-args:
   - --persist=.ballisticakit
 
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm20
+  - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
-  # We are currently using org.freedesktop.Sdk version 25.08
+  # We are currently using org.freedesktop.Sdk version 26.08
   # which provides python3.13 required by bombsquad
   # if this ever changes then enable this python module to build
   # the required python locally
@@ -80,8 +80,8 @@ modules:
   - name: bombsquad
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/llvm20/bin
-      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      append-path: /usr/lib/sdk/llvm22/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
       build-args:
         - --share=network
       env:
