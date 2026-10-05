@@ -1031,7 +1031,7 @@ class Bomb(bs.Actor):
 
         # We blew up so we need to go away.
         # NOTE TO SELF: do we actually need this delay?
-        # Update (April 2026): Using bs.pushcall instead of bs.timer 
+        # Update (April 2026): Using bs.pushcall instead of bs.timer
         # for slightly faster removal without having to wait for the next frame.
         bs.pushcall(bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
 
