@@ -461,11 +461,11 @@ def prep_row_footnote(
             text=native(row.footnote, wrap=NO_WRAP),
             color=(
                 (0.6, 0.74, 0.6)
-                if row.subtitle_color is None
-                else row.subtitle_color
+                if row.footnote_color is None
+                else row.footnote_color
             ),
-            flatness=row.subtitle_flatness,
-            shadow=row.subtitle_shadow,
+            flatness=row.footnote_flatness,
+            shadow=row.footnote_shadow,
             scale=_ROW_SUBTITLE_SCALE,
             maxwidth=max(1.0, maxwidth),
             h_align=title_align.name.lower(),

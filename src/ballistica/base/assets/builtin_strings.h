@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261003"
+// Generated from: "a-0.babuiltinassets.261005"
 
 #include <memory>
 
@@ -206,12 +206,13 @@ class BuiltinStrings {
   class Device {
    public:
     /// Screen-message shown once per run on Android when the game deliberately
-    /// drops its frame rate to 60hz because the OS reports severe thermal
-    /// throttling; only shown on devices whose display would otherwise run
-    /// faster than 60hz.
+    /// lowers its frame rate because the OS reports severe thermal throttling;
+    /// only shown on devices whose display would otherwise run faster than
+    /// 60hz. The behavior can be turned off with the Thermal Throttling
+    /// checkbox in graphics settings.
     ///
-    /// English: "Device is running hot; frame rate reduced to 60 until it
-    /// cools."
+    /// English: "Device is running hot; reducing frame rate until it cools.
+    /// Configure this in graphics settings."
     static auto ThermalFrameRateCap() -> std::shared_ptr<const LangStr>;
   };
 

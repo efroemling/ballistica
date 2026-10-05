@@ -6088,6 +6088,22 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
     dBodySetForce(b, 0, 0, 0);
   }
 
+  // Legacy-form hair rides main-sim joints; seat it on the moved head
+  // (top before bottom, so the ponytail chain resolves root-first) or
+  // it springs across the map from wherever it was.
+  if (hair_front_right_joint_) {
+    base::JointFixedEFPositionBody(hair_front_right_joint_);
+  }
+  if (hair_front_left_joint_) {
+    base::JointFixedEFPositionBody(hair_front_left_joint_);
+  }
+  if (hair_ponytail_top_joint_) {
+    base::JointFixedEFPositionBody(hair_ponytail_top_joint_);
+  }
+  if (hair_ponytail_bottom_joint_) {
+    base::JointFixedEFPositionBody(hair_ponytail_bottom_joint_);
+  }
+
   // Definition attachment rigs (and bg limbs) re-place themselves on
   // their bodies.
   SnapAttachments_();

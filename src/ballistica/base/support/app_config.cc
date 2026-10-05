@@ -249,6 +249,10 @@ void AppConfig::SetupEntries_() {
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);
+  bool_entries_[BoolID::kTouchControlsHaptics] =
+      BoolEntry("Touch Controls Haptics", true);
+  bool_entries_[BoolID::kThermalThrottling] =
+      BoolEntry("Thermal Throttling", true);
   bool_entries_[BoolID::kFullscreen] = BoolEntry("Fullscreen", false);
   bool_entries_[BoolID::kKickIdlePlayers] =
       BoolEntry("Kick Idle Players", false);

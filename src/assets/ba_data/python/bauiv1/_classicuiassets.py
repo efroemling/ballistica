@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261004b`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261005a`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 413
+# ba_meta require asset-package 419
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261004b
-_ASSET_PACKAGE = ApverNum(413)
+# a-0.baclassicuiassets.261005a
+_ASSET_PACKAGE = ApverNum(419)
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -109,6 +109,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "You can't delete your account profile."
         cant_delete_account_profile: LangStr
+
+        #: ::
+        #:
+        #:     Error when opening the profile editor on a profile whose look is
+        #:     a kind this editor does not support.
+        #:
+        #:     English: "This profile can't be edited here."
+        cant_edit_here: LangStr
 
         #: ::
         #:
@@ -287,6 +295,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when saving a profile whose name starts or ends with an
+        #:     underscore character.
+        #:
+        #:     English: "Profile names may not start or end with "_"."
+        name_edge_underscore: LangStr
+
+        #: ::
+        #:
         #:     Error when the profile name field is empty.
         #:
         #:     English: "Name cannot be empty!"
@@ -335,6 +351,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Random Name"
         random_name: LangStr
+
+        #: ::
+        #:
+        #:     Error when starting a global-profile upgrade while the profile
+        #:     editor holds an unsaved name change.
+        #:
+        #:     English: "You must save changes to your name first."
+        save_name_first: LangStr
 
         #: ::
         #:
@@ -404,6 +428,23 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Red message in the profile list window when converting the
+        #:     account's legacy profiles to cloud profiles failed for now.
+        #:
+        #:     English: "Unable to convert your legacy profiles right now; will
+        #:     try again later."
+        convert_failed: LangStr
+
+        #: ::
+        #:
+        #:     Status shown in the profile list window while the account's
+        #:     legacy profiles are being converted to cloud profiles.
+        #:
+        #:     English: "Converting profiles..."
+        converting: LangStr
+
+        #: ::
+        #:
         #:     Single-line parenthetical hint; keep the parentheses.
         #:
         #:     English: "(custom player names and appearances for this account)"
@@ -411,11 +452,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Single-line parenthetical hint under the legacy-profiles heading;
-        #:     keep the parentheses.
+        #:     Explanation under the legacy-profiles heading in the inventory:
+        #:     when legacy profiles get used and what they are limited to. Wraps
+        #:     as needed.
         #:
-        #:     English: "(stored on this device and your legacy account; cloud
-        #:     profiles are used when available)"
+        #:     English: "Used when connected to old servers or when cloud
+        #:     profiles are not available. Supports only a limited set of
+        #:     characters and looks."
         legacy_explanation: LangStr
 
         #: ::
@@ -441,6 +484,15 @@ if TYPE_CHECKING:
         #:
         #:     English: "New Profile"
         new_profile: LangStr
+
+        #: ::
+        #:
+        #:     Red note under the profile list, shown until the account's legacy
+        #:     profiles have been migrated to cloud profiles. Wraps as needed.
+        #:
+        #:     English: "NOTE: Your legacy profiles have not been migrated to
+        #:     cloud profiles yet. Migration will happen soon."
+        not_migrated_note: LangStr
 
         #: ::
         #:
@@ -479,8 +531,8 @@ if TYPE_CHECKING:
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 52 strings (``economy``, ``profile``,
-    #: ``profiles``, and 49 more). Full list in source.
+    #: The ``strings`` group - 58 strings (``economy``, ``profile``,
+    #: ``profiles``, and 55 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -495,6 +547,7 @@ _TREE = {
             'account_profile_info': ('icons',),
             'available': ('name',),
             'cant_delete_account_profile': (),
+            'cant_edit_here': (),
             'character': (),
             'character_label': (),
             'checking_availability': ('name',),
@@ -518,6 +571,7 @@ _TREE = {
             'local_profile': (),
             'local_profile_info': (),
             'name_description': (),
+            'name_edge_underscore': (),
             'name_not_empty': (),
             'not_enough_tickets': (),
             'nothing_selected': (),
@@ -525,6 +579,7 @@ _TREE = {
             'profile_upgraded': (),
             'purchasing': (),
             'random_name': (),
+            'save_name_first': (),
             'title_edit': (),
             'title_new': (),
             'too_many_legacy_profiles': (),
@@ -534,11 +589,14 @@ _TREE = {
             'upgrade_to_global': (),
         },
         'profiles': {
+            'convert_failed': (),
+            'converting': (),
             'explanation': (),
             'legacy_explanation': (),
             'legacy_title': (),
             'max_reached': (),
             'new_profile': (),
+            'not_migrated_note': (),
             'show_cloud_profiles': (),
             'show_legacy_profiles': (),
             'title': (),

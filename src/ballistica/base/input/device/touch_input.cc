@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -876,6 +877,16 @@ void TouchInput::Draw(FrameDef* frame_def) {
   }
 }
 
+auto TouchInput::DoApplyFeedback(const FeedbackEvent& event) -> int {
+  // Someone playing on the touchscreen is holding the device, so the
+  // device itself is what should buzz. The player's own setting gets the
+  // final say (the host only ever requests).
+  if (!haptics_enabled_) {
+    return 0;
+  }
+  return g_base->app_adapter->ApplyDeviceFeedback(event);
+}
+
 void TouchInput::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
@@ -908,6 +919,8 @@ void TouchInput::ApplyAppConfig() {
       AppConfig::FloatID::kTouchControlsScaleActions);
   swipe_controls_hidden_ =
       g_base->app_config->Resolve(AppConfig::BoolID::kTouchControlsSwipeHidden);
+  haptics_enabled_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kTouchControlsHaptics);
 
   // Start with defaults.
   switch (g_base->ui->uiscale()) {

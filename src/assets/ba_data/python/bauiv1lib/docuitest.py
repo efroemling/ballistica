@@ -765,6 +765,14 @@ def _test_v2_page_root(
                     subtitle_color=(1.0, 0.5, 1.0, 0.5),
                     subtitle_flatness=1.0,
                     subtitle_shadow=0.0,
+                    # Styled on its own, not inheriting the subtitle's
+                    # overrides. (Dev-only page, so a baked literal.)
+                    footnote=LangStrSpecValue.literal(
+                        'Footnote with its own color, flatness and shadow.'
+                    ),
+                    footnote_color=(0.4, 1.0, 1.0, 1.0),
+                    footnote_flatness=0.0,
+                    footnote_shadow=1.0,
                     center_content=True,
                     center_title=True,
                     buttons=[

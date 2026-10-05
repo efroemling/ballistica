@@ -43,6 +43,7 @@ _ACTIONS_KEY = 'Touch Action Control Type'
 _MOVEMENT_SCALE_KEY = 'Touch Controls Scale Movement'
 _ACTIONS_SCALE_KEY = 'Touch Controls Scale Actions'
 _SWIPE_HIDDEN_KEY = 'Touch Controls Swipe Hidden'
+_HAPTICS_KEY = 'Touch Controls Haptics'
 
 #: Everything Reset clears (the drag positions included).
 _RESET_KEYS = (
@@ -52,6 +53,7 @@ _RESET_KEYS = (
     _MOVEMENT_SCALE_KEY,
     _ACTIONS_SCALE_KEY,
     _SWIPE_HIDDEN_KEY,
+    _HAPTICS_KEY,
     'Touch DPad X',
     'Touch DPad Y',
     'Touch Buttons X',
@@ -89,7 +91,7 @@ class TouchscreenRoute(DocUIRoute):
     @override
     @classmethod
     def get_window_layout(cls) -> dui2.WindowLayout:
-        # Two explanatory lines, five rows and a button; a small-tall
+        # Two explanatory lines, six rows and a button; a small-tall
         # layout cuts off the button at medium ui-scale. (Still narrow,
         # leaving the touch controls at the screen edges uncovered.)
         return dui2.WindowLayout.SMALL_TALLER
@@ -114,6 +116,7 @@ class TouchscreenState(DocUIState, state_id='settings.touchscreen'):
     actions: Annotated[ActionType, IOAttrs('a')] = ActionType.BUTTONS
     actions_scale: Annotated[float, IOAttrs('as')] = 1.0
     swipe_hidden: Annotated[bool, IOAttrs('sh')] = False
+    haptics: Annotated[bool, IOAttrs('h')] = True
 
 
 #: Config key for each state field (the state's wire values are the
@@ -125,6 +128,7 @@ _CONFIG_KEYS: dict[str, str] = {
     TouchscreenState.key(lambda s: s.actions): _ACTIONS_KEY,
     TouchscreenState.key(lambda s: s.actions_scale): _ACTIONS_SCALE_KEY,
     TouchscreenState.key(lambda s: s.swipe_hidden): _SWIPE_HIDDEN_KEY,
+    TouchscreenState.key(lambda s: s.haptics): _HAPTICS_KEY,
 }
 
 
@@ -300,6 +304,7 @@ def _page() -> dui2.Response:
     """Build the page (called in a background thread)."""
     config = bui.app.config
     tstate = TouchscreenState
+    haptics_supported = bui.device_haptics_supported()
 
     def _enum_from_config[E: Enum](etype: type[E], key: str, default: E) -> E:
         try:
@@ -315,6 +320,9 @@ def _page() -> dui2.Response:
         actions=_enum_from_config(ActionType, _ACTIONS_KEY, ActionType.BUTTONS),
         actions_scale=float(config.resolve(_ACTIONS_SCALE_KEY)),
         swipe_hidden=bool(config.resolve(_SWIPE_HIDDEN_KEY)),
+        # A device that can't play haptics shows the box unchecked (and
+        # dimmed, below) whatever the config says.
+        haptics=haptics_supported and bool(config.resolve(_HAPTICS_KEY)),
     )
     apply = ApplySetting().local(default_sound=False)
     apply_drag = ApplySetting(commit=False).local(default_sound=False)
@@ -377,6 +385,12 @@ def _page() -> dui2.Response:
             lambda s: s.swipe_hidden,
             label=_tsstrs.swipe_controls_hidden.spec,
             on_change=apply,
+        ),
+        tstate.checkbox_row(
+            lambda s: s.haptics,
+            label=_tsstrs.enable_haptics.spec,
+            on_change=apply,
+            disabled=not haptics_supported,
         ),
     ]
     # A lone, deliberately narrow button centered under the controls

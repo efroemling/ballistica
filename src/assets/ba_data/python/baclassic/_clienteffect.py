@@ -95,7 +95,19 @@ def run_bs_client_effects(
     apvernums: set[ApverNum] = set()
     clfx.collect_apvernums(effects, apvernums)
     if not apvernums:
-        _run_effects(effects, delay=delay, context=context)
+        # Nothing to resolve, but v2 text can still be pure literals
+        # (a server-side message not yet given a translated string);
+        # those decode fine against an empty context.
+        from bacommon.langstr import LanguageStringNameDecodeContext
+
+        _run_effects(
+            effects,
+            delay=delay,
+            context=context,
+            decodectx=LanguageStringNameDecodeContext(
+                {}, bauiv1.app.locale.current_locale
+            ),
+        )
         return
     # Hold root-ui live updates from right now, not just from once the
     # resolve finishes: the caller is often handing over a hold of its
@@ -214,7 +226,7 @@ def _run_effects(
     *,
     delay: float = 0.0,
     context: ClientEffectContext | None = None,
-    decodectx: LanguageStringNameDecodeContext | None = None,
+    decodectx: LanguageStringNameDecodeContext,
 ) -> None:
     # pylint: disable=too-many-branches
     import bacommon.clienteffect as clfx
@@ -253,13 +265,7 @@ def _run_effects(
 
         elif effecttype is clfx.EffectTypeID.SCREEN_MESSAGE_V2:
             assert isinstance(effect, clfx.ScreenMessageV2)
-            if decodectx is None:
-                # Should be impossible; v2 effects imply a resolve
-                # pass happened (which builds the context).
-                logging.error(
-                    'Got ScreenMessageV2 effect with no decode context.'
-                )
-            elif isinstance(effect.message, int):
+            if isinstance(effect.message, int):
                 # Unfolded during resolve; a folded index here means
                 # that failed. Skip loudly rather than guess.
                 assetslog.error(

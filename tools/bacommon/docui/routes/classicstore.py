@@ -244,6 +244,25 @@ class ProfileGlobalUpgradeBuy(
     ticket_cost: Annotated[int, IOAttrs('tc')]
 
 
+@ioprepped
+@dataclass
+class ProfileMigrate(
+    StoreRoute, path='/profile/migrate', method=dui2.RequestMethod.POST
+):
+    """(Inventory) copy the account's legacy profiles into cloud ones.
+
+    Requested by the 'Converting profiles...' page the root shows
+    while a migration is due; redirects back to the root afterward
+    (carrying the root's view arguments along).
+    """
+
+    #: See :attr:`Root.profiles_only`.
+    profiles_only: Annotated[bool, IOAttrs('po', store_default=False)] = False
+
+    #: See :attr:`Root.debug`.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+
 # All routes in the family.
 AnyStoreRoute = (
     Root
@@ -257,6 +276,7 @@ AnyStoreRoute = (
     | ProfileIcon
     | ProfileGlobalUpgrade
     | ProfileGlobalUpgradeBuy
+    | ProfileMigrate
 )
 
 

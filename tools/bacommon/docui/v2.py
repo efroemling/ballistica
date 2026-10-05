@@ -1054,6 +1054,19 @@ class ButtonRow(Row):
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
     ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
+    ] = None
 
     #: Spacing between all buttons in the row.
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 15.0
@@ -1251,6 +1264,19 @@ class CheckboxRow(Row):
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
     ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
+    ] = None
 
     #: Extra inset for the label, which otherwise starts where row
     #: titles do.
@@ -1397,6 +1423,19 @@ class TextInputRow(Row):
     #: like its title; the row grows to make room for it.
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
+    ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
     ] = None
 
     #: Extra inset for the label, which otherwise starts where row
@@ -1546,6 +1585,19 @@ class ChoiceRow(Row):
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
     ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
+    ] = None
 
     #: Extra inset for the label, which otherwise starts where row
     #: titles do.
@@ -1675,6 +1727,19 @@ class ColorRow(Row):
     #: like its title; the row grows to make room for it.
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
+    ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
     ] = None
 
     #: Extra inset for the label, which otherwise starts where row
@@ -1826,6 +1891,19 @@ class SliderRow(Row):
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
     ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
+    ] = None
 
     #: Extra inset for the label, which otherwise starts where row
     #: titles do.
@@ -1968,6 +2046,19 @@ class NumberRow(Row):
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
     ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
+    ] = None
 
     #: Extra inset for the label, which otherwise starts where row
     #: titles do.
@@ -2092,6 +2183,19 @@ class ButtonControlRow(Row):
     #: like its title; the row grows to make room for it.
     footnote: Annotated[
         LangStrSpec | int | None, IOAttrs('fn', store_default=False)
+    ] = None
+    #: The footnote's color/flatness/shadow; None for the defaults it
+    #: shares with the subtitle. Independent of the subtitle's own
+    #: overrides.
+    footnote_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('fnc', store_default=False),
+    ] = None
+    footnote_flatness: Annotated[
+        float | None, IOAttrs('fnf', store_default=False)
+    ] = None
+    footnote_shadow: Annotated[
+        float | None, IOAttrs('fns', store_default=False)
     ] = None
 
     #: Extra inset for the label, which otherwise starts where row

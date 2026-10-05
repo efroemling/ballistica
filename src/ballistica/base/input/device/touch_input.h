@@ -30,6 +30,7 @@ class TouchInput : public InputDevice {
 
  protected:
   auto DoGetDeviceName() -> std::string override;
+  auto DoApplyFeedback(const FeedbackEvent& event) -> int override;
 
  private:
   void UpdateDPad();
@@ -39,6 +40,7 @@ class TouchInput : public InputDevice {
   float controls_scale_move_{1.0f};
   float controls_scale_actions_{1.0f};
   bool swipe_controls_hidden_{};
+  bool haptics_enabled_{true};
   float presence_{};
   float button_fade_{};
   bool editing_{};

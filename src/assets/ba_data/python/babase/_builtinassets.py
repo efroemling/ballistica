@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261003`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261005`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 390
+# ba_meta require asset-package 417
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-# a-0.babuiltinassets.261003
-_ASSET_PACKAGE = ApverNum(390)
+# a-0.babuiltinassets.261005
+_ASSET_PACKAGE = ApverNum(417)
 
 if TYPE_CHECKING:
     import datetime
@@ -333,12 +333,13 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Screen-message shown once per run on Android when the game
-        #:     deliberately drops its frame rate to 60hz because the OS reports
-        #:     severe thermal throttling; only shown on devices whose display
-        #:     would otherwise run faster than 60hz.
+        #:     deliberately lowers its frame rate because the OS reports severe
+        #:     thermal throttling; only shown on devices whose display would
+        #:     otherwise run faster than 60hz. The behavior can be turned off
+        #:     with the Thermal Throttling checkbox in graphics settings.
         #:
-        #:     English: "Device is running hot; frame rate reduced to 60 until
-        #:     it cools."
+        #:     English: "Device is running hot; reducing frame rate until it
+        #:     cools. Configure this in graphics settings."
         thermal_frame_rate_cap: LangStr
 
     class StringsInputGroup:

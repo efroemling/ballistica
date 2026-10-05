@@ -2000,6 +2000,32 @@ static PyMethodDef PyNativeReviewRequestSupportedDef = {
     ":meta private:",
 };
 
+// ------------------------ device_haptics_supported ---------------------------
+
+static auto PyDeviceHapticsSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->app_adapter->DeviceFeedbackSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDeviceHapticsSupportedDef = {
+    "device_haptics_supported",             // name
+    (PyCFunction)PyDeviceHapticsSupported,  // method
+    METH_NOARGS,                            // flags
+
+    "device_haptics_supported() -> bool\n"
+    "\n"
+    "Return whether the device we are running on can play haptics.\n"
+    "\n"
+    "This is about the device itself (a phone's vibrator); controllers\n"
+    "are a separate matter.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------------- native_review_request ----------------------------
 
 static auto PyNativeReviewRequest(PyObject* self) -> PyObject* {
@@ -2925,6 +2951,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyUsingGooglePlayGameServicesDef,
       PyUsingGameCenterDef,
       PyNativeReviewRequestSupportedDef,
+      PyDeviceHapticsSupportedDef,
       PyNativeReviewRequestDef,
       PyTempTestingDef,
       PyOpenFileExternallyDef,

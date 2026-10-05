@@ -408,6 +408,30 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         ),
     ] = TranslationEffort.AUTO
 
+    #: The exact English text of this string, when the wording is
+    #: fixed (empty = not stated). The English output is checked
+    #: against it (modulo the style preset's casing) and regenerated on
+    #: a mismatch. The structured successor to writing ``In English
+    #: this is exactly: "..."`` in the brief, which is still honoured.
+    #: Like ``translation_effort``, folded into the translation digest
+    #: only when set, so adding the field restaled nothing.
+    english_exact: Annotated[
+        str, IOAttrs('english_exact', store_default=False)
+    ] = ''
+
+    #: For a shared *term*: the phrases whose literal appearance in a
+    #: consuming brief means "this should be a ``{@...}`` ref to me"
+    #: (empty = the term's own English text, which is right for most
+    #: terms). Set it when that English is a common word with other
+    #: senses -- the profile-icon term renders as just "icon", but a
+    #: power-up's icon or a button icon is not it, so it lists
+    #: ``profile icon`` and ``player icon`` instead. Authoring-lint
+    #: metadata only: it never reaches the translator, so it is not
+    #: part of the translation digest and editing it restales nothing.
+    mention_phrases: Annotated[
+        list[str], IOAttrs('mention_phrases', store_default=False)
+    ] = field(default_factory=list)
+
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
     )

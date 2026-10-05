@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261003`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261005a`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 392
+# ba_meta require asset-package 418
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261003
-_ASSET_PACKAGE = ApverNum(392)
+# a-0.baclassicassets.261005a
+_ASSET_PACKAGE = ApverNum(418)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -491,7 +491,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives on {level}."
+                English: "Kill 3 bad guys with TNT on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -501,7 +501,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Killed 3 bad guys with TNT on {level}"
             """
 
         #: ::
@@ -545,7 +545,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} without using any bombs."
+                English: "Complete {level} without using any bombs"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -632,7 +632,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win {level} without getting hit."
+                English: "Win {level} without getting hit"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -642,7 +642,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Won {level} without getting hit."
+                English: "Won {level} without getting hit"
             """
 
         #: ::
@@ -719,7 +719,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Kill 6 enemies with landmines on {level}."
+                English: "Kill 6 bad guys with land-mines on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -773,7 +773,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win {level} without any punches or bombs."
+                English: "Win {level} without any punches or bombs"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -860,7 +860,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete the mission on {level}."
+                English: "Score 1000 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -870,7 +870,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Scored 1000 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -916,7 +916,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives on {level}."
+                English: "Score 250 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -926,7 +926,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Scored 250 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -972,7 +972,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} to unlock this achievement."
+                English: "Score 500 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -982,7 +982,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Scored 500 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -991,7 +991,7 @@ if TYPE_CHECKING:
 
                 Name of an achievement the player can earn.
 
-                English: "{level} Champion"
+                English: "{level} Wizard"
             """
 
     class StringsAchievementsMineGamesGroup:
@@ -1038,7 +1038,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed all objectives on {level}."
+                English: "Killed 3 bad guys with land-mines on {level}"
             """
 
         #: ::
@@ -1082,7 +1082,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives in {level}."
+                English: "Toss 3 bad guys off the map in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1136,7 +1136,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives on {level}."
+                English: "Score 5000 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1146,7 +1146,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Scored 5000 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1192,7 +1192,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives on {level}."
+                English: "Score 500 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1202,7 +1202,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Scored 500 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1248,7 +1248,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Defeat all waves in {level}."
+                English: "Defeat all waves in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1258,7 +1258,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Defeated all waves in {level}."
+                English: "Defeated all waves in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1304,7 +1304,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives in {level}."
+                English: "Score 1000 points in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1314,7 +1314,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Scored 1000 points in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1323,7 +1323,7 @@ if TYPE_CHECKING:
 
                 Name of an achievement the player can earn.
 
-                English: "{level} Master"
+                English: "{level} Wizard"
             """
 
     class StringsAchievementsPrecisionBombingGroup:
@@ -1360,7 +1360,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win {level} without using any power-ups."
+                English: "Win {level} without any power-ups"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1370,7 +1370,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Won {level} without any power-ups."
+                English: "Won {level} without any power-ups"
             """
 
         #: ::
@@ -1414,7 +1414,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} without using any bombs."
+                English: "Complete {level} without using any bombs"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1468,7 +1468,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} without taking any damage."
+                English: "Win {level} without letting the bad guys score"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1478,7 +1478,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level} without letting the opponent score."
+                English: "Won {level} without letting the bad guys score"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1524,7 +1524,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win the game in {level}."
+                English: "Win the game in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1534,7 +1534,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Won the game in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1580,7 +1580,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Defeat all waves of {level}."
+                English: "Defeat all waves of {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1692,7 +1692,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win {level} without letting the opponent score."
+                English: "Win {level} without letting the bad guys score"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1702,7 +1702,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Won {level} without letting the bad guys score"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1758,7 +1758,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed the campaign on {level}."
+                English: "Won the game in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1804,7 +1804,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Defeat all waves in {level}."
+                English: "Defeat all waves in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1814,7 +1814,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Defeated all waves in {level}."
+                English: "Defeated all waves in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1860,7 +1860,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives on {level}."
+                English: "Score 2000 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1870,7 +1870,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Scored 2000 points on {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1916,7 +1916,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives in {level}."
+                English: "Score 500 points in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1926,7 +1926,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Scored 500 points in {level}"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -1972,7 +1972,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete the objective on {level}."
+                English: "Score 1000 points on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -1991,7 +1991,7 @@ if TYPE_CHECKING:
 
                 Name of an achievement the player can earn.
 
-                English: "Champion of {level}"
+                English: "{level} Wizard"
             """
 
     class StringsAchievementsSharingIsCaringGroup:
@@ -2061,7 +2061,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win {level} without dying."
+                English: "Win {level} without dying"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2125,7 +2125,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}"
+                English: "Inflicted 100% damage with one punch in {level}"
             """
 
         #: ::
@@ -2169,7 +2169,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} without taking any damage."
+                English: "Inflict 50% damage with one punch on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2256,7 +2256,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete all objectives in {level}."
+                English: "Stop every single bad guy on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2266,7 +2266,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Stopped every single bad guy on {level}."
+                English: "Stopped every single bad guy on {level}"
             """
 
         #: ::
@@ -2310,7 +2310,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Stop every single bad guy on {level}."
+                English: "Stop every single bad guy on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2364,7 +2364,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Kill 6 enemies with TNT on {level}."
+                English: "Kill 6 bad guys with TNT on {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2418,7 +2418,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Complete {level} without taking any damage."
+                English: "Win {level} without letting the bad guys score"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -2428,7 +2428,7 @@ if TYPE_CHECKING:
                 Full description of an achievement the player has already
                 earned, naming the campaign level (past tense).
 
-                English: "Completed {level}."
+                English: "Won {level} without letting the bad guys score"
             """
 
         def name(self, *, level: str | LangStr) -> LangStr:
@@ -2474,7 +2474,7 @@ if TYPE_CHECKING:
                 Full description of what an achievement requires, naming the
                 campaign level it applies to.
 
-                English: "Win the game in {level}."
+                English: "Win the game in {level}"
             """
 
         def description_full_complete(self, *, level: str | LangStr) -> LangStr:
@@ -7475,6 +7475,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Checkbox turning touch-screen haptic feedback on or off.
+        #:
+        #:     English: "Enable Haptics"
+        enable_haptics: LangStr
+
+        #: ::
+        #:
         #:     Option value: movement via an on-screen joystick.
         #:
         #:     English: "Joystick"
@@ -7922,6 +7929,22 @@ if TYPE_CHECKING:
         #:
         #:     English: "Textures"
         textures: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox (Android only) letting the game lower its frame rate
+        #:     when the device overheats.
+        #:
+        #:     English: "Thermal Throttling"
+        thermal_throttling: LangStr
+
+        #: ::
+        #:
+        #:     Small explanatory footnote under the Thermal Throttling checkbox
+        #:     in graphics settings.
+        #:
+        #:     English: "Drop frame rate when your device gets too hot"
+        thermal_throttling_description: LangStr
 
         #: ::
         #:
@@ -9734,8 +9757,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1007 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1002 more). Full list in
+    #: The ``strings`` group - 1010 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1005 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10865,6 +10888,7 @@ _TREE = {
                     'actions': (),
                     'buttons': (),
                     'drag_controls': (),
+                    'enable_haptics': (),
                     'joystick': (),
                     'movement': (),
                     'movement_control_scale': (),
@@ -10922,6 +10946,8 @@ _TREE = {
                 'screen_insets_automatic': (),
                 'show_fps': (),
                 'textures': (),
+                'thermal_throttling': (),
+                'thermal_throttling_description': (),
                 'title': (),
                 'tv_border': (),
                 'vertical_sync': (),

@@ -519,7 +519,13 @@ def test_page_widgets(
                     button=_map_button(rt.NavTest().browse()),
                     label=_lit('Map (browses when pressed)'),
                     title=_lit('Button Control'),
-                    footnote=_lit('Button-control-row footnote.'),
+                    footnote=_lit(
+                        'Button-control-row footnote, styled as a warning'
+                        ' (footnote_color/flatness/shadow).'
+                    ),
+                    footnote_color=(1.0, 0.45, 0.3, 1.0),
+                    footnote_flatness=1.0,
+                    footnote_shadow=0.0,
                     debug=debug,
                 ),
                 dui2.ButtonControlRow(

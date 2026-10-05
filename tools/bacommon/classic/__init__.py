@@ -8,10 +8,7 @@
   it in mod code.
 """
 
-from bacommon.classic._account import (
-    ClassicLiveAccountClientData,
-    ClassicPlayerProfile,
-)
+from bacommon.classic._account import ClassicLiveAccountClientData
 from bacommon.classic._classic import (
     TOKENS1_COUNT,
     TOKENS2_COUNT,
@@ -55,7 +52,6 @@ __all__ = [
     'ChestInfoMessage',
     'ChestInfoResponse',
     'ClassicLiveAccountClientData',
-    'ClassicPlayerProfile',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
     'ChestTints',

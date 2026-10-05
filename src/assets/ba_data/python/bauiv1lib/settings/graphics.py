@@ -156,6 +156,10 @@ class GraphicsState(DocUIState, state_id='settings.graphics'):
     #: 0-1; see ApplyScreenInsets for how it relates to screen_insets.
     custom_screen_insets: Annotated[float, IOAttrs('csi')] = 0.0
 
+    #: Whether to drop the frame rate under severe thermal pressure
+    #: (Android only).
+    thermal_throttling: Annotated[bool, IOAttrs('tt')] = True
+
 
 #: Config key for each state field that is a plain config mirror (its
 #: wire value is its config value). Built from typed field lookups so a
@@ -164,6 +168,7 @@ _CONFIG_KEYS: dict[str, str] = {
     GraphicsState.key(lambda s: s.visuals): 'Graphics Quality',
     GraphicsState.key(lambda s: s.vsync): 'Vertical Sync',
     GraphicsState.key(lambda s: s.show_fps): 'Show FPS',
+    GraphicsState.key(lambda s: s.thermal_throttling): 'Thermal Throttling',
 }
 
 
@@ -365,6 +370,7 @@ class GraphicsSettingsController(
             custom_screen_insets=_snap_screen_insets(
                 float(config.resolve('Custom Screen Insets'))
             ),
+            thermal_throttling=bool(config.resolve('Thermal Throttling')),
         )
 
         rows: list[dui2.Row] = []
@@ -476,6 +482,17 @@ class GraphicsSettingsController(
                     disabled=state.screen_insets is ScreenInsets.AUTO,
                 ),
             ]
+        # The thermal frame-rate back-off only exists on Android.
+        assert bui.app.classic is not None
+        if bui.app.classic.platform == 'android':
+            rows.append(
+                gstate.checkbox_row(
+                    lambda s: s.thermal_throttling,
+                    label=_gfxstrs.thermal_throttling.spec,
+                    footnote=_gfxstrs.thermal_throttling_description.spec,
+                    on_change=apply,
+                )
+            )
 
         return dui2.Response(
             page=dui2.Page(

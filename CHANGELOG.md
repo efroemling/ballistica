@@ -1,4 +1,12 @@
-### 1.8.0 (build 23036, api 9, 2026-10-04)
+### 1.8.0 (build 23037, api 9, 2026-10-04)
+- Touchscreen players on Android and iPhone now get haptic feedback from the
+  device itself for the same events controllers rumble for (Android 10 and
+  newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'
+  checkbox on the touchscreen settings page turns it off; it is dimmed where
+  the device can't do it.
+- Android graphics settings gained a 'Thermal Throttling' checkbox (on by
+  default) controlling whether the game drops to 60hz when the device gets
+  too hot. The notice shown when that happens now points there.
 - The economy and player-profile strings moved out of the ui-chrome
   asset package into a new `baclassicuiassets` package, and 'global
   profile' and profile 'icon' now read the same way everywhere in every

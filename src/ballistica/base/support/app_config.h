@@ -66,6 +66,8 @@ class AppConfig {
 
   enum class BoolID {
     kTouchControlsSwipeHidden,
+    kTouchControlsHaptics,
+    kThermalThrottling,
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,

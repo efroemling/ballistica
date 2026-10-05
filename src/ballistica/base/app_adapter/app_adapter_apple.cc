@@ -427,6 +427,72 @@ void AppAdapterApple::StopJoystickFeedback(JoystickInput* device) {
   });
 }
 
+// What UIKitFromCpp.playDeviceHaptic takes as its style: the five
+// UIImpactFeedbackGenerator styles, then the 'error' notification
+// pattern (the one multi-beat effect on offer).
+constexpr int kDeviceHapticLight{0};
+constexpr int kDeviceHapticMedium{1};
+constexpr int kDeviceHapticHeavy{2};
+constexpr int kDeviceHapticRigid{4};
+constexpr int kDeviceHapticError{5};
+
+/// How each feedback type is rendered on the device itself (an iPhone's
+/// Taptic Engine), for touchscreen players.
+struct AppleDeviceTypeRender_ {
+  int style;
+
+  /// 0-1. Ignored by the error pattern, which has a fixed strength.
+  float intensity;
+};
+
+/// Indexed by FeedbackEvent::Type; see the static_assert below.
+static constexpr AppleDeviceTypeRender_ kAppleDeviceTypeRender[] = {
+    // join -- substantial and final.
+    {kDeviceHapticHeavy, 0.8f},
+    // collect -- the lightest thing we emit.
+    {kDeviceHapticLight, 0.7f},
+    // grab -- a shade fuller than a collect.
+    {kDeviceHapticMedium, 0.7f},
+    // impact-dealt -- crisp; confirming something you did.
+    {kDeviceHapticRigid, 0.8f},
+    // impact-received -- heavier; something happened to you.
+    {kDeviceHapticHeavy, 1.0f},
+    // death -- the one multi-beat effect, so it reads as an outlier.
+    {kDeviceHapticError, 1.0f},
+};
+
+static_assert(std::size(kAppleDeviceTypeRender)
+                  == static_cast<size_t>(FeedbackEvent::Type::kLast),
+              "Every FeedbackEvent::Type needs an Apple device render"
+              " mapping, in enum order.");
+
+auto AppAdapterApple::DeviceFeedbackSupported() -> bool {
+#if BA_PLATFORM_IOS
+  return BallisticaKit::UIKitFromCpp::deviceHapticsSupported();
+#else
+  return false;
+#endif
+}
+
+auto AppAdapterApple::ApplyDeviceFeedback(const FeedbackEvent& event) -> int {
+#if BA_PLATFORM_IOS
+  if (!DeviceFeedbackSupported()) {
+    return 0;
+  }
+  auto index = static_cast<size_t>(event.type);
+  assert(index < std::size(kAppleDeviceTypeRender));
+  auto style = kAppleDeviceTypeRender[index].style;
+  auto intensity = kAppleDeviceTypeRender[index].intensity;
+
+  // Feedback generators are main-thread-only.
+  PushMainThreadCall([style, intensity] {
+    BallisticaKit::UIKitFromCpp::playDeviceHaptic(style, intensity);
+  });
+#endif
+  // These effects have no length we control.
+  return 0;
+}
+
 auto AppAdapterApple::HasDirectKeyboardInput() -> bool {
   // Mac feeds the engine real key and text events (see CocoaGLView), so
   // widgets can be edited inline there. iOS/tvOS deliver no text events

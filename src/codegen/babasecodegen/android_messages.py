@@ -389,6 +389,16 @@ MESSAGES: list[Message] = [
         fields=[Field('login_type', STR)],
         doc='Java reports an implicit sign-out.',
     ),
+    Message(
+        name='DeviceHapticsSupported',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[Field('supported', BOOL)],
+        doc=(
+            'Whether the device itself can play our haptic effects: it'
+            ' has a vibrator and the OS is new enough for predefined'
+            ' effects (API 29+). Sent once when native init completes.'
+        ),
+    ),
     # ---- Native -> Java ----
     Message(
         name='RunMainThreadCall',
@@ -545,6 +555,30 @@ MESSAGES: list[Message] = [
             'engine sends false when the construct-mode asset gate opens '
             '(bring-up complete). Devices whose Power HAL wires the '
             'GAME_LOADING power mode can boost clocks for the duration.'
+        ),
+    ),
+    Message(
+        name='SetThermalThrottling',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('enabled', BOOL)],
+        doc=(
+            "Whether we drop our frame rate under severe thermal pressure"
+            " (the 'Thermal Throttling' graphics setting). Sent each time"
+            ' graphics settings are applied; while off, Java tracks'
+            ' thermal state but neither caps the rate nor shows the'
+            ' notice.'
+        ),
+    ),
+    Message(
+        name='DeviceHaptic',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('effect', INT)],
+        doc=(
+            'Play a predefined haptic effect on the device itself (not a'
+            ' controller). The value is an Android'
+            ' VibrationEffect.EFFECT_* id; which effect an event gets is'
+            ' decided on the native side. Ignored where'
+            ' DeviceHapticsSupported reported false.'
         ),
     ),
     # ---- Native -> Java (flavor-specific actions) ----

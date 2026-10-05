@@ -64,6 +64,8 @@ class AppAdapterApple : public AppAdapter {
   auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
       -> int override;
   void StopJoystickFeedback(JoystickInput* device) override;
+  auto DeviceFeedbackSupported() -> bool override;
+  auto ApplyDeviceFeedback(const FeedbackEvent& event) -> int override;
 
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);

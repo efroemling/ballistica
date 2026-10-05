@@ -13,28 +13,6 @@ from bacommon.classic._chest import ClassicChestAppearance
 
 @ioprepped
 @dataclass
-class ClassicPlayerProfile:
-    """A *cloud profile*: a player profile stored on the v2 master server.
-
-    Mirrors the shape of the client's local (*legacy*) ``Player
-    Profiles`` config entries: a character appearance name plus the
-    two tint colors and an optional icon glyph. The profile's name is
-    the key it is stored under, not a field here. Authored and edited
-    through the cloud-rendered inventory UI; delivered to game hosts
-    with v2-auth so a joiner's profiles come from the server rather
-    than from the joiner.
-    """
-
-    character: Annotated[str, IOAttrs('c')]
-    color: Annotated[tuple[float, float, float], IOAttrs('cl')]
-    highlight: Annotated[tuple[float, float, float], IOAttrs('h')]
-    #: Icon glyph shown beside the name (a purchased icon's special
-    #: char, or empty for none).
-    icon: Annotated[str, IOAttrs('i', store_default=False)] = ''
-
-
-@ioprepped
-@dataclass
 class ClassicLiveAccountClientData:
     """Live account data fed to the client in the bs classic app mode."""
 
