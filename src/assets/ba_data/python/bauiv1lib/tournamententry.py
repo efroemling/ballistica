@@ -9,7 +9,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
-from bauiv1 import _uiv1assets
+from bauiv1 import _uiv1assets, _classicuiassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -235,7 +235,7 @@ class TournamentEntryWindow(PopupWindow):
                 scale=0.6,
                 # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
-                text=_uiv1assets.strings.economy.watch_an_ad,
+                text=_classicuiassets.strings.economy.watch_an_ad,
                 maxwidth=95,
                 color=(0, 1, 0),
             )
@@ -708,7 +708,7 @@ class TournamentEntryWindow(PopupWindow):
         if ticket_count is not None and ticket_count < ticket_cost:
             _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                _uiv1assets.strings.profile.not_enough_tickets,
+                _classicuiassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             # gettickets.show_get_tickets_prompt()

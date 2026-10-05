@@ -297,6 +297,7 @@
  "ba_data/python/bauiv1/_builtinassets.py",
  "ba_data/python/bauiv1/_classicassets.py",
  "ba_data/python/bauiv1/_classiccatalogassets.py",
+ "ba_data/python/bauiv1/_classicuiassets.py",
  "ba_data/python/bauiv1/_commonassets.py",
  "ba_data/python/bauiv1/_docuiv2testassets.py",
  "ba_data/python/bauiv1/_generated/__init__.py",

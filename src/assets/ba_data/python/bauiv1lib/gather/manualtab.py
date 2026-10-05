@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets, _uiv1assets
+from bauiv1 import _commonassets, _classicassets, _classicuiassets
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 
@@ -508,7 +508,7 @@ class ManualGatherTab(GatherTab):
 
     def _no_favorite_selected_error(self) -> None:
         bui.screenmessage(
-            _uiv1assets.strings.profile.nothing_selected, color=(1, 0, 0)
+            _classicuiassets.strings.profile.nothing_selected, color=(1, 0, 0)
         )
         _builtinassets.audio.error.get().play()
 

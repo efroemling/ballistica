@@ -27,7 +27,8 @@ class StoreSubsystem:
         """Return a display name for a store item."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
-        from bascenev1 import _classicassets, _uiv1assets, _classiccatalogassets
+        from bascenev1 import _classicassets, _classiccatalogassets
+        from bauiv1 import _classicuiassets
 
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
@@ -49,7 +50,7 @@ class StoreSubsystem:
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
             return gametype.get_display_string(langstr=True)
         if item_name.startswith('icons.'):
-            return _uiv1assets.strings.profile.icon
+            return _classicuiassets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
             return _classiccatalogassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':

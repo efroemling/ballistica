@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import bacommon.classic
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, _uiv1assets
+from bauiv1 import _commonassets, _classicuiassets
 from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
@@ -91,7 +91,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38 + yoffs),
             size=(0, 0),
-            text=_uiv1assets.strings.profile.upgrade_to_global,
+            text=_classicuiassets.strings.profile.upgrade_to_global,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -104,7 +104,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100 + yoffs),
             size=(0, 0),
-            text=_uiv1assets.strings.profile.upgrade_profile_info,
+            text=_classicuiassets.strings.profile.upgrade_profile_info,
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -116,7 +116,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 160 + yoffs),
             size=(0, 0),
-            text=_uiv1assets.strings.profile.checking_availability(
+            text=_classicuiassets.strings.profile.checking_availability(
                 name=self._name
             ),
             color=(0.8, 0.4, 0.0),
@@ -173,7 +173,9 @@ class ProfileUpgradeWindow(bui.Window):
             if response.available:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=_uiv1assets.strings.profile.available(name=self._name),
+                    text=_classicuiassets.strings.profile.available(
+                        name=self._name
+                    ),
                     color=(0, 1, 0),
                 )
                 bui.textwidget(
@@ -184,7 +186,7 @@ class ProfileUpgradeWindow(bui.Window):
             else:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=_uiv1assets.strings.profile.unavailable(
+                    text=_classicuiassets.strings.profile.unavailable(
                         name=self._name
                     ),
                     color=(1, 0, 0),
@@ -210,13 +212,13 @@ class ProfileUpgradeWindow(bui.Window):
             if tickets < self._cost:
                 _builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    _uiv1assets.strings.profile.not_enough_tickets,
+                    _classicuiassets.strings.profile.not_enough_tickets,
                     color=(1, 0, 0),
                 )
                 return
 
             bui.screenmessage(
-                _uiv1assets.strings.profile.purchasing, color=(0, 1, 0)
+                _classicuiassets.strings.profile.purchasing, color=(0, 1, 0)
             )
             self._status = 'pre_upgrading'
 

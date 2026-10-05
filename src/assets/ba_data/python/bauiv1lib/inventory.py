@@ -19,6 +19,7 @@ from bauiv1 import (
     _classicassets,
     _commonassets,
     _uiv1assets,
+    _classicuiassets,
     _classiccatalogassets,
 )
 
@@ -95,7 +96,7 @@ class InventoryUIController(
         # All local authoring here uses strings from BUNDLED packages
         # (baclassicassets/builtin) so these pages keep working offline.
         invstrs = _classicassets.strings.inventory
-        profstrs = _uiv1assets.strings.profiles
+        profstrs = _classicuiassets.strings.profiles
 
         response: DocUIResponse
         cloud_ok = False
@@ -206,7 +207,7 @@ class InventoryUIController(
         self, *, show_cloud_toggle: bool
     ) -> list[dui2.Row]:
         """Rows for our locally-authored legacy profiles section."""
-        profstrs = _uiv1assets.strings.profiles
+        profstrs = _classicuiassets.strings.profiles
 
         buttons = [
             dui2.Button(
@@ -461,7 +462,7 @@ class InventoryUIController(
         profiles = bui.app.config.get('Player Profiles', {})
         if len(profiles) > 100:
             bui.screenmessage(
-                _uiv1assets.strings.profiles.max_reached,
+                _classicuiassets.strings.profiles.max_reached,
                 color=(1, 0, 0),
             )
             _builtinassets.audio.error.get().play()

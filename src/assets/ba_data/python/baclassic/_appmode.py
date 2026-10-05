@@ -19,6 +19,7 @@ import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _classicassets
 from bauiv1 import _uiv1assets
+from bauiv1 import _classicuiassets
 from bauiv1 import _classiccatalogassets
 from baclassic._uiassetdefaults import make_ui_asset_set
 from baclassic._baseassetdefaults import make_base_asset_set
@@ -407,7 +408,7 @@ class ClassicAppMode(AppMode):
                 ),
                 clfx.Delay(anim_time),
                 clfx.ScreenMessageV2(
-                    message=_uiv1assets.strings.economy.you_got_tokens(
+                    message=_classicuiassets.strings.economy.you_got_tokens(
                         tokens=tokens
                     ).spec,
                     color=(0, 1, 0),
