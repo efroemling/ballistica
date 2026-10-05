@@ -3,9 +3,13 @@
 #ifndef BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 #define BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 
+#include <memory>
 #include <string>
 
+#include "ballistica/base/input/device/feedback_event.h"
 #include "ballistica/base/input/device/input_device_delegate.h"
+#include "ballistica/base/support/lang_str.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -53,6 +57,48 @@ class InputDevice : public Object {
   /// assumption.
   auto GetPersistentIdentifier() const -> std::string;
 
+  /// Request physical feedback (rumble/haptics) on this device.
+  ///
+  /// Haptic hardware has no notion of mixing: issuing a new effect
+  /// *replaces* whatever is playing rather than layering onto it. So
+  /// exactly one event owns the device at a time, and this arbitrates by
+  /// the requesting types' priorities before handing anything to a
+  /// backend.
+  ///
+  /// Deciding *which* device should feel something -- anything involving
+  /// players, sessions, or the network -- belongs to the layer above.
+  /// Call in the logic thread.
+  void ApplyFeedback(const FeedbackEvent& event);
+
+  /// Immediately stop any feedback in progress and forget arbiter state.
+  /// Used when we might otherwise strand a motor running (app suspend,
+  /// etc).
+  void StopFeedback();
+
+  /// Render a feedback event that has already won arbitration, and
+  /// return how many milliseconds that render will take (0 if nothing
+  /// was rendered or the platform gives no control over the length).
+  ///
+  /// Default does nothing, which is correct both for devices with no
+  /// haptic hardware (keyboards, test inputs) and for proxies standing
+  /// in for someone else's hardware.
+  ///
+  /// Treat each call as "play this now, replacing anything current"; the
+  /// arbiter has already decided this event should be heard, so a
+  /// backend needs no history of its own. How strong and how long are
+  /// entirely the backend's decisions -- the returned length simply lets
+  /// the arbiter avoid cutting the render short, so a backend needing
+  /// longer than a type's hold_millisecs is free to take it rather than
+  /// being truncated into imperceptibility.
+  ///
+  /// Called in the logic thread. A backend needing main-thread-only
+  /// platform state must hop there itself, capturing an id rather than a
+  /// pointer -- the device can be removed before the call runs.
+  virtual auto DoApplyFeedback(const FeedbackEvent& event) -> int;
+
+  /// Stop any in-progress feedback. Default does nothing.
+  virtual void DoStopFeedback();
+
   /// Called during the game loop - for manual button repeats, etc.
   virtual void Update();
 
@@ -73,7 +119,7 @@ class InputDevice : public Object {
   virtual void ApplyAppConfig();
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-  virtual void HandleSDLEvent(const SDL_Event* e);
+  virtual void HandleSDLEvent(const BAEvent* e);
 #endif
 
   virtual auto GetAllowsConfiguring() -> bool;
@@ -89,7 +135,12 @@ class InputDevice : public Object {
   virtual auto IsRemoteApp() -> bool;
 
   /// Return a human-readable name for a button/key.
-  virtual auto GetButtonName(int index) -> std::string;
+  ///
+  /// Returns a language-string rather than baked text so the name stays
+  /// live across locale switches: the generic fallback ('Button 5') is a
+  /// resource form, while device-supplied glyph names ('A', 'Space') are
+  /// literal value forms shown as-is in every locale.
+  virtual auto GetButtonName(int index) -> std::shared_ptr<const LangStr>;
 
   /// Return a human-readable name for an axis.
   virtual auto GetAxisName(int index) -> std::string;
@@ -151,6 +202,12 @@ class InputDevice : public Object {
   Object::Ref<InputDeviceDelegate> delegate_;
 
   millisecs_t last_active_time_millisecs_{};
+
+  // Feedback arbiter state (see ApplyFeedback).
+  millisecs_t feedback_hold_until_{};
+  millisecs_t feedback_window_start_{};
+  int feedback_window_count_{};
+  int feedback_priority_{};
 
   int index_{-1};   // Our overall device index.
   int number_{-1};  // Our type-specific number.

@@ -36,7 +36,67 @@ work on builds newer than what they were built against; not older - even if the
 api-version has not changed. In general it is best to always be running newest
 available builds.
 
+### Backwards-compatible changes already in effect
+These need no action to keep a mod working; they are listed because they
+change behavior a mod may be relying on or can now take advantage of.
+- Plugins are now loaded *after* the engine finishes acquiring its
+  asset-packages rather than before. In practice this means a plugin's module
+  is not even imported until every asset-package the engine found a
+  `# ba_meta require asset-package` line for -- including any your own plugin
+  declares -- is resolved and ready, so `on_app_running()` can load assets
+  freely. It is still early enough to steer what the app does next: setting
+  `babase.app.mode_selector`, calling `babase.app.register_subsystem()`, or
+  driving your own intent via `babase.app.set_intent()` all still work from
+  `on_app_running()`, because the launch intent is not dispatched until every
+  plugin has had its turn. The one thing that no longer works is running
+  plugin code *during* engine bring-up.
+
 ### Upcoming changes when api 9 support ends (and how to prepare for them)
+- `babase.getsimplesound()` is now inert and will be removed. It took a legacy
+  bare sound name (`'error'`, `'shieldDown'`, ...), which only ever resolved
+  while that sound's asset-package happened to be registered — so the same
+  call could work or silently fail depending on when it ran. It now returns a
+  silent sound and warns. Load the sound through a generated asset-package
+  wrapper module for the package it lives in instead
+  (`<wrapper>.audio.error.get().play()`). Note that the engine's own bundled
+  wrapper modules are private (`_builtinassets`, `_classicassets`,
+  `_commonassets`) and not API you should depend on; generate and bundle your
+  own wrapper for whichever packages your mod uses. Sounds outside the builtin
+  package (most of the classic ones) cannot be loaded before the app finishes
+  bringing assets up.
+- `ba*.Lstr` is going away. Migrate all uses of it to the new `ba*.LangStr`
+  class.
+- Engine calls that return an `Lstr` are growing a `langstr` keyword argument.
+  Passing `langstr=True` gets you a `LangStr` (or a plain `str` for things we
+  have no translation entry for, such as a name your own mod supplied). To
+  prepare, pass `langstr=True` at these call sites and handle the result being
+  `str | LangStr`. When api 9 support ends these calls return the new type
+  unconditionally and the argument becomes inert; it is removed when api 10
+  support ends, so you will then drop it again. Affected so far:
+  `bascenev1.GameActivity.get_display_string()`,
+  `get_settings_display_string()`, `get_instance_display_string()`,
+  `get_instance_scoreboard_display_string()`, `get_team_display_string()`,
+  `bascenev1.get_map_display_string()`, and
+  `bascenev1.MultiTeamSession.get_next_game_description()`.
+- Properties that return an `Lstr` cannot take an argument, so each is gaining
+  a `_langstr` twin. Use `bascenev1.Level.displayname_langstr` instead of
+  `bascenev1.Level.displayname`. When api 9 support ends, `displayname` itself
+  returns a `LangStr`; the `_langstr` twin is then removed when api 10 support
+  ends, at which point you switch back to the plain name.
+- `bascenev1.SessionTeam.name` and `bascenev1.Team.name` are now
+  `str | LangStr` rather than `str | Lstr`. Built-in team names are `LangStr`
+  values and player-customized names are plain strings. If you assign an
+  `Lstr` it is flattened to a `str`, so team names you set will no longer
+  re-translate when the language changes; assign a `LangStr` to keep that.
+- `bascenev1.InputDevice.get_button_name()` now returns a `LangStr` rather
+  than an `Lstr`. It could not take a `langstr` argument like the calls above
+  because it is implemented natively and the old return value existed only to
+  be converted straight back for display. Calling `.evaluate()` on the result
+  or passing it to a text/label slot works unchanged; the one thing that
+  breaks is using the result as a substitution inside an `Lstr`, which
+  `LangStr` values cannot ride. A side benefit: generic names such as
+  'button 5' now re-translate when the language changes instead of being
+  baked at the time you asked for them.
 - `ba*.Call()` will change to behave like `ba*.CallStrict()` instead of
   `ba*.CallPartial()`. To prepare for this, change all of your existing `Call()`
   usage to `CallPartial()` to lock in current behavior. Or use `CallStrict()` if
@@ -61,7 +121,46 @@ available builds.
   identical and return V1 ids for protocol < 36 and V2 ids for protocol >= 36;
   the new one just has a more correct name. The old name will be removed when
   api 9 support ends.
+- `bascenev1.Map.get_preview_texture_name()` is deprecated; override
+  `get_preview_texture()` instead, which returns a loaded `bauiv1.Texture`
+  rather than a name for the caller to look up. Normally you return it
+  straight off an asset-package wrapper, e.g.
+  `return myassets.textures.my_map_preview.get()`. Maps that override only
+  the old call keep working (the new one falls back to it), but built-in maps
+  no longer implement it, so calling it on one now returns `None`. It is
+  removed when api 9 support ends.
+- `bascenev1.Level.preview_texture_name` is deprecated, as is passing
+  `preview_texture_name` to `bascenev1.Level()`. Use the `preview_texture`
+  keyword argument and the matching `preview_texture` property instead, which
+  deal in asset-package wrapper references rather than names to look up:
+  pass the wrapper's texture entry directly —
+  `bs.Level(..., preview_texture=myassets.textures.my_level_preview)`, note
+  no `.get()`, since levels are built before asset-packages are resolved —
+  and read `level.preview_texture` to get the loaded `bauiv1.Texture`.
+  Constructing a level the old way still works (the texture is then looked up
+  from the name on first use), but built-in levels no longer carry a name, so
+  reading `preview_texture_name` on one now returns `None`. Both go away when
+  api 9 support ends.
 - The `float_times` argument on `efro.dataclassio.IOAttrs` is deprecated and
   will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
   with `IOAttrs(time_format='float')`.
 
+- `babase.clipboard_get_text()` is deprecated and will be removed; use the new
+  `babase.clipboard_get_text_async()` instead, which passes its result to a
+  callback: text, or `None` if no text could be fetched for any reason. On
+  some platforms (notably iOS), reading the clipboard can require the OS to
+  ask the user for permission, so a synchronous read would hang the app while
+  that prompt is up; the async form lets things keep running. Note that
+  `babase.clipboard_has_text()` is *not* going anywhere - platforms provide
+  prompt-free ways to check for text, so it remains a synchronous call and the
+  right way to decide whether to show paste UI.
+- The `on_return_press_call` and `invoke_return_press` args to
+  `bauiv1.textwidget()` are deprecated; use `on_submit_call` and
+  `invoke_submit` instead. They are the same thing under a name that fits
+  every platform: the call runs when text is *submitted*, which is an enter
+  press when editing inline but is the action key or commit button of the
+  platform's string-edit dialog on mobile, where no return key is involved
+  (and only for `string_edit_kind`s that submit; see `babase.StringEditKind`).
+  It is not a change notification; text can be edited without it ever
+  running. The old names keep working with a deprecation warning and will be
+  removed when api 9 support ends.

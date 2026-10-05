@@ -9,10 +9,8 @@ up the engine, and also allows external scripts to import game scripts
 successfully (albeit with limited functionality).
 """
 
-from __future__ import annotations
-
 import os
-
+import re
 import types
 import textwrap
 import subprocess
@@ -91,6 +89,24 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             'def getactivity(doraise: bool = True)'
             ' -> bascenev1.Activity | None:\n'
         )
+    elif sig_in == 'getlocaldisplay(doraise: bool = True) -> <varies>':
+        sig = (
+            '# Show that our return type varies based on "doraise" value:\n'
+            '@overload\n'
+            'def getlocaldisplay(doraise: Literal[True] = True) ->'
+            ' bascenev1.LocalDisplay:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            '@overload\n'
+            'def getlocaldisplay(doraise: Literal[False])'
+            ' -> bascenev1.LocalDisplay | None:\n'
+            '    ...\n'
+            '\n'
+            '\n'
+            'def getlocaldisplay(doraise: bool = True)'
+            ' -> bascenev1.LocalDisplay | None:\n'
+        )
     elif sig_in == 'getsession(doraise: bool = True) -> <varies>':
         sig = (
             '# Show that our return type varies based on "doraise" value:\n'
@@ -115,6 +131,32 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
             f'Unimplemented varying func: {Clr.RED}{sig_in}{Clr.RST}'
         )
     return sig, returns
+
+
+def _get_deprecation_message(docstr: str, funcname: str) -> str:
+    """Extract a `.. deprecated::` directive's body as plain text."""
+    lines = docstr.splitlines()
+    index = next(
+        i
+        for i, line in enumerate(lines)
+        if line.lstrip().startswith('.. deprecated::')
+    )
+    dirindent = len(lines[index]) - len(lines[index].lstrip())
+    bodylines: list[str] = []
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            if bodylines:
+                break
+            continue
+        if len(line) - len(line.lstrip()) <= dirindent:
+            break
+        bodylines.append(line.strip())
+    if not bodylines:
+        raise RuntimeError(
+            f'Unable to extract deprecation message for {funcname}.'
+        )
+    # Boil RST refs such as :meth:`~babase.foo()` down to plain babase.foo().
+    return re.sub(r':\w+:`~?([^`]+)`', r'\1', ' '.join(bodylines))
 
 
 def _writefuncs(
@@ -181,6 +223,13 @@ def _writefuncs(
             if is_classmethod:
                 defslines = f'{indstr}@classmethod\n{defslines}'
 
+            # Surface `.. deprecated::` docstring directives to type
+            # checkers (and dummy-module runtime use) via PEP-702's
+            # @deprecated decorator.
+            if '.. deprecated::' in docstr:
+                depmsg = _get_deprecation_message(docstr, funcname)
+                defslines = f'{indstr}@deprecated({depmsg!r})\n{defslines}'
+
             # if funcname in {'quit', 'newnode', 'basetimer'}:
             #     defslines = (
             #         f'{indstr}# noinspection PyShadowingBuiltins\n'
@@ -200,10 +249,10 @@ def _writefuncs(
                 returns = returns[1:-1]
             if returns == 'None':
                 returnstr = 'return None'
-            elif returns == 'babase.Lstr':
+            elif returns == 'babase.LangStr':
                 returnstr = (
                     'import babase  # pylint: disable=cyclic-import\n'
-                    "return babase.Lstr(value='')"
+                    "return babase.LangStr.from_text('')"
                 )
             elif returns == 'babase.AppTime':
                 returnstr = (
@@ -239,7 +288,7 @@ def _writefuncs(
             elif returns in {'bascenev1.Session', 'bascenev1.Session | None'}:
                 returnstr = (
                     'import bascenev1  # pylint: disable=cyclic-import\nreturn '
-                    + 'bascenev1.Session([])'
+                    + 'bascenev1.Session()'
                 )
             elif returns == 'bascenev1.SessionPlayer | None':
                 returnstr = (
@@ -250,6 +299,14 @@ def _writefuncs(
                 returnstr = (
                     'import bascenev1  # pylint: disable=cyclic-import\n'
                     'return bascenev1.Player()'
+                )
+            elif returns == 'babase.LangStr':
+                # LangStr's constructor requires an arg, so the generic
+                # 'return babase.LangStr()' below won't type-check; build
+                # a valid empty literal instead.
+                returnstr = (
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    "return babase.LangStr.from_text('')"
                 )
             elif returns.startswith('babase.') and ' | None' not in returns:
                 # We cant import babase at module level so let's
@@ -283,14 +340,27 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
+            elif returns == 'bytes | None':
+                returnstr = "return b''"
             elif returns == 'int | None':
                 returnstr = 'return 0'
+            elif returns == 'float | None':
+                returnstr = 'return 0.0'
             elif returns == 'tuple[float, float, float, float]':
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
+            elif returns == 'tuple[float, float, float] | None':
+                returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':
                 returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
+            elif returns in {
+                'bauiv1.Viewer | None',
+                'bascenev1.Depiction | None',
+            }:
+                returnstr = 'return None'
             elif returns == 'bascenev1.InputDevice | None':
                 returnstr = 'return InputDevice()'
+            elif returns == 'list[bascenev1.InputDevice]':
+                returnstr = 'return [InputDevice()]'
             elif returns == 'list[bauiv1.Widget]':
                 returnstr = 'import bauiv1\nreturn [bauiv1.Widget()]'
             elif returns == 'tuple[float, ...]':
@@ -309,6 +379,18 @@ def _writefuncs(
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns == 'list[dict[str, str]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'dict[str, list[tuple[str, str]]]':
+                returnstr = "return {'foo': [('bar', 'baz')]}"
+            elif returns in {'list[int]', 'list[int] | None'}:
+                returnstr = 'return [0]'
+            elif returns == 'list[tuple[float, float]]':
+                returnstr = 'return [(0.0, 0.0)]'
+            elif returns == 'list[tuple[str, float]]':
+                returnstr = "return [('blah', 0.0)]"
+            elif returns == 'list[tuple[int, float]]':
+                returnstr = 'return [(0, 0.0)]'
+            elif returns == 'tuple[str, float | None]':
+                returnstr = "return ('blah', None)"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -342,6 +424,7 @@ def _writefuncs(
                 'SimpleSound',
                 'team.Team',
                 'Vec3',
+                'Quat',
                 'Widget',
                 'Node',
                 'ContextRef',
@@ -446,6 +529,46 @@ def _special_class_cases(classname: str) -> str:
             '    def __setitem__(self, index: int, val: float) -> None:\n'
             '        pass\n'
         )
+    if classname in ['Quat']:
+        out += (
+            '\n'
+            '    # pylint: disable=function-redefined\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self) -> None:\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, values: Sequence[float]):\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, w: float, x: float, y: float, z: float):\n'
+            '        pass\n'
+            '\n'
+            '    def __init__(self, *args: Any, **kwds: Any):\n'
+            '        pass\n'
+            '\n'
+            '    def __mul__(self, other: Quat) -> Quat:\n'
+            '        return self\n'
+            '\n'
+            '    # (for index access)\n'
+            '    @override\n'
+            '    def __getitem__(self, typeargs: Any) -> Any:\n'
+            '        return 0.0\n'
+            '\n'
+            '    @override\n'
+            '    def __len__(self) -> int:\n'
+            '        return 4\n'
+            '\n'
+            '    # (for iterator access)\n'
+            '    @override\n'
+            '    def __iter__(self) -> Any:\n'
+            '        return self\n'
+            '\n'
+            '    def __next__(self) -> float:\n'
+            '        return 0.0\n'
+        )
     if classname in ['Node']:
         out += (
             '\n'
@@ -466,9 +589,12 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
-            "    text: babase.Lstr | str = ''\n"
+            '    tint3_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
+            "    text: babase.Lstr | babase.LangStr | str = ''\n"
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'
+            '    spaz_def: bascenev1.SpazDef | None = None\n'
+            '    depiction: bascenev1.Depiction | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'
             '    values: Sequence[float] = (1.0, 2.0, 3.0, 4.0)\n'
             '    offset: float = 0.0\n'
@@ -477,6 +603,7 @@ def _special_class_cases(classname: str) -> str:
             '    input2: float = 0.0\n'
             '    input3: float = 0.0\n'
             '    flashing: bool = False\n'
+            '    flash: bool = False\n'
             '    scale: float | Sequence[float] = 0.0\n'  # FIXME
             '    opacity: float = 0.0\n'
             '    loop: bool = False\n'
@@ -490,12 +617,15 @@ def _special_class_cases(classname: str) -> str:
             '    punch_materials: Sequence[bascenev1.Material] = ()\n'
             '    pickup_materials: Sequence[bascenev1.Material] = ()\n'
             '    extras_material: Sequence[bascenev1.Material] = ()\n'
-            '    rotate: float = 0.0\n'
+            '    rotate: float | Sequence[float] = 0.0\n'
             '    hold_node: bascenev1.Node | None = None\n'
             '    hold_body: int = 0\n'
             '    behavior_version: int = 0\n'
             '    pickup_before_hitbox: bool = False\n'
+            '    pickup_release_time_ms: float = 0\n'
             '    host_only: bool = False\n'
+            '    visible: bool = True\n'
+            "    config: str = ''\n"
             '    premultiplied: bool = False\n'
             '    source_player: bascenev1.Player | None = None\n'
             '    mesh_opaque: bascenev1.Mesh | None = None\n'
@@ -519,6 +649,7 @@ def _special_class_cases(classname: str) -> str:
             '    knockout: float = 0.0\n'
             '    invincible: bool = False\n'
             '    stick_to_owner: bool = False\n'
+            '    stickiness: float = 1.0\n'
             '    damage: int = 0\n'
             '    #: Available on spaz node.\n'
             '    run: float = 0.0\n'
@@ -532,12 +663,17 @@ def _special_class_cases(classname: str) -> str:
             '    use_fixed_vr_overlay: bool = False\n'
             '    #: Available on globals node.\n'
             '    allow_kick_idle_players: bool = False\n'
+            '    legacy_spaz_limbs: bool = False\n'
             '    music_continuous: bool = False\n'
             '    music_count: int = 0\n'
             '    #: Available on spaz node.\n'
             '    hurt: float = 0.0\n'
-            '    #: On shield node.\n'
+            '    #: On shield node. Only consulted while health_bar_display\n'
+            '    #: is :attr:`bascenev1.HealthBarDisplay.DEFAULT`.\n'
             '    always_show_health_bar: bool = False\n'
+            '    #: On shield node; a :class:`bascenev1.HealthBarDisplay`'
+            ' value.\n'
+            '    health_bar_display: int = 0\n'
             '    #: Available on spaz node.\n'
             '    mini_billboard_1_texture: bascenev1.Texture | None = None\n'
             '    #: Available on spaz node.\n'
@@ -585,6 +721,18 @@ def _special_class_cases(classname: str) -> str:
             '    billboard_cross_out: bool = False\n'
             '    #: Available on spaz node.\n'
             '    billboard_opacity: float = 0.0\n'
+            '    #: Available on spaz node.\n'
+            '    use_spaz_def_color: bool = False\n'
+            '    #: Available on spaz node.\n'
+            '    use_spaz_def_highlight: bool = False\n'
+            '    #: Available on spaz node.\n'
+            '    boxing_gloves_mesh: bascenev1.Mesh | None = None\n'
+            '    #: Available on spaz node.\n'
+            '    boxing_gloves_color_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
+            '    boxing_gloves_color: Sequence[float] = (1.0, 1.0, 1.0)\n'
+            '    #: Available on spaz node.\n'
+            '    boxing_gloves_scale: float = 1.0\n'
             '    slow_motion: bool = False\n'
             "    music: str = ''\n"
             '    vr_camera_offset: Sequence[float] = (0.0, 0.0, 0.0)\n'
@@ -731,8 +879,9 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             raise RuntimeError('unexpected')
         out += '\n\n'
 
-        # Special case:
-        if classname == 'Vec3':
+        # Special case: classes implementing the sequence protocol
+        # natively so they can be passed anywhere a float sequence is.
+        if classname in {'Vec3', 'Quat'}:
             out += f'class {classname}(Sequence[float]):\n'
         else:
             out += f'class {classname}:\n'
@@ -795,7 +944,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         # Special cases such as attributes we add.
         out += _special_class_cases(classname)
 
-        # Print its methods.
+        # Print its methods (and getset-descriptor properties).
         funcnames = []
         for entry in (e for e in dir(cls) if not e.startswith('__')):
             if isinstance(getattr(cls, entry), types.MethodDescriptorType):
@@ -803,6 +952,25 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             elif isinstance(getattr(cls, entry), types.BuiltinMethodType):
                 # We get this for classmethods
                 funcnames.append(entry)
+            elif isinstance(getattr(cls, entry), types.GetSetDescriptorType):
+                # A native property. By convention its docstring's first
+                # line is '<name>: <type>' followed by a blank line and
+                # the prose docs; emit a typed read-only property.
+                gsdoc = getattr(cls, entry).__doc__
+                assert gsdoc is not None, f'getset {entry} needs a docstring'
+                gslines = gsdoc.splitlines()
+                prefix = f'{entry}: '
+                assert gslines and gslines[0].startswith(prefix), (
+                    f"getset {entry} docstring must start with"
+                    f" '{entry}: <type>'"
+                )
+                gstype = gslines[0].removeprefix(prefix)
+                gsbody = '\n'.join(gslines[1:]).strip()
+                out += '\n    @property\n'
+                out += f'    def {entry}(self) -> {gstype}:\n'
+                out += _formatdoc(_filterdoc(gsbody), indent=8, form='str')
+                out += '        raise NotImplementedError()\n'
+                has_attrs = True
             else:
                 entrytype = type(getattr(cls, entry))
                 raise RuntimeError(
@@ -858,25 +1026,27 @@ class Generator:
                 )
         funcnames.sort()
         classnames.sort()
+        # Note that Sequence must be imported for real (not just under
+        # TYPE_CHECKING) in modules housing classes that subclass it.
         typing_imports = (
             'TYPE_CHECKING, overload, override, Sequence'
-            if self.mname == '_babase'
-            else (
-                'TYPE_CHECKING, overload, override'
-                if self.mname == '_bascenev1'
-                else 'TYPE_CHECKING, override'
-            )
+            if self.mname in ('_babase', '_bascenev1')
+            else 'TYPE_CHECKING, override'
         )
         typing_imports_tc = (
             'Any, Callable'
             if self.mname == '_babase'
             else (
-                'Any, Callable, Literal, Sequence'
+                'Any, Callable, Literal'
                 if self.mname == '_bascenev1'
                 else (
                     'Any, Callable, Literal, Sequence'
                     if self.mname == '_bauiv1'
-                    else 'Any, Callable'
+                    else (
+                        'Any, Callable, Sequence'
+                        if self.mname == '_baclassic'
+                        else 'Any, Callable'
+                    )
                 )
             )
         )
@@ -884,18 +1054,25 @@ class Generator:
         if self.mname == '_babase':
             tc_import_lines_extra += (
                 '    import bacommon.app\n'
+                '    import bacommon.langstr\n'
                 '    from babase import App\n'
                 '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
-            tc_import_lines_extra += '    import babase\n    import bascenev1\n'
+            tc_import_lines_extra += (
+                '    import babase\n    import bascenev1\n    import bauiv1\n'
+            )
         elif self.mname == '_bauiv1':
-            tc_import_lines_extra += '    import babase\n    import bauiv1\n'
+            tc_import_lines_extra += (
+                '    import babase\n'
+                '    import bacommon.langstr\n'
+                '    import bauiv1\n'
+            )
         app_declare_lines = 'app: App\n\n' if self.mname == '_babase' else ''
         enum_import_lines = (
             ''
             if self.mname == '_babase'
-            # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            # else 'from babase._generated.enums import TimeFormat\n\n'
             else '' if self.mname == '_bascenev1' else ''
         )
         out = (
@@ -939,9 +1116,8 @@ class Generator:
             '# pylint: disable=unused-import\n'
             '# pylint: disable=too-many-positional-arguments\n'
             '\n'
-            'from __future__ import annotations\n'
-            '\n'
             f'from typing import {typing_imports}\n'
+            'from warnings import deprecated\n'
             '\n'
             f'{enum_import_lines}'
             'if TYPE_CHECKING:\n'
@@ -999,12 +1175,9 @@ def generate_dummy_modules(projroot: str) -> None:
         )
 
     # Dummy-module generation launches the binary and introspects its
-    # Python bindings; it never touches audio/textures/meshes, so a
-    # scripts-only asset bundle is sufficient (and lets this work in
-    # environments that don't sync the media assets).
-    binary_path = apprun.acquire_binary(
-        assets='scripts', purpose='dummy-module generation'
-    )
+    # Python bindings; a headless-server binary is sufficient (and lets
+    # this work in environments that don't sync media assets).
+    binary_path = apprun.acquire_binary(purpose='dummy-module generation')
 
     # We need access to things like black that are installed into the project
     # venv.

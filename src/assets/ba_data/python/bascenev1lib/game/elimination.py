@@ -5,13 +5,12 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import weakref
 import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import _classicassets, _classiccatalogassets
 
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -42,29 +41,45 @@ class Icon(bs.Actor):
         self._show_lives = show_lives
         self._show_death = show_death
         self._name_scale = name_scale
-        self._outline_tex = bs.gettexture('characterIconMask')
-
-        icon = player.get_icon()
-        self.node = bs.newnode(
-            'image',
-            delegate=self,
-            attrs={
-                'texture': icon['texture'],
-                'tint_texture': icon['tint_texture'],
-                'tint_color': icon['tint_color'],
-                'vr_depth': 400,
-                'tint2_color': icon['tint2_color'],
-                'mask_texture': self._outline_tex,
-                'opacity': 1.0,
-                'absolute_scale': True,
-                'attach': 'bottomCenter',
-            },
+        self._outline_tex = (
+            _classiccatalogassets.textures.character_icon_mask.get()
         )
+
+        depiction = player.get_icon_depiction()
+        if depiction is not None:
+            self.node = bs.newnode(
+                'depictiondisplay',
+                delegate=self,
+                attrs={
+                    'depiction': depiction,
+                    'vr_depth': 400,
+                    'opacity': 1.0,
+                    'attach': 'bottomCenter',
+                },
+            )
+        else:
+            icon = player.get_icon()
+            self.node = bs.newnode(
+                'image',
+                delegate=self,
+                attrs={
+                    'texture': icon['texture'],
+                    'tint_texture': icon['tint_texture'],
+                    'tint_color': icon['tint_color'],
+                    'vr_depth': 400,
+                    'tint2_color': icon['tint2_color'],
+                    'tint3_color': icon.get('tint3_color', (1.0, 1.0, 1.0)),
+                    'mask_texture': self._outline_tex,
+                    'opacity': 1.0,
+                    'absolute_scale': True,
+                    'attach': 'bottomCenter',
+                },
+            )
         self._name_text = bs.newnode(
             'text',
             owner=self.node,
             attrs={
-                'text': bs.Lstr(value=player.getname()),
+                'text': player.getname(),
                 'color': bs.safecolor(player.team.color),
                 'h_align': 'center',
                 'v_align': 'center',
@@ -124,7 +139,9 @@ class Icon(bs.Actor):
         if lives == 0:
             self._name_text.opacity = 0.2
             assert self.node
-            self.node.color = (0.7, 0.3, 0.3)
+            # (Depiction icons have no tint; the fade alone says it.)
+            if self.node.getnodetype() == 'image':
+                self.node.color = (0.7, 0.3, 0.3)
             self.node.opacity = 0.2
 
     def handle_player_spawned(self) -> None:
@@ -335,7 +352,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                         'scale': 0.6,
                         'v_attach': 'bottom',
                         'color': (0.8, 0.8, 0.3, 1.0),
-                        'text': bs.Lstr(resource='vsText'),
+                        'text': _classicassets.strings.game.vs,
                     },
                 )
             )

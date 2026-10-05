@@ -5,8 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/assets/collision_mesh_asset.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/component/object_component.h"
+#include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -42,6 +45,8 @@ class TerrainNodeType : public NodeType {
   BA_COLLISION_MESH_ATTR(collision_mesh, collision_mesh, set_collision_mesh);
   BA_MATERIAL_ARRAY_ATTR(materials, materials, set_materials);
   BA_BOOL_ATTR(vr_only, vr_only, set_vr_only);
+  BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
+  BA_FLOAT_ARRAY_ATTR(rotate, rotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   TerrainNodeType()
@@ -61,7 +66,9 @@ class TerrainNodeType : public NodeType {
         color_texture(this),
         collision_mesh(this),
         materials(this),
-        vr_only(this) {}
+        vr_only(this),
+        position(this),
+        rotate(this) {}
 };
 static NodeType* node_type{};
 
@@ -139,6 +146,9 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
         RigidBody::kCollideAll ^ RigidBody::kCollideBackground,
         collision_mesh_.get(), flags);
     body_->set_can_cause_impact_damage(true);
+    if (transformed_) {
+      body_->SetStaticTransform(transform_);
+    }
 
     // also ship it to the BG-Dynamics thread..
     if (!bumper_ && affect_bg_dynamics_) {
@@ -150,6 +160,63 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
 }
 
 void TerrainNode::SetColorTexture(SceneTexture* val) { color_texture_ = val; }
+
+void TerrainNode::DrawDebug_(base::FrameDef* frame_def) {
+  // In debug-draw mode we draw our collision geometry instead of our
+  // visual mesh: flat facing-ratio grey, still receiving lights/shadows.
+  if (!collision_mesh_.exists()) {
+    return;
+  }
+  auto* asset = collision_mesh_->collision_mesh_data();
+  // Preloaded is enough; the debug mesh is built from the preload
+  // payload (vertex/index arrays), not the loaded one.
+  if (!asset->preloaded()) {
+    return;
+  }
+  auto* mesh = asset->GetDebugMesh();
+  if (mesh == nullptr) {
+    return;
+  }
+  base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()
+                          : background_ ? frame_def->beauty_pass_bg()
+                                        : frame_def->beauty_pass());
+  c.SetFacingRatio(true);
+  c.SetLightShadow(base::LightShadowType::kTerrain);
+  c.SetColor(1.0f, 1.0f, 1.0f);
+  uint32_t draw_flags = 0;
+  if (!visible_in_reflections_) {
+    draw_flags |= base::kMeshDrawFlagNoReflection;
+  }
+  if (transformed_) {
+    c.PushTransform();
+    c.MultMatrix(transform_.m);
+  }
+  c.DrawMesh(mesh, static_cast<int>(draw_flags));
+  if (transformed_) {
+    c.PopTransform();
+  }
+  c.Submit();
+
+  // Plus a faint wireframe of every edge. Drawn transparent (depth-tested
+  // but not depth-writing) so edges of faces culled as back-facing show
+  // through subtly wherever nothing in front covers them.
+  if (auto* wire = asset->GetDebugWireMesh()) {
+    base::SimpleComponent wc(overlay_      ? frame_def->overlay_3d_pass()
+                             : background_ ? frame_def->beauty_pass_bg()
+                                           : frame_def->beauty_pass());
+    wc.SetTransparent(true);
+    wc.SetColor(0.0f, 0.0f, 0.0f, 0.5f);
+    if (transformed_) {
+      wc.PushTransform();
+      wc.MultMatrix(transform_.m);
+    }
+    wc.DrawMesh(wire, static_cast<int>(draw_flags | base::kMeshDrawFlagLines));
+    if (transformed_) {
+      wc.PopTransform();
+    }
+    wc.Submit();
+  }
+}
 
 void TerrainNode::SetReflectionScale(const std::vector<float>& vals) {
   if (vals.size() != 1 && vals.size() != 3) {
@@ -182,6 +249,50 @@ void TerrainNode::SetColor(const std::vector<float>& vals) {
   }
 }
 
+void TerrainNode::SetPosition(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
+  }
+  position_ = vals;
+  UpdateTransform_();
+}
+
+void TerrainNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for rotate",
+                    PyExcType::kValue);
+  }
+  rotate_ = vals;
+  UpdateTransform_();
+}
+
+void TerrainNode::UpdateTransform_() {
+  transformed_ =
+      (position_[0] != 0.0f || position_[1] != 0.0f || position_[2] != 0.0f
+       || rotate_[0] != 0.0f || rotate_[1] != 0.0f || rotate_[2] != 0.0f);
+
+  // Euler degrees, applied x then y then z, and the result translated.
+  // Deriving this once and handing the same matrix to rendering, physics,
+  // and bg-dynamics is what keeps those three from drifting apart.
+  transform_ = Matrix44fRotate(Vector3f(1.0f, 0.0f, 0.0f), rotate_[0])
+               * Matrix44fRotate(Vector3f(0.0f, 1.0f, 0.0f), rotate_[1])
+               * Matrix44fRotate(Vector3f(0.0f, 0.0f, 1.0f), rotate_[2])
+               * Matrix44fTranslate(position_[0], position_[1], position_[2]);
+
+  if (body_.exists()) {
+    body_->SetStaticTransform(transform_);
+  }
+
+  // Bg-dynamics bakes the transform in at add time, so a change means
+  // re-adding. Only ever a handful of terrains, and this is attr-set time,
+  // not per-frame.
+  if (bg_dynamics_collision_mesh_ != nullptr) {
+    RemoveFromBGDynamics();
+    AddToBGDynamics();
+  }
+}
+
 auto TerrainNode::GetReflection() const -> std::string {
   return base::Graphics::StringFromReflectionType(reflection_);
 }
@@ -206,32 +317,44 @@ void TerrainNode::AddToBGDynamics() {
          && !bumper_ && affect_bg_dynamics_);
   bg_dynamics_collision_mesh_ = collision_mesh_.get();
 #if !BA_HEADLESS_BUILD
-  g_base->bg_dynamics->AddTerrain(
-      bg_dynamics_collision_mesh_->collision_mesh_data());
+  assert(!bg_dynamics_world_.exists());
+  bg_dynamics_world_ = scene()->bg_dynamics_world();
+  bg_dynamics_world_->AddTerrain(
+      bg_dynamics_collision_mesh_->collision_mesh_data(), transform_);
 #endif  // !BA_HEADLESS_BUILD
 }
 
 void TerrainNode::RemoveFromBGDynamics() {
   if (bg_dynamics_collision_mesh_ != nullptr) {
 #if !BA_HEADLESS_BUILD
-    g_base->bg_dynamics->RemoveTerrain(
+    bg_dynamics_world_->RemoveTerrain(
         bg_dynamics_collision_mesh_->collision_mesh_data());
+    bg_dynamics_world_.Clear();
 #endif  // !BA_HEADLESS_BUILD
     bg_dynamics_collision_mesh_ = nullptr;
   }
 }
 
 void TerrainNode::Draw(base::FrameDef* frame_def) {
-  if (!mesh_.exists()) {
+  if (vr_only_ && !g_core->vr_mode()) {
     return;
   }
-  if (vr_only_ && !g_core->vr_mode()) {
+  if (g_base->graphics->debug_draw()) {
+    DrawDebug_(frame_def);
+    return;
+  }
+  if (!mesh_.exists()) {
     return;
   }
   base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()
                           : background_ ? frame_def->beauty_pass_bg()
                                         : frame_def->beauty_pass());
-  c.SetWorldSpace(true);
+  // World-space mode has the shader treat vert positions as already being
+  // world-space (skipping the model-world matrix), which is only true while
+  // we're drawing untransformed. Left on, a transformed terrain would move
+  // on screen but keep sampling light/shadow and reflections from where it
+  // used to be.
+  c.SetWorldSpace(!transformed_);
   if (color_texture_.exists()) {
     c.SetTexture(color_texture_->texture_data());
   }
@@ -265,7 +388,14 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   if (!visible_in_reflections_) {
     draw_flags |= base::kMeshDrawFlagNoReflection;
   }
+  if (transformed_) {
+    c.PushTransform();
+    c.MultMatrix(transform_.m);
+  }
   c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
+  if (transformed_) {
+    c.PopTransform();
+  }
   c.Submit();
 }
 

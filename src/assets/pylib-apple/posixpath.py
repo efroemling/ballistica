@@ -407,6 +407,8 @@ symbolic links encountered in the path."""
     else:
         ignored_error = OSError
 
+    lstat = os.lstat
+    readlink = os.readlink
     maxlinks = None
 
     # The stack of unresolved path parts. When popped, a special value of None
@@ -429,6 +431,10 @@ symbolic links encountered in the path."""
     # the same links.
     seen = {}
 
+    # Number of symlinks traversed. When the number of traversals is limited
+    # by *maxlinks*, this is used instead of *seen* to detect symlink loops.
+    link_count = 0
+
     while part_count:
         name = rest.pop()
         if name is None:
@@ -448,14 +454,22 @@ symbolic links encountered in the path."""
         else:
             newpath = path + sep + name
         try:
-            st_mode = os.lstat(newpath).st_mode
+            st_mode = lstat(newpath).st_mode
             if not stat.S_ISLNK(st_mode):
                 if strict and part_count and not stat.S_ISDIR(st_mode):
                     raise OSError(errno.ENOTDIR, os.strerror(errno.ENOTDIR),
                                   newpath)
                 path = newpath
                 continue
-            if newpath in seen:
+            elif maxlinks is not None:
+                link_count += 1
+                if link_count > maxlinks:
+                    if strict:
+                        raise OSError(errno.ELOOP, os.strerror(errno.ELOOP),
+                                      newpath)
+                    path = newpath
+                    continue
+            elif newpath in seen:
                 # Already seen this path
                 path = seen[newpath]
                 if path is not None:
@@ -463,11 +477,11 @@ symbolic links encountered in the path."""
                     continue
                 # The symlink is not resolved, so we must have a symlink loop.
                 if strict:
-                    # Raise OSError(errno.ELOOP)
-                    os.stat(newpath)
+                    raise OSError(errno.ELOOP, os.strerror(errno.ELOOP),
+                                  newpath)
                 path = newpath
                 continue
-            target = os.readlink(newpath)
+            target = readlink(newpath)
         except ignored_error:
             pass
         else:

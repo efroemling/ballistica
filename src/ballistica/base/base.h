@@ -4,14 +4,22 @@
 #define BALLISTICA_BASE_BASE_H_
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
-#include "ballistica/base/discord/discord.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+
+namespace ballistica::base {
+class Discord;
+#if BA_ENABLE_AUTOMATION
+class Automation;
+#endif
+}  // namespace ballistica::base
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -48,22 +56,26 @@ class BGDynamicsServer;
 class BGDynamicsDrawSnapshot;
 class BGDynamicsEmission;
 class BGDynamicsFuse;
-struct BGDynamicsFuseData;
 class BGDynamicsHeightCache;
 class BGDynamicsShadow;
-struct BGDynamicsShadowData;
 class BGDynamicsVolumeLight;
-struct BGDynamicsVolumeLightData;
+class BGDynamicsWorld;
+class BGDynamicsWorldServer;
 class Camera;
 class ClassicSoftInterface;
 class CollisionMeshAsset;
-class CollisionCache;
+class TerrainCollider;
+class SimpleDialog;
 class DevConsole;
 class DisplayTimer;
 class Context;
 class ContextRef;
 class DataAsset;
+class DebugTextureView;
+class FixedCamera;
 class FrameDef;
+class FrameDefView;
+class GameCamera;
 class Graphics;
 class GraphicsServer;
 struct GraphicsSettings;
@@ -82,6 +94,7 @@ class MeshBufferVertexSprite;
 class MeshBufferVertexSimpleFull;
 class MeshBufferVertexSmokeFull;
 class Mesh;
+class MeshIndexedObjectSplit;
 class MeshData;
 class MeshDataClientHandle;
 class MeshIndexBuffer16;
@@ -104,6 +117,7 @@ class RenderComponent;
 class RenderCommandBuffer;
 class RenderPass;
 class RenderTarget;
+class RenderView;
 class RemoteAppServer;
 class RemoteControlInput;
 class Repeater;
@@ -141,6 +155,7 @@ enum class AssetType : uint8_t {
 enum class DrawType : uint8_t {
   kTriangles,
   kPoints,
+  kLines,
 };
 
 /// Hints to the renderer - stuff that is changed rarely should be static,
@@ -270,6 +285,16 @@ enum class TextureFormat : uint8_t {
   kPVR4,
   kETC2_RGB,
   kETC2_RGBA,
+  kBC7,
+  // ASTC LDR (mobile_v1 profile). One enum per block size the server
+  // can emit (the full square ladder the per-texture quality search
+  // picks from); each maps to a distinct GL internal format.
+  kASTC_4x4,
+  kASTC_5x5,
+  kASTC_6x6,
+  kASTC_8x8,
+  kASTC_10x10,
+  kASTC_12x12,
 };
 
 enum class TextureCompressionType : uint8_t {
@@ -278,6 +303,18 @@ enum class TextureCompressionType : uint8_t {
   kETC1,
   kETC2,
   kASTC,
+  kBPTC,
+};
+
+/// How a texture samples past its edge, per axis. Authored per-texture
+/// in the asset workspace and delivered in the KTX2 key/value data;
+/// maps 1:1 onto the GL wrap modes. Absent key => kClamp, which is
+/// both the pipeline default and the right answer for the vast
+/// majority of our textures (they do not tile).
+enum class TextureWrapping : uint8_t {
+  kClamp,
+  kRepeat,
+  kMirroredRepeat,
 };
 
 enum class TextureMinQuality : uint8_t {
@@ -317,6 +354,8 @@ enum class TextMeshEntryType : uint8_t {
 
 enum MeshDrawFlags : uint8_t {
   kMeshDrawFlagNoReflection = 1,
+  /// Draw the mesh's indices as line pairs instead of triangles.
+  kMeshDrawFlagLines = 1 << 1,
 };
 
 enum class LightShadowType : uint8_t {
@@ -379,14 +418,12 @@ enum class ShadingType : uint8_t {
   kSimpleTexture,
   kSimpleTextureModulated,
   kSimpleTextureModulatedColorized,
-  kSimpleTextureModulatedColorized2,
-  kSimpleTextureModulatedColorized2Masked,
+  kSimpleTextureModulatedColorizedMasked,
   kSimpleTextureModulatedTransparent,
   kSimpleTextureModulatedTransFlatness,
   kSimpleTextureModulatedTransparentDoubleSided,
   kSimpleTextureModulatedTransparentColorized,
-  kSimpleTextureModulatedTransparentColorized2,
-  kSimpleTextureModulatedTransparentColorized2Masked,
+  kSimpleTextureModulatedTransparentColorizedMasked,
   kSimpleTextureModulatedTransparentShadow,
   kSimpleTexModulatedTransShadowFlatness,
   kSimpleTextureModulatedTransparentGlow,
@@ -400,13 +437,13 @@ enum class ShadingType : uint8_t {
   kObjectReflectTransparent,
   kObjectReflectAddTransparent,
   kObjectLightShadow,
+  kObjectLightShadowFacingRatio,
+  kObjectLightShadowFacingRatioTransparent,
   kObjectReflectLightShadow,
   kObjectReflectLightShadowDoubleSided,
   kObjectReflectLightShadowColorized,
-  kObjectReflectLightShadowColorized2,
   kObjectReflectLightShadowAdd,
   kObjectReflectLightShadowAddColorized,
-  kObjectReflectLightShadowAddColorized2,
   kSmoke,
   kSmokeOverlay,
   kPostProcess,
@@ -416,201 +453,75 @@ enum class ShadingType : uint8_t {
   kCount
 };
 
-enum class SysTextureID : uint8_t {
-  kUIAtlas,
-  kButtonSquare,
-  kWhite,
-  kFontSmall0,
-  kFontBig,
-  kCursor,
-  kBoxingGlove,
-  kShield,
-  kExplosion,
-  kTextClearButton,
-  kWindowHSmallVMed,
-  kWindowHSmallVSmall,
-  kGlow,
-  kScrollWidget,
-  kScrollWidgetGlow,
-  kFlagPole,
-  kScorch,
-  kScorchBig,
-  kShadow,
-  kLight,
-  kShadowSharp,
-  kLightSharp,
-  kShadowSoft,
-  kLightSoft,
-  kSparks,
-  kEye,
-  kEyeTint,
-  kFuse,
-  kShrapnel1,
-  kSmoke,
-  kCircle,
-  kCircleOutline,
-  kCircleNoAlpha,
-  kCircleOutlineNoAlpha,
-  kCircleShadow,
-  kSoftRect,
-  kSoftRect2,
-  kSoftRectVertical,
-  kStartButton,
-  kBombButton,
-  kOuyaAButton,
-  kBackIcon,
-  kNub,
-  kArrow,
-  kMenuButton,
-  kUsersButton,
-  kActionButtons,
-  kTouchArrows,
-  kTouchArrowsActions,
-  kRGBStripes,
-  kUIAtlas2,
-  kFontSmall1,
-  kFontSmall2,
-  kFontSmall3,
-  kFontSmall4,
-  kFontSmall5,
-  kFontSmall6,
-  kFontSmall7,
-  kFontExtras,
-  kFontExtras2,
-  kFontExtras3,
-  kFontExtras4,
-  kCharacterIconMask,
-  kBlack,
-  kWings,
-  kSpinner,
-  kSpinner0,
-  kSpinner1,
-  kSpinner2,
-  kSpinner3,
-  kSpinner4,
-  kSpinner5,
-  kSpinner6,
-  kSpinner7,
-  kSpinner8,
-  kSpinner9,
-  kSpinner10,
-  kSpinner11,
-  kCircleSoft,
-  kButtonSquareWide,
-  kPageLeftRight,
-  kFontExtras5,
-};
-
-enum class SysCubeMapTextureID : uint8_t {
-  kReflectionChar,
-  kReflectionPowerup,
-  kReflectionSoft,
-  kReflectionSharp,
-  kReflectionSharper,
-  kReflectionSharpest
-};
-
-enum class SysSoundID {
-  kDeek,
-  kBlip,
-  kBlank,
-  kPunch,
-  kClick,
-  kErrorBeep,
-  kSwish,
-  kSwish2,
-  kSwish3,
-  kTap,
-  kCorkPop,
-  kGunCock,
-  kTickingCrazy,
-  kSparkle,
-  kSparkle2,
-  kSparkle3,
-  kScoreIncrease,
-  kCashRegister,
-  kPowerDown,
-  kDing,
-};
-
 enum class SystemDataID : uint8_t {};
 
-enum class SysMeshID : uint8_t {
-  kButtonSmallTransparent,
-  kButtonSmallOpaque,
-  kButtonMediumTransparent,
-  kButtonMediumOpaque,
-  kButtonBackTransparent,
-  kButtonBackOpaque,
-  kButtonBackSmallTransparent,
-  kButtonBackSmallOpaque,
-  kButtonTabTransparent,
-  kButtonTabOpaque,
-  kButtonLargeTransparent,
-  kButtonLargeOpaque,
-  kButtonLargerTransparent,
-  kButtonLargerOpaque,
-  kButtonSquareTransparent,
-  kButtonSquareOpaque,
-  kCheckTransparent,
-  kScrollBarThumbTransparent,
-  kScrollBarThumbOpaque,
-  kScrollBarThumbSimple,
-  kScrollBarThumbShortTransparent,
-  kScrollBarThumbShortOpaque,
-  kScrollBarThumbShortSimple,
-  kScrollBarTroughTransparent,
-  kTextBoxTransparent,
-  kImage1x1,
-  kImage1x1FullScreen,
-  kImage2x1,
-  kImage4x1,
-  kImage16x1,
-#if BA_VR_BUILD
-  kImage1x1VRFullScreen,
-  kVROverlay,
-  kVRFade,
-#endif
-  kOverlayGuide,
-  kWindowHSmallVMedTransparent,
-  kWindowHSmallVMedOpaque,
-  kWindowHSmallVSmallTransparent,
-  kWindowHSmallVSmallOpaque,
-  kSoftEdgeOutside,
-  kSoftEdgeInside,
-  kBoxingGlove,
-  kShield,
-  kFlagPole,
-  kFlagStand,
-  kScorch,
-  kEyeBall,
-  kEyeBallIris,
-  kEyeLid,
-  kHairTuft1,
-  kHairTuft1b,
-  kHairTuft2,
-  kHairTuft3,
-  kHairTuft4,
-  kShrapnel1,
-  kShrapnelSlime,
-  kShrapnelBoard,
-  kShockWave,
-  kFlash,
-  kCylinder,
-  kArrowFront,
-  kArrowBack,
-  kActionButtonLeft,
-  kActionButtonTop,
-  kActionButtonRight,
-  kActionButtonBottom,
-  kBox,
-  kLocator,
-  kLocatorBox,
-  kLocatorCircle,
-  kLocatorCircleOutline,
-  kCrossOut,
-  kWing
+// __AUTOGENERATED_BUILTIN_ASSET_IDS_BEGIN__
+//
+// Generated by ``tools/pcommand gen_builtin_asset_ids`` (run by
+// ``assetpins`` when the construct asset-package pin in
+// ``pconfig/projectconfig.json`` changes) from that pin. Do not edit
+// by hand; rerun ``make assetpins-latest`` to regenerate. New
+// per-asset entries land here as the workspace gains them; old
+// hand-coded ``Builtin*OldID`` entries above retire one at a time as
+// their callsites migrate.
+
+// Builtin asset-package: a-0.babuiltinassets.261005
+inline constexpr const char* kBuiltinAssetsApvernum = "417";
+
+enum class BuiltinTextureID : uint16_t {
+  kTexturesAccountV2Icon,     // textures/account_v2_icon
+  kTexturesBlack,             // textures/black
+  kTexturesCircle,            // textures/circle
+  kTexturesCircleShadow,      // textures/circle_shadow
+  kTexturesCursor,            // textures/cursor
+  kTexturesFontBig,           // textures/font_big
+  kTexturesFontExtras,        // textures/font_extras
+  kTexturesFontExtras2,       // textures/font_extras2
+  kTexturesFontExtras3,       // textures/font_extras3
+  kTexturesFontExtras4,       // textures/font_extras4
+  kTexturesFontExtras5,       // textures/font_extras5
+  kTexturesFontSmall0,        // textures/font_small0
+  kTexturesFontSmall1,        // textures/font_small1
+  kTexturesFontSmall2,        // textures/font_small2
+  kTexturesFontSmall3,        // textures/font_small3
+  kTexturesFontSmall4,        // textures/font_small4
+  kTexturesFontSmall5,        // textures/font_small5
+  kTexturesFontSmall6,        // textures/font_small6
+  kTexturesFontSmall7,        // textures/font_small7
+  kTexturesGlowCircle,        // textures/glow_circle
+  kTexturesHowdy,             // textures/howdy
+  kTexturesShadow,            // textures/shadow
+  kTexturesShadowSharp,       // textures/shadow_sharp
+  kTexturesSoftRect,          // textures/soft_rect
+  kTexturesSoftRect2,         // textures/soft_rect2
+  kTexturesSoftRectVertical,  // textures/soft_rect_vertical
+  kTexturesWhite,             // textures/white
 };
+
+enum class BuiltinCubeMapTextureID : uint16_t {
+  kTexturesBlackCube,  // textures/black_cube
+};
+
+enum class BuiltinSoundID : uint16_t {
+  kAudioBlank,         // audio/blank
+  kAudioBlip,          // audio/blip
+  kAudioCashRegister,  // audio/cash_register
+  kAudioClick01,       // audio/click01
+  kAudioDing,          // audio/ding
+  kAudioError,         // audio/error
+  kAudioGunCocking,    // audio/gun_cocking
+  kAudioPowerdown01,   // audio/powerdown01
+  kAudioTap,           // audio/tap
+};
+
+enum class BuiltinMeshID : uint16_t {
+  kMeshesBox,           // meshes/box
+  kMeshesImage1x1,      // meshes/image1x1
+  kMeshesOverlayGuide,  // meshes/overlay_guide
+  kMeshesVrFade,        // meshes/vr_fade
+  kMeshesVrOverlay,     // meshes/vr_overlay
+};
+// __AUTOGENERATED_BUILTIN_ASSET_IDS_END__
 
 // The screen, no matter what size/aspect, will always fit this virtual
 // rectangle, so placing UI elements within these coords is always safe.
@@ -774,15 +685,12 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
 
-  void PlusDirectSendV1CloudLogs(const std::string& prefix,
-                                 const std::string& suffix, bool instant,
-                                 int* result) override;
   auto CreateFeatureSetData(FeatureSetNativeComponent* featureset)
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
-  void DoV1CloudLog(const std::string& msg) override;
-  void PushDevConsolePrintCall(std::string_view msg, float scale,
-                               Vector4f color) override;
+  void PushDevConsolePrintCall(
+      std::vector<core::DevConsolePrintEntry> entries) override;
+  void OnOSMusicPlayingChanged(bool playing) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;
@@ -825,7 +733,20 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   /// Return current text from the clipboard. Raises an Exception if
   /// clipboard is unsupported or if there's no text on the clipboard.
+  /// Deprecated; use ClipboardGetTextAsync() instead, which can handle
+  /// platforms where clipboard reads may block on the OS (permission
+  /// prompts, etc.).
   auto ClipboardGetText() -> std::string;
+
+  /// Fetch text from the clipboard asynchronously. Must be called from
+  /// the logic thread. The provided call will be run in the logic thread
+  /// and passed the fetched text, or an empty optional if no text could
+  /// be fetched for any reason (clipboard unsupported, no text present,
+  /// access denied by the OS, etc.). On some platforms fetching clipboard
+  /// contents can require the OS to ask the user for permission, so the
+  /// call may not run until they respond (or may never run at all).
+  void ClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> call);
 
   /// Set current clipboard text. Raises an Exception if clipboard is
   /// unsupported.
@@ -840,6 +761,14 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
+
+  /// Whether a *real* (non-empty) app-mode is currently active. Thread-
+  /// safe (unlike comparing :meth:`app_mode()` against the EmptyAppMode
+  /// singleton, whose accessor is logic-thread-only), so it can be polled
+  /// from e.g. the stdin-reading thread to hold off on commands that
+  /// assume a real intent-handling mode until the boot-time construct
+  /// phase (which leaves the empty mode in place) hands off.
+  auto app_mode_is_real() const -> bool { return app_mode_is_real_.load(); }
   auto app_active() -> bool const { return app_active_; }
 
   /// Whether we're running under ballisticakit_server.py
@@ -852,6 +781,15 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto config_and_state_writes_suppressed() const {
     return config_and_state_writes_suppressed_;
   }
+
+  auto AppExitCode() const -> int override { return app_exit_code_; }
+
+  /// Set the process exit code returned from a clean app shutdown. Lets
+  /// a clean-but-failing run (e.g. a headless construct-mode asset
+  /// bring-up failure) surface a specific nonzero code without going
+  /// through the fatal-error/crash path. See
+  /// BaseSoftInterface::AppExitCode().
+  void set_app_exit_code(int code) { app_exit_code_ = code; }
 
   auto base_import_completed() const { return base_import_completed_; }
 
@@ -884,6 +822,17 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   UI* const ui;
   Utils* const utils;
   Discord* const discord;
+#if BA_ENABLE_AUTOMATION
+  // Opt-in automation capability (screenshot capture etc. for the
+  // automation channel / cloud console). Null except on developer
+  // builds. The whole subsystem is compiled out of default builds
+  // (gated on BA_ENABLE_AUTOMATION, which CMake sets only when
+  // -DENABLE_AUTOMATION=ON). Set in the constructor body rather than
+  // the init list so the #if doesn't sit between the last
+  // initializer and the opening brace (clang-format would otherwise
+  // join those).
+  Automation* automation{};
+#endif
 
   // Non-const components (fixme: clean up access to these).
   TouchInput* touch_input{};
@@ -896,6 +845,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void PrintContextUnavailable_();
 
   AppMode* app_mode_;
+  std::atomic_bool app_mode_is_real_{false};
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   std::string local_app_instance_uuid_;
@@ -908,6 +858,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   std::optional<std::string> global_app_instance_uuid_;
   seconds_t global_app_instance_uuid_expire_time_{};
   int shutdown_suppress_count_{};
+  int app_exit_code_{};
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
   bool app_active_set_{};
@@ -921,7 +872,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool called_run_app_to_completion_{};
   bool base_import_completed_{};
   bool base_native_import_completed_{};
-  bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
   bool config_and_state_writes_suppressed_{};
   bool have_local_app_instance_uuid_{};

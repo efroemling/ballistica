@@ -6,8 +6,6 @@ This includes things like subsystem attributes for all feature-sets that
 want them and default app-intent handling.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import textwrap

@@ -2,8 +2,6 @@
 #
 """BombSquad specific bits."""
 
-from __future__ import annotations
-
 import datetime
 from enum import Enum
 from dataclasses import dataclass
@@ -30,6 +28,13 @@ class ClassicLiveAccountClientData:
         unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
         unlock_tokens: Annotated[int, IOAttrs('k')]
         ad_allow_time: Annotated[datetime.datetime | None, IOAttrs('at')]
+
+        #: How to draw the chest: a :class:`bacommon.depiction.Depiction`
+        #: as json, or None to draw by :attr:`appearance`. Only sent to
+        #: builds new enough to draw it.
+        depiction: Annotated[str | None, IOAttrs('dp', store_default=False)] = (
+            None
+        )
 
     class LeagueType(Enum):
         """Type of league we are in."""
@@ -75,6 +80,24 @@ class ClassicLiveAccountClientData:
 
     # State id of our purchases for builds 22459+.
     purchases_state: Annotated[str | None, IOAttrs('p')]
+
+    #: State id of our cloud profiles (builds 23014+); None if the
+    #: account has none. Clients refetch via
+    #: :class:`GetClassicProfilesMessage` when this changes.
+    profiles_state: Annotated[str | None, IOAttrs('ps', soft_default=None)]
+
+    #: Fleet-wide classic cache version (builds 23018+). An opaque
+    #: string; when it differs from the one cached classic data (cloud
+    #: profiles) was fetched under, that cache is stale and gets
+    #: refetched in the background. None means unknown (an older basn
+    #: node), which never stales anything.
+    cache_version: Annotated[str | None, IOAttrs('cv', soft_default=None)]
+
+    #: How the account's name draws (builds 23025+): a
+    #: :class:`bacommon.depiction.NameDepiction` as json, shown by the
+    #: toolbar's account button in place of its usual art. None (not
+    #: baked yet, or an older basn node) keeps the usual button.
+    name_depiction: Annotated[str | None, IOAttrs('nd', soft_default=None)]
 
     flags: Annotated[set[Flag], IOAttrs('f', soft_default_factory=set)]
 

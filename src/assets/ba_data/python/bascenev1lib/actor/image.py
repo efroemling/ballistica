@@ -2,12 +2,11 @@
 #
 """Defines Actor(s)."""
 
-from __future__ import annotations
-
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -32,11 +31,16 @@ class Image(bs.Actor):
         CENTER = 'center'
         TOP_CENTER = 'topCenter'
         TOP_LEFT = 'topLeft'
+        TOP_RIGHT = 'topRight'
+        CENTER_LEFT = 'centerLeft'
+        CENTER_RIGHT = 'centerRight'
         BOTTOM_CENTER = 'bottomCenter'
+        BOTTOM_LEFT = 'bottomLeft'
+        BOTTOM_RIGHT = 'bottomRight'
 
     def __init__(
         self,
-        texture: bs.Texture | dict[str, Any],
+        texture: bs.Texture | dict[str, Any] | bs.Depiction,
         *,
         position: tuple[float, float] = (0, 0),
         transition: Transition | None = None,
@@ -51,9 +55,37 @@ class Image(bs.Actor):
         host_only: bool = False,
         front: bool = False,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         super().__init__()
+
+        # A depiction (a player's icon from
+        # bs.Player.get_icon_depiction(), say) draws itself through a
+        # depictiondisplay node, which takes the same layout and
+        # opacity animation as an image node; it has no meshes or color
+        # tint, so only color's alpha applies.
+        if isinstance(texture, bs.Depiction):
+            assert mesh_opaque is None and mesh_transparent is None
+            self.node = bs.newnode(
+                'depictiondisplay',
+                attrs={
+                    'depiction': texture,
+                    'position': position,
+                    'vr_depth': vr_depth,
+                    'scale': scale,
+                    'opacity': color[3],
+                    'host_only': host_only,
+                    'front': front,
+                    'attach': attach.value,
+                },
+                delegate=self,
+            )
+            self._setup_transitions(
+                position,
+                transition,
+                transition_delay,
+                transition_out_delay,
+                alpha=color[3],
+            )
+            return
 
         # If they provided a dict as texture, use it to wire up extended
         # stuff like tints and masks.
@@ -61,18 +93,28 @@ class Image(bs.Actor):
         if isinstance(texture, dict):
             tint_color = texture['tint_color']
             tint2_color = texture['tint2_color']
+            # Optional; icon info from older sources has none.
+            tint3_color = texture.get('tint3_color')
             tint_texture = texture['tint_texture']
 
             # Assume we're dealing with a character icon but allow
             # overriding.
-            mask_tex_name = texture.get('mask_texture', 'characterIconMask')
-            mask_texture = (
-                None if mask_tex_name is None else bs.gettexture(mask_tex_name)
-            )
+            if 'mask_texture' in texture:
+                mask_tex_name = texture['mask_texture']
+                mask_texture = (
+                    None
+                    if mask_tex_name is None
+                    else bs.gettexture(mask_tex_name)
+                )
+            else:
+                mask_texture = (
+                    _classiccatalogassets.textures.character_icon_mask.get()
+                )
             texture = texture['texture']
         else:
             tint_color = (1, 1, 1)
             tint2_color = None
+            tint3_color = None
             tint_texture = None
             mask_texture = None
 
@@ -101,10 +143,29 @@ class Image(bs.Actor):
             self.node.mesh_transparent = mesh_transparent
         if tint2_color is not None:
             self.node.tint2_color = tint2_color
+        if tint3_color is not None:
+            self.node.tint3_color = tint3_color
+        self._setup_transitions(
+            position,
+            transition,
+            transition_delay,
+            transition_out_delay,
+            alpha=color[3],
+        )
+
+    def _setup_transitions(
+        self,
+        position: tuple[float, float],
+        transition: Transition | None,
+        transition_delay: float,
+        transition_out_delay: float | None,
+        *,
+        alpha: float = 1.0,
+    ) -> None:
         if transition is self.Transition.FADE_IN:
-            keys = {transition_delay: 0, transition_delay + 0.5: color[3]}
+            keys = {transition_delay: 0, transition_delay + 0.5: alpha}
             if transition_out_delay is not None:
-                keys[transition_delay + transition_out_delay] = color[3]
+                keys[transition_delay + transition_out_delay] = alpha
                 keys[transition_delay + transition_out_delay + 0.5] = 0
             bs.animate(self.node, 'opacity', keys)
         cmb = self.position_combine = bs.newnode(

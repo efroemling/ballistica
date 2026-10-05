@@ -3,10 +3,16 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_NODE_ATTRIBUTE_H_
 #define BALLISTICA_SCENE_V1_NODE_NODE_ATTRIBUTE_H_
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/scene_v1/scene_v1.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -63,6 +69,12 @@ class NodeAttributeUnbound {
   virtual auto GetAsTexture(Node* node) -> SceneTexture*;
   virtual void Set(Node* node, SceneTexture* value);
 
+  virtual auto GetAsSpazDef(Node* node) -> SpazDef*;
+  virtual void Set(Node* node, SpazDef* value);
+
+  virtual auto GetAsDepiction(Node* node) -> SceneDepiction*;
+  virtual void Set(Node* node, SceneDepiction* value);
+
   virtual auto GetAsTextures(Node* node) -> std::vector<SceneTexture*>;
   virtual void Set(Node* node, const std::vector<SceneTexture*>& values);
 
@@ -88,13 +100,40 @@ class NodeAttributeUnbound {
   auto is_read_only() const -> bool {
     return static_cast<bool>(flags_ & kNodeAttributeFlagReadOnly);
   }
+  auto is_lang_str() const -> bool {
+    return static_cast<bool>(flags_ & kNodeAttributeFlagLangStr);
+  }
+
+  /// Set a lang-str-flagged string attr from its tagged wire value plus
+  /// an optionally pre-parsed LangStr (for the kLangStrWireTagLangStr
+  /// leg; null otherwise). Only meaningful on attrs flagged
+  /// kNodeAttributeFlagLangStr; the default falls back to the plain
+  /// string Set.
+  virtual void SetLangStrWire(Node* node, const std::string& wire,
+                              std::shared_ptr<const base::LangStr> parsed) {
+    Set(node, wire);
+  }
+
+  /// Return the parsed native LangStr a lang-str-flagged attr's slot
+  /// currently holds, or null when its value is not one (plain/legacy
+  /// strings, tagged legs that carry no parsed form). Only ever
+  /// non-null on attrs flagged kNodeAttributeFlagLangStr.
+  virtual auto GetLangStr(Node* node) const
+      -> std::shared_ptr<const base::LangStr> {
+    return nullptr;
+  }
+
   auto type() const -> NodeAttributeType { return type_; }
   auto GetTypeName() const -> std::string {
     return GetNodeAttributeTypeName(type_);
   }
   auto name() const -> const std::string& { return name_; }
   auto node_type() const -> NodeType* { return node_type_; }
-  auto index() const -> int { return index_; }
+  auto index() const -> int {
+    // Late-index attrs have no index until FinalizeAttrIndices() runs.
+    assert(index_ >= 0);
+    return index_;
+  }
   void DisconnectIncoming(Node* node);
 
  protected:
@@ -107,6 +146,7 @@ class NodeAttributeUnbound {
   std::string name_;
   uint32_t flags_;
   int index_;
+  friend class NodeType;
 };
 
 // Simple node-attribute pair; used as a convenience measure.
@@ -130,6 +170,14 @@ class NodeAttribute {
   auto index() const -> int { return attr->index(); }
   void DisconnectIncoming() { attr->DisconnectIncoming(node); }
   auto is_read_only() const -> bool { return attr->is_read_only(); }
+  auto is_lang_str() const -> bool { return attr->is_lang_str(); }
+  void SetLangStrWire(const std::string& wire,
+                      std::shared_ptr<const base::LangStr> parsed) const {
+    attr->SetLangStrWire(node, wire, std::move(parsed));
+  }
+  auto GetLangStr() const -> std::shared_ptr<const base::LangStr> {
+    return attr->GetLangStr(node);
+  }
   auto GetAsFloat() const -> float { return attr->GetAsFloat(node); }
   void Set(float value) const { attr->Set(node, value); }
   auto GetAsInt() const -> int64_t { return attr->GetAsInt(node); }
@@ -164,6 +212,12 @@ class NodeAttribute {
     return attr->GetAsTexture(node);
   }
   void Set(SceneTexture* value) const { attr->Set(node, value); }
+  auto GetAsSpazDef() const -> SpazDef* { return attr->GetAsSpazDef(node); }
+  void Set(SpazDef* value) const { attr->Set(node, value); }
+  auto GetAsDepiction() const -> SceneDepiction* {
+    return attr->GetAsDepiction(node);
+  }
+  void Set(SceneDepiction* value) const { attr->Set(node, value); }
   auto GetAsTextures() const -> std::vector<SceneTexture*> {
     return attr->GetAsTextures(node);
   }
@@ -410,6 +464,36 @@ class NodeAttributeUnboundTexture : public NodeAttributeUnbound {
   void Set(Node* node, SceneTexture* val) override { NotWritableError(node); }
 };
 
+// SpazDef attr (a session-level spaz definition ref).
+class NodeAttributeUnboundSpazDef : public NodeAttributeUnbound {
+ public:
+  NodeAttributeUnboundSpazDef(NodeType* node_type, const std::string& name,
+                              uint32_t flags)
+      : NodeAttributeUnbound(node_type, NodeAttributeType::kSpazDef, name,
+                             flags) {}
+  // Override these:
+  auto GetAsSpazDef(Node* node) -> SpazDef* override {
+    NotReadableError(node);
+    return nullptr;
+  }
+  void Set(Node* node, SpazDef* val) override { NotWritableError(node); }
+};
+
+// Depiction attr (a session-level SceneDepiction ref).
+class NodeAttributeUnboundDepiction : public NodeAttributeUnbound {
+ public:
+  NodeAttributeUnboundDepiction(NodeType* node_type, const std::string& name,
+                                uint32_t flags)
+      : NodeAttributeUnbound(node_type, NodeAttributeType::kDepiction, name,
+                             flags) {}
+  // Override these:
+  auto GetAsDepiction(Node* node) -> SceneDepiction* override {
+    NotReadableError(node);
+    return nullptr;
+  }
+  void Set(Node* node, SceneDepiction* val) override { NotWritableError(node); }
+};
+
 // Texture array attr.
 class NodeAttributeUnboundTextureArray : public NodeAttributeUnbound {
  public:
@@ -547,6 +631,27 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
   };                                                                      \
   Attr_##NAME NAME;
 
+// Like BA_FLOAT_ATTR but with deferred wire-index assignment; see
+// BA_FLOAT_ARRAY_ATTR_LATE.
+#define BA_FLOAT_ATTR_LATE(NAME, GETTER, SETTER)                          \
+  class Attr_##NAME : public NodeAttributeUnboundFloat {                  \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundFloat(node_type, #NAME,                     \
+                                    kNodeAttributeFlagLateIndex) {}       \
+    auto GetAsFloat(Node* node) -> float override {                       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, float val) override {                            \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
 // Defines a float attr subclass that interfaces with specific getter/setter
 // calls.
 #define BA_FLOAT_ATTR_READONLY(NAME, GETTER)                              \
@@ -570,6 +675,32 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
    public:                                                                \
     explicit Attr_##NAME(NodeType* node_type)                             \
         : NodeAttributeUnboundFloatArray(node_type, #NAME, 0) {}          \
+    auto GetAsFloats(Node* node) -> std::vector<float> override {         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, const std::vector<float>& vals) override {       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(vals);                                                \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Like BA_FLOAT_ARRAY_ATTR but with deferred wire-index assignment
+// (kNodeAttributeFlagLateIndex): the attr takes its index after ALL
+// normally-registered attrs, including those of node-type subclasses.
+// Use this (or add the analogous _LATE variant for other attr kinds)
+// when appending an attr to a node type that has subclasses, so the
+// subclasses' attrs keep their existing wire indices; see the
+// protocol-changes list in scene_v1.h (42/43).
+#define BA_FLOAT_ARRAY_ATTR_LATE(NAME, GETTER, SETTER)                    \
+  class Attr_##NAME : public NodeAttributeUnboundFloatArray {             \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundFloatArray(node_type, #NAME,                \
+                                         kNodeAttributeFlagLateIndex) {}  \
     auto GetAsFloats(Node* node) -> std::vector<float> override {         \
       BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
       assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
@@ -747,6 +878,45 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
   };                                                                      \
   Attr_##NAME NAME;
 
+// Defines a lang-str-capable string attr subclass: like BA_STRING_ATTR
+// but flagged kNodeAttributeFlagLangStr, with a WIRE_SETTER receiving
+// the tagged wire value plus an optionally pre-parsed LangStr (see
+// the kLangStrWireTag* constants) and a LANG_STR_GETTER returning the
+// parsed LangStr the slot currently holds (null when it holds a
+// plain/legacy value). Plain Set() still routes through SETTER with
+// legacy semantics (old streams, attr connections).
+#define BA_LANG_STR_ATTR(NAME, GETTER, SETTER, WIRE_SETTER, LANG_STR_GETTER) \
+  class Attr_##NAME : public NodeAttributeUnboundString {                    \
+   public:                                                                   \
+    explicit Attr_##NAME(NodeType* node_type)                                \
+        : NodeAttributeUnboundString(node_type, #NAME,                       \
+                                     kNodeAttributeFlagLangStr) {}           \
+    auto GetAsString(Node* node) -> std::string override {                   \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node);    \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);              \
+      return tnode->GETTER();                                                \
+    }                                                                        \
+    void Set(Node* node, const std::string& val) override {                  \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node);    \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);              \
+      tnode->SETTER(val);                                                    \
+    }                                                                        \
+    void SetLangStrWire(                                                     \
+        Node* node, const std::string& wire,                                 \
+        std::shared_ptr<const base::LangStr> parsed) override {              \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node);    \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);              \
+      tnode->WIRE_SETTER(wire, std::move(parsed));                           \
+    }                                                                        \
+    auto GetLangStr(Node* node) const                                        \
+        -> std::shared_ptr<const base::LangStr> override {                   \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node);    \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);              \
+      return tnode->LANG_STR_GETTER();                                       \
+    }                                                                        \
+  };                                                                         \
+  Attr_##NAME NAME;
+
 // Defines a string attr subclass that interfaces with specific getter/setter
 // calls.
 #define BA_STRING_ATTR_READONLY(NAME, GETTER)                             \
@@ -856,6 +1026,46 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
       return tnode->GETTER();                                             \
     }                                                                     \
     void Set(Node* node, SceneTexture* val) override {                    \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Defines a spaz-def attr subclass that interfaces with specific
+// getter/setter calls.
+#define BA_SPAZ_DEF_ATTR(NAME, GETTER, SETTER)                            \
+  class Attr_##NAME : public NodeAttributeUnboundSpazDef {                \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundSpazDef(node_type, #NAME, 0) {}             \
+    auto GetAsSpazDef(Node* node) -> SpazDef* override {                  \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, SpazDef* val) override {                         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Defines a depiction attr subclass that interfaces with specific
+// getter/setter calls.
+#define BA_DEPICTION_ATTR(NAME, GETTER, SETTER)                           \
+  class Attr_##NAME : public NodeAttributeUnboundDepiction {              \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundDepiction(node_type, #NAME, 0) {}           \
+    auto GetAsDepiction(Node* node) -> SceneDepiction* override {         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, SceneDepiction* val) override {                  \
       BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
       assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
       tnode->SETTER(val);                                                 \

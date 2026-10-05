@@ -2,11 +2,13 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 
+#include <cstdio>
 #include <list>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/automation/automation.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/logic/logic.h"
@@ -15,6 +17,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
+#include "ballistica/shared/generic/thread_cpu_time.h"
 
 namespace ballistica::base {
 
@@ -55,20 +58,60 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
          && settings->resolution_virtual.y >= 0.0f);
 
   // Pull a few things out ourself such as screen resolution.
-  tv_border_ = settings->tv_border;
   if (renderer_) {
-    renderer_->set_pixel_scale(settings->pixel_scale);
+    float pixel_scale = settings->pixel_scale;
+#if BA_ENABLE_AUTOMATION
+    // DO NOT REMOVE without re-testing screenshot capture at pixel-scale
+    // 1.0 on an ANGLE/Metal build — it looks like a harmless dev-only
+    // tweak but it is load-bearing there. (The tear was witnessed only
+    // on macOS desktop; iOS shares the ANGLE-Metal backend so is
+    // presumed affected but is unverified. Applied on all platforms
+    // regardless — it's dev-only and cheap, and which ANGLE backends
+    // share the bug is untested.)
+    //
+    // Automation screenshot capture reads the offscreen 'backing'
+    // buffer, which the engine only maintains for pixel-scales below 1.0
+    // (at 1.0 it draws straight to the window). The window's default
+    // framebuffer can't be read back cleanly on ANGLE's Metal backend —
+    // it's the CAMetalLayer swapchain drawable, whose frame isn't
+    // realized until present, so a readback tears (verified: glFinish,
+    // fences, post-swap reads, and delays all fail to fix it). Capping
+    // the scale a hair under 1.0 on a capture-capable build guarantees a
+    // stable backing texture always exists to read instead. 0.999 is
+    // visually indistinguishable from 1.0 and only affects developer
+    // builds (the subsystem is compiled out otherwise). Full story:
+    // efrohome automation-over-transport.md, 2026-08-18 tearing entry.
+    if (g_base->automation != nullptr && pixel_scale >= 1.0f) {
+      pixel_scale = 0.999f;
+    }
+#endif
+    renderer_->set_pixel_scale(pixel_scale);
   }
-  // Note: need to look at both physical and virtual res here; its possible
-  // for physical to stay the same but for virtual to change (ui-scale
-  // changes can do this).
+  // Note: need to look at physical/virtual res plus the active render
+  // rect and virtual bounds here; each can change independently of the
+  // others (ui-scale changes can move virtual res alone; a tv-border
+  // toggle can move the render rect alone; a cutout-inset change can
+  // move the bounds alone).
+  const Rect& arect = settings->active_render_rect;
+  const Rect& vbrect = settings->virtual_bounds_rect;
   if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y
       || res_x_virtual_ != settings->resolution_virtual.x
-      || res_y_virtual_ != settings->resolution_virtual.y) {
+      || res_y_virtual_ != settings->resolution_virtual.y
+      || active_render_rect_.l != arect.l || active_render_rect_.r != arect.r
+      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t
+      || virtual_bounds_rect_.l != vbrect.l
+      || virtual_bounds_rect_.r != vbrect.r
+      || virtual_bounds_rect_.b != vbrect.b
+      || virtual_bounds_rect_.t != vbrect.t) {
     res_x_ = settings->resolution.x;
     res_y_ = settings->resolution.y;
     res_x_virtual_ = settings->resolution_virtual.x;
     res_y_virtual_ = settings->resolution_virtual.y;
+    active_render_rect_ = arect;
+    virtual_bounds_rect_ = vbrect;
+    virtual_outer_rect_ = Graphics::CalcVirtualOuterRect(
+        active_render_rect_, virtual_bounds_rect_, res_x_virtual_,
+        res_y_virtual_);
     if (renderer_) {
       renderer_->OnScreenSizeChange();
     }
@@ -135,10 +178,34 @@ auto GraphicsServer::TryRender() -> bool {
     // Only actually render if we have a screen and aren't in a hold.
     auto target = renderer()->screen_render_target();
     if (target != nullptr && render_hold_ == 0) {
+      // Under BA_RENDER_PROFILE (test_game_run --render-profile) we
+      // time how long frames take to submit. We count this thread's
+      // cpu time rather than wall time: drawing to the screen blocks
+      // until the display wants a frame, which otherwise swamps
+      // everything else. So this is what issuing draw calls costs us,
+      // not what the gpu then spends on them.
+      if (!render_profile_checked_) {
+        render_profile_checked_ = true;
+        render_profile_ = (getenv("BA_RENDER_PROFILE") != nullptr);
+      }
+      double t0 = render_profile_ ? ThreadCPUTimeMillisecs() : 0.0;
       PreprocessRenderFrameDef(frame_def);
+      double t1 = render_profile_ ? ThreadCPUTimeMillisecs() : 0.0;
       DrawRenderFrameDef(frame_def);
       FinishRenderFrameDef(frame_def);
+      if (render_profile_) {
+        UpdateRenderProfile_(t1 - t0, ThreadCPUTimeMillisecs() - t1);
+      }
       success = true;
+
+#if BA_ENABLE_AUTOMATION
+      // Service any pending automation screenshot captures now that the
+      // frame is fully drawn (and, when there's a backing buffer,
+      // composited into it). See Automation::RunPendingCaptures.
+      if (g_base->automation != nullptr) {
+        g_base->automation->RunPendingCaptures();
+      }
+#endif
     }
 
     // Send this frame_def back to the logic thread for deletion or
@@ -147,6 +214,51 @@ auto GraphicsServer::TryRender() -> bool {
   }
 
   return success;
+}
+
+void GraphicsServer::UpdateRenderProfile_(double preprocess_ms,
+                                          double render_ms) {
+  render_profile_frames_++;
+  render_profile_preprocess_ms_ += preprocess_ms;
+  render_profile_render_ms_ += render_ms;
+  seconds_t now = g_core->AppTimeSeconds();
+  if (render_profile_window_start_ == 0.0) {
+    render_profile_window_start_ = now;
+  }
+  seconds_t elapsed = now - render_profile_window_start_;
+  if (elapsed < 5.0) {
+    return;
+  }
+  double frames = render_profile_frames_;
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer),
+           "render profile (gfx): %d frames in %.2fs (%.1f fps); cpu per"
+           " frame: preprocess %.0fus, render %.0fus",
+           render_profile_frames_, elapsed, frames / elapsed,
+           1000.0 * render_profile_preprocess_ms_ / frames,
+           1000.0 * render_profile_render_ms_ / frames);
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo, buffer);
+
+  // Counts, which unlike the timings above are exact.
+  Renderer::Stats* stats = renderer()->stats();
+  snprintf(buffer, sizeof(buffer),
+           "render profile (counts): per frame: draws %.2f, target begins"
+           " %.2f, clears %.2f, blits %.2f; offscreen target pixels %.0f",
+           static_cast<double>(stats->draw_calls) / frames,
+           static_cast<double>(stats->target_begins) / frames,
+           static_cast<double>(stats->clears) / frames,
+           static_cast<double>(stats->blits) / frames,
+           static_cast<double>(stats->target_pixels));
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo, buffer);
+  stats->draw_calls = 0;
+  stats->target_begins = 0;
+  stats->clears = 0;
+  stats->blits = 0;
+
+  render_profile_frames_ = 0;
+  render_profile_preprocess_ms_ = 0.0;
+  render_profile_render_ms_ = 0.0;
+  render_profile_window_start_ = now;
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
@@ -267,6 +379,46 @@ void GraphicsServer::ReloadMedia_() {
   g_base->logic->event_loop()->PushCall([this] {
     g_base->assets->MarkAllAssetsForLoad();
     g_base->graphics->EnableProgressBar(false);
+    PushRemoveRenderHoldCall();
+  });
+}
+
+// Reload only assets whose underlying flavor changed (e.g. fallback -> ideal
+// after a downloading asset-package resolve). A scoped sibling of
+// ReloadMedia_: same render-hold + re-mark + progress-bar dance, but it
+// unloads only the textures/meshes whose CAS blob actually changed -- and
+// no-ops entirely when nothing changed (the common warm-start case), so it
+// is safe to call unconditionally after any resolve.
+void GraphicsServer::ReloadChangedMedia_() {
+  assert(g_base->app_adapter->InGraphicsContext());
+  if (!renderer_ || !renderer_loaded_) {
+    return;
+  }
+
+  // Unload the textures/meshes the logic thread flagged for reload (the
+  // re-resolution already happened there -- FindAssetFile is logic-thread-
+  // only). If nothing was flagged there's nothing to reload -- bail without a
+  // render-hold or progress bar.
+  if (!g_base->assets->UnloadReloadPendingRendererBits()) {
+    return;
+  }
+
+  // Hold rendering until the reloads are queued and the progress bar is up,
+  // so we never render a frame referencing a just-unloaded texture.
+  SetRenderHold();
+
+  // Re-mark the now-unloaded assets for load, flip on progress-bar drawing,
+  // then tell the graphics thread to stop ignoring frame-defs. Use the
+  // fade-in variant (unlike the full ReloadMedia_ paths): a changed-media
+  // reload is usually tiny -- often a handful of textures after a warm
+  // resolve -- and finishes well within the bar's 2s fade-in ramp, so the
+  // full-screen bar stays invisible rather than flashing. This matters
+  // especially because this can run behind a construct-mode fade-out, where
+  // the "draw only the progress bar" hold-path would otherwise punch an
+  // instant bar through the black.
+  g_base->logic->event_loop()->PushCall([this] {
+    g_base->assets->MarkAllAssetsForLoad();
+    g_base->graphics->EnableProgressBar(true);
     PushRemoveRenderHoldCall();
   });
 }
@@ -419,6 +571,9 @@ void GraphicsServer::SetTextureCompressionTypes(
     texture_compression_types_ |= (0x01u << (static_cast<uint32_t>(i)));
   }
   texture_compression_types_set_ = true;
+  // Publish the thread-safe mirror for cross-thread readers
+  // (e.g. Assets::PreferredTextureProfile on the logic thread).
+  texture_compression_types_atomic_.store(texture_compression_types_);
 }
 
 void GraphicsServer::SetOrthoProjection(float left, float right, float bottom,
@@ -525,6 +680,11 @@ void GraphicsServer::UpdateCamOrientMatrix_() {
 
 void GraphicsServer::PushReloadMediaCall() {
   g_base->app_adapter->PushGraphicsContextCall([this] { ReloadMedia_(); });
+}
+
+void GraphicsServer::PushReloadChangedMediaCall() {
+  g_base->app_adapter->PushGraphicsContextCall(
+      [this] { ReloadChangedMedia_(); });
 }
 
 void GraphicsServer::PushComponentUnloadCall(

@@ -6,14 +6,16 @@
 #include <vector>
 
 #include "ballistica/base/audio/audio.h"
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
@@ -62,6 +64,13 @@ class GlobalsNodeType : public NodeType {
   BA_BOOL_ATTR(music_continuous, music_continuous, set_music_continuous);
   BA_STRING_ATTR(music, music, set_music);
   BA_INT_ATTR(music_count, music_count, SetMusicCount);
+  // Note: attrs are addressed over the wire by their position in this
+  // table, so new ones must be appended at the end (and need a protocol
+  // version bump); see the protocol-changes list in scene_v1.h. A plain
+  // append is only safe because nothing subclasses this type; a type
+  // with subclasses needs the _LATE macros (see 42/43 in that list).
+  BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
+  BA_BOOL_ATTR(legacy_spaz_limbs, legacy_spaz_limbs, set_legacy_spaz_limbs);
 #undef BA_NODE_TYPE_CLASS
 
   GlobalsNodeType()
@@ -93,7 +102,9 @@ class GlobalsNodeType : public NodeType {
         vr_near_clip(this),
         music_continuous(this),
         music(this),
-        music_count(this) {}
+        music_count(this),
+        gravity(this),
+        legacy_spaz_limbs(this) {}
 };
 
 static NodeType* node_type{};
@@ -134,6 +145,10 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // push our values globally.
   if (appmode->GetForegroundScene() == this->scene()) {
     SetAsForeground();
+  } else if (this->scene()->has_own_render_view()) {
+    // Scenes with views of their own never become the foreground one,
+    // but their view is theirs to set up.
+    PushToView_();
   }
 }
 
@@ -148,30 +163,7 @@ GlobalsNode::~GlobalsNode() {
 // values to the global state (since there can be multiple scenes in
 // existence, there has to be a single "foreground" globals node in control).
 void GlobalsNode::SetAsForeground() {
-  if (g_base && g_base->bg_dynamics != nullptr) {
-    g_base->bg_dynamics->SetDebrisFriction(debris_friction_);
-    g_base->bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
-  }
-  auto* cam = g_base->graphics->camera();
-
-  g_base->graphics->set_floor_reflection(floor_reflection());
-  cam->SetMode(camera_mode());
-  cam->set_vr_offset(Vector3f(vr_camera_offset()));
-  cam->set_happy_thoughts_mode(happy_thoughts_mode());
-  g_base->graphics->set_shadow_scale(shadow_scale()[0], shadow_scale()[1]);
-  cam->set_area_of_interest_bounds(
-      area_of_interest_bounds_[0], area_of_interest_bounds_[1],
-      area_of_interest_bounds_[2], area_of_interest_bounds_[3],
-      area_of_interest_bounds_[4], area_of_interest_bounds_[5]);
-  g_base->graphics->SetShadowRange(shadow_range_[0], shadow_range_[1],
-                                   shadow_range_[2], shadow_range_[3]);
-  g_base->graphics->set_shadow_offset(Vector3f(shadow_offset()));
-  g_base->graphics->set_shadow_ortho(shadow_ortho());
-  g_base->graphics->set_tint(Vector3f(tint()));
-
-  g_base->graphics->set_ambient_color(Vector3f(ambient_color()));
-  g_base->graphics->set_vignette_outer(Vector3f(vignette_outer()));
-  g_base->graphics->set_vignette_inner(Vector3f(vignette_inner()));
+  PushToView_();
 
 #if BA_VR_BUILD
   if (g_core->vr_mode()) {
@@ -191,6 +183,50 @@ void GlobalsNode::SetAsForeground() {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                 "Classic not present; music will not play.");
   }
+}
+
+// Push the values of ours that say how our scene's world should be
+// viewed (its look, what its camera should be up to) to our scene's
+// view.
+void GlobalsNode::PushToView_() {
+  // The bg-dynamics world that goes with the view is ours to set up
+  // along with it.
+  if (base::BGDynamicsWorld* bg_world = scene()->bg_dynamics_world()) {
+    bg_world->SetDebrisFriction(debris_friction_);
+    bg_world->SetDebrisKillHeight(debris_kill_height_);
+  }
+
+  auto* view = scene()->render_view();
+  auto* cam = view->camera();
+
+  view->set_floor_reflection(floor_reflection());
+  cam->SetMode(camera_mode());
+  cam->SetVROffset(Vector3f(vr_camera_offset()));
+  cam->set_happy_thoughts_mode(happy_thoughts_mode());
+  view->set_shadow_scale(shadow_scale()[0], shadow_scale()[1]);
+  cam->SetAreaOfInterestBounds(
+      area_of_interest_bounds_[0], area_of_interest_bounds_[1],
+      area_of_interest_bounds_[2], area_of_interest_bounds_[3],
+      area_of_interest_bounds_[4], area_of_interest_bounds_[5]);
+  view->SetShadowRange(shadow_range_[0], shadow_range_[1], shadow_range_[2],
+                       shadow_range_[3]);
+  view->set_shadow_offset(Vector3f(shadow_offset()));
+  view->set_shadow_ortho(shadow_ortho());
+  view->set_tint(Vector3f(tint()));
+
+  view->set_ambient_color(Vector3f(ambient_color()));
+  view->set_vignette_outer(Vector3f(vignette_outer()));
+  view->set_vignette_inner(Vector3f(vignette_inner()));
+}
+
+auto GlobalsNode::DrivesView() const -> bool {
+  // A scene with a view of its own is always in charge of it. Scenes
+  // sharing the main view take turns: whichever is the foreground one
+  // is.
+  if (scene()->has_own_render_view()) {
+    return scene()->globals_node() == this;
+  }
+  return IsCurrentGlobals();
 }
 
 auto GlobalsNode::IsCurrentGlobals() const -> bool {
@@ -220,9 +256,9 @@ auto GlobalsNode::GetStep() -> int64_t { return scene()->stepnum(); }
 
 void GlobalsNode::SetDebrisFriction(float val) {
   debris_friction_ = val;
-  if (IsCurrentGlobals()) {
-    if (g_base && g_base->bg_dynamics != nullptr) {
-      g_base->bg_dynamics->SetDebrisFriction(debris_friction_);
+  if (DrivesView()) {
+    if (base::BGDynamicsWorld* bg_world = scene()->bg_dynamics_world()) {
+      bg_world->SetDebrisFriction(debris_friction_);
     }
   }
 }
@@ -240,24 +276,25 @@ void GlobalsNode::SetVRNearClip(float val) {
 
 void GlobalsNode::SetFloorReflection(bool val) {
   floor_reflection_ = val;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_floor_reflection(floor_reflection_);
+  if (DrivesView()) {
+    scene()->render_view()->set_floor_reflection(floor_reflection_);
   }
 }
 
 void GlobalsNode::SetDebrisKillHeight(float val) {
   debris_kill_height_ = val;
-  if (IsCurrentGlobals()) {
-    if (g_base && g_base->bg_dynamics != nullptr) {
-      g_base->bg_dynamics->SetDebrisKillHeight(debris_kill_height_);
+  if (DrivesView()) {
+    if (base::BGDynamicsWorld* bg_world = scene()->bg_dynamics_world()) {
+      bg_world->SetDebrisKillHeight(debris_kill_height_);
     }
   }
 }
 
 void GlobalsNode::SetHappyThoughtsMode(bool val) {
   happy_thoughts_mode_ = val;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->camera()->set_happy_thoughts_mode(happy_thoughts_mode_);
+  if (DrivesView()) {
+    scene()->render_view()->camera()->set_happy_thoughts_mode(
+        happy_thoughts_mode_);
   }
 }
 
@@ -267,8 +304,9 @@ void GlobalsNode::SetShadowScale(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   shadow_scale_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_shadow_scale(shadow_scale_[0], shadow_scale_[1]);
+  if (DrivesView()) {
+    scene()->render_view()->set_shadow_scale(shadow_scale_[0],
+                                             shadow_scale_[1]);
   }
 }
 
@@ -280,9 +318,8 @@ void GlobalsNode::set_area_of_interest_bounds(const std::vector<float>& vals) {
   }
   area_of_interest_bounds_ = vals;
 
-  assert(g_base->graphics->camera());
-  if (IsCurrentGlobals()) {
-    g_base->graphics->camera()->set_area_of_interest_bounds(
+  if (DrivesView()) {
+    scene()->render_view()->camera()->SetAreaOfInterestBounds(
         area_of_interest_bounds_[0], area_of_interest_bounds_[1],
         area_of_interest_bounds_[2], area_of_interest_bounds_[3],
         area_of_interest_bounds_[4], area_of_interest_bounds_[5]);
@@ -295,9 +332,9 @@ void GlobalsNode::SetShadowRange(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   shadow_range_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->SetShadowRange(shadow_range_[0], shadow_range_[1],
-                                     shadow_range_[2], shadow_range_[3]);
+  if (DrivesView()) {
+    scene()->render_view()->SetShadowRange(shadow_range_[0], shadow_range_[1],
+                                           shadow_range_[2], shadow_range_[3]);
   }
 }
 
@@ -307,8 +344,8 @@ void GlobalsNode::SetShadowOffset(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   shadow_offset_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_shadow_offset(Vector3f(shadow_offset_));
+  if (DrivesView()) {
+    scene()->render_view()->set_shadow_offset(Vector3f(shadow_offset_));
   }
 }
 
@@ -318,15 +355,15 @@ void GlobalsNode::SetVRCameraOffset(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   vr_camera_offset_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->camera()->set_vr_offset(Vector3f(vr_camera_offset_));
+  if (DrivesView()) {
+    scene()->render_view()->camera()->SetVROffset(Vector3f(vr_camera_offset_));
   }
 }
 
 void GlobalsNode::SetShadowOrtho(bool val) {
   shadow_ortho_ = val;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_shadow_ortho(shadow_ortho_);
+  if (DrivesView()) {
+    scene()->render_view()->set_shadow_ortho(shadow_ortho_);
   }
 }
 
@@ -336,8 +373,8 @@ void GlobalsNode::SetTint(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   tint_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_tint(Vector3f(tint_[0], tint_[1], tint_[2]));
+  if (DrivesView()) {
+    scene()->render_view()->set_tint(Vector3f(tint_[0], tint_[1], tint_[2]));
   }
 }
 
@@ -371,8 +408,8 @@ void GlobalsNode::SetAmbientColor(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   ambient_color_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_ambient_color(Vector3f(ambient_color_));
+  if (DrivesView()) {
+    scene()->render_view()->set_ambient_color(Vector3f(ambient_color_));
   }
 }
 
@@ -382,8 +419,8 @@ void GlobalsNode::SetVignetteOuter(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   vignette_outer_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_vignette_outer(Vector3f(vignette_outer_));
+  if (DrivesView()) {
+    scene()->render_view()->set_vignette_outer(Vector3f(vignette_outer_));
   }
 }
 
@@ -393,8 +430,8 @@ void GlobalsNode::SetVignetteInner(const std::vector<float>& vals) {
                     PyExcType::kValue);
   }
   vignette_inner_ = vals;
-  if (IsCurrentGlobals()) {
-    g_base->graphics->set_vignette_inner(Vector3f(vignette_inner_));
+  if (DrivesView()) {
+    scene()->render_view()->set_vignette_inner(Vector3f(vignette_inner_));
   }
 }
 
@@ -423,7 +460,24 @@ void GlobalsNode::SetCameraMode(const std::string& val) {
     throw Exception("Invalid camera mode: '" + val
                     + R"('; expected "rotate" or "follow")");
   }
-  if (IsCurrentGlobals()) g_base->graphics->camera()->SetMode(camera_mode_);
+  if (DrivesView()) {
+    scene()->render_view()->camera()->SetMode(camera_mode_);
+  }
+}
+
+auto GlobalsNode::GetGravity() const -> std::vector<float> {
+  dVector3 grav;
+  dWorldGetGravity(scene()->dynamics()->ode_world(), grav);
+  return {static_cast<float>(grav[0]), static_cast<float>(grav[1]),
+          static_cast<float>(grav[2])};
+}
+
+void GlobalsNode::SetGravity(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for gravity",
+                    PyExcType::kValue);
+  }
+  dWorldSetGravity(scene()->dynamics()->ode_world(), vals[0], vals[1], vals[2]);
 }
 
 void GlobalsNode::SetAllowKickIdlePlayers(bool val) {

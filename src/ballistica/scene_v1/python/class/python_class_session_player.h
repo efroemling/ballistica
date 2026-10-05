@@ -37,6 +37,8 @@ class PythonClassSessionPlayer : public PythonClass {
   static auto SetName(PythonClassSessionPlayer* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto ResetInput(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto SendFeedback(PythonClassSessionPlayer* self, PyObject* args,
+                           PyObject* keywds) -> PyObject*;
   static auto AssignInputCall(PythonClassSessionPlayer* self, PyObject* args,
                               PyObject* keywds) -> PyObject*;
   static auto RemoveFromGame(PythonClassSessionPlayer* self) -> PyObject*;
@@ -53,6 +55,7 @@ class PythonClassSessionPlayer : public PythonClass {
   static auto SetNode(PythonClassSessionPlayer* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto GetIcon(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetIconDepiction(PythonClassSessionPlayer* self) -> PyObject*;
   static auto Dir(PythonClassSessionPlayer* self) -> PyObject*;
   Object::WeakRef<Player>* player_;
   static auto nb_bool(PythonClassSessionPlayer* self) -> int;

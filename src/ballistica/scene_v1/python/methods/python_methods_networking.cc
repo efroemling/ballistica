@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -17,6 +17,8 @@
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/scene_v1/support/huffman.h"
+#include "ballistica/scene_v1/support/zstd_packet_codec.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
@@ -297,14 +299,18 @@ static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
-  int version;
-  static const char* kwlist[] = {"enable", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "p", const_cast<char**>(kwlist), &enable, &version)) {
+  int optional{};
+  static const char* kwlist[] = {"enable", "optional", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p|$p",
+                                   const_cast<char**>(kwlist), &enable,
+                                   &optional)) {
     return nullptr;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->set_require_client_authentication(static_cast<bool>(enable));
+  appmode->set_client_auth_mode(!enable ? classic::ClientAuthMode::kOff
+                                : optional
+                                    ? classic::ClientAuthMode::kOptional
+                                    : classic::ClientAuthMode::kRequired);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -314,9 +320,14 @@ static PyMethodDef PySetAuthenticateClientsDef = {
     (PyCFunction)PySetAuthenticateClients,  // method
     METH_VARARGS | METH_KEYWORDS,           // flags
 
-    "set_authenticate_clients(enable: bool) -> None\n"
+    "set_authenticate_clients(enable: bool, *, optional: bool = False)"
+    " -> None\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    "With optional, auth is offered (while we're online) but not\n"
+    "required: joiners that can authenticate do, anyone else joins\n"
+    "unauthenticated. Affects connections made from then on.",
 };
 
 // ------------------------------- set_admins ----------------------------------
@@ -351,6 +362,84 @@ static PyMethodDef PySetAdminsDef = {
     "set_admins(admins: list[str]) -> None\n"
     "\n"
     "(internal)",
+};
+
+// ----------------------- set_hosting_asset_packages --------------------------
+
+static auto PySetHostingAssetPackages(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* packages_obj;
+  static const char* kwlist[] = {"packages", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &packages_obj)) {
+    return nullptr;
+  }
+  // Numeric ids; the engine keys packages by them as text.
+  std::vector<std::string> packages;
+  for (int64_t apvernum : Python::GetInts64(packages_obj)) {
+    packages.push_back(std::to_string(apvernum));
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  appmode->SetHostingAssetPackages(packages);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostingAssetPackagesDef = {
+    "set_hosting_asset_packages",            // name
+    (PyCFunction)PySetHostingAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "set_hosting_asset_packages(packages: Sequence[int]) -> None\n"
+    "\n"
+    "Set the asset-package-versions this app run hosts with.\n"
+    "\n"
+    "This should be the launch metascan snapshot (the app's hosting\n"
+    "package universe; see asset-packages.md decision #36). Advertised\n"
+    "to LAN scanners in v2 host-query responses.\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_host_password -------------------------------
+
+static auto PySetHostPassword(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* password_obj;
+  static const char* kwlist[] = {"password", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &password_obj)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  std::string password;
+  if (password_obj != Py_None) {
+    password = Python::GetString(password_obj);
+  }
+  appmode->SetHostPassword(password);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostPasswordDef = {
+    "set_host_password",             // name
+    (PyCFunction)PySetHostPassword,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_host_password(password: str | None) -> None\n"
+    "\n"
+    "Set the password clients must provide to join us.\n"
+    "\n"
+    "Pass None or an empty string for no password. Advertised (as a\n"
+    "required-flag only) in pre-join requirements-query responses.\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    ":meta private:",
 };
 
 // --------------------- set_enable_default_kick_voting ------------------------
@@ -398,11 +487,18 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // be printed and most connection attempts will be silent todo: could
   // generalize this to pass all results to a callback instead
   int print_progress = 1;
-  static const char* kwlist[] = {"address", "port", "print_progress", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ip",
-                                   const_cast<char**>(kwlist), &address_obj,
-                                   &port, &print_progress)) {
+  PyObject* password_obj{Py_None};
+  int prepped = 0;
+  static const char* kwlist[] = {"address",  "port",    "print_progress",
+                                 "password", "prepped", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ipOp", const_cast<char**>(kwlist), &address_obj,
+          &port, &print_progress, &password_obj, &prepped)) {
     return nullptr;
+  }
+  std::string password;
+  if (password_obj != Py_None) {
+    password = Python::GetString(password_obj);
   }
 
   // Error if we're not in our app-mode.
@@ -427,8 +523,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } catch (const std::exception&) {
     g_base->ScreenMessage(
-        g_base->assets->GetResourceString("invalidAddressErrorText"),
-        {1, 0, 0});
+        base::BuiltinStrings::Net::InvalidAddress()->Evaluate(), {1, 0, 0});
     Py_RETURN_NONE;
   }
   g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [&s] {
@@ -436,7 +531,8 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
            + ":" + std::to_string(s.Port()) + ".";
   });
   appmode->connections()->PushHostConnectedUDPCall(
-      s, static_cast<bool>(print_progress));
+      s, static_cast<bool>(print_progress), password,
+      static_cast<bool>(prepped));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -447,7 +543,8 @@ static PyMethodDef PyConnectToPartyDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "connect_to_party(address: str, port: int | None = None,\n"
-    "  print_progress: bool = True) -> None\n"
+    "  print_progress: bool = True, password: str | None = None,\n"
+    "  prepped: bool = False) -> None\n"
     "\n"
     "(internal)",
 };
@@ -791,9 +888,19 @@ static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
       appmode->GetScanResults();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : results) {
-    PyList_Append(py_list, Py_BuildValue("{ssss}", "display_string",
-                                         i.display_string.c_str(), "address",
-                                         i.address.c_str()));
+    PyObject* py_dict =
+        Py_BuildValue("{ss ss sO ss si si sO si si}",              // format
+                      "display_string", i.display_string.c_str(),  //
+                      "address", i.address.c_str(),                //
+                      "has_v2", i.has_v2 ? Py_True : Py_False,     //
+                      "party_name", i.party_name.c_str(),          //
+                      "party_size", i.party_size,                  //
+                      "party_max_size", i.party_max_size,          //
+                      "auth_required", i.auth_required ? Py_True : Py_False,  //
+                      "build_number", i.build_number,                         //
+                      "protocol_version", i.protocol_version);
+    PyList_Append(py_list, py_dict);
+    Py_DECREF(py_dict);
   }
   return py_list;
   BA_PYTHON_CATCH;
@@ -804,7 +911,14 @@ static PyMethodDef PyHostScanCycleDef = {
     (PyCFunction)PyHostScanCycle,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "host_scan_cycle() -> list[dict[str, str]]\n"
+    "host_scan_cycle() -> list[dict[str, Any]]\n"
+    "\n"
+    "Run a lan-scan cycle and return results gathered so far.\n"
+    "\n"
+    "Hosts answering only the old v1 query form have ``has_v2`` False\n"
+    "and carry defaults for the v2-only fields (``party_name``,\n"
+    "``party_size``, ``party_max_size``, ``auth_required``,\n"
+    "``build_number``, ``protocol_version``).\n"
     "\n"
     "(internal)\n"
     "\n"
@@ -902,7 +1016,7 @@ static PyMethodDef PyChatMessageDef = {
     (PyCFunction)PyChatMessage,    // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "chatmessage(message: str | babase.Lstr,\n"
+    "chatmessage(message: str | babase.Lstr | babase.LangStr,\n"
     "  clients: Sequence[int] | None = None,\n"
     "  sender_override: str | None = None) -> None\n"
     "\n"
@@ -942,8 +1056,97 @@ static PyMethodDef PyGetChatMessagesDef = {
 
 // -----------------------------------------------------------------------------
 
+// ---------------------- set_packet_compression_dict --------------------------
+
+static auto PySetPacketCompressionDict(PyObject* self, PyObject* args)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* bytes_obj;
+  if (!PyArg_ParseTuple(args, "O", &bytes_obj)) {
+    return nullptr;
+  }
+  if (!PyBytes_Check(bytes_obj)) {
+    throw Exception("expected bytes", PyExcType::kType);
+  }
+  auto* data = reinterpret_cast<const uint8_t*>(PyBytes_AS_STRING(bytes_obj));
+  auto size = static_cast<size_t>(PyBytes_GET_SIZE(bytes_obj));
+  std::vector<uint8_t> dict(data, data + size);
+  // Install (once per app run; replacing would break live connections).
+  if (g_scene_v1->zstd_packets == nullptr) {
+    g_scene_v1->zstd_packets = new ZstdPacketCodec(dict);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetPacketCompressionDictDef = {
+    "set_packet_compression_dict",  // name
+    PySetPacketCompressionDict,     // method
+    METH_VARARGS,                   // flags
+
+    "set_packet_compression_dict(data: bytes) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Install the zstd dictionary used to compress scene game packets\n"
+    "(bacommon.packetzstddict). Called once at app start; connections\n"
+    "made before it stay on the legacy huffman.",
+};
+
+// --------------------- packet_compression_selftest ---------------------------
+
+static auto PyPacketCompressionSelftest(PyObject* self, PyObject* args)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  // Round-trip a representative packet through the installed codec and
+  // report sizes: {'codec': 'zstd'|'huffman', 'raw': n, 'compressed': n}.
+  // A dev aid for checking a platform's zstd link at runtime.
+  std::vector<uint8_t> sample;
+  sample.push_back(17);  // BA_SCENEPACKET_MESSAGE-ish type byte.
+  for (int i = 0; i < 40; ++i) {
+    // Something like a run of compact set-attr-float commands.
+    const uint8_t chunk[] = {9, 23, 2, 6, 0, 0, 0x80, 0x3f,
+                             9, 23, 2, 8, 0, 0, 0,    0};
+    sample.insert(sample.end(), chunk, chunk + sizeof(chunk));
+  }
+  const char* codec = "huffman";
+  std::vector<uint8_t> packed;
+  std::vector<uint8_t> unpacked;
+  if (g_scene_v1->zstd_packets) {
+    codec = "zstd";
+    packed = g_scene_v1->zstd_packets->compress(sample);
+    unpacked = g_scene_v1->zstd_packets->decompress(packed);
+  } else {
+    packed = g_scene_v1->huffman->compress(sample);
+    unpacked = g_scene_v1->huffman->decompress(packed);
+  }
+  if (unpacked != sample) {
+    throw Exception("packet compression round-trip mismatch");
+  }
+  return Py_BuildValue("{s:s,s:n,s:n}", "codec", codec, "raw",
+                       static_cast<Py_ssize_t>(sample.size()), "compressed",
+                       static_cast<Py_ssize_t>(packed.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPacketCompressionSelftestDef = {
+    "packet_compression_selftest",  // name
+    PyPacketCompressionSelftest,    // method
+    METH_VARARGS,                   // flags
+
+    "packet_compression_selftest() -> dict\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Round-trip a sample packet through the active packet codec and\n"
+    "return {'codec', 'raw', 'compressed'}; raises if the round trip\n"
+    "fails. For checking a platform's zstd link at runtime.",
+};
+
 auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PySetPacketCompressionDictDef,
+      PyPacketCompressionSelftestDef,
       PyHaveConnectedClientsDef,
       PyEndHostScanningDef,
       PyHostScanCycleDef,
@@ -961,6 +1164,8 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
       PySetAdminsDef,
+      PySetHostingAssetPackagesDef,
+      PySetHostPasswordDef,
       PySetEnableDefaultKickVotingDef,
       PySetPublicPartyMaxSizeDef,
       PySetPublicPartyQueueEnabledDef,

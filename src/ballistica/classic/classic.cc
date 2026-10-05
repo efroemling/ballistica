@@ -34,7 +34,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_baclassic exec begin");
 
   // Create our feature-set's C++ front-end.
@@ -62,7 +62,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_ui_v1 == nullptr);
   g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_baclassic exec end");
 }
 
@@ -256,9 +256,9 @@ void ClassicFeatureSet::PlayMusic(const std::string& music_type,
 
 void ClassicFeatureSet::GetClassicChestDisplayInfo(
     const std::string& id, std::string* texclosed, std::string* texclosedtint,
-    Vector3f* color, Vector3f* tint, Vector3f* tint2) {
+    Vector3f* color, Vector3f* tint, Vector3f* tint2, Vector3f* tint3) {
   python->GetClassicChestDisplayInfo(id, texclosed, texclosedtint, color, tint,
-                                     tint2);
+                                     tint2, tint3);
 }
 
 }  // namespace ballistica::classic

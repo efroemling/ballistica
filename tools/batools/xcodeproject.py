@@ -2,8 +2,6 @@
 #
 """XCode related functionality."""
 
-from __future__ import annotations
-
 import os
 import hashlib
 from typing import TYPE_CHECKING
@@ -65,7 +63,6 @@ class Updater:
         sources: list[str],
         projname: str,
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
         if not path.endswith('.xcodeproj'):
             raise RuntimeError(f"Path does not end in .xcodeproj: '{path}'.")
 

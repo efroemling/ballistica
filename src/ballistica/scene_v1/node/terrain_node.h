@@ -8,6 +8,7 @@
 
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node.h"
+#include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::scene_v1 {
 
@@ -17,6 +18,7 @@ class TerrainNode : public Node {
   explicit TerrainNode(Scene* scene);
   ~TerrainNode() override;
   void Draw(base::FrameDef* frame_def) override;
+  void DrawDebug_(base::FrameDef* frame_def);
   auto visible_in_reflections() const -> bool {
     return visible_in_reflections_;
   }
@@ -59,11 +61,22 @@ class TerrainNode : public Node {
   void set_materials(const std::vector<Material*>& vals);
   auto vr_only() const -> bool { return vr_only_; }
   void set_vr_only(bool val) { vr_only_ = val; }
+  auto position() const -> std::vector<float> { return position_; }
+  void SetPosition(const std::vector<float>& vals);
+  auto rotate() const -> std::vector<float> { return rotate_; }
+  void SetRotate(const std::vector<float>& vals);
 
  private:
   void AddToBGDynamics();
   void RemoveFromBGDynamics();
+
+  /// Rebuild transform_ from position_/rotate_ and push it out to whoever
+  /// is holding a copy of it (physics, bg-dynamics).
+  void UpdateTransform_();
   SceneCollisionMesh* bg_dynamics_collision_mesh_;
+  // The bg-dynamics world we've been added to, held so it is there to
+  // be taken out of again.
+  Object::Ref<base::BGDynamicsWorld> bg_dynamics_world_;
   bool vr_only_;
   bool bumper_;
   bool affect_bg_dynamics_;
@@ -84,6 +97,10 @@ class TerrainNode : public Node {
   float reflection_scale_r_, reflection_scale_g_, reflection_scale_b_;
   std::vector<float> color_;
   float color_r_, color_g_, color_b_;
+  std::vector<float> position_ = {0.0f, 0.0f, 0.0f};
+  std::vector<float> rotate_ = {0.0f, 0.0f, 0.0f};
+  Matrix44f transform_{kMatrix44fIdentity};
+  bool transformed_{};
 };
 
 }  // namespace ballistica::scene_v1

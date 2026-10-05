@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,6 +16,7 @@
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
@@ -24,6 +26,7 @@
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
@@ -37,6 +40,12 @@ const int kDevConsoleLineLimit{80};
 const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
+
+// Python-terminal input-line text placement (bottom-relative, in
+// base-scale units).
+const float kInputTextX{15.0f};
+const float kInputTextY{14.5f};
+const float kInputTextScale{0.5f};
 
 enum class DevConsoleHAnchor_ {
   kLeft,
@@ -183,8 +192,12 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
                      float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
-  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
-  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+  auto* tex = g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle);
+  // Premultiply rgb by alpha for the premultiplied texture so faded rects
+  // composite 'over' correctly (see docs/design/premultiplied-alpha.md).
+  float cmul = tex->premultiplied() ? alpha : 1.0f;
+  c.SetColor(bgcolor.x * cmul, bgcolor.y * cmul, bgcolor.z * cmul, alpha);
+  c.SetTexture(tex);
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
@@ -203,7 +216,13 @@ static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale, float x,
     c.Translate(x, y, kDevConsoleZDepth);
     c.Scale(tscale, tscale, 1.0f);
     int elem_count = tgrp->GetElementCount();
-    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, alpha);
+    // OS-rendered text-group textures are premultiplied-alpha; premultiply
+    // rgb by alpha so faded text composites 'over' correctly (see
+    // docs/design/premultiplied-alpha.md).
+    float cmul = (elem_count > 0 && tgrp->GetElementTexture(0)->premultiplied())
+                     ? alpha
+                     : 1.0f;
+    c.SetColor(fgcolor.x * cmul, fgcolor.y * cmul, fgcolor.z * cmul, alpha);
     c.SetFlatness(1.0f);
     for (int e = 0; e < elem_count; e++) {
       c.SetTexture(tgrp->GetElementTexture(e));
@@ -240,6 +259,16 @@ class DevConsole::Widget_ {
   virtual void HandleMouseUp(float mx, float my) {}
   virtual void HandleMouseCancel(float mx, float my) {}
   virtual void Draw(RenderPass* pass, float bottom) = 0;
+
+ protected:
+  /// Feedback for a button-like widget being activated. Lives here so
+  /// every dev-console button sounds the same; call it from the spot
+  /// that runs the button's callback, not from the callbacks
+  /// themselves (those are also reachable from key bindings and
+  /// deferred calls, which should stay silent).
+  void PlayActivateSound_() {
+    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioClick01);
+  }
 };
 
 class DevConsole::Text_ : public DevConsole::Widget_ {
@@ -290,10 +319,15 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   DevButtonStyle_ style;
   bool disabled;
 
+  /// Whether a press plays the standard activate sound. Off for buttons
+  /// whose calls make their own (a window swish, say), so the two don't
+  /// stack.
+  bool sound;
+
   template <typename F>
   Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
-          DevButtonStyle_ style, bool disabled, const F& lambda)
+          DevButtonStyle_ style, bool disabled, bool sound, const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -303,6 +337,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         text_scale{text_scale},
         style{style},
         disabled{disabled},
+        sound{sound},
         mesh(0.0f, 0.0f, 0.0f, width, height,
              NinePatchMesh::BorderForRadius(corner_radius, width, height),
              NinePatchMesh::BorderForRadius(corner_radius, height, width),
@@ -331,6 +366,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
+        if (sound) {
+          PlayActivateSound_();
+        }
         if (call.exists()) {
           call.get()->Run();
         }
@@ -494,6 +532,7 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
+        PlayActivateSound_();
         on = !on;
         auto&& call = on ? on_call : off_call;
         if (call.exists()) {
@@ -582,6 +621,7 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         // unselected for a frame before the deferred call runs.
         selected = true;
 
+        PlayActivateSound_();
         if (call.exists()) {
           call.get()->Run();
         }
@@ -658,6 +698,14 @@ void DevConsole::ApplyAppConfig() {
 
 void DevConsole::OnUIScaleChanged() {
   g_base->logic->event_loop()->PushCall([this] {
+    // If we're not currently shown there's nothing to rebuild;
+    // activating from inactive refreshes everything anyway (see
+    // CycleState_). Refreshing while inactive is not merely wasted
+    // work — some tab refreshes (the Python terminal's) require an
+    // active console and would raise.
+    if (!IsActive()) {
+      return;
+    }
     RefreshCloseButton_();
     RefreshTabButtons_();
     RefreshTabContents_();
@@ -775,7 +823,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
                            float height, PyObject* call,
                            const char* h_anchor_str, float label_scale,
                            float corner_radius, const char* style_str,
-                           bool disabled) {
+                           bool disabled, bool sound) {
   assert(g_base->InLogicThread());
 
   auto style = ButtonStyleFromStr_(style_str);
@@ -783,7 +831,7 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
-      disabled, [this, callref = PythonRef::Acquired(call)] {
+      disabled, sound, [this, callref = PythonRef::Acquired(call)] {
         if (callref.get() != Py_None) {
           callref.Call();
         }
@@ -794,12 +842,12 @@ void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
   widgets_.emplace_back(std::make_unique<Button_>(
       "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
-      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
+      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false, true,
       [this] { Exec(); }));
   widgets_.emplace_back(std::make_unique<Button_>(
       "Copy History", 0.4f * bs, DevConsoleHAnchor_::kRight, -75.0f * bs,
       Height() - 18.0f * bs, 72.0f * bs, 15.0f * bs, 4.0 * bs,
-      DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
+      DevButtonStyle_::kNormal, false, true, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }
 
@@ -849,9 +897,52 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
 
   if (button == 1 && python_terminal_visible_) {
     python_terminal_pressed_ = true;
+
+    // With direct text input, a click on the input line places the
+    // carat.
+    float bs = BaseScale();
+    if (CaratShown_() && y < bottom + 32.0f * bs) {
+      if (auto pos = CaratPosAtPoint_(x, y - bottom)) {
+        carat_char_ = *pos;
+        carat_dirty_ = true;
+      }
+    }
   }
 
   return true;
+}
+
+auto DevConsole::CaratShown_() const -> bool {
+  // Where terminal input goes through the platform string-editor dialog,
+  // it draws its own blinking cursor (and two of those flashing at once
+  // looks broken), so we show none. With direct keyboard input (or no
+  // string editor) typing really does land here, so the carat stays.
+  return g_base->ui->UIHasDirectKeyboardInput()
+         || !g_base->platform->HaveStringEditor();
+}
+
+auto DevConsole::CaratPosAtPoint_(float x, float y) -> std::optional<int> {
+  // Undo the input line's draw transform (x/y bottom-relative here).
+  float bs = BaseScale();
+  float scale{kInputTextScale * bs};
+  auto pos = input_text_group_.GetCaratPosAtPoint(
+      input_string_, TextMesh::HAlign::kLeft, TextMesh::VAlign::kNone,
+      (x - kInputTextX * bs) / scale, (y - kInputTextY * bs) / scale,
+      TextGroup::CaratHitMode::kContainingChar);
+  if (!pos.has_value()) {
+    // Some OS-span measure is still cold. Our warm-up on text changes
+    // should generally have beaten any click here, so we're curious
+    // whether this ever happens in practice. (Note: debug builds
+    // deliberately report some warm spans cold; expect this there
+    // occasionally.)
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning, [this] {
+      return "DevConsole: text measures not ready for click-to-position;"
+             " ignoring (len "
+             + std::to_string(Utils::UTF8StringLength(input_string_.c_str()))
+             + ").";
+    });
+  }
+  return pos;
 }
 
 auto DevConsole::Width() -> float {
@@ -891,8 +982,7 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
     if (y > bottom) {
       // If we're not getting fed keyboard events and have a string editor
       // available, invoke it.
-      if (!g_base->ui->UIHasDirectKeyboardInput()
-          && g_base->platform->HaveStringEditor()) {
+      if (!CaratShown_()) {
         InvokeStringEditor_();
       }
     }
@@ -971,7 +1061,7 @@ void DevConsole::InputAdapterFinish() {
   string_edit_adapter_.Release();
 }
 
-auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyPress(const BAKeysym* keysym) -> bool {
   assert(g_base->InLogicThread());
 
   // Any presses or releases cancels repeat actions.
@@ -983,7 +1073,7 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
 
   // Stuff we always look for.
   switch (keysym->sym) {
-    case SDLK_ESCAPE:
+    case BAK_ESCAPE:
       Dismiss();
       return true;
     default:
@@ -1007,98 +1097,98 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     bool do_move_to_beginning{};
     bool do_kill_line{};
     switch (keysym->sym) {
-      case SDLK_BACKSPACE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_BACKSPACE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_backspace = true;
         } else {
           do_backspace = true;
         }
         break;
       }
-      case SDLK_DELETE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_DELETE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         } else {
           do_forward_delete = true;
         }
         break;
       }
-      case SDLK_HOME:
+      case BAK_HOME:
         do_move_to_beginning = true;
         break;
-      case SDLK_END:
+      case BAK_END:
         do_move_to_end = true;
         break;
-      case SDLK_UP:
+      case BAK_UP:
         do_history_up = true;
         break;
-      case SDLK_DOWN:
+      case BAK_DOWN:
         do_history_down = true;
         break;
-      case SDLK_RIGHT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_RIGHT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         } else {
           do_carat_right = true;
         }
         break;
-      case SDLK_LEFT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_LEFT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         } else {
           do_carat_left = true;
         }
         break;
-      case SDLK_KP_ENTER:
-      case SDLK_RETURN: {
+      case BAK_KP_ENTER:
+      case BAK_RETURN: {
         Exec();
         break;
       }
 
       // Wheeee emacs key shortcuts!!
-      case SDLK_n:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_n:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_down = true;
         }
         break;
-      case SDLK_f:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_f:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_right = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         }
         break;
-      case SDLK_b:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_b:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_left = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         }
         break;
-      case SDLK_p:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_p:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_up = true;
         }
         break;
-      case SDLK_a:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_a:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_beginning = true;
         }
         break;
-      case SDLK_d:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_d:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_forward_delete = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         }
         break;
-      case SDLK_e:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_e:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_end = true;
         }
         break;
-      case SDLK_k:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_k:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_kill_line = true;
         }
       default: {
@@ -1287,7 +1377,7 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   return true;
 }
 
-auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyRelease(const BAKeysym* keysym) -> bool {
   // Any presses or releases cancels repeat actions.
   key_repeater_.Clear();
 
@@ -1406,7 +1496,7 @@ void DevConsole::CycleState(bool backwards) {
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
     }
   }
-  g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
+  g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
@@ -1513,15 +1603,21 @@ void DevConsole::Draw(FrameDef* frame_def) {
 
   float bottom = Bottom_();
 
+  // Our backing, stripe, bottom border, and drop shadow all extend to
+  // the edges of the visible area (the reported virtual outer rect)
+  // rather than stopping at the virtual rect; otherwise we look oddly
+  // cut off when margins are present. Content stays in virtual coords.
+  Rect vout = g_base->graphics->reported_virtual_outer_rect();
+
   float border_height{3.0f};
   {
-    bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
-                                pass->virtual_width(),
-                                (pass->virtual_height() - bottom));
-    stripe_mesh_.SetPositionAndSize(0, bottom + 15.0f * bs, kDevConsoleZDepth,
-                                    pass->virtual_width(), 15.0f * bs);
-    border_mesh_.SetPositionAndSize(0, bottom - border_height * bs,
-                                    kDevConsoleZDepth, pass->virtual_width(),
+    bg_mesh_.SetPositionAndSize(vout.l, bottom, kDevConsoleZDepth, vout.width(),
+                                (vout.t - bottom));
+    stripe_mesh_.SetPositionAndSize(vout.l, bottom + 15.0f * bs,
+                                    kDevConsoleZDepth, vout.width(),
+                                    15.0f * bs);
+    border_mesh_.SetPositionAndSize(vout.l, bottom - border_height * bs,
+                                    kDevConsoleZDepth, vout.width(),
                                     border_height * bs);
     {
       SimpleComponent c(pass);
@@ -1549,28 +1645,52 @@ void DevConsole::Draw(FrameDef* frame_def) {
   {
     SimpleComponent c(pass);
     c.SetTransparent(true);
-    c.SetColor(0.03, 0, 0.09, 0.9f);
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+    // kTexturesSoftRectVertical is premultiplied-alpha, so premultiply the
+    // modulate rgb by its alpha (0.9) to composite 'over' correctly (premult
+    // blend adds rgb directly rather than weighting it by alpha).
+    c.SetColor(0.03f * 0.9f, 0.0f, 0.09f * 0.9f, 0.9f);
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        BuiltinTextureID::kTexturesSoftRectVertical));
     {
-      auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
-                                      bottom - (border_height * 0.75f) * bs});
+      auto scissor = c.ScopedScissor(
+          {vout.l, vout.b, vout.r, bottom - (border_height * 0.75f) * bs});
       auto xf = c.ScopedTransform();
-      c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
-      c.Scale(pass->virtual_width() * 1.2f, 600.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      c.Translate((vout.l + vout.r) * 0.5f, bottom + 160.0f);
+      c.Scale(vout.width() * 1.2f, 600.0f);
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     }
   }
 
   if (python_terminal_visible_) {
+    // Report our input line as the app's live text-editing target
+    // (drives OS IME positioning/etc). We outrank any bauiv1 widget
+    // that might also be editing, since text input comes to us first.
+    // Skip while transitioning out (state kInactive still draws briefly).
+    if (state_ != State_::kInactive) {
+      g_base->ui->ReportTextEditing(
+          Rect{0.0f, bottom + 15.0f * bs, pass->virtual_width(),
+               bottom + 30.0f * bs},
+          UI::TextEditSource::kDevConsole);
+    }
+
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
+      // Get click-to-position measures warming so they're ready before
+      // any click (see CaratPosAtPoint_()).
+      if (CaratShown_()) {
+        g_base->text_graphics->WarmUpCaratMeasuresAsync(input_string_);
+      }
     }
     {
       SimpleComponent c(pass);
       c.SetFlatness(1.0f);
       c.SetTransparent(true);
-      c.SetColor(0.4f, 0.33f, 0.45f, 0.8f);
+      // OS-rendered text-group textures are premultiplied-alpha, so
+      // premultiply this faint (alpha 0.8) rgb ourselves so the build/title
+      // labels don't draw over-bright under premult blend.
+      c.SetColor(0.4f * 0.8f, 0.33f * 0.8f, 0.45f * 0.8f, 0.8f);
 
       // Build.
       int elem_count = built_text_group_.GetElementCount();
@@ -1616,42 +1736,55 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.SetTexture(input_text_group_.GetElementTexture(e));
         {
           auto xf = c.ScopedTransform();
-          c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-          c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+          c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                      kDevConsoleZDepth);
+          c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
           c.DrawMesh(input_text_group_.GetElementMesh(e));
         }
       }
     }
 
     // Carat.
-    if (!carat_mesh_.exists() || carat_dirty_) {
+    bool show_carat = CaratShown_();
+    if (show_carat && (!carat_mesh_.exists() || carat_dirty_)) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
-      UpdateCarat_();
+      if (UpdateCarat_()) {
+        carat_dirty_ = false;
+      }
     }
     millisecs_t app_time = pass->frame_def()->app_time_millisecs();
     millisecs_t since_change = app_time - last_carat_x_change_time_;
-    if (since_change < 300 || since_change % 1000 < 500) {
+    if (show_carat && (since_change < 300 || since_change % 1000 < 500)) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadow));
-      c.SetColor(0.8, 0.0, 1.0, 0.3f);
+      c.SetTexture(
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesShadow));
+      // kTexturesShadow is now a premultiplied-alpha texture, so this draws
+      // with premult (additive) blend. Premultiply the modulate rgb by its
+      // alpha (0.3) so the glow keeps its original brightness instead of
+      // blowing out (premult-blend adds rgb directly rather than weighting it
+      // by alpha).
+      c.SetColor(0.8f * 0.3f, 0.0f * 0.3f, 1.0f * 0.3f, 0.3f);
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();
-        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                    kDevConsoleZDepth);
+        c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_glow_mesh_.get());
       }
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();
-        c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
-        c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
+        c.Translate(kInputTextX * bs, bottom + kInputTextY * bs,
+                    kDevConsoleZDepth);
+        c.Scale(kInputTextScale * bs, kInputTextScale * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_mesh_.get());
       }
@@ -1671,8 +1804,13 @@ void DevConsole::Draw(FrameDef* frame_def) {
       for (auto i = output_lines_.rbegin(); i != output_lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
-          c.SetColor(i->color.x, i->color.y, i->color.z, i->color.a);
-          c.SetTexture(i->GetText().GetElementTexture(e));
+          auto* tex = i->GetText().GetElementTexture(e);
+          // Premultiply rgb by alpha for premultiplied text textures so faded
+          // output lines don't draw over-bright.
+          float cmul = tex->premultiplied() ? i->color.a : 1.0f;
+          c.SetColor(i->color.x * cmul, i->color.y * cmul, i->color.z * cmul,
+                     i->color.a);
+          c.SetTexture(tex);
           {
             auto xf = c.ScopedTransform();
             c.Translate(h, v + 2, kDevConsoleZDepth);
@@ -1753,29 +1891,20 @@ auto DevConsole::PasteFromClipboard() -> bool {
     if (python_terminal_visible_) {
       if (g_base->ClipboardIsSupported()) {
         if (g_base->ClipboardHasText()) {
-          auto text = g_base->ClipboardGetText();
-
-          // Strip trailing newlines (if we have a single line ending with a
-          // newline we want to allow that).
-
-          // Find the position of the last character that is not a newline.
-          size_t endpos = text.find_last_not_of("\n\r");
-          if (std::string::npos != endpos) {
-            // Erase all characters after the last non-newline character.
-            text.erase(endpos + 1);
-          } else {
-            // The string is entirely newlines.
-            text.clear();
-          }
-
-          if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
-            g_base->ScreenMessage("Can only paste single lines of text.",
-                                  Vector3f(1.0f, 0.0f, 0.0f));
-          } else {
-            HandleTextEditing(text);
-          }
-          // Ok, we either pasted or complained, so consider it handled.
+          g_base->ClipboardGetTextAsync([](std::optional<std::string> text) {
+            // Text may arrive late (OS permission prompts, etc.); apply
+            // to whatever console exists at that point, provided its
+            // terminal is still up.
+            auto* console = g_base->ui->dev_console();
+            if (!text.has_value() || console == nullptr
+                || console->state_ == State_::kInactive
+                || !console->python_terminal_visible_) {
+              return;
+            }
+            console->ApplyPastedText_(*text);
+          });
+          // Ok, we've kicked off a paste (which may complain when it
+          // lands), so consider it handled.
           return true;
         }
       }
@@ -1784,14 +1913,49 @@ auto DevConsole::PasteFromClipboard() -> bool {
   return false;
 }
 
-void DevConsole::UpdateCarat_() {
+void DevConsole::ApplyPastedText_(const std::string& text_in) {
+  assert(g_base->InLogicThread());
+  std::string text = text_in;
+
+  // Strip trailing newlines (if we have a single line ending with a
+  // newline we want to allow that).
+
+  // Find the position of the last character that is not a newline.
+  size_t endpos = text.find_last_not_of("\n\r");
+  if (std::string::npos != endpos) {
+    // Erase all characters after the last non-newline character.
+    text.erase(endpos + 1);
+  } else {
+    // The string is entirely newlines.
+    text.clear();
+  }
+
+  if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
+    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
+    g_base->ScreenMessage("Can only paste single lines of text.",
+                          Vector3f(1.0f, 0.0f, 0.0f));
+  } else {
+    HandleTextEditing(text);
+  }
+}
+
+auto DevConsole::UpdateCarat_() -> bool {
   last_carat_x_change_time_ = g_core->AppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
 
   unichars_clamped.resize(carat_char_);
   auto clamped_str = Utils::UTF8FromUnicode(unichars_clamped);
-  carat_x_ = g_base->text_graphics->GetStringWidth(clamped_str);
+  // Non-stalling measures: cold OS spans (e.g. just-pasted foreign
+  // text) defer to the background; meanwhile we keep the previous
+  // carat pos (and a stand-in width) and report incomplete so we get
+  // retried.
+  bool complete{true};
+  if (auto carat_x = g_base->text_graphics->TryGetStringWidth(clamped_str)) {
+    carat_x_ = *carat_x;
+  } else {
+    complete = false;
+  }
 
   // Use a base width if we're not covering a char, and use the char's width
   // if we are.
@@ -1799,8 +1963,12 @@ void DevConsole::UpdateCarat_() {
   if (carat_char_ < static_cast<int>(unichars.size())) {
     std::vector<uint32_t> covered_char{unichars[carat_char_]};
     auto covered_char_str = Utils::UTF8FromUnicode(covered_char);
-    width =
-        std::max(3.0f, g_base->text_graphics->GetStringWidth(covered_char_str));
+    if (auto char_width =
+            g_base->text_graphics->TryGetStringWidth(covered_char_str)) {
+      width = std::max(3.0f, *char_width);
+    } else {
+      complete = false;
+    }
   }
 
   float height = 32.0f;
@@ -1833,11 +2001,12 @@ void DevConsole::UpdateCarat_() {
   carat_mesh_ = Object::New<NinePatchMesh>(
       -x_extend + x_offset, -y_extend + y_offset, 0.0f, width_fin, height_fin,
       x_border, y_border, x_border, y_border);
+  return complete;
 }
 
 auto DevConsole::GetCaratX_() -> float {
-  if (carat_dirty_) {
-    UpdateCarat_();
+  // (Stay dirty while measures are cold so we keep retrying.)
+  if (carat_dirty_ && UpdateCarat_()) {
     carat_dirty_ = false;
   }
   return carat_x_;

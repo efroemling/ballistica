@@ -2,8 +2,6 @@
 #
 """Defines base Actor class."""
 
-from __future__ import annotations
-
 import weakref
 import logging
 from typing import TYPE_CHECKING, overload
@@ -22,6 +20,7 @@ if TYPE_CHECKING:
     from typing import Any, Literal, Self
 
     import bascenev1
+    from bascenev1._actorhost import ActorHost
 
 
 class Actor:
@@ -79,13 +78,26 @@ class Actor:
     """
 
     def __init__(self) -> None:
-        """Instantiates an Actor in the current bascenev1.Activity."""
+        """Instantiates an Actor in the current actor host.
+
+        That is the current :class:`bascenev1.Activity` during normal
+        gameplay, or the current :class:`bascenev1.LocalDisplay` when
+        created within one's context.
+        """
 
         if __debug__:
             self._root_actor_init_called = True
-        activity = _bascenev1.getactivity()
-        self._activity = weakref.ref(activity)
-        activity.add_actor_weak_ref(self)
+
+        # Set this first so __del__ behaves even if we fail below.
+        self._host: weakref.ref[ActorHost] | None = None
+
+        host: ActorHost | None = _bascenev1.getactivity(doraise=False)
+        if host is None:
+            host = _bascenev1.getlocaldisplay(doraise=False)
+        if host is None:
+            raise babase.ActivityNotFoundError()
+        self._host = weakref.ref(host)
+        host.add_actor_weak_ref(self)
 
     def __del__(self) -> None:
         try:
@@ -113,19 +125,20 @@ class Actor:
         """Keep this actor alive without needing to hold a reference to it.
 
         This keeps the actor in existence by storing a reference to it
-        with the :class:`~bascenev1.Activity` it was created in. The
-        reference is lazily released once
-        :meth:`~bascenev1.Actor.exists()` returns False for the actor or
-        when the :class:`~bascenev1.Activity` is set as expired. This
-        can be a convenient alternative to storing references explicitly
-        just to keep an actor from dying. For convenience, this method
-        returns the actor it is called with, enabling chained statements
-        such as: ``myflag = bascenev1.Flag().autoretain()``
+        with the :class:`~bascenev1.Activity` (or other
+        :class:`~bascenev1.ActorHost`) it was created in. The reference
+        is lazily released once :meth:`~bascenev1.Actor.exists()`
+        returns False for the actor or when the host is set as expired.
+        This can be a convenient alternative to storing references
+        explicitly just to keep an actor from dying. For convenience,
+        this method returns the actor it is called with, enabling
+        chained statements such as:
+        ``myflag = bascenev1.Flag().autoretain()``
         """
-        activity = self._activity()
-        if activity is None:
+        host = None if self._host is None else self._host()
+        if host is None:
             raise babase.ActivityNotFoundError()
-        activity.retain_actor(self)
+        host.retain_actor(self)
         return self
 
     def on_expire(self) -> None:
@@ -148,8 +161,8 @@ class Actor:
 
         (see :meth:`~bascenev1.Actor.on_expire()`)
         """
-        activity = self.getactivity(doraise=False)
-        return True if activity is None else activity.expired
+        host = None if self._host is None else self._host()
+        return True if host is None else host.expired
 
     def exists(self) -> bool:
         """Returns whether the actor is still present in a meaningful way.
@@ -190,9 +203,10 @@ class Actor:
         """The activity this actor was created in.
 
         Raises a :class:`~bascenev1.ActivityNotFoundError` if the
-        activity no longer exists.
+        activity no longer exists (or if the actor was created in a
+        non-activity host such as a :class:`~bascenev1.LocalDisplay`).
         """
-        activity = self._activity()
+        activity = self.getactivity(doraise=False)
         if activity is None:
             raise babase.ActivityNotFoundError()
         return activity
@@ -212,11 +226,13 @@ class Actor:
     def getactivity(self, doraise: bool = True) -> bascenev1.Activity | None:
         """Return the activity this actor is associated with.
 
-        If the activity no longer exists, raises a
-        :class:`~bascenev1.ActivityNotFoundError` or returns None
-        depending on whether ``doraise`` is True.
+        If the activity no longer exists (or the actor was created in
+        a non-activity host such as a :class:`~bascenev1.LocalDisplay`),
+        raises a :class:`~bascenev1.ActivityNotFoundError` or returns
+        None depending on whether ``doraise`` is True.
         """
-        activity = self._activity()
+        host = None if self._host is None else self._host()
+        activity = None if host is None else host._get_activity()
         if activity is None and doraise:
             raise babase.ActivityNotFoundError()
         return activity

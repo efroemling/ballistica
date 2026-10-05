@@ -2,16 +2,19 @@
 
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <list>
 #include <string>
 #include <vector>
 
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/assets/asset_package_registry.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
@@ -22,18 +25,22 @@
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
+#include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_depiction.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/local_display_context.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
-#include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -367,6 +374,53 @@ static PyMethodDef PyNewReplaySessionDef = {
     ":meta private:",
 };
 
+// --------------------- get_replay_asset_packages -----------------------------
+
+static auto PyGetReplayAssetPackages(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* file_name_obj;
+  static const char* kwlist[] = {"file_name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O", const_cast<char**>(kwlist), &file_name_obj)) {
+    return nullptr;
+  }
+  std::string file_name = Python::GetString(file_name_obj);
+  auto packages = ReadReplayAssetPackages(file_name);
+  if (!packages.has_value()) {
+    Py_RETURN_NONE;
+  }
+  PyObject* list = PyList_New(0);
+  for (auto&& apverid : *packages) {
+    // Package keys are numeric ids as text; a replay predating them
+    // names packages this build can't address, so it reads as unusable.
+    auto apvernum = base::AssetPackageRegistry::ApverNumFromKey(apverid);
+    if (!apvernum.has_value()) {
+      Py_DECREF(list);
+      Py_RETURN_NONE;
+    }
+    PythonRef item(PyLong_FromLongLong(*apvernum), PythonRef::kSteal);
+    PyList_Append(list, item.get());
+  }
+  return list;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetReplayAssetPackagesDef = {
+    "get_replay_asset_packages",            // name
+    (PyCFunction)PyGetReplayAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "get_replay_asset_packages(file_name: str) -> list[int] | None\n"
+    "\n"
+    "Read a replay file's asset-package requirements from its header\n"
+    "without starting playback (returns None for a missing/unreadable\n"
+    "file, or one naming packages by pre-numeric string ids; an empty\n"
+    "list for a replay predating package tables).\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------------------ is_in_replay ---------------------------------
 
 static auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
@@ -619,6 +673,169 @@ static PyMethodDef PyGetActivityDef = {
     "If doraise is False, None will be returned instead in that case.",
 };
 
+// ---------------------------- getlocaldisplay --------------------------------
+
+static auto PyGetLocalDisplay(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  int raise = true;
+  static const char* kwlist[] = {"doraise", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i",
+                                   const_cast<char**>(kwlist), &raise)) {
+    return nullptr;
+  }
+
+  // Fail gracefully if called from outside the logic thread.
+  if (!g_base->InLogicThread()) {
+    Py_RETURN_NONE;
+  }
+
+  PyObject* ret_obj{};
+
+  if (auto* ctx = ContextRefSceneV1::FromCurrent()
+                      .GetContextTyped<LocalDisplayContext>()) {
+    // GetPyLocalDisplay() returns a new ref or nullptr.
+    auto obj{PythonRef::StolenSoft(ctx->GetPyLocalDisplay())};
+    if (obj.exists()) {
+      ret_obj = obj.NewRef();
+    }
+  }
+
+  if (ret_obj) {
+    return ret_obj;
+  }
+
+  if (raise) {
+    throw Exception("No current local-display.", PyExcType::kNotFound);
+  }
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetLocalDisplayDef = {
+    "getlocaldisplay",               // name
+    (PyCFunction)PyGetLocalDisplay,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "getlocaldisplay(doraise: bool = True) -> <varies>\n"
+    "\n"
+    "Return the current bascenev1.LocalDisplay instance.\n"
+    "\n"
+    "Like getactivity(), this is based on context_ref; code run in a\n"
+    "timer created within a local-display's context will return that\n"
+    "local-display here. If there is no current local-display, raises a\n"
+    "babase.NotFoundError. If doraise is False, None will be returned\n"
+    "instead in that case.",
+};
+
+// ------------------------------ animcurve -----------------------------------
+
+static auto PyAnimCurve(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* target_obj;
+  const char* attr_name;
+  PyObject* globals_obj;
+  PyObject* times_obj;
+  PyObject* values_obj;
+  long long offset;  // NOLINT(runtime/int) - PyArg 'L'.
+  int loop;
+  const char* name;
+  static const char* kwlist[] = {"node",  "attr",   "globals_node",
+                                 "times", "values", "offset",
+                                 "loop",  "name",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OsOOOLps",
+                                   const_cast<char**>(kwlist), &target_obj,
+                                   &attr_name, &globals_obj, &times_obj,
+                                   &values_obj, &offset, &loop, &name)) {
+    return nullptr;
+  }
+  Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene();
+  if (!scene) {
+    throw Exception("Can't create nodes in this context_ref.",
+                    PyExcType::kContext);
+  }
+  Node* target = SceneV1Python::GetPyNode(target_obj);
+  Node* globals = SceneV1Python::GetPyNode(globals_obj);
+  if (target->scene() != scene || globals->scene() != scene) {
+    throw Exception("Node is from a different scene.", PyExcType::kValue);
+  }
+  std::vector<int64_t> times = Python::GetInts64(times_obj);
+  std::vector<float> values = Python::GetFloats(values_obj);
+  if (times.size() != values.size()) {
+    throw Exception("times and values must be the same length.",
+                    PyExcType::kValue);
+  }
+  NodeAttributeUnbound* target_attr =
+      target->type()->GetAttribute(std::string(attr_name));
+
+  // The host does everything bs.animate() used to do from Python, in
+  // the same order, so its own scene is unaffected; only what reaches
+  // the stream changes: under kProtocolVersionAnimCurveCommand the
+  // eight commands this emits are folded into one kAddAnimCurve.
+  SessionStream* stream = scene->GetSceneStream();
+  bool fold = stream != nullptr && stream->CanFoldAnimCurve();
+  if (fold) {
+    stream->BeginFold();
+  }
+  Node* curve{};
+  try {
+    curve = scene->NewNode("animcurve", name, Py_None);
+    // owner=node: the curve dies with its target.
+    target->AddDependentNode(curve);
+    if (stream) {
+      stream->NodeOnCreate(curve);
+    }
+    curve->OnCreate();
+    curve->GetAttribute("times").Set(times);
+    curve->GetAttribute("offset").Set(static_cast<float>(offset));
+    curve->GetAttribute("values").Set(values);
+    curve->GetAttribute("loop").Set(static_cast<bool>(loop));
+    NodeAttributeUnbound* time_attr = globals->type()->GetAttribute("time");
+    NodeAttributeUnbound* in_attr = curve->type()->GetAttribute("in");
+    NodeAttributeUnbound* out_attr = curve->type()->GetAttribute("out");
+    if (stream) {
+      stream->ConnectNodeAttribute(globals, time_attr, curve, in_attr);
+    }
+    globals->ConnectAttribute(time_attr, curve, in_attr);
+    if (stream) {
+      stream->ConnectNodeAttribute(curve, out_attr, target, target_attr);
+    }
+    curve->ConnectAttribute(out_attr, target, target_attr);
+    if (fold) {
+      stream->CommitFoldAnimCurve(scene, curve, globals, time_attr, in_attr,
+                                  out_attr, target, target_attr, offset,
+                                  static_cast<bool>(loop), times, values);
+    }
+  } catch (const std::exception&) {
+    if (fold) {
+      stream->AbortFold();
+    }
+    throw;
+  }
+  return curve->NewPyRef();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAnimCurveDef = {
+    "animcurve",                   // name
+    (PyCFunction)PyAnimCurve,      // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "animcurve(node: bascenev1.Node, attr: str,\n"
+    "  globals_node: bascenev1.Node, times: Sequence[int],\n"
+    "  values: Sequence[float], offset: int, loop: bool,\n"
+    "  name: str) -> bascenev1.Node\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Create an animcurve node driving attr on node (what bascenev1.animate\n"
+    "does): owned by node, keyed by times (ms) and values, offset by\n"
+    "offset (scene ms), driven by globals_node's 'time'. Under protocol\n"
+    "44+ the whole thing reaches the stream as one command.",
+};
+
 // -------------------------- broadcastmessage ---------------------------------
 
 static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
@@ -669,15 +886,23 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           "messages.",
           PyExcType::kValue);
     }
+    // The message also rides as a lang-str tagged wire value (LangStrs
+    // as self-describing resource refs -- the message layer has no
+    // package table -- plain str as literal text, a legacy Lstr as its
+    // legacy json) so new enough clients always get the tagged form:
+    // their own locale for LangStrs, verbatim text for str. The flat
+    // text remains for older clients.
+    std::string tagged =
+        SceneV1Python::BuildLangStrWireValue(message_obj, nullptr).first;
     std::vector<int32_t> client_ids;
     if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
         std::vector<int> client_ids2 = Python::GetInts(clients_obj);
         appmode->connections()->SendScreenMessageToSpecificClients(
-            message, color.x, color.y, color.z, client_ids2);
+            message, color.x, color.y, color.z, client_ids2, tagged);
       } else {
-        appmode->connections()->SendScreenMessageToAll(message, color.x,
-                                                       color.y, color.z);
+        appmode->connections()->SendScreenMessageToAll(
+            message, color.x, color.y, color.z, tagged);
       }
     }
   } else {
@@ -695,10 +920,17 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
 
     SceneTexture* texture = nullptr;
     SceneTexture* tint_texture = nullptr;
+    SceneDepiction* depiction = nullptr;
     Vector3f tint_color{1.0f, 1.0f, 1.0f};
     Vector3f tint2_color{1.0f, 1.0f, 1.0f};
+    Vector3f tint3_color{1.0f, 1.0f, 1.0f};
     if (image_obj != Py_None) {
-      if (PyDict_Check(image_obj)) {
+      if (PythonClassSceneDepiction::Check(image_obj)) {
+        if (!top) {
+          throw Exception("Depiction images require 'top'.", PyExcType::kValue);
+        }
+        depiction = SceneV1Python::GetPySceneDepiction(image_obj);
+      } else if (PyDict_Check(image_obj)) {
         PyObject* obj = PyDict_GetItemString(image_obj, "texture");
         if (!obj) {
           throw Exception("Provided image dict contains no 'texture' entry.",
@@ -726,15 +958,40 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
                           PyExcType::kValue);
         }
         tint2_color = base::BasePython::GetPyVector3f(obj);
+        // Optional (older icon dicts have none).
+        obj = PyDict_GetItemString(image_obj, "tint3_color");
+        if (obj && obj != Py_None) {
+          tint3_color = base::BasePython::GetPyVector3f(obj);
+        }
       } else {
         texture = SceneV1Python::GetPySceneTexture(image_obj);
       }
     }
 
     if (output_stream) {
+      // The stream carries the tagged lang-str wire form (native
+      // LangStrs stay structured with indexed refs; each client
+      // evaluates in its own locale). Local display below keeps using
+      // the flat GetPyLString result.
+      auto [wire, parsed] = SceneV1Python::BuildLangStrWireValue(
+          message_obj, ContextRefSceneV1::FromCurrent().GetHostSession());
+
       // FIXME: for now we just do bottom messages.
-      if (texture == nullptr && !top) {
-        output_stream->ScreenMessageBottom(message, color.x, color.y, color.z);
+      if (depiction != nullptr) {
+        // Scoping as for depiction node attrs: the context's own scene,
+        // or the host session's (which works in all its activities).
+        HostSession* host_session =
+            ContextRefSceneV1::FromCurrent().GetHostSession();
+        bool session_scene = host_session != nullptr
+                             && depiction->scene() == host_session->scene();
+        if (depiction->scene() != context_scene && !session_scene) {
+          throw Exception("Depiction is not from the current context_ref.",
+                          PyExcType::kContext);
+        }
+        output_stream->ScreenMessageTopDepiction(wire, color.x, color.y,
+                                                 color.z, depiction);
+      } else if (texture == nullptr && !top) {
+        output_stream->ScreenMessageBottom(wire, color.x, color.y, color.z);
       } else if (top && texture != nullptr && tint_texture != nullptr) {
         if (texture->scene() != context_scene) {
           throw Exception("Texture is not from the current context_ref.",
@@ -744,9 +1001,10 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           throw Exception("Tint-texture is not from the current context_ref.",
                           PyExcType::kContext);
         output_stream->ScreenMessageTop(
-            message, color.x, color.y, color.z, texture, tint_texture,
+            wire, color.x, color.y, color.z, texture, tint_texture,
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
-            tint2_color.y, tint2_color.z);
+            tint2_color.y, tint2_color.z, tint3_color.x, tint3_color.y,
+            tint3_color.z);
       } else {
         g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
                              "Unhandled screenmessage output_stream case.");
@@ -754,11 +1012,16 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     // Now display it locally.
-    g_base->graphics->screenmessages->AddScreenMessage(
-        message, false, color, static_cast<bool>(top),
-        texture ? texture->texture_data() : nullptr,
-        tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
-        tint2_color);
+    if (depiction != nullptr) {
+      g_base->graphics->screenmessages->AddTopScreenMessageWithDepiction(
+          message, false, color, depiction->json());
+    } else {
+      g_base->graphics->screenmessages->AddScreenMessage(
+          message, false, color, static_cast<bool>(top),
+          texture ? texture->texture_data() : nullptr,
+          tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
+          tint2_color, tint3_color);
+    }
   }
 
   Py_RETURN_NONE;
@@ -771,10 +1034,10 @@ static PyMethodDef PyBroadcastMessageDef = {
     (PyCFunction)PyBroadcastMessage,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "broadcastmessage(message: str | babase.Lstr,\n"
+    "broadcastmessage(message: str | babase.Lstr | babase.LangStr,\n"
     "  color: Sequence[float] | None = None,\n"
     "  top: bool = False,\n"
-    "  image: dict[str, Any] | None = None,\n"
+    "  image: dict[str, Any] | bascenev1.Depiction | None = None,\n"
     "  log: bool = False,\n"
     "  clients: Sequence[int] | None = None,\n"
     "  transient: bool = False)"
@@ -785,7 +1048,9 @@ static PyMethodDef PyBroadcastMessageDef = {
     "If 'top' is True, the message will go to the top message area.\n"
     "For 'top' messages, 'image' must be a dict containing 'texture'\n"
     "and 'tint_texture' textures and 'tint_color' and 'tint2_color'\n"
-    "colors. This defines an icon to display alongside the message.\n"
+    "colors and optionally a 'tint3_color', or a bascenev1.Depiction\n"
+    "(a player's get_icon_depiction(), say). This defines an icon to\n"
+    "display alongside the message.\n"
     "If 'log' is True, the message will also be submitted to the log.\n"
     "'clients' can be a list of client-ids the message should be sent\n"
     "to, or None to specify that everyone should receive it.\n"
@@ -1184,8 +1449,8 @@ static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     // Depict locally.
-    if (!g_core->HeadlessMode()) {
-      g_base->bg_dynamics->Emit(e);
+    if (base::BGDynamicsWorld* bg_world = scene->bg_dynamics_world()) {
+      bg_world->Emit(e);
     }
   } else {
     throw Exception("Can't emit bg dynamics in this context_ref.",
@@ -1299,85 +1564,54 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
 
-  cJSON* party = classic::ClassicAppMode::GetSingleton()->game_roster();
-  assert(cJSON_IsArray(party));
-  int len = cJSON_GetArraySize(party);
-  for (int i = 0; i < len; i++) {
-    cJSON* client = cJSON_GetArrayItem(party, i);
-    if (cJSON_IsObject(client)) {
-      cJSON* spec = cJSON_GetObjectItem(client, "spec");
-      cJSON* players = cJSON_GetObjectItem(client, "p");
-      PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
-      if (cJSON_IsArray(players)) {
-        int plen = cJSON_GetArraySize(players);
-        for (int j = 0; j < plen; ++j) {
-          cJSON* player = cJSON_GetArrayItem(players, j);
-          if (cJSON_IsObject(player)) {
-            cJSON* name = cJSON_GetObjectItem(player, "n");
-            cJSON* py_name_full = cJSON_GetObjectItem(player, "nf");
-            cJSON* id_obj = cJSON_GetObjectItem(player, "i");
-            int id_val = cJSON_IsNumber(id_obj) ? id_obj->valueint : -1;
-            if (cJSON_IsString(name) && cJSON_IsString(py_name_full)
-                && cJSON_IsNumber(id_obj)) {
-              PythonRef py_player(
-                  Py_BuildValue(
-                      "{sssssi}", "name",
-                      Utils::GetValidUTF8(name->valuestring, "ggr1").c_str(),
-                      "name_full",
-                      Utils::GetValidUTF8(py_name_full->valuestring, "ggr2")
-                          .c_str(),
-                      "id", id_val),
-                  PythonRef::kSteal);
-              // This increments ref.
-              PyList_Append(py_player_list.get(), py_player.get());
-            }
-          }
-        }
-      }
-
-      // If there's a client_id with this data, include it; otherwise pass None.
-      cJSON* client_id = cJSON_GetObjectItem(client, "i");
-      int clientid{};
-      PythonRef client_id_ref;
-      if (client_id != nullptr) {
-        clientid = client_id->valueint;
-        client_id_ref.Steal(PyLong_FromLong(clientid));
-      } else {
-        client_id_ref.Acquire(Py_None);
-      }
-
-      // Let's also include a public account-id if we have one.
-      std::string account_id;
-      if (clientid == -1) {
-        account_id = g_base->Plus()->GetAccountID();
-      } else {
-        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-          auto client2 =
-              appmode->connections()->connections_to_clients().find(clientid);
-          if (client2
-              != appmode->connections()->connections_to_clients().end()) {
-            account_id = client2->second->peer_public_account_id();
-          }
-        }
-      }
-      PythonRef account_id_ref;
-      if (account_id.empty()) {
-        account_id_ref.Acquire(Py_None);
-      } else {
-        account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
-      }
-
-      auto py_client{PythonRef::Stolen(Py_BuildValue(
-          "{sssssOsOsO}", "display_string",
-          cJSON_IsString(spec)
-              ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
-              : "",
-          "spec_string", cJSON_IsString(spec) ? spec->valuestring : "",
-          "players", py_player_list.get(), "client_id", client_id_ref.get(),
-          "account_id", account_id_ref.get()))};
-
-      PyList_Append(py_client_list.get(), py_client.get());
+  const auto& party = classic::ClassicAppMode::GetSingleton()->game_roster();
+  for (auto&& client : party) {
+    PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
+    for (auto&& player : client.players) {
+      PythonRef py_player(
+          Py_BuildValue(
+              "{sssssi}", "name",
+              Utils::GetValidUTF8(player.name.c_str(), "ggr1").c_str(),
+              "name_full",
+              Utils::GetValidUTF8(player.name_full.c_str(), "ggr2").c_str(),
+              "id", player.id),
+          PythonRef::kSteal);
+      // This increments ref.
+      PyList_Append(py_player_list.get(), py_player.get());
     }
+
+    int clientid = client.client_id;
+    PythonRef client_id_ref(PyLong_FromLong(clientid), PythonRef::kSteal);
+
+    // Let's also include a public account-id if we have one.
+    std::string account_id;
+    if (clientid == -1) {
+      account_id = g_base->Plus()->GetAccountID();
+    } else {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
+        auto client2 =
+            appmode->connections()->connections_to_clients().find(clientid);
+        if (client2 != appmode->connections()->connections_to_clients().end()) {
+          account_id = client2->second->peer_public_account_id();
+        }
+      }
+    }
+    PythonRef account_id_ref;
+    if (account_id.empty()) {
+      account_id_ref.Acquire(Py_None);
+    } else {
+      account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
+    }
+
+    auto py_client{PythonRef::Stolen(Py_BuildValue(
+        "{sssssOsOsO}", "display_string",
+        client.spec.empty()
+            ? ""
+            : PlayerSpec(client.spec).GetDisplayString().c_str(),
+        "spec_string", client.spec.c_str(), "players", py_player_list.get(),
+        "client_id", client_id_ref.get(), "account_id", account_id_ref.get()))};
+
+    PyList_Append(py_client_list.get(), py_client.get());
   }
   return py_client_list.NewRef();
   BA_PYTHON_CATCH;
@@ -1683,19 +1917,23 @@ static auto PySetInternalMusic(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* music_obj;
   float volume{1.0};
   int loop{1};
-  static const char* kwlist[] = {"music", "volume", "loop", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|fp",
+  float fade_out{0.0f};
+  static const char* kwlist[] = {"music", "volume", "loop", "fade_out",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|fpf",
                                    const_cast<char**>(kwlist), &music_obj,
-                                   &volume, &loop)) {
+                                   &volume, &loop, &fade_out)) {
     return nullptr;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  auto fade_out_millisecs =
+      static_cast<uint32_t>(std::max(0.0f, fade_out) * 1000.0f);
 
   if (music_obj == Py_None) {
-    appmode->SetInternalMusic(nullptr);
+    appmode->SetInternalMusic(nullptr, 1.0f, true, fade_out_millisecs);
   } else {
     auto& sound = base::PythonClassSimpleSound::FromPyObj(music_obj).sound();
-    appmode->SetInternalMusic(&sound, volume, loop);
+    appmode->SetInternalMusic(&sound, volume, loop, fade_out_millisecs);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1707,7 +1945,8 @@ static PyMethodDef PySetInternalMusicDef = {
     METH_VARARGS | METH_KEYWORDS,     // flags
 
     "set_internal_music(music: babase.SimpleSound | None,\n"
-    "   volume: float = 1.0, loop: bool  = True) -> None\n"
+    "   volume: float = 1.0, loop: bool  = True,\n"
+    "   fade_out: float = 0.0) -> None\n"
     "\n"
     ":meta private:.",
 };
@@ -1728,6 +1967,78 @@ static PyMethodDef PyProtocolVersionDef = {
     METH_NOARGS,                     // flags
 
     "protocol_version() -> int\n"
+    "\n"
+    ":meta private:\n",
+};
+
+// ------------------------- get_node_attr_tables ------------------------------
+
+static auto PyGetNodeAttrTables(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Return every node type's attr table as {type_name: [(attr_name,
+  // attr_type_name), ...]} in wire-index order. Attrs are addressed
+  // over the wire by these indices, so this mapping is part of the
+  // scene_v1 protocol; a golden test in tests/test_scene_v1 pins it.
+  const auto& types_by_id = g_scene_v1->node_types_by_id();
+  PythonRef out{PyDict_New(), PythonRef::kSteal};
+  for (int id = 0; id < static_cast<int>(types_by_id.size()); ++id) {
+    NodeType* node_type = types_by_id.at(id);
+    const auto& attrs = node_type->attributes_by_index();
+    PythonRef attr_list{PyList_New(attrs.size()), PythonRef::kSteal};
+    for (size_t i = 0; i < attrs.size(); ++i) {
+      PyList_SetItem(attr_list.get(), static_cast<Py_ssize_t>(i),
+                     Py_BuildValue("(ss)", attrs[i]->name().c_str(),
+                                   attrs[i]->GetTypeName().c_str()));
+    }
+    PyDict_SetItemString(out.get(), node_type->name().c_str(), attr_list.get());
+  }
+  return out.HandOver();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetNodeAttrTablesDef = {
+    "get_node_attr_tables",            // name
+    (PyCFunction)PyGetNodeAttrTables,  // method
+    METH_NOARGS,                       // flags
+
+    "get_node_attr_tables() -> dict[str, list[tuple[str, str]]]\n"
+    "\n"
+    "Return every node type's attr table in wire-index order.\n"
+    "\n"
+    ":meta private:\n",
+};
+
+// --------------------------- get_spaz_def_count ------------------------------
+
+static auto PyGetSpazDefCount(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Live SpazDef entries in the foreground host session's output
+  // stream (what a late joiner's baseline would carry). Test
+  // introspection for the spaz-def churn test; -1 if not hosting.
+  HostSession* host_session =
+      ContextRefSceneV1::FromAppForegroundContext().GetHostSession();
+  if (host_session == nullptr) {
+    return PyLong_FromLong(-1);
+  }
+  SessionStream* stream = host_session->GetSceneStream();
+  if (stream == nullptr) {
+    return PyLong_FromLong(-1);
+  }
+  return PyLong_FromSize_t(stream->live_spaz_def_count());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetSpazDefCountDef = {
+    "get_spaz_def_count",            // name
+    (PyCFunction)PyGetSpazDefCount,  // method
+    METH_NOARGS,                     // flags
+
+    "get_spaz_def_count() -> int\n"
+    "\n"
+    "Return the number of live spaz definitions in the foreground host\n"
+    "session's stream, or -1 if not hosting.\n"
     "\n"
     ":meta private:\n",
 };
@@ -1760,9 +2071,12 @@ static PyMethodDef PyReloadHooksDef = {
 auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyNewReplaySessionDef,
+      PyGetReplayAssetPackagesDef,
       PyNewHostSessionDef,
       PyGetSessionDef,
       PyGetActivityDef,
+      PyGetLocalDisplayDef,
+      PyAnimCurveDef,
       PyNewActivityDef,
       PyGetForegroundHostSessionDef,
       PyRegisterActivityDef,
@@ -1795,6 +2109,8 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimerDef,
       PyLsInputDevicesDef,
       PyProtocolVersionDef,
+      PyGetNodeAttrTablesDef,
+      PyGetSpazDefCountDef,
       PyReloadHooksDef,
   };
 }

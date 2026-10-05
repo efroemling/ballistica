@@ -12,7 +12,9 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
@@ -22,6 +24,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/crash_info.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -136,6 +139,13 @@ void Logic::CompleteAppBootstrapping_() {
   // Let base know it can create the console or other asset-dependent things.
   g_base->OnAssetsAvailable();
 
+  // Warm up the OS text backend in the background so its one-time init
+  // cost doesn't hitch the first UI that measures or draws OS-rendered
+  // text. Queued behind boot-critical asset work on the assets-server
+  // loop; done long before a human can navigate anywhere text-heavy.
+  // (Currently a no-op; see kEnableOSTextWarmUp in text_graphics.cc.)
+  g_base->text_graphics->WarmUpOSText();
+
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
       0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).get());
@@ -235,8 +245,24 @@ void Logic::OnAppShutdown() {
   assert(g_base->CurrentContext().IsEmpty());
   assert(shutting_down_);
 
+  // Silence network-availability dispatch before any subsystem
+  // teardown. OS-level monitors (NWPathMonitor / NLM event sink /
+  // ConnectivityManager.NetworkCallback) keep running on detached
+  // threads until process exit; this gates the dispatch path so
+  // late callbacks don't reach subscribers (or the GIL) once the
+  // shutdown cascade starts dismantling them.
+  g_core->platform->StopNetworkAvailabilityDispatch();
+
+  // Arm a Python traceback dump in case shutdown wedges; on platforms
+  // where it can write (fd 2 usable) it will fire at the hard deadline
+  // and the returned suicide-timer delay includes a bit of extra
+  // runway for the dump to finish. On platforms where it can't arm,
+  // the returned delay is just the hard deadline.
+  auto suicide_delay_seconds = g_base->python->ShutdownFaultHandlerArm();
+
   // Nuke the app from orbit if we get stuck while shutting down.
-  g_core->StartSuicideTimer("shutdown", 15000);
+  g_core->StartSuicideTimer("shutdown",
+                            static_cast<int>(suicide_delay_seconds * 1000.0));
 
   // Tell base to disallow shutdown-suppressors from here on out.
   g_base->ShutdownSuppressDisallow();
@@ -355,6 +381,12 @@ void Logic::StepDisplayTime_() {
     UpdateDisplayTimeForFrameDraw_();
   }
 
+  // Keep the crash-context record current. Cross-platform and cheap
+  // (a few scalar stores), and this runs per frame with a gui and on a
+  // 10hz timer headless, so a crash record is never badly stale.
+  CrashInfoUpdateRuntime((g_base->app_active() ? 1u : 0u)
+                         | (g_base->app_suspended() ? 2u : 0u));
+
   // Give all our subsystems some update love.
   // Note: keep these in the same order as OnAppStart.
   g_base->graphics->StepDisplayTime();
@@ -365,6 +397,9 @@ void Logic::StepDisplayTime_() {
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
     g_base->Plus()->StepDisplayTime();
+  }
+  if (g_base->discord) {
+    g_base->discord->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
 

@@ -2,491 +2,605 @@
 #
 """Examples/tests for using DocUI to build UIs."""
 
-# pylint: disable=too-many-lines
-from __future__ import annotations
+from typing import TYPE_CHECKING, override, assert_never
 
-import time
-import copy
-from typing import TYPE_CHECKING, override
-
-from efro.error import CleanError
+from bacommon.langstr import LangStrSpecValue
+import bacommon.docui.routes.docuitest as rt
 import bauiv1 as bui
+from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets, _classiccatalogassets
+from bauiv1 import _classicassets
 
-from bauiv1lib.docui import DocUIWindow, DocUIController
+from bauiv1lib.docui import DocUIWindow, TypedDocUIController
 
 if TYPE_CHECKING:
-    from bacommon.docui import DocUIRequest, DocUIResponse
-    import bacommon.docui.v1
+    from bacommon.docui import DocUIResponse
+    import bacommon.docui.v2
+    import bacommon.docui.routes.docuitest
 
     from bauiv1lib.docui import DocUILocalAction
 
 
-def show_test_doc_ui_window() -> None:
-    """Bust out a doc-ui window."""
-    import bacommon.docui.v1 as dui1
+def show_test_doc_ui_v2_window() -> None:
+    """Bust out a doc-ui test window built locally on the client.
 
-    # Pop up an auxiliary window wherever we are in the nav stack.
+    Test pages authored as language-agnostic v2 documents — text as
+    ``LangStrSpec`` values from the ``badocuiv2testassets`` package (decoded
+    in the client's locale at render time), textures/meshes as typed
+    refs, and multi-line labels via wrap-params instead of hand-baked
+    newlines. The Cloud-Msg and Web buttons fetch equivalent v2 pages
+    from bamaster, keeping the full cloud/web resolve -> decode ->
+    render paths exercised.
+    """
     bui.app.ui_v1.auxiliary_window_activate(
         win_type=DocUIWindow,
         win_create_call=bui.CallStrict(
-            TestDocUIController().create_window, dui1.Request('/')
+            TestDocUIV2Controller().create_window, rt.Root()
         ),
-        win_extra_type_id=TestDocUIController.get_window_extra_type_id(),
+        win_extra_type_id=TestDocUIV2Controller.get_window_extra_type_id(),
     )
 
 
-class TestDocUIController(DocUIController):
-    """Provides various tests/demonstrations of docui functionality."""
+class TestDocUIV2Controller(
+    TypedDocUIController[rt.AnyTestRoute, rt.AnyTestLocalAction]
+):
+    """Tests/demonstrations of native (v2 / l-string) docui.
+
+    Local pages are authored client-side; the web-test and
+    cloud-msg-test routes fetch equivalent v2 pages from bamaster.
+    """
 
     @override
-    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
-        """Fulfill a request.
-
-        Will be called in a background thread.
-        """
-        # pylint: disable=too-many-return-statements
-
-        import bacommon.docui.v1 as dui1
-
-        # We currently support v1 requests only.
-        if not isinstance(request, dui1.Request):
-            raise CleanError('Invalid request version.')
-
-        # Handle some pages purely locally.
-        if request.path == '/':
-            return _test_page_root(request)
-        if request.path == '/test2':
-            return _test_page_2(request)
-        if request.path == '/slow':
-            return _test_page_long(request)
-        if request.path == '/timedactions':
-            return _test_page_timed_actions(request)
-        if request.path == '/displayitems':
-            return _test_page_display_items(request)
-        if request.path == '/emptypage':
-            return _test_page_empty(request)
-        if request.path == '/boundstests':
-            return _test_bounds(request)
-
-        # Ship '/webtest/*' off to some webserver to handle.
-        if request.path.startswith('/webtest/'):
-            return self.fulfill_request_web(
-                request, 'https://www.ballistica.net/docuitest'
-            )
-
-        # Ship '/cloudmsgtest/*' through our cloud connection to handle.
-        if request.path.startswith('/cloudmsgtest/'):
-            return self.fulfill_request_cloud(request, 'test')
-
-        raise CleanError('Invalid request path.')
+    @classmethod
+    def get_route_type(cls) -> type[bacommon.docui.routes.docuitest.TestRoute]:
+        return rt.TestRoute
 
     @override
-    def local_action(self, action: DocUILocalAction) -> None:
-        bui.screenmessage(
-            f'Would do {action.name!r} with args {action.args!r}.'
-        )
+    @classmethod
+    def get_local_action_type(
+        cls,
+    ) -> type[bacommon.docui.routes.docuitest.TestLocalAction]:
+        return rt.TestLocalAction
+
+    @override
+    def fulfill_route(
+        self, route: bacommon.docui.routes.docuitest.AnyTestRoute
+    ) -> DocUIResponse:
+        """Fulfill a route (called in a background thread)."""
+        import bacommon.docui.v2 as dui2
+
+        response = self._fulfill_route_page(route)
+
+        # No horizontal scroll bars anywhere on our test pages (page
+        # arrows and drag/wheel scrolling still carry their rows).
+        if isinstance(response, dui2.Response):
+            for row in dui2.all_rows(response.page.rows):
+                if isinstance(row, dui2.ButtonRow):
+                    row.show_scrollbar = False
+        return response
+
+    def _fulfill_route_page(
+        self, route: bacommon.docui.routes.docuitest.AnyTestRoute
+    ) -> DocUIResponse:
+        # A flat route-to-page dispatch; every case adds a branch and a
+        # return.
+        # pylint: disable=too-many-return-statements, too-many-branches
+
+        match route:
+            # Handle some pages purely locally.
+            case rt.Root():
+                return _test_v2_page_root(route)
+            case rt.Test2():
+                from bauiv1lib.docuitestsimple import test_page_2
+
+                return test_page_2()
+            case rt.Slow():
+                from bauiv1lib.docuitestsimple import test_page_long
+
+                return test_page_long()
+            case rt.TimedActions():
+                from bauiv1lib.docuitestsimple import (
+                    test_page_timed_actions,
+                )
+
+                return test_page_timed_actions(route)
+            case rt.DisplayItems():
+                from bauiv1lib.docuitestitems import test_page_display_items
+
+                return test_page_display_items(route)
+            case rt.TextImages():
+                from bauiv1lib.docuitesttextimages import (
+                    test_page_text_images,
+                )
+
+                return test_page_text_images(route)
+            case rt.LiveTimes():
+                from bauiv1lib.docuitestlivetimes import test_page_live_times
+
+                return test_page_live_times(route)
+            case rt.TextWrapping():
+                from bauiv1lib.docuitesttextwrap import (
+                    test_page_text_wrapping,
+                )
+
+                return test_page_text_wrapping(route)
+            case rt.Animation():
+                from bauiv1lib.docuitestanimation import test_page_animation
+
+                return test_page_animation()
+            case rt.Depictions():
+                from bauiv1lib.docuitestdepictions import (
+                    test_page_depictions,
+                )
+
+                return test_page_depictions(route)
+            case rt.Names():
+                from bauiv1lib.docuitestnames import test_page_names
+
+                return test_page_names(route)
+            case rt.NinePatch():
+                from bauiv1lib.docuitestninepatch import (
+                    test_page_nine_patch,
+                )
+
+                return test_page_nine_patch(route)
+            case rt.EmptyPage():
+                from bauiv1lib.docuitestsimple import test_page_empty
+
+                return test_page_empty()
+            case rt.BoundsTests():
+                from bauiv1lib.docuitestlayouts import test_page_bounds
+
+                return test_page_bounds()
+            case rt.Widgets():
+                from bauiv1lib.docuitestwidgets import test_page_widgets
+
+                return test_page_widgets(route)
+            case rt.NavTest():
+                from bauiv1lib.docuitestnav import test_page_nav
+
+                return test_page_nav(route)
+            case rt.WindowLayouts():
+                from bauiv1lib.docuitestlayouts import (
+                    test_page_window_layouts,
+                )
+
+                return test_page_window_layouts(route)
+            case rt.Sections():
+                from bauiv1lib.docuitestsections import test_page_sections
+
+                return test_page_sections(route)
+            case rt.WideFit():
+                from bauiv1lib.docuitestlayouts import test_page_wide_fit
+
+                return test_page_wide_fit(route)
+
+            # Ship web-tests off to some webserver to handle.
+            case rt.WebTestGet() | rt.WebTestPost():
+                return self.fulfill_request_web(
+                    route, 'https://www.ballistica.net/docuitest'
+                )
+
+            # Ship cloud-msg-tests through our cloud connection.
+            case rt.CloudMsgTestGet() | rt.CloudMsgTestPost():
+                return self.fulfill_request_cloud(route, 'docuitestv2')
+
+            case _:
+                assert_never(route)
+
+    @override
+    def run_local_action(
+        self,
+        action: bacommon.docui.routes.docuitest.AnyTestLocalAction,
+        context: DocUILocalAction,
+    ) -> None:
+        match action:
+            case rt.ShowVolume():
+                # The live value: the row wrote it to page state before
+                # firing us.
+                state = context.state(rt.WidgetTestState)
+                vol = (
+                    'unknown'
+                    if state is None
+                    else f'{round(state.volume * 100)}%'
+                )
+                bui.screenmessage(
+                    f'Volume: {vol} (trigger={context.trigger!r})'
+                )
+            case rt.TestAction():
+                bui.screenmessage(f'Would do {action!r}.')
+            case _:
+                assert_never(action)
 
 
-def _test_page_long(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    """Testing a page that takes a bit of time to load."""
-    import bacommon.docui.v1 as dui1
+def _test_v2_page_root(
+    route: bacommon.docui.routes.docuitest.Root,
+) -> bacommon.docui.v2.Response:
+    """Author the v2 (l-string) test root page purely on the client.
 
-    del request  # Unused.
-
-    # Simulate a slow connection or whatnot.
-    time.sleep(3.0)
-
-    return dui1.Response(
-        page=dui1.Page(
-            title='Test',
-            center_vertically=True,
-            rows=[
-                dui1.ButtonRow(
-                    title='That took a while',
-                    center_title=True,
-                    center_content=True,
-                    buttons=[
-                        dui1.Button(
-                            'Sure Did',
-                            size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/')),
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_page_timed_actions(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    """Testing a page that takes a bit of time to load."""
-    import bacommon.docui.v1 as dui1
-
-    val = request.args.get('val')
-    if not isinstance(val, int):
-        val = 5
-
-    return dui1.Response(
-        page=dui1.Page(
-            title='Test',
-            center_vertically=True,
-            rows=[
-                dui1.ButtonRow(
-                    title=f'Hello there {val}',
-                    subtitle='Each change here is a new request/response.',
-                    center_title=True,
-                    center_content=True,
-                    buttons=[
-                        dui1.Button(
-                            'Done',
-                            size=(120, 80),
-                            action=dui1.Local(close_window=True),
-                            default=True,
-                        ),
-                    ],
-                ),
-            ],
-        ),
-        # Refresh this page with a countdown until we hit zero and then
-        # close the window.
-        timed_action=(
-            dui1.Replace(dui1.Request('/timedactions', args={'val': val - 1}))
-            if (val - 1) > 0
-            else dui1.Local(close_window=True)
-        ),
-        timed_action_delay=1.0,
-    )
-
-
-def _test_page_effects() -> bacommon.docui.v1.Page:
-    """Testing effects after a page load."""
-    import bacommon.docui.v1 as dui1
-
-    return dui1.Page(
-        title='Effects',
-        center_vertically=True,
-        rows=[
-            dui1.ButtonRow(
-                title='Have some lovely effects',
-                center_title=True,
-                center_content=True,
-                buttons=[
-                    dui1.Button(
-                        'Nice!',
-                        size=(120, 80),
-                        action=dui1.Local(close_window=True),
-                    ),
-                ],
-            ),
-        ],
-    )
-
-
-def _test_page_2(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    """More testing."""
-    import bacommon.docui.v1 as dui1
-
-    del request  # Unused.
-
-    return dui1.Response(
-        page=dui1.Page(
-            title='Test 2',
-            rows=[
-                dui1.ButtonRow(
-                    title='More Tests',
-                    buttons=[
-                        dui1.Button(
-                            'Browse',
-                            size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/')),
-                        ),
-                        dui1.Button(
-                            'Replace',
-                            size=(120, 80),
-                            action=dui1.Replace(dui1.Request('/')),
-                        ),
-                        dui1.Button(
-                            'Close',
-                            size=(120, 80),
-                            action=dui1.Local(close_window=True),
-                            selected=True,  # Testing this
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_page_root(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    """Return test page."""
-
+    The full v1 test root page, with all text authored as
+    language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
+    package, textures/meshes as typed refs from
+    ``_builtinassets``/``_classicassets``, and multi-line labels wrapped via
+    definition-time :class:`~bacommon.langstr.WrapParams` on the
+    package's string definitions (decision D-t) instead of v1's
+    hand-baked newlines. The client resolves the referenced packages
+    in its own locale, decodes, and wraps -- so this single response
+    renders in any language.
+    """
     import bacommon.clienteffect as clfx
-    import bacommon.docui.v1 as dui1
+    import bacommon.docui.v2 as dui2
+
+    from bauiv1 import _docuiv2testassets
+    from bauiv1lib.docuitestlayouts import layout_test_decos
+
+    strs = _docuiv2testassets.strings
 
     # Show some specific debug bits if they ask us to.
-    debug = bool(request.args.get('debug', False))
+    debug = route.debug
 
-    response = dui1.Response(
-        page=dui1.Page(
-            title='Test Root',
+    # The long-row test's buttons all reload this page unchanged, to
+    # check that scroll positions survive a reload.
+    reload = route.replace()
+
+    def _long_row_button(num: int) -> bacommon.docui.v2.Button:
+        # Dev-only page, so baked literals.
+        return dui2.Button(
+            label=LangStrSpecValue.literal(str(num)),
+            size=(150, 100),
+            action=reload,
+        )
+
+    response = dui2.Response(
+        page=dui2.Page(
+            title=strs.nav.test_root_title.spec,
             rows=[
-                dui1.ButtonRow(
+                dui2.ButtonRow(
                     debug=debug,
                     header_height=100,
                     header_decorations_left=[
-                        dui1.Text(
-                            'HeaderLeft',
+                        dui2.Text(
+                            text=strs.common.header_left.spec,
                             position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
-                            h_align=dui1.HAlign.LEFT,
+                            h_align=dui2.HAlign.LEFT,
                             debug=debug,
                         ),
                     ],
                     header_decorations_center=[
-                        dui1.Text(
-                            'Hello From DocUI!',
+                        dui2.Text(
+                            text=strs.common.hello_from_docui.spec,
                             position=(0, 10 + 20),
                             size=(300, 30),
                             debug=debug,
                         ),
-                        dui1.Text(
-                            (
-                                'Use this as reference for building'
-                                ' UIs with DocUI.'
-                                ' Its code lives at bauiv1lib.docuitest'
-                            ),
+                        dui2.Text(
+                            text=strs.common.docui_reference.spec,
                             scale=0.5,
                             position=(0, -18 + 20),
                             size=(600, 23),
                             debug=debug,
                         ),
-                        dui1.Image(
-                            'nub', position=(0, -58 + 20), size=(60, 60)
+                        dui2.Image(
+                            texture=_classicassets.textures.nub,
+                            position=(0, -58 + 20),
+                            size=(60, 60),
                         ),
                     ],
                     header_decorations_right=[
-                        dui1.Text(
-                            'HeaderRight',
+                        dui2.Text(
+                            text=strs.common.header_right.spec,
                             position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
-                            h_align=dui1.HAlign.RIGHT,
+                            h_align=dui2.HAlign.RIGHT,
                             debug=debug,
                         ),
                     ],
-                    title='Some Tests',
+                    title=strs.nav.some_tests.spec,
                     buttons=[
-                        dui1.Button(
-                            'Browse',
+                        dui2.Button(
+                            label=strs.nav.browse.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/test2')),
+                            action=rt.Test2().browse(),
                         ),
-                        dui1.Button(
-                            'Replace',
+                        dui2.Button(
+                            label=strs.nav.replace.spec,
                             size=(120, 80),
-                            action=dui1.Replace(dui1.Request('/test2')),
+                            action=rt.Test2().replace(),
                         ),
-                        dui1.Button(
-                            'Close',
+                        dui2.Button(
+                            label=strs.nav.close.spec,
                             size=(120, 80),
-                            action=dui1.Local(close_window=True),
+                            action=dui2.Local(close_window=True),
                         ),
-                        dui1.Button(
-                            'Invalid\nRequest',
+                        dui2.Button(
+                            label=strs.common.invalid_request.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/invalidrequest')),
+                            # A path with no route, to exercise error
+                            # handling; routes can't express that (by
+                            # design) so we build it by hand.
+                            # pylint: disable-next=docui-raw-request
+                            action=dui2.Browse(dui2.Request('/invalidrequest')),
                         ),
-                        dui1.Button(
-                            'Immediate\nClientEffects',
+                        dui2.Button(
+                            label=strs.effects.immediate_client_effects.spec,
                             size=(120, 80),
-                            action=dui1.Local(
+                            action=dui2.Local(
+                                # V2 effect forms: l-string text decoded
+                                # in the client's locale + a typed sound
+                                # ref from an asset package. The page
+                                # resolve pre-warms the referenced
+                                # packages, so press-time runs are
+                                # cache hits.
                                 immediate_client_effects=[
-                                    clfx.ScreenMessage(
-                                        'Hello From Immediate Client Effects',
+                                    clfx.ScreenMessageV2(
+                                        message=(
+                                            strs.effects.immediate_effects_hello
+                                        ).spec,
                                         color=(0, 1, 0),
                                     ),
-                                    clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+                                    clfx.PlaySoundV2(
+                                        sound=(
+                                            _builtinassets.audio
+                                        ).cash_register,
+                                    ),
                                     clfx.Delay(1.0),
-                                    clfx.ScreenMessage(
-                                        '{"r":"successText"}',
-                                        is_lstr=True,
+                                    clfx.ScreenMessageV2(
+                                        message=(
+                                            strs.effects.effect_success
+                                        ).spec,
                                         color=(0, 1, 0),
                                     ),
-                                    clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+                                    clfx.PlaySoundV2(
+                                        sound=(
+                                            _builtinassets.audio
+                                        ).cash_register,
+                                    ),
                                 ]
                             ),
                         ),
-                        dui1.Button(
-                            'Response\nClientEffects',
+                        dui2.Button(
+                            label=strs.effects.response_client_effects.spec,
                             size=(120, 80),
-                            action=dui1.Browse(
-                                dui1.Request('/', args={'test_effects': True})
-                            ),
+                            action=rt.Root(test_effects=True).browse(),
                         ),
-                        dui1.Button(
-                            'Immediate\nLocalAction',
+                        dui2.Button(
+                            label=strs.effects.immediate_local_action.spec,
                             size=(120, 80),
-                            action=dui1.Local(
-                                immediate_local_action='testaction',
-                                immediate_local_action_args={'testparam': 123},
-                            ),
+                            action=rt.TestAction(testparam=123).local(),
                         ),
-                        dui1.Button(
-                            'Response\nLocalAction',
+                        dui2.Button(
+                            label=strs.effects.response_local_action.spec,
                             size=(120, 80),
-                            action=dui1.Browse(
-                                dui1.Request('/', args={'test_action': True})
-                            ),
+                            action=rt.Root(test_action=True).browse(),
                         ),
                     ],
                 ),
-                dui1.ButtonRow(
-                    title='A Few More Tests',
+                dui2.ButtonRow(
+                    title=strs.nav.few_more_tests.spec,
                     buttons=[
-                        dui1.Button(
-                            'Hide\nDebug' if debug else 'Show\nDebug',
-                            size=(120, 80),
-                            action=dui1.Replace(
-                                dui1.Request('/', args={'debug': not debug})
+                        dui2.Button(
+                            label=(
+                                strs.common.hide_debug.spec
+                                if debug
+                                else strs.common.show_debug.spec
                             ),
-                        ),
-                        dui1.Button(
-                            'Slow\nBrowse',
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/slow')),
+                            action=rt.Root(debug=not debug).replace(),
                         ),
-                        dui1.Button(
-                            'Slow\nReplace',
+                        dui2.Button(
+                            label=strs.nav.slow_browse.spec,
                             size=(120, 80),
-                            action=dui1.Replace(dui1.Request('/slow')),
+                            action=rt.Slow().browse(),
                         ),
-                        dui1.Button(
-                            'Timed\nActions',
+                        dui2.Button(
+                            label=strs.nav.slow_replace.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/timedactions')),
+                            action=rt.Slow().replace(),
                         ),
-                        dui1.Button(
-                            'Web\nGET',
+                        dui2.Button(
+                            label=strs.common.timed_actions.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/webtest/get')),
+                            action=rt.TimedActions().browse(),
                         ),
-                        dui1.Button(
-                            'Web\nPOST',
+                        dui2.Button(
+                            label=strs.web.web_get.spec,
                             size=(120, 80),
-                            action=dui1.Browse(
-                                dui1.Request(
-                                    '/webtest/post',
-                                    method=dui1.RequestMethod.POST,
-                                )
-                            ),
+                            action=rt.WebTestGet().browse(),
                         ),
-                        dui1.Button(
-                            'DisplayItems',
+                        dui2.Button(
+                            label=strs.web.web_post.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/displayitems')),
+                            action=rt.WebTestPost().browse(),
                         ),
-                        dui1.Button(
-                            'Empty\nPage',
+                        dui2.Button(
+                            label=strs.items.display_items.spec,
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/emptypage')),
+                            action=rt.DisplayItems().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Text Images'),
+                            size=(120, 80),
+                            action=rt.TextImages().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Live Times'),
+                            size=(120, 80),
+                            action=rt.LiveTimes().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Text Wrapping'),
+                            size=(120, 80),
+                            action=rt.TextWrapping().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Animation'),
+                            size=(120, 80),
+                            action=rt.Animation().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Depictions'),
+                            size=(120, 80),
+                            action=rt.Depictions().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Names'),
+                            size=(120, 80),
+                            action=rt.Names().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('9-Patch'),
+                            size=(120, 80),
+                            action=rt.NinePatch().browse(),
+                        ),
+                        dui2.Button(
+                            label=strs.layout.empty_page.spec,
+                            size=(120, 80),
+                            action=rt.EmptyPage().browse(),
                         ),
                     ],
                 ),
-                dui1.ButtonRow(
-                    title='Even More Tests',
+                dui2.ButtonRow(
+                    title=strs.nav.even_more_tests.spec,
                     buttons=[
-                        dui1.Button(
-                            'Cloud-Msg\nGET',
+                        dui2.Button(
+                            label=strs.cloud.cloud_msg_get.spec,
                             size=(120, 80),
-                            action=dui1.Browse(
-                                dui1.Request('/cloudmsgtest/get')
+                            action=rt.CloudMsgTestGet().browse(),
+                        ),
+                        dui2.Button(
+                            label=strs.cloud.cloud_msg_post.spec,
+                            size=(120, 80),
+                            action=rt.CloudMsgTestPost().browse(),
+                        ),
+                        dui2.Button(
+                            label=strs.layout.bounds_tests.spec,
+                            size=(120, 80),
+                            action=rt.BoundsTests().browse(),
+                        ),
+                        # Dev-only page, so baked literal labels.
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Small'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL
                             ),
                         ),
-                        dui1.Button(
-                            'Cloud-Msg\nPOST',
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                'Widgets Small Tall'
+                            ),
                             size=(120, 80),
-                            action=dui1.Browse(
-                                dui1.Request(
-                                    '/cloudmsgtest/post',
-                                    method=dui1.RequestMethod.POST,
-                                )
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL_TALL
                             ),
                         ),
-                        dui1.Button(
-                            'Bounds\nTests',
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                'Widgets Small Taller'
+                            ),
                             size=(120, 80),
-                            action=dui1.Browse(dui1.Request('/boundstests')),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.SMALL_TALLER
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Wide'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.WIDE
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Wider'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.WIDER
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Widgets Large'),
+                            size=(120, 80),
+                            action=rt.Widgets().browse(
+                                layout=dui2.WindowLayout.LARGE
+                            ),
+                        ),
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Nav Test'),
+                            size=(120, 80),
+                            action=rt.NavTest().browse(
+                                layout=dui2.WindowLayout.SMALL
+                            ),
                         ),
                     ],
                 ),
-                dui1.ButtonRow(title='Empty Row', buttons=[]),
-                dui1.ButtonRow(
-                    title='Layout Tests',
+                dui2.ButtonRow(
+                    # Dev-only, so baked literals. (Every layout, to see
+                    # how sections and cards behave at each width.)
+                    title=LangStrSpecValue.literal('Sections'),
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                layout.name.replace('_', ' ').title()
+                            ),
+                            size=(120, 80),
+                            action=rt.Sections().browse(layout=layout),
+                        )
+                        for layout in dui2.WindowLayout
+                    ],
+                ),
+                dui2.ButtonRow(
+                    # Dev-only, so baked literals.
+                    title=LangStrSpecValue.literal('Window Layouts'),
+                    buttons=[
+                        *(
+                            dui2.Button(
+                                label=LangStrSpecValue.literal(
+                                    layout.name.replace('_', ' ').title()
+                                ),
+                                size=(120, 80),
+                                action=rt.WindowLayouts().browse(layout=layout),
+                            )
+                            for layout in dui2.WindowLayout
+                        ),
+                        *(
+                            dui2.Button(
+                                label=LangStrSpecValue.literal(
+                                    f'{layout.name.title()} Fit'
+                                ),
+                                size=(120, 80),
+                                action=rt.WideFit(
+                                    wider=layout is dui2.WindowLayout.WIDER
+                                ).browse(layout=layout),
+                            )
+                            for layout in (
+                                dui2.WindowLayout.WIDE,
+                                dui2.WindowLayout.WIDER,
+                            )
+                        ),
+                    ],
+                ),
+                dui2.ButtonRow(title=strs.layout.empty_row.spec, buttons=[]),
+                dui2.ButtonRow(
+                    title=strs.layout.layout_tests.spec,
                     debug=debug,
-                    padding_left=5.0,
                     buttons=[
-                        dui1.Button(
-                            label='Test',
+                        dui2.Button(
+                            label=strs.nav.test.spec,
                             size=(180, 200),
-                            decorations=[
-                                dui1.Image(
-                                    'powerupPunch',
-                                    position=(-70, 0),
-                                    size=(40, 40),
-                                    h_align=dui1.HAlign.LEFT,
-                                ),
-                                dui1.Image(
-                                    'powerupSpeed',
-                                    position=(0, 75),
-                                    size=(35, 35),
-                                    v_align=dui1.VAlign.TOP,
-                                ),
-                                dui1.Text(
-                                    'TL',
-                                    position=(-70, 75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.LEFT,
-                                    v_align=dui1.VAlign.TOP,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'TR',
-                                    position=(70, 75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.RIGHT,
-                                    v_align=dui1.VAlign.TOP,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'BL',
-                                    position=(-70, -75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.LEFT,
-                                    v_align=dui1.VAlign.BOTTOM,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'BR',
-                                    position=(70, -75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.RIGHT,
-                                    v_align=dui1.VAlign.BOTTOM,
-                                    debug=debug,
-                                ),
-                            ],
+                            decorations=layout_test_decos(debug),
                         ),
-                        dui1.Button(
-                            label='Test2',
+                        dui2.Button(
+                            label=strs.nav.test_two.spec,
                             size=(100, 100),
                             color=(1, 0, 0, 1),
                             label_color=(1, 1, 1, 1),
@@ -494,95 +608,60 @@ def _test_page_root(
                         ),
                         # Should look like the first button but
                         # scaled down.
-                        dui1.Button(
-                            label='Test',
+                        dui2.Button(
+                            label=strs.nav.test.spec,
                             size=(180, 200),
                             scale=0.6,
                             padding_bottom=30,  # Should nudge us up.
                             debug=debug,  # Show bounds.
-                            decorations=[
-                                dui1.Image(
-                                    'powerupPunch',
-                                    position=(-70, 0),
-                                    size=(40, 40),
-                                    h_align=dui1.HAlign.LEFT,
-                                ),
-                                dui1.Image(
-                                    'powerupSpeed',
-                                    position=(0, 75),
-                                    size=(35, 35),
-                                    v_align=dui1.VAlign.TOP,
-                                ),
-                                dui1.Text(
-                                    'TL',
-                                    position=(-70, 75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.LEFT,
-                                    v_align=dui1.VAlign.TOP,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'TR',
-                                    position=(70, 75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.RIGHT,
-                                    v_align=dui1.VAlign.TOP,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'BL',
-                                    position=(-70, -75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.LEFT,
-                                    v_align=dui1.VAlign.BOTTOM,
-                                    debug=debug,
-                                ),
-                                dui1.Text(
-                                    'BR',
-                                    position=(70, -75),
-                                    size=(50, 50),
-                                    h_align=dui1.HAlign.RIGHT,
-                                    v_align=dui1.VAlign.BOTTOM,
-                                    debug=debug,
-                                ),
-                            ],
+                            decorations=layout_test_decos(debug),
                         ),
                         # Testing custom button images and opacity.
-                        dui1.Button(
-                            label='Test3',
-                            texture='buttonSquareWide',
+                        dui2.Button(
+                            label=strs.nav.test_three.spec,
+                            texture=_uiv1assets.textures.button_square_wide,
                             padding_left=10.0,
                             padding_right=10.0,
                             color=(1, 1, 1, 0.3),
                             size=(200, 100),
+                            style=dui2.ButtonStyle.MEDIUM,
                         ),
                         # Testing image drawing vs bounds
-                        dui1.Button(
-                            label='BoundsTest',
-                            texture='white',
+                        dui2.Button(
+                            label=strs.layout.bounds_test.spec,
+                            texture=_builtinassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
                             debug=debug,
                         ),
                     ],
                 ),
-                dui1.ButtonRow(
-                    title='Long Row Test',
-                    subtitle='Look - a subtitle!',
+                dui2.ButtonRow(
+                    title=strs.layout.long_row_test.spec,
+                    # Dev-only page, so baked literals.
+                    subtitle=LangStrSpecValue.literal(
+                        'Look - a subtitle! - These buttons reload the page'
+                        ' - all scrolling should remain intact.'
+                    ),
+                    footnote=LangStrSpecValue.literal('Look - a footnote!'),
                     buttons=[
-                        dui1.Button(
+                        dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
-                                dui1.Text(
-                                    'MaxWidthTest',
+                                dui2.Text(
+                                    text=strs.layout.max_width_test.spec,
                                     position=(0, 25),
                                     size=(150 * 0.8, 32.0),
                                     flatness=1.0,
                                     shadow=0.0,
                                     debug=debug,
                                 ),
-                                dui1.Text(
-                                    'MaxHeightTest\nSecondLine',
+                                # v1 bakes a newline into this one
+                                # ('MaxHeightTest\nSecondLine'); we ask
+                                # for two balanced lines instead.
+                                dui2.Text(
+                                    text=strs.layout.max_height_test.spec,
                                     position=(0, -20),
                                     size=(150 * 0.8, 40),
                                     flatness=1.0,
@@ -591,502 +670,225 @@ def _test_page_root(
                                 ),
                             ],
                         ),
-                        dui1.Button(
+                        dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
-                                dui1.Image(
-                                    'zoeIcon',
+                                dui2.Image(
+                                    texture=(
+                                        _classiccatalogassets.textures
+                                    ).zoe_icon,
                                     position=(0, 0),
                                     size=(70, 70),
-                                    tint_texture='zoeIconColorMask',
+                                    tint_texture=(
+                                        _classiccatalogassets.textures
+                                    ).zoe_icon_color_mask,
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
-                                    mask_texture='characterIconMask',
+                                    mask_texture=(
+                                        _classiccatalogassets.textures
+                                    ).character_icon_mask,
                                 ),
                             ],
                         ),
-                        dui1.Button(
+                        dui2.Button(
                             size=(150, 100),
+                            action=reload,
                             decorations=[
-                                dui1.Image(
-                                    'bridgitPreview',
+                                dui2.Image(
+                                    texture=(
+                                        _classiccatalogassets.textures
+                                    ).bridgit_preview,
                                     position=(0, 10),
                                     size=(120, 60),
-                                    mask_texture='mapPreviewMask',
-                                    mesh_opaque='level_select_button_opaque',
-                                    mesh_transparent=(
-                                        'level_select_button_transparent'
+                                    mask_texture=(
+                                        (
+                                            _classiccatalogassets.textures
+                                        ).map_preview_mask
                                     ),
+                                    mesh_opaque=(
+                                        _classiccatalogassets.meshes
+                                    ).level_select_button_opaque,
+                                    mesh_transparent=(
+                                        _classiccatalogassets.meshes
+                                    ).level_select_button_transparent,
                                 ),
                             ],
                         ),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(
-                            'foo',
+                        *[_long_row_button(i) for i in range(1, 9)],
+                        dui2.Button(
+                            label=strs.common.foo.spec,
                             size=(150, 100),
                             scale=0.4,
                             padding_left=100,
                             padding_right=200,
+                            action=reload,
                         ),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
-                        dui1.Button(size=(150, 100)),
+                        *[_long_row_button(i) for i in range(9, 17)],
                     ],
                 ),
-                dui1.ButtonRow(
-                    spacing_top=-15,
-                    subtitle='Subtitle only!',
+                dui2.ButtonRow(
+                    subtitle=strs.layout.subtitle_only.spec,
                     buttons=[
-                        dui1.Button(size=(200, 120)),
+                        dui2.Button(size=(200, 120)),
                     ],
                 ),
-                dui1.ButtonRow(
+                # Same again, so a subtitle-only row can be judged
+                # against a plain button row above it as well as
+                # against a footnote.
+                dui2.ButtonRow(
+                    # Dev-only page, so a baked literal.
+                    subtitle=LangStrSpecValue.literal('Subtitle only 2'),
                     buttons=[
-                        dui1.Button(
-                            'Row-With-No-Title Test',
+                        dui2.Button(size=(200, 120)),
+                    ],
+                ),
+                dui2.ButtonRow(
+                    buttons=[
+                        dui2.Button(
+                            label=strs.layout.row_with_no_title.spec,
                             size=(300, 80),
-                            style=dui1.ButtonStyle.MEDIUM,
+                            style=dui2.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
-                            icon='buttonPunch',
+                            icon=_classicassets.textures.button_punch,
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
                         ),
                     ],
                 ),
-                dui1.ButtonRow(
-                    title='Centered Content / Faded Title',
+                dui2.ButtonRow(
+                    title=strs.layout.centered_faded_title.spec,
                     title_color=(0.6, 0.6, 1.0, 0.3),
                     title_flatness=1.0,
                     title_shadow=1.0,
-                    subtitle='Testing Centered Title/Content',
+                    subtitle=strs.layout.testing_centered.spec,
                     subtitle_color=(1.0, 0.5, 1.0, 0.5),
                     subtitle_flatness=1.0,
                     subtitle_shadow=0.0,
+                    # Styled on its own, not inheriting the subtitle's
+                    # overrides. (Dev-only page, so a baked literal.)
+                    footnote=LangStrSpecValue.literal(
+                        'Footnote with its own color, flatness and shadow.'
+                    ),
+                    footnote_color=(0.4, 1.0, 1.0, 1.0),
+                    footnote_flatness=0.0,
+                    footnote_shadow=1.0,
                     center_content=True,
                     center_title=True,
                     buttons=[
-                        dui1.Button(
-                            'Hello There!',
+                        dui2.Button(
+                            label=strs.common.hello_there.spec,
                             size=(200, 120),
                             color=(0.7, 0.7, 0.9, 1),
                         ),
                     ],
                 ),
+                # Right-alignment tests. (Dev-only, so baked literals.)
+                dui2.ButtonRow(
+                    title=LangStrSpecValue.literal('Right Aligned Title'),
+                    subtitle=LangStrSpecValue.literal(
+                        'Testing right-aligned title, subtitle, and content'
+                    ),
+                    title_align=dui2.HAlign.RIGHT,
+                    content_align=dui2.HAlign.RIGHT,
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal('Right'),
+                            size=(200, 80),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            debug=debug,
+                        ),
+                    ],
+                ),
+                # Same, but with more buttons than fit; alignment only
+                # applies to rows with room to spare, so this one should
+                # simply fill its width and scroll like any other.
+                dui2.ButtonRow(
+                    title=LangStrSpecValue.literal('Right Aligned Scrolling'),
+                    subtitle=LangStrSpecValue.literal(
+                        'Too many buttons to fit; should scroll normally'
+                    ),
+                    title_align=dui2.HAlign.RIGHT,
+                    content_align=dui2.HAlign.RIGHT,
+                    debug=debug,
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(str(i + 1)),
+                            size=(150, 100),
+                        )
+                        for i in range(16)
+                    ],
+                    # The first row's header test, flipped upside down
+                    # as a footer.
+                    footer_height=100,
+                    footer_decorations_left=[
+                        dui2.Text(
+                            text=LangStrSpecValue.literal('Footer Left'),
+                            position=(0, -10 - 20),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=dui2.HAlign.LEFT,
+                            debug=debug,
+                        ),
+                    ],
+                    footer_decorations_center=[
+                        dui2.Image(
+                            texture=_classicassets.textures.nub,
+                            position=(0, 58 - 20),
+                            size=(60, 60),
+                        ),
+                        dui2.Text(
+                            text=strs.common.docui_reference.spec,
+                            scale=0.5,
+                            position=(0, 18 - 20),
+                            size=(600, 23),
+                            debug=debug,
+                        ),
+                        dui2.Text(
+                            text=LangStrSpecValue.literal(
+                                'Hello from a DocUI footer!'
+                            ),
+                            position=(0, -10 - 20),
+                            size=(300, 30),
+                            debug=debug,
+                        ),
+                    ],
+                    footer_decorations_right=[
+                        dui2.Text(
+                            text=LangStrSpecValue.literal('Footer Right'),
+                            position=(0, -10 - 20),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=dui2.HAlign.RIGHT,
+                            debug=debug,
+                        ),
+                    ],
+                ),
             ],
-        ),
+        )
     )
 
-    # Include some client effects if they ask.
-    if request.args.get('test_effects', False):
+    # Include some client effects if they ask (the 'Response
+    # ClientEffects' button). V2 effect forms; see the immediate-effects
+    # note above.
+    if route.test_effects:
         response.client_effects = [
-            clfx.ScreenMessage(
-                'Hello From Response Client Effects', color=(0, 1, 0)
+            clfx.ScreenMessageV2(
+                message=strs.effects.response_effects_hello.spec,
+                color=(0, 1, 0),
             ),
-            clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
             clfx.Delay(1.0),
-            clfx.ScreenMessage(
-                '{"r":"successText"}', is_lstr=True, color=(0, 1, 0)
+            clfx.ScreenMessageV2(
+                message=strs.effects.effect_success.spec, color=(0, 1, 0)
             ),
-            clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
         ]
 
-    # Include a local-action if they ask.
-    if request.args.get('test_action', False):
-        response.local_action = 'testaction'
-        response.local_action_args = {'testparam': 234}
+    # Include a local-action if they ask (the 'Response LocalAction'
+    # button).
+    if route.test_action:
+        rt.TestAction(testparam=234).attach(response)
 
     return response
-
-
-def _test_page_empty(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    import bacommon.docui.v1 as dui1
-
-    del request  # Unused.
-
-    return dui1.Response(page=dui1.Page(title='EmptyPage', rows=[]))
-
-
-def _test_page_display_items(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    """Testing display-items."""
-    from bacommon.classic import ClassicChestAppearance, ClassicChestDisplayItem
-    import bacommon.docui.v1 as dui1
-    import bacommon.displayitem as ditm
-
-    # Show some specific debug bits if they ask us to.
-    debug = bool(request.args.get('debug', False))
-
-    def _make_test_button(
-        scale: float,
-        wrapper: ditm.Wrapper,
-    ) -> dui1.Button:
-
-        # See how this looks when unrecognized (relying on wrapper info
-        # only).
-        uwrapper = copy.deepcopy(wrapper)
-        uwrapper.item = ditm.Unknown()
-
-        return dui1.Button(
-            size=(300, 400),
-            scale=scale,
-            decorations=[
-                dui1.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui1.DisplayItemStyle.FULL,
-                    position=(-62, 100),
-                    size=(120, 120),
-                    debug=debug,
-                ),
-                dui1.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui1.DisplayItemStyle.FULL,
-                    position=(62, 100),
-                    size=(120, 120),
-                    debug=debug,
-                ),
-                dui1.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui1.DisplayItemStyle.COMPACT,
-                    position=(-55, -20),
-                    size=(80, 80),
-                    debug=debug,
-                ),
-                dui1.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui1.DisplayItemStyle.COMPACT,
-                    position=(55, -20),
-                    size=(80, 80),
-                    debug=debug,
-                ),
-                dui1.DisplayItem(
-                    wrapper=wrapper,
-                    style=dui1.DisplayItemStyle.ICON,
-                    position=(-55, -120),
-                    size=(100, 80),
-                    debug=debug,
-                ),
-                dui1.DisplayItem(
-                    wrapper=uwrapper,
-                    style=dui1.DisplayItemStyle.ICON,
-                    position=(55, -120),
-                    size=(100, 80),
-                    debug=debug,
-                ),
-            ],
-        )
-
-    return dui1.Response(
-        page=dui1.Page(
-            padding_left=20,
-            padding_right=20,
-            title='DisplayItems',
-            rows=[
-                dui1.ButtonRow(
-                    debug=debug,
-                    padding_left=-10,
-                    title='Display Item Tests',
-                    subtitle=(
-                        'top=FULL, center=COMPACT, bottom=ICON;'
-                        ' left=regular, right=unknown'
-                    ),
-                    buttons=[
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
-                        ),
-                        _make_test_button(
-                            0.47,
-                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(
-                                ClassicChestDisplayItem(
-                                    appearance=ClassicChestAppearance.L3
-                                )
-                            ),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tokens(count=3)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Tokens(count=1414287)),
-                        ),
-                        _make_test_button(
-                            1.0,
-                            ditm.Wrapper.for_item(ditm.Test()),
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    buttons=[
-                        dui1.Button(
-                            'Hide Debug' if debug else 'Show Debug',
-                            style=dui1.ButtonStyle.MEDIUM,
-                            size=(240, 60),
-                            color=(0.6, 0.4, 0.8, 1.0),
-                            action=dui1.Replace(
-                                dui1.Request(
-                                    request.path, args={'debug': not debug}
-                                )
-                            ),
-                        )
-                    ],
-                ),
-            ],
-        )
-    )
-
-
-def _test_bounds(
-    request: bacommon.docui.v1.Request,
-) -> bacommon.docui.v1.Response:
-    import bacommon.docui.v1 as dui1
-
-    del request  # Unused.
-
-    def _nm(style: dui1.ButtonStyle) -> str:
-        return f'{type(style).__name__}.{style.name}'
-
-    return dui1.Response(
-        page=dui1.Page(
-            title='BoundsTests',
-            rows=[
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.SQUARE),
-                    buttons=[
-                        dui1.Button('Hello', size=(300, 300), debug=True),
-                        dui1.Button('Hello', size=(200, 200), debug=True),
-                        dui1.Button('Hello', size=(100, 100), debug=True),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.SQUARE_WIDE),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(400, 200),
-                            style=dui1.ButtonStyle.SQUARE_WIDE,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 250),
-                            style=dui1.ButtonStyle.SQUARE_WIDE,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(60, 100),
-                            style=dui1.ButtonStyle.SQUARE_WIDE,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title='(background texture)',
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(300, 300),
-                            texture='white',
-                            color=(1, 0, 0, 0.3),
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 200),
-                            texture='white',
-                            color=(1, 0, 0, 0.3),
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 100),
-                            texture='white',
-                            color=(1, 0, 0, 0.3),
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.TAB),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(400, 100),
-                            style=dui1.ButtonStyle.TAB,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.TAB,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.TAB,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.LARGER),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(500, 100),
-                            style=dui1.ButtonStyle.LARGER,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.LARGER,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.LARGER,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.LARGE),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(400, 100),
-                            style=dui1.ButtonStyle.LARGE,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.LARGE,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.LARGE,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.MEDIUM),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(300, 100),
-                            style=dui1.ButtonStyle.MEDIUM,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.MEDIUM,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.MEDIUM,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.SMALL),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 100),
-                            style=dui1.ButtonStyle.SMALL,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.SMALL,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.SMALL,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.BACK),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 100),
-                            style=dui1.ButtonStyle.BACK,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.BACK,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.BACK,
-                            debug=True,
-                        ),
-                    ],
-                ),
-                dui1.ButtonRow(
-                    title=_nm(dui1.ButtonStyle.BACK_SMALL),
-                    buttons=[
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 100),
-                            style=dui1.ButtonStyle.BACK_SMALL,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(200, 50),
-                            style=dui1.ButtonStyle.BACK_SMALL,
-                            debug=True,
-                        ),
-                        dui1.Button(
-                            'Hello',
-                            size=(100, 60),
-                            style=dui1.ButtonStyle.BACK_SMALL,
-                            debug=True,
-                        ),
-                    ],
-                ),
-            ],
-        )
-    )

@@ -27,7 +27,7 @@ steps:
     commands:
       - cd ../build_and_test_linux
       - make cmake-server-build
-      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make test-ex
     depends_on: [parallel-prepare]
   - name: spinoff-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest

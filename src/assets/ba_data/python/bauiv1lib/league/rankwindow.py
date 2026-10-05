@@ -4,15 +4,21 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import copy
 import logging
 from typing import TYPE_CHECKING, override
 
 import bacommon.classic
 import bauiv1 as bui
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
+from bauiv1lib.league import league_display_name
 from bauiv1lib.popup import PopupMenu
 
 if TYPE_CHECKING:
@@ -53,15 +59,19 @@ class LeagueRankWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1500 if uiscale is bui.UIScale.SMALL else 1120
+        # Note: small-ui width is sized so our backing covers the
+        # widest-case screen (21:9 aspect plus max screen margins) and
+        # our scroll clamp doesn't stop short of the screen edges.
+        self._width = 1630 if uiscale is bui.UIScale.SMALL else 1120
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            1000
-            if uiscale is bui.UIScale.SMALL
-            else 710 if uiscale is bui.UIScale.MEDIUM else 800
-        )
+        self._height = 1000 if uiscale is bui.UIScale.SMALL else 710
+
+        # Large ui-scale is medium's layout drawn smaller, by the same
+        # ratio doc-ui windows use between the two (root scale 0.9 vs
+        # 0.65); nothing here benefits from a bigger window. Popups we
+        # open shrink by it too, keeping their size relative to us.
+        self._large_shrink = 0.65 / 0.9 if uiscale is bui.UIScale.LARGE else 1.0
         self._r = 'coopSelectWindow'
-        self._rdict = bui.app.lang.get_resource(self._r)
         self._xoffs = 40
 
         self._league_url_arg = ''
@@ -74,9 +84,7 @@ class LeagueRankWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.13
-            if uiscale is bui.UIScale.SMALL
-            else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
+            1.13 if uiscale is bui.UIScale.SMALL else 0.93 * self._large_shrink
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -95,6 +103,21 @@ class LeagueRankWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             self._scroll_height += 53
             scroll_bottom -= 1
+
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -117,12 +140,21 @@ class LeagueRankWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # Sized to match doc-ui windows' back/close button on screen
+            # (scale 0.88 under their 0.9 medium root scale; ours is
+            # 0.93), keeping the center it has always had.
+            back_size = (50.0, 50.0) if auxiliary_style else (60.0, 55.0)
+            back_scale = 0.88 * 0.9 / 0.93
+            back_center = (75.0 + x_inset + 36.0, yoffs - 27.0)
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(75 + x_inset, yoffs - 60),
-                size=(60, 55),
-                scale=1.2,
+                position=(
+                    back_center[0] - 0.5 * back_size[0] * back_scale,
+                    back_center[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 label=bui.charstr(
                     bui.SpecialChar.CLOSE
@@ -141,20 +173,29 @@ class LeagueRankWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height + self._margin_bottom + self._margin_top,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
+                scroll_bottom - self._margin_bottom,
             ),
             center_small_content=True,
             center_small_content_horizontally=True,
-            border_opacity=0.4,
+            # Outside small ui our content always fits; no outline.
+            border_opacity=0.4 if uiscale is bui.UIScale.SMALL else 0.0,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
         # With full-screen scrolling, fade content as it approaches
-        # toolbars.
+        # toolbars. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL:
             scroll_fade_top(
                 self._root_widget,
@@ -174,18 +215,18 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
+            # (Outside small ui, centered on the back button and sized
+            # like doc-ui windows' titles on screen: 1.0 under their 0.9
+            # medium root scale; ours is 0.93.)
             position=(
                 self._width * 0.5,
-                yoffs - (55 if uiscale is bui.UIScale.SMALL else 30),
+                yoffs - (55 if uiscale is bui.UIScale.SMALL else 27),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='league.leagueRankText',
-                fallback_resource='coopSelectWindow.powerRankingText',
-            ),
+            text=_classicassets.strings.league.league_rank,
             h_align='center',
             color=bui.app.ui_v1.title_color,
-            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.3,
+            scale=1.2 if uiscale is bui.UIScale.SMALL else 0.9 / 0.93,
             maxwidth=600,
             v_align='center',
         )
@@ -194,12 +235,23 @@ class LeagueRankWindow(bui.MainWindow):
         self._doing_power_ranking_query = False
 
         self._subcontainer: bui.Widget | None = None
-        self._subcontainerwidth = 1024
-        self._subcontainerheight = 573
+        self._subcontainerwidth = 1024.0
 
-        # For fullscreen scrollable, account for toolbar.
+        # Cover any screen margins our scroll area extends into;
+        # content itself stays within the virtual bounds (the layout
+        # in _refresh starts margin_top down from our top).
+        self._subcontainerheight = (
+            573.0 + self._margin_bottom + self._margin_top
+        )
+
+        # For fullscreen scrollable, account for toolbar. Elsewhere, drop
+        # the empty space below our lowest content (the 'More...'
+        # button), which only small ui's full-screen layout wants; this
+        # way everything fits our scroll area without scrolling.
         if uiscale is bui.UIScale.SMALL:
             self._subcontainerheight += 53
+        else:
+            self._subcontainerheight -= 80
 
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
@@ -246,6 +298,7 @@ class LeagueRankWindow(bui.MainWindow):
             edit=self._president_name,
             color=(0.6, 0.6, 1, 0.9),
             text=response.name,
+            literal=True,
         )
 
     @override
@@ -276,13 +329,12 @@ class LeagueRankWindow(bui.MainWindow):
             )
         else:
             bui.screenmessage(
-                bui.Lstr(
-                    resource='achievementsUnavailableForOldSeasonsText',
-                    fallback_resource='unavailableText',
-                ),
+                (
+                    _classicassets.strings.league
+                ).achievements_unavailable_old_seasons,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
 
     def _on_activity_mult_press(self) -> None:
         from bauiv1lib import confirm
@@ -290,20 +342,13 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        txt = bui.Lstr(
-            resource=(
-                'coopSelectWindow.activenessAllTimeInfoText'
-                if self._season == 'a'
-                else 'coopSelectWindow.activenessInfoText'
-            ),
-            subs=[
-                (
-                    '${MAX}',
-                    str(
-                        plus.get_v1_account_misc_read_val('activenessMax', 1.0)
-                    ),
-                )
-            ],
+        # (The legacy form passed a ${MAX} sub that neither string
+        # actually contained; dropped with the port.)
+        lstrs = _classicassets.strings.league
+        txt = (
+            lstrs.activeness_all_time_info
+            if self._season == 'a'
+            else lstrs.activeness_info
         )
         confirm.ConfirmWindow(
             txt,
@@ -311,6 +356,7 @@ class LeagueRankWindow(bui.MainWindow):
             width=460,
             height=150,
             origin_widget=self._activity_mult_button,
+            scale=self._popup_scale(1.5),
         )
 
     def _on_up_to_date_bonus_press(self) -> None:
@@ -319,18 +365,10 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        txt = bui.Lstr(
-            resource='league.upToDateBonusDescriptionText',
-            subs=[
-                (
-                    '${PERCENT}',
-                    str(
-                        plus.get_v1_account_misc_read_val(
-                            'proPowerRankingBoost', 10
-                        )
-                    ),
-                ),
-            ],
+        txt = _classicassets.strings.league.up_to_date_bonus_description(
+            percent=str(
+                plus.get_v1_account_misc_read_val('proPowerRankingBoost', 10)
+            )
         )
         confirm.ConfirmWindow(
             txt,
@@ -338,6 +376,7 @@ class LeagueRankWindow(bui.MainWindow):
             width=460,
             height=130,
             origin_widget=self._up_to_date_bonus_button,
+            scale=self._popup_scale(1.5),
         )
 
     def _on_trophies_press(self) -> None:
@@ -350,9 +389,21 @@ class LeagueRankWindow(bui.MainWindow):
             TrophiesWindow(
                 position=prtb.get_screen_space_center(),
                 data=info,
+                scale=self._popup_scale(1.65),
             )
         else:
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
+
+    def _popup_scale(self, medium_scale: float) -> float | None:
+        """Scale for a popup we open, given its medium ui-scale scale.
+
+        None (the popup's own default) at small ui-scale. At large it is
+        the medium scale shrunk as we are, so popups keep the same size
+        relative to us at medium and large.
+        """
+        if bui.app.ui_v1.uiscale is bui.UIScale.SMALL:
+            return None
+        return medium_scale * self._large_shrink
 
     def _on_power_ranking_query_response(
         self, data: dict[str, Any] | None
@@ -443,7 +494,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
         w_parent = self._subcontainer
-        v = self._subcontainerheight - 20
+        v = self._subcontainerheight - self._margin_top - 20
 
         v -= 0
 
@@ -468,7 +519,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='coopSelectWindow.pointsText'),
+            text=_classicassets.strings.ui.points,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -481,7 +532,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|ach',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=bui.gettexture('achievementsIcon'),
+            icon=_classicassets.textures.achievements_icon.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
@@ -512,7 +563,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|trophies',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=bui.gettexture('medalSilver'),
+            icon=_classicassets.textures.medal_silver.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
@@ -542,7 +593,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='coopSelectWindow.multipliersText'),
+            text=_classicassets.strings.league.multipliers,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -557,9 +608,9 @@ class LeagueRankWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|amult',
                 position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
-                icon=bui.gettexture('heart'),
+                icon=_classicassets.textures.heart.get(),
                 icon_color=(0.5, 0, 0.5),
-                label=bui.Lstr(resource='coopSelectWindow.activityText'),
+                label=_classicassets.strings.ui.activity,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._on_activity_mult_press
@@ -591,9 +642,9 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|uptodatebonus',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
-            icon=bui.gettexture('logo'),
+            icon=_classicassets.textures.logo.get(),
             icon_color=(0.3, 0, 0.3),
-            label=bui.Lstr(resource='league.upToDateBonusText'),
+            label=_classicassets.strings.league.up_to_date_bonus,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(
                 self._on_up_to_date_bonus_press
@@ -625,7 +676,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='finalScoreText'),
+            text=_classicassets.strings.ui.final_score,
             h_align='right',
             v_align='center',
             scale=0.9,
@@ -652,7 +703,7 @@ class LeagueRankWindow(bui.MainWindow):
             label='',
             position=(self._xoffs + h2 - 60, v2 - 100),
             color=(0.7, 0.55, 0.9),
-            texture=bui.gettexture('buttonSquareWide'),
+            texture=_uiv1assets.textures.button_square_wide.get(),
             opacity=0.3,
             size=(200, 80),
             autoselect=True,
@@ -660,7 +711,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
         self._president_label = bui.textwidget(
             parent=w_parent,
-            text=bui.Lstr(resource='league.leaguePresidentText'),
+            text=_classicassets.strings.league.league_president,
             flatness=1.0,
             shadow=0.0,
             color=(0.6, 0.6, 1, 0.7),
@@ -688,7 +739,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=bui.gettexture('star'),
+            texture=_classicassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
@@ -697,7 +748,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=bui.gettexture('star'),
+            texture=_classicassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),
@@ -710,7 +761,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=200,
-            text=bui.Lstr(resource='showText'),
+            text=_commonassets.strings.actions.show,
             h_align='right',
             v_align='center',
             scale=0.8,
@@ -847,7 +898,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._see_more_button = bui.buttonwidget(
             parent=w_parent,
             id=f'{self.main_window_id_prefix}|seemore',
-            label=self._rdict.seeMoreText,
+            label=bui.app.lang.get_resource(f'{self._r}.seeMoreText'),
             position=(self._xoffs + h, v),
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -857,7 +908,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
     def _on_president_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.routes.classicleaguepresidency as lroutes
 
         from bauiv1lib.league.presidency import LeaguePresidencyUIController
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -872,9 +923,9 @@ class LeagueRankWindow(bui.MainWindow):
         # We should be signed in at this point, but let's be sure.
         if plus.accounts.primary is None:
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Wait for connectivity if need be, then bring up a cloud based
@@ -883,7 +934,7 @@ class LeagueRankWindow(bui.MainWindow):
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     LeaguePresidencyUIController().create_window,
-                    dui1.Request('/', args={'season': self._season}),
+                    lroutes.Root(season=self._season),
                     origin_widget=self._president_button,
                     auxiliary_style=False,
                 ),
@@ -899,9 +950,9 @@ class LeagueRankWindow(bui.MainWindow):
 
         our_login_id = plus.get_v1_account_public_login_id()
         if not self._can_do_more_button or our_login_id is None:
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='unavailableText'), color=(1, 0, 0)
+                _commonassets.strings.status.unavailable_status, color=(1, 0, 0)
             )
             return
         if self._season is None:
@@ -935,27 +986,37 @@ class LeagueRankWindow(bui.MainWindow):
         assert bui.app.classic is not None
         accounts = bui.app.classic.accounts
         in_top = data is not None and data['rank'] is not None
-        eq_text = self._rdict.powerRankingPointsEqualsText
-        pts_txt = self._rdict.powerRankingPointsText
-        num_text = bui.Lstr(resource='numberText').evaluate()
+        eq_text = bui.app.lang.get_resource(
+            f'{self._r}.powerRankingPointsEqualsText'
+        )
+        pts_txt = bui.app.lang.get_resource(f'{self._r}.powerRankingPointsText')
+
+        def num_str(number: str) -> str:
+            # Layout code (flat widths/placement); evaluate locally.
+            return (
+                _classicassets.strings.league.number_badge(number=number)
+            ).evaluate()
+
         do_percent = False
         finished_season_unranked = False
         self._can_do_more_button = True
         extra_text = ''
         if plus.get_v1_account_state() != 'signed_in':
             status_text = (
-                '(' + bui.Lstr(resource='notSignedInText').evaluate() + ')'
+                '('
+                + _classicassets.strings.ui.not_signed_in_status.evaluate()
+                + ')'
             )
         elif in_top:
             assert data is not None
-            status_text = num_text.replace('${NUMBER}', str(data['rank']))
+            status_text = num_str(str(data['rank']))
         elif data is not None:
             try:
                 # Handle old seasons where we didn't wind up ranked at
                 # the end.
                 if not data['scores']:
-                    status_text = (
-                        self._rdict.powerRankingFinishedSeasonUnrankedText
+                    status_text = bui.app.lang.get_resource(
+                        f'{self._r}.powerRankingFinishedSeasonUnrankedText'
                     )
                     extra_text = ''
                     finished_season_unranked = True
@@ -964,25 +1025,24 @@ class LeagueRankWindow(bui.MainWindow):
                     our_points = accounts.get_league_rank_points(data)
                     progress = float(our_points) / max(1, data['scores'][-1][1])
                     status_text = str(int(progress * 100.0)) + '%'
-                    extra_text = (
-                        '\n'
-                        + self._rdict.powerRankingPointsToRankedText.replace(
-                            '${CURRENT}', str(our_points)
-                        ).replace('${REMAINING}', str(data['scores'][-1][1]))
+                    extra_text = '\n' + bui.app.lang.get_resource(
+                        f'{self._r}.powerRankingPointsToRankedText'
+                    ).replace('${CURRENT}', str(our_points)).replace(
+                        '${REMAINING}', str(data['scores'][-1][1])
                     )
                     do_percent = True
             except Exception:
                 logging.exception('Error updating power ranking.')
-                status_text = self._rdict.powerRankingNotInTopText.replace(
-                    '${NUMBER}', str(data['listSize'])
-                )
+                status_text = bui.app.lang.get_resource(
+                    f'{self._r}.powerRankingNotInTopText'
+                ).replace('${NUMBER}', str(data['listSize']))
                 extra_text = ''
         else:
             status_text = '-'
 
         self._season = data['s'] if data is not None else None
 
-        v = self._subcontainerheight - 20
+        v = self._subcontainerheight - self._margin_top - 20
         # For fullscreen scrollable, account for toolbar.
         uiscale = bui.app.ui_v1.uiscale
         if uiscale is bui.UIScale.SMALL:
@@ -1005,10 +1065,7 @@ class LeagueRankWindow(bui.MainWindow):
                 season_choices.append(ssn)
                 if ssn != 'a' and not did_first:
                     season_choices_display.append(
-                        bui.Lstr(
-                            resource='league.currentSeasonText',
-                            subs=[('${NUMBER}', ssn)],
-                        )
+                        _classicassets.strings.league.current_season(number=ssn)
                     )
                     did_first = True
 
@@ -1018,21 +1075,17 @@ class LeagueRankWindow(bui.MainWindow):
                         self._is_current_season = True
                 elif ssn == 'a':
                     season_choices_display.append(
-                        bui.Lstr(resource='league.allTimeText')
+                        _classicassets.strings.league.all_time
                     )
                 else:
                     season_choices_display.append(
-                        bui.Lstr(
-                            resource='league.seasonText',
-                            subs=[('${NUMBER}', ssn)],
-                        )
+                        _classicassets.strings.league.season(number=ssn)
                     )
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
                 parent=self._subcontainer,
                 button_id=f'{self.main_window_id_prefix}|season',
                 position=(self._xoffs + 390, v - 45),
-                width=150,
                 button_size=(200, 50),
                 choices=season_choices,
                 on_value_change_call=bui.WeakCallPartial(
@@ -1040,6 +1093,8 @@ class LeagueRankWindow(bui.MainWindow):
                 ),
                 choices_display=season_choices_display,
                 current_choice=self._season,
+                # (Medium's default popup-menu scale.)
+                scale=self._popup_scale(1.65),
             )
             if popup_was_selected:
                 bui.containerwidget(
@@ -1063,7 +1118,7 @@ class LeagueRankWindow(bui.MainWindow):
             text=(
                 ''
                 if self._season == 'a'
-                else bui.Lstr(resource='league.leagueText')
+                else _classicassets.strings.league.league
             ),
         )
 
@@ -1073,21 +1128,22 @@ class LeagueRankWindow(bui.MainWindow):
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
         elif self._season == 'a':
-            lname = bui.Lstr(resource='league.allTimeText').evaluate()
+            lname = _classicassets.strings.league.all_time.evaluate()
             lnum = ''
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
         else:
             lnum = ('[' + str(data['l']['i']) + ']') if data['l']['i2'] else ''
-            lname = bui.Lstr(
-                translate=('leagueNames', data['l']['n'])
-            ).evaluate()
+            lnameval = league_display_name(data['l']['n'])
+            lname = (
+                lnameval if isinstance(lnameval, str) else lnameval.evaluate()
+            )
             lcolor = data['l']['c']
             self._league_url_arg = (
                 data['l']['n'] + '_' + str(data['l']['i'])
             ).lower()
 
-        to_end_string: bui.Lstr | str
+        to_end_string: bui.Lstr | bui.LangStr | str
         if data is None or self._season == 'a' or data['se'] is None:
             to_end_string = ''
             show_season_end = False
@@ -1096,31 +1152,31 @@ class LeagueRankWindow(bui.MainWindow):
             days_to_end = data['se'][0]
             minutes_to_end = data['se'][1]
             if days_to_end > 0:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsDaysText',
-                    subs=[('${NUMBER}', str(days_to_end))],
+                to_end_string = _classicassets.strings.league.season_ends_days(
+                    days=days_to_end
                 )
             elif days_to_end == 0 and minutes_to_end >= 60:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsHoursText',
-                    subs=[('${NUMBER}', str(minutes_to_end // 60))],
+                to_end_string = _classicassets.strings.league.season_ends_hours(
+                    hours=minutes_to_end // 60
                 )
             elif days_to_end == 0 and minutes_to_end >= 0:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsMinutesText',
-                    subs=[('${NUMBER}', str(minutes_to_end))],
+                to_end_string = (
+                    _classicassets.strings.league.season_ends_minutes(
+                        minutes=minutes_to_end
+                    )
                 )
             else:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndedDaysAgoText',
-                    subs=[('${NUMBER}', str(-(days_to_end + 1)))],
+                to_end_string = (
+                    _classicassets.strings.league.season_ended_days_ago(
+                        days=-(days_to_end + 1)
+                    )
                 )
 
         bui.textwidget(edit=self._season_ends_text, text=to_end_string)
         bui.textwidget(
             edit=self._trophy_counts_reset_text,
             text=(
-                bui.Lstr(resource='league.trophyCountsResetText')
+                _classicassets.strings.league.trophy_counts_reset
                 if self._is_current_season and show_season_end
                 else ''
             ),
@@ -1129,7 +1185,9 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(edit=self._league_text, text=lname, color=lcolor)
         l_text_width = min(
             self._league_text_maxwidth,
-            bui.get_string_width(lname, suppress_warning=True)
+            bui.get_string_width(
+                lname, suppress_warning=True, suppress_logic_thread_warning=True
+            )
             * self._league_text_scale,
         )
         bui.textwidget(
@@ -1147,7 +1205,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._to_ranked_text,
             text=(
-                bui.Lstr(resource='coopSelectWindow.toRankedText').evaluate()
+                _classicassets.strings.league.to_ranked.evaluate()
                 + ''
                 + extra_text
                 if do_percent
@@ -1157,14 +1215,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         bui.textwidget(
             edit=self._your_power_ranking_text,
-            text=(
-                bui.Lstr(
-                    resource='rankText',
-                    fallback_resource='coopSelectWindow.yourPowerRankingText',
-                )
-                if (not do_percent)
-                else ''
-            ),
+            text=(_classicassets.strings.ui.rank if (not do_percent) else ''),
         )
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
 
@@ -1229,7 +1280,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_achievements_button,
             label=('' if data is None else str(data['a']) + ' ')
-            + bui.Lstr(resource='achievementsText').evaluate(),
+            + _classicassets.strings.ui.achievements.evaluate(),
         )
 
         # For the achievement value, use the number they gave us for
@@ -1258,7 +1309,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_trophies_button,
             label=('' if data is None else str(total_trophies_count) + ' ')
-            + bui.Lstr(resource='trophiesText').evaluate(),
+            + _classicassets.strings.ui.trophies.evaluate(),
         )
         bui.textwidget(
             edit=self._power_ranking_trophies_total_text,
@@ -1303,7 +1354,7 @@ class LeagueRankWindow(bui.MainWindow):
                     maxwidth=40,
                     flatness=1.0,
                     shadow=0.0,
-                    text=num_text.replace('${NUMBER}', str(score[0])),
+                    text=num_str(str(score[0])),
                     h_align='right',
                     v_align='center',
                     scale=0.5,
@@ -1361,7 +1412,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        bui.getsound('swish').play()
+        bui.play_swish()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

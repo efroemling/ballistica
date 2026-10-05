@@ -36,9 +36,28 @@ class ConnectionToClient : public Connection {
   auto GetClassicPurchases() const -> PyObject* {
     return classic_purchases_.get();
   }
+  /// This client's account's cloud profiles as cloud-composed
+  /// character json strings (list of str), as provided by the master
+  /// server via v2-auth, or ``Py_None`` / ``nullptr`` when none were
+  /// provided (non-v2-auth connection, older master, unknown). The
+  /// lobby offers these instead of the legacy ``player_profiles``.
+  auto GetCloudCharacters() const -> PyObject* {
+    return cloud_characters_.get();
+  }
   auto build_number() const -> int { return build_number_; }
+  /// Send a screen-message. ``s`` is the legacy flat/resource-json text
+  /// every build understands; ``tagged``, when non-empty, is a lang-str
+  /// tagged wire value (see kLangStrWireTag*) shipped alongside it --
+  /// new enough clients prefer it and render in their own locale.
   void SendScreenMessage(const std::string& s, float r = 1.0f, float g = 1.0f,
-                         float b = 1.0f);
+                         float b = 1.0f,
+                         const std::string& tagged = std::string());
+
+  /// Send a post-handshake join-rejection reason CODE (a BA_REJECT_REASON_*
+  /// value) as a BA_JMESSAGE_REJECT_REASON; the joiner renders its own
+  /// localized string. Only understood by peers at or above
+  /// BA_REJECT_REASON_MIN_BUILD; gate the call on build_number().
+  void SendRejectReason(int reason);
   auto token() const -> const std::string& { return token_; }
   void HandleMasterServerClientInfo(PyObject* info_obj);
 
@@ -47,6 +66,19 @@ class ConnectionToClient : public Connection {
   auto peer_public_account_id() const -> const std::string& {
     return peer_public_account_id_;
   }
+
+  /// Whether our handshake offered this client v2-auth. Decided once,
+  /// at our first handshake send, from the app mode's ClientAuthMode
+  /// (optional mode offers it only if we have a global app-instance id
+  /// then), and fixed for the connection: the client latches whatever
+  /// our first handshake says.
+  auto v2_auth_offered() const { return v2_auth_offered_; }
+
+  /// Whether this client authenticated through v2-auth (so its peer
+  /// spec, account id, and profiles came verified from the cloud).
+  /// Always true for an accepted client when auth is required; for
+  /// optional auth, only for those that could.
+  auto v2_authed() const { return v2_authed_; }
 
   /// Return whether this client is an admin. Will only return true once their
   /// account id has been verified by the master server.
@@ -69,13 +101,42 @@ class ConnectionToClient : public Connection {
     assert(protocol_version_ != -1);
     return protocol_version_;
   }
+  auto PeerSupportsZstdPackets() const -> bool override {
+    // Set once the client's handshake response has claimed a version
+    // matching ours; before that (our own handshake) it's huffman.
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionZstdPackets;
+  }
+  auto PeerSupportsUnreliableParts() const -> bool override {
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionUnreliableParts;
+  }
+  auto PeerSupportsWideAcks() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionWideAcks;
+  }
+  auto PeerSupportsBigPackets() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionBigPackets;
+  }
+
+  /// Protocol version the client claimed in its CLIENT_REQUEST packet, or
+  /// -1 if we never saw one. Note this is client-supplied and completely
+  /// unverified (we don't gate connects on it), so treat it as a
+  /// diagnostic hint only -- it is useful mainly for telling stock
+  /// clients apart from hand-rolled ones when a join goes wrong.
+  auto client_claimed_protocol_version() const {
+    return client_claimed_protocol_version_;
+  }
+  void set_client_claimed_protocol_version(int val) {
+    client_claimed_protocol_version_ = val;
+  }
 
  private:
-  virtual auto ShouldPrintIncompatibleClientErrors() const -> bool;
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
+  auto ApplyV2AuthToken_(const std::string& token) -> bool;
 
   int protocol_version_;
+  int client_claimed_protocol_version_{-1};
   std::string our_handshake_player_spec_str_;
   std::string our_handshake_salt_;
   std::string peer_public_account_id_;
@@ -92,7 +153,13 @@ class ConnectionToClient : public Connection {
   std::string peer_hash_;
   PythonRef player_profiles_;
   PythonRef classic_purchases_;
+  PythonRef cloud_characters_;
   bool got_v1_auth_from_master_server_{};
+  bool v2_auth_decided_{};
+  bool v2_auth_offered_{};
+  bool v2_auth_required_{};
+  bool v2_authed_{};
+  std::string v2_auth_app_instance_id_;
   std::vector<millisecs_t> last_chat_times_;
   millisecs_t next_kick_vote_allow_time_{};
   millisecs_t chat_block_time_{};

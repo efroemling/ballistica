@@ -77,6 +77,13 @@ class HostSession : public Session {
     assert(scene_.exists());
     return scene_.get();
   }
+  /// Create a session-scene SpazDef (the lobby's choosers build players'
+  /// cloud-profile looks here, before any activity has them) or
+  /// depiction. Same lifecycle as HostActivity's: refcounted, marked
+  /// dead at session teardown, dumped for late joiners.
+  auto NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> override;
+  auto NewDepiction(const std::string& json)
+      -> Object::Ref<SceneDepiction> override;
   void RegisterContextCall(base::PythonContextCall* call) override;
   auto GetSceneStream() const -> SessionStream* { return output_stream_.get(); }
   auto is_main_menu() const -> bool {
@@ -104,6 +111,14 @@ class HostSession : public Session {
   auto ContextAllowsDefaultTimerTypes() -> bool override;
   auto TimeToNextEvent() -> std::optional<microsecs_t> override;
 
+  /// The session's fixed asset-package universe (sorted apverids),
+  /// snapshotted from the app-run hosting set at session creation.
+  /// Position in this list is the wire pkg-index (see
+  /// SessionCommand::kDeclareAssetPackage).
+  auto asset_package_universe() const -> const std::vector<std::string>& {
+    return asset_package_universe_;
+  }
+
  private:
   void StepScene();
   void ProcessPlayerTimeOuts();
@@ -111,6 +126,7 @@ class HostSession : public Session {
   void IssuePlayerLeft(Player* player);
 
   bool is_main_menu_;  // FIXME: Remove this.
+  std::vector<std::string> asset_package_universe_;
   Object::Ref<SessionStream> output_stream_;
   Timer* step_scene_timer_;
   millisecs_t base_time_millisecs_{};
@@ -123,6 +139,8 @@ class HostSession : public Session {
   // clear them as we are shutting down and ensure nothing runs after that
   // point.
   std::list<Object::WeakRef<base::PythonContextCall> > python_calls_;
+  std::list<Object::WeakRef<SpazDef> > spaz_defs_;
+  std::list<Object::WeakRef<SceneDepiction> > depictions_;
   std::vector<Object::Ref<Player> > players_;
   int next_player_id_{};
 

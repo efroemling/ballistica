@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto-imported by MSBuild into every project under this directory
+  (all BallisticaKit projects including the *Plus libs).
+
+  Holds cross-cutting build-config axes expressed as MSBuild
+  properties so they can be flipped per-invocation without
+  per-project edits.
+-->
+<Project>
+  <!--
+    Merge the UTF-8 active-code-page manifest into every exe so
+    narrow-string APIs treat char* paths as UTF-8 on Windows 10 1903+
+    (see utf8.manifest). Static-lib projects ignore Manifest items, so
+    applying this unconditionally is harmless there.
+  -->
+  <ItemDefinitionGroup>
+    <Manifest>
+      <AdditionalManifestFiles>$(MSBuildThisFileDirectory)utf8.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
+  </ItemDefinitionGroup>
+</Project>

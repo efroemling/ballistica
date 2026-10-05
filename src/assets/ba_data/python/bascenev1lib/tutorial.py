@@ -9,14 +9,13 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring
 # pylint: disable=unused-argument
 
-from __future__ import annotations
-
 import math
 import logging
 from collections import deque
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.spaz import Spaz
 
@@ -255,7 +254,7 @@ class SpawnSpaz:
         color: Sequence[float] = (1.0, 1.0, 1.0),
         make_current: bool = False,
         relative_to: int | None = None,
-        name: str | bs.Lstr = '',
+        name: str | bs.Lstr | bs.LangStr = '',
         flash: bool = True,
         angle: float = 0.0,
     ):
@@ -294,12 +293,12 @@ class SpawnSpaz:
             demo_mode=True,
         )
 
-        # FIXME: Should extend spaz to support Lstr names.
+        # FIXME: Should extend spaz to support deferred names.
         assert s.node
-        if isinstance(self._name, bs.Lstr):
-            s.node.name = self._name.evaluate()
-        else:
+        if isinstance(self._name, str):
             s.node.name = self._name
+        else:
+            s.node.name = self._name.evaluate()
         s.node.name_color = self._color
         s.handlemessage(bs.StandMessage(pos, self._angle))
         if self._make_current:
@@ -539,7 +538,7 @@ class ShowControls:
 
 
 class Text:
-    def __init__(self, text: str | bs.Lstr):
+    def __init__(self, text: str | bs.Lstr | bs.LangStr):
         self.text = text
 
     def run(self, a: TutorialActivity) -> None:
@@ -599,6 +598,11 @@ class Celebrate:
 
 
 class TutorialActivity(bs.Activity[Player, Team]):
+    # Our recorded input script is calibrated against the old spaz
+    # physics (limbs in the main sim, punches at the end of the arm);
+    # keep them for this activity.
+    legacy_spaz_limbs = True
+
     def __init__(self, settings: dict | None = None):
         from bascenev1lib.maps import Rampage
 
@@ -614,14 +618,13 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._issued_warning = False
         self._map_type = Rampage
         self._map_type.preload()
-        self._jump_button_tex = bs.gettexture('buttonJump')
-        self._pick_up_button_tex = bs.gettexture('buttonPickUp')
-        self._bomb_button_tex = bs.gettexture('buttonBomb')
-        self._punch_button_tex = bs.gettexture('buttonPunch')
-        self._r = 'tutorial'
+        self._jump_button_tex = _classicassets.textures.button_jump.get()
+        self._pick_up_button_tex = _classicassets.textures.button_pick_up.get()
+        self._bomb_button_tex = _classicassets.textures.button_bomb.get()
+        self._punch_button_tex = _classicassets.textures.button_punch.get()
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
-        self.spawn_sound = bs.getsound('spawn')
+        self.spawn_sound = _classicassets.audio.spawn.get()
         self.map: bs.Map | None = None
         self.text: bs.Node | None = None
         self._skip_text: bs.Node | None = None
@@ -688,9 +691,9 @@ class TutorialActivity(bs.Activity[Player, Team]):
 
         # Need different versions of this: taps/buttons/keys.
         txt = (
-            bs.Lstr(resource=f'{self._r}.cpuBenchmarkText')
+            _classicassets.strings.tutorial.cpu_benchmark
             if self._benchmark_type == 'cpu'
-            else bs.Lstr(resource=f'{self._r}.toSkipPressAnythingText')
+            else _classicassets.strings.tutorial.to_skip_press_anything
         )
         t = self._skip_text = bs.newnode(
             'text',
@@ -752,7 +755,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPunch'),
+                'texture': _classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -765,7 +768,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonBomb'),
+                'texture': _classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -780,7 +783,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPickUp'),
+                'texture': _classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -794,7 +797,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_base_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('nub'),
+                'texture': _classicassets.textures.nub.get(),
                 'absolute_scale': True,
                 'vr_depth': -40,
                 'position': p,
@@ -807,7 +810,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_nub_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('nub'),
+                'texture': _classicassets.textures.nub.get(),
                 'absolute_scale': True,
                 'position': p,
                 'scale': (nub_size, nub_size),
@@ -868,17 +871,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     SpawnSpaz(0, (0, 5.5, -3.0), make_current=True),
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 1'),
-                    Text(
-                        bs.Lstr(resource=f'{self._r}.phrase01Text')
-                    ),  # hi there
+                    Text(_classicassets.strings.tutorial.phrase01),  # hi there
                     Celebrate('left'),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase02Text',
-                            subs=[
-                                ('${APP_NAME}', bs.Lstr(resource='titleText'))
-                            ],
+                        _classicassets.strings.tutorial.phrase02(
+                            app_name=_classicassets.strings.ui.app_name
                         )
                     ),  # welcome to <appname>
                     DelayOld(80),
@@ -905,7 +903,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     MoveUD(0),
                     DelayOld(1500),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase03Text')
+                        _classicassets.strings.tutorial.phrase03
                     ),  # here's a few tips
                     DelayOld(1000),
                     ShowControls(),
@@ -916,11 +914,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 2'),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase04Text',
-                            subs=[
-                                ('${APP_NAME}', bs.Lstr(resource='titleText'))
-                            ],
+                        _classicassets.strings.tutorial.phrase04(
+                            app_name=_classicassets.strings.ui.app_name
                         )
                     ),  # many things are based on physics
                     DelayOld(20),
@@ -1278,7 +1273,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase05Text')
+                        _classicassets.strings.tutorial.phrase05
                     ),  # for example when you punch..
                     DelayOld(510),
                     Move(0, -0.01),
@@ -1296,7 +1291,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (-3.1, 4.3, -2.0),
                         make_current=False,
                         color=(1, 1, 0.4),
-                        name=bs.Lstr(resource=f'{self._r}.randomName1Text'),
+                        name=_classicassets.strings.tutorial.random_name1,
                     ),
                     Move(-1.0, 0),
                     DelayOld(1050),
@@ -1305,7 +1300,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase06Text')
+                        _classicassets.strings.tutorial.phrase06
                     ),  # your damage is based
                     DelayOld(1200),
                     Move(-0.05, 0),
@@ -1320,23 +1315,15 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(100),
                     Move(0, 0),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase07Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName1Text'
-                                    ),
-                                )
-                            ],
+                        _classicassets.strings.tutorial.phrase07(
+                            name=_classicassets.strings.tutorial.random_name1
                         )
                     ),  # see that didn't hurt fred
                     DelayOld(2000),
                     Celebrate('right', spaz_num=1),
                     DelayOld(1400),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase08Text')
+                        _classicassets.strings.tutorial.phrase08
                     ),  # lets jump and spin to get more speed
                     DelayOld(30),
                     MoveLR(0),
@@ -1537,12 +1524,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(1000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase09Text')
+                        _classicassets.strings.tutorial.phrase09
                     ),  # ah that's better
                     DelayOld(1900),
                     AnalyticsScreen('Tutorial Section 3'),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase10Text')
+                        _classicassets.strings.tutorial.phrase10
                     ),  # running also helps
                     DelayOld(100),
                     SpawnSpaz(
@@ -1553,11 +1540,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (3.3, 4.2, -5.8),
                         make_current=False,
                         color=(0.9, 0.5, 1.0),
-                        name=bs.Lstr(resource=f'{self._r}.randomName2Text'),
+                        name=_classicassets.strings.tutorial.random_name2,
                     ),
                     DelayOld(1800),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase11Text')
+                        _classicassets.strings.tutorial.phrase11
                     ),  # hold ANY button to run
                     DelayOld(300),
                     MoveUD(0),
@@ -1814,7 +1801,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     MoveUD(0),
                     AnalyticsScreen('Tutorial Section 4'),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase12Text')
+                        _classicassets.strings.tutorial.phrase12
                     ),  # for extra-awesome punches,...
                     DelayOld(200),
                     SpawnSpaz(
@@ -1833,7 +1820,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         make_current=False,
                         color=(1.0, 0.7, 0.3),
                         # name=R.randomName3Text),
-                        name=bs.Lstr(resource=f'{self._r}.randomName3Text'),
+                        name=_classicassets.strings.tutorial.random_name3,
                     ),
                     DelayOld(100),
                     Powerup(1, (2.5, 0.0, 0), relative_to=0),
@@ -2031,32 +2018,16 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(750),
                     MoveLR(0),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase13Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName3Text'
-                                    ),
-                                )
-                            ],
+                        _classicassets.strings.tutorial.phrase13(
+                            name=_classicassets.strings.tutorial.random_name3
                         )
                     ),  # whoops sorry bill
                     RemoveGloves(),
                     DelayOld(2000),
                     AnalyticsScreen('Tutorial Section 5'),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase14Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName4Text'
-                                    ),
-                                )
-                            ],
+                        _classicassets.strings.tutorial.phrase14(
+                            name=_classicassets.strings.tutorial.random_name4
                         )
                     ),  # you can pick up and throw things such as chuck here
                     SpawnSpaz(
@@ -2072,7 +2043,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.4, 1.0, 0.7),
-                        name=bs.Lstr(resource=f'{self._r}.randomName4Text'),
+                        name=_classicassets.strings.tutorial.random_name4,
                     ),
                     DelayOld(1000),
                     Celebrate('left', 1, duration=1000),
@@ -2100,11 +2071,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     ),
                     AnalyticsScreen('Tutorial Section 6'),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase15Text')
+                        _classicassets.strings.tutorial.phrase15
                     ),  # lastly there's bombs
                     DelayOld(1900),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase16Text')
+                        _classicassets.strings.tutorial.phrase16
                     ),  # throwing bombs takes practice
                     DelayOld(2000),
                     Bomb(),
@@ -2116,11 +2087,11 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Bomb(),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase17Text')
+                        _classicassets.strings.tutorial.phrase17
                     ),  # not a very good throw
                     DelayOld(3000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase18Text')
+                        _classicassets.strings.tutorial.phrase18
                     ),  # moving helps you get distance
                     DelayOld(1000),
                     Bomb(),
@@ -2138,7 +2109,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(2500),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase19Text')
+                        _classicassets.strings.tutorial.phrase19
                     ),  # jumping helps you get height
                     DelayOld(2000),
                     Bomb(),
@@ -2158,7 +2129,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase20Text')
+                        _classicassets.strings.tutorial.phrase20
                     ),  # whiplash your bombs
                     DelayOld(1000),
                     Bomb(release=False),
@@ -2320,7 +2291,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(2000),
                     AnalyticsScreen('Tutorial Section 7'),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase21Text')
+                        _classicassets.strings.tutorial.phrase21
                     ),  # timing your bombs can be tricky
                     Move(-1, 0),
                     DelayOld(1000),
@@ -2340,7 +2311,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.3, 0.8, 1.0),
-                        name=bs.Lstr(resource=f'{self._r}.randomName5Text'),
+                        name=_classicassets.strings.tutorial.random_name5,
                     ),
                     DelayOld2(1000),
                     Move(-1, 0),
@@ -2358,12 +2329,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld2(1000),
                     Move(0, 0),
                     DelayOld2(1500),
-                    Text(bs.Lstr(resource=f'{self._r}.phrase22Text')),  # dang
+                    Text(_classicassets.strings.tutorial.phrase22),  # dang
                     Delay(1500),
                     Text(''),
                     Delay(200),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase23Text')
+                        _classicassets.strings.tutorial.phrase23
                     ),  # try cooking off
                     Delay(1500),
                     Bomb(),
@@ -2379,7 +2350,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Move(0, 0),
                     Delay(2000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase24Text')
+                        _classicassets.strings.tutorial.phrase24
                     ),  # hooray nicely cooked
                     Celebrate(),
                     DelayOld(2000),
@@ -2393,24 +2364,22 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 8'),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase25Text')
+                        _classicassets.strings.tutorial.phrase25
                     ),  # well that's just about it
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase26Text')
+                        _classicassets.strings.tutorial.phrase26
                     ),  # go get em tiger
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase27Text')
+                        _classicassets.strings.tutorial.phrase27
                     ),  # remember you training
                     DelayOld(3000),
                     Text(
-                        bs.Lstr(resource=f'{self._r}.phrase28Text')
+                        _classicassets.strings.tutorial.phrase28
                     ),  # well maybe
                     DelayOld(1600),
-                    Text(
-                        bs.Lstr(resource=f'{self._r}.phrase29Text')
-                    ),  # good luck
+                    Text(_classicassets.strings.tutorial.phrase29),  # good luck
                     Celebrate('right', duration=10000),
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Complete'),
@@ -2456,12 +2425,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
         count = sum(1 for player in self.players if player.pressed)
         assert self._skip_count_text
         self._skip_count_text.text = (
-            bs.Lstr(
-                resource=f'{self._r}.skipVoteCountText',
-                subs=[
-                    ('${COUNT}', str(count)),
-                    ('${TOTAL}', str(len(self.players))),
-                ],
+            _classicassets.strings.tutorial.skip_vote_count(
+                count=str(count), total=str(len(self.players))
             )
             if count > 0
             else ''
@@ -2474,10 +2439,12 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.increment_analytics_count('Tutorial skip')
             bs.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
-            bs.getsound('swish').play()
-            # self._skip_count_text.text = self._r.skippingText
-            self._skip_count_text.text = bs.Lstr(
-                resource=f'{self._r}.skippingText'
+            _classicassets.audio.swish.get().play()
+            # self._skip_count_text.text = (
+            #     _classicassets.strings.tutorial.skipping
+            # )
+            self._skip_count_text.text = (
+                _classicassets.strings.tutorial.skipping
             )
             assert self._skip_text
             self._skip_text.text = ''
@@ -2490,9 +2457,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         if len(self.players) == 1 and not self._issued_warning:
             self._issued_warning = True
             assert self._skip_text
-            self._skip_text.text = bs.Lstr(
-                resource=f'{self._r}.skipConfirmText'
-            )
+            self._skip_text.text = _classicassets.strings.tutorial.skip_confirm
             self._skip_text.color = (1, 1, 1)
             self._skip_text.scale = 1.3
             incr = 50
@@ -2528,8 +2493,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
 
     def _revert_confirm(self) -> None:
         assert self._skip_text
-        self._skip_text.text = bs.Lstr(
-            resource=f'{self._r}.toSkipPressAnythingText'
+        self._skip_text.text = (
+            _classicassets.strings.tutorial.to_skip_press_anything
         )
         self._skip_text.color = (1, 1, 1)
         self._issued_warning = False

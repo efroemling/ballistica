@@ -3,9 +3,12 @@
 #ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 
+#include <functional>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/input/device/feedback_event.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 
 namespace ballistica::base {
@@ -63,6 +66,49 @@ class AppAdapter {
   void PushMainThreadCall(const F& lambda) {
     DoPushMainThreadRunnable(NewLambdaRunnableUnmanaged(lambda));
   }
+
+  /// Play haptic feedback on a game controller, if this platform can.
+  ///
+  /// The device is passed rather than any particular id because how a
+  /// controller is addressed is itself platform-specific: the SDL adapter
+  /// wants an SDL instance id, the Apple one a handle its Swift layer can
+  /// resolve back to a GCController. Each adapter reads what it needs off
+  /// the device here in the logic thread and carries *that* to its own
+  /// thread; the device pointer itself must not outlive this call.
+  ///
+  /// How the event maps onto real hardware is likewise each platform's own
+  /// business -- a response curve tuned for eccentric-rotating-mass motors
+  /// would be wrong for a linear actuator, and the type vocabulary exists
+  /// precisely so each platform renders an event its own way rather than
+  /// replaying someone else's waveform.
+  ///
+  /// An implementation may deliberately render NOTHING for a type it
+  /// understands but whose hardware cannot do it justice; see
+  /// FeedbackEvent::Type.
+  ///
+  /// Called in the logic thread; implementations hop to wherever their
+  /// platform requires. Default does nothing, so platforms without a
+  /// haptics implementation are silently inert rather than broken.
+  virtual auto ApplyJoystickFeedback(JoystickInput* device,
+                                     const FeedbackEvent& event) -> int;
+
+  /// Stop any haptic feedback in progress on a controller. Default does
+  /// nothing.
+  virtual void StopJoystickFeedback(JoystickInput* device);
+
+  /// Return whether the device we are running on (a phone or tablet
+  /// itself, as opposed to a controller attached to it) can play haptic
+  /// feedback. Callable from any thread. Default is false.
+  virtual auto DeviceFeedbackSupported() -> bool;
+
+  /// Play haptic feedback on the device itself; the counterpart of
+  /// ApplyJoystickFeedback for touchscreen players, and everything said
+  /// there about rendering applies here too. Returns the render length
+  /// in milliseconds (0 if nothing was rendered or the platform gives no
+  /// control over the length).
+  ///
+  /// Called in the logic thread. Default does nothing.
+  virtual auto ApplyDeviceFeedback(const FeedbackEvent& event) -> int;
 
   /// Should return whether the current thread and/or context setup is the
   /// one where graphics calls should be made. For the default
@@ -131,6 +177,20 @@ class AppAdapter {
   virtual auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string>;
 
+  /// Return the current size of the app's OS window in logical units,
+  /// for adapters running in a desktop window (SDL builds). Returns
+  /// false where unsupported (no desktop window). Must be called from
+  /// the main thread.
+  virtual auto GetWindowSize(int* width, int* height) -> bool;
+
+  /// Resize the app's OS window, for adapters running in a desktop
+  /// window (SDL builds). Only functions in windowed mode; returns
+  /// false where unsupported or currently fullscreen. The OS may clamp
+  /// the result (e.g. macOS to display bounds); follow with
+  /// GetWindowSize() for the size actually applied. Must be called
+  /// from the main thread.
+  virtual auto SetWindowSize(int width, int height) -> bool;
+
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
 
@@ -193,6 +253,23 @@ class AppAdapter {
   /// keyboard even if there is a physical keyboard attached).
   virtual auto HasDirectKeyboardInput() -> bool;
 
+  /// Called in the logic thread when direct inline text editing begins
+  /// somewhere in the UI. The rect is the on-screen area of the text
+  /// being edited, in normalized (0-1) window coords with a bottom-left
+  /// origin (y-up); adapters flip/scale to their own window conventions.
+  /// Adapters can use these calls to keep OS IME machinery informed of
+  /// when and where editing is occurring. Default implementations are
+  /// no-ops.
+  virtual void OnUITextEditingBegin(const Rect& rect_normalized);
+
+  /// Called in the logic thread when the on-screen area of actively
+  /// edited text changes (fields moving due to window animations,
+  /// scrolling, etc.).
+  virtual void OnUITextEditingUpdate(const Rect& rect_normalized);
+
+  /// Called in the logic thread when direct inline text editing ends.
+  virtual void OnUITextEditingEnd();
+
   /// Called in the graphics context to apply new settings coming in from
   /// the logic subsystem. This will be called initially to jump-start the
   /// graphics system as well as before frame draws to update any new
@@ -223,6 +300,16 @@ class AppAdapter {
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+  /// Fetch clipboard text asynchronously. Called in the logic thread,
+  /// and only when DoClipboardIsSupported() is true. Implementations
+  /// must (eventually) invoke completion_call in the logic thread with
+  /// the fetched text or an empty optional if none could be fetched;
+  /// the default implementation simply reads synchronously. Note that
+  /// completion_call may hold thread-affine state, so implementations
+  /// must not copy/destroy it in other threads.
+  virtual void DoClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> completion_call);
 
   virtual auto SupportsPurchases() -> bool;
 

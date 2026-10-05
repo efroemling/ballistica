@@ -2,16 +2,25 @@
 
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/scene_v1/python/class/python_class_scene_depiction.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/player.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
+#include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
@@ -33,14 +42,16 @@ PyNumberMethods PythonClassSessionPlayer::as_number_;
 #define ATTR_COLOR "color"
 #define ATTR_HIGHLIGHT "highlight"
 #define ATTR_CHARACTER "character"
+#define ATTR_CLOUD_SPAZ_DEF "cloud_spaz_def"
 #define ATTR_ACTIVITYPLAYER "activityplayer"
 #define ATTR_ID "id"
 #define ATTR_INPUT_DEVICE "inputdevice"
 
 // The set we expose via dir().
 static const char* extra_dir_attrs[] = {
-    ATTR_ID,        ATTR_IN_GAME,   ATTR_SESSIONTEAM,  ATTR_COLOR,
-    ATTR_HIGHLIGHT, ATTR_CHARACTER, ATTR_INPUT_DEVICE, nullptr};
+    ATTR_ID,        ATTR_IN_GAME,   ATTR_SESSIONTEAM,    ATTR_COLOR,
+    ATTR_HIGHLIGHT, ATTR_CHARACTER, ATTR_CLOUD_SPAZ_DEF, ATTR_INPUT_DEVICE,
+    nullptr};
 
 auto PythonClassSessionPlayer::type_name() -> const char* {
   return "SessionPlayer";
@@ -101,6 +112,14 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "\n"
     "    " ATTR_CHARACTER " (str):\n"
     "        The character this player has selected in their profile.\n"
+    "        For a player on a cloud profile this is the legacy standin\n"
+    "        appearance; see " ATTR_CLOUD_SPAZ_DEF ".\n"
+    "\n"
+    "    " ATTR_CLOUD_SPAZ_DEF " (bascenev1.SpazDef | None):\n"
+    "        The cloud-composed look for the cloud profile this player\n"
+    "        picked, or None when they are on a legacy profile or a\n"
+    "        random look. Sites that spawn the player prefer this when\n"
+    "        present.\n"
     "\n"
     "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
     "        The current game-specific instance for this player.\n";
@@ -279,6 +298,14 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
     PyObject* obj = p->GetPyCharacter();
     Py_INCREF(obj);
     return obj;
+  } else if (!strcmp(s, ATTR_CLOUD_SPAZ_DEF)) {
+    Player* p = self->player_->get();
+    if (!p) {
+      throw Exception(PyExcType::kSessionPlayerNotFound);
+    }
+    PyObject* obj = p->GetPyCloudSpazDef();
+    Py_INCREF(obj);
+    return obj;
   } else if (!strcmp(s, ATTR_COLOR)) {
     Player* p = self->player_->get();
     if (!p) {
@@ -428,6 +455,70 @@ auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSessionPlayer::SendFeedback(PythonClassSessionPlayer* self,
+                                            PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+
+  const char* event_name{"impact_received"};
+  static const char* kwlist[] = {"event", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|$s",
+                                   const_cast<char**>(kwlist), &event_name)) {
+    return nullptr;
+  }
+
+  // Readable names in the API; terse codes on the wire. The two are
+  // deliberately decoupled -- wire codes are effectively frozen once
+  // shipped, and the public API should stay renameable.
+  auto type_parsed = base::FeedbackEvent::TypeFromName(event_name);
+  if (!type_parsed.has_value()) {
+    throw Exception(
+        "Invalid feedback event: '" + std::string(event_name) + "'.",
+        PyExcType::kValue);
+  }
+  auto event = base::FeedbackEvent{*type_parsed};
+
+  // Cosmetic fire-and-forget effect, and callers reach this from message
+  // handlers where the player may have just left -- so a departed player
+  // is a quiet no-op rather than an exception. (Diverges from most other
+  // methods on this class, which raise.)
+  Player* p = self->player_->get();
+  if (!p) {
+    Py_RETURN_NONE;
+  }
+
+  JsonBuilder builder;
+  auto obj = builder.root_object();
+  // Omitted when it is the default type, which is what keeps the
+  // commonest event a two-byte payload.
+  if (event.type != base::FeedbackEvent::kDefaultType) {
+    char code[2] = {base::FeedbackEvent::ProfileForType(event.type).code, 0};
+    obj.Add("e", code);
+  }
+
+  // Ship to clients and replays.
+  if (HostSession* host_session = p->GetHostSession()) {
+    if (SessionStream* output_stream = host_session->GetSceneStream()) {
+      output_stream->EmitInputDeviceFeedback(p->id(), builder.Write());
+    }
+  }
+
+  // Depict locally. The host does not consume its own stream, so a
+  // player sitting at the host machine needs this second path; for a
+  // player on a connected client the device here is a ClientInputDevice,
+  // whose DoApplyFeedback is an intentional no-op (the stream already
+  // covers them).
+  if (auto* delegate = p->input_device_delegate()) {
+    if (delegate->InputDeviceExists()) {
+      delegate->input_device().ApplyFeedback(event);
+    }
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
                                                PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -552,12 +643,21 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   PyObject* character_obj;
   PyObject* color_obj;
   PyObject* highlight_obj;
-  static const char* kwlist[] = {"team", "character", "color", "highlight",
+  PyObject* cloud_spaz_def_obj{Py_None};
+  PyObject* cloud_icon_obj{Py_None};
+  static const char* kwlist[] = {"team",      "character",      "color",
+                                 "highlight", "cloud_spaz_def", "cloud_icon",
                                  nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO", const_cast<char**>(kwlist), &team_obj,
-          &character_obj, &color_obj, &highlight_obj)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOO|OO",
+                                   const_cast<char**>(kwlist), &team_obj,
+                                   &character_obj, &color_obj, &highlight_obj,
+                                   &cloud_spaz_def_obj, &cloud_icon_obj)) {
     return nullptr;
+  }
+  if (cloud_icon_obj != Py_None
+      && !PythonClassSceneDepiction::Check(cloud_icon_obj)) {
+    throw Exception("Expected a bascenev1.Depiction or None for cloud_icon.",
+                    PyExcType::kType);
   }
   Player* p = self->player_->get();
   if (!p) {
@@ -566,6 +666,8 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   p->set_has_py_data(true);
   p->SetPyTeam(team_obj);
   p->SetPyCharacter(character_obj);
+  p->SetPyCloudSpazDef(cloud_spaz_def_obj);
+  p->SetPyCloudIcon(cloud_icon_obj);
   p->SetPyColor(color_obj);
   p->SetPyHighlight(highlight_obj);
   Py_RETURN_NONE;
@@ -582,10 +684,12 @@ auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
   }
   std::vector<float> color = p->icon_tint_color();
   std::vector<float> color2 = p->icon_tint2_color();
+  std::vector<float> color3 = p->icon_tint3_color();
   return Py_BuildValue(
-      "{sssss(fff)s(fff)}", "texture", p->icon_tex_name().c_str(),
+      "{sssss(fff)s(fff)s(fff)}", "texture", p->icon_tex_name().c_str(),
       "tint_texture", p->icon_tint_tex_name().c_str(), "tint_color", color[0],
-      color[1], color[2], "tint2_color", color2[0], color2[1], color2[2]);
+      color[1], color[2], "tint2_color", color2[0], color2[1], color2[2],
+      "tint3_color", color3[0], color3[1], color3[2]);
   BA_PYTHON_CATCH;
 }
 
@@ -598,11 +702,13 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   PyObject* tint_texture_name_obj;
   PyObject* tint_color_obj;
   PyObject* tint2_color_obj;
-  static const char* kwlist[] = {"texture", "tint_texture", "tint_color",
-                                 "tint2_color", nullptr};
+  PyObject* tint3_color_obj{Py_None};
+  static const char* kwlist[] = {"texture",     "tint_texture", "tint_color",
+                                 "tint2_color", "tint3_color",  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO", const_cast<char**>(kwlist), &texture_name_obj,
-          &tint_texture_name_obj, &tint_color_obj, &tint2_color_obj)) {
+          args, keywds, "OOOO|O", const_cast<char**>(kwlist), &texture_name_obj,
+          &tint_texture_name_obj, &tint_color_obj, &tint2_color_obj,
+          &tint3_color_obj)) {
     return nullptr;
   }
   Player* p = self->player_->get();
@@ -619,7 +725,16 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  p->SetIcon(texture_name, tint_texture_name, tint_color, tint2_color);
+  // White is the no-op for the third tint.
+  std::vector<float> tint3_color{1.0f, 1.0f, 1.0f};
+  if (tint3_color_obj != Py_None) {
+    tint3_color = Python::GetFloats(tint3_color_obj);
+    if (tint3_color.size() != 3) {
+      throw Exception("Expected 3 floats for tint3-color.", PyExcType::kValue);
+    }
+  }
+  p->SetIcon(texture_name, tint_texture_name, tint_color, tint2_color,
+             tint3_color);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -674,6 +789,20 @@ auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
   p->set_node(node);
 
   Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassSessionPlayer::GetIconDepiction(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  PyObject* obj = p->GetPyCloudIcon();
+  Py_INCREF(obj);
+  return obj;
   BA_PYTHON_CATCH;
 }
 
@@ -738,6 +867,21 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "resetinput() -> None\n"
      "\n"
      "Clears out the player's assigned input actions."},
+    {"send_feedback", (PyCFunction)SendFeedback, METH_VARARGS | METH_KEYWORDS,
+     "send_feedback(*, event: str = 'impact_received') -> None\n"
+     "\n"
+     "Request physical feedback (controller rumble, device vibration) for\n"
+     "whoever is controlling this player.\n"
+     "\n"
+     "``event`` says what happened, not what it should feel like; each\n"
+     "platform renders it however it does that best. Valid values are\n"
+     "'join', 'collect', 'grab', 'impact_dealt', 'impact_received' and\n"
+     "'death'. Note a device may render nothing at all for an event its\n"
+     "hardware cannot represent well, so don't rely on any particular one\n"
+     "always being felt.\n"
+     "\n"
+
+     "Does nothing if the player has already left the game."},
     {"exists", (PyCFunction)Exists, METH_NOARGS,
      "exists() -> bool\n"
      "\n"
@@ -773,12 +917,15 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "be determined with relative certainty. Returns None otherwise."},
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
-     "  color: Sequence[float], highlight: Sequence[float]) -> None\n"
+     "  color: Sequence[float], highlight: Sequence[float],\n"
+     "  cloud_spaz_def: bascenev1.SpazDef | None = None,\n"
+     "  cloud_icon: bascenev1.Depiction | None = None) -> None\n"
      "\n"
      "(internal)"},
     {"set_icon_info", (PyCFunction)SetIconInfo, METH_VARARGS | METH_KEYWORDS,
      "set_icon_info(texture: str, tint_texture: str,\n"
-     "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
+     "  tint_color: Sequence[float], tint2_color: Sequence[float],\n"
+     "  tint3_color: Sequence[float] | None = None) -> None\n"
      "\n"
      "(internal)\n"
      "\n"
@@ -798,8 +945,25 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Return the character's icon (images, colors, etc contained\n"
-     "in a dict."},
+     "Return the character's legacy icon (images, colors, etc contained\n"
+     "in a dict).\n"
+     "\n"
+     "Prefer :meth:`get_icon_depiction` where available; this is the\n"
+     "fallback for players without one. For a player on a cloud\n"
+     "profile it gives a standin icon in the profile's colors."},
+    {"get_icon_depiction", (PyCFunction)GetIconDepiction, METH_NOARGS,
+     "get_icon_depiction() -> bascenev1.Depiction | None\n"
+     "\n"
+     "Return the player's icon as a depiction, if they have one.\n"
+     "\n"
+     "Players on cloud profiles have one (the icon composed with\n"
+     "their profile); anyone else (legacy profiles, random looks,\n"
+     "bots) gets None and should be shown via :meth:`get_icon`. Show it\n"
+     "with a ``depictiondisplay`` node or anything else accepting a\n"
+     ":class:`~bascenev1.Depiction` (the\n"
+     ":class:`~bascenev1lib.actor.image.Image` actor,\n"
+     ":func:`~bascenev1.broadcastmessage` images). The usual pattern is\n"
+     "``player.get_icon_depiction() or player.get_icon()``."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"

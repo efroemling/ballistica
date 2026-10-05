@@ -2,13 +2,12 @@
 #
 """Self-contained Apple Python build script.
 
-Builds a static libpython3.13.a for each Apple platform slice
+Builds a static libpython3.14.a for each Apple platform slice
 (macOS, iOS, tvOS, visionOS) and assembles them into a Python.xcframework.
 Uses BeeWare's Python.patch and prebuilt cpython-apple-source-deps.
 """
 
 # pylint: disable=too-many-lines
-from __future__ import annotations
 
 import glob
 import os
@@ -18,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import urllib.request
 from typing import TYPE_CHECKING
 
@@ -48,18 +48,35 @@ if TYPE_CHECKING:
 #
 # ---------------------------------------------------------------------------
 
-PY_VER = '3.13'
-PY_VER_EXACT = '3.13.11'
-BEEWARE_BRANCH = '3.13'
+# Both 3.13.11 and 3.14.2 have been verified on this pipeline as of
+# 2026-05-03 (all 10 slices + gather); 3.14.7 is the active version as
+# of 2026-09-27 (macosx.x86_64 now cross-compiled; no Rosetta needed).
+# To switch active version, change all three constants
+# together (they must agree). Per-version differences in module sets
+# etc. live in ``efrotools.pybuild.patch_modules_setup`` keyed off
+# PY_VER. The BeeWare branch's Makefile pins PYTHON_VERSION exactly,
+# and ``_check_beeware_versions()`` will fail loudly on a mismatch —
+# so bumping the patch version requires matching what BeeWare
+# currently pins (or pinning BEEWARE_COMMIT to override).
+#
+# To switch back to 3.13:
+#   PY_VER = '3.13'
+#   PY_VER_EXACT = '3.13.11'  # whatever BeeWare's 3.13 branch pins
+#   BEEWARE_BRANCH = '3.13'
+#   OPENSSL_VER = '3.0.18-1'
+PY_VER = '3.14'
+PY_VER_EXACT = '3.14.7'
+BEEWARE_BRANCH = '3.14'
 # BEEWARE_COMMIT: str | None = None  # Pin to a commit hash to override branch.
 BEEWARE_COMMIT: str | None = None
 
 # Prebuilt dep versions from beeware/cpython-apple-source-deps.
-OPENSSL_VER = '3.0.18-1'
+OPENSSL_VER = '3.5.8-1'
 LIBFFI_VER = '3.4.7-2'
 XZ_VER = '5.6.4-2'
 BZIP2_VER = '1.0.8-2'
 MPDECIMAL_VER = '4.0.0-2'
+ZSTD_VER = '1.5.7-1'
 
 # Deployment targets.
 MACOS_MIN = '11.0'
@@ -177,7 +194,18 @@ def _fetch(url: str, cache_dir: str, cache_name: str | None = None) -> str:
     if not os.path.exists(local):
         print(f'  Downloading {url} ...')
         part = local + f'.part.{os.getpid()}'
-        urllib.request.urlretrieve(url, part)
+        # Retry truncated transfers: some proxies (the Claude Code
+        # sandbox's, notably) cut big downloads short now and then, and
+        # one flaky fetch shouldn't sink a long multi-slice build.
+        attempts = 5
+        for attempt in range(1, attempts + 1):
+            try:
+                urllib.request.urlretrieve(url, part)
+                break
+            except urllib.error.ContentTooShortError:
+                if attempt == attempts:
+                    raise
+                print(f'  Truncated download; retrying ({attempt})...')
         os.rename(part, local)
     else:
         print(f'  Using cached {fname}')
@@ -185,11 +213,26 @@ def _fetch(url: str, cache_dir: str, cache_name: str | None = None) -> str:
 
 
 def _extract(tarball: str, destdir: str) -> str:
-    """Extract tarball into destdir; return path to top-level extracted dir."""
+    """Extract tarball into destdir; return path to top-level extracted dir.
+
+    Filters out ``.idea/`` directories — Python's source tarball ships
+    JetBrains/PyCharm project metadata under ``Android/testbed/.idea/``
+    which Claude Code's sandbox refuses to write inside (and refuses
+    to delete from). Skipping at extract time keeps the working tree
+    free of those paths so ``rm -rf`` cleans it normally next time.
+    """
     os.makedirs(destdir, exist_ok=True)
+
+    def _filter(
+        member: tarfile.TarInfo, dest_path: str
+    ) -> tarfile.TarInfo | None:
+        if '.idea' in member.name.split('/'):
+            return None
+        return tarfile.tar_filter(member, dest_path)
+
     with tarfile.open(tarball) as tf:
         top = tf.getmembers()[0].name.split('/')[0]
-        tf.extractall(destdir, filter='tar')
+        tf.extractall(destdir, filter=_filter)
     return os.path.join(destdir, top)
 
 
@@ -248,6 +291,7 @@ def _check_beeware_versions(cache_dir: str) -> None:
         ('XZ_VERSION', XZ_VER, 'XZ_VER'),
         ('BZIP2_VERSION', BZIP2_VER, 'BZIP2_VER'),
         ('MPDECIMAL_VERSION', MPDECIMAL_VER, 'MPDECIMAL_VER'),
+        ('ZSTD_VERSION', ZSTD_VER, 'ZSTD_VER'),
     ]
     mismatches: list[str] = []
     for var, our_val, our_name in checks:
@@ -400,9 +444,22 @@ def _build_env_apple(sdk: str, _triple: str, pydir: str) -> dict[str, str]:
         'xrsimulator': 'visionOS',
     }
     platform_name = sdk_to_platform[sdk]
+    # BeeWare moved the patched-in platform support from Apple/ to
+    # Platforms/Apple/ somewhere between 3.14.2 and 3.14.6; support
+    # both layouts (upstream CPython's own iOS bits still live at
+    # Apple/iOS).
     wrapper_bin = os.path.join(
-        pydir, 'Apple', platform_name, 'Resources', 'bin'
+        pydir, 'Platforms', 'Apple', platform_name, 'Resources', 'bin'
     )
+    if not os.path.isdir(wrapper_bin):
+        wrapper_bin = os.path.join(
+            pydir, 'Apple', platform_name, 'Resources', 'bin'
+        )
+    if not os.path.isdir(wrapper_bin):
+        raise RuntimeError(
+            f'BeeWare toolchain wrapper bin dir not found for sdk {sdk}'
+            f' (looked under Platforms/Apple and Apple in {pydir}).'
+        )
     env = dict(os.environ)
     # Prepend the wrapper bin dir to PATH.
     cur_path = env.get('PATH', '/usr/local/bin:/usr/bin:/bin')
@@ -419,6 +476,36 @@ def _build_env_apple(sdk: str, _triple: str, pydir: str) -> dict[str, str]:
     # symbol link failures when building for iOS/tvOS.
     env['PKG_CONFIG_LIBDIR'] = ''
     env['PKG_CONFIG_PATH'] = ''
+    # Force-off autoconf detection for libc functions that exist on
+    # the host (macOS) but aren't declared in the iOS/tvOS/xrOS SDK
+    # headers. Without this, configure's link test succeeds via the
+    # iphonesimulator wrapper's host-libc fallback, HAVE_DUP3 /
+    # HAVE_PIPE2 get defined, and posixmodule.c then fails with
+    # ``-Werror=implicit-function-declaration`` because the SDK
+    # doesn't actually declare them. The dup2 / pipe fallback paths
+    # already exist in posixmodule.c so disabling these is safe.
+    #
+    # This is the same class of issue BeeWare's Python.patch
+    # already handles for ``getentropy``, ``execv``, ``fork``,
+    # ``fork1``, ``posix_spawn``, ``posix_spawnp``,
+    # ``posix_spawn_file_actions_addclosefrom_np``, and
+    # ``sigaltstack`` — they patch ``configure`` to skip
+    # ``AC_CHECK_FUNC`` entirely on iOS/tvOS/visionOS/watchOS, with
+    # the comment "iOS defines some system methods that can be
+    # linked (so they are found by configure), but either raise a
+    # compilation error (because the header definition prevents
+    # usage - autoconf doesn't use the headers), or raise an error
+    # if used at runtime."
+    #
+    # ``dup3`` / ``pipe2`` aren't yet in BeeWare's force-off list,
+    # likely because their CI pins Xcode 16.4 and the issue only
+    # surfaces with Xcode 26+ where the iOS-26 simulator SDK
+    # exposes more libsystem symbols. We preempt it via env-var
+    # cache override here (same effect as their patch). Drop these
+    # lines once BeeWare adds the entries upstream and the next
+    # ``BEEWARE_BRANCH`` bump pulls in their version.
+    env['ac_cv_func_dup3'] = 'no'
+    env['ac_cv_func_pipe2'] = 'no'
     return env
 
 
@@ -569,6 +656,66 @@ def _build_macos_bzip2_source(deps_dir: str, arch: str, cache_dir: str) -> None:
     )
 
 
+def _build_macos_zstd_source(deps_dir: str, arch: str, cache_dir: str) -> None:
+    """Build zstd (libzstd) from source into deps_dir for macOS/arch.
+
+    Backs Python 3.14's _zstd module (stdlib compression.zstd), which
+    the client asset pipeline needs at runtime to decode
+    zstd-compressed CAS blobs. Mirrors python_build_android._build_zstd;
+    BeeWare has no macOS (desktop) dep tarballs, so we build from the
+    upstream source release matching the BeeWare version pin.
+    """
+    ver = _macos_src_ver(ZSTD_VER)
+    url = (
+        f'https://github.com/facebook/zstd/releases/'
+        f'download/v{ver}/zstd-{ver}.tar.gz'
+    )
+    tarball = _fetch(url, cache_dir)
+    src_parent = os.path.join(deps_dir, '_src_zstd')
+    srcdir = _extract(tarball, src_parent)
+    env = _clean_macos_dep_env(arch)
+    cc = env['CC']
+    ar = env['AR']
+    cflags = env['CFLAGS']
+    # zstd uses a plain Makefile with no configure. Build just the
+    # static lib; Python's _zstd module is our only consumer. CC in
+    # _clean_macos_dep_env already carries -target; fold the sysroot
+    # CFLAGS in explicitly since zstd's Makefile overrides CFLAGS.
+    subprocess.run(
+        [
+            'make',
+            f'-j{_cpus()}',
+            '-C',
+            'lib',
+            'libzstd.a',
+            f'CC={cc}',
+            f'AR={ar}',
+            f'CFLAGS={cflags} -O2',
+        ],
+        cwd=srcdir,
+        env=env,
+        check=True,
+    )
+    # Manual install (the Makefile's install target also wants shared
+    # libs and pkg-config bits; we just need the static lib and the
+    # public headers _zstdmodule.c includes).
+    os.makedirs(os.path.join(deps_dir, 'include'), exist_ok=True)
+    os.makedirs(os.path.join(deps_dir, 'lib'), exist_ok=True)
+    for hdr in ['zstd.h', 'zdict.h', 'zstd_errors.h']:
+        shutil.copy2(
+            os.path.join(srcdir, 'lib', hdr),
+            os.path.join(deps_dir, 'include'),
+        )
+    shutil.copy2(
+        os.path.join(srcdir, 'lib', 'libzstd.a'),
+        os.path.join(deps_dir, 'lib'),
+    )
+    subprocess.run(
+        [env['RANLIB'], os.path.join(deps_dir, 'lib', 'libzstd.a')],
+        check=True,
+    )
+
+
 def _build_macos_deps_from_source(
     deps_dir: str, arch: str, cache_dir: str
 ) -> tuple[str, str, str]:
@@ -582,6 +729,7 @@ def _build_macos_deps_from_source(
     _build_macos_openssl_source(deps_dir, arch, cache_dir)
     _build_macos_xz_source(deps_dir, arch, cache_dir)
     _build_macos_bzip2_source(deps_dir, arch, cache_dir)
+    _build_macos_zstd_source(deps_dir, arch, cache_dir)
     # mpdecimal: Python 3.13 bundles a copy of mpdecimal (HACL*-accelerated)
     # and CPython's configure will use it automatically when
     # --with-system-libmpdec is absent.  No need to build it from source for
@@ -609,7 +757,28 @@ def _patch_modules_setup(pydir: str) -> None:
     """
     from efrotools.pybuild import patch_modules_setup
 
-    patch_modules_setup(pydir, 'apple')
+    patch_modules_setup(pydir, 'apple', python_version=PY_VER)
+
+
+def _patch_configure_darwin_cross_release(pydir: str) -> None:
+    """Give a macOS cross build (x86_64 on Apple Silicon) a release.
+
+    Cross-compiling, configure leaves ``ac_sys_release`` empty, so its
+    'known Darwin release' check fails and it defines _XOPEN_SOURCE --
+    hiding the BSD APIs (getpagesize and co.) a native macOS build has,
+    and failing the compile. Build and host run the same Darwin here,
+    so the build machine's ``uname -r`` is the right answer.
+    """
+    cfg = os.path.join(pydir, 'configure')
+    with open(cfg, encoding='utf-8') as f:
+        txt = f.read()
+    old = '\tac_sys_release=\n    else\n'
+    if txt.count(old) != 1:
+        raise RuntimeError('configure cross ac_sys_release line not found')
+    txt = txt.replace(old, '\tac_sys_release=`uname -r`\n    else\n')
+    with open(cfg, 'w', encoding='utf-8') as f:
+        f.write(txt)
+    print('  Patched configure cross-build ac_sys_release (macOS).')
 
 
 def _patch_configure(pydir: str) -> None:
@@ -695,17 +864,20 @@ def _patch_embedded_makefile(pydir: str) -> None:
        path 'no-framework/' — a nonexistent directory that the linker rejects.
 
     2. build_all dependencies: $(BUILDPYTHON) is replaced with $(LIBRARY)
-       (libpython3.13.a) so the static library is still built, but the python
+       (libpython3.14.a) so the static library is still built, but the python
        executable link step is skipped — it fails for cross-compiled embedded
        targets because macOS-only Homebrew dylibs (e.g. libb2) get pulled in.
        Programs/_testembed, checksharedmods, and rundsymutil are also removed
        from build_all because they all have transitive deps on $(BUILDPYTHON).
 
-    3. MODULE__BLAKE2_LDFLAGS: Cleared so the build uses Python 3.13's
-       built-in HACL* blake2 instead of Homebrew libb2. If left set,
-       blake2b_*/blake2s_* symbols from libb2 end up as unresolved externals
-       in the resulting static library because libb2 is a macOS-only dylib
-       that cannot be statically merged or used on iOS/tvOS.
+    3. MODULE__BLAKE2_LDFLAGS: Cleared so the (unused) shared-module link
+       rule for _blake2 can't pull in Homebrew libb2 (a macOS-only dylib
+       that can't be used on iOS/tvOS). We build only the static
+       $(LIBRARY), so this value is never consumed, but clearing it is
+       belt-and-suspenders. NOTE: MODULE__BLAKE2_CFLAGS is deliberately
+       NOT cleared — _blake2 is enabled and its CFLAGS carry the
+       -I.../Modules/_hacl include paths that blake2module.c needs to
+       find the HACL headers; blanking them breaks the compile.
     """
     mk = os.path.join(pydir, 'Makefile')
     with open(mk, encoding='utf-8') as fh:
@@ -735,7 +907,7 @@ def _patch_embedded_makefile(pydir: str) -> None:
     # rundsymutil all fail to link or are meaningless for cross-compiled
     # embedded targets (macOS-only Homebrew dylibs like libb2 get pulled in).
     # We run our own _check_no_shared_modules check after install instead.
-    # Replace $(BUILDPYTHON) with $(LIBRARY): we need libpython3.13.a but not
+    # Replace $(BUILDPYTHON) with $(LIBRARY): we need libpython3.14.a but not
     # the python executable (which fails to link for cross-compiled targets
     # because Homebrew libraries like libb2 are macOS-only).
     new_txt = txt.replace(
@@ -767,25 +939,21 @@ def _patch_embedded_makefile(pydir: str) -> None:
         )
     txt = new_txt
 
-    # Fix 3: Clear MODULE__BLAKE2_CFLAGS and MODULE__BLAKE2_LDFLAGS so the
-    # build uses Python 3.13's built-in HACL* blake2 instead of Homebrew
-    # libb2. With PKG_CONFIG isolation in _build_env_apple these should
-    # already be empty after configure, but clearing them here too is
-    # belt-and-suspenders for any pre-existing build directories. Warning
-    # only: if already empty (because PKG_CONFIG isolation worked) the
-    # substitution count will be 0, which is fine.
-    txt, n_blake2_cflags = re.subn(
-        r'^(MODULE__BLAKE2_CFLAGS=).*$',
-        r'\1',
-        txt,
-        flags=re.MULTILINE,
-    )
-    if n_blake2_cflags == 0:
-        print(
-            '  Note: MODULE__BLAKE2_CFLAGS not found in Makefile — Python'
-            ' may have renamed it. Verify no Homebrew libb2 is being used'
-            ' and update _patch_embedded_makefile() if needed.'
-        )
+    # Fix 3: Clear MODULE__BLAKE2_LDFLAGS so the (unused) shared-module
+    # link rule for _blake2 can't pull in an arch-incompatible Homebrew
+    # libb2. We build only the static $(LIBRARY), so this value is never
+    # consumed, but clearing it is belt-and-suspenders. PKG_CONFIG
+    # isolation in _build_env_apple already steers configure to the
+    # built-in HACL* blake2, so the value is usually empty anyway (a
+    # substitution count of 0 is fine).
+    #
+    # We must NOT clear MODULE__BLAKE2_CFLAGS. _blake2 is enabled (it is
+    # the only source of hashlib.blake2{b,s} — see
+    # pybuild.patch_modules_setup) and its CFLAGS carry the
+    # -I.../Modules/_hacl include paths that blake2module.c needs to find
+    # the HACL headers (krml/...). The natural configure value matches
+    # the other HACL modules (_md5/_sha*/_hmac) and contains no libb2
+    # references, so leaving it intact is both necessary and safe.
     txt, n_blake2 = re.subn(
         r'^(MODULE__BLAKE2_LDFLAGS=).*$',
         r'\1',
@@ -826,6 +994,28 @@ def _check_no_shared_modules(installdir: str, slice_name: str) -> None:
     print(f'  Static-module check passed for {slice_name}.')
 
 
+def _check_zstd_in_libpython(src_lib: str, slice_name: str) -> None:
+    """Fail if the _zstd module didn't make it into libpython.
+
+    _zstd is enabled via pybuild.patch_modules_setup, but it only
+    actually builds if Python's configure detected libzstd (via the
+    LIBZSTD_* flags we pass). If detection quietly fails, configure
+    just marks the module missing and the breakage only shows up as a
+    runtime ModuleNotFoundError in the app; catch it at build time
+    instead. (Mirrors python_build_android._check_zstd_in_libpython.)
+    """
+    if PY_VER == '3.13':
+        return
+    # Host ar can list archives for any target arch.
+    listing = subprocess.check_output(['ar', 't', src_lib]).decode()
+    if '_zstdmodule.o' not in listing:
+        raise RuntimeError(
+            f'Apple/{slice_name}: _zstdmodule.o not found in libpython;'
+            f' configure likely failed to detect libzstd.'
+        )
+    print(f'  _zstd static-inclusion check passed for {slice_name}.')
+
+
 # ---------------------------------------------------------------------------
 # Main build function
 # ---------------------------------------------------------------------------
@@ -863,8 +1053,13 @@ def build(rootdir: str, slice_name: str) -> None:
     print('Checking BeeWare version constants...')
     _check_beeware_versions(cache_dir)
 
-    # Start fresh.
-    subprocess.run(['rm', '-rf', build_dir], check=True)
+    # Start fresh. ``check=False`` because Claude Code's sandbox
+    # blocks deletes inside any ``.idea/`` directory (Python's source
+    # tarball ships some under ``Android/testbed/.idea/``); leftover
+    # ``.idea/`` content from prior builds is harmless to the build
+    # itself, and ``_extract()`` filters new ``.idea/`` paths out at
+    # extract time so they don't accumulate further.
+    subprocess.run(['rm', '-rf', build_dir], check=False)
     os.makedirs(src_dir, exist_ok=True)
     os.makedirs(deps_dir, exist_ok=True)
 
@@ -904,9 +1099,13 @@ def build(rootdir: str, slice_name: str) -> None:
     del compliance_patch
 
     # patch(1) does not restore the executable bit on newly created files.
-    # Make all wrapper scripts under Apple/*/Resources/bin/ executable.
+    # Make all wrapper scripts under {Platforms/,}Apple/*/Resources/bin/
+    # executable (BeeWare moved these under Platforms/ between 3.14.2
+    # and 3.14.6; cover both layouts).
     for wrapper_bin_glob in glob.glob(
         os.path.join(pydir, 'Apple', '*', 'Resources', 'bin', '*')
+    ) + glob.glob(
+        os.path.join(pydir, 'Platforms', 'Apple', '*', 'Resources', 'bin', '*')
     ):
         if os.path.isfile(wrapper_bin_glob):
             os.chmod(wrapper_bin_glob, 0o755)
@@ -940,6 +1139,7 @@ def build(rootdir: str, slice_name: str) -> None:
             ('BZip2', BZIP2_VER),
             ('mpdecimal', MPDECIMAL_VER),
             ('libFFI', LIBFFI_VER),
+            ('zstd', ZSTD_VER),
         ]
 
         dep_sdk = _SDK_DEP_TAG[sdk]
@@ -972,7 +1172,21 @@ def build(rootdir: str, slice_name: str) -> None:
     # ------------------------------------------------------------------
     # 6. Build host python path.
     # ------------------------------------------------------------------
+    # configure rejects a host python whose minor version differs from
+    # the build target. sys.executable is our project venv (currently
+    # 3.13). When PY_VER is something else, look up python<PY_VER> on
+    # PATH instead — Homebrew installs land at /opt/homebrew/bin/.
     build_python = sys.executable
+    host_ver_tag = f'{sys.version_info.major}.{sys.version_info.minor}'
+    if host_ver_tag != PY_VER:
+        found = shutil.which(f'python{PY_VER}')
+        if found is None:
+            raise RuntimeError(
+                f'Need python{PY_VER} on PATH for --with-build-python'
+                f' (cross-compiling Python {PY_VER_EXACT}); '
+                f'sys.executable is python{host_ver_tag}.'
+            )
+        build_python = found
 
     # ------------------------------------------------------------------
     # 7. Configure Python.
@@ -995,6 +1209,29 @@ def build(rootdir: str, slice_name: str) -> None:
             f'--with-openssl={openssl_prefix}',
             '--disable-test-modules',
         ]
+        if arch != platform.machine():
+            # A different arch than the build machine (x86_64 on Apple
+            # Silicon): tell configure it's a cross build, or it runs
+            # its compiled test programs -- which needs Rosetta.
+            configure_cmd += [
+                # With the Darwin release on both, as configure keys
+                # things off it (no _XOPEN_SOURCE only for known Darwin
+                # releases; without it the BSD APIs vanish).
+                f'--host={arch}-apple-darwin{uname_release}',
+                f'--build={platform.machine()}-apple-darwin{uname_release}',
+                # Checks configure can't run when cross-compiling:
+                # answered as a native macOS build finds them (the
+                # first three it won't even guess at; the rest it
+                # would guess 'no', losing computed gotos among others).
+                'ac_cv_buggy_getaddrinfo=no',
+                'ac_cv_file__dev_ptmx=yes',
+                'ac_cv_file__dev_ptc=no',
+                'ac_cv_computed_gotos=yes',
+                'ac_cv_working_tzset=yes',
+                'ac_cv_pthread_system_supported=yes',
+                'ac_cv_ffi_complex_double_supported=yes',
+            ]
+            _patch_configure_darwin_cross_release(pydir)
     else:
         configure_cmd = [
             './configure',
@@ -1015,6 +1252,15 @@ def build(rootdir: str, slice_name: str) -> None:
     # bzip2
     env['BZIP2_CFLAGS'] = extra_cflags
     env['BZIP2_LIBS'] = extra_libs + ' -lbz2'
+
+    # zstd: configure looks for libzstd via PKG_CHECK_MODULES([LIBZSTD]);
+    # pass the flags directly so it finds our static dep build (BeeWare
+    # prebuilt tarball on embedded slices, source-built on macOS)
+    # without pkg-config. Backs the _zstd module (stdlib
+    # compression.zstd), which the client asset pipeline needs at
+    # runtime to decode zstd-compressed CAS blobs.
+    env['LIBZSTD_CFLAGS'] = extra_cflags
+    env['LIBZSTD_LIBS'] = extra_libs + ' -lzstd'
 
     # mpdecimal: non-macOS slices use BeeWare's prebuilt mpdecimal.
     # macOS uses Python's bundled copy (no --with-system-libmpdec in configure).
@@ -1055,7 +1301,7 @@ def build(rootdir: str, slice_name: str) -> None:
             check=True,
         )
     else:
-        # libainstall: libpython3.13.a and config-*/Makefile etc.
+        # libainstall: libpython3.14.a and config-*/Makefile etc.
         # libinstall:  stdlib .py files + app-store compliance patch.
         # inclinstall: headers (standalone, no build_all dep).
         # altbininstall / bininstall / maninstall are skipped — we don't need
@@ -1100,6 +1346,10 @@ def build(rootdir: str, slice_name: str) -> None:
         )
     src_lib = matches[0]
 
+    # Verify _zstd actually got compiled in (3.14+).
+    print('Checking for static _zstd module...')
+    _check_zstd_in_libpython(src_lib, slice_name)
+
     # ------------------------------------------------------------------
     # 9d. Collect all dep .a files and merge into one fat archive.
     # ------------------------------------------------------------------
@@ -1109,14 +1359,27 @@ def build(rootdir: str, slice_name: str) -> None:
     dep_lib_dir = os.path.join(deps_dir, 'lib')
     dep_libs_a = sorted(glob.glob(os.path.join(dep_lib_dir, '*.a')))
 
+    # Python 3.14+ links the static _hmac module against the bundled
+    # HACL* crypto objects via MODULE__HMAC_LDFLAGS instead of archiving
+    # them into libpython.a, so the install tree's libpython lacks them
+    # (undefined _Py_LibHacl_* symbols at app link time). Pull the built
+    # HACL objects into our merged archive ourselves. No-op if absent.
+    hacl_objs = sorted(
+        glob.glob(os.path.join(pydir, 'Modules', '_hacl', '*.o'))
+    )
+
     merged_lib = os.path.join(build_dir, 'libpython_merged.a')
-    libtool_cmd = [
-        'libtool',
-        '-static',
-        '-o',
-        merged_lib,
-        src_lib,
-    ] + dep_libs_a
+    libtool_cmd = (
+        [
+            'libtool',
+            '-static',
+            '-o',
+            merged_lib,
+            src_lib,
+        ]
+        + dep_libs_a
+        + hacl_objs
+    )
     subprocess.run(libtool_cmd, check=True)
     assert os.path.isfile(merged_lib)
 

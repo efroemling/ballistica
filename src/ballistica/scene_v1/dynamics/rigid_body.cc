@@ -2,13 +2,23 @@
 
 #include "ballistica/scene_v1/dynamics/rigid_body.h"
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+#include "ballistica/base/dynamics/geom_transform.h"
+#include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/render_component.h"
+#include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ode/ode_collision_util.h"
@@ -194,6 +204,19 @@ void RigidBody::ApplyToRenderComponent(base::RenderComponent* c) {
   c->MultMatrix(matrix);
 }
 
+void RigidBody::SetStaticTransform(const Matrix44f& t) {
+  // Only meaningful for static geometry; a real body's transform belongs to
+  // the solver, and multi-geom shapes would need their sub-geom offsets
+  // rebuilt instead of a single geom being moved.
+  assert(type_ == Type::kGeomOnly && geoms_.size() == 1);
+
+  base::GeomSetTransform(geoms_[0], t);
+
+  if (shape_ == Shape::kTrimesh) {
+    dynamics_->MarkTrimeshMoved(geoms_[0]);
+  }
+}
+
 void RigidBody::Check() {
   if (type_ == Type::kBody) {
     const dReal* p = dBodyGetPosition(body_);
@@ -320,6 +343,181 @@ void RigidBody::EmbedFull(char** buffer) {
   }
 }
 
+namespace {
+
+// Compact positions: millimetres in a signed 24-bit int (+-8388 m).
+// Sub-millimetre error is below the f16 orientation error already
+// accepted by the full encoding.
+constexpr float kCompactPosScale = 1000.0f;
+constexpr int32_t kCompactPosMax = (1 << 23) - 1;
+
+// Compact velocity flag bits (same order as EmbedFull's bool byte).
+constexpr uint8_t kCompactEnabledBit = 1 << 6;
+
+// Smallest-three quaternion packing: the largest-magnitude component
+// is dropped (its sign folded into the others so it reconstructs
+// positive) and the remaining three go in 10 bits each over
+// [-1/sqrt2, 1/sqrt2], with 2 bits naming the dropped one.
+constexpr float kQuatRange = 0.70710678f;
+
+void PutInt24(std::vector<uint8_t>* out, int32_t v) {
+  auto u = static_cast<uint32_t>(v);
+  out->push_back(static_cast<uint8_t>(u & 0xff));
+  out->push_back(static_cast<uint8_t>((u >> 8) & 0xff));
+  out->push_back(static_cast<uint8_t>((u >> 16) & 0xff));
+}
+
+auto GetInt24(const uint8_t* p) -> int32_t {
+  uint32_t u = static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8)
+               | (static_cast<uint32_t>(p[2]) << 16);
+  if (u & 0x800000u) {
+    u |= 0xff000000u;
+  }
+  return static_cast<int32_t>(u);
+}
+
+void PutHalf(std::vector<uint8_t>* out, float f) {
+  uint16_t h = Utils::FloatToHalf(f);
+  out->push_back(static_cast<uint8_t>(h & 0xff));
+  out->push_back(static_cast<uint8_t>(h >> 8));
+}
+
+auto GetHalf(const uint8_t* p) -> float {
+  auto h = static_cast<uint16_t>(p[0] | (p[1] << 8));
+  return Utils::HalfToFloat(h);
+}
+
+auto PackQuat(const dReal* q) -> uint32_t {
+  int big = 0;
+  for (int i = 1; i < 4; ++i) {
+    if (std::abs(q[i]) > std::abs(q[big])) {
+      big = i;
+    }
+  }
+  float sign = q[big] < 0 ? -1.0f : 1.0f;
+  auto packed = static_cast<uint32_t>(big);
+  int shift = 2;
+  for (int i = 0; i < 4; ++i) {
+    if (i == big) {
+      continue;
+    }
+    float v =
+        std::clamp(static_cast<float>(q[i]) * sign, -kQuatRange, kQuatRange);
+    auto bits = static_cast<uint32_t>(
+        std::lround((v / kQuatRange * 0.5f + 0.5f) * 1023.0f));
+    packed |= (bits & 0x3ffu) << shift;
+    shift += 10;
+  }
+  return packed;
+}
+
+void UnpackQuat(uint32_t packed, dQuaternion q) {
+  int big = static_cast<int>(packed & 3u);
+  int shift = 2;
+  float sumsq = 0.0f;
+  for (int i = 0; i < 4; ++i) {
+    if (i == big) {
+      continue;
+    }
+    uint32_t bits = (packed >> shift) & 0x3ffu;
+    float v = (static_cast<float>(bits) / 1023.0f * 2.0f - 1.0f) * kQuatRange;
+    q[i] = v;
+    sumsq += v * v;
+    shift += 10;
+  }
+  q[big] = std::sqrt(std::max(0.0f, 1.0f - sumsq));
+}
+
+}  // namespace
+
+void RigidBody::EmbedCompact(std::vector<uint8_t>* out) {
+  assert(type_ == Type::kBody);
+  const dReal* p = dBodyGetPosition(body_);
+  const dReal* q = dBodyGetQuaternion(body_);
+  const dReal* lv = dBodyGetLinearVel(body_);
+  const dReal* av = dBodyGetAngularVel(body_);
+
+  uint8_t flags = dBodyIsEnabled(body_) ? kCompactEnabledBit : 0;
+  for (int i = 0; i < 3; ++i) {
+    if (std::abs(lv[i]) > ABSOLUTE_EPSILON) {
+      flags |= static_cast<uint8_t>(1 << i);
+    }
+    if (std::abs(av[i]) > ABSOLUTE_EPSILON) {
+      flags |= static_cast<uint8_t>(1 << (3 + i));
+    }
+  }
+  out->push_back(flags);
+  for (int i = 0; i < 3; ++i) {
+    auto mm = static_cast<int32_t>(std::lround(p[i] * kCompactPosScale));
+    PutInt24(out, std::clamp(mm, -kCompactPosMax - 1, kCompactPosMax));
+  }
+  uint32_t packed = PackQuat(q);
+  for (int i = 0; i < 4; ++i) {
+    out->push_back(static_cast<uint8_t>((packed >> (8 * i)) & 0xff));
+  }
+  for (int i = 0; i < 3; ++i) {
+    if (flags & (1 << i)) {
+      PutHalf(out, lv[i]);
+    }
+    if (flags & (1 << (3 + i))) {
+      PutHalf(out, av[i]);
+    }
+  }
+}
+
+void RigidBody::ExtractCompact(const uint8_t** pp, const uint8_t* end,
+                               RigidBody* body) {
+  const uint8_t* p = *pp;
+  auto need = [&](size_t n) {
+    if (end - p < static_cast<ptrdiff_t>(n)) {
+      throw Exception("truncated compact body correction");
+    }
+  };
+  need(1);
+  uint8_t flags = *p++;
+  need(3 * 3 + 4);
+  float pos[3];
+  for (float& v : pos) {
+    v = static_cast<float>(GetInt24(p)) / kCompactPosScale;
+    p += 3;
+  }
+  uint32_t packed = static_cast<uint32_t>(p[0])
+                    | (static_cast<uint32_t>(p[1]) << 8)
+                    | (static_cast<uint32_t>(p[2]) << 16)
+                    | (static_cast<uint32_t>(p[3]) << 24);
+  p += 4;
+  float lv[3]{};
+  float av[3]{};
+  for (int i = 0; i < 3; ++i) {
+    if (flags & (1 << i)) {
+      need(2);
+      lv[i] = GetHalf(p);
+      p += 2;
+    }
+    if (flags & (1 << (3 + i))) {
+      need(2);
+      av[i] = GetHalf(p);
+      p += 2;
+    }
+  }
+  *pp = p;
+  if (body == nullptr) {
+    return;
+  }
+  assert(body->type_ == Type::kBody);
+  dQuaternion q;
+  UnpackQuat(packed, q);
+  dBodySetPosition(body->body_, pos[0], pos[1], pos[2]);
+  dBodySetQuaternion(body->body_, q);
+  dBodySetLinearVel(body->body_, lv[0], lv[1], lv[2]);
+  dBodySetAngularVel(body->body_, av[0], av[1], av[2]);
+  if (flags & kCompactEnabledBit) {
+    dBodyEnable(body->body_);
+  } else {
+    dBodyDisable(body->body_);
+  }
+}
+
 // Position a body from buffer data.
 void RigidBody::ExtractFull(const char** buffer) {
   assert(type_ == Type::kBody);
@@ -371,18 +569,150 @@ void RigidBody::ExtractFull(const char** buffer) {
   }
 }
 
-void RigidBody::Draw(base::RenderPass* pass, bool shaded) {
-  assert(pass);
-  base::RenderPass::Type pass_type = pass->type();
-  // only passes we draw in are light_shadow and beauty
-  if (pass_type != base::RenderPass::Type::kLightShadowPass
-      && pass_type != base::RenderPass::Type::kBeautyPass) {
-    return;
+auto RigidBody::DrawDebugWireframe(base::RenderPass* pass, float r, float g,
+                                   float b, float a) -> bool {
+  assert(g_base->InLogicThread());
+  if (shape_ != Shape::kBox && shape_ != Shape::kSphere) {
+    return false;
   }
-  // assume trimeshes are landscapes and shouldn't be in shadow passes..
-  if (shape_ == Shape::kTrimesh
-      && (pass_type != base::RenderPass::Type::kBeautyPass)) {
-    return;
+  base::SimpleComponent c(pass);
+  c.SetTransparent(true);
+  c.SetColor(r, g, b, a);
+  {
+    auto xf = c.ScopedTransform();
+    ApplyToRenderComponent(&c);
+    switch (shape_) {
+      case Shape::kBox: {
+        c.Scale(dimensions_[0], dimensions_[1], dimensions_[2]);
+        c.BeginDebugDrawLines();
+        // 12 edges of the unit cube: 4 along each axis.
+        const float h = 0.5f;
+        for (int axis = 0; axis < 3; ++axis) {
+          for (int s1 = -1; s1 <= 1; s1 += 2) {
+            for (int s2 = -1; s2 <= 1; s2 += 2) {
+              float p[3];
+              p[(axis + 1) % 3] = h * static_cast<float>(s1);
+              p[(axis + 2) % 3] = h * static_cast<float>(s2);
+              p[axis] = -h;
+              c.Vertex(p[0], p[1], p[2]);
+              p[axis] = h;
+              c.Vertex(p[0], p[1], p[2]);
+            }
+          }
+        }
+        c.End();
+        break;
+      }
+      case Shape::kSphere: {
+        float rad = dimensions_[0];
+        c.Scale(rad, rad, rad);
+        c.BeginDebugDrawLines();
+        // Three great circles (one per axis plane).
+        const int segs = 12;
+        for (int axis = 0; axis < 3; ++axis) {
+          for (int i = 0; i < segs; ++i) {
+            for (int k = 0; k < 2; ++k) {
+              float t = 2.0f * kPi * static_cast<float>(i + k) / segs;
+              float p[3];
+              p[axis] = 0.0f;
+              p[(axis + 1) % 3] = cosf(t);
+              p[(axis + 2) % 3] = sinf(t);
+              c.Vertex(p[0], p[1], p[2]);
+            }
+          }
+        }
+        c.End();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  c.Submit();
+  return true;
+}
+
+auto RigidBody::DrawDebug(base::RenderPass* pass, float r, float g, float b,
+                          float a) -> bool {
+  assert(g_base->InLogicThread());
+  if (shape_ != Shape::kBox && shape_ != Shape::kSphere
+      && shape_ != Shape::kCapsule && shape_ != Shape::kCylinder) {
+    return false;
+  }
+  base::ObjectComponent c(pass);
+  c.SetFacingRatio(true);
+  c.SetLightShadow(base::LightShadowType::kObject);
+  if (a < 1.0f) {
+    c.SetTransparent(true);
+  }
+  c.SetColor(r, g, b, a);
+  DrawDebugShape_(&c);
+  c.Submit();
+  return true;
+}
+
+void RigidBody::DrawDebugShape_(base::RenderComponent* c) {
+  {
+    auto xf = c->ScopedTransform();
+    ApplyToRenderComponent(c);
+    switch (shape_) {
+      case Shape::kBox:
+        c->Scale(dimensions_[0], dimensions_[1], dimensions_[2]);
+        c->DrawMesh(g_base->graphics->debug_box_mesh());
+        break;
+      case Shape::kSphere:
+        c->Scale(dimensions_[0], dimensions_[0], dimensions_[0]);
+        c->DrawMesh(g_base->graphics->debug_sphere_mesh());
+        break;
+      case Shape::kCapsule: {
+        // ODE capsule: axis along local z; length excludes the caps.
+        float radius = dimensions_[0];
+        float length = dimensions_[1];
+        {
+          auto xf2 = c->ScopedTransform();
+          c->Scale(radius, radius, length);
+          c->DrawMesh(g_base->graphics->debug_cylinder_mesh());
+        }
+        {
+          auto xf2 = c->ScopedTransform();
+          c->Translate(0.0f, 0.0f, 0.5f * length);
+          c->Scale(radius, radius, radius);
+          c->DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+        }
+        {
+          auto xf2 = c->ScopedTransform();
+          c->Translate(0.0f, 0.0f, -0.5f * length);
+          c->Rotate(180.0f, 1.0f, 0.0f, 0.0f);
+          c->Scale(radius, radius, radius);
+          c->DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+        }
+        break;
+      }
+      case Shape::kCylinder: {
+        // A ring of sub-spheres (each behind a transform geom, so their
+        // positions are body-local) plus one center sphere; see the
+        // shape setup in the constructor.
+        auto* sphere_mesh = g_base->graphics->debug_sphere_mesh();
+        for (size_t i = 0; i + 1 < geoms_.size(); i += 2) {
+          dGeomID sphere = geoms_[i + 1];
+          const dReal* p = dGeomGetPosition(sphere);
+          float rad = dGeomSphereGetRadius(sphere);
+          auto xf2 = c->ScopedTransform();
+          c->Translate(p[0], p[1], p[2]);
+          c->Scale(rad, rad, rad);
+          c->DrawMesh(sphere_mesh);
+        }
+        {
+          float rad = dGeomSphereGetRadius(geoms_.back());
+          auto xf2 = c->ScopedTransform();
+          c->Scale(rad, rad, rad);
+          c->DrawMesh(sphere_mesh);
+        }
+        break;
+      }
+      default:
+        break;
+    }
   }
 }
 

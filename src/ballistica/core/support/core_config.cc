@@ -111,6 +111,15 @@ void CoreConfig::ApplyEnvVars() {
       debug_timing = true;
     }
   }
+  // Env-var equivalent of the --exec arg. Some platform entry points
+  // (iOS/tvOS via ForEnvVars) never see an argv, and external test
+  // drivers can often deliver env vars where args are impossible
+  // (e.g. simctl's SIMCTL_CHILD_ forwarding for test_game_run's ios
+  // leg). Applied before args, so an explicit --exec wins when both
+  // are present.
+  if (auto* envval = getenv("BA_EXEC")) {
+    exec_command = envval;
+  }
 }
 
 void CoreConfig::ApplyArgs(int argc, char** argv) {
@@ -209,12 +218,29 @@ auto CoreConfig::ForEnvVars() -> CoreConfig {
   return cfg;
 }
 
-auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig {
+auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv, seconds_t launch_time)
+    -> CoreConfig {
   CoreConfig cfg{};
+  cfg.launch_time = launch_time;
 
   // Apply env-vars first. We want explicit args to override these.
   cfg.ApplyEnvVars();
   cfg.ApplyArgs(argc, argv);
+
+  // For the full monolithic app path, assume the caller is going to bring
+  // up a LogHandler via baenv.configure() and defer C++ log emission until
+  // then. This keeps pre-handler log lines from being dropped silently by
+  // Python's default root-logger filter.
+  //
+  // We exclude two cases, both of which want emit-immediately behavior:
+  // bare-interpreter (-c) invocations (no handler is coming), and modular
+  // builds. In modular builds baenv.configure() runs from Python *before*
+  // the engine is imported, so the handler is already up by the time core
+  // comes up; and nothing on that path ever calls OnLogHandlerReady() to
+  // flush a deferred buffer, so deferring would strand logs (and trip the
+  // python_logging_calls_enabled_ assert in UpdateInternalLoggerLevels).
+  cfg.expect_log_handler_setup =
+      g_buildconfig.monolithic_build() && !cfg.call_command.has_value();
 
   return cfg;
 }

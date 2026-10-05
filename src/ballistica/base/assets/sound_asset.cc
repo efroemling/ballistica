@@ -17,16 +17,13 @@
 #endif
 #endif  // BA_ENABLE_AUDIO
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/audio/ogg_blob_source.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
-
-// Need to move away from OpenAL on Apple stuff.
-#if __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
 
 namespace ballistica::base {
 
@@ -34,21 +31,26 @@ namespace ballistica::base {
 
 const int kReadBufferSize = 32768;  // 32 KB buffers
 
-static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
-                         void* data_source) -> size_t {
-  return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
-}
-static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
-    -> int {
-  return fseek(static_cast<FILE*>(data_source),
-               static_cast_check_fit<long>(offset), whence);  // NOLINT
-}
-static auto CallbackClose(void* data_source) -> int {
-  return fclose(static_cast<FILE*>(data_source));
-}
-static long CallbackTell(void* data_source) {  // NOLINT (vorbis uses long)
-  return ftell(static_cast<FILE*>(data_source));
-}
+// Whether to cache decoded PCM on disk (LoadCachedOgg) instead of
+// decoding oggs on every load. Disabled 2026-09-29 and likely to be
+// removed soon: now that sounds load lazily a few at a time, the cache
+// saves ~1-3 ms per sound while its first-load writes add ~10%, it
+// never gets pruned (content-hash asset paths leave orphans on every
+// asset update), and its mtime check can't stat sounds served from
+// inside the Android APK (so there it rewrote files it never read).
+// Removing it also means clearing out the old <cache>/audio dir once.
+constexpr bool kUseDecodedAudioCache = false;
+
+// Decoded-PCM-size threshold above which a sound plays via the streaming
+// path instead of being fully decoded into a static buffer at preload.
+// Byte-based rather than duration-based since memory footprint is the
+// concern (stereo hits the same footprint at half the duration). 1.75 MB
+// is roughly 20s of mono or 10s of stereo at 16-bit 44.1kHz; it also
+// sits in the gap between our largest legacy non-music sound (crowdChant,
+// 1.64 MB decoded) and our smallest legacy music (charSelectMusic,
+// 2.18 MB decoded) with ~12% margin each way, reproducing the legacy
+// music-streams/sounds-preload classification exactly.
+const size_t kStreamDecodedSizeThreshold = 1792 * 1024;
 
 // This function loads a .ogg file into a memory buffer and returns
 // the format and frequency.  return value is true on success or false if a
@@ -58,12 +60,10 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   int bit_stream;
   int bytes;
   char array[kReadBufferSize];  // Local fixed size array
-  FILE* f;
   bool fallback = false;
 
-  // Open for binary reading.
-  f = g_core->platform->FOpen(file_name, "rb");
-  if (f == nullptr) {
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
     fallback = true;
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
                          std::string("Can't open sound file '") + file_name
@@ -71,37 +71,35 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
-    if (f == nullptr)
+    blob = AssetBlob::FromFile(file_name);
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
   }
 
   vorbis_info* p_info;
   OggVorbis_File ogg_file;
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  OggBlobSource blob_source{&blob};
 
   // Try opening the given file
-  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kError,
         std::string("Error decoding sound file '") + file_name + "'");
 
-    fclose(f);
-
     // Attempt fallback.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
+    blob = AssetBlob::FromFile(file_name);
 
     // If fallback doesn't work, throw in the towel.
-    if (f == nullptr)
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
-    if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0)
+    blob_source = OggBlobSource{&blob};
+    if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0,
+                          OggBlobCallbacks())
+        != 0)
       throw Exception(std::string("Error decoding fallback sound file '")
                       + file_name + "'");
   }
@@ -162,6 +160,56 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
                     + file_name + "'");
   }
   return !fallback;
+}
+
+// Probes an ogg's headers to classify how it should load: sounds whose
+// fully-decoded PCM size crosses our threshold play via the streaming
+// path, and a BA_ROLE=pre_mixed vorbis comment tag (stamped by the asset
+// pipeline on authored mixes) marks the sound as always-listener-space.
+// Returns false without logging if the file can't be opened or parsed;
+// the full load paths downstream own error reporting and fallbacks.
+static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
+    -> bool {
+  *is_streamed = false;
+  *pre_mixed = false;
+
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
+    return false;
+  }
+  OggBlobSource blob_source{&blob};
+
+  OggVorbis_File ogg_file;
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
+    return false;
+  }
+
+  // We always decode to 16-bit samples, so decoded size is simply
+  // frames * channels * 2.
+  vorbis_info* p_info = ov_info(&ogg_file, -1);
+  ogg_int64_t pcm_frames = ov_pcm_total(&ogg_file, -1);
+  if (p_info != nullptr && p_info->channels > 0 && pcm_frames > 0) {
+    ogg_int64_t decoded_size = pcm_frames * p_info->channels * 2;
+    *is_streamed =
+        decoded_size > static_cast<ogg_int64_t>(kStreamDecodedSizeThreshold);
+  }
+
+  // Our pipeline stamps the tag with this exact casing, so a plain
+  // compare suffices (and stays portable; no strncasecmp on MSVC).
+  vorbis_comment* comment = ov_comment(&ogg_file, -1);
+  if (comment != nullptr) {
+    for (int i = 0; i < comment->comments; ++i) {
+      const char* entry = comment->user_comments[i];
+      if (entry != nullptr && strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
+        *pre_mixed = true;
+        break;
+      }
+    }
+  }
+
+  ov_clear(&ogg_file);
+  return true;
 }
 
 static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
@@ -271,17 +319,41 @@ auto SoundAsset::GetName() const -> std::string {
 void SoundAsset::DoPreload() {
 #if BA_ENABLE_AUDIO
 
-  // Its an ogg sound file.
-  // if it has 'music' in its name, we'll stream it;
-  // otherwise we load it in its entirety into our load-buffer.
-  if (strstr(file_name_full_.c_str(), "Music.ogg")) {
-    is_streamed_ = true;
-  } else if (strstr(file_name_full_.c_str(), ".ogg")) {
-    is_streamed_ = false;
-    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
-  } else {
+  // Guard against non-ogg sources slipping in — but only when the path
+  // visibly carries an extension. CAS blob paths are bare content
+  // hashes (no extension, or the archive-serving blob suffix, which is
+  // not a content-type extension); the probe below handles those (and
+  // anything else that isn't really ogg-vorbis) gracefully. Match
+  // either slash flavor; Windows blob paths use backslashes and a
+  // leading '.\' which a forward-slash-only search would mistake for
+  // an extension.
+  auto slash_pos = file_name_full_.find_last_of("/\\");
+  auto base_start = slash_pos == std::string::npos ? 0 : slash_pos + 1;
+  bool has_extension =
+      file_name_full_.find('.', base_start) != std::string::npos
+      && !file_name_full_.ends_with(kBundledCasBlobSuffix);
+  if (has_extension && !strstr(file_name_full_.c_str(), ".ogg")) {
     throw Exception("Unsupported sound file (needs to end in .ogg): '"
                     + file_name_full_ + "'");
+  }
+
+  // Probe the headers: long sounds (by decoded size) play via the
+  // streaming path; everything else gets fully decoded into our
+  // load-buffer here. Probe failures classify as non-streamed and fall
+  // through to the full load path, which owns error reporting and
+  // fallbacks.
+  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_);
+  g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
+    return "Classified sound '" + file_name_
+           + "' (streamed=" + std::to_string(is_streamed_)
+           + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
+  });
+  if (!is_streamed_) {
+    if (kUseDecodedAudioCache) {
+      LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    } else {
+      LoadOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    }
   }
 #endif  // BA_ENABLE_AUDIO
 }

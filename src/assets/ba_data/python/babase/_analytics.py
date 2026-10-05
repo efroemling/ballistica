@@ -2,8 +2,6 @@
 #
 """Analytics functionality."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bacommon.cloud
@@ -30,6 +28,8 @@ class AnalyticsSubsystem:
         """Submit an event.
 
         Should only be called from the logic thread.
+
+        :meta private:
         """
 
         if not _babase.in_logic_thread():

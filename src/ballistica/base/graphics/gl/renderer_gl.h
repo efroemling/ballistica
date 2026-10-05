@@ -39,7 +39,10 @@ class RendererGL : public Renderer {
   class MeshDataDualTextureFullGL;
   class MeshDataSmokeFullGL;
   class MeshDataSpriteGL;
+  class MeshDataDebugTrianglesGL;
+  class MeshDataDebugLinesGL;
   class RenderTargetGL;
+  struct RenderViewDataGL;
   class FramebufferObjectGL;
   class ShaderGL;
   class FragmentShaderGL;
@@ -58,6 +61,19 @@ class RendererGL : public Renderer {
   static void CheckGLError(const char* file, int line);
   static auto GLErrorToString(GLenum err) -> std::string;
   static auto GetGLTextureFormat(TextureFormat f) -> GLenum;
+
+  /// Pick the framebuffer + pixel dims to read back for a full-frame
+  /// screenshot. Prefers the offscreen 'backing' target when one is in
+  /// use (a stable, texture-backed FBO holding the complete composited
+  /// frame — reliable to read), and otherwise falls back to the window
+  /// framebuffer. ``content_only`` is set true when the chosen target
+  /// holds just the game content region (the backing target — its image
+  /// maps to virtual coords by a uniform scale), false when it is the
+  /// whole window including any tv-border / aspect-clamp black bars (the
+  /// fallback). Call from the graphics context after a frame is drawn.
+  /// See Automation::RunPendingCaptures.
+  void GetScreenshotReadTarget(GLuint* framebuffer, int* width, int* height,
+                               bool* content_only);
 
   RendererGL();
   ~RendererGL() override;
@@ -101,7 +117,7 @@ class RendererGL : public Renderer {
     SHD_PREMULTIPLY = 1 << 13,
     SHD_OVERLAY = 1 << 14,
     SHD_EYES = 1 << 15,
-    SHD_COLORIZE2 = 1 << 16,
+    SHD_FACING_RATIO = 1 << 16,
     SHD_HIGHER_QUALITY = 1 << 17,
     SHD_SHADOW = 1 << 18,
     SHD_GLOW = 1 << 19,
@@ -109,7 +125,8 @@ class RendererGL : public Renderer {
     SHD_MASK_UV2 = 1 << 21,
     SHD_CONDITIONAL = 1 << 22,
     SHD_FLATNESS = 1 << 23,
-    SHD_DEPTH_BUG_TEST = 1 << 24
+    SHD_DEPTH_BUG_TEST = 1 << 24,
+    SHD_TEXT_GLOW = 1 << 25
   };
 
   enum VertexAttr {
@@ -133,6 +150,7 @@ class RendererGL : public Renderer {
 
  protected:
   void DrawDebug() override;
+  void FlushDebugDraw_();
   void CheckForErrors() override;
   void GenerateCameraBufferBlurPasses() override;
   void FlipCullFace() override;
@@ -146,6 +164,12 @@ class RendererGL : public Renderer {
                                   bool depth_is_texture, bool high_quality,
                                   bool msaa, bool alpha)
       -> Object::Ref<RenderTarget> override;
+  auto NewRenderViewData() -> Object::Ref<RenderViewRendererData> override;
+  void LoadCurrentViewData() override;
+
+  /// The GL texture a texture view's world was last drawn to, or 0 if
+  /// there isn't one (nothing has drawn it yet, or the view is gone).
+  auto GetTextureViewOutputTexture(int view_id) -> GLuint;
   auto NewMeshAssetData(const MeshAsset& mesh)
       -> Object::Ref<MeshAssetRendererData> override;
   auto NewTextureData(const TextureAsset& texture)
@@ -164,6 +188,7 @@ class RendererGL : public Renderer {
   void UpdateMeshes(
       const std::vector<Object::Ref<MeshDataClientHandle> >& meshes,
       const std::vector<int8_t>& index_sizes,
+      const std::vector<uint32_t>& index_draw_counts,
       const std::vector<Object::Ref<MeshBufferBase> >& buffers) override;
   void PushGroupMarker(const char* label) override;
   void PopGroupMarker() override;
@@ -218,6 +243,8 @@ class RendererGL : public Renderer {
   auto GLGetIntOptional(GLenum name) -> std::optional<int>;
 
  private:
+  /// What we hold for the view being drawn right now, as our own type.
+  auto view_data_gl() const -> RenderViewDataGL*;
   static auto GetFunkyDepthIssue_() -> bool;
   void CheckFunkyDepthIssue_();
   auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
@@ -252,14 +279,13 @@ class RendererGL : public Renderer {
   void SetBlend(bool b);
   void SetBlendPremult(bool b);
 
-  GraphicsQuality vignette_quality_{};
   bool blend_{};
   bool blend_premult_{};
   bool first_extension_check_{true};
-  bool is_tegra_4_{};
-  bool is_tegra_k1_{};
-  bool is_recent_adreno_{};
   bool is_adreno_{};
+  // Mirror of Platform::low_end_device() (only ever true on Android); read
+  // once at GL init. See docs/initiatives/low-end-device-tiering.md.
+  bool low_end_device_{};
   bool enable_msaa_{};
   bool draw_at_equal_depth_{};
   bool depth_writing_enabled_{};
@@ -270,15 +296,6 @@ class RendererGL : public Renderer {
   bool double_sided_{};
   bool invalidate_framebuffer_support_{};
   bool checked_gl_version_{};
-  int last_blur_res_count_{};
-  float last_cam_buffer_width_{};
-  float last_cam_buffer_height_{};
-  float vignette_tex_outer_r_{};
-  float vignette_tex_outer_g_{};
-  float vignette_tex_outer_b_{};
-  float vignette_tex_inner_r_{};
-  float vignette_tex_inner_g_{};
-  float vignette_tex_inner_b_{};
   float depth_range_min_{};
   float depth_range_max_{};
   GLint gl_version_major_{};
@@ -289,9 +306,6 @@ class RendererGL : public Renderer {
   GLint viewport_y_{};
   GLint viewport_width_{};
   GLint viewport_height_{};
-  GLuint vignette_tex_{};
-  millisecs_t dof_update_time_{};
-  std::vector<Object::Ref<FramebufferObjectGL> > blur_buffers_;
   std::vector<std::unique_ptr<ProgramGL> > shaders_;
   ProgramSimpleGL* simple_color_prog_{};
   ProgramSimpleGL* simple_tex_prog_{};
@@ -300,11 +314,12 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_shadow_prog_{};
   ProgramSimpleGL* simple_tex_mod_shadow_flatness_prog_{};
+  ProgramSimpleGL* simple_tex_mod_text_glow_prog_{};
+  ProgramSimpleGL* simple_tex_mod_text_glow_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};
-  ProgramSimpleGL* simple_tex_mod_colorized2_prog_{};
-  ProgramSimpleGL* simple_tex_mod_colorized2_masked_prog_{};
+  ProgramSimpleGL* simple_tex_mod_colorized_masked_prog_{};
   ProgramObjectGL* obj_prog_{};
   ProgramObjectGL* obj_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_transparent_prog_{};
@@ -314,13 +329,13 @@ class RendererGL : public Renderer {
   ProgramObjectGL* obj_refl_add_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_prog_{};
   ProgramObjectGL* obj_lightshad_worldspace_prog_{};
+  ProgramObjectGL* obj_lightshad_facing_prog_{};
+  ProgramObjectGL* obj_lightshad_facing_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_prog_{};
   ProgramObjectGL* obj_refl_lightshad_worldspace_prog_{};
   ProgramObjectGL* obj_refl_lightshad_colorize_prog_{};
-  ProgramObjectGL* obj_refl_lightshad_colorize2_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_colorize_prog_{};
-  ProgramObjectGL* obj_refl_lightshad_add_colorize2_prog_{};
   ProgramSmokeGL* smoke_prog_{};
   ProgramSmokeGL* smoke_overlay_prog_{};
   ProgramSpriteGL* sprite_prog_{};
@@ -345,6 +360,13 @@ class RendererGL : public Renderer {
   int bound_textures_2d_[kMaxGLTexUnitsUsed]{};
   int bound_textures_cube_map_[kMaxGLTexUnitsUsed]{};
   std::unique_ptr<MeshDataSimpleFullGL> screen_mesh_;
+
+  // Debug-draw accumulation (kBeginDebugDraw* / kDebugDrawVertex3 /
+  // kEndDebugDraw). Verts collect here and get uploaded+drawn at End.
+  std::vector<float> debug_draw_verts_;
+  bool debug_draw_lines_{};
+  std::unique_ptr<MeshDataDebugTrianglesGL> debug_tri_mesh_;
+  std::unique_ptr<MeshDataDebugLinesGL> debug_line_mesh_;
   std::vector<MeshDataSimpleSplitGL*> recycle_mesh_datas_simple_split_;
   std::vector<MeshDataObjectSplitGL*> recycle_mesh_datas_object_split_;
   std::vector<MeshDataSimpleFullGL*> recycle_mesh_datas_simple_full_;
@@ -358,6 +380,11 @@ class RendererGL : public Renderer {
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
   bool gl_debug_output_available_{};
+  // Whether the GL_KHR_debug extension is actually advertised. Proc
+  // addresses alone can't be trusted for this (eglGetProcAddress may
+  // return non-null for unsupported functions), and using the KHR
+  // debug enums without the extension yields GL_INVALID_ENUM.
+  bool gl_supports_khr_debug_{};
 #if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
   // Not available on Apple ES builds (iOS/tvOS) — gl2ext.h KHR typedefs absent.
   PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};

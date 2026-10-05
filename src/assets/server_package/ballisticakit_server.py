@@ -1,10 +1,8 @@
-#!/usr/bin/env -S python3.13 -B
+#!/usr/bin/env -S python3.14 -B
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines
 """BallisticaKit server manager."""
-
-from __future__ import annotations
 
 import os
 import sys
@@ -876,8 +874,15 @@ class ServerManagerApp:
         if self._config.log_levels is not None:
             # Users supply us log level names like NOTSET; convert those
             # to numeric vals which the engine expects.
+            level_nums = logging.getLevelNamesMapping()
+            for key, val in self._config.log_levels.items():
+                if val not in level_nums:
+                    raise CleanError(
+                        f"Invalid log level '{val}' for logger '{key}';"
+                        f' expected one of {sorted(level_nums)}.'
+                    )
             bincfg[binkey] = {
-                key: logging.getLevelName(val)
+                key: level_nums[val]
                 for key, val in self._config.log_levels.items()
             }
         elif binkey in bincfg:

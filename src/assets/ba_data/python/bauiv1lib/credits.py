@@ -2,17 +2,293 @@
 #
 """Provides a window to display game credits."""
 
-from __future__ import annotations
-
-import os
-import json
-import logging
+from functools import partial
 from typing import TYPE_CHECKING, override
 
+from efro.util import strip_exception_tracebacks
+
 import bauiv1 as bui
+from bauiv1 import _classicassets
+
+from bauiv1lib.utils import get_screen_margins
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from typing import Sequence, TypeAlias
+
+    #: One display row: either a plain text line, or a row of names as
+    #: (inset, [(column-slot, name), ...]) drawn as individual widgets
+    #: at absolute column positions.
+    CreditsRow: TypeAlias = str | tuple[float, list[tuple[int, str]]]
+
+#: Horizontal distance between name columns (text units).
+_NAME_COLUMN_SPACING = 330.0
+
+#: Name columns per row.
+_NAME_COLUMN_COUNT = 3
+
+#: Font scale for the credits body text.
+_TEXT_SCALE = 0.55
+
+#: Vertical distance between rows, in container units. This is
+#: text-mesh row height (32) at our text scale — rows within a
+#: multi-line widget land exactly this far apart, which is what lets
+#: us batch many rows into one widget with per-row positions intact.
+_ROW_HEIGHT = 32.0 * _TEXT_SCALE
+
+#: Widget-creates performed per frame when populating content.
+#: Each create costs ~1ms all-in on a midrange phone (creation plus
+#: its first-draw mesh build), so this keeps per-frame logic-thread
+#: cost in the single-digit-ms range while the full page still lands
+#: within a fraction of a second. Content fills top-down, so the
+#: initially-visible portion appears in the first batch or two.
+_CREATES_PER_FRAME = 6
+
+#: Max rows batched into a single textwidget. Batching is what keeps
+#: logic-thread build cost low (widget-creation overhead dominates on
+#: mobile; a phone spent ~165ms creating one widget per row/name).
+#: Capped well below text-mesh vertex limits (a 50-row chunk of even
+#: very long lines stays under ~20k of the 65535 max verts).
+_CHUNK_ROWS = 50
+
+
+def _layout_names(
+    names2: Sequence[str], inset: float
+) -> list[tuple[float, list[tuple[int, str]]]]:
+    """Assign names to (row, column-slot) positions.
+
+    Each name later becomes its own widget at an absolute column x, so
+    columns line up exactly regardless of font metrics; measurement
+    (via the OS text backend for non-Latin names, hence
+    background-thread-only) is needed only to skip slots for names too
+    wide for their column.
+    """
+    rows: list[tuple[float, list[tuple[int, str]]]] = []
+    row: list[tuple[int, str]] = []
+    slot = 0
+    for name in names2:
+        if slot >= _NAME_COLUMN_COUNT:
+            rows.append((inset, row))
+            row = []
+            slot = 0
+        row.append((slot, name))
+        width = bui.get_string_width(name, suppress_warning=True)
+        # Advance past however many slots this name's width covers.
+        end = slot * _NAME_COLUMN_SPACING + width
+        slot = max(slot + 1, int(end // _NAME_COLUMN_SPACING) + 1)
+    if row:
+        rows.append((inset, row))
+    return rows
+
+
+def _bake_widget_specs(
+    rows: Sequence[CreditsRow],
+) -> tuple[int, list[tuple[float, float, str]]]:
+    """Bake display rows into a minimal set of widget-create specs.
+
+    Returns ``(row_count, [(x, y_down, text), ...])`` where each spec
+    is one multi-line textwidget: x in container units, y_down the
+    distance of its first row below the content top, text with rows
+    joined by newlines (drawn ``_ROW_HEIGHT`` apart). Consecutive
+    plain rows batch into chunks; name rows batch into one spec per
+    column (same y, fixed column x) so column alignment survives
+    batching exactly. All layout math happens here (on the background
+    compose thread) so the logic thread's job is reduced to a few
+    dozen bare widget-create calls.
+    """
+    specs: list[tuple[float, float, str]] = []
+    row_idx = 0
+    total = len(rows)
+    while row_idx < total:
+        row = rows[row_idx]
+        chunk_top = row_idx
+        if isinstance(row, str):
+            # A run of plain rows.
+            lines: list[str] = []
+            while (
+                row_idx < total
+                and isinstance(rows[row_idx], str)
+                and len(lines) < _CHUNK_ROWS
+            ):
+                nrow = rows[row_idx]
+                assert isinstance(nrow, str)
+                lines.append(nrow)
+                row_idx += 1
+            specs.append((0.0, chunk_top * _ROW_HEIGHT, '\n'.join(lines)))
+        else:
+            # A run of name rows (all sharing one inset; the sections
+            # are separated by plain rows so runs never mix insets).
+            inset = row[0]
+            cols: list[list[str]] = [[] for _ in range(_NAME_COLUMN_COUNT)]
+            count = 0
+            while (
+                row_idx < total
+                and not isinstance(rows[row_idx], str)
+                and count < _CHUNK_ROWS
+            ):
+                nrow = rows[row_idx]
+                assert not isinstance(nrow, str)
+                present: dict[int, str] = dict(nrow[1])
+                for slot in range(_NAME_COLUMN_COUNT):
+                    cols[slot].append(present.get(slot, ''))
+                count += 1
+                row_idx += 1
+            for slot in range(_NAME_COLUMN_COUNT):
+                text = '\n'.join(cols[slot])
+                if not text.strip():
+                    continue
+                specs.append(
+                    (
+                        (inset + slot * _NAME_COLUMN_SPACING) * _TEXT_SCALE,
+                        chunk_top * _ROW_HEIGHT,
+                        text,
+                    )
+                )
+    return (total, specs)
+
+
+def _compose_credits_rows(
+    translation_contributors: Sequence[str],
+) -> list[CreditsRow]:
+    """Build the full credits body as a list of display rows.
+
+    Involves lots of string measuring (see ``_layout_names``), so this
+    must run on a background thread, not the logic thread.
+    """
+    # Flat text on purpose: the credits body is assembled as
+    # pre-laid-out plain text (name rows get positioned-widget
+    # treatment instead so their columns line up exactly), so Lstr
+    # values get evaluated at the boundary.
+    sound_and_music = _classicassets.strings.credits.song_credit(
+        title="'William Tell (Trumpet Entry)'",
+        performer='The Apollo Symphony Orchestra',
+        composer='Gioacchino Rossini',
+        arranger='Chris Worth',
+        publisher='BMI',
+        source='www.AudioSparx.com',
+    ).evaluate()
+    spc = '     '
+    sound_and_music = spc + sound_and_music.replace('\n', '\n' + spc)
+    names = [
+        'HubOfTheUniverseProd',
+        'Jovica',
+        'LG',
+        'Leady',
+        'Percy Duke',
+        'PhreaKsAccount',
+        'Pogotron',
+        'Rock Savage',
+        'anamorphosis',
+        'benboncan',
+        'cdrk',
+        'chipfork',
+        'guitarguy1985',
+        'jascha',
+        'joedeshon',
+        'loofa',
+        'm_O_m',
+        'mich3d',
+        'sandyrb',
+        'shakaharu',
+        'sirplus',
+        'stickman',
+        'thanvannispen',
+        'virotic',
+        'zimbot',
+    ]
+    names.sort(key=lambda x: x.lower())
+
+    part_before_freesound = (
+        '  '
+        + _classicassets.strings.credits.coding_graphics_audio(
+            name='Eric Froemling'
+        ).evaluate()
+        + '\n'
+        '\n'
+        '  '
+        + _classicassets.strings.credits.additional_audio_art_ideas(
+            name='Raphael Suter'
+        ).evaluate()
+        + '\n'
+        '\n'
+        '  ' + _classicassets.strings.credits.sound_and_music.evaluate() + '\n'
+        '\n' + sound_and_music + '\n'
+        '\n'
+        '     '
+        + _classicassets.strings.credits.public_domain_music_via(
+            name='Musopen.com'
+        ).evaluate()
+        + '\n'
+        '        '
+        + _classicassets.strings.credits.thanks_especially_to(
+            name='the US Army, Navy, and Marine Bands'
+        ).evaluate()
+        + '\n'
+        '\n'
+        '     '
+        + _classicassets.strings.credits.additional_music_from(
+            name='The YouTube Audio Library'
+        ).evaluate()
+        + '\n'
+        '\n'
+        '     '
+        + _classicassets.strings.credits.sounds_source(
+            source='Freesound.org'
+        ).evaluate()
+        + '\n\n'
+    )
+
+    part_before_translators = (
+        '\n\n  '
+        + _classicassets.strings.credits.language_translations.evaluate()
+        + '\n\n'
+    )
+
+    part_after_translators = (
+        '\n'
+        '  Shout Out to Awesome Mods / Modders / Contributors:\n\n'
+        '     BombDash ModPack\n'
+        '     TheMikirog & SoK - BombSquad Joyride Modpack\n'
+        '     Mrmaxmeier - BombSquad-Community-Mod-Manager\n'
+        '     Ritiek Malhotra \n'
+        '     Dliwk\n'
+        '     vishal332008\n'
+        '     itsre3\n'
+        '     Drooopyyy\n'
+        '     Loup\n'
+        '\n'
+        '  Holiday theme vector art designed by Freepik\n'
+        '\n'
+        '  ' + _classicassets.strings.credits.special_thanks.evaluate() + '\n'
+        '\n'
+        '     Todd, Laura, and Robert Froemling\n'
+        '     '
+        + _classicassets.strings.credits.all_my_family.evaluate().replace(
+            '\n', '\n     '
+        )
+        + '\n'
+        '     '
+        + _classicassets.strings.credits.whoever_invented_coffee.evaluate()
+        + '\n'
+        '\n'
+        '  ' + _classicassets.strings.credits.legal.evaluate() + '\n'
+        '\n'
+        '     '
+        + _classicassets.strings.credits.software_based_on(
+            name='the Khronos Group'
+        ).evaluate()
+        + '\n'
+        '\n'
+        '                                       '
+        '                      www.ballistica.net\n'
+    )
+
+    rows: list[CreditsRow] = []
+    rows += part_before_freesound.splitlines()
+    rows += _layout_names(names, 90)
+    rows += part_before_translators.splitlines()
+    rows += _layout_names(translation_contributors, 60)
+    rows += part_after_translators.splitlines()
+    return rows
 
 
 class CreditsWindow(bui.MainWindow):
@@ -23,9 +299,6 @@ class CreditsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
-
         bui.set_analytics_screen('Credits Window')
 
         assert bui.app.classic is not None
@@ -66,9 +339,29 @@ class CreditsWindow(bui.MainWindow):
             scroll_height = target_height
             scroll_y = yoffs - scroll_height
         else:
+            # Title and back button (sized like doc-ui windows' on
+            # screen, as of 2026-09-30) share a band at the top; the
+            # scroll area runs from under it to a bit past the target
+            # area's bottom.
             yoffs += 30
-            scroll_height = target_height - 29
-            scroll_y = yoffs - 58 - scroll_height
+            scroll_height = target_height - 15
+            scroll_y = yoffs - 44 - scroll_height
+
+        # In small ui (where we cover the screen), extend our scroll
+        # area out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot),
+        # insetting content by those same amounts so it stays put and
+        # only the scroll surface itself reaches further out.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
 
         self._r = 'creditsWindow'
         super().__init__(
@@ -92,12 +385,17 @@ class CreditsWindow(bui.MainWindow):
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
+            # (Centered at (64, yoffs - 22), on the title.)
+            back_scale = 0.66 if uiscale is bui.UIScale.MEDIUM else 0.57
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(40, yoffs - 46),
+                position=(
+                    64.0 - 30.0 * back_scale,
+                    yoffs - 22.0 - 27.5 * back_scale,
+                ),
                 size=(60, 55),
-                scale=0.8,
+                scale=back_scale,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
@@ -105,10 +403,16 @@ class CreditsWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        scroll = bui.scrollwidget(
+        scroll = self._scroll = bui.scrollwidget(
             parent=self._root_widget,
-            size=(scroll_width, scroll_height),
-            position=(width * 0.5 - scroll_width * 0.5, scroll_y),
+            size=(
+                scroll_width + self._margin_left + self._margin_right,
+                scroll_height + self._margin_bottom + self._margin_top,
+            ),
+            position=(
+                width * 0.5 - scroll_width * 0.5 - self._margin_left,
+                scroll_y - self._margin_bottom,
+            ),
             capture_arrows=True,
             border_opacity=0.4,
             center_small_content_horizontally=True,
@@ -125,225 +429,87 @@ class CreditsWindow(bui.MainWindow):
         )
         bui.containerwidget(edit=self._root_widget, selected_child=scroll)
 
-        def _format_names(names2: Sequence[str], inset: float) -> str:
-            sval = ''
-            # measure a series since there's overlaps and stuff..
-            space_width = (
-                bui.get_string_width(' ' * 10, suppress_warning=True) / 10.0
-            )
-            spacing = 330.0
-            col1 = inset
-            col2 = col1 + spacing
-            col3 = col2 + spacing
-            line_width = 0.0
-            nline = ''
-            for name in names2:
-                # move to the next column (or row) and print
-                if line_width > col3:
-                    sval += nline + '\n'
-                    nline = ''
-                    line_width = 0
-
-                if line_width > col2:
-                    target = col3
-                elif line_width > col1:
-                    target = col2
-                else:
-                    target = col1
-                spacingstr = ' ' * int((target - line_width) / space_width)
-                nline += spacingstr
-                nline += name
-                line_width = bui.get_string_width(nline, suppress_warning=True)
-            if nline != '':
-                sval += nline + '\n'
-            return sval
-
-        sound_and_music = bui.Lstr(
-            resource=f'{self._r}.songCreditText'
-        ).evaluate()
-        sound_and_music = sound_and_music.replace(
-            '${TITLE}', "'William Tell (Trumpet Entry)'"
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${COMPOSER}', 'Gioacchino Rossini'
-        )
-        sound_and_music = sound_and_music.replace('${ARRANGER}', 'Chris Worth')
-        sound_and_music = sound_and_music.replace('${PUBLISHER}', 'BMI')
-        sound_and_music = sound_and_music.replace(
-            '${SOURCE}', 'www.AudioSparx.com'
-        )
-        spc = '     '
-        sound_and_music = spc + sound_and_music.replace('\n', '\n' + spc)
-        names = [
-            'HubOfTheUniverseProd',
-            'Jovica',
-            'LG',
-            'Leady',
-            'Percy Duke',
-            'PhreaKsAccount',
-            'Pogotron',
-            'Rock Savage',
-            'anamorphosis',
-            'benboncan',
-            'cdrk',
-            'chipfork',
-            'guitarguy1985',
-            'jascha',
-            'joedeshon',
-            'loofa',
-            'm_O_m',
-            'mich3d',
-            'sandyrb',
-            'shakaharu',
-            'sirplus',
-            'stickman',
-            'thanvannispen',
-            'virotic',
-            'zimbot',
-        ]
-        names.sort(key=lambda x: x.lower())
-        freesound_names = _format_names(names, 90)
-
-        try:
-            with open(
-                os.path.join(
-                    bui.app.env.data_directory,
-                    'ba_data',
-                    'data',
-                    'langdata.json',
-                ),
-                encoding='utf-8',
-            ) as infile:
-                translation_contributors = json.loads(infile.read())[
-                    'translation_contributors'
-                ]
-        except Exception:
-            logging.exception('Error reading translation contributors.')
-            translation_contributors = []
-
-        translation_names = _format_names(translation_contributors, 60)
-
-        # Need to bake this out and chop it up since we're passing our
-        # 65535 vertex limit for meshes..
-        # We can remove that limit once we drop support for GL ES2.. :-/
-        # (or add mesh splitting under the hood)
-        credits_text = (
-            '  '
-            + bui.Lstr(resource=f'{self._r}.codingGraphicsAudioText')
-            .evaluate()
-            .replace('${NAME}', 'Eric Froemling')
-            + '\n'
-            '\n'
-            '  '
-            + bui.Lstr(resource=f'{self._r}.additionalAudioArtIdeasText')
-            .evaluate()
-            .replace('${NAME}', 'Raphael Suter')
-            + '\n'
-            '\n'
-            '  '
-            + bui.Lstr(resource=f'{self._r}.soundAndMusicText').evaluate()
-            + '\n'
-            '\n' + sound_and_music + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.publicDomainMusicViaText')
-            .evaluate()
-            .replace('${NAME}', 'Musopen.com')
-            + '\n'
-            '        '
-            + bui.Lstr(resource=f'{self._r}.thanksEspeciallyToText')
-            .evaluate()
-            .replace('${NAME}', 'the US Army, Navy, and Marine Bands')
-            + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.additionalMusicFromText')
-            .evaluate()
-            .replace('${NAME}', 'The YouTube Audio Library')
-            + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.soundsText')
-            .evaluate()
-            .replace('${SOURCE}', 'Freesound.org')
-            + '\n'
-            '\n' + freesound_names + '\n'
-            '\n'
-            '  '
-            + bui.Lstr(
-                resource=f'{self._r}.languageTranslationsText'
-            ).evaluate()
-            + '\n'
-            '\n'
-            + '\n'.join(translation_names.splitlines()[:146])
-            + '\n'.join(translation_names.splitlines()[146:])
-            + '\n'
-            '\n'
-            '  Shout Out to Awesome Mods / Modders / Contributors:\n\n'
-            '     BombDash ModPack\n'
-            '     TheMikirog & SoK - BombSquad Joyride Modpack\n'
-            '     Mrmaxmeier - BombSquad-Community-Mod-Manager\n'
-            '     Ritiek Malhotra \n'
-            '     Dliwk\n'
-            '     vishal332008\n'
-            '     itsre3\n'
-            '     Drooopyyy\n'
-            '     Loup\n'
-            '\n'
-            '  Holiday theme vector art designed by Freepik\n'
-            '\n'
-            '  '
-            + bui.Lstr(resource=f'{self._r}.specialThanksText').evaluate()
-            + '\n'
-            '\n'
-            '     Todd, Laura, and Robert Froemling\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.allMyFamilyText')
-            .evaluate()
-            .replace('\n', '\n     ')
-            + '\n'
-            '     '
-            + bui.Lstr(
-                resource=f'{self._r}.whoeverInventedCoffeeText'
-            ).evaluate()
-            + '\n'
-            '\n'
-            '  ' + bui.Lstr(resource=f'{self._r}.legalText').evaluate() + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.softwareBasedOnText')
-            .evaluate()
-            .replace('${NAME}', 'the Khronos Group')
-            + '\n'
-            '\n'
-            '                                       '
-            '                      www.ballistica.net\n'
-        )
-
-        txt = credits_text
-        lines = txt.splitlines()
-        line_height = 20
-
-        scale = 0.55
+        # Layout values our deferred content build will need.
+        self._uiscale = uiscale
+        self._width = width
+        self._yoffs = yoffs
+        self._scroll_width = scroll_width
         self._sub_width = min(700, width - 80)
-        self._sub_height = line_height * len(lines) + 40
+        self._sub_height: float | None = None
+        self._subcontainer: bui.Widget | None = None
+        self._specs: list[tuple[float, float, str]] | None = None
+        self._spec_index = 0
+        self._content_top = 0.0
+        self._build_timer: bui.DisplayTimer | None = None
+
+        # Composing the credits body involves measuring lots of
+        # multi-script text, which can stall on lazy OS font loads — so
+        # it happens on a background thread and the resulting content
+        # gets built here once ready (this is also why we grab the
+        # contributor list here rather than there; its underlying
+        # asset-registry lookups keep a simple logic-thread-only
+        # contract). Measurement itself is thread-safe.
+        translation_contributors: Sequence[str] = bui.get_legacy_langdata().get(
+            'translation_contributors', []
+        )
+        bui.app.threadpool.submit_no_wait(
+            partial(self._compose_in_bg, translation_contributors)
+        )
+
+    def _compose_in_bg(self, translation_contributors: Sequence[str]) -> None:
+        """Compose the credits body (on a background thread)."""
+        try:
+            assert not bui.in_logic_thread()
+            rows = _compose_credits_rows(translation_contributors)
+            # Bake rows into a minimal set of fully-positioned widget
+            # specs (all layout math done here, off the logic thread).
+            row_count, specs = _bake_widget_specs(rows)
+            # Pre-measure the exact spec strings: this populates the
+            # engine's span-measure cache with the spans the logic
+            # thread will need when building these widgets' text
+            # meshes, keeping that step off the OS text backend.
+            for _x, _y, spec_text in specs:
+                bui.get_string_width(spec_text, suppress_warning=True)
+            bui.pushcall(
+                bui.WeakCallStrict(self._build_content, row_count, specs),
+                from_other_thread=True,
+            )
+        except Exception as exc:
+            bui.uilog.exception('Error composing credits content.')
+            strip_exception_tracebacks(exc)
+
+    def _build_content(
+        self, row_count: int, specs: list[tuple[float, float, str]]
+    ) -> None:
+        """Populate our scroll content (back on the logic thread).
+
+        Everything here was baked on the background compose thread;
+        this just runs the (few dozen) widget creates.
+        """
+        # No-op if our ui is already gone.
+        if not self._root_widget:
+            return
+
+        sub_height = float(_ROW_HEIGHT * row_count + 40)
 
         inline_title_height = 50
 
         # Make space for our title when we're stuffing it inline.
-        if uiscale is bui.UIScale.SMALL:
-            self._sub_height += inline_title_height
+        if self._uiscale is bui.UIScale.SMALL:
+            sub_height += inline_title_height
 
-        container = self._subcontainer = bui.containerwidget(
-            parent=scroll,
+        # Grow to cover any screen margins, insetting content to match
+        # (via the margin_left/margin_top shifts below) so it stays put.
+        sub_height += self._margin_bottom + self._margin_top
+        self._sub_height = sub_height
+
+        self._subcontainer = bui.containerwidget(
+            parent=self._scroll,
             id=f'{self.main_window_id_prefix}|sub',
-            size=(self._sub_width, self._sub_height),
+            size=(
+                self._sub_width + self._margin_left + self._margin_right,
+                sub_height,
+            ),
             background=False,
             claims_left_right=False,
         )
@@ -353,42 +519,83 @@ class CreditsWindow(bui.MainWindow):
         bui.textwidget(
             parent=(
                 self._subcontainer
-                if uiscale is bui.UIScale.SMALL
+                if self._uiscale is bui.UIScale.SMALL
                 else self._root_widget
             ),
             position=(
-                (self._sub_width * 0.5, self._sub_height - 20)
-                if uiscale is bui.UIScale.SMALL
-                else (width * 0.5, yoffs - 28)
+                (
+                    self._margin_left + self._sub_width * 0.5,
+                    sub_height - self._margin_top - 20,
+                )
+                if self._uiscale is bui.UIScale.SMALL
+                else (self._width * 0.5, self._yoffs - 22)
             ),
             size=(0, 0),
-            scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            # (Medium/large: doc-ui windows' title size on screen, as
+            # of 2026-09-30.)
+            scale=(
+                0.8
+                if self._uiscale is bui.UIScale.SMALL
+                else 0.75 if self._uiscale is bui.UIScale.MEDIUM else 0.65
+            ),
+            text=_classicassets.strings.credits.title(
+                app_name=_classicassets.strings.ui.app_name
             ),
             h_align='center',
             v_align='center',
             color=bui.app.ui_v1.title_color,
-            maxwidth=scroll_width * 0.7,
+            maxwidth=self._scroll_width * 0.7,
         )
 
-        voffs = -inline_title_height if uiscale is bui.UIScale.SMALL else 0
+        voffs = (
+            -inline_title_height if self._uiscale is bui.UIScale.SMALL else 0
+        )
 
-        for line in lines:
-            bui.textwidget(
+        # Create content widgets a few per frame: each costs ~1ms
+        # all-in on a midrange phone, so doing all of them in one
+        # frame is a visible hitch while this way stays well within
+        # frame budget. Specs are ordered top-down so visible content
+        # lands first; the rest fills in below over the next fraction
+        # of a second.
+        self._content_top = sub_height - self._margin_top - 20 + voffs
+        self._specs = specs
+        self._spec_index = 0
+        self._build_timer = bui.DisplayTimer(
+            0.0001, bui.WeakCallStrict(self._build_batch), repeat=True
+        )
+        self._build_batch()
+
+    def _build_batch(self) -> None:
+        """Create the next batch of content widgets (logic thread)."""
+        container = self._subcontainer
+        if not container:
+            # Our ui died; stop.
+            self._build_timer = None
+            return
+        assert self._specs is not None
+        batch_end = min(len(self._specs), self._spec_index + _CREATES_PER_FRAME)
+        textwidget = bui.textwidget
+        for i in range(self._spec_index, batch_end):
+            xoffs, y_down, text = self._specs[i]
+            textwidget(
                 parent=container,
                 padding=4,
                 color=(0.7, 0.9, 0.7, 1.0),
-                scale=scale,
+                scale=_TEXT_SCALE,
                 flatness=1.0,
                 size=(0, 0),
-                position=(0, self._sub_height - 20 + voffs),
+                position=(
+                    self._margin_left + xoffs,
+                    self._content_top - y_down,
+                ),
                 h_align='left',
                 v_align='top',
-                text=bui.Lstr(value=line),
+                text=text,
             )
-            voffs -= line_height
+        self._spec_index = batch_end
+        if batch_end >= len(self._specs):
+            self._build_timer = None
+            self._specs = None
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

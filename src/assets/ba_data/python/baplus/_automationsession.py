@@ -1,0 +1,938 @@
+# Released under the MIT License. See LICENSE for details.
+#
+"""Our end of the automation channel.
+
+An automation-enabled build offers itself up to be driven: it holds a
+SmartSocket to the basn node its transport is already talking to, and
+a driver elsewhere attaches to the other end of that channel to send
+Python and read results back. The two ends find each other through a
+locator line this module logs on every transport connect.
+
+Three things make this the *device's* channel rather than something
+handed to us like the console's:
+
+- **We create it.** The node is the issuer, the way it is for a
+  bacloud session: we dial, it mints, no bamaster in the path and no
+  round trip in front of the session.
+- **We mint the credential.** A random key per app run, whose hash we
+  register with the node; presenting the key is what authorizes a
+  driver. That is deliberately not account ownership -- test devices
+  are signed out, shared, or signed into throwaway accounts, and
+  automation has to work anyway. A *registered* device instead holds
+  a persistent key (``babase._automation.register_automation_device``),
+  which also opts it in on every launch and has it report each
+  channel to the cloud, so a driver can find it by device id without
+  seeing our log (``automation-over-transport.md`` decision 14).
+- **The address is not the credential.** Knowing the channel id gets
+  you nothing without the key, so a locator line in a pasted log is
+  harmless on its own.
+
+The key itself is a bearer credential for remote code execution on
+this device, and we log it. That is acceptable only because the
+whole capability is compiled out of everything but developer builds
+and additionally requires a runtime opt-in; see
+``automation-over-transport.md`` decision 8.
+"""
+
+import os
+import json
+import time
+import base64
+import hashlib
+import asyncio
+import logging
+import tempfile
+from functools import partial
+from typing import TYPE_CHECKING
+
+import babase
+import baenv
+
+from baplus import _automationhelpers
+from efro.dataclassio import dataclass_to_json
+from efro.smartsocket import (
+    MAX_MESSAGE_BYTES,
+    MAX_PAYLOAD_BYTES,
+    framed_size,
+    SmartSocketClosed,
+    SmartSocketEndpoint,
+    SmartSocketPayloadTooLarge,
+)
+from bacommon.automationchannel import (
+    AutomationCommand,
+    ChunkEvent,
+    # Runtime import, not TYPE_CHECKING: the endpoint takes the root
+    # types as real arguments, since generics are erased at runtime.
+    AutomationEvent,
+    ExecCommand,
+    GapEvent,
+    HelloCommand,
+    ImageFormat,
+    LogEntriesEvent,
+    ResultEvent,
+    ScreenshotCommand,
+    ScreenshotEvent,
+)
+
+if TYPE_CHECKING:
+    from typing import Any
+
+logger = logging.getLogger('ba.automationsession')
+
+#: How many un-acked bytes this endpoint may hold.
+#:
+#: Bigger than the transport default (one message's worth) because a
+#: chunked screenshot is several messages that must ALL fit without
+#: blocking. Blocking here is not merely slow, it deadlocks: a
+#: SmartSocket reads message frames and ack frames in one loop, and a
+#: command handler runs inside that loop, so a handler that waits for
+#: in-flight space is waiting for acks its own caller is blocked from
+#: reading. Sizing the buffer past anything we will send is what keeps
+#: that unreachable; ``_MAX_CHUNKED_PAYLOAD_BYTES`` enforces the other
+#: half.
+#:
+#: Costs real device memory in the worst case, which is affordable for
+#: a developer-build-only channel.
+_IN_FLIGHT_CAP_BYTES = 8 * 1024 * 1024
+
+#: Largest event we will split rather than refuse.
+#:
+#: Leaves headroom under the in-flight cap for the chunk envelopes and
+#: for whatever else is in flight (log traffic keeps flowing during a
+#: capture). Past this we answer with a clean failure, because sending
+#: it would risk the deadlock described above -- a caller told "too
+#: big" can do something about it; a wedged channel cannot.
+_MAX_CHUNKED_PAYLOAD_BYTES = _IN_FLIGHT_CAP_BYTES // 2
+
+#: How much serialized event one :class:`ChunkEvent` carries.
+#:
+#: Half the always-safe payload size, less envelope room. A slice is
+#: JSON that gets escaped again into the chunk envelope, so it can
+#: double -- the same worst case ``MAX_PAYLOAD_BYTES`` already budgets
+#: for once. Deliberately the guaranteed-safe size rather than a
+#: measured one: this is the path for payloads already known not to
+#: fit, so being generous here just risks a chunk that also doesn't.
+#: Mirrors basn's ``_RESPONSE_SLICE_BYTES``, which solves this same
+#: problem for bacloud responses.
+_EVENT_SLICE_BYTES = MAX_PAYLOAD_BYTES // 2 - 1024
+
+#: Env var that turns the channel on. The capability is compiled into
+#: developer builds only, but even there it stays off until asked
+#: for: a dev build left running should not be quietly drivable.
+_ENABLE_ENV_VAR = 'BA_AUTOMATION_CHANNEL'
+
+#: Env var supplying a persistent key instead of a per-run one, for a
+#: test device driven repeatedly across restarts.
+_KEY_ENV_VAR = 'BA_AUTOMATION_KEY'
+
+#: How often we look for new log entries to push. Local in-memory
+#: check, so it can be brisk.
+_POLL_SECONDS = 0.1
+
+#: Cap on log entries pushed at once. A log tail is lossy by nature
+#: and must stay that way: pushing an unbounded stream into a
+#: gapless-or-dead channel lets a slow reader kill the session rather
+#: than merely miss scrollback.
+_MAX_PENDING_ENTRIES = 400
+
+#: How long to wait for a capture to land on disk before giving up.
+_SCREENSHOT_TIMEOUT_SECONDS = 10.0
+
+#: How long an exec's result waits for the code to finish on the logic
+#: thread. Past this we answer anyway (noting it is still running)
+#: rather than hold the channel.
+_EXEC_RESULT_TIMEOUT_SECONDS = 10.0
+
+#: How long a shutdown waits for the channel's polite close. Short on
+#: purpose -- telling the relay we're gone is worth a moment, never
+#: worth stalling the app's exit.
+_SHUTDOWN_CLOSE_TIMEOUT = 2.0
+
+#: How long the recreate loop waits for the transport before looking
+#: again. The transport tells us when it reconnects, so this is only
+#: the self-heal path for a notification that never arrives; it must
+#: never be the *only* way we wake up, and nothing may depend on it
+#: being short.
+_TRANSPORT_RECHECK_SECONDS = 30.0
+
+#: How long after a key change to recycle the live channel. Long
+#: enough for a driver that delivered the change to get its result.
+_RECYCLE_DELAY_SECONDS = 3.0
+
+#: A channel that died sooner than this means something is wrong
+#: (an unreachable node) rather than a drive having finished.
+_CHANNEL_SHORT_LIFE_SECONDS = 2.0
+
+#: Backoff bounds for re-offering after a channel dies immediately.
+_RECREATE_BACKOFF_MIN_SECONDS = 2.0
+_RECREATE_BACKOFF_MAX_SECONDS = 60.0
+
+
+def _persistent_key() -> str | None:
+    """The standing key this device was given, if any.
+
+    Either provisioned for the run (``BA_AUTOMATION_KEY``) or stored
+    by registering the device (``register_automation_device``). A
+    persistent key is never logged or put in a locator: it outlives
+    any log line it could leak into.
+    """
+    from babase import _automation
+
+    supplied = os.environ.get(_KEY_ENV_VAR)
+    if supplied:
+        return supplied
+    return _automation.stored_device_key()
+
+
+def _resolve_future[T](future: asyncio.Future[T], value: T) -> None:
+    """Set a future's result unless it already has one (or was dropped)."""
+    if not future.done():
+        future.set_result(value)
+
+
+def _make_ephemeral_key() -> str:
+    """Mint a per-run automation key."""
+    from secrets import token_hex
+
+    # 128 bits, per decision 8.
+    return token_hex(16)
+
+
+class AutomationSessionManager:
+    """Holds this app's automation channel, if it has one."""
+
+    def __init__(self) -> None:
+        self._task: asyncio.Task | None = None
+        self._endpoint: (
+            SmartSocketEndpoint[AutomationEvent, AutomationCommand] | None
+        ) = None
+        self._channel_id: str | None = None
+        self._key: str | None = None
+        self._log_index = 0
+        self._node_url: str | None = None
+        #: Set at app shutdown so the recreate loop stops offering
+        #: fresh channels while the runtime is going away.
+        self._shutting_down = False
+        #: Wakes the recreate loop when the transport reconnects.
+        #: A wakeup *only*: what gates the loop is asking the
+        #: transport where it is, so a set() we miss costs a
+        #: re-check delay rather than a device that never becomes
+        #: drivable again.
+        self._transport_connected = asyncio.Event()
+        #: Supplied by the caller, which has the private-api access
+        #: to read it (baplus may not reach ``_babase``).
+        self._app_instance_id = ''
+        #: The transport's loop, which we run on; captured from its
+        #: first connect call.
+        self._loop: asyncio.AbstractEventLoop | None = None
+        #: The key the live channel was registered with, so a changed
+        #: registration can tell the channel is stale.
+        self._channel_key: str | None = None
+        #: Helper tasks we must hold references to.
+        self._aux_tasks: set[asyncio.Task] = set()
+
+        # Hear about device registration, which happens down in
+        # babase (which can't reach up to us).
+        from babase import _automation
+
+        _automation.set_registration_changed_call(self.on_registration_changed)
+
+    @property
+    def enabled(self) -> bool:
+        """Whether this build+run offers an automation channel.
+
+        Both halves matter, and neither is stripped-attribute-shaped
+        (reading one of those from code that reaches public builds is
+        how you break every public build at once): the native hooks
+        are simply *absent* when automation was not compiled in, so
+        ``hasattr`` is a legitimate question in any build, and the
+        env var is the runtime opt-in -- as is a registered device
+        key, which is a standing opt-in given deliberately.
+        """
+        from babase import _automation
+
+        if not _automation.available():
+            return False
+        return bool(os.environ.get(_ENABLE_ENV_VAR)) or (
+            _automation.stored_device_key() is not None
+        )
+
+    def on_registration_changed(self) -> None:
+        """This device's registered key was set, replaced, or removed.
+
+        Takes effect on the live channel, not just the next one: a
+        channel only ends when a driver ends it, so leaving it alone
+        would leave the device offering (and reporting) the *old* key
+        indefinitely -- exactly what unregister-then-register did
+        before this.
+        """
+        # We run on the transport's loop, not the logic thread this is
+        # called from. No loop yet means the transport has never
+        # connected, and its first connect will start us anyway.
+        loop = self._loop
+        if loop is None:
+            return
+        loop.call_soon_threadsafe(self._apply_registration)
+
+    def _apply_registration(self) -> None:
+        """Bring our channel in line with the current key (on our loop)."""
+        idle = self._task is None or self._task.done()
+        if not self.enabled:
+            # Unregistered, and not opted in any other way: stop
+            # offering ourselves up.
+            if not idle:
+                self._hold(self._retire_channel())
+            return
+        if idle:
+            self._task = None
+            self._node_url = None
+            plus = babase.app.plus
+            if plus is None:
+                return
+            self.on_transport_connected(
+                plus.cloud.get_connected_node_base_url(), self._app_instance_id
+            )
+            return
+        if self._channel_key != self._current_key():
+            # Recycle so the next channel carries (and reports) the new
+            # key. Not at once: the registration may have arrived over
+            # this very channel (automation_drive --register-as), and
+            # that driver should get its result before we pull it.
+            self._hold(self._recycle_channel_soon())
+
+    def _current_key(self) -> str:
+        """The key the next channel will use."""
+        persistent_key = _persistent_key()
+        if persistent_key is not None:
+            return persistent_key
+        if self._key is None:
+            self._key = _make_ephemeral_key()
+        return self._key
+
+    def _hold(self, coro: Any) -> None:
+        """Run a helper task, keeping a reference so it isn't GC'd."""
+        task = asyncio.create_task(coro)
+        self._aux_tasks.add(task)
+        task.add_done_callback(self._aux_tasks.discard)
+
+    async def _recycle_channel_soon(self) -> None:
+        """End the live channel if it still has a stale key."""
+        await asyncio.sleep(_RECYCLE_DELAY_SECONDS)
+        endpoint = self._endpoint
+        if endpoint is None or self._channel_key == self._current_key():
+            return  # Already recycled (e.g. its driver ended it).
+        try:
+            await asyncio.wait_for(
+                endpoint.end('automation key changed'),
+                timeout=_SHUTDOWN_CLOSE_TIMEOUT,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.debug('automation: recycle end failed', exc_info=True)
+        # The run loop sees the channel end and offers a fresh one.
+
+    async def _retire_channel(self) -> None:
+        """Stop offering a channel at all.
+
+        Ending the channel is enough: the run loop checks ``enabled``
+        before offering another, and so winds itself up.
+        """
+        endpoint = self._endpoint
+        if endpoint is None:
+            return
+        try:
+            await asyncio.wait_for(
+                endpoint.end('automation device unregistered'),
+                timeout=_SHUTDOWN_CLOSE_TIMEOUT,
+            )
+        except Exception:  # pylint: disable=broad-except
+            logger.debug('automation: retire end failed', exc_info=True)
+
+    def on_transport_connected(
+        self, node_base_url: str | None, app_instance_id: str
+    ) -> None:
+        """Start (or restart) our channel against a node.
+
+        Called on every transport connect, so a reconnect or a
+        node retirement re-establishes and re-advertises rather than
+        leaving a dead locator in the log. Cheap and safe to call
+        when disabled.
+        """
+        # Remember these before bailing: a device registered later this
+        # run starts its channel from here without a fresh connect.
+        self._app_instance_id = app_instance_id
+        self._loop = asyncio.get_running_loop()
+        if not self.enabled or node_base_url is None or self._shutting_down:
+            return
+
+        ws_url = _automationhelpers.ws_url_for(node_base_url)
+
+        # Before the early-out below, not after: a task that parked
+        # because the transport was down is still very much running,
+        # and this is the wakeup that un-parks it.
+        self._transport_connected.set()
+
+        if ws_url == self._node_url and self._task is not None:
+            # Same node, still running; nothing to do. (Also the
+            # ordinary path back from a transport outage: the task
+            # notices the node it holds is reachable again.)
+            return
+
+        self._stop()
+        self._node_url = ws_url
+        self._task = asyncio.create_task(self._run())
+
+    def _stop(self) -> None:
+        """Tear down any live channel."""
+        if self._task is not None:
+            self._task.cancel()
+            self._task = None
+        self._endpoint = None
+
+    async def shutdown(self) -> None:
+        """End the channel before the runtime goes away.
+
+        Mirrors the console (see ``ConsoleSessionManager.shutdown``):
+        end the channel cleanly so the relay releases it (and its
+        basn task) now instead of waiting out the linger for a device
+        that has quit, and await the task's cancellation so we hand
+        the runtime no straggler -- an abandoned session task torn
+        down by loop-close raises ``Event loop is closed`` and, worse,
+        drags a pile of cancellation-cycle garbage. Best-effort: a
+        shutdown must never hang on a socket that stopped answering.
+        """
+        self._shutting_down = True
+        endpoint = self._endpoint
+        self._endpoint = None
+        if endpoint is not None:
+            try:
+                await asyncio.wait_for(
+                    endpoint.end('app shutting down'),
+                    timeout=_SHUTDOWN_CLOSE_TIMEOUT,
+                )
+            except Exception:  # pylint: disable=broad-except
+                logger.debug(
+                    'automation channel: close on shutdown failed',
+                    exc_info=True,
+                )
+        task = self._task
+        self._task = None
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except BaseException:  # pylint: disable=broad-except
+                pass  # Cancelled (or already failing) -- we're leaving.
+
+    async def _run(self) -> None:
+        """Offer a channel, and a fresh one each time one ends.
+
+        A SmartSocket channel is one device + one driver over its
+        life: seq numbers are session-scoped and end-to-end, so a
+        second *driver process* can't reuse a channel a previous one
+        used (its fresh seqs would collide and get deduped). So each
+        driver ends its channel when done, and we immediately offer a
+        new one under a new id + locator. A single driver's own wifi
+        blip is invisible to this loop -- the endpoint resumes the
+        same channel internally and only returns here on a real end.
+
+        Offering is gated on the transport being connected. Not the
+        live channel -- an endpoint mid-resume keeps its full
+        reconnect budget, since a brief drop is exactly what it is
+        built to ride out and killing it would cost a driver its
+        session. What stops is the *recreating*: with the device
+        asleep or the network gone, its node is unreachable by
+        definition, and re-offering into that produces a fresh
+        locator and a fresh round of failures every couple of
+        seconds, forever, for nobody.
+        """
+        backoff = _RECREATE_BACKOFF_MIN_SECONDS
+        while not self._shutting_down:
+            if not self.enabled:
+                return  # Unregistered mid-run; stop offering.
+            ws_url = await self._await_transport()
+            if ws_url is None:
+                return  # Shutting down.
+            # Adopt whatever node the transport is on now. Normally
+            # ``on_transport_connected`` restarts us on a node change
+            # and this is simply the url we already had; taking it
+            # from the transport each time means a notification we
+            # somehow miss costs a recheck interval instead of
+            # leaving us dialing a node nobody is on any more.
+            self._node_url = ws_url
+
+            started = time.monotonic()
+            channel_dead = await self._run_one_channel(ws_url)
+            if not channel_dead or self._shutting_down:
+                # Cancelled (node change / shutdown); stop entirely.
+                return
+            # A channel ended (a driver finished, or it timed out).
+            # Offer another so the device stays drivable. Recreate at
+            # once when the channel actually lived a bit -- a driver
+            # racing to read the fresh locator right after ending the
+            # old one must not find a gap. Back off only when a
+            # channel dies almost immediately, which means something
+            # is wrong (a node that answers but won't hold a channel)
+            # rather than a drive having finished.
+            if time.monotonic() - started < _CHANNEL_SHORT_LIFE_SECONDS:
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2.0, _RECREATE_BACKOFF_MAX_SECONDS)
+            else:
+                backoff = _RECREATE_BACKOFF_MIN_SECONDS
+
+    async def _await_transport(self) -> str | None:
+        """Wait until we have a node to offer a channel on.
+
+        Returns its attach url, or ``None`` if we're shutting down.
+
+        Level-triggered on purpose: we ask the transport where it is
+        rather than trusting a remembered flag, and the wait always
+        times out. Both halves are about recovery -- a gate that can
+        only be re-opened by an event arriving is a gate that strands
+        the device for the rest of the run if one ever doesn't, and
+        that failure would look exactly like automation being broken.
+        """
+        while not self._shutting_down:
+            # Clear *before* looking, so a connect landing between
+            # the two leaves the event set and the wait returns at
+            # once. Clearing after would be the classic missed-wakeup
+            # race, costing a full recheck interval.
+            self._transport_connected.clear()
+            ws_url = self._connected_node_ws_url()
+            if ws_url is not None:
+                return ws_url
+            try:
+                await asyncio.wait_for(
+                    self._transport_connected.wait(),
+                    timeout=_TRANSPORT_RECHECK_SECONDS,
+                )
+            except TimeoutError:
+                pass
+        return None
+
+    def _connected_node_ws_url(self) -> str | None:
+        """Our transport's current node as an attach url, if any."""
+        plus = babase.app.plus
+        if plus is None:
+            return None
+        base_url = plus.cloud.get_connected_node_base_url()
+        return (
+            None
+            if base_url is None
+            else _automationhelpers.ws_url_for(base_url)
+        )
+
+    async def _run_one_channel(self, ws_url: str) -> bool:
+        """Hold one channel until it dies. True if it died on its own.
+
+        Returns False only if we were cancelled, so the caller knows
+        to stop rather than offer another.
+        """
+        from secrets import token_hex
+
+        from babase import _automation
+
+        # Looked up per channel, so registering (or re-registering)
+        # takes effect with the next channel offered.
+        persistent_key = _persistent_key()
+        key = self._current_key()
+        self._channel_key = key
+        channel_id = token_hex(16)
+        self._channel_id = channel_id
+        self._log_index = 0
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
+
+        endpoint = SmartSocketEndpoint(
+            lambda: _automationhelpers.connect(ws_url, channel_id, key_hash),
+            send_type=AutomationEvent,
+            recv_type=AutomationCommand,
+            on_message=self._on_command,
+            in_flight_cap_bytes=_IN_FLIGHT_CAP_BYTES,
+            label='automation-device',
+        )
+        self._endpoint = endpoint
+
+        # Advertise before we even know the dial worked: the locator
+        # is what a human reads out of the log to drive us, and a
+        # failed dial retries behind the scenes anyway.
+        _automationhelpers.log_locator(
+            ws_url,
+            channel_id,
+            None if persistent_key is not None else key,
+            (
+                None
+                if persistent_key is None
+                else _automation.automation_device_id_for_key(persistent_key)
+            ),
+        )
+        if persistent_key is not None:
+            # A registered device tells the cloud where it is, so a
+            # driver holding the key can find it without our log.
+            _automationhelpers.report_online(persistent_key, channel_id)
+
+        pump = asyncio.create_task(self._pump_log())
+        try:
+            # No unsolicited hello: a driver asks with HelloCommand on
+            # attach. An unprompted one would just sit in the resend
+            # buffer until the first driver, then arrive alongside
+            # that driver's requested one -- two hellos for no gain.
+            await endpoint.run()
+        except asyncio.CancelledError:
+            pump.cancel()
+            raise
+        except Exception:  # pylint: disable=broad-except
+            logger.exception('automation channel failed')
+        finally:
+            pump.cancel()
+            logger.debug(
+                'automation channel ended (code %s)', endpoint.close_code
+            )
+            if self._endpoint is endpoint:
+                self._endpoint = None
+        return True
+
+    async def _emit(
+        self, event: AutomationEvent, *, shed_when_oversized: bool = False
+    ) -> None:
+        """Send one event, tolerating a channel that just died.
+
+        An event too big for one message is split across several and
+        rejoined by the driver, so a caller gets its answer whatever
+        the size. ``shed_when_oversized`` opts out of that for log
+        traffic, which drops the event and expresses the loss as a
+        gap instead.
+
+        The distinction matters: shedding is a *logging* policy, and
+        applying it to everything is what made an over-cap screenshot
+        vanish with no result event and no error -- the caller's own
+        too-large handler could never run, because this method had
+        already swallowed the exception. A command must never
+        complete without an answer.
+        """
+        endpoint = self._endpoint
+        if endpoint is None:
+            return
+        try:
+            if shed_when_oversized:
+                await endpoint.send(event)
+            else:
+                await self._send_possibly_chunked(endpoint, event)
+        except SmartSocketClosed:
+            pass  # The run loop observes this and winds up.
+        except SmartSocketPayloadTooLarge as exc:
+            if not shed_when_oversized:
+                # Chunking should have made this unreachable; if it
+                # somehow didn't, the caller owns the answer. Letting
+                # this through is what keeps "a command always gets a
+                # result" true rather than aspirational.
+                raise
+            # Shedding upstream bounds the entry *count*; nothing
+            # bounds bytes, and a handful of very long lines (a stack
+            # dump, a big repr) blows the cap while staying well under
+            # the count. Express it as a gap, the same way every other
+            # loss here is expressed -- the alternative is this
+            # escaping into the run loop and taking the channel down
+            # because something logged too much.
+            logger.warning(
+                'automation: dropping a %d-byte %s; over the channel'
+                ' message cap.',
+                exc.size,
+                type(event).__name__,
+            )
+            if isinstance(event, LogEntriesEvent):
+                try:
+                    # A GapEvent is tiny, so this cannot recurse.
+                    await endpoint.send(GapEvent(dropped=len(event.entries)))
+                except SmartSocketClosed:
+                    pass
+
+    async def _send_possibly_chunked(
+        self,
+        endpoint: SmartSocketEndpoint[AutomationEvent, AutomationCommand],
+        event: AutomationEvent,
+    ) -> None:
+        """Send one event, splitting it if it can't fit in one message."""
+        payload = dataclass_to_json(event)
+
+        # Test what this payload actually costs framed rather than
+        # assuming the worst: a screenshot is base64 and inflates ~0%,
+        # so a pessimistic trigger would chop events that fit whole.
+        if framed_size(payload) <= MAX_MESSAGE_BYTES:
+            await endpoint.send(event)
+            return
+
+        # Refuse what we could not send without blocking. See
+        # _MAX_CHUNKED_PAYLOAD_BYTES: waiting for in-flight space from
+        # inside a command handler deadlocks the channel, so the size
+        # we can chunk is bounded by the buffer rather than by
+        # patience.
+        if len(payload) > _MAX_CHUNKED_PAYLOAD_BYTES:
+            raise SmartSocketPayloadTooLarge(
+                len(payload), _MAX_CHUNKED_PAYLOAD_BYTES
+            )
+
+        # Slice the serialized form, not the object: rejoining is
+        # concatenation and the result decodes exactly as it would
+        # have unsplit, so this carries every event type without
+        # knowing anything about them.
+        slices = [
+            payload[i : i + _EVENT_SLICE_BYTES]
+            for i in range(0, len(payload), _EVENT_SLICE_BYTES)
+        ]
+        logger.debug(
+            'automation: splitting a %d-byte %s into %d chunks.',
+            len(payload),
+            type(event).__name__,
+            len(slices),
+        )
+        for index, chunk in enumerate(slices):
+            await endpoint.send(
+                ChunkEvent(index=index, count=len(slices), data=chunk)
+            )
+
+    async def _pump_log(self) -> None:
+        """Push new log entries as they appear."""
+        envconfig = baenv.get_env_config()
+        if envconfig.log_handler is None:
+            return
+
+        while True:
+            await asyncio.sleep(_POLL_SECONDS)
+            endpoint = self._endpoint
+            if endpoint is None or not endpoint.connected:
+                continue
+
+            archive = envconfig.log_handler.get_cached(
+                start_index=self._log_index
+            )
+            dropped = max(0, archive.start_index - self._log_index)
+            if dropped:
+                await self._emit(GapEvent(dropped=dropped))
+            if not archive.entries:
+                continue
+
+            entries = archive.entries
+            if len(entries) > _MAX_PENDING_ENTRIES:
+                skipped = len(entries) - _MAX_PENDING_ENTRIES
+                entries = entries[-_MAX_PENDING_ENTRIES:]
+                await self._emit(GapEvent(dropped=skipped))
+
+            self._log_index = archive.start_index + len(archive.entries)
+            await self._emit(
+                LogEntriesEvent(entries=entries), shed_when_oversized=True
+            )
+
+    async def _on_command(self, command: AutomationCommand) -> None:
+        """Handle one command from a driver.
+
+        Arrives decoded: the endpoint owns the automation root pair,
+        so anything that isn't an AutomationCommand has already
+        killed the channel rather than reaching us.
+        """
+        if isinstance(command, HelloCommand):
+            # A driver introducing itself. Our unsolicited hello went
+            # out at channel birth and was consumed by whoever was
+            # attached then, so this is how every later driver learns
+            # what it has reached.
+            await self._emit(
+                _automationhelpers.hello_event(self._app_instance_id)
+            )
+        elif isinstance(command, ExecCommand):
+            await self._handle_exec(command)
+        elif isinstance(command, ScreenshotCommand):
+            await self._handle_screenshot(command)
+        else:
+            logger.warning(
+                'unhandled automation command %s', type(command).__name__
+            )
+
+    async def _handle_exec(self, command: ExecCommand) -> None:
+        """Run driver-supplied code on the logic thread.
+
+        Answers only once the code has run, with its real outcome: a
+        ``fail`` naming the exception if it raised, preceded by any
+        ``[automation]`` results it emitted. (Answering ``ok`` on
+        dispatch left a failed exec visible only in the device log.)
+        """
+        babase.user_ran_commands()  # disable tourneys/etc.
+        loop = asyncio.get_running_loop()
+        done: asyncio.Future[tuple[str | None, list[tuple[str, str, str]]]] = (
+            loop.create_future()
+        )
+
+        def _run() -> None:
+            outcome = _automationhelpers.exec_code(command.code)
+            try:
+                loop.call_soon_threadsafe(_resolve_future, done, outcome)
+            except RuntimeError:
+                # Our loop is gone (session shut down); nobody to tell.
+                pass
+
+        babase.pushcall(
+            _run, from_other_thread=True, other_thread_use_fg_context=True
+        )
+        summary = f'exec {len(command.code.splitlines())} line(s)'
+        finished, _pending = await asyncio.wait(
+            {done}, timeout=_EXEC_RESULT_TIMEOUT_SECONDS
+        )
+        if not finished:
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag,
+                    status='ok',
+                    payload=f'{summary}; still running after'
+                    f' {_EXEC_RESULT_TIMEOUT_SECONDS:.0f}s',
+                )
+            )
+            return
+
+        error, results = done.result()
+        for rtag, rstatus, rpayload in results:
+            await self._emit(
+                ResultEvent(tag=rtag, status=rstatus, payload=rpayload)
+            )
+        await self._emit(
+            ResultEvent(
+                tag=command.tag,
+                status='ok' if error is None else 'fail',
+                payload=summary if error is None else error,
+            )
+        )
+        # Give resulting output a moment to reach the log cache so it
+        # rides out with this exec rather than a poll later.
+        await asyncio.sleep(0.05)
+
+    async def _handle_screenshot(self, command: ScreenshotCommand) -> None:
+        """Capture a frame and send the bytes back.
+
+        Writing a file on the device is no use to a driver somewhere
+        else, so we capture to a temp path, read it, and ship it.
+        """
+        suffix = '.png' if command.lossless else '.jpg'
+        path = os.path.join(
+            tempfile.gettempdir(), f'ba_automation_shot{suffix}'
+        )
+        # The device writes a '.meta' JSON sidecar next to the image
+        # with the pixel->virtual mapping (see automation.cc
+        # WriteScreenshotMeta_); clear both from any prior capture.
+        meta_path = path + '.meta'
+        for stale in (path, meta_path):
+            try:
+                os.remove(stale)
+            except OSError:
+                pass
+
+        from babase import _automation
+
+        if not _automation.available():
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag,
+                    status='fail',
+                    payload='not_compiled_in',
+                )
+            )
+            return
+
+        # Through babase's own helper rather than the native hook:
+        # baplus may not reach the private module, and the helper is
+        # where absolute-vs-silo path resolution lives anyway.
+        babase.pushcall(
+            partial(_automation.screenshot, path, command.tag),
+            from_other_thread=True,
+        )
+
+        # The capture happens in the graphics context between frames,
+        # so wait for the file rather than assuming it is there.
+        deadline = time.monotonic() + _SCREENSHOT_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.1)
+            if os.path.exists(path) and os.path.getsize(path) > 0:
+                break
+        else:
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag, status='fail', payload='capture_timeout'
+                )
+            )
+            return
+
+        try:
+            with open(path, 'rb') as infile:
+                data = infile.read()
+        except OSError as exc:
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag, status='fail', payload=f'read_failed:{exc}'
+                )
+            )
+            return
+
+        # Read the mapping sidecar. It is written right after the image
+        # (same graphics-context call), so it is effectively always
+        # present by the time we see the image; allow a couple of brief
+        # retries for the microscopic race, then fall back to no mapping
+        # (the ScreenshotEvent's content-rect defaults describe the
+        # whole image as content).
+        meta = await self._read_screenshot_meta(meta_path)
+
+        # A lossless PNG of a large screen exceeds what one channel
+        # message may carry, so _emit splits it across several. (JPEG
+        # -- the default -- never gets close.) The handler below is a
+        # backstop for a payload that somehow overruns even chunked:
+        # a command must never complete without a result, which is
+        # exactly what went wrong when this arm was unreachable and an
+        # over-cap capture vanished in silence.
+        try:
+            await self._emit(
+                ScreenshotEvent(
+                    tag=command.tag,
+                    data=base64.b64encode(data).decode(),
+                    image_format=(
+                        ImageFormat.PNG
+                        if command.lossless
+                        else ImageFormat.JPEG
+                    ),
+                    width=int(meta.get('iw', 0)),
+                    height=int(meta.get('ih', 0)),
+                    virtual_width=float(meta.get('vw', 0.0)),
+                    virtual_height=float(meta.get('vh', 0.0)),
+                    content_l=float(meta.get('cl', 0.0)),
+                    content_t=float(meta.get('ct', 0.0)),
+                    content_w=float(meta.get('cw', 1.0)),
+                    content_h=float(meta.get('ch', 1.0)),
+                )
+            )
+        except SmartSocketPayloadTooLarge as exc:
+            await self._emit(
+                ResultEvent(
+                    tag=command.tag,
+                    status='fail',
+                    payload=f'image_too_large:{exc.size}',
+                )
+            )
+
+    async def _read_screenshot_meta(self, meta_path: str) -> dict[str, float]:
+        """Read the screenshot mapping sidecar, or {} if unavailable.
+
+        Written right after the image in the same graphics-context call,
+        so a couple of brief retries covers the microscopic
+        image-exists-but-sidecar-not-yet race. Returns {} on timeout or
+        a malformed/absent file; callers fall back to the
+        ScreenshotEvent mapping defaults.
+        """
+        for _ in range(5):
+            try:
+                with open(meta_path, 'rb') as infile:
+                    raw = infile.read()
+                if raw:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict):
+                        return parsed
+            except OSError, ValueError:
+                pass
+            await asyncio.sleep(0.02)
+        return {}
+
+
+#: Process-level singleton; an app holds at most one of these.
+automation_session_manager = AutomationSessionManager()

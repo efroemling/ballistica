@@ -2,11 +2,10 @@
 #
 """Functionality related to the final screen in free-for-all games."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import _classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -22,7 +21,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         # Keep prev activity alive while we fade in.
         self.transition_time = 0.5
-        self._cymbal_sound = bs.getsound('cymbal')
+        self._cymbal_sound = _classicassets.audio.cymbal.get()
 
     @override
     def on_begin(self) -> None:
@@ -111,9 +110,8 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         assert isinstance(session, bs.FreeForAllSession)
         title = Text(
-            bs.Lstr(
-                resource='firstToSeriesText',
-                subs=[('${COUNT}', str(session.get_ffa_series_length()))],
+            _classicassets.strings.multi_team.first_to_series(
+                count=session.get_ffa_series_length()
             ),
             scale=1.05 * scale,
             position=(
@@ -148,7 +146,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             if order_change:
                 bs.timer(tdelay + delay2 + 0.1, self._cymbal_sound.play)
             img = Image(
-                player.get_icon(),
+                player.get_icon_depiction() or player.get_icon(),
                 position=(
                     ts_h_offs - 72.0 * scale,
                     y_base + (v_offs + 15.0) * scale,
@@ -182,7 +180,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ),
             )
             txt = Text(
-                bs.Lstr(value=player.getname(full=True)),
+                player.getname(full=True),
                 maxwidth=130.0,
                 scale=0.75 * scale,
                 position=(

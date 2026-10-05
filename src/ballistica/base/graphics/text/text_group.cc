@@ -2,7 +2,9 @@
 
 #include "ballistica/base/graphics/text/text_group.h"
 
+#include <algorithm>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -18,6 +20,19 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
                         TextMesh::VAlign alignment_v, bool big,
                         float resolution_scale) {
   text_ = text;
+
+  // Stored for self-healing rebuilds (see GetElementCount()).
+  alignment_h_ = alignment_h;
+  alignment_v_ = alignment_v;
+  big_raw_ = big;
+  res_scale_ = resolution_scale;
+  incomplete_ = false;
+
+  // Snapshot this BEFORE building: any measures our build kicks off
+  // complete (and bump the epoch) strictly after this, so a completion
+  // can never slip between our build and our snapshot and leave us
+  // waiting forever.
+  int64_t epoch_before = g_base->text_graphics->os_span_measure_epoch();
 
   // In order to *actually* draw big, all our letters must be available in
   // the big font.
@@ -38,7 +53,8 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
     entry->max_flatness = 1.0f;
     entry->mesh.SetText(text, alignment_h, alignment_v, true, 0, 65535,
                         TextMeshEntryType::kRegular, nullptr);
-    entry->tex = g_base->assets->SysTexture(SysTextureID::kFontBig);
+    entry->tex =
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesFontBig);
     entries_.push_back(std::move(entry));
 
   } else {
@@ -109,7 +125,16 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       entry->mesh.SetText(text, alignment_h, alignment_v, false, min, max,
                           entry->type, packer.get());
 
-      if (packer.exists()) {
+      if (!entry->mesh.complete()) {
+        // Some OS-span measures were cold and got deferred to the
+        // background; this build is a throwaway (we present nothing
+        // until the rebuild; see below). Importantly, do NOT create a
+        // texture from the packer in this case — its spans carry
+        // placeholder bounds and text textures are content-cached.
+        incomplete_ = true;
+      }
+
+      if (packer.exists() && !incomplete_) {
         // If we made a text-packer, we need to fetch/generate a texture
         // that matches it.
         // There should only ever be one of these.
@@ -128,46 +153,59 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       }
       switch (*i) {
         case 0:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall0);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall0);
           break;
         case 1:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall1);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall1);
           break;
         case 2:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall2);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall2);
           break;
         case 3:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall3);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall3);
           break;
         case 4:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall4);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall4);
           break;
         case 5:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall5);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall5);
           break;
         case 6:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall6);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall6);
           break;
         case 7:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall7);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall7);
           break;
         case static_cast<int>(TextGraphics::FontPage::kOSRendered):
           entry->tex = os_texture_;
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras1):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras2):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras2);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras2);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras3):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras3);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras3);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras4):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras4);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras4);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras5):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras5);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras5);
           break;
         default:
           throw Exception();
@@ -175,156 +213,159 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       entries_.push_back(std::move(entry));
     }
   }
+
+  if (incomplete_) {
+    // Present nothing until our deferred measures land and we rebuild
+    // (blank-until-ready, same story as unrendered text textures).
+    // GetElementCount() re-runs us once the epoch moves past this.
+    entries_.clear();
+    os_texture_.Clear();
+    build_epoch_ = epoch_before;
+  }
 }
 
-void TextGroup::GetCaratPts(const std::string& text_in,
+auto TextGroup::GetCaratPts(const std::string& text_in,
                             TextMesh::HAlign alignment_h,
                             TextMesh::VAlign alignment_v, int carat_position,
-                            float* carat_x, float* carat_y) {
+                            float* carat_x, float* carat_y) -> bool {
   assert(carat_x && carat_y);
   assert(Utils::IsValidUTF8(text_in));
-  const char* txt = text_in.c_str();
-  float x = 0;
-  float x_offset;
-  float y_offset;
-  x_offset = x;
-  float char_width{32.0};
-  uint32_t char_val;
-  float row_height = kTextRowHeight;
-  float line_length;
-  float l{0.0f};
-  float r{0.0f};
-  float b{0.0f};
-  float t{0.0f};
-  float text_height;
-  float char_offset_h{-3.0f};
-  float char_offset_v{-3.0f};
 
-  // Calc the height of the text where needed.
-  switch (alignment_v) {
-    case TextMesh::VAlign::kNone:
-    case TextMesh::VAlign::kTop:
-      text_height = 0;  // Not used here.
-      break;
-    case TextMesh::VAlign::kCenter:
-    case TextMesh::VAlign::kBottom: {
-      int rows = 1;
-      for (const char* c = txt; *c != 0; c++) {
-        if (*c == '\n') rows++;
-      }
-      text_height = static_cast<float>(rows) * row_height;
-      break;
+  // These mirror TextMesh::SetText()'s layout (zero-size bounds;
+  // alignment is relative to the origin).
+  constexpr float kCharOffsetH{-3.0f};
+  constexpr float kCharOffsetV{-3.0f};
+  const float row_height{kTextRowHeight};
+
+  std::vector<uint32_t> chars = Utils::UnicodeFromUTF8(text_in, "cpt83kd");
+  int char_count = static_cast<int>(chars.size());
+  carat_position = std::clamp(carat_position, 0, char_count);
+
+  // Locate the carat's line: its row index and char range.
+  int row{};
+  int line_start{};
+  for (int i = 0; i < carat_position; ++i) {
+    if (chars[i] == '\n') {
+      ++row;
+      line_start = i + 1;
     }
-    default:
-      throw Exception();
   }
+  int line_end{carat_position};
+  while (line_end < char_count && chars[line_end] != '\n') {
+    ++line_end;
+  }
+
+  // Vertical: the first row's baseline per alignment, then down a row
+  // per preceding newline.
+  float text_height{};
+  if (alignment_v == TextMesh::VAlign::kCenter
+      || alignment_v == TextMesh::VAlign::kBottom) {
+    int rows = 1;
+    for (uint32_t c : chars) {
+      if (c == '\n') {
+        ++rows;
+      }
+    }
+    text_height = static_cast<float>(rows) * row_height;
+  }
+  float y_offset;
   switch (alignment_v) {
     case TextMesh::VAlign::kNone:
-      y_offset = b + char_offset_v;
+      y_offset = kCharOffsetV;
       break;
     case TextMesh::VAlign::kTop:
-      y_offset = b + char_offset_v + (t - b) - row_height;
+      y_offset = kCharOffsetV - row_height;
       break;
     case TextMesh::VAlign::kCenter:
-      y_offset =
-          b + char_offset_v + ((t - b) / 2) + (text_height / 2) - row_height;
+      y_offset = kCharOffsetV + (text_height / 2) - row_height;
       break;
     case TextMesh::VAlign::kBottom:
-      y_offset = b + char_offset_v + text_height - row_height;
+      y_offset = kCharOffsetV + text_height - row_height;
       break;
     default:
       throw Exception();
   }
-  const char* tc = txt;
-  bool first_char = true;
-  std::vector<uint32_t> line;
-  int char_num = 0;
-  while (*tc != 0) {
-    const char* tv_prev = tc;
-    char_val = Utils::GetUTF8Value(tc);
-    Utils::AdvanceUTF8(&tc);
+  y_offset -= static_cast<float>(row) * row_height;
 
-    // Reset alignment on new lines.
-    if (first_char || char_val == '\n') {
-      switch (alignment_h) {
-        case TextMesh::HAlign::kLeft:
-          x_offset = l + char_offset_h;
-          line.clear();
-          break;
-        case TextMesh::HAlign::kCenter:
-        case TextMesh::HAlign::kRight: {
-          // Find the length of this line.
-          line_length = 0;
-          const char* c;
+  // Non-stalling measures: a cold OS-span measure defers to the
+  // background (we report failure; the caller retries later).
+  auto measure = [this, &chars](int start, int end) -> std::optional<float> {
+    std::vector<uint32_t> span(chars.begin() + start, chars.begin() + end);
+    return g_base->text_graphics->TryGetStringWidth(
+        Utils::UTF8FromUnicode(span), big_);
+  };
 
-          // If this was the first char, include it in this line tally if it
-          // was a newline, don't.
-          if (first_char) {
-            c = tv_prev;
-          } else {
-            c = tc;
-          }
-          while (true) {
-            // Note Sept 2019: this was set to uint8_t. Assuming that was an
-            // accident?
-            uint32_t val;
-            if (*c == 0) {  // NOLINT(bugprone-branch-clone)
-              break;
-            } else if (*c == '\n') {
-              break;
-            } else {
-              val = Utils::GetUTF8Value(c);
-              Utils::AdvanceUTF8(&c);
-
-              // Special case: if we're already doing an OS-span, tack
-              // certain chars onto it instead of switching back to glyph
-              // mode. (to reduce the number of times we switch back and
-              // forth)
-              if (TextGraphics::Glyph* g =
-                      g_base->text_graphics->GetGlyph(val, big_)) {
-                line_length += char_width * g->advance;
-              } else {
-                // TODO(ericf): add non-glyph chars into spans and ask the
-                //  OS for their length.
-              }
-            }
-          }
-          if (alignment_h == TextMesh::HAlign::kCenter) {
-            x_offset = l + char_offset_h + ((r - l) / 2) - (line_length / 2);
-            line.clear();
-          } else {
-            x_offset = l + char_offset_h + (r - l) - line_length;
-            line.clear();
-          }
-          break;
-        }
-        default:
-          throw Exception();
-      }
-      first_char = false;
+  // Horizontal: line origin per alignment. Centered/right lines need the
+  // full line width, measured the same way the mesh lays it out
+  // (including OS-rendered spans).
+  float x_offset{kCharOffsetH};
+  if (alignment_h == TextMesh::HAlign::kCenter
+      || alignment_h == TextMesh::HAlign::kRight) {
+    auto line_width = measure(line_start, line_end);
+    if (!line_width.has_value()) {
+      return false;
     }
-    switch (char_val) {
-      case '\n':
-        y_offset -= row_height;
-        break;
-      case '\r':
-      case ' ':
-        break;
-      default: {
-      }
-    }
-    if (carat_position == char_num) {
-      break;
-    }
-    if (char_val != '\n') {
-      line.push_back(char_val);
-    }
-    char_num++;
+    x_offset -= (alignment_h == TextMesh::HAlign::kCenter) ? *line_width / 2
+                                                           : *line_width;
   }
-  *carat_x = x_offset
-             + g_base->text_graphics->GetStringWidth(
-                 Utils::UTF8FromUnicode(line).c_str());
+
+  auto prefix_width = measure(line_start, carat_position);
+  if (!prefix_width.has_value()) {
+    return false;
+  }
+  *carat_x = x_offset + *prefix_width;
   *carat_y = y_offset;
+  return true;
+}
+
+auto TextGroup::GetCaratPosAtPoint(const std::string& text_in,
+                                   TextMesh::HAlign alignment_h,
+                                   TextMesh::VAlign alignment_v, float x,
+                                   float y, CaratHitMode mode)
+    -> std::optional<int> {
+  int char_count = Utils::UTF8StringLength(text_in.c_str());
+  std::vector<std::pair<float, float>> pts(char_count + 1);
+  for (int i = 0; i <= char_count; ++i) {
+    if (!GetCaratPts(text_in, alignment_h, alignment_v, i, &pts[i].first,
+                     &pts[i].second)) {
+      return {};
+    }
+  }
+
+  // Nearest row first. (Every slot on a row shares one exact y.)
+  float row_y{pts[0].second};
+  for (auto& pt : pts) {
+    if (std::abs(pt.second - y) < std::abs(row_y - y)) {
+      row_y = pt.second;
+    }
+  }
+
+  // Then the slot within it.
+  std::optional<int> best;
+  for (int i = 0; i <= char_count; ++i) {
+    auto [cx, cy] = pts[i];
+    if (cy != row_y) {
+      continue;
+    }
+    switch (mode) {
+      case CaratHitMode::kNearestBoundary:
+        if (!best.has_value()
+            || std::abs(cx - x) < std::abs(pts[*best].first - x)) {
+          best = i;
+        }
+        break;
+      case CaratHitMode::kContainingChar:
+        // The last slot at or left of the point (or the row's first
+        // slot for a point left of everything).
+        if (!best.has_value() || cx <= x) {
+          best = i;
+        }
+        break;
+      default:
+        throw Exception("Invalid CaratHitMode.");
+    }
+  }
+  return best;
 }
 
 }  // namespace ballistica::base

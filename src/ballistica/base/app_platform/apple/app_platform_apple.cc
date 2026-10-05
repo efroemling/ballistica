@@ -19,13 +19,6 @@
 
 namespace ballistica::base {
 
-AppPlatformApple::AppPlatformApple() {
-  // On iOS, keep the device from falling asleep in our app
-#if BA_PLATFORM_IOS_TVOS
-  // AppleUtils::DisableIdleTimer();
-#endif
-}
-
 void AppPlatformApple::DoPurchase(const std::string& item) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchase(item);
@@ -67,13 +60,22 @@ void AppPlatformApple::DoOpenURL(const std::string& url) {
 #endif  // BA_XCODE_BUILD
 }
 
+auto AppPlatformApple::DoHasGyro() -> bool {
+#if BA_XCODE_BUILD && !BA_PLATFORM_MACOS
+  return BallisticaKit::UIKitFromCpp::haveGyro();
+#else
+  // Macs have no gyro, and non-xcode apple builds have no Swift bridge to
+  // ask through.
+  return AppPlatform::DoHasGyro();
+#endif
+}
+
 auto AppPlatformApple::OverlayWebBrowserIsSupported() -> bool {
 #if BA_XCODE_BUILD
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::haveOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  return AppPlatform::OverlayWebBrowserIsSupported();
+  return BallisticaKit::UIKitFromCpp::haveOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -87,8 +89,7 @@ void AppPlatformApple::DoOverlayWebBrowserOpenURL(const std::string& url) {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::openURLInOverlayWebBrowser(url);
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::DoOverlayWebBrowserOpenURL(url);
+  BallisticaKit::UIKitFromCpp::openURLInOverlayWebBrowser(url);
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -102,8 +103,7 @@ void AppPlatformApple::DoOverlayWebBrowserClose() {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::closeOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::OverlayWebBrowserIsSupported();
+  BallisticaKit::UIKitFromCpp::closeOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -163,6 +163,34 @@ void AppPlatformApple::OpenFileExternally(const std::string& path) {
   BallisticaKit::CocoaFromCpp::openFileExternally(path);
 #else
   AppPlatform::OpenFileExternally(path);
+#endif
+}
+
+auto AppPlatformApple::HaveStringEditor() -> bool {
+#if BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
+  // iOS/tvOS text entry goes through our UIKit editor dialog; those
+  // platforms feed the engine no text events for inline editing.
+  return true;
+#else
+  // Mac edits text widgets inline from real key/text events.
+  return AppPlatform::HaveStringEditor();
+#endif
+}
+
+void AppPlatformApple::DoInvokeStringEditor(const std::string& title,
+                                            const std::string& value,
+                                            std::optional<int> max_chars,
+                                            bool is_password,
+                                            const std::string& kind) {
+#if BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
+  // Note that we're on the logic thread here (holding the GIL); the
+  // Swift side hops to main asynchronously to present, which is the
+  // only safe direction (a blocking hop while holding the GIL can
+  // deadlock against the main thread - see UIKitFromCpp.onMain).
+  BallisticaKit::UIKitFromCpp::invokeStringEditor(
+      title, value, max_chars.has_value() ? *max_chars : -1, is_password, kind);
+#else
+  AppPlatform::DoInvokeStringEditor(title, value, max_chars, is_password, kind);
 #endif
 }
 

@@ -8,8 +8,6 @@ everything everywhere manually. It also provides a centralized location
 for some tool defaults across all my projects.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -184,7 +182,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     fixed_format_cache = True
 
     enable_error_code = redundant-expr, truthy-bool, \
-truthy-function, unused-awaitable, explicit-override
+truthy-function, unused-awaitable, explicit-override, deprecated
     """).strip()
 
     cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings)

@@ -5,8 +5,6 @@
 #include <string>
 
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
-#include "ballistica/scene_v1/support/scene.h"
-#include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {
 
@@ -14,11 +12,10 @@ SceneDataAsset::SceneDataAsset(const std::string& name, Scene* scene)
     : SceneAsset(name, scene) {
   assert(g_base->InLogicThread());
 
-  if (scene) {
-    if (SessionStream* os = scene->GetSceneStream()) {
-      os->AddData(this);
-    }
-  }
+  // Data assets feed host-side game logic only; clients never need
+  // them, so (unlike textures, meshes, etc.) they never go on the scene
+  // stream. (They once did, as kAddData/kRemoveData, which clients
+  // never handled -- a hosted bs.getdata() dropped every joiner.)
   {
     base::Assets::AssetListLock lock;
     data_data_ = g_base->assets->GetDataAsset(name);
@@ -33,12 +30,6 @@ void SceneDataAsset::MarkDead() {
     return;
   }
   set_dead(true);
-
-  if (Scene* s = scene()) {
-    if (SessionStream* os = s->GetSceneStream()) {
-      os->RemoveData(this);
-    }
-  }
 
   // If we've created a Python ref, it's likewise holding a ref
   // to us, which is a dependency loop. Break the loop to allow us

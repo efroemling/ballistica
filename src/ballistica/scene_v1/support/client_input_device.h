@@ -20,6 +20,17 @@ class ClientInputDevice : public base::InputDevice {
   auto DoGetDeviceName() -> std::string override;
   auto IsLocal() -> bool override { return false; }
 
+  /// Deliberately does nothing -- this is a decision, not an oversight.
+  ///
+  /// We are the host's proxy for hardware sitting on a client machine,
+  /// so there is nothing here to render on. Neither should we forward:
+  /// feedback reaches that client through the session stream
+  /// (SessionCommand::kInputDeviceFeedback), which the client filters to
+  /// its own devices. Sending anything from here would double-deliver.
+  auto DoApplyFeedback(const base::FeedbackEvent& event) -> int override {
+    return 0;
+  }
+
   void PassInputCommand(InputType type, float value) {
     InputCommand(type, value);
   }

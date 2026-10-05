@@ -4,7 +4,6 @@
 
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
-from __future__ import annotations
 
 import _baplus
 

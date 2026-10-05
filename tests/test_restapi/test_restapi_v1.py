@@ -2,19 +2,20 @@
 #
 """Live-server tests for public REST API v1 endpoints."""
 
-from __future__ import annotations
-
 import hashlib
 import json
 import os
 from typing import TYPE_CHECKING
 
 import pytest
-import urllib3
+
+from restapi_test_fixtures import make_pool, raise_if_transient, retry_transient
 
 from bacommon.restapi.v1 import Endpoint
 
 if TYPE_CHECKING:
+    import urllib3
+
     from restapi_test_fixtures import AuthedClient
 
 FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
@@ -23,13 +24,23 @@ FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 def _delete_workspaces_named(
     authed: AuthedClient, server_url: str, name: str
 ) -> None:
-    """Delete all workspaces with the given name (idempotent cleanup)."""
+    """Delete all workspaces with the given name (idempotent cleanup).
+
+    Accepts 404 on the DELETE in addition to 204 — a parallel session
+    or manual cleanup may have removed the workspace between our LIST
+    and DELETE. Any other status surfaces as a test error so real
+    server/auth regressions don't silently leak storage.
+    """
     r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
     assert r.status == 200
     for ws in json.loads(r.data).get('workspaces', []):
         if ws['name'] == name:
             path = Endpoint.WORKSPACE.format(workspace_id=ws['id'])
-            authed.delete(f'{server_url}{path}', timeout=10)
+            dr = authed.delete(f'{server_url}{path}', timeout=10)
+            assert dr.status in (
+                204,
+                404,
+            ), f'cleanup DELETE {path} returned {dr.status}: {dr.data!r}'
 
 
 def _upload_workspace_file(
@@ -44,7 +55,27 @@ def _upload_workspace_file(
     buffered PUT path removed, all uploads now go through the
     streaming pipeline. The dedup short-circuit collapses repeated
     identical content to a single round-trip.
+
+    Retries the whole init/PUT/finalize sequence on transient gateway
+    errors (502/503/504 from a stalled prod instance). Re-running from
+    ``upload-init`` is always safe: if a previous attempt's finalize
+    actually completed server-side, the re-init dedups against the
+    now-existing content and returns ``'exists'``.
     """
+    retry_transient(
+        lambda: _upload_workspace_file_once(
+            server_url, authed, file_url, content
+        )
+    )
+
+
+def _upload_workspace_file_once(
+    server_url: str,
+    authed: AuthedClient,
+    file_url: str,
+    content: bytes,
+) -> None:
+    """Single attempt of the init/PUT/finalize upload sequence."""
     sha256_hex = hashlib.sha256(content).hexdigest()
 
     init_r = authed.post(
@@ -56,6 +87,7 @@ def _upload_workspace_file(
         },
         timeout=30,
     )
+    raise_if_transient(init_r)
     assert init_r.status == 200, f'init failed: {init_r.data!r}'
     init = json.loads(init_r.data)
 
@@ -63,7 +95,7 @@ def _upload_workspace_file(
         return  # Dedup hit — server already wired the file in.
 
     assert init['status'] == 'upload_required'
-    put_pool = urllib3.PoolManager()
+    put_pool = make_pool()
     gcs_r = put_pool.request(
         'PUT',
         init['upload_url'],
@@ -71,12 +103,14 @@ def _upload_workspace_file(
         headers=init['upload_headers'],
         timeout=180,
     )
+    raise_if_transient(gcs_r)
     assert gcs_r.status == 200, f'GCS PUT failed: {gcs_r.status}'
     fin_r = authed.post(
         f'{server_url}{file_url}',
         json={'op': 'upload-finalize', 'session_id': init['session_id']},
         timeout=60,
     )
+    raise_if_transient(fin_r)
     assert fin_r.status == 204, f'finalize failed: {fin_r.data!r}'
 
 
@@ -459,7 +493,12 @@ def test_file_upload_and_download(
     content = os.urandom(24 * 1024 * 1024)
     _upload_workspace_file(server_url, authed, file_path, content)
 
-    get_r = authed.get(f'{server_url}{file_path}', timeout=180)
+    def _download() -> urllib3.BaseHTTPResponse:
+        r = authed.get(f'{server_url}{file_path}', timeout=180)
+        raise_if_transient(r)
+        return r
+
+    get_r = retry_transient(_download)
     assert get_r.status == 200
     assert get_r.data == content
 

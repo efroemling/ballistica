@@ -2,12 +2,12 @@
 #
 """Implements the main menu window."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -91,10 +91,10 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.account.settings as _unused5
         import bauiv1lib.credits as _unused6
         import bauiv1lib.help as _unused7
-        import bauiv1lib.settings.allsettings as _unused8
+        import bauiv1lib.settings.allsettingsdocui as _unused8
         import bauiv1lib.gather as _unused9
         import bauiv1lib.watch as _unused10
-        import bauiv1lib.play as _unused11
+        import bauiv1lib.playdocui as _unused11
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app
@@ -107,16 +107,17 @@ class MainMenuWindow(bui.MainWindow):
             try:
                 force_test = False
                 bs.get_local_active_input_devices_count()
-                if (
+                show = (
                     (app.env.tv or app.classic.platform == 'mac')
                     and bui.app.config.get('launchCount', 0) <= 1
-                ) or force_test:
+                ) or force_test
+                if show:
 
                     def _check_show_bs_remote_window() -> None:
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            bui.getsound('swish').play()
+                            bui.play_swish()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(
@@ -279,12 +280,10 @@ class MainMenuWindow(bui.MainWindow):
                 autoselect=True,
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
-                label=bui.Lstr(
-                    resource=(
-                        'modeArcadeText'
-                        if variant is vart.ARCADE
-                        else 'modeDemoText'
-                    )
+                label=(
+                    _classicassets.strings.main_menu.mode_arcade
+                    if variant is vart.ARCADE
+                    else _classicassets.strings.main_menu.mode_demo
                 ),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self.main_window_back,
@@ -319,12 +318,12 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             draw_controller=self._gather_button,
             color=(0.75, 1.0, 0.7),
             maxwidth=side_button_width * side_button_scale * 0.8,
-            text=bui.Lstr(resource='gatherWindow.titleText'),
+            text=_classicassets.strings.gather.title,
             h_align='center',
             v_align='center',
         )
@@ -340,7 +339,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=bui.gettexture('usersButton'),
+            texture=_uiv1assets.textures.users_button.get(),
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
 
@@ -359,7 +358,7 @@ class MainMenuWindow(bui.MainWindow):
             size=(side_button_2_width, side_button_2_height * 2.0),
             button_type='square',
             scale=side_button_2_scale,
-            label=bui.Lstr(resource=f'{self._r}.howToPlayText'),
+            label=_classicassets.strings.main_menu.how_to_play,
             transition_delay=thistdelay,
             on_activate_call=self._howtoplay,
         )
@@ -382,7 +381,7 @@ class MainMenuWindow(bui.MainWindow):
             autoselect=self._use_autoselect,
             scale=play_button_scale,
             text_res_scale=2.0,
-            label=bui.Lstr(resource='playText'),
+            label=_classicassets.strings.ui.play,
             transition_delay=thistdelay,
             on_activate_call=self._play_press,
         )
@@ -416,12 +415,12 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             color=(0.75, 1.0, 0.7),
             draw_controller=self._watch_button,
             maxwidth=side_button_width * side_button_scale * 0.8,
-            text=bui.Lstr(resource='watchWindow.titleText'),
+            text=_classicassets.strings.watch.title,
             h_align='center',
             v_align='center',
         )
@@ -437,7 +436,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=bui.gettexture('tv'),
+            texture=_uiv1assets.textures.tv.get(),
         )
 
         # Credits button.
@@ -460,7 +459,7 @@ class MainMenuWindow(bui.MainWindow):
             ),
             scale=side_button_2_scale,
             autoselect=self._use_autoselect,
-            label=bui.Lstr(resource=f'{self._r}.creditsText'),
+            label=_classicassets.strings.main_menu.credits,
             transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
@@ -477,13 +476,10 @@ class MainMenuWindow(bui.MainWindow):
                 position=(h + 4.0, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
-                label=bui.Lstr(
-                    resource=self._r
-                    + (
-                        '.quitText'
-                        if 'Mac' in app.classic.legacy_user_agent_string
-                        else '.exitGameText'
-                    )
+                label=(
+                    _classicassets.strings.main_menu.quit
+                    if 'Mac' in app.classic.legacy_user_agent_string
+                    else _classicassets.strings.main_menu.exit_game
                 ),
                 on_activate_call=self._quit,
                 transition_delay=thistdelay,
@@ -560,8 +556,13 @@ class MainMenuWindow(bui.MainWindow):
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.play import PlayWindow
+        from bauiv1lib.playdocui import PlayController, Root
 
         self.main_window_replace(
-            lambda: PlayWindow(origin_widget=self._play_button)
+            lambda: PlayController().create_window(
+                Root(),
+                origin_widget=self._play_button,
+                auxiliary_style=False,
+            ),
+            extra_type_id=PlayController.get_window_extra_type_id(),
         )

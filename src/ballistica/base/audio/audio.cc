@@ -2,6 +2,8 @@
 
 #include "ballistica/base/audio/audio.h"
 
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio_server.h"
@@ -111,10 +113,46 @@ auto Audio::SourceBeginNew() -> AudioSource* {
       s->Lock(1);
       assert(!s->available());
       s->set_client_queue_size(s->client_queue_size() + 1);
+
+      // Sources get reused; start each use without a listener of its
+      // own.
+      s->ClearListenerSpace();
     }
+  }
+  if (!s) {
+    WarnNoSourceAvailable_();
   }
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
   return s;
+}
+
+void Audio::WarnNoSourceAvailable_() {
+  // Nothing to say on headless or a null audio device (no sources ever
+  // exist there).
+  if (source_pool_empty()) {
+    return;
+  }
+  // Callers drop the play when we come up empty. One-shot sounds are
+  // re-requested on the next event so a dropped one is harmless, but keep
+  // this visible: it is the tell for the startup race where sounds get
+  // requested before the audio server has finished opening its device
+  // (which is what the internal-music retry in ClassicAppMode covers).
+  millisecs_t now = g_core->AppTimeMillisecs();
+  if (now - last_no_source_warn_time_ < 5000) {
+    return;
+  }
+  last_no_source_warn_time_ = now;
+  if (!server_ready_) {
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "No audio source available; the audio server is still starting up "
+        "(device open in progress). Dropping this play request.");
+  } else {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                         "No audio source available (all "
+                             + std::to_string(client_sources_.size())
+                             + " sources busy). Dropping this play request.");
+  }
 }
 
 #pragma clang diagnostic pop
@@ -164,7 +202,8 @@ auto Audio::ShouldPlay(SoundAsset* sound) -> bool {
   return (time - sound->last_play_time() > 50);
 }
 
-auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
+auto Audio::SafePlayBuiltinSound(BuiltinSoundID sound_id)
+    -> std::optional<uint32_t> {
   // Save some time on headless.
   if (g_core->HeadlessMode()) {
     return {};
@@ -172,25 +211,44 @@ auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
   if (!g_base->InLogicThread()) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kError,
-        "Audio::SafePlaySysSound called from non-logic thread. id="
+        "Audio::SafePlayBuiltinSound called from non-logic thread. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->sys_assets_loaded()) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kWarning,
-        "Audio::SafePlaySysSound called before sys assets loaded. id="
+        "Audio::SafePlayBuiltinSound called before sys assets loaded. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
-  if (!g_base->assets->IsValidSysSound(sound_id)) {
+  if (!g_base->assets->IsValidBuiltinSound(sound_id)) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kWarning,
-        "Audio::SafePlaySysSound called with invalid sound_id. id="
+        "Audio::SafePlayBuiltinSound called with invalid sound_id. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
-  return PlaySound(g_base->assets->SysSound(sound_id));
+  return PlaySound(g_base->assets->BuiltinSound(sound_id));
+}
+
+auto Audio::SafePlaySound(SoundAsset* sound) -> std::optional<uint32_t> {
+  // Save some time on headless.
+  if (g_core->HeadlessMode()) {
+    return {};
+  }
+  if (!g_base->InLogicThread()) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         "Audio::SafePlaySound called from non-logic thread.");
+    return {};
+  }
+  if (!g_base->assets->sys_assets_loaded()) {
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "Audio::SafePlaySound called before sys assets loaded.");
+    return {};
+  }
+  return PlaySound(sound);
 }
 
 auto Audio::PlaySound(SoundAsset* sound, float volume)

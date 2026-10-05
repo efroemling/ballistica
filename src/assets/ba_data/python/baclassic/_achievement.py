@@ -2,21 +2,22 @@
 #
 """Various functionality related to achievements."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 
 from bacommon.classic import ClassicChestAppearance
+from baclassic import _achievementstrings
 from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
 )
 import babase
 import bascenev1
-import bauiv1
+from bascenev1 import _classicassets
+from bascenev1 import _builtinassets
 
 if TYPE_CHECKING:
+    import bauiv1
     from typing import Any, Sequence
 
     import baclassic
@@ -92,56 +93,56 @@ class AchievementSubsystem:
         self.achievements += [
             Achievement(
                 'In Control',
-                'achievementInControl',
+                _classicassets.textures.achievement_in_control,
                 (1, 1, 1),
                 '',
                 award=5,
             ),
             Achievement(
                 'Sharing is Caring',
-                'achievementSharingIsCaring',
+                _classicassets.textures.achievement_sharing_is_caring,
                 (1, 1, 1),
                 '',
                 award=15,
             ),
             Achievement(
                 'Dual Wielding',
-                'achievementDualWielding',
+                _classicassets.textures.achievement_dual_wielding,
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Free Loader',
-                'achievementFreeLoader',
+                _classicassets.textures.achievement_free_loader,
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Team Player',
-                'achievementTeamPlayer',
+                _classicassets.textures.achievement_team_player,
                 (1, 1, 1),
                 '',
                 award=20,
             ),
             Achievement(
                 'Onslaught Training Victory',
-                'achievementOnslaught',
+                _classicassets.textures.achievement_onslaught,
                 (1, 1, 1),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Off You Go Then',
-                'achievementOffYouGo',
+                _classicassets.textures.achievement_off_you_go,
                 (1, 1.1, 1.3),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Boxer',
-                'achievementBoxer',
+                _classicassets.textures.achievement_boxer,
                 (1, 0.6, 0.6),
                 'Default:Onslaught Training',
                 award=10,
@@ -149,21 +150,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Onslaught Victory',
-                'achievementOnslaught',
+                _classicassets.textures.achievement_onslaught,
                 (0.5, 1.4, 0.6),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Mine Games',
-                'achievementMine',
+                _classicassets.textures.achievement_mine,
                 (1, 1, 1.4),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Flawless Victory',
-                'achievementFlawlessVictory',
+                _classicassets.textures.achievement_flawless_victory,
                 (1, 1, 1),
                 'Default:Rookie Onslaught',
                 award=15,
@@ -171,21 +172,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Football Victory',
-                'achievementFootballVictory',
+                _classicassets.textures.achievement_football_victory,
                 (1.0, 1, 0.6),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Super Punch',
-                'achievementSuperPunch',
+                _classicassets.textures.achievement_super_punch,
                 (1, 1, 1.8),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Rookie Football Shutout',
-                'achievementFootballShutout',
+                _classicassets.textures.achievement_football_shutout,
                 (1, 1, 1),
                 'Default:Rookie Football',
                 award=15,
@@ -193,21 +194,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Onslaught Victory',
-                'achievementOnslaught',
+                _classicassets.textures.achievement_onslaught,
                 (0.3, 1, 2.0),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Boom Goes the Dynamite',
-                'achievementTNT',
+                _classicassets.textures.achievement_tnt,
                 (1.4, 1.2, 0.8),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Pro Boxer',
-                'achievementBoxer',
+                _classicassets.textures.achievement_boxer,
                 (2, 2, 0),
                 'Default:Pro Onslaught',
                 award=20,
@@ -215,21 +216,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Football Victory',
-                'achievementFootballVictory',
+                _classicassets.textures.achievement_football_victory,
                 (1.3, 1.3, 2.0),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Super Mega Punch',
-                'achievementSuperPunch',
+                _classicassets.textures.achievement_super_punch,
                 (2, 1, 0.6),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Pro Football Shutout',
-                'achievementFootballShutout',
+                _classicassets.textures.achievement_football_shutout,
                 (0.7, 0.7, 2.0),
                 'Default:Pro Football',
                 award=20,
@@ -237,14 +238,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Runaround Victory',
-                'achievementRunaround',
+                _classicassets.textures.achievement_runaround,
                 (1, 1, 1),
                 'Default:Pro Runaround',
                 award=15,
             ),
             Achievement(
                 'Precision Bombing',
-                'achievementCrossHair',
+                _classicassets.textures.achievement_cross_hair,
                 (1, 1, 1.3),
                 'Default:Pro Runaround',
                 award=20,
@@ -252,7 +253,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'The Wall',
-                'achievementWall',
+                _classicassets.textures.achievement_wall,
                 (1, 0.7, 0.7),
                 'Default:Pro Runaround',
                 award=25,
@@ -260,14 +261,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Onslaught Victory',
-                'achievementOnslaught',
+                _classicassets.textures.achievement_onslaught,
                 (2, 2, 1),
                 'Default:Uber Onslaught',
                 award=30,
             ),
             Achievement(
                 'Gold Miner',
-                'achievementMine',
+                _classicassets.textures.achievement_mine,
                 (2, 1.6, 0.2),
                 'Default:Uber Onslaught',
                 award=30,
@@ -275,7 +276,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'TNT Terror',
-                'achievementTNT',
+                _classicassets.textures.achievement_tnt,
                 (2, 1.8, 0.3),
                 'Default:Uber Onslaught',
                 award=30,
@@ -283,14 +284,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Victory',
-                'achievementFootballVictory',
+                _classicassets.textures.achievement_football_victory,
                 (1.8, 1.4, 0.3),
                 'Default:Uber Football',
                 award=30,
             ),
             Achievement(
                 'Got the Moves',
-                'achievementGotTheMoves',
+                _classicassets.textures.achievement_got_the_moves,
                 (2, 1, 0),
                 'Default:Uber Football',
                 award=30,
@@ -298,7 +299,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Shutout',
-                'achievementFootballShutout',
+                _classicassets.textures.achievement_football_shutout,
                 (2, 2, 0),
                 'Default:Uber Football',
                 award=40,
@@ -306,14 +307,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Runaround Victory',
-                'achievementRunaround',
+                _classicassets.textures.achievement_runaround,
                 (1.5, 1.2, 0.2),
                 'Default:Uber Runaround',
                 award=30,
             ),
             Achievement(
                 'The Great Wall',
-                'achievementWall',
+                _classicassets.textures.achievement_wall,
                 (2, 1.7, 0.4),
                 'Default:Uber Runaround',
                 award=40,
@@ -321,7 +322,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Stayin\' Alive',
-                'achievementStayinAlive',
+                _classicassets.textures.achievement_stayin_alive,
                 (2, 2, 1),
                 'Default:Uber Runaround',
                 award=40,
@@ -329,7 +330,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Master',
-                'achievementMedalSmall',
+                _classicassets.textures.achievement_medal_small,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=20,
@@ -337,7 +338,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Wizard',
-                'achievementMedalMedium',
+                _classicassets.textures.achievement_medal_medium,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=40,
@@ -345,7 +346,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand God',
-                'achievementMedalLarge',
+                _classicassets.textures.achievement_medal_large,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=60,
@@ -353,42 +354,42 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Onslaught Master',
-                'achievementMedalSmall',
+                _classicassets.textures.achievement_medal_small,
                 (0.7, 1, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=5,
             ),
             Achievement(
                 'Onslaught Wizard',
-                'achievementMedalMedium',
+                _classicassets.textures.achievement_medal_medium,
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=15,
             ),
             Achievement(
                 'Onslaught God',
-                'achievementMedalLarge',
+                _classicassets.textures.achievement_medal_large,
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=30,
             ),
             Achievement(
                 'Runaround Master',
-                'achievementMedalSmall',
+                _classicassets.textures.achievement_medal_small,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=5,
             ),
             Achievement(
                 'Runaround Wizard',
-                'achievementMedalMedium',
+                _classicassets.textures.achievement_medal_medium,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=15,
             ),
             Achievement(
                 'Runaround God',
-                'achievementMedalLarge',
+                _classicassets.textures.achievement_medal_large,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=30,
@@ -530,10 +531,14 @@ def _display_next_achievement() -> None:
 class Achievement:
     """Represents attributes and state for an individual achievement."""
 
+    # Over the limit purely due to the five transitional `_langstr`
+    # display twins; they go away with the removal of api 10.
+    # pylint: disable=too-many-public-methods
+
     def __init__(
         self,
         name: str,
-        icon_name: str,
+        icon: bascenev1.TextureHandle,
         icon_color: tuple[float, float, float],
         level_name: str,
         *,
@@ -541,7 +546,7 @@ class Achievement:
         hard_mode_only: bool = False,
     ):
         self._name = name
-        self._icon_name = icon_name
+        self._icon = icon
         assert len(icon_color) == 3
         self._icon_color = icon_color + (1.0,)
         self._level_name = level_name
@@ -561,15 +566,23 @@ class Achievement:
 
     def get_icon_ui_texture(self, complete: bool) -> bauiv1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bauiv1.gettexture(
-            self._icon_name if complete else 'achievementEmpty'
+        return (
+            (
+                self._icon
+                if complete
+                else _classicassets.textures.achievement_empty
+            )
+            .ui()
+            .get()
         )
 
     def get_icon_texture(self, complete: bool) -> bascenev1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bascenev1.gettexture(
-            self._icon_name if complete else 'achievementEmpty'
-        )
+        return (
+            self._icon
+            if complete
+            else _classicassets.textures.achievement_empty
+        ).get()
 
     def get_icon_color(self, complete: bool) -> Sequence[float]:
         """Return the color tint for this Achievement's icon."""
@@ -665,9 +678,8 @@ class Achievement:
     @property
     def description(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's brief description."""
-        if (
-            'description'
-            in babase.app.lang.get_resource('achievements')[self._name]
+        if babase.app.lang.has_resource(
+            f'achievements.{self._name}.description'
         ):
             return babase.Lstr(
                 resource='achievements.' + self._name + '.description'
@@ -679,9 +691,8 @@ class Achievement:
     @property
     def description_complete(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's description when complete."""
-        if (
-            'descriptionComplete'
-            in babase.app.lang.get_resource('achievements')[self._name]
+        if babase.app.lang.has_resource(
+            f'achievements.{self._name}.descriptionComplete'
         ):
             return babase.Lstr(
                 resource='achievements.' + self._name + '.descriptionComplete'
@@ -725,6 +736,78 @@ class Achievement:
                 )
             ],
         )
+
+    def _level_display_name(self) -> babase.LangStr:
+        """This achievement's campaign level name, for ``{level}``."""
+        levelname = ACH_LEVEL_NAMES.get(self._name)
+        if levelname is None:
+            return babase.LangStr.from_text('')
+        entry = _achievementstrings.level_name_table().get(levelname)
+        return babase.LangStr.from_text(levelname) if entry is None else entry
+
+    @property
+    def display_name_langstr(self) -> babase.LangStr:
+        """The localized name for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`display_name`. It exists only for the transition; once
+        api 9 support ends, :attr:`display_name` returns this and this
+        property goes away with the removal of api 10.
+        """
+        entry = _achievementstrings.name_table().get(self._name)
+        if entry is None:
+            # A mod's achievement; show its own name.
+            return babase.LangStr.from_text(self._name)
+        return entry(self._level_display_name())
+
+    @property
+    def description_langstr(self) -> babase.LangStr:
+        """The brief description for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.short_description_table().get(self._name)
+        if entry is None:
+            return self.description_full_langstr
+        return entry[0]
+
+    @property
+    def description_complete_langstr(self) -> babase.LangStr:
+        """The brief description for this achievement once earned.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_complete`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.short_description_table().get(self._name)
+        if entry is None:
+            return self.description_full_complete_langstr
+        return entry[1]
+
+    @property
+    def description_full_langstr(self) -> babase.LangStr:
+        """The full description for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_full`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.full_description_table().get(self._name)
+        if entry is None:
+            return babase.LangStr.from_text('')
+        return entry[0](self._level_display_name())
+
+    @property
+    def description_full_complete_langstr(self) -> babase.LangStr:
+        """The full description for this achievement once earned.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_full_complete`; see
+        :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.full_description_table().get(self._name)
+        if entry is None:
+            return babase.LangStr.from_text('')
+        return entry[1](self._level_display_name())
 
     def get_award_chest_type(self) -> ClassicChestAppearance:
         """Return the type of chest given for this achievement.
@@ -873,7 +956,7 @@ class Achievement:
                     scale=(40, 40),
                 ).autoretain()
             )
-            txt = self.display_name
+            txt = self.display_name_langstr
             txt_s = 0.85
             txt_max_w = 300
             objs.append(
@@ -897,7 +980,11 @@ class Achievement:
             txt2_max_w = 400
             objs.append(
                 Text(
-                    self.description_full if in_main_menu else self.description,
+                    (
+                        self.description_full_langstr
+                        if in_main_menu
+                        else self.description_langstr
+                    ),
                     host_only=True,
                     maxwidth=txt2_max_w,
                     position=(x, y - 14),
@@ -916,7 +1003,7 @@ class Achievement:
 
             if hmo:
                 txtactor = Text(
-                    babase.Lstr(resource='difficultyHardOnlyText'),
+                    _classicassets.strings.coop.difficulty_hard_only,
                     host_only=True,
                     maxwidth=txt2_max_w * 0.7,
                     position=(x + 60, y + 5),
@@ -947,14 +1034,11 @@ class Achievement:
                     # Provide magical extended dict version of texture
                     # that Image actor supports.
                     texture={
-                        'texture': bascenev1.gettexture(
-                            chestdisplayinfo.texclosed
-                        ),
-                        'tint_texture': bascenev1.gettexture(
-                            chestdisplayinfo.texclosedtint
-                        ),
+                        'texture': chestdisplayinfo.texclosed.get(),
+                        'tint_texture': chestdisplayinfo.texclosedtint.get(),
                         'tint_color': chestdisplayinfo.tint,
                         'tint2_color': chestdisplayinfo.tint2,
+                        'tint3_color': chestdisplayinfo.tint3,
                         'mask_texture': None,
                     },
                     color=chestdisplayinfo.color + (0.5 if hmo else 1.0,),
@@ -1025,11 +1109,11 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        bascenev1.gettexture('achievementOutline'),
+                        _classicassets.textures.achievement_outline.get(),
                         host_only=True,
-                        mesh_transparent=bascenev1.getmesh(
-                            'achievementOutline'
-                        ),
+                        mesh_transparent=(
+                            _classicassets.meshes
+                        ).achievement_outline.get(),
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
                         position=(x - 25, y + 5),
@@ -1068,14 +1152,13 @@ class Achievement:
                             # Provide magical extended dict version of texture
                             # that Image actor supports.
                             texture={
-                                'texture': bascenev1.gettexture(
-                                    chestdisplayinfo.texclosed
-                                ),
-                                'tint_texture': bascenev1.gettexture(
-                                    chestdisplayinfo.texclosedtint
+                                'texture': chestdisplayinfo.texclosed.get(),
+                                'tint_texture': (
+                                    chestdisplayinfo.texclosedtint.get()
                                 ),
                                 'tint_color': chestdisplayinfo.tint,
                                 'tint2_color': chestdisplayinfo.tint2,
+                                'tint3_color': chestdisplayinfo.tint3,
                                 'mask_texture': None,
                             },
                             color=chestdisplayinfo.color
@@ -1112,7 +1195,7 @@ class Achievement:
                     # when that's the case.
                     if hmo:
                         txtactor = Text(
-                            babase.Lstr(resource='difficultyHardOnlyText'),
+                            _classicassets.strings.coop.difficulty_hard_only,
                             host_only=True,
                             maxwidth=300 * 0.7,
                             position=(x + 60, y + 5),
@@ -1135,7 +1218,7 @@ class Achievement:
 
             objs.append(
                 Text(
-                    self.display_name,
+                    self.display_name_langstr,
                     host_only=True,
                     maxwidth=300,
                     position=(x, y + 2),
@@ -1155,7 +1238,11 @@ class Achievement:
             )
             objs.append(
                 Text(
-                    self.description_complete if complete else self.description,
+                    (
+                        self.description_complete_langstr
+                        if complete
+                        else self.description_langstr
+                    ),
                     host_only=True,
                     maxwidth=400,
                     position=(x, y - 14),
@@ -1221,10 +1308,11 @@ class Achievement:
             return
 
         if sound:
-            bascenev1.getsound('achievement').play(host_only=True)
+            _classicassets.audio.achievement.get().play(host_only=True)
         else:
             bascenev1.timer(
-                0.5, lambda: bascenev1.getsound('ding').play(host_only=True)
+                0.5,
+                lambda: _builtinassets.audio.ding.get().play(host_only=True),
             )
 
         in_time = 0.300
@@ -1252,7 +1340,7 @@ class Achievement:
         y_offs = 110 * self._completion_banner_slot
         objs: list[bascenev1.Actor] = []
         obj = Image(
-            bascenev1.gettexture('shadow'),
+            _builtinassets.textures.shadow.get(),
             position=(-30, 30 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1267,7 +1355,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            bascenev1.gettexture('light'),
+            _classicassets.textures.light.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1356,8 +1444,8 @@ class Achievement:
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            bascenev1.gettexture('achievementOutline'),
-            mesh_transparent=bascenev1.getmesh('achievementOutline'),
+            _classicassets.textures.achievement_outline.get(),
+            mesh_transparent=_classicassets.meshes.achievement_outline.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1403,10 +1491,7 @@ class Achievement:
         objs.append(obj)
 
         objt = Text(
-            babase.Lstr(
-                value='${A}:',
-                subs=[('${A}', babase.Lstr(resource='achievementText'))],
-            ),
+            _classicassets.strings.coop.achievement_label,
             position=(-120, 91 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,
@@ -1423,7 +1508,7 @@ class Achievement:
         objt.node.host_only = True
 
         objt = Text(
-            self.display_name,
+            self.display_name_langstr,
             position=(-120, 50 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,
@@ -1506,7 +1591,7 @@ class Achievement:
         #     objt.node.host_only = True
 
         objt = Text(
-            self.description_complete,
+            self.description_complete_langstr,
             position=(-120, 30 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,

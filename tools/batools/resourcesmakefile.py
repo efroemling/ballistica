@@ -5,8 +5,6 @@
 (builds things like icons, banners, images, etc.)
 """
 
-from __future__ import annotations
-
 import os
 from pathlib import Path
 from dataclasses import dataclass
@@ -99,7 +97,9 @@ class ResourcesMakefileGenerator:
             # Private targets (available in public through efrocache)
             self.targets = []
             basename = 'private'
-            self._add_windows_icon(generic=True, oculus=False, inputs=False)
+            self._add_windows_icon(
+                generic=True, oculus=False, testbuild=False, inputs=False
+            )
             our_lines_private_1 = (
                 _empty_line_if(bool(self.targets))
                 + self._emit_group_build_lines(basename)
@@ -111,7 +111,9 @@ class ResourcesMakefileGenerator:
             # Private-internal targets (not available at all in public)
             self.targets = []
             basename = 'private-internal'
-            self._add_windows_icon(generic=False, oculus=True, inputs=True)
+            self._add_windows_icon(
+                generic=False, oculus=True, testbuild=True, inputs=True
+            )
             self._add_ios_app_icon()
             self._add_macos_app_icon()
             self._add_android_app_icon()
@@ -123,7 +125,6 @@ class ResourcesMakefileGenerator:
             self._add_apple_tv_3d_icon()
             self._add_apple_tv_store_icon()
             self._add_google_vr_icon()
-            self._add_macos_cursor()
             our_lines_private_2 = (
                 ['# __PUBSYNC_STRIP_BEGIN__']
                 + _empty_line_if(bool(self.targets))
@@ -209,7 +210,11 @@ class ResourcesMakefileGenerator:
         return out
 
     def _add_windows_icon(
-        self, generic: bool, oculus: bool, inputs: bool
+        self,
+        generic: bool,
+        oculus: bool,
+        testbuild: bool,
+        inputs: bool,
     ) -> None:
         sizes = [256, 128, 96, 64, 48, 32, 16]
         all_icons = []
@@ -241,6 +246,10 @@ class ResourcesMakefileGenerator:
             (
                 f'{ROOT_DIR}/{self.namel}-windows/Oculus/{self.nameu}.ico',
                 oculus,
+            ),
+            (
+                f'{ROOT_DIR}/{self.namel}-windows/TestBuild/{self.nameu}.ico',
+                testbuild,
             ),
         ]:
             cmd = (
@@ -584,33 +593,6 @@ class ResourcesMakefileGenerator:
                 ]
             )
             self.targets.append(Target(src=[src], dst=dst, cmd=cmd, mkdir=True))
-
-    def _add_macos_cursor(self) -> None:
-        sizes = [
-            (64, 1),
-            (64, 2),
-        ]
-        for size in sizes:
-            res = int(size[0] * size[1])
-            src = os.path.join('cursor.png')
-            dst = os.path.join(
-                ROOT_DIR,
-                f'{self.namel}-xcode',
-                f'{self.nameu} Shared',
-                'Assets.xcassets',
-                'Cursor macOS.imageset',
-                'cursor_' + str(size[0]) + 'x' + str(size[1]) + '.png',
-            )
-            cmd = ' '.join(
-                [
-                    RESIZE_CMD,
-                    str(res),
-                    str(res),
-                    '"' + src + '"',
-                    '"' + dst + '"',
-                ]
-            )
-            self.targets.append(Target(src=[src], dst=dst, cmd=cmd))
 
 
 def _empty_line_if(condition: bool) -> list[str]:

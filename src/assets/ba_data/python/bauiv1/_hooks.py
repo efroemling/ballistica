@@ -4,7 +4,6 @@
 
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
-from __future__ import annotations
 
 import logging
 import inspect
@@ -176,3 +175,27 @@ def double_transition_out_warning() -> None:
         caller_filename,
         caller_line_number,
     )
+
+
+def get_live_depiction(
+    type_id: str, key: str, depiction_json: str
+) -> bauiv1.Viewer | None:
+    """The live object behind a depiction kind that needs one.
+
+    Called by the native viewer depiction kind the first time it is
+    shown (and again if its viewer gets retired while still shown):
+    hands back the viewer app modes registered a maker for (see
+    ``UIV1AppSubsystem.live_depictions``), carrying on with the one
+    kept under ``key`` if there is one.
+    """
+    import babase
+
+    maker = babase.app.ui_v1.live_depictions.get(type_id)
+    if maker is None:
+        logging.warning(
+            "No live-depiction maker registered for kind '%s';"
+            ' it will show nothing.',
+            type_id,
+        )
+        return None
+    return maker(key, depiction_json)

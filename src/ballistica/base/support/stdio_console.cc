@@ -64,6 +64,8 @@ void StdioConsole::StartInMainThread_() {
 }
 
 void StdioConsole::StartNativePythonREPL_() {
+  WaitForRealAppModeIfNeeded_();
+
   Python::ScopedInterpreterLock gil;
 
   // Run Python's interactive loop directly. This handles:
@@ -75,6 +77,8 @@ void StdioConsole::StartNativePythonREPL_() {
 }
 
 void StdioConsole::StartLegacyConsole_() {
+  WaitForRealAppModeIfNeeded_();
+
   bool stdin_is_terminal = g_core->platform->is_stdin_a_terminal();
 
   while (true) {
@@ -144,6 +148,26 @@ void StdioConsole::StartLegacyConsole_() {
       }
       break;
     }
+  }
+}
+
+void StdioConsole::WaitForRealAppModeIfNeeded_() {
+  // Under the server manager, raw stdin commands (e.g. the wrapper's
+  // StartServerModeCommand) assume a real, intent-handling app-mode is
+  // active and will fail if run during the construct-mode bring-up phase.
+  // So hold off on reading until one is. Construct-mode is Python-only and
+  // never sets the native app-mode, so app_mode() stays the EmptyAppMode
+  // singleton until a real mode (classic, etc.) activates. Interactive
+  // sessions skip this wait, so a stuck bring-up stays debuggable from
+  // stdin.
+  if (!g_base->server_wrapper_managed()) {
+    return;
+  }
+  while (!g_base->app_mode_is_real()) {
+    if (g_base->logic->shutting_down()) {
+      return;
+    }
+    core::Platform::SleepMillisecs(10);
   }
 }
 

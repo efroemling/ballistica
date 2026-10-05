@@ -4,10 +4,9 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import os
 import sys
+import shutil
 import fnmatch
 import tempfile
 import subprocess
@@ -260,14 +259,14 @@ class SpinoffContext:
         self.dst_name = 'Untitled'
 
         self._src_config_path = os.path.join(
-            self._src_root, 'config', 'spinoffconfig.py'
+            self._src_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._src_config_path):
             raise CleanError(
                 f"Spinoff src config not found at '{self._src_config_path}'."
             )
         self._dst_config_path = os.path.join(
-            self._dst_root, 'config', 'spinoffconfig.py'
+            self._dst_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._dst_config_path):
             raise CleanError(
@@ -340,7 +339,7 @@ class SpinoffContext:
 
             # Omit its config file.
             # Make sure this featureset exists on src.
-            fsconfigpath = f'config/featuresets/featureset_{fsname}.py'
+            fsconfigpath = f'pconfig/featuresets/featureset_{fsname}.py'
             paths.add(fsconfigpath)
 
             # Omit its Python package.
@@ -350,9 +349,9 @@ class SpinoffContext:
             # Omit its C++ dir.
             paths.add(f'src/ballistica/{fsname}')
 
-            # Omits its meta dir.
-            fsmetapackagename = featureset.name_python_package_meta
-            paths.add(f'src/meta/{fsmetapackagename}')
+            # Omits its codegen dir.
+            fscodegenpackagename = featureset.name_python_package_codegen
+            paths.add(f'src/codegen/{fscodegenpackagename}')
 
             # Omit its tests package.
             fstestspackagename = featureset.name_python_package_tests
@@ -765,12 +764,12 @@ class SpinoffContext:
         start_line = (
             '# Ignore everything managed by spinoff.\n'
             '# To control this, modify src_write_paths in'
-            " 'config/spinoffconfig.py'.\n"
+            " 'pconfig/spinoffconfig.py'.\n"
             "# If you ever want to 'flatten' your project and remove it"
             ' from spinoff\n'
             '# control completely: simply delete this section, delete'
             " the 'tools/spinoff'\n"
-            "# symlink, and delete 'config/spinoffconfig.py'. Then you can add"
+            "# symlink, and delete 'pconfig/spinoffconfig.py'. Then you can add"
             ' everything\n'
             '# in its current state to your git repo and forget that spinoff'
             ' ever existed.'
@@ -1216,7 +1215,6 @@ class SpinoffContext:
         dst_path_full: str,
         key: str,
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
 
         # Ick; dst changed.  Now the only way we allow
         # the delete is if we can re-filter its src
@@ -1489,7 +1487,7 @@ class SpinoffContext:
         self._validate_final_lists()
         self._handle_recache_entities()
 
-        if os.system('which colordiff > /dev/null 2>&1') == 0:
+        if shutil.which('colordiff') is not None:
             display_diff_cmd = 'colordiff'
         else:
             print(
@@ -1534,7 +1532,6 @@ class SpinoffContext:
         dst_path_full: str,
         display_diff_cmd: str,
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
 
         if os.path.isfile(src_path_full) and os.path.isfile(dst_path_full):
             # We want to show how this update would change the dst file,
@@ -1559,15 +1556,16 @@ class SpinoffContext:
             else:
                 diff_src_path_full = src_path_full
                 delete_file_name = None
-            result = os.system(
-                f'diff "{diff_src_path_full}" "{dst_path_full}"'
-                f' > /dev/null 2>&1'
-            )
+            result = subprocess.run(
+                ['diff', diff_src_path_full, dst_path_full],
+                capture_output=True,
+                check=False,
+            ).returncode
             if result != 0:
                 print(f'\n{dst_path}:')
-                os.system(
-                    f'{display_diff_cmd} "{dst_path_full}"'
-                    f' "{diff_src_path_full}"'
+                subprocess.run(
+                    [display_diff_cmd, dst_path_full, diff_src_path_full],
+                    check=False,
                 )
                 print('')
 

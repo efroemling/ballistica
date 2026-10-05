@@ -14,8 +14,6 @@ Enable them only for debugging situations and be aware that their use may
 itself cause problems. The same is true for the gc module itself.
 """
 
-from __future__ import annotations
-
 import os
 import gc
 import sys
@@ -24,10 +22,11 @@ import types
 import weakref
 import logging
 import threading
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, TextIO
+    from typing import Any, TextIO, Iterable
 
 
 ABS_MAX_LEVEL = 10
@@ -196,12 +195,13 @@ def printfiles(file: TextIO | None = None) -> None:
     file.flush()
 
 
-def printrefs(
+def printrefs(  # pylint: disable=too-many-positional-arguments
     obj: Any,
     max_level: int = 2,
     exclude_objs: list[Any] | None = None,
     expand_ids: list[int] | None = None,
     file: TextIO | None = None,
+    max_visits: int = 500,
 ) -> None:
     """Print human readable list of objects referring to an object.
 
@@ -218,6 +218,16 @@ def printrefs(
       expand_ids:
         Can be a list of object ids; if that particular object is
         found, it will always be expanded even if max_level has been reached.
+
+      max_visits:
+        Caps total ``_printrefs`` recursive entries; when exceeded,
+        an aborted traversal prints a single ``[truncated...]``
+        marker and unwinds. Each recursive entry costs an O(heap)
+        ``gc.get_referrers`` scan, so on busy processes this is the
+        load-bearing safeguard against runaway calls — the
+        per-step ``max_level`` interacts multiplicatively with
+        average referrer fan-out, and a few highly-shared
+        structural objects can blow up the visit count fast.
     """
     if file is None:
         file = sys.stderr
@@ -231,6 +241,13 @@ def printrefs(
         exclude_objs = list(exclude_objs)
     exclude_objs.append(gc.garbage)
 
+    # Mutable state shared across the recursion.
+    state: dict[str, Any] = {
+        'visits': 0,
+        'max_visits': max_visits,
+        'truncated_printed': False,
+    }
+
     _printrefs(
         obj,
         level=0,
@@ -238,8 +255,165 @@ def printrefs(
         exclude_objs=exclude_objs,
         expand_ids=[] if expand_ids is None else expand_ids,
         file=file,
+        state=state,
     )
     file.flush()
+
+
+@dataclass
+class GarbageRefDump:
+    """Captured ref-cycle data for a single sampled object.
+
+    Returned as part of :class:`GarbageSummary` for objects whose type
+    matched a caller-provided ``debug_types`` entry.
+    """
+
+    #: ``printrefs()`` output describing what holds this object.
+    refs: str
+
+    #: If the sampled object was a :class:`BaseException`, the formatted
+    #: traceback string. ``None`` otherwise.
+    exception_trace: str | None = None
+
+
+@dataclass
+class GarbageSummary:
+    """Result of inspecting :data:`gc.garbage` for cyclic references.
+
+    Returned by :func:`summarize_garbage`. Callers format the histogram
+    and ref-dumps for whatever output context they need (log messages,
+    REST responses, etc.).
+    """
+
+    #: Map of fully-qualified type name (``module.Class``, or bare class
+    #: name for builtins) to count of objects of that type currently in
+    #: ``gc.garbage``.
+    histogram: dict[str, int] = field(default_factory=dict)
+
+    #: For each type name in the caller's ``debug_types``, a list of
+    #: captured ref dumps (one per sampled object, up to
+    #: ``debug_type_limit``).
+    ref_dumps: dict[str, list[GarbageRefDump]] = field(default_factory=dict)
+
+    #: For ``type`` objects appearing in ``gc.garbage``, the dotted path
+    #: of each (e.g. ``mymodule.MyClass``). Useful as an inline annotation
+    #: alongside the histogram entry for ``type``.
+    type_paths: list[str] = field(default_factory=list)
+
+
+def summarize_garbage(
+    *,
+    debug_types: Iterable[str] = (),
+    debug_type_limit: int = 1,
+    auto_include_exceptions: bool = False,
+    printrefs_max_level: int = 2,
+    printrefs_max_visits: int = 500,
+) -> GarbageSummary:
+    """Summarize the current contents of :data:`gc.garbage`.
+
+    The caller is expected to have already run a collect with
+    :data:`gc.DEBUG_SAVEALL` so cyclic-collected objects accumulated in
+    ``gc.garbage``. This function does not collect or modify gc state
+    itself — it only reads ``gc.garbage`` and builds a structured
+    summary.
+
+    Args:
+      debug_types:
+        Iterable of fully-qualified type names (``module.Class``, or
+        bare class name for builtins). Sampled objects of these types
+        get ``printrefs()`` output captured into the result. Empty
+        means histogram only.
+      debug_type_limit:
+        Max number of objects to sample per matched debug type.
+      auto_include_exceptions:
+        If ``True``, every object in ``gc.garbage`` that is an
+        instance of :class:`BaseException` is sampled for ref-dumps
+        (subject to ``debug_type_limit``) regardless of whether
+        its type appears in ``debug_types``. Useful when you don't
+        yet know which exception classes are anchoring cycles —
+        the dump output's ``exception_trace`` field tells you
+        where they came from.
+      printrefs_max_level:
+        Forwarded to :func:`printrefs` as its ``max_level``. Default
+        of 2 matches the standalone helper. Higher values walk
+        deeper into the referrer graph but cost gets exponential
+        in heap-shared structural objects (dict, type, etc.); the
+        ``printrefs_max_visits`` cap is the load-bearing safeguard
+        against runaway calls — see :func:`printrefs`.
+      printrefs_max_visits:
+        Forwarded to :func:`printrefs` as its ``max_visits``.
+
+    Returns:
+      A :class:`GarbageSummary`.
+    """
+    # pylint: disable=import-outside-toplevel
+    import io
+    import traceback
+
+    debug_types_set = set(debug_types)
+    debug_objs: dict[str, list[Any]] = {}
+    type_paths: list[str] = []
+    histogram: dict[str, int] = {}
+
+    for obj in gc.garbage:
+        cls = type(obj)
+        if cls.__module__ == 'builtins':
+            tpname = cls.__qualname__
+        else:
+            tpname = f'{cls.__module__}.{cls.__qualname__}'
+        histogram[tpname] = histogram.get(tpname, 0) + 1
+
+        # Sample objects we've been asked to dump ref-cycles for —
+        # either by explicit type name in debug_types, or by being
+        # any BaseException subclass when auto_include_exceptions
+        # is on.
+        sample_for_dump = tpname in debug_types_set or (
+            auto_include_exceptions and isinstance(obj, BaseException)
+        )
+        if sample_for_dump:
+            objs = debug_objs.setdefault(tpname, [])
+            if len(objs) < debug_type_limit:
+                objs.append(obj)
+
+        # Capture dotted paths for type objects so callers can annotate
+        # the histogram's 'type' entry inline.
+        if tpname == 'type':
+            type_paths.append(f'{obj.__module__}.{obj.__qualname__}')
+
+    ref_dumps: dict[str, list[GarbageRefDump]] = {}
+    for tpname, objs in debug_objs.items():
+        dumps: list[GarbageRefDump] = []
+        for obj in objs:
+            buf = io.StringIO()
+            printrefs(
+                obj,
+                file=buf,
+                max_level=printrefs_max_level,
+                max_visits=printrefs_max_visits,
+            )
+            exc_trace: str | None = None
+            if isinstance(obj, BaseException):
+                exc_trace = ''.join(
+                    traceback.format_exception(
+                        type(obj), obj, obj.__traceback__
+                    )
+                )
+            dumps.append(
+                GarbageRefDump(refs=buf.getvalue(), exception_trace=exc_trace)
+            )
+        ref_dumps[tpname] = dumps
+
+    # Don't keep our own references to gc.garbage members in this
+    # frame's locals once we're done — callers may want to clear
+    # gc.garbage immediately after we return.
+    debug_objs.clear()
+    del debug_objs
+
+    return GarbageSummary(
+        histogram=histogram,
+        ref_dumps=ref_dumps,
+        type_paths=type_paths,
+    )
 
 
 def printtypes(
@@ -323,6 +497,14 @@ def _desctype(obj: Any) -> str:
     if cls is types.MethodType:
         bnd = 'bound' if hasattr(obj, '__self__') else 'unbound'
         return f'{bnd} {type(obj).__name__} {obj.__name__}'
+    if cls is types.FunctionType:
+        return f'{type(obj).__name__} {obj.__module__}.{obj.__qualname__}'
+    if cls is types.CellType:
+        try:
+            contents = _desctype(obj.cell_contents)
+        except ValueError:
+            return f'{type(obj).__name__} (empty)'
+        return f'{type(obj).__name__} (contains {contents})'
     return f'{type(obj).__name__}'
 
 
@@ -370,7 +552,24 @@ def _printrefs(
     exclude_objs: list,
     expand_ids: list[int],
     file: TextIO,
+    state: dict[str, Any],
 ) -> None:
+    # Visit-count safeguard. Print one truncation marker the first
+    # time we go over and bail out of further recursion. Each level
+    # in the tree calls gc.get_referrers which is O(heap-size); a
+    # few highly-shared referrers can otherwise produce a runaway
+    # traversal.
+    state['visits'] += 1
+    if state['visits'] > state['max_visits']:
+        if not state['truncated_printed']:
+            print(
+                ('  ' * level)
+                + f"[truncated: visit limit {state['max_visits']} reached]",
+                file=file,
+            )
+            state['truncated_printed'] = True
+        return
+
     ind = '  ' * level
     print(ind + _desc(obj), file=file)
     v = vars()
@@ -402,6 +601,7 @@ def _printrefs(
                 exclude_objs=exclude_objs + [refs],
                 expand_ids=expand_ids,
                 file=file,
+                state=state,
             )
 
 

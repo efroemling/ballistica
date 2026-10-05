@@ -2,8 +2,6 @@
 #
 """Updates top level Makefile based on project elements present."""
 
-from __future__ import annotations
-
 import os
 from typing import TYPE_CHECKING
 import subprocess

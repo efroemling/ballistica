@@ -113,12 +113,26 @@ class AppPlatform {
   void InvokeStringEditor(PyObject* string_edit_adapter);
 
   /// Should be called by platform StringEditor to apply a value.
+  /// Submit means the commit came from an enter-equivalent gesture
+  /// (keyboard action key, send button) and should also trigger the
+  /// edit target's return-press action, matching desktop inline
+  /// editing; a non-submit apply just stores the value.
   /// Must be called in the logic thread.
-  void StringEditorApply(const std::string& val);
+  void StringEditorApply(const std::string& val, bool submit);
 
   /// Should be called by platform StringEditor to signify a cancel.
   /// Must be called in the logic thread.
   void StringEditorCancel();
+
+#pragma mark DEVICE CAPABILITIES -----------------------------------------------
+
+  /// Does this device have gyroscope hardware feeding
+  /// Input::PushGyroEvent()? Lets UI hide gyro-related options on
+  /// hardware that will never produce a sample -- including phones and
+  /// tablets that simply ship without the sensor -- rather than guessing
+  /// from the platform name. The value is queried once and cached (gyro
+  /// hardware does not come and go).
+  auto HasGyro() -> bool;
 
 #pragma mark MISC --------------------------------------------------------------
 
@@ -135,10 +149,13 @@ class AppPlatform {
   virtual void OpenFileExternally(const std::string& path);
 
  protected:
-  /// Pop up a text edit dialog.
+  /// Pop up a text edit dialog. `kind` is a babase.StringEditKind value
+  /// ('default', 'chat', ...) hinting at presentation (keyboard action
+  /// labels, chrome visibility, etc).
   virtual void DoInvokeStringEditor(const std::string& title,
                                     const std::string& value,
-                                    std::optional<int> max_chars);
+                                    std::optional<int> max_chars,
+                                    bool is_password, const std::string& kind);
 
   /// Open the provided URL in a browser. This will always be called in the
   /// main thread.
@@ -155,6 +172,11 @@ class AppPlatform {
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
 
+  /// Platforms with gyro hardware plumbing should override this. Defaults
+  /// to false, so a platform that never feeds gyro samples needs no code
+  /// here at all.
+  virtual auto DoHasGyro() -> bool;
+
   virtual ~AppPlatform();
 
  private:
@@ -162,6 +184,8 @@ class AppPlatform {
 
   bool ran_base_post_init_{};
   bool web_overlay_open_{};
+  bool have_gyro_{};
+  bool have_gyro_value_{};
   PythonRef string_edit_adapter_{};
   std::string public_device_uuid_;
   std::deque<char> stdin_buffer_;

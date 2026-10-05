@@ -2,13 +2,13 @@
 #
 """Provides party related UI."""
 
-from __future__ import annotations
-
 import math
 import logging
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
 
@@ -24,7 +24,6 @@ class PartyWindow(bui.Window):
     def __init__(self, origin: Sequence[float] = (0, 0)):
 
         self._uiopenstate = bui.UIOpenState('classicparty')
-        self._r = 'partyWindow'
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
         self._popup_party_member_is_host: bool | None = None
@@ -98,9 +97,9 @@ class PartyWindow(bui.Window):
         info = bs.get_connection_to_host_info_2()
 
         if info is not None and info.name != '':
-            title = bui.Lstr(value=info.name)
+            title = bui.LangStr.from_text(info.name)
         else:
-            title = bui.Lstr(resource=f'{self._r}.titleText')
+            title = _classicassets.strings.party.title
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -161,7 +160,7 @@ class PartyWindow(bui.Window):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='chatMutedText'),
+            text=_classicassets.strings.party.chat_muted,
         )
         self._chat_texts: list[bui.Widget] = []
 
@@ -175,10 +174,11 @@ class PartyWindow(bui.Window):
             maxwidth=494,
             shadow=0.3,
             flatness=1.0,
-            description=bui.Lstr(resource=f'{self._r}.chatMessageText'),
+            description=_classicassets.strings.party.chat_message,
             autoselect=True,
             v_align='center',
             corner_scale=0.7,
+            string_edit_kind=bui.StringEditKind.CHAT.value,
         )
 
         bui.widget(
@@ -200,14 +200,14 @@ class PartyWindow(bui.Window):
             parent=self._root_widget,
             id=f'{self._idprefix}|send',
             size=(50, 35),
-            label=bui.Lstr(resource=f'{self._r}.sendText'),
+            label=_commonassets.strings.actions.send,
             button_type='square',
             autoselect=True,
             position=(self._width - 70, 35),
             on_activate_call=self._send_chat_message,
         )
 
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
         bui.widget(edit=txt, down_widget=btn)
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
@@ -229,6 +229,8 @@ class PartyWindow(bui.Window):
             scale=0.55,
             size=(900, 13),
             text=msg,
+            # Peer-supplied text; never compile it as a resource string.
+            literal=True,
             autoselect=True,
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,
@@ -253,7 +255,8 @@ class PartyWindow(bui.Window):
 
             bui.clipboard_set_text(content)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
+                _commonassets.strings.status.copied_to_clipboard,
+                color=(0, 1, 0),
             )
 
     def _on_menu_button_press(self) -> None:
@@ -262,8 +265,12 @@ class PartyWindow(bui.Window):
         uiscale = bui.app.ui_v1.uiscale
 
         choices: list[str] = ['unmute' if is_muted else 'mute']
-        choices_display: list[bui.Lstr] = [
-            bui.Lstr(resource='chatUnMuteText' if is_muted else 'chatMuteText')
+        choices_display: list[bui.Lstr | bui.LangStr] = [
+            (
+                _classicassets.strings.party.unmute_chat
+                if is_muted
+                else _classicassets.strings.party.mute_chat
+            )
         ]
 
         # Allow the 'Add to Favorites' option only if we're actually
@@ -275,7 +282,9 @@ class PartyWindow(bui.Window):
             'Private Party '
         ):
             choices.append('add_to_favorites')
-            choices_display.append(bui.Lstr(resource='addToFavoritesText'))
+            choices_display.append(
+                _classicassets.strings.party.add_to_favorites
+            )
 
         self._menu_popup = PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
@@ -325,11 +334,11 @@ class PartyWindow(bui.Window):
                 top_section_height = 60
                 bui.textwidget(
                     edit=self._empty_str,
-                    text=bui.Lstr(resource=f'{self._r}.emptyText'),
+                    text=_classicassets.strings.party.empty,
                 )
                 bui.textwidget(
                     edit=self._empty_str_2,
-                    text=bui.Lstr(resource='gatherWindow.descriptionShortText'),
+                    text=_classicassets.strings.gather.description_short,
                 )
                 bui.scrollwidget(
                     edit=self._scrollwidget,
@@ -405,7 +414,7 @@ class PartyWindow(bui.Window):
                                 selectable=True,
                                 autoselect=True,
                                 click_activate=True,
-                                text=bui.Lstr(value=p_str),
+                                text=bui.LangStr.from_text(p_str),
                                 h_align='left',
                                 v_align='center',
                             )
@@ -446,7 +455,9 @@ class PartyWindow(bui.Window):
                                 twd = min(
                                     c_width * 0.85,
                                     bui.get_string_width(
-                                        p_str, suppress_warning=True
+                                        p_str,
+                                        suppress_warning=True,
+                                        suppress_logic_thread_warning=True,
                                     )
                                     * t_scale,
                                 )
@@ -462,9 +473,7 @@ class PartyWindow(bui.Window):
                                         v_align='center',
                                         maxwidth=c_width * 0.96 - twd,
                                         color=(0.1, 1, 0.1, 0.5),
-                                        text=bui.Lstr(
-                                            resource=f'{self._r}.hostText'
-                                        ),
+                                        text=_classicassets.strings.party.host,
                                         scale=0.4,
                                         shadow=0.1,
                                         flatness=1.0,
@@ -488,9 +497,9 @@ class PartyWindow(bui.Window):
         del popup_window  # unused
         if self._popup_type == 'partyMemberPress':
             if self._popup_party_member_is_host:
-                bui.getsound('error').play()
+                _builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    bui.Lstr(resource='internal.cantKickHostError'),
+                    _classicassets.strings.party.cant_kick_host,
                     color=(1, 0, 0),
                 )
             else:
@@ -501,9 +510,9 @@ class PartyWindow(bui.Window):
                     self._popup_party_member_client_id, ban_time=5 * 60
                 )
                 if not result:
-                    bui.getsound('error').play()
+                    _builtinassets.audio.error.get().play()
                     bui.screenmessage(
-                        bui.Lstr(resource='getTicketsWindow.unavailableText'),
+                        _commonassets.strings.status.not_available,
                         color=(1, 0, 0),
                     )
         elif self._popup_type == 'menu':
@@ -525,9 +534,9 @@ class PartyWindow(bui.Window):
                     # We should not allow the user to see this option
                     # if they aren't in a server; this is our bad.
                     bui.screenmessage(
-                        bui.Lstr(resource='errorText'), color=(1, 0, 0)
+                        _commonassets.strings.values.error, color=(1, 0, 0)
                     )
-                    bui.getsound('error').play()
+                    _builtinassets.audio.error.get().play()
         else:
             print(f'unhandled popup type: {self._popup_type}')
 
@@ -537,18 +546,18 @@ class PartyWindow(bui.Window):
         addr = address
         if addr == '':
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                _classicassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
             return
         port = port_num if port_num is not None else -1
         if port > 65535 or port < 0:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidPortErrorText'),
+                _classicassets.strings.gather.invalid_port_error,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Avoid empty names.
@@ -566,19 +575,17 @@ class PartyWindow(bui.Window):
                 'name': name,
             }
             config.commit()
-            bui.getsound('gunCocking').play()
+            _builtinassets.audio.gun_cocking.get().play()
             bui.screenmessage(
-                bui.Lstr(
-                    resource='addedToFavoritesText', subs=[('${NAME}', name)]
-                ),
+                _classicassets.strings.gather.added_to_favorites(name=name),
                 color=(0, 1, 0),
             )
         else:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                _classicassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
 
     def popup_menu_closing(self, _popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
@@ -589,13 +596,13 @@ class PartyWindow(bui.Window):
     ) -> None:
         # if we're the host, pop up 'kick' options for all non-host members
         if bs.get_foreground_host_session() is not None:
-            kick_str = bui.Lstr(resource='kickText')
+            kick_str = _classicassets.strings.ui.kick
         else:
             # kick-votes appeared in build 14248
             info = bs.get_connection_to_host_info_2()
             if info is None or info.build_number < 14248:
                 return
-            kick_str = bui.Lstr(resource='kickVoteText')
+            kick_str = _classicassets.strings.party.kick_vote
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._menu_popup = PopupMenuWindow(
@@ -638,5 +645,5 @@ class PartyWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        bui.getsound('swish').play()
+        bui.play_swish()
         self.close()

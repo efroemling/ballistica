@@ -2,8 +2,6 @@
 #
 """Functionality used for building."""
 
-from __future__ import annotations
-
 import os
 import time
 import subprocess
@@ -55,11 +53,18 @@ class LazyBuildContext:
         srcpaths_exist: list[str] | None = None,
         manifest_file: str | None = None,
         command_fullclean: str | None = None,
+        force: bool = False,
     ) -> None:
         self.target = target
         self.srcpaths = srcpaths
         self.srcpaths_exist = srcpaths_exist
         self.command = command
+        # When set, always run the command regardless of whether inputs
+        # changed (the up-to-date check is still performed, only its
+        # skip-decision is overridden). Lets a caller force a rebuild for
+        # reasons the source-hashing can't see -- e.g. a server-side input
+        # the local inputs don't capture.
+        self.force = force
         self.dirfilter = dirfilter
         self.filefilter = filefilter
         self.buildlockname = buildlockname
@@ -82,10 +87,10 @@ class LazyBuildContext:
 
         # We support a mechanism where some paths can be passed as 'fullclean'
         # paths - these will trigger a separate 'fullclean' command as well as
-        # the regular command when any of them change. This is handy for 'meta'
-        # type builds where a lot of tools scripts can conceivably influence
-        # target creation, but where it would be unwieldy to list all of them
-        # as dependency relationships in a Makefile.
+        # the regular command when any of them change. This is handy for
+        # 'codegen' type builds where a lot of tools scripts can influence
+        # target creation, but where it would be unwieldy to list all of
+        # them as dependency relationships in a Makefile.
         self.srcpaths_fullclean = srcpaths_fullclean
         self.command_fullclean = command_fullclean
 
@@ -101,6 +106,14 @@ class LazyBuildContext:
         starttime = time.monotonic()
 
         self._check_for_changes()
+
+        if self.force and not self.have_changes:
+            self.have_changes = True
+            print(
+                f'{Clr.MAG}Lazybuild: forcing "{self.target_name_pretty}"'
+                f' (force requested).{Clr.RST}',
+                flush=True,
+            )
 
         if self.have_changes:
             # If we were given a build-lock-name, surround our payload

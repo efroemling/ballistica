@@ -32,6 +32,7 @@ import logging.handlers
 import os
 import queue
 import re
+import socket
 import struct
 import threading
 import traceback
@@ -865,6 +866,8 @@ class DictConfigurator(BaseConfigurator):
             else:
                 factory = klass
         kwargs = {k: config[k] for k in config if (k != '.' and valid_ident(k))}
+        # When deprecation ends for using the 'strm' parameter, remove the
+        # "except TypeError ..."
         try:
             result = factory(**kwargs)
         except TypeError as te:
@@ -876,6 +879,15 @@ class DictConfigurator(BaseConfigurator):
             #(e.g. by Django)
             kwargs['strm'] = kwargs.pop('stream')
             result = factory(**kwargs)
+
+            import warnings
+            warnings.warn(
+                "Support for custom logging handlers with the 'strm' argument "
+                "is deprecated and scheduled for removal in Python 3.16. "
+                "Define handlers with the 'stream' argument instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         if formatter:
             result.setFormatter(formatter)
         if level is not None:
@@ -1006,10 +1018,20 @@ def listen(port=DEFAULT_LOGGING_CONFIG_PORT, verify=None):
         A simple TCP socket-based logging config receiver.
         """
 
-        allow_reuse_address = 1
+        allow_reuse_address = True
+        allow_reuse_port = False
 
         def __init__(self, host='localhost', port=DEFAULT_LOGGING_CONFIG_PORT,
                      handler=None, ready=None, verify=None):
+            # The host can have no IPv4 address, for example if "localhost"
+            # is only aliased to ::1.  Leave resolution errors to the server.
+            try:
+                infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+            except OSError:
+                pass
+            else:
+                if not any(info[0] == socket.AF_INET for info in infos):
+                    self.address_family = infos[0][0]
             ThreadingTCPServer.__init__(self, (host, port), handler)
             with logging._lock:
                 self.abort = 0
@@ -1041,9 +1063,14 @@ def listen(port=DEFAULT_LOGGING_CONFIG_PORT, verify=None):
             self.ready = threading.Event()
 
         def run(self):
-            server = self.rcvr(port=self.port, handler=self.hdlr,
-                               ready=self.ready,
-                               verify=self.verify)
+            try:
+                server = self.rcvr(port=self.port, handler=self.hdlr,
+                                   ready=self.ready,
+                                   verify=self.verify)
+            except BaseException:
+                # Do not leave the caller waiting for ready forever.
+                self.ready.set()
+                raise
             if self.port == 0:
                 self.port = server.server_address[1]
             self.ready.set()

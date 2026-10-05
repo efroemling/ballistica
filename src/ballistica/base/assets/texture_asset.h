@@ -23,9 +23,26 @@ class TextureAsset : public Asset {
                         TextureMinQuality min_quality_in);
   explicit TextureAsset(const std::string& qr_url);
 
+  /// Create the texture that a view drawing to a texture draws to. We
+  /// hold no pixels of our own in this case; we stand for whatever the
+  /// renderer last drew of that view's world, so that anything able to
+  /// draw a texture can draw it.
+  explicit TextureAsset(RenderView* view);
+
+  auto GetRenderView() const -> RenderView* override;
+
+  /// The id of the view that draws to us, or 0 if we're not that kind
+  /// of texture. (Unlike the view itself, this can be asked from any
+  /// thread and keeps its value once the view is gone.)
+  auto render_view_id() const -> int { return render_view_id_; }
+
+  /// Called by our view as it goes away. Logic thread only.
+  void ClearRenderView();
+
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
+  auto ReResolveSource() -> bool override;
   void DoPreload() override;
   void DoLoad() override;
   void DoUnload() override;
@@ -43,16 +60,36 @@ class TextureAsset : public Asset {
   }
   auto base_level() const -> int { return base_level_; }
 
+  /// Whether this texture's RGB is premultiplied by its alpha (read from
+  /// the KTX2 DFD at load; asset-packages decision #23). Drives per-draw
+  /// premult-blend selection in the graphics components. False for
+  /// straight-alpha textures and for loaders that don't carry the flag
+  /// (only the KTX2 path sets it). Re-read on every (re)load, mirroring
+  /// base_level_.
+  auto premultiplied() const -> bool { return premultiplied_; }
+
  private:
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
+  int render_view_id_{};
+  // Not a reference; our view tells us when it goes (it holds us, so
+  // we can outlive it but not the other way around).
+  RenderView* render_view_{};
   std::string file_name_;
   std::string file_name_full_;
+  /// Whether ``file_name_full_`` is an asset-package CAS blob (named
+  /// by content hash — bare or with the bundled transport suffix —
+  /// never by a content extension). CAS blobs dispatch on content
+  /// magic bytes at preload; legacy on-disk assets dispatch on the
+  /// path's suffix (``.dds``, ``.android_dds``, ``.ktx``, ``.pvr``,
+  /// ``.nop``).
+  bool is_cas_blob_{};
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};
   TextureMinQuality min_quality_{TextureMinQuality::kLow};
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
+  bool premultiplied_{};
 };
 
 }  // namespace ballistica::base

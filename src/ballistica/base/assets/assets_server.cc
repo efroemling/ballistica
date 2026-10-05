@@ -13,6 +13,10 @@
 
 namespace ballistica::base {
 
+// Soft time budget for how long Process_ spends preloading per pass before
+// yielding back to the event loop. We always preload at least one item.
+const millisecs_t kPreloadProcessTimeMillisecs{5};
+
 AssetsServer::AssetsServer() = default;
 
 void AssetsServer::OnMainThreadStartApp() {
@@ -79,19 +83,23 @@ void AssetsServer::Process_() {
     return;
   }
 
-  // Process exactly 1 preload item. Empty out our non-audio list first
-  // (audio is less likely to cause noticeable hitches if it needs to be
-  // loaded on-demand, so that's a lower priority for us).
-  if (!pending_preloads_.empty()) {
-    (**pending_preloads_.back()).Preload();
+  // Preload a batch of pending items, bounded by a small time budget so we
+  // stay responsive to our event-loop (new preloads arriving, etc.) and don't
+  // starve attached processors when a lot is queued -- anything left over
+  // rides the next process pass. We drain the non-audio list first; audio
+  // hitches less if it has to load on-demand, so it's lower priority. (We
+  // always preload at least one item per pass.)
+  millisecs_t starttime = g_core->AppTimeMillisecs();
+  while (!pending_preloads_.empty() || !pending_preloads_audio_.empty()) {
+    auto& list = !pending_preloads_.empty() ? pending_preloads_
+                                            : pending_preloads_audio_;
+    (**list.back()).Preload();
     // Pass the ref-pointer along to the load queue.
-    g_base->assets->AddPendingLoad(pending_preloads_.back());
-    pending_preloads_.pop_back();
-  } else if (!pending_preloads_audio_.empty()) {
-    (**pending_preloads_audio_.back()).Preload();
-    // Pass the ref-pointer along to the load queue.
-    g_base->assets->AddPendingLoad(pending_preloads_audio_.back());
-    pending_preloads_audio_.pop_back();
+    g_base->assets->AddPendingLoad(list.back());
+    list.pop_back();
+    if (g_core->AppTimeMillisecs() - starttime > kPreloadProcessTimeMillisecs) {
+      break;
+    }
   }
 
   // Give all attached processors processing time.

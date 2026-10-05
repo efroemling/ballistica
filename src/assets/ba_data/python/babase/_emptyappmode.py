@@ -2,8 +2,6 @@
 #
 """Provides AppMode functionality."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import _babase
@@ -11,7 +9,7 @@ from babase._appmode import AppMode
 from babase._appintent import AppIntentExec, AppIntentDefault
 
 if TYPE_CHECKING:
-    from babase import AppIntent
+    from babase import AppIntent, AppModeConfig
 
 
 # ba_meta export babase.AppMode
@@ -36,7 +34,9 @@ class EmptyAppMode(AppMode):
         _babase.empty_app_mode_handle_app_intent_default()
 
     @override
-    def on_activate(self) -> None:
+    def on_activate(self, config: AppModeConfig) -> None:
+        del config  # Unused.
+
         # Let the native layer do its thing.
         _babase.empty_app_mode_activate()
 

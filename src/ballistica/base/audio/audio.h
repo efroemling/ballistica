@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_AUDIO_AUDIO_H_
 #define BALLISTICA_BASE_AUDIO_AUDIO_H_
 
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <optional>
@@ -61,9 +62,14 @@ class Audio {
   auto PlaySoundAtPosition(SoundAsset* sound, float volume, float x, float y,
                            float z) -> std::optional<uint32_t>;
 
-  /// Load and play a sys sound if possible. Gracefully fail if not
-  /// (possibly logging warnings or errors).
-  auto SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t>;
+  /// Load and play a builtin sound if possible. Gracefully fail if
+  /// not (possibly logging warnings or errors).
+  auto SafePlayBuiltinSound(BuiltinSoundID sound_id) -> std::optional<uint32_t>;
+
+  /// SafePlayBuiltinSound's sibling for arbitrary loaded sounds (e.g.
+  /// base-asset-set slots): same guards (headless no-op, logic-thread
+  /// and sys-assets-loaded checks) without the builtin-id table.
+  auto SafePlaySound(SoundAsset* sound) -> std::optional<uint32_t>;
 
   /// Call this if you want to prevent repeated plays of the same sound. It'll
   /// tell you if the sound has been played recently.  The one-shot sound-play
@@ -81,7 +87,29 @@ class Audio {
     return available_sources_mutex_;
   }
 
+  /// Called by the audio server (from the audio thread) once its device is
+  /// open and its sources are claimable. Device bring-up runs asynchronously
+  /// and can take seconds on some routes (Bluetooth on iOS, for instance),
+  /// so until this flips, SourceBeginNew() can only come up empty.
+  void set_server_ready() { server_ready_ = true; }
+  auto server_ready() const -> bool { return server_ready_; }
+
+  /// True once the server is ready but owns no sources at all (headless
+  /// builds and the null-device fallback). No play can ever land there, so
+  /// callers should drop quietly rather than wait, retry, or warn.
+  /// (client_sources_ is only written before server_ready_ flips, so reading
+  /// it after observing the flag is safe.)
+  auto source_pool_empty() const -> bool {
+    return server_ready_ && client_sources_.empty();
+  }
+
  private:
+  /// Log (rate-limited) that SourceBeginNew() found nothing, so dropped
+  /// plays are visible instead of silent.
+  void WarnNoSourceAvailable_();
+
+  std::atomic<bool> server_ready_{};
+  std::atomic<millisecs_t> last_no_source_warn_time_{-99999};
   /// Flat list of client sources indexed by id.
   std::vector<AudioSource*> client_sources_;
 

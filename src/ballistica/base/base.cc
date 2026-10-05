@@ -3,6 +3,8 @@
 #include "ballistica/base/base.h"
 
 #include <cstdio>
+#include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,7 +15,11 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
+#if BA_ENABLE_AUTOMATION
+#include "ballistica/base/automation/automation.h"
+#endif
 #include "ballistica/base/discord/discord.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -56,7 +62,6 @@ BaseFeatureSet::BaseFeatureSet()
       assets_server{new AssetsServer()},
       audio{new Audio()},
       audio_server{new AudioServer()},
-      basn_log_behavior_{g_core->platform->GetEnv("BASNLOG") == "1"},
       bg_dynamics{g_core->HeadlessMode() ? nullptr : new BGDynamics},
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
@@ -75,13 +80,24 @@ BaseFeatureSet::BaseFeatureSet()
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()},
-      discord{g_buildconfig.enable_discord() ? new Discord() : nullptr} {
+      // Only spin up Discord where we've actually done the per-platform
+      // plumbing (desktop today). The compile flag alone is not enough:
+      // the SDK itself builds on mobile, but OAuth redirects there need
+      // a registered URL scheme which we haven't wired up. Leaving the
+      // belt-and-suspenders runtime guard prevents an accidental flag
+      // flip from activating a broken code path.
+      discord(
+          (g_buildconfig.enable_discord() && !g_buildconfig.platform_mobile())
+              ? new Discord()
+              : nullptr) {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
 
   // We modify some app behavior when run under the server manager.
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
+#if BA_ENABLE_AUTOMATION
+#endif
 }
 
 void BaseFeatureSet::OnModuleExec(PyObject* module) {
@@ -94,7 +110,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec begin");
 
   // This locks in a baenv configuration.
@@ -139,7 +155,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec end");
 }
 
@@ -351,6 +367,10 @@ void BaseFeatureSet::SuspendApp() {
       }
       return;
     }
+    // Don't spin at full speed while we wait; we'd be pinning a core at
+    // 100% at exactly the moment the audio thread is trying to ramp its
+    // volume down cleanly (and the OS is snapshotting us/etc).
+    core::Platform::SleepMillisecs(1);
   } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 
@@ -482,6 +502,12 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
     // Set and build up new one.
     app_mode_ = mode;
+
+    // Publish a thread-safe "real app-mode is active" flag for consumers
+    // that can't touch the logic-thread-only EmptyAppMode singleton
+    // (e.g. the stdin reader). Construct-mode never calls set_app_mode,
+    // so this stays false through the boot-time bring-up phase.
+    app_mode_is_real_.store(mode != EmptyAppMode::GetSingleton());
 
     // App modes each provide their own input-device delegate types.
     input->RebuildInputDeviceDelegates();
@@ -617,14 +643,6 @@ void BaseFeatureSet::SetGlobalAppInstanceUUID(std::string value,
   global_app_instance_uuid_expire_time_ = expire_time;
 }
 
-void BaseFeatureSet::PlusDirectSendV1CloudLogs(const std::string& prefix,
-                                               const std::string& suffix,
-                                               bool instant, int* result) {
-  if (plus_soft_ != nullptr) {
-    plus_soft_->DirectSendV1CloudLogs(prefix, suffix, instant, result);
-  }
-}
-
 auto BaseFeatureSet::CreateFeatureSetData(FeatureSetNativeComponent* featureset)
     -> PyObject* {
   return PythonClassFeatureSetData::Create(featureset);
@@ -696,73 +714,26 @@ void BaseFeatureSet::ScreenMessage(const std::string& s, const Vector3f& color,
   });
 }
 
-void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
-  // We may attempt to import stuff and that should *never* happen before
-  // base is fully imported.
-  if (!IsBaseCompletelyImported()) {
-    static bool warned = false;
-    if (!warned) {
-      warned = true;
-      printf(
-          "WARNING: V1CloudLog called before babase fully imported; "
-          "ignoring.\n");
-    }
-    return;
-  }
-
-  // Even though this part lives here in 'base', this is considered 'classic'
-  // functionality, so silently no-op if classic isn't present.
-  if (!HaveClassic()) {
-    return;
-  }
-
-  // Let the Python layer handle this if possible. PushCall functionality
-  // requires the app to be running, and the call itself requires plus.
-  if (app_started_ && HavePlus()) {
-    python->objs().PushCall(BasePython::ObjID::kHandleV1CloudLogCall);
-    return;
-  }
-
-  // Ok; Python path not available. We might be able to do a direct send.
-
-  // Hack: Currently disabling direct sends for basn to avoid shipping early
-  // logs not containing errors or warnings. Need to clean this system up;
-  // this shouldn't be necessary.
-  if (basn_log_behavior_) {
-    return;
-  }
-
-  // Need plus for direct sends.
-  if (!HavePlus()) {
-    static bool did_warn = false;
-    if (!did_warn) {
-      did_warn = true;
-      printf("WARNING: V1CloudLog direct-sends not available; ignoring.\n");
-    }
-    return;
-  }
-
-  // Only attempt direct sends a few times.
-  if (core::g_early_v1_cloud_log_writes <= 0) {
-    return;
-  }
-
-  // Ok; going ahead with the direct send.
-  core::g_early_v1_cloud_log_writes -= 1;
-  std::string logprefix = "EARLY-LOG:";
-  std::string logsuffix;
-
-  // If we're an early enough error, our global log isn't even available,
-  // so include this whole message as a suffix instead.
-  if (g_core == nullptr) {
-    logsuffix = msg;
-  }
-  Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
+void BaseFeatureSet::PushDevConsolePrintCall(
+    std::vector<core::DevConsolePrintEntry> entries) {
+  ui->PushDevConsolePrintCall(std::move(entries));
 }
 
-void BaseFeatureSet::PushDevConsolePrintCall(std::string_view msg, float scale,
-                                             Vector4f color) {
-  ui->PushDevConsolePrintCall(msg, scale, color);
+void BaseFeatureSet::OnOSMusicPlayingChanged(bool playing) {
+  // Nothing to tell before the app is up; the Python music subsystem
+  // reads Platform::os_music_playing() directly whenever it plays
+  // anything, so an early change is picked up then.
+  if (!IsAppStarted()) {
+    return;
+  }
+  logic->event_loop()->PushCall([playing] {
+    auto& objs = g_base->python->objs();
+    auto id = BasePython::ObjID::kOSMusicPlayingChangedCall;
+    if (objs.Exists(id)) {
+      objs.Get(id).Call(PythonRef::Stolen(
+          Py_BuildValue("(O)", playing ? Py_True : Py_False)));
+    }
+  });
 }
 
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
@@ -984,6 +955,17 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
                     PyExcType::kRuntime);
   }
   return app_adapter->DoClipboardGetText();
+}
+
+void BaseFeatureSet::ClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> call) {
+  BA_PRECONDITION(InLogicThread());
+
+  if (!ClipboardIsSupported()) {
+    logic->event_loop()->PushCall([call = std::move(call)] { call({}); });
+    return;
+  }
+  app_adapter->DoClipboardGetTextAsync(std::move(call));
 }
 
 void BaseFeatureSet::SetAppActive(bool active) {

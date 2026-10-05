@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_SET_H_
 #define BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_SET_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -10,6 +11,10 @@
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -57,7 +62,8 @@ class ConnectionSet {
   auto DisconnectClient(int client_id, int ban_seconds) -> bool;
   void ForceDisconnectClients();
   void PushHostConnectedUDPCall(const SockAddr& addr,
-                                bool print_connect_progress);
+                                bool print_connect_progress,
+                                const std::string& password, bool prepped);
   void PushDisconnectFromHostCall();
   void PushDisconnectedFromHostCall();
   auto GetPrintUDPConnectProgress() const -> bool {
@@ -81,18 +87,34 @@ class ConnectionSet {
                        const std::vector<int>* clients = nullptr,
                        const std::string* sender_override = nullptr);
 
-  // Send a screen message to all connected clients AND print it on the host.
-  void SendScreenMessageToAll(const std::string& s, float r, float g, float b);
+  /// Build the lang-str tagged wire form (see kLangStrWireTag*) of a
+  /// native LangStr for message-level screen-message sends: LangStr
+  /// json with self-describing resource refs (no stream package-index
+  /// needed; sound for established connections per the D28 ingest
+  /// contract). Falls back to locally-evaluated literal text if
+  /// serialization fails.
+  static auto LangStrWireTagged(const std::shared_ptr<const base::LangStr>& val)
+      -> std::string;
+
+  // Send a screen message to all connected clients AND print it on the
+  // host. ``tagged``, when non-empty, is a lang-str tagged wire value
+  // (see kLangStrWireTag*) added alongside the flat text; new enough
+  // clients render it in their own locale while older ones show the
+  // flat text.
+  void SendScreenMessageToAll(const std::string& s, float r, float g, float b,
+                              const std::string& tagged = std::string());
 
   // send a screen message to all connected clients
   void SendScreenMessageToClients(const std::string& s, float r, float g,
-                                  float b);
+                                  float b,
+                                  const std::string& tagged = std::string());
 
   // Send a screen message to specific connected clients (those matching the IDs
   // specified) the id -1 can be used to specify the host.
-  void SendScreenMessageToSpecificClients(const std::string& s, float r,
-                                          float g, float b,
-                                          const std::vector<int>& clients);
+  void SendScreenMessageToSpecificClients(
+      const std::string& s, float r, float g, float b,
+      const std::vector<int>& clients,
+      const std::string& tagged = std::string());
 
   void HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                                const SockAddr& addr);

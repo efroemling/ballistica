@@ -3,7 +3,9 @@
 #include "ballistica/scene_v1/support/client_session_net.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "ballistica/base/graphics/graphics.h"
@@ -18,18 +20,10 @@
 namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
-  // Sanity check: we should only ever be writing one replay at once.
-  if (g_scene_v1->replay_open) {
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                         "g_scene_v1->replay_open true at netclient start;"
-                         " shouldn't happen.");
-  }
-  assert(g_base->assets_server);
-
-  // We always write replays as the highest protocol version we support.
-  replay_writer_ = new ReplayWriter;
-  writing_replay_ = true;
-  g_scene_v1->replay_open = true;
+  stats_enabled_ = getenv("BA_STREAM_STATS") != nullptr;
+  // Note: replay-writing setup happens in SetConnectionToHost() — we
+  // need the connection's negotiated protocol version to stamp the
+  // replay, and no stream messages arrive before that wiring happens.
 }
 
 ClientSessionNet::~ClientSessionNet() {
@@ -50,6 +44,26 @@ ClientSessionNet::~ClientSessionNet() {
 
 void ClientSessionNet::SetConnectionToHost(ConnectionToHost* c) {
   connection_to_host_ = c;
+
+  if (c != nullptr) {
+    set_stream_protocol(c->protocol_version());
+  }
+
+  if (c != nullptr && !writing_replay_) {
+    // Sanity check: we should only ever be writing one replay at once.
+    if (g_scene_v1->replay_open) {
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "g_scene_v1->replay_open true at netclient start;"
+                           " shouldn't happen.");
+    }
+    assert(g_base->assets_server);
+
+    // Messages get written to the replay verbatim, so its protocol is
+    // whatever we negotiated with the host (possibly older than ours).
+    replay_writer_ = new ReplayWriter(c->protocol_version());
+    writing_replay_ = true;
+    g_scene_v1->replay_open = true;
+  }
 }
 
 void ClientSessionNet::OnCommandBufferUnderrun() {
@@ -127,6 +141,32 @@ void ClientSessionNet::UpdateBuffering() {
         std::max(0.5f, 1.0f + speed_change_aggression * to_ideal_offset));
     set_consume_rate(new_consume_rate);
 
+    // Client-side counterpart of the host's --stream-stats: how the
+    // pacing loop is doing (buffered step time, playback rate, lag
+    // estimate) every 5s.
+    if (stats_enabled_ && now - stats_last_log_time_ >= 5000) {
+      stats_last_log_time_ = now;
+      std::string unreliable;
+      if (auto* conn = connection_to_host()) {
+        auto st = conn->TakeStatsUnreliable();
+        unreliable = "; unreliable: applied " + std::to_string(st.applied)
+                     + ", reassembled " + std::to_string(st.reassembled)
+                     + " from " + std::to_string(st.parts_in) + " parts, held "
+                     + std::to_string(st.held) + ", dropped stale "
+                     + std::to_string(st.dropped_stale) + " incomplete "
+                     + std::to_string(st.dropped_incomplete);
+      }
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kInfo,
+          "client pacing: buffered " + std::to_string(base_time_buffered())
+              + "ms, run rate " + std::to_string(new_consume_rate)
+              + ", received-ahead-of-played "
+              + std::to_string(base_time_received_ - base_time()) + "ms"
+              + ", filtered delay " + std::to_string(max_delay_smoothed_)
+              + "ms, packet delay " + std::to_string(current_delay_) + "ms"
+              + unreliable);
+    }
+
     if (g_base->graphics->network_debug_info_display_enabled()) {
       // Plug display time into these graphs to get smoother looking updates.
       auto now_d = g_base->logic->display_time() * 1000.0;
@@ -202,6 +242,15 @@ void ClientSessionNet::OnBaseTimeStepAdded(int step) {
   if (use) {
     leading_base_time_received_ = new_base_time_received;
     leading_base_time_receive_time_ = now;
+  }
+}
+
+void ClientSessionNet::OnAssetPackageTableComplete() {
+  // Feed the just-parsed table to our replay writer's header. (Host
+  // recordings source this from SessionStream instead; a client only
+  // learns it once the baseline's declaration finishes parsing here.)
+  if (writing_replay_ && replay_writer_ != nullptr) {
+    replay_writer_->SetAssetPackageTable(asset_package_table());
   }
 }
 

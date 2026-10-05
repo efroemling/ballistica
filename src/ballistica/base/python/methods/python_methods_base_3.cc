@@ -2,7 +2,9 @@
 
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
+#include <cmath>
 #include <list>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -16,6 +18,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
+#include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
@@ -24,6 +27,10 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
+#include "ballistica/shared/python/python.h"
+#include "external/monocypher/monocypher-ed25519.h"
 
 namespace ballistica::base {
 
@@ -34,6 +41,13 @@ namespace ballistica::base {
 
 // ---------------------------- getsimplesound --------------------------------
 
+// Legacy bare-name sound load. No first-party caller remains: the
+// public ``babase.getsimplesound()`` is now an inert Python shim
+// (``babase/_assetref.py``) that warns and returns a silent sound, and
+// everything else loads through asset-package wrappers
+// (``apsimplesoundget`` below). This native twin stays only so a mod
+// reaching into the private ``_babase`` module keeps the old behavior
+// until api 9 support ends, at which point both it and the shim go.
 static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -45,6 +59,7 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
   }
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  Assets::FailOnAssetPackagePath(name, "getsimplesound");
   {
     Assets::AssetListLock lock;
     Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
@@ -60,6 +75,49 @@ static PyMethodDef PyGetSimpleSoundDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "getsimplesound(name: str) -> SimpleSound\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- apsimplesoundget --------------------------------
+
+static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  int64_t apvernum;
+  const char* name;
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
+    return nullptr;
+  }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  {
+    Assets::AssetListLock lock;
+    Object::Ref<SoundAsset> sound =
+        g_base->assets->GetPackageSound(apverid, name);
+    return PythonClassSimpleSound::Create(sound.get());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApSimpleSoundGetDef = {
+    "apsimplesoundget",               // name
+    (PyCFunction)PyApSimpleSoundGet,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+
+    "apsimplesoundget(apvernum: int, name: str) -> SimpleSound\n"
+    "\n"
+    "Load a simple sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
+    "asset name.\n"
     "\n"
     ":meta private:",
 };
@@ -216,6 +274,37 @@ static PyMethodDef PyHasTouchScreenDef = {
     ":meta private:",
 };
 
+// -------------------------------- hasgyro ------------------------------------
+
+static auto PyHasGyro(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->platform->HasGyro()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHasGyroDef = {
+    "hasgyro",                     // name
+    (PyCFunction)PyHasGyro,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "hasgyro() -> bool\n"
+    "\n"
+    "Return whether gyroscope hardware is present on the current device.\n"
+    "\n"
+    "Prefer this over testing platform names when gating gyro-related\n"
+    "functionality; plenty of phones and tablets ship without the sensor,\n"
+    "and TV devices never have one.",
+};
+
 // ------------------------- clipboard_is_supported ----------------------------
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
@@ -295,10 +384,17 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 // --------------------------- clipboard_get_text ------------------------------
 
+// REMOVE WHEN API 9 SUPPORT ENDS
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+  if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                   "clipboard_get_text() will be removed when api 9 support"
+                   " ends; use clipboard_get_text_async() instead.",
+                   1)
+      == -1) {
+    return nullptr;
+  }
   return PyUnicode_FromString(g_base->ClipboardGetText().c_str());
-  Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
@@ -312,7 +408,63 @@ static PyMethodDef PyClipboardGetTextDef = {
     "Return text currently on the system clipboard.\n"
     "\n"
     "Ensure that :meth:`~babase.clipboard_has_text()` returns True before\n"
-    "calling this function.",
+    "calling this function.\n"
+    "\n"
+    ".. deprecated:: 1.8.0\n"
+    "   Use :meth:`~babase.clipboard_get_text_async()`.\n"
+    "   Will be removed when api 9 support ends.",
+};
+
+// ------------------------ clipboard_get_text_async ---------------------------
+
+static auto PyClipboardGetTextAsync(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  PyObject* call_obj{};
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  if (!PyCallable_Check(call_obj)) {
+    throw Exception("Object is not callable.", PyExcType::kType);
+  }
+
+  // Wrap their callable in a context-call so it runs in the context
+  // that kicked this off, and hand it over to the engine's async fetch.
+  auto context_call{Object::New<PythonContextCall>(call_obj)};
+  g_base->ClipboardGetTextAsync(
+      [context_call](std::optional<std::string> text) {
+        assert(g_base->InLogicThread());
+        PythonRef callargs(text ? Py_BuildValue("(s)", text->c_str())
+                                : Py_BuildValue("(O)", Py_None),
+                           PythonRef::kSteal);
+        context_call->Run(callargs);
+      });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClipboardGetTextAsyncDef = {
+    "clipboard_get_text_async",            // name
+    (PyCFunction)PyClipboardGetTextAsync,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "clipboard_get_text_async(call: Callable[[str | None], None]) -> None\n"
+    "\n"
+    "Fetch text from the system clipboard asynchronously.\n"
+    "\n"
+    "The provided callback will be run in the logic thread and passed\n"
+    "the fetched text, or None if no text could be fetched for any\n"
+    "reason (clipboard unsupported on this build, no text present,\n"
+    "access denied by the OS, etc.).\n"
+    "\n"
+    "On some platforms, fetching clipboard contents can require\n"
+    "the OS to ask the user for permission; the async nature of this\n"
+    "call allows the app to keep running normally while that happens.\n"
+    "Note that in such cases the callback may not run until the user\n"
+    "responds (or may never run at all).",
 };
 
 // ------------------------------ setup_sigint ---------------------------------
@@ -399,6 +551,61 @@ static PyMethodDef PyRequestPermissionDef = {
     METH_VARARGS | METH_KEYWORDS,      // flags
 
     "request_permission(permission: babase.Permission) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------- add_network_availability_callback -----------------------
+
+static auto PyAddNetworkAvailabilityCallback(PyObject* self, PyObject* args,
+                                             PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  // No logic-thread precondition: registration just stores a
+  // Python callable and forwards it to the platform layer. The
+  // platform-layer callback fires on whatever thread, and the
+  // wrapping lambda acquires the GIL itself. So registration is
+  // safe from any Python-running thread.
+  PyObject* call_obj;
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  if (!PyCallable_Check(call_obj)) {
+    PyErr_SetString(PyExc_TypeError, "'call' must be callable.");
+    return nullptr;
+  }
+  // Underlying contract has no deregistration; the callable lives
+  // for the app's lifetime, so we just retain a reference and never
+  // release it.
+  Py_INCREF(call_obj);
+  g_core->platform->AddNetworkAvailabilityCallback([call_obj](bool available) {
+    // Callback may fire on any thread; acquire the GIL before
+    // touching Python.
+    Python::ScopedInterpreterLock gil;
+    PyObject* py_args = Py_BuildValue("(O)", available ? Py_True : Py_False);
+    PyObject* result = PyObject_Call(call_obj, py_args, nullptr);
+    Py_DECREF(py_args);
+    if (result == nullptr) {
+      // Don't propagate; print and clear so subsequent
+      // invocations still fire.
+      PyErr_Print();
+      PyErr_Clear();
+    } else {
+      Py_DECREF(result);
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAddNetworkAvailabilityCallbackDef = {
+    "add_network_availability_callback",            // name
+    (PyCFunction)PyAddNetworkAvailabilityCallback,  // method
+    METH_VARARGS | METH_KEYWORDS,                   // flags
+
+    "add_network_availability_callback(call: Callable[[bool], None])"
+    " -> None\n"
     "\n"
     ":meta private:",
 };
@@ -896,58 +1103,6 @@ static PyMethodDef PyResolveAppConfigValueDef = {
     ":meta private:",
 };
 
-// --------------------- get_low_level_config_value ----------------------------
-
-static auto PyGetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int default_value;
-  static const char* kwlist[] = {"key", "default_value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "si", const_cast<char**>(kwlist), &key, &default_value))
-    return nullptr;
-  return PyLong_FromLong(
-      g_core->platform->GetLowLevelConfigValue(key, default_value));
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLowLevelConfigValueDef = {
-    "get_low_level_config_value",           // name
-    (PyCFunction)PyGetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "get_low_level_config_value(key: str, default_value: int) -> int\n"
-    "\n"
-    ":meta private:",
-};
-
-// --------------------- set_low_level_config_value ----------------------------
-
-static auto PySetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int value;
-  static const char* kwlist[] = {"key", "value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "si",
-                                   const_cast<char**>(kwlist), &key, &value))
-    return nullptr;
-  g_core->platform->SetLowLevelConfigValue(key, value);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetLowLevelConfigValueDef = {
-    "set_low_level_config_value",           // name
-    (PyCFunction)PySetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "set_low_level_config_value(key: str, value: int) -> None\n"
-    "\n"
-    ":meta private:",
-};
-
 // --------------------- set_platform_misc_read_vals ---------------------------
 
 static auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args,
@@ -971,96 +1126,6 @@ static PyMethodDef PySetPlatformMiscReadValsDef = {
     METH_VARARGS | METH_KEYWORDS,            // flags
 
     "set_platform_misc_read_vals(mode: str) -> None\n"
-    "\n"
-    ":meta private:",
-};
-
-// --------------------- get_v1_cloud_log_file_path ----------------------------
-
-static auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string config_dir = g_core->GetConfigDirectory();
-  std::string logpath = config_dir + BA_DIRSLASH + "log.json";
-  return PyUnicode_FromString(logpath.c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLogFilePathDef = {
-    "get_v1_cloud_log_file_path",  // name
-    PyGetLogFilePath,              // method
-    METH_VARARGS,                  // flags
-
-    "get_v1_cloud_log_file_path() -> str\n"
-    "\n"
-    "Return the path to the app log file.\n"
-    "\n"
-    ":meta private:",
-};
-
-// ----------------------------- is_log_full -----------------------------------
-static auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->logging->v1_cloud_log_full()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsLogFullDef = {
-    "is_log_full",  // name
-    PyIsLogFull,    // method
-    METH_VARARGS,   // flags
-
-    "is_log_full() -> bool\n"
-    "\n"
-    ":meta private:",
-};
-
-// -------------------------- get_v1_cloud_log ---------------------------------
-
-static auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string log_fin;
-  {
-    std::scoped_lock lock(g_core->logging->v1_cloud_log_mutex());
-    log_fin = g_core->logging->v1_cloud_log();
-  }
-  // we want to use something with error handling here since the last
-  // bit of this string could be truncated utf8 chars..
-  return PyUnicode_FromString(
-      Utils::GetValidUTF8(log_fin.c_str(), "_glg1").c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetV1CloudLogDef = {
-    "get_v1_cloud_log",            // name
-    (PyCFunction)PyGetV1CloudLog,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "get_v1_cloud_log() -> str\n"
-    "\n"
-    ":meta private:",
-};
-
-// ---------------------------- mark_log_sent ----------------------------------
-
-static auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  // This way we won't try to send it at shutdown time and whatnot
-  g_core->logging->set_did_put_v1_cloud_log(true);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyMarkLogSentDef = {
-    "mark_log_sent",               // name
-    (PyCFunction)PyMarkLogSent,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "mark_log_sent() -> None\n"
     "\n"
     ":meta private:",
 };
@@ -1257,58 +1322,124 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
     ":meta private:",
 };
 
-// ---------------------- set_internal_language_keys ---------------------------
+// ---------------------- reload_language --------------------------------------
 
-static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
+static auto PyReloadLanguage(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* list_obj;
-  PyObject* random_names_list_obj;
-  if (!PyArg_ParseTuple(args, "OO", &list_obj, &random_names_list_obj)) {
+  PyObject* apvernums_obj;
+  const char* plural_locale;
+  const char* decimal_mark{"."};
+  const char* duration_separator{" "};
+  static const char* kwlist[] = {"apvernums", "plural_locale", "decimal_mark",
+                                 "duration_separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Os|$ss", const_cast<char**>(kwlist), &apvernums_obj,
+          &plural_locale, &decimal_mark, &duration_separator)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(list_obj));
-  BA_PRECONDITION(PyList_Check(random_names_list_obj));
-  std::unordered_map<std::string, std::string> language;
-  int size = static_cast<int>(PyList_GET_SIZE(list_obj));
-
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(list_obj, i);
-    if (!PyTuple_Check(entry) || PyTuple_GET_SIZE(entry) != 2
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 0))
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 1))) {
-      throw Exception("Invalid root language data.");
-    }
-    language[PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 0))] =
-        PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 1));
+  // The engine keys packages by numeric id as text.
+  std::vector<std::string> apverids;
+  for (int64_t apvernum : Python::GetInts64(apvernums_obj)) {
+    apverids.emplace_back(std::to_string(apvernum));
   }
-
-  size = static_cast<int>(PyList_GET_SIZE(random_names_list_obj));
-  std::list<std::string> random_names;
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(random_names_list_obj, i);
-    if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in random name list.", PyExcType::kType);
-    }
-    random_names.emplace_back(PyUnicode_AsUTF8(entry));
-  }
-
-  Utils::SetRandomNameList(random_names);
   assert(g_base->logic);
-  g_base->assets->SetLanguageKeys(language);
+  g_base->assets->ReloadLanguage(apverids, plural_locale, decimal_mark,
+                                 duration_separator);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetInternalLanguageKeysDef = {
-    "set_internal_language_keys",  // name
-    PySetInternalLanguageKeys,     // method
-    METH_VARARGS,                  // flags
+static PyMethodDef PyReloadLanguageDef = {
+    "reload_language",              // name
+    (PyCFunction)PyReloadLanguage,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
-    "  random_names_list: list[tuple[str, str]]) -> None\n"
+    "reload_language(apvernums: Sequence[int], plural_locale: str,"
+    " *, decimal_mark: str = '.', duration_separator: str = ' ')"
+    " -> None\n"
     "\n"
-    ":meta private:",
+    ":meta private:\n"
+    "\n"
+    "(Re)build the native language string table (and per-package\n"
+    "language-string tables) from the registered ``language`` buckets\n"
+    "of the given asset-packages and notify subsystems of the language\n"
+    "change. ``plural_locale`` is the resolved locale wire value\n"
+    "driving CLDR plural selection; ``decimal_mark`` and\n"
+    "``duration_separator`` are its number data for display-formatted\n"
+    "params (durations, sizes).",
+};
+
+// ---------------------- get_resource -----------------------------------------
+
+static auto PyGetResource(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* resource;
+  PyObject* fallback_resource_obj = Py_None;
+  static const char* kwlist[] = {"resource", "fallback_resource", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|O",
+                                   const_cast<char**>(kwlist), &resource,
+                                   &fallback_resource_obj)) {
+    return nullptr;
+  }
+  std::optional<std::string> result;
+  if (fallback_resource_obj != Py_None) {
+    if (!PyUnicode_Check(fallback_resource_obj)) {
+      throw Exception("fallback_resource must be a string or None.",
+                      PyExcType::kType);
+    }
+    std::string fr{PyUnicode_AsUTF8(fallback_resource_obj)};
+    result = g_base->assets->GetResourceOrFallback(resource, &fr);
+  } else {
+    result = g_base->assets->GetResourceOrFallback(resource, nullptr);
+  }
+  if (result.has_value()) {
+    return PyUnicode_FromString(result->c_str());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetResourceDef = {
+    "get_resource",                // name
+    (PyCFunction)PyGetResource,    // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "get_resource(resource: str,\n"
+    "             fallback_resource: str | None = None) -> str | None\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native resource lookup by full dot-path key, trying\n"
+    "``fallback_resource`` on a miss. ``None`` if neither resolves.",
+};
+
+// ---------------------- translate --------------------------------------------
+
+static auto PyTranslate(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* category;
+  const char* value;
+  if (!PyArg_ParseTuple(args, "ss", &category, &value)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(
+      g_base->assets->GetTranslation(category, value).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTranslateDef = {
+    "translate",   // name
+    PyTranslate,   // method
+    METH_VARARGS,  // flags
+
+    "translate(category: str, value: str) -> str\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native translate lookup; returns ``value`` itself when there is no\n"
+    "translation (the legacy null-means-use-value convention).",
 };
 
 // -------------------- android_get_external_files_dir -------------------------
@@ -1589,13 +1720,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   float corner_radius;
   const char* style;
   int disabled;
-  if (!PyArg_ParseTuple(args, "sffffOsffsp", &label, &x, &y, &width, &height,
+  int sound;
+  if (!PyArg_ParseTuple(args, "sffffOsffspp", &label, &x, &y, &width, &height,
                         &call, &h_anchor, &label_scale, &corner_radius, &style,
-                        &disabled)) {
+                        &disabled, &sound)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius, style, disabled);
+                         label_scale, corner_radius, style, disabled, sound);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1617,6 +1749,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  corner_radius: float,\n"
     "  style: str,\n"
     "  disabled: bool,\n"
+    "  sound: bool,\n"
     ") -> None\n"
     "\n"
     ":meta private:",
@@ -1867,6 +2000,32 @@ static PyMethodDef PyNativeReviewRequestSupportedDef = {
     ":meta private:",
 };
 
+// ------------------------ device_haptics_supported ---------------------------
+
+static auto PyDeviceHapticsSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->app_adapter->DeviceFeedbackSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDeviceHapticsSupportedDef = {
+    "device_haptics_supported",             // name
+    (PyCFunction)PyDeviceHapticsSupported,  // method
+    METH_NOARGS,                            // flags
+
+    "device_haptics_supported() -> bool\n"
+    "\n"
+    "Return whether the device we are running on can play haptics.\n"
+    "\n"
+    "This is about the device itself (a phone's vibrator); controllers\n"
+    "are a separate matter.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------------- native_review_request ----------------------------
 
 static auto PyNativeReviewRequest(PyObject* self) -> PyObject* {
@@ -1983,6 +2142,414 @@ static PyMethodDef PyGetDrawVirtualSafeAreaBoundsDef = {
     METH_NOARGS,                                  // flags
 
     "get_draw_virtual_safe_area_bounds() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------- virtual_bounds_calc_probe -----------------------------
+
+static auto PyVirtualBoundsCalcProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double res_x;
+  double res_y;
+  double inset_l = 0.0;
+  double inset_r = 0.0;
+  double inset_b = 0.0;
+  double inset_t = 0.0;
+  double bleed = 0.0;
+  static const char* kwlist[] = {"render_rect", "res_x",   "res_y",
+                                 "inset_l",     "inset_r", "inset_b",
+                                 "inset_t",     "bleed",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odd|ddddd", const_cast<char**>(kwlist), &render_obj,
+          &res_x, &res_y, &inset_l, &inset_r, &inset_b, &inset_t, &bleed)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(res_x),
+      static_cast<float>(res_y), static_cast<float>(inset_l),
+      static_cast<float>(inset_r), static_cast<float>(inset_b),
+      static_cast<float>(inset_t), static_cast<float>(bleed));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsCalcProbeDef = {
+    "virtual_bounds_calc_probe",            // name
+    (PyCFunction)PyVirtualBoundsCalcProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "virtual_bounds_calc_probe(render_rect: Sequence[float], res_x: float,\n"
+    "  res_y: float, inset_l: float = 0.0, inset_r: float = 0.0,\n"
+    "  inset_b: float = 0.0, inset_t: float = 0.0, bleed: float = 0.0)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------ virtual_bounds_max_margins_probe -------------------------
+
+static auto PyVirtualBoundsMaxMarginsProbe(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double base_res_x;
+  double base_res_y;
+  double margin_x;
+  double margin_y;
+  static const char* kwlist[] = {"render_rect", "base_res_x", "base_res_y",
+                                 "margin_x",    "margin_y",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odddd", const_cast<char**>(kwlist), &render_obj,
+          &base_res_x, &base_res_y, &margin_x, &margin_y)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcMaxMarginsVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(base_res_x),
+      static_cast<float>(base_res_y), static_cast<float>(margin_x),
+      static_cast<float>(margin_y));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsMaxMarginsProbeDef = {
+    "virtual_bounds_max_margins_probe",           // name
+    (PyCFunction)PyVirtualBoundsMaxMarginsProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
+
+    "virtual_bounds_max_margins_probe(render_rect: Sequence[float],\n"
+    "  base_res_x: float, base_res_y: float, margin_x: float,\n"
+    "  margin_y: float) -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- screen_insets_blend_probe ----------------------------
+
+static auto PyScreenInsetsBlendProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* os_obj;
+  PyObject* max_obj;
+  double amount;
+  static const char* kwlist[] = {"os_bounds", "max_bounds", "amount", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOd",
+                                   const_cast<char**>(kwlist), &os_obj,
+                                   &max_obj, &amount)) {
+    return nullptr;
+  }
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect out = Graphics::BlendScreenInsetsRect(
+      rect_from(os_obj), rect_from(max_obj), static_cast<float>(amount));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyScreenInsetsBlendProbeDef = {
+    "screen_insets_blend_probe",            // name
+    (PyCFunction)PyScreenInsetsBlendProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "screen_insets_blend_probe(os_bounds: Sequence[float],\n"
+    "  max_bounds: Sequence[float], amount: float)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------- virtual_bounds_project_probe ---------------------------
+
+static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  PyObject* bounds_obj;
+  PyObject* points_obj;
+  double fov_y = 60.0;
+  double near_val = 4.0;
+  double far_val = 1000.0;
+  static const char* kwlist[] = {"render_rect", "bounds_rect", "points",
+                                 "fov_y",       "near_val",    "far_val",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "OOO|ddd", const_cast<char**>(kwlist), &render_obj,
+          &bounds_obj, &points_obj, &fov_y, &near_val, &far_val)) {
+    return nullptr;
+  }
+
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect render_rect = rect_from(render_obj);
+  Rect bounds_rect = rect_from(bounds_obj);
+
+  // Compose for the bounds: symmetric frustum at the bounds' aspect,
+  // exactly as the aspect-derived branch of RenderPass::SetFrustum
+  // does.
+  float aspect = bounds_rect.height() > 0.0f
+                     ? bounds_rect.width() / bounds_rect.height()
+                     : 1.0f;
+  float y = static_cast<float>(near_val
+                               * tan((fov_y / 2.0) * 3.14159265358979 / 180.0));
+  float x = y * aspect;
+  float l = x;
+  float r = x;
+  float b = y;
+  float t = y;
+
+  // ..then extend out to the render rect. Same function the renderer
+  // uses, so this cannot drift from what actually gets drawn.
+  Graphics::ExtendFrustumToRenderRect(render_rect, bounds_rect, &l, &r, &b, &t);
+  Matrix44f proj = Matrix44fFrustum(-l, r, -b, t, static_cast<float>(near_val),
+                                    static_cast<float>(far_val));
+
+  // Project each eye-space point and map to window pixels through the
+  // render rect, which is what the viewport is set to.
+  PyObject* out = PyList_New(0);
+  PyObject* pts_fast = PySequence_Fast(points_obj, "Expected a sequence.");
+  if (pts_fast == nullptr) {
+    Py_DECREF(out);
+    return nullptr;
+  }
+  Py_ssize_t npts = PySequence_Fast_GET_SIZE(pts_fast);
+  for (Py_ssize_t i = 0; i < npts; ++i) {
+    auto pt = Python::GetFloats(PySequence_Fast_GET_ITEM(pts_fast, i));
+    if (pt.size() != 3) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Expected 3 values per point.", PyExcType::kValue);
+    }
+    float px_clip =
+        pt[0] * proj.m[0] + pt[1] * proj.m[4] + pt[2] * proj.m[8] + proj.m[12];
+    float py_clip =
+        pt[0] * proj.m[1] + pt[1] * proj.m[5] + pt[2] * proj.m[9] + proj.m[13];
+    float w_clip =
+        pt[0] * proj.m[3] + pt[1] * proj.m[7] + pt[2] * proj.m[11] + proj.m[15];
+    if (w_clip == 0.0f) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Degenerate projection for point.", PyExcType::kValue);
+    }
+    float px =
+        render_rect.l + (px_clip / w_clip * 0.5f + 0.5f) * render_rect.width();
+    float py =
+        render_rect.b + (py_clip / w_clip * 0.5f + 0.5f) * render_rect.height();
+    PyObject* pair = Py_BuildValue("(ff)", px, py);
+    PyList_Append(out, pair);
+    Py_DECREF(pair);
+  }
+  Py_DECREF(pts_fast);
+  return out;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsProjectProbeDef = {
+    "virtual_bounds_project_probe",            // name
+    (PyCFunction)PyVirtualBoundsProjectProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "virtual_bounds_project_probe(render_rect: Sequence[float],\n"
+    "  bounds_rect: Sequence[float], points: Sequence[Sequence[float]],\n"
+    "  fov_y: float = 60.0, near_val: float = 4.0,\n"
+    "  far_val: float = 1000.0) -> list[tuple[float, float]]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- get_draw_virtual_bounds ------------------------------
+
+static auto PyGetDrawVirtualBounds(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->draw_virtual_bounds()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDrawVirtualBoundsDef = {
+    "get_draw_virtual_bounds",            // name
+    (PyCFunction)PyGetDrawVirtualBounds,  // method
+    METH_NOARGS,                          // flags
+
+    "get_draw_virtual_bounds() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- set_draw_virtual_bounds ------------------------------
+
+static auto PySetDrawVirtualBounds(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_draw_virtual_bounds(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDrawVirtualBoundsDef = {
+    "set_draw_virtual_bounds",            // name
+    (PyCFunction)PySetDrawVirtualBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- get_debug_draw ---------------------------------
+
+static auto PyGetDebugDraw(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->debug_draw()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugDrawDef = {
+    "get_debug_draw",             // name
+    (PyCFunction)PyGetDebugDraw,  // method
+    METH_NOARGS,                  // flags
+
+    "get_debug_draw() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_debug_draw ---------------------------------
+
+static auto PySetDebugDraw(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_debug_draw(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugDrawDef = {
+    "set_debug_draw",              // name
+    (PyCFunction)PySetDebugDraw,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_debug_draw(value: bool) -> None\n"
+    "\n"
+    "Enable/disable engine debug drawing (the same thing F10 toggles).\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- get_force_max_virtual_bounds_margins -----------------------
+
+static auto PyGetForceMaxVirtualBoundsMargins(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  if (g_base->graphics->force_max_virtual_bounds_margins()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetForceMaxVirtualBoundsMarginsDef = {
+    "get_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PyGetForceMaxVirtualBoundsMargins,  // method
+    METH_NOARGS,                                     // flags
+
+    "get_force_max_virtual_bounds_margins() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- set_force_max_virtual_bounds_margins -----------------------
+
+static auto PySetForceMaxVirtualBoundsMargins(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->SetForceMaxVirtualBoundsMargins(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetForceMaxVirtualBoundsMarginsDef = {
+    "set_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PySetForceMaxVirtualBoundsMargins,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "set_force_max_virtual_bounds_margins(value: bool) -> None\n"
     "\n"
     ":meta private:",
 };
@@ -2164,6 +2731,158 @@ static PyMethodDef PyReloadHooksDef = {
     "native layer to see your changes.",
 };
 
+// ---------------------------- verify_ed25519 ---------------------------------
+
+static auto PyVerifyEd25519(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* public_key;
+  Py_ssize_t public_key_len;
+  const char* signature;
+  Py_ssize_t signature_len;
+  const char* message;
+  Py_ssize_t message_len;
+  static const char* kwlist[] = {"public_key", "signature", "message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#y#",
+                                   const_cast<char**>(kwlist), &public_key,
+                                   &public_key_len, &signature, &signature_len,
+                                   &message, &message_len)) {
+    return nullptr;
+  }
+  if (public_key_len != 32) {
+    PyErr_SetString(PyExc_ValueError, "public_key must be exactly 32 bytes");
+    return nullptr;
+  }
+  if (signature_len != 64) {
+    PyErr_SetString(PyExc_ValueError, "signature must be exactly 64 bytes");
+    return nullptr;
+  }
+  int result =
+      crypto_ed25519_check(reinterpret_cast<const uint8_t*>(signature),
+                           reinterpret_cast<const uint8_t*>(public_key),
+                           reinterpret_cast<const uint8_t*>(message),
+                           static_cast<size_t>(message_len));
+  if (result == 0) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVerifyEd25519Def = {
+    "verify_ed25519",              // name
+    (PyCFunction)PyVerifyEd25519,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "verify_ed25519(public_key: bytes, signature: bytes,\n"
+    "  message: bytes) -> bool\n"
+    "\n"
+    "Verify an Ed25519 signature (RFC 8032).\n"
+    "\n"
+    "``public_key`` must be exactly 32 bytes and ``signature`` exactly\n"
+    "64 bytes; ``message`` may be any length. Returns ``True`` when\n"
+    "the signature is valid for this key and message, ``False``\n"
+    "otherwise. Backed by Monocypher's SHA-512 variant so signatures\n"
+    "produced by any RFC-8032-compliant signer (e.g. OpenSSL, the\n"
+    "Python ``cryptography`` package) verify correctly.",
+};
+
+// --------------------------- simpledialog_create -----------------------------
+
+static auto PySimpleDialogCreate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int id = g_base->ui->CreateSimpleDialog();
+  return PyLong_FromLong(id);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogCreateDef = {
+    "simpledialog_create",              // name
+    (PyCFunction)PySimpleDialogCreate,  // method
+    METH_NOARGS,                        // flags
+
+    "simpledialog_create() -> int\n"
+    "\n"
+    "Create a SimpleDialog and return its id.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_update -----------------------------
+
+static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  const char* title;
+  const char* message;
+  float progress;
+  const char* button_label;
+  int cancel_activates_button;
+  static const char* kwlist[] = {"dialog_id",    "title",
+                                 "message",      "progress",
+                                 "button_label", "cancel_activates_button",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "issfsp",
+                                   const_cast<char**>(kwlist), &dialog_id,
+                                   &title, &message, &progress, &button_label,
+                                   &cancel_activates_button)) {
+    return nullptr;
+  }
+  g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
+                                   button_label, cancel_activates_button != 0);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogUpdateDef = {
+    "simpledialog_update",              // name
+    (PyCFunction)PySimpleDialogUpdate,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "simpledialog_update(dialog_id: int, title: str, message: str,\n"
+    "  progress: float, button_label: str,\n"
+    "  cancel_activates_button: bool) -> None\n"
+    "\n"
+    "Set a SimpleDialog's full visible state. A negative ``progress``\n"
+    "hides the bar; an empty ``button_label`` hides the button;\n"
+    "``cancel_activates_button`` lets cancel-type input fire the button.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_dismiss ----------------------------
+
+static auto PySimpleDialogDismiss(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  static const char* kwlist[] = {"dialog_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &dialog_id)) {
+    return nullptr;
+  }
+  g_base->ui->DismissSimpleDialog(dialog_id);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogDismissDef = {
+    "simpledialog_dismiss",              // name
+    (PyCFunction)PySimpleDialogDismiss,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "simpledialog_dismiss(dialog_id: int) -> None\n"
+    "\n"
+    "Dismiss (remove) a SimpleDialog.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2172,10 +2891,14 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardHasTextDef,
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
+      PyClipboardGetTextAsyncDef,
       PyDoOnceDef,
+      PyVerifyEd25519Def,
       PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
-      PySetInternalLanguageKeysDef,
+      PyReloadLanguageDef,
+      PyGetResourceDef,
+      PyTranslateDef,
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,
@@ -2183,13 +2906,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyIncrementAnalyticsCountRawDef,
       PyIncrementAnalyticsCountRaw2Def,
       PyIncrementAnalyticsCountDef,
-      PyMarkLogSentDef,
-      PyGetV1CloudLogDef,
-      PyIsLogFullDef,
-      PyGetLogFilePathDef,
       PySetPlatformMiscReadValsDef,
-      PySetLowLevelConfigValueDef,
-      PyGetLowLevelConfigValueDef,
       PyResolveAppConfigValueDef,
       PyGetAppConfigDefaultValueDef,
       PyAppConfigGetBuiltinKeysDef,
@@ -2211,11 +2928,14 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyInMainMenuDef,
       PyRequestPermissionDef,
       PyHavePermissionDef,
+      PyAddNetworkAvailabilityCallbackDef,
       PyUnlockAllInputDef,
       PyLockAllInputDef,
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
+      PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
+      PyHasGyroDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,
@@ -2231,6 +2951,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyUsingGooglePlayGameServicesDef,
       PyUsingGameCenterDef,
       PyNativeReviewRequestSupportedDef,
+      PyDeviceHapticsSupportedDef,
       PyNativeReviewRequestDef,
       PyTempTestingDef,
       PyOpenFileExternallyDef,
@@ -2239,12 +2960,25 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyRequestMainUIDef,
       PyGetDrawVirtualSafeAreaBoundsDef,
       PySetDrawVirtualSafeAreaBoundsDef,
+      PyGetDrawVirtualBoundsDef,
+      PySetDrawVirtualBoundsDef,
+      PyGetDebugDrawDef,
+      PySetDebugDrawDef,
+      PyGetForceMaxVirtualBoundsMarginsDef,
+      PySetForceMaxVirtualBoundsMarginsDef,
+      PyVirtualBoundsProjectProbeDef,
+      PyVirtualBoundsCalcProbeDef,
+      PyVirtualBoundsMaxMarginsProbeDef,
+      PyScreenInsetsBlendProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,
       PySuppressConfigAndStateWritesDef,
       PyGetSuppressConfigAndStateWritesDef,
       PyReloadHooksDef,
+      PySimpleDialogCreateDef,
+      PySimpleDialogUpdateDef,
+      PySimpleDialogDismissDef,
   };
 }
 

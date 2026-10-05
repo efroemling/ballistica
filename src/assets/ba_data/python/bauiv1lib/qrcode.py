@@ -2,8 +2,6 @@
 #
 """Provides functionality for displaying QR codes."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bauiv1 as bui
@@ -34,6 +32,7 @@ class QRCodeWindow(PopupWindow):
             bg_color=bg_color,
         )
         self._cancel_button = bui.buttonwidget(
+            id=f'{self._idprefix}|close',
             parent=self.root_widget,
             position=(50, self._height - 30),
             size=(50, 50),
@@ -61,5 +60,5 @@ class QRCodeWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        bui.play_swish()
         self._transition_out()

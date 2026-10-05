@@ -17,9 +17,17 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: "3.13"
-        cache: "pip"
-        cache-dependency-path: config/requirements.txt
+        python-version: "3.14"
+    # ``make env`` builds the project venv via uv (uv venv +
+    # uv pip install ...), so uv must be on PATH before that runs.
+    # ``setup-uv`` is the official Astral-published action; it
+    # installs uv and uses requirements.txt-keyed caching the same
+    # way ``setup-python``'s ``cache: pip`` did before this switch.
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v8.1.0
+      with:
+        enable-cache: true
+        cache-dependency-glob: "pconfig/requirements.txt"
     - name: Cache Bombsquad assets
       id: cache-assets
       uses: actions/cache@v5
@@ -37,9 +45,25 @@ runs:
       run: make env
     - name: Update assets
       shell: bash
+      # These targets assemble bundled builtin assets by calling the
+      # live bacloud server, and ephemeral runners hit a cold cache
+      # every time. A cold asset-package meta-build can occasionally
+      # surface a transient "Unable to reach bacloud server." from the
+      # basn proxy before the server-side build warms up (the proxy
+      # collapses distinct upstream conditions into that one message --
+      # see ballistica-server-node docs/followups.md). Both targets are
+      # idempotent and cache-backed, so a bounded retry absorbs that
+      # hiccup; a genuine break still fails all attempts.
       run: |
-        make assets-cmake
-        make assets-windows
+        for attempt in 1 2 3; do
+          if make assets-cmake && make assets-windows; then
+            exit 0
+          fi
+          echo "::warning::Asset assembly failed (attempt ${attempt}/3); retrying in 20s..."
+          sleep 20
+        done
+        echo "::error::Asset assembly failed after 3 attempts." >&2
+        exit 1
     # Following steps only run for inputs.using-cmake == 'true'
     - name: Install build packgages
       if: ${{ inputs.using-cmake == 'true' }}
@@ -49,8 +73,10 @@ runs:
         sudo apt-get install -y --no-install-recommends \
           libglut-dev \
           libopenal-dev \
-          libsdl2-dev \
-          libvorbis-dev
+          libvorbis-dev \
+          libpango1.0-dev \
+          ninja-build \
+          libsdl3-dev
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
@@ -60,6 +86,6 @@ runs:
         echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
     - name: Setup sccache
       if: ${{ inputs.using-cmake == 'true' }}
-      uses: mozilla-actions/sccache-action@v0.0.9
+      uses: mozilla-actions/sccache-action@v0.0.10
       with:
         disable_annotations: true

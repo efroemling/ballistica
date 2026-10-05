@@ -2,8 +2,6 @@
 #
 """Provides ui for network related testing."""
 
-from __future__ import annotations
-
 import time
 import copy
 import weakref
@@ -14,7 +12,9 @@ from typing import TYPE_CHECKING, override
 from efro.error import CleanError
 from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
+from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 import bauiv1 as bui
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -37,7 +37,7 @@ class NetTestingWindow(bui.MainWindow):
         self._height = (
             800
             if uiscale is bui.UIScale.SMALL
-            else 550 if uiscale is bui.UIScale.MEDIUM else 650
+            else 650 if uiscale is bui.UIScale.MEDIUM else 780
         )
 
         self._printed_lines: list[str] = []
@@ -50,7 +50,7 @@ class NetTestingWindow(bui.MainWindow):
         scale = (
             1.75
             if uiscale is bui.UIScale.SMALL
-            else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.75
+            else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.64
         )
 
         # Calc screen size in our local container space and clamp to a
@@ -65,6 +65,33 @@ class NetTestingWindow(bui.MainWindow):
         scroll_width = target_width
         scroll_height = target_height - 52
         scroll_bottom = yoffs - 82 - scroll_height
+
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        margin_left, margin_right, margin_bottom, margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
+        # In small ui we also extend the scroll's top edge all the way
+        # up to the top of the screen; soft blobs then keep our title
+        # and titlebar buttons legible over any content scrolled up
+        # there. Content gets padded to stay clear of the faded areas.
+        top_extend = (
+            (0.5 * self._height + 0.5 * (screensize[1] / scale))
+            - (scroll_bottom + scroll_height)
+            + margin_top
+            if uiscale is bui.UIScale.SMALL
+            else 0.0
+        )
+
+        # A bit of extra padding above our content so the soft blobs
+        # fading things out under the title don't eat into our top
+        # rows when scrolled to the top.
+        top_pad = 15.0 if uiscale is bui.UIScale.SMALL else 0.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -103,6 +130,40 @@ class NetTestingWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
+        self._scroll = bui.scrollwidget(
+            parent=self._root_widget,
+            size=(
+                scroll_width + margin_left + margin_right,
+                scroll_height + margin_bottom + top_extend,
+            ),
+            position=(
+                self._width * 0.5 - scroll_width * 0.5 - margin_left,
+                scroll_bottom - margin_bottom,
+            ),
+            capture_arrows=True,
+            autoselect=True,
+            border_opacity=0.4,
+        )
+
+        # Our scroll area extends up past our title; these soft blobs
+        # (plus the title and titlebar buttons being drawn after the
+        # scroll area) keep those legible over content scrolled up
+        # there. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here so the blobs
+        # coincide with that chrome, which doesn't move when we extend
+        # out into screen margins.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - scroll_width * 0.5,
+                scroll_bottom,
+                scroll_width,
+                scroll_height,
+                # Nudge the blobs up so their most-opaque core covers
+                # our title and titlebar-button area.
+                yoffs_extra=30.0,
+            )
+
         # Avoid squads button on small mode.
         # xinset = -50 if uiscale is bui.UIScale.SMALL else 0
 
@@ -117,9 +178,14 @@ class NetTestingWindow(bui.MainWindow):
             size=(100, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(resource='copyText'),
+            label=_commonassets.strings.actions.copy,
             on_activate_call=self._copy,
         )
+        # Explicitly slot titlebar buttons in front of the soft blobs
+        # (all children of a container share a single depth slice, so
+        # creation order alone doesn't put our opaque parts in front
+        # of the blobs' transparent faces).
+        bui.widget(edit=self._copy_button, depth_range=(0.95, 1.0))
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -131,33 +197,37 @@ class NetTestingWindow(bui.MainWindow):
             size=(60, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(value='...'),
+            label='...',
             on_activate_call=self._show_val_testing,
         )
+        bui.widget(edit=self._settings_button, depth_range=(0.95, 1.0))
 
-        bui.textwidget(
+        ttxt = bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
-            text=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+            text=_classicassets.strings.settings.net_testing.title,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
             maxwidth=250,
         )
+        bui.widget(edit=ttxt, depth_range=(0.9, 1.0))
 
-        self._scroll = bui.scrollwidget(
-            parent=self._root_widget,
-            size=(scroll_width, scroll_height),
-            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
-            capture_arrows=True,
-            autoselect=True,
-            border_opacity=0.4,
-        )
         self._rows = bui.columnwidget(
             parent=self._scroll,
             id=f'{self.main_window_id_prefix}|content',
+            left_border=margin_left,
         )
+        # One-time padding above our content so it starts clear of the
+        # soft blobs under the title (note that the column's border
+        # args apply per-child, so they can't be used for this).
+        if top_extend + top_pad > 0.0:
+            bui.textwidget(
+                parent=self._rows,
+                size=(0, top_extend + top_pad),
+                text='',
+            )
 
         # Now kick off the tests.
         # Pass a weak-ref to this window so we don't keep it alive
@@ -493,7 +563,7 @@ def get_net_val_testing_window() -> TestingWindow:
         {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
     ]
     return TestingWindow(
-        title=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+        title=_classicassets.strings.settings.net_testing.title,
         entries=entries,
     )
 
@@ -517,7 +587,7 @@ def get_net_val_testing_window() -> TestingWindow:
 #             {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
 #         ]
 #         super().__init__(
-#             title=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+#             title=_classicassets.strings.settings.net_testing.title,
 #             entries=entries,
 #             transition=transition,
 #         )

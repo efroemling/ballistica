@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -24,25 +25,81 @@ static constexpr float kPangoBaseFontSize = 26.0f;
 static constexpr bool kPangoDebugFontBounds = false;
 static constexpr const char* kPangoFontFamily = "Sans";
 
+// Serializes all Pango entry points below. Per-call surfaces/contexts/
+// layouts are private, but everything resolves through shared state (the
+// measure path's shared fontmap/layout below; rasterization's per-thread
+// default fontmaps + default-language state), and these functions run
+// concurrently: measuring may run on any thread (logic-thread UI,
+// background warm-ups, doc-ui prep), as may rasterization, since asset
+// preloads are not thread-pinned (see Asset::DoPreload()). Modern pango
+// (>=1.32.6) + fontconfig (>=2.13) document the fontmap as thread-safe,
+// but we don't pin those minimums, so one coarse lock buys certainty;
+// text work is rare and cheap enough that contention is negligible.
+inline std::mutex g_pango_mutex_;
+
 struct PangoTextData_ {
   std::vector<uint8_t> pixels;
   int width{};
   int height{};
 };
 
+inline auto PangoGetTextLineBreakOffsets_(const std::string& text)
+    -> std::vector<int> {
+  // pango_get_log_attrs runs Pango's UAX #14 analysis (libthai-backed for
+  // Thai where available); attrs[i].is_line_break means a line may begin
+  // before character i.
+  std::vector<int> offsets;
+  auto n_chars = static_cast<int64_t>(g_utf8_strlen(text.c_str(), -1));
+  if (n_chars <= 1) {
+    return offsets;
+  }
+  std::scoped_lock lock(g_pango_mutex_);
+  std::vector<PangoLogAttr> attrs(static_cast<size_t>(n_chars) + 1);
+  pango_get_log_attrs(text.c_str(), static_cast<int>(text.size()), -1,
+                      pango_language_get_default(), attrs.data(),
+                      static_cast<int>(attrs.size()));
+  const char* p = text.c_str();
+  for (int64_t i = 1; i < n_chars; ++i) {
+    p = g_utf8_next_char(p);
+    if (attrs[static_cast<size_t>(i)].is_line_break) {
+      offsets.push_back(static_cast<int>(p - text.c_str()));
+    }
+  }
+  return offsets;
+}
+
+// Persistent layout used by all measure calls on any thread (callers
+// must hold g_pango_mutex_). Two reasons this exists rather than
+// per-call creation: per-call setup (context + layout + font
+// description) dominates short-string measures, and — the load-bearing
+// part — pango-cairo's *default* fontmap is per-thread, so font and
+// fallback caches populated by a background warm-up (see
+// TextGraphics::WarmUpOSText) would never benefit measures from other
+// threads. One explicit shared fontmap makes warm-ups stick
+// process-wide. (Font *selection* still resolves through the same
+// fontconfig config as the per-thread default maps used for
+// rasterization, so measured metrics match rendered output.)
+inline auto PangoSharedMeasureLayout_() -> PangoLayout* {
+  static PangoLayout* layout = [] {
+    PangoFontMap* fontmap = pango_cairo_font_map_new();
+    PangoContext* context = pango_font_map_create_context(fontmap);
+    PangoLayout* l = pango_layout_new(context);
+    PangoFontDescription* font_desc = pango_font_description_new();
+    pango_font_description_set_family(font_desc, kPangoFontFamily);
+    pango_font_description_set_weight(font_desc, PANGO_WEIGHT_MEDIUM);
+    pango_font_description_set_absolute_size(
+        font_desc, static_cast<int>(kPangoBaseFontSize * PANGO_SCALE));
+    pango_layout_set_font_description(l, font_desc);
+    pango_font_description_free(font_desc);
+    return l;
+  }();
+  return layout;
+}
+
 inline void PangoGetTextBoundsAndWidth_(const std::string& text, Rect* r,
                                         float* width) {
-  cairo_surface_t* surface =
-      cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
-  cairo_t* cr = cairo_create(surface);
-  PangoLayout* layout = pango_cairo_create_layout(cr);
-  PangoFontDescription* font_desc = pango_font_description_new();
-  pango_font_description_set_family(font_desc, kPangoFontFamily);
-  pango_font_description_set_weight(font_desc, PANGO_WEIGHT_MEDIUM);
-  pango_font_description_set_absolute_size(
-      font_desc, static_cast<int>(kPangoBaseFontSize * PANGO_SCALE));
-  pango_layout_set_font_description(layout, font_desc);
-  pango_font_description_free(font_desc);
+  std::scoped_lock lock(g_pango_mutex_);
+  PangoLayout* layout = PangoSharedMeasureLayout_();
   pango_layout_set_text(layout, text.c_str(), -1);
   PangoRectangle ink_rect{};
   PangoRectangle logical_rect{};
@@ -64,9 +121,6 @@ inline void PangoGetTextBoundsAndWidth_(const std::string& text, Rect* r,
         ink_rect.y, ink_rect.width, ink_rect.height);
     fflush(stdout);
   }
-  g_object_unref(layout);
-  cairo_destroy(cr);
-  cairo_surface_destroy(surface);
 }
 
 inline auto PangoCreateTextTexture_(int width, int height,
@@ -83,6 +137,7 @@ inline auto PangoCreateTextTexture_(int width, int height,
     }
     fflush(stdout);
   }
+  std::scoped_lock lock(g_pango_mutex_);
   cairo_surface_t* surface =
       cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
   cairo_t* cr = cairo_create(surface);

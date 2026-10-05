@@ -2,8 +2,6 @@
 #
 """Version 1 of our doc-ui system."""
 
-from __future__ import annotations
-
 from enum import Enum
 from dataclasses import dataclass
 from typing import override, assert_never, TYPE_CHECKING, Annotated
@@ -20,6 +18,7 @@ class DocUIRequestTypeID(Enum):
 
     UNKNOWN = 'u'
     V1 = 'v1'
+    V2 = 'v2'
 
 
 class DocUIRequest(IOMultiType[DocUIRequestTypeID]):
@@ -46,6 +45,10 @@ class DocUIRequest(IOMultiType[DocUIRequestTypeID]):
             from bacommon.docui.v1 import Request
 
             return Request
+        if type_id is t.V2:
+            from bacommon.docui.v2 import Request as RequestV2
+
+            return RequestV2
 
         # Make sure we cover all types.
         assert_never(type_id)
@@ -82,6 +85,7 @@ class DocUIResponseTypeID(Enum):
 
     UNKNOWN = 'u'
     V1 = 'v1'
+    V2 = 'v2'
 
 
 class DocUIResponse(IOMultiType[DocUIResponseTypeID]):
@@ -108,6 +112,10 @@ class DocUIResponse(IOMultiType[DocUIResponseTypeID]):
             from bacommon.docui.v1 import Response
 
             return Response
+        if type_id is t.V2:
+            from bacommon.docui.v2 import Response as ResponseV2
+
+            return ResponseV2
 
         # Make sure we cover all types.
         assert_never(type_id)

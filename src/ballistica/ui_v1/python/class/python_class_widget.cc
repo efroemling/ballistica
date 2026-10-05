@@ -11,6 +11,7 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/slider_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -27,11 +28,13 @@ PyNumberMethods PythonClassWidget::as_number_;
 #define ATTR_SELECTABLE "selectable"
 #define ATTR_CENTER "center"
 #define ATTR_PARENT "parent"
+#define ATTR_DRAW_CONTROLLER "draw_controller"
 
 // The set we expose via dir().
 static const char* extra_dir_attrs[] = {
-    ATTR_TRANSITIONING_OUT, ATTR_ID, ATTR_ALLOW_PRESERVE_SELECTION,
-    ATTR_SELECTABLE,        nullptr,
+    ATTR_TRANSITIONING_OUT,        ATTR_ID,
+    ATTR_ALLOW_PRESERVE_SELECTION, ATTR_SELECTABLE,
+    ATTR_DRAW_CONTROLLER,          nullptr,
 };
 
 auto PythonClassWidget::type_name() -> const char* { return "Widget"; }
@@ -72,7 +75,14 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "        The parent widget (if any).\n"
       "\n"
       "    " ATTR_SELECTABLE " (bool):\n"
-      "        Whether this widget can be selected.\n";
+      "        Whether this widget can be selected.\n"
+      "\n"
+      "    " ATTR_DRAW_CONTROLLER " (bauiv1.Widget | None):\n"
+      "        The widget that visually 'owns' this one — typically\n"
+      "        set when an overlay textwidget represents the label of\n"
+      "        an underlying buttonwidget; activating the draw\n"
+      "        controller is the right way to act on the visual\n"
+      "        widget. None for widgets with no draw controller set.\n";
 
   // clang-format on
 
@@ -181,6 +191,19 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
     }
     if (Widget* parent = w->parent_widget()) {
       return parent->NewPyRef();
+    }
+    Py_RETURN_NONE;
+  }
+  if (!strcmp(s, ATTR_DRAW_CONTROLLER)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    // The "draw controller" is the widget visually responsible for
+    // this one (e.g. the underlying button for an overlaid label
+    // textwidget). Set via ``draw_controller=`` on widget creation.
+    if (Widget* dc = w->draw_control_parent()) {
+      return dc->NewPyRef();
     }
     Py_RETURN_NONE;
   }
@@ -294,7 +317,13 @@ auto PythonClassWidget::Activate(PythonClassWidget* self) -> PyObject* {
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
+  // Activation triggers user code (on-activate callbacks) via the current
+  // ui-operation; establish one in case we're being called from a timer or
+  // other non-ui-operation context (see GlobalSelect below).
+  base::UI::OperationContext operation_context;
   w->Activate();
+  // Run anything we triggered.
+  operation_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -335,6 +364,20 @@ auto PythonClassWidget::GetSelectedChild(PythonClassWidget* self) -> PyObject* {
     if (Widget* selected_widget = cw->selected_widget()) {
       return selected_widget->NewPyRef();
     }
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::GetSliderValue(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  if (auto* sw = dynamic_cast<SliderWidget*>(w)) {
+    return PyFloat_FromDouble(sw->value());
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -428,19 +471,72 @@ auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
+  // Selection can trigger user code (on-select callbacks), which gets
+  // scheduled on the current ui-operation. Establish one for the duration
+  // of this call: global-select is commonly invoked from timers/async
+  // contexts (docui timed refreshes, selection restores) where none is
+  // otherwise active, and without one the scheduled callbacks get dropped
+  // with an error. Harmlessly defers to any operation already in progress.
+  base::UI::OperationContext operation_context;
   w->GlobalSelect();
+  // Run anything we triggered.
+  operation_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self) -> PyObject* {
+auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int animate{1};
+  static const char* kwlist[] = {"animate", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|p",
+                                   const_cast<char**>(kwlist), &animate)) {
+    return nullptr;
+  }
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  w->ScrollIntoView(static_cast<bool>(animate));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::GetScrollState(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
-  w->ScrollIntoView();
+  auto state = w->GetScrollState();
+  if (!state) {
+    Py_RETURN_NONE;
+  }
+  return Py_BuildValue("(fff)", state->offset, state->content_extent,
+                       state->visible_extent);
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::SetScrollOffset(PythonClassWidget* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  float offset{};
+  static const char* kwlist[] = {"offset", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "f",
+                                   const_cast<char**>(kwlist), &offset)) {
+    return nullptr;
+  }
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  if (!w->SetScrollOffset(offset)) {
+    throw Exception("Widget is not a scrolling widget.", PyExcType::kType);
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -499,6 +595,18 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "get_selected_child() -> bauiv1.Widget | None\n"
      "\n"
      "Returns the selected child Widget or None if nothing is selected."},
+    {"get_slider_value", (PyCFunction)GetSliderValue, METH_NOARGS,
+     "get_slider_value() -> float | None\n"
+     "\n"
+     "Returns a slider Widget's current value, or None if this is not a\n"
+     "slider.\n"
+     "\n"
+     "Slider callbacks announce every change, so UI code can simply track\n"
+     "the value it is given; this exists for callers that would rather ask\n"
+     "the widget than shadow it -- automation and tests especially. Note\n"
+     "that callbacks are deferred to the end of the current UI operation,\n"
+     "so within one operation this reports the live value while a\n"
+     "callback-tracked copy may not have caught up yet."},
     // NOLINTNEXTLINE (signed bitwise stuff)
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
@@ -521,10 +629,34 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "\n"
      ":meta private:"},
     {"scroll_into_view", (PyCFunction)ScrollIntoView,
-     METH_NOARGS,  // NOLINT (signed bitwise stuff)
-     "scroll_into_view() -> None\n"
+     METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
+     "scroll_into_view(animate: bool = True) -> None\n"
      "\n"
-     "Scroll to show this widget if possible."},
+     "Scroll to show this widget if possible.\n"
+     "\n"
+     "Pass animate=False to snap straight to the destination instead of\n"
+     "gliding. Use that when the scrolled content was itself just built,\n"
+     "since there is then nothing on screen for the motion to read as\n"
+     "movement from."},
+    {"get_scroll_state", (PyCFunction)GetScrollState, METH_NOARGS,
+     "get_scroll_state() -> tuple[float, float, float] | None\n"
+     "\n"
+     "For a scrolling widget, return (offset, content_extent,\n"
+     "visible_extent) along its scroll axis; None for other widgets.\n"
+     "\n"
+     "The offset is in the widget's own terms, meaningful only to\n"
+     ":meth:`set_scroll_offset` on the same kind of widget. The extents\n"
+     "tell whether it still means the same thing: an offset saved from\n"
+     "one widget applies to another only if both extents match."},
+    {"set_scroll_offset", (PyCFunction)SetScrollOffset,
+     METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
+     "set_scroll_offset(offset: float) -> None\n"
+     "\n"
+     "Jump a scrolling widget straight to an offset.\n"
+     "\n"
+     "Takes an offset from :meth:`get_scroll_state`; clamped to the\n"
+     "content, with no glide and any inertia stopped. Raises TypeError\n"
+     "for widgets that don't scroll."},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

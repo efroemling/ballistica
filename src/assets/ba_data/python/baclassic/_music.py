@@ -2,9 +2,8 @@
 #
 """Music related functionality."""
 
-from __future__ import annotations
-
 import copy
+import time
 import logging
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
@@ -12,12 +11,22 @@ from enum import Enum
 
 import babase
 import bascenev1
-from bascenev1 import MusicType
+from bascenev1 import MusicType, _classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
     import bauiv1
+
+
+#: After another app's music stops, how long to wait before resuming
+#: game music. Long enough to ride out the brief 'stopped' gaps between
+#: a music app's tracks and between the phases of a Siri interaction
+#: (either would otherwise restart our music for a moment); short enough
+#: that genuinely stopping your music brings ours back promptly. Only
+#: that one transition waits -- yielding, and music with nothing else
+#: playing, are immediate.
+_OS_MUSIC_RESUME_DELAY_SECONDS = 3.0
 
 
 class MusicPlayMode(Enum):
@@ -36,39 +45,79 @@ class AssetSoundtrackEntry:
     loop: bool = True
 
 
+def _audioref(name: str) -> str:
+    """Qualified asset-package ref for a _classicassets audio asset."""
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:audio/{name}'
+
+
 # What gets played by default for our different music types:
 ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
-    MusicType.MENU: AssetSoundtrackEntry('menuMusic'),
+    MusicType.MENU: AssetSoundtrackEntry(_audioref('menu_music')),
     MusicType.VICTORY: AssetSoundtrackEntry(
-        'victoryMusic', volume=1.2, loop=False
+        _audioref('victory_music'), volume=1.2, loop=False
     ),
-    MusicType.CHAR_SELECT: AssetSoundtrackEntry('charSelectMusic', volume=0.4),
-    MusicType.RUN_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.ONSLAUGHT: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.KEEP_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.RACE: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.EPIC_RACE: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
+    MusicType.CHAR_SELECT: AssetSoundtrackEntry(
+        _audioref('char_select_music'), volume=0.4
+    ),
+    MusicType.RUN_AWAY: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.ONSLAUGHT: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.KEEP_AWAY: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.RACE: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.EPIC_RACE: AssetSoundtrackEntry(
+        _audioref('slow_epic_music'), volume=1.2
+    ),
     MusicType.SCORES: AssetSoundtrackEntry(
-        'scoresEpicMusic', volume=0.6, loop=False
+        _audioref('scores_epic_music'), volume=0.6, loop=False
     ),
-    MusicType.GRAND_ROMP: AssetSoundtrackEntry('grandRompMusic', volume=1.2),
-    MusicType.TO_THE_DEATH: AssetSoundtrackEntry('toTheDeathMusic', volume=1.2),
-    MusicType.CHOSEN_ONE: AssetSoundtrackEntry('survivalMusic', volume=0.8),
+    MusicType.GRAND_ROMP: AssetSoundtrackEntry(
+        _audioref('grand_romp_music'), volume=1.2
+    ),
+    MusicType.TO_THE_DEATH: AssetSoundtrackEntry(
+        _audioref('to_the_death_music'), volume=1.2
+    ),
+    MusicType.CHOSEN_ONE: AssetSoundtrackEntry(
+        _audioref('survival_music'), volume=0.8
+    ),
     MusicType.FORWARD_MARCH: AssetSoundtrackEntry(
-        'forwardMarchMusic', volume=0.8
+        _audioref('forward_march_music'), volume=0.8
     ),
     MusicType.FLAG_CATCHER: AssetSoundtrackEntry(
-        'flagCatcherMusic', volume=1.2
+        _audioref('flag_catcher_music'), volume=1.2
     ),
-    MusicType.SURVIVAL: AssetSoundtrackEntry('survivalMusic', volume=0.8),
-    MusicType.EPIC: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
-    MusicType.SPORTS: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.HOCKEY: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FOOTBALL: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FLYING: AssetSoundtrackEntry('flyingMusic', volume=0.8),
-    MusicType.SCARY: AssetSoundtrackEntry('scaryMusic', volume=0.8),
+    MusicType.SURVIVAL: AssetSoundtrackEntry(
+        _audioref('survival_music'), volume=0.8
+    ),
+    MusicType.EPIC: AssetSoundtrackEntry(
+        _audioref('slow_epic_music'), volume=1.2
+    ),
+    MusicType.SPORTS: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.HOCKEY: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.FOOTBALL: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.FLYING: AssetSoundtrackEntry(
+        _audioref('flying_music'), volume=0.8
+    ),
+    MusicType.SCARY: AssetSoundtrackEntry(_audioref('scary_music'), volume=0.8),
     MusicType.MARCHING: AssetSoundtrackEntry(
-        'whenJohnnyComesMarchingHomeMusic', volume=0.8
+        _audioref('when_johnny_comes_marching_home_music'), volume=0.8
     ),
 }
 
@@ -90,6 +139,21 @@ class MusicSubsystem:
             MusicPlayMode.REGULAR: None,
             MusicPlayMode.TEST: None,
         }
+
+        # Yield-to-external-music state (see
+        # docs/initiatives/soundtrack-modernization.md). Whether the
+        # playback we last actually applied was yielding to another
+        # app's music; lets us re-apply only on a real change.
+        self._os_music_applied = False
+        # The test soundtrack of the last TEST-mode request, so a yield
+        # and resume mid-test replays it rather than the user's own.
+        self._test_soundtrack: dict[str, Any] | None = None
+        # Recent change times, for spotting a flapping platform signal.
+        self._os_music_change_times: list[float] = []
+        self._warned_os_music_flapping = False
+        # Set while another app's music has stopped but we're holding off
+        # resuming ours (see _OS_MUSIC_RESUME_DELAY_SECONDS).
+        self._os_music_resume_timer: babase.AppTimer | None = None
 
         # Set up custom music players for platforms that support them.
         # FIXME: should generalize this to support arbitrary players per
@@ -237,8 +301,90 @@ class MusicSubsystem:
 
     def on_app_unsuspend(self) -> None:
         """Should be run when the app resumes from a suspended state."""
+        # Platforms re-report on foreground, but re-check here as a
+        # safety net in case a change arrived while we were suspended.
+        self._sync_os_music_state()
+
+    def on_os_music_playing_changed(self, playing: bool) -> None:
+        """Called when another app starts or stops playing music.
+
+        Game music (internal or a user soundtrack) fades out while
+        another app plays music and resumes when it stops. Sound
+        effects are unaffected.
+
+        :meta private:
+        """
+        now = time.monotonic()
+        self._os_music_change_times = [
+            t for t in self._os_music_change_times if now - t < 60.0
+        ] + [now]
+        if (
+            len(self._os_music_change_times) > 10
+            and not self._warned_os_music_flapping
+        ):
+            # A person toggling their music can't plausibly do this;
+            # suggests a platform signal misreporting (e.g. counting
+            # some short system sound as music). Warn once per run.
+            self._warned_os_music_flapping = True
+            logging.warning(
+                'OS music-playing signal changed %d times in 60s'
+                ' (platform %s); game music will keep starting/stopping.',
+                len(self._os_music_change_times),
+                babase.app.env.platform.value,
+            )
+        babase.audiolog.info(
+            'OS music playing changed: %s (applied: %s).',
+            playing,
+            self._os_music_applied,
+        )
         if babase.is_os_playing_music():
-            self.do_play_music(None)
+            # Other music is (back) on; any pending resume is moot.
+            self._os_music_resume_timer = None
+        elif self._os_music_applied and self._os_music_resume_timer is None:
+            # Other music just stopped while we were yielding to it. Hold
+            # off before resuming: gaps between tracks, and between the
+            # phases of a Siri interaction, briefly read as 'stopped',
+            # and resuming into them restarts our music for a moment.
+            babase.audiolog.debug(
+                'Other music stopped; resuming game music in %.1fs'
+                ' unless it starts again.',
+                _OS_MUSIC_RESUME_DELAY_SECONDS,
+            )
+            self._os_music_resume_timer = babase.AppTimer(
+                _OS_MUSIC_RESUME_DELAY_SECONDS,
+                babase.WeakCallStrict(self._on_os_music_resume_timer),
+            )
+        self._sync_os_music_state()
+
+    def _on_os_music_resume_timer(self) -> None:
+        self._os_music_resume_timer = None
+        babase.audiolog.debug('Resume delay elapsed; re-syncing game music.')
+        self._sync_os_music_state()
+
+    def _os_music_yielding(self) -> bool:
+        """Should game music currently yield to another app's?
+
+        True while another app plays music, and also during the resume
+        delay after it stops -- so a music change requested in that window
+        (a round starting, say) waits too instead of slipping through.
+        """
+        return (
+            babase.is_os_playing_music()
+            or self._os_music_resume_timer is not None
+        )
+
+    def _sync_os_music_state(self) -> None:
+        """Re-apply current music if yield state no longer matches."""
+        if self._os_music_yielding() == self._os_music_applied:
+            return
+        mode = self._music_mode
+        self.do_play_music(
+            self.music_types[mode],
+            mode=mode,
+            testsoundtrack=(
+                self._test_soundtrack if mode is MusicPlayMode.TEST else None
+            ),
+        )
 
     def do_play_music(
         self,
@@ -267,18 +413,46 @@ class MusicSubsystem:
             # If they don't want to restart music and we're already
             # playing what's requested, we're done.
             if continuous and self.music_types[mode] is musictype:
+                babase.audiolog.debug(
+                    'do_play_music: %s already current for %s'
+                    ' (continuous); leaving as-is.',
+                    musictype,
+                    mode,
+                )
                 return
             self.music_types[mode] = musictype
+            if mode is MusicPlayMode.TEST:
+                self._test_soundtrack = testsoundtrack
 
-            # If the OS tells us there's currently music playing,
-            # all our operations default to playing nothing.
-            if babase.is_os_playing_music():
+            # If another app is playing music, all our operations
+            # default to playing nothing (we still recorded the
+            # requested type above, so it resumes when that stops).
+            os_music_playing = self._os_music_yielding()
+            if os_music_playing:
+                babase.audiolog.debug(
+                    'do_play_music: OS reports music playing;'
+                    ' playing nothing instead of %s.',
+                    musictype,
+                )
                 musictype = None
 
             # If we're not in the mode this music is being set for,
             # don't actually change what's playing.
             if mode != self._music_mode:
+                babase.audiolog.debug(
+                    'do_play_music: %s requested for %s but current'
+                    ' mode is %s; not changing playback.',
+                    musictype,
+                    mode,
+                    self._music_mode,
+                )
                 return
+
+            # Fade (rather than cut) if this is us starting to yield.
+            fade_out = (
+                1.0 if os_music_playing and not self._os_music_applied else 0.0
+            )
+            self._os_music_applied = os_music_playing
 
             # Some platforms have a special music-player for things like iTunes
             # soundtracks, mp3s, etc. if this is the case, attempt to grab an
@@ -295,11 +469,20 @@ class MusicSubsystem:
 
             # Go through music-player.
             if entry is not None:
+                babase.audiolog.debug(
+                    'do_play_music: playing %s via music-player entry %s.',
+                    musictype,
+                    entry,
+                )
                 self._play_music_player_music(entry)
 
             # Handle via internal music.
             else:
-                self._play_internal_music(musictype)
+                babase.audiolog.debug(
+                    'do_play_music: playing %s via internal music.',
+                    musictype,
+                )
+                self._play_internal_music(musictype, fade_out=fade_out)
 
     def _get_user_soundtrack(self) -> dict[str, Any]:
         """Return current user soundtrack or empty dict otherwise."""
@@ -326,17 +509,19 @@ class MusicSubsystem:
         # Do the thing.
         self.get_music_player().play(entry)
 
-    def _play_internal_music(self, musictype: MusicType | None) -> None:
+    def _play_internal_music(
+        self, musictype: MusicType | None, fade_out: float = 0.0
+    ) -> None:
         # Stop any existing music-player playback.
         if self._music_player is not None:
             self._music_player.stop()
 
-        # Stop any existing internal music.
+        # Stop (or fade out) any existing internal music.
         # if self._music_node:
         #     self._music_node.delete()
         #     self._music_node = None
         if self._playing_internal_music:
-            bascenev1.set_internal_music(None)
+            bascenev1.set_internal_music(None, fade_out=fade_out)
             self._playing_internal_music = False
 
         # Start up new internal music.
@@ -357,7 +542,7 @@ class MusicSubsystem:
             #     },
             # )
             bascenev1.set_internal_music(
-                babase.getsimplesound(entry.assetname),
+                babase.simple_sound_from_ref(entry.assetname),
                 volume=entry.volume * 5.0,
                 loop=entry.loop,
             )

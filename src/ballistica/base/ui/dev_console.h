@@ -5,11 +5,13 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/graphics/mesh/image_mesh.h"
 #include "ballistica/base/graphics/text/text_group.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_ref.h"
@@ -24,8 +26,8 @@ class DevConsole {
   DevConsole();
   auto IsActive() const -> bool { return (state_ != State_::kInactive); }
   auto HandleTextEditing(const std::string& text) -> bool;
-  auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
-  auto HandleKeyRelease(const SDL_Keysym* keysym) -> bool;
+  auto HandleKeyPress(const BAKeysym* keysym) -> bool;
+  auto HandleKeyRelease(const BAKeysym* keysym) -> bool;
   auto transition_start() const -> millisecs_t { return transition_start_; }
 
   /// Toggle between mini, fullscreen, and inactive.
@@ -63,7 +65,8 @@ class DevConsole {
 
   void AddButton(const char* label, float x, float y, float width, float height,
                  PyObject* call, const char* h_anchor_str, float label_scale,
-                 float corner_radius, const char* style_str, bool disabled);
+                 float corner_radius, const char* style_str, bool disabled,
+                 bool sound);
   void AddText(const char* text, float x, float y, const char* h_anchor_str,
                const char* h_align_str, const char* v_align_str, float scale,
                const char* style_str);
@@ -88,7 +91,15 @@ class DevConsole {
 
   auto CaratCharValid_() -> bool;
   auto GetCaratX_() -> float;
-  void UpdateCarat_();
+  /// Rebuild carat pos/meshes; returns false if some measure was cold
+  /// (stand-in values used; retry later).
+  auto UpdateCarat_() -> bool;
+  auto CaratShown_() const -> bool;
+
+  /// Return the carat index nearest a (bottom-relative) point on the
+  /// input line, or empty if it can't be determined right now.
+  auto CaratPosAtPoint_(float x, float y) -> std::optional<int>;
+  void ApplyPastedText_(const std::string& text_in);
   auto Bottom_() const -> float;
   void SubmitPythonCommand_(const std::string& command);
   void InvokeStringEditor_();

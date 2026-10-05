@@ -6,19 +6,19 @@
 # pylint: disable=too-many-lines
 """Small handy bits of functionality."""
 
-from __future__ import annotations
-
 import os
+import math
 import time
 import random
 import weakref
 import threading
 import functools
 import datetime
-from typing import TYPE_CHECKING, cast, overload
+from typing import TYPE_CHECKING, Protocol, cast, overload
 
 if TYPE_CHECKING:
     import asyncio
+    import logging
     from typing import Any, Callable, Literal, Sequence
 
 
@@ -808,11 +808,26 @@ def unchanging_hostname() -> str:
     import platform
     import subprocess
 
-    # On Mac, this should give the computer name assigned in System Prefs.
+    # On Mac, read the user-set ComputerName directly out of the
+    # SystemConfiguration plist via plutil. This is the same
+    # source-of-truth that ``scutil --get ComputerName`` reads through
+    # configd, but plutil hits the file directly so it's also
+    # resilient to sandbox restrictions on configd access (Claude
+    # Code's sandbox blocks scutil's SCDynamicStore queries, causing
+    # them to return the generic factory default "MacBook Pro").
     if platform.system() == 'Darwin':
         return (
             subprocess.run(
-                ['scutil', '--get', 'ComputerName'],
+                [
+                    'plutil',
+                    '-extract',
+                    'System.System.ComputerName',
+                    'raw',
+                    '-o',
+                    '-',
+                    '/Library/Preferences/SystemConfiguration/'
+                    'preferences.plist',
+                ],
                 check=True,
                 capture_output=True,
             )
@@ -866,6 +881,7 @@ def timedelta_str(
     *,
     maxparts: int = 2,
     decimals: int = 0,
+    round_up: bool = False,
 ) -> str:
     """Return a simple human readable time string for a length of time.
 
@@ -877,11 +893,15 @@ def timedelta_str(
     - ``"23d 1h"``        (with maxparts == 2)
     - ``"23d 1.08h"``     (with maxparts == 2 and decimals == 2)
 
+    The smallest unit shown normally rounds down, which suits elapsed
+    times ("0s" until a full second has passed). Pass ``round_up`` for
+    countdowns, which conventionally round up instead: "1s" until the
+    time actually runs out rather than "0s" for the whole final second
+    (and "1h 0m" for 59m 59.5s left).
+
     Note that this is hard-coded in English and probably not especially
     performant.
     """
-    # pylint: disable=too-many-locals
-
     if isinstance(timeval, float | int):
         timevalfin = datetime.timedelta(seconds=timeval)
     else:
@@ -889,7 +909,33 @@ def timedelta_str(
 
     # Internally we only handle positive values.
     if timevalfin.total_seconds() < 0:
-        return f'-{timedelta_str(timeval=-timeval, maxparts=maxparts)}'
+        return '-' + timedelta_str(
+            -timevalfin, maxparts=maxparts, decimals=decimals, round_up=round_up
+        )
+
+    text, quantum = _timedelta_str_parts(timevalfin, maxparts, decimals)
+    if round_up:
+        # Round up to a whole number of the smallest unit shown, then
+        # render that. (The tolerance keeps float noise in an exact
+        # multiple from rounding it up a whole extra step.)
+        total = timevalfin.total_seconds()
+        rounded = math.ceil(total / quantum - 1e-9) * quantum
+        if rounded > total:
+            text, _ = _timedelta_str_parts(
+                datetime.timedelta(seconds=rounded), maxparts, decimals
+            )
+    return text
+
+
+def _timedelta_str_parts(
+    timevalfin: datetime.timedelta, maxparts: int, decimals: int
+) -> tuple[str, float]:
+    """Render a non-negative length; also return its smallest step.
+
+    The step is the length in seconds of the last unit shown (a fraction
+    of one when it shows decimals) -- how coarsely the text measures.
+    """
+    # pylint: disable=too-many-locals
 
     years = timevalfin.days // 365
     days = timevalfin.days % 365
@@ -923,22 +969,25 @@ def timedelta_str(
         years_f = days_f = hours_f = minutes_f = seconds_f = 0.0
 
     parts: list[str] = []
-    for part, part_f, suffix in (
-        (years, years_f, 'y'),
-        (days, days_f, 'd'),
-        (hours, hours_f, 'h'),
-        (minutes, minutes_f, 'm'),
-        (seconds, seconds_f, 's'),
+    quantum = 1.0
+    for part, part_f, suffix, unit in (
+        (years, years_f, 'y', 365 * 86400.0),
+        (days, days_f, 'd', 86400.0),
+        (hours, hours_f, 'h', 3600.0),
+        (minutes, minutes_f, 'm', 60.0),
+        (seconds, seconds_f, 's', 1.0),
     ):
         if part or parts or (not parts and suffix == 's'):
             # Do decimal version only for the last part.
             if decimals and (len(parts) >= maxparts - 1 or suffix == 's'):
                 parts.append(f'{part+part_f:.{decimals}f}{suffix}')
+                quantum = unit / 10**decimals
             else:
                 parts.append(f'{part}{suffix}')
+                quantum = unit
             if len(parts) >= maxparts:
                 break
-    return ' '.join(parts)
+    return ' '.join(parts), quantum
 
 
 def ago_str(
@@ -1075,6 +1124,93 @@ def prune_empty_dirs(prunedir: str) -> None:
                 ) from exc
 
 
+async def gather_strip(*coros: Any) -> list[Any]:
+    """asyncio.gather() with return_exceptions=True, traceback-stripped.
+
+    A common cause of reference cycles in async code is
+    asyncio.gather called with return_exceptions=True: each
+    coroutine that raised has its exception stored in the result
+    list with its full __traceback__, which keeps the originating
+    frames alive (see :func:`strip_exception_tracebacks`).
+
+    Use this anywhere you'd use ``gather(..., return_exceptions=True)``.
+    It returns the same list of results, but with exception
+    tracebacks already cleared so callers can log/inspect them
+    without creating a cycle.
+    """
+    import asyncio
+
+    results = await asyncio.gather(*coros, return_exceptions=True)
+    for r in results:
+        if isinstance(r, BaseException):
+            strip_exception_tracebacks(r)
+    return results
+
+
+class WebSocketProtocolLike(Protocol):
+    """The bit of a ``websockets`` protocol object we need to reach.
+
+    ``logger`` is typed exactly as ``websockets`` types it
+    (``LoggerLike``); a mutable protocol attribute is invariant, so a
+    near-miss here would fail to match rather than merely widen.
+    """
+
+    logger: logging.Logger | logging.LoggerAdapter[Any]
+
+
+class WebSocketConnectionLike(Protocol):
+    """The bit of a ``websockets`` connection we need to reach.
+
+    Structural so that :mod:`efro.util` stays free of a hard
+    dependency on ``websockets``, which not every consumer installs.
+    """
+
+    logger: logging.Logger | logging.LoggerAdapter[Any]
+
+    @property
+    def protocol(self) -> WebSocketProtocolLike:
+        """The connection's protocol object.
+
+        Read-only here so implementations may supply any compatible
+        protocol type; we only ever assign to its ``logger``.
+        """
+
+
+def break_websocket_logger_cycle(
+    connection: WebSocketConnectionLike,
+) -> None:
+    """Undo the self-reference ``websockets`` puts in a connection.
+
+    On construction, ``websockets`` replaces a connection's logger
+    with a :class:`logging.LoggerAdapter` carrying
+    ``{'websocket': <the connection>}`` so log records can report it.
+    That back-reference makes every connection a reference cycle
+    (connection -> adapter -> extra -> connection), which keeps the
+    whole connection graph -- TLS objects, compression contexts,
+    stream buffers, pending futures and, under asyncio debug mode,
+    their source tracebacks -- alive until a cyclic collection rather
+    than freeing it when the last real reference goes away. On a
+    process that opens connections repeatedly, that accumulates.
+
+    Call this right after connecting, on any connection whose logs
+    don't need the ``websocket`` field. Doing it at connect time
+    rather than at close covers every teardown path, including ones
+    that abandon the socket rather than closing it.
+
+    Tolerant by design: a ``websockets`` version that stops wrapping
+    the logger leaves this a no-op instead of an error.
+    """
+    import logging
+
+    adapter = getattr(connection, 'logger', None)
+    if isinstance(adapter, logging.LoggerAdapter):
+        underlying = adapter.logger
+        connection.logger = underlying
+        protocol = getattr(connection, 'protocol', None)
+        if protocol is not None:
+            protocol.logger = underlying
+
+
 def strip_exception_tracebacks(exc: BaseException) -> None:
     """Strip tracebacks from exceptions to break reference cycles.
 
@@ -1087,9 +1223,35 @@ def strip_exception_tracebacks(exc: BaseException) -> None:
     garbage collector.
 
     This call strips tracebacks from the provided exception, any
-    exceptions that were active when it was raised, and any it was
-    explicitly raised from, recursively. Be sure you are done using the
-    exception before calling this.
+    exceptions that were active when it was raised, any it was
+    explicitly raised from, and (for :class:`BaseExceptionGroup`)
+    any nested child exceptions, recursively.
+
+    Important: ONLY call this when you are fully done with the
+    exception — typically at the tail end of an ``except`` block,
+    after any logging, reporting, or chaining via ``raise X from
+    Y`` has already happened. The traceback is part of the
+    exception's user-visible diagnostic surface; consumers
+    (including subsequent ``except`` blocks up the stack, log
+    handlers, and code that calls ``traceback.format_exception``)
+    expect it to be intact while the exception is in flight.
+
+    DO NOT call this in places that:
+
+    * Store the exception somewhere a future caller will read it
+      (e.g. attaching it to a response object, queueing it, etc.).
+    * Hand the exception off to a callback or another thread.
+    * Re-raise it (with or without ``from``) after the call —
+      the new exception's ``__cause__``/``__context__`` chain
+      would point at a now-tracebackless exception, so the
+      caller catching the new exception sees a degraded
+      diagnostic.
+
+    The right pattern is "consume, then strip": let the
+    exception flow normally through producers, dispatchers, and
+    chaining points; only call this where you've finished
+    extracting whatever info you need (logging, error-reporting,
+    etc.) and are about to drop the reference.
     """
     seen = set()
     stack = [exc]
@@ -1111,6 +1273,10 @@ def strip_exception_tracebacks(exc: BaseException) -> None:
         cause = getattr(e, '__cause__', None)
         if cause is not None:
             stack.append(cause)
+
+        # Children of a PEP 654 ExceptionGroup.
+        if isinstance(e, BaseExceptionGroup):
+            stack.extend(e.exceptions)
 
 
 def secure_id() -> str:

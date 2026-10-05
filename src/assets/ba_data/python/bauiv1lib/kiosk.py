@@ -2,12 +2,11 @@
 #
 """UI functionality for running the game in kiosk mode."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 
 
 class KioskWindow(bui.MainWindow):
@@ -57,9 +56,13 @@ class KioskWindow(bui.MainWindow):
             t_delay_base = 1.0
             t_delay_scale = 1.0
 
-        mesh_opaque = bui.getmesh('level_select_button_opaque')
-        mesh_transparent = bui.getmesh('level_select_button_transparent')
-        mask_tex = bui.gettexture('mapPreviewMask')
+        mesh_opaque = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
+        )
+        mesh_transparent = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = _classiccatalogassets.textures.map_preview_mask.get()
 
         y_extra = 130.0 + (0.0 if self._show_multiplayer else -130.0)
         b_width = 250.0
@@ -80,7 +83,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 44),
                 transition_delay=tdelay,
-                text=bui.Lstr(resource=f'{self._r}.singlePlayerExamplesText'),
+                text=_classicassets.strings.kiosk.single_player_examples,
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -95,10 +98,7 @@ class KioskWindow(bui.MainWindow):
                 position=(self._width * 0.5, self._height + y_extra - 34),
                 transition_delay=tdelay,
                 text=(
-                    bui.Lstr(
-                        resource='demoText',
-                        fallback_resource='mainMenu.demoMenuText',
-                    )
+                    _classicassets.strings.ui.demo
                     if variant is vart.DEMO
                     else 'ARCADE'
                 ),
@@ -127,7 +127,7 @@ class KioskWindow(bui.MainWindow):
             size=(0, 0),
             position=(h, label_height),
             maxwidth=b_width * 0.7,
-            text=bui.Lstr(resource=f'{self._r}.easyText'),
+            text=_classicassets.strings.ui.easy,
             scale=1.3,
             h_align='center',
             v_align='center',
@@ -138,7 +138,7 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=bui.gettexture('doomShroomPreview'),
+            texture=_classiccatalogassets.textures.doom_shroom_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -162,7 +162,7 @@ class KioskWindow(bui.MainWindow):
             size=(0, 0),
             position=(h, label_height),
             maxwidth=b_width * 0.7,
-            text=bui.Lstr(resource=f'{self._r}.mediumText'),
+            text=_commonassets.strings.values.medium,
             scale=1.3,
             h_align='center',
             v_align='center',
@@ -173,7 +173,9 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=bui.gettexture('footballStadiumPreview'),
+            texture=(
+                _classiccatalogassets.textures
+            ).football_stadium_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -208,7 +210,7 @@ class KioskWindow(bui.MainWindow):
             transition_delay=tdelay,
             size=(img_width, 0.5 * img_width),
             position=(h - img_width * 0.5, img_v),
-            texture=bui.gettexture('courtyardPreview'),
+            texture=_classiccatalogassets.textures.courtyard_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -226,7 +228,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 44),
                 transition_delay=tdelay,
-                text=bui.Lstr(resource=f'{self._r}.versusExamplesText'),
+                text=_classicassets.strings.kiosk.versus_examples,
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -252,7 +254,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Capture the Flag')),
+                text=_classiccatalogassets.strings.game_names.capture_the_flag,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -263,7 +265,7 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=bui.gettexture('bridgitPreview'),
+                texture=_classiccatalogassets.textures.bridgit_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -288,7 +290,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Hockey')),
+                text=_classiccatalogassets.strings.game_names.hockey,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -299,7 +301,9 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=bui.gettexture('hockeyStadiumPreview'),
+                texture=(
+                    _classiccatalogassets.textures
+                ).hockey_stadium_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -323,7 +327,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(resource=f'{self._r}.epicModeText'),
+                text=_classicassets.strings.ui.epic_mode,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -334,7 +338,7 @@ class KioskWindow(bui.MainWindow):
                 transition_delay=tdelay,
                 size=(img_width, 0.5 * img_width),
                 position=(h - img_width * 0.5, img_v),
-                texture=bui.gettexture('tipTopPreview'),
+                texture=_classiccatalogassets.textures.tip_top_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -353,7 +357,7 @@ class KioskWindow(bui.MainWindow):
                 scale=0.5,
                 position=(self._width * 0.5 - 60.0, b_v - 70.0),
                 transition_delay=tdelay,
-                label=bui.Lstr(resource=f'{self._r}.fullMenuText'),
+                label=_classicassets.strings.kiosk.full_menu,
                 on_activate_call=self._do_full_menu,
             )
         else:

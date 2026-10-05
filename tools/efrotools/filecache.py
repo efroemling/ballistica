@@ -2,10 +2,9 @@
 #
 """Provides a system for caching linting/formatting operations."""
 
-from __future__ import annotations
-
 import json
 import os
+import sys
 from typing import TYPE_CHECKING
 
 # Pylint's preferred import order here seems non-deterministic (as of 2.10.1).
@@ -94,9 +93,13 @@ class FileCache:
         # if anything has been modified, don't write.
         for fname, mtime in self.mtimes.items():
             if os.path.getmtime(fname) != mtime:
+                # Stderr (not stdout) so programmatic consumers
+                # parsing tool output via captured stdout don't
+                # get this warning mixed into their results.
                 print(
                     f'{Clr.MAG}File changed during run:'
-                    f' "{fname}"; cache not updated.{Clr.RST}'
+                    f' "{fname}"; cache not updated.{Clr.RST}',
+                    file=sys.stderr,
                 )
                 return
         out = json.dumps(self.entries)

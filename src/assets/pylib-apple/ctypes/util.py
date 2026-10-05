@@ -67,6 +67,71 @@ if os.name == "nt":
                 return fname
         return None
 
+    # Listing loaded DLLs on Windows relies on the following APIs:
+    # https://learn.microsoft.com/windows/win32/api/psapi/nf-psapi-enumprocessmodules
+    # https://learn.microsoft.com/windows/win32/api/libloaderapi/nf-libloaderapi-getmodulefilenamew
+    import ctypes
+    from ctypes import wintypes
+
+    _kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    _get_current_process = _kernel32["GetCurrentProcess"]
+    _get_current_process.restype = wintypes.HANDLE
+
+    _k32_get_module_file_name = _kernel32["GetModuleFileNameW"]
+    _k32_get_module_file_name.restype = wintypes.DWORD
+    _k32_get_module_file_name.argtypes = (
+        wintypes.HMODULE,
+        wintypes.LPWSTR,
+        wintypes.DWORD,
+    )
+
+    # gh-145307: We defer loading psapi.dll until _get_module_handles is called.
+    # Loading additional DLLs at startup for functionality that may never be
+    # used is wasteful.
+    _enum_process_modules = None
+
+    def _get_module_filename(module: wintypes.HMODULE):
+        name = (wintypes.WCHAR * 32767)() # UNICODE_STRING_MAX_CHARS
+        if _k32_get_module_file_name(module, name, len(name)):
+            return name.value
+        return None
+
+    def _get_module_handles():
+        global _enum_process_modules
+        if _enum_process_modules is None:
+            _psapi = ctypes.WinDLL('psapi', use_last_error=True)
+            _enum_process_modules = _psapi["EnumProcessModules"]
+            _enum_process_modules.restype = wintypes.BOOL
+            _enum_process_modules.argtypes = (
+                wintypes.HANDLE,
+                ctypes.POINTER(wintypes.HMODULE),
+                wintypes.DWORD,
+                wintypes.LPDWORD,
+            )
+
+        process = _get_current_process()
+        space_needed = wintypes.DWORD()
+        n = 1024
+        while True:
+            modules = (wintypes.HMODULE * n)()
+            if not _enum_process_modules(process,
+                                         modules,
+                                         ctypes.sizeof(modules),
+                                         ctypes.byref(space_needed)):
+                err = ctypes.get_last_error()
+                msg = ctypes.FormatError(err).strip()
+                raise ctypes.WinError(err, f"EnumProcessModules failed: {msg}")
+            n = space_needed.value // ctypes.sizeof(wintypes.HMODULE)
+            if n <= len(modules):
+                return modules[:n]
+
+    def dllist():
+        """Return a list of loaded shared libraries in the current process."""
+        modules = _get_module_handles()
+        libraries = [name for h in modules
+                        if (name := _get_module_filename(h)) is not None]
+        return libraries
+
 elif os.name == "posix" and sys.platform in {"darwin", "ios", "tvos", "visionos", "watchos"}:
     from ctypes.macholib.dyld import dyld_find as _dyld_find
     def find_library(name):
@@ -79,6 +144,22 @@ elif os.name == "posix" and sys.platform in {"darwin", "ios", "tvos", "visionos"
             except ValueError:
                 continue
         return None
+
+    # Listing loaded libraries on Apple systems relies on the following API:
+    # https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/dyld.3.html
+    import ctypes
+
+    _libc = ctypes.CDLL(find_library("c"))
+    _dyld_get_image_name = _libc["_dyld_get_image_name"]
+    _dyld_get_image_name.restype = ctypes.c_char_p
+
+    def dllist():
+        """Return a list of loaded shared libraries in the current process."""
+        num_images = _libc._dyld_image_count()
+        libraries = [os.fsdecode(name) for i in range(num_images)
+                        if (name := _dyld_get_image_name(i)) is not None]
+
+        return libraries
 
 elif sys.platform.startswith("aix"):
     # AIX has two styles of storing shared libraries
@@ -97,6 +178,25 @@ elif sys.platform == "android":
 
         fname = f"{directory}/lib{name}.so"
         return fname if os.path.isfile(fname) else None
+
+elif sys.platform == "emscripten":
+    def _is_wasm(filename):
+        # Return True if the given file is an WASM module
+        wasm_header = b"\x00asm"
+        with open(filename, 'br') as thefile:
+            return thefile.read(4) == wasm_header
+
+    def find_library(name):
+        candidates = [f"lib{name}.so", f"lib{name}.wasm"]
+        paths = os.environ.get("LD_LIBRARY_PATH", "")
+        for libdir in paths.split(":"):
+            for name in candidates:
+                libfile = os.path.join(libdir, name)
+
+                if os.path.isfile(libfile) and _is_wasm(libfile):
+                    return libfile
+
+        return None
 
 elif os.name == "posix":
     # Andreas Degert's find functions, using gcc, /sbin/ldconfig, objdump
@@ -321,8 +421,7 @@ elif os.name == "posix":
             result = None
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE,
-                                     universal_newlines=True)
+                                     stderr=subprocess.PIPE)
                 out, _ = p.communicate()
                 res = re.findall(expr, os.fsdecode(out))
                 for file in res:
@@ -340,6 +439,14 @@ elif os.name == "posix":
             # See issue #9998
             return _findSoname_ldconfig(name) or \
                    _get_soname(_findLib_gcc(name)) or _get_soname(_findLib_ld(name))
+
+
+# On platforms which provide dl_iterate_phdr(), dllist() is implemented
+# in _ctypes.
+try:
+    from _ctypes import dllist
+except ImportError:
+    pass
 
 ################################################################
 # test code
@@ -383,6 +490,13 @@ def test():
             print(cdll.LoadLibrary("libm.so"))
             print(cdll.LoadLibrary("libcrypt.so"))
             print(find_library("crypt"))
+
+    try:
+        dllist
+    except NameError:
+        print('dllist() not available')
+    else:
+        print(dllist())
 
 if __name__ == "__main__":
     test()

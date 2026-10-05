@@ -24,17 +24,56 @@ class ConnectionToHost : public Connection {
   virtual auto GetAsUDP() -> ConnectionToHostUDP*;
   auto build_number() const -> int { return build_number_; }
   auto protocol_version() const -> int { return protocol_version_; }
+  auto PeerSupportsZstdPackets() const -> bool override {
+    // The host's version arrives in its handshake; until then we only
+    // ever send huffman (which any host decodes).
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionZstdPackets;
+  }
+  auto PeerSupportsUnreliableParts() const -> bool override {
+    return can_communicate()
+           && protocol_version_ >= kProtocolVersionUnreliableParts;
+  }
+  auto PeerSupportsWideAcks() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionWideAcks;
+  }
+  auto PeerSupportsBigPackets() const -> bool override {
+    return can_communicate() && protocol_version_ >= kProtocolVersionBigPackets;
+  }
   void set_protocol_version(int val) { protocol_version_ = val; }
   auto party_name() const -> std::string {
     // FIXME should we return peer name as fallback?..
     return party_name_;
   }
 
+  /// The password to present to the host (empty = none). Set at connect
+  /// time; the client sends HMAC(password, host-salt) in its CLIENT_INFO
+  /// so the host can verify without the raw password ever hitting the
+  /// (plaintext) wire.
+  void set_join_password(const std::string& val) { join_password_ = val; }
+
+  /// Whether the pre-join requirements exchange completed for this
+  /// connect. Set at connect time; the handshake hard-fails joins to
+  /// lang-str-era hosts (protocol 39+) that weren't prepped (the
+  /// no-mid-game-downloads design means such a join could only strand).
+  void set_prepped(bool val) { prepped_ = val; }
+
  private:
   std::string party_name_;
   std::string peer_hash_input_;
   std::string peer_hash_;
+  std::string join_password_;
+  bool prepped_{};
+  std::string handshake_salt_;
   std::optional<std::string> v2_auth_global_app_instance_id_;
+  // Whether the host's v2-auth offer is optional (we may join without).
+  bool v2_auth_optional_{};
+  // Once set, our settled token decision for this connection: the
+  // token we send, or no token (an optional offer we couldn't take).
+  // Latched so every handshake-response says the same thing.
+  bool v2_auth_decided_{};
+  std::optional<std::string> v2_auth_token_;
+  millisecs_t v2_auth_start_time_{};
   // The client-session that we're driving
   Object::WeakRef<ClientSession> client_session_;
   int protocol_version_{-1};

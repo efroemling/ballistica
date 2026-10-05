@@ -34,6 +34,20 @@ class TextureAssetPreloadData {
   int widths[kMaxTextureLevels]{};
   int heights[kMaxTextureLevels]{};
   int base_level{};
+
+  // Whether the texture's RGB is premultiplied by its alpha, read from
+  // the KTX2 DFD's KHR_DF_FLAG_ALPHA_PREMULTIPLIED flag at load
+  // (asset-packages decision #23). Fed in now but NOT yet consumed by
+  // the GPU upload / blend path — it's a hook for a future
+  // premult-aware renderer. Legacy loaders (DDS/KTX/PVR) leave it false.
+  bool premultiplied{};
+
+  // Per-axis wrapping, read from the KTX2 key/value data at load
+  // (``baTextureWrappingH``/``V``). Unlike ``premultiplied`` this IS
+  // consumed: it becomes GL_TEXTURE_WRAP_S/T at upload. Legacy loaders
+  // (DDS/KTX/PVR) and any file without the keys leave these kClamp.
+  TextureWrapping wrap_h{TextureWrapping::kClamp};
+  TextureWrapping wrap_v{TextureWrapping::kClamp};
 };
 
 }  // namespace ballistica::base

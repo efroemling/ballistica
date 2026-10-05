@@ -2,12 +2,89 @@
 #
 """Provides AppMode functionality."""
 
-from __future__ import annotations
-
+from enum import Enum
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from babase import AppIntent, DevConsoleButtonDef
+
+
+class ControlPermission(Enum):
+    """An app-mode's answer to a request to control the app."""
+
+    #: The user (or policy) allows it.
+    ALLOW = 'allow'
+
+    #: The user (or policy) refuses it. This is sticky -- the
+    #: requester is turned away for a while without asking again,
+    #: so a repeated request can't wear someone down.
+    DENY = 'deny'
+
+    #: No answer is possible *right now* -- this mode has no way to
+    #: ask. Distinct from DENY on purpose, because a request
+    #: arriving during bring-up should be held and put to the user
+    #: once a mode that can ask becomes active, not refused.
+    CANNOT_ASK = 'cannot_ask'
+
+
+@dataclass
+class ControlPermissionRequest:
+    """Someone asking for permission to control this app."""
+
+    #: Display name of whoever is asking -- an account tag, vouched
+    #: for by the master server, so it can be shown as fact rather
+    #: than as a claim. ``None`` when it couldn't be established.
+    #:
+    #: Classic deliberately does not show this: today's only caller
+    #: (the cloud console) can reach a device only by owning it, so
+    #: the tag is always the viewer's own and naming it says nothing.
+    #: Kept because that is a property of the current caller, not of
+    #: this request -- anything reachable by someone else would need
+    #: it back.
+    requester_name: str | None = None
+
+    #: Opaque stable id for the requester, the same across their
+    #: sessions. A remembered grant hangs off this. ``None`` means
+    #: this requester can't be recognized again, so any allowance
+    #: must apply to this request alone.
+    requester_key: str | None = None
+
+
+class AppModeConfig:
+    """Base class for app-mode configuration objects.
+
+    An app-mode defines how it should be set up by returning one of
+    these from :meth:`AppMode.new_app_mode_config`. The framework
+    builds a fresh one for each activation, offers it to plugins
+    (:meth:`~babase.Plugin.on_app_mode_config`), and then hands it to
+    the mode's :meth:`AppMode.on_activate`, where the mode configures
+    itself and any app-subsystems it uses from it.
+
+    Each mode defines its own config subclass, so the config *type*
+    identifies the mode to anyone amending it. By convention a config
+    only *describes* -- building or mutating one changes nothing
+    live; values take effect when the mode activates and reads them.
+    That convention is what makes configs safe for mode subclasses
+    and plugins to amend.
+
+    Configs are deliberately owned by their mode rather than being
+    one framework-wide object with a part per subsystem: the mode
+    that builds a config is also the one that consumes it, so the
+    framework never needs to know what any particular config holds
+    and nothing has to be registered to apply one.
+
+    When writing a config type, make any value that has no sensible
+    default a required constructor argument of whatever object holds
+    it, and leave everything a plain mutable attribute afterward.
+    That way a type checker catches a mode that forgets a required
+    value, while subclasses and plugins can still reassign anything.
+    Prefer holding cheap descriptions (asset handles rather than
+    loaded assets, for example) so that building a config stays free
+    of side effects and replaced defaults are never loaded.
+    """
 
 
 class AppMode:
@@ -27,8 +104,53 @@ class AppMode:
         """Handle an intent."""
         raise NotImplementedError('AppMode subclasses must override this.')
 
-    def on_activate(self) -> None:
-        """Called when the mode is becoming the active one fro the app."""
+    def on_control_permission_request(
+        self,
+        request: ControlPermissionRequest,
+        on_result: Callable[[ControlPermission], None],
+    ) -> None:
+        """Ask the user whether something may control the app.
+
+        'Control' is deliberately broad: running commands, reading
+        this app's log, and whatever that grows into. Answer via
+        ``on_result``, which may be called later (from a dialog) or
+        immediately (from policy).
+
+        The default answers ``CANNOT_ASK``, which is the honest
+        answer for a mode with no way to prompt -- the request is
+        then held and re-put once a mode that can ask activates.
+        An app-mode with a UI should override this; one running
+        without a user present (a dedicated server) should answer
+        ``ALLOW``, since nobody is there to ask and the operator
+        already owns the account.
+        """
+        del request  # Unused.
+        on_result(ControlPermission.CANNOT_ASK)
+
+    def new_app_mode_config(self) -> AppModeConfig:
+        """Create a fresh config describing how this mode should run.
+
+        Called by the framework each time this mode is about to become
+        the active one. Override to return your mode's own
+        :class:`~babase.AppModeConfig` subclass, built with the mode's
+        defaults; the framework then offers it to plugins and passes
+        the final result to :meth:`on_activate`.
+
+        A fresh instance is built per activation, so nothing can
+        persist between modes (or activations) by construction.
+        """
+        return AppModeConfig()
+
+    def on_activate(self, config: AppModeConfig) -> None:
+        """Called when the mode is becoming the active one for the app.
+
+        ``config`` is the object created by
+        :meth:`new_app_mode_config` for this activation, possibly
+        amended by plugins. Modes that define their own config type
+        should begin with ``assert isinstance(config, TheirConfig)``
+        to recover the concrete type, then set themselves (and any
+        app-subsystems they use) up from it.
+        """
 
     def on_deactivate(self) -> None:
         """Called when the mode stops being the active one for the app.
@@ -75,6 +197,8 @@ class AppMode:
         # pylint: disable=cyclic-import
         import babase
 
+        from babase import _builtinassets
+
         del item_id  # Unused.
 
         # Show nothing for stuff not directly kicked off by the user.
@@ -82,13 +206,13 @@ class AppMode:
             return
 
         babase.screenmessage(
-            babase.Lstr(resource='updatingAccountText'),
+            _builtinassets.strings.account.updating_account,
             color=(0, 1, 0),
         )
         # Ick; we can be called early in the bootstrapping process
         # before we're allowed to load assets. Guard against that.
         if babase.asset_loads_allowed():
-            babase.getsimplesound('click01').play()
+            _builtinassets.audio.click01.get().play()
 
     def on_purchase_process_end(
         self, item_id: str, user_initiated: bool, applied: bool
@@ -117,15 +241,14 @@ class AppMode:
 
         # By default just announce the item id we got. Real app-modes
         # probably want to do something more specific based on item-id.
+        from babase import _builtinassets
+
         babase.screenmessage(
-            babase.Lstr(
-                translate=('serverResponses', 'You got a ${ITEM}!'),
-                subs=[('${ITEM}', item_id)],
-            ),
+            _builtinassets.strings.account.you_got_item(item=item_id),
             color=(0, 1, 0),
         )
         if babase.asset_loads_allowed():
-            babase.getsimplesound('cashRegister').play()
+            _builtinassets.audio.cash_register.get().play()
 
     def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
         """Define buttons to show up in the UI dev console.

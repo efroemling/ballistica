@@ -2,8 +2,6 @@
 #
 """Functionality related to android builds."""
 
-from __future__ import annotations
-
 import os
 import sys
 import stat
@@ -15,8 +13,6 @@ if TYPE_CHECKING:
     pass
 
 if __name__ == '__main__':
-
-    # pylint: disable=invalid-name
 
     from efrotools.project import (
         getprojectconfig,

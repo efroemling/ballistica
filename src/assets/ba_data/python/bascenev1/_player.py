@@ -2,11 +2,9 @@
 #
 """Player related functionality."""
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import babase
 
@@ -17,6 +15,20 @@ if TYPE_CHECKING:
     from typing import Sequence, Any, Callable
 
     import bascenev1
+
+
+#: What happened, for :meth:`bascenev1.Player.send_feedback`. A haptic
+#: request names an event rather than a sensation; each platform decides
+#: how strong and how long that should feel, and may render nothing at
+#: all for one its hardware cannot represent well.
+type FeedbackEvent = Literal[
+    'join',
+    'collect',
+    'grab',
+    'impact_dealt',
+    'impact_received',
+    'death',
+]
 
 
 @dataclass
@@ -47,6 +59,12 @@ class Player[TeamT]:
     # These are instance attrs but we define them at the type level so
     # their type annotations are introspectable (for docs generation).
     character: str
+
+    cloud_spaz_def: bascenev1.SpazDef | None
+    """The cloud-composed look for the cloud profile this player
+       picked, or None when they are on a legacy profile or a random
+       look. When present, ``character`` is just the legacy standin
+       appearance; spawn sites should prefer this."""
 
     actor: bascenev1.Actor | None
     """The bascenev1.Actor associated with the player."""
@@ -90,6 +108,7 @@ class Player[TeamT]:
         self._nodeactor: bascenev1.NodeActor | None = None
         self._sessionplayer = sessionplayer
         self.character = sessionplayer.character
+        self.cloud_spaz_def = sessionplayer.cloud_spaz_def
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
         self._team = cast(
@@ -242,11 +261,24 @@ class Player[TeamT]:
 
     def get_icon(self) -> dict[str, Any]:
         """
-        Returns the character's icon (images, colors, etc contained in a dict)
+        Returns the character's legacy icon (images, colors, etc contained
+        in a dict).
+
+        Prefer :meth:`get_icon_depiction` where available; see
+        :meth:`bascenev1.SessionPlayer.get_icon`.
         """
         assert self._postinited
         assert not self._expired
         return self._sessionplayer.get_icon()
+
+    def get_icon_depiction(self) -> bascenev1.Depiction | None:
+        """Return the player's icon as a depiction, if they have one.
+
+        See :meth:`bascenev1.SessionPlayer.get_icon_depiction`.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._sessionplayer.get_icon_depiction()
 
     def assigninput(
         self,
@@ -267,6 +299,23 @@ class Player[TeamT]:
         assert self._postinited
         assert not self._expired
         self._sessionplayer.resetinput()
+
+    def send_feedback(
+        self, *, event: FeedbackEvent = 'impact_received'
+    ) -> None:
+        """
+        Request physical feedback (controller rumble, device vibration)
+        for whoever is controlling this player.
+
+        ``event`` says what happened; each platform decides how strong
+        and how long that should feel, so there is deliberately nothing
+        else to pass. Note a device may render nothing at all for an
+        event its hardware cannot represent well, so don't rely on any
+        particular one always being felt.
+        """
+        assert self._postinited
+        assert not self._expired
+        self._sessionplayer.send_feedback(event=event)
 
     def __bool__(self) -> bool:
         return self.exists()

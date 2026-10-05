@@ -4,15 +4,17 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import logging
 import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from efro.dataclassio import dataclass_to_json
+import bacommon.depiction as bdep
 import babase
 import _bascenev1
+from bascenev1 import _assetref
+from bascenev1._character import name_text, split_character
 from bascenev1._profile import get_player_profile_colors
 from bascenev1._gameutils import animate, animate_array
 
@@ -31,16 +33,22 @@ class JoinInfo:
     """Display useful info for joiners."""
 
     def __init__(self, lobby: bascenev1.Lobby):
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, _classicassets
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_punch: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.LEFT_BUTTON
         )
-        self._press_to_bomb: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_bomb: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.RIGHT_BUTTON
         )
-        self._joinmsg = babase.Lstr(resource='pressAnyButtonToJoinText')
+        self._joinmsg: babase.LangStr = (
+            _classicassets.strings.lobby.press_any_button_to_join
+        )
         can_switch_teams = len(lobby.sessionteams) > 1
 
         # If we have a keyboard, grab keys for punch and pickup.
@@ -72,42 +80,28 @@ class JoinInfo:
         if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
-            msg1 = babase.Lstr(
-                resource='pressToSelectProfileText',
-                subs=[
-                    (
-                        '${BUTTONS}',
-                        babase.charstr(babase.SpecialChar.UP_ARROW)
-                        + ' '
-                        + babase.charstr(babase.SpecialChar.DOWN_ARROW),
-                    )
-                ],
+            msg1 = _classicassets.strings.lobby.press_to_select_profile(
+                buttons=(
+                    babase.charstr(babase.SpecialChar.UP_ARROW)
+                    + ' '
+                    + babase.charstr(babase.SpecialChar.DOWN_ARROW)
+                )
             )
-            msg2 = babase.Lstr(
-                resource='pressToOverrideCharacterText',
-                subs=[('${BUTTONS}', babase.Lstr(resource='bombBoldText'))],
+            msg2 = _classicassets.strings.lobby.press_to_override_character(
+                buttons=_classicassets.strings.lobby.bomb
             )
-            msg3 = babase.Lstr(
-                value='${A} < ${B} >',
-                subs=[('${A}', msg2), ('${B}', self._press_to_bomb)],
+            msg3 = _commonassets.strings.compose.angle_button_suffix(
+                main=msg2, button=self._press_to_bomb
             )
             self._messages = (
                 (
                     [
-                        babase.Lstr(
-                            resource='pressToSelectTeamText',
-                            subs=[
-                                (
-                                    '${BUTTONS}',
-                                    babase.charstr(
-                                        babase.SpecialChar.LEFT_ARROW
-                                    )
-                                    + ' '
-                                    + babase.charstr(
-                                        babase.SpecialChar.RIGHT_ARROW
-                                    ),
-                                )
-                            ],
+                        _classicassets.strings.lobby.press_to_select_team(
+                            buttons=(
+                                babase.charstr(babase.SpecialChar.LEFT_ARROW)
+                                + ' '
+                                + babase.charstr(babase.SpecialChar.RIGHT_ARROW)
+                            )
                         )
                     ]
                     if can_switch_teams
@@ -123,41 +117,30 @@ class JoinInfo:
         )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, _classicassets
+
         classic = babase.app.classic
         assert classic is not None
 
+        compose = _commonassets.strings.compose
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', punch_key)]),
-                ),
-                ('${B}', self._press_to_punch),
-            ],
+        self._press_to_punch = compose.or_join(
+            a=compose.quoted(text=punch_key), b=self._press_to_punch
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', bomb_key)]),
-                ),
-                ('${B}', self._press_to_bomb),
-            ],
+        self._press_to_bomb = compose.or_join(
+            a=compose.quoted(text=bomb_key), b=self._press_to_bomb
         )
-        self._joinmsg = babase.Lstr(
-            value='${A} < ${B} >',
-            subs=[
-                ('${A}', babase.Lstr(resource='pressPunchToJoinText')),
-                ('${B}', self._press_to_punch),
-            ],
+        self._joinmsg = _commonassets.strings.compose.angle_button_suffix(
+            main=_classicassets.strings.lobby.press_punch_to_join,
+            button=self._press_to_punch,
         )
 
     def _update(self) -> None:
@@ -195,12 +178,25 @@ class Chooser:
         sessionplayer: bascenev1.SessionPlayer,
         lobby: 'Lobby',
     ) -> None:
-        self._deek_sound = _bascenev1.getsound('deek')
-        self._click_sound = _bascenev1.getsound('click01')
-        self._punchsound = _bascenev1.getsound('punch01')
-        self._swish_sound = _bascenev1.getsound('punchSwish')
-        self._errorsound = _bascenev1.getsound('error')
-        self._mask_texture = _bascenev1.gettexture('characterIconMask')
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import (
+            _commonassets,
+            _builtinassets,
+            _classicassets,
+            _uiv1assets,
+            _classiccatalogassets,
+        )
+
+        self._deek_sound = _classicassets.audio.deek.get()
+        self._click_sound = _builtinassets.audio.click01.get()
+        self._punchsound = _classicassets.audio.punch01.get()
+        self._swish_sound = _classicassets.audio.punch_swish.get()
+        self._errorsound = _builtinassets.audio.error.get()
+        self._mask_texture = (
+            _classiccatalogassets.textures.character_icon_mask.get()
+        )
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -213,6 +209,21 @@ class Chooser:
         self._character_names: list[str] = []
         self._last_change: Sequence[float | int] = (0, 0)
         self._profiles: dict[str, dict[str, Any]] = {}
+        # Cloud profiles, when this player's source supplies them (the
+        # joiner's v2-auth data for remote players, our own synced cache
+        # for local ones): each composed look (its spaz part) keyed by
+        # profile name. Empty in legacy mode.
+        self._cloud_by_name: dict[str, bascenev1.SpazDef] = {}
+        self._cloud_spaz_def: bascenev1.SpazDef | None = None
+        # And each one's icon, as the session depiction our icon node
+        # shows (registered once however often the selection flips).
+        self._cloud_icon_by_name: dict[str, bascenev1.Depiction] = {}
+        self._cloud_icon: bascenev1.Depiction | None = None
+        # The cloud profile whose look (spaz, icon, colors) we're
+        # borrowing via the character-override button while keeping
+        # the selected profile's name; None for the profile's own look.
+        # Lasts until the profile selection changes.
+        self._cloud_look_name: str | None = None
 
         app = babase.app
         assert app.classic is not None
@@ -275,7 +286,7 @@ class Chooser:
 
         # Set our initial name to '<choosing player>' in case anyone asks.
         self._sessionplayer.setname(
-            babase.Lstr(resource='choosingPlayerText').evaluate(), real=False
+            _classicassets.strings.lobby.choosing_player.evaluate(), real=False
         )
 
         # Init these to our rando but they should get switched to the
@@ -289,6 +300,13 @@ class Chooser:
         self._inited = True
 
         self._set_ready(False)
+
+        # Confirm the join physically. This is the moment someone pressed
+        # a button and got in, so it is exactly the kind of
+        # tied-to-your-own-action event haptics read well for. Fired once
+        # per session join (Session.on_player_request), so unlike the
+        # in-game events it needs no rate limiting.
+        self._sessionplayer.send_feedback(event='join')
 
     def _select_initial_profile(self) -> int:
         app = babase.app
@@ -408,6 +426,18 @@ class Chooser:
         """Set character/colors based on the current profile."""
         assert babase.app.classic is not None
         self._profilename = self._profilenames[self._profileindex]
+        # A cloud profile carries its whole look as a composed spaz def;
+        # everything else (legacy profiles, random, edit) is legacy-form.
+        # The look may be borrowed from another of our cloud profiles
+        # (see _cycle_cloud_look()); drop a borrow whose source is gone.
+        if (
+            self._profilename not in self._cloud_by_name
+            or self._cloud_look_name not in self._cloud_by_name
+        ):
+            self._cloud_look_name = None
+        look = self._cloud_look_name or self._profilename
+        self._cloud_spaz_def = self._cloud_by_name.get(look)
+        self._cloud_icon = self._cloud_icon_by_name.get(look)
         if self._profilename == '_edit':
             pass
         elif self._profilename == '_random':
@@ -431,8 +461,10 @@ class Chooser:
             ):
                 self._character_names.append(character)
             self._character_index = self._character_names.index(character)
+            # Colors are part of the look, so a borrowed look brings
+            # its own.
             self._color, self._highlight = get_player_profile_colors(
-                self._profilename, profiles=self._profiles
+                look, profiles=self._profiles
             )
         self._update_icon()
         self._update_text()
@@ -494,17 +526,27 @@ class Chooser:
         else:
             self._profiles = app.config.get('Player Profiles', {})
 
-        # These may have come over the wire from an older
-        # (non-unicode/non-json) version.
-        # Make sure they conform to our standards
-        # (unicode strings, no tuples, etc)
-        self._profiles = app.classic.json_prep(self._profiles)
+        # Cloud profiles (cloud-profiles D11): when the master server has
+        # composed a character list for this player -- delivered with
+        # the v2-auth handshake for remote players, synced into our own
+        # cache for local ones -- that list is the authoritative set and
+        # replaces the legacy profiles outright. None means no cloud
+        # data (old host, v2-auth off, offline, not fetched yet): fall
+        # back to legacy profiles.
+        self._apply_cloud_profiles(
+            input_device, is_remote=is_remote, is_test_input=is_test_input
+        )
 
-        # Filter out any characters we're unaware of.
+        # Filter out any characters we're unaware of. These profiles can
+        # arrive over the wire from clients, so a malformed 'character'
+        # value (e.g. an unhashable list) must not be allowed to reach
+        # the membership check below; that would raise and abort the
+        # join partway through, leaving the session corrupted.
         for profile in list(self._profiles.items()):
+            character = profile[1].get('character', '')
             if (
-                profile[1].get('character', '')
-                not in app.classic.spaz_appearances
+                not isinstance(character, str)
+                or character not in app.classic.spaz_appearances
             ):
                 profile[1]['character'] = 'Spaz'
 
@@ -562,13 +604,166 @@ class Chooser:
         )
 
     def get_character_name(self) -> str:
-        """Return the selected character name."""
+        """Return the selected character name.
+
+        For a cloud profile this is the legacy standin appearance; the
+        real look is :meth:`get_cloud_spaz_def`.
+        """
         return self._character_names[self._character_index]
+
+    def get_cloud_spaz_def(self) -> bascenev1.SpazDef | None:
+        """Return the selected cloud profile's composed look.
+
+        That is the profile's own look, or another of the player's
+        cloud profiles' if they've borrowed one with the
+        character-override button. None when the selection is a legacy
+        profile or the random look.
+        """
+        return self._cloud_spaz_def
+
+    def _cycle_cloud_look(self, step: int) -> None:
+        """Step the look of our cloud profile through our other ones.
+
+        The character-override button for cloud profiles: a cloud look
+        is a sealed, server-composed whole, so rather than swapping a
+        character inside it we borrow another of the player's profiles'
+        look (spaz, icon, colors) while keeping the selected profile's
+        name. The cycle runs in profile order and comes back around to
+        the profile's own look.
+        """
+        names = [n for n in self._profilenames if n in self._cloud_by_name]
+        if len(names) < 2:
+            # No other looks to borrow.
+            self._errorsound.play()
+            return
+        current = self._cloud_look_name or self._profilename
+        index = names.index(current) if current in names else 0
+        look = names[(index + step) % len(names)]
+        self._cloud_look_name = None if look == self._profilename else look
+        self._click_sound.play()
+        self.update_from_profile()
+
+    def get_cloud_icon(self) -> bascenev1.Depiction | None:
+        """Return the selected cloud profile's icon depiction.
+
+        None exactly when :meth:`get_cloud_spaz_def` is None.
+        """
+        return self._cloud_icon
+
+    def _apply_cloud_profiles(
+        self,
+        input_device: bascenev1.InputDevice,
+        *,
+        is_remote: bool,
+        is_test_input: bool,
+    ) -> None:
+        """Replace our profile table with the player's cloud profiles.
+
+        Sources: the joiner's v2-auth data for remote players, our own
+        synced cache for local ones. When either yields a list it fills
+        ``_cloud_by_name`` and rewrites ``_profiles`` in the legacy
+        shape the rest of the chooser reads (name, colors, and the
+        standin appearance name for anything still reading
+        ``character``). None from the source leaves the legacy
+        profiles in place.
+        """
+        classic = babase.app.classic
+        assert classic is not None
+        cloud_json: list[str] | None = None
+        if is_remote:
+            cloud_json = input_device.get_cloud_characters()
+        elif not is_test_input:
+            cloud_json = classic.cloud_profiles.get_usable_profiles()
+            plus = babase.app.plus
+            if (
+                cloud_json is None
+                and plus is not None
+                and plus.accounts.have_primary_credentials()
+            ):
+                # Legacy profiles must be obvious (D11); the lobby
+                # says so once -- but only for someone signed in
+                # (offline, or the cloud data not here yet). Signed
+                # out, having no cloud profiles is stating the
+                # obvious. (Remote players hear it from their own
+                # client when they join an old or v2-auth-off host.)
+                self.lobby.warn_legacy_profiles_once()
+        self._cloud_by_name = {}
+        self._cloud_icon_by_name = {}
+        if cloud_json is None:
+            return
+        profiles: dict[str, dict[str, Any]] = {}
+        for cjson in cloud_json:
+            # A profile arrives as a whole character; we use its parts
+            # (look, name, icon) independently.
+            parts = split_character(cjson)
+            cname = name_text(parts.name)
+            if (
+                cname is None
+                or cname in profiles
+                or parts.spaz is None
+                or parts.icon is None
+            ):
+                # Unusable or duplicate composition; the server
+                # shouldn't produce these.
+                continue
+            spaz_def = _bascenev1.SpazDef(parts.spaz)
+            profiles[cname] = {
+                'character': 'Spaz',
+                'color': spaz_def.color or (0.5, 0.5, 0.5),
+                'highlight': spaz_def.highlight or (0.5, 0.5, 0.5),
+            }
+            self._cloud_by_name[cname] = spaz_def
+            self._cloud_icon_by_name[cname] = _bascenev1.Depiction(
+                dataclass_to_json(bdep.CharacterIconDepiction(parts.icon))
+            )
+        self._profiles = profiles
+
+    def _ensure_icon_node(self, *, cloud: bool) -> None:
+        """Make our icon node the right kind for the current selection.
+
+        Cloud profiles draw via a 'depictiondisplay' node (a character
+        icon depiction), legacy profiles via an 'image' node; switching
+        between them swaps the node in place (same position/size/attach).
+        """
+        want = 'depictiondisplay' if cloud else 'image'
+        if self.icon and self.icon.getnodetype() == want:
+            return
+        position = self.icon.position if self.icon else (-130, self._vpos + 20)
+        if self.icon:
+            self.icon.delete()
+        if cloud:
+            self.icon = _bascenev1.newnode(
+                'depictiondisplay',
+                owner=self._text_node,
+                attrs={
+                    'position': position,
+                    'scale': (45, 45),
+                    'vr_depth': -10,
+                    'attach': 'topCenter',
+                },
+            )
+        else:
+            self.icon = _bascenev1.newnode(
+                'image',
+                owner=self._text_node,
+                attrs={
+                    'position': position,
+                    'scale': (45, 45),
+                    'mask_texture': self._mask_texture,
+                    'vr_depth': -10,
+                    'attach': 'topCenter',
+                },
+            )
 
     def _do_nothing(self) -> None:
         """Does nothing! (hacky way to disable callbacks)"""
 
     def _getname(self, full: bool = False) -> str:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, _classicassets
+
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
         if name == '_random':
@@ -588,10 +783,7 @@ class Chooser:
         elif name == '_edit':
             # Explicitly flattening this to a str; it's only relevant on
             # the host so that's ok.
-            name = babase.Lstr(
-                resource='createEditPlayerText',
-                fallback_resource='editProfileWindow.titleNewText',
-            ).evaluate()
+            name = _classicassets.strings.lobby.create_edit_player.evaluate()
         else:
             # If we have a regular profile marked as global with an icon,
             # use it (for full only).
@@ -737,6 +929,17 @@ class Chooser:
             _bascenev1.getsession().handlemessage(PlayerReadyMessage(self))
 
     def _handle_ready_msg(self, ready: bool) -> None:
+        # Stress-test input devices mash random buttons; if they could
+        # un-ready, a lobby of them would churn forever without ever
+        # reaching all-ready. Their ready state only moves forward, and
+        # they never land on the profile-editor entry (which would pop
+        # a window instead of readying).
+        if self._sessionplayer.inputdevice.is_test_input:
+            if not ready:
+                return
+            if self._profilenames[self._profileindex] == '_edit':
+                self.handlemessage(ChangeMessage('profileindex', 1))
+
         force_team_switch = False
 
         # Team auto-balance kicks us to another team if we try to
@@ -793,6 +996,10 @@ class Chooser:
 
     def handlemessage(self, msg: Any) -> Any:
         """Standard generic message handler."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _builtinassets
 
         if isinstance(msg, ChangeMessage):
             self._handle_repeat_message_attack()
@@ -821,7 +1028,7 @@ class Chooser:
                 if len(self._profilenames) == 1:
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
-                    _bascenev1.getsound('error').play()
+                    _builtinassets.audio.error.get().play()
                 else:
                     # Pick the next player profile and assign our name
                     # and character based on that.
@@ -829,9 +1036,15 @@ class Chooser:
                     self._profileindex = (self._profileindex + msg.value) % len(
                         self._profilenames
                     )
+                    # A new profile starts out in its own look (as a
+                    # legacy character override resets here too).
+                    self._cloud_look_name = None
                     self.update_from_profile()
 
             elif msg.what == 'character':
+                if self._profilename in self._cloud_by_name:
+                    self._cycle_cloud_look(msg.value)
+                    return
                 self._click_sound.play()
                 # update our index in our local list of characters
                 self._character_index = (
@@ -844,20 +1057,22 @@ class Chooser:
                 self._handle_ready_msg(bool(msg.value))
 
     def _update_text(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, _classicassets
+
         assert self._text_node is not None
+        text: str | babase.LangStr
         if self._ready:
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = babase.Lstr(value=self._sessionplayer.getname(full=True))
-            text = babase.Lstr(
-                value='${A} (${B})',
-                subs=[
-                    ('${A}', text),
-                    ('${B}', babase.Lstr(resource='readyText')),
-                ],
+            text = _commonassets.strings.compose.paren_suffix(
+                main=self._sessionplayer.getname(full=True),
+                note=_classicassets.strings.lobby.ready,
             )
         else:
-            text = babase.Lstr(value=self._getname(full=True))
+            text = self._getname(full=True)
 
         can_switch_teams = len(self.lobby.sessionteams) > 1
 
@@ -933,30 +1148,80 @@ class Chooser:
         return self._sessionplayer
 
     def _update_icon(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import (
+            _commonassets,
+            _builtinassets,
+            _classicassets,
+            _uiv1assets,
+            _classiccatalogassets,
+        )
+
         assert babase.app.classic is not None
+
+        # Cloud profiles draw through a depiction display node (the
+        # composed definition's own icon and colors, the standin while
+        # its art loads); everything else keeps the legacy image node.
+        self._ensure_icon_node(cloud=self._cloud_icon is not None)
+
+        if self._cloud_icon is not None:
+            # Safe up-call; see below.
+            # pylint: disable-next=cyclic-import
+            from bascenev1lib.actor import spazappearance
+
+            self.icon.depiction = self._cloud_icon
+            # In-game icon sites draw the player's icon depiction
+            # (SessionPlayer.get_icon_depiction()); the legacy icon
+            # info stays for anything still reading get_icon() (mods,
+            # mostly), so it gets the standin icon in this profile's
+            # colors.
+            self._sessionplayer.set_icon_info(
+                _assetref.qualified_ref(
+                    spazappearance.texture_spec(
+                        _classiccatalogassets.textures.neo_spaz_icon
+                    )
+                ),
+                _assetref.qualified_ref(
+                    spazappearance.texture_spec(
+                        _classiccatalogassets.textures.neo_spaz_icon_color_mask
+                    )
+                ),
+                self.get_color(),
+                self.get_highlight(),
+            )
+            return
+
         if self._profilenames[self._profileindex] == '_edit':
-            tex = _bascenev1.gettexture('black')
-            tint_tex = _bascenev1.gettexture('black')
+            tex = _builtinassets.textures.black.get()
+            tint_tex = _builtinassets.textures.black.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex
             self.icon.tint_color = (0, 1, 0)
             return
 
+        # Safe up-call: bascenev1lib is fully imported by the time a
+        # lobby exists; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1lib.actor import spazappearance
+
+        texval: spazappearance.TexVal
+        tintval: spazappearance.TexVal
         try:
-            tex_name = babase.app.classic.spaz_appearances[
+            appearance = babase.app.classic.spaz_appearances[
                 self._character_names[self._character_index]
-            ].icon_texture
-            tint_tex_name = babase.app.classic.spaz_appearances[
-                self._character_names[self._character_index]
-            ].icon_mask_texture
+            ]
+            texval = appearance.icon_texture
+            tintval = appearance.icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            tex_name = 'neoSpazIcon'
-            tint_tex_name = 'neoSpazIconColorMask'
+            texval = _classiccatalogassets.textures.neo_spaz_icon
+            tintval = _classiccatalogassets.textures.neo_spaz_icon_color_mask
 
-        tex = _bascenev1.gettexture(tex_name)
-        tint_tex = _bascenev1.gettexture(tint_tex_name)
+        tex = spazappearance.scene_texture(texval)
+        tint_tex = spazappearance.scene_texture(tintval)
 
         self.icon.color = (1, 1, 1)
         self.icon.texture = tex
@@ -985,7 +1250,16 @@ class Chooser:
         self.icon.tint2_color = clr2
 
         # Store the icon info the the player.
-        self._sessionplayer.set_icon_info(tex_name, tint_tex_name, clr, clr2)
+        # set_icon_info is a native call taking qualified engine
+        # names (they ride the wire to other clients).
+        texspec = spazappearance.texture_spec(texval)
+        tintspec = spazappearance.texture_spec(tintval)
+        self._sessionplayer.set_icon_info(
+            _assetref.qualified_ref(texspec),
+            _assetref.qualified_ref(tintspec),
+            clr,
+            clr2,
+        )
 
 
 class Lobby:
@@ -1020,11 +1294,31 @@ class Lobby:
         self._next_add_team = 0
         self.character_names_local_unlocked: list[str] = []
         self._vpos = 0
+        self._warned_legacy_profiles = False
 
         # Grab available profiles.
         self.reload_profiles()
 
         self._join_info_text = None
+
+    def warn_legacy_profiles_once(self) -> None:
+        """Tell the local player their cloud profiles are unavailable.
+
+        Shown once per lobby, when a signed-in local player's chooser
+        falls back to legacy profiles (offline, or not yet fetched).
+        """
+        # Safe up-call: bascenev1 is fully imported by the time this
+        # runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _classicassets
+
+        if self._warned_legacy_profiles:
+            return
+        self._warned_legacy_profiles = True
+        babase.screenmessage(
+            _classicassets.strings.lobby.legacy_profiles_only,
+            color=(1.0, 1.0, 0.0),
+        )
 
     @property
     def next_add_team(self) -> int:

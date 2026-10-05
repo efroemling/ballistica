@@ -3,11 +3,17 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 
+#include <memory>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/graphics/mesh/text_mesh.h"
 #include "ballistica/shared/python/python_ref.h"
 #include "ballistica/ui_v1/widget/widget.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::ui_v1 {
 
@@ -24,10 +30,13 @@ class TextWidget : public Widget {
   enum class HAlign : uint8_t { kLeft, kCenter, kRight };
   enum class VAlign : uint8_t { kTop, kCenter, kBottom };
   enum class GlowType : uint8_t { kGradient, kUniform };
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
-  auto IsSelectable() -> bool override {
-    return (enabled_ && (editable_ || selectable_));
-  }
+  void SetSelected(bool s, SelectionCause cause) override;
+  // Note: deliberately independent of enabled_; a disabled text widget
+  // stays selectable (as a disabled ButtonWidget does) so navigation
+  // around it never changes. It just can't be used.
+  auto IsSelectable() -> bool override { return editable_ || selectable_; }
   void SetHAlign(HAlign a);
   void SetVAlign(VAlign a);
   void set_max_width(float m) { max_width_ = m; }
@@ -35,6 +44,18 @@ class TextWidget : public Widget {
   void set_rotate(float val) { rotate_ = val; }
   void SetLiteral(bool val);
   void SetText(const std::string& text_in);
+
+  /// Set a native language-string as our text. The widget retains the
+  /// value and re-evaluates it on language changes (the native mirror
+  /// of the legacy Lstr resource-string behavior). Cleared by any
+  /// subsequent SetText().
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
+
+  /// Whether our text is a time-varying language-string (a live
+  /// countdown, etc.) that re-renders itself as time passes.
+  auto IsTimeVarying() const -> bool {
+    return lang_str_next_change_time_.has_value();
+  }
   void set_color(float r, float g, float b, float a) {
     color_r_ = r;
     color_g_ = g;
@@ -42,6 +63,11 @@ class TextWidget : public Widget {
     color_a_ = a;
   }
   auto text_raw() const -> const std::string& { return text_raw_; }
+
+  /// The text as consumers should *read* it: for native
+  /// language-string content this is the evaluated display text
+  /// (raw is empty in that case); otherwise the raw text.
+  auto GetQueryText() -> std::string;
   void SetEditable(bool e);
   void set_selectable(bool s) { selectable_ = s; }
   void SetEnabled(bool val);
@@ -51,21 +77,57 @@ class TextWidget : public Widget {
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
-  void SetOnReturnPressCall(PyObject* call_tuple);
+  void SetOnSubmitCall(PyObject* call_tuple);
+  void SetOnApplyCall(PyObject* call_tuple);
   void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
+  auto password() const -> bool { return password_; }
+
+  /// Set password mode: display masks each character as a bullet.
+  /// Only presentation is affected; the real text stays queryable.
+  void set_password(bool val) {
+    if (val != password_) {
+      password_ = val;
+      text_translation_dirty_ = true;
+    }
+  }
   void Activate() override;
   auto GetWidgetTypeName() -> std::string override { return "text"; }
   void set_always_highlight(bool val) { always_highlight_ = val; }
   void set_description(const std::string& d) { description_ = d; }
   auto description() const -> std::string { return description_; }
+
+  /// Run our submit call (if any), as if enter were pressed during
+  /// inline editing. Used by string-edit adapters to honor submit-style
+  /// applies from platform edit UIs.
+  void InvokeSubmit();
+
+  /// Treat the current text as applied: run our apply call (if any)
+  /// if the text differs from the last applied value. Called wherever
+  /// an edit stops being a draft (a string-edit dialog handing back a
+  /// value, inline editing ending, the clear button); harmless to call
+  /// when nothing changed.
+  void ApplyText();
+
+  /// Semantic kind hint for string-edit UIs (a babase.StringEditKind
+  /// value). Stored as a plain string; validated Python-side when a
+  /// StringEditAdapter picks it up.
+  void set_string_edit_kind(const std::string& kind) {
+    string_edit_kind_ = kind;
+  }
+  auto string_edit_kind() const -> std::string { return string_edit_kind_; }
   void set_transition_delay(float val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_flatness(float flatness) { flatness_ = flatness; }
   void set_shadow(float shadow) { shadow_ = shadow; }
   void set_res_scale(float res_scale);
   void set_allow_clear_button(bool val) { allow_clear_button_ = val; }
-  auto GetTextWidth() -> float;
+  auto TryGetTextWidth() -> std::optional<float>;
+  /// Our text's height in its own units: one row per line (plain row
+  /// spacing; no measuring of glyph extents). Unlike width this needs
+  /// no async measure, so it's always available.
+  auto GetTextHeight() -> float;
   void OnLanguageChange() override;
   void AdapterFinished();
 
@@ -89,6 +151,19 @@ class TextWidget : public Widget {
   auto ShouldUseStringEditor_() const -> bool;
   void InvokeStringEditor_();
   void UpdateTranslation_();
+  void CheckLangStrTickCost_(microsecs_t start_time,
+                             base::TextureAsset* os_texture_before);
+  void PrefetchTextMeasures_();
+  void CalcTextOrigin_(float l, float r, float b, float t, float* x_offset,
+                       float* y_offset, base::TextMesh::HAlign* align_h,
+                       base::TextMesh::VAlign* align_v) const;
+  void CalcMaxScales_(float* max_width_scale, float* max_height_scale) const;
+  auto CaratDisplayText_() const -> const std::string&;
+  void WarmCaratMeasures_();
+
+  /// Return the carat index nearest a widget-space point, or empty if
+  /// it can't be determined right now.
+  auto CaratPositionAtPoint_(float x, float y) -> std::optional<int>;
   void DoDrawCarat_(base::RenderPass* pass, base::TextMesh::HAlign align_h,
                     base::TextMesh::VAlign align_v, float x_offset,
                     float y_offset, float max_width_scale,
@@ -99,6 +174,7 @@ class TextWidget : public Widget {
   HAlign alignment_h_{HAlign::kLeft};
   VAlign alignment_v_{VAlign::kTop};
   GlowType glow_type_{GlowType::kGradient};
+  TransitionType transition_type_{TransitionType::kInLeft};
   bool enabled_{true};
   bool big_{};
   bool force_internal_editing_{};
@@ -113,6 +189,7 @@ class TextWidget : public Widget {
   bool pressed_activate_{};
   bool always_highlight_{};
   bool editable_{};
+  bool password_{};
   bool selectable_{};
   bool clear_pressed_{};
   bool clear_mouse_over_{};
@@ -149,14 +226,27 @@ class TextWidget : public Widget {
   float center_scale_{1.0f};
   std::string text_raw_;
   std::string text_translated_;
+  std::shared_ptr<const base::LangStr> lang_str_;
+  // When a time-varying lang_str_ (a live countdown, etc.) is next due
+  // to read differently, in app-time millisecs; empty for static text.
+  std::optional<millisecs_t> lang_str_next_change_time_;
+  // Set while a re-evaluation is one of those scheduled ticks.
+  bool lang_str_ticking_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};
   std::string description_{"Text"};
+  std::string string_edit_kind_{"default"};
   Object::Ref<base::TextGroup> text_group_;
 
+  // The text as of the last apply, so we can tell an edit from a
+  // no-op (see ApplyText()). Every non-user route to the text
+  // (SetText from Python, etc.) counts as applied without firing.
+  std::string last_applied_text_;
+
   // We keep these at the bottom so they're torn down first.
-  Object::Ref<base::PythonContextCall> on_return_press_call_;
+  Object::Ref<base::PythonContextCall> on_submit_call_;
+  Object::Ref<base::PythonContextCall> on_apply_call_;
   Object::Ref<base::PythonContextCall> on_activate_call_;
   Object::Ref<base::NinePatchMesh> highlight_mesh_;
   PythonRef string_edit_adapter_;

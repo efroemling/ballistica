@@ -2,8 +2,6 @@
 #
 """Call related functionality shared between all efro components."""
 
-from __future__ import annotations
-
 import weakref
 import threading
 from typing import TYPE_CHECKING

@@ -9,7 +9,10 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/support/host_activity.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 #include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::scene_v1 {
@@ -91,7 +94,7 @@ auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {
 
 auto SceneV1Context::GetTexture(const std::string& name)
     -> Object::Ref<SceneTexture> {
-  throw Exception("SysTexture() not supported in this context_ref");
+  throw Exception("GetTexture() not supported in this context_ref");
 }
 
 auto SceneV1Context::GetSound(const std::string& name)
@@ -106,12 +109,30 @@ auto SceneV1Context::GetData(const std::string& name)
 
 auto SceneV1Context::GetMesh(const std::string& name)
     -> Object::Ref<SceneMesh> {
-  throw Exception("SysMesh() not supported in this context_ref");
+  throw Exception("GetMesh() not supported in this context_ref");
 }
 
 auto SceneV1Context::GetCollisionMesh(const std::string& name)
     -> Object::Ref<SceneCollisionMesh> {
   throw Exception("GetCollisionMesh() not supported in this context_ref");
+}
+
+auto SceneV1Context::NewMaterial(const std::string& name)
+    -> Object::Ref<Material> {
+  throw Exception("Can't create materials in this context_ref.",
+                  PyExcType::kContext);
+}
+
+auto SceneV1Context::NewSpazDef(const std::string& json)
+    -> Object::Ref<SpazDef> {
+  throw Exception("Can't create spaz definitions in this context_ref.",
+                  PyExcType::kContext);
+}
+
+auto SceneV1Context::NewDepiction(const std::string& json)
+    -> Object::Ref<SceneDepiction> {
+  throw Exception("Can't create depictions in this context_ref.",
+                  PyExcType::kContext);
 }
 
 }  // namespace ballistica::scene_v1

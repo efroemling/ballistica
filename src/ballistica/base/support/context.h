@@ -94,12 +94,17 @@ class ContextRef {
 class Context : public Object {
  public:
   /// Return the current context_ref cast to a desired type. Throws an
-  /// Exception if the context_ref is unset or is another type.
+  /// Exception if the context_ref is unset or is another type. The type
+  /// must expose a static ContextTypeNameStatic() returning a
+  /// human-readable name for use in error messages.
   template <typename T>
   static auto CurrentTyped() -> T& {
     T* t = g_base->CurrentContext().GetContextTyped<T>();
     if (t == nullptr) {
-      throw Exception("Context of the provided type is not set.",
+      throw Exception(std::string("This code must be run in a ")
+                          + T::ContextTypeNameStatic()
+                          + " context (current context: "
+                          + g_base->CurrentContext().GetDescription() + ").",
                       PyExcType::kContext);
     }
     return *t;

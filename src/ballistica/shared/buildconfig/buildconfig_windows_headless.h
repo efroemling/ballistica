@@ -5,10 +5,11 @@
 
 // note: define overrides BEFORE common header
 
-// Currently building these as test variant. Can reconsider at some point if
-// we want to make things slightly more streamlined.
-#define BA_VARIANT "test_build"
-#define BA_VARIANT_TEST_BUILD 1
+// These are the server bundles we distribute for third-party operators
+// (the ballistica.net downloads page) — variant = distribution
+// audience. See the AppVariant enum in tools/bacommon/app.py.
+#define BA_VARIANT "server"
+#define BA_VARIANT_SERVER 1
 
 #define BA_ENABLE_STDIO_CONSOLE 1
 #define BA_HEADLESS_BUILD 1

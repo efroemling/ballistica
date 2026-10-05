@@ -6,11 +6,10 @@ This abstracts native edit dialogs as well as ones implemented via our
 own ui toolkits.
 """
 
-from __future__ import annotations
-
 import time
 import logging
 import weakref
+from enum import Enum
 from typing import TYPE_CHECKING, final
 
 from efro.util import empty_weakref
@@ -19,6 +18,31 @@ import _babase
 
 if TYPE_CHECKING:
     pass
+
+
+class StringEditKind(Enum):
+    """Semantic kind for a string being edited.
+
+    Platform edit UIs can use this to tailor presentation: keyboard
+    action buttons (send vs done), title/button visibility,
+    suggestion behavior, etc. Purely a presentation hint; has no
+    effect on the resulting value.
+    """
+
+    #: Generic text edit; no special treatment.
+    DEFAULT = 'default'
+
+    #: A chat message; edit UIs may show a 'send' action and minimize
+    #: chrome around the field.
+    CHAT = 'chat'
+
+    #: Source code or a command line. Edit UIs should turn off
+    #: autocorrection, autocapitalization and smart punctuation, all of
+    #: which corrupt code (smart quotes alone are a syntax error), and
+    #: should treat their action key as 'run': a commit from it carries
+    #: through to the target's return-press behavior, while a commit
+    #: from tapping away just fills the value in.
+    CODE = 'code'
 
 
 class StringEditSubsystem:
@@ -53,6 +77,9 @@ class StringEditAdapter:
         initial_text: str,
         max_length: int | None,
         screen_space_center: tuple[float, float] | None,
+        *,
+        is_password: bool = False,
+        kind: StringEditKind = StringEditKind.DEFAULT,
     ) -> None:
         if not _babase.in_logic_thread():
             raise RuntimeError('This must be called from the logic thread.')
@@ -65,6 +92,10 @@ class StringEditAdapter:
         self.initial_text = initial_text
         self.max_length = max_length
         self.screen_space_center = screen_space_center
+        # Whether the platform editor should mask input (password entry).
+        self.is_password = is_password
+        # Semantic kind hint for platform edit UIs.
+        self.kind = kind
 
         # Attempt to register ourself as the active edit.
         subsys = _babase.app.stringedit
@@ -105,8 +136,14 @@ class StringEditAdapter:
         return False
 
     @final
-    def apply(self, new_text: str) -> None:
+    def apply(self, new_text: str, submit: bool = False) -> None:
         """Should be called by the owner when editing is complete.
+
+        Submit means the commit came from an enter-equivalent gesture
+        (a keyboard send/done action key or the like) and should also
+        trigger the edit target's return-press behavior, matching
+        desktop inline editing where enter does both. A plain apply
+        just stores the value.
 
         Note that in some cases this call may be a no-op (such as if
         this adapter is no longer the globally active one).
@@ -128,6 +165,8 @@ class StringEditAdapter:
             new_text = new_text[: self.max_length]
 
         self._do_apply(new_text)
+        if submit:
+            self._do_submit()
 
     @final
     def cancel(self) -> None:
@@ -149,3 +188,11 @@ class StringEditAdapter:
         Will always be called in the logic thread.
         """
         raise NotImplementedError('Subclasses must override this.')
+
+    def _do_submit(self) -> None:
+        """Trigger the edit target's return-press behavior, if any.
+
+        Called after :meth:`_do_apply` for submit-style applies.
+        Optional override; the default does nothing. Will always be
+        called in the logic thread.
+        """

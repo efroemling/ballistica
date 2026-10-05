@@ -7,23 +7,28 @@
 #include <utility>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/depiction/depiction.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
-const float kScreenMessageZDepth{-0.06f};
+/// Where on the overlay-front pass we draw. Above the dev-console and
+/// simple-dialog depths (and submitted after both) so messages stay
+/// visible over them; the fade and cursor still draw above us.
+const float kScreenMessageZDepth{kDevConsoleZDepth + 0.05f};
 
 class ScreenMessages::ScreenMessageEntry {
  public:
   ScreenMessageEntry(std::string text, bool literal, bool top_style, uint32_t c,
                      const Vector3f& color, TextureAsset* texture,
                      TextureAsset* tint_texture, const Vector3f& tint,
-                     const Vector3f& tint2)
+                     const Vector3f& tint2, const Vector3f& tint3)
       : literal(literal),
         top_style(top_style),
         creation_time(c),
@@ -32,21 +37,26 @@ class ScreenMessages::ScreenMessageEntry {
         texture(texture),
         tint_texture(tint_texture),
         tint(tint),
-        tint2(tint2) {}
+        tint2(tint2),
+        tint3(tint3) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
+  void PrefetchTextMeasures();
   bool literal;
   bool top_style;
   uint32_t creation_time;
   Vector3f color;
   Vector3f tint;
   Vector3f tint2;
+  Vector3f tint3;
   std::string s_raw;
   std::string s_translated;
   float str_width{};
   float str_height{};
   Object::Ref<TextureAsset> texture;
   Object::Ref<TextureAsset> tint_texture;
+  /// An icon drawn by a depiction instead of the texture pair.
+  Object::Ref<Depiction> depiction;
   float v_smoothed{};
   bool translation_dirty{true};
   bool mesh_dirty{true};
@@ -59,8 +69,8 @@ class ScreenMessages::ScreenMessageEntry {
 
 ScreenMessages::ScreenMessages() = default;
 
-void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
-  RenderPass* pass = frame_def->overlay_pass();
+void ScreenMessages::Draw(FrameDef* frame_def) {
+  RenderPass* pass = frame_def->overlay_front_pass();
 
   // Screen messages (bottom).
   {
@@ -111,9 +121,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
       {
         SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetTexture(
-            // g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
-            g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+        TextureAsset* shadow_tex =
+            // g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical);
+            g_base->assets->BuiltinTexture(
+                BuiltinTextureID::kTexturesShadowSharp);
+        c.SetTexture(shadow_tex);
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -129,6 +141,13 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           // Don't actually need the text just yet but need shadow mesh
           // which is calculated as part of it.
           i->GetText();
+
+          // If the entry's text measures are still pending (cold OS
+          // spans being measured in the background), it has no shadow
+          // mesh yet and occupies no space; it pops in once ready.
+          if (i->mesh_dirty) {
+            continue;
+          }
 
           millisecs_t age = g_core->AppTimeMillisecs() - i->creation_time;
           youngest_age = std::min(youngest_age, age);
@@ -146,7 +165,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           } else {
             a = 1;
           }
-          a *= 0.7f;
+          a *= 0.35f;
 
           // if (vr) {
           //   a *= 0.8f;
@@ -181,7 +200,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             // showing which looks nice.
             fade = std::max(0.07f, (200.0f - static_cast<float>(age)) / 100.0f);
           }
-          c.SetColor(r * fade, g * fade, b * fade, a);
+          // The shadow texture is premultiplied, so the fade-out must scale
+          // rgb as well as alpha; otherwise the rgb contribution holds
+          // constant through the fade and pops off when the message dies.
+          float cmul = shadow_tex->premultiplied() ? a : 1.0f;
+          c.SetColor(r * fade * cmul, g * fade * cmul, b * fade * cmul, a);
 
           {
             auto xf = c.ScopedTransform();
@@ -222,7 +245,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               // Align our bottom with where we just scaled from.
               c.Translate(0, 0.5f, 0);
             }
-            // c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            // c.DrawMeshAsset(g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
             assert(i->shadow_mesh_.exists());
             c.DrawMesh(i->shadow_mesh_.get());
           }
@@ -286,11 +309,28 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               continue;
             }
             c.SetTexture(t);
-            if (i->GetText().GetElementCanColor(e)) {
-              c.SetColor(r, g, b, a);
-            } else {
-              c.SetColor(1, 1, 1, a);
+            bool can_color = i->GetText().GetElementCanColor(e);
+            float cr = can_color ? r : 1.0f;
+            float cg = can_color ? g : 1.0f;
+            float cb = can_color ? b : 1.0f;
+            // Premultiplied glyph textures (KTX2 builtin fonts and OS-rendered
+            // text alike) blend with glBlendFunc(GL_ONE,
+            // GL_ONE_MINUS_SRC_ALPHA), so the fade must scale RGB as well as
+            // alpha; premultiply the modulate color by its alpha. Any
+            // straight-alpha texture keeps the raw color and fades via alpha as
+            // before.
+            if (t->premultiplied()) {
+              cr *= a;
+              cg *= a;
+              cb *= a;
             }
+            c.SetColor(cr, cg, cb, a);
+            // Full drop shadow (TextWidget's shadow 1.0), for legibility
+            // over busy game scenes.
+            c.SetShadow(-0.004f * i->GetText().GetElementUScale(e),
+                        -0.004f * i->GetText().GetElementVScale(e), 0.0f,
+                        1.0f * a);
+            c.SetMaskUV2Texture(i->GetText().GetElementMaskUV2Texture(e));
             c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
             {
               auto xf = c.ScopedTransform();
@@ -386,7 +426,29 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
         last_v = i->v_smoothed;
 
         // Draw the image if they provided one.
-        if (i->texture.exists()) {
+        if (i->depiction.exists()) {
+          c.Submit();
+          i->depiction->MarkShown();
+          i->depiction->Update(g_core->AppTimeMillisecs());
+          float size = 22.0f * s_extra;
+          DepictionDrawContext context;
+          context.pass = pass;
+          context.transparent = true;
+          context.box = FitDepictionBox(
+              {h - 14.0f - size * 0.5f,
+               v_base + 10.0f + i->v_smoothed - size * 0.5f, size, size},
+              *i->depiction, DepictionHAlign::kCenter,
+              DepictionVAlign::kCenter);
+          context.z = kScreenMessageZDepth;
+          context.opacity = a;
+          float virtual_width = g_base->graphics->screen_virtual_width();
+          context.pixels_per_unit =
+              virtual_width > 0.0f
+                  ? g_base->graphics->virtual_bounds_rect().width()
+                        / virtual_width
+                  : 1.0f;
+          i->depiction->Draw(context);
+        } else if (i->texture.exists()) {
           c.Submit();
 
           SimpleComponent c2(pass);
@@ -396,16 +458,23 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
+            c2.SetColorizeColor3(i->tint3.x, i->tint3.y, i->tint3.z);
             c2.SetMaskTexture(
-                g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
+                g_base->assets->base_assets().character_icon_mask.get());
           }
-          c2.SetColor(1, 1, 1, a);
+          // Premultiply rgb by alpha for premultiplied icon textures so
+          // fading icons composite 'over' under premult blend instead of
+          // staying full-brightness (colorize colors stay raw; they modulate
+          // the texture before the base color applies).
+          float icmul = i->texture->premultiplied() ? a : 1.0f;
+          c2.SetColor(icmul, icmul, icmul, a);
           {
             auto xf = c2.ScopedTransform();
             c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
                          kScreenMessageZDepth);
             c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            c2.DrawMeshAsset(
+                g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
           }
           c2.Submit();
         }
@@ -423,10 +492,14 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             continue;
           }
           c.SetTexture(t);
+          // Premultiply rgb by alpha for premultiplied textures so fading
+          // top-messages composite 'over' under premult blend (matches the
+          // bottom-message pass); straight-alpha textures keep raw rgb.
+          float cmul = t->premultiplied() ? a : 1.0f;
           if (i->GetText().GetElementCanColor(e)) {
-            c.SetColor(r, g, b, a);
+            c.SetColor(r * cmul, g * cmul, b * cmul, a);
           } else {
-            c.SetColor(1, 1, 1, a);
+            c.SetColor(cmul, cmul, cmul, a);
           }
           c.SetShadow(-0.003f * i->GetText().GetElementUScale(e),
                       -0.003f * i->GetText().GetElementVScale(e), 0.0f,
@@ -450,13 +523,17 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
   }
 }
 
-void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
-                                      const Vector3f& color, bool top,
-                                      TextureAsset* texture,
-                                      TextureAsset* tint_texture,
-                                      const Vector3f& tint,
-                                      const Vector3f& tint2) {
+void ScreenMessages::AddScreenMessage(
+    const std::string& msg, bool literal, const Vector3f& color, bool top,
+    TextureAsset* texture, TextureAsset* tint_texture, const Vector3f& tint,
+    const Vector3f& tint2, const Vector3f& tint3) {
   assert(g_base->InLogicThread());
+
+  // With no renderer there is nothing to ever display OR trim these;
+  // queueing them would leak for the life of the process.
+  if (g_core->HeadlessMode()) {
+    return;
+  }
 
   // So we know we're always dealing with valid utf8.
   std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");
@@ -468,14 +545,32 @@ void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
           start_v,
           std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
     }
-    screen_messages_top_.emplace_back(m, literal, true,
-                                      g_core->AppTimeMillisecs(), color,
-                                      texture, tint_texture, tint, tint2);
+    screen_messages_top_.emplace_back(
+        m, literal, true, g_core->AppTimeMillisecs(), color, texture,
+        tint_texture, tint, tint2, tint3);
     screen_messages_top_.back().v_smoothed = start_v;
+    screen_messages_top_.back().PrefetchTextMeasures();
   } else {
     screen_messages_.emplace_back(m, literal, false, g_core->AppTimeMillisecs(),
-                                  color, texture, tint_texture, tint, tint2);
+                                  color, texture, tint_texture, tint, tint2,
+                                  tint3);
+    screen_messages_.back().PrefetchTextMeasures();
   }
+}
+
+void ScreenMessages::AddTopScreenMessageWithDepiction(
+    const std::string& msg, bool literal, const Vector3f& color,
+    const std::string& depiction_json) {
+  assert(g_base->InLogicThread());
+
+  // Nothing ever displays these headless (see AddScreenMessage).
+  if (g_core->HeadlessMode()) {
+    return;
+  }
+  AddScreenMessage(msg, literal, color, true);
+  // A json a machine can't draw makes the usual placeholder box.
+  screen_messages_top_.back().depiction =
+      DepictionRegistry::Create(depiction_json, DepictionHost::kScene, "");
 }
 
 void ScreenMessages::Reset() {
@@ -505,12 +600,21 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = true;
   }
   if (mesh_dirty) {
+    // Measure without stalling: cold OS-span measures run in the
+    // background and we simply stay dirty (showing nothing new) until
+    // they land — a chat message with a first-seen script pops in a
+    // beat late instead of hitching the logic thread on font loads.
+    auto width_opt =
+        g_base->text_graphics->TryGetStringWidth(s_translated.c_str());
+    if (!width_opt.has_value()) {
+      return *s_mesh_;
+    }
     s_mesh_->SetText(
         s_translated,
         top_style ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
         TextMesh::VAlign::kBottom);
 
-    str_width = g_base->text_graphics->GetStringWidth(s_translated.c_str());
+    str_width = *width_opt;
     str_height = g_base->text_graphics->GetStringHeight(s_translated.c_str());
 
     if (!top_style) {
@@ -532,6 +636,15 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = false;
   }
   return *s_mesh_;
+}
+
+void ScreenMessages::ScreenMessageEntry::PrefetchTextMeasures() {
+  // Kick any needed background OS-span measures right at add-time
+  // rather than waiting for our first draw; warm-font measures usually
+  // land before that draw, avoiding a blank first frame. Fully async
+  // (even the O(length) walk runs on the assets loop).
+  UpdateTranslation();
+  g_base->text_graphics->WarmUpStringAsync(s_translated);
 }
 
 void ScreenMessages::ScreenMessageEntry::UpdateTranslation() {

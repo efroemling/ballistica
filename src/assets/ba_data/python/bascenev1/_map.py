@@ -2,10 +2,8 @@
 #
 """Map related functionality."""
 
-from __future__ import annotations
-
 import random
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, overload, override
 
 import babase
 
@@ -13,7 +11,10 @@ import _bascenev1
 from bascenev1._actor import Actor
 
 if TYPE_CHECKING:
-    from typing import Sequence, Any
+    from typing import Sequence, Any, Literal
+
+    import bauiv1
+    from bacommon.assetspec import TextureSpec
 
     import bascenev1
 
@@ -31,8 +32,66 @@ def get_filtered_map_name(name: str) -> str:
     return name
 
 
-def get_map_display_string(name: str) -> babase.Lstr:
-    """Return a babase.Lstr for displaying a given map's name."""
+def get_map_display_name(name: str) -> babase.LangStr:
+    """Return a displayable name for a map.
+
+    First-party maps resolve to their authored entry; a mod's map name
+    is shown exactly as the mod provides it.
+
+    :meta private:
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import _uiv1assets, _classiccatalogassets
+
+    s = _classiccatalogassets.strings.map_names
+    entry = {
+        'Big G': s.big_g,
+        'Bridgit': s.bridgit,
+        'Courtyard': s.courtyard,
+        'Crag Castle': s.crag_castle,
+        'Doom Shroom': s.doom_shroom,
+        'Football Stadium': s.football_stadium,
+        'Happy Thoughts': s.happy_thoughts,
+        'Hockey Stadium': s.hockey_stadium,
+        'Lake Frigid': s.lake_frigid,
+        'Monkey Face': s.monkey_face,
+        'Rampage': s.rampage,
+        'Roundabout': s.roundabout,
+        'Step Right Up': s.step_right_up,
+        'The Pad': s.the_pad,
+        'Tip Top': s.tip_top,
+        'Tower D': s.tower_d,
+        'Zigzag': s.zigzag,
+    }.get(name)
+    return entry if entry is not None else babase.LangStr.from_text(name)
+
+
+@overload
+def get_map_display_string(
+    name: str, *, langstr: Literal[False] = False
+) -> babase.Lstr: ...
+
+
+@overload
+def get_map_display_string(
+    name: str, *, langstr: Literal[True]
+) -> babase.LangStr: ...
+
+
+def get_map_display_string(
+    name: str, *, langstr: bool = False
+) -> babase.Lstr | babase.LangStr:
+    """Return a displayable name for a given map.
+
+    Pass ``langstr=True`` to receive a :class:`~babase.LangStr` (or a
+    plain str for a map we have no entry for, such as a mod's). The
+    legacy :class:`~babase.Lstr` form goes away when api 9 support
+    ends.
+    """
+    if langstr:
+        return get_map_display_name(name)
     return babase.Lstr(translate=('mapsNames', name))
 
 
@@ -79,8 +138,60 @@ class Map(Actor):
 
     @classmethod
     def get_preview_texture_name(cls) -> str | None:
-        """Return the name of the preview texture for this map."""
+        """Return the name of the preview texture for this map.
+
+        .. deprecated:: 1.8.0
+           Override :meth:`~bascenev1.Map.get_preview_texture_spec`
+           instead, which names an asset-package texture rather than a
+           loose one. Overriding this still works --
+           :meth:`~bascenev1.Map.get_preview_texture` falls back to it --
+           but built-in maps no longer implement it, so calling it on one
+           returns ``None``. Removed when api 9 support ends.
+        """
         return None
+
+    @classmethod
+    def get_preview_texture_spec(cls) -> TextureSpec | None:
+        """Return this map's preview texture as an asset-package spec.
+
+        This is the hook maps should override -- typically returning a
+        texture straight off an asset-package wrapper
+        (``someassets.textures.my_map_preview``). Unlike a loaded
+        texture, a spec can go anywhere a texture is described rather
+        than drawn directly, such as doc-ui pages (the playlist browser
+        shows previews this way).
+        :meth:`~bascenev1.Map.get_preview_texture` loads it.
+        """
+        return None
+
+    @classmethod
+    def get_preview_texture(cls) -> bauiv1.Texture | None:
+        """Return this map's preview texture, or ``None`` if it has none.
+
+        Map previews are drawn by ui code, so this hands back a loaded
+        :class:`~bauiv1.Texture`, by default loaded from
+        :meth:`~bascenev1.Map.get_preview_texture_spec`; override that
+        rather than this.
+        (Overriding this still works for code that draws previews
+        directly, but such previews are missing wherever a spec is
+        needed.) Headless builds can call this too; textures there load
+        as null data rather than being unavailable.
+        """
+        # Deferred: the ui feature-set is not a dependency of ours, and
+        # only drawing previews needs it.
+        import bauiv1
+
+        spec = cls.get_preview_texture_spec()
+        if spec is not None:
+            return bauiv1.TextureHandle.from_spec(spec).get()
+
+        # Fall back to the deprecated name-based override so maps
+        # implementing only that still get a preview. Goes away when api
+        # 9 support ends.
+        name = cls.get_preview_texture_name()
+        if name is None:
+            return None
+        return bauiv1.gettexture(name)
 
     @classmethod
     def on_preload(cls) -> Any:

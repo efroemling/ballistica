@@ -3,13 +3,18 @@
 #ifndef BALLISTICA_BASE_UI_UI_H_
 #define BALLISTICA_BASE_UI_UI_H_
 
+#include <atomic>
 #include <list>
+#include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
+#include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
@@ -57,6 +62,29 @@ class UI {
   /// allowing exiting or tweaking settings.
   auto IsMainUIVisible() const -> bool;
 
+  /// Return whether the UI currently covers the entire visible screen
+  /// (the virtual outer rect) with opaque drawing - i.e. a
+  /// fully-transitioned-in opaque-backed window spanning the whole screen, as
+  /// is common in menus at small ui-scale. Consumers may use a true result to
+  /// skip rendering anything behind the UI. Deliberately conservative (false
+  /// negatives are common; true guarantees coverage), always false in
+  /// VR mode (where UI floats in 3d space and never occludes), and can
+  /// be force-disabled via the BA_DISABLE_UI_COVER_OPT=1 env var.
+  auto UICoversScreenOpaquely() const -> bool;
+
+  /// Thread-safe snapshot of whether a back/menu press would navigate
+  /// within the game rather than doing nothing at the top level,
+  /// refreshed each display step. Exists for platforms that must decide
+  /// synchronously, off the logic thread, whether to swallow the OS's
+  /// own back/menu handling (tvOS's menu button, which exits the app if
+  /// nothing in the responder chain consumes it, with no programmatic
+  /// way to exit later). Being a snapshot, it can lag by a frame; a
+  /// wrong answer costs one press, so don't build anything on it that
+  /// needs to be exact.
+  auto BackPressWouldNavigateSnapshot() const -> bool {
+    return back_press_would_navigate_.load(std::memory_order_relaxed);
+  }
+
   /// Request invocation a main ui on the behalf of the provided device (or
   /// nullptr if none). Must be called from the logic thread. May have no
   /// effect depending on conditions such as a main ui already being
@@ -95,6 +123,8 @@ class UI {
   /// Set persistent account state info; will be provided to current and
   /// future delegates.
   void SetAccountSignInState(bool signed_in, const std::string& name);
+  /// Whether the Python layer last reported a signed-in account.
+  auto account_signed_in() const -> bool { return account_state_signed_in_; }
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
@@ -103,6 +133,25 @@ class UI {
 
   /// Draw regular UI.
   void Draw(FrameDef* frame_def);
+
+  /// Draw any active SimpleDialogs (over all game/UI but under the dev
+  /// console).
+  void DrawSimpleDialogs(FrameDef* frame_def);
+
+  /// SimpleDialog management (dialogs are addressed by integer id from
+  /// Python; see ``_babase.simpledialog_*`` / ``babase.SimpleDialog``).
+  /// CreateSimpleDialog returns the new dialog's id.
+  auto CreateSimpleDialog() -> int;
+  void SetSimpleDialogState(int id, const std::string& title,
+                            const std::string& message, float progress,
+                            const std::string& button_label,
+                            bool cancel_activates_button);
+  void DismissSimpleDialog(int id);
+
+  /// Whether a (modal) SimpleDialog is currently up. While true, input
+  /// handlers should treat it as modal -- swallow input rather than letting
+  /// it reach the UI/game underneath (e.g. don't summon the main UI).
+  auto HasModalSimpleDialog() const -> bool { return !simple_dialogs_.empty(); }
 
   /// Draw dev UI on top.
   void DrawDev(FrameDef* frame_def);
@@ -126,6 +175,32 @@ class UI {
   /// directly instead of popping up string edit dialogs.
   auto UIHasDirectKeyboardInput() const -> bool;
 
+  /// Sources for ReportTextEditing(). When multiple sources report in a
+  /// single frame, the highest value wins (the dev console sits above
+  /// bauiv1 and intercepts text input first, so it takes precedence).
+  enum class TextEditSource : uint8_t { kWidget, kDevConsole };
+
+  /// Should be called each frame during drawing by anything actively
+  /// accepting direct inline text editing (i.e. drawing a flashing
+  /// carat). The rect is the on-screen area of the text being edited, in
+  /// virtual coords. Text-editing begin/end is derived from these
+  /// reports appearing/disappearing across frames (see
+  /// ProcessTextEditReports).
+  void ReportTextEditing(const Rect& rect_virtual, TextEditSource source);
+
+  /// Called at the end of each frame build; diffs this frame's
+  /// text-editing reports against the previous frame's and informs the
+  /// app-adapter of begin/end/rect-change (so OS IME machinery/etc. can
+  /// be kept in sync).
+  void ProcessTextEditReports(FrameDef* frame_def);
+
+  /// Whether a text-edit session is currently active (something is
+  /// accepting direct inline text editing; see ReportTextEditing).
+  auto text_editing_active() const -> bool {
+    assert(g_base->InLogicThread());
+    return text_edit_active_;
+  }
+
   /// Return whether currently selected widgets should flash. This will be
   /// false in some situations such as when only touch screen control is
   /// present.
@@ -139,8 +214,7 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(std::string_view msg, float scale,
-                               Vector4f color);
+  void PushDevConsolePrintCall(std::vector<core::DevConsolePrintEntry> entries);
 
   auto* delegate() const { return delegate_; }
 
@@ -175,8 +249,18 @@ class UI {
  private:
   void RequestMainUI_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
+  void DevConsoleButtonCenter_(float* x, float* y) const;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
+
+  /// If a button-bearing SimpleDialog is active, fire its button and return
+  /// true (consuming the event). Routes OK/confirm from keyboard/controllers/
+  /// remotes (which funnel through SendWidgetMessage) to the dialog.
+  auto HandleSimpleDialogActivate_() -> bool;
+  /// Cancel counterpart: fire the top-most button-bearing SimpleDialog's
+  /// button if that dialog opted into cancel-activation; returns true if so.
+  auto HandleSimpleDialogCancel_() -> bool;
+  void DispatchSimpleDialogButton_(int id, const char* source);
 
   Object::Ref<TextGroup> dev_console_button_txt_;
   Object::WeakRef<InputDevice> main_ui_input_device_;
@@ -184,10 +268,54 @@ class UI {
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
+  std::map<int, std::unique_ptr<SimpleDialog>> simple_dialogs_;
+  int next_simple_dialog_id_{1};
   std::list<std::tuple<std::string, float, Vector4f>>
       dev_console_startup_messages_;
   millisecs_t last_main_ui_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
+  Rect text_edit_rect_{};
+  Rect text_edit_rect_norm_prev_{};
+  // Dev-console button look, from the config: its size as a multiple of
+  // the ui-scale default, and its color scheme.
+  enum class DevConsoleButtonStyle_ { kGrey, kGreen, kPurple, kHowdy };
+  float dev_console_button_size_scale_{1.0f};
+  DevConsoleButtonStyle_ dev_console_button_style_{
+      DevConsoleButtonStyle_::kGrey};
+  // Dev-console button custom position (active once the button has been
+  // dragged) and in-flight press/drag tracking. The position is an
+  // offset in virtual units from an anchor point on the virtual bounds:
+  // anchor x is 0/1/2 for left/center/right and anchor y is 0/1/2 for
+  // bottom/center/top, so a button parked near a corner or edge stays
+  // put relative to it as the window resizes. (Anchor 0,0 makes the
+  // offset a plain virtual coord, which is what a drag in progress and
+  // configs predating anchors use.)
+  float dev_console_button_custom_x_{};
+  float dev_console_button_custom_y_{};
+  uint8_t dev_console_button_anchor_x_{};
+  uint8_t dev_console_button_anchor_y_{};
+  uint8_t dev_console_button_pre_drag_anchor_x_{};
+  uint8_t dev_console_button_pre_drag_anchor_y_{};
+  float dev_console_button_press_x_{};
+  float dev_console_button_press_y_{};
+  float dev_console_button_drag_offset_x_{};
+  float dev_console_button_drag_offset_y_{};
+  // The button's position as of the current press, so a canceled drag
+  // can snap it back (the OS taking the gesture, as when a drag near
+  // the top of an iPad screen becomes a window drag).
+  float dev_console_button_pre_drag_x_{};
+  float dev_console_button_pre_drag_y_{};
+  bool dev_console_button_pre_drag_has_custom_pos_{};
+  // When the dev-console button was last activated (drives its fade back
+  // from the lit-up look). Starts far enough in the past to never light up
+  // at launch.
+  seconds_t dev_console_button_activate_time_{-999.0};
+  seconds_t text_edit_flap_window_start_{};
+  int text_edit_flap_count_{};
+  TextEditSource text_edit_source_{};
+  std::atomic<bool> back_press_would_navigate_{};
+  bool text_edit_reported_{};
+  bool text_edit_active_{};
   UIScale uiscale_{UIScale::kLarge};
   int squad_size_label_{};
   bool touch_mode_{};
@@ -195,6 +323,15 @@ class UI {
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
+  bool dev_console_button_dragging_{};
+  // The pointer is over the dev-console button (mouse only; touch has
+  // no hover). Drives its hover look.
+  bool dev_console_button_hovered_{};
+  // While the button is pressed (and not yet dragging), whether the
+  // pointer is still over it (touch and mouse alike); drives its held
+  // look, as a press that drifts off lets go visually.
+  bool dev_console_button_press_over_{};
+  bool dev_console_button_has_custom_pos_{};
   bool mousing_in_main_ui_{};
 };
 

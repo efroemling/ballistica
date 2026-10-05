@@ -2,15 +2,20 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
+#include <functional>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "ballistica/base/graphics/support/graphics_client_context.h"
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
 
@@ -78,6 +83,18 @@ auto AppAdapter::FullscreenControlKeyShortcut() const
   return {};
 }
 
+auto AppAdapter::GetWindowSize(int* width, int* height) -> bool {
+  // Unsupported by default; adapters running in a desktop window
+  // override this.
+  return false;
+}
+
+auto AppAdapter::SetWindowSize(int width, int height) -> bool {
+  // Unsupported by default; adapters running in a desktop window
+  // override this.
+  return false;
+}
+
 void AppAdapter::CursorPositionForDraw(float* x, float* y) {
   assert(x && y);
 
@@ -98,12 +115,29 @@ auto AppAdapter::HasHardwareCursor() -> bool { return false; }
 
 void AppAdapter::SetHardwareCursorVisible(bool visible) {}
 
+auto AppAdapter::ApplyJoystickFeedback(JoystickInput* device,
+                                       const FeedbackEvent& event) -> int {
+  return 0;
+}
+
+void AppAdapter::StopJoystickFeedback(JoystickInput* device) {}
+
+auto AppAdapter::DeviceFeedbackSupported() -> bool { return false; }
+
+auto AppAdapter::ApplyDeviceFeedback(const FeedbackEvent& event) -> int {
+  return 0;
+}
+
 auto AppAdapter::CanSoftQuit() -> bool { return false; }
 auto AppAdapter::CanBackQuit() -> bool { return false; }
 void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
 auto AppAdapter::HasDirectKeyboardInput() -> bool { return false; }
+
+void AppAdapter::OnUITextEditingBegin(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingUpdate(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingEnd() {}
 
 void AppAdapter::ApplyGraphicsSettings(const GraphicsSettings* settings) {}
 
@@ -135,6 +169,28 @@ auto AppAdapter::DoClipboardGetText() -> std::string {
   // Shouldn't get here since we default to no clipboard support.
   FatalError("Shouldn't get here.");
   return "";
+}
+
+void AppAdapter::DoClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> completion_call) {
+  assert(g_base->InLogicThread());
+
+  // Default behavior is a simple synchronous read with the completion
+  // scheduled for an upcoming logic-thread cycle. Platforms where reads
+  // can block on the OS (permission prompts, etc.) should override this
+  // with a genuinely async fetch.
+  std::optional<std::string> text{};
+  if (DoClipboardHasText()) {
+    try {
+      text = DoClipboardGetText();
+    } catch (const std::exception&) {
+      // Contents changing under us or whatnot; count this as no-text.
+    }
+  }
+  g_base->logic->event_loop()->PushCall(
+      [call = std::move(completion_call), text = std::move(text)] {
+        call(text);
+      });
 }
 
 auto AppAdapter::GetKeyName(int keycode) -> std::string {

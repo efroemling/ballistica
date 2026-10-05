@@ -122,6 +122,15 @@ auto PythonCommand::Exec(bool print_errors, PyObject* globals, PyObject* locals)
                  .get();
   }
 
+  // Make sure __builtins__ is present in our exec globals. The eval
+  // loop implicitly provides builtins for the frame itself, but
+  // Python 3.14's deferred-annotation machinery (PEP 649) does an
+  // explicit __builtins__ lookup in globals when building annotated
+  // classes, which KeyErrors on a bare dict from PyDict_New().
+  if (PyDict_GetItemString(globals, "__builtins__") == nullptr) {
+    PyDict_SetItemString(globals, "__builtins__", PyEval_GetBuiltins());
+  }
+
   if (!file_code_obj_.get()) {
     CompileForExec();
     assert(!dead_);

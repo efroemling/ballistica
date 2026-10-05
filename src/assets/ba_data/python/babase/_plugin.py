@@ -2,8 +2,6 @@
 #
 """Plugin related functionality."""
 
-from __future__ import annotations
-
 import logging
 import importlib.util
 from typing import TYPE_CHECKING, override
@@ -49,7 +47,7 @@ class PluginSubsystem(AppSubsystem):
 
         :meta private:
         """
-        from babase._language import Lstr
+        from babase import _builtinassets
 
         config_changed = False
         found_new = False
@@ -91,9 +89,9 @@ class PluginSubsystem(AppSubsystem):
         # found new ones.
         if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
-                Lstr(resource='pluginsDetectedText'), color=(0, 1, 0)
+                _builtinassets.strings.plugins.detected, color=(0, 1, 0)
             )
-            _babase.getsimplesound('ding').play()
+            _builtinassets.audio.ding.get().play()
 
         # Ok, now go through all plugins registered in the app-config
         # that weren't covered by the meta stuff above, either creating
@@ -142,11 +140,10 @@ class PluginSubsystem(AppSubsystem):
         # later reappear. This makes it much smoother to switch between
         # users or workspaces.
         if disappeared_plugs:
-            _babase.getsimplesound('shieldDown').play()
+            _builtinassets.audio.powerdown01.get().play()
             _babase.screenmessage(
-                Lstr(
-                    resource='pluginsRemovedText',
-                    subs=[('${NUM}', str(len(disappeared_plugs)))],
+                _builtinassets.strings.plugins.removed(
+                    count=len(disappeared_plugs)
                 ),
                 color=(1, 1, 0),
             )
@@ -164,17 +161,42 @@ class PluginSubsystem(AppSubsystem):
         if config_changed:
             _babase.app.config.commit()
 
-    @override
-    def on_app_running(self) -> None:
-        """:meta private:"""
-        # Load up our plugins and go ahead and call their on_app_running
-        # calls.
-        self._load_plugins()
+    def load_and_notify(self) -> None:
+        """Load enabled plugins and give them their on_app_running call.
+
+        Driven by :meth:`~babase.App.on_construct_complete()` -- *not*
+        by the usual :meth:`on_app_running` subsystem callback -- so that
+        no plugin-authored code (module top-level, ``__init__``, or
+        callback) runs until construct-mode has resolved every required
+        asset-package. See that method for why this lands where it does.
+
+        :meta private:
+        """
+        # Load plugins from any specs that are enabled & able to.
+        for _class_path, plug_spec in sorted(self.plugin_specs.items()):
+            plugin = plug_spec.attempt_load_if_enabled()
+            if plugin is not None:
+                self.active_plugins.append(plugin)
+
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_running()
             except Exception:
                 balog.exception('Error in plugin on_app_running().')
+
+    def offer_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Give each active plugin its on_app_mode_config() call.
+
+        Errors are caught per-plugin so one broken plugin can't spoil
+        the config phase for the mode or for other plugins.
+
+        :meta private:
+        """
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_mode_config(config)
+            except Exception:
+                balog.exception('Error in plugin on_app_mode_config().')
 
     @override
     def on_app_suspend(self) -> None:
@@ -211,14 +233,6 @@ class PluginSubsystem(AppSubsystem):
                 plugin.on_app_shutdown_complete()
             except Exception:
                 balog.exception('Error in plugin on_app_shutdown_complete().')
-
-    def _load_plugins(self) -> None:
-
-        # Load plugins from any specs that are enabled & able to.
-        for _class_path, plug_spec in sorted(self.plugin_specs.items()):
-            plugin = plug_spec.attempt_load_if_enabled()
-            if plugin is not None:
-                self.active_plugins.append(plugin)
 
 
 class PluginSpec:
@@ -268,8 +282,8 @@ class PluginSpec:
 
     def attempt_load_if_enabled(self) -> Plugin | None:
         """Possibly load the plugin and log any errors."""
+        from babase import _builtinassets
         from babase._general import getclass
-        from babase._language import Lstr
 
         assert not self.attempted_load
         assert self.plugin is None
@@ -282,14 +296,10 @@ class PluginSpec:
         try:
             cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
-            _babase.getsimplesound('error').play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                Lstr(
-                    resource='pluginClassLoadErrorText',
-                    subs=[
-                        ('${PLUGIN}', self.class_path),
-                        ('${ERROR}', str(exc)),
-                    ],
+                _builtinassets.strings.plugins.class_load_error(
+                    plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),
             )
@@ -303,14 +313,10 @@ class PluginSpec:
         except Exception as exc:
             from babase import _error
 
-            _babase.getsimplesound('error').play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                Lstr(
-                    resource='pluginInitErrorText',
-                    subs=[
-                        ('${PLUGIN}', self.class_path),
-                        ('${ERROR}', str(exc)),
-                    ],
+                _builtinassets.strings.plugins.init_error(
+                    plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),
             )
@@ -330,7 +336,49 @@ class Plugin:
     """
 
     def on_app_running(self) -> None:
-        """Called when the app reaches the running state."""
+        """Called when the app reaches the running state.
+
+        Specifically, this fires once boot-time asset-package bring-up
+        has completed but before the launch intent is dispatched to an
+        app-mode. That means every asset-package the meta-scan found a
+        ``# ba_meta require asset-package`` line for (including your
+        own) is resolved and safe to load by this point, while it is
+        still early enough to influence what the app does next --
+        setting :attr:`~babase.App.mode_selector`, registering app
+        subsystems, or driving an intent of your own via
+        :meth:`~babase.App.set_intent()`.
+
+        Note that a plugin's module is not even imported until this
+        point, so plugin code never runs before assets are ready.
+        """
+
+    def on_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Called when an app-mode is about to become active.
+
+        ``config`` is the :class:`~babase.AppModeConfig` the incoming
+        mode built to describe how it should run; its concrete type
+        identifies the mode, so a plugin targeting a particular mode
+        checks for that mode's config type and amends what it finds::
+
+            @override
+            def on_app_mode_config(
+                self, config: babase.AppModeConfig
+            ) -> None:
+                if isinstance(config, baclassic.ClassicAppModeConfig):
+                    config.ui_assets.trophy = my_trophy_texture
+
+        By convention, only *describe* here -- mutate the config and
+        touch nothing live. The mode reads the final result as it
+        activates, so if several plugins amend the same value the last
+        writer wins.
+
+        Only the config is passed, not the mode itself; that is
+        deliberate, to keep plugins amending the description rather
+        than reaching into a mode that is not active yet.
+
+        This never fires before construct-mode completes (plugins do
+        not run at all until then), so assets are safe to load here.
+        """
 
     def on_app_suspend(self) -> None:
         """Called when the app enters the suspended state."""

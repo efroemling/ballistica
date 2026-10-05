@@ -4,44 +4,75 @@
 #define BALLISTICA_BASE_DISCORD_DISCORD_H_
 
 #include <memory>
-#if BA_ENABLE_DISCORD
-#include "external/discord_social_sdk/include/discordpp.h"
-#endif  // BA_ENABLE_DISCORD
+#include <string>
+
+#include "ballistica/base/base.h"
+
+// Forward declaration so this header does not need to pull in the Social SDK.
+namespace discordpp {
+class Client;
+}
 
 namespace ballistica::base {
+
+/// Ballistica integration with the Discord Social SDK. Only instantiated
+/// when BA_ENABLE_DISCORD is on; see BaseFeatureSet construction.
+///
+/// This is currently a bare smoke-test: it logs the SDK version and hooks
+/// the SDK's log callback into our logging system. No OAuth, presence, or
+/// lobby wiring yet.
 class Discord {
-#if BA_ENABLE_DISCORD
-
  public:
-  static const uint64_t APPLICATION_ID = 1373228222002626610;
-  std::shared_ptr<discordpp::Client> init();
-  std::shared_ptr<discordpp::Client> client;
-  discordpp::Activity activity;
-  uint64_t lobbyId_{0};
-  uint64_t oldMessageId_{0};
-  bool client_is_ready = false;
-  void authenticate();
+  Discord();
+  ~Discord();
 
-  void SetActivity(const char* state, const char* details,
-                   const char* largeImageKey, const char* largeImageText,
-                   const char* smallImageKey, const char* smallImageText,
-                   int64_t startTimestamp, int64_t endTimestamp);
+  /// Pump the Discord SDK's callback queue. Called once per logic-thread
+  /// tick from Logic::StepDisplayTime_(); callbacks run synchronously on
+  /// the caller, so this is where SDK events become visible to our
+  /// Python/C++ code.
+  void StepDisplayTime();
 
-  void SetParty(const char* partyId, int currentPartySize, int maxPartySize);
-  void AddButton(const char* label, const char* url);
-  void JoinLobby(const char* lobbySecret);
-  void LeaveLobby(const char* lobbyId);
-  void SendLobbyMessage(const char* message);
-  void LeaveLobby();
-  void UpdateRP();
-  void Shutdown() {
-    if (client) {
-      client->Disconnect();
-      client.reset();
-    }
-  }
-#endif  // BA_ENABLE_DISCORD
+  /// Start the OAuth2 sign-in flow. Opens the user's browser to
+  /// Discord's authorization page; once the user approves, the SDK
+  /// captures the code via the loopback redirect, we exchange it for
+  /// an access token, and connect to the SDK gateway for presence.
+  /// Progress is logged to ba.discord.
+  ///
+  /// ``attempt_id`` identifies this attempt in the Python-side pending
+  /// map (see ``babase._login.discord_sign_in``). When the flow
+  /// completes we report the access token back via the
+  /// ``kDiscordSignInTokenResponseCall`` hook keyed on this id. An
+  /// empty token signals failure.
+  void SignIn(int attempt_id);
+
+  /// Publish a Rich Presence activity to Discord. Shows up on the user's
+  /// Discord profile as "Playing BallisticaKit: <state>" with details
+  /// underneath. Requires SDK status to be Ready (i.e. the user has
+  /// signed in) — otherwise the call is a no-op.
+  void UpdatePresence(const std::string& state, const std::string& details);
+
+  /// Reconnect to the Discord SDK using a previously-stored refresh
+  /// token (no browser flow). Called on app startup when the current
+  /// V2 account has a Discord login attached and we have a refresh
+  /// token saved for the same Discord user. On success the new
+  /// rotated refresh token is handed back to Python for storage; on
+  /// failure we tell Python to clear the stored auth.
+  void ReconnectWithRefreshToken(const std::string& refresh_token);
+
+ private:
+  /// Forward a new Discord auth pair to the Python account subsystem
+  /// for persistent storage. Passing empty strings signals "clear".
+  static void ReportDiscordAuth(const std::string& refresh_token,
+                                const std::string& user_id);
+
+#if BA_ENABLE_DISCORD
+  /// Cached refresh token captured from GetToken, consumed when the
+  /// SDK reaches Ready and we can also look up the Discord user id.
+  std::string pending_refresh_token_;
+  std::unique_ptr<discordpp::Client> client_;
+#endif
 };
+
 }  // namespace ballistica::base
 
 #endif  // BALLISTICA_BASE_DISCORD_DISCORD_H_

@@ -2,12 +2,10 @@
 #
 """Functionality related to game results."""
 
-from __future__ import annotations
-
 import copy
 import weakref
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from efro.util import asserttype
 import babase
@@ -15,9 +13,16 @@ import babase
 from bascenev1._team import Team, SessionTeam
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from typing import Sequence, Literal
 
     import bascenev1
+
+
+def _plainstr(text: str, *, langstr: bool) -> babase.Lstr | babase.LangStr:
+    """Return an untranslated literal in whichever string flavor is asked."""
+    if langstr:
+        return babase.LangStr.from_text(text)
+    return babase.Lstr(value=text)
 
 
 @dataclass
@@ -105,27 +110,61 @@ class GameResults:
         """Return whether there is a score for a given team."""
         return any(s[0]() is sessionteam for s in self._scores.values())
 
+    @overload
     def get_sessionteam_score_str(
-        self, sessionteam: bascenev1.SessionTeam
-    ) -> babase.Lstr:
-        """Return the score for the given team as an :class:`~bascenev1.Lstr`.
+        self,
+        sessionteam: bascenev1.SessionTeam,
+        *,
+        langstr: Literal[False] = False,
+    ) -> babase.Lstr: ...
+
+    @overload
+    def get_sessionteam_score_str(
+        self,
+        sessionteam: bascenev1.SessionTeam,
+        *,
+        langstr: Literal[True],
+    ) -> babase.LangStr: ...
+
+    def get_sessionteam_score_str(
+        self,
+        sessionteam: bascenev1.SessionTeam,
+        *,
+        langstr: bool = False,
+    ) -> babase.Lstr | babase.LangStr:
+        """Return the score for the given team as a displayable string.
 
         (properly formatted for the score type.)
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
         """
         from bascenev1._score import ScoreType
 
         if not self._game_set:
             raise RuntimeError("Can't get team-score-str until game is set.")
+
+        scoreval: int | None = None
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
-                if score[1] is None:
-                    return babase.Lstr(value='-')
-                if self._scoretype is ScoreType.SECONDS:
-                    return babase.timestring(score[1], centi=False)
-                if self._scoretype is ScoreType.MILLISECONDS:
-                    return babase.timestring(score[1] / 1000.0, centi=True)
-                return babase.Lstr(value=str(score[1]))
-        return babase.Lstr(value='-')
+                scoreval = score[1]
+                break
+
+        # No score recorded for this team (or none yet).
+        if scoreval is None:
+            return _plainstr('-', langstr=langstr)
+
+        if self._scoretype is ScoreType.SECONDS:
+            secs, centi = float(scoreval), False
+        elif self._scoretype is ScoreType.MILLISECONDS:
+            secs, centi = scoreval / 1000.0, True
+        else:
+            return _plainstr(str(scoreval), langstr=langstr)
+
+        if langstr:
+            return babase.timestring(secs, centi=centi, langstr=True)
+        return babase.timestring(secs, centi=centi)
 
     @property
     def playerinfos(self) -> list[bascenev1.PlayerInfo]:

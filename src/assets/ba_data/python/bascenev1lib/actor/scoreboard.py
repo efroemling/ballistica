@@ -2,12 +2,11 @@
 #
 """Defines ScoreBoard Actor and related functionality."""
 
-from __future__ import annotations
-
 import weakref
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+from bascenev1 import _classicassets, _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -20,7 +19,7 @@ class _Entry:
         team: bs.Team,
         do_cover: bool,
         scale: float,
-        label: bs.Lstr | None,
+        label: bs.Lstr | bs.LangStr | None,
         flash_length: float,
         width: float | None = None,
         height: float | None = None,
@@ -34,9 +33,9 @@ class _Entry:
         self._height = (32.0 if height is None else height) * self._scale
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
-        self._bar_tex = self._backing_tex = bs.gettexture('bar')
-        self._cover_tex = bs.gettexture('uiAtlas')
-        self._mesh = bs.getmesh('meterTransparent')
+        self._bar_tex = self._backing_tex = _classicassets.textures.bar.get()
+        self._cover_tex = _uiv1assets.textures.ui_atlas.get()
+        self._mesh = _classicassets.meshes.meter_transparent.get()
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None
         self._flash_counter: int | None = None
@@ -143,26 +142,19 @@ class _Entry:
 
         clr = safe_team_color
 
-        team_name_label: str | bs.Lstr
+        team_name_label: str | bs.Lstr | bs.LangStr
         if label is not None:
             team_name_label = label
         else:
             team_name_label = team.name
 
-            # We do our own clipping here; should probably try to tap into some
-            # existing functionality.
-            if isinstance(team_name_label, bs.Lstr):
-                # Hmmm; if the team-name is a non-translatable value lets go
-                # ahead and clip it otherwise we leave it as-is so
-                # translation can occur..
-                if team_name_label.is_flat_value():
-                    val = team_name_label.evaluate()
-                    if len(val) > 10:
-                        team_name_label = bs.Lstr(value=val[:10] + '...')
-            else:
+            # A plain str is a name the player typed, so clip it
+            # to fit; a LangStr is one of our authored defaults,
+            # which we leave whole so it can translate (maxwidth
+            # handles the fitting).
+            if isinstance(team_name_label, str):
                 if len(team_name_label) > 10:
                     team_name_label = team_name_label[:10] + '...'
-                team_name_label = bs.Lstr(value=team_name_label)
 
         flatness = (1.0 if vrmode else 0.5) if self._do_cover else 1.0
         self._name_text = bs.NodeActor(
@@ -186,16 +178,33 @@ class _Entry:
 
     def flash(self, countdown: bool, extra_flash: bool) -> None:
         """Flash momentarily."""
+        ticks = 10 if countdown else int(20.0 * self._flash_length)
+        if extra_flash:
+            ticks *= 4
+        # Protocol 44+ image nodes flash on their own off scene time
+        # (the 'flash' attr): two bool sets per episode instead of three
+        # color sets per 100ms tick streamed to every client. Older
+        # streams keep toggling colors from here.
+        if bs.protocol_version() >= 44:
+            self._set_flash_attr(True)
+            self._flash_timer = bs.Timer(
+                0.1 * ticks, bs.WeakCallStrict(self._set_flash_attr, False)
+            )
+            return
         self._flash_timer = bs.Timer(
             0.1, bs.WeakCallStrict(self._do_flash), repeat=True
         )
-        if countdown:
-            self._flash_counter = 10
-        else:
-            self._flash_counter = int(20.0 * self._flash_length)
-        if extra_flash:
-            self._flash_counter *= 4
+        self._flash_counter = ticks
         self._set_flash_colors(True)
+
+    def _set_flash_attr(self, flash: bool) -> None:
+        for node in (
+            self._backing.node,
+            self._bar.node,
+            self._cover.node if self._do_cover else None,
+        ):
+            if node:
+                node.flash = flash
 
     def set_position(self, position: Sequence[float]) -> None:
         """Set the entry's position."""
@@ -373,7 +382,7 @@ class Scoreboard:
 
     def __init__(
         self,
-        label: bs.Lstr | None = None,
+        label: bs.Lstr | bs.LangStr | None = None,
         score_split: float = 0.7,
         pos: Sequence[float] | None = None,
         width: float | None = None,
@@ -384,8 +393,7 @@ class Scoreboard:
         Label can be something like 'points' and will
         show up on boards if provided.
         """
-        # pylint: disable=too-many-positional-arguments
-        self._flat_tex = bs.gettexture('null')
+        self._flat_tex = _classicassets.textures.null.get()
         self._entries: dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split

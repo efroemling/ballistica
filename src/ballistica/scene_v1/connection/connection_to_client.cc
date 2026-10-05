@@ -7,9 +7,11 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
@@ -24,7 +26,7 @@
 #include "ballistica/scene_v1/support/client_input_device.h"
 #include "ballistica/scene_v1/support/client_input_device_delegate.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 
@@ -43,15 +45,9 @@ ConnectionToClient::ConnectionToClient(int id)
   our_handshake_player_spec_str_ =
       PlayerSpec::GetAccountPlayerSpec().GetSpecString();
 
-  // On newer protocols we include an extra salt value to ensure the hash
-  // the client generates can't be recycled.
-  if (explicit_bool(protocol_version() >= 33)) {
-    our_handshake_salt_ = std::to_string(rand());  // NOLINT
-  }
-}
-
-auto ConnectionToClient::ShouldPrintIncompatibleClientErrors() const -> bool {
-  return false;
+  // Include an extra salt value to ensure the hash the client
+  // generates can't be recycled.
+  our_handshake_salt_ = std::to_string(rand());  // NOLINT
 }
 
 void ConnectionToClient::SetController(ClientControllerInterface* c) {
@@ -87,11 +83,14 @@ ConnectionToClient::~ConnectionToClient() {
   auto* appmode = classic::ClassicAppMode::GetActive();
   if (appmode && can_communicate()
       && appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
-    std::string s = g_base->assets->GetResourceString("playerLeftPartyText");
-    Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
-    g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
+    // (Evaluated text holding a peer-chosen name: literal.)
+    g_base->ScreenMessage(base::BuiltinStrings::Net::PlayerLeftParty(
+                              peer_spec().GetDisplayString())
+                              ->Evaluate(),
+                          {1, 0.5f, 0.0f}, true);
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().cork_pop.get());
     }
   }
 }
@@ -107,14 +106,47 @@ void ConnectionToClient::Update() {
   if (!appmode) {
     return;
   }
-  auto doing_v2_auth{appmode->require_client_authentication()
-                     && appmode->client_authentication_version() == 2};
-
-  if (doing_v2_auth && !g_base->GlobalAppInstanceUUID().has_value()) {
-    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                "V2 client auth enabled but still waiting on "
-                "global-app-instance-uuid...");
-    return;
+  // Client-auth is always v2 (v1 auth died with the protocol-40
+  // hosting floor). Decide once whether we offer it to this client;
+  // the client latches what our first handshake says, so every resend
+  // must say the same thing.
+  if (!v2_auth_decided_) {
+    auto app_uuid{g_base->GlobalAppInstanceUUID()};
+    switch (appmode->client_auth_mode()) {
+      case classic::ClientAuthMode::kRequired:
+        // Can't offer without our id; hold off on handshakes until we
+        // have one (the client waits on us meanwhile).
+        if (!app_uuid.has_value()) {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "V2 client auth enabled but still waiting on "
+                      "global-app-instance-uuid...");
+          return;
+        }
+        v2_auth_offered_ = true;
+        v2_auth_required_ = true;
+        break;
+      case classic::ClientAuthMode::kOptional:
+        // Offer it only if we can right now (i.e. we're online); an
+        // offline host is a plain LAN host, never a stuck one.
+        v2_auth_offered_ = app_uuid.has_value();
+        v2_auth_required_ = false;
+        break;
+      case classic::ClientAuthMode::kOff:
+        v2_auth_offered_ = false;
+        v2_auth_required_ = false;
+        break;
+    }
+    if (v2_auth_offered_) {
+      v2_auth_app_instance_id_ = *app_uuid;
+    }
+    v2_auth_decided_ = true;
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+      return "ConnectionToClient(id=" + std::to_string(id()) + "): v2-auth "
+             + (!v2_auth_offered_   ? std::string("not offered")
+                : v2_auth_required_ ? std::string("required")
+                                    : std::string("offered (optional)"))
+             + ".";
+    });
   }
 
   // If we're waiting for handshake response still, keep sending out
@@ -128,44 +160,36 @@ void ConnectionToClient::Update() {
   // through, but that would be more complicated engineering. This is good
   // enough for now.
   if (!can_communicate() && real_time - last_hand_shake_send_time_ > 250) {
-    // In newer protocols we embed a json dict as the second part of the
-    // handshake packet; this way we can evolve the protocol more easily in
-    // the future.
-    if (explicit_bool(protocol_version() >= 33)) {
-      // Construct a json dict with our player-spec-string as one element.
-      JsonDict dict;
-      dict.AddString("s", our_handshake_player_spec_str_);
+    // The handshake packet's second part is a json dict, letting the
+    // exchange evolve easily. (A pre-protocol-33 raw-spec-string form
+    // lived here; our hosting protocol floor made it unreachable.)
+    // Construct a json dict with our player-spec-string as one element.
+    JsonBuilder builder;
+    JsonObjBuilder dict = builder.root_object();
+    dict.Add("s", our_handshake_player_spec_str_);
 
-      // We also add our random salt for hashing.
-      dict.AddString("l", our_handshake_salt_);
+    // We also add our random salt for hashing.
+    dict.Add("l", our_handshake_salt_);
 
-      // If we're doing V2 auth, bundle our global-app-instance-uuid so they
-      // can ask the cloud to send us their credentials.
-      auto app_uuid{g_base->GlobalAppInstanceUUID()};
-      if (doing_v2_auth && app_uuid.has_value()) {
-        dict.AddString("v2a", *app_uuid);
+    // If we're offering V2 auth, bundle our global-app-instance-uuid so
+    // they can ask the cloud to send us their credentials. 'v2o' marks
+    // the offer optional: a client that can't authenticate joins
+    // without (clients predating it treat any 'v2a' as required, which
+    // only ever costs them the join, never a mismatch).
+    if (v2_auth_offered_) {
+      dict.Add("v2a", v2_auth_app_instance_id_);
+      if (!v2_auth_required_) {
+        dict.Add("v2o", true);
       }
-
-      std::string out = dict.PrintUnformatted();
-      std::vector<uint8_t> data(3 + out.size());
-      data[0] = BA_SCENEPACKET_HANDSHAKE;
-      uint16_t val = protocol_version();
-      memcpy(data.data() + 1, &val, sizeof(val));
-      memcpy(data.data() + 3, out.c_str(), out.size());
-      SendGamePacket(data);
-    } else {
-      // (KILL THIS WHEN kProtocolVersionClientMin >= 33).
-      //
-      // On older protocols, we simply embedded our spec-string as the
-      // second part of the handshake packet.
-      std::vector<uint8_t> data(3 + our_handshake_player_spec_str_.size());
-      data[0] = BA_SCENEPACKET_HANDSHAKE;
-      uint16_t val = protocol_version();
-      memcpy(data.data() + 1, &val, sizeof(val));
-      memcpy(data.data() + 3, our_handshake_player_spec_str_.c_str(),
-             our_handshake_player_spec_str_.size());
-      SendGamePacket(data);
     }
+
+    std::string out = builder.Write();
+    std::vector<uint8_t> data(3 + out.size());
+    data[0] = BA_SCENEPACKET_HANDSHAKE;
+    uint16_t val = protocol_version();
+    memcpy(data.data() + 1, &val, sizeof(val));
+    memcpy(data.data() + 3, out.c_str(), out.size());
+    SendGamePacket(data);
     last_hand_shake_send_time_ = real_time;
   }
 }
@@ -207,153 +231,122 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
                    + std::to_string(protocol_version()) + ").";
           });
 
-      // In newer builds we expect to be sent a json dict here; pull
-      // client's spec from that.
-      if (protocol_version() >= 33) {
-        std::vector<char> string_buffer(data.size() - 3 + 1);
-        memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
-        string_buffer[string_buffer.size() - 1] = 0;
-        if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
-          if (cJSON_IsObject(handshake)) {
-            // Grab V2 auth token if present.
-            if (cJSON* v2at = cJSON_GetObjectItem(handshake, "v2at")) {
-              if (cJSON_IsString(v2at)) {
-                v2_auth_token = v2at->valuestring;
-              }
-            }
-            if (cJSON* pspec = cJSON_GetObjectItem(handshake, "s")) {
-              if (cJSON_IsString(pspec)) {
-                // Set peer-spec to what they pass us (note this is
-                // untrusted). With v2 auth we'll override this further down
-                // when we look at their token.
-                set_peer_spec(PlayerSpec(pspec->valuestring));
-              } else {
-                BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                            "Ignoring non-string peer-spec data.");
-              }
-            }
-
-            // Newer builds also send their public-device-id; servers
-            // can use this to combat simple spam attacks.
-            if (cJSON* pubdeviceid = cJSON_GetObjectItem(handshake, "d")) {
-              if (cJSON_IsString(pubdeviceid)) {
-                public_device_id_ = pubdeviceid->valuestring;
-              } else {
-                BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                            "Ignoring non-string public-device-id data.");
-              }
-            }
-          } else {
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "Ignoring non-object player-data container.");
+      // The payload is a json dict: the bytes after the 3-byte header
+      // (no trailing null). (A pre-protocol-33 raw-spec-string form
+      // lived here; our hosting protocol floor made it unreachable.)
+      if (auto doc = JsonDoc::Parse(
+              std::string_view(reinterpret_cast<const char*>(data.data() + 3),
+                               data.size() - 3))) {
+        JsonRef root = doc->root();
+        if (root.is_object()) {
+          // Grab V2 auth token if present.
+          if (auto v2at = root["v2at"].as_string()) {
+            v2_auth_token = std::string(*v2at);
           }
-          cJSON_Delete(handshake);
+          if (JsonRef pspec = root["s"]) {
+            if (auto s = pspec.as_string()) {
+              // Set peer-spec to what they pass us (note this is
+              // untrusted). With v2 auth we'll override this further down
+              // when we look at their token.
+              set_peer_spec(PlayerSpec(std::string(*s)));
+            } else {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                          "Ignoring non-string peer-spec data.");
+            }
+          }
+
+          // Clients also send their public-device-id; servers can use
+          // this to combat simple spam attacks.
+          if (JsonRef pubdeviceid = root["d"]) {
+            if (auto d = pubdeviceid.as_string()) {
+              public_device_id_ = std::string(*d);
+            } else {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                          "Ignoring non-string public-device-id data.");
+            }
+          }
+        } else {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Ignoring non-object player-data container.");
         }
-      } else {
-        // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
-        //
-        // Older versions only contained the client spec; pull client's spec
-        // from the handshake packet.
-        std::vector<char> string_buffer(data.size() - 3 + 1);
-        memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
-        string_buffer[string_buffer.size() - 1] = 0;
-        set_peer_spec(PlayerSpec(&(string_buffer[0])));
       }
-      // If we require v2 auth, look up their info using the token they
-      // passed.
-      auto doing_v2_auth{appmode->require_client_authentication()
-                         && appmode->client_authentication_version() == 2};
-      if (doing_v2_auth) {
+      // A response before we've even decided what to offer can't be
+      // answering a handshake of ours (we decide before the first
+      // send); only a hand-made packet gets here. Ignore it rather than
+      // judge it against an undecided (and so seemingly auth-free)
+      // offer.
+      if (!v2_auth_decided_) {
+        return;
+      }
+
+      // If we offered (v2) auth, look up their info using the token
+      // they passed. Re-derived on every response (a client answers
+      // each of our handshake resends), consistently since the client
+      // latches its token decision.
+      v2_authed_ = false;
+      if (v2_auth_offered_ && !v2_auth_required_
+          && !v2_auth_token.has_value()) {
+        // An optional offer they couldn't take (signed out, offline, a
+        // failed or slow request): an unauthenticated joiner, exactly
+        // as if we hadn't offered.
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+          return "ConnectionToClient(id=" + std::to_string(id())
+                 + "): joining without v2-auth (optional; no token).";
+        });
+      } else if (v2_auth_offered_) {
         if (!v2_auth_token.has_value()) {
-          // Because v2 auth requires protocol 36, no client should get to
-          // this point without knowing they need to provide us a token.
-          // Make noise if that does happen.
+          // A stock client never lands here: it learns from our handshake
+          // that we require auth and won't send a handshake-response at
+          // all until it has a token in hand. But nothing stops an
+          // arbitrary sender from firing a client-request and a
+          // hand-made handshake-response at us (we don't gate connects
+          // on the claimed protocol version), so this is reachable by
+          // anything probing the port -- bots and scanners included.
+          // Log what little we know about them; every value here is
+          // client-supplied and unverified.
+          auto claimed_protocol{client_claimed_protocol_version()};
+
+          // A peer claiming a protocol below ours could never have
+          // talked to us anyway: we don't gate connects on the claimed
+          // version (a real client self-rejects once it sees ours in
+          // our handshake), so the only way one reaches this point is
+          // by ignoring that -- i.e. it is definitely not a stock
+          // client. That case is settled, so log it quietly rather
+          // than spending a warning (and a cloud log report) on
+          // routine port-probing. A peer claiming a version we could
+          // actually have spoken is the interesting one: it looked
+          // like a current client and still produced no token, which
+          // is worth surfacing. Claiming *higher* than ours is fine
+          // and viable -- such a client adopts our version.
+          auto never_viable{claimed_protocol != -1
+                            && claimed_protocol < protocol_version()};
           g_core->logging->Log(
-              LogName::kBaNetworking, LogLevel::kWarning,
-              "Rejecting a join attempt that lacks a V2 auth token; "
-              "this should not happen.");
+              LogName::kBaNetworking,
+              never_viable ? LogLevel::kDebug : LogLevel::kWarning,
+              "Rejecting a join attempt that lacks a V2 auth token"
+              " (likely a bot; a stock client never gets this far without"
+              " one). client-id="
+                  + std::to_string(id()) + ", claimed-protocol="
+                  + (claimed_protocol == -1 ? "unknown"
+                                            : std::to_string(claimed_protocol))
+                  + ", our-protocol=" + std::to_string(protocol_version())
+                  + ", untrusted-spec='" + peer_spec().GetSpecString()
+                  + "', untrusted-device-id='" + public_device_id_ + "'.");
+          Error("");
+          return;
+        } else if (ApplyV2AuthToken_(*v2_auth_token)) {
+          v2_authed_ = true;
+        } else if (v2_auth_required_) {
           Error("");
           return;
         } else {
-          g_core->logging->Log(
-              LogName::kBaNetworking, LogLevel::kDebug, [&v2_auth_token] {
-                return "Got V2 auth token from joiner: " + *v2_auth_token;
-              });
-
-          auto args =
-              PythonRef::Stolen(Py_BuildValue("(s)", v2_auth_token->c_str()));
-          auto result = g_base->python->objs()
-                            .Get(base::BasePython::ObjID::kV2AuthDataCall)
-                            .Call(args);
-          if (!result.exists()) {
-            g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                                 "Error looking up v2 auth data for joiner.");
-            Error("");
-            return;
-          }
-          if (result.ValueIsNone()) {
-            // No auth found for this client (curious if this will happen
-            // enough to make warning overkill; can downgrade to debug if
-            // so).
-            g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                                 "Rejecting invalid v2 auth token.");
-            Error("");
-            return;
-          }
-          auto valid_format{false};
-          PythonRef account_id_ref;
-          PythonRef account_tag_ref;
-          PythonRef profiles_ref;
-          PythonRef classic_purchases_ref;
-          if (result.ValueIsSequence()) {
-            auto vals{result.ValueAsSequence()};
-            if (vals.size() == 4 && vals[0].ValueIsString()
-                && vals[1].ValueIsString() && PyDict_Check(*vals[2])
-                && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))) {
-              valid_format = true;
-              account_id_ref = vals[0];
-              account_tag_ref = vals[1];
-              profiles_ref = vals[2];
-              classic_purchases_ref = vals[3];  // list or Py_None
-            }
-          }
-          if (!valid_format) {
-            g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                                 "Invalid type returned from v2_auth_data.");
-            Error("");
-            return;
-          }
-
-          peer_public_account_id_ = account_id_ref.ValueAsString();
-
-          // Create a v2 account id spec for them.
-          //
-          // Verified account tag should always be simple ascii with no
-          // quotes or crazy stuff so we can just stuff it directly into a
-          // json str.
-          auto account_tag_str = account_tag_ref.ValueAsString();
-          assert(account_tag_str.size() < 128);
-          char buffer[256];
-          snprintf(buffer, sizeof(buffer),
-                   "{\"n\":\"%s\",\"a\":\"V2\",\"sn\":\"\"}",
-                   account_tag_str.c_str());
-          set_peer_spec(PlayerSpec(buffer));
-
-          // printf("TODO: SET PEER PROFILES TO %s.\n",
-          //        profiles_ref.Str().c_str());
-          player_profiles_ = profiles_ref;
-          // Store the classic purchases ref as-is; the accessor
-          // differentiates between "a Py_None sentinel was stored"
-          // (masters signaled unknown) and "nothing was ever stored"
-          // (non-v2-auth connection). Both cases end up as None on
-          // the Python side, which is what the lobby wants.
-          classic_purchases_ = classic_purchases_ref;
-          g_core->logging->Log(
-              LogName::kBaNetworking, LogLevel::kDebug, [this] {
-                return "ConnectionToClient(id=" + std::to_string(id())
-                       + "): v2-auth succeeded (account="
-                       + peer_public_account_id_ + ").";
-              });
+          // Optional offer: a token we can't use just makes them an
+          // unauthenticated joiner. (They believe they authed, so
+          // they won't send us legacy profiles either and get random
+          // looks here; this should be rare enough to live with.)
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                               "Unusable v2 auth token from joiner; joining "
+                               "them without v2-auth (optional).");
         }
       }
 
@@ -375,26 +368,16 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         return;
       }
 
-      // Bytes 2 and 3 are their protocol version.
+      // Bytes 2 and 3 are their protocol version. A mismatch normally
+      // can't get this far (UDP connects are protocol-vetted at the
+      // request stage, and UDP is the only remaining connection type);
+      // fail quietly if it somehow does. (A host-side announce for
+      // invite-style connection types lived here; those types are
+      // long gone.)
       uint16_t val;
       memcpy(&val, data.data() + 1, sizeof(val));
       if (val != protocol_version()) {
-        // Depending on the connection type we may print the connection
-        // failure or not. (If we invited them it'd be good to know about
-        // the failure).
-        std::string s;
-        if (ShouldPrintIncompatibleClientErrors()) {
-          // If they get here, announce on the host that the client is
-          // incompatible. UDP connections will get rejected during the
-          // connection attempt so this will only apply to things like
-          // Google Play invites where we probably want to be more verbose
-          // as to why the game just died.
-          s = g_base->assets->GetResourceString(
-              "incompatibleVersionPlayerText");
-          Utils::StringReplaceOne(&s, "${NAME}",
-                                  peer_spec().GetDisplayString());
-        }
-        Error(s);
+        Error("");
         return;
       }
 
@@ -409,13 +392,13 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
 
         // At this point we have their name, so lets announce their arrival.
         if (appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
-          std::string s =
-              g_base->assets->GetResourceString("playerJoinedPartyText");
-          Utils::StringReplaceOne(&s, "${NAME}",
-                                  peer_spec().GetDisplayString());
-          g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
+          g_base->ScreenMessage(base::BuiltinStrings::Net::PlayerJoinedParty(
+                                    peer_spec().GetDisplayString())
+                                    ->Evaluate(),
+                                {0.5f, 1, 0.5f}, true);
           if (g_base->assets->sys_assets_loaded()) {
-            g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
+            g_base->audio->SafePlaySound(
+                g_base->assets->base_assets().gun_cocking.get());
           }
         }
 
@@ -432,18 +415,15 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         // reliable message they get; if something else shows up first
         // they'll assume we're an old build and not sending this.
         {
-          cJSON* info_dict = cJSON_CreateObject();
-          cJSON_AddItemToObject(info_dict, "b",
-                                cJSON_CreateNumber(kEngineBuildNumber));
+          JsonBuilder builder;
+          JsonObjBuilder info_dict = builder.root_object();
+          info_dict.Add("b", kEngineBuildNumber);
 
           // Add a name entry if we've got a public party name set.
           if (!appmode->public_party_name().empty()) {
-            cJSON_AddItemToObject(
-                info_dict, "n",
-                cJSON_CreateString(appmode->public_party_name().c_str()));
+            info_dict.Add("n", appmode->public_party_name());
           }
-          std::string info = cJSON_PrintUnformatted(info_dict);
-          cJSON_Delete(info_dict);
+          std::string info = builder.Write();
 
           std::vector<uint8_t> info_msg(info.size() + 1);
           info_msg[0] = BA_MESSAGE_HOST_INFO;
@@ -495,32 +475,34 @@ void ConnectionToClient::Error(const std::string& msg) {
 }
 
 void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
-                                           float g, float b) {
-  // Older clients don't support the screen-message message, so in that
-  // case we just send it as a chat-message from <HOST>.
-  if (build_number() < 14248) {
-    std::string value = g_base->assets->CompileResourceString(s);
-    std::string our_spec_string =
-        PlayerSpec::GetDummyPlayerSpec("<HOST>").GetSpecString();
-    std::vector<uint8_t> msg_out(1 + 1 + our_spec_string.size() + value.size());
-    msg_out[0] = BA_MESSAGE_CHAT;
-    size_t spec_size = our_spec_string.size();
-    assert(spec_size < 256);
-    msg_out[1] = static_cast<uint8_t>(spec_size);
-    memcpy(&(msg_out[2]), our_spec_string.c_str(),
-           static_cast<size_t>(spec_size));
-    memcpy(&(msg_out[2 + spec_size]), value.c_str(), value.size());
-    SendReliableMessage(msg_out);
+                                           float g, float b,
+                                           const std::string& tagged) {
+  // (An ancient pre-14248 chat-message fallback lived here; our hosting
+  // protocol floor makes such peers unable to join at all, so it went.)
+  JsonBuilder builder;
+  JsonObjBuilder obj = builder.root_object();
+  obj.Add("t", BA_JMESSAGE_SCREEN_MESSAGE).Add("r", r).Add("g", g).Add("b", b);
+  // Single-form per receiver: builds at/above the cutoff render the
+  // lang-str tagged form alone (in their own locale), so they get
+  // only that; older builds get only the legacy flat/resource-json
+  // text. (In-between legacy-era shapes -- both keys, or 'm2' beside
+  // an empty 'm' -- remain valid to receive; we just no longer send
+  // them.)
+  if (!tagged.empty() && build_number() >= kScreenMessageLangStrOnlyMinBuild) {
+    obj.Add("m2", tagged);
   } else {
-    cJSON* msg = cJSON_CreateObject();
-    cJSON_AddNumberToObject(msg, "t", BA_JMESSAGE_SCREEN_MESSAGE);
-    cJSON_AddStringToObject(msg, "m", s.c_str());
-    cJSON_AddNumberToObject(msg, "r", r);
-    cJSON_AddNumberToObject(msg, "g", g);
-    cJSON_AddNumberToObject(msg, "b", b);
-    SendJMessage(msg);
-    cJSON_Delete(msg);
+    obj.Add("m", s);
   }
+  SendJMessage(builder.Write());
+}
+
+void ConnectionToClient::SendRejectReason(int reason) {
+  // Send just the reason code; the joiner maps it to its own localized
+  // builtin string (unrecognized codes -> a generic rejection). No message
+  // text crosses the wire.
+  JsonBuilder builder;
+  builder.root_object().Add("t", BA_JMESSAGE_REJECT_REASON).Add("r", reason);
+  SendJMessage(builder.Write());
 }
 
 void ConnectionToClient::HandleMessagePacket(
@@ -546,10 +528,18 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        cJSON* msg =
-            cJSON_Parse(reinterpret_cast<const char*>(buffer.data() + 1));
-        if (msg) {
-          cJSON_Delete(msg);
+        // Validate the payload (nothing currently uses the parsed
+        // contents); it is the bytes between the type byte and the
+        // trailing null. Log-once only; this arrives from remote
+        // clients, so per-packet logging would be a spam vector.
+        auto doc = JsonDoc::Parse(
+            std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
+                             buffer.size() - 2));
+        if (!doc.has_value()) {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got malformed jmessage packet (" + doc.error().message
+                          + " at byte offset "
+                          + std::to_string(doc.error().byte_offset) + ").");
         }
       }
       break;
@@ -570,16 +560,15 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_CLIENT_INFO: {
       if (buffer.size() > 1) {
-        // Create a string from bytes 1+ of msg.
-        std::vector<char> str_buffer(buffer.size());  // Preallocate needed.
-        std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
-        str_buffer.back() = 0;  // Null terminate.
-
-        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
-          if (cJSON_IsObject(info)) {
-            cJSON* b = cJSON_GetObjectItem(info, "b");
-            if (cJSON_IsNumber(b)) {
-              build_number_ = b->valueint;
+        // Payload is the bytes after the type byte (no trailing null).
+        std::string_view info_str(
+            reinterpret_cast<const char*>(buffer.data() + 1),
+            buffer.size() - 1);
+        if (auto doc = JsonDoc::Parse(info_str)) {
+          JsonRef root = doc->root();
+          if (root.is_object()) {
+            if (auto b = root["b"].as_double()) {
+              build_number_ = static_cast<int>(*b);
             } else {
               BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                           "No buildnumber in clientinfo msg.");
@@ -588,9 +577,8 @@ void ConnectionToClient::HandleMessagePacket(
 
             // Grab their token (we use this to ask the server for their
             // v1 account info).
-            cJSON* t = cJSON_GetObjectItem(info, "tk");
-            if (cJSON_IsString(t)) {
-              token_ = t->valuestring;
+            if (auto t = root["tk"].as_string()) {
+              token_ = std::string(*t);
             } else {
               BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                           "No token in clientinfo msg.");
@@ -600,16 +588,44 @@ void ConnectionToClient::HandleMessagePacket(
             // Newer clients also pass a peer-hash, which we can include
             // with the token to allow the v1 server to better verify the
             // client's identity.
-            cJSON* ph = cJSON_GetObjectItem(info, "ph");
-            if (cJSON_IsString(ph)) {
-              peer_hash_ = ph->valuestring;
+            if (auto ph = root["ph"].as_string()) {
+              peer_hash_ = std::string(*ph);
             }
-            auto doing_v2_auth{appmode->require_client_authentication()
-                               && appmode->client_authentication_version()
-                                      == 2};
+
+            // Join-password gate: if we host with a password, the client
+            // must prove it knows it via HMAC(password, our handshake
+            // salt). Fail closed — missing or wrong hash is rejected. The
+            // raw password never crosses the (plaintext) wire.
+            auto host_password{appmode->GetHostPassword()};
+            if (!host_password.empty()) {
+              std::string expected{g_base->python->HmacSha256Hex(
+                  host_password, our_handshake_salt_)};
+              auto got{root["pw"].string_or("")};
+              if (expected.empty() || got != expected) {
+                g_core->logging->Log(
+                    LogName::kBaNetworking, LogLevel::kDebug,
+                    "ConnectionToClient rejecting join; bad/missing "
+                    "password.");
+                // Send a reason code to clients new enough to render their
+                // own localized string; fall back to the English literal for
+                // older ones (which don't understand the reject-reason type).
+                if (build_number() >= BA_REJECT_REASON_MIN_BUILD) {
+                  SendRejectReason(BA_REJECT_REASON_PASSWORD_INCORRECT);
+                } else {
+                  SendScreenMessage("Incorrect password.", 1, 0, 0);
+                }
+                // Proactively kick (not just Error(), which only replies
+                // to further incoming packets) so the joiner is cleanly
+                // disconnected rather than left hanging.
+                RequestDisconnect();
+                return;
+              }
+            }
+
+            auto doing_v2_auth{v2_authed_};
 
             if (!token_.empty() && !doing_v2_auth) {
-              // If we're NOT doing v2 auth, kick off a query to the
+              // If they're NOT v2-authed, kick off a query to the
               // master-server for this client's info.
               //
               // FIXME: we need to add retries for this in case of failure.
@@ -626,11 +642,10 @@ void ConnectionToClient::HandleMessagePacket(
                          + (doing_v2_auth ? "true" : "false") + ").";
                 });
           }
-          cJSON_Delete(info);
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got invalid json in clientinfo message: '"
-                          + std::string(str_buffer.data()) + "'.");
+                          + std::string(info_str) + "'.");
           Error("");
         }
       }
@@ -646,45 +661,34 @@ void ConnectionToClient::HandleMessagePacket(
         BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                     "Ignoring invalid client-player-profiles-json msg.");
       } else {
-        switch (appmode->client_authentication_version()) {
-          case 1: {
-            // Ok; doing old-school V1 auth.
-            //
-            // Only accept peer profiles if we're allowing that and have not
-            // gotten official ones through v1 client auth.
-            if (!appmode->require_client_authentication()
-                && !got_v1_auth_from_master_server_) {
-              // Create a string from bytes 1+ of msg.
-              std::vector<char> b2(buffer.size());  // Preallocate full space.
-              std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
-              b2.back() = 0;  // Null terminate.
+        // Note: what matters here is whether this client actually
+        // v2-authed. The client makes the matching send/don't-send call
+        // based on whether it sent us a token.
+        if (v2_authed_) {
+          // With client-auth in effect we get verified profiles through
+          // the auth path (from the cloud *before* the connection is
+          // allowed), so fully ignore anything coming through here.
+          // But also authed clients know not to bother sending
+          // profiles, so this should never happen.
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got client-profiles message while client-auth is "
+                      "enabled; this should not happen.");
+        } else if (!got_v1_auth_from_master_server_) {
+          // Auth not required (private/LAN party); accept the profiles
+          // the peer sent us (unless official v1-auth ones arrived).
+          //
+          // Create a string from bytes 1+ of msg.
+          std::vector<char> b2(buffer.size());  // Preallocate full space.
+          std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
+          b2.back() = 0;  // Null terminate.
 
-              PythonRef args(Py_BuildValue("(s)", b2.data()),
-                             PythonRef::kSteal);
-              PythonRef results =
-                  g_core->python->objs()
-                      .Get(core::CorePython::ObjID::kJsonLoadsCall)
-                      .Call(args);
-              if (results.exists()) {
-                player_profiles_ = results;
-              }
-            }
-            break;
+          PythonRef args(Py_BuildValue("(s)", b2.data()), PythonRef::kSteal);
+          PythonRef results = g_core->python->objs()
+                                  .Get(core::CorePython::ObjID::kJsonLoadsCall)
+                                  .Call(args);
+          if (results.exists()) {
+            player_profiles_ = results;
           }
-          case 2: {
-            // In client-auth version 2, profiles are sent to us by the
-            // cloud *before* the connection is allowed, so fully ignore
-            // anything that comes through here. But also clients should
-            // know not to bother sending us profiles so this should never
-            // happen.
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "Got client-profiles message while v2-auth is enabled; "
-                        "this should not happen.");
-            break;
-          }
-          default:
-            FatalError("Unexpected client-auth version.");
-            break;
         }
       }
       break;
@@ -724,16 +728,11 @@ void ConnectionToClient::HandleMessagePacket(
           }
         }
 
-        // If we require v1 client-info and don't have it from this guy yet,
-        // ignore their chat messages (prevent bots from jumping in and
-        // spamming before we can verify their identities)
-        if (appmode->require_client_authentication()
-            && appmode->client_authentication_version() < 2
-            && !got_v1_auth_from_master_server_) {
-          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                      "Ignoring chat message from peer with no client info.");
-          SendScreenMessage(R"({"r":"loadingTryAgainText"})", 1, 0, 0);
-        } else if (last_chat_times_.size() >= 5) {
+        // (A v1-auth chat-hold lived here -- ignore chat until the
+        // client's master-server info arrived; it died with the
+        // protocol-40 hosting floor, since client-auth is always v2
+        // and verified *before* the connection is allowed.)
+        if (last_chat_times_.size() >= 5) {
           chat_block_time_ = now + next_chat_block_seconds_ * 1000;
           appmode->connections()->SendScreenMessageToAll(
               R"({"r":"internal.chatBlockedText","s":[["${NAME}",)"
@@ -741,7 +740,11 @@ void ConnectionToClient::HandleMessagePacket(
                       GetCombinedSpec().GetDisplayString().c_str())
                   + R"(],["${TIME}",")"
                   + std::to_string(next_chat_block_seconds_) + "\"]]}",
-              1, 1, 0);
+              1, 1, 0,
+              ConnectionSet::LangStrWireTagged(
+                  base::BuiltinStrings::Session::ChatBlocked(
+                      next_chat_block_seconds_,
+                      GetCombinedSpec().GetDisplayString())));
           next_chat_block_seconds_ *= 2;  // make it worse next time
 
         } else {
@@ -766,10 +769,13 @@ void ConnectionToClient::HandleMessagePacket(
               // Clamp messages at a reasonable size
               // (yes, people used this to try and crash machines).
               if (b2.size() > 100) {
+                // (The legacy json is only for older clients.)
                 SendScreenMessage(
                     "{\"t\":[\"serverResponses\","
                     "\"Message is too long.\"]}",
-                    1, 0, 0);
+                    1, 0, 0,
+                    ConnectionSet::LangStrWireTagged(
+                        base::BuiltinStrings::Session::ChatMessageTooLong()));
               } else if (kick_vote_in_progress
                          && (!strcmp(b2.data(), "1")
                              || !strcmp(b2.data(), "2"))) {
@@ -782,7 +788,10 @@ void ConnectionToClient::HandleMessagePacket(
                   kick_voted_ = true;
                   kick_vote_choice_ = !strcmp(b2.data(), "1");
                 } else {
-                  SendScreenMessage(R"({"r":"votedAlreadyText"})", 1, 0, 0);
+                  SendScreenMessage(
+                      R"({"r":"votedAlreadyText"})", 1, 0, 0,
+                      ConnectionSet::LangStrWireTagged(
+                          base::BuiltinStrings::Session::VotedAlready()));
                 }
               } else {
                 // Pass the message through any custom filtering we've
@@ -907,31 +916,12 @@ void ConnectionToClient::HandleMessagePacket(
       if (auto* hs =
               dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
         if (!cid->AttachedToPlayer()) {
-          bool still_waiting_for_auth =
-              (appmode->require_client_authentication()
-               && appmode->client_authentication_version() < 2
-               && !got_v1_auth_from_master_server_);
-
-          // If we're not allowing peer client-info and have yet to get
-          // master-server info for this client, delay their join (we'll
-          // eventually give up and just give them a blank slate).
-          if (still_waiting_for_auth
-              && (g_core->AppTimeMillisecs() - creation_time() < 10000)) {
-            SendScreenMessage(
-                "{\"v\":\"${A}...\",\"s\":[[\"${A}\",{\"r\":"
-                "\"loadingTryAgainText\",\"f\":\"loadingText\"}]]}",
-                1, 1, 0);
-          } else {
-            // Either timed out or have info; let the request go through.
-            if (still_waiting_for_auth) {
-              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                          "Allowing player-request without client\'s "
-                          "master-server "
-                          "info (build "
-                              + std::to_string(build_number_) + ")");
-            }
-            hs->RequestPlayer(cid_d);
-          }
+          // (A v1-auth join-delay lived here -- stall the player
+          // request until the client's master-server info arrived; it
+          // died with the protocol-40 hosting floor, since client-auth
+          // is always v2 and verified *before* the connection is
+          // allowed.)
+          hs->RequestPlayer(cid_d);
         }
       } else {
         BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
@@ -947,7 +937,9 @@ void ConnectionToClient::HandleMessagePacket(
       if (buffer[0] == BA_MESSAGE_MULTIPART) {
         if (multipart_buffer_size() > 50000) {
           // Its not actually unknown but shhh don't tell the hackers...
-          SendScreenMessage(R"({"r":"errorUnknownText"})", 1, 0, 0);
+          SendScreenMessage(R"({"r":"errorUnknownText"})", 1, 0, 0,
+                            ConnectionSet::LangStrWireTagged(
+                                base::BuiltinStrings::Ui::UnknownError()));
           g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
                                "Client data limit exceeded by '"
                                    + peer_spec().GetShortName()
@@ -1019,15 +1011,99 @@ auto ConnectionToClient::GetAsUDP() -> ConnectionToClientUDP* {
   return nullptr;
 }
 
-// Old V1 authentication stuff:
-void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+// Look up and apply the cloud's auth data for a joiner's v2 auth token
+// (verified spec, account id, profiles, purchases, cloud characters).
+// Returns false, changing nothing, if the token is unusable.
+auto ConnectionToClient::ApplyV2AuthToken_(const std::string& token) -> bool {
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [&token] {
+    return "Got V2 auth token from joiner: " + token;
+  });
 
-  // Sanity check; should never come through here if we're doing v2 auth.
-  [[maybe_unused]] auto doing_v2_auth{
-      appmode->require_client_authentication()
-      && appmode->client_authentication_version() == 2};
-  assert(!doing_v2_auth);
+  auto args = PythonRef::Stolen(Py_BuildValue("(s)", token.c_str()));
+  auto result = g_base->python->objs()
+                    .Get(base::BasePython::ObjID::kV2AuthDataCall)
+                    .Call(args);
+  if (!result.exists()) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Error looking up v2 auth data for joiner.");
+    return false;
+  }
+  if (result.ValueIsNone()) {
+    // No auth found for this client (curious if this will happen
+    // enough to make warning overkill; can downgrade to debug if
+    // so).
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                         "Invalid v2 auth token from joiner.");
+    return false;
+  }
+  auto valid_format{false};
+  PythonRef account_id_ref;
+  PythonRef account_tag_ref;
+  PythonRef profiles_ref;
+  PythonRef classic_purchases_ref;
+  PythonRef cloud_characters_ref;
+  if (result.ValueIsSequence()) {
+    auto vals{result.ValueAsSequence()};
+    if (vals.size() == 5 && vals[0].ValueIsString() && vals[1].ValueIsString()
+        && PyDict_Check(*vals[2])
+        && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))
+        && (vals[4].ValueIsNone() || PyList_Check(*vals[4]))) {
+      valid_format = true;
+      account_id_ref = vals[0];
+      account_tag_ref = vals[1];
+      profiles_ref = vals[2];
+      classic_purchases_ref = vals[3];  // list or Py_None
+      cloud_characters_ref = vals[4];   // list or Py_None
+    }
+  }
+  if (!valid_format) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Invalid type returned from v2_auth_data.");
+    return false;
+  }
+
+  peer_public_account_id_ = account_id_ref.ValueAsString();
+
+  // Create a v2 account id spec for them.
+  //
+  // Verified account tag should always be simple ascii with no
+  // quotes or crazy stuff so we can just stuff it directly into a
+  // json str.
+  auto account_tag_str = account_tag_ref.ValueAsString();
+  assert(account_tag_str.size() < 128);
+  char buffer[256];
+  snprintf(buffer, sizeof(buffer), "{\"n\":\"%s\",\"a\":\"V2\",\"sn\":\"\"}",
+           account_tag_str.c_str());
+  set_peer_spec(PlayerSpec(buffer));
+
+  // printf("TODO: SET PEER PROFILES TO %s.\n",
+  //        profiles_ref.Str().c_str());
+  player_profiles_ = profiles_ref;
+  // Store the classic purchases ref as-is; the accessor
+  // differentiates between "a Py_None sentinel was stored"
+  // (masters signaled unknown) and "nothing was ever stored"
+  // (non-v2-auth connection). Both cases end up as None on
+  // the Python side, which is what the lobby wants.
+  classic_purchases_ = classic_purchases_ref;
+  // Same convention: the list of cloud-composed character json
+  // (the joiner's cloud profiles), or Py_None when the master
+  // sent none.
+  cloud_characters_ = cloud_characters_ref;
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+    return "ConnectionToClient(id=" + std::to_string(id())
+           + "): v2-auth succeeded (account=" + peer_public_account_id_ + ").";
+  });
+  return true;
+}
+
+// V1 client-info response (info duty only these days: public
+// account-id + official profiles for parties not requiring auth; the
+// v1 *auth* duty died with the protocol-40 hosting floor).
+void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
+  [[maybe_unused]] auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  // Sanity check; the query is only sent for clients not v2-authed.
+  assert(!v2_authed_);
 
   PyObject* profiles_obj = PyDict_GetItemString(info_obj, "p");
   if (profiles_obj != nullptr) {
@@ -1040,26 +1116,11 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
   if (public_id_obj != nullptr && g_base->python->IsPyLString(public_id_obj)) {
     peer_public_account_id_ = Python::GetString(public_id_obj);
   } else {
+    // No valid account info found. Nothing to do beyond clearing the
+    // id: this query only runs for parties not requiring auth (the v1
+    // *auth* kick that lived here died with the protocol-40 hosting
+    // floor).
     peer_public_account_id_ = "";
-
-    // If the server returned no valid account info for them
-    // and we're not trusting peers, kick this fella right out
-    // and ban him for a short bit (to hopefully limit rejoin spam).
-    if (appmode->require_client_authentication()) {
-      SendScreenMessage(
-          "{\"t\":[\"serverResponses\","
-          "\"Your account was rejected. Are you signed in?\"]}",
-          1, 0, 0);
-      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                           "Master server found no valid account for '"
-                               + peer_spec().GetShortName() + "'; kicking.");
-
-      // Not benning anymore. People were exploiting this by impersonating
-      // other players using their public ids to get them banned from
-      // their own servers/etc.
-      // g_logic->BanPlayer(peer_spec(), 1000 * 60);
-      Error("");
-    }
   }
   got_v1_auth_from_master_server_ = true;
 }

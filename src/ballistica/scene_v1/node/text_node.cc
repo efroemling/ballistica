@@ -3,11 +3,15 @@
 #include "ballistica/scene_v1/node/text_node.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
+#include "ballistica/base/input/input.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -25,7 +29,7 @@ class TextNodeType : public NodeType {
   BA_FLOAT_ATTR(project_scale, project_scale, set_project_scale);
   BA_FLOAT_ATTR(scale, scale, set_scale);
   BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
-  BA_STRING_ATTR(text, getText, SetText);
+  BA_LANG_STR_ATTR(text, getText, SetText, SetTextWire, text_lang_str);
   BA_BOOL_ATTR(big, big, SetBig);
   BA_BOOL_ATTR(trail, trail, set_trail);
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
@@ -131,13 +135,54 @@ void TextNode::SetText(const std::string& val) {
     }
     text_translation_dirty_ = true;
     text_raw_ = val;
+    text_mode_ = TextMode::kLegacy;
+    text_lang_str_.reset();
+    PrefetchTextMeasures_();
   }
+}
+
+void TextNode::SetTextWire(const std::string& wire,
+                           std::shared_ptr<const base::LangStr> parsed) {
+  // Untagged values (defensive; e.g. shared code paths that don't
+  // know about tagging) get legacy semantics.
+  if (wire.empty()
+      || (wire[0] != kLangStrWireTagLiteral
+          && wire[0] != kLangStrWireTagLegacyJson
+          && wire[0] != kLangStrWireTagLangStr)) {
+    SetText(wire);
+    return;
+  }
+  if (text_raw_ == wire && text_mode_ != TextMode::kLegacy) {
+    return;
+  }
+  assert(Utils::IsValidUTF8(wire));
+  text_raw_ = wire;  // Full tagged value, so gets/dumps round-trip it.
+  switch (wire[0]) {
+    case kLangStrWireTagLiteral:
+      text_mode_ = TextMode::kLiteral;
+      text_lang_str_.reset();
+      break;
+    case kLangStrWireTagLegacyJson:
+      text_mode_ = TextMode::kLegacyJson;
+      text_lang_str_.reset();
+      break;
+    default:
+      text_mode_ = TextMode::kLangStr;
+      text_lang_str_ = std::move(parsed);
+      break;
+  }
+  text_translation_dirty_ = true;
+  PrefetchTextMeasures_();
 }
 
 void TextNode::SetBig(bool val) {
   big_ = val;
   text_group_dirty_ = true;
   text_width_dirty_ = true;
+  // Big-ness is part of a measure's identity, so re-warm for the new
+  // value like the text setters do (otherwise the next draw can find
+  // measures cold and defer a frame).
+  PrefetchTextMeasures_();
 }
 
 auto TextNode::GetHAlign() const -> std::string {
@@ -343,6 +388,42 @@ void TextNode::Update() {
   }
 }
 
+void TextNode::UpdateTranslation_() {
+  if (!text_translation_dirty_) {
+    return;
+  }
+  switch (text_mode_) {
+    case TextMode::kLegacy:
+      text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+      break;
+    case TextMode::kLiteral:
+      text_translated_ = text_raw_.substr(1);
+      break;
+    case TextMode::kLegacyJson:
+      text_translated_ =
+          g_base->assets->CompileResourceString(text_raw_.substr(1));
+      break;
+    case TextMode::kLangStr:
+      text_translated_ = text_lang_str_ != nullptr
+                             ? text_lang_str_->Evaluate()
+                             : "LANGSTR_ERROR:unparsed wire value";
+      break;
+  }
+  text_translation_dirty_ = false;
+  text_group_dirty_ = true;
+  text_width_dirty_ = true;
+}
+
+void TextNode::PrefetchTextMeasures_() {
+  // Kick any needed background OS-span measures for our text right at
+  // set-time rather than waiting for our first draw; warm-font
+  // measures usually land before that draw, avoiding a blank first
+  // frame. Fully async (even the O(length) walk runs on the assets
+  // loop); costs only a string copy here.
+  UpdateTranslation_();
+  g_base->text_graphics->WarmUpStringAsync(text_translated_, big_);
+}
+
 void TextNode::Draw(base::FrameDef* frame_def) {
   if (client_only_ && context_ref().GetHostSession()) {
     return;
@@ -352,12 +433,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
   }
 
   // Apply subs/resources to get our actual text if need be.
-  if (text_translation_dirty_) {
-    text_translated_ = g_base->assets->CompileResourceString(text_raw_);
-    text_translation_dirty_ = false;
-    text_group_dirty_ = true;
-    text_width_dirty_ = true;
-  }
+  UpdateTranslation_();
 
   if (text_translated_.empty()) {
     return;
@@ -365,9 +441,23 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
   // recalc our text width if need be..
   if (text_width_dirty_) {
-    text_width_ =
-        g_base->text_graphics->GetStringWidth(text_translated_.c_str(), big_);
-    text_width_dirty_ = false;
+    // Measure without stalling; if OS-span measures are cold they run
+    // in the background and we stay dirty (our text-group defers its
+    // own display in that case too, so nothing draws mismatched).
+    auto text_width = g_base->text_graphics->TryGetStringWidth(
+        text_translated_.c_str(), big_);
+    if (text_width.has_value()) {
+      text_width_ = *text_width;
+      text_width_dirty_ = false;
+    }
+  }
+  if (text_width_dirty_) {
+    // Spans are still warming; skip drawing entirely this frame
+    // rather than drawing with a stale width. This is the node-side
+    // half of the deferral the comment above describes -- without it
+    // we fell through to draw math asserting a clean width (the
+    // text_width_dirty_ boot abort noted in followups 2026-08-31).
+    return;
   }
 
   bool vr_2d_text = (g_core->vr_mode() && !in_world_);
@@ -435,7 +525,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
     // left/rigth shift from tilting the device
     if (tilt_translate_ != 0.0f) {
-      Vector3f tilt = g_base->graphics->tilt();
+      Vector3f tilt = g_base->input->tilt();
       tx_tilt = -tilt.y * tilt_translate_;
       ty_tilt = tilt.x * tilt_translate_;
     }
@@ -514,7 +604,6 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
         base::SimpleComponent c(&pass);
         c.SetTransparent(true);
-        c.SetColor(color_[0], color_[1], color_[2], color_[3] * opacity_);
 
         int elem_count = text_group_.GetElementCount();
         bool did_submit = false;
@@ -523,6 +612,12 @@ void TextNode::Draw(base::FrameDef* frame_def) {
           base::TextureAsset* t = text_group_.GetElementTexture(e);
           if (!t->preloaded()) continue;
           c.SetTexture(t);
+          // Premultiply rgb by alpha for premultiplied textures so faded text
+          // composites 'over' under premult blend instead of showing
+          // full-brightness rgb. Straight-alpha textures keep raw rgb.
+          float cmul = t->premultiplied() ? (color_[3] * opacity_) : 1.0f;
+          c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul,
+                     color_[3] * opacity_);
           float shadow_opacity = shadow_;
           if (opacity_scales_shadow_) {
             float o = color_[3] * opacity_;
@@ -633,10 +728,15 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       } else {
         c.ClearMaskUV2Texture();
       }
+      // Premultiply rgb by the (faded) alpha for premultiplied textures so
+      // semi-transparent text composites 'over' under premult blend instead of
+      // showing full-brightness rgb (and never fading out). Straight-alpha
+      // textures keep raw rgb and fade via alpha as before.
+      float cmul = t->premultiplied() ? fin_a : 1.0f;
       if (text_group_.GetElementCanColor(e)) {
-        c.SetColor(color_[0], color_[1], color_[2], fin_a);
+        c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul, fin_a);
       } else {
-        c.SetColor(1, 1, 1, fin_a);
+        c.SetColor(cmul, cmul, cmul, fin_a);
       }
       if (g_core->vr_mode()) {
         c.SetFlatness(text_group_.GetElementMaxFlatness(e));

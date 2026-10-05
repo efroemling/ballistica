@@ -2,8 +2,6 @@
 #
 """Window related UI bits."""
 
-from __future__ import annotations
-
 import logging
 import warnings
 from typing import TYPE_CHECKING, override
@@ -44,13 +42,27 @@ class Window:
             else None
         )
 
-        # Generally we complain if we outlive our root widget.
+        # Generally we complain if we outlive our root widget. (The
+        # context is the plain function, not a bound method: the check
+        # holds it strongly and must not keep us alive itself.)
         if cleanupcheck:
-            babase.app.ui_v1.add_ui_cleanup_check(self, root_widget)
+            babase.app.ui_v1.add_ui_cleanup_check(
+                self, root_widget, context=type(self).window_describe
+            )
 
     def get_root_widget(self) -> bauiv1.Widget:
         """Return the root widget."""
         return self._root_widget
+
+    def window_describe(self) -> str:
+        """Describe this window in a line, for diagnostics.
+
+        Used by the ui cleanup check to say where a leaked object lived
+        (a window's own leak report, and that of any widget-owning
+        object created inside it). Subclasses can add what identifies
+        them: a doc-ui window names its controller and page.
+        """
+        return type(self).__name__
 
 
 class MainWindow(Window):
@@ -124,6 +136,13 @@ class MainWindow(Window):
             scale_origin_stack_offset=scale_origin,
         )
 
+    @override
+    def window_describe(self) -> str:
+        desc = type(self).__name__
+        if self.main_window_extra_type_id:
+            desc = f'{desc}[{self.main_window_extra_type_id}]'
+        return desc
+
     def main_window_save_shared_state(self) -> None:
         """Save shared state (such as widget selection).
 
@@ -145,7 +164,26 @@ class MainWindow(Window):
 
         # Save selection if desired.
         if self._get_main_window_should_preserve_selection():
+            # Note: deliberately the *global* selection, not just what is
+            # selected within our own widget tree. Main-windows own
+            # saving/restoring selection of the toolbar buttons too
+            # (account, settings, store, etc. live in the screen root's
+            # toolbar, outside our root widget), so filtering to our own
+            # tree would silently break toolbar selection restore. The
+            # flip side is that ui on the overlay stack (a popup, say)
+            # can hold the global selection while we save, and its widget
+            # won't exist to restore; in that case we save our own
+            # selection - what the user returns to once the overlay ui
+            # goes away.
             sel = _bauiv1.get_selected_widget()
+            if sel is not None and _in_overlay_stack(sel):
+                babase.uilog.debug(
+                    'Global selection is on the overlay stack (%s);'
+                    ' saving selection for %r from its own widget tree.',
+                    sel,
+                    self.main_window_id_prefix,
+                )
+                sel = _own_selection(self._root_widget)
             if sel is None:
                 selfin = None
             else:
@@ -200,7 +238,7 @@ class MainWindow(Window):
         )
         babase.app.ui_v1.main_window_shared_states[keyfin] = shared_state
 
-    def main_window_restore_shared_state(self) -> None:
+    def main_window_restore_shared_state(self, animate: bool = False) -> None:
         """Restore shared state (such as widget selection), if any.
 
         This is automatically called just after main-windows are
@@ -210,6 +248,12 @@ class MainWindow(Window):
         State contained here is intended to operate on
         already-constructed UI; state that influences which UI is
         contructed should go through other mechanisms.
+
+        Any scroll needed to reveal the restored selection snaps rather
+        than glides by default: the ui is simply being put back the way
+        it was, and a whole page visibly scrolling there reads as
+        broken, not intentional. Pass ``animate=True`` only if a glide
+        is genuinely wanted.
         """
 
         # pylint: disable=assignment-from-none
@@ -253,7 +297,10 @@ class MainWindow(Window):
                 if widget is not None:
                     if widget.selectable:
                         widget.global_select()
-                        widget.scroll_into_view()
+                        if self.main_window_should_scroll_to_restored_selection(
+                            widget
+                        ):
+                            widget.scroll_into_view(animate=animate)
                     else:
                         babase.uilog.debug(
                             "Unable to restore selection '%s';"
@@ -486,6 +533,19 @@ class MainWindow(Window):
         """
         return None
 
+    def main_window_should_scroll_to_restored_selection(
+        self, widget: bauiv1.Widget
+    ) -> bool:
+        """Whether restoring selection to ``widget`` should scroll to it.
+
+        By default a restored selection is scrolled into view (show
+        buffers and all). Windows that restore their scroll positions
+        exactly can return False when the widget is already back where
+        it was, so the restore doesn't nudge it toward the center.
+        """
+        del widget  # Unused here.
+        return True
+
     def get_main_window_shared_state_id(self) -> str | None:
         """Provide a custom id for window shared state.
 
@@ -562,6 +622,29 @@ class MainWindowState:
         """
         raise NotImplementedError()
 
+    def get_ui_open_states(self) -> list[bauiv1.UIOpenState]:
+        """Return the ui-open-states this state itself keeps alive.
+
+        Child classes holding any should override this so that
+        :meth:`~bauiv1.MainWindowState.set_ui_open_states_dormant()` can
+        reach them.
+        """
+        return []
+
+    def set_ui_open_states_dormant(self, dormant: bool) -> None:
+        """Set dormancy on the ui-open-states of this state and its parents.
+
+        A state saved for later restoration (while a game runs, say)
+        should not keep toolbar buttons lit for windows that aren't
+        showing; make its states dormant while it waits, and wake them
+        again just before restoring it.
+        """
+        state: MainWindowState | None = self
+        while state is not None:
+            for uiopenstate in state.get_ui_open_states():
+                uiopenstate.set_dormant(dormant)
+            state = state.parent
+
 
 class BasicMainWindowState(MainWindowState):
     """A basic MainWindowState.
@@ -589,6 +672,10 @@ class BasicMainWindowState(MainWindowState):
         self.uiopenstate = uiopenstate
 
     @override
+    def get_ui_open_states(self) -> list[bauiv1.UIOpenState]:
+        return [] if self.uiopenstate is None else [self.uiopenstate]
+
+    @override
     def create_window(
         self,
         transition: Literal['in_right', 'in_left', 'in_scale'] | None = None,
@@ -597,6 +684,32 @@ class BasicMainWindowState(MainWindowState):
         win = self.create_call(transition, origin_widget)
 
         return win
+
+
+def _in_overlay_stack(widget: bauiv1.Widget) -> bool:
+    """Whether a widget lives somewhere under the overlay stack."""
+    overlay = _bauiv1.get_special_widget('overlay_stack')
+    wdg: bauiv1.Widget | None = widget
+    while wdg is not None:
+        if wdg is overlay:
+            return True
+        wdg = wdg.parent
+    return False
+
+
+def _own_selection(root: bauiv1.Widget) -> bauiv1.Widget | None:
+    """The selected leaf within a widget tree, if any.
+
+    Follows each container's selected child down from ``root``; this is
+    what becomes the global selection once nothing outside the tree
+    (such as overlay ui) holds it.
+    """
+    wdg = root
+    while (child := wdg.get_selected_child()) is not None:
+        wdg = child
+    if wdg is root or not wdg.selectable:
+        return None
+    return wdg
 
 
 class MainWindowAutoRecreateSuppress:

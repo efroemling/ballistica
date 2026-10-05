@@ -2,8 +2,6 @@
 #
 """Store related functionality for classic mode."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 
@@ -23,38 +21,40 @@ class StoreSubsystem:
         """(internal)"""
         return self.get_store_items()[item]
 
-    def get_store_item_name_translated(self, item_name: str) -> babase.Lstr:
-        """Return a babase.Lstr for a store item name."""
+    def get_store_item_name_translated(
+        self, item_name: str
+    ) -> babase.Lstr | babase.LangStr:
+        """Return a display name for a store item."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
+        from bascenev1 import _classicassets, _classiccatalogassets
+        from bauiv1 import _classicuiassets
+
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
-            return babase.Lstr(
-                translate=('characterNames', item_info['character'])
+            from bascenev1lib.actor import spazappearance
+
+            return spazappearance.get_appearance_display_name(
+                item_info['character'], langstr=True
             )
         if item_name in ['merch']:
-            return babase.Lstr(resource='merchText')
+            return _classicassets.strings.store.merch
         if item_name in ['upgrades.pro', 'pro']:
-            return babase.Lstr(
-                resource='store.bombSquadProNameText',
-                subs=[('${APP_NAME}', babase.Lstr(resource='titleText'))],
+            return _classicassets.strings.store.pro_name(
+                app_name=_classicassets.strings.ui.app_name
             )
         if item_name.startswith('maps.'):
             map_type: type[bascenev1.Map] = item_info['map_type']
-            return bascenev1.get_map_display_string(map_type.name)
+            return bascenev1.get_map_display_string(map_type.name, langstr=True)
         if item_name.startswith('games.'):
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
-            return gametype.get_display_string()
+            return gametype.get_display_string(langstr=True)
         if item_name.startswith('icons.'):
-            return babase.Lstr(resource='editProfileWindow.iconText')
+            return _classicuiassets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
-            return babase.Lstr(
-                translate=('coopLevelNames', 'Infinite Runaround')
-            )
+            return _classiccatalogassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':
-            return babase.Lstr(
-                translate=('coopLevelNames', 'Infinite Onslaught')
-            )
+            return _classiccatalogassets.strings.coop_levels.infinite_onslaught
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -123,30 +123,12 @@ class StoreSubsystem:
                 'merch': {},
                 'pro': {},
                 'maps.lake_frigid': {'map_type': maps.LakeFrigid},
-                'games.race': {
-                    'gametype': RaceGame,
-                    'previewTex': 'bigGPreview',
-                },
-                'games.ninja_fight': {
-                    'gametype': NinjaFightGame,
-                    'previewTex': 'courtyardPreview',
-                },
-                'games.meteor_shower': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': 'rampagePreview',
-                },
-                'games.infinite_onslaught': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': 'rampagePreview',
-                },
-                'games.target_practice': {
-                    'gametype': TargetPracticeGame,
-                    'previewTex': 'doomShroomPreview',
-                },
-                'games.easter_egg_hunt': {
-                    'gametype': EasterEggHuntGame,
-                    'previewTex': 'towerDPreview',
-                },
+                'games.race': {'gametype': RaceGame},
+                'games.ninja_fight': {'gametype': NinjaFightGame},
+                'games.meteor_shower': {'gametype': MeteorShowerGame},
+                'games.infinite_onslaught': {'gametype': MeteorShowerGame},
+                'games.target_practice': {'gametype': TargetPracticeGame},
+                'games.easter_egg_hunt': {'gametype': EasterEggHuntGame},
                 'icons.flag_us': {
                     'icon': babase.charstr(
                         babase.SpecialChar.FLAG_UNITED_STATES

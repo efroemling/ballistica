@@ -64,6 +64,23 @@ class Python {
   /// sanity checking that.
   static auto HaveGIL() -> bool;
 
+  /// Debug-only lock-ordering guard. Code holding a "leaf" lock that must
+  /// never be held while *blocking* to acquire the GIL (e.g. an Asset lock --
+  /// see Asset's lock-ordering invariant) brackets that hold with
+  /// Push/PopNoGilLockZone(). If a ScopedInterpreterLock then blocks to
+  /// acquire the GIL inside such a zone (i.e. the thread did not already hold
+  /// the GIL), it fires a fatal error pinpointing the offending call -- which
+  /// is exactly the pattern that deadlocks against the logic thread. No-ops in
+  /// release builds. Same-thread bracketing only (the locking thread is the
+  /// unlocking thread).
+#if BA_DEBUG_BUILD
+  static void PushNoGilLockZone();
+  static void PopNoGilLockZone();
+#else
+  static void PushNoGilLockZone() {}
+  static void PopNoGilLockZone() {}
+#endif
+
   /// For use in specific cases when a thread exits our control. In most
   /// cases Scoped Locks/Unlocks should be used.
   static void PermanentlyReleaseGIL();
@@ -130,8 +147,33 @@ class Python {
   /// Return an int64_t from any numeric PyObject.
   static auto GetInt64(PyObject* o) -> int64_t;
 
+  /// Return a narrower int from any numeric PyObject, raising a Python
+  /// ValueError if the value does not fit.
+  ///
+  /// Prefer these over narrowing a GetInt64() result with
+  /// static_cast_check_fit() whenever the value comes from outside the
+  /// engine (mod code, config files, the network). That check is
+  /// assert-only, so out-of-range input aborts a debug build and
+  /// silently truncates in a shipped one; these raise identically in
+  /// both. static_cast_check_fit remains the right tool for internal
+  /// invariants, where a bad value really does mean an engine bug.
+  static auto GetInt32(PyObject* o) -> int32_t;
+  static auto GetInt16(PyObject* o) -> int16_t;
+  static auto GetInt8(PyObject* o) -> int8_t;
+
   /// Return a bool from any numeric PyObject.
   static auto GetBool(PyObject* o) -> bool;
+
+  /// Narrow a floating-point value that came from Python to an int,
+  /// raising a Python ValueError if it is non-finite or out of range.
+  ///
+  /// Python floats can be NaN or infinite, and static_cast of either to
+  /// an integer is undefined behavior -- so any `float`/`double` pulled
+  /// from Python (whether via GetDouble or a PyArg "f"/"d" format) must
+  /// come through here rather than being cast directly. Raises rather
+  /// than clamping because a caller passing NaN has a bug worth hearing
+  /// about; for untrusted non-Python input use clamped_float_to_int.
+  static auto IntFromDouble(double val) -> int;
 
   /// Return a double from any Python numeric type.
   static auto GetDouble(PyObject* o) -> double;

@@ -89,15 +89,21 @@ PlayStation / My toaster??**
 
 ### Cloning And Contributing
 
-This repository can be cloned and accepts issues and pull requests from the
-following sources
+You can contribute to this repository by reporting issues or creating pull
+requests in GitHub.
+This repository can be cloned from the following sources:
 
 * **GitHub**
   * Link: https://github.com/efroemling/ballistica
   * Cloning via [git](https://git-scm.com):
   `git clone https://github.com/efroemling/ballistica.git`
 
-* **Codeberg**:
-  * Link: https://codeberg.org/3ra/ballistica
+* **GitLab**:
+  * Link: https://gitlab.com/efroemling/ballistica
   * Cloning via [git](https://git-scm.com):
-  `git clone https://codeberg.org/3ra/ballistica.git`
+  `git clone https://gitlab.com/efroemling/ballistica.git`
+
+* **Codeberg**:
+  * Link: https://codeberg.org/efroemling/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://codeberg.org/efroemling/ballistica.git`

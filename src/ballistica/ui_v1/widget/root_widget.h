@@ -31,7 +31,19 @@ class RootWidget : public ContainerWidget {
   auto overlay_window_stack() const -> StackWidget* {
     return overlay_stack_widget_;
   }
+
+  /// Called when the overlay stack's last child goes away; hands
+  /// selection back to what had it before the overlay ui appeared.
+  void OnOverlayStackEmptied();
+
   void SquadPress();
+
+  /// Whether a back/menu press would navigate somewhere rather than
+  /// land at the top level with nothing to do. Mirrors how our kCancel
+  /// handling routes: a popup on the overlay stack or an enabled global
+  /// back button means there is somewhere to go, and outside the main
+  /// menu a press brings up the in-game menu.
+  auto BackPressWouldNavigate() const -> bool;
 
   /// Called when UIScale or screen dimensions change.
   void OnUIScaleChange();
@@ -42,6 +54,11 @@ class RootWidget : public ContainerWidget {
   void SetSquadSizeLabel(int val);
   void SetAccountSignInState(bool signed_in, const std::string& name);
 
+  /// Draw the account button as this depiction json (the account's
+  /// name, server-composed) in place of its usual art and label; empty
+  /// for the usual button.
+  void SetAccountDepiction(const std::string& json);
+
   void SetTicketsMeterValue(int val);
   void SetTokensMeterValue(int val, bool gold_pass);
   void SetLeagueRankValues(const std::string& league_type, int league_number,
@@ -51,6 +68,9 @@ class RootWidget : public ContainerWidget {
   void SetXPText(const std::string& val);
   void SetInboxState(int val, bool is_max, const std::string& announce_text);
   void SetStoreStyle(const std::string& val);
+  /// Each slot's depiction json (empty to draw by appearance), in slot
+  /// order.
+  void SetChestDepictions(const std::vector<std::string>& depictions);
   void SetChests(const std::string& chest_0_appearance,
                  const std::string& chest_1_appearance,
                  const std::string& chest_2_appearance,
@@ -129,6 +149,7 @@ class RootWidget : public ContainerWidget {
                  bool plus, const std::string& s, const std::string& widget_id);
   void UpdateTokensMeterTextColor_();
   void UpdateAccountButtonColor_();
+  void UpdateAccountButtonLabel_();
   void ShowTrophyMeterAnnotation_(const std::string& val,
                                   const Vector3f& color);
   void HideTrophyMeterAnnotation_();
@@ -247,9 +268,12 @@ class RootWidget : public ContainerWidget {
   bool highlight_potential_token_purchases_{};
   bool ui_open_states_dirty_{true};
   bool account_button_signed_in_{};
+  std::string account_name_;
+  std::string account_depiction_json_;
   bool trophy_meter_open_{};
 
   static int update_pause_count_;
+  static seconds_t update_pause_start_time_;
 };
 
 }  // namespace ballistica::ui_v1

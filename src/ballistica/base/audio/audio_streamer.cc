@@ -2,16 +2,11 @@
 
 #include "ballistica/base/audio/audio_streamer.h"
 
-#include <cstdio>
+#include <string>
 
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-
-// Need to move away from OpenAL on Apple stuff.
-#if __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
 
 namespace ballistica::base {
 
@@ -116,8 +111,19 @@ void AudioStreamer::Update() {
   CHECK_AL_ERROR;
 
   if (state != AL_PLAYING) {
-    printf("AudioServer::Streamer: restarting playback\n");
-    fflush(stdout);
+    // The source ran dry (we didn't refill fast enough) and OpenAL stopped
+    // it. We recover here, but each one is an audible hiccup, so keep it
+    // visible (this used to be a bare printf, invisible on mobile logs).
+    restart_count_++;
+    millisecs_t now = g_core->AppTimeMillisecs();
+    if (now - last_restart_log_time_ > 5000) {
+      last_restart_log_time_ = now;
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "Streaming source underran; restarting playback (file '" + file_name_
+              + "', " + std::to_string(restart_count_)
+              + " restart(s) so far).");
+    }
 
     alSourcePlay(source_);
     CHECK_AL_ERROR;

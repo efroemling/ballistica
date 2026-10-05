@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
@@ -32,10 +33,11 @@ void MeshAsset::DoPreload() {
 #if !BA_HEADLESS_BUILD
 
   assert(!file_name_.empty());
-  FILE* f = g_core->platform->FOpen(file_name_full_.c_str(), "rb");
-  if (!f) {
+  auto blob = AssetBlob::FromFile(file_name_full_);
+  if (!blob.exists()) {
     throw Exception("Can't open mesh file: '" + file_name_full_ + "'");
   }
+  AssetBlobReader reader(blob);
 
   // We currently read/write in little-endian since that's all we run on at the
   // moment.
@@ -44,7 +46,7 @@ void MeshAsset::DoPreload() {
 #endif
 
   uint32_t version;
-  if (fread(&version, sizeof(version), 1, f) != 1) {
+  if (!reader.ReadInto(&version, sizeof(version))) {
     throw Exception("Error reading file header for '" + file_name_full_ + "'");
   }
   if (version != kBobFileID) {
@@ -55,7 +57,7 @@ void MeshAsset::DoPreload() {
   }
 
   uint32_t mesh_format;
-  if (fread(&mesh_format, sizeof(mesh_format), 1, f) != 1) {
+  if (!reader.ReadInto(&mesh_format, sizeof(mesh_format))) {
     throw Exception("Error reading mesh_format for '" + file_name_full_ + "'");
   }
   format_ = static_cast<MeshFormat>(mesh_format);
@@ -64,41 +66,41 @@ void MeshAsset::DoPreload() {
                   || (format_ == MeshFormat::kUV16N8Index32));
 
   uint32_t vertex_count;
-  if (fread(&vertex_count, sizeof(vertex_count), 1, f) != 1) {
+  if (!reader.ReadInto(&vertex_count, sizeof(vertex_count))) {
     throw Exception("Error reading vertex_count for '" + file_name_full_ + "'");
   }
 
   uint32_t face_count;
-  if (fread(&face_count, sizeof(face_count), 1, f) != 1) {
+  if (!reader.ReadInto(&face_count, sizeof(face_count))) {
     throw Exception("Error reading face_count for '" + file_name_full_ + "'");
   }
 
   vertices_.resize(vertex_count);
-  if (fread(&(vertices_[0]), vertices_.size() * sizeof(VertexObjectFull), 1, f)
-      != 1) {
+  if (!reader.ReadInto(vertices_.data(),
+                       vertices_.size() * sizeof(VertexObjectFull))) {
     throw Exception("Read failed for " + file_name_full_);
   }
   switch (GetIndexSize()) {
     case 1: {
       indices8_.resize(face_count * 3);
-      if (fread(indices8_.data(), indices8_.size() * sizeof(uint8_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices8_.data(),
+                           indices8_.size() * sizeof(uint8_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
     }
     case 2: {
       indices16_.resize(face_count * 3);
-      if (fread(indices16_.data(), indices16_.size() * sizeof(uint16_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices16_.data(),
+                           indices16_.size() * sizeof(uint16_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
     }
     case 4: {
       indices32_.resize(face_count * 3);
-      if (fread(indices32_.data(), indices32_.size() * sizeof(uint32_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices32_.data(),
+                           indices32_.size() * sizeof(uint32_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
@@ -106,8 +108,6 @@ void MeshAsset::DoPreload() {
     default:
       throw Exception();
   }
-
-  fclose(f);
 
 #endif  // BA_HEADLESS_BUILD
 }

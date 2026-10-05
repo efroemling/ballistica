@@ -2,8 +2,6 @@
 #
 """Common high level values/functionality related to Ballistica apps."""
 
-from __future__ import annotations
-
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -14,6 +12,29 @@ if TYPE_CHECKING:
 # to update ALL servers before running any clients that might be using
 # newly defined values. Alterntely we could set up fallback values but I
 # don't think that will be necessary and could mask problems.
+
+
+class ExitCode(Enum):
+    """Process exit codes a Ballistica app may return on a clean shutdown.
+
+    These accompany a *clean* (non-crash) shutdown: the app tears down
+    gracefully via the normal shutdown sequence and simply returns one
+    of these as its process exit code. This is distinct from a
+    fatal-error/abort exit (which routes through crash reporting); a
+    nonzero value here means "we shut down cleanly, but the run was a
+    failure". Supervisors such as the headless server-wrapper script
+    (and BASN task orchestration) interpret nonzero values to decide
+    whether restarting is worthwhile.
+    """
+
+    #: Normal successful exit.
+    SUCCESS = 0
+
+    #: A headless app could not bring up assets it requires to run (e.g.
+    #: a construct-mode asset resolve failed terminally). Not transient
+    #: --- a restart with the same inputs would fail the same way --- so
+    #: supervisors should treat it as terminal and not auto-restart.
+    ASSET_BRINGUP_FAILED = 10
 
 
 class AppInterfaceIdiom(Enum):
@@ -130,6 +151,13 @@ class AppVariant(Enum):
     #: Particular builds intended for public testing (may have some extra
     #: checks or logging enabled).
     TEST_BUILD = 'test_build'
+
+    #: Server bundles we distribute for third-party operators (such as
+    #: those on the ballistica.net downloads page).
+    SERVER = 'server'
+
+    #: Our own cloud-hosted game servers.
+    SERVER_BASN = 'server_basn'
 
     # Various stores.
     AMAZON_APPSTORE = 'amazon_appstore'

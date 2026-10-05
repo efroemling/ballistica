@@ -50,12 +50,14 @@ TimeDisplayNode::~TimeDisplayNode() = default;
 auto TimeDisplayNode::GetOutput() -> std::string {
   assert(g_base->InLogicThread());
   if (translations_dirty_) {
-    time_suffix_hours_ =
-        g_base->assets->CompileResourceString(R"({"r":"timeSuffixHoursText"})");
-    time_suffix_minutes_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixMinutesText"})");
-    time_suffix_seconds_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixSecondsText"})");
+    // Unit templates come from the duration formatter components
+    // (LangStr-era translated content; the builtin package embeds
+    // them), keeping this node off the legacy language corpus. Output
+    // format is unchanged.
+    auto units = g_base->assets->GetDurationUnitTemplates();
+    time_suffix_hours_ = units.hours;
+    time_suffix_minutes_ = units.minutes;
+    time_suffix_seconds_ = units.seconds;
     translations_dirty_ = false;
     output_dirty_ = true;
   }
@@ -79,7 +81,7 @@ auto TimeDisplayNode::GetOutput() -> std::string {
       std::string s = time_suffix_hours_;
       char buffer[100];
       snprintf(buffer, sizeof(buffer), "%d", h);
-      Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+      Utils::StringReplaceOne(&s, "{amount}", buffer);
       if (!output_.empty()) {
         output_ += " ";
       }
@@ -92,7 +94,7 @@ auto TimeDisplayNode::GetOutput() -> std::string {
       std::string s = time_suffix_minutes_;
       char buffer[100];
       snprintf(buffer, sizeof(buffer), "%d", m);
-      Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+      Utils::StringReplaceOne(&s, "{amount}", buffer);
       if (!output_.empty()) {
         output_ += " ";
       }
@@ -106,7 +108,7 @@ auto TimeDisplayNode::GetOutput() -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%.2f", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output_.empty()) {
           output_ += " ";
         }
@@ -119,7 +121,7 @@ auto TimeDisplayNode::GetOutput() -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%d", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output_.empty()) {
           output_ += " ";
         }

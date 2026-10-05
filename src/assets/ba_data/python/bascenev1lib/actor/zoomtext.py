@@ -2,8 +2,6 @@
 #
 """Defined Actor(s)."""
 
-from __future__ import annotations
-
 import random
 import logging
 from typing import TYPE_CHECKING, override
@@ -22,7 +20,7 @@ class ZoomText(bs.Actor):
 
     def __init__(
         self,
-        text: str | bs.Lstr,
+        text: str | bs.Lstr | bs.LangStr,
         position: tuple[float, float] = (0.0, 0.0),
         *,
         shiftposition: tuple[float, float] | None = None,

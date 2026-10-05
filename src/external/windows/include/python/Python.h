@@ -16,6 +16,7 @@
 
 
 // Include standard header files
+// When changing these files, remember to update Doc/extending/extending.rst.
 #include <assert.h>               // assert()
 #include <inttypes.h>             // uintptr_t
 #include <limits.h>               // INT_MAX
@@ -59,6 +60,14 @@
 #  include <intrin.h>             // __readgsqword()
 #endif
 
+// Suppress known warnings in Python header files.
+#if defined(_MSC_VER)
+// Warning that alignas behaviour has changed. Doesn't affect us, because we
+// never relied on the old behaviour.
+#pragma warning(push)
+#pragma warning(disable: 5274)
+#endif
+
 // Include Python header files
 #include "pyport.h"
 #include "pymacro.h"
@@ -69,7 +78,9 @@
 #include "pystats.h"
 #include "pyatomic.h"
 #include "lock.h"
+#include "critical_section.h"
 #include "object.h"
+#include "refcount.h"
 #include "objimpl.h"
 #include "typeslots.h"
 #include "pyhash.h"
@@ -123,17 +134,22 @@
 #include "pylifecycle.h"
 #include "ceval.h"
 #include "sysmodule.h"
+#include "audit.h"
 #include "osmodule.h"
 #include "intrcheck.h"
 #include "import.h"
 #include "abstract.h"
 #include "bltinmodule.h"
-#include "critical_section.h"
 #include "cpython/pyctype.h"
 #include "pystrtod.h"
 #include "pystrcmp.h"
 #include "fileutils.h"
 #include "cpython/pyfpe.h"
 #include "cpython/tracemalloc.h"
+
+// Restore warning filter
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif /* !Py_PYTHON_H */

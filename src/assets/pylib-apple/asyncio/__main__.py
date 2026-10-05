@@ -1,5 +1,7 @@
+import argparse
 import ast
 import asyncio
+import asyncio.tools
 import concurrent.futures
 import contextvars
 import inspect
@@ -10,7 +12,7 @@ import threading
 import types
 import warnings
 
-from _colorize import can_colorize, ANSIColors  # type: ignore[import-not-found]
+from _colorize import get_theme
 from _pyrepl.console import InteractiveColoredConsole
 
 from . import futures
@@ -84,26 +86,32 @@ class REPLThread(threading.Thread):
         global return_code
 
         try:
-            banner = (
-                f'asyncio REPL {sys.version} on {sys.platform}\n'
-                f'Use "await" directly instead of "asyncio.run()".\n'
-                f'Type "help", "copyright", "credits" or "license" '
-                f'for more information.\n'
-            )
+            if not sys.flags.quiet:
+                banner = (
+                    f'asyncio REPL {sys.version} on {sys.platform}\n'
+                    f'Use "await" directly instead of "asyncio.run()".\n'
+                    f'Type "help", "copyright", "credits" or "license" '
+                    f'for more information.\n'
+                )
 
-            console.write(banner)
+                console.write(banner)
 
-            if startup_path := os.getenv("PYTHONSTARTUP"):
+            if not sys.flags.ignore_environment and (startup_path := os.getenv("PYTHONSTARTUP")):
                 sys.audit("cpython.run_startup", startup_path)
-
-                import tokenize
-                with tokenize.open(startup_path) as f:
-                    startup_code = compile(f.read(), startup_path, "exec")
+                try:
+                    import tokenize
+                    with tokenize.open(startup_path) as f:
+                        startup_code = compile(f.read(), startup_path, "exec")
                     exec(startup_code, console.locals)
+                except SystemExit:
+                    raise
+                except BaseException:
+                    console.showtraceback()
 
             ps1 = getattr(sys, "ps1", ">>> ")
-            if can_colorize() and CAN_USE_PYREPL:
-                ps1 = f"{ANSIColors.BOLD_MAGENTA}{ps1}{ANSIColors.RESET}"
+            if CAN_USE_PYREPL:
+                theme = get_theme().syntax
+                ps1 = f"{theme.prompt}{ps1}{theme.reset}"
             console.write(f"{ps1}import asyncio\n")
 
             if CAN_USE_PYREPL:
@@ -141,9 +149,40 @@ class REPLThread(threading.Thread):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog="python3 -m asyncio",
+        description="Interactive asyncio shell and CLI tools",
+        color=True,
+    )
+    subparsers = parser.add_subparsers(help="sub-commands", dest="command")
+    ps = subparsers.add_parser(
+        "ps", help="Display a table of all pending tasks in a process"
+    )
+    ps.add_argument("pid", type=int, help="Process ID to inspect")
+    pstree = subparsers.add_parser(
+        "pstree", help="Display a tree of all pending tasks in a process"
+    )
+    pstree.add_argument("pid", type=int, help="Process ID to inspect")
+    args = parser.parse_args()
+    match args.command:
+        case "ps":
+            asyncio.tools.display_awaited_by_tasks_table(args.pid)
+            sys.exit(0)
+        case "pstree":
+            asyncio.tools.display_awaited_by_tasks_tree(args.pid)
+            sys.exit(0)
+        case None:
+            pass  # continue to the interactive shell
+        case _:
+            # shouldn't happen as an invalid command-line wouldn't parse
+            # but let's keep it for the next person adding a command
+            print(f"error: unhandled command {args.command}", file=sys.stderr)
+            parser.print_usage(file=sys.stderr)
+            sys.exit(1)
+
     sys.audit("cpython.run_stdin")
 
-    if os.getenv('PYTHON_BASIC_REPL'):
+    if not sys.flags.ignore_environment and os.getenv('PYTHON_BASIC_REPL'):
         CAN_USE_PYREPL = False
     else:
         from _pyrepl.main import CAN_USE_PYREPL
@@ -152,11 +191,14 @@ if __name__ == '__main__':
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    repl_locals = {'asyncio': asyncio}
-    for key in {'__name__', '__package__',
-                '__loader__', '__spec__',
-                '__builtins__', '__file__'}:
-        repl_locals[key] = locals()[key]
+    repl_locals = {
+        'asyncio': asyncio,
+        '__name__': __name__,
+        '__package__': None,
+        '__loader__': __loader__,
+        '__spec__': None,
+        '__builtins__': __builtins__,
+    }
 
     console = AsyncIOInteractiveConsole(repl_locals, loop)
 
@@ -202,4 +244,5 @@ if __name__ == '__main__':
             break
 
     console.write('exiting asyncio REPL...\n')
+    loop.close()
     sys.exit(return_code)

@@ -7,6 +7,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_macros.h"
 #include "ballistica/shared/python/python_module_builder.h"
@@ -30,7 +31,7 @@ extern "C" auto PyInit__baclassic() -> PyObject* {
 }
 
 void ClassicPython::ImportPythonObjs() {
-#include "ballistica/classic/mgen/pyembed/binding_classic.inc"
+#include "ballistica/classic/generated/pyembed/binding_classic.inc"
 
   // Cache some basic display values for chests from the Python layer. This
   // way C++ UI stuff doesn't have to call out to Python when drawing the
@@ -48,29 +49,39 @@ void ClassicPython::ImportPythonObjs() {
   }
 }
 
+auto ClassicPython::QualifiedRefFromHandle_(const PythonRef& handle)
+    -> std::string {
+  // The parts are private on the Python side (nothing there may build
+  // an asset path); reading them here is the sanctioned boundary.
+  return std::to_string(handle.GetAttr("_apvernum").ValueAsInt()) + ":"
+         + handle.GetAttr("_name").ValueAsString();
+}
+
 auto ClassicPython::ChestDisplayFromPython(const PythonRef& ref)
     -> ChestDisplay_ {
   ChestDisplay_ out;
 
-  out.texclosed = ref.GetAttr("texclosed").ValueAsString().c_str();
-  out.texclosedtint = ref.GetAttr("texclosedtint").ValueAsString().c_str();
+  // These are asset handles now, not name strings; join their parts
+  // into the qualified form the asset system keys on. Init-time only.
+  out.texclosed = QualifiedRefFromHandle_(ref.GetAttr("texclosed"));
+  out.texclosedtint = QualifiedRefFromHandle_(ref.GetAttr("texclosedtint"));
   out.color = base::BasePython::GetPyVector3f(ref.GetAttr("color").get());
   out.tint = base::BasePython::GetPyVector3f(ref.GetAttr("tint").get());
   out.tint2 = base::BasePython::GetPyVector3f(ref.GetAttr("tint2").get());
+  out.tint3 = base::BasePython::GetPyVector3f(ref.GetAttr("tint3").get());
 
   return out;
 }
 
-void ClassicPython::GetClassicChestDisplayInfo(const std::string& id,
-                                               std::string* texclosed,
-                                               std::string* texclosedtint,
-                                               Vector3f* color, Vector3f* tint,
-                                               Vector3f* tint2) {
+void ClassicPython::GetClassicChestDisplayInfo(
+    const std::string& id, std::string* texclosed, std::string* texclosedtint,
+    Vector3f* color, Vector3f* tint, Vector3f* tint2, Vector3f* tint3) {
   assert(texclosed);
   assert(texclosedtint);
   assert(color);
   assert(tint);
   assert(tint2);
+  assert(tint3);
   auto&& display{chest_displays_.find(id)};
   if (display != chest_displays_.end()) {
     *texclosed = display->second.texclosed;
@@ -78,12 +89,14 @@ void ClassicPython::GetClassicChestDisplayInfo(const std::string& id,
     *color = display->second.color;
     *tint = display->second.tint;
     *tint2 = display->second.tint2;
+    *tint3 = display->second.tint3;
   } else {
     *texclosed = chest_display_default_.texclosed;
     *texclosedtint = chest_display_default_.texclosedtint;
     *color = chest_display_default_.color;
     *tint = chest_display_default_.tint;
     *tint2 = chest_display_default_.tint2;
+    *tint3 = chest_display_default_.tint3;
   }
 }
 
@@ -121,7 +134,25 @@ auto ClassicPython::GetControllerValue(base::InputDevice* device,
     throw Exception("Non-int returned from get_device_value call.",
                     PyExcType::kType);
   }
-  return static_cast<int>(PyLong_AsLong(ret_val.get()));
+  // Via the helper rather than PyLong_AsLong: this value comes back from
+  // Python (controller-mapping config), and Python ints are arbitrary
+  // precision, so a large one would otherwise set OverflowError, return
+  // -1, and leave the stray error for something unrelated to hit.
+  //
+  // Caught rather than propagated, though. This runs inside app-config
+  // application, and a config file is a thing users hand-edit -- letting
+  // one nonsense mapping abort the whole apply would leave every setting
+  // after it silently unapplied. -1 is what callers already use for
+  // 'not mapped', so falling back to it keeps a bad entry local to the
+  // control it describes.
+  try {
+    return Python::GetInt(ret_val.get());
+  } catch (const std::exception& exc) {
+    BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                "Ignoring out-of-range controller mapping for '" + value_name
+                    + "' on " + device->GetDeviceName() + ": " + exc.what());
+    return -1;
+  }
 }
 
 auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
@@ -139,7 +170,24 @@ auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
   BA_PRECONDITION(ret_val.exists());
   if (!PyFloat_Check(ret_val.get())) {
     if (PyLong_Check(ret_val.get())) {
-      return static_cast<float>(PyLong_AsLong(ret_val.get()));
+      // GetFloat rather than PyLong_AsLong: we want a float anyway, so
+      // going through the float path means a large int converts (or
+      // fails cleanly) instead of overflowing a C long and leaving a
+      // stray Python error behind.
+      //
+      // Caught for the same reason as GetControllerValue above: this
+      // runs during app-config application, so a single unconvertible
+      // entry must not abort every setting after it. -1 is the
+      // 'unusable' value callers already test for.
+      try {
+        return Python::GetFloat(ret_val.get());
+      } catch (const std::exception& exc) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Ignoring unusable controller mapping for '" + value_name
+                        + "' on " + device->GetDeviceName() + ": "
+                        + exc.what());
+        return -1.0f;
+      }
     } else {
       throw Exception(
           "Non float/int returned from GetControllerFloatValue call.",

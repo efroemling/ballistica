@@ -7,12 +7,13 @@
 
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
 // The following was pulled from sdl2
 #if BA_MINSDL_BUILD
-static const char* const scancode_names[SDL_NUM_SCANCODES] = {
+static const char* const scancode_names[BA_NUM_SCANCODES] = {
     nullptr,
     nullptr,
     nullptr,
@@ -345,10 +346,10 @@ static char* UCS4ToUTF8(uint32_t ch, char* dst) {
 }
 #pragma clang diagnostic pop
 
-static const char* GetScancodeName(SDL_Scancode scancode) {
+static const char* GetScancodeName(BAScancode scancode) {
   const char* name;
-  if (static_cast<int>(scancode) < SDL_SCANCODE_UNKNOWN
-      || scancode >= SDL_NUM_SCANCODES) {
+  if (static_cast<int>(scancode) < BA_SCANCODE_UNKNOWN
+      || scancode >= BA_NUM_SCANCODES) {
     BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                 "GetScancodeName passed invalid scancode "
                     + std::to_string(static_cast<int>(scancode)));
@@ -364,43 +365,43 @@ static const char* GetScancodeName(SDL_Scancode scancode) {
 }
 
 auto MinSDL_GetKeyName(int keycode) -> std::string {
-  SDL_Keycode key{keycode};
+  BAKeycode key{keycode};
   static char name[8];
   char* end;
 
   // Handle a few specially per platform.
   if (g_buildconfig.platform_macos()) {
     switch (key) {
-      case SDLK_LGUI:
+      case BAK_LGUI:
         return "Left Command";
-      case SDLK_RGUI:
+      case BAK_RGUI:
         return "Right Command";
-      case SDLK_LALT:
+      case BAK_LALT:
         return "Left Option";
-      case SDLK_RALT:
+      case BAK_RALT:
         return "Right Option";
       default:
         break;
     }
   }
 
-  if (key & SDLK_SCANCODE_MASK) {
-    return GetScancodeName((SDL_Scancode)(key & ~SDLK_SCANCODE_MASK));
+  if (key & BAK_SCANCODE_MASK) {
+    return GetScancodeName((BAScancode)(key & ~BAK_SCANCODE_MASK));
   }
 
   switch (key) {
-    case SDLK_RETURN:
-      return GetScancodeName(SDL_SCANCODE_RETURN);
-    case SDLK_ESCAPE:
-      return GetScancodeName(SDL_SCANCODE_ESCAPE);
-    case SDLK_BACKSPACE:
-      return GetScancodeName(SDL_SCANCODE_BACKSPACE);
-    case SDLK_TAB:
-      return GetScancodeName(SDL_SCANCODE_TAB);
-    case SDLK_SPACE:
-      return GetScancodeName(SDL_SCANCODE_SPACE);
-    case SDLK_DELETE:
-      return GetScancodeName(SDL_SCANCODE_DELETE);
+    case BAK_RETURN:
+      return GetScancodeName(BA_SCANCODE_RETURN);
+    case BAK_ESCAPE:
+      return GetScancodeName(BA_SCANCODE_ESCAPE);
+    case BAK_BACKSPACE:
+      return GetScancodeName(BA_SCANCODE_BACKSPACE);
+    case BAK_TAB:
+      return GetScancodeName(BA_SCANCODE_TAB);
+    case BAK_SPACE:
+      return GetScancodeName(BA_SCANCODE_SPACE);
+    case BAK_DELETE:
+      return GetScancodeName(BA_SCANCODE_DELETE);
     default:
       /* Unaccented letter keys on latin keyboards are normally
          labeled in upper case (and probably on others like Greek or

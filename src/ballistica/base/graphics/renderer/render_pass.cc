@@ -19,8 +19,9 @@ namespace ballistica::base {
 const float kCamNearClip = 4.0f;
 const float kCamFarClip = 1000.0f;
 
-RenderPass::RenderPass(RenderPass::Type type_in, FrameDef* frame_def_in)
-    : type_(type_in), frame_def_(frame_def_in) {
+RenderPass::RenderPass(RenderPass::Type type_in, FrameDef* frame_def_in,
+                       FrameDefView* view_in)
+    : type_(type_in), frame_def_(frame_def_in), view_(view_in) {
   // Create/init our command buffers.
   if (UsesWorldLists()) {
     for (auto& command : commands_) {
@@ -40,6 +41,23 @@ RenderPass::RenderPass(RenderPass::Type type_in, FrameDef* frame_def_in)
 }
 
 RenderPass::~RenderPass() = default;
+
+auto RenderPass::draws_flipped() const -> bool {
+  if (view_ == nullptr || view_->output() != RenderView::Output::kTexture) {
+    return false;
+  }
+  switch (type()) {
+    case Type::kBeautyPass:
+    case Type::kBeautyPassBG:
+    case Type::kOverlay3DPass:
+    case Type::kBlitPass:
+      return true;
+    default:
+      // Light and shadow passes are drawn to buffers that only ever
+      // get projected back onto the world; nothing to flip there.
+      return false;
+  }
+}
 
 void RenderPass::Render(RenderTarget* render_target, bool transparent) {
   assert(g_base->app_adapter->InGraphicsContext());
@@ -188,16 +206,14 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
         } else {
           renderer->SetDepthRange(kBackingDepth1B, kBackingDepth2);
         }
-        if (g_base->graphics_server->tv_border()) {
-          float amt = 0.5f * kTVBorder;
-          float w = virtual_width();
-          float h = virtual_height();
-          g_base->graphics_server->SetOrthoProjection(
-              -amt * w, (1.0f + amt) * w, -amt * h, (1.0f + amt) * h, -1, 1);
-        } else {
-          g_base->graphics_server->SetOrthoProjection(0, virtual_width(), 0,
-                                                      virtual_height(), -1, 1);
-        }
+        // Project over the render rect expressed in virtual coords
+        // rather than the plain virtual rect. Identical to
+        // (0, vw, 0, vh) unless the virtual bounds are inset, in which
+        // case this is what lets drawing continue out past the bounds
+        // to the physical edge instead of being squashed into them.
+        const Rect& vout = virtual_outer_rect_;
+        g_base->graphics_server->SetOrthoProjection(vout.l, vout.r, vout.b,
+                                                    vout.t, -1, 1);
       }
       break;
     }
@@ -280,8 +296,7 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
       if (reflection_sub_pass == ReflectionSubPass::kMirrored) {
         // Only actually draw reflection pass if quality >= high
         // and floor-reflections are on.
-        if (floor_reflection()
-            && frame_def()->quality() >= GraphicsQuality::kHigher) {
+        if (floor_reflection() && quality() >= GraphicsQuality::kHigher) {
           doing_reflection = true;
           renderer->set_drawing_reflection(true);
           g_base->graphics_server->PushTransform();
@@ -304,32 +319,30 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
           ShadingType::kSimpleTexture,
           ShadingType::kSimpleTextureModulated,
           ShadingType::kSimpleTextureModulatedColorized,
-          ShadingType::kSimpleTextureModulatedColorized2,
-          ShadingType::kSimpleTextureModulatedColorized2Masked,
+          ShadingType::kSimpleTextureModulatedColorizedMasked,
           ShadingType::kObjectReflectLightShadow,
           ShadingType::kObjectLightShadow,
+          ShadingType::kObjectLightShadowFacingRatio,
           ShadingType::kObjectReflect,
           ShadingType::kObject,
           ShadingType::kObjectReflectLightShadowDoubleSided,
           ShadingType::kObjectReflectLightShadowColorized,
-          ShadingType::kObjectReflectLightShadowColorized2,
           ShadingType::kObjectReflectLightShadowAdd,
-          ShadingType::kObjectReflectLightShadowAddColorized,
-          ShadingType::kObjectReflectLightShadowAddColorized2};
+          ShadingType::kObjectReflectLightShadowAddColorized};
 
       ShadingType component_types_transparent[] = {
           ShadingType::kSimpleColorTransparent,
           ShadingType::kSimpleColorTransparentDoubleSided,
           ShadingType::kObjectTransparent,
           ShadingType::kObjectLightShadowTransparent,
+          ShadingType::kObjectLightShadowFacingRatioTransparent,
           ShadingType::kObjectReflectTransparent,
           ShadingType::kObjectReflectAddTransparent,
           ShadingType::kSimpleTextureModulatedTransparent,
           ShadingType::kSimpleTextureModulatedTransFlatness,
           ShadingType::kSimpleTextureModulatedTransparentDoubleSided,
           ShadingType::kSimpleTextureModulatedTransparentColorized,
-          ShadingType::kSimpleTextureModulatedTransparentColorized2,
-          ShadingType::kSimpleTextureModulatedTransparentColorized2Masked,
+          ShadingType::kSimpleTextureModulatedTransparentColorizedMasked,
           ShadingType::kSimpleTextureModulatedTransparentShadow,
           ShadingType::kSimpleTexModulatedTransShadowFlatness,
           ShadingType::kSimpleTextureModulatedTransparentGlow,
@@ -408,7 +421,14 @@ void RenderPass::Reset() {
   cam_fov_y_ = 40.0f;
   tex_project_matrix_ = kMatrix44fIdentity;
 
-  Renderer* renderer = g_base->graphics_server->renderer();
+  // We're drawn at our view's quality if we have one; otherwise the
+  // app's.
+  quality_ = view_ ? view_->quality() : frame_def_->app_quality();
+
+  // Views drawing to a texture of their own are a simpler case than
+  // the screen: the texture is the whole of what they draw to.
+  bool to_texture =
+      (view_ != nullptr && view_->output() == RenderView::Output::kTexture);
 
   // Figure our our width/height for drawing commands to reference
   // (we cant wait until the drawing is actually occurring because
@@ -422,17 +442,32 @@ void RenderPass::Reset() {
     case Type::kOverlayFlatPass:
     case Type::kVRCoverPass:
     case Type::kOverlayFixedPass:
-    case Type::kBlitPass:
-      physical_width_ = g_base->graphics->screen_pixel_width();
-      physical_height_ = g_base->graphics->screen_pixel_height();
+    case Type::kBlitPass: {
+      if (to_texture) {
+        physical_width_ = static_cast<float>(view_->width());
+        physical_height_ = static_cast<float>(view_->height());
+      } else {
+        // Content passes draw *as if* the virtual bounds were the whole
+        // surface, so that's what our physical dims describe (and thus
+        // what perspective passes derive their aspect ratio from). We
+        // still physically cover the active render rect, but that shows
+        // up as the outward projection extension below rather than as a
+        // different aspect ratio; a bounds inset must not squash or
+        // stretch anything relative to an equally-inset render rect.
+        const Rect& rect = g_base->graphics->virtual_bounds_rect();
+        physical_width_ = rect.width();
+        physical_height_ = rect.height();
+      }
       break;
+    }
     case Type::kLightPass:
       physical_width_ = physical_height_ =
-          static_cast<float>(renderer->shadow_res()) / kLightResDiv;
+          static_cast<float>(Renderer::ShadowResForQuality(quality_))
+          / kLightResDiv;
       break;
     case Type::kLightShadowPass:
       physical_width_ = physical_height_ =
-          static_cast<float>(renderer->shadow_res());
+          static_cast<float>(Renderer::ShadowResForQuality(quality_));
       break;
     default:
       throw Exception();
@@ -454,6 +489,22 @@ void RenderPass::Reset() {
       break;
   }
 
+  // Our projections cover the virtual bounds; grab how much further we
+  // physically reach so they can be extended outward to fill it. In
+  // virtual coords for the ortho passes, and as per-edge fractions of
+  // the bounds for the perspective ones. Both are no-ops (0 / the plain
+  // virtual rect) whenever the bounds aren't inset.
+  if (to_texture) {
+    // Nothing to extend out to here; we cover the texture and that is
+    // all there is.
+    virtual_outer_rect_ = render_rect_ = bounds_rect_ =
+        Rect{0.0f, 0.0f, physical_width_, physical_height_};
+  } else {
+    virtual_outer_rect_ = g_base->graphics->virtual_outer_rect();
+    render_rect_ = g_base->graphics->active_render_rect();
+    bounds_rect_ = g_base->graphics->virtual_bounds_rect();
+  }
+
   // Clear the command buffers this pass cares about.
   if (UsesWorldLists()) {
     for (auto& command : commands_) {
@@ -473,7 +524,11 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
     float r = near_val * cam_fov_r_tan_;
     float t = near_val * cam_fov_t_tan_;
     float b = near_val * cam_fov_b_tan_;
-    projection_matrix_ = Matrix44fFrustum(-l, r, -b, t, near_val, far_val);
+    Graphics::ExtendFrustumToRenderRect(render_rect_, bounds_rect_, &l, &r, &b,
+                                        &t);
+    projection_matrix_ =
+        draws_flipped() ? Matrix44fFrustum(-l, r, t, -b, near_val, far_val)
+                        : Matrix44fFrustum(-l, r, -b, t, near_val, far_val);
   } else {
     // Old angle-based stuff:
     float x;
@@ -487,7 +542,15 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
     } else {
       x = y * GetPhysicalAspectRatio();
     }
-    projection_matrix_ = Matrix44fFrustum(-x, x, -y, y, near_val, far_val);
+    float l = x;
+    float r = x;
+    float b = y;
+    float t = y;
+    Graphics::ExtendFrustumToRenderRect(render_rect_, bounds_rect_, &l, &r, &b,
+                                        &t);
+    projection_matrix_ =
+        draws_flipped() ? Matrix44fFrustum(-l, r, t, -b, near_val, far_val)
+                        : Matrix44fFrustum(-l, r, -b, t, near_val, far_val);
   }
   g_base->graphics_server->SetProjectionMatrix(projection_matrix_);
 }

@@ -184,8 +184,23 @@ void AppConfig::SetupEntries_() {
   float_entries_[FloatID::kGoogleVRRenderTargetScale] =
       FloatEntry("GVR Render Target Scale", gvrrts_default);
 
+  // 0-1; only used when 'Screen Insets' is 'Custom'. See
+  // Graphics::ScreenInsetAmount.
+  float_entries_[FloatID::kCustomScreenInsets] =
+      FloatEntry("Custom Screen Insets", 0.0f);
+
+  // Dev-console button size, as a multiple of its ui-scale default.
+  float_entries_[FloatID::kDevConsoleButtonSize] =
+      FloatEntry("Dev Console Button Size", 1.0f);
+
   optional_float_entries_[OptionalFloatID::kIdleExitMinutes] =
       OptionalFloatEntry("Idle Exit Minutes", std::optional<float>());
+  // Custom dev-console button center (virtual-screen coords; set by
+  // dragging the button). Unset = the default docked position.
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosX] =
+      OptionalFloatEntry("Dev Console Button Pos X", std::optional<float>());
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosY] =
+      OptionalFloatEntry("Dev Console Button Pos Y", std::optional<float>());
 
   string_entries_[StringID::kResolutionAndroid] =
       StringEntry("Resolution (Android)", "Auto");
@@ -195,8 +210,6 @@ void AppConfig::SetupEntries_() {
       StringEntry("Touch Movement Control Type", "swipe");
   string_entries_[StringID::kGraphicsQuality] =
       StringEntry("Graphics Quality", "Auto");
-  string_entries_[StringID::kTextureQuality] =
-      StringEntry("Texture Quality", "Auto");
   string_entries_[StringID::kVerticalSync] =
       StringEntry("Vertical Sync", "Auto");
   string_entries_[StringID::kVRHeadRelativeAudio] =
@@ -205,36 +218,58 @@ void AppConfig::SetupEntries_() {
       StringEntry("Mac Controller Subsystem", "Classic");
   string_entries_[StringID::kDevConsoleActiveTab] =
       StringEntry("Dev Console Tab", "Python");
+  // Tri-state replacement for the legacy ``Use Insecure Connections``
+  // bool. Values: ``always`` (force ws:// + http://), ``auto`` (use
+  // secure by default, honor server-signed insecure-directive when
+  // present — matches the pre-existing default behavior), ``never``
+  // (force secure, ignore server directive). See
+  // src/assets/ba_data/python/bauiv1lib/settings/advanced.py for UI.
+  string_entries_[StringID::kInsecureConnections] =
+      StringEntry("Insecure Connections", "auto");
+
+  // 'Auto' or 'Custom' (anything else acts as 'Auto'). See
+  // Graphics::ScreenInsetAmount.
+  string_entries_[StringID::kScreenInsets] =
+      StringEntry("Screen Insets", "Auto");
+
+  // 'grey', 'green', 'purple', or 'howdy' (anything else acts as 'grey'). See
+  // UI::ApplyAppConfig.
+  string_entries_[StringID::kDevConsoleButtonStyle] =
+      StringEntry("Dev Console Button Style", "grey");
+  string_entries_[StringID::kDevConsoleButtonAnchor] =
+      StringEntry("Dev Console Button Anchor", "");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
 
-  // TEMP - forcing protocol 36 while I test v2 auth.
-  if (g_buildconfig.headless_build() && explicit_bool(false)) {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 36);
-    printf("TEMP DOING PROTOCOL 36 DEFAULT!!!\n");
-  } else {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 33);
-  }
+  // Note: this gets clamped to the valid host range at use time, so
+  // stored values from old configs simply snap forward when mins rise.
+  int_entries_[IntID::kSceneV1HostProtocol] =
+      IntEntry("SceneV1 Host Protocol", 46);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);
+  bool_entries_[BoolID::kTouchControlsHaptics] =
+      BoolEntry("Touch Controls Haptics", true);
+  bool_entries_[BoolID::kThermalThrottling] =
+      BoolEntry("Thermal Throttling", true);
   bool_entries_[BoolID::kFullscreen] = BoolEntry("Fullscreen", false);
   bool_entries_[BoolID::kKickIdlePlayers] =
       BoolEntry("Kick Idle Players", false);
 
   bool_entries_[BoolID::kAlwaysUseInternalKeyboard] =
       BoolEntry("Always Use Internal Keyboard", false);
+  // Skip the active render rect's aspect-ratio clamp (no black bars on
+  // extreme window shapes; UI may look broken there). See
+  // Graphics::CalcActiveRenderRect.
+  bool_entries_[BoolID::kAllowExtremeAspectRatios] =
+      BoolEntry("Allow Extreme Aspect Ratios", false);
   bool_entries_[BoolID::kUseInsecureConnections] =
       BoolEntry("Use Insecure Connections", false);
   bool_entries_[BoolID::kShowFPS] = BoolEntry("Show FPS", false);
   bool_entries_[BoolID::kShowPing] = BoolEntry("Show Ping", false);
   bool_entries_[BoolID::kShowDevConsoleButton] =
       BoolEntry("Show Dev Console Button", false);
-  bool_entries_[BoolID::kEnableTVBorder] =
-      BoolEntry("TV Border", g_core->platform->IsRunningOnTV());
   bool_entries_[BoolID::kKeyboardP2Enabled] =
       BoolEntry("Keyboard P2 Enabled", false);
   bool_entries_[BoolID::kEnablePackageMods] =
@@ -248,12 +283,19 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =
       BoolEntry("Show Demos When Idle", false);
-  bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
-      BoolEntry("Show Deprecated Login Types", false);
   bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =
       BoolEntry("Use Native Python REPL", false);
+
+  // Windows-only; SDL's XInput path can misbehave with some devices so we
+  // allow turning it off. Note that this value is consumed *before* the app
+  // (and thus this class) exists - it has to be known by the time we init
+  // SDL - so the actual read happens in CoreFeatureSet::ApplyBaEnvConfig()
+  // which snapshots it straight out of the raw config dict. We register it
+  // here anyway so it shows up in builtin-keys, resolve(), etc. Keep this
+  // default synced with the one there.
+  bool_entries_[BoolID::kDisableXInput] = BoolEntry("Disable XInput", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);

@@ -54,7 +54,7 @@ steps:
   - name: build-and-publish-gui-docker
     image: woodpeckerci/plugin-docker-buildx:6
     settings:
-      dockerfile: config/docker/Dockerfile
+      dockerfile: pconfig/docker/Dockerfile
       build_args:
         cmake_build_type: Debug
         headless_build: "0"
@@ -71,7 +71,7 @@ steps:
   - name: build-and-publish-server-docker
     image: woodpeckerci/plugin-docker-buildx:6
     settings:
-      dockerfile: config/docker/Dockerfile
+      dockerfile: pconfig/docker/Dockerfile
       build_args:
         cmake_build_type: Debug
         headless_build: "1"

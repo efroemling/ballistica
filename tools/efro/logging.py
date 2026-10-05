@@ -2,7 +2,7 @@
 #
 """Logging functionality."""
 
-from __future__ import annotations
+# pylint: disable=too-many-lines
 
 import sys
 import time
@@ -23,7 +23,7 @@ from efro.dataclassio import ioprepped, IOAttrs, dataclass_to_json
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any, Callable, TextIO, Literal
+    from typing import Any, Awaitable, Callable, TextIO, Literal
 
 
 class LogLevel(Enum):
@@ -206,11 +206,17 @@ class LogHandler(logging.Handler):
         assert current_thread() is self._thread
         self._callbacks.append(call)
 
-        # Run all of our cached entries through the new callback if desired.
+        # Run all of our cached entries through the new callback if
+        # desired. Snapshot the cache under its lock but run the
+        # callback outside it - callbacks are arbitrary code and may
+        # themselves query the cache (get_cached), which would
+        # deadlock under the (non-reentrant) lock. Emits happen on
+        # this same thread, so the snapshot cannot miss entries.
         if feed_existing_logs and self._cache_size_limit > 0:
             with self._cache_lock:
-                for _id, entry in self._cache:
-                    self._run_callback_on_entry(call, entry)
+                entries = [entry for _id, entry in self._cache]
+            for entry in entries:
+                self._run_callback_on_entry(call, entry)
 
     def set_aux_handler(self, handler: logging.Handler | None) -> None:
         """Set an auxiliary handler that receives all log records.
@@ -471,7 +477,6 @@ class LogHandler(logging.Handler):
         message: str | logging.LogRecord,
         labels: dict[str, str],
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
         try:
             # If they passed a raw record here, bake it down to a string.
             if isinstance(message, logging.LogRecord):
@@ -696,6 +701,23 @@ class FileLogEcho:
         """Are we a terminal?"""
         return self._original.isatty()
 
+    def fileno(self) -> int:
+        """Return the underlying file descriptor.
+
+        Pass-through to the wrapped file. Callers that need a raw fd
+        — most notably :mod:`faulthandler` (``dump_traceback`` and
+        friends require an integer fd or an object with
+        ``fileno()``) — get the original stderr/stdout fd here. The
+        log-echo wrapping is intentionally bypassed in that path:
+        faulthandler writes during shutdown / stuck-loop diagnostics
+        when acquiring locks may be unsafe, so going straight to the
+        fd is the correct behavior. In hosted-server / basn
+        environments where the raw fd is captured into the task
+        output stream, the dump still ends up where operators can
+        find it.
+        """
+        return self._original.fileno()
+
 
 def setup_logging(
     log_path: str | Path | None,
@@ -804,6 +826,214 @@ def setup_logging(
         sys.stderr = FileLogEcho(sys.stderr, 'stderr', loghandler)
 
     return loghandler
+
+
+class LogBatchForwarder:
+    """Forwards :class:`LogEntry` batches to a user-supplied async flush.
+
+    Plugs into a :class:`LogHandler` via ``add_callback``. Receives
+    entries on the LogHandler's bg thread, coalesces them into
+    batches, and ships via the user-supplied async ``flush``
+    coroutine on the consumer's asyncio loop (the loop the
+    constructor was called from, unless ``loop`` is passed).
+
+    Two modes:
+
+    - **Continuous** (default, ``trigger=None``): every entry
+      passing ``min_level`` queues for the next flush. For cases
+      like a sandboxed task shipping all its logs out over IPC.
+
+    - **Triggered** (``trigger`` callable provided): idle by
+      default — entries reach the LogHandler cache but the
+      forwarder ignores them. When an entry matches ``trigger``
+      the forwarder enters a shipping window: pulls the last
+      ``backfill_count`` cached entries for context, ships them,
+      and continues shipping subsequent matching entries until
+      ``shipping_window`` seconds elapse without another trigger.
+      For cases like a client uploading logs on error.
+
+    Always call :meth:`shutdown` from the consumer's shutdown path
+    before tearing down the transport — otherwise queued entries
+    are stranded (the :class:`LogHandler`'s own shutdown machinery
+    does not know about the forwarder's queue).
+    """
+
+    # pylint: disable=too-many-instance-attributes
+
+    def __init__(
+        self,
+        *,
+        log_handler: LogHandler,
+        flush: Callable[[list[LogEntry]], Awaitable[None]],
+        loop: asyncio.AbstractEventLoop | None = None,
+        min_level: int = logging.NOTSET,
+        max_queue: int = 1000,
+        flush_interval: float = 1.0,
+        trigger: Callable[[LogEntry], bool] | None = None,
+        backfill_count: int = 0,
+        shipping_window: float = 0.0,
+    ) -> None:
+        # pylint: disable=too-many-arguments
+        self._log_handler = log_handler
+        self._flush = flush
+        self._loop = loop if loop is not None else asyncio.get_running_loop()
+        self._min_level = min_level
+        self._max_queue = max_queue
+        self._flush_interval = flush_interval
+        self._trigger = trigger
+        self._backfill_count = backfill_count
+        self._shipping_window = shipping_window
+
+        # Shared state. The queue + counters are touched from both
+        # the bg thread (callback) and the main loop (flush task);
+        # the lock guards the queue itself. ``_active`` and
+        # ``_shipping_until`` are single-word reads/writes whose
+        # races are benign — see notes inline.
+        self._lock = Lock()
+        self._queue: list[LogEntry] = []
+        self._dropped = 0
+        self._stopping = False
+        # Triggered-mode state. Continuous mode starts active and
+        # never deactivates; triggered mode starts idle and toggles.
+        self._active = trigger is None
+        self._shipping_until: float | None = None
+
+        # Main-loop flush task (created on demand, terminated when
+        # queue is empty).
+        self._flush_task: asyncio.Task[None] | None = None
+
+        log_handler.add_callback(self._on_entry)
+
+    @property
+    def dropped_count(self) -> int:
+        """How many entries have been dropped due to max-queue cap."""
+        return self._dropped
+
+    # ---- bg-thread callback ----
+
+    def _on_entry(self, entry: LogEntry) -> None:
+        """Receive a new LogEntry (called on LogHandler's bg thread)."""
+        if self._stopping:
+            return
+
+        # Triggered mode: maybe transition idle → shipping.
+        if self._trigger is not None:
+            try:
+                triggered = self._trigger(entry)
+            except Exception:  # pylint: disable=broad-exception-caught
+                triggered = False
+            if triggered:
+                # Extend (or open) the shipping window.
+                self._shipping_until = time.monotonic() + self._shipping_window
+                if not self._active:
+                    # Idle → active: backfill from cache.
+                    self._active = True
+                    self._do_backfill()
+
+        if not self._active:
+            return
+
+        if entry.level.python_logging_level < self._min_level:
+            return
+
+        with self._lock:
+            if len(self._queue) >= self._max_queue:
+                self._dropped += 1
+                return
+            self._queue.append(entry)
+
+        # Wake the main loop to schedule a flush.
+        try:
+            self._loop.call_soon_threadsafe(self._schedule_flush)
+        except RuntimeError:
+            # Loop is closed (shutdown race). Nothing to do.
+            pass
+
+    def _do_backfill(self) -> None:
+        """On trigger transition, pull recent cached entries for context."""
+        if self._backfill_count <= 0:
+            return
+        try:
+            archive = self._log_handler.get_cached()
+            entries = archive.entries[-self._backfill_count :]
+        except Exception:  # pylint: disable=broad-exception-caught
+            return
+        if not entries:
+            return
+        with self._lock:
+            # Subject to the same queue cap.
+            for entry in entries:
+                if len(self._queue) >= self._max_queue:
+                    self._dropped += 1
+                    continue
+                self._queue.append(entry)
+
+    # ---- main-loop side ----
+
+    def _schedule_flush(self) -> None:
+        """Ensure a flush task is in flight (called on main loop)."""
+        if self._flush_task is None or self._flush_task.done():
+            self._flush_task = self._loop.create_task(
+                self._flush_loop(), name='LogBatchForwarder.flush_loop'
+            )
+
+    async def _flush_loop(self) -> None:
+        # Initial coalescing sleep — bursts of nearby entries merge
+        # into a single flush call.
+        await asyncio.sleep(self._flush_interval)
+        while True:
+            entries = self._take_queue()
+            if not entries:
+                return  # nothing left; terminate
+            try:
+                await self._flush(entries)
+            except Exception:  # pylint: disable=broad-exception-caught
+                # Logs are best-effort. Don't log here (recursion).
+                pass
+            # Triggered mode: check whether shipping window expired.
+            if (
+                self._trigger is not None
+                and self._shipping_until is not None
+                and time.monotonic() >= self._shipping_until
+            ):
+                self._active = False
+                self._shipping_until = None
+                return
+            # Wait for more entries to accumulate, then loop.
+            await asyncio.sleep(self._flush_interval)
+
+    def _take_queue(self) -> list[LogEntry]:
+        """Atomically drain the queue."""
+        with self._lock:
+            entries = self._queue
+            self._queue = []
+        return entries
+
+    async def flush_now(self) -> None:
+        """Drain and flush immediately, bypassing coalescing."""
+        entries = self._take_queue()
+        if entries:
+            try:
+                await self._flush(entries)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+    async def shutdown(self) -> None:
+        """Stop accepting new entries and drain remaining ones.
+
+        Must be called from the consumer's shutdown path BEFORE the
+        transport is torn down — :class:`LogHandler`'s own shutdown
+        machinery doesn't know about this forwarder's queue.
+        """
+        self._stopping = True
+        if self._flush_task is not None:
+            self._flush_task.cancel()
+            try:
+                await self._flush_task
+            except asyncio.CancelledError, Exception:
+                pass
+            self._flush_task = None
+        await self.flush_now()
 
 
 def _asyncio_exception_handler(

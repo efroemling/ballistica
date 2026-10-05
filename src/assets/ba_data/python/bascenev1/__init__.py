@@ -30,7 +30,6 @@ from babase import (
     AppTime,
     apptimer,
     AppTimer,
-    Call,
     CallPartial,
     CallStrict,
     ContextError,
@@ -41,12 +40,14 @@ from babase import (
     DisplayTimer,
     existing,
     fade_screen,
-    get_remote_app_name,
     increment_analytics_count,
     InputType,
     is_point_in_box,
+    LangStr,
+    langstr_value,
     lock_all_input,
     Lstr,
+    translate_server_text,
     NodeNotFoundError,
     normalized_color,
     NotFoundError,
@@ -63,10 +64,14 @@ from babase import (
     UIScale,
     unlock_all_input,
     Vec3,
-    WeakCall,
     WeakCallPartial,
     WeakCallStrict,
 )
+
+# Deprecated names deliberately kept in the public api for compat;
+# imported separately so the deprecation ignore stays targeted.
+from babase import Call  # type: ignore[deprecated]
+from babase import WeakCall  # type: ignore[deprecated]
 
 from _bascenev1 import (
     ActivityData,
@@ -79,7 +84,6 @@ from _bascenev1 import (
     chatmessage,
     client_info_query_response,
     CollisionMesh,
-    connect_to_party,
     Data,
     disconnect_client,
     disconnect_from_host,
@@ -90,7 +94,9 @@ from _bascenev1 import (
     get_connection_to_host_info,
     get_connection_to_host_info_2,
     get_foreground_host_activity,
+    get_replay_asset_packages,
     get_foreground_host_session,
+    get_input_devices,
     get_game_port,
     get_game_roster,
     get_local_active_input_devices_count,
@@ -100,6 +106,11 @@ from _bascenev1 import (
     get_replay_speed_exponent,
     get_main_ui_input_device,
     getactivity,
+    getlocaldisplay,
+    apcollisionmeshget,
+    apmeshget,
+    apsoundget,
+    aptextureget,
     getcollisionmesh,
     getdata,
     getinputdevice,
@@ -116,21 +127,23 @@ from _bascenev1 import (
     is_replay_paused,
     ls_input_devices,
     ls_objects,
+    Depiction,
     Material,
     Mesh,
     new_host_session,
-    new_replay_session,
     newactivity,
     newnode,
     Node,
     pause_replay,
     printnodes,
     protocol_version,
+    Quat,
     release_game_controller_input,
     release_keyboard_input,
     reload_hooks,
     reset_random_player_names,
     resume_replay,
+    SceneViewer,
     seek_replay,
     broadcastmessage,
     SessionData,
@@ -138,6 +151,8 @@ from _bascenev1 import (
     set_admins,
     set_authenticate_clients,
     set_debug_speed_exponent,
+    set_host_password,
+    set_hosting_asset_packages,
     set_enable_default_kick_voting,
     set_internal_music,
     set_map_bounds,
@@ -152,6 +167,7 @@ from _bascenev1 import (
     set_replay_speed_exponent,
     set_touchscreen_editing,
     Sound,
+    SpazDef,
     Texture,
     time,
     timer,
@@ -159,22 +175,40 @@ from _bascenev1 import (
 )
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
+from bascenev1._appsubsystem import SceneV1AppSubsystem
+from bascenev1._generated.scene_asset_set import (
+    SceneV1AssetSet,
+    set_scene_asset_set,
+)
+from bascenev1._assetref import (
+    texture_from_ref,
+    TextureHandle,
+    MeshHandle,
+    SoundHandle,
+    CollisionMeshHandle,
+)
 from bascenev1._actor import Actor
+from bascenev1._actorhost import ActorHost
 from bascenev1._campaign import init_campaigns, Campaign
+from bascenev1._character import CharacterParts, name_text, split_character
 from bascenev1._collision import Collision, getcollision
 from bascenev1._coopgame import CoopGameActivity
 from bascenev1._coopsession import CoopSession
 from bascenev1._debug import print_live_object_warnings
-from bascenev1._dependency import (
-    Dependency,
-    DependencyComponent,
-    DependencySet,
-    AssetPackage,
-)
 from bascenev1._dualteamsession import DualTeamSession
 from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
 from bascenev1._gameresults import GameResults, WinnerGroup
+from bascenev1._localdisplay import (
+    ClassicControlsLocalDisplayConfig,
+    LocalDisplay,
+    LocalDisplayConfig,
+    LocalDisplayConfigSet,
+    LocalDisplayHandler,
+    LocalDisplayTypeID,
+    UnknownLocalDisplayConfig,
+    register_local_display_handler,
+)
 from bascenev1._gameutils import (
     animate,
     animate_array,
@@ -185,6 +219,7 @@ from bascenev1._gameutils import (
     show_damage_count,
     Time,
 )
+from bascenev1._healthbar import HealthBarDisplay
 from bascenev1._level import Level
 from bascenev1._lobby import Lobby, Chooser, JoinInfo
 from bascenev1._map import (
@@ -219,15 +254,32 @@ from bascenev1._multiteamsession import (
     DEFAULT_TEAM_NAMES,
 )
 from bascenev1._music import MusicType, setmusic
-from bascenev1._net import HostInfo
+from bascenev1._net import (
+    connect_to_party,
+    fetch_host_requirements,
+    HostInfo,
+    HostProbeOutcome,
+    HostRequirements,
+)
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
+from bascenev1._replay import (
+    new_replay_session,
+    prepare_replay,
+    launch_replay,
+)
 from bascenev1._profile import (
     get_player_colors,
     get_player_profile_icon,
     get_player_profile_colors,
 )
-from bascenev1._player import PlayerInfo, Player, EmptyPlayer, StandLocation
+from bascenev1._player import (
+    PlayerInfo,
+    Player,
+    EmptyPlayer,
+    StandLocation,
+    FeedbackEvent,
+)
 from bascenev1._playlist import (
     get_default_free_for_all_playlist,
     get_default_teams_playlist,
@@ -254,10 +306,30 @@ from bascenev1._team import SessionTeam, Team, EmptyTeam
 from bascenev1._teamgame import TeamGameActivity
 
 __all__ = [
+    'ClassicControlsLocalDisplayConfig',
+    'LocalDisplay',
+    'LocalDisplayConfig',
+    'LocalDisplayConfigSet',
+    'LocalDisplayHandler',
+    'LocalDisplayTypeID',
+    'UnknownLocalDisplayConfig',
+    'register_local_display_handler',
+    'get_input_devices',
+    'getlocaldisplay',
+    'texture_from_ref',
     'Activity',
     'ActivityData',
     'ActivityNotFoundError',
     'Actor',
+    'ActorHost',
+    'TextureHandle',
+    'SoundHandle',
+    'SceneV1AppSubsystem',
+    'SceneV1AssetSet',
+    'SceneViewer',
+    'set_scene_asset_set',
+    'MeshHandle',
+    'CollisionMeshHandle',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
@@ -272,7 +344,6 @@ __all__ = [
     'apptime',
     'apptimer',
     'AppTimer',
-    'AssetPackage',
     'basetime',
     'BaseTime',
     'basetimer',
@@ -287,6 +358,7 @@ __all__ = [
     'capture_game_controller_input',
     'capture_keyboard_input',
     'CelebrateMessage',
+    'CharacterParts',
     'chatmessage',
     'ChoiceSetting',
     'Chooser',
@@ -302,9 +374,7 @@ __all__ = [
     'DeathType',
     'DEFAULT_TEAM_COLORS',
     'DEFAULT_TEAM_NAMES',
-    'Dependency',
-    'DependencyComponent',
-    'DependencySet',
+    'Depiction',
     'DieMessage',
     'disconnect_client',
     'disconnect_from_host',
@@ -338,6 +408,7 @@ __all__ = [
     'get_default_powerup_distribution',
     'get_filtered_map_name',
     'get_foreground_host_activity',
+    'get_replay_asset_packages',
     'get_foreground_host_session',
     'get_game_port',
     'get_game_roster',
@@ -351,11 +422,14 @@ __all__ = [
     'get_public_party_enabled',
     'get_public_party_max_size',
     'get_random_names',
-    'get_remote_app_name',
     'get_replay_speed_exponent',
     'get_trophy_string',
     'get_main_ui_input_device',
     'getactivity',
+    'apcollisionmeshget',
+    'apmeshget',
+    'apsoundget',
+    'aptextureget',
     'getcollision',
     'getcollisionmesh',
     'getdata',
@@ -367,8 +441,12 @@ __all__ = [
     'gettexture',
     'have_connected_clients',
     'have_touchscreen_input',
+    'HealthBarDisplay',
     'HitMessage',
+    'fetch_host_requirements',
     'HostInfo',
+    'HostProbeOutcome',
+    'HostRequirements',
     'host_scan_cycle',
     'ImpactDamageMessage',
     'increment_analytics_count',
@@ -384,10 +462,13 @@ __all__ = [
     'JoinInfo',
     'Level',
     'Lobby',
+    'LangStr',
+    'langstr_value',
     'lock_all_input',
     'ls_input_devices',
     'ls_objects',
     'Lstr',
+    'translate_server_text',
     'Map',
     'Material',
     'Mesh',
@@ -395,6 +476,9 @@ __all__ = [
     'MusicType',
     'new_host_session',
     'new_replay_session',
+    'prepare_replay',
+    'launch_replay',
+    'name_text',
     'newactivity',
     'newnode',
     'Node',
@@ -420,6 +504,7 @@ __all__ = [
     'printnodes',
     'protocol_version',
     'pushcall',
+    'Quat',
     'register_map',
     'release_game_controller_input',
     'release_keyboard_input',
@@ -443,8 +528,9 @@ __all__ = [
     'set_analytics_screen',
     'set_authenticate_clients',
     'set_debug_speed_exponent',
-    'set_debug_speed_exponent',
     'set_enable_default_kick_voting',
+    'set_host_password',
+    'set_hosting_asset_packages',
     'set_internal_music',
     'set_map_bounds',
     'set_master_server_source',
@@ -464,7 +550,10 @@ __all__ = [
     'ShouldShatterMessage',
     'show_damage_count',
     'Sound',
+    'SpazDef',
+    'split_character',
     'StandLocation',
+    'FeedbackEvent',
     'StandMessage',
     'Stats',
     'storagename',

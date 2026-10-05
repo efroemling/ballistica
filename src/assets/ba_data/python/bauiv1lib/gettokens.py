@@ -2,19 +2,31 @@
 #
 """UI functionality for purchasing/acquiring currency."""
 
-from __future__ import annotations
-
 import time
+import logging
 from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never, override
 
 import bacommon.cloud
 import bacommon.classic
+from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
+
+def _tex(name: str) -> str:
+    """Qualified _classicassets ref for a button image texture."""
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 @dataclass
@@ -45,7 +57,7 @@ class TextContents(Enum):
 
 @dataclass
 class _TxtDef:
-    text: str | TextContents | bui.Lstr
+    text: str | TextContents | bui.Lstr | bui.LangStr
     pos: tuple[float, float]
     maxwidth: float | None
     scale: float = 1.0
@@ -89,14 +101,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens1',
+                        _tex('tokens1'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -105,14 +117,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS1_COUNT),
-                                )
-                            ],
+                        _classicassets.strings.get_tokens.num_tokens(
+                            count=bacommon.classic.TOKENS1_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -134,14 +140,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens2',
+                        _tex('tokens2'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -150,14 +156,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS2_COUNT),
-                                )
-                            ],
+                        _classicassets.strings.get_tokens.num_tokens(
+                            count=bacommon.classic.TOKENS2_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -179,14 +179,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens3',
+                        _tex('tokens3'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -195,14 +195,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS3_COUNT),
-                                )
-                            ],
+                        _classicassets.strings.get_tokens.num_tokens(
+                            count=bacommon.classic.TOKENS3_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -224,14 +218,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens4',
+                        _tex('tokens4'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -240,14 +234,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS4_COUNT),
-                                )
-                            ],
+                        _classicassets.strings.get_tokens.num_tokens(
+                            count=bacommon.classic.TOKENS4_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -269,13 +257,13 @@ class GetTokensWindow(bui.MainWindow):
                 color=pcolor,
                 imgdefs=[
                     _ImgDef(
-                        'goldPass',
+                        _tex('gold_pass'),
                         pos=(-7, 102),
                         size=(312, 156),
                         draw_controller_mult=0.3,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(8, 4),
                         size=(bwidthwide * 0.923, 116),
                         color=(0.25, 0.12, 0.15),
@@ -284,28 +272,28 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.goldPassText'),
+                        _classicassets.strings.get_tokens.gold_pass,
                         pos=(bwidthwide * 0.5, pos1 + 27),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc1InfTokensText'),
+                        _classicassets.strings.get_tokens.gold_pass_desc1,
                         pos=(bwidthwide * 0.5, pos1 + 6),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc2NoAdsText'),
+                        _classicassets.strings.get_tokens.gold_pass_desc2,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 1),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc3ForeverText'),
+                        _classicassets.strings.get_tokens.gold_pass_desc3,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 2),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
@@ -333,7 +321,7 @@ class GetTokensWindow(bui.MainWindow):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 1070.0
+        self._width = 1300.0 if uiscale is bui.UIScale.SMALL else 1070.0
         self._height = 800 if uiscale is bui.UIScale.SMALL else 520.0
 
         self._r = 'getTokensWindow'
@@ -342,10 +330,12 @@ class GetTokensWindow(bui.MainWindow):
         # size of our backing container. This lets us fit to the exact
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
+        # Slightly reduced scale in small ui so our full button set
+        # fits on screen without scrolling on phone-ish aspect ratios.
         scale = (
-            1.5
+            1.425
             if uiscale is bui.UIScale.SMALL
-            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.76
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -357,6 +347,15 @@ class GetTokensWindow(bui.MainWindow):
         self._yoffs = 0.5 * self._height + 0.5 * target_height + 20.0
 
         self._scroll_width = target_width
+
+        # In small ui we extend our h-scroll out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges).
+        self._margin_left, self._margin_right = (
+            get_screen_margins(scale)[:2]
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -407,7 +406,11 @@ class GetTokensWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._yoffs - 42),
+            # Outside small ui, centered vertically on our back button.
+            position=(
+                self._width * 0.5,
+                self._yoffs - (42 if uiscale is bui.UIScale.SMALL else 60),
+            ),
             size=(0, 0),
             color=self._textcolor,
             flatness=0.0,
@@ -415,7 +418,7 @@ class GetTokensWindow(bui.MainWindow):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='tokens.getTokensText'),
+            text=_classicassets.strings.resource_type_info.get_tokens,
             maxwidth=260,
         )
 
@@ -448,7 +451,7 @@ class GetTokensWindow(bui.MainWindow):
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
             for bimg in bdef.imgdefs:
-                bui.gettexture(bimg.tex)
+                bui.texture_from_ref(bimg.tex)
 
         self._state = self.State.LOADING
 
@@ -537,7 +540,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(1, 0, 0),
-                text=bui.Lstr(resource='notSignedInErrorText'),
+                text=_classicassets.strings.account.not_signed_in,
             )
         elif state is self.State.LOADING:
             raise RuntimeError('Should never return to loading state.')
@@ -545,7 +548,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(0, 1, 0),
-                text=bui.Lstr(resource='tokens.youHaveGoldPassText'),
+                text=_classicassets.strings.get_tokens.you_have_gold_pass,
             )
         elif state is self.State.SHOWING_STORE:
             assert self._last_query_response is not None
@@ -560,7 +563,7 @@ class GetTokensWindow(bui.MainWindow):
     def _on_load_error(self) -> None:
         bui.textwidget(
             edit=self._status_text,
-            text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
+            text=_commonassets.strings.status.unavailable_no_connection,
             color=(1, 0, 0),
         )
 
@@ -579,8 +582,6 @@ class GetTokensWindow(bui.MainWindow):
         # pylint: disable=too-many-locals
         plus = bui.app.plus
         classic = bui.app.classic
-
-        uiscale = bui.app.ui_v1.uiscale
 
         bui.textwidget(edit=self._status_text, text='')
 
@@ -615,52 +616,32 @@ class GetTokensWindow(bui.MainWindow):
 
         h_scroll = bui.hscrollwidget(
             parent=self._root_widget,
-            size=(self._scroll_width, scrollheight),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                scrollheight,
+            ),
             position=(
-                self._width * 0.5 - 0.5 * self._scroll_width,
+                self._width * 0.5
+                - 0.5 * self._scroll_width
+                - self._margin_left,
                 self._height * 0.5 - 0.5 * scrollheight - 40,
             ),
             claims_left_right=True,
             highlight=False,
             border_opacity=0.0,
             center_small_content=True,
+            button_inset_left=self._margin_left,
+            button_inset_right=self._margin_right,
         )
         subcontainer = bui.containerwidget(
             parent=h_scroll,
             background=False,
-            size=(total_button_width, scrollheight),
-        )
-        tinfobtn = bui.buttonwidget(
-            parent=self._root_widget,
-            id=f'{self.main_window_id_prefix}|learnmore',
-            autoselect=True,
-            label=bui.Lstr(resource='learnMoreText'),
-            text_scale=0.7,
-            position=(
-                self._width * 0.5 - 75,
-                self._yoffs - 100,
-            ),
-            size=(180, 40),
-            scale=0.8,
-            color=(0.4, 0.25, 0.5),
-            textcolor=self._textcolor,
-            on_activate_call=bui.WeakCallStrict(
-                self._on_learn_more_press, response.token_info_url
+            size=(
+                total_button_width + self._margin_left + self._margin_right,
+                scrollheight,
             ),
         )
-        if uiscale is bui.UIScale.SMALL:
-            bui.widget(
-                edit=tinfobtn,
-                left_widget=bui.get_special_widget('back_button'),
-                up_widget=bui.get_special_widget('back_button'),
-            )
-
-        bui.widget(
-            edit=tinfobtn,
-            right_widget=bui.get_special_widget('tokens_meter'),
-        )
-
-        x = sidepad + xfudge
+        x = sidepad + xfudge + self._margin_left
         bwidgets: list[bui.Widget] = []
         for i, buttondef in enumerate(buttondefs_shown):
 
@@ -674,7 +655,6 @@ class GetTokensWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|button{i}',
                 color=buttondef.color,
                 transition_delay=tdelay,
-                up_widget=tinfobtn,
                 parent=subcontainer,
                 size=(buttondef.width, 275),
                 position=(x, -10 + yoffs),
@@ -684,6 +664,11 @@ class GetTokensWindow(bui.MainWindow):
                 ),
             )
             bwidgets.append(btn)
+
+            # Outside small ui our back button sits in the window; up from
+            # any pack goes to it.
+            if bui.app.ui_v1.uiscale is not bui.UIScale.SMALL:
+                bui.widget(edit=btn, up_widget=self._back_button)
 
             if i == 0:
                 bui.widget(edit=btn, left_widget=self._back_button)
@@ -696,19 +681,19 @@ class GetTokensWindow(bui.MainWindow):
                     draw_controller=btn,
                     draw_controller_mult=imgdef.draw_controller_mult,
                     color=imgdef.color,
-                    texture=bui.gettexture(imgdef.tex),
+                    texture=bui.texture_from_ref(imgdef.tex),
                     transition_delay=tdelay,
                     opacity=imgdef.opacity,
                 )
             for txtdef in buttondef.txtdefs:
-                txt: bui.Lstr | str
+                txt: bui.Lstr | bui.LangStr | str
                 if isinstance(txtdef.text, TextContents):
                     if txtdef.text is TextContents.PRICE:
                         tcolor = (
                             (1, 1, 1, 0.5) if price is None else txtdef.color
                         )
                         txt = (
-                            bui.Lstr(resource='unavailableText')
+                            _commonassets.strings.status.unavailable_status
                             if price is None
                             else price
                         )
@@ -750,7 +735,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(resource='tokens.shinyNewCurrencyText'),
+                text=_classicassets.strings.get_tokens.shiny_new_currency,
             )
 
         has_removed_ads = classic is not None and (
@@ -776,7 +761,7 @@ class GetTokensWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 maxwidth=self._scroll_width * 0.9,
-                text=bui.Lstr(resource='removeInGameAdsTokenPurchaseText'),
+                text=_classicassets.strings.get_tokens.remove_ads_offer,
             )
 
         # Most of our UI won't exist until this point so we need to
@@ -795,13 +780,17 @@ class GetTokensWindow(bui.MainWindow):
         if price is None:
             if plus is not None and plus.supports_purchases():
                 # Looks like internet is down or something temporary.
-                errmsg = bui.Lstr(resource='purchaseNotAvailableText')
+                errmsg = (
+                    _classicassets.strings.get_tokens.purchase_not_available
+                )
             else:
                 # Looks like purchases will never work here.
-                errmsg = bui.Lstr(resource='purchaseNeverAvailableText')
+                errmsg = (
+                    _classicassets.strings.get_tokens.purchase_never_available
+                )
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
-            bui.getsound('error').play()
+            _builtinassets.audio.error.get().play()
             return
 
         assert plus is not None
@@ -810,9 +799,6 @@ class GetTokensWindow(bui.MainWindow):
     def _update_store_state(self) -> None:
         """Called to make minor updates to an already shown store."""
         assert self._last_query_response is not None
-
-    def _on_learn_more_press(self, url: str) -> None:
-        bui.open_url(url)
 
 
 def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
@@ -830,18 +816,18 @@ def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
-            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            _classicassets.strings.get_tokens.not_enough_tokens,
             bui.CallStrict(
                 show_get_tokens_window, origin_widget=get_tokens_button
             ),
-            ok_text=bui.Lstr(resource='tokens.getTokensText'),
+            ok_text=_classicassets.strings.resource_type_info.get_tokens,
             width=460,
             height=130,
             origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
-            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            _classicassets.strings.get_tokens.not_enough_tokens,
             cancel_button=False,
             width=460,
             height=130,
@@ -873,17 +859,39 @@ def show_get_tokens_window(
         return
 
     ui = bui.app.ui_v1
+    back_state = ui.save_current_main_window_state()
+
+    # Save the outgoing window's shared state (selection, etc.) *before*
+    # we create the new window; creating it moves ui selection into it,
+    # and a save after that point would record a selection the outgoing
+    # window can't restore when we come back (so it would fall back to
+    # its default selection instead of, say, the toolbar button that
+    # brought us here). This mirrors what main_window_replace() does.
+    if prev_main_window is not None:
+        prev_main_window.main_window_save_shared_state()
+
     # Set our new main window. Note that we pass auxiliary_style=False
     # so that we get a back button instead of a close button.
     ui.set_main_window(
         GetTokensWindow(origin_widget=origin_widget, auxiliary_style=False),
         from_window=False,  # Don't check where we're coming from.
-        back_state=ui.save_current_main_window_state(),
+        back_state=back_state,
         is_auxiliary=False,
         suppress_warning=True,
         extra_type_id='',
     )
 
-    # Transition out any previous main window.
+    # Transition out any previous main window. We can't use
+    # main_window_close() here since that would re-save shared state
+    # and clobber the good save we made above, so do its parts by hand
+    # (again mirroring main_window_replace()).
     if prev_main_window is not None:
-        prev_main_window.main_window_close(transition='out_left')
+        try:
+            prev_main_window.on_main_window_close()
+        except Exception:
+            logging.exception(
+                'Error in on_main_window_close() for %s.', prev_main_window
+            )
+        prev_root = prev_main_window.get_root_widget()
+        if prev_root and not prev_root.transitioning_out:
+            bui.containerwidget(edit=prev_root, transition='out_left')

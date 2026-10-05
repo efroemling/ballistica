@@ -3,33 +3,30 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_SOUND_H_
 #define BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_SOUND_H_
 
-#include "ballistica/scene_v1/scene_v1.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
+#include "ballistica/scene_v1/assets/scene_sound.h"
 
 namespace ballistica::scene_v1 {
 
-class PythonClassSceneSound : public PythonClass {
+class PythonClassSceneSound
+    : public base::PythonClassAssetRef<PythonClassSceneSound, SceneSound> {
  public:
-  static auto type_name() -> const char*;
-  static PyTypeObject type_obj;
-  static auto tp_repr(PythonClassSceneSound* self) -> PyObject*;
-  static void SetupType(PyTypeObject* cls);
-  static auto Create(SceneSound* sound) -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
+  static auto type_name() -> const char* { return "Sound"; }
+  static constexpr const char* kTpName = "bascenev1.Sound";
+  static constexpr const char* kTpDoc =
+      "A reference to a sound.\n"
+      "\n"
+      "Use :meth:`bascenev1.getsound()` to instantiate one.";
+  static constexpr const char* kFactoryCall = "bascenev1.getsound()";
+  static PyMethodDef tp_methods[];
+
+  auto GetSound(bool doraise = true) const -> SceneSound* {
+    return GetAsset(doraise);
   }
-  auto GetSound(bool doraise = true) const -> SceneSound*;
 
  private:
   static auto Play(PythonClassSceneSound* self, PyObject* args,
                    PyObject* keywds) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassSceneSound* self);
-  static PyMethodDef tp_methods[];
-  static bool s_create_empty_;
-  Object::Ref<SceneSound>* sound_;
 };
 
 }  // namespace ballistica::scene_v1

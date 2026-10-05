@@ -27,7 +27,7 @@
 // We don't *actually* need this because gl_sys.h includes it before
 // it includes us, but this keeps things from erroring if we look at
 // the header by itself.
-#include <SDL_opengl.h>
+#include <SDL3/SDL_opengl.h>
 
 // We run some init code to grab function ptrs/etc.
 #define BA_HAS_SYS_GL_INIT

@@ -2,8 +2,6 @@
 #
 """Useful starting points for new classes and whatnot."""
 
-from __future__ import annotations
-
 import random
 from typing import override
 

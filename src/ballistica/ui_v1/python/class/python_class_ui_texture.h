@@ -3,49 +3,22 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_TEXTURE_H_
 #define BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_TEXTURE_H_
 
-#include <string>
-
-#include "ballistica/base/base.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/assets/texture_asset.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
 
 namespace ballistica::ui_v1 {
 
-class PythonClassUITexture : public PythonClass {
+class PythonClassUITexture
+    : public base::PythonClassAssetRef<PythonClassUITexture,
+                                       base::TextureAsset> {
  public:
-  static void SetupType(PyTypeObject* cls);
-  static auto type_name() -> const char*;
-  static auto Create(const Object::Ref<base::TextureAsset>& texture)
-      -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
-  }
+  static auto type_name() -> const char* { return "Texture"; }
+  static constexpr const char* kTpName = "bauiv1.Texture";
+  static constexpr const char* kTpDoc =
+      "Texture asset for local user interface purposes.";
+  static constexpr const char* kFactoryCall = "bauiv1.gettexture()";
 
-  /// Cast raw Python pointer to our type; throws an exception on wrong types.
-  static auto FromPyObj(PyObject* o) -> PythonClassUITexture& {
-    if (Check(o)) {
-      return *reinterpret_cast<PythonClassUITexture*>(o);
-    }
-    throw Exception(std::string("Expected a ") + type_name() + "; got a "
-                        + Python::ObjTypeToString(o),
-                    PyExcType::kType);
-  }
-
-  auto texture() const -> base::TextureAsset& {
-    assert(texture_);
-    return **texture_;
-  }
-
-  static PyTypeObject type_obj;
-
- private:
-  static PyMethodDef tp_methods[];
-  static auto tp_repr(PythonClassUITexture* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassUITexture* self);
-  Object::Ref<base::TextureAsset>* texture_;
+  auto texture() const -> base::TextureAsset& { return asset(); }
 };
 
 }  // namespace ballistica::ui_v1

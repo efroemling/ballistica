@@ -1,4 +1,255 @@
-### 1.7.62 (build 22812, api 9, 2026-04-10)
+### 1.8.0 (build 23037, api 9, 2026-10-04)
+- Touchscreen players on Android and iPhone now get haptic feedback from the
+  device itself for the same events controllers rumble for (Android 10 and
+  newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'
+  checkbox on the touchscreen settings page turns it off; it is dimmed where
+  the device can't do it.
+- Android graphics settings gained a 'Thermal Throttling' checkbox (on by
+  default) controlling whether the game drops to 60hz when the device gets
+  too hot. The notice shown when that happens now points there.
+- The economy and player-profile strings moved out of the ui-chrome
+  asset package into a new `baclassicuiassets` package, and 'global
+  profile' and profile 'icon' now read the same way everywhere in every
+  language (built on new shared translation terms).
+- Fixed bots (and other non-cloud characters) drawing with their character
+  definition's highlight instead of their own (e.g. Impact Bot Pro's red
+  hair showing up green). Only cloud-profile looks use character
+  definitions now; everything else uses the classic appearance path.
+- Spaz nodes gained `use_spaz_def_color` and `use_spaz_def_highlight`
+  (default False): when set, a spaz wearing a `bascenev1.SpazDef` draws the
+  definition's own color/highlight instead of the `color`/`highlight`
+  attrs. The `highlight` attr is now honored for definition-form spazzes,
+  and the `color`/`highlight` attrs read back as set. Scene protocol 49.
+- Prop and bomb nodes gained `stickiness` (a float from 0.01 to 10.0, default
+  1.0), which scales how strongly a `sticky` node sticks to things. Scene
+  protocol 51.
+- Added a `legacy_spaz_physics` server config option (default false) which
+  gives spazzes the pre-1.8 physics (limbs and punch simulated in the main
+  sim), for servers whose players miss the 'bomb-jump' trick. Expect server
+  bandwidth to double or triple with it on. Scripts can do the same by
+  setting `babase.app.classic.legacy_spaz_physics` to True; activities
+  started while it is set are affected. An activity can also ask for it
+  itself with `legacy_spaz_limbs = True`, which now brings back the old
+  punch placement along with the old limbs (the tutorial does this).
+- Spaz nodes gained `boxing_gloves_mesh`, `boxing_gloves_color_texture`,
+  `boxing_gloves_color` (a multiply tint, default white) and
+  `boxing_gloves_scale` (default 1.0) for customizing how boxing gloves
+  look. Leaving the mesh or texture unset gives the stock gloves. The mesh is
+  the right-hand glove (the left is mirrored), and scale is visual only;
+  punch reach is unchanged.
+- `bascenev1lib.actor.image.Image.Attach` now covers all nine attach points
+  the image node supports (added `TOP_RIGHT`, `CENTER_LEFT`, `CENTER_RIGHT`,
+  `BOTTOM_LEFT` and `BOTTOM_RIGHT`), and `bascenev1lib.actor.text.Text.VAlign`
+  gained `TOP` and `BOTTOM`.
+- Fixed a spaz sharing a `bascenev1.SpazDef` with another sometimes keeping
+  the stand-in look (gray hair, default eyes) after the definition's media
+  finished loading.
+- Shield nodes gained `health_bar_display`, a `bascenev1.HealthBarDisplay`
+  value (`DEFAULT`, `AFTER_DAMAGE`, `ALWAYS`, `NEVER`) controlling when
+  their health bar shows; `DEFAULT` defers to the existing
+  `always_show_health_bar`, which keeps working. Based on a community PR
+  (#966) by anasdhaoidi.
+- `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
+  text) whenever an edit is applied: a string-edit dialog closing with a value,
+  inline editing ending via return or focus leaving the widget, or the clear
+  button. Not per character, and only when the text actually changed.
+- `bauiv1.textwidget()`'s `on_return_press_call` / `invoke_return_press` args
+  are now `on_submit_call` / `invoke_submit` (the old names still work with a
+  deprecation warning until api 9 support ends; see CHANGELOG_API_VERSIONS.md).
+- Android: fixed the game staying at 60hz on devices where switching to
+  the display's fastest mode is a non-seamless mode change (many
+  ColorOS/MediaTek phones, e.g. Realme). The frame-rate vote now derives
+  the display's peak rate from all supported modes at the current
+  resolution instead of only the seamlessly-switchable ones, and also
+  requests the display mode at the window level, which some OEM display
+  policies honor where a plain surface frame-rate vote is ignored.
+- Android: the thermal frame-rate back-off now waits for the OS to report
+  severe throttling for a sustained 10 seconds before dropping to 60hz
+  (some devices report it spuriously right at launch), and when it does
+  drop on a faster-than-60hz display it now shows a one-time screen
+  message explaining why.
+- Fully implemented asset packages (more on this soon)
+- The asset-package wrapper modules bundled with the engine are now all
+  private: `babase.builtinassets`, `bascenev1.builtinassets`, and
+  `bauiv1.builtinassets` are now `_builtinassets`, and
+  `bascenev1.classicassets` / `bauiv1.classicassets` are now
+  `_classicassets` (joining the already-private `_commonassets`). Mods can
+  bundle their own generated wrapper modules for whatever packages they
+  use, so there is no reason for ours to be public API we would then have
+  to keep stable.
+- App-config committing (dirty-tracking, debounced disk writes, and
+  suspend/shutdown flushes) now lives fully in `babase` instead of routing
+  through the `plus` feature-set; the engine can now persist its config with
+  plus absent. Additionally, if a non-json-friendly value winds up stored in
+  the app config (generally a mod bug), config writes now drop exactly the
+  offending entries (with an error naming their paths) instead of failing
+  forever — so one bad mod value no longer breaks config persistence for
+  everything else.
+- Removed `baclassic.ClassicAppSubsystem.json_prep()`. It was a Python-2-era
+  sanitizer (unicode wrangling, tuple conversion) that no longer served a
+  purpose; `json.dumps` handles tuples natively, the app-config salvage path
+  now prunes bad entries instead, and nothing lossily coerces data anymore.
+- Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
+  `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,
+  and `CollisionMeshHandle` (in both `bauiv1` and `bascenev1`). Regenerate
+  any asset-package wrapper modules you maintain to pick up the new names;
+  old wrappers keep *running* fine (they only reference these types in
+  type-checking annotations) but will want regenerating for type-checkers.
+- Asset-load calls such as `bascenev1.gettexture()`, `bauiv1.getsound()`, etc.
+  now raise a `ValueError` if passed a qualified asset-package path
+  (`'<apverid>:<path>'`). Asset-package assets should always be accessed
+  through the package's generated Python wrapper module rather than by raw
+  path string; wrapper modules stay valid across engine/pipeline changes
+  (regenerate the wrapper if it is outdated) while raw paths are an internal
+  detail that may change without notice.
+- Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
+  compression to help speed up online stuff and also means we can get rid of all
+  the annoying `from __future__ import annotations` lines. Woohoo!
+- Fixed a 'z.dll missing' error on Windows builds (the refreshed ANGLE
+  graphics libs had picked up an external zlib dll dependency; zlib is now
+  linked statically into them).
+- Windows builds are now made with Visual Studio 2026 (platform toolset v145).
+  The bundled redist installers have been updated to match; if you get errors
+  running an updated build, install the bundled redist libs and try again.
+- Upgraded from SDL2 to SDL3.
+- Finally got rid of the weird square textures containing non-square contents
+  split into two pieces. This was a long-obsolete artifact of targeting pvrtc
+  texture compression which was limited to square dimensions.
+- Added hardware cursor support on all platforms; should eliminate any sense of
+  cursor lag.
+- Upgraded Windows builds from VS2022 to VS2026.
+- Added password option to game hosting.
+- Button and image widgets can now be rotated (thanks vishal332008!)
+- Terrain nodes now have `position` and `rotate` attrs, so a terrain can be
+  placed and oriented instead of being stuck wherever its mesh was authored.
+  Rendering, collision, and bg-dynamics (debris/smoke/shadows) all follow.
+  Note that this bumps the scene-v1 protocol to 41 (thanks vishal332008!)
+- Prop nodes now have a `rotate` attr — a `(w, x, y, z)` quaternion that can
+  be read (live body orientation) or written, including before the body
+  exists to set a custom starting orientation. Globals nodes gain a
+  `gravity` attr for per-scene gravity control (moon maps, wind, zero-g).
+  This bumps the scene-v1 protocol to 42 (thanks vishal332008!)
+- Fixed a wire-protocol regression from the prop `rotate` addition: bomb
+  nodes inherit prop's attrs, so the append shifted bomb's `fuse_length`
+  wire index and joining any pre-42 server got you kicked the moment a
+  fused bomb appeared (replays of older games were equally broken). Bomb's
+  table is restored to its historical layout (with `rotate` now after
+  `fuse_length`), and a golden test now pins every node type's attr indices
+  so table shifts get caught in CI. This bumps the scene-v1 protocol to 43.
+- Joining a server that runs an older version of the game now shows a
+  yellow screen-message warning that some newer characters may show up as
+  older ones there (groundwork for on-the-fly character downloads). This
+  bumps the scene-v1 protocol to 44.
+- New `bascenev1.Character`: a session-level character definition built
+  from an opaque json description and assigned to a spaz node's new
+  `character` attr. When set, the node draws, voices, and proportions
+  itself from the definition (falling back to a standard-spaz standin
+  until the definition's media is available locally), and the legacy
+  per-part mesh/texture/sound attrs, `style`, and `highlight` are ignored.
+  Definitions live and die with their references like materials do. All
+  builtin characters now spawn this way; mod-defined appearances without a
+  definition keep using the legacy explicit-media form. (Part of the
+  protocol-44 changes.)
+- Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
+  wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
+  (previously `stdassets`).
+- Punches now deal no damage to other Spaz characters shortly
+  before and after grabbing. This behavior replaces an old one where punches
+  were ignored if executed during a grab. This patches the punch grab infinite
+  exploit without impacting other game techiques like "bomb jumps"
+  (Thanks TheMikirog!)
+- Added an `allow_punch_grab` server config option (default false) which
+  disables the above punch-grab protection, for servers whose players
+  prefer the classic behavior. Modders can do the same by setting
+  `babase.app.classic.allow_punch_grab` to True; spazzes spawned while it
+  is set omit the protection.
+- The boot-time asset gate now offers an interactive browser sign-in when
+  required assets need an authenticated account and no sign-in is coming on
+  its own. Previously, an app bundling mods that pin restricted asset-package
+  versions (dev/test) could soft-lock before the main menu — the account UI
+  for signing in lives behind the asset gate. Now a dialog surfaces a
+  sign-in URL (with a button to open it) and the app proceeds automatically
+  once the sign-in completes in the browser. On headless servers the same
+  URL is logged at `ba.app` INFO, so a server operator hosting bundled
+  restricted assets can open it, sign in, and have the server continue.
+- The early-boot / asset-download / connect-time dialogs (progress lines,
+  the sign-in gate, and error messages) are now translated rather than
+  hard-coded English, sourced from the `babuiltinassets` package so they
+  are available before any real app-mode loads. (Adds a strings-only
+  `babase` asset-package wrapper type for this pre-featureset layer.)
+- Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
+- Game Controller Haptics!
+- The game now restricts the view area to reasonable aspect-ratios and draws
+  black outside of them. This gives us a clean goal of everything drawing
+  reasonably within the supported range; it should no longer be possible to see
+  broken drawing by sizing a window extremely wide or tall.
+- The cloud console now streams output straight from the app through a nearby
+  server node instead of being polled for it from the master server. Output
+  appears as it happens and commands run sooner, which should be an especially
+  noticeable difference the further you are from the US, where the old polling
+  round trips cost the most. The app also now asks your permission before
+  letting a console control it, and tells the console when it is quitting
+  instead of leaving it waiting.
+- Android text editing has been streamlined - you can send chat messages
+  directly from the keyboard instead of having to hit 'Done' and then 'Send',
+  etc.
+- Added a `bascenev1.Quat` quaternion class. This can be useful for wrangling
+  the new rotation value on the prop node. For example, to point a prop in
+  random heading (rotating around the up axis) you can do:
+  `"rotate": bs.Quat.from_angles(heading=random.uniform(0.0, 360.0))`
+- Added wrapping params for textures (clamp by default), and relaxed the
+  requirement that texture dimensions be a power-of-two. That requirement now
+  only applies to wrapped dimensions (where there are some subtle technical
+  benefits). In other cases they can be any size (though dimensions must be
+  divisible by 4).
+- Android builds should now properly respect camera cutouts and round corners.
+  Please holler if you see any UI elements being cut off at this point.
+- OS Text rendering (Asian languages, emoji, etc.) is now more efficient and
+  renders more cleanly in the background, meaning it should never cause frame
+  hitches. The credits window used to be a major offender here and should now
+  come up smoothly.
+- On Android, frame-rate should now be the native device frame-rate instead of
+  60 by default, and should respond to game-mode and thermal settings so it
+  drops to 60 if the device is getting hot or the user puts it into energy-saver
+  mode via game-overlays or whatnot.
+- The dev-console on-screen button can now be dragged around.
+- Improved caching and restore behavior on DocUI - re-opening the store should
+  generally now be instant after it has loaded once successfully/etc.
+- Finally added a slider widget! - `bauiv1.sliderwidget()`.
+- Assets for bauiv1 and bascenev2 are now fed in through Python - this means it
+  will be possible to replace them with custom assets using mods; no need to
+  hack system scripts.
+- Android builds now access their bundled Python files and assets directly from
+  their APK, which speeds up booting and eliminates the 'finishing
+  install..please wait' dialog at launch.
+- Finally resurrected my old debug-draw mode from many years ago. Press F10 or
+  use the new gameplay dev-console tab to toggle it.
+- Control guides at the start of games now properly show controls for the local
+  client; not for the host.
+- You can now click to place the cursor in direct-input text boxes.
+- Game music now automatically stops playing anytime external music is playing
+  on Android 8.1+ (and upcoming iOS) devices.
+- Private/LAN parties hosted from the game now verify joiners' accounts
+  when possible (so their cloud profiles come along) without requiring it:
+  joiners who are signed out or offline, or a host that is offline, still
+  connect just as before. Public parties still require sign-in.
+
+### 1.7.63 (build 22870, api 9, 2026-06-08)
+- Fixed mouse-wheel zooming in manual camera mode.
+- Now using `uv` instead of `pip`. So now you'll need to install `uv` before
+  working with the repo, but this makes things lots faster to work with.
+
+### 1.7.62 (build 22837, api 9, 2026-05-04)
+- Added initial support for signing in with a Discord account as a first-class
+  V2 login type, via Discord's Social SDK. Discord support is included in Mac,
+  Windows, and Linux test-builds for now, but will expand to Android and Mac App
+  Store builds soon. We can also start taking advantage of other features of the
+  Discord SDK such as rich presence or voice chat once any initial bugs are
+  ironed out. (Thanks Loup-Garou911XD for the proof-of-concept implementation!).
+- Regional server connections have been overhauled and now use websockets on
+  standard http/https ports. This should help reduce blocking and should
+  establish connections much faster. Please holler if you run into connectivity
+  problems as this is a significant code overhaul.
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
@@ -11,14 +262,31 @@
   logic has been cleaned up (Thanks vinnytherabbit!)
 - Added `BA_LOG_LEVELS` env var to override log levels at launch (e.g.
   `BA_LOG_LEVELS='ba.net=DEBUG,ba.connectivity=DEBUG'`).
-- Added `test_game_run` and `test_game_kill` pcommands for automated game
-  testing.
+- The engine's networking now honors the standard `HTTPS_PROXY`
+  environment variable, so the game works behind corporate /
+  sandboxed proxies without manual configuration.
+- Added `test_game_run` pcommand for automated game testing.
 - Players finally have all their unlocked characters accurately available when
   connecting to servers with v2-auth enabled.
 - Servers with v2-auth enabled can now see verified classic_purchases for
   connected clients (without v2-auth this will show up as None).
 - Workspace uploads are no longer are limited to 10mb (applies to web UI, REST,
-  and bacloud).
+  and bacloud). Note that syncing workspaces to the client currently does not
+  support workspaces with such large files (that will mainly be for assets).
+- Added scale transition option for widget and wired up doc-ui to use that
+  instead of in-left transitions.
+- Very early logs should now be displayed consistently and with accurate timing
+  info (good for debugging bootstrapping/lifecycle issues).
+- The 'Use insecure connections' checkbox is now an always/auto/never popup with
+  'auto' being the default. In auto mode the app may opt to use insecure
+  connections in environments that are known to muck with or block secure ones.
+  Choose always or never if you don't want to give it that choice.
+- Added support for platforms to provide a 'network-available' state. This
+  allows us to skip trying to talk to cloud stuff when there's no network
+  connection or when we're in airplane mode or whatever which should save some
+  battery, and also it lets us reconnect *exactly* when the network comes back
+  online.
+
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
@@ -116,9 +384,9 @@
   from something like `a-0.bastdassets.260116` (YYMMDD).
 - Flatpak package name is now `net.froemling.bombsquad` instead of
   `net.froemling.BombSquad` along with improved package metadata.
-  Installing new flatpak builds alongside old flatpak builds will create 2 
+  Installing new flatpak builds alongside old flatpak builds will create 2
   seperate installs.
-- Added `flatpak-generate-flathub-manifest` make target that will generate 
+- Added `flatpak-generate-flathub-manifest` make target that will generate
   manifest for flathub in `build/flathub`
 - Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
@@ -139,7 +407,7 @@
 - Added a null audio device to prevent crash when no audio device is available
 - Flatpak permissions adjusted to allow gamepads to be properly detected and the
   configuration directory to be created if it does not already exist.
-  
+
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
@@ -178,7 +446,7 @@
 - On Android builds, mice and trackpads now function the same as on Desktop
   builds instead of behaving like touches. This means buttons will highlight on
   mouse-over, scrollbars can be dragged, etc.
-  
+
 
 ### 1.7.55 (build 22649, api 9, 2025-12-01)
 - The 'get-tokens' plus button now allows going back to whatever window one was
@@ -226,7 +494,7 @@
   spinner appear/disappear immediately instead of fading.
 - Widget ids can now be any string; there are no longer restrictions on which
   characters can be used.
-  
+
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
@@ -412,7 +680,7 @@
   possible, the app now starts bootstrapping network stuff earlier in the boot
   process so it can proceed in parallel with other bootstrappy stuff (see
   `babase._env._bootstrap_networking()`).
-  
+
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.
 - Working towards more consistent toolbar visibility more on small ui mode.
@@ -486,8 +754,6 @@
   garbage collection due to reference loops, and it offers some tips and
   functionality to help track down and eliminate said loops. Check out the
   `GarbageCollectionSubsystem` documentation for more info.
-- Added `DiscordSubsystem` class which wraps the underlying `_babase` 
-  implementation of discord sdk
 - Added proper support for mouse-cancel events. This fixes an annoying issue
   where using home-bar nav gestures on Android to switch apps could lead to
   unintended button presses (namely on chest slots since that is near the home
@@ -600,7 +866,7 @@
   shutdown. If you run into cases where the app consistently gets stuck when
   trying to exit or you see warnings about unexpected threads still running,
   please holler.
-  
+
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
   servers by feeding them bad json data. If you ever come across CXX code
@@ -669,7 +935,7 @@
   please let me know.
 - Added highlights to show players when they have unclaimed chests in their
   inbox or chests that can be opened.
-  
+
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens
 - Made MainWindow auto-recreate smarter. If something such as text input or a
@@ -677,7 +943,7 @@
   recreate once the suppression ends.
 - (build 22313) Fixed a possible client crash due to uninitialized memory when
   handling `BA_MESSAGE_HOST_INFO` data.
-  
+
 ### 1.7.37 (build 22304, api 9, 2025-03-10)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
@@ -920,7 +1186,7 @@
   see https://ballistica.net/whataretokens
 - Paid private hosting now uses tokens instead of tickets.
 - Wired up initial support for using asset-packages for bundled assets.
-- bacloud workspace commands are now a bit smarter; you can now do things like 
+- bacloud workspace commands are now a bit smarter; you can now do things like
   `bacloud workspace put .` or even just `bacloud workspace put` and it will
   work. Previously such cases required explicitly passing the workspace name
   as a second argument. Both `workspace get` and `workspace put` now also have
@@ -958,7 +1224,7 @@
   version and then upgrading to later builds of the same version containing
   incompatibilities with the older sys scripts. This should help with that
   problem.
-  
+
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
@@ -1008,7 +1274,7 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, 
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`,
   `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
@@ -1033,7 +1299,7 @@
   when running builds after pulling small updates from git.
 - Added github workflow for making docker image and sphinx docs nightly
 - Added github workflow for making build release on tag creation
-  
+
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
@@ -1090,7 +1356,7 @@
   default `.toml`. This can be handy when procedurally generating server
   configs. If no `--config` path is explicitly passed, it will look for
   `config.json` and `config.toml` in the same dir as the script in that order.
-  
+
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).

@@ -2,8 +2,6 @@
 #
 """State data for spinoff."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Annotated
 from enum import Enum
 from dataclasses import dataclass

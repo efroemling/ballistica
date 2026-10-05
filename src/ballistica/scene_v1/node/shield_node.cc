@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/component/shield_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -29,6 +30,9 @@ class ShieldNodeType : public NodeType {
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
   BA_BOOL_ATTR(always_show_health_bar, always_show_health_bar,
                set_always_show_health_bar);
+  // (protocol 49) Appended so existing attr indices hold; the legacy
+  // bool above stays and is consulted only while this is 0 (default).
+  BA_INT_ATTR(health_bar_display, health_bar_display, set_health_bar_display);
 #undef BA_NODE_TYPE_CLASS
 
   ShieldNodeType()
@@ -37,7 +41,8 @@ class ShieldNodeType : public NodeType {
         radius(this),
         hurt(this),
         color(this),
-        always_show_health_bar(this) {}
+        always_show_health_bar(this),
+        health_bar_display(this) {}
 };
 static NodeType* node_type{};
 
@@ -50,13 +55,28 @@ ShieldNode::ShieldNode(Scene* scene)
     : Node(scene, node_type)
 #if !BA_HEADLESS_BUILD
       ,
-      shadow_(0.2f)
+      shadow_(scene->bg_dynamics_world(), 0.2f)
 #endif  // !BA_HEADLESS_BUILD
 {
   last_hurt_change_time_ = scene->time();
 }
 
 ShieldNode::~ShieldNode() = default;
+
+auto ShieldNode::EffectiveHealthBarDisplay_() const -> HealthBarDisplay {
+  switch (health_bar_display_) {
+    case static_cast<int>(HealthBarDisplay::kAfterDamage):
+      return HealthBarDisplay::kAfterDamage;
+    case static_cast<int>(HealthBarDisplay::kAlways):
+      return HealthBarDisplay::kAlways;
+    case static_cast<int>(HealthBarDisplay::kNever):
+      return HealthBarDisplay::kNever;
+    default:
+      // kDefault (or a value from a newer host we don't know).
+      return always_show_health_bar_ ? HealthBarDisplay::kAlways
+                                     : HealthBarDisplay::kAfterDamage;
+  }
+}
 
 void ShieldNode::SetColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
@@ -129,11 +149,11 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     float rs = (0.6f + hurt_rand_ * 0.05f) * radius_ * s_scale * r_scale_;
 
     // draw our light on both terrain and objects
-    g_base->graphics->DrawBlotchSoft(
+    scene()->render_view()->DrawBlotchSoft(
         Vector3f(&position_[0]), 3.4f * rs, color_[0] * brightness,
         color_[1] * brightness, color_[2] * brightness, 0.0f);
     // draw our light on both terrain and objects
-    g_base->graphics->DrawBlotchSoftObj(
+    scene()->render_view()->DrawBlotchSoftObj(
         Vector3f(&position_[0]), 3.4f * rs, color_[0] * brightness * 0.4f,
         color_[1] * brightness * 0.4f, color_[2] * brightness * 0.4f, 0.0f);
   }
@@ -145,7 +165,10 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     millisecs_t since_last_hurt_change =
         scene()->time() - last_hurt_change_time_;
 
-    if (since_last_hurt_change < fade_time || always_show_health_bar_) {
+    HealthBarDisplay display = EffectiveHealthBarDisplay_();
+    if (display != HealthBarDisplay::kNever
+        && (since_last_hurt_change < fade_time
+            || display == HealthBarDisplay::kAlways)) {
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
       c.SetPremultiplied(true);
@@ -154,7 +177,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         float o = 1.0f
                   - static_cast<float>(since_last_hurt_change)
                         / static_cast<float>(fade_time);
-        if (always_show_health_bar_) {
+        if (display == HealthBarDisplay::kAlways) {
           o = std::max(o, 0.5f);
         }
         o *= o;
@@ -183,28 +206,32 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       }
       c.Submit();
@@ -216,7 +243,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
   float o = (1.0f - hurt_) * 1.0f + hurt_ * (1.0f * r * r * r);
   o *= 0.3f;
   float cx, cy, cz;
-  g_base->graphics->camera()->get_position(&cx, &cy, &cz);
+  scene()->render_view()->camera()->get_position(&cx, &cy, &cz);
   float col[4];
   col[0] = color_[0] * o;
   col[1] = color_[1] * o;
@@ -236,7 +263,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShield));
+    c.SetTexture(g_scene_v1->assets().shield.get());
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
     Vector3f to_cam =
         Vector3f(cx - position_[0], cy - position_[1], cz - position_[2])
@@ -258,7 +285,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
                1, 0);
       c.Scale(r2, r2, r2);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield),
+      c.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get(),
                       base::kMeshDrawFlagNoReflection);
     }
     c.Submit();
@@ -273,7 +300,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360,
                   0, 1, 0);
         c2.Scale(r2, r2, r2);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+        c2.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get());
       }
       c2.Submit();
     }
@@ -288,7 +315,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
                   0, 1, 0);
         float sc = r2 * 1.1f;
         c2.Scale(sc, sc, sc);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+        c2.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get());
       }
       c2.Submit();
     }

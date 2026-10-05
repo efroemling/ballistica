@@ -437,6 +437,14 @@ void Node::CheckBodies() {
   }
 }
 
+void NodeType::FinalizeAttrIndices() {
+  for (auto* attr : late_index_attrs_) {
+    attr->index_ = static_cast<int>(attributes_by_index_.size());
+    attributes_by_index_.push_back(attr);
+  }
+  late_index_attrs_.clear();
+}
+
 auto NodeType::GetAttributeNames() const -> std::vector<std::string> {
   std::vector<std::string> names;
   names.reserve(attributes_by_name_.size());

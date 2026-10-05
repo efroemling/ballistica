@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -40,8 +41,18 @@ class ContainerWidget : public Widget {
   // nullptr to deselect widgets.
   void SelectWidget(Widget* w, SelectionCause s = SelectionCause::kNone);
   void ReselectLastSelectedWidget();
-  void ShowWidget(Widget* w);
+  /// Scroll as needed to bring a child into view. Pass animate=false to
+  /// snap rather than glide -- see WidgetMessage::animate.
+  void ShowWidget(Widget* w, bool animate = true);
   void set_background(bool enable) { background_ = enable; }
+
+  /// Shift where our background art draws, without moving anything else
+  /// (children, input, transitions). For working around art whose
+  /// placement doesn't suit a particular window shape.
+  void set_background_offset(float x, float y) {
+    background_offset_x_ = x;
+    background_offset_y_ = y;
+  }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
   void set_darken_behind(bool val) { darken_behind_ = val; }
@@ -180,6 +191,19 @@ class ContainerWidget : public Widget {
 
   auto IsTransitioningOut() const -> bool override;
 
+  /// Color multiplier currently applied to our window backing; > 1 for
+  /// the brief glow during a scale-in, otherwise 1. Children that
+  /// masquerade as part of the backing can apply it to stay matched.
+  auto GetBackingGlowMult() const -> float {
+    if (transition_scale_ <= 0.9f && !transitioning_out_) {
+      float amt = transition_scale_ / 0.9f;
+      return std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
+    }
+    return 1.0f;
+  }
+
+  auto CoversScreenOpaquely() const -> bool override;
+
  protected:
   void set_single_depth_root(bool s) { single_depth_root_ = s; }
 
@@ -203,6 +227,12 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
+  // Calc the widget-local bounds of the hand-calibrated known-opaque
+  // sub-rect of our window backing (see CoversScreenOpaquely());
+  // returns false for backing setups with no such calibration.
+  auto GetCalibratedOpaqueRegion_(float* l, float* b, float* r, float* t) const
+      -> bool;
+
   // Given a container and a point, returns a selectable widget in the
   // downward direction or nullptr.
   auto GetClosestDownWidget(float x, float y, Widget* ignoreWidget) -> Widget*;
@@ -218,8 +248,8 @@ class ContainerWidget : public Widget {
   Object::WeakRef<ButtonWidget> start_button_;
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
-  base::SysMeshID bg_mesh_transparent_id_{};
-  base::SysMeshID bg_mesh_opaque_id_{};
+  Object::Ref<base::MeshAsset> bg_mesh_transparent_;
+  Object::Ref<base::MeshAsset> bg_mesh_opaque_;
   TransitionType transition_type_{};
   float width_{};
   float height_{};
@@ -245,6 +275,8 @@ class ContainerWidget : public Widget {
   float transition_scale_{1.0f};
   float d_transition_scale_{};
   float bg_center_fudge_x_{};
+  float background_offset_x_{};
+  float background_offset_y_{};
   float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};
