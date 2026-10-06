@@ -22,6 +22,27 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
+  # rsync is not in the SDK, and the build system requires it: pcommand
+  # checkenv insists on it, and the staging steps use it to assemble
+  # build/cmake/*/staged. It is built from a pinned source archive,
+  # which works offline -- flatpak-builder fetches declared sources
+  # outside the build sandbox -- and cleaned out of the finished app.
+  # Listed first because it never changes: flatpak-builder rebuilds
+  # every module after one that does (python-build-env, on any lock
+  # bump).
+  - name: rsync
+    buildsystem: autotools
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --disable-debug
+      - --disable-locale
+    sources:
+      - type: archive
+        url: https://download.samba.org/pub/rsync/src/rsync-3.5.1.tar.gz
+        sha256: c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
+    cleanup:
+      - "*"
+
   # uv plus a wheel for every package in
   # pconfig/requirements_build_lock.txt, so the module below can create
   # the project venv with no network access. Generated from our
@@ -73,24 +94,6 @@ modules:
   #       url: https://github.com/libsdl-org/SDL
   #       tag: release-2.32.8
 
-  # rsync is not in the SDK, and the build system requires it: pcommand
-  # checkenv insists on it, and the staging steps use it to assemble
-  # build/cmake/*/staged. It is built from a pinned source archive,
-  # which works offline -- flatpak-builder fetches declared sources
-  # outside the build sandbox -- and cleaned out of the finished app.
-  - name: rsync
-    buildsystem: autotools
-    config-opts:
-      - --prefix=${FLATPAK_DEST}
-      - --disable-debug
-      - --disable-locale
-    sources:
-      - type: archive
-        url: https://download.samba.org/pub/rsync/src/rsync-3.5.1.tar.gz
-        sha256: c55f9c9dc10fb8bec397b399a0fdded53cc9a2d8e30891bb0d63724d25c37bef
-    cleanup:
-      - "*"
-
   - name: bombsquad
     buildsystem: simple
     build-options:
@@ -100,11 +103,10 @@ modules:
         - --share=network
       env:
         CMAKE_BUILD_TYPE: "Release"
-        # Build the project venv against *this* sandbox's interpreter,
-        # from the wheels the python-build-env module staged. A venv
-        # cannot be carried in from the host: its bin/python symlink,
-        # its pyvenv.cfg 'home' key and every script shebang name the
-        # absolute path of the interpreter that created it.
+        # Build the project venv in the sandbox, offline, from the wheels
+        # the python-build-env module staged (see
+        # tools/batools/flatpakbuildenv.py for why it can't come from
+        # the host).
         VENV_LOCK: pconfig/requirements_build_lock.txt
         UV_OFFLINE: "1"
         UV_FIND_LINKS: /app/share/python-build-env/wheels
@@ -132,10 +134,15 @@ modules:
       - type: dir
         path: ./../../
         skip:
-          # A venv is tied to the absolute path of the interpreter that
-          # built it, so the host's is useless here; it gets rebuilt in
-          # the sandbox instead.
+          # Host-built state the sandbox rebuilds for itself anyway (the
+          # venv is bound to the host's interpreter path, the cmake trees
+          # to host paths); copying it in is just wasted I/O and churns
+          # flatpak-builder's cache for this module.
           - .venv
+          - build/cmake
+          - build/prefab
+          - build/spinofftest
+          - build/dummymodules
           # flatpak-builder's own scratch space, which lives inside the
           # project; copying it into the build would be circular.
           - .cache/flatpak

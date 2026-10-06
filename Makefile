@@ -1525,7 +1525,7 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-flatpak-linux: env
+flatpak-linux:
 	mkdir build/flatpak -p
 	flatpak-builder --repo=./.cache/flatpak/repo \
 	--force-clean --keep-build-dirs \

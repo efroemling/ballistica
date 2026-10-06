@@ -37,11 +37,13 @@ import os
 import re
 import json
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
+from efrotools.util import writefile
 
 if TYPE_CHECKING:
     from typing import Any
@@ -52,6 +54,9 @@ if TYPE_CHECKING:
 # version and the checksums together; the checksums are published as
 # <asset>.sha256 next to each release asset.
 UV_VERSION = '0.12.23'
+#
+# Keyed by flatpak arch name, which is also the substring identifying a
+# manylinux wheel built for it; these keys are the build arches.
 UV_SHA256 = {
     'x86_64': (
         '9167d72b3319674b6303c4cbe071854bba13ebdf3d76b1a7cbdc175471fb66d6'
@@ -60,14 +65,6 @@ UV_SHA256 = {
         '6524bd338177ed50d035d39354e12545e993bbeba2ecbddf0480c5b3a81d313f'
     ),
 }
-UV_TARGET = {
-    'x86_64': 'x86_64-unknown-linux-gnu',
-    'aarch64': 'aarch64-unknown-linux-gnu',
-}
-
-# Flatpak arch names mapped to the substring that identifies a wheel
-# built for them. Linux-only; the flatpak build targets nothing else.
-WHEEL_ARCHES = {'x86_64': 'x86_64', 'aarch64': 'aarch64'}
 
 # Where the generated module stages its payload, relative to
 # FLATPAK_DEST (/app). The manifests name the absolute form in
@@ -101,8 +98,8 @@ class LockedPackage:
     name: str
     version: str
     hashes: list[str]
-    via: list[str] = field(default_factory=list)
-    text: str = ''
+    via: list[str]
+    text: str
 
     @property
     def key(self) -> str:
@@ -312,23 +309,23 @@ def select_distributions(
     if universal:
         return [(None, min(universal, key=_wheel_rank))]
 
-    out: list[tuple[str | None, dict[str, Any]]] = []
-    for arch, tag in WHEEL_ARCHES.items():
+    per_arch: dict[str, dict[str, Any]] = {}
+    for arch in UV_SHA256:
         matches = [
             f
             for f in wheels
-            if 'manylinux' in f['filename'] and tag in f['filename']
+            if 'manylinux' in f['filename'] and arch in f['filename']
         ]
         if matches:
-            out.append((arch, min(matches, key=_wheel_rank)))
-    if out:
-        if len(out) != len(WHEEL_ARCHES):
-            got = ', '.join(a for a, _ in out if a is not None)
+            per_arch[arch] = min(matches, key=_wheel_rank)
+    if per_arch:
+        if len(per_arch) != len(UV_SHA256):
+            got = ', '.join(per_arch)
             raise CleanError(
                 f'{pkg.name}=={pkg.version} has manylinux wheels for'
                 f' {got} but not for every build arch.'
             )
-        return out
+        return list(per_arch.items())
 
     sdists = [f for f in files if not f['filename'].endswith('.whl')]
     if not sdists:
@@ -336,6 +333,21 @@ def select_distributions(
             f'No wheel or sdist usable for {pkg.name}=={pkg.version}.'
         )
     return [(None, sdists[0])]
+
+
+def _write_if_changed(path: str, text: str) -> None:
+    """Write a file only if its contents differ.
+
+    The build lockfile is a make prerequisite of the venv (VENV_LOCK),
+    so a no-op regeneration must not bump its mtime.
+    """
+    try:
+        with open(path, encoding='utf-8') as infile:
+            if infile.read() == text:
+                return
+    except FileNotFoundError:
+        pass
+    writefile(path, text)
 
 
 def write_subset_lockfile(
@@ -352,8 +364,7 @@ def write_subset_lockfile(
         '',
     ]
     lines.extend(pkg.text for pkg in subset)
-    with open(path, 'w', encoding='utf-8') as outfile:
-        outfile.write('\n'.join(lines) + '\n')
+    _write_if_changed(path, '\n'.join(lines) + '\n')
 
 
 def write_flatpak_module(
@@ -379,18 +390,23 @@ def write_flatpak_module(
         'sources:',
     ]
 
-    for arch, target in UV_TARGET.items():
+    for arch, sha256 in UV_SHA256.items():
         lines += [
             '  - type: archive',
             f'    only-arches: [{arch}]',
             '    url: https://github.com/astral-sh/uv/releases/download/'
-            f'{UV_VERSION}/uv-{target}.tar.gz',
-            f'    sha256: {UV_SHA256[arch]}',
+            f'{UV_VERSION}/uv-{arch}-unknown-linux-gnu.tar.gz',
+            f'    sha256: {sha256}',
         ]
 
-    for pkg in subset:
+    # One PyPI metadata request per package; they are independent, so
+    # run them concurrently. map() keeps lockfile order for the output.
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        selections = list(executor.map(select_distributions, subset))
+
+    for pkg, selection in zip(subset, selections):
         print(f'  {Clr.BLU}{pkg.name}=={pkg.version}{Clr.RST}', flush=True)
-        for wheel_arch, pypi_file in select_distributions(pkg):
+        for wheel_arch, pypi_file in selection:
             lines.append('  - type: file')
             if wheel_arch is not None:
                 lines.append(f'    only-arches: [{wheel_arch}]')
@@ -402,8 +418,7 @@ def write_flatpak_module(
                 f'    sha256: {sha256}',
             ]
 
-    with open(path, 'w', encoding='utf-8') as outfile:
-        outfile.write('\n'.join(lines) + '\n')
+    _write_if_changed(path, '\n'.join(lines) + '\n')
 
 
 def generate(projroot: str) -> None:
@@ -413,10 +428,11 @@ def generate(projroot: str) -> None:
     subset_path = os.path.join('pconfig', 'requirements_build_lock.txt')
     module_path = os.path.join('pconfig', 'flatpak', 'python-build-env.yml')
 
-    os.chdir(projroot)
+    def _abs(path: str) -> str:
+        return os.path.join(projroot, path)
 
-    packages = parse_lockfile(lock_path)
-    subset = resolve_subset(packages, read_roots(roots_path))
+    packages = parse_lockfile(_abs(lock_path))
+    subset = resolve_subset(packages, read_roots(_abs(roots_path)))
 
     print(
         f'{Clr.BLD}Resolving {len(subset)} build packages'
@@ -424,8 +440,8 @@ def generate(projroot: str) -> None:
         flush=True,
     )
 
-    write_subset_lockfile(subset_path, subset, roots_path, lock_path)
-    write_flatpak_module(module_path, subset, subset_path)
+    write_subset_lockfile(_abs(subset_path), subset, roots_path, lock_path)
+    write_flatpak_module(_abs(module_path), subset, subset_path)
 
     print(
         f'{Clr.GRN}Wrote {subset_path} and {module_path}.{Clr.RST}',
