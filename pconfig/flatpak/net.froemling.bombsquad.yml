@@ -19,7 +19,6 @@ finish-args:
   - --socket=pulseaudio
   - --device=dri
   # - --device=input
-  - --persist=.ballisticakit
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22
