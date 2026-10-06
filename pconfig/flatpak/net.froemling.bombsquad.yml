@@ -8,8 +8,11 @@ runtime: org.freedesktop.Platform
 # flathub and their dev remote is unreliable.)
 runtime-version: "26.08"
 sdk: org.freedesktop.Sdk
-command: bombsquad.sh
+command: ballisticakit
 finish-args:
+  # The game looks for its data (ba_data etc.) here instead of in the
+  # cwd, so it can be launched from anywhere.
+  - --env=BA_DATA_DIR=/app/bin/bombsquad
   - --share=network
   - --share=ipc
   - --socket=x11
@@ -33,7 +36,6 @@ modules:
   - name: rsync
     buildsystem: autotools
     config-opts:
-      - --prefix=${FLATPAK_DEST}
       - --disable-debug
       - --disable-locale
     sources:
@@ -99,8 +101,6 @@ modules:
     build-options:
       append-path: /usr/lib/sdk/llvm22/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
-      build-args:
-        - --share=network
       env:
         CMAKE_BUILD_TYPE: "Release"
         # Build the project venv in the sandbox, offline, from the wheels
@@ -124,11 +124,11 @@ modules:
       - make cmake-build
       - mv build/cmake/*/ballisticakit build/cmake/*/staged/
       - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
-      - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
+      - ln -s bombsquad/ballisticakit ${FLATPAK_DEST}/bin/ballisticakit
       - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
       - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
-      - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
+      - install -Dm644 pconfig/flatpak/${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
     sources:
       - type: dir
@@ -140,7 +140,6 @@ modules:
           # flatpak-builder's cache for this module.
           - .venv
           - build/cmake
-          - build/prefab
           - build/spinofftest
           - build/dummymodules
           # flatpak-builder's own scratch space, which lives inside the
@@ -153,13 +152,10 @@ modules:
       #   sha256: { SHA256_CHECKSUM }
       #   strip-components: 0
 
+      # The release tarball already carries the icon at this path (see
+      # release.yml); a local tree does not, so fetch it into place.
       - type: file
+        dest: pconfig/flatpak
         dest-filename: net.froemling.bombsquad.png
         url: https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
         sha256: c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a
-
-      - type: script
-        dest-filename: bombsquad.sh
-        commands:
-          - cd /app/bin/bombsquad
-          - exec ./ballisticakit

@@ -120,6 +120,13 @@ void CoreConfig::ApplyEnvVars() {
   if (auto* envval = getenv("BA_EXEC")) {
     exec_command = envval;
   }
+  // Env-var equivalent of the --data-dir arg, for launchers that can
+  // set an environment but not pass args (e.g. a Flatpak manifest's
+  // 'command', which takes none). Like the arg, it frees the app from
+  // having to be started with its data dir as the cwd.
+  if (auto* envval = getenv("BA_DATA_DIR")) {
+    data_dir = envval;
+  }
 }
 
 void CoreConfig::ApplyArgs(int argc, char** argv) {

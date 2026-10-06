@@ -1525,7 +1525,16 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-flatpak-linux:
+# Everything a flatpak build would otherwise download mid-build: built
+# assets, resources, and the prefab plus lib for each flatpak arch. The
+# build sandbox has no network (Flathub forbids it), so these have to be
+# in the tree it is handed: the release tarball, or the local tree for
+# flatpak-linux.
+flatpak-prefetch: assets-cmake resources \
+ build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
+ build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
 	flatpak-builder --repo=./.cache/flatpak/repo \
 	--force-clean --keep-build-dirs \

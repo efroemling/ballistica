@@ -14,6 +14,10 @@
 - Fixed keyboard/controller selection getting stuck on doc-ui pages with
   nothing selectable on them (an empty inbox, say): such a page now gets a
   subtle Ok button at its end that closes the window.
+- The `BA_DATA_DIR` environment variable now does what the `--data-dir`
+  arg does (the arg wins if both are given), for launchers that can set an
+  environment but not pass args. The Flatpak uses it, so the game no longer
+  needs a wrapper script to start from its data dir.
 - Touchscreen players on Android and iPhone now get haptic feedback from the
   device itself for the same events controllers rumble for (Android 10 and
   newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'

@@ -99,26 +99,16 @@ def generate_flatpak_build_env() -> None:
     batools.flatpakbuildenv.generate(str(pcommand.PROJROOT))
 
 
-# pylint: disable=too-many-locals,too-many-statements
-def generate_flathub_manifest() -> None:
-    """Generate a Flathub manifest for Ballistica and push to submodule.
-    This function is intended to be run within a GitHub Actions workflow.
-
-    This function:
-    1. Copies files from pconfig/flatpak/ to pconfig/flatpak/flathub
-    2. Generates the manifest from template using latest GitHub release info
-    """
-    import json
+# pylint: disable=too-many-locals
+def _github_repo() -> str:
+    """Return 'owner/repo' from GITHUB_REPOSITORY or the git remote."""
     import os
-    import shutil
-    import urllib.request
     import subprocess
 
     from efro.error import CleanError
-    from efro.terminal import Clr
 
     try:
-        github_repo = os.environ['GITHUB_REPOSITORY']
+        return os.environ['GITHUB_REPOSITORY']
     except KeyError:
         try:
             user_plus_repo: list[str] = (
@@ -132,7 +122,7 @@ def generate_flathub_manifest() -> None:
                 .stdout.strip(' \n')
                 .split('/')
             )
-            github_repo = (
+            return (
                 user_plus_repo[-2]
                 + '/'
                 + user_plus_repo[-1].removesuffix('.git')
@@ -143,6 +133,27 @@ def generate_flathub_manifest() -> None:
                 f'set and git remote.origin.url not set.'
                 f'{e}'
             ) from e
+
+
+def generate_flathub_manifest() -> None:
+    """Generate a Flathub manifest for Ballistica into build/flathub.
+    This function is intended to be run within a GitHub Actions workflow.
+
+    This function:
+    1. Copies the manifest's python-build-env module to build/flathub
+       and removes files that belong upstream (desktop file, metainfo,
+       releases.xml; Flathub wants those from the source tarball)
+    2. Generates the manifest from template using latest GitHub release info
+    """
+    import json
+    import os
+    import shutil
+    import urllib.request
+
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    github_repo = _github_repo()
 
     # Paths
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'pconfig', 'flatpak')
@@ -155,30 +166,27 @@ def generate_flathub_manifest() -> None:
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
-    # Step 1: Copy files from pconfig/flatpak/ to pconfig/flatpak/flathub
-    print(
-        f'{Clr.BLD}Copying files from {flatpak_src_dir} to '
-        f'{flathub_dir}...{Clr.RST}'
-    )
-
-    # List of files to copy (skip the flathub directory itself)
-    files_to_copy = [
+    # Step 1: The flathub repo holds only the manifest and the module
+    # files it includes. Everything the build installs (desktop file,
+    # metainfo, releases.xml, icon) comes from the source tarball, so
+    # clear out any copies an earlier version of this step pushed.
+    for filename in [
         'net.froemling.bombsquad.metainfo.xml',
         'net.froemling.bombsquad.desktop',
         'net.froemling.bombsquad.releases.xml',
-        # Referenced by the manifest as a module; without it the
-        # flathub build has no uv and no wheels to install from.
-        'python-build-env.yml',
-    ]
+    ]:
+        stale = os.path.join(flathub_dir, filename)
+        if os.path.exists(stale):
+            os.remove(stale)
+            print(f'  Removed {filename} (now sourced from the tarball)')
 
-    for filename in files_to_copy:
-        src = os.path.join(flatpak_src_dir, filename)
-        dst = os.path.join(flathub_dir, filename)
-        if os.path.exists(src):
-            shutil.copy2(src, dst)
-            print(f'  Copied {filename}')
-        else:
-            print(f'  Warning: {filename} not found at {src}')
+    # Referenced by the manifest as a module; without it the flathub
+    # build has no uv and no wheels to install from.
+    shutil.copy2(
+        os.path.join(flatpak_src_dir, 'python-build-env.yml'),
+        os.path.join(flathub_dir, 'python-build-env.yml'),
+    )
+    print('  Copied python-build-env.yml')
 
     # Step 2: Get latest release information from GitHub
     print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
@@ -206,21 +214,6 @@ def generate_flathub_manifest() -> None:
             )
 
         print(f'  Found asset: {asset_url}')
-
-        # Extract version from release tag
-        version = release_data.get('tag_name', '').lstrip('v')
-        if not version:
-            raise CleanError('Could not extract version from release tag')
-        print(f'  Release version: {version}')
-
-        # Extract release date from published_at field
-        release_date = release_data.get('published_at', '')
-        if not release_date:
-            raise CleanError('Could not extract release date from API')
-        # Convert ISO format date (e.g., '2026-01-25T12:34:56Z')
-        # to YYYY-MM-DD
-        release_date = release_date.split('T')[0]
-        print(f'  Release date: {release_date}')
 
         print(f'{Clr.BLD}Getting SHA256 checksum...{Clr.RST}')
         digest = asset.get('digest')
@@ -257,50 +250,44 @@ def generate_flathub_manifest() -> None:
 
     print(f'  Generated manifest at {manifest_path}')
 
-    # Call generate_flatpak_release_manifest with
-    # the extracted version, repo URL, and date
-    print(f'{Clr.BLD}Generating Flatpak release manifest...{Clr.RST}')
-    generate_flatpak_release_manifest(
-        version, asset_url, checksum, github_repo, release_date
-    )
-
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
 
 
-# pylint: disable=too-many-locals
-def generate_flatpak_release_manifest(
-    version: str,
-    asset_url: str,
-    checksum: str,
-    github_repo: str,
-    release_date: str,
-) -> None:
-    """Generate a Flatpak release manifest for Ballistica.
+def flatpak_add_release() -> None:
+    """Add a release entry to the flatpak releases.xml.
 
-    This function:
+    Args: <version> [YYYY-MM-DD]
 
-    1. Adds a new release entry to net.froemling.bombsquad.releases.xml
-    2. Updates the net.froemling.bombsquad.releases.xml file with the
-       new release information
-
-    Args:
-        version: Version string from GitHub release (e.g., '1.7.60')
-        asset_url: URL to the release asset
-        checksum: SHA256 checksum of the release asset
-        github_repo: GitHub repository in format 'owner/repo'
-        release_date: Release date in YYYY-MM-DD format
+    Writes pconfig/flatpak/net.froemling.bombsquad.releases.xml, which
+    the flatpak build installs from the source tarball. The release
+    workflow runs this before packing that tarball; committing the entry
+    ahead of time works too (an existing version is left alone). The
+    date defaults to today (UTC).
     """
     import os
+    import datetime
     from xml.etree import ElementTree as ET
 
     from efro.error import CleanError
     from efro.terminal import Clr
     from batools.changelog import get_version_changelog
 
-    # Paths
-    flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
+    args = pcommand.get_args()
+    if len(args) not in (1, 2):
+        raise CleanError('Expected args: <version> [YYYY-MM-DD]')
+    version = args[0].removeprefix('v')
+    release_date = (
+        args[1]
+        if len(args) == 2
+        else datetime.datetime.now(datetime.UTC).date().isoformat()
+    )
+    github_repo = _github_repo()
+
     releases_xml_path = os.path.join(
-        flathub_dir, 'net.froemling.bombsquad.releases.xml'
+        pcommand.PROJROOT,
+        'pconfig',
+        'flatpak',
+        'net.froemling.bombsquad.releases.xml',
     )
 
     print(f'{Clr.BLD}Adding release {version} to releases.xml...{Clr.RST}')
@@ -359,18 +346,6 @@ def generate_flatpak_release_manifest(
         f'https://github.com/{github_repo}/archive/refs/tags/v{version}.tar.gz'
     )
 
-    # Add binary artifact for linux
-    binary_artifact = ET.SubElement(artifacts, 'artifact')
-    binary_artifact.set('type', 'source')
-    binary_artifact.set('platform', 'x86_64-linux-gnu')
-
-    binary_location = ET.SubElement(binary_artifact, 'location')
-    binary_location.text = asset_url
-
-    binary_checksum = ET.SubElement(binary_artifact, 'checksum')
-    binary_checksum.set('type', 'sha256')
-    binary_checksum.text = checksum
-
     # Insert the new release at the beginning (after the root element)
     root.insert(0, new_release)
 
@@ -397,11 +372,9 @@ def generate_flatpak_release_manifest(
     # Write back to file
     try:
         tree.write(releases_xml_path, encoding='utf-8', xml_declaration=True)
-        print(f'  Added release {version} to releases.xml')
-        print(f'  Generated flatpak release manifest at {releases_xml_path}')
         print(
-            f'{Clr.BLD}{Clr.GRN}Flatpak release manifest '
-            f'generation complete!{Clr.RST}'
+            f'{Clr.GRN}Added release {version} to'
+            f' {releases_xml_path}.{Clr.RST}'
         )
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}') from e
