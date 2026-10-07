@@ -140,6 +140,7 @@ def generate_flathub_manifest() -> None:
     This function is intended to be run within a GitHub Actions workflow.
 
     This function:
+
     1. Copies the manifest's python-build-env module to build/flathub
        and removes files that belong upstream (desktop file, metainfo,
        releases.xml; Flathub wants those from the source tarball)
