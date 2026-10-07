@@ -96,8 +96,10 @@ modules:
     build-options:
       append-path: /usr/lib/sdk/llvm22/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
-      build-args:
-        - --share=network
+      # No network: Flathub forbids it, so everything the build would
+      # download (assets, the asset bundle, prefab libs, the efrocache
+      # dir) has to arrive with the sources. `make flatpak-prereqs`
+      # fetches it on the host; see the Flatpak section of the Makefile.
       env:
         CMAKE_BUILD_TYPE: "Release"
         # Build the project venv against *this* sandbox's interpreter,
@@ -113,11 +115,11 @@ modules:
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
-      # .venv is excluded from the sources below, so this creates it
-      # from scratch against the runtime's python3.14 and installs into
-      # it from the staged wheels. The generated tools/pcommand and
-      # friends carry the host's shebangs, so clear them out first and
-      # let `make env` regenerate them for this venv.
+      # The sources carry no .venv, so this creates one from scratch
+      # against the runtime's python3.14 and installs into it from the
+      # staged wheels. The generated tools/pcommand and friends carry
+      # the shebangs of whatever machine produced the sources, so clear
+      # them out first and let `make env` regenerate them for this venv.
       - make env-clean
       - make cmake-build
       - mv build/cmake/*/ballisticakit build/cmake/*/staged/
@@ -129,6 +131,10 @@ modules:
       - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
     sources:
+      # Flathub builds swap this dir source for the release's
+      # bombsquad_build_env.tar; see generate_flathub_manifest in
+      # tools/batools/pcommands3.py. Keep the skip list in sync with the
+      # tar excludes in .github/workflows/release.yml.
       - type: dir
         path: ./../../
         skip:
@@ -136,15 +142,13 @@ modules:
           # built it, so the host's is useless here; it gets rebuilt in
           # the sandbox instead.
           - .venv
+          # Never read by the build.
+          - .git
+          - .idea
           # flatpak-builder's own scratch space, which lives inside the
           # project; copying it into the build would be circular.
           - .cache/flatpak
           - build/flatpak
-
-      # - type: archive
-      #   url: { ARCHIVE_URL }
-      #   sha256: { SHA256_CHECKSUM }
-      #   strip-components: 0
 
       - type: file
         dest-filename: net.froemling.bombsquad.png

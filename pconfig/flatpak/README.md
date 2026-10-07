@@ -1,0 +1,208 @@
+# BombSquad Flatpak
+
+This directory holds everything needed to package BombSquad as a Flatpak
+(`net.froemling.bombsquad`), both for local/CI test builds and for
+publishing on [Flathub](https://flathub.org).
+
+There is one manifest, `net.froemling.bombsquad.yml`, used two ways:
+
+- **Local / CI builds** use it as-is and build straight from the working
+  tree. They produce a `.flatpak` bundle you can install by hand.
+- **Flathub builds** use a copy generated at release time, with the
+  working-tree source swapped for a prebuilt source tarball attached to the
+  GitHub release. That copy is pushed to our Flathub repo.
+
+### Files
+
+| File | Purpose |
+| --- | --- |
+| `net.froemling.bombsquad.yml` | The manifest. Its `bombsquad` module uses the project directory itself (`type: dir`) as its source; the Flathub generator replaces that one source with the release tarball. |
+| `python-build-env.yml` | Generated module supplying `uv` plus one wheel per package in `pconfig/requirements_build_lock.txt`, so the build can create its venv offline. Do not edit by hand. |
+| `net.froemling.bombsquad.metainfo.xml` | AppStream metadata (description, screenshots, content rating, branding) shown on Flathub and in software centers. |
+| `net.froemling.bombsquad.releases.xml` | AppStream release history, installed alongside the metainfo. New entries are added automatically at release time (see below). |
+| `net.froemling.bombsquad.desktop` | Desktop entry that launches `bombsquad.sh`. |
+
+## How the build works
+
+Flatpak builds run in a sandbox based on `org.freedesktop.Sdk` 26.08 (plus
+the `llvm22` SDK extension for the compiler), with the matching
+`org.freedesktop.Platform` as the runtime. The 26.08 runtime ships the
+Python 3.14 the game needs, so we don't build Python ourselves. A
+commented-out `Python` module remains in the manifest in case we ever
+need to target an older runtime.
+
+The manifest builds three modules in order:
+
+1. **`python-build-env`** stages `uv` and the build's Python wheels under
+   `/app/share/python-build-env`.
+2. **`rsync`** builds rsync from a pinned source archive, since the SDK
+   doesn't include it and our build tooling needs it.
+3. **`bombsquad`** runs `make env-clean` then `make cmake-build`
+   to compile the game, and installs the staged build into
+   `/app/bin/bombsquad` along with the launcher script, desktop file,
+   metainfo, releases file, and icon.
+
+The build modules (`uv`, the wheels and `rsync`) are cleaned out of the
+finished app.
+
+### No network during the build
+
+Flathub builds have no network access, and the `bombsquad` module doesn't
+request it either, so local and CI builds hit the same limits Flathub
+does. (The app itself still gets network at runtime through `finish-args`,
+for multiplayer.) Several steps of `make cmake-build` normally download
+things, so `make flatpak-prereqs` fetches them on the host first and they
+travel into the sandbox with the sources:
+
+- the cmake assets, including the asset bundle that is assembled by
+  calling the bacloud server;
+- `.cache/efrocache`, since if it's missing the asset build downloads a
+  starter archive;
+- `build/prefab/lib/linux_<arch>_gui/release/libballisticaplus.a`, the
+  prebuilt library the binary links against, for each arch in
+  `FLATPAK_ARCHES` (default: the host's).
+
+Inside the sandbox those make targets then find their outputs already in
+place and up to date, so nothing is downloaded. That relies on file
+modification times surviving the copy into the sandbox. If you add a build
+step that downloads something, add it to `flatpak-prereqs` too, or the
+flatpak build will fail.
+
+### The Python venv
+
+The build tooling (`pcommand` and friends) runs out of the project venv
+(`.venv`). A venv can't be copied into the sandbox from the host, because
+its `bin/python` symlink, its `pyvenv.cfg` `home` key, and every script
+shebang hold the absolute path of the interpreter that created it. So the
+host's `.venv` is excluded from the sources, and `make env` creates a
+fresh venv inside the sandbox against the runtime's `python3.14`.
+
+Flathub builds have no network access, so the venv gets installed from
+vendored wheels:
+
+- `pconfig/requirements_build.txt` lists the root packages the *build*
+  needs. These are a small subset of the full dev requirements, which also
+  pull in linters, type checkers, test tooling, and so on.
+- `make flatpak-build-env` (see `tools/batools/flatpakbuildenv.py`)
+  expands those roots through the main `pconfig/requirements_lock.txt` and
+  writes two outputs:
+  - `pconfig/requirements_build_lock.txt`, the reduced lockfile. Versions
+    and hashes are copied verbatim from the main lockfile, which stays the
+    only place anything is pinned.
+  - `pconfig/flatpak/python-build-env.yml`, which has a pinned `uv`
+    release plus a hash-verified wheel per package for each arch
+    (`x86_64`, `aarch64`).
+- The `bombsquad` module sets `VENV_LOCK`, `UV_OFFLINE=1`,
+  `UV_FIND_LINKS` and `UV_PYTHON_DOWNLOADS=never`, so `make env` installs
+  the reduced lockfile from the staged wheels and never touches the
+  network.
+
+Both generated files are committed. **Re-run `make flatpak-build-env` and
+commit the result** whenever `pconfig/requirements.txt`, the main lockfile,
+or `pconfig/requirements_build.txt` changes. If a flatpak build fails on a
+missing import, add that package to `requirements_build.txt` and
+regenerate. To bump `uv`, update `UV_VERSION` and `UV_SHA256` in
+`flatpakbuildenv.py` and regenerate.
+
+Note that a venv built from the reduced lockfile has no dev tooling, so
+`make check` / `make test` won't run against it.
+
+## Building locally
+
+Install `flatpak` and `flatpak-builder`, then from the project root:
+
+```sh
+make flatpak-linux
+```
+
+This first runs `make flatpak-prereqs` (see above), which needs the host
+venv and network access. It then adds the `flathub` remote for your user if it's missing, and runs
+`flatpak-builder --user --install-deps-from=flathub` against
+`net.froemling.bombsquad.yml`. That step installs or updates the SDK,
+runtime and extensions the manifest names, so their versions live only in
+the manifest. State, the build dir and the repo live under
+`.cache/flatpak/`. The target then exports a bundle to
+`build/flatpak/bombsquad.flatpak`. Install and run the bundle with:
+
+```sh
+flatpak install --user build/flatpak/bombsquad.flatpak
+flatpak run net.froemling.bombsquad
+```
+
+`make flatpak-clean` removes `build/flatpak`, `build/flathub` and
+`.cache/flatpak`.
+
+## CI builds
+
+- **Nightly** (`.github/workflows/nightly.yml`, job
+  `make_flatpak_gui_debug`) runs `make flatpak-linux` on x86_64 and arm64
+  runners and uploads the bundles as workflow artifacts. The per-user
+  flatpak installation and flatpak-builder's state are cached between runs,
+  keyed on the manifest and `python-build-env.yml`.
+- **Release** (`.github/workflows/release.yml`, job
+  `release_flatpak_gui_debug`) does the same on every `v*` tag and attaches
+  `bombsquad_x86_64.flatpak` / `bombsquad_arm64.flatpak` to the GitHub
+  release.
+
+## Publishing to Flathub
+
+Flathub builds every app from its own manifest repo, on Flathub's
+infrastructure, with no network access during the build. So we hand it a
+source tarball that already holds everything `make flatpak-prereqs`
+fetches, for every arch Flathub builds. Two jobs in `.github/workflows/release.yml` handle this.
+They only run when the repo owner is `efroemling` or `Loup-Garou911XD`.
+
+```
+git tag v1.x.y ─► release.yml
+                   │
+                   ├─ release_bombsquad_build_env
+                   │    make flatpak-prereqs FLATPAK_ARCHES="x86_64 arm64"
+                   │    tar the tree (minus .venv, .git, .idea) ─► bombsquad_build_env.tar
+                   │    attach it to the GitHub release
+                   │
+                   └─ release_generate_flathub_manifest   (needs the job above)
+                        clone <owner>/flathub, branch net.froemling.bombsquad, into build/flathub
+                        make flatpak-generate-flathub-manifest
+                        commit + push to <owner>/flathub (net.froemling.bombsquad branch)
+```
+
+`make flatpak-generate-flathub-manifest` runs `pcommand
+generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
+
+1. Copies `metainfo.xml`, `.desktop`, `releases.xml` and
+   `python-build-env.yml` from this directory into `build/flathub/`.
+2. Queries the GitHub API for the **latest** release of the repo
+   (`GITHUB_REPOSITORY`, or else derived from `git remote.origin.url`),
+   and finds the `bombsquad_build_env.tar` asset, its SHA256 digest, the
+   version (the tag minus the `v`), and the publish date.
+3. Reads `net.froemling.bombsquad.yml`, replaces its one `type: dir`
+   source (and the comment above it) with an `archive` source pointing at
+   that tarball and checksum, and writes the result to
+   `build/flathub/net.froemling.bombsquad.yml`. It fails if it doesn't find
+   exactly one dir source.
+4. Prepends a `<release>` entry to `build/flathub/...releases.xml`, built
+   from that version's `CHANGELOG.md` entries, with links to the GitHub
+   release, the source archive and the build-env tarball. If that version
+   is already listed, nothing is added.
+
+The push uses the `FLATHUB_PUSH_PAT` repository secret, a token with
+push access to the `<owner>/flathub` repo.
+
+From there the update goes to Flathub through the usual Flathub flow,
+which is outside this repo: a pull request from that branch into the
+app's Flathub repository. Once it's merged, Flathub's buildbot builds the
+manifest and publishes the new version.
+
+### Release checklist
+
+- If you change what the build needs from the source tree, keep the dir
+  source's `skip:` list in the manifest and the tar excludes in
+  `release.yml` in step, since they decide what CI and Flathub each see.
+- Keep `python-build-env.yml` current with `make flatpak-build-env`,
+  because the Flathub build uses the committed copy.
+- Changes to `metainfo.xml` or the `.desktop` file reach Flathub on the
+  next release. You can validate them with
+  `flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream net.froemling.bombsquad.metainfo.xml`.
+- The generator always uses the *latest* GitHub release, so it has to run
+  after the release (and its `bombsquad_build_env.tar`) has been
+  published.

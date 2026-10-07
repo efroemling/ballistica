@@ -37,6 +37,7 @@ import os
 import re
 import json
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -60,17 +61,14 @@ UV_SHA256 = {
         '6524bd338177ed50d035d39354e12545e993bbeba2ecbddf0480c5b3a81d313f'
     ),
 }
-UV_TARGET = {
-    'x86_64': 'x86_64-unknown-linux-gnu',
-    'aarch64': 'aarch64-unknown-linux-gnu',
-}
 
-# Flatpak arch names mapped to the substring that identifies a wheel
-# built for them. Linux-only; the flatpak build targets nothing else.
-WHEEL_ARCHES = {'x86_64': 'x86_64', 'aarch64': 'aarch64'}
+# Flatpak arch names we build for. Each also names the uv release target
+# ('<arch>-unknown-linux-gnu') and is the substring identifying a wheel
+# built for it. Linux-only; the flatpak build targets nothing else.
+ARCHES = ('x86_64', 'aarch64')
 
 # Where the generated module stages its payload, relative to
-# FLATPAK_DEST (/app). The manifests name the absolute form in
+# FLATPAK_DEST (/app). The manifest names the absolute form in
 # UV_FIND_LINKS. Both uv and the wheels are cleaned out of the finished
 # app; they exist only for the duration of the build.
 STAGE_SUBDIR = 'share/python-build-env'
@@ -249,8 +247,8 @@ def _wheel_rank(pypi_file: dict[str, Any]) -> tuple[int, tuple[int, int], int]:
 
 def _cpython_tag_version(tag: str) -> int | None:
     """Return 314 for 'cp314', None for anything that isn't a cpython tag."""
-    match = re.fullmatch(r'cp(\d)(\d+)', tag)
-    return int(match.group(1) + match.group(2)) if match else None
+    match = re.fullmatch(r'cp(\d+)', tag)
+    return int(match.group(1)) if match else None
 
 
 def _is_usable_wheel(filename: str) -> bool:
@@ -313,16 +311,16 @@ def select_distributions(
         return [(None, min(universal, key=_wheel_rank))]
 
     out: list[tuple[str | None, dict[str, Any]]] = []
-    for arch, tag in WHEEL_ARCHES.items():
+    for arch in ARCHES:
         matches = [
             f
             for f in wheels
-            if 'manylinux' in f['filename'] and tag in f['filename']
+            if 'manylinux' in f['filename'] and arch in f['filename']
         ]
         if matches:
             out.append((arch, min(matches, key=_wheel_rank)))
     if out:
-        if len(out) != len(WHEEL_ARCHES):
+        if len(out) != len(ARCHES):
             got = ', '.join(a for a, _ in out if a is not None)
             raise CleanError(
                 f'{pkg.name}=={pkg.version} has manylinux wheels for'
@@ -379,18 +377,22 @@ def write_flatpak_module(
         'sources:',
     ]
 
-    for arch, target in UV_TARGET.items():
+    for arch in ARCHES:
         lines += [
             '  - type: archive',
             f'    only-arches: [{arch}]',
             '    url: https://github.com/astral-sh/uv/releases/download/'
-            f'{UV_VERSION}/uv-{target}.tar.gz',
+            f'{UV_VERSION}/uv-{arch}-unknown-linux-gnu.tar.gz',
             f'    sha256: {UV_SHA256[arch]}',
         ]
 
-    for pkg in subset:
+    # One PyPI request per package; run them concurrently.
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        selections = list(executor.map(select_distributions, subset))
+
+    for pkg, selection in zip(subset, selections, strict=True):
         print(f'  {Clr.BLU}{pkg.name}=={pkg.version}{Clr.RST}', flush=True)
-        for wheel_arch, pypi_file in select_distributions(pkg):
+        for wheel_arch, pypi_file in selection:
             lines.append('  - type: file')
             if wheel_arch is not None:
                 lines.append(f'    only-arches: [{wheel_arch}]')
@@ -408,15 +410,18 @@ def write_flatpak_module(
 
 def generate(projroot: str) -> None:
     """Regenerate the build subset lockfile and the flatpak module."""
+    # Project-relative, since these names also land in the generated
+    # files' header comments.
     lock_path = os.path.join('pconfig', 'requirements_lock.txt')
     roots_path = os.path.join('pconfig', 'requirements_build.txt')
     subset_path = os.path.join('pconfig', 'requirements_build_lock.txt')
     module_path = os.path.join('pconfig', 'flatpak', 'python-build-env.yml')
 
-    os.chdir(projroot)
+    def _abs(path: str) -> str:
+        return os.path.join(projroot, path)
 
-    packages = parse_lockfile(lock_path)
-    subset = resolve_subset(packages, read_roots(roots_path))
+    packages = parse_lockfile(_abs(lock_path))
+    subset = resolve_subset(packages, read_roots(_abs(roots_path)))
 
     print(
         f'{Clr.BLD}Resolving {len(subset)} build packages'
@@ -424,8 +429,8 @@ def generate(projroot: str) -> None:
         flush=True,
     )
 
-    write_subset_lockfile(subset_path, subset, roots_path, lock_path)
-    write_flatpak_module(module_path, subset, subset_path)
+    write_subset_lockfile(_abs(subset_path), subset, roots_path, lock_path)
+    write_flatpak_module(_abs(module_path), subset, subset_path)
 
     print(
         f'{Clr.GRN}Wrote {subset_path} and {module_path}.{Clr.RST}',

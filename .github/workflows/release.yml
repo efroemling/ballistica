@@ -453,9 +453,9 @@ jobs:
           path: |
             ~/.local/share/flatpak
             .cache/flatpak/flatpak-builder
-            .cache/flatpak/build_dir
             .cache/flatpak/repo
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}
+            !.cache/flatpak/flatpak-builder/build
+          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml', 'pconfig/flatpak/python-build-env.yml') }}
           restore-keys: |
             ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
       - name: Install dependencies
@@ -468,14 +468,10 @@ jobs:
       #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       #   with:
       #     bundle: bombsquad.flatpak
-      #     manifest-path: pconfig/flatpak/net.froemling.BombSquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
+      #     manifest-path: pconfig/flatpak/net.froemling.bombsquad.yml
+      #     cache-key: flatpak-builder-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml') }}-${{ github.sha }}
       - name: Make the build
         run: |
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y flathub org.freedesktop.Sdk//26.08
-          sudo flatpak install -y flathub org.freedesktop.Platform//26.08
-          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm22//26.08
           make flatpak-linux
           mv build/flatpak/bombsquad.flatpak bombsquad_${{ matrix.arch }}.flatpak
       - name: Upload the build
@@ -498,19 +494,22 @@ jobs:
       - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-        with:
-          using-cmake: true
       - name: Make the build
+        # Everything the network-less Flathub build needs, for every
+        # arch Flathub builds; see flatpak-prereqs in the Makefile.
         run: |
-          make assets
+          make flatpak-prereqs FLATPAK_ARCHES="x86_64 arm64"
       - name: Compress the build
         # .venv is deliberately left out: a venv is bound to the
         # absolute path of the interpreter that created it, so the
         # flatpak build creates its own inside the sandbox (see
-        # pconfig/flatpak/python-build-env.yml).
+        # pconfig/flatpak/python-build-env.yml). .git and .idea are
+        # never read by the build. Keep this in sync with the dir
+        # source's skip list in pconfig/flatpak/net.froemling.bombsquad.yml.
         run: >
           tar -cf "bombsquad_build_env.tar"
-          --exclude="bombsquad_build_env.tar" --exclude="./.venv" .
+          --exclude="bombsquad_build_env.tar" --exclude="./.venv"
+          --exclude="./.git" --exclude="./.idea" .
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:

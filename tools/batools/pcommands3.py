@@ -101,15 +101,18 @@ def generate_flatpak_build_env() -> None:
 
 # pylint: disable=too-many-locals,too-many-statements
 def generate_flathub_manifest() -> None:
-    """Generate a Flathub manifest for Ballistica and push to submodule.
+    """Generate a Flathub manifest for Ballistica into build/flathub.
     This function is intended to be run within a GitHub Actions workflow.
 
     This function:
-    1. Copies files from pconfig/flatpak/ to pconfig/flatpak/flathub
-    2. Generates the manifest from template using latest GitHub release info
+    1. Copies the files the manifest needs from pconfig/flatpak/
+    2. Writes pconfig/flatpak/net.froemling.bombsquad.yml with its
+       project-dir source swapped for the latest GitHub release's
+       build-env tarball
     """
     import json
     import os
+    import re
     import shutil
     import urllib.request
     import subprocess
@@ -147,21 +150,17 @@ def generate_flathub_manifest() -> None:
     # Paths
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'pconfig', 'flatpak')
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
-    template_path = os.path.join(
-        flatpak_src_dir, 'net.froemling.bombsquad.yml.template'
-    )
+    manifest_name = 'net.froemling.bombsquad.yml'
     os.makedirs(flathub_dir, exist_ok=True)
-    manifest_path = os.path.join(flathub_dir, 'net.froemling.bombsquad.yml')
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
-    # Step 1: Copy files from pconfig/flatpak/ to pconfig/flatpak/flathub
+    # Step 1: Copy files from pconfig/flatpak/ to build/flathub
     print(
         f'{Clr.BLD}Copying files from {flatpak_src_dir} to '
         f'{flathub_dir}...{Clr.RST}'
     )
 
-    # List of files to copy (skip the flathub directory itself)
     files_to_copy = [
         'net.froemling.bombsquad.metainfo.xml',
         'net.froemling.bombsquad.desktop',
@@ -173,12 +172,10 @@ def generate_flathub_manifest() -> None:
 
     for filename in files_to_copy:
         src = os.path.join(flatpak_src_dir, filename)
-        dst = os.path.join(flathub_dir, filename)
-        if os.path.exists(src):
-            shutil.copy2(src, dst)
-            print(f'  Copied {filename}')
-        else:
-            print(f'  Warning: {filename} not found at {src}')
+        if not os.path.exists(src):
+            raise CleanError(f'{filename} not found at {src}.')
+        shutil.copy2(src, os.path.join(flathub_dir, filename))
+        print(f'  Copied {filename}')
 
     # Step 2: Get latest release information from GitHub
     print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
@@ -232,28 +229,41 @@ def generate_flathub_manifest() -> None:
     except Exception as e:
         raise CleanError(f'Failed to fetch release info: {e}') from e
 
-    print(f'{Clr.BLD}Generating manifest from template...{Clr.RST}')
+    print(f'{Clr.BLD}Generating manifest...{Clr.RST}')
 
-    with open(template_path, 'r', encoding='utf-8') as infile:
-        template = infile.read()
+    with open(
+        os.path.join(flatpak_src_dir, manifest_name), encoding='utf-8'
+    ) as infile:
+        manifest = infile.read()
 
-    def _remove_comments_from_xml_template(content: str) -> str:
-        import re
+    # Swap the project-dir source (and the comment lines leading into
+    # it) for the release tarball, which carries prebuilt assets that a
+    # network-less Flathub build could not produce itself.
+    def _archive_source(match: re.Match[str]) -> str:
+        indent = match['indent']
+        return (
+            f'{indent}- type: archive\n'
+            f'{indent}  url: {asset_url}\n'
+            f'{indent}  sha256: {checksum}\n'
+            f'{indent}  strip-components: 0\n'
+        )
 
-        # Pattern matches lines that start with optional spaces/tabs then '#'
-        # This removes the entire line including the newline
-        pattern = r'^\s*#.*$\n?'
-        result = re.sub(pattern, '', content, flags=re.MULTILINE)
+    manifest, count = re.subn(
+        r'^(?P<indent> *)(?:#.*\n(?P=indent))*- type: dir\n'
+        r'(?:(?P=indent) {2}.*\n)*',
+        _archive_source,
+        manifest,
+        flags=re.MULTILINE,
+    )
+    if count != 1:
+        raise CleanError(
+            f'Expected exactly one dir source in {manifest_name};'
+            f' found {count}.'
+        )
 
-        return result
-
-    template = _remove_comments_from_xml_template(template)
-    # Replace placeholders
-    manifest_content = template.replace('{ ARCHIVE_URL }', asset_url)
-    manifest_content = manifest_content.replace('{ SHA256_CHECKSUM }', checksum)
-
+    manifest_path = os.path.join(flathub_dir, manifest_name)
     with open(manifest_path, 'w', encoding='utf-8') as outfile:
-        outfile.write(manifest_content)
+        outfile.write(manifest)
 
     print(f'  Generated manifest at {manifest_path}')
 
@@ -347,7 +357,7 @@ def generate_flatpak_release_manifest(
         f'https://github.com/{github_repo}/releases/tag/v{version}'
     )
 
-    # Add artifacts section with binary information
+    # Add artifacts section
     artifacts = ET.SubElement(new_release, 'artifacts')
 
     # Add source artifact
@@ -359,17 +369,18 @@ def generate_flatpak_release_manifest(
         f'https://github.com/{github_repo}/archive/refs/tags/v{version}.tar.gz'
     )
 
-    # Add binary artifact for linux
-    binary_artifact = ET.SubElement(artifacts, 'artifact')
-    binary_artifact.set('type', 'source')
-    binary_artifact.set('platform', 'x86_64-linux-gnu')
+    # Add the build-env tarball the Flathub manifest builds from. It is
+    # source plus prebuilt assets and serves every arch, so it is a
+    # source artifact with no platform.
+    build_env_artifact = ET.SubElement(artifacts, 'artifact')
+    build_env_artifact.set('type', 'source')
 
-    binary_location = ET.SubElement(binary_artifact, 'location')
-    binary_location.text = asset_url
+    build_env_location = ET.SubElement(build_env_artifact, 'location')
+    build_env_location.text = asset_url
 
-    binary_checksum = ET.SubElement(binary_artifact, 'checksum')
-    binary_checksum.set('type', 'sha256')
-    binary_checksum.text = checksum
+    build_env_checksum = ET.SubElement(build_env_artifact, 'checksum')
+    build_env_checksum.set('type', 'sha256')
+    build_env_checksum.text = checksum
 
     # Insert the new release at the beginning (after the root element)
     root.insert(0, new_release)
