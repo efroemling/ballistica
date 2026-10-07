@@ -99,7 +99,6 @@ def generate_flatpak_build_env() -> None:
     batools.flatpakbuildenv.generate(str(pcommand.PROJROOT))
 
 
-# pylint: disable=too-many-locals
 def _github_repo() -> str:
     """Return 'owner/repo' from GITHUB_REPOSITORY or the git remote."""
     import os
@@ -141,13 +140,15 @@ def generate_flathub_manifest() -> None:
 
     This function:
 
-    1. Copies the manifest's python-build-env module to build/flathub
-       and removes files that belong upstream (desktop file, metainfo,
-       releases.xml; Flathub wants those from the app's own sources)
-    2. Writes pconfig/flatpak/net.froemling.bombsquad.yml with its
-       project-dir source swapped for git at the latest GitHub
-       release's tag, plus that release's prebuilt-inputs archive
+    1. Copies the manifest and its python-build-env module to
+       build/flathub and removes files that belong upstream (desktop
+       file, metainfo, releases.xml; Flathub wants those from the app's
+       own sources)
+    2. Writes build/flathub/bombsquad-sources.yml, the manifest's
+       project source: git at the latest GitHub release's tag, plus
+       that release's prebuilt-inputs archive
     """
+    # pylint: disable=too-many-locals
     import json
     import os
     import shutil
@@ -156,15 +157,14 @@ def generate_flathub_manifest() -> None:
 
     from efro.error import CleanError
     from efro.terminal import Clr
+    from efrotools.util import writefile
 
     github_repo = _github_repo()
 
     # Paths
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'pconfig', 'flatpak')
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
-    manifest_name = 'net.froemling.bombsquad.yml'
     os.makedirs(flathub_dir, exist_ok=True)
-    manifest_path = os.path.join(flathub_dir, manifest_name)
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
@@ -182,13 +182,14 @@ def generate_flathub_manifest() -> None:
             os.remove(stale)
             print(f'  Removed {filename} (now from the app sources)')
 
-    # Referenced by the manifest as a module; without it the flathub
-    # build has no uv and no wheels to install from.
-    shutil.copy2(
-        os.path.join(flatpak_src_dir, 'python-build-env.yml'),
-        os.path.join(flathub_dir, 'python-build-env.yml'),
-    )
-    print('  Copied python-build-env.yml')
+    # The manifest goes as-is, along with the module file it includes;
+    # only its included sources file (step 2) differs from ours.
+    for filename in ['net.froemling.bombsquad.yml', 'python-build-env.yml']:
+        shutil.copy2(
+            os.path.join(flatpak_src_dir, filename),
+            os.path.join(flathub_dir, filename),
+        )
+        print(f'  Copied {filename}')
 
     # Step 2: Get latest release information from GitHub
     print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
@@ -253,27 +254,19 @@ def generate_flathub_manifest() -> None:
             ) from e
     print(f'  Release commit: {commit}')
 
-    print(f'{Clr.BLD}Generating manifest...{Clr.RST}')
-
-    with open(
-        os.path.join(flatpak_src_dir, manifest_name), encoding='utf-8'
-    ) as infile:
-        manifest = infile.read()
-
-    manifest = _flathub_manifest_sources(
-        manifest,
-        git_source=[
-            f'url: https://github.com/{github_repo}.git',
-            f'tag: {tag}',
-            f'commit: {commit}',
-        ],
-        archive_source=[f'url: {asset_url}', f'sha256: {checksum}'],
+    sources_path = os.path.join(flathub_dir, 'bombsquad-sources.yml')
+    writefile(
+        sources_path,
+        _flathub_sources(
+            git_source=[
+                f'url: https://github.com/{github_repo}.git',
+                f'tag: {tag}',
+                f'commit: {commit}',
+            ],
+            archive_source=[f'url: {asset_url}', f'sha256: {checksum}'],
+        ),
     )
-
-    with open(manifest_path, 'w', encoding='utf-8') as outfile:
-        outfile.write(manifest)
-
-    print(f'  Generated manifest at {manifest_path}')
+    print(f'  Wrote {sources_path}')
 
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
 
@@ -284,9 +277,9 @@ def flatpak_prebuilt_inputs() -> None:
     Writes build/flatpak/bombsquad_prebuilt_inputs.tar.xz: what
     `make flatpak-prefetch` fetched (built assets, resources, the
     prebuilt plus lib for each arch, the gui asset bundle and the
-    content-store blobs it references) plus releases.xml, which the
-    release workflow adds this release's entry to. Flathub builds take
-    the code from git and extract this over it.
+    content-store blobs it references, the app icon) plus releases.xml,
+    which the release workflow adds this release's entry to. Flathub
+    builds take the code from git and extract this over it.
 
     The archive also carries a list of its own files,
     .flatpak-prebuilt-inputs, which the manifest uses to mark exactly
@@ -311,6 +304,7 @@ def flatpak_prebuilt_inputs() -> None:
         'ballisticakit-windows/Generic/BallisticaKit.ico',
         os.path.dirname(bundle_manifest),
         'pconfig/flatpak/net.froemling.bombsquad.releases.xml',
+        'pconfig/flatpak/net.froemling.bombsquad.png',
     ]
     # Staging copies the bundle's blobs out of the local content store;
     # take only those, not the whole (much larger) store.
@@ -349,46 +343,23 @@ def flatpak_prebuilt_inputs() -> None:
     print(f'{Clr.GRN}Wrote {outpath} ({len(packed)} files).{Clr.RST}')
 
 
-def _flathub_manifest_sources(
-    manifest: str, git_source: list[str], archive_source: list[str]
-) -> str:
-    """Swap the manifest's project-dir source for Flathub's sources.
+def _flathub_sources(git_source: list[str], archive_source: list[str]) -> str:
+    """Return the Flathub copy of pconfig/flatpak/bombsquad-sources.yml.
 
-    The local manifest builds straight from the working tree (one
-    `type: dir` source). Flathub instead gets the code from git, and the
-    parts of the tree that aren't in git (what `make flatpak-prefetch`
-    fetches, plus the release's releases.xml entry) from the release's
-    prebuilt-inputs archive, extracted over the checkout.
+    The local copy builds straight from the working tree. Flathub
+    instead gets the code from git, and the parts of the tree that
+    aren't in git (what `make flatpak-prefetch` fetches, plus the
+    release's releases.xml entry) from the release's prebuilt-inputs
+    archive, extracted over the checkout.
 
     `git_source` and `archive_source` are the key lines for each source
     (e.g. 'url: ...', 'commit: ...'), without their type line.
     """
-    import re
-
-    from efro.error import CleanError
-
-    def _sources(match: re.Match[str]) -> str:
-        indent = match['indent']
-        lines = [f'{indent}- type: git']
-        lines += [f'{indent}  {line}' for line in git_source]
-        lines += [f'{indent}- type: archive']
-        lines += [f'{indent}  {line}' for line in archive_source]
-        lines += [f'{indent}  strip-components: 0']
-        return '\n'.join(lines) + '\n'
-
-    # Matches the dir source plus the comment lines leading into it.
-    manifest, count = re.subn(
-        r'^(?P<indent> *)(?:#.*\n(?P=indent))*- type: dir\n'
-        r'(?:(?P=indent) {2}.*\n)*',
-        _sources,
-        manifest,
-        flags=re.MULTILINE,
-    )
-    if count != 1:
-        raise CleanError(
-            f'Expected exactly one dir source in the manifest; found {count}.'
-        )
-    return manifest
+    lines = ['# Generated by generate_flathub_manifest; do not edit.']
+    lines += ['- type: git'] + [f'  {line}' for line in git_source]
+    lines += ['- type: archive'] + [f'  {line}' for line in archive_source]
+    lines += ['  strip-components: 0']
+    return '\n'.join(lines) + '\n'
 
 
 def flatpak_add_release() -> None:
@@ -402,6 +373,7 @@ def flatpak_add_release() -> None:
     committing the entry ahead of time works too (an existing version
     is left alone). The date defaults to today (UTC).
     """
+    # pylint: disable=too-many-locals
     import os
     import datetime
     from xml.etree import ElementTree as ET

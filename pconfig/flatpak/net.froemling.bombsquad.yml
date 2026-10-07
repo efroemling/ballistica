@@ -142,32 +142,6 @@ modules:
       - install -Dm644 pconfig/flatpak/${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
     sources:
-      # Flathub builds swap this dir source for git at the release tag
-      # plus the release's bombsquad_prebuilt_inputs.tar (see
-      # `make flatpak-prebuilt-inputs` and generate_flathub_manifest in
-      # tools/batools/pcommands3.py).
-      - type: dir
-        path: ./../../
-        skip:
-          # Host-built state the sandbox rebuilds for itself anyway (the
-          # venv is bound to the host's interpreter path, the cmake trees
-          # to host paths); copying it in is just wasted I/O and churns
-          # flatpak-builder's cache for this module.
-          - .venv
-          - build/cmake
-          - build/spinofftest
-          - build/dummymodules
-          # Never read by the build.
-          - .git
-          - .idea
-          # flatpak-builder's own scratch space, which lives inside the
-          # project; copying it into the build would be circular.
-          - .cache/flatpak
-          - build/flatpak
-
-      # The icon isn't in git, so fetch it into place.
-      - type: file
-        dest: pconfig/flatpak
-        dest-filename: net.froemling.bombsquad.png
-        url: https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
-        sha256: c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a
+      # The project itself: this working tree locally, git plus the
+      # prebuilt-inputs archive on Flathub (see that file).
+      - bombsquad-sources.yml

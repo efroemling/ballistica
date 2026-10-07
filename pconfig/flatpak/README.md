@@ -17,7 +17,8 @@ There is one manifest, `net.froemling.bombsquad.yml`, used two ways:
 
 | File | Purpose |
 | --- | --- |
-| `net.froemling.bombsquad.yml` | The manifest. Its `bombsquad` module uses the project directory itself (`type: dir`) as its source; the Flathub generator replaces that one source with a git source plus the release's prebuilt-inputs archive. |
+| `net.froemling.bombsquad.yml` | The manifest. Its `bombsquad` module includes its project source from `bombsquad-sources.yml`. |
+| `bombsquad-sources.yml` | The `bombsquad` module's project source: the project directory itself (`type: dir`). The Flathub generator writes its own copy of this file with a git source plus the release's prebuilt-inputs archive instead. |
 | `python-build-env.yml` | Generated module supplying `uv` plus one wheel per package in `pconfig/requirements_build_lock.txt`, so the build can create its venv offline. Do not edit by hand. |
 | `net.froemling.bombsquad.metainfo.xml` | AppStream metadata (description, screenshots, content rating, branding) shown on Flathub and in software centers. |
 | `net.froemling.bombsquad.releases.xml` | AppStream release history, installed alongside the metainfo. The release workflow adds each new version's entry (see below). |
@@ -67,7 +68,10 @@ travel into the sandbox with the sources:
 - the built resources;
 - `build/prefab/lib/linux_<arch>_gui/release/libballisticaplus.a`, the
   prebuilt library the binary links against, for both `x86_64` and
-  `arm64`.
+  `arm64`;
+- the app icon, `pconfig/flatpak/net.froemling.bombsquad.png`, fetched
+  from files.ballistica.net and checked against a pinned sha256 (it isn't
+  in git).
 
 Inside the sandbox those make targets then find their outputs already in
 place and up to date, so nothing is downloaded. Two build steps make
@@ -186,14 +190,12 @@ infrastructure, with no network access during the build. Flathub also
 wants everything the build installs to come from the app's own sources,
 not from files in the Flathub repo. So the Flathub manifest takes the code
 from git, pinned to the release tag and its commit, and the few things git
-doesn't have from a release asset:
-
-- `bombsquad_prebuilt_inputs.tar.xz` (about 4MB), written by `make
-  flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
-  what `make flatpak-prefetch` fetches (see above) plus `releases.xml`
-  with this release's entry, and is extracted over the git checkout.
-- The icon is a separate declared `file` source, fetched from
-  files.ballistica.net with a pinned checksum.
+doesn't have from one release asset,
+`bombsquad_prebuilt_inputs.tar.xz` (about 4MB), written by `make
+flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
+what `make flatpak-prefetch` fetches (see above), icon included, plus
+`releases.xml` with this release's entry, and is extracted over the git
+checkout.
 
 Two jobs in `.github/workflows/release.yml` handle this. They only run
 when the repo owner is `efroemling` or `Loup-Garou911XD`.
@@ -221,18 +223,17 @@ you can also commit the entry ahead of time.
 `make flatpak-generate-flathub-manifest` runs `pcommand
 generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
 
-1. Copies `python-build-env.yml`, which the manifest includes as a module,
-   into `build/flathub/`, and deletes any metainfo, desktop or releases
-   files an older version of this step left there.
+1. Copies the manifest, unchanged, and `python-build-env.yml`, which it
+   includes as a module, into `build/flathub/`, and deletes any
+   metainfo, desktop or releases files an older version of this step
+   left there.
 2. Queries the GitHub API for the **latest** release of the repo
    (`GITHUB_REPOSITORY`, or else derived from `git remote.origin.url`),
    and finds its tag, the commit that tag points at, and the
    `bombsquad_prebuilt_inputs.tar.xz` asset and its SHA256 digest.
-3. Reads `net.froemling.bombsquad.yml`, replaces its one `type: dir`
-   source (and the comment above it) with a `git` source (url, tag and
-   commit) followed by an `archive` source for the prebuilt inputs, and
-   writes the result to `build/flathub/net.froemling.bombsquad.yml`. It
-   fails if it doesn't find exactly one dir source.
+3. Writes `build/flathub/bombsquad-sources.yml`, the Flathub copy of the
+   manifest's included project source: a `git` source (url, tag and
+   commit) followed by an `archive` source for the prebuilt inputs.
 
 The push uses the `FLATHUB_PUSH_PAT` repository secret, a token with
 push access to the `<owner>/flathub` repo.

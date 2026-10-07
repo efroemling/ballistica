@@ -468,13 +468,6 @@ jobs:
             https://flathub.org/repo/flathub.flatpakrepo
           make flatpak-deps
 
-      # This works but its nice to have precise control over the cache
-      # - name: Build Flatpak
-      #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-      #   with:
-      #     bundle: bombsquad.flatpak
-      #     manifest-path: pconfig/flatpak/net.froemling.bombsquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml') }}-${{ github.sha }}
       - name: Make the build
         run: |
           make flatpak-linux

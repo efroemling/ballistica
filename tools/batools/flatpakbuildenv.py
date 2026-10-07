@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools.util import writefile
+from efrotools.util import readfile, writefile
 
 if TYPE_CHECKING:
     from typing import Any
@@ -109,8 +109,7 @@ class LockedPackage:
 
 def parse_lockfile(path: str) -> dict[str, LockedPackage]:
     """Parse a ``uv pip compile --generate-hashes`` lockfile."""
-    with open(path, encoding='utf-8') as infile:
-        text = infile.read()
+    text = readfile(path)
 
     out: dict[str, LockedPackage] = {}
     for match in _LOCK_ENTRY.finditer(text):
@@ -146,12 +145,11 @@ def parse_lockfile(path: str) -> dict[str, LockedPackage]:
 
 def read_roots(path: str) -> list[str]:
     """Read the list of root package names for the build subset."""
-    roots: list[str] = []
-    with open(path, encoding='utf-8') as infile:
-        for line in infile:
-            line = line.split('#', 1)[0].strip()
-            if line:
-                roots.append(line)
+    roots = [
+        name
+        for line in readfile(path).splitlines()
+        if (name := line.split('#', 1)[0].strip())
+    ]
     if not roots:
         raise CleanError(f"No package names found in '{path}'.")
     return roots
@@ -341,13 +339,8 @@ def _write_if_changed(path: str, text: str) -> None:
     The build lockfile is a make prerequisite of the venv (VENV_LOCK),
     so a no-op regeneration must not bump its mtime.
     """
-    try:
-        with open(path, encoding='utf-8') as infile:
-            if infile.read() == text:
-                return
-    except FileNotFoundError:
-        pass
-    writefile(path, text)
+    if not os.path.exists(path) or readfile(path) != text:
+        writefile(path, text)
 
 
 def write_subset_lockfile(

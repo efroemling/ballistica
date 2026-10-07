@@ -1526,13 +1526,24 @@ docker-clean:
 ################################################################################
 
 # Everything a flatpak build would otherwise download mid-build: built
-# assets, resources, and the prefab plus lib for each flatpak arch. The
-# build sandbox has no network (Flathub forbids it), so these have to be
-# in the tree it is handed: the local tree for flatpak-linux, or the
-# release's prebuilt-inputs archive (below) for Flathub.
-flatpak-prefetch: assets-cmake resources \
+# assets, resources, the prefab plus lib for each flatpak arch, and the
+# app icon. The build sandbox has no network (Flathub forbids it), so
+# these have to be in the tree it is handed: the local tree for
+# flatpak-linux, or the release's prebuilt-inputs archive (below) for
+# Flathub.
+FLATPAK_ICON = pconfig/flatpak/net.froemling.bombsquad.png
+
+flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) \
  build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
  build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+# The app icon isn't in git; fetch it, checksum-verified.
+$(FLATPAK_ICON):
+	curl -fsSL -o $@.tmp \
+ https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
+	echo "c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a" \
+ " $@.tmp" | sha256sum -c -
+	mv $@.tmp $@
 
 # Pack what flatpak-prefetch produced, plus this release's releases.xml
 # entry, into build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
