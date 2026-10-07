@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.261003`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.261006`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,7 +9,7 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 391
+# ba_meta require asset-package 430
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -21,8 +21,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.bacommonassets.261003
-_ASSET_PACKAGE = ApverNum(391)
+# a-0.bacommonassets.261006
+_ASSET_PACKAGE = ApverNum(430)
 
 if TYPE_CHECKING:
     from babase import LangStr

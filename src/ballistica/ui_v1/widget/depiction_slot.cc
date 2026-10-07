@@ -54,8 +54,9 @@ auto DepictionSlot::GetContentBox(float width, float height) const
   if (!depiction_.exists()) {
     return std::nullopt;
   }
-  return depiction_->GetContentBox(base::FitDepictionBox(
-      {0.0f, 0.0f, width, height}, *depiction_, h_align_, v_align_));
+  return depiction_->GetContentBox(
+      base::FitDepictionBox({0.0f, 0.0f, width, height}, *depiction_, h_align_,
+                            v_align_, suffix_.GetTrailingAspect()));
 }
 
 /// Physical pixels per unit of a widget's own space, as settled on
@@ -166,11 +167,12 @@ void DepictionSlot::Draw(const DrawArgs& args) {
     depiction_->Update(args.pass->frame_def()->display_time_millisecs());
   }
 
-  base::DepictionBox box =
-      ScaledBox(base::FitDepictionBox(
-                    {args.offset_x, args.offset_y, args.width, args.height},
-                    *depiction_, h_align_, v_align_),
-                args.scale);
+  base::DepictionBox box = ScaledBox(
+      base::FitDepictionBox(
+          {args.offset_x, args.offset_y, args.width, args.height}, *depiction_,
+          h_align_, v_align_, suffix_.GetTrailingAspect()),
+      args.scale);
+  const float* color_override = use_color_override_ ? color_override_ : nullptr;
 
   base::DepictionDrawContext context;
   context.pass = args.pass;
@@ -183,7 +185,9 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   context.mask_texture = args.mask_texture;
   std::copy(std::begin(frame_color_), std::end(frame_color_),
             context.frame_color);
+  context.color_override = color_override;
   depiction_->Draw(context);
+  suffix_.Draw(context, box, color_override);
   if (debug_ && args.transparent) {
     DrawDebugBox_(args, depiction_->GetContentBox(box));
   }

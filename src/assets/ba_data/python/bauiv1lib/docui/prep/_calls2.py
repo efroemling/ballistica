@@ -137,6 +137,11 @@ def prep_decorations(
                 tdelay,
                 out_decoration_preps,
                 highlight=highlight,
+                suffix=(
+                    None
+                    if decoration.suffix is None
+                    else _native(decoration.suffix, packages).evaluate()
+                ),
             )
         else:
             assert_never(dectypeid)

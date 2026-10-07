@@ -75,6 +75,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           glGetUniformLocation(program(), "texPremultiplied");
       assert(tex_premultiplied_location_ != -1);
     }
+    if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
+      mask_straight_location_ = glGetUniformLocation(program(), "maskStraight");
+      assert(mask_straight_location_ != -1);
+    }
     if (flags & SHD_MASKED) {
       SetTextureUnit("maskTex", kMaskTexUnit);
     }
@@ -191,6 +195,20 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (premultiplied != tex_premultiplied_) {
       tex_premultiplied_ = premultiplied;
       glUniform1f(tex_premultiplied_location_, tex_premultiplied_);
+    }
+  }
+
+  // 1.0 if this is a premult-blended draw whose mask texture is NOT
+  // premultiplied (a data-role mask, or a straight-alpha one from a mod),
+  // else 0.0. The shader then scales the mask's color contribution by the
+  // mask's alpha itself -- the factor straight blending applies for free
+  // and a premultiplied mask already has baked in.
+  void SetMaskStraight(float mask_straight) {
+    assert((flags_ & SHD_MASKED) && (flags_ & SHD_MODULATE));
+    assert(IsBound());
+    if (mask_straight != mask_straight_) {
+      mask_straight_ = mask_straight;
+      glUniform1f(mask_straight_location_, mask_straight_);
     }
   }
 
@@ -338,6 +356,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         || ((flags & SHD_MASKED) && (flags & SHD_MODULATE))) {
       s += "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
     }
+    if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
+      s += "uniform " BA_GLSL_MEDIUMP "float maskStraight;\n";
+    }
     if (flags & SHD_SHADOW) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
            BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow2;\n"
@@ -389,6 +410,15 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         if (flags & SHD_MASKED) {
           s += "   " BA_GLSL_MEDIUMP "vec4 mask = "
                      BA_GLSL_TEXTURE2D "(maskTex, vUV);";
+          if (flags & SHD_MODULATE) {
+            // A mask that is not premultiplied (a data-role mask, or a
+            // straight one from a mod) in a premult-blended draw needs its
+            // color contribution scaled by its own alpha here: straight
+            // blending used to apply that factor at blend time and a
+            // premultiplied mask has it baked in. maskStraight is 0/1.
+            s += "   " BA_GLSL_MEDIUMP
+                 "float maskMult = mix(1.0, mask.a, maskStraight);";
+          }
         }
 
         if (flags & SHD_MODULATE) {
@@ -433,9 +463,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           // color's alpha ourselves (decision #23). texPremultiplied (0/1)
           // preserves the exact legacy path for straight-alpha textures.
           if (flags & SHD_MODULATE) {
-            s += " * vec4(vec3(mask.r), mask.a) + "
+            s += " * vec4(vec3(mask.r) * maskMult, mask.a) + "
                  "vec4((vec3(mask.g) * colorizeColor.rgb + vec3(mask.b))"
-                 " * mix(1.0, color.a, texPremultiplied), 0.0)";
+                 " * maskMult * mix(1.0, color.a, texPremultiplied), 0.0)";
           } else {
             s += " * vec4(vec3(mask.r), mask.a) + "
                  "vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)";
@@ -557,6 +587,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   float glow_amount_{}, glow_blur_{};
   float flatness_{};
   float tex_premultiplied_{};
+  float mask_straight_{};
   GLint color_location_{};
   GLint colorize_color_location_{};
   GLint colorize2_color_location_{};
@@ -567,6 +598,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   GLint glow_params_location_{};
   GLint flatness_location{};
   GLint tex_premultiplied_location_{};
+  GLint mask_straight_location_{};
   int flags_{};
 };
 

@@ -801,13 +801,14 @@ class Session:
 
         assert sessionplayer not in sessionteam.players
         sessionteam.players.append(sessionplayer)
+        cloud_look = chooser.get_cloud_look_json()
         sessionplayer.setdata(
             team=sessionteam,
             character=chooser.get_character_name(),
             color=chooser.get_color(),
             highlight=chooser.get_highlight(),
-            cloud_spaz_def=chooser.get_cloud_spaz_def(),
-            cloud_icon=chooser.get_cloud_icon(),
+            cloud_spaz_json=None if cloud_look is None else cloud_look[0],
+            cloud_icon_json=None if cloud_look is None else cloud_look[1],
         )
 
         self.stats.register_sessionplayer(sessionplayer)

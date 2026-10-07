@@ -1497,8 +1497,8 @@ void SessionStream::AddSpazDef(SpazDef* d) {
     Add(d, &spaz_defs_, &free_indices_spaz_defs_);
     // Every live definition costs its json on the stream and in every
     // late joiner's baseline; game code is expected to reuse one per
-    // look (the session player's cloud_spaz_def), so a pile-up means
-    // something is minting them per spawn.
+    // look per scene (the session player's cloud_spaz_def does), so a
+    // pile-up means something is minting them per spawn.
     size_t live = spaz_defs_.size() - free_indices_spaz_defs_.size();
     if (live > kLiveSpazDefsWarnThreshold) {
       BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
@@ -1755,16 +1755,12 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, SpazDef* val) {
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidSpazDef(val));
-    // A definition built in the session scene (a player's cloud
-    // profile look, made by the lobby before any activity has them) is
-    // usable from every scene in the session: it outlives every
-    // activity and HostSession::DumpFullState adds it before any
-    // activity's nodes. Activity-scene ones stay confined to their own
-    // scene since their stream id is recycled at activity teardown
-    // while a foreign node could still reference them.
-    bool session_scene =
-        host_session_ != nullptr && val->scene() == host_session_->scene();
-    if (attr.node->scene() != val->scene() && !session_scene) {
+    // Scene objects never cross scenes (see
+    // docs/design/scene-stream-wire.md, "Scene confinement"). (Not
+    // checked without a host session: re-dumping a client session's
+    // state -- a replay's seek snapshot -- only mirrors what a host
+    // already sent.)
+    if (host_session_ && attr.node->scene() != val->scene()) {
       throw Exception("spaz-def/node are from different scenes");
     }
     WriteCommandInt64_3(SessionCommand::kSetNodeAttrSpazDef,
@@ -1781,10 +1777,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
   if (val) {
     assert(IsValidNode(attr.node));
     assert(IsValidDepiction(val));
-    // Scoping as for spaz defs (session-scene ones work everywhere).
-    bool session_scene =
-        host_session_ != nullptr && val->scene() == host_session_->scene();
-    if (attr.node->scene() != val->scene() && !session_scene) {
+    // Confined to one scene, as for spaz defs.
+    if (host_session_ && attr.node->scene() != val->scene()) {
       throw Exception("depiction/node are from different scenes");
     }
     WriteCommandInt64_3(SessionCommand::kSetNodeAttrDepiction,

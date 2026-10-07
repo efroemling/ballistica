@@ -425,3 +425,31 @@ def gen_pyembed() -> None:
         encrypt=encrypt,
         ctx_var=ctx_var,
     )
+
+
+def require_unsandboxed() -> None:
+    """Fail right away if running inside Claude Code's command sandbox.
+
+    args: a short description of what is being attempted (for the
+    error message).
+
+    For build targets that cannot produce a correct result there:
+    release archives and anything that uploads. Gradle is forced
+    offline in the sandbox, so steps that need the network (Crashlytics
+    mapping/symbol uploads, dependency fetches) fail or are skipped --
+    and a release artifact that merely *looks* built is worse than no
+    artifact. Failing in the first second, with the reason, beats
+    finding out after a full build (or after shipping it).
+    """
+    from efro.error import CleanError
+    from batools.build import in_claude_sandbox
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg: a description of the task.')
+    if in_claude_sandbox():
+        raise CleanError(
+            f"Refusing to run {sys.argv[2]} inside Claude Code's command"
+            ' sandbox: Gradle has no network access there (it is forced'
+            ' offline), so this cannot produce a correct result. Run it'
+            ' from a normal shell instead.'
+        )

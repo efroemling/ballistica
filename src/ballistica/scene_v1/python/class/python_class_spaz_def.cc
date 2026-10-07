@@ -62,11 +62,11 @@ void PythonClassSpazDef::SetupType(PyTypeObject* cls) {
       "long as something references it (this object or a node attr)\n"
       "and leaves the session automatically once nothing does.\n"
       "\n"
-      "Must be created in a host activity or host session context. One\n"
-      "created in a session context (as the lobby does for a player's\n"
-      "cloud profile) can be assigned to nodes in any of that session's\n"
-      "activities; one created in an activity context only to nodes of\n"
-      "that activity.\n";
+      "Must be created in a host activity or host session context, and\n"
+      "can only be assigned to nodes of that same scene (scene objects\n"
+      "never cross scenes). A player's cloud look is made per scene for\n"
+      "you: read ``SessionPlayer.cloud_spaz_def`` in the context it\n"
+      "will be used in.\n";
   // clang-format on
 
   cls->tp_methods = tp_methods;

@@ -58,18 +58,26 @@ class Player : public Object {
   auto GetPyCharacter() -> PyObject*;  // Returns a borrowed ref.
   void SetPyCharacter(PyObject* team);
 
-  /// The player's cloud look (a bascenev1.SpazDef built from the spaz
-  /// part of the cloud-composed profile they picked), or Py_None when
-  /// they are on a legacy profile / random look. Parallel to the legacy
-  /// appearance-name 'character', which stays the fallback.
-  auto GetPyCloudSpazDef() -> PyObject*;  // Returns a borrowed ref.
-  void SetPyCloudSpazDef(PyObject* spaz_def);
+  /// The player's cloud look as json: the spaz part of the
+  /// cloud-composed profile they picked and its icon (a
+  /// bacommon.depiction icon depiction), or empty when they are on a
+  /// legacy profile / random look (the legacy appearance-name
+  /// 'character' stays the fallback). Kept as json rather than scene
+  /// objects because scene objects are confined to one scene and a
+  /// player outlives activities; see GetPyCloudSpazDef.
+  void SetCloudLook(const std::string& spaz_json, const std::string& icon_json);
 
-  /// The player's cloud icon (a bascenev1.Depiction of the icon part of
-  /// the same cloud-composed profile), or Py_None alongside a Py_None
-  /// cloud spaz def. The legacy icon info stays the fallback.
-  auto GetPyCloudIcon() -> PyObject*;  // Returns a borrowed ref.
-  void SetPyCloudIcon(PyObject* icon);
+  /// The player's cloud look as a bascenev1.SpazDef in the current
+  /// context's scene (made on first ask in each scene and reused while
+  /// anything holds it), or Py_None without one. New reference.
+  auto GetPyCloudSpazDef() -> PyObject*;
+
+  /// The player's cloud icon as a bascenev1.Depiction in the current
+  /// context's scene (as GetPyCloudSpazDef), or Py_None. New reference.
+  auto GetPyCloudIcon() -> PyObject*;
+  auto cloud_icon_json() const -> const std::string& {
+    return cloud_icon_json_;
+  }
 
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
   void SetPyColor(PyObject* team);
@@ -181,8 +189,12 @@ class Player : public Object {
   // PythonRef py_actor_;
   PythonRef py_team_weak_ref_;
   PythonRef py_character_;
-  PythonRef py_cloud_spaz_def_;
-  PythonRef py_cloud_icon_;
+  std::string cloud_spaz_json_;
+  std::string cloud_icon_json_;
+  // The last made of each (weak: whatever uses one keeps it alive, and
+  // it must never outlive its scene's activity on our account).
+  Object::WeakRef<SpazDef> cloud_spaz_def_;
+  Object::WeakRef<SceneDepiction> cloud_icon_;
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;

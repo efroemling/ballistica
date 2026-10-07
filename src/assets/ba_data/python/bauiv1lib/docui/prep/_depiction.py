@@ -37,8 +37,12 @@ def prep_depiction(
     out_decoration_preps: list[DecorationPrep],
     *,
     highlight: bool,
+    suffix: str | None = None,
 ) -> None:
-    """Prep a depiction decoration."""
+    """Prep a depiction decoration.
+
+    ``suffix`` is the decoration's suffix, already evaluated.
+    """
     width = decoration.size[0] * bscale
     height = decoration.size[1] * bscale
     left = bcenter[0] + decoration.position[0] * bscale - width * 0.5
@@ -57,6 +61,11 @@ def prep_depiction(
                 transition_type='scale',
                 depth_range=decoration.depth_range,
                 depiction_debug=decoration.debug,
+                depiction_suffix=suffix,
+                depiction_color_override=decoration.color_override,
+                depiction_use_color_override=(
+                    decoration.color_override is not None
+                ),
             ),
             textures={},
             meshes={},

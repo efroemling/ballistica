@@ -18,6 +18,7 @@ from bacommon.langstr import LangStrSpec
 if TYPE_CHECKING:
     from typing import Iterator
 
+    from babase import ResolveResult
     from bacommon.locale import Locale
     from bacommon.assetpackage import ApverNum
     from bacommon.docui import DocUIRequest
@@ -442,27 +443,38 @@ def _resolve_packages_blocking(
 
     import bauiv1 as bui
 
+    from bauiv1lib.docui import _timing
+
     if not apvernums:
         return
 
     done = threading.Event()
-    box: dict[str, BaseException] = {}
+    errors: list[BaseException] = []
+    results: list[ResolveResult] = []
 
     def _kick() -> None:
         async def _run() -> None:
             try:
-                await bui.app.assets.resolve(
-                    apvernums, language=locale, label='doc-ui page'
+                results.append(
+                    await bui.app.assets.resolve(
+                        apvernums, language=locale, label='doc-ui page'
+                    )
                 )
             except Exception as exc:
-                box['error'] = exc
+                errors.append(exc)
             finally:
                 done.set()
 
         bui.app.create_async_task(_run())
 
+    # For the slow-page breakdown: a resolve that downloaded, failed or
+    # timed out says nothing about how fast this device is.
+    timing = _timing.current()
+
     bui.pushcall(_kick, from_other_thread=True)
     if not done.wait(timeout=30.0):
+        if timing is not None:
+            timing.resolve_used_network = True
         # Say what the (serialized) resolve queue was busy with; a
         # timeout here usually means waiting behind someone else's
         # resolve, not trouble with these packages.
@@ -470,8 +482,13 @@ def _resolve_packages_blocking(
             f'Timed out resolving doc-ui asset-packages: {apvernums}.'
             f' Resolve queue: {bui.app.assets.describe_activity()}'
         )
-    if 'error' in box:
-        raise box['error']
+    if errors:
+        if timing is not None:
+            timing.resolve_used_network = True
+        raise errors[0]
+    if timing is not None and results:
+        timing.resolve_used_network = results[0].downloaded
+        timing.resolve_queue = results[0].queue_seconds
 
 
 def collect_apvernums(page: dui2.Page, acc: set[ApverNum]) -> None:

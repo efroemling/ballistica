@@ -258,6 +258,16 @@ class Graphics {
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
 
+  /// Brighten an rgb color in place by a multiplier, blowing out toward
+  /// white rather than clipping: a plain multiply until the brightest
+  /// channel reaches 1, then the color (at full intensity, hue kept)
+  /// lerps toward white by 1 - 1/overshoot -- so a saturated color
+  /// still visibly brightens. Done in sRGB for now (linear light would
+  /// be more even across colors). Use it where a color tints something
+  /// white-ish (text, flat shapes); a multiply can't whiten art with
+  /// colors of its own. Exposed to Python as babase.brightened_color.
+  static void BrightenColor(float* rgb, float brightness);
+
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
 

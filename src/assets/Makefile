@@ -452,6 +452,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popuptext.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_timing.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_typed.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \

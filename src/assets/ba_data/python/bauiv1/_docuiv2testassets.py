@@ -1,10 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.badocuiv2testassets.261002`` (bauiv1)."""
+"""Asset-package wrapper for ``a-0.badocuiv2testassets.261007`` (bauiv1)."""
 
 # ba_meta require api 9
-# ba_meta require asset-package 386
+# ba_meta require asset-package 445
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -18,8 +18,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.badocuiv2testassets.261002
-_ASSET_PACKAGE = ApverNum(386)
+# a-0.badocuiv2testassets.261007
+_ASSET_PACKAGE = ApverNum(445)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import TextureHandle

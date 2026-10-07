@@ -78,6 +78,30 @@ auto ReadCapsule(const JsonRef& tier) -> std::optional<CapsuleNameDef> {
   if (auto fill = tier["cf"].as_double()) {
     d.capsule_tile = (*fill == 1.0);
   }
+  // Override targets, by name; names this build doesn't know are
+  // ignored (later ones degrade to not taking the override).
+  if (JsonRef targets = tier["ot"]; targets.is_array()) {
+    d.override_text = false;
+    for (size_t i = 0; i < targets.size(); ++i) {
+      auto target = targets[i].as_string();
+      if (!target) {
+        continue;
+      }
+      if (*target == "t") {
+        d.override_text = true;
+      } else if (*target == "c") {
+        d.override_capsule = true;
+      } else if (*target == "t1") {
+        d.override_tints[0] = true;
+      } else if (*target == "t2") {
+        d.override_tints[1] = true;
+      } else if (*target == "t3") {
+        d.override_tints[2] = true;
+      } else if (*target == "i") {
+        d.override_icon = true;
+      }
+    }
+  }
   ReadPackageAssetRef(tier, "ctt", &d.capsule_tint_texture);
   ReadColor(tier, "ctc1", d.capsule_tint_colors[0], 3);
   ReadColor(tier, "ctc2", d.capsule_tint_colors[1], 3);
@@ -124,6 +148,15 @@ auto NameDef::Parse(const JsonRef& block) -> std::optional<NameDef> {
   ReadColor(basic, "c", d.basic.color, 3);
   if (JsonRef capsule = block["c"]; capsule.is_object()) {
     d.capsule = ReadCapsule(capsule);
+  }
+  if (JsonRef glyph = block["g"]; glyph.is_object()) {
+    auto icon = glyph["i"].as_string();
+    if (icon && !icon->empty()) {
+      d.glyph = GlyphNameDef{std::string(*icon)};
+    } else {
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                  "Name glyph tier has no icon; ignoring it.");
+    }
   }
   return d;
 }

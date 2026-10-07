@@ -3,10 +3,12 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_DEPICTION_DISPLAY_NODE_H_
 #define BALLISTICA_SCENE_V1_NODE_DEPICTION_DISPLAY_NODE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/depiction/depiction.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/scene_v1/node/node.h"
 
 namespace ballistica::scene_v1 {
@@ -24,6 +26,13 @@ namespace ballistica::scene_v1 {
 /// depiction with a shape of its own is fitted inside it by
 /// 'h_align'/'v_align'. Protocol 47 (see scene_v1.h). Design:
 /// docs/initiatives/depictions.md.
+///
+/// Since protocol 52: 'color_override' (rgb) is imposed on the
+/// depiction while 'use_color_override' is set (each kind decides what
+/// it applies to; see base::DepictionDrawContext), 'brightness' scales
+/// everything it draws (animate it to flash), and 'suffix' (text, as a
+/// text node's) trails the depiction ("(ready)" after a name), fitted
+/// into the box along with it on each machine.
 class DepictionDisplayNode : public Node {
  public:
   static auto InitType() -> NodeType*;
@@ -52,8 +61,28 @@ class DepictionDisplayNode : public Node {
   void set_host_only(bool val) { host_only_ = val; }
   auto front() const -> bool { return front_; }
   void set_front(bool val) { front_ = val; }
+  auto color_override() const -> std::vector<float> {
+    return {color_override_[0], color_override_[1], color_override_[2]};
+  }
+  void SetColorOverride(const std::vector<float>& val);
+  auto use_color_override() const -> bool { return use_color_override_; }
+  void set_use_color_override(bool val) { use_color_override_ = val; }
+  auto brightness() const -> float { return brightness_; }
+  void set_brightness(float val) { brightness_ = val; }
+  auto GetSuffix() const -> std::string { return suffix_raw_; }
+  void SetSuffix(const std::string& val);
+  void SetSuffixWire(const std::string& wire,
+                     std::shared_ptr<const base::LangStr> parsed);
+  auto suffix_lang_str() const -> std::shared_ptr<const base::LangStr> {
+    return suffix_lang_str_;
+  }
+  void OnLanguageChange() override { suffix_dirty_ = true; }
 
  private:
+  /// How suffix_raw_ is to be read (as a text node's text; see
+  /// TextNode).
+  enum class SuffixMode : uint8_t { kLegacy, kLiteral, kLegacyJson, kLangStr };
+  void UpdateSuffix_();
   enum class Attach : uint8_t {
     kCenter,
     kTopLeft,
@@ -84,6 +113,15 @@ class DepictionDisplayNode : public Node {
   float center_y_{};
   float width_{};
   float height_{};
+  // See base::DepictionDrawContext.
+  float color_override_[3]{1.0f, 1.0f, 1.0f};
+  bool use_color_override_{};
+  float brightness_{1.0f};
+  std::string suffix_raw_;
+  SuffixMode suffix_mode_{SuffixMode::kLegacy};
+  std::shared_ptr<const base::LangStr> suffix_lang_str_;
+  bool suffix_dirty_{};
+  base::DepictionSuffix suffix_;
 };
 
 }  // namespace ballistica::scene_v1

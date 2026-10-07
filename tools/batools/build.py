@@ -840,3 +840,14 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+
+def in_claude_sandbox() -> bool:
+    """Are we running inside Claude Code's command sandbox?
+
+    There, all network egress is forced through an authenticating proxy
+    that the JVM/Gradle won't use, so Gradle can only work offline.
+    """
+    return bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))

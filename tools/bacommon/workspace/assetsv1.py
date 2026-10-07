@@ -683,9 +683,8 @@ class Role(Enum):
     Drives mip-filtering math and encoder flags (asset-packages
     initiative decisions #19/#23). Intent-based rather than a bundle
     of low-level mechanical flags — the recipe maps each role to a
-    concrete filtering/encoding behavior. ``normal_map`` / ``data``
-    are reserved slots for when such content (and the compressed-
-    profile recipes) land.
+    concrete filtering/encoding behavior. ``normal_map`` is a
+    reserved slot for when such content lands.
     """
 
     #: sRGB color with straight opacity alpha. The pipeline
@@ -716,6 +715,16 @@ class Role(Enum):
     #: color). Straight output bytes; ``ALPHA_PREMULTIPLIED`` flag
     #: clear. Renders with ordinary straight-alpha blending.
     STRAIGHT_ALPHA = 'straight_alpha'
+
+    #: Not a picture. Each channel is an independent value a shader
+    #: reads on its own (colorize / tint masks and the like). Nothing
+    #: is premultiplied, mips filter every channel independently on
+    #: the stored values (no render_space transfer), the encoders
+    #: weight all channels equally instead of perceptually, and the
+    #: automatic quality search scores plain per-channel error instead
+    #: of a perceptual color difference. Ships in the same container
+    #: formats as color, so it needs nothing from the client.
+    DATA = 'data'
 
 
 class AstcBlockSize(Enum):
@@ -763,14 +772,27 @@ class Bc7Rdo(Enum):
     has its ``texture_quality`` set to ``CUSTOM``; otherwise the blanket
     ``LOW``/``DEFAULT``/``HIGH`` map to a value in this range
     (``LOW`` = ``FOUR``, ``HIGH`` = ``OFF``).
+
+    Members are declared weakest to strongest; the automatic quality
+    search walks them in that order, so keep it. Each doubling has one
+    value in between: measured on 60 catalog textures (2026-10-06),
+    that let the search land closer to its error cap and cut opaque
+    textures' download size by about 9% at low and default quality
+    (1% at high; next to nothing for textures with alpha, where RDO
+    only touches the fully opaque blocks).
     """
 
     OFF = 'off'
     ZERO_POINT_ONE_TWO_FIVE = '0.125'
+    ZERO_POINT_ONE_EIGHT_SEVEN_FIVE = '0.1875'
     ZERO_POINT_TWO_FIVE = '0.25'
+    ZERO_POINT_THREE_SEVEN_FIVE = '0.375'
     ZERO_POINT_FIVE = '0.5'
+    ZERO_POINT_SEVEN_FIVE = '0.75'
     ONE = '1'
+    ONE_POINT_FIVE = '1.5'
     TWO = '2'
+    THREE = '3'
     FOUR = '4'
 
 
@@ -794,10 +816,18 @@ class AstcEffort(Enum):
 class Bc7Effort(Enum):
     """How hard the BC7 encoder works per block (its 'uber' level).
 
-    More effort = better quality at the same size, paid for in build
-    time only. Consulted only when a :class:`Bc7Settings` has its
-    ``texture_quality`` set to ``CUSTOM``; otherwise the texture tier
-    picks it (regular = ``TWO``, ultra = ``FOUR``).
+    Paid for in build time only. Consulted only when a
+    :class:`Bc7Settings` has its ``texture_quality`` set to ``CUSTOM``;
+    otherwise every tier uses ``ZERO``.
+
+    ``ZERO`` is the default everywhere because, measured against the
+    metrics the quality search judges by, more effort does not
+    reliably buy anything: across 17 first-party textures the higher
+    levels stayed within about 1% of ``ZERO`` on average at every rdo
+    setting, with individual textures swinging a few percent either
+    way, for 1.2x-3x the encode time (2026-10). The odd texture does
+    respond (one character body improved ~20%), which is what this
+    knob remains for. ``TWO`` and ``THREE`` produce identical output.
     """
 
     ZERO = '0'
@@ -805,6 +835,27 @@ class Bc7Effort(Enum):
     TWO = '2'
     THREE = '3'
     FOUR = '4'
+
+
+class AlphaPriority(Enum):
+    """How much a texture's alpha matters relative to its color.
+
+    Both encoders spread a fixed bit budget across color and alpha;
+    this shifts the balance. Raising it sharpens alpha edges
+    (silhouettes, soft fades) at some cost in color accuracy, and vice
+    versa. It has no effect on a texture without alpha.
+
+    Consulted only when a format's ``texture_quality`` is ``CUSTOM``;
+    automatic quality always uses ``DEFAULT``. That is deliberate: the
+    automatic search already protects alpha by its own means (a
+    texture limited by its alpha edge gets a higher-quality setting),
+    whereas guessing a priority per texture and guessing wrong would
+    cost color silently.
+    """
+
+    LOW = 'low'
+    DEFAULT = 'default'
+    HIGH = 'high'
 
 
 @ioprepped
@@ -820,10 +871,11 @@ class AstcSettings:
     explicitly.
 
     The explicit values come in two independent sets, one per texture
-    tier: ``block_size``/``effort`` for regular and
-    ``ultra_block_size``/``ultra_effort`` for ultra. The ultra set
-    defaults to maximum quality, so hand-tuning the regular values can
-    never leave ultra looking worse than regular by accident.
+    tier: ``block_size``/``effort``/``alpha_priority`` for regular and
+    the ``ultra_``-prefixed equivalents for ultra. The ultra set's
+    block size and effort default to maximum quality, so hand-tuning
+    the regular values can never leave ultra looking worse than
+    regular by accident.
     """
 
     texture_quality: Annotated[
@@ -838,6 +890,10 @@ class AstcSettings:
         AstcEffort.MEDIUM
     )
 
+    alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('ap', store_default=False)
+    ] = AlphaPriority.DEFAULT
+
     ultra_block_size: Annotated[
         AstcBlockSize, IOAttrs('ubs', store_default=False)
     ] = AstcBlockSize.FOUR_BY_FOUR
@@ -845,6 +901,10 @@ class AstcSettings:
     ultra_effort: Annotated[AstcEffort, IOAttrs('uef', store_default=False)] = (
         AstcEffort.THOROUGH
     )
+
+    ultra_alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('uap', store_default=False)
+    ] = AlphaPriority.DEFAULT
 
 
 @ioprepped
@@ -860,8 +920,10 @@ class Bc7Settings:
     explicitly.
 
     As with :class:`AstcSettings`, the explicit values come in a
-    regular set (``rdo``/``effort``) and an independent ultra set
-    (``ultra_rdo``/``ultra_effort``) that defaults to maximum quality.
+    regular set (``rdo``/``effort``/``alpha_priority``) and an
+    independent ``ultra_``-prefixed set whose rdo defaults to maximum
+    quality (off). Effort defaults to ``ZERO`` in both; see
+    :class:`Bc7Effort` for why.
     """
 
     texture_quality: Annotated[
@@ -871,16 +933,24 @@ class Bc7Settings:
     rdo: Annotated[Bc7Rdo, IOAttrs('rdo', store_default=False)] = Bc7Rdo.ONE
 
     effort: Annotated[Bc7Effort, IOAttrs('ef', store_default=False)] = (
-        Bc7Effort.TWO
+        Bc7Effort.ZERO
     )
+
+    alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('ap', store_default=False)
+    ] = AlphaPriority.DEFAULT
 
     ultra_rdo: Annotated[Bc7Rdo, IOAttrs('urdo', store_default=False)] = (
         Bc7Rdo.OFF
     )
 
     ultra_effort: Annotated[Bc7Effort, IOAttrs('uef', store_default=False)] = (
-        Bc7Effort.FOUR
+        Bc7Effort.ZERO
     )
+
+    ultra_alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('uap', store_default=False)
+    ] = AlphaPriority.DEFAULT
 
 
 class TextureWrapping(Enum):
@@ -913,6 +983,30 @@ class TextureWrapping(Enum):
     #: Tile with every other copy flipped (``GL_MIRRORED_REPEAT``).
     #: Seamless by construction; mips filter with a mirrored kernel.
     MIRRORED_REPEAT = 'mirrored_repeat'
+
+
+class TextureAlpha(Enum):
+    """Whether a texture's alpha channel is meaningful.
+
+    Exists because stray transparency is easy to ship by accident: a
+    few unpainted texels in an otherwise opaque texture make the whole
+    thing build as a transparent one (losing the opaque-only encoder
+    weighting and making the quality search guard an alpha edge nobody
+    sees).
+    """
+
+    #: Detect from the pixels. Any texel with alpha below 255 makes the
+    #: texture transparent. A texture whose transparency looks
+    #: accidental gets a conventions finding asking for an explicit
+    #: choice.
+    AUTO = 'auto'
+
+    #: The transparency is intentional; keep it and never flag it.
+    YES = 'yes'
+
+    #: The texture is opaque; any transparency in the source is
+    #: discarded (alpha forced to fully opaque) when building.
+    NO = 'no'
 
 
 @ioprepped
@@ -974,6 +1068,15 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     fallback_high_res: Annotated[
         bool, IOAttrs('fallback_high_res', store_default=False)
     ] = False
+
+    #: Whether this texture's alpha channel is meaningful (see
+    #: :class:`TextureAlpha`). Like ``fallback_high_res`` this is
+    #: deliberately not exposed in the workspace web UI; edit
+    #: workspace.json directly to answer a stray-alpha conventions
+    #: finding.
+    texture_alpha: Annotated[
+        TextureAlpha, IOAttrs('texture_alpha', store_default=False)
+    ] = TextureAlpha.AUTO
 
     @override
     @classmethod

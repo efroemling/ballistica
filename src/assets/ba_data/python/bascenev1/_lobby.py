@@ -4,6 +4,7 @@
 
 # pylint: disable=too-many-lines
 
+import json
 import logging
 import weakref
 from dataclasses import dataclass
@@ -26,6 +27,15 @@ if TYPE_CHECKING:
 MAX_QUICK_CHANGE_COUNT = 30
 QUICK_CHANGE_INTERVAL = 0.05
 QUICK_CHANGE_RESET_INTERVAL = 1.0
+
+# A chooser's name box (its left edge sits just right of its icon): room
+# for the name and its '(ready)' together, which shrink as one to fit
+# (each viewer measures them in its own fonts). 40 tall draws a basic
+# name's text at the size the old name text node used; 180 wide stays
+# clear of the next team's column (350 over).
+_NAME_BOX_WIDTH = 180.0
+_NAME_BOX_HEIGHT = 40.0
+_NAME_BOX_LEFT = -100.0
 
 
 # Hmm should we move this to actors?..
@@ -219,6 +229,16 @@ class Chooser:
         # shows (registered once however often the selection flips).
         self._cloud_icon_by_name: dict[str, bascenev1.Depiction] = {}
         self._cloud_icon: bascenev1.Depiction | None = None
+        # And each one's name as the cloud composed it (a name block's
+        # json): how it shows, which may differ from the profile name
+        # it's keyed by (an __account__ profile shows the account's).
+        self._cloud_name_by_name: dict[str, str] = {}
+        # And each one's (spaz json, icon depiction json): what a player
+        # carries out of the lobby (see get_cloud_look_json()).
+        self._cloud_json_by_name: dict[str, tuple[str, str]] = {}
+        # Name depictions our name node has shown, by json (registered
+        # once each however often the selection flips).
+        self._name_depictions: dict[str, bascenev1.Depiction] = {}
         # The cloud profile whose look (spaz, icon, colors) we're
         # borrowing via the character-override button while keeping
         # the selected profile's name; None for the profile's own look.
@@ -257,20 +277,29 @@ class Chooser:
         self._profileindex = self._select_initial_profile()
         self._profilename = self._profilenames[self._profileindex]
 
+        # Our name (and '(ready)' after it) as a name depiction, in our
+        # color; see _update_text().
         self._text_node = _bascenev1.newnode(
-            'text',
+            'depictiondisplay',
             delegate=self,
             attrs={
-                'position': (-100, self._vpos),
-                'maxwidth': 160,
-                'shadow': 0.5,
+                'position': (
+                    _NAME_BOX_LEFT + _NAME_BOX_WIDTH * 0.5,
+                    self._vpos,
+                ),
                 'vr_depth': -20,
                 'h_align': 'left',
                 'v_align': 'center',
-                'v_attach': 'top',
+                'attach': 'topCenter',
+                'use_color_override': True,
             },
         )
-        animate(self._text_node, 'scale', {0: 0, 0.1: 1.0})
+        animate_array(
+            self._text_node,
+            'scale',
+            2,
+            {0: (0, 0), 0.1: (_NAME_BOX_WIDTH, _NAME_BOX_HEIGHT)},
+        )
         self.icon = _bascenev1.newnode(
             'image',
             owner=self._text_node,
@@ -594,7 +623,13 @@ class Chooser:
             self._text_node,
             'position',
             2,
-            {0: self._text_node.position, 0.1: (-100 + offs, self._vpos + 23)},
+            {
+                0: self._text_node.position,
+                0.1: (
+                    _NAME_BOX_LEFT + _NAME_BOX_WIDTH * 0.5 + offs,
+                    self._vpos + 23,
+                ),
+            },
         )
         animate_array(
             self.icon,
@@ -650,6 +685,20 @@ class Chooser:
         """
         return self._cloud_icon
 
+    def get_cloud_look_json(self) -> tuple[str, str] | None:
+        """Return the selected cloud look as json, for the player.
+
+        (spaz json, icon depiction json), or None exactly when
+        :meth:`get_cloud_spaz_def` is None. Our own spaz def and icon
+        live in the session scene with the lobby; a player carries the
+        json instead and gets objects made in each activity's own scene
+        (scene objects never cross scenes).
+        """
+        look = self._cloud_look_name or self._profilename
+        if self._cloud_spaz_def is None:
+            return None
+        return self._cloud_json_by_name.get(look)
+
     def _apply_cloud_profiles(
         self,
         input_device: bascenev1.InputDevice,
@@ -689,6 +738,8 @@ class Chooser:
                 self.lobby.warn_legacy_profiles_once()
         self._cloud_by_name = {}
         self._cloud_icon_by_name = {}
+        self._cloud_name_by_name = {}
+        self._cloud_json_by_name = {}
         if cloud_json is None:
             return
         profiles: dict[str, dict[str, Any]] = {}
@@ -696,7 +747,10 @@ class Chooser:
             # A profile arrives as a whole character; we use its parts
             # (look, name, icon) independently.
             parts = split_character(cjson)
-            cname = name_text(parts.name)
+            # Keyed by the profile's own name (an __account__ profile
+            # shows the account's name; that's display only). Older
+            # cached data had no key; its shown name was the key.
+            cname = parts.profile or name_text(parts.name)
             if (
                 cname is None
                 or cname in profiles
@@ -713,9 +767,13 @@ class Chooser:
                 'highlight': spaz_def.highlight or (0.5, 0.5, 0.5),
             }
             self._cloud_by_name[cname] = spaz_def
-            self._cloud_icon_by_name[cname] = _bascenev1.Depiction(
-                dataclass_to_json(bdep.CharacterIconDepiction(parts.icon))
+            icon_json = dataclass_to_json(
+                bdep.CharacterIconDepiction(parts.icon)
             )
+            self._cloud_icon_by_name[cname] = _bascenev1.Depiction(icon_json)
+            self._cloud_json_by_name[cname] = (parts.spaz, icon_json)
+            if parts.name is not None:
+                self._cloud_name_by_name[cname] = parts.name
         self._profiles = profiles
 
     def _ensure_icon_node(self, *, cloud: bool) -> None:
@@ -1063,41 +1121,83 @@ class Chooser:
         from bascenev1 import _commonassets, _classicassets
 
         assert self._text_node is not None
-        text: str | babase.LangStr
-        if self._ready:
-            # Once we're ready, we've saved the name, so lets ask the system
-            # for it so we get appended numbers and stuff.
-            text = _commonassets.strings.compose.paren_suffix(
-                main=self._sessionplayer.getname(full=True),
-                note=_classicassets.strings.lobby.ready,
+        self._text_node.depiction = self._get_name_depiction()
+        self._text_node.suffix = (
+            _commonassets.strings.compose.parenthesized(
+                note=_classicassets.strings.lobby.ready
             )
-        else:
-            text = self._getname(full=True)
+            if self._ready
+            else ''
+        )
 
         can_switch_teams = len(self.lobby.sessionteams) > 1
 
-        # Flash as we're coming in.
-        fin_color = babase.safecolor(self.get_color()) + (1,)
+        # Our color is imposed on the name (as legacy's name text always
+        # showed in it; a capsule routes it where it wants it).
+        fin_color = babase.safecolor(self.get_color())
         if not self._inited:
-            animate_array(
+            self._text_node.color_override = fin_color
+            # Flash as we're coming in.
+            animate(
                 self._text_node,
-                'color',
-                4,
-                {0.15: fin_color, 0.25: (2, 2, 2, 1), 0.35: fin_color},
+                'brightness',
+                {0.15: 1.0, 0.25: 2.0, 0.35: 1.0},
             )
         else:
             # Blend if we're in teams mode; switch instantly otherwise.
             if can_switch_teams:
                 animate_array(
                     self._text_node,
-                    'color',
-                    4,
-                    {0: self._text_node.color, 0.1: fin_color},
+                    'color_override',
+                    3,
+                    {0: self._text_node.color_override, 0.1: fin_color},
                 )
             else:
-                self._text_node.color = fin_color
+                self._text_node.color_override = fin_color
 
-        self._text_node.text = text
+    def _get_name_depiction(self) -> bascenev1.Depiction:
+        """Our current selection's full name, as a session depiction.
+
+        A cloud profile shows the name the cloud composed for it (with
+        its glyph if global). An __account__ profile shows the
+        account's name: our own live one for a local player (the cloud
+        doesn't send it to us; it can change at any time), the one the
+        cloud sent with a remote player's profiles otherwise. Anything
+        else -- legacy profiles, random, edit -- shows its plain name.
+        """
+        assert babase.app.classic is not None
+        name = self._profilename
+        depiction_json: str | None = None
+        if name == '__account__' and not (
+            self._sessionplayer.inputdevice.is_remote_client
+        ):
+            if name in self._cloud_by_name:
+                depiction_json = (
+                    babase.app.classic.account_name_depiction or None
+                )
+        else:
+            name_json = self._cloud_name_by_name.get(name)
+            # (A plain '__account__' name only stands in for the
+            # account's for older builds; ours draws it as legacy does.)
+            if name_json is not None and name_text(name_json) != '__account__':
+                depiction_json = dataclass_to_json(
+                    bdep.NameDepiction(name_json)
+                )
+        if depiction_json is None:
+            depiction_json = dataclass_to_json(
+                bdep.NameDepiction(
+                    json.dumps(
+                        {'b': {'t': self._getname(full=True)}},
+                        separators=(',', ':'),
+                    )
+                )
+            )
+        depiction = self._name_depictions.get(depiction_json)
+        if depiction is None:
+            depiction = self._name_depictions[depiction_json] = (
+                _bascenev1.Depiction(depiction_json)
+            )
+        return depiction
 
     def get_color(self) -> Sequence[float]:
         """Return the currently selected color."""
@@ -1195,7 +1295,7 @@ class Chooser:
 
         if self._profilenames[self._profileindex] == '_edit':
             tex = _builtinassets.textures.black.get()
-            tint_tex = _builtinassets.textures.black.get()
+            tint_tex = _builtinassets.textures.black_data.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex

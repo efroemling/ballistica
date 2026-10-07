@@ -62,7 +62,9 @@ class PlayerRecord:
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
         self._last_sessionplayer: bascenev1.SessionPlayer | None = None
-        self._icon_depiction: bascenev1.Depiction | None = None
+        # The json of the player's icon depiction, if any (scene
+        # objects never cross scenes, and we outlive activities).
+        self._icon_depiction_json: str | None = None
         self._sessionplayer: bascenev1.SessionPlayer | None = None
         self._sessionteam: weakref.ref[bascenev1.SessionTeam] | None = None
         self.streak = 0
@@ -108,8 +110,12 @@ class PlayerRecord:
 
         See :meth:`bascenev1.SessionPlayer.get_icon_depiction`. Kept
         from the last associated player, so it survives them leaving.
+        Made in the current context's scene, so call it in the context
+        that will show it.
         """
-        return self._icon_depiction
+        if self._icon_depiction_json is None:
+            return None
+        return _bascenev1.Depiction(self._icon_depiction_json)
 
     def cancel_multi_kill_timer(self) -> None:
         """Cancel any multi-kill timer for this player entry."""
@@ -130,7 +136,7 @@ class PlayerRecord:
         """Associate this entry with a bascenev1.SessionPlayer."""
         self._sessionteam = weakref.ref(sessionplayer.sessionteam)
         self.character = sessionplayer.character
-        self._icon_depiction = sessionplayer.get_icon_depiction()
+        self._icon_depiction_json = sessionplayer.get_icon_depiction_json()
         self._last_sessionplayer = sessionplayer
         self._sessionplayer = sessionplayer
         self.streak = 0

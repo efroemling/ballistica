@@ -119,7 +119,9 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "        The cloud-composed look for the cloud profile this player\n"
     "        picked, or None when they are on a legacy profile or a\n"
     "        random look. Sites that spawn the player prefer this when\n"
-    "        present.\n"
+    "        present. Made in the current context's scene (scene\n"
+    "        objects never cross scenes), so read it in the context it\n"
+    "        will be used in.\n"
     "\n"
     "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
     "        The current game-specific instance for this player.\n";
@@ -303,9 +305,7 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
-    PyObject* obj = p->GetPyCloudSpazDef();
-    Py_INCREF(obj);
-    return obj;
+    return p->GetPyCloudSpazDef();  // (New ref.)
   } else if (!strcmp(s, ATTR_COLOR)) {
     Player* p = self->player_->get();
     if (!p) {
@@ -643,21 +643,17 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   PyObject* character_obj;
   PyObject* color_obj;
   PyObject* highlight_obj;
-  PyObject* cloud_spaz_def_obj{Py_None};
-  PyObject* cloud_icon_obj{Py_None};
-  static const char* kwlist[] = {"team",      "character",      "color",
-                                 "highlight", "cloud_spaz_def", "cloud_icon",
-                                 nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOOO|OO",
-                                   const_cast<char**>(kwlist), &team_obj,
-                                   &character_obj, &color_obj, &highlight_obj,
-                                   &cloud_spaz_def_obj, &cloud_icon_obj)) {
+  PyObject* cloud_spaz_json_obj{Py_None};
+  PyObject* cloud_icon_json_obj{Py_None};
+  static const char* kwlist[] = {
+      "team",      "character",       "color",
+      "highlight", "cloud_spaz_json", "cloud_icon_json",
+      nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "OOOO|OO", const_cast<char**>(kwlist), &team_obj,
+          &character_obj, &color_obj, &highlight_obj, &cloud_spaz_json_obj,
+          &cloud_icon_json_obj)) {
     return nullptr;
-  }
-  if (cloud_icon_obj != Py_None
-      && !PythonClassSceneDepiction::Check(cloud_icon_obj)) {
-    throw Exception("Expected a bascenev1.Depiction or None for cloud_icon.",
-                    PyExcType::kType);
   }
   Player* p = self->player_->get();
   if (!p) {
@@ -666,8 +662,11 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   p->set_has_py_data(true);
   p->SetPyTeam(team_obj);
   p->SetPyCharacter(character_obj);
-  p->SetPyCloudSpazDef(cloud_spaz_def_obj);
-  p->SetPyCloudIcon(cloud_icon_obj);
+  p->SetCloudLook(
+      cloud_spaz_json_obj == Py_None ? std::string()
+                                     : Python::GetString(cloud_spaz_json_obj),
+      cloud_icon_json_obj == Py_None ? std::string()
+                                     : Python::GetString(cloud_icon_json_obj));
   p->SetPyColor(color_obj);
   p->SetPyHighlight(highlight_obj);
   Py_RETURN_NONE;
@@ -800,9 +799,22 @@ auto PythonClassSessionPlayer::GetIconDepiction(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  PyObject* obj = p->GetPyCloudIcon();
-  Py_INCREF(obj);
-  return obj;
+  return p->GetPyCloudIcon();  // (New ref.)
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassSessionPlayer::GetIconDepictionJson(
+    PythonClassSessionPlayer* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  if (p->cloud_icon_json().empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(p->cloud_icon_json().c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -918,8 +930,8 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
      "  color: Sequence[float], highlight: Sequence[float],\n"
-     "  cloud_spaz_def: bascenev1.SpazDef | None = None,\n"
-     "  cloud_icon: bascenev1.Depiction | None = None) -> None\n"
+     "  cloud_spaz_json: str | None = None,\n"
+     "  cloud_icon_json: str | None = None) -> None\n"
      "\n"
      "(internal)"},
     {"set_icon_info", (PyCFunction)SetIconInfo, METH_VARARGS | METH_KEYWORDS,
@@ -963,7 +975,20 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      ":class:`~bascenev1.Depiction` (the\n"
      ":class:`~bascenev1lib.actor.image.Image` actor,\n"
      ":func:`~bascenev1.broadcastmessage` images). The usual pattern is\n"
-     "``player.get_icon_depiction() or player.get_icon()``."},
+     "``player.get_icon_depiction() or player.get_icon()``.\n"
+     "\n"
+     "The depiction is made in the current context's scene (scene\n"
+     "objects never cross scenes), so ask in the context it will be\n"
+     "shown in rather than holding one across activities."},
+    {"get_icon_depiction_json", (PyCFunction)GetIconDepictionJson, METH_NOARGS,
+     "get_icon_depiction_json() -> str | None\n"
+     "\n"
+     "Return the json :meth:`get_icon_depiction` builds from, if any.\n"
+     "\n"
+     "For keeping a player's icon somewhere that outlives scenes (a\n"
+     "stats record, say).\n"
+     "\n"
+     ":meta private:"},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"

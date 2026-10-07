@@ -164,6 +164,7 @@ from batools.pcommands3 import (
     remove_docker_images,
     generate_flathub_manifest,
     gen_pyembed,
+    require_unsandboxed,
 )
 from batools.pcommands4 import (
     ios_sim_run,

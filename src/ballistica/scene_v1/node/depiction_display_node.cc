@@ -3,12 +3,16 @@
 #include "ballistica/scene_v1/node/depiction_display_node.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -32,6 +36,11 @@ class DepictionDisplayNodeType : public NodeType {
   BA_FLOAT_ATTR(vr_depth, vr_depth, set_vr_depth);
   BA_BOOL_ATTR(host_only, host_only, set_host_only);
   BA_BOOL_ATTR(front, front, set_front);
+  BA_FLOAT_ARRAY_ATTR(color_override, color_override, SetColorOverride);
+  BA_BOOL_ATTR(use_color_override, use_color_override, set_use_color_override);
+  BA_FLOAT_ATTR(brightness, brightness, set_brightness);
+  BA_LANG_STR_ATTR(suffix, GetSuffix, SetSuffix, SetSuffixWire,
+                   suffix_lang_str);
 #undef BA_NODE_TYPE_CLASS
 
   DepictionDisplayNodeType()
@@ -45,7 +54,11 @@ class DepictionDisplayNodeType : public NodeType {
         v_align(this),
         vr_depth(this),
         host_only(this),
-        front(this) {}
+        front(this),
+        color_override(this),
+        use_color_override(this),
+        brightness(this),
+        suffix(this) {}
 };
 
 static NodeType* node_type{};
@@ -189,6 +202,78 @@ void DepictionDisplayNode::SetVAlign(const std::string& val) {
   }
 }
 
+void DepictionDisplayNode::SetColorOverride(const std::vector<float>& val) {
+  if (val.size() != 3) {
+    throw Exception("Expected float array of size 3 for color_override",
+                    PyExcType::kValue);
+  }
+  std::copy(val.begin(), val.end(), color_override_);
+}
+
+void DepictionDisplayNode::SetSuffix(const std::string& val) {
+  if (suffix_raw_ == val && suffix_mode_ == SuffixMode::kLegacy) {
+    return;
+  }
+  suffix_raw_ = val;
+  suffix_mode_ = SuffixMode::kLegacy;
+  suffix_lang_str_.reset();
+  suffix_dirty_ = true;
+}
+
+void DepictionDisplayNode::SetSuffixWire(
+    const std::string& wire, std::shared_ptr<const base::LangStr> parsed) {
+  // Untagged values get legacy semantics (as with a text node's text).
+  if (wire.empty()
+      || (wire[0] != kLangStrWireTagLiteral
+          && wire[0] != kLangStrWireTagLegacyJson
+          && wire[0] != kLangStrWireTagLangStr)) {
+    SetSuffix(wire);
+    return;
+  }
+  suffix_raw_ = wire;
+  switch (wire[0]) {
+    case kLangStrWireTagLiteral:
+      suffix_mode_ = SuffixMode::kLiteral;
+      suffix_lang_str_.reset();
+      break;
+    case kLangStrWireTagLegacyJson:
+      suffix_mode_ = SuffixMode::kLegacyJson;
+      suffix_lang_str_.reset();
+      break;
+    default:
+      suffix_mode_ = SuffixMode::kLangStr;
+      suffix_lang_str_ = std::move(parsed);
+      break;
+  }
+  suffix_dirty_ = true;
+}
+
+void DepictionDisplayNode::UpdateSuffix_() {
+  if (!suffix_dirty_) {
+    return;
+  }
+  suffix_dirty_ = false;
+  std::string text;
+  switch (suffix_mode_) {
+    case SuffixMode::kLegacy:
+      text = suffix_raw_.empty()
+                 ? std::string()
+                 : g_base->assets->CompileResourceString(suffix_raw_);
+      break;
+    case SuffixMode::kLiteral:
+      text = suffix_raw_.substr(1);
+      break;
+    case SuffixMode::kLegacyJson:
+      text = g_base->assets->CompileResourceString(suffix_raw_.substr(1));
+      break;
+    case SuffixMode::kLangStr:
+      text = suffix_lang_str_ != nullptr ? suffix_lang_str_->Evaluate()
+                                         : "LANGSTR_ERROR:unparsed wire value";
+      break;
+  }
+  suffix_.SetText(text);
+}
+
 void DepictionDisplayNode::UpdateLayout_(float screen_width,
                                          float screen_height) {
   width_ = scale_[0];
@@ -255,12 +340,16 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
     UpdateLayout_(pass.virtual_width(), pass.virtual_height());
   }
 
+  UpdateSuffix_();
   base::DepictionDrawContext context;
   context.pass = &pass;
   context.transparent = true;
   context.box = base::FitDepictionBox(
       {center_x_ - width_ * 0.5f, center_y_ - height_ * 0.5f, width_, height_},
-      *depiction_, h_align_, v_align_);
+      *depiction_, h_align_, v_align_, suffix_.GetTrailingAspect());
+  const float* color_override = use_color_override_ ? color_override_ : nullptr;
+  context.color_override = color_override;
+  context.brightness = std::max(0.0f, brightness_);
   context.z = vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth();
   context.opacity = std::max(0.0f, opacity_);
   // Overlay units are virtual screen units.
@@ -270,6 +359,7 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
           ? g_base->graphics->virtual_bounds_rect().width() / virtual_width
           : 1.0f;
   depiction_->Draw(context);
+  suffix_.Draw(context, context.box, color_override);
 }
 
 }  // namespace ballistica::scene_v1

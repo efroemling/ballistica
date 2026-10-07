@@ -326,6 +326,24 @@ enum class TextureWrapping : uint8_t {
   kMirroredRepeat,
 };
 
+/// What a texture was authored as (its role in the asset workspace),
+/// delivered in the KTX2 key/value data. Lets a texture be checked
+/// against the kind of shader slot it is bound to: a kData texture
+/// (mask/tint; independent channel values) in a picture slot, or a
+/// picture in a mask slot, shades subtly wrong and is otherwise easy to
+/// miss. kUnknown is anything that did not come from the asset pipeline
+/// (legacy formats, OS-decoded images, text, render targets), a texture
+/// that has not loaded yet, or a role newer than this build knows; such
+/// textures are never checked. A pipeline texture with no role key is
+/// kDefault.
+enum class TextureRole : uint8_t {
+  kUnknown,
+  kDefault,
+  kSourcePremultiplied,
+  kStraightAlpha,
+  kData,
+};
+
 enum class TextureMinQuality : uint8_t {
   kLow,
   kMedium,
@@ -474,12 +492,13 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261005
-inline constexpr const char* kBuiltinAssetsApvernum = "417";
+// Builtin asset-package: a-0.babuiltinassets.261007a
+inline constexpr const char* kBuiltinAssetsApvernum = "440";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesAccountV2Icon,     // textures/account_v2_icon
   kTexturesBlack,             // textures/black
+  kTexturesBlackData,         // textures/black_data
   kTexturesCircle,            // textures/circle
   kTexturesCircleShadow,      // textures/circle_shadow
   kTexturesCursor,            // textures/cursor
@@ -503,8 +522,11 @@ enum class BuiltinTextureID : uint16_t {
   kTexturesShadowSharp,       // textures/shadow_sharp
   kTexturesSoftRect,          // textures/soft_rect
   kTexturesSoftRect2,         // textures/soft_rect2
+  kTexturesSoftRect2Mask,     // textures/soft_rect2_mask
+  kTexturesSoftRectMask,      // textures/soft_rect_mask
   kTexturesSoftRectVertical,  // textures/soft_rect_vertical
   kTexturesWhite,             // textures/white
+  kTexturesWhiteData,         // textures/white_data
 };
 
 enum class BuiltinCubeMapTextureID : uint16_t {

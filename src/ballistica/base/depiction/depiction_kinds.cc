@@ -12,6 +12,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/depiction/depiction.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
@@ -113,6 +114,7 @@ class CharacterIconDepiction : public Depiction {
 /// richest form we understand:
 ///
 /// - Basic: its text in its color, as large as fits the box.
+/// - Glyph: the same, after an icon glyph (a global profile's look).
 /// - Capsule: the text in a rounded capsule (a 9-patch, a circle by
 ///   default), with an optional square icon covering the capsule's left
 ///   end; the text sits against the icon (or reaches into the left
@@ -134,7 +136,15 @@ class NameDepiction : public Depiction {
         name_ = std::move(*name);
       }
     }
-    text_group_.SetText(name_.basic.text, TextMesh::HAlign::kCenter,
+    // A glyph tier puts its icon before the text (unless a capsule,
+    // which brings its own icon, draws instead); otherwise it is
+    // exactly the basic tier.
+    if (name_.glyph && !name_.capsule) {
+      shown_text_ = name_.glyph->icon + name_.basic.text;
+    } else {
+      shown_text_ = name_.basic.text;
+    }
+    text_group_.SetText(shown_text_, TextMesh::HAlign::kCenter,
                         TextMesh::VAlign::kCenter);
   }
 
@@ -161,8 +171,8 @@ class NameDepiction : public Depiction {
   void Update(millisecs_t now) override {
     // Measure without stalling (cold OS-span measures run in the
     // background; until then we have no shape and draw nothing).
-    if (!width_ && !name_.basic.text.empty()) {
-      width_ = g_base->text_graphics->TryGetStringWidth(name_.basic.text);
+    if (!width_ && !shown_text_.empty()) {
+      width_ = g_base->text_graphics->TryGetStringWidth(shown_text_);
     }
     if (const CapsuleNameDef* cap = Capsule_()) {
       LoadCapsuleMedia_(*cap, now);
@@ -362,12 +372,19 @@ class NameDepiction : public Depiction {
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     c.SetTexture(tex);
-    SetColor_(&c, context, tex, cap.capsule_color);
+    const float* over = context.color_override;
+    if (over && cap.override_capsule) {
+      float rgba[4]{over[0], over[1], over[2], cap.capsule_color[3]};
+      SetColor_(&c, context, tex, rgba);
+    } else {
+      SetColor_(&c, context, tex, cap.capsule_color);
+    }
     if (tint_tex) {
       float tints[3][3];
       for (int i = 0; i < 3; ++i) {
-        std::copy(cap.capsule_tint_colors[i], cap.capsule_tint_colors[i] + 3,
-                  tints[i]);
+        const float* src =
+            (over && cap.override_tints[i]) ? over : cap.capsule_tint_colors[i];
+        std::copy(src, src + 3, tints[i]);
         context.StandardColor(tints[i]);
       }
       c.SetColorizeTexture(tint_tex);
@@ -391,7 +408,13 @@ class NameDepiction : public Depiction {
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     c.SetTexture(tex);
-    SetColor_(&c, context, tex, cap.icon_color);
+    const float* over = context.color_override;
+    if (over && cap.override_icon) {
+      float rgba[4]{over[0], over[1], over[2], cap.icon_color[3]};
+      SetColor_(&c, context, tex, rgba);
+    } else {
+      SetColor_(&c, context, tex, cap.icon_color);
+    }
     {
       auto xf = c.ScopedTransform();
       c.Translate(b.x + r, b.y + r, context.z);
@@ -412,12 +435,21 @@ class NameDepiction : public Depiction {
   void DrawText_(const DepictionDrawContext& context, float cx, float cy,
                  float scale) {
     float alpha = context.StandardOpacity();
-    float rgb[3]{name_.basic.color[0], name_.basic.color[1],
-                 name_.basic.color[2]};
+    // A host's color override replaces our own (unless our capsule
+    // routes it elsewhere; see CapsuleNameDef).
+    const CapsuleNameDef* cap = Capsule_();
+    bool take_override = context.color_override && (!cap || cap->override_text);
+    const float* own =
+        take_override ? context.color_override : name_.basic.color;
+    float rgb[3]{own[0], own[1], own[2]};
     context.StandardColor(rgb);
+    // Our text brightens toward white (a flash of saturated text still
+    // shows); see Graphics::BrightenColor.
+    float brightness = context.StandardBrightness();
+    Graphics::BrightenColor(rgb, brightness);
     // Glyphs with colors of their own (icon chars) keep them, as they do
-    // in text widgets.
-    float rgb_plain[3]{1.0f, 1.0f, 1.0f};
+    // in text widgets (and can only brighten by a multiply).
+    float rgb_plain[3]{brightness, brightness, brightness};
     context.StandardColor(rgb_plain);
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
@@ -445,8 +477,8 @@ class NameDepiction : public Depiction {
       } else {
         c.ClearMaskUV2Texture();
       }
-      float cmul =
-          (t->premultiplied() ? alpha : 1.0f) * context.StandardBrightness();
+      // (Brightness is already in both colors.)
+      float cmul = t->premultiplied() ? alpha : 1.0f;
       const float* ergb = text_group_.GetElementCanColor(e) ? rgb : rgb_plain;
       c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
       c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e), 1.0f));
@@ -461,6 +493,8 @@ class NameDepiction : public Depiction {
   }
 
   NameDef name_;
+  /// What we draw as text: the basic tier's, after any glyph.
+  std::string shown_text_;
   TextGroup text_group_;
   std::optional<float> width_;
   MediaBlock block_;

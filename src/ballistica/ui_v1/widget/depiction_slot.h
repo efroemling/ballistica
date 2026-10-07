@@ -83,6 +83,21 @@ class DepictionSlot {
     frame_color_[1] = g;
     frame_color_[2] = b;
   }
+  /// Text drawn right after the depiction (already translated; empty
+  /// for none), fitted into the box along with it (see
+  /// base::DepictionSuffix).
+  void set_suffix(const std::string& val) { suffix_.SetText(val); }
+
+  /// A color imposed on the depiction while use_color_override is set
+  /// (see base::DepictionDrawContext::color_override); the suffix draws
+  /// in it too.
+  void set_color_override(float r, float g, float b) {
+    color_override_[0] = r;
+    color_override_[1] = g;
+    color_override_[2] = b;
+  }
+  void set_use_color_override(bool val) { use_color_override_ = val; }
+
   void set_backing_color(float r, float g, float b) {
     has_backing_ = true;
     backing_color_[0] = r;
@@ -129,6 +144,9 @@ class DepictionSlot {
   float frame_color_[3]{1.0f, 1.0f, 1.0f};
   bool has_backing_{};
   float backing_color_[3]{};
+  bool use_color_override_{};
+  float color_override_[3]{1.0f, 1.0f, 1.0f};
+  base::DepictionSuffix suffix_;
 };
 
 }  // namespace ballistica::ui_v1

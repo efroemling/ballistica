@@ -2049,6 +2049,20 @@ void ClientSession::DumpFullState(SessionStream* out) {
     }
   }
 
+  // Spaz defs and depictions must exist before any node referencing
+  // them (as in HostSession::DumpFullState); a snapshot without them
+  // fails every node attr pointing at one on restore.
+  for (auto&& i : spaz_defs()) {
+    if (SpazDef* d = i.get()) {
+      out->AddSpazDef(d);
+    }
+  }
+  for (auto&& i : depictions()) {
+    if (SceneDepiction* d = i.get()) {
+      out->AddDepiction(d);
+    }
+  }
+
   // Add all scene nodes.
   for (auto&& i : scenes()) {
     if (Scene* sg = i.get()) {

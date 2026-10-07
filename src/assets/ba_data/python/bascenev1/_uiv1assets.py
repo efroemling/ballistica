@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bauiv1assets.261004a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bauiv1assets.261007`` (bascenev1).
 
 Standard ui chrome the ui_v1 widget layer draws itself with -- window backings,
 button faces, scroll furniture, the ui atlases -- supplied to ui_v1 by the
@@ -11,7 +11,7 @@ supplying its own set instead. Server-rendered pages draw some of it too
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 407
+# ba_meta require asset-package 438
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bacommon.assetpackage import ApverNum
 
 from bascenev1._assetref import AssetGroup
 
-# a-0.bauiv1assets.261004a
-_ASSET_PACKAGE = ApverNum(407)
+# a-0.bauiv1assets.261007
+_ASSET_PACKAGE = ApverNum(438)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle

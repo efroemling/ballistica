@@ -40,6 +40,34 @@ for them alone -- a branch serving only that band is dead code. Keep
 `kProtocolVersionDevGapMax` one below `kProtocolVersionMax` on any
 further bump before 1.8 ships (a static_assert enforces it).
 
+## Scene confinement
+
+Every object a session puts on the stream -- materials, textures and
+other media, spaz defs, depictions -- belongs to exactly one scene
+(the session's own, used by the lobby, or one activity's), and only
+that scene's nodes may reference it. `SessionStream::SetNodeAttr`
+enforces this when hosting ("…/node are from different scenes").
+
+Don't carve out exceptions, even for something that feels
+session-wide. Each one has to be known to every path that serializes
+or restores state -- the host's late-joiner dump, a replay's seek
+snapshot (`ClientSession::DumpFullState`), anything added later -- and
+a path that doesn't know breaks only when the exception is actually
+used. It happened once: players' cloud looks were built in the
+session scene (by the lobby) and assigned to activity spazzes, the
+check was relaxed for the session scene, and replay playback of any
+game with a cloud-profile player died at its first seek snapshot
+(fixed 2026-10-06; 1.8.0b10).
+
+When something must outlive a scene -- a player's look, a stats
+record's icon -- carry its *description* (json, a name) and build an
+object in each scene that uses it. `SessionPlayer.cloud_spaz_def` and
+`get_icon_depiction()` work that way: the player holds the json and
+hands out an object made in the calling context's scene (reused while
+alive), so read them in the context that will use them, and never hold
+one across activities. The cost is a few hundred bytes of json per
+player per activity, nothing next to the stream itself.
+
 ## Framing (protocol 44)
 
 `[BA_MESSAGE_SESSION_COMMANDS][varint len][cmd id][zigzag varint

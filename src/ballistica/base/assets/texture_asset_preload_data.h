@@ -48,6 +48,11 @@ class TextureAssetPreloadData {
   // (DDS/KTX/PVR) and any file without the keys leave these kClamp.
   TextureWrapping wrap_h{TextureWrapping::kClamp};
   TextureWrapping wrap_v{TextureWrapping::kClamp};
+
+  // The texture's authored role, read from the KTX2 key/value data at
+  // load (``baTextureRole``; absent means kDefault). Legacy loaders
+  // (DDS/KTX/PVR) leave it kUnknown.
+  TextureRole role{TextureRole::kUnknown};
 };
 
 }  // namespace ballistica::base

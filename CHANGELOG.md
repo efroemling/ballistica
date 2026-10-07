@@ -1,4 +1,19 @@
-### 1.8.0 (build 23038, api 9, 2026-10-05)
+### 1.8.0 (build 23039, api 9, 2026-10-06)
+- Asset-package textures now carry the role they were authored with, and the
+  engine checks it where a texture is used: a `data` texture (a mask or tint,
+  whose channels are independent values) drawn as a picture, or a picture
+  bound as a colorize/mask texture, logs a one-time warning naming the
+  texture. Masks built with the `data` role are no longer premultiplied by
+  their alpha; the masked image shader applies mask alpha itself for those.
+  Textures that did not come from an asset package are not checked.
+- Doc-ui pages (the settings pages, inbox, etc.) open faster, most noticeably
+  on slower devices: asset-packages already resolved this run are no longer
+  resolved again for every page shown. A page or asset resolve that takes
+  over a second for purely local reasons (nothing fetched from the network)
+  now logs a warning saying where the time went.
+- Fixed keyboard/controller selection getting stuck on doc-ui pages with
+  nothing selectable on them (an empty inbox, say): such a page now gets a
+  subtle Ok button at its end that closes the window.
 - Touchscreen players on Android and iPhone now get haptic feedback from the
   device itself for the same events controllers rumble for (Android 10 and
   newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'

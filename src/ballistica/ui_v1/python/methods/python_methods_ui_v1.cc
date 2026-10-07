@@ -282,9 +282,26 @@ static PyMethodDef PyApMeshGetDef = {
 /// for any left unset).
 static void ApplyDepictionArgs(DepictionSlot* slot, PyObject* depiction_obj,
                                PyObject* key_obj, PyObject* h_align_obj,
-                               PyObject* v_align_obj, PyObject* debug_obj) {
+                               PyObject* v_align_obj, PyObject* debug_obj,
+                               PyObject* suffix_obj,
+                               PyObject* color_override_obj,
+                               PyObject* use_color_override_obj) {
   if (debug_obj != Py_None) {
     slot->set_debug(Python::GetBool(debug_obj));
+  }
+  if (suffix_obj != Py_None) {
+    slot->set_suffix(Python::GetString(suffix_obj));
+  }
+  if (color_override_obj != Py_None) {
+    std::vector<float> color = Python::GetFloats(color_override_obj);
+    if (color.size() != 3) {
+      throw Exception("Expected 3 floats for depiction_color_override.",
+                      PyExcType::kValue);
+    }
+    slot->set_color_override(color[0], color[1], color[2]);
+  }
+  if (use_color_override_obj != Py_None) {
+    slot->set_use_color_override(Python::GetBool(use_color_override_obj));
   }
   // Key first: it applies to the depiction set below.
   if (key_obj != Py_None) {
@@ -396,6 +413,9 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depiction_hit_area_obj{Py_None};
   PyObject* depiction_debug_obj{Py_None};
   PyObject* tint3_color_obj{Py_None};
+  PyObject* depiction_suffix_obj{Py_None};
+  PyObject* depiction_color_override_obj{Py_None};
+  PyObject* depiction_use_color_override_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "id",
@@ -450,10 +470,13 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depiction_hit_area",
                                  "depiction_debug",
                                  "tint3_color",
+                                 "depiction_suffix",
+                                 "depiction_color_override",
+                                 "depiction_use_color_override",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds,
-          "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -469,7 +492,8 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &on_actions_complete_call_obj, &text_h_align_obj, &accessory_obj,
           &depiction_obj, &depiction_key_obj, &depiction_h_align_obj,
           &depiction_v_align_obj, &depiction_hit_area_obj, &depiction_debug_obj,
-          &tint3_color_obj))
+          &tint3_color_obj, &depiction_suffix_obj,
+          &depiction_color_override_obj, &depiction_use_color_override_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -754,10 +778,14 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (AnySet({depiction_obj, depiction_key_obj, depiction_h_align_obj,
-              depiction_v_align_obj, depiction_debug_obj})) {
+              depiction_v_align_obj, depiction_debug_obj, depiction_suffix_obj,
+              depiction_color_override_obj,
+              depiction_use_color_override_obj})) {
     ApplyDepictionArgs(&b->GetDepictionSlot(), depiction_obj, depiction_key_obj,
                        depiction_h_align_obj, depiction_v_align_obj,
-                       depiction_debug_obj);
+                       depiction_debug_obj, depiction_suffix_obj,
+                       depiction_color_override_obj,
+                       depiction_use_color_override_obj);
   }
   if (depiction_hit_area_obj != Py_None) {
     b->set_depiction_hit_area(Python::GetBool(depiction_hit_area_obj));
@@ -835,6 +863,9 @@ static PyMethodDef PyButtonWidgetDef = {
     "  depiction_hit_area: bool | None = None,\n"
     "  depiction_debug: bool | None = None,\n"
     "  tint3_color: Sequence[float] | None = None,\n"
+    "  depiction_suffix: str | None = None,\n"
+    "  depiction_color_override: Sequence[float] | None = None,\n"
+    "  depiction_use_color_override: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
@@ -1162,6 +1193,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* nine_patch_insets_obj{Py_None};
   PyObject* nine_patch_borders_obj{Py_None};
   PyObject* nine_patch_tile_obj{Py_None};
+  PyObject* depiction_suffix_obj{Py_None};
+  PyObject* depiction_color_override_obj{Py_None};
+  PyObject* depiction_use_color_override_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1198,9 +1232,12 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "nine_patch_insets",
                                  "nine_patch_borders",
                                  "nine_patch_tile",
+                                 "depiction_suffix",
+                                 "depiction_color_override",
+                                 "depiction_use_color_override",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &color_obj, &texture_obj, &opacity_obj, &rotate_obj,
           &mesh_transparent_obj, &mesh_opaque_obj, &has_alpha_channel_obj,
@@ -1212,7 +1249,8 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &depiction_v_align_obj, &depiction_take_input_obj,
           &depiction_frame_color_obj, &depiction_backing_color_obj,
           &depiction_debug_obj, &tint3_color_obj, &nine_patch_insets_obj,
-          &nine_patch_borders_obj, &nine_patch_tile_obj))
+          &nine_patch_borders_obj, &nine_patch_tile_obj, &depiction_suffix_obj,
+          &depiction_color_override_obj, &depiction_use_color_override_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1391,7 +1429,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (AnySet({depiction_obj, depiction_key_obj, depiction_h_align_obj,
               depiction_v_align_obj, depiction_take_input_obj,
               depiction_frame_color_obj, depiction_backing_color_obj,
-              depiction_debug_obj})) {
+              depiction_debug_obj, depiction_suffix_obj,
+              depiction_color_override_obj,
+              depiction_use_color_override_obj})) {
     DepictionSlot& slot{b->GetDepictionSlot()};
     if (depiction_take_input_obj != Py_None) {
       slot.set_take_input(Python::GetBool(depiction_take_input_obj));
@@ -1412,9 +1452,10 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
       }
       slot.set_backing_color(c[0], c[1], c[2]);
     }
-    ApplyDepictionArgs(&slot, depiction_obj, depiction_key_obj,
-                       depiction_h_align_obj, depiction_v_align_obj,
-                       depiction_debug_obj);
+    ApplyDepictionArgs(
+        &slot, depiction_obj, depiction_key_obj, depiction_h_align_obj,
+        depiction_v_align_obj, depiction_debug_obj, depiction_suffix_obj,
+        depiction_color_override_obj, depiction_use_color_override_obj);
   }
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
@@ -1469,6 +1510,9 @@ static PyMethodDef PyImageWidgetDef = {
     "  nine_patch_insets: Sequence[float] | None = None,\n"
     "  nine_patch_borders: Sequence[float] | None = None,\n"
     "  nine_patch_tile: Sequence[bool] | None = None,\n"
+    "  depiction_suffix: str | None = None,\n"
+    "  depiction_color_override: Sequence[float] | None = None,\n"
+    "  depiction_use_color_override: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -1520,7 +1564,16 @@ static PyMethodDef PyImageWidgetDef = {
     "picture honors the mask too. ``depiction_debug`` tints the box the\n"
     "depiction reports covering (what a hit-tested button takes presses\n"
     "over), to check it against what is drawn. See also\n"
-    "``get_depiction_control()``.",
+    "``get_depiction_control()``.\n"
+    "\n"
+    "``depiction_suffix`` is text drawn right after the depiction (a\n"
+    "player's '(ready)' after their name, say; empty for none), sized to\n"
+    "its height and fitted into the box along with it.\n"
+    "``depiction_color_override`` (rgb) is a color imposed on the\n"
+    "depiction while ``depiction_use_color_override`` is set; each kind\n"
+    "decides what it applies to (a name: its text, or the capsule parts\n"
+    "its override targets name; never glyphs with colors of their own).\n"
+    "The suffix draws in it too.",
 };
 
 // ------------------------- get_depiction_control -----------------------------

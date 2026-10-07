@@ -619,6 +619,25 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
   }
 }
 
+void Graphics::BrightenColor(float* rgb, float brightness) {
+  assert(rgb);
+  float b = std::max(0.0f, brightness);
+  float m{};
+  for (int i = 0; i < 3; ++i) {
+    rgb[i] = std::max(0.0f, rgb[i]) * b;
+    m = std::max(m, rgb[i]);
+  }
+  if (m <= 1.0f) {
+    return;
+  }
+  // Past the knee: hue at full intensity, whitened by the overshoot.
+  float whiten = 1.0f - 1.0f / m;
+  for (int i = 0; i < 3; ++i) {
+    float c = rgb[i] / m;
+    rgb[i] = c + (1.0f - c) * whiten;
+  }
+}
+
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;

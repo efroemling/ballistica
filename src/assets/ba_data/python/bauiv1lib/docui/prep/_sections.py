@@ -132,8 +132,37 @@ def _nothing_here_row(row: dui2.ButtonRow) -> dui2.ButtonRow:
     return row
 
 
+#: Pages we've already warned have nothing selectable on them. Each is
+#: built again for every redisplay and refresh; once a run says it.
+_g_warned_unselectable: set[str] = set()
+
+
+def _ok_row() -> dui2.ButtonRow:
+    """A lone button that closes the window.
+
+    What we end a page with when it gives us nothing to select. It is
+    there for selection to land on, not to be noticed: colored like
+    the window behind it, so the page still reads as the page's
+    author drew it.
+    """
+    return dui2.ButtonRow(
+        buttons=[
+            dui2.Button(
+                _commonassets.strings.actions.ok.spec,
+                action=dui2.Local(close_window=True),
+                style=dui2.ButtonStyle.MEDIUM,
+                size=(130, 50),
+                # (The window backing's own tint.)
+                color=(0.4, 0.37, 0.49, 1.0),
+                label_color=(0.75, 0.72, 0.8, 1.0),
+            )
+        ],
+        center_content=True,
+    )
+
+
 def layout_entries(
-    page: dui2.Page,
+    page: dui2.Page, description: str
 ) -> tuple[list[LayoutEntry], list[tuple[dui2.Section, int, int]]]:
     """The flat list of what a page lays out, and its sections' spans.
 
@@ -141,6 +170,13 @@ def layout_entries(
     its :class:`SectionHead`, its rows and (when it has one) its
     :class:`SectionFoot`. Each span is (section, first row index, last
     row index) into the list; last < first for a section with no rows.
+
+    A page with nothing selectable on it gets an Ok button at its end.
+    Keyboard and controller selection needs something in a window to
+    land on: with nothing there it moves into the page and cannot get
+    back out to the toolbars.
+
+    ``description`` names the page in anything logged about it.
 
     :meta private:
     """
@@ -207,6 +243,16 @@ def layout_entries(
             )
     if unknown_rows:
         bui.uilog.error('Got unknown row type(s) in doc-ui; ignoring.')
+    if all(isinstance(entry, SectionHead | SectionFoot) for entry in entries):
+        if description not in _g_warned_unselectable:
+            _g_warned_unselectable.add(description)
+            bui.uilog.warning(
+                'Doc-ui page %s has nothing selectable on it; adding an'
+                ' Ok button so selection has somewhere to go. Pages'
+                ' should provide one of their own.',
+                description,
+            )
+        entries.append(_ok_row())
     return entries, spans
 
 

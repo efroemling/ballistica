@@ -343,6 +343,7 @@
  "ba_data/python/bauiv1lib/docui/_popuptext.py",
  "ba_data/python/bauiv1lib/docui/_resolve.py",
  "ba_data/python/bauiv1lib/docui/_scrollrestore.py",
+ "ba_data/python/bauiv1lib/docui/_timing.py",
  "ba_data/python/bauiv1lib/docui/_typed.py",
  "ba_data/python/bauiv1lib/docui/_types.py",
  "ba_data/python/bauiv1lib/docui/_window.py",

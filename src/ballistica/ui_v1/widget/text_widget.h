@@ -148,6 +148,8 @@ class TextWidget : public Widget {
   auto ScaleAdjustedX_(float x) -> float;
   auto ScaleAdjustedY_(float y) -> float;
   void AddCharsToText_(const std::string& addchars);
+  void DeleteBackward_(bool word);
+  void DeleteForward_(bool word);
   auto ShouldUseStringEditor_() const -> bool;
   void InvokeStringEditor_();
   void UpdateTranslation_();

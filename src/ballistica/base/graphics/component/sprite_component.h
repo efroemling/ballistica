@@ -32,6 +32,9 @@ class SpriteComponent : public RenderComponent {
   }
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 

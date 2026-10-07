@@ -1016,20 +1016,13 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       case BAK_DELETE:
         if (editable()) {
           claimed = true;
-          std::vector<uint32_t> unichars =
-              Utils::UnicodeFromUTF8(text_raw_, "c94j8f");
-          auto len = static_cast<int>(unichars.size());
-          if (len > 0) {
-            if (carat_position_ > 0) {
-              int pos = carat_position_ - 1;
-              if (pos > len - 1) {
-                pos = len - 1;
-              }
-              unichars.erase(unichars.begin() + pos);
-              text_raw_ = Utils::UTF8FromUnicode(unichars);
-              text_translation_dirty_ = true;
-              carat_position_--;
-            }
+          // Alt (mac convention) or ctrl (everywhere else) deletes a
+          // whole word instead of a single char.
+          bool word{(m.keysym.mod & (BA_KMOD_ALT | BA_KMOD_CTRL)) != 0};
+          if (m.keysym.sym == BAK_BACKSPACE) {
+            DeleteBackward_(word);
+          } else {
+            DeleteForward_(word);
           }
         }
         break;
@@ -1258,6 +1251,61 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
       carat_position_++;
     }
   }
+  text_raw_ = Utils::UTF8FromUnicode(unichars);
+  text_translation_dirty_ = true;
+}
+
+// Chars that make up a 'word' for word-wise deletes: ascii letters,
+// digits, and underscore, plus anything non-ascii (so accented and
+// non-latin names delete as words too).
+static auto IsWordChar_(uint32_t ch) -> bool {
+  return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+         || (ch >= '0' && ch <= '9') || ch == '_' || ch > 127;
+}
+
+void TextWidget::DeleteBackward_(bool word) {
+  assert(editable());
+  std::vector<uint32_t> unichars = Utils::UnicodeFromUTF8(text_raw_, "c94j8f");
+  auto len = static_cast<int>(unichars.size());
+  carat_position_ = std::clamp(carat_position_, 0, len);
+  int start{carat_position_ - 1};
+  if (start < 0) {
+    return;
+  }
+  if (word) {
+    // Eat any non-word chars, then the word before them.
+    while (start > 0 && !IsWordChar_(unichars[start])) {
+      start--;
+    }
+    while (start > 0 && IsWordChar_(unichars[start - 1])) {
+      start--;
+    }
+  }
+  unichars.erase(unichars.begin() + start, unichars.begin() + carat_position_);
+  carat_position_ = start;
+  text_raw_ = Utils::UTF8FromUnicode(unichars);
+  text_translation_dirty_ = true;
+}
+
+void TextWidget::DeleteForward_(bool word) {
+  assert(editable());
+  std::vector<uint32_t> unichars = Utils::UnicodeFromUTF8(text_raw_, "f83jd9");
+  auto len = static_cast<int>(unichars.size());
+  carat_position_ = std::clamp(carat_position_, 0, len);
+  int end{carat_position_ + 1};
+  if (end > len) {
+    return;
+  }
+  if (word) {
+    // Eat any non-word chars, then the word after them.
+    while (end < len && !IsWordChar_(unichars[end - 1])) {
+      end++;
+    }
+    while (end < len && IsWordChar_(unichars[end])) {
+      end++;
+    }
+  }
+  unichars.erase(unichars.begin() + carat_position_, unichars.begin() + end);
   text_raw_ = Utils::UTF8FromUnicode(unichars);
   text_translation_dirty_ = true;
 }

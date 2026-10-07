@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets.260911``
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261007``
 (bascenev1).
 
 Everything a classic character is made of: body textures and color masks, body
@@ -13,7 +13,7 @@ dedupe means that costs roughly the new character's own art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 316
+# ba_meta require asset-package 444
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -25,8 +25,8 @@ from bacommon.assetpackage import ApverNum
 
 from bascenev1._assetref import AssetGroup
 
-# a-0.baclassiccharacterassets.260911
-_ASSET_PACKAGE = ApverNum(316)
+# a-0.baclassiccharacterassets.261007
+_ASSET_PACKAGE = ApverNum(444)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle

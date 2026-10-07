@@ -254,8 +254,8 @@ SPEC = SceneAssetSpec(
                 Slot(
                     name='black',
                     kind=Kind.TEXTURE,
-                    doc='Solid black; an identity colorize mask.',
-                    default='textures.black',
+                    doc='Solid black (data role); an identity colorize mask.',
+                    default='textures.black_data',
                 ),
             ],
         ),

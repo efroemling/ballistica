@@ -48,6 +48,18 @@ struct CapsuleNameDef {
   /// number of copies) rather than stretching it. Its art must tile.
   bool capsule_tile{};
 
+  /// Where a host's color override goes (see
+  /// base::DepictionDrawContext::color_override), each replacing that
+  /// part's own rgb (alphas still apply): the text (and its glow), the
+  /// capsule body, each of the three tint channels, the icon. Just the
+  /// text unless the capsule says otherwise -- so a capsule can route
+  /// a team color into, say, a glow in one tint channel while its text
+  /// keeps its own color.
+  bool override_text{true};
+  bool override_capsule{};
+  bool override_tints[3]{};
+  bool override_icon{};
+
   /// Optional tint texture over the capsule texture (same layout):
   /// its red, green, and blue channels say where each tint color
   /// multiplies in. Unset tint colors are white (no effect).
@@ -87,6 +99,14 @@ struct CapsuleNameDef {
   std::string domain_digest;
 };
 
+/// Glyph tier of a name: an icon glyph (one of the game's private-use
+/// icon chars) drawn before the basic tier's text, in its color -- a
+/// global profile's look. Never sent alongside a capsule; if both
+/// arrive, the capsule wins.
+struct GlyphNameDef {
+  std::string icon;
+};
+
 /// A name: its basic tier plus any richer ones this build understands.
 /// The same form wherever a name appears -- on its own (a name
 /// depiction; an account's name) or as a character's name. Parsed
@@ -95,9 +115,10 @@ struct CapsuleNameDef {
 struct NameDef {
   BasicNameDef basic;
   std::optional<CapsuleNameDef> capsule;
+  std::optional<GlyphNameDef> glyph;
 
-  /// Parse a name block ({"b": {...}, "c": {...}}). None if it has no
-  /// usable basic tier. Logs (once) what it can't use.
+  /// Parse a name block ({"b": {...}, "c": {...}, "g": {...}}). None if
+  /// it has no usable basic tier. Logs (once) what it can't use.
   static auto Parse(const JsonRef& block) -> std::optional<NameDef>;
 };
 

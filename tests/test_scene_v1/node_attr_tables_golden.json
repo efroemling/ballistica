@@ -1364,6 +1364,22 @@
   [
    "front",
    "bool"
+  ],
+  [
+   "color_override",
+   "float-array"
+  ],
+  [
+   "use_color_override",
+   "bool"
+  ],
+  [
+   "brightness",
+   "float"
+  ],
+  [
+   "suffix",
+   "string"
   ]
  ]
 }

@@ -155,6 +155,8 @@ def _walk_decorations(
         elif dectypeid is dui2.DecorationTypeID.DEPICTION:
             assert isinstance(deco, dui2.Depiction)
             _walk_depiction(deco.depiction)
+            if deco.suffix is not None:
+                deco.suffix = lstr(deco.suffix)
 
         elif dectypeid is dui2.DecorationTypeID.UNKNOWN:
             # A decoration from a newer producer. Nothing here can
@@ -254,7 +256,8 @@ def walk_page(
     is over decorations -- so their strings *and* their asset refs
     are both covered. Depictions (in decorations, and the page's
     viewer) are visited but hold nothing for either callback: they are
-    self-sufficient and deliberately outside the page's manifest.
+    self-sufficient and deliberately outside the page's manifest. (A
+    depiction decoration's suffix is an ordinary page string, though.)
     """
     import bacommon.clienteffect as clfx
 
