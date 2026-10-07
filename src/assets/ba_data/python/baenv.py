@@ -617,6 +617,8 @@ def _setup_paths(
     # lives in the app's own data dir instead. That path is the same
     # inside and outside the sandbox, so dirs we hand to the desktop
     # (e.g. 'Show Mods Folder' via the OpenURI portal) resolve there.
+    # (CorePython::InitPython in core_python.cc mirrors this to pick its
+    # pycache_prefix; keep the two in sync.)
     if config_dir is None:
         flatpak_id = os.environ.get('FLATPAK_ID')
         if flatpak_id:

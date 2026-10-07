@@ -487,7 +487,7 @@ jobs:
   #                           (only runs on upstream)                            #
   ################################################################################
 
-  release_bombsquad_build_env:
+  release_flatpak_prebuilt_inputs:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest
     steps:
@@ -496,42 +496,24 @@ jobs:
         uses: ./.github/actions/bombsquad_build_env
         with:
           using-cmake: true
-      - name: Make the build
-        run: |
-          make flatpak-prefetch
-      # Flathub wants everything the build installs to come from the
-      # source tarball, so put this release's metadata entry and the
-      # app icon into the tree before packing it.
+      # Flathub builds take the code from git at this tag; this archive
+      # carries the rest (what a network-less build can't fetch, plus
+      # this release's metadata entry). See pconfig/flatpak/README.md.
       - name: Add flatpak release metadata
         run: tools/pcommand flatpak_add_release "${GITHUB_REF_NAME}"
-      - name: Fetch flatpak icon
-        run: |
-          curl -fsSL -o pconfig/flatpak/net.froemling.bombsquad.png \
-            https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
-          echo "c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a  pconfig/flatpak/net.froemling.bombsquad.png" \
-            | sha256sum -c -
-      - name: Compress the build
-        # .venv is deliberately left out: a venv is bound to the
-        # absolute path of the interpreter that created it, so the
-        # flatpak build creates its own inside the sandbox (see
-        # pconfig/flatpak/python-build-env.yml). .git and .idea are
-        # never read by the build. Keep this in sync with the dir
-        # source's skip list in pconfig/flatpak/net.froemling.bombsquad.yml.
-        run: >
-          tar -cf "bombsquad_build_env.tar"
-          --exclude="bombsquad_build_env.tar" --exclude="./.venv"
-          --exclude="./.git" --exclude="./.idea" .
-      - name: Upload the build
+      - name: Pack the flatpak prebuilt inputs
+        run: make flatpak-prebuilt-inputs
+      - name: Upload the prebuilt inputs
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           omitBody: true
-          artifacts: bombsquad_build_env.tar
+          artifacts: build/flatpak/bombsquad_prebuilt_inputs.tar
 
   release_generate_flathub_manifest:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest
-    needs: release_bombsquad_build_env
+    needs: release_flatpak_prebuilt_inputs
     steps:
       - uses: actions/checkout@v7
         with:

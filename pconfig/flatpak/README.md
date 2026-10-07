@@ -9,14 +9,15 @@ There is one manifest, `net.froemling.bombsquad.yml`, used two ways:
 - **Local / CI builds** use it as-is and build straight from the working
   tree. They produce a `.flatpak` bundle you can install by hand.
 - **Flathub builds** use a copy generated at release time, with the
-  working-tree source swapped for a prebuilt source tarball attached to the
-  GitHub release. That copy is pushed to our Flathub repo.
+  working-tree source swapped for git at the release tag plus a small
+  archive of the prebuilt inputs that aren't in git, attached to the GitHub
+  release. That copy is pushed to our Flathub repo.
 
 ### Files
 
 | File | Purpose |
 | --- | --- |
-| `net.froemling.bombsquad.yml` | The manifest. Its `bombsquad` module uses the project directory itself (`type: dir`) as its source; the Flathub generator replaces that one source with the release tarball. |
+| `net.froemling.bombsquad.yml` | The manifest. Its `bombsquad` module uses the project directory itself (`type: dir`) as its source; the Flathub generator replaces that one source with a git source plus the release's prebuilt-inputs archive. |
 | `python-build-env.yml` | Generated module supplying `uv` plus one wheel per package in `pconfig/requirements_build_lock.txt`, so the build can create its venv offline. Do not edit by hand. |
 | `net.froemling.bombsquad.metainfo.xml` | AppStream metadata (description, screenshots, content rating, branding) shown on Flathub and in software centers. |
 | `net.froemling.bombsquad.releases.xml` | AppStream release history, installed alongside the metainfo. The release workflow adds each new version's entry (see below). |
@@ -59,19 +60,29 @@ for multiplayer.) Several steps of `make cmake-build` normally download
 things, so `make flatpak-prefetch` fetches them on the host first and they
 travel into the sandbox with the sources:
 
-- the cmake assets, including the asset bundle that is assembled by
-  calling the bacloud server, plus `.cache/efrocache`, since if it's
-  missing the asset build downloads a starter archive;
+- the cmake assets in `build/assets`, including the asset bundle that is
+  assembled by calling the bacloud server (its manifest in
+  `.cache/asset_bundle/gui-minimal` and the blobs it references in
+  `.cache/assetdata`);
 - the built resources;
 - `build/prefab/lib/linux_<arch>_gui/release/libballisticaplus.a`, the
   prebuilt library the binary links against, for both `x86_64` and
   `arm64`.
 
 Inside the sandbox those make targets then find their outputs already in
-place and up to date, so nothing is downloaded. That relies on file
-modification times surviving the copy into the sandbox. If you add a build
-step that downloads something, add it to `flatpak-prefetch` too, or the
-flatpak build will fail.
+place and up to date, so nothing is downloaded. Two build steps make
+sure of that whatever the sources are:
+
+- the prefetched files are all touched to one fresh timestamp, since a
+  git checkout leaves them older than the files around them, and make
+  would then try to re-download them;
+- an empty `.cache/efrocache` is created, since the asset build
+  downloads an efrocache starter archive whenever that dir is missing.
+
+If you add a build step that downloads something, add it to
+`flatpak-prefetch` (and, if it lands outside the paths
+`flatpak_prebuilt_inputs` packs, to that list too), or the flatpak build
+will fail.
 
 ### The Python venv
 
@@ -153,20 +164,26 @@ flatpak run net.froemling.bombsquad
 Flathub builds every app from its own manifest repo, on Flathub's
 infrastructure, with no network access during the build. Flathub also
 wants everything the build installs to come from the app's own sources,
-not from files in the Flathub repo. So we hand it a source tarball that
-already holds everything `make flatpak-prefetch` fetches, plus this
-release's metadata and the icon. Two jobs in
-`.github/workflows/release.yml` handle this. They only run when the repo
-owner is `efroemling` or `Loup-Garou911XD`.
+not from files in the Flathub repo. So the Flathub manifest takes the code
+from git, pinned to the release tag and its commit, and the few things git
+doesn't have from a release asset:
+
+- `bombsquad_prebuilt_inputs.tar` (about 30MB), written by `make
+  flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
+  what `make flatpak-prefetch` fetches (see above) plus `releases.xml`
+  with this release's entry, and is extracted over the git checkout.
+- The icon is a separate declared `file` source, fetched from
+  files.ballistica.net with a pinned checksum.
+
+Two jobs in `.github/workflows/release.yml` handle this. They only run
+when the repo owner is `efroemling` or `Loup-Garou911XD`.
 
 ```
 git tag v1.x.y ─► release.yml
                    │
-                   ├─ release_bombsquad_build_env
-                   │    make flatpak-prefetch
+                   ├─ release_flatpak_prebuilt_inputs
                    │    pcommand flatpak_add_release <tag>   (adds the entry to releases.xml)
-                   │    fetch the icon into pconfig/flatpak/
-                   │    tar the tree (minus .venv, .git, .idea) ─► bombsquad_build_env.tar
+                   │    make flatpak-prebuilt-inputs  ─► bombsquad_prebuilt_inputs.tar
                    │    attach it to the GitHub release
                    │
                    └─ release_generate_flathub_manifest   (needs the job above)
@@ -189,12 +206,13 @@ generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
    files an older version of this step left there.
 2. Queries the GitHub API for the **latest** release of the repo
    (`GITHUB_REPOSITORY`, or else derived from `git remote.origin.url`),
-   and finds the `bombsquad_build_env.tar` asset and its SHA256 digest.
+   and finds its tag, the commit that tag points at, and the
+   `bombsquad_prebuilt_inputs.tar` asset and its SHA256 digest.
 3. Reads `net.froemling.bombsquad.yml`, replaces its one `type: dir`
-   source (and the comment above it) with an `archive` source pointing at
-   that tarball and checksum, and writes the result to
-   `build/flathub/net.froemling.bombsquad.yml`. It fails if it doesn't find
-   exactly one dir source.
+   source (and the comment above it) with a `git` source (url, tag and
+   commit) followed by an `archive` source for the prebuilt inputs, and
+   writes the result to `build/flathub/net.froemling.bombsquad.yml`. It
+   fails if it doesn't find exactly one dir source.
 
 The push uses the `FLATHUB_PUSH_PAT` repository secret, a token with
 push access to the `<owner>/flathub` repo.
@@ -206,14 +224,14 @@ manifest and publishes the new version.
 
 ### Release checklist
 
-- If you change what the build needs from the source tree, keep the dir
-  source's `skip:` list in the manifest and the tar excludes in
-  `release.yml` in step, since they decide what CI and Flathub each see.
+- If the build starts needing a file that git doesn't have, add it to
+  `flatpak_prebuilt_inputs`, or Flathub builds will fail while local ones
+  (which see the whole working tree) still pass.
 - Keep `python-build-env.yml` current with `make flatpak-build-env`,
   because the Flathub build uses the committed copy.
 - Changes to `metainfo.xml` or the `.desktop` file reach Flathub on the
   next release. You can validate them with
   `flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream net.froemling.bombsquad.metainfo.xml`.
 - The generator always uses the *latest* GitHub release, so it has to run
-  after the release (and its `bombsquad_build_env.tar`) has been
+  after the release (and its `bombsquad_prebuilt_inputs.tar`) has been
   published.

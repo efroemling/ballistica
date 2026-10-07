@@ -1528,11 +1528,20 @@ docker-clean:
 # Everything a flatpak build would otherwise download mid-build: built
 # assets, resources, and the prefab plus lib for each flatpak arch. The
 # build sandbox has no network (Flathub forbids it), so these have to be
-# in the tree it is handed: the release tarball, or the local tree for
-# flatpak-linux.
+# in the tree it is handed: the local tree for flatpak-linux, or the
+# release's prebuilt-inputs archive (below) for Flathub.
 flatpak-prefetch: assets-cmake resources \
  build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
  build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+# Pack what flatpak-prefetch produced, plus this release's releases.xml
+# entry, into build/flatpak/bombsquad_prebuilt_inputs.tar: the parts of
+# a Flathub build's tree that are not in git. Flathub builds take the
+# source from git at the release tag and lay this archive over it; see
+# flatpak_prebuilt_inputs and generate_flathub_manifest in
+# tools/batools/pcommands3.py.
+flatpak-prebuilt-inputs: flatpak-prefetch
+	$(PCOMMAND) flatpak_prebuilt_inputs
 
 # The SDK, runtime and extensions named in the manifest are installed
 # per-user from flathub, so their versions live only in the manifest.

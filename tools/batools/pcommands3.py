@@ -143,15 +143,15 @@ def generate_flathub_manifest() -> None:
 
     1. Copies the manifest's python-build-env module to build/flathub
        and removes files that belong upstream (desktop file, metainfo,
-       releases.xml; Flathub wants those from the source tarball)
+       releases.xml; Flathub wants those from the app's own sources)
     2. Writes pconfig/flatpak/net.froemling.bombsquad.yml with its
-       project-dir source swapped for the latest GitHub release's
-       build-env tarball
+       project-dir source swapped for git at the latest GitHub
+       release's tag, plus that release's prebuilt-inputs archive
     """
     import json
     import os
-    import re
     import shutil
+    import subprocess
     import urllib.request
 
     from efro.error import CleanError
@@ -170,7 +170,7 @@ def generate_flathub_manifest() -> None:
 
     # Step 1: The flathub repo holds only the manifest and the module
     # files it includes. Everything the build installs (desktop file,
-    # metainfo, releases.xml, icon) comes from the source tarball, so
+    # metainfo, releases.xml, icon) comes from the app's sources, so
     # clear out any copies an earlier version of this step pushed.
     for filename in [
         'net.froemling.bombsquad.metainfo.xml',
@@ -200,10 +200,15 @@ def generate_flathub_manifest() -> None:
         with urllib.request.urlopen(req) as response:
             release_data = json.loads(response.read().decode())
 
-        # Find the bombsquad_build_env.tar asset
+        tag = release_data.get('tag_name')
+        if not tag:
+            raise CleanError('Could not get the tag of the latest release')
+        print(f'  Release tag: {tag}')
+
+        # Find the prebuilt-inputs asset
         asset: dict = {}
         asset_url = None
-        asset_name = 'bombsquad_build_env.tar'
+        asset_name = 'bombsquad_prebuilt_inputs.tar'
 
         for asset in release_data.get('assets', []):
             if asset['name'] == asset_name:
@@ -227,6 +232,27 @@ def generate_flathub_manifest() -> None:
     except Exception as e:
         raise CleanError(f'Failed to fetch release info: {e}') from e
 
+    # Pin the git source to the commit as well as the tag, so a moved
+    # tag can't change what Flathub builds. In the release workflow the
+    # triggering tag's commit is GITHUB_SHA, which also covers a shallow
+    # checkout that can't resolve the tag itself.
+    if os.environ.get('GITHUB_REF_NAME') == tag and 'GITHUB_SHA' in os.environ:
+        commit = os.environ['GITHUB_SHA']
+    else:
+        try:
+            commit = subprocess.run(
+                ['git', 'rev-parse', f'{tag}^{{commit}}'],
+                cwd=pcommand.PROJROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        except subprocess.CalledProcessError as e:
+            raise CleanError(
+                f'Could not resolve tag {tag} to a commit: {e.stderr}'
+            ) from e
+    print(f'  Release commit: {commit}')
+
     print(f'{Clr.BLD}Generating manifest...{Clr.RST}')
 
     with open(
@@ -234,30 +260,15 @@ def generate_flathub_manifest() -> None:
     ) as infile:
         manifest = infile.read()
 
-    # Swap the project-dir source (and the comment lines leading into
-    # it) for the release tarball, which carries everything a
-    # network-less Flathub build could not fetch itself.
-    def _archive_source(match: re.Match[str]) -> str:
-        indent = match['indent']
-        return (
-            f'{indent}- type: archive\n'
-            f'{indent}  url: {asset_url}\n'
-            f'{indent}  sha256: {checksum}\n'
-            f'{indent}  strip-components: 0\n'
-        )
-
-    manifest, count = re.subn(
-        r'^(?P<indent> *)(?:#.*\n(?P=indent))*- type: dir\n'
-        r'(?:(?P=indent) {2}.*\n)*',
-        _archive_source,
+    manifest = _flathub_manifest_sources(
         manifest,
-        flags=re.MULTILINE,
+        git_source=[
+            f'url: https://github.com/{github_repo}.git',
+            f'tag: {tag}',
+            f'commit: {commit}',
+        ],
+        archive_source=[f'url: {asset_url}', f'sha256: {checksum}'],
     )
-    if count != 1:
-        raise CleanError(
-            f'Expected exactly one dir source in {manifest_name};'
-            f' found {count}.'
-        )
 
     with open(manifest_path, 'w', encoding='utf-8') as outfile:
         outfile.write(manifest)
@@ -265,6 +276,93 @@ def generate_flathub_manifest() -> None:
     print(f'  Generated manifest at {manifest_path}')
 
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
+
+
+def flatpak_prebuilt_inputs() -> None:
+    """Pack the parts of a flatpak build's tree that aren't in git.
+
+    Writes build/flatpak/bombsquad_prebuilt_inputs.tar: what
+    `make flatpak-prefetch` fetched (built assets, resources, the
+    prebuilt plus lib for each arch, the gui asset bundle and the
+    content-store blobs it references) plus releases.xml, which the
+    release workflow adds this release's entry to. Flathub builds take
+    the code from git and extract this over it.
+    """
+    import os
+    import tarfile
+
+    from efro.terminal import Clr
+    from batools._bundlestage import _collect_bundle_hashes
+
+    projroot = str(pcommand.PROJROOT)
+    bundle_manifest = '.cache/asset_bundle/gui-minimal/manifest.json'
+    paths = [
+        'build/assets',
+        'build/prefab/lib/linux_x86_64_gui/release',
+        'build/prefab/lib/linux_arm64_gui/release',
+        'ballisticakit-windows/Generic/BallisticaKit.ico',
+        os.path.dirname(bundle_manifest),
+        'pconfig/flatpak/net.froemling.bombsquad.releases.xml',
+    ]
+    # Staging copies the bundle's blobs out of the local content store;
+    # take only those, not the whole (much larger) store.
+    paths += sorted(
+        f'.cache/assetdata/{h[:2]}/{h[2:]}'
+        for h in _collect_bundle_hashes(
+            projroot, os.path.join(projroot, bundle_manifest)
+        )
+    )
+
+    outpath = os.path.join(
+        projroot, 'build', 'flatpak', 'bombsquad_prebuilt_inputs.tar'
+    )
+    os.makedirs(os.path.dirname(outpath), exist_ok=True)
+    with tarfile.open(outpath, 'w') as tar:
+        for path in paths:
+            tar.add(os.path.join(projroot, path), arcname=path)
+    print(f'{Clr.GRN}Wrote {outpath}.{Clr.RST}')
+
+
+def _flathub_manifest_sources(
+    manifest: str, git_source: list[str], archive_source: list[str]
+) -> str:
+    """Swap the manifest's project-dir source for Flathub's sources.
+
+    The local manifest builds straight from the working tree (one
+    `type: dir` source). Flathub instead gets the code from git, and the
+    parts of the tree that aren't in git (what `make flatpak-prefetch`
+    fetches, plus the release's releases.xml entry) from the release's
+    prebuilt-inputs archive, extracted over the checkout.
+
+    `git_source` and `archive_source` are the key lines for each source
+    (e.g. 'url: ...', 'commit: ...'), without their type line.
+    """
+    import re
+
+    from efro.error import CleanError
+
+    def _sources(match: re.Match[str]) -> str:
+        indent = match['indent']
+        lines = [f'{indent}- type: git']
+        lines += [f'{indent}  {line}' for line in git_source]
+        lines += [f'{indent}- type: archive']
+        lines += [f'{indent}  {line}' for line in archive_source]
+        lines += [f'{indent}  strip-components: 0']
+        return '\n'.join(lines) + '\n'
+
+    # Matches the dir source plus the comment lines leading into it.
+    manifest, count = re.subn(
+        r'^(?P<indent> *)(?:#.*\n(?P=indent))*- type: dir\n'
+        r'(?:(?P=indent) {2}.*\n)*',
+        _sources,
+        manifest,
+        flags=re.MULTILINE,
+    )
+    if count != 1:
+        raise CleanError(
+            f'Expected exactly one dir source in the manifest; found {count}.'
+        )
+    return manifest
 
 
 def flatpak_add_release() -> None:

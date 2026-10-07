@@ -120,6 +120,17 @@ modules:
       # the shebangs of whatever machine produced the sources, so clear
       # them out first and let `make env` regenerate them for this venv.
       - make env-clean
+      # Flathub builds lay the prebuilt-inputs archive over a git
+      # checkout, so those files can be older than the checkout around
+      # them, and make would then try to re-download them. Mark them
+      # fresh, all with one timestamp so none looks newer than another
+      # that depends on it. (Harmless for local builds.)
+      - find build/assets build/prefab ballisticakit-windows/Generic .cache/asset_bundle .cache/assetdata -exec touch -d "@$(date +%s.%N)" {} +
+      # The asset build downloads an efrocache starter archive when it
+      # finds no local cache dir. Everything it would fetch is already
+      # in place, so an empty one is enough; a real cache miss still
+      # fails loudly, since there's no network.
+      - mkdir -p .cache/efrocache
       - make cmake-build
       - mv build/cmake/*/ballisticakit build/cmake/*/staged/
       - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
@@ -130,10 +141,10 @@ modules:
       - install -Dm644 pconfig/flatpak/${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
 
     sources:
-      # Flathub builds swap this dir source for the release's
-      # bombsquad_build_env.tar; see generate_flathub_manifest in
-      # tools/batools/pcommands3.py. Keep the skip list in sync with the
-      # tar excludes in .github/workflows/release.yml.
+      # Flathub builds swap this dir source for git at the release tag
+      # plus the release's bombsquad_prebuilt_inputs.tar (see
+      # `make flatpak-prebuilt-inputs` and generate_flathub_manifest in
+      # tools/batools/pcommands3.py).
       - type: dir
         path: ./../../
         skip:
@@ -153,8 +164,7 @@ modules:
           - .cache/flatpak
           - build/flatpak
 
-      # A local tree has no icon at this path, so fetch it into place.
-      # (The release tarball already carries it; see release.yml.)
+      # The icon isn't in git, so fetch it into place.
       - type: file
         dest: pconfig/flatpak
         dest-filename: net.froemling.bombsquad.png
