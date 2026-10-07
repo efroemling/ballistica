@@ -268,6 +268,27 @@ class Graphics {
   /// colors of its own. Exposed to Python as babase.brightened_color.
   static void BrightenColor(float* rgb, float brightness);
 
+  /// Tone an rgb color down in place so ``main_rgb`` stays the
+  /// dominant color of whatever both are drawn on: 'team coloring',
+  /// where main is a team's color and the others are a character's
+  /// (or a name capsule's) secondary tints. ``strength`` runs from 0
+  /// (the color as it was) to 1 (main's own tint at the color's
+  /// brightness); in between the color's hue and saturation move
+  /// toward main's while its brightness holds. Colors already near
+  /// main's barely move at any strength. The one rule every
+  /// team-colored thing shares (spaz nodes, character icons, names),
+  /// so they stay in step.
+  static void ToneForTeamColor(const float* main_rgb, float* rgb,
+                               float strength);
+
+  /// As above, at the standard strength.
+  static void ToneForTeamColor(const float* main_rgb, float* rgb) {
+    ToneForTeamColor(main_rgb, rgb, TeamColoringStrength());
+  }
+
+  /// The standard team-coloring strength (see ToneForTeamColor).
+  static auto TeamColoringStrength() -> float;
+
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
 

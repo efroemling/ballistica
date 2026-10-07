@@ -53,6 +53,11 @@ constexpr int kCharacterBodyPartCount = 9;
 /// Optional tint colors for one piece of a character (a body part, a
 /// wing, an attachment segment): each present one stands in for the
 /// character's own color / highlight / highlight2 on that piece.
+///
+/// A piece can likewise set how strongly team coloring tones its
+/// highlights (Graphics::ToneForTeamColor's strength, 0-1; negative
+/// = unset, the character's own applies), so a piece borrowed from
+/// another character reacts to team colors as it does there.
 struct CharacterTintDef {
   bool has_color{};
   bool has_highlight{};
@@ -60,6 +65,8 @@ struct CharacterTintDef {
   float color[3]{1.0f, 1.0f, 1.0f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
 };
 
 /// Body an attachment hangs off. Mirrors AttachTarget in bamaster
@@ -143,6 +150,11 @@ struct BasicIconDef {
   float color[3]{0.5f, 0.5f, 0.5f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  // How strongly team coloring tones each highlight
+  // (Graphics::ToneForTeamColor's strength, 0-1); negative = unset,
+  // the standard strength applies.
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
 };
 
 /// The loaded media for a BasicIconDef.
@@ -212,6 +224,12 @@ struct BasicSpazDef {
   float highlight[3]{0.5f, 0.5f, 0.5f};
   // Through the color mask's blue channel; white (the no-op) unless set.
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  // How strongly team coloring tones each highlight
+  // (Graphics::ToneForTeamColor's strength, 0-1); negative = unset,
+  // the standard strength applies. Pieces can set their own (see
+  // CharacterTintDef).
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
   // Physique (sim state; must never depend on media).
   float torso_radius{0.15f};
   float shoulder_offset[3]{0.0f, 0.0f, 0.0f};

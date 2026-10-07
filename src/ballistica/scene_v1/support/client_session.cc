@@ -639,6 +639,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           }
           assert(!scenes_[id].exists());
           scenes_[id] = Object::New<Scene>(starttime);
+          scenes_[id]->set_streamed_in(true);
           scenes_[id]->set_stream_id(id);
           scenes_[id]->set_protocol_version(stream_protocol());
           break;
@@ -1329,7 +1330,12 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
                   return "ClientSession: lang-str screen-message: " + val;
                 });
           }
-          g_base->ScreenMessage(val, color, literal);
+          // Text from whoever wrote the stream (possibly an older
+          // build); a bad resource string there isn't ours to fix, so
+          // it shouldn't log as an error.
+          g_base->graphics->screenmessages->AddScreenMessage(
+              val, literal, color, false, nullptr, nullptr, {1, 1, 1},
+              {1, 1, 1}, {1, 1, 1}, LogLevel::kDebug);
           break;
         }
         case SessionCommand::kScreenMessageTop: {
@@ -1352,7 +1358,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
               s, literal, Vector3f(f[0], f[1], f[2]), true,
               texture->texture_data(), tint_texture->texture_data(),
               Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]),
-              Vector3f(f[9], f[10], f[11]));
+              Vector3f(f[9], f[10], f[11]), LogLevel::kDebug);
           break;
         }
         case SessionCommand::kScreenMessageTopDepiction: {

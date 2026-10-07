@@ -1634,8 +1634,18 @@ class AssetSubsystem(AppSubsystem):
         )
         self._emit_progress()
 
-    def resolve_local(self, apvernums: list[ApverNum]) -> ResolveResult:
+    def resolve_local(
+        self,
+        apvernums: list[ApverNum],
+        optional: set[ApverNum] | None = None,
+    ) -> ResolveResult:
         """Synchronously register the best LOCAL flavor of each package.
+
+        A package in ``optional`` that has no usable local flavor is
+        skipped rather than failing the call; the returned
+        ``apvernums`` holds only those actually registered. Any other
+        package failing raises :class:`AssetResolveError` and nothing
+        is registered.
 
         A downloads-disabled, fully-synchronous resolve: for each apvernum it
         registers the desired flavor when that flavor's blobs are already on
@@ -1655,20 +1665,43 @@ class AssetSubsystem(AppSubsystem):
         """
         assert _babase.in_logic_thread()
         desired = self._desired_coords(_babase.app.locale.current_locale)
-        results = [self._resolve_one_local(apv, desired) for apv in apvernums]
+        resolved: list[ApverNum] = []
+        results: list[_OneResult] = []
+        for apvernum in apvernums:
+            try:
+                result = self._resolve_one_local(apvernum, desired)
+            except AssetResolveError as exc:
+                if optional is None or apvernum not in optional:
+                    raise
+                # Expected on some devices; e.g. a store bundle carries
+                # only the native texture flavor of these, which a gpu
+                # lacking it can't use. A later downloading resolve
+                # fetches a flavor it can.
+                logger.info(
+                    'Bundled package %s not usable locally (%s);'
+                    ' leaving it to a downloading resolve.',
+                    apvernum,
+                    exc,
+                )
+                strip_exception_tracebacks(exc)
+                continue
+            resolved.append(apvernum)
+            results.append(result)
         register_specs, manifest_pkgs, fell_back_by_pkg = (
-            self._accumulate_results(apvernums, results)
+            self._accumulate_results(resolved, results)
         )
         fell_back = _flatten_fell_back(fell_back_by_pkg)
         _babase.register_asset_package_buckets(register_specs)
         self._pin(manifest_pkgs)
         self._reload_language()
+        skipped = len(apvernums) - len(resolved)
         logger.info(
-            'Registered %d builtin package(s) at best-local flavor%s.',
-            len(apvernums),
+            'Registered %d builtin package(s) at best-local flavor%s%s.',
+            len(resolved),
             f' ({len(fell_back)} on fallback)' if fell_back else '',
+            f'; {skipped} left to download' if skipped else '',
         )
-        return ResolveResult(apvernums=list(apvernums), fell_back=fell_back)
+        return ResolveResult(apvernums=resolved, fell_back=fell_back)
 
     def get_package_strings(
         self, apvernum: ApverNum, locale: Locale

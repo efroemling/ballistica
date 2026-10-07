@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
@@ -626,7 +628,17 @@ void TextureAsset::WarnSlotMismatch_(const char* slot) {
              " shade slightly wrong. Set its texture role to 'data'.",
              file_name_.c_str(), slot);
   }
-  g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
+  // The texture name alone rarely pins down who bound it; the stack
+  // names the drawing widget/node/component. (Once per texture, so the
+  // cost doesn't matter; in all builds since field reports are where
+  // these mostly show up.)
+  std::unique_ptr<NativeStackTrace> trace(
+      g_core->platform->GetNativeStackTrace());
+  g_core->logging->Log(
+      LogName::kBaAssets, LogLevel::kWarning,
+      std::string(buffer) + "\nBound from:\n"
+          + (trace ? trace->FormatForDisplay()
+                   : std::string("<native trace unavailable>")));
 }
 
 }  // namespace ballistica::base

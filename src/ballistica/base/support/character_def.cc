@@ -34,6 +34,7 @@ struct Range {
 
 const Range kRangeColor{0.0f, 1.0f};
 const Range kRangeHighlight{0.0f, 1.0f};
+const Range kRangeTeamColoringStrength{0.0f, 1.0f};
 const Range kRangeTorsoRadius{0.11f, 0.3f};
 const Range kRangeShoulderOffset{-0.05f, 0.03f};
 const Range kRangeThighRadius{0.04f, 0.06f};
@@ -72,10 +73,25 @@ auto ReadFloat3(const JsonRef& obj, const char* key, float* out,
   return true;
 }
 
+// The team-coloring strengths for the two highlights: keys are
+// ``prefix`` + 'hls' / 'hl2s' + ``suffix``. Left as is if absent.
+void ReadTeamColoringStrengths(const JsonRef& obj, const std::string& prefix,
+                               const std::string& suffix, float* highlight,
+                               float* highlight2) {
+  ReadFloat(obj, (prefix + "hls" + suffix).c_str(), highlight,
+            kRangeTeamColoringStrength);
+  ReadFloat(obj, (prefix + "hl2s" + suffix).c_str(), highlight2,
+            kRangeTeamColoringStrength);
+}
+
 // A piece's optional tint colors: keys are ``prefix`` + 'cl' / 'hl' /
-// 'hl2' + ``suffix`` (the base color keys, wrapped).
+// 'hl2' + ``suffix`` (the base color keys, wrapped), plus its
+// team-coloring strengths.
 void ReadTint(const JsonRef& obj, const std::string& prefix,
               const std::string& suffix, CharacterTintDef* out) {
+  ReadTeamColoringStrengths(obj, prefix, suffix,
+                            &out->highlight_team_coloring_strength,
+                            &out->highlight2_team_coloring_strength);
   out->has_color = ReadFloat3(obj, (prefix + "cl" + suffix).c_str(), out->color,
                               kRangeColor);
   out->has_highlight = ReadFloat3(obj, (prefix + "hl" + suffix).c_str(),
@@ -399,6 +415,8 @@ auto ReadIcon(const JsonRef& basic, BasicIconDef* out) -> bool {
   ReadFloat3(basic, "cl", d.color, kRangeColor);
   ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
   ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
+  ReadTeamColoringStrengths(basic, "", "", &d.highlight_team_coloring_strength,
+                            &d.highlight2_team_coloring_strength);
   *out = std::move(d);
   return true;
 }
@@ -476,6 +494,8 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   d.has_color = ReadFloat3(basic, "cl", d.color, kRangeColor);
   ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
   ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
+  ReadTeamColoringStrengths(basic, "", "", &d.highlight_team_coloring_strength,
+                            &d.highlight2_team_coloring_strength);
 
   ReadFloat(basic, "tr", &d.torso_radius, kRangeTorsoRadius);
   ReadFloat3(basic, "so", d.shoulder_offset, kRangeShoulderOffset);

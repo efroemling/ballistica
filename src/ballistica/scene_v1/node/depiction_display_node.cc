@@ -41,6 +41,8 @@ class DepictionDisplayNodeType : public NodeType {
   BA_FLOAT_ATTR(brightness, brightness, set_brightness);
   BA_LANG_STR_ATTR(suffix, GetSuffix, SetSuffix, SetSuffixWire,
                    suffix_lang_str);
+  // (protocol 53)
+  BA_BOOL_ATTR(team_coloring, team_coloring, set_team_coloring);
 #undef BA_NODE_TYPE_CLASS
 
   DepictionDisplayNodeType()
@@ -58,7 +60,8 @@ class DepictionDisplayNodeType : public NodeType {
         color_override(this),
         use_color_override(this),
         brightness(this),
-        suffix(this) {}
+        suffix(this),
+        team_coloring(this) {}
 };
 
 static NodeType* node_type{};
@@ -254,17 +257,22 @@ void DepictionDisplayNode::UpdateSuffix_() {
   }
   suffix_dirty_ = false;
   std::string text;
+  // (Bad text in a streamed-in scene isn't ours to fix; see
+  // TextNode::SetText.)
+  LogLevel fail_log_level =
+      scene()->streamed_in() ? LogLevel::kDebug : LogLevel::kError;
   switch (suffix_mode_) {
     case SuffixMode::kLegacy:
-      text = suffix_raw_.empty()
-                 ? std::string()
-                 : g_base->assets->CompileResourceString(suffix_raw_);
+      text = suffix_raw_.empty() ? std::string()
+                                 : g_base->assets->CompileResourceString(
+                                       suffix_raw_, nullptr, fail_log_level);
       break;
     case SuffixMode::kLiteral:
       text = suffix_raw_.substr(1);
       break;
     case SuffixMode::kLegacyJson:
-      text = g_base->assets->CompileResourceString(suffix_raw_.substr(1));
+      text = g_base->assets->CompileResourceString(suffix_raw_.substr(1),
+                                                   nullptr, fail_log_level);
       break;
     case SuffixMode::kLangStr:
       text = suffix_lang_str_ != nullptr ? suffix_lang_str_->Evaluate()
@@ -347,8 +355,10 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
   context.box = base::FitDepictionBox(
       {center_x_ - width_ * 0.5f, center_y_ - height_ * 0.5f, width_, height_},
       *depiction_, h_align_, v_align_, suffix_.GetTrailingAspect());
-  const float* color_override = use_color_override_ ? color_override_ : nullptr;
+  const float* color_override = depiction_->EffectiveColorOverride(
+      use_color_override_ ? color_override_ : nullptr);
   context.color_override = color_override;
+  context.team_coloring = depiction_->EffectiveTeamColoring(team_coloring_);
   context.brightness = std::max(0.0f, brightness_);
   context.z = vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth();
   context.opacity = std::max(0.0f, opacity_);

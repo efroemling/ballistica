@@ -104,7 +104,13 @@ void TextNode::SetText(const std::string& val) {
     bool do_format_check{};
     bool print_false_positives{};
 
-    if (g_buildconfig.debug_build()) {
+    // The check exists to catch our own code passing unprotected
+    // text (raw names etc. should be wrapped as Lstr(value=...)). A
+    // streamed-in scene's text comes from whoever wrote the stream,
+    // possibly an older build, so there's nothing for us to fix there.
+    if (scene()->streamed_in()) {
+      do_format_check = false;
+    } else if (g_buildconfig.debug_build()) {
       do_format_check = true;
     } else {
       if (val.size() > 1 && val[0] == '{' && val[val.size() - 1] == '}') {
@@ -392,16 +398,20 @@ void TextNode::UpdateTranslation_() {
   if (!text_translation_dirty_) {
     return;
   }
+  // (Bad text in a streamed-in scene isn't ours to fix; see SetText.)
+  LogLevel fail_log_level =
+      scene()->streamed_in() ? LogLevel::kDebug : LogLevel::kError;
   switch (text_mode_) {
     case TextMode::kLegacy:
-      text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+      text_translated_ = g_base->assets->CompileResourceString(
+          text_raw_, nullptr, fail_log_level);
       break;
     case TextMode::kLiteral:
       text_translated_ = text_raw_.substr(1);
       break;
     case TextMode::kLegacyJson:
-      text_translated_ =
-          g_base->assets->CompileResourceString(text_raw_.substr(1));
+      text_translated_ = g_base->assets->CompileResourceString(
+          text_raw_.substr(1), nullptr, fail_log_level);
       break;
     case TextMode::kLangStr:
       text_translated_ = text_lang_str_ != nullptr

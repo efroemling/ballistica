@@ -111,6 +111,13 @@ class Scene : public Object {
   auto silent() const -> bool { return silent_; }
   void set_silent(bool val) { silent_ = val; }
 
+  /// Streamed-in scenes are built from a session stream someone else
+  /// wrote (a host we've joined, or a replay), possibly by an older
+  /// build. Their content is beyond our control, so checks meant to
+  /// catch our own code misbehaving should stay quiet for them.
+  auto streamed_in() const -> bool { return streamed_in_; }
+  void set_streamed_in(bool val) { streamed_in_ = val; }
+
   /// Start a new sound for something in this scene. Returns nullptr if
   /// there's none to be had (we're silent, or audio has none to
   /// spare). Finish with End() on what comes back, as with
@@ -124,6 +131,7 @@ class Scene : public Object {
 
  private:
   bool silent_{};
+  bool streamed_in_{};
   std::optional<base::AudioListenerSpace> audio_listener_space_;
   Object::Ref<base::RenderView> render_view_;
   Object::Ref<base::BGDynamicsWorld> bg_dynamics_world_;

@@ -173,20 +173,28 @@ void Assets::StartLoading() {
 
   // Populate the asset-package CAS registry before the LoadBuiltin*
   // calls below land — those use qualified-ref names that require the
-  // registry to be live. Resolving the bundled builtin packages is a hard
-  // prerequisite for running: every builtin texture/mesh/sound is a ref
-  // into them, so if this fails there is no recovery -- continuing would
+  // registry to be live. Resolving the builtin (construct) package is a
+  // hard prerequisite for running: every builtin texture/mesh/sound is a
+  // ref into it, so if this fails there is no recovery -- continuing would
   // leave the whole builtin set null and blow up inscrutably at first
-  // draw. Fail loudly here instead. (Call() returns an empty ref and logs
-  // the underlying exception when the Python call raises.)
+  // draw. Fail loudly here instead. The call catches its own exceptions
+  // and returns a one-line cause (None on success), which goes in the
+  // fatal text: that text is all a field report carries, while the
+  // logged exception stays on the device. (An empty ref means the call
+  // itself raised, which Call() logs.)
   auto bundled_result =
       g_base->python->objs()
           .Get(BasePython::ObjID::kLoadBundledAssetPackagesCall)
           .Call();
-  if (!bundled_result.exists()) {
+  if (!bundled_result.exists() || !bundled_result.ValueIsNone()) {
+    std::string cause{"unknown (see the logged exception above)"};
+    if (bundled_result.exists() && bundled_result.ValueIsString()) {
+      cause = bundled_result.ValueAsString();
+    }
     FatalError(
         "Failed to load bundled builtin asset-packages; cannot continue."
-        " See the logged exception above for the underlying cause.");
+        " Cause: "
+        + cause);
   }
 
   // Just grab the lock once for all this stuff for efficiency.
@@ -2527,8 +2535,8 @@ auto DoCompileResourceString(JsonRef obj, int depth) -> std::string {
   return result;
 }
 
-auto Assets::CompileResourceString(const std::string& s, bool* valid)
-    -> std::string {
+auto Assets::CompileResourceString(const std::string& s, bool* valid,
+                                   LogLevel fail_log_level) -> std::string {
   bool dummyvalid;
   if (valid == nullptr) {
     valid = &dummyvalid;
@@ -2544,7 +2552,7 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
   auto doc = JsonDoc::Parse(s);
   if (!doc.has_value() || !doc->root().is_object()) {
     g_core->logging->Log(
-        LogName::kBaAssets, LogLevel::kError,
+        LogName::kBaAssets, fail_log_level,
         "CompileResourceString failed; invalid json: '" + s + "'");
     *valid = false;
     return "";
@@ -2554,7 +2562,7 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
     result = DoCompileResourceString(doc->root(), 0);
     *valid = true;
   } catch (const std::exception& e) {
-    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+    g_core->logging->Log(LogName::kBaAssets, fail_log_level,
                          "CompileResourceString failed: "
                              + std::string(e.what()) + "; str='" + s + "'");
     result = "<error>";

@@ -27,6 +27,9 @@ namespace ballistica::scene_v1 {
 /// 'h_align'/'v_align'. Protocol 47 (see scene_v1.h). Design:
 /// docs/initiatives/depictions.md.
 ///
+/// Since protocol 53: 'team_coloring' says the depiction's main color
+/// is a team's and should stay dominant (each kind tones its other
+/// colors down as it sees fit; see base::DepictionDrawContext).
 /// Since protocol 52: 'color_override' (rgb) is imposed on the
 /// depiction while 'use_color_override' is set (each kind decides what
 /// it applies to; see base::DepictionDrawContext), 'brightness' scales
@@ -69,6 +72,8 @@ class DepictionDisplayNode : public Node {
   void set_use_color_override(bool val) { use_color_override_ = val; }
   auto brightness() const -> float { return brightness_; }
   void set_brightness(float val) { brightness_ = val; }
+  auto team_coloring() const -> bool { return team_coloring_; }
+  void set_team_coloring(bool val) { team_coloring_ = val; }
   auto GetSuffix() const -> std::string { return suffix_raw_; }
   void SetSuffix(const std::string& val);
   void SetSuffixWire(const std::string& wire,
@@ -117,6 +122,7 @@ class DepictionDisplayNode : public Node {
   float color_override_[3]{1.0f, 1.0f, 1.0f};
   bool use_color_override_{};
   float brightness_{1.0f};
+  bool team_coloring_{};
   std::string suffix_raw_;
   SuffixMode suffix_mode_{SuffixMode::kLegacy};
   std::shared_ptr<const base::LangStr> suffix_lang_str_;

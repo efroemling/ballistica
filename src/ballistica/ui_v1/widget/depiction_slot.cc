@@ -172,7 +172,8 @@ void DepictionSlot::Draw(const DrawArgs& args) {
           {args.offset_x, args.offset_y, args.width, args.height}, *depiction_,
           h_align_, v_align_, suffix_.GetTrailingAspect()),
       args.scale);
-  const float* color_override = use_color_override_ ? color_override_ : nullptr;
+  const float* color_override = depiction_->EffectiveColorOverride(
+      use_color_override_ ? color_override_ : nullptr);
 
   base::DepictionDrawContext context;
   context.pass = args.pass;
@@ -186,6 +187,8 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   std::copy(std::begin(frame_color_), std::end(frame_color_),
             context.frame_color);
   context.color_override = color_override;
+  // (No host switch for this here yet; a depiction's baked one counts.)
+  context.team_coloring = depiction_->EffectiveTeamColoring(false);
   depiction_->Draw(context);
   suffix_.Draw(context, box, color_override);
   if (debug_ && args.transparent) {

@@ -30,6 +30,7 @@ const Range kRangeTextInset{-1.0f, 1.0f};
 const Range kRangeIconEdge{0.0f, 2.0f};
 const Range kRangeTextGlow{0.0f, 4.0f};
 const Range kRangeInset{0.0f, 0.5f};
+const Range kRangeTeamColoringStrength{0.0f, 1.0f};
 
 void ReadFloat(const JsonRef& obj, const char* key, float* out,
                const Range& range) {
@@ -108,6 +109,16 @@ auto ReadCapsule(const JsonRef& tier) -> std::optional<CapsuleNameDef> {
   ReadColor(tier, "ctc3", d.capsule_tint_colors[2], 3);
   ReadPackageAssetRef(tier, "it", &d.icon_texture);
   ReadColor(tier, "ic", d.icon_color, 4);
+  ReadFloat(tier, "ccs", &d.capsule_team_coloring_strength,
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs1", &d.capsule_tint_team_coloring_strengths[0],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs2", &d.capsule_tint_team_coloring_strengths[1],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs3", &d.capsule_tint_team_coloring_strengths[2],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ics", &d.icon_team_coloring_strength,
+            kRangeTeamColoringStrength);
   ReadFloat(tier, "is", &d.icon_scale, kRangeIconScale);
   ReadFloat(tier, "ie", &d.icon_edge, kRangeIconEdge);
   ReadOptionalFloat(tier, "ti", &d.text_inset, kRangeTextInset);

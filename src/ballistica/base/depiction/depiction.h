@@ -91,14 +91,28 @@ struct DepictionDrawContext {
   TextureAsset* mask_texture{};
   float frame_color[3]{1.0f, 1.0f, 1.0f};
 
-  /// A host's color override (rgb), or null for none: one color a host
-  /// can impose on a depiction (a lobby chooser's player or team color,
-  /// say). Each kind decides what it applies to; kinds that don't say
+  /// The color override (rgb) in effect, or null for none: one color
+  /// imposed on a depiction (a lobby chooser's player or team color,
+  /// say), by its host or baked into the depiction itself (hosts fill
+  /// this in from Depiction::EffectiveColorOverride, which settles
+  /// the two). Each kind decides what it applies to; kinds that don't say
   /// ignore it. Names: their text (and its glow), plus whatever parts
   /// of a capsule its override targets route it to (see
-  /// CapsuleNameDef); glyphs with colors of their own keep them. For
+  /// CapsuleNameDef); glyphs with colors of their own keep them.
+  /// Character icons: their main color (highlights stay). For
   /// flashes use brightness, which every standard draw follows.
   const float* color_override{};
+
+  /// Whether team coloring is in effect: the depiction's main color is
+  /// a team's, and should stay its clearly dominant one. Set by its
+  /// host or baked into the depiction (hosts fill this in from
+  /// Depiction::EffectiveTeamColoring). Each kind decides what that
+  /// means, toning its other colors down with
+  /// Graphics::ToneForTeamColor; kinds with nothing to tone ignore it.
+  /// 'Its main color' is the color override if there is one, else
+  /// whatever the kind takes as its own (a character icon's color, a
+  /// name's text color).
+  bool team_coloring{};
 
   /// The standard look: what to draw with, host state applied. A
   /// disabled host fades its depiction and greys its colors, the way a
@@ -194,6 +208,37 @@ class Depiction : public Object {
   /// Our kind's wire type id (bacommon.depiction.DepictionTypeID).
   auto type_id() const -> const std::string& { return type_id_; }
 
+  /// The color override a host should draw us with (see
+  /// DepictionDrawContext::color_override): the host's own if it has
+  /// one (pass null if not), else the one baked into us (any kind's
+  /// json can carry one; the static form of a host's), else null.
+  auto EffectiveColorOverride(const float* host_override) const -> const
+      float* {
+    if (host_override) {
+      return host_override;
+    }
+    return has_color_override_ ? color_override_ : nullptr;
+  }
+
+  /// Set our baked color override (rgb); the registry does this from
+  /// our json.
+  void SetColorOverride(const float* rgb) {
+    color_override_[0] = rgb[0];
+    color_override_[1] = rgb[1];
+    color_override_[2] = rgb[2];
+    has_color_override_ = true;
+  }
+
+  /// Whether a host should draw us with team coloring (see
+  /// DepictionDrawContext::team_coloring): if it asks for it itself or
+  /// it is baked into us (any kind's json can say so).
+  auto EffectiveTeamColoring(bool host_team_coloring) const -> bool {
+    return host_team_coloring || team_coloring_;
+  }
+
+  /// Set our baked team coloring; the registry does this from our json.
+  void set_team_coloring(bool val) { team_coloring_ = val; }
+
   /// Hosts call this each frame they show us (see Update).
   void MarkShown();
 
@@ -204,6 +249,9 @@ class Depiction : public Object {
  private:
   std::string type_id_;
   seconds_t last_shown_time_{};
+  float color_override_[3]{};
+  bool has_color_override_{};
+  bool team_coloring_{};
 };
 
 /// Text a host draws right after its depiction ("(ready)" after a

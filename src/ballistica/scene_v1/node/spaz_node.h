@@ -176,6 +176,10 @@ class SpazNode : public Node {
     return use_spaz_def_highlight_;
   }
   void SetUseSpazDefHighlight(bool val);
+  // Our color is a team's; every other tint we draw with is toned
+  // down so it stays dominant (base::Graphics::ToneForTeamColor).
+  auto team_coloring() const -> bool { return team_coloring_; }
+  void set_team_coloring(bool val) { team_coloring_ = val; }
   // Boxing-glove look overrides; unset media means the stock gloves.
   auto boxing_gloves_mesh() const -> SceneMesh* {
     return boxing_gloves_mesh_.get();
@@ -414,6 +418,10 @@ class SpazNode : public Node {
     const float* color;
     const float* highlight;
     const float* highlight2;
+    // Team-coloring strengths for the two highlights; negative = the
+    // standard strength.
+    float highlight_strength{-1.0f};
+    float highlight2_strength{-1.0f};
     auto operator==(const PieceTint_& other) const -> bool = default;
   };
   // What one body part draws with: its mesh plus color texture and
@@ -437,7 +445,7 @@ class SpazNode : public Node {
   // the definition's base ones do); highlight2 has no attr, so always.
   void ApplyPieceTint_(const base::CharacterTintDef& def,
                        PieceTint_* tint) const;
-  static void SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint);
+  void SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint) const;
   auto ColorTextureData_() const -> base::TextureAsset*;
   auto ColorMaskTextureData_() const -> base::TextureAsset*;
   auto RandomJumpSound_() const -> base::SoundAsset*;
@@ -703,6 +711,7 @@ class SpazNode : public Node {
   std::vector<float> color_attr_{1.0f, 1.0f, 1.0f};
   bool use_spaz_def_color_{};
   bool use_spaz_def_highlight_{};
+  bool team_coloring_{};
   bool pirate_{};
   bool flippers_{};
   bool frosty_{};

@@ -247,7 +247,10 @@ class Assets {
       -> std::string;
 
   auto CharStr(SpecialChar id) -> std::string;
-  auto CompileResourceString(const std::string& s, bool* valid = nullptr)
+  /// Pass a lower ``fail_log_level`` for strings we didn't make and so
+  /// can't fix (from a host running an older build, say).
+  auto CompileResourceString(const std::string& s, bool* valid = nullptr,
+                             LogLevel fail_log_level = LogLevel::kError)
       -> std::string;
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }

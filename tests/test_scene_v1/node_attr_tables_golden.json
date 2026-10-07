@@ -1218,6 +1218,10 @@
   [
    "boxing_gloves_scale",
    "float"
+  ],
+  [
+   "team_coloring",
+   "bool"
   ]
  ],
  "region": [
@@ -1380,6 +1384,10 @@
   [
    "suffix",
    "string"
+  ],
+  [
+   "team_coloring",
+   "bool"
   ]
  ]
 }

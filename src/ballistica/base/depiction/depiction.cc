@@ -376,6 +376,19 @@ auto DepictionRegistry::Create(const std::string& json, DepictionHost host,
     WarnPlaceholder(type_id, "this kind can't draw in this host.");
     return Object::New<Depiction, PlaceholderDepiction>(type_id);
   }
+  // Any kind's json can carry a baked color override ([r, g, b]).
+  if (JsonRef arr = root["co"]; arr.is_array() && arr.size() == 3) {
+    float rgb[3];
+    for (size_t i = 0; i < 3; ++i) {
+      auto val = arr[i].as_double();
+      rgb[i] = std::clamp(static_cast<float>(val ? *val : 0.0), 0.0f, 2.0f);
+    }
+    out->SetColorOverride(rgb);
+  }
+  // Likewise baked team coloring.
+  if (auto val = root["tco"].as_bool(); val && *val) {
+    out->set_team_coloring(true);
+  }
   return out;
 }
 

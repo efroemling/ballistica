@@ -71,6 +71,13 @@ struct CapsuleNameDef {
   PackageAssetRef icon_texture;
   float icon_color[4]{1.0f, 1.0f, 1.0f, 1.0f};
 
+  /// How strongly team coloring tones each of our own colors (those
+  /// the override isn't routed to; Graphics::ToneForTeamColor's
+  /// strength, 0-1). Negative = unset: the standard strength.
+  float capsule_team_coloring_strength{-1.0f};
+  float capsule_tint_team_coloring_strengths[3]{-1.0f, -1.0f, -1.0f};
+  float icon_team_coloring_strength{-1.0f};
+
   /// The icon's drawn size: 1.0 fills the capsule's left end (a square
   /// as tall as the capsule), centered there.
   float icon_scale{1.0f};

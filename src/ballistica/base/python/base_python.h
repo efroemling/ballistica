@@ -62,6 +62,7 @@ class BasePython {
     kStoreConfigFullscreenOffCall,
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
+    kCommitConfigCall,
     kNotSignedInScreenMessageCall,
     kTemporarilyUnavailableMessageCall,
     kInProgressMessageCall,

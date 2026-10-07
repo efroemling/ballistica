@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261005a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261007`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 419
+# ba_meta require asset-package 455
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261005a
-_ASSET_PACKAGE = ApverNum(419)
+# a-0.baclassicuiassets.261007
+_ASSET_PACKAGE = ApverNum(455)
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -303,6 +303,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when saving a profile whose name contains one of the game's
+        #:     icon characters.
+        #:
+        #:     English: "Profile names may not contain icons."
+        name_no_icons: LangStr
+
+        #: ::
+        #:
         #:     Error when the profile name field is empty.
         #:
         #:     English: "Name cannot be empty!"
@@ -531,8 +539,8 @@ if TYPE_CHECKING:
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 58 strings (``economy``, ``profile``,
-    #: ``profiles``, and 55 more). Full list in source.
+    #: The ``strings`` group - 59 strings (``economy``, ``profile``,
+    #: ``profiles``, and 56 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -572,6 +580,7 @@ _TREE = {
             'local_profile_info': (),
             'name_description': (),
             'name_edge_underscore': (),
+            'name_no_icons': (),
             'name_not_empty': (),
             'not_enough_tickets': (),
             'nothing_selected': (),

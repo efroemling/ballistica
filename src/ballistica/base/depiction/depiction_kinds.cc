@@ -34,6 +34,10 @@ const char* const kTypeName = "n";
 /// A character's icon: its art tinted by its colors through the round
 /// icon mask, or the standard-spaz standin (in those same colors) while
 /// the art isn't local, upgrading in place once it is.
+///
+/// A color override replaces its main color, the way a team's color
+/// replaces a character's own on its spaz (a player's icon in a teams
+/// game); highlights are always the icon's own.
 class CharacterIconDepiction : public Depiction {
  public:
   /// ``json`` is an icon block on its own (a character's 'i').
@@ -74,6 +78,26 @@ class CharacterIconDepiction : public Depiction {
     }
     if (!tex) {
       return;
+    }
+    if (const float* over = context.color_override) {
+      std::copy(over, over + 3, color);
+    }
+    // Team coloring: our main color (the override, or our own without
+    // one) stays dominant over our highlights.
+    if (context.team_coloring) {
+      float strength = Graphics::TeamColoringStrength();
+      float strength2 = strength;
+      if (def_.has_icon()) {
+        const BasicIconDef& icon = def_.icon();
+        if (icon.highlight_team_coloring_strength >= 0.0f) {
+          strength = icon.highlight_team_coloring_strength;
+        }
+        if (icon.highlight2_team_coloring_strength >= 0.0f) {
+          strength2 = icon.highlight2_team_coloring_strength;
+        }
+      }
+      Graphics::ToneForTeamColor(color, highlight, strength);
+      Graphics::ToneForTeamColor(color, highlight2, strength2);
     }
     context.StandardColor(color);
     context.StandardColor(highlight);
@@ -377,14 +401,21 @@ class NameDepiction : public Depiction {
       float rgba[4]{over[0], over[1], over[2], cap.capsule_color[3]};
       SetColor_(&c, context, tex, rgba);
     } else {
-      SetColor_(&c, context, tex, cap.capsule_color);
+      float rgba[4];
+      std::copy(cap.capsule_color, cap.capsule_color + 4, rgba);
+      TeamTone_(context, rgba, cap.capsule_team_coloring_strength);
+      SetColor_(&c, context, tex, rgba);
     }
     if (tint_tex) {
       float tints[3][3];
       for (int i = 0; i < 3; ++i) {
-        const float* src =
-            (over && cap.override_tints[i]) ? over : cap.capsule_tint_colors[i];
+        bool overridden = over && cap.override_tints[i];
+        const float* src = overridden ? over : cap.capsule_tint_colors[i];
         std::copy(src, src + 3, tints[i]);
+        if (!overridden) {
+          TeamTone_(context, tints[i],
+                    cap.capsule_tint_team_coloring_strengths[i]);
+        }
         context.StandardColor(tints[i]);
       }
       c.SetColorizeTexture(tint_tex);
@@ -413,7 +444,10 @@ class NameDepiction : public Depiction {
       float rgba[4]{over[0], over[1], over[2], cap.icon_color[3]};
       SetColor_(&c, context, tex, rgba);
     } else {
-      SetColor_(&c, context, tex, cap.icon_color);
+      float rgba[4];
+      std::copy(cap.icon_color, cap.icon_color + 4, rgba);
+      TeamTone_(context, rgba, cap.icon_team_coloring_strength);
+      SetColor_(&c, context, tex, rgba);
     }
     {
       auto xf = c.ScopedTransform();
@@ -423,6 +457,20 @@ class NameDepiction : public Depiction {
           g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
+  }
+
+  /// Under team coloring, tone one of our own colors (a part the
+  /// override isn't routed to) so 'our color' stays dominant: the
+  /// override if there is one, else our text's own color.
+  /// ``strength`` is that color's own setting (negative = the standard).
+  void TeamTone_(const DepictionDrawContext& context, float* rgb,
+                 float strength = -1.0f) const {
+    if (!context.team_coloring) {
+      return;
+    }
+    Graphics::ToneForTeamColor(
+        context.color_override ? context.color_override : name_.basic.color,
+        rgb, strength >= 0.0f ? strength : Graphics::TeamColoringStrength());
   }
 
   /// How much the text glows like neon (see CapsuleNameDef::text_glow);
@@ -442,6 +490,9 @@ class NameDepiction : public Depiction {
     const float* own =
         take_override ? context.color_override : name_.basic.color;
     float rgb[3]{own[0], own[1], own[2]};
+    if (!take_override) {
+      TeamTone_(context, rgb);
+    }
     context.StandardColor(rgb);
     // Our text brightens toward white (a flash of saturated text still
     // shows); see Graphics::BrightenColor.

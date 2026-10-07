@@ -729,6 +729,8 @@ def _special_class_cases(classname: str) -> str:
             '    use_spaz_def_color: bool = False\n'
             '    #: Available on spaz node.\n'
             '    use_spaz_def_highlight: bool = False\n'
+            '    #: Available on spaz and depictiondisplay nodes.\n'
+            '    team_coloring: bool = False\n'
             '    #: Available on spaz node.\n'
             '    boxing_gloves_mesh: bascenev1.Mesh | None = None\n'
             '    #: Available on spaz node.\n'

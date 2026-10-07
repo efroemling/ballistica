@@ -1,4 +1,19 @@
-### 1.8.0 (build 23039, api 9, 2026-10-06)
+### 1.8.0 (build 23040, api 9, 2026-10-07)
+- Fixed the game failing at launch ('Failed to load bundled builtin
+  asset-packages') on Android devices whose graphics hardware lacks ASTC
+  texture support (some older phones, x86 devices and emulators). Store
+  builds bundle most asset-packages in ASTC form only; only the builtin
+  package is required at launch now, and such devices download the rest in
+  a form they can use on first run. That fatal error also now says what
+  went wrong.
+- Fixed all Android builds being treated as having modified scripts, which
+  mislabeled their error reports.
+- In team games a player's cloud character, its icon and the lobby's name
+  and icon displays now keep the team's color clearly dominant: the
+  character's other tint colors are toned toward it ('team coloring'), and
+  icons take the team color as the character itself does. Spaz and
+  depictiondisplay nodes gain a `team_coloring` attr, and any depiction can
+  carry a `color_override` and `team_coloring` of its own. Scene protocol 53.
 - Asset-package textures now carry the role they were authored with, and the
   engine checks it where a texture is used: a `data` texture (a mask or tint,
   whose channels are independent values) drawn as a picture, or a picture

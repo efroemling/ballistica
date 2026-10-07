@@ -221,24 +221,27 @@ class Chooser:
         self._profiles: dict[str, dict[str, Any]] = {}
         # Cloud profiles, when this player's source supplies them (the
         # joiner's v2-auth data for remote players, our own synced cache
-        # for local ones): each composed look (its spaz part) keyed by
-        # profile name. Empty in legacy mode.
-        self._cloud_by_name: dict[str, bascenev1.SpazDef] = {}
-        self._cloud_spaz_def: bascenev1.SpazDef | None = None
-        # And each one's icon, as the session depiction our icon node
-        # shows (registered once however often the selection flips).
-        self._cloud_icon_by_name: dict[str, bascenev1.Depiction] = {}
-        self._cloud_icon: bascenev1.Depiction | None = None
-        # And each one's name as the cloud composed it (a name block's
-        # json): how it shows, which may differ from the profile name
-        # it's keyed by (an __account__ profile shows the account's).
-        self._cloud_name_by_name: dict[str, str] = {}
-        # And each one's (spaz json, icon depiction json): what a player
-        # carries out of the lobby (see get_cloud_look_json()).
+        # for local ones): each one's (spaz json, icon block json) keyed
+        # by profile name -- also what a player carries out of the lobby
+        # is built from these (see get_cloud_look_json()). Empty in
+        # legacy mode. Kept as json: every live spaz def and depiction
+        # rides the session stream (to every client), so we only make
+        # objects for the selected look, not for each of the player's
+        # profiles (accounts can have ~100).
         self._cloud_json_by_name: dict[str, tuple[str, str]] = {}
-        # Name depictions our name node has shown, by json (registered
-        # once each however often the selection flips).
-        self._name_depictions: dict[str, bascenev1.Depiction] = {}
+        # The selected look's spaz def and icon depiction, and the
+        # look they were made for (remade only when that changes).
+        self._cloud_spaz_def: bascenev1.SpazDef | None = None
+        self._cloud_icon: bascenev1.Depiction | None = None
+        self._cloud_made_look: str | None = None
+        # Each cloud profile's name as the cloud composed it (a name
+        # block's json): how it shows, which may differ from the
+        # profile name it's keyed by (an __account__ profile shows the
+        # account's).
+        self._cloud_name_by_name: dict[str, str] = {}
+        # The name depiction our name node shows, with its json (kept
+        # while the name stays the same; replaced when it changes).
+        self._name_depiction: tuple[str, bascenev1.Depiction] | None = None
         # The cloud profile whose look (spaz, icon, colors) we're
         # borrowing via the character-override button while keeping
         # the selected profile's name; None for the profile's own look.
@@ -292,6 +295,8 @@ class Chooser:
                 'v_align': 'center',
                 'attach': 'topCenter',
                 'use_color_override': True,
+                # A team's color stays dominant over a capsule's own.
+                'team_coloring': self.lobby.use_team_colors,
             },
         )
         animate_array(
@@ -460,13 +465,12 @@ class Chooser:
         # The look may be borrowed from another of our cloud profiles
         # (see _cycle_cloud_look()); drop a borrow whose source is gone.
         if (
-            self._profilename not in self._cloud_by_name
-            or self._cloud_look_name not in self._cloud_by_name
+            self._profilename not in self._cloud_json_by_name
+            or self._cloud_look_name not in self._cloud_json_by_name
         ):
             self._cloud_look_name = None
         look = self._cloud_look_name or self._profilename
-        self._cloud_spaz_def = self._cloud_by_name.get(look)
-        self._cloud_icon = self._cloud_icon_by_name.get(look)
+        self._make_cloud_look(look)
         if self._profilename == '_edit':
             pass
         elif self._profilename == '_random':
@@ -492,9 +496,17 @@ class Chooser:
             self._character_index = self._character_names.index(character)
             # Colors are part of the look, so a borrowed look brings
             # its own.
-            self._color, self._highlight = get_player_profile_colors(
-                look, profiles=self._profiles
-            )
+            if self._cloud_spaz_def is not None:
+                self._color = self._cloud_spaz_def.color or (0.5, 0.5, 0.5)
+                self._highlight = self._cloud_spaz_def.highlight or (
+                    0.5,
+                    0.5,
+                    0.5,
+                )
+            else:
+                self._color, self._highlight = get_player_profile_colors(
+                    look, profiles=self._profiles
+                )
         self._update_icon()
         self._update_text()
 
@@ -666,7 +678,7 @@ class Chooser:
         name. The cycle runs in profile order and comes back around to
         the profile's own look.
         """
-        names = [n for n in self._profilenames if n in self._cloud_by_name]
+        names = [n for n in self._profilenames if n in self._cloud_json_by_name]
         if len(names) < 2:
             # No other looks to borrow.
             self._errorsound.play()
@@ -697,7 +709,25 @@ class Chooser:
         look = self._cloud_look_name or self._profilename
         if self._cloud_spaz_def is None:
             return None
-        return self._cloud_json_by_name.get(look)
+        blocks = self._cloud_json_by_name.get(look)
+        if blocks is None:
+            return None
+        spaz_json, icon_block = blocks
+        # In a teams game the icon takes the team's color in place of
+        # its own main one, as the spaz does; baked into the depiction
+        # as its color override so everything showing the player's
+        # icon follows.
+        color: tuple[float, float, float] | None = None
+        if self.lobby.use_team_colors:
+            red, green, blue = self.get_color()
+            color = (red, green, blue)
+        return spaz_json, dataclass_to_json(
+            bdep.CharacterIconDepiction(
+                icon_block,
+                color_override=color,
+                team_coloring=color is not None,
+            )
+        )
 
     def _apply_cloud_profiles(
         self,
@@ -710,11 +740,10 @@ class Chooser:
 
         Sources: the joiner's v2-auth data for remote players, our own
         synced cache for local ones. When either yields a list it fills
-        ``_cloud_by_name`` and rewrites ``_profiles`` in the legacy
-        shape the rest of the chooser reads (name, colors, and the
-        standin appearance name for anything still reading
-        ``character``). None from the source leaves the legacy
-        profiles in place.
+        ``_cloud_json_by_name`` and rewrites ``_profiles`` in the legacy
+        shape the rest of the chooser reads (name and the standin
+        appearance name for anything still reading ``character``).
+        None from the source leaves the legacy profiles in place.
         """
         classic = babase.app.classic
         assert classic is not None
@@ -736,10 +765,11 @@ class Chooser:
                 # obvious. (Remote players hear it from their own
                 # client when they join an old or v2-auth-off host.)
                 self.lobby.warn_legacy_profiles_once()
-        self._cloud_by_name = {}
-        self._cloud_icon_by_name = {}
         self._cloud_name_by_name = {}
         self._cloud_json_by_name = {}
+        # A look's json can change under the same name; remake on the
+        # next update_from_profile().
+        self._cloud_made_look = None
         if cloud_json is None:
             return
         profiles: dict[str, dict[str, Any]] = {}
@@ -760,32 +790,47 @@ class Chooser:
                 # Unusable or duplicate composition; the server
                 # shouldn't produce these.
                 continue
-            spaz_def = _bascenev1.SpazDef(parts.spaz)
-            profiles[cname] = {
-                'character': 'Spaz',
-                'color': spaz_def.color or (0.5, 0.5, 0.5),
-                'highlight': spaz_def.highlight or (0.5, 0.5, 0.5),
-            }
-            self._cloud_by_name[cname] = spaz_def
-            icon_json = dataclass_to_json(
-                bdep.CharacterIconDepiction(parts.icon)
-            )
-            self._cloud_icon_by_name[cname] = _bascenev1.Depiction(icon_json)
-            self._cloud_json_by_name[cname] = (parts.spaz, icon_json)
+            # (Colors come from the look's spaz def once it's made;
+            # see update_from_profile().)
+            profiles[cname] = {'character': 'Spaz'}
+            self._cloud_json_by_name[cname] = (parts.spaz, parts.icon)
             if parts.name is not None:
                 self._cloud_name_by_name[cname] = parts.name
         self._profiles = profiles
 
-    def _ensure_icon_node(self, *, cloud: bool) -> None:
+    def _make_cloud_look(self, look: str) -> None:
+        """Make the spaz def and icon for a cloud look (None: legacy).
+
+        Reuses the current ones while the look is unchanged; otherwise
+        the old ones are dropped, so a chooser holds at most one of
+        each however far the player browses.
+        """
+        if look == self._cloud_made_look:
+            return
+        jsons = self._cloud_json_by_name.get(look)
+        if jsons is None:
+            self._cloud_spaz_def = None
+            self._cloud_icon = None
+            self._cloud_made_look = None
+            return
+        spaz_json, icon_block = jsons
+        self._cloud_spaz_def = _bascenev1.SpazDef(spaz_json)
+        self._cloud_icon = _bascenev1.Depiction(
+            dataclass_to_json(bdep.CharacterIconDepiction(icon_block))
+        )
+        self._cloud_made_look = look
+
+    def _ensure_icon_node(self, *, cloud: bool) -> bool:
         """Make our icon node the right kind for the current selection.
 
         Cloud profiles draw via a 'depictiondisplay' node (a character
         icon depiction), legacy profiles via an 'image' node; switching
         between them swaps the node in place (same position/size/attach).
+        Returns whether a new node was made.
         """
         want = 'depictiondisplay' if cloud else 'image'
         if self.icon and self.icon.getnodetype() == want:
-            return
+            return False
         position = self.icon.position if self.icon else (-130, self._vpos + 20)
         if self.icon:
             self.icon.delete()
@@ -798,6 +843,10 @@ class Chooser:
                     'scale': (45, 45),
                     'vr_depth': -10,
                     'attach': 'topCenter',
+                    # A team's color replaces the icon's own main one
+                    # (see _update_icon()).
+                    'use_color_override': self.lobby.use_team_colors,
+                    'team_coloring': self.lobby.use_team_colors,
                 },
             )
         else:
@@ -812,6 +861,7 @@ class Chooser:
                     'attach': 'topCenter',
                 },
             )
+        return True
 
     def _do_nothing(self) -> None:
         """Does nothing! (hacky way to disable callbacks)"""
@@ -1100,7 +1150,7 @@ class Chooser:
                     self.update_from_profile()
 
             elif msg.what == 'character':
-                if self._profilename in self._cloud_by_name:
+                if self._profilename in self._cloud_json_by_name:
                     self._cycle_cloud_look(msg.value)
                     return
                 self._click_sound.play()
@@ -1171,7 +1221,7 @@ class Chooser:
         if name == '__account__' and not (
             self._sessionplayer.inputdevice.is_remote_client
         ):
-            if name in self._cloud_by_name:
+            if name in self._cloud_json_by_name:
                 depiction_json = (
                     babase.app.classic.account_name_depiction or None
                 )
@@ -1192,12 +1242,15 @@ class Chooser:
                     )
                 )
             )
-        depiction = self._name_depictions.get(depiction_json)
-        if depiction is None:
-            depiction = self._name_depictions[depiction_json] = (
-                _bascenev1.Depiction(depiction_json)
+        if (
+            self._name_depiction is None
+            or self._name_depiction[0] != depiction_json
+        ):
+            self._name_depiction = (
+                depiction_json,
+                _bascenev1.Depiction(depiction_json),
             )
-        return depiction
+        return self._name_depiction[1]
 
     def get_color(self) -> Sequence[float]:
         """Return the currently selected color."""
@@ -1264,7 +1317,7 @@ class Chooser:
         # Cloud profiles draw through a depiction display node (the
         # composed definition's own icon and colors, the standin while
         # its art loads); everything else keeps the legacy image node.
-        self._ensure_icon_node(cloud=self._cloud_icon is not None)
+        fresh = self._ensure_icon_node(cloud=self._cloud_icon is not None)
 
         if self._cloud_icon is not None:
             # Safe up-call; see below.
@@ -1272,6 +1325,20 @@ class Chooser:
             from bascenev1lib.actor import spazappearance
 
             self.icon.depiction = self._cloud_icon
+            # In teams mode our team's color goes on the icon (in place
+            # of its own main one), blending with the name's as we
+            # switch teams.
+            if self.lobby.use_team_colors:
+                team_color = self.get_color()
+                if fresh:
+                    self.icon.color_override = team_color
+                else:
+                    animate_array(
+                        self.icon,
+                        'color_override',
+                        3,
+                        {0: self.icon.color_override, 0.1: team_color},
+                    )
             # In-game icon sites draw the player's icon depiction
             # (SessionPlayer.get_icon_depiction()); the legacy icon
             # info stays for anything still reading get_icon() (mods,

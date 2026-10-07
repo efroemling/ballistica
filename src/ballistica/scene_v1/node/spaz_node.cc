@@ -673,6 +673,9 @@ class SpazNodeType : public NodeType {
                       SetBoxingGlovesColor);
   BA_FLOAT_ATTR(boxing_gloves_scale, boxing_gloves_scale,
                 set_boxing_gloves_scale);
+  // (protocol 53) Our color is a team's: tone our other tints down so
+  // it stays dominant.
+  BA_BOOL_ATTR(team_coloring, team_coloring, set_team_coloring);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -765,7 +768,8 @@ class SpazNodeType : public NodeType {
         boxing_gloves_mesh(this),
         boxing_gloves_color_texture(this),
         boxing_gloves_color(this),
-        boxing_gloves_scale(this) {}
+        boxing_gloves_scale(this),
+        team_coloring(this) {}
 };
 
 static NodeType* node_type{};
@@ -3817,11 +3821,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   if (shading) {
     c->SetTexture(ColorTextureData_());
     c->SetColorizeTexture(ColorMaskTextureData_());
-    c->SetColorizeColor(color_[0], color_[1], color_[2]);
-    assert(highlight_.size() == 3);
-    c->SetColorizeColor2(highlight_[0], highlight_[1], highlight_[2]);
-    assert(highlight2_.size() == 3);
-    c->SetColorizeColor3(highlight2_[0], highlight2_[1], highlight2_[2]);
+    SetPieceTint_(c, BaseTint_());
     c->SetLightShadow(base::LightShadowType::kObject);
     c->SetAddColor(add_color[0], add_color[1], add_color[2]);
 
@@ -7493,14 +7493,38 @@ auto SpazNode::RandomPickupSound_() const -> base::SoundAsset* {
 auto SpazNode::BaseTint_() const -> PieceTint_ {
   assert(color_.size() == 3 && highlight_.size() == 3
          && highlight2_.size() == 3);
-  return {color_.data(), highlight_.data(), highlight2_.data()};
+  PieceTint_ out{color_.data(), highlight_.data(), highlight2_.data()};
+  // A definition can say how strongly team coloring tones its
+  // highlights (pieces can again; see ApplyPieceTint_).
+  if (CharacterForm_() && character_look_applied_) {
+    const base::BasicSpazDef& look = spaz_def_->def().spaz();
+    out.highlight_strength = look.highlight_team_coloring_strength;
+    out.highlight2_strength = look.highlight2_team_coloring_strength;
+  }
+  return out;
 }
 
-void SpazNode::SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint) {
+void SpazNode::SetPieceTint_(base::ObjectComponent* c,
+                             const PieceTint_& tint) const {
   c->SetColorizeColor(tint.color[0], tint.color[1], tint.color[2]);
-  c->SetColorizeColor2(tint.highlight[0], tint.highlight[1], tint.highlight[2]);
-  c->SetColorizeColor3(tint.highlight2[0], tint.highlight2[1],
-                       tint.highlight2[2]);
+  float highlight[3]{tint.highlight[0], tint.highlight[1], tint.highlight[2]};
+  float highlight2[3]{tint.highlight2[0], tint.highlight2[1],
+                      tint.highlight2[2]};
+  // Team coloring: the piece's main color stays dominant over its
+  // highlights (the same rule character icons follow, so the two
+  // agree). Done here, at the one place every tint is applied, so it
+  // covers the body and every piece with tints of its own.
+  if (team_coloring_) {
+    float standard = base::Graphics::TeamColoringStrength();
+    base::Graphics::ToneForTeamColor(
+        tint.color, highlight,
+        tint.highlight_strength >= 0.0f ? tint.highlight_strength : standard);
+    base::Graphics::ToneForTeamColor(
+        tint.color, highlight2,
+        tint.highlight2_strength >= 0.0f ? tint.highlight2_strength : standard);
+  }
+  c->SetColorizeColor2(highlight[0], highlight[1], highlight[2]);
+  c->SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
 }
 
 void SpazNode::ApplyPieceTint_(const base::CharacterTintDef& def,
@@ -7513,6 +7537,14 @@ void SpazNode::ApplyPieceTint_(const base::CharacterTintDef& def,
   }
   if (def.has_highlight2) {
     tint->highlight2 = def.highlight2;
+  }
+  // A piece's own team-coloring strengths stand in the same way (so a
+  // piece from another character reacts as it does there).
+  if (def.highlight_team_coloring_strength >= 0.0f) {
+    tint->highlight_strength = def.highlight_team_coloring_strength;
+  }
+  if (def.highlight2_team_coloring_strength >= 0.0f) {
+    tint->highlight2_strength = def.highlight2_team_coloring_strength;
   }
 }
 

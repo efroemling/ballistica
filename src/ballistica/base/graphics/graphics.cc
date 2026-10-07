@@ -638,6 +638,57 @@ void Graphics::BrightenColor(float* rgb, float brightness) {
   }
 }
 
+auto Graphics::TeamColoringStrength() -> float {
+  // The standard strength (Eric, 2026-10-07). Definitions can set
+  // their own per color; see CharacterTintDef and CapsuleNameDef.
+  const float kStandard{0.5f};
+
+  // Tuning aid: BA_TEAM_COLORING_STRENGTH overrides it, re-read a few
+  // times a second so it can be changed in a running game.
+  static millisecs_t last_check{-1000};
+  static float current{kStandard};
+  millisecs_t now = g_core->AppTimeMillisecs();
+  if (now - last_check >= 250) {
+    last_check = now;
+    current = kStandard;
+    if (const char* val = getenv("BA_TEAM_COLORING_STRENGTH")) {
+      if (val[0] != 0) {
+        current = std::clamp(static_cast<float>(atof(val)), 0.0f, 1.0f);
+      }
+    }
+  }
+  return current;
+}
+
+void Graphics::ToneForTeamColor(const float* main_rgb, float* rgb,
+                                float strength) {
+  assert(main_rgb && rgb);
+  float t = std::clamp(strength, 0.0f, 1.0f);
+  float main_max{};
+  float v{};
+  for (int i = 0; i < 3; ++i) {
+    main_max = std::max(main_max, main_rgb[i]);
+    v = std::max(v, rgb[i]);
+  }
+  if (t <= 0.0f || main_max <= 0.0f || v <= 0.0f) {
+    return;
+  }
+  // Blend toward main's own tint at this color's brightness, then put
+  // the brightness (its brightest channel) back where it was: only
+  // hue and saturation move.
+  float blended_max{};
+  for (int i = 0; i < 3; ++i) {
+    float target = std::max(0.0f, main_rgb[i]) / main_max * v;
+    rgb[i] = std::max(0.0f, rgb[i]) + (target - std::max(0.0f, rgb[i])) * t;
+    blended_max = std::max(blended_max, rgb[i]);
+  }
+  if (blended_max > 0.0f) {
+    for (int i = 0; i < 3; ++i) {
+      rgb[i] *= v / blended_max;
+    }
+  }
+}
+
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;

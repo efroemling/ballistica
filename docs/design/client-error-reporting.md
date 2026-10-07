@@ -118,6 +118,20 @@ Lines look like `client fatal: <message> | build=… version=…
 platform=…/… os=… variant=… devbuild=… modded=… coregone=… addr=…`,
 with the stack trace on following lines. `os=` is omitted when unknown.
 
+**Ignore `modded=True` on Android reports from builds through 23039.**
+Every Android build read as modded there: the custom-scripts check
+compared the app-python dir against baenv's default path, while Android
+serves scripts from the apk. Fixed 2026-10-07 (`core.cc`, where
+`using_custom_app_python_dir_` is computed). The same bug made those
+builds `exit(1)` on a fatal instead of aborting and tagged their log
+reports `baModified=1`.
+
+**A fatal's message is all that reaches us; put the cause in it.** A
+logged Python exception stays on the device. When a fatal wraps a
+failed Python call, have the call return its cause and append it to the
+message, as `Assets::StartLoading` does for the bundled asset-package
+load (`Cause: <Type>: <message> (file:line func < ...)`).
+
 **Don't filter with `--service global`.** The master server emits these
 from whichever Cloud Run service processes the event (`bg` in
 practice); `resource.type=global` is for logs relayed from elsewhere,
