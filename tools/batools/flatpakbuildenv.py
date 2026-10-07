@@ -37,12 +37,13 @@ import os
 import re
 import json
 import urllib.request
+from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
+from efrotools.util import writefile
 
 if TYPE_CHECKING:
     from typing import Any
@@ -53,6 +54,9 @@ if TYPE_CHECKING:
 # version and the checksums together; the checksums are published as
 # <asset>.sha256 next to each release asset.
 UV_VERSION = '0.12.23'
+#
+# Keyed by flatpak arch name, which is also the substring identifying a
+# manylinux wheel built for it; these keys are the build arches.
 UV_SHA256 = {
     'x86_64': (
         '9167d72b3319674b6303c4cbe071854bba13ebdf3d76b1a7cbdc175471fb66d6'
@@ -62,13 +66,8 @@ UV_SHA256 = {
     ),
 }
 
-# Flatpak arch names we build for. Each also names the uv release target
-# ('<arch>-unknown-linux-gnu') and is the substring identifying a wheel
-# built for it. Linux-only; the flatpak build targets nothing else.
-ARCHES = ('x86_64', 'aarch64')
-
 # Where the generated module stages its payload, relative to
-# FLATPAK_DEST (/app). The manifest names the absolute form in
+# FLATPAK_DEST (/app). The manifests name the absolute form in
 # UV_FIND_LINKS. Both uv and the wheels are cleaned out of the finished
 # app; they exist only for the duration of the build.
 STAGE_SUBDIR = 'share/python-build-env'
@@ -99,8 +98,8 @@ class LockedPackage:
     name: str
     version: str
     hashes: list[str]
-    via: list[str] = field(default_factory=list)
-    text: str = ''
+    via: list[str]
+    text: str
 
     @property
     def key(self) -> str:
@@ -247,8 +246,8 @@ def _wheel_rank(pypi_file: dict[str, Any]) -> tuple[int, tuple[int, int], int]:
 
 def _cpython_tag_version(tag: str) -> int | None:
     """Return 314 for 'cp314', None for anything that isn't a cpython tag."""
-    match = re.fullmatch(r'cp(\d+)', tag)
-    return int(match.group(1)) if match else None
+    match = re.fullmatch(r'cp(\d)(\d+)', tag)
+    return int(match.group(1) + match.group(2)) if match else None
 
 
 def _is_usable_wheel(filename: str) -> bool:
@@ -310,23 +309,23 @@ def select_distributions(
     if universal:
         return [(None, min(universal, key=_wheel_rank))]
 
-    out: list[tuple[str | None, dict[str, Any]]] = []
-    for arch in ARCHES:
+    per_arch: dict[str, dict[str, Any]] = {}
+    for arch in UV_SHA256:
         matches = [
             f
             for f in wheels
             if 'manylinux' in f['filename'] and arch in f['filename']
         ]
         if matches:
-            out.append((arch, min(matches, key=_wheel_rank)))
-    if out:
-        if len(out) != len(ARCHES):
-            got = ', '.join(a for a, _ in out if a is not None)
+            per_arch[arch] = min(matches, key=_wheel_rank)
+    if per_arch:
+        if len(per_arch) != len(UV_SHA256):
+            got = ', '.join(per_arch)
             raise CleanError(
                 f'{pkg.name}=={pkg.version} has manylinux wheels for'
                 f' {got} but not for every build arch.'
             )
-        return out
+        return list(per_arch.items())
 
     sdists = [f for f in files if not f['filename'].endswith('.whl')]
     if not sdists:
@@ -334,6 +333,21 @@ def select_distributions(
             f'No wheel or sdist usable for {pkg.name}=={pkg.version}.'
         )
     return [(None, sdists[0])]
+
+
+def _write_if_changed(path: str, text: str) -> None:
+    """Write a file only if its contents differ.
+
+    The build lockfile is a make prerequisite of the venv (VENV_LOCK),
+    so a no-op regeneration must not bump its mtime.
+    """
+    try:
+        with open(path, encoding='utf-8') as infile:
+            if infile.read() == text:
+                return
+    except FileNotFoundError:
+        pass
+    writefile(path, text)
 
 
 def write_subset_lockfile(
@@ -350,8 +364,7 @@ def write_subset_lockfile(
         '',
     ]
     lines.extend(pkg.text for pkg in subset)
-    with open(path, 'w', encoding='utf-8') as outfile:
-        outfile.write('\n'.join(lines) + '\n')
+    _write_if_changed(path, '\n'.join(lines) + '\n')
 
 
 def write_flatpak_module(
@@ -377,20 +390,21 @@ def write_flatpak_module(
         'sources:',
     ]
 
-    for arch in ARCHES:
+    for arch, sha256 in UV_SHA256.items():
         lines += [
             '  - type: archive',
             f'    only-arches: [{arch}]',
             '    url: https://github.com/astral-sh/uv/releases/download/'
             f'{UV_VERSION}/uv-{arch}-unknown-linux-gnu.tar.gz',
-            f'    sha256: {UV_SHA256[arch]}',
+            f'    sha256: {sha256}',
         ]
 
-    # One PyPI request per package; run them concurrently.
+    # One PyPI metadata request per package; they are independent, so
+    # run them concurrently. map() keeps lockfile order for the output.
     with ThreadPoolExecutor(max_workers=8) as executor:
         selections = list(executor.map(select_distributions, subset))
 
-    for pkg, selection in zip(subset, selections, strict=True):
+    for pkg, selection in zip(subset, selections):
         print(f'  {Clr.BLU}{pkg.name}=={pkg.version}{Clr.RST}', flush=True)
         for wheel_arch, pypi_file in selection:
             lines.append('  - type: file')
@@ -404,14 +418,11 @@ def write_flatpak_module(
                 f'    sha256: {sha256}',
             ]
 
-    with open(path, 'w', encoding='utf-8') as outfile:
-        outfile.write('\n'.join(lines) + '\n')
+    _write_if_changed(path, '\n'.join(lines) + '\n')
 
 
 def generate(projroot: str) -> None:
     """Regenerate the build subset lockfile and the flatpak module."""
-    # Project-relative, since these names also land in the generated
-    # files' header comments.
     lock_path = os.path.join('pconfig', 'requirements_lock.txt')
     roots_path = os.path.join('pconfig', 'requirements_build.txt')
     subset_path = os.path.join('pconfig', 'requirements_build_lock.txt')

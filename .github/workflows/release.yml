@@ -494,11 +494,22 @@ jobs:
       - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Make the build
-        # Everything the network-less Flathub build needs, for every
-        # arch Flathub builds; see flatpak-prereqs in the Makefile.
         run: |
-          make flatpak-prereqs FLATPAK_ARCHES="x86_64 arm64"
+          make flatpak-prefetch
+      # Flathub wants everything the build installs to come from the
+      # source tarball, so put this release's metadata entry and the
+      # app icon into the tree before packing it.
+      - name: Add flatpak release metadata
+        run: tools/pcommand flatpak_add_release "${GITHUB_REF_NAME}"
+      - name: Fetch flatpak icon
+        run: |
+          curl -fsSL -o pconfig/flatpak/net.froemling.bombsquad.png \
+            https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
+          echo "c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a  pconfig/flatpak/net.froemling.bombsquad.png" \
+            | sha256sum -c -
       - name: Compress the build
         # .venv is deliberately left out: a venv is bound to the
         # absolute path of the interpreter that created it, so the

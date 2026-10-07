@@ -1525,24 +1525,18 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-# Flatpak builds run with no network access (Flathub requires it, and
-# the local manifest matches so problems show up before a release). So
-# everything the sandbox's `make cmake-build` would otherwise download
-# is fetched on the host first: the cmake assets (including the
-# bacloud-assembled asset bundle, plus the efrocache dir whose absence
-# would trigger a starter-archive download) and the release prefab lib
-# for each arch in FLATPAK_ARCHES. The sandbox then finds them all in
-# place. The release workflow sets FLATPAK_ARCHES to every arch Flathub
-# builds, since its tarball has to serve all of them.
-FLATPAK_ARCHES ?= $(subst aarch64,arm64,$(shell uname -m))
-
-flatpak-prereqs: assets-cmake
-	@$(DMAKE) $(foreach arch,$(FLATPAK_ARCHES),\
-      build/prefab/lib/linux_$(arch)_gui/release/libballisticaplus.a)
+# Everything a flatpak build would otherwise download mid-build: built
+# assets, resources, and the prefab plus lib for each flatpak arch. The
+# build sandbox has no network (Flathub forbids it), so these have to be
+# in the tree it is handed: the release tarball, or the local tree for
+# flatpak-linux.
+flatpak-prefetch: assets-cmake resources \
+ build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
+ build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
 
 # The SDK, runtime and extensions named in the manifest are installed
 # per-user from flathub, so their versions live only in the manifest.
-flatpak-linux: flatpak-prereqs
+flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
 	flatpak remote-add --user --if-not-exists flathub \
 	https://flathub.org/repo/flathub.flatpakrepo
