@@ -1535,7 +1535,7 @@ flatpak-prefetch: assets-cmake resources \
  build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
 
 # Pack what flatpak-prefetch produced, plus this release's releases.xml
-# entry, into build/flatpak/bombsquad_prebuilt_inputs.tar: the parts of
+# entry, into build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
 # a Flathub build's tree that are not in git. Flathub builds take the
 # source from git at the release tag and lay this archive over it; see
 # flatpak_prebuilt_inputs and generate_flathub_manifest in
@@ -1543,14 +1543,27 @@ flatpak-prefetch: assets-cmake resources \
 flatpak-prebuilt-inputs: flatpak-prefetch
 	$(PCOMMAND) flatpak_prebuilt_inputs
 
-# The SDK, runtime and extensions named in the manifest are installed
-# per-user from flathub, so their versions live only in the manifest.
+# One-time setup for flatpak-linux, run by hand (or as its own CI step)
+# since it changes your user flatpak installation: installs the SDK,
+# runtime and extensions the manifest names, from the flathub remote,
+# so their versions live only in the manifest. Adding that remote is
+# left to you.
+flatpak-deps:
+	@flatpak remote-list --user --columns=name | grep -qx flathub || { \
+ echo "Error: no 'flathub' flatpak remote for your user. Add it with:"; \
+ echo "  flatpak remote-add --user --if-not-exists flathub" \
+ "https://flathub.org/repo/flathub.flatpakrepo"; \
+ echo "then re-run 'make flatpak-deps'."; \
+ exit 1; }
+	flatpak-builder --user --install-deps-from=flathub --install-deps-only \
+	--state-dir=./.cache/flatpak/flatpak-builder \
+	./.cache/flatpak/build_dir \
+	pconfig/flatpak/net.froemling.bombsquad.yml
+
+# Needs the SDK etc. installed first; see flatpak-deps.
 flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
-	flatpak remote-add --user --if-not-exists flathub \
-	https://flathub.org/repo/flathub.flatpakrepo
 	flatpak-builder --repo=./.cache/flatpak/repo \
-	--user --install-deps-from=flathub \
 	--force-clean --keep-build-dirs \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \

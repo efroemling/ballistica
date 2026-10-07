@@ -462,6 +462,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install -y flatpak flatpak-builder
+      - name: Install flatpak build dependencies
+        run: |
+          flatpak remote-add --user --if-not-exists flathub \
+            https://flathub.org/repo/flathub.flatpakrepo
+          make flatpak-deps
 
       # This works but its nice to have precise control over the cache
       # - name: Build Flatpak
@@ -508,7 +513,7 @@ jobs:
         with:
           allowUpdates: true
           omitBody: true
-          artifacts: build/flatpak/bombsquad_prebuilt_inputs.tar
+          artifacts: build/flatpak/bombsquad_prebuilt_inputs.tar.xz
 
   release_generate_flathub_manifest:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}

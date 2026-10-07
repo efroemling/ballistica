@@ -73,9 +73,12 @@ Inside the sandbox those make targets then find their outputs already in
 place and up to date, so nothing is downloaded. Two build steps make
 sure of that whatever the sources are:
 
-- the prefetched files are all touched to one fresh timestamp, since a
-  git checkout leaves them older than the files around them, and make
-  would then try to re-download them;
+- in Flathub builds, the files from the prebuilt-inputs archive (see
+  below) are all touched to one fresh timestamp, since extracted over a
+  git checkout they can be older than the files around them, and make
+  would then try to re-download them. The archive lists its own files in
+  `.flatpak-prebuilt-inputs` for this; local builds have no such list
+  and skip the step;
 - an empty `.cache/efrocache` is created, since the asset build
   downloads an efrocache starter archive whenever that dir is missing.
 
@@ -124,19 +127,35 @@ Note that a venv built from the reduced lockfile has no dev tooling, so
 
 ## Building locally
 
-Install `flatpak` and `flatpak-builder`, then from the project root:
+Install `flatpak` and `flatpak-builder`. Then, once, add the `flathub`
+remote for your user and install the build dependencies:
+
+```sh
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+make flatpak-deps
+```
+
+`make flatpak-deps` runs `flatpak-builder --user
+--install-deps-from=flathub --install-deps-only` against
+`net.froemling.bombsquad.yml`, which installs (or updates) the SDK,
+runtime and extensions the manifest names, so their versions live only in
+the manifest. It's a separate step, not part of the build, because it
+changes your user flatpak installation (about 1GB). If the `flathub`
+remote is missing it stops and prints the `remote-add` command above
+rather than adding it for you. Re-run it after the manifest's runtime
+version or extensions change.
+
+Then, from the project root:
 
 ```sh
 make flatpak-linux
 ```
 
 This first runs `make flatpak-prefetch` (see above), which needs the host
-venv and network access. It then adds the `flathub` remote for your user
-if it's missing, and runs `flatpak-builder --user
---install-deps-from=flathub` against `net.froemling.bombsquad.yml`. That
-step installs or updates the SDK, runtime and extensions the manifest
-names, so their versions live only in the manifest. State, the build dir
-and the repo live under `.cache/flatpak/`. The target then exports a
+venv and network access. It then builds `net.froemling.bombsquad.yml`
+with flatpak-builder, which installs nothing; if the build fails because
+the SDK or an extension isn't installed, run `make flatpak-deps`. State, the build
+dir and the repo live under `.cache/flatpak/`. The target then exports a
 bundle to `build/flatpak/bombsquad.flatpak`. Install and run it with:
 
 ```sh
@@ -150,8 +169,9 @@ flatpak run net.froemling.bombsquad
 ## CI builds
 
 - **Nightly** (`.github/workflows/nightly.yml`, job
-  `make_flatpak_gui_debug`) runs `make flatpak-linux` on x86_64 and arm64
-  runners and uploads the bundles as workflow artifacts. The per-user
+  `make_flatpak_gui_debug`) adds the `flathub` remote and runs `make
+  flatpak-deps` as its own step, then runs `make flatpak-linux` on x86_64
+  and arm64 runners and uploads the bundles as workflow artifacts. The per-user
   flatpak installation and flatpak-builder's state are cached between runs,
   keyed on the manifest and `python-build-env.yml`.
 - **Release** (`.github/workflows/release.yml`, job
@@ -168,7 +188,7 @@ not from files in the Flathub repo. So the Flathub manifest takes the code
 from git, pinned to the release tag and its commit, and the few things git
 doesn't have from a release asset:
 
-- `bombsquad_prebuilt_inputs.tar` (about 30MB), written by `make
+- `bombsquad_prebuilt_inputs.tar.xz` (about 4MB), written by `make
   flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
   what `make flatpak-prefetch` fetches (see above) plus `releases.xml`
   with this release's entry, and is extracted over the git checkout.
@@ -183,7 +203,7 @@ git tag v1.x.y ─► release.yml
                    │
                    ├─ release_flatpak_prebuilt_inputs
                    │    pcommand flatpak_add_release <tag>   (adds the entry to releases.xml)
-                   │    make flatpak-prebuilt-inputs  ─► bombsquad_prebuilt_inputs.tar
+                   │    make flatpak-prebuilt-inputs  ─► bombsquad_prebuilt_inputs.tar.xz
                    │    attach it to the GitHub release
                    │
                    └─ release_generate_flathub_manifest   (needs the job above)
@@ -207,7 +227,7 @@ generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
 2. Queries the GitHub API for the **latest** release of the repo
    (`GITHUB_REPOSITORY`, or else derived from `git remote.origin.url`),
    and finds its tag, the commit that tag points at, and the
-   `bombsquad_prebuilt_inputs.tar` asset and its SHA256 digest.
+   `bombsquad_prebuilt_inputs.tar.xz` asset and its SHA256 digest.
 3. Reads `net.froemling.bombsquad.yml`, replaces its one `type: dir`
    source (and the comment above it) with a `git` source (url, tag and
    commit) followed by an `archive` source for the prebuilt inputs, and
@@ -233,5 +253,5 @@ manifest and publishes the new version.
   next release. You can validate them with
   `flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream net.froemling.bombsquad.metainfo.xml`.
 - The generator always uses the *latest* GitHub release, so it has to run
-  after the release (and its `bombsquad_prebuilt_inputs.tar`) has been
+  after the release (and its `bombsquad_prebuilt_inputs.tar.xz`) has been
   published.

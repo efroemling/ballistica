@@ -5,6 +5,7 @@
 #if BA_PLATFORM_LINUX
 
 #include <list>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,8 @@ class PlatformLinux : public Platform {
  public:
   PlatformLinux();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
+  auto DoGetConfigDirectoryMonolithicDefault()
+      -> std::optional<std::string> override;
   auto DoHasTouchScreen() -> bool override;
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;

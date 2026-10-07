@@ -613,20 +613,9 @@ def _setup_paths(
 
     data_dir = _calc_data_dir(data_dir)
 
-    # Default config-dir is simply ~/.ballisticakit; under Flatpak it
-    # lives in the app's own data dir instead. That path is the same
-    # inside and outside the sandbox, so dirs we hand to the desktop
-    # (e.g. 'Show Mods Folder' via the OpenURI portal) resolve there.
-    # (CorePython::InitPython in core_python.cc mirrors this to pick its
-    # pycache_prefix; keep the two in sync.)
+    # Default config-dir is simply ~/.ballisticakit
     if config_dir is None:
-        flatpak_id = os.environ.get('FLATPAK_ID')
-        if flatpak_id:
-            config_dir = str(
-                Path(Path.home(), '.var', 'app', flatpak_id, '.ballisticakit')
-            )
-        else:
-            config_dir = str(Path(Path.home(), '.ballisticakit'))
+        config_dir = str(Path(Path.home(), '.ballisticakit'))
 
     # By default, cache-dir is simply 'cache' under config-dir.
     if cache_dir is None:

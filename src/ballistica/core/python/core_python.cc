@@ -110,16 +110,7 @@ void CorePython::InitPython() {
       // explicitly.
       auto home = g_core->platform->GetEnv("HOME");
       if (home.has_value() && !home->empty()) {
-        // Like baenv, under Flatpak this lives in the app's own data dir
-        // (~/.var/app/<app-id>) instead.
-        auto flatpak_id = g_core->platform->GetEnv("FLATPAK_ID");
-        if (flatpak_id.has_value() && !flatpak_id->empty()) {
-          config_dir = *home + BA_DIRSLASH + ".var" + BA_DIRSLASH + "app"
-                       + BA_DIRSLASH + *flatpak_id + BA_DIRSLASH
-                       + ".ballisticakit";
-        } else {
-          config_dir = *home + BA_DIRSLASH + ".ballisticakit";
-        }
+        config_dir = *home + BA_DIRSLASH + ".ballisticakit";
       }
     }
     // If we've calced a config-dir, we can calc cache-dir.

@@ -180,7 +180,7 @@ def generate_flathub_manifest() -> None:
         stale = os.path.join(flathub_dir, filename)
         if os.path.exists(stale):
             os.remove(stale)
-            print(f'  Removed {filename} (now sourced from the tarball)')
+            print(f'  Removed {filename} (now from the app sources)')
 
     # Referenced by the manifest as a module; without it the flathub
     # build has no uv and no wheels to install from.
@@ -208,7 +208,7 @@ def generate_flathub_manifest() -> None:
         # Find the prebuilt-inputs asset
         asset: dict = {}
         asset_url = None
-        asset_name = 'bombsquad_prebuilt_inputs.tar'
+        asset_name = 'bombsquad_prebuilt_inputs.tar.xz'
 
         for asset in release_data.get('assets', []):
             if asset['name'] == asset_name:
@@ -281,18 +281,26 @@ def generate_flathub_manifest() -> None:
 def flatpak_prebuilt_inputs() -> None:
     """Pack the parts of a flatpak build's tree that aren't in git.
 
-    Writes build/flatpak/bombsquad_prebuilt_inputs.tar: what
+    Writes build/flatpak/bombsquad_prebuilt_inputs.tar.xz: what
     `make flatpak-prefetch` fetched (built assets, resources, the
     prebuilt plus lib for each arch, the gui asset bundle and the
     content-store blobs it references) plus releases.xml, which the
     release workflow adds this release's entry to. Flathub builds take
     the code from git and extract this over it.
+
+    The archive also carries a list of its own files,
+    .flatpak-prebuilt-inputs, which the manifest uses to mark exactly
+    those files fresh after extracting them over the checkout.
     """
+    import io
     import os
     import tarfile
 
     from efro.terminal import Clr
-    from batools._bundlestage import _collect_bundle_hashes
+    from batools._bundlestage import (
+        assetdata_blob_path,
+        collect_bundle_hashes,
+    )
 
     projroot = str(pcommand.PROJROOT)
     bundle_manifest = '.cache/asset_bundle/gui-minimal/manifest.json'
@@ -307,20 +315,38 @@ def flatpak_prebuilt_inputs() -> None:
     # Staging copies the bundle's blobs out of the local content store;
     # take only those, not the whole (much larger) store.
     paths += sorted(
-        f'.cache/assetdata/{h[:2]}/{h[2:]}'
-        for h in _collect_bundle_hashes(
+        assetdata_blob_path(h)
+        for h in collect_bundle_hashes(
             projroot, os.path.join(projroot, bundle_manifest)
         )
     )
+    # Not needed: Windows-only assets, and scripts the build copies
+    # into build/assets from the git checkout itself.
+    excluded = ('build/assets/windows', 'build/assets/ba_data/python')
+
+    packed: list[str] = []
+
+    def _filter(info: tarfile.TarInfo) -> tarfile.TarInfo | None:
+        if any(
+            info.name == e or info.name.startswith(f'{e}/') for e in excluded
+        ):
+            return None
+        if info.isfile():
+            packed.append(info.name)
+        return info
 
     outpath = os.path.join(
-        projroot, 'build', 'flatpak', 'bombsquad_prebuilt_inputs.tar'
+        projroot, 'build', 'flatpak', 'bombsquad_prebuilt_inputs.tar.xz'
     )
     os.makedirs(os.path.dirname(outpath), exist_ok=True)
-    with tarfile.open(outpath, 'w') as tar:
+    with tarfile.open(outpath, 'w:xz') as tar:
         for path in paths:
-            tar.add(os.path.join(projroot, path), arcname=path)
-    print(f'{Clr.GRN}Wrote {outpath}.{Clr.RST}')
+            tar.add(os.path.join(projroot, path), arcname=path, filter=_filter)
+        listing = ('\n'.join(packed) + '\n').encode()
+        info = tarfile.TarInfo('.flatpak-prebuilt-inputs')
+        info.size = len(listing)
+        tar.addfile(info, io.BytesIO(listing))
+    print(f'{Clr.GRN}Wrote {outpath} ({len(packed)} files).{Clr.RST}')
 
 
 def _flathub_manifest_sources(
@@ -371,10 +397,10 @@ def flatpak_add_release() -> None:
     Args: <version> [YYYY-MM-DD]
 
     Writes pconfig/flatpak/net.froemling.bombsquad.releases.xml, which
-    the flatpak build installs from the source tarball. The release
-    workflow runs this before packing that tarball; committing the entry
-    ahead of time works too (an existing version is left alone). The
-    date defaults to today (UTC).
+    the flatpak build installs. The release workflow runs this before
+    packing the prebuilt-inputs archive that carries it to Flathub;
+    committing the entry ahead of time works too (an existing version
+    is left alone). The date defaults to today (UTC).
     """
     import os
     import datetime
