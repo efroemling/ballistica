@@ -492,8 +492,6 @@ jobs:
       - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-        with:
-          using-cmake: true
       # Flathub builds take the code from git at this tag; this archive
       # carries the rest (what a network-less build can't fetch, plus
       # this release's metadata entry). See pconfig/flatpak/README.md.

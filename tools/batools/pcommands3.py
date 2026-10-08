@@ -138,15 +138,11 @@ def generate_flathub_manifest() -> None:
     """Generate a Flathub manifest for Ballistica into build/flathub.
     This function is intended to be run within a GitHub Actions workflow.
 
-    This function:
-
-    1. Copies the manifest and its python-build-env module to
-       build/flathub and removes files that belong upstream (desktop
-       file, metainfo, releases.xml; Flathub wants those from the app's
-       own sources)
-    2. Writes build/flathub/bombsquad-sources.yml, the manifest's
-       project source: git at the latest GitHub release's tag, plus
-       that release's prebuilt-inputs archive
+    Replaces everything in build/flathub (except .git and flathub.json)
+    with the manifest, its python-build-env module, and a generated
+    bombsquad-sources.yml: git at the release's tag plus that release's
+    prebuilt-inputs archive. The release is the one for the tag that
+    triggered the workflow, or else the latest one.
     """
     # pylint: disable=too-many-locals
     import json
@@ -160,30 +156,22 @@ def generate_flathub_manifest() -> None:
     from efrotools.util import writefile
 
     github_repo = _github_repo()
-
-    # Paths
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'pconfig', 'flatpak')
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
     os.makedirs(flathub_dir, exist_ok=True)
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
-    # Step 1: The flathub repo holds only the manifest and the module
-    # files it includes. Everything the build installs (desktop file,
-    # metainfo, releases.xml, icon) comes from the app's sources, so
-    # clear out any copies an earlier version of this step pushed.
-    for filename in [
-        'net.froemling.bombsquad.metainfo.xml',
-        'net.froemling.bombsquad.desktop',
-        'net.froemling.bombsquad.releases.xml',
-    ]:
-        stale = os.path.join(flathub_dir, filename)
-        if os.path.exists(stale):
-            os.remove(stale)
-            print(f'  Removed {filename} (now from the app sources)')
-
-    # The manifest goes as-is, along with the module file it includes;
-    # only its included sources file (step 2) differs from ours.
+    # The flathub repo holds only what this writes; Flathub wants
+    # everything the build installs to come from the app's sources.
+    for name in os.listdir(flathub_dir):
+        if name in {'.git', 'flathub.json'}:
+            continue
+        path = os.path.join(flathub_dir, name)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
     for filename in ['net.froemling.bombsquad.yml', 'python-build-env.yml']:
         shutil.copy2(
             os.path.join(flatpak_src_dir, filename),
@@ -191,53 +179,36 @@ def generate_flathub_manifest() -> None:
         )
         print(f'  Copied {filename}')
 
-    # Step 2: Get latest release information from GitHub
-    print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
-
+    in_tag_workflow = os.environ.get('GITHUB_REF_TYPE') == 'tag'
+    ref_name = os.environ.get('GITHUB_REF_NAME')
+    which = f'tags/{ref_name}' if in_tag_workflow else 'latest'
+    print(f'{Clr.BLD}Fetching GitHub release info ({which})...{Clr.RST}')
+    asset_name = 'bombsquad_prebuilt_inputs.tar.xz'
     try:
-        api_url = f'https://api.github.com/repos/{github_repo}/releases/latest'
-        req = urllib.request.Request(api_url)
-
-        with urllib.request.urlopen(req) as response:
+        api_url = f'https://api.github.com/repos/{github_repo}/releases/{which}'
+        with urllib.request.urlopen(api_url) as response:
             release_data = json.loads(response.read().decode())
-
-        tag = release_data.get('tag_name')
-        if not tag:
-            raise CleanError('Could not get the tag of the latest release')
-        print(f'  Release tag: {tag}')
-
-        # Find the prebuilt-inputs asset
-        asset: dict = {}
-        asset_url = None
-        asset_name = 'bombsquad_prebuilt_inputs.tar.xz'
-
-        for asset in release_data.get('assets', []):
-            if asset['name'] == asset_name:
-                asset_url = asset['browser_download_url']
-                break
-
-        if not asset_url:
-            raise CleanError(
-                f'Could not find {asset_name} in latest release assets'
-            )
-
-        print(f'  Found asset: {asset_url}')
-
-        print(f'{Clr.BLD}Getting SHA256 checksum...{Clr.RST}')
-        digest = asset.get('digest')
-        if not digest or not digest.startswith('sha256:'):
-            msg = 'No SHA256 digest found in GitHub release asset'
-            raise CleanError(msg)
-        checksum = digest.split(':', 1)[1]
-
+        tag = release_data['tag_name']
+        asset = next(
+            a for a in release_data['assets'] if a['name'] == asset_name
+        )
+    except StopIteration:
+        raise CleanError(f'No {asset_name} in release {which}.') from None
     except Exception as e:
         raise CleanError(f'Failed to fetch release info: {e}') from e
+    digest = asset.get('digest') or ''
+    if not digest.startswith('sha256:'):
+        raise CleanError(f'No SHA256 digest for {asset_name}.')
+    asset_url = asset['browser_download_url']
+    checksum = digest.removeprefix('sha256:')
+    print(f'  Release tag: {tag}')
+    print(f'  Found asset: {asset_url}')
 
     # Pin the git source to the commit as well as the tag, so a moved
-    # tag can't change what Flathub builds. In the release workflow the
-    # triggering tag's commit is GITHUB_SHA, which also covers a shallow
-    # checkout that can't resolve the tag itself.
-    if os.environ.get('GITHUB_REF_NAME') == tag and 'GITHUB_SHA' in os.environ:
+    # tag can't change what Flathub builds. In the release workflow
+    # that's GITHUB_SHA, which also covers a shallow checkout that can't
+    # resolve the tag itself.
+    if in_tag_workflow:
         commit = os.environ['GITHUB_SHA']
     else:
         try:
@@ -254,17 +225,21 @@ def generate_flathub_manifest() -> None:
             ) from e
     print(f'  Release commit: {commit}')
 
+    # The Flathub copy of pconfig/flatpak/bombsquad-sources.yml: the
+    # code from git, and what git lacks from the release's archive,
+    # extracted over the checkout.
     sources_path = os.path.join(flathub_dir, 'bombsquad-sources.yml')
     writefile(
         sources_path,
-        _flathub_sources(
-            git_source=[
-                f'url: https://github.com/{github_repo}.git',
-                f'tag: {tag}',
-                f'commit: {commit}',
-            ],
-            archive_source=[f'url: {asset_url}', f'sha256: {checksum}'],
-        ),
+        '# Generated by generate_flathub_manifest; do not edit.\n'
+        '- type: git\n'
+        f'  url: https://github.com/{github_repo}.git\n'
+        f'  tag: {tag}\n'
+        f'  commit: {commit}\n'
+        '- type: archive\n'
+        f'  url: {asset_url}\n'
+        f'  sha256: {checksum}\n'
+        '  strip-components: 0\n',
     )
     print(f'  Wrote {sources_path}')
 
@@ -343,35 +318,16 @@ def flatpak_prebuilt_inputs() -> None:
     print(f'{Clr.GRN}Wrote {outpath} ({len(packed)} files).{Clr.RST}')
 
 
-def _flathub_sources(git_source: list[str], archive_source: list[str]) -> str:
-    """Return the Flathub copy of pconfig/flatpak/bombsquad-sources.yml.
-
-    The local copy builds straight from the working tree. Flathub
-    instead gets the code from git, and the parts of the tree that
-    aren't in git (what `make flatpak-prefetch` fetches, plus the
-    release's releases.xml entry) from the release's prebuilt-inputs
-    archive, extracted over the checkout.
-
-    `git_source` and `archive_source` are the key lines for each source
-    (e.g. 'url: ...', 'commit: ...'), without their type line.
-    """
-    lines = ['# Generated by generate_flathub_manifest; do not edit.']
-    lines += ['- type: git'] + [f'  {line}' for line in git_source]
-    lines += ['- type: archive'] + [f'  {line}' for line in archive_source]
-    lines += ['  strip-components: 0']
-    return '\n'.join(lines) + '\n'
-
-
 def flatpak_add_release() -> None:
     """Add a release entry to the flatpak releases.xml.
 
-    Args: <version> [YYYY-MM-DD]
+    Args: <version>
 
     Writes pconfig/flatpak/net.froemling.bombsquad.releases.xml, which
     the flatpak build installs. The release workflow runs this before
     packing the prebuilt-inputs archive that carries it to Flathub;
     committing the entry ahead of time works too (an existing version
-    is left alone). The date defaults to today (UTC).
+    is left alone). The release date is today (UTC).
     """
     # pylint: disable=too-many-locals
     import os
@@ -383,14 +339,10 @@ def flatpak_add_release() -> None:
     from batools.changelog import get_version_changelog
 
     args = pcommand.get_args()
-    if len(args) not in (1, 2):
-        raise CleanError('Expected args: <version> [YYYY-MM-DD]')
+    if len(args) != 1:
+        raise CleanError('Expected args: <version>')
     version = args[0].removeprefix('v')
-    release_date = (
-        args[1]
-        if len(args) == 2
-        else datetime.datetime.now(datetime.UTC).date().isoformat()
-    )
+    release_date = datetime.datetime.now(datetime.UTC).date().isoformat()
     github_repo = _github_repo()
 
     releases_xml_path = os.path.join(

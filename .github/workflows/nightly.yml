@@ -110,7 +110,6 @@ jobs:
             https://flathub.org/repo/flathub.flatpakrepo
           make flatpak-deps
 
-
       - name: Make the build
         run: |
           make flatpak-linux

@@ -105,15 +105,15 @@ That venv is installed offline, from vendored wheels:
 - `pconfig/requirements_build.txt` lists the root packages the *build*
   needs. These are a small subset of the full dev requirements, which also
   pull in linters, type checkers, test tooling, and so on.
-- `make flatpak-build-env` (see `tools/batools/flatpakbuildenv.py`)
-  expands those roots through the main `pconfig/requirements_lock.txt` and
-  writes two outputs:
-  - `pconfig/requirements_build_lock.txt`, the reduced lockfile. Versions
-    and hashes are copied verbatim from the main lockfile, which stays the
-    only place anything is pinned.
-  - `pconfig/flatpak/python-build-env.yml`, which has a pinned `uv`
-    release plus a hash-verified wheel per package for each arch
-    (`x86_64`, `aarch64`).
+- `make flatpak-build-env` writes two outputs:
+  - `pconfig/requirements_build_lock.txt`, the reduced lockfile, compiled
+    by `uv pip compile` from those roots with the main
+    `pconfig/requirements_lock.txt` as a constraint, so the main lockfile
+    stays the only place anything is pinned.
+  - `pconfig/flatpak/python-build-env.yml` (see
+    `tools/batools/flatpakbuildenv.py`), which has a pinned `uv` release
+    plus a hash-verified wheel per package for each arch (`x86_64`,
+    `aarch64`).
 - The `bombsquad` module sets `VENV_LOCK`, `UV_OFFLINE=1`,
   `UV_FIND_LINKS` and `UV_PYTHON_DOWNLOADS=never`, so `make env` installs
   the reduced lockfile from the staged wheels and never touches the
@@ -214,8 +214,8 @@ git tag v1.x.y ─► release.yml
                         commit + push to <owner>/flathub (net.froemling.bombsquad branch)
 ```
 
-`pcommand flatpak_add_release <version> [YYYY-MM-DD]` prepends a
-`<release>` entry to `net.froemling.bombsquad.releases.xml`, built from
+`pcommand flatpak_add_release <version>` prepends a `<release>` entry,
+dated today, to `net.froemling.bombsquad.releases.xml`, built from
 that version's `CHANGELOG.md` entries, with links to the GitHub release
 and its source archive. A version that's already listed is left alone, so
 you can also commit the entry ahead of time.
@@ -223,11 +223,12 @@ you can also commit the entry ahead of time.
 `make flatpak-generate-flathub-manifest` runs `pcommand
 generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
 
-1. Copies the manifest, unchanged, and `python-build-env.yml`, which it
-   includes as a module, into `build/flathub/`, and deletes any
-   metainfo, desktop or releases files an older version of this step
-   left there.
-2. Queries the GitHub API for the **latest** release of the repo
+1. Empties `build/flathub/` (keeping `.git` and any `flathub.json`), so
+   the Flathub repo holds only what this step writes, then copies in the
+   manifest, unchanged, and `python-build-env.yml`, which it includes as
+   a module.
+2. Queries the GitHub API for the release of the tag that triggered the
+   workflow (or, run by hand, the **latest** release) of the repo
    (`GITHUB_REPOSITORY`, or else derived from `git remote.origin.url`),
    and finds its tag, the commit that tag points at, and the
    `bombsquad_prebuilt_inputs.tar.xz` asset and its SHA256 digest.
@@ -253,6 +254,6 @@ manifest and publishes the new version.
 - Changes to `metainfo.xml` or the `.desktop` file reach Flathub on the
   next release. You can validate them with
   `flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream net.froemling.bombsquad.metainfo.xml`.
-- The generator always uses the *latest* GitHub release, so it has to run
-  after the release (and its `bombsquad_prebuilt_inputs.tar.xz`) has been
-  published.
+- Run by hand, the generator uses the *latest* GitHub release, so it has
+  to run after that release (and its `bombsquad_prebuilt_inputs.tar.xz`)
+  has been published.

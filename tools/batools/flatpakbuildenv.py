@@ -10,27 +10,16 @@ created it. So the project venv has to be created *inside* the build
 sandbox, from files flatpak-builder has already fetched as declared
 sources.
 
-This module turns our committed hash-pinned lockfile into the two
-things that make that possible:
+``make flatpak-build-env`` first compiles
+``pconfig/requirements_build_lock.txt``: the roots in
+``pconfig/requirements_build.txt`` (what *building* the app needs, as
+opposed to the full dev environment) constrained to the versions in
+``pconfig/requirements_lock.txt``. This module then turns that lockfile
+into ``pconfig/flatpak/python-build-env.yml``, a flatpak-builder module
+supplying uv plus one wheel per package, staged where the main module's
+``make env`` can install from them with uv in offline mode.
 
-- ``pconfig/requirements_build_lock.txt`` -- the subset of
-  ``pconfig/requirements_lock.txt`` needed to *build* the app. The full
-  dev lockfile also carries linters, type checkers, test and docs
-  tooling that a packaging build never runs, and vendoring those would
-  mean fetching hundreds of megabytes per build.
-- ``pconfig/flatpak/python-build-env.yml`` -- a flatpak-builder module
-  supplying uv plus one wheel per package in that subset, staged where
-  the main module's ``make env`` can install from them with uv in
-  offline mode.
-
-Package versions and hashes come straight out of the main lockfile, so
-there is only ever one place where a version is pinned. The roots of
-the subset live in ``pconfig/requirements_build.txt``; everything they
-pull in is derived from the ``# via`` annotations uv writes into the
-lockfile.
-
-Both outputs are committed. Regenerate them with ``make
-flatpak-build-env`` after changing requirements.
+Both outputs are committed.
 """
 
 import os
@@ -73,22 +62,16 @@ UV_SHA256 = {
 STAGE_SUBDIR = 'share/python-build-env'
 
 # A lockfile entry is 'name==version[ ; marker]' followed by its
-# hashes and then uv's '# via ...' annotations. The marker is easy to
-# forget about -- only a handful of packages carry one -- so
-# parse_lockfile cross-checks its tally against the raw pin count.
+# hashes. The marker is easy to forget about (only a handful of
+# packages carry one), so parse_lockfile cross-checks its tally
+# against the raw pin count.
 _LOCK_ENTRY = re.compile(
     r'^(?P<name>[A-Za-z0-9._-]+)==(?P<version>[^\s;\\]+)'
-    r'(?P<marker>[ \t]*;[^\\\n]*)?'
-    r'(?P<hashes>(?:[ \t]*\\\n[ \t]*--hash=sha256:[0-9a-f]+)+)'
-    r'(?P<via>(?:\n[ \t]*#.*)*)',
+    r'(?:[ \t]*;[^\\\n]*)?'
+    r'(?P<hashes>(?:[ \t]*\\\n[ \t]*--hash=sha256:[0-9a-f]+)+)',
     re.MULTILINE,
 )
 _LOCK_PIN = re.compile(r'^[A-Za-z0-9._-]+==', re.MULTILINE)
-
-
-def normalize(name: str) -> str:
-    """Return a PEP 503 normalized project name."""
-    return re.sub(r'[-_.]+', '-', name).lower()
 
 
 @dataclass
@@ -98,40 +81,19 @@ class LockedPackage:
     name: str
     version: str
     hashes: list[str]
-    via: list[str]
-    text: str
-
-    @property
-    def key(self) -> str:
-        """Normalized name; use this for any lookup."""
-        return normalize(self.name)
 
 
-def parse_lockfile(path: str) -> dict[str, LockedPackage]:
+def parse_lockfile(path: str) -> list[LockedPackage]:
     """Parse a ``uv pip compile --generate-hashes`` lockfile."""
     text = readfile(path)
-
-    out: dict[str, LockedPackage] = {}
-    for match in _LOCK_ENTRY.finditer(text):
-        # 'via' blocks look like '# via\n#   foo\n#   bar' or
-        # '# via foo'; either way the package names are the only
-        # non-'via' words in there.
-        via = [
-            normalize(word)
-            for word in re.findall(
-                r'#\s*(?:via\s+)?([A-Za-z0-9._-]+)', match.group('via')
-            )
-            if word != 'via'
-        ]
-        pkg = LockedPackage(
+    out = [
+        LockedPackage(
             name=match.group('name'),
             version=match.group('version'),
             hashes=re.findall(r'sha256:([0-9a-f]+)', match.group('hashes')),
-            via=via,
-            text=match.group(0).rstrip(),
         )
-        out[pkg.key] = pkg
-
+        for match in _LOCK_ENTRY.finditer(text)
+    ]
     expected = len(_LOCK_PIN.findall(text))
     if len(out) != expected:
         raise CleanError(
@@ -141,49 +103,6 @@ def parse_lockfile(path: str) -> dict[str, LockedPackage]:
     if not out:
         raise CleanError(f"No pinned packages found in '{path}'.")
     return out
-
-
-def read_roots(path: str) -> list[str]:
-    """Read the list of root package names for the build subset."""
-    roots = [
-        name
-        for line in readfile(path).splitlines()
-        if (name := line.split('#', 1)[0].strip())
-    ]
-    if not roots:
-        raise CleanError(f"No package names found in '{path}'.")
-    return roots
-
-
-def resolve_subset(
-    packages: dict[str, LockedPackage], roots: list[str]
-) -> list[LockedPackage]:
-    """Return the roots plus everything they pull in, lockfile order.
-
-    uv annotates each locked package with the packages that required it
-    ('# via foo'), which is exactly the edge we need read backwards: a
-    package belongs in the subset if anything already in the subset
-    depends on it.
-    """
-    missing = sorted(r for r in roots if normalize(r) not in packages)
-    if missing:
-        names = ', '.join(missing)
-        raise CleanError(
-            f'Build requirements not present in the main lockfile: {names}.'
-        )
-
-    keep = {normalize(r) for r in roots}
-    while True:
-        added = {
-            key
-            for key, pkg in packages.items()
-            if key not in keep and any(v in keep for v in pkg.via)
-        }
-        if not added:
-            break
-        keep |= added
-
-    return [pkg for key, pkg in packages.items() if key in keep]
 
 
 def _pypi_release_files(pkg: LockedPackage) -> list[dict[str, Any]]:
@@ -292,9 +211,7 @@ def select_distributions(
 
     Returns (flatpak arch or None for 'any arch', pypi file) pairs. A
     pure-Python wheel covers everything; otherwise we take one manylinux
-    wheel per arch so each builder only downloads what it can use. A
-    package with no usable wheel falls back to its sdist, which uv
-    builds locally.
+    wheel per arch so each builder only downloads what it can use.
     """
     files = _pypi_release_files(pkg)
     wheels = [
@@ -325,43 +242,12 @@ def select_distributions(
             )
         return list(per_arch.items())
 
-    sdists = [f for f in files if not f['filename'].endswith('.whl')]
-    if not sdists:
-        raise CleanError(
-            f'No wheel or sdist usable for {pkg.name}=={pkg.version}.'
-        )
-    return [(None, sdists[0])]
-
-
-def _write_if_changed(path: str, text: str) -> None:
-    """Write a file only if its contents differ.
-
-    The build lockfile is a make prerequisite of the venv (VENV_LOCK),
-    so a no-op regeneration must not bump its mtime.
-    """
-    if not os.path.exists(path) or readfile(path) != text:
-        writefile(path, text)
-
-
-def write_subset_lockfile(
-    path: str, subset: list[LockedPackage], roots_path: str, lock_path: str
-) -> None:
-    """Write the reduced lockfile in uv's own format."""
-    lines = [
-        '# Generated by `make flatpak-build-env`; do not edit by hand.',
-        '#',
-        f'# The subset of {lock_path} needed to build the app, derived',
-        f'# from the root package names in {roots_path}. Versions and',
-        '# hashes are copied verbatim from the main lockfile, which',
-        '# stays the single place any version is pinned.',
-        '',
-    ]
-    lines.extend(pkg.text for pkg in subset)
-    _write_if_changed(path, '\n'.join(lines) + '\n')
+    # An sdist is no use: the offline build vendors no build backend.
+    raise CleanError(f'No usable wheel for {pkg.name}=={pkg.version}.')
 
 
 def write_flatpak_module(
-    path: str, subset: list[LockedPackage], lock_name: str
+    path: str, packages: list[LockedPackage], lock_name: str
 ) -> None:
     """Write the flatpak-builder module supplying uv and the wheels."""
     lines = [
@@ -395,9 +281,9 @@ def write_flatpak_module(
     # One PyPI metadata request per package; they are independent, so
     # run them concurrently. map() keeps lockfile order for the output.
     with ThreadPoolExecutor(max_workers=8) as executor:
-        selections = list(executor.map(select_distributions, subset))
+        selections = list(executor.map(select_distributions, packages))
 
-    for pkg, selection in zip(subset, selections):
+    for pkg, selection in zip(packages, selections):
         print(f'  {Clr.BLU}{pkg.name}=={pkg.version}{Clr.RST}', flush=True)
         for wheel_arch, pypi_file in selection:
             lines.append('  - type: file')
@@ -411,32 +297,21 @@ def write_flatpak_module(
                 f'    sha256: {sha256}',
             ]
 
-    _write_if_changed(path, '\n'.join(lines) + '\n')
+    writefile(path, '\n'.join(lines) + '\n')
 
 
 def generate(projroot: str) -> None:
-    """Regenerate the build subset lockfile and the flatpak module."""
-    lock_path = os.path.join('pconfig', 'requirements_lock.txt')
-    roots_path = os.path.join('pconfig', 'requirements_build.txt')
-    subset_path = os.path.join('pconfig', 'requirements_build_lock.txt')
+    """Regenerate the flatpak module from the build lockfile."""
+    lock_path = os.path.join('pconfig', 'requirements_build_lock.txt')
     module_path = os.path.join('pconfig', 'flatpak', 'python-build-env.yml')
 
-    def _abs(path: str) -> str:
-        return os.path.join(projroot, path)
-
-    packages = parse_lockfile(_abs(lock_path))
-    subset = resolve_subset(packages, read_roots(_abs(roots_path)))
-
+    packages = parse_lockfile(os.path.join(projroot, lock_path))
     print(
-        f'{Clr.BLD}Resolving {len(subset)} build packages'
-        f' (of {len(packages)} locked)...{Clr.RST}',
+        f'{Clr.BLD}Selecting wheels for {len(packages)}'
+        f' build packages...{Clr.RST}',
         flush=True,
     )
-
-    write_subset_lockfile(_abs(subset_path), subset, roots_path, lock_path)
-    write_flatpak_module(_abs(module_path), subset, subset_path)
-
-    print(
-        f'{Clr.GRN}Wrote {subset_path} and {module_path}.{Clr.RST}',
-        flush=True,
+    write_flatpak_module(
+        os.path.join(projroot, module_path), packages, lock_path
     )
+    print(f'{Clr.GRN}Wrote {module_path}.{Clr.RST}', flush=True)

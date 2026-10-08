@@ -1586,11 +1586,17 @@ flatpak-generate-flathub-manifest:
 	$(PCOMMAND) generate_flathub_manifest
 
 # Regenerate the offline Python build environment the flatpak builds
-# use: pconfig/requirements_build_lock.txt and the flatpak-builder
-# module that supplies uv plus a wheel for each of its packages. Both
-# outputs are committed; run this (and commit the result) after
-# changing pconfig/requirements.txt or pconfig/requirements_build.txt.
+# use: pconfig/requirements_build_lock.txt (the requirements_build.txt
+# roots, pinned to the versions in requirements_lock.txt) and the
+# flatpak-builder module that supplies uv plus a wheel for each of its
+# packages. Both outputs are committed; run this (and commit the
+# result) after changing either requirements file. Deliberately not a
+# file rule: the offline flatpak build must never try to re-resolve.
 flatpak-build-env: env
+	@uv pip compile --universal --generate-hashes --quiet \
+ --python $(VENV_PYTHON) \
+ -c pconfig/requirements_lock.txt \
+ pconfig/requirements_build.txt -o pconfig/requirements_build_lock.txt
 	$(PCOMMAND) generate_flatpak_build_env
 
 flatpak-clean:
