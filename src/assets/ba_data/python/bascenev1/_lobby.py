@@ -361,6 +361,10 @@ class Chooser:
         if self.lobby.fixed_profiles is not None and '_random' not in (
             profilenames
         ):
+            # (Not the edit entry, if there is one; it sorts first.)
+            for i, profilename in enumerate(profilenames):
+                if profilename != '_edit':
+                    return i
             return 0
 
         # If we've got a set profile name for this device, work backwards
@@ -607,9 +611,12 @@ class Chooser:
                 profile[1]['character'] = 'Spaz'
 
         # A session that fixes its profiles offers those and nothing
-        # more: no random one, and no editing. (Unless none of them
-        # was usable, which leaves the random one as the only way in.)
+        # more: no random one, and no editing of a player's own. (Unless
+        # none of them was usable, which leaves the random one as the
+        # only way in.) The session may offer editing the fixed ones
+        # themselves, through the same entry.
         fixed = self.lobby.fixed_profiles is not None and bool(self._profiles)
+        fixed_editable = fixed and self.lobby.fixed_profiles_editable
 
         # Add in a random one so we're ok even if there's no user profiles.
         if not fixed:
@@ -630,7 +637,7 @@ class Chooser:
             not is_remote
             and not is_test_input
             and not arcade_or_demo
-            and not fixed
+            and (not fixed or fixed_editable)
         ):
             self._profiles['_edit'] = {}
 
@@ -958,7 +965,12 @@ class Chooser:
         if profilename == '_edit' and ready:
             with babase.ContextRef.empty():
 
-                classic.profile_browser_window()
+                if self.lobby.fixed_profiles is not None:
+                    # (The session's own profiles; editing them is
+                    # its business.)
+                    self.lobby.edit_fixed_profiles()
+                else:
+                    classic.profile_browser_window()
 
                 # Give their input-device main-UI ownership too (prevent
                 # someone else from snatching it in crowded games).
@@ -1520,14 +1532,28 @@ class Lobby:
         self._vpos = 0
         self._warned_legacy_profiles = False
 
+        self._session = weakref.ref(session)
+
         #: The only profiles choosers here offer, when the session
-        #: fixes them (see :meth:`Session.get_fixed_profiles`).
-        self.fixed_profiles: list[str] | None = session.get_fixed_profiles()
+        #: fixes them (see :meth:`Session.get_fixed_profiles`), and
+        #: whether it offers editing them. Asked again on each
+        #: profile reload.
+        self.fixed_profiles: list[str] | None = None
+        self.fixed_profiles_editable = False
 
         # Grab available profiles.
         self.reload_profiles()
 
         self._join_info_text = None
+
+    def edit_fixed_profiles(self) -> None:
+        """Have the session open whatever edits its fixed profiles.
+
+        :meta private:
+        """
+        session = self._session()
+        if session is not None:
+            session.edit_fixed_profiles()
 
     def warn_legacy_profiles_once(self) -> None:
         """Tell the local player their cloud profiles are unavailable.
@@ -1589,6 +1615,15 @@ class Lobby:
         from bascenev1lib.actor.spazappearance import get_appearances
 
         assert babase.app.classic is not None
+
+        # A session that fixes its profiles may have changed them.
+        session = self._session()
+        if session is not None:
+            self.fixed_profiles = session.get_fixed_profiles()
+            self.fixed_profiles_editable = (
+                self.fixed_profiles is not None
+                and session.can_edit_fixed_profiles()
+            )
 
         # We may have gained or lost character names if the user
         # bought something; reload these too.

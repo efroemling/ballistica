@@ -63,9 +63,6 @@ Decisions, and why:
   `PlusFeatureSet` method that bailed out entirely when plus was
   absent — so the engine-couldn't-start failures most worth reporting
   were the most likely to be dropped.
-- **Logging is the only side effect on receipt.** No datastore write:
-  reports are forgeable, so persisting them would let anyone grow the
-  storage bill. Cloud Logging already provides retention and search.
 - **cpp-httplib, confined to this one translation unit.** It returns
   errors as values rather than throwing, which matters in a fatal
   handler, and it is built with `CPPHTTPLIB_NO_EXCEPTIONS`. The header
@@ -106,41 +103,6 @@ back yet) looked exactly like the app silently vanishing.
   the payload's `t` still carries when the error actually happened.
 - A send that completes after the handler gave up on it produces one
   duplicate report; accepted.
-
-### Reading them
-
-```bash
-tools/pcommand cloud_log_query --message 'client fatal' --freshness 1d
-# Only the ones delivered a launch late:
-tools/pcommand cloud_log_query --message 'DEFERRED' --freshness 1d
-```
-
-Lines look like `client fatal: <message> | build=… version=…
-platform=…/… os=… variant=… devbuild=… modded=… coregone=… addr=…`,
-with the stack trace on following lines. `os=` is omitted when unknown.
-
-**Ignore `modded=True` on Android reports from builds through 23039.**
-Every Android build read as modded there: the custom-scripts check
-compared the app-python dir against baenv's default path, while Android
-serves scripts from the apk. Fixed 2026-10-07 (`core.cc`, where
-`using_custom_app_python_dir_` is computed). The same bug made those
-builds `exit(1)` on a fatal instead of aborting and tagged their log
-reports `baModified=1`.
-
-**A fatal's message is all that reaches us; put the cause in it.** A
-logged Python exception stays on the device. When a fatal wraps a
-failed Python call, have the call return its cause and append it to the
-message, as `Assets::StartLoading` does for the bundled asset-package
-load (`Cause: <Type>: <message> (file:line func < ...)`).
-
-**Don't filter with `--service global`.** The master server emits these
-from whichever Cloud Run service processes the event (`bg` in
-practice); `resource.type=global` is for logs relayed from elsewhere,
-so that filter excludes exactly these entries. Omit `--service`.
-
-**`devbuild` doesn't separate us from users.** The public repo strips
-the developer-build flag, so public-CI builds report `devbuild=False`
-exactly like a player's.
 
 ### Testing
 
@@ -242,29 +204,6 @@ a crash handler that fills the fault fields and writes the record, plus
 a `GetPendingCrashRecordPath()` override; the struct, the next-launch
 submit, and everything server-side are already platform-neutral.
 
-### Reading them
-
-```bash
-tools/pcommand cloud_log_query --message 'CRASH' --freshness 1d
-```
-
-They are `client fatal` lines whose message starts `CRASH:`, with the
-crash block appended to the first line:
-
-```
-client fatal: CRASH: 0xC0000005 in libGLESv2.dll+0x212863 | build=… …
-  | fault=0xC0000005 at=libGLESv2.dll+0x212863 acc=0@0x0 appstate=1
-    frame=2464 uptime=81s renderer=ANGLE (NVIDIA, …, D3D11-…) | OpenGL ES …
-```
-
-`acc=0@0x0` — a read of address zero — is the classic null
-dereference. When the fault is outside every module we can name, `at=`
-falls back to the absolute address, since an offset would mean nothing.
-
-The renderer string is message text, not a label: it is near-unique
-per GPU + driver combination, so it is something you search, not
-something you slice by.
-
 ### From an address to code
 
 Crash reports carry an address; resolving it is a manual, local step —
@@ -342,42 +281,6 @@ to log what — is planned; document it here as it lands.
   queries can filter for clients showing exactly the levels the
   server configured.
 
-### Integrity signals (blessed / modified)
-
-Successors to the v1 system where clients sent their master-hash
-(camouflaged as `newsShow`) + `userRanCommands`/`userModded` and the
-legacy server derived `blessed` from a per-build Blessing record.
-Now split into two orthogonal client-computed values on every
-`ClientLogReportMessage`, sampled at each slice send:
-
-- `blessed` (`bl`, tri-state): pure build integrity — non-debug build
-  with an embedded blessing hash whose computed script hash checks
-  out (`_baplus.get_blessing_state()`). `None` = the background hash
-  calc (game_hash.py, kicked at pyembed init) hadn't finished, or a
-  pre-field client. Debug builds are always unblessed.
-- `modified` (`md`): user-side taint — commands run, workspaces in
-  use, custom app-scripts dir, or Python present in the mods dir
-  (`_babase.is_user_modified()`; the same four the
-  [fatal-error reporter](#fatal-errors) sends, there as `rancmds`,
-  `workspaces`, `custompy`, `userpy`). Inherently latching within a
-  run, so False = clean-so-far. Note automation-channel execs latch it
-  (by design — they run arbitrary code).
-
-  The mods-dir signal (builds after 23040) is what catches plugins,
-  which need no commands run to take effect. It is presence-based,
-  like the blessing hash: the startup meta-scan reports whether the
-  mods dir holds anything the import system could load, loaded or
-  not, and the flag is set when that scan completes — so a report
-  from the first moments of boot can still read clean. It and
-  `blessed` overlap without matching: the hash sees any `.py`
-  anywhere under mods, the scan sees importable modules of any form
-  (`.pyc`, zips and extensions included).
-
-Server side: `build=blessed|unblessed|unknown, modded=yes|no|unknown`
-in summary lines; `baBlessed`/`baModified` labels on every emitted
-line (omitted when unknown). Gold-standard field-data filter:
-`baBlessed=1, baModified=0, baCloudControlledLogging=1`.
-
 ### Mechanics
 
 - Pre-roll ships immediately on trigger (no arm delay); follow-up slices
@@ -391,22 +294,6 @@ line (omitted when unknown). Gold-standard field-data filter:
   from field data.
 - Pure logic + tests: `bacommon/logreporting.py` /
   `tests/test_bacommon/`.
-
-### Reading reports
-
-- `tools/pcommand cloud_log_query --src client` on prod, or the
-  dev-log search on dev. Summary line:
-  `client log report from b<build> <tag>: N entries at index I`.
-- Query mechanics — including the `--message` tokenization trap that
-  silently breaks per-build attribution and the strict post-filter
-  recipe for it — live in the `cloud-logs` Claude skill.
-
-### Driving an investigation
-
-Set a phrase trigger + windows on the fleet, have the target clients
-run; pair with raising logger verbosity via the fleet's cloud logger
-control config (above) — and filter the resulting reports on
-`levels=cloud` so user-tweaked clients don't muddy the picture.
 
 ## Crashlytics (Google Play Android)
 

@@ -429,6 +429,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpreviewui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/chestui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
@@ -622,6 +623,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_base.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classiccharacterpreview.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicinbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicleaguepresidency.py \

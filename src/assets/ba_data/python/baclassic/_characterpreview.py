@@ -9,7 +9,8 @@ makes sure we have that package (downloading it behind the usual
 progress dialog if we must, so nobody sees a stand-in while it
 arrives) and then starts a :class:`CharacterPreviewSession`: a
 free-for-all session of one Death Match on Rampage whose lobby offers
-that character and nothing else.
+that character and nothing else, plus editing its profile (the cloud's
+profile editor aimed at it; see ``bauiv1lib.characterpreviewui``).
 
 The server asks repeatedly, with the same request id, until we say we
 are done or have failed (see ``CharacterPreviewShowMessage``); the
@@ -44,8 +45,11 @@ class CharacterPreviewSession(bascenev1.FreeForAllSession):
     """A session for trying out one character.
 
     One Death Match on Rampage, round after round, with a lobby that
-    offers only the character being previewed (no random profile, no
-    profile editing): whoever joins plays as it.
+    offers only the character being previewed (no random profile, none
+    of the player's own): whoever joins plays as it. The lobby's edit
+    entry opens the profile editor for that character, as someone who
+    picks it for a profile of theirs will see it; what is saved there
+    is what the session offers from then on.
     """
 
     @override
@@ -67,6 +71,18 @@ class CharacterPreviewSession(bascenev1.FreeForAllSession):
         classic = babase.app.classic
         assert classic is not None
         return list(classic.character_preview.characters)
+
+    @override
+    def can_edit_fixed_profiles(self) -> bool:
+        # Half of trying a character is seeing how its profile editor
+        # comes out.
+        return True
+
+    @override
+    def edit_fixed_profiles(self) -> None:
+        classic = babase.app.classic
+        assert classic is not None
+        classic.character_preview.edit()
 
 
 class CharacterPreview:
@@ -111,6 +127,47 @@ class CharacterPreview:
                     name='character preview',
                 )
         return self._state, self._error
+
+    def edit(self) -> None:
+        """Open the profile editor for the character being previewed.
+
+        The cloud's editor, aimed at the previewed character (it goes
+        by the id the character was sent under); saving there comes
+        back through :meth:`apply_edit`. Logic thread.
+        """
+        # pylint: disable=cyclic-import
+        from bauiv1lib.characterpreviewui import show_character_preview_editor
+
+        assert babase.in_logic_thread()
+        if self._request_id is None:
+            return
+        show_character_preview_editor(self._request_id)
+
+    def apply_edit(self, request_id: str, character: str) -> None:
+        """Carry on with a previewed character as its editor saved it.
+
+        Ignored unless it is for the preview that is up now (a window
+        left open across a newer preview, say). Logic thread.
+        """
+        assert babase.in_logic_thread()
+        if (
+            request_id != self._request_id
+            or self._state is not CharacterPreviewState.DONE
+        ):
+            return
+        session = bascenev1.get_foreground_host_session()
+        if not isinstance(session, CharacterPreviewSession):
+            return
+        parts = bascenev1.split_character(character)
+        if parts.spaz is None or parts.icon is None:
+            logger.warning('Ignoring incomplete edited preview character.')
+            return
+
+        # The lobby asks the session for its profiles again on hearing
+        # they changed. (Whoever is already playing keeps the look they
+        # joined with until they next come through the lobby.)
+        self.characters = [character]
+        session.handlemessage(bascenev1.PlayerProfilesChangedMessage())
 
     @staticmethod
     def _why_not(character: str) -> str | None:

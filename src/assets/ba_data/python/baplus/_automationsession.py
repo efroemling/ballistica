@@ -753,7 +753,10 @@ class AutomationSessionManager:
         ``[automation]`` results it emitted. (Answering ``ok`` on
         dispatch left a failed exec visible only in the device log.)
         """
-        babase.user_ran_commands()  # disable tourneys/etc.
+        # Deliberately not flagged via babase.user_ran_commands() the way
+        # console commands are: this channel exists only in developer
+        # builds and needs a key, and we use it to test builds as
+        # players would experience them.
         loop = asyncio.get_running_loop()
         done: asyncio.Future[tuple[str | None, list[tuple[str, str, str]]]] = (
             loop.create_future()

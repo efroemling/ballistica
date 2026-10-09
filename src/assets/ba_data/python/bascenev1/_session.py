@@ -220,14 +220,39 @@ class Session:
         those instead: each a character's json as a cloud profile's
         arrives (name, icon and spaz parts, and optionally the profile
         name it goes by). Every player is then offered exactly those
-        and nothing else -- no random entry, no editing -- and what
-        they pick isn't remembered as their usual profile.
+        and nothing else -- no random entry, and no editing unless
+        :meth:`can_edit_fixed_profiles` says so -- and what they pick
+        isn't remembered as their usual profile.
 
-        Asked once, as the session's lobby is made (which is during
-        the base class's ``__init__``, before a subclass's own has
-        returned).
+        Asked as the session's lobby is made (which is during the
+        base class's ``__init__``, before a subclass's own has
+        returned), and again whenever the lobby reloads profiles
+        (send the session a
+        :class:`~bascenev1.PlayerProfilesChangedMessage` after
+        changing what this returns).
         """
         return None
+
+    def can_edit_fixed_profiles(self) -> bool:
+        """Return whether the lobby offers editing its fixed profiles.
+
+        Only asked of a session with fixed profiles (see
+        :meth:`get_fixed_profiles`). If so, local players get the
+        lobby's usual edit entry, and choosing it calls
+        :meth:`edit_fixed_profiles` instead of opening their own
+        profiles. Asked whenever the fixed profiles are.
+        """
+        return False
+
+    def edit_fixed_profiles(self) -> None:
+        """Open whatever edits the lobby's fixed profiles.
+
+        Called (with no context set) when a local player chooses the
+        lobby's edit entry in a session where
+        :meth:`can_edit_fixed_profiles` is True. Whatever opens
+        should end by changing what :meth:`get_fixed_profiles` returns
+        and telling the session so (see there).
+        """
 
     def on_player_request(self, player: bascenev1.SessionPlayer) -> bool:
         """Called when a new player wants to join the session.
