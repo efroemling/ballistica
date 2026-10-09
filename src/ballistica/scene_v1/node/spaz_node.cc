@@ -3764,18 +3764,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
           && static_cast<int>(Part::kToes)
                  == static_cast<int>(base::CharacterAttachTarget::kToes),
       "Limb parts and their attach targets share indices.");
-  auto part_attachments = [&](Part part) {
-    if (!limb_def) {
-      return;
-    }
-    int ti = static_cast<int>(part);
-    if (left_side) {
-      // A left-side list, when given, replaces the both-sides one.
-      int left_ti = ti + base::kCharacterLimbAttachTargetCount;
-      if (limb_def->attachment_target_present[left_ti]) {
-        ti = left_ti;
-      }
-    }
+  // Draws one target's static attachments in the current transform.
+  auto target_attachments = [&](int ti) {
     const auto& defs = limb_def->attachments[ti];
     const auto& medias = limb_media->attachments[ti];
     for (size_t ai = 0; ai < defs.size() && ai < medias.size(); ++ai) {
@@ -3801,6 +3791,46 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
         c->DrawMeshAsset(mesh);
       }
     }
+  };
+  auto part_attachments = [&](Part part) {
+    if (!limb_def) {
+      return;
+    }
+    int ti = static_cast<int>(part);
+    if (left_side) {
+      // A left-side list, when given, replaces the both-sides one.
+      int left_ti = ti + base::kCharacterLimbAttachTargetCount;
+      if (limb_def->attachment_target_present[left_ti]) {
+        ti = left_ti;
+      }
+    }
+    target_attachments(ti);
+  };
+  // A wing (definition form): whatever is attached to the wing target,
+  // drawn in that wing's swinging frame. Sided exactly as limbs are:
+  // authored as the right wing and mirrored for the left, unless the
+  // left has a list of its own.
+  auto wing_attachments = [&](bool left) {
+    if (!limb_def || !wings_) {
+      return;
+    }
+    int ti = static_cast<int>(base::CharacterAttachTarget::kWing);
+    int left_ti = static_cast<int>(base::CharacterAttachTarget::kLeftWing);
+    if (left && limb_def->attachment_target_present[left_ti]) {
+      ti = left_ti;
+    }
+    if (limb_def->attachments[ti].empty()) {
+      return;
+    }
+    auto xf = c->ScopedTransform();
+    ApplyWingTransform_(c, left ? wing_pos_left_ : wing_pos_right_, false);
+    if (left) {
+      c->Scale(-1.0f, 1.0f, 1.0f);
+    }
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    target_attachments(ti);
   };
 
   // Head.
@@ -3960,10 +3990,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kForearm)) {
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kForearm)) {
         c->DrawMeshAsset(mesh);
       }
-      if (!flippers_) {
+      if (!hide_lower_arms_) {
         part_attachments(Part::kForearm);
       }
     }
@@ -3977,10 +4007,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kHand)) {
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kHand)) {
         c->DrawMeshAsset(mesh);
       }
-      if (!flippers_) {
+      if (!hide_lower_arms_) {
         part_attachments(Part::kHand);
       }
     }
@@ -4029,9 +4059,15 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     part_attachments(Part::kToes);
   }
 
+  // Right wing.
+  wing_attachments(false);
+
   // OK NOW LEFT SIDE LIMBS:
   left_side = true;
   c->FlipCullFace();
+
+  // Left wing (mirrored, so with the left limbs).
+  wing_attachments(true);
 
   // Left upper arm.
   float left_stretch =
@@ -4070,10 +4106,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kForearm)) {
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kForearm)) {
         c->DrawMeshAsset(mesh);
       }
-      if (!flippers_) {
+      if (!hide_lower_arms_) {
         part_attachments(Part::kForearm);
       }
     }
@@ -4087,10 +4123,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      if (auto* mesh = flippers_ ? nullptr : part_mesh(Part::kHand)) {
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kHand)) {
         c->DrawMeshAsset(mesh);
       }
-      if (!flippers_) {
+      if (!hide_lower_arms_) {
         part_attachments(Part::kHand);
       }
     }
@@ -5119,45 +5155,21 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     }
   }
 
-  // Wings.
-  if (wings_ && !debug_draw) {
+  // Legacy wings (the 'pixie' style): the stock wing art in a pass of
+  // its own, neither wing mirrored. A definition's wings are
+  // attachments on its wing targets and draw with the body (see
+  // DrawBodyParts).
+  if (wings_ && !CharacterForm_() && !debug_draw) {
     base::ObjectComponent c(beauty_pass);
     c.SetTransparent(false);
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    // The left wing (drawn first) may bring its own mesh and textures
-    // in definition form; otherwise both wings share one look.
-    base::MeshAsset* wing_mesh = WingMeshData_();
-    base::TextureAsset* wing_texture = WingTextureData_();
-    base::TextureAsset* wing_tint_texture = WingTintTextureData_();
-    base::MeshAsset* left_wing_mesh = wing_mesh;
-    base::TextureAsset* left_wing_texture = wing_texture;
-    base::TextureAsset* left_wing_tint_texture = wing_tint_texture;
-    if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
-      const auto& media = spaz_def_->def().spaz_media();
-      if (media.wing_left_mesh.exists()) {
-        left_wing_mesh = media.wing_left_mesh.get();
-      }
-      if (media.wing_left_texture.exists()) {
-        left_wing_texture = media.wing_left_texture.get();
-      }
-      if (media.wing_left_tint_texture.exists()) {
-        left_wing_tint_texture = media.wing_left_tint_texture.get();
-      }
-    }
-    // Likewise tint colors: left, then the wings', then our own.
-    PieceTint_ wing_tint = BaseTint_();
-    PieceTint_ left_wing_tint = wing_tint;
-    if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
-      const auto& def = spaz_def_->def().spaz();
-      ApplyPieceTint_(def.wing_tint, &wing_tint);
-      left_wing_tint = wing_tint;
-      ApplyPieceTint_(def.wing_left_tint, &left_wing_tint);
-    }
-    c.SetTexture(left_wing_texture);
-    c.SetColorizeTexture(left_wing_tint_texture);
-    SetPieceTint_(&c, left_wing_tint);
+    base::MeshAsset* wing_mesh = g_scene_v1->assets().wing.get();
+    c.SetTexture(g_scene_v1->assets().wings.get());
+    // (A solid black mask: color and highlight leave the art alone.)
+    c.SetColorizeTexture(g_scene_v1->assets().black.get());
+    SetPieceTint_(&c, BaseTint_());
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5212,54 +5224,9 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       }
     }
 
-    // To draw wings, we need a matrix positioned at our torso pointing at our
-    // wing points.
-    Vector3f torso_pos2(dBodyGetPosition(body_torso_->body()));
-    Vector3f torsoUp = {0.0f, 0.0f, 0.0f};
-    dBodyGetRelPointPos(body_torso_->body(), 0.0f, 1.0f, 0.0f, torsoUp.v);
-    torsoUp -= torso_pos2;  // needs to be relative to body
-    torsoUp.Normalize();
-
-    Vector3f to_left_wing = wing_pos_left_ - torso_pos2;
-    to_left_wing.Normalize();
-    Vector3f left_wing_side = Vector3f::Cross(to_left_wing, torsoUp);
-    left_wing_side.Normalize();
-    Vector3f left_wing_up = Vector3f::Cross(left_wing_side, to_left_wing);
-    left_wing_up.Normalize();
-
-    // Draw target.
-    {
+    for (const Vector3f* wing_pos : {&wing_pos_left_, &wing_pos_right_}) {
       auto xf = c.ScopedTransform();
-      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-      c.MultMatrix(
-          Matrix44fOrient(left_wing_side, left_wing_up, to_left_wing).m);
-      if (death_scale != 1.0f) {
-        c.Scale(death_scale, death_scale, death_scale);
-      }
-      c.DrawMeshAsset(left_wing_mesh);
-    }
-    if (wing_texture != left_wing_texture
-        || wing_tint_texture != left_wing_tint_texture) {
-      c.SetTexture(wing_texture);
-      c.SetColorizeTexture(wing_tint_texture);
-    }
-    if (wing_tint != left_wing_tint) {
-      SetPieceTint_(&c, wing_tint);
-    }
-
-    Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
-    to_right_wing.Normalize();
-    Vector3f right_wing_side = Vector3f::Cross(to_right_wing, torsoUp);
-    right_wing_side.Normalize();
-    Vector3f right_wing_up = Vector3f::Cross(right_wing_side, to_right_wing);
-    right_wing_up.Normalize();
-
-    // Draw target.
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-      c.MultMatrix(
-          Matrix44fOrient(right_wing_side, right_wing_up, to_right_wing).m);
+      ApplyWingTransform_(&c, *wing_pos, true);
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
@@ -6967,6 +6934,7 @@ void SpazNode::ApplyStyle_() {
   eye_color_green_ = 0.5f;
   eye_color_blue_ = 1.2f;
   flippers_ = false;
+  hide_lower_arms_ = false;
   wings_ = false;
 
   if (style_ == "bear") {
@@ -6989,6 +6957,9 @@ void SpazNode::ApplyStyle_() {
     reflection_scale_ = 0.05f;
   } else if (style_ == "penguin") {
     flippers_ = true;
+    // (Legacy content names forearm and hand meshes regardless; this
+    // style is what leaves them out.)
+    hide_lower_arms_ = true;
     eye_ball_color_red_ = 0.5f;
     eye_ball_color_green_ = 0.5f;
     eye_ball_color_blue_ = 0.5f;
@@ -7216,10 +7187,20 @@ void SpazNode::ApplyCharacterDef_() {
   eye_lid_color_blue_ = look.eyelid_color[2];
   default_eye_lid_angle_ = look.eyelid_angle;
   reflection_scale_ = look.reflection_scale;
+  // Flippers only shorten the arms under boxing gloves here; whether
+  // forearms and hands draw is up to the definition naming meshes for
+  // them or not.
   flippers_ = look.flippers;
-  // Winged iff the definition supplies a wing mesh (mesh presence is
-  // the switch; the standin look has no wings).
-  wings_ = !look.wing_mesh.name.empty();
+  hide_lower_arms_ = false;
+  // Winged exactly when something is attached to a wing target (the
+  // standin look has nothing there). This is also what runs the wing
+  // springs and flapping, so a wingless character pays for neither.
+  wings_ =
+      !look.attachments[static_cast<int>(base::CharacterAttachTarget::kWing)]
+           .empty()
+      || !look.attachments[static_cast<int>(
+                               base::CharacterAttachTarget::kLeftWing)]
+              .empty();
   draw_hair_ = false;
 }
 
@@ -7489,39 +7470,38 @@ auto SpazNode::PartDrawData_(base::CharacterBodyPart part, bool left,
   return out;
 }
 
-auto SpazNode::WingMeshData_() const -> base::MeshAsset* {
-  if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
-    return spaz_def_->def().spaz_media().wing_mesh.get();
+// A wing's frame: at the torso, its forward (+z) aimed at the wing's
+// sprung point and its up kept near the torso's. Anything drawn in it
+// swings and flaps as that wing does.
+//
+// The frame is a proper (right-handed) one, so art shows as authored;
+// a left wing is that with x flipped by the caller, as a left limb is.
+// The legacy frame has x the other way: a reflection, which the
+// legacy wings have always been drawn through (both of them, inside
+// out; it doesn't show on the thin, symmetric stock wing).
+void SpazNode::ApplyWingTransform_(base::RenderComponent* c,
+                                   const Vector3f& wing_pos,
+                                   bool legacy_frame) const {
+  Vector3f torso_pos(dBodyGetPosition(body_torso_->body()));
+  Vector3f torso_up = {0.0f, 0.0f, 0.0f};
+  dBodyGetRelPointPos(body_torso_->body(), 0.0f, 1.0f, 0.0f, torso_up.v);
+  torso_up -= torso_pos;  // Needs to be relative to the body.
+  torso_up.Normalize();
+
+  Vector3f to_wing = wing_pos - torso_pos;
+  to_wing.Normalize();
+  Vector3f side = Vector3f::Cross(to_wing, torso_up);
+  side.Normalize();
+  Vector3f up = Vector3f::Cross(side, to_wing);
+  up.Normalize();
+  if (!legacy_frame) {
+    side = side * -1.0f;
   }
-  return g_scene_v1->assets().wing.get();
+
+  c->Translate(torso_pos.x, torso_pos.y, torso_pos.z);
+  c->MultMatrix(Matrix44fOrient(side, up, to_wing).m);
 }
-auto SpazNode::WingTextureData_() const -> base::TextureAsset* {
-  if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
-    if (auto* tex = spaz_def_->def().spaz_media().wing_texture.get()) {
-      return tex;
-    }
-    // No wing texture in the definition: wings share the character's
-    // own color texture, so a custom winged character can lay its wing
-    // UVs into its one atlas. (A definition wanting the stock wing art
-    // references it explicitly, as the legacy winged styles do.)
-    return spaz_def_->def().spaz_media().color_texture.get();
-  }
-  // Legacy bool-driven wings always wear the stock art.
-  return g_scene_v1->assets().wings.get();
-}
-auto SpazNode::WingTintTextureData_() const -> base::TextureAsset* {
-  if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
-    if (auto* tex = spaz_def_->def().spaz_media().wing_tint_texture.get()) {
-      return tex;
-    }
-    // No wing tint mask in the definition: share the character's own
-    // color mask, same one-atlas rule as the wing color texture.
-    return spaz_def_->def().spaz_media().color_mask_texture.get();
-  }
-  // Legacy bool-driven wings: solid black mask, so color/highlight
-  // leave the stock wing art untouched (the historical look).
-  return g_scene_v1->assets().black.get();
-}
+
 auto SpazNode::RandomFallSound_() const -> base::SoundAsset* {
   const auto& a = g_scene_v1->assets();
   return RandomSoundData_(fall_sounds_, {&a.standin_fall01},

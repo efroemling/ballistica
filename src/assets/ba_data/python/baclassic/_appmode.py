@@ -29,6 +29,7 @@ import _baclassic
 import bascenev1
 from bascenev1 import _scenev1assets
 from bascenev1 import _classiccharacterassets, _classicmapassets
+from bascenev1 import _classiccharacterassets2
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal, Iterable
@@ -183,6 +184,9 @@ class ClassicAppMode(AppMode):
                 'classiccatalogassets': (_classiccatalogassets._ASSET_PACKAGE),
                 'classiccharacterassets': (
                     _classiccharacterassets._ASSET_PACKAGE
+                ),
+                'classiccharacterassets2': (
+                    _classiccharacterassets2._ASSET_PACKAGE
                 ),
                 'classicmapassets': _classicmapassets._ASSET_PACKAGE,
             }

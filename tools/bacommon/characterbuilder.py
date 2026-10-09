@@ -129,13 +129,21 @@ class BuilderAttachTarget(Enum):
     UPPER_LEG = 'upper_leg'
     LOWER_LEG = 'lower_leg'
     TOES = 'toes'
+    #: Not a body part but a place wings go; a pair of spots at the
+    #: character's back that swing and flap as wings do. Whatever is
+    #: attached here is the wing, and a character has wings exactly
+    #: when something is. Its forward (+z) points out along the wing
+    #: from the middle of the torso. Sided like a limb, and like a
+    #: limb it takes static attachments only.
+    WING = 'wing'
 
 
 class BuilderAttachSide(Enum):
     """Which of a paired body part's two sides an attachment is on.
 
-    Like the limb meshes themselves, a limb attachment is authored for
-    the character's right side and drawn mirrored on the left.
+    Like the limb meshes themselves, a limb (or wing) attachment is
+    authored for the character's right side and drawn mirrored on the
+    left.
     """
 
     #: Both sides. The only choice for the head, torso and pelvis.
@@ -175,7 +183,7 @@ class BuilderAttachmentKind(Enum):
     ANTENNA_4 = 'antenna_4'
     #: No movement at all, just art fixed to the body part, for hats,
     #: horns, badges and the like. One segment. The only kind limbs
-    #: can take.
+    #: and wings can take.
     STATIC = 'static'
 
 
@@ -185,11 +193,27 @@ class BuilderAttachmentSegment:
     """The art for one segment of an attachment.
 
     Drawn with the character's own texture, tint mask, color and
-    highlight, like every other piece of it.
+    highlight, like every other piece of it, unless it names textures
+    of its own.
     """
 
     #: The segment's mesh, by logical path.
     mesh: Annotated[str, IOAttrs('mesh')]
+
+    #: A color texture of its own, by logical path. Left out, the
+    #: character's ``color_texture`` is used, which suits art whose
+    #: picture is part of the character's one texture.
+    texture: Annotated[str | None, IOAttrs('texture', store_default=False)] = (
+        None
+    )
+
+    #: A tint mask of its own, read as the character's
+    #: ``color_mask_texture`` is. Left out, that one is used. For art
+    #: with a texture of its own that should take no tint at all,
+    #: name an all-black mask here.
+    mask_texture: Annotated[
+        str | None, IOAttrs('mask_texture', store_default=False)
+    ] = None
 
     #: How the mesh is drawn on its segment (for a static attachment,
     #: on the body part itself).
@@ -438,6 +462,15 @@ class BasicSpazBuilder(CharacterBuilderData):
     reflection_scale: Annotated[
         float, IOAttrs('reflection_scale', store_default=False)
     ] = 0.1
+
+    # ---- Arms ----
+    #: For a character whose arms are flippers or fins, meaning one
+    #: long upper-arm mesh that is the whole limb. Its arms are drawn
+    #: shorter while it wears boxing gloves, so they don't poke through
+    #: the gloves. This changes only that; to leave out the forearms
+    #: and hands such a character doesn't have, leave ``forearm_mesh``
+    #: and ``hand_mesh`` unset.
+    flippers: Annotated[bool, IOAttrs('flippers', store_default=False)] = False
 
     # ---- Attachments ----
     #: Extra pieces hung off the character's body parts, such as hair,

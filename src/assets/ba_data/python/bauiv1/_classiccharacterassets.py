@@ -1,8 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261009b``
-(bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261009h`` (bauiv1).
 
 Everything a classic character is made of: body textures and color masks, body
 part meshes, voice sounds, icons and icon color masks, and display names -- a
@@ -13,7 +12,7 @@ costs roughly the new character's own art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 505
+# ba_meta require asset-package 546
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -27,8 +26,8 @@ from bauiv1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccharacterassets.261009b
-_ASSET_PACKAGE = ApverNum(505)
+# a-0.baclassiccharacterassets.261009h
+_ASSET_PACKAGE = ApverNum(546)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import (
@@ -48,14 +47,6 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero1: SoundHandle
-        action_hero2: SoundHandle
-        action_hero3: SoundHandle
-        action_hero4: SoundHandle
-        action_hero_death: SoundHandle
-        action_hero_fall: SoundHandle
-        action_hero_hit1: SoundHandle
-        action_hero_hit2: SoundHandle
         agent1: SoundHandle
         agent2: SoundHandle
         agent3: SoundHandle
@@ -64,14 +55,6 @@ if TYPE_CHECKING:
         agent_fall: SoundHandle
         agent_hit1: SoundHandle
         agent_hit2: SoundHandle
-        ali1: SoundHandle
-        ali2: SoundHandle
-        ali3: SoundHandle
-        ali4: SoundHandle
-        ali_death: SoundHandle
-        ali_fall: SoundHandle
-        ali_hit1: SoundHandle
-        ali_hit2: SoundHandle
         alien1: SoundHandle
         alien2: SoundHandle
         alien3: SoundHandle
@@ -110,14 +93,6 @@ if TYPE_CHECKING:
         bunny_hit1: SoundHandle
         bunny_hit2: SoundHandle
         bunny_jump: SoundHandle
-        cowboy1: SoundHandle
-        cowboy2: SoundHandle
-        cowboy3: SoundHandle
-        cowboy4: SoundHandle
-        cowboy_death: SoundHandle
-        cowboy_fall: SoundHandle
-        cowboy_hit1: SoundHandle
-        cowboy_hit2: SoundHandle
         cyborg1: SoundHandle
         cyborg2: SoundHandle
         cyborg3: SoundHandle
@@ -159,14 +134,6 @@ if TYPE_CHECKING:
         jack_hit05: SoundHandle
         jack_hit06: SoundHandle
         jack_hit07: SoundHandle
-        jumpsuit1: SoundHandle
-        jumpsuit2: SoundHandle
-        jumpsuit3: SoundHandle
-        jumpsuit4: SoundHandle
-        jumpsuit_death: SoundHandle
-        jumpsuit_fall: SoundHandle
-        jumpsuit_hit1: SoundHandle
-        jumpsuit_hit2: SoundHandle
         kronk1: SoundHandle
         kronk10: SoundHandle
         kronk2: SoundHandle
@@ -216,14 +183,6 @@ if TYPE_CHECKING:
         old_lady_fall: SoundHandle
         old_lady_hit1: SoundHandle
         old_lady_hit2: SoundHandle
-        opera_singer1: SoundHandle
-        opera_singer2: SoundHandle
-        opera_singer3: SoundHandle
-        opera_singer4: SoundHandle
-        opera_singer_death: SoundHandle
-        opera_singer_fall: SoundHandle
-        opera_singer_hit1: SoundHandle
-        opera_singer_hit2: SoundHandle
         penguin1: SoundHandle
         penguin2: SoundHandle
         penguin3: SoundHandle
@@ -274,14 +233,6 @@ if TYPE_CHECKING:
         spaz_jump03: SoundHandle
         spaz_jump04: SoundHandle
         spaz_pickup01: SoundHandle
-        superhero1: SoundHandle
-        superhero2: SoundHandle
-        superhero3: SoundHandle
-        superhero4: SoundHandle
-        superhero_death: SoundHandle
-        superhero_fall: SoundHandle
-        superhero_hit1: SoundHandle
-        superhero_hit2: SoundHandle
         warrior1: SoundHandle
         warrior2: SoundHandle
         warrior3: SoundHandle
@@ -338,15 +289,6 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero_fore_arm: MeshHandle
-        action_hero_hand: MeshHandle
-        action_hero_head: MeshHandle
-        action_hero_lower_leg: MeshHandle
-        action_hero_pelvis: MeshHandle
-        action_hero_toes: MeshHandle
-        action_hero_torso: MeshHandle
-        action_hero_upper_arm: MeshHandle
-        action_hero_upper_leg: MeshHandle
         agent_fore_arm: MeshHandle
         agent_hand: MeshHandle
         agent_head: MeshHandle
@@ -356,15 +298,6 @@ if TYPE_CHECKING:
         agent_torso: MeshHandle
         agent_upper_arm: MeshHandle
         agent_upper_leg: MeshHandle
-        ali_fore_arm: MeshHandle
-        ali_hand: MeshHandle
-        ali_head: MeshHandle
-        ali_lower_leg: MeshHandle
-        ali_pelvis: MeshHandle
-        ali_toes: MeshHandle
-        ali_torso: MeshHandle
-        ali_upper_arm: MeshHandle
-        ali_upper_leg: MeshHandle
         alien_fore_arm: MeshHandle
         alien_hand: MeshHandle
         alien_head: MeshHandle
@@ -410,15 +343,6 @@ if TYPE_CHECKING:
         bunny_torso: MeshHandle
         bunny_upper_arm: MeshHandle
         bunny_upper_leg: MeshHandle
-        cowboy_fore_arm: MeshHandle
-        cowboy_hand: MeshHandle
-        cowboy_head: MeshHandle
-        cowboy_lower_leg: MeshHandle
-        cowboy_pelvis: MeshHandle
-        cowboy_toes: MeshHandle
-        cowboy_torso: MeshHandle
-        cowboy_upper_arm: MeshHandle
-        cowboy_upper_leg: MeshHandle
         cyborg_fore_arm: MeshHandle
         cyborg_hand: MeshHandle
         cyborg_head: MeshHandle
@@ -459,15 +383,6 @@ if TYPE_CHECKING:
         jack_torso: MeshHandle
         jack_upper_arm: MeshHandle
         jack_upper_leg: MeshHandle
-        jumpsuit_fore_arm: MeshHandle
-        jumpsuit_hand: MeshHandle
-        jumpsuit_head: MeshHandle
-        jumpsuit_lower_leg: MeshHandle
-        jumpsuit_pelvis: MeshHandle
-        jumpsuit_toes: MeshHandle
-        jumpsuit_torso: MeshHandle
-        jumpsuit_upper_arm: MeshHandle
-        jumpsuit_upper_leg: MeshHandle
         kronk_fore_arm: MeshHandle
         kronk_hand: MeshHandle
         kronk_head: MeshHandle
@@ -512,15 +427,6 @@ if TYPE_CHECKING:
         old_lady_torso: MeshHandle
         old_lady_upper_arm: MeshHandle
         old_lady_upper_leg: MeshHandle
-        opera_singer_fore_arm: MeshHandle
-        opera_singer_hand: MeshHandle
-        opera_singer_head: MeshHandle
-        opera_singer_lower_leg: MeshHandle
-        opera_singer_pelvis: MeshHandle
-        opera_singer_toes: MeshHandle
-        opera_singer_torso: MeshHandle
-        opera_singer_upper_arm: MeshHandle
-        opera_singer_upper_leg: MeshHandle
         penguin_fore_arm: MeshHandle
         penguin_hand: MeshHandle
         penguin_head: MeshHandle
@@ -539,6 +445,7 @@ if TYPE_CHECKING:
         pixie_torso: MeshHandle
         pixie_upper_arm: MeshHandle
         pixie_upper_leg: MeshHandle
+        pixie_wing: MeshHandle
         robot_fore_arm: MeshHandle
         robot_hand: MeshHandle
         robot_head: MeshHandle
@@ -556,15 +463,6 @@ if TYPE_CHECKING:
         santa_torso: MeshHandle
         santa_upper_arm: MeshHandle
         santa_upper_leg: MeshHandle
-        superhero_fore_arm: MeshHandle
-        superhero_hand: MeshHandle
-        superhero_head: MeshHandle
-        superhero_lower_leg: MeshHandle
-        superhero_pelvis: MeshHandle
-        superhero_toes: MeshHandle
-        superhero_torso: MeshHandle
-        superhero_upper_arm: MeshHandle
-        superhero_upper_leg: MeshHandle
         warrior_fore_arm: MeshHandle
         warrior_hand: MeshHandle
         warrior_head: MeshHandle
@@ -671,16 +569,6 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. playful given name; transliterate
-        #:     phonetically in non-Latin scripts, or keep an established
-        #:     cowboy-flavored rename.
-        #:
-        #:     English: "Butch"
-        butch: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
         #:     picker, and gameplay UIs. Use each culture's standard
         #:     Easter-bunny term.
         #:
@@ -696,15 +584,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Frosty"
         frosty: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Gretel"
-        gretel: LangStr
 
         #: ::
         #:
@@ -742,15 +621,6 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. short proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Lee"
-        lee: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
         #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
         #:     translate the meaning as a name-like form.
         #:
@@ -767,15 +637,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Mel"
         mel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. a compound nickname meaning a neutral
-        #:     intermediary; a fitting localized equivalent works well.
-        #:
-        #:     English: "Middle-Man"
-        middle_man: LangStr
 
         #: ::
         #:
@@ -829,25 +690,6 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Chinese locales use the official mascot
-        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
-        #:     brand).
-        #:
-        #:     English: "Taobao Mascot"
-        taobao_mascot: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Todd McBurton"
-        todd_mcburton: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
         #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
         #:     Latin-script locales; transliterate phonetically in non-Latin
         #:     scripts. Established legacy renames in some locales are
@@ -877,18 +719,10 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero_color: TextureHandle
-        action_hero_color_mask: TextureHandle
-        action_hero_icon: TextureHandle
-        action_hero_icon_color_mask: TextureHandle
         agent_color: TextureHandle
         agent_color_mask: TextureHandle
         agent_icon: TextureHandle
         agent_icon_color_mask: TextureHandle
-        ali_color: TextureHandle
-        ali_color_mask: TextureHandle
-        ali_icon: TextureHandle
-        ali_icon_color_mask: TextureHandle
         alien_color: TextureHandle
         alien_color_mask: TextureHandle
         alien_icon: TextureHandle
@@ -909,10 +743,6 @@ if TYPE_CHECKING:
         bunny_color_mask: TextureHandle
         bunny_icon: TextureHandle
         bunny_icon_color_mask: TextureHandle
-        cowboy_color: TextureHandle
-        cowboy_color_mask: TextureHandle
-        cowboy_icon: TextureHandle
-        cowboy_icon_color_mask: TextureHandle
         cyborg_color: TextureHandle
         cyborg_color_mask: TextureHandle
         cyborg_icon: TextureHandle
@@ -929,10 +759,6 @@ if TYPE_CHECKING:
         jack_color_mask: TextureHandle
         jack_icon: TextureHandle
         jack_icon_color_mask: TextureHandle
-        jumpsuit_color: TextureHandle
-        jumpsuit_color_mask: TextureHandle
-        jumpsuit_icon: TextureHandle
-        jumpsuit_icon_color_mask: TextureHandle
         kronk: TextureHandle
         kronk_color_mask: TextureHandle
         kronk_icon: TextureHandle
@@ -953,10 +779,6 @@ if TYPE_CHECKING:
         old_lady_color_mask: TextureHandle
         old_lady_icon: TextureHandle
         old_lady_icon_color_mask: TextureHandle
-        opera_singer_color: TextureHandle
-        opera_singer_color_mask: TextureHandle
-        opera_singer_icon: TextureHandle
-        opera_singer_icon_color_mask: TextureHandle
         penguin_color: TextureHandle
         penguin_color_mask: TextureHandle
         penguin_icon: TextureHandle
@@ -965,6 +787,8 @@ if TYPE_CHECKING:
         pixie_color_mask: TextureHandle
         pixie_icon: TextureHandle
         pixie_icon_color_mask: TextureHandle
+        pixie_wings: TextureHandle
+        pixie_wings_color_mask: TextureHandle
         robot_color: TextureHandle
         robot_color_mask: TextureHandle
         robot_icon: TextureHandle
@@ -973,10 +797,6 @@ if TYPE_CHECKING:
         santa_color_mask: TextureHandle
         santa_icon: TextureHandle
         santa_icon_color_mask: TextureHandle
-        superhero_color: TextureHandle
-        superhero_color_mask: TextureHandle
-        superhero_icon: TextureHandle
-        superhero_icon_color_mask: TextureHandle
         warrior_color: TextureHandle
         warrior_color_mask: TextureHandle
         warrior_icon: TextureHandle
@@ -1002,45 +822,48 @@ if TYPE_CHECKING:
         """Character-group type; see source for the full list."""
 
         agent_johnson: CharacterHandle
+        b9000: CharacterHandle
+        bernard: CharacterHandle
+        betty: CharacterHandle
+        bones: CharacterHandle
+        easter_bunny: CharacterHandle
+        frosty: CharacterHandle
+        grumbledorf: CharacterHandle
         jack_morgan: CharacterHandle
         kronk: CharacterHandle
+        lucky: CharacterHandle
+        mel: CharacterHandle
+        pascal: CharacterHandle
+        pixel: CharacterHandle
+        santa_claus: CharacterHandle
+        snake_shadow: CharacterHandle
         spaz: CharacterHandle
         zoe: CharacterHandle
 
-    #: The ``audio`` group - 280 assets (``action_hero1``, ``action_hero2``,
-    #: ``action_hero3``, ``action_hero4``, ``action_hero_death``, and 275 more).
-    #: Full list in source.
+    #: The ``audio`` group - 232 assets (``agent1``, ``agent2``, ``agent3``,
+    #: ``agent4``, ``agent_death``, and 227 more). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 272 assets (``action_hero_fore_arm``,
-    #: ``action_hero_hand``, ``action_hero_head``, ``action_hero_lower_leg``,
-    #: ``action_hero_pelvis``, and 267 more). Full list in source.
+    #: The ``meshes`` group - 219 assets (``agent_fore_arm``, ``agent_hand``,
+    #: ``agent_head``, ``agent_lower_leg``, ``agent_pelvis``, and 214 more).
+    #: Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 24 strings (``characters``, and 23 more). Full
+    #: The ``strings`` group - 18 strings (``characters``, and 17 more). Full
     #: list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 120 assets (``action_hero_color``,
-    #: ``action_hero_color_mask``, ``action_hero_icon``,
-    #: ``action_hero_icon_color_mask``, ``agent_color``, and 115 more). Full
-    #: list in source.
+    #: The ``textures`` group - 98 assets (``agent_color``,
+    #: ``agent_color_mask``, ``agent_icon``, ``agent_icon_color_mask``,
+    #: ``alien_color``, and 93 more). Full list in source.
     textures: TexturesGroup
 
-    #: The ``characters`` group - 5 characters (``agent_johnson``,
-    #: ``jack_morgan``, ``kronk``, ``spaz``, ``zoe``). Full list in source.
+    #: The ``characters`` group - 18 characters (``agent_johnson``, ``b9000``,
+    #: ``bernard``, ``betty``, ``bones``, and 13 more). Full list in source.
     characters: CharactersGroup
 
 _TREE = {
     'audio': {
-        'action_hero1': 's',
-        'action_hero2': 's',
-        'action_hero3': 's',
-        'action_hero4': 's',
-        'action_hero_death': 's',
-        'action_hero_fall': 's',
-        'action_hero_hit1': 's',
-        'action_hero_hit2': 's',
         'agent1': 's',
         'agent2': 's',
         'agent3': 's',
@@ -1049,14 +872,6 @@ _TREE = {
         'agent_fall': 's',
         'agent_hit1': 's',
         'agent_hit2': 's',
-        'ali1': 's',
-        'ali2': 's',
-        'ali3': 's',
-        'ali4': 's',
-        'ali_death': 's',
-        'ali_fall': 's',
-        'ali_hit1': 's',
-        'ali_hit2': 's',
         'alien1': 's',
         'alien2': 's',
         'alien3': 's',
@@ -1095,14 +910,6 @@ _TREE = {
         'bunny_hit1': 's',
         'bunny_hit2': 's',
         'bunny_jump': 's',
-        'cowboy1': 's',
-        'cowboy2': 's',
-        'cowboy3': 's',
-        'cowboy4': 's',
-        'cowboy_death': 's',
-        'cowboy_fall': 's',
-        'cowboy_hit1': 's',
-        'cowboy_hit2': 's',
         'cyborg1': 's',
         'cyborg2': 's',
         'cyborg3': 's',
@@ -1144,14 +951,6 @@ _TREE = {
         'jack_hit05': 's',
         'jack_hit06': 's',
         'jack_hit07': 's',
-        'jumpsuit1': 's',
-        'jumpsuit2': 's',
-        'jumpsuit3': 's',
-        'jumpsuit4': 's',
-        'jumpsuit_death': 's',
-        'jumpsuit_fall': 's',
-        'jumpsuit_hit1': 's',
-        'jumpsuit_hit2': 's',
         'kronk1': 's',
         'kronk10': 's',
         'kronk2': 's',
@@ -1201,14 +1000,6 @@ _TREE = {
         'old_lady_fall': 's',
         'old_lady_hit1': 's',
         'old_lady_hit2': 's',
-        'opera_singer1': 's',
-        'opera_singer2': 's',
-        'opera_singer3': 's',
-        'opera_singer4': 's',
-        'opera_singer_death': 's',
-        'opera_singer_fall': 's',
-        'opera_singer_hit1': 's',
-        'opera_singer_hit2': 's',
         'penguin1': 's',
         'penguin2': 's',
         'penguin3': 's',
@@ -1259,14 +1050,6 @@ _TREE = {
         'spaz_jump03': 's',
         'spaz_jump04': 's',
         'spaz_pickup01': 's',
-        'superhero1': 's',
-        'superhero2': 's',
-        'superhero3': 's',
-        'superhero4': 's',
-        'superhero_death': 's',
-        'superhero_fall': 's',
-        'superhero_hit1': 's',
-        'superhero_hit2': 's',
         'warrior1': 's',
         'warrior2': 's',
         'warrior3': 's',
@@ -1315,15 +1098,6 @@ _TREE = {
         'zoe_pickup01': 's',
     },
     'meshes': {
-        'action_hero_fore_arm': 'm',
-        'action_hero_hand': 'm',
-        'action_hero_head': 'm',
-        'action_hero_lower_leg': 'm',
-        'action_hero_pelvis': 'm',
-        'action_hero_toes': 'm',
-        'action_hero_torso': 'm',
-        'action_hero_upper_arm': 'm',
-        'action_hero_upper_leg': 'm',
         'agent_fore_arm': 'm',
         'agent_hand': 'm',
         'agent_head': 'm',
@@ -1333,15 +1107,6 @@ _TREE = {
         'agent_torso': 'm',
         'agent_upper_arm': 'm',
         'agent_upper_leg': 'm',
-        'ali_fore_arm': 'm',
-        'ali_hand': 'm',
-        'ali_head': 'm',
-        'ali_lower_leg': 'm',
-        'ali_pelvis': 'm',
-        'ali_toes': 'm',
-        'ali_torso': 'm',
-        'ali_upper_arm': 'm',
-        'ali_upper_leg': 'm',
         'alien_fore_arm': 'm',
         'alien_hand': 'm',
         'alien_head': 'm',
@@ -1387,15 +1152,6 @@ _TREE = {
         'bunny_torso': 'm',
         'bunny_upper_arm': 'm',
         'bunny_upper_leg': 'm',
-        'cowboy_fore_arm': 'm',
-        'cowboy_hand': 'm',
-        'cowboy_head': 'm',
-        'cowboy_lower_leg': 'm',
-        'cowboy_pelvis': 'm',
-        'cowboy_toes': 'm',
-        'cowboy_torso': 'm',
-        'cowboy_upper_arm': 'm',
-        'cowboy_upper_leg': 'm',
         'cyborg_fore_arm': 'm',
         'cyborg_hand': 'm',
         'cyborg_head': 'm',
@@ -1436,15 +1192,6 @@ _TREE = {
         'jack_torso': 'm',
         'jack_upper_arm': 'm',
         'jack_upper_leg': 'm',
-        'jumpsuit_fore_arm': 'm',
-        'jumpsuit_hand': 'm',
-        'jumpsuit_head': 'm',
-        'jumpsuit_lower_leg': 'm',
-        'jumpsuit_pelvis': 'm',
-        'jumpsuit_toes': 'm',
-        'jumpsuit_torso': 'm',
-        'jumpsuit_upper_arm': 'm',
-        'jumpsuit_upper_leg': 'm',
         'kronk_fore_arm': 'm',
         'kronk_hand': 'm',
         'kronk_head': 'm',
@@ -1489,15 +1236,6 @@ _TREE = {
         'old_lady_torso': 'm',
         'old_lady_upper_arm': 'm',
         'old_lady_upper_leg': 'm',
-        'opera_singer_fore_arm': 'm',
-        'opera_singer_hand': 'm',
-        'opera_singer_head': 'm',
-        'opera_singer_lower_leg': 'm',
-        'opera_singer_pelvis': 'm',
-        'opera_singer_toes': 'm',
-        'opera_singer_torso': 'm',
-        'opera_singer_upper_arm': 'm',
-        'opera_singer_upper_leg': 'm',
         'penguin_fore_arm': 'm',
         'penguin_hand': 'm',
         'penguin_head': 'm',
@@ -1516,6 +1254,7 @@ _TREE = {
         'pixie_torso': 'm',
         'pixie_upper_arm': 'm',
         'pixie_upper_leg': 'm',
+        'pixie_wing': 'm',
         'robot_fore_arm': 'm',
         'robot_hand': 'm',
         'robot_head': 'm',
@@ -1533,15 +1272,6 @@ _TREE = {
         'santa_torso': 'm',
         'santa_upper_arm': 'm',
         'santa_upper_leg': 'm',
-        'superhero_fore_arm': 'm',
-        'superhero_hand': 'm',
-        'superhero_head': 'm',
-        'superhero_lower_leg': 'm',
-        'superhero_pelvis': 'm',
-        'superhero_toes': 'm',
-        'superhero_torso': 'm',
-        'superhero_upper_arm': 'm',
-        'superhero_upper_leg': 'm',
         'warrior_fore_arm': 'm',
         'warrior_hand': 'm',
         'warrior_head': 'm',
@@ -1595,40 +1325,26 @@ _TREE = {
             'bernard': (),
             'betty': (),
             'bones': (),
-            'butch': (),
             'easter_bunny': (),
             'frosty': (),
-            'gretel': (),
             'grumbledorf': (),
             'jack_morgan': (),
             'kronk': (),
-            'lee': (),
             'lucky': (),
             'mel': (),
-            'middle_man': (),
             'pascal': (),
             'pixel': (),
             'santa_claus': (),
             'snake_shadow': (),
             'spaz': (),
-            'taobao_mascot': (),
-            'todd_mcburton': (),
             'zoe': (),
         }
     },
     'textures': {
-        'action_hero_color': 't',
-        'action_hero_color_mask': 't',
-        'action_hero_icon': 't',
-        'action_hero_icon_color_mask': 't',
         'agent_color': 't',
         'agent_color_mask': 't',
         'agent_icon': 't',
         'agent_icon_color_mask': 't',
-        'ali_color': 't',
-        'ali_color_mask': 't',
-        'ali_icon': 't',
-        'ali_icon_color_mask': 't',
         'alien_color': 't',
         'alien_color_mask': 't',
         'alien_icon': 't',
@@ -1649,10 +1365,6 @@ _TREE = {
         'bunny_color_mask': 't',
         'bunny_icon': 't',
         'bunny_icon_color_mask': 't',
-        'cowboy_color': 't',
-        'cowboy_color_mask': 't',
-        'cowboy_icon': 't',
-        'cowboy_icon_color_mask': 't',
         'cyborg_color': 't',
         'cyborg_color_mask': 't',
         'cyborg_icon': 't',
@@ -1669,10 +1381,6 @@ _TREE = {
         'jack_color_mask': 't',
         'jack_icon': 't',
         'jack_icon_color_mask': 't',
-        'jumpsuit_color': 't',
-        'jumpsuit_color_mask': 't',
-        'jumpsuit_icon': 't',
-        'jumpsuit_icon_color_mask': 't',
         'kronk': 't',
         'kronk_color_mask': 't',
         'kronk_icon': 't',
@@ -1693,10 +1401,6 @@ _TREE = {
         'old_lady_color_mask': 't',
         'old_lady_icon': 't',
         'old_lady_icon_color_mask': 't',
-        'opera_singer_color': 't',
-        'opera_singer_color_mask': 't',
-        'opera_singer_icon': 't',
-        'opera_singer_icon_color_mask': 't',
         'penguin_color': 't',
         'penguin_color_mask': 't',
         'penguin_icon': 't',
@@ -1705,6 +1409,8 @@ _TREE = {
         'pixie_color_mask': 't',
         'pixie_icon': 't',
         'pixie_icon_color_mask': 't',
+        'pixie_wings': 't',
+        'pixie_wings_color_mask': 't',
         'robot_color': 't',
         'robot_color_mask': 't',
         'robot_icon': 't',
@@ -1713,10 +1419,6 @@ _TREE = {
         'santa_color_mask': 't',
         'santa_icon': 't',
         'santa_icon_color_mask': 't',
-        'superhero_color': 't',
-        'superhero_color_mask': 't',
-        'superhero_icon': 't',
-        'superhero_icon_color_mask': 't',
         'warrior_color': 't',
         'warrior_color_mask': 't',
         'warrior_icon': 't',
@@ -1744,40 +1446,144 @@ _CHARACTERS = {
     'characters': {
         'agent_johnson': (
             (
-                '{"b":{"tx":{"a":505,"n":"textures/agent_icon"},'
-                '"cm":{"a":505,"n":"textures/agent_icon_color_mask"},'
+                '{"b":{"tx":{"a":546,"n":"textures/agent_icon"},'
+                '"cm":{"a":546,"n":"textures/agent_icon_color_mask"},'
                 '"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/agent_johnson',
         ),
+        'b9000': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/cyborg_icon"},'
+                '"cm":{"a":546,"n":"textures/cyborg_icon_color_mask"},'
+                '"hl":[1.0,0.0,0.0]}}'
+            ),
+            'strings/characters/b9000',
+        ),
+        'bernard': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/bear_icon"},'
+                '"cm":{"a":546,"n":"textures/bear_icon_color_mask"},'
+                '"cl":[0.7,0.5,0.0]}}'
+            ),
+            'strings/characters/bernard',
+        ),
+        'betty': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/old_lady_icon"},'
+                '"cm":{"a":546,"n":"textures/old_lady_icon_color_mask"},'
+                '"cl":[0.2,1.0,1.0],"hl":[0.5,0.25,1.0]}}'
+            ),
+            'strings/characters/betty',
+        ),
+        'bones': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/bones_icon"},'
+                '"cm":{"a":546,"n":"textures/bones_icon_color_mask"},'
+                '"cl":[0.6,0.9,1.0],"hl":[0.6,0.9,1.0]}}'
+            ),
+            'strings/characters/bones',
+        ),
+        'easter_bunny': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/bunny_icon"},'
+                '"cm":{"a":546,"n":"textures/bunny_icon_color_mask"},'
+                '"cl":[1.0,1.0,1.0],"hl":[1.0,0.5,0.5]}}'
+            ),
+            'strings/characters/easter_bunny',
+        ),
+        'frosty': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/frosty_icon"},'
+                '"cm":{"a":546,"n":"textures/frosty_icon_color_mask"},'
+                '"cl":[0.5,0.5,1.0],"hl":[1.0,0.5,0.0]}}'
+            ),
+            'strings/characters/frosty',
+        ),
+        'grumbledorf': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/wizard_icon"},'
+                '"cm":{"a":546,"n":"textures/wizard_icon_color_mask"},'
+                '"cl":[0.2,0.4,1.0],"hl":[0.06,0.15,0.4]}}'
+            ),
+            'strings/characters/grumbledorf',
+        ),
         'jack_morgan': (
             (
-                '{"b":{"tx":{"a":505,"n":"textures/jack_icon"},'
-                '"cm":{"a":505,"n":"textures/jack_icon_color_mask"},'
+                '{"b":{"tx":{"a":546,"n":"textures/jack_icon"},'
+                '"cm":{"a":546,"n":"textures/jack_icon_color_mask"},'
                 '"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,0.0]}}'
             ),
             'strings/characters/jack_morgan',
         ),
         'kronk': (
             (
-                '{"b":{"tx":{"a":505,"n":"textures/kronk_icon"},'
-                '"cm":{"a":505,"n":"textures/kronk_icon_color_mask"},'
+                '{"b":{"tx":{"a":546,"n":"textures/kronk_icon"},'
+                '"cm":{"a":546,"n":"textures/kronk_icon_color_mask"},'
                 '"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/kronk',
         ),
+        'lucky': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/assassin_icon"},'
+                '"cm":{"a":546,"n":"textures/assassin_icon_color_mask"},'
+                '"cl":[0.2,1.0,0.5],"hl":[1.0,0.3,0.0]}}'
+            ),
+            'strings/characters/lucky',
+        ),
+        'mel': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/mel_icon"},'
+                '"cm":{"a":546,"n":"textures/mel_icon_color_mask"},'
+                '"cl":[1.0,1.0,1.0],"hl":[0.1,0.6,0.1]}}'
+            ),
+            'strings/characters/mel',
+        ),
+        'pascal': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/penguin_icon"},'
+                '"cm":{"a":546,"n":"textures/penguin_icon_color_mask"},'
+                '"cl":[0.3,0.5,0.8],"hl":[1.0,0.0,0.0]}}'
+            ),
+            'strings/characters/pascal',
+        ),
+        'pixel': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/pixie_icon"},'
+                '"cm":{"a":546,"n":"textures/pixie_icon_color_mask"},'
+                '"cl":[0.0,1.0,0.7],"hl":[0.65,0.35,0.75]}}'
+            ),
+            'strings/characters/pixel',
+        ),
+        'santa_claus': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/santa_icon"},'
+                '"cm":{"a":546,"n":"textures/santa_icon_color_mask"},'
+                '"cl":[1.0,0.0,0.0],"hl":[1.0,1.0,1.0]}}'
+            ),
+            'strings/characters/santa_claus',
+        ),
+        'snake_shadow': (
+            (
+                '{"b":{"tx":{"a":546,"n":"textures/ninja_icon"},'
+                '"cm":{"a":546,"n":"textures/ninja_icon_color_mask"},'
+                '"cl":[1.0,1.0,1.0],"hl":[0.55,0.8,0.55]}}'
+            ),
+            'strings/characters/snake_shadow',
+        ),
         'spaz': (
             (
-                '{"b":{"tx":{"a":505,"n":"textures/neo_spaz_icon"},'
-                '"cm":{"a":505,'
+                '{"b":{"tx":{"a":546,"n":"textures/neo_spaz_icon"},'
+                '"cm":{"a":546,'
                 '"n":"textures/neo_spaz_icon_color_mask"}}}'
             ),
             'strings/characters/spaz',
         ),
         'zoe': (
             (
-                '{"b":{"tx":{"a":505,"n":"textures/zoe_icon"},'
-                '"cm":{"a":505,"n":"textures/zoe_icon_color_mask"},'
+                '{"b":{"tx":{"a":546,"n":"textures/zoe_icon"},'
+                '"cm":{"a":546,"n":"textures/zoe_icon_color_mask"},'
                 '"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,0.0]}}'
             ),
             'strings/characters/zoe',

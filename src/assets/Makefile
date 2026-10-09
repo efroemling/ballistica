@@ -286,6 +286,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classiccatalogassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classiccharacterassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classiccharacterassets2.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classicmapassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
@@ -409,6 +410,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classiccatalogassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classiccharacterassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classiccharacterassets2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicuiassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \

@@ -364,6 +364,8 @@ void ReadAttachments(const JsonRef& obj, const char* key,
       {"lul", CharacterAttachTarget::kLeftUpperLeg},
       {"lll", CharacterAttachTarget::kLeftLowerLeg},
       {"lto", CharacterAttachTarget::kLeftToes},
+      {"w", CharacterAttachTarget::kWing},
+      {"lw", CharacterAttachTarget::kLeftWing},
   };
   for (const auto& entry : kTargets) {
     int ti = static_cast<int>(entry.target);
@@ -440,16 +442,6 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   ReadPackageAssetRef(basic, "mfa", &d.forearm_mesh);
   ReadPackageAssetRef(basic, "mhn", &d.hand_mesh);
   ReadPackageAssetRef(basic, "mp", &d.pelvis_mesh);
-  // Optional wings: mesh presence is what makes a character winged;
-  // the texture alone does nothing.
-  ReadPackageAssetRef(basic, "mw", &d.wing_mesh);
-  ReadPackageAssetRef(basic, "tw", &d.wing_texture);
-  ReadPackageAssetRef(basic, "wm", &d.wing_tint_texture);
-  ReadPackageAssetRef(basic, "lmw", &d.wing_left_mesh);
-  ReadPackageAssetRef(basic, "ltw", &d.wing_left_texture);
-  ReadPackageAssetRef(basic, "lwm", &d.wing_left_tint_texture);
-  ReadTint(basic, "", "w", &d.wing_tint);
-  ReadTint(basic, "l", "w", &d.wing_left_tint);
   // Optional per-part looks. Keys are a prefix plus the part's suffix
   // (the one its mesh key uses): 't' texture, 'tm' tint mask, and
   // 'cl' / 'hl' / 'hl2' tint colors; for paired parts 'lm' / 'lt' /
@@ -601,8 +593,6 @@ void CharacterDef::LoadSpazMedia_() {
   std::vector<MediaBlock::IndexedRef> indexed;
   note(&d.color_texture, "textures/", &indexed);
   note(&d.color_mask_texture, "textures/", &indexed);
-  note(&d.wing_texture, "textures/", &indexed);
-  note(&d.wing_tint_texture, "textures/", &indexed);
   note(&d.head_mesh, "meshes/", &indexed);
   note(&d.torso_mesh, "meshes/", &indexed);
   note(&d.pelvis_mesh, "meshes/", &indexed);
@@ -612,10 +602,6 @@ void CharacterDef::LoadSpazMedia_() {
   note(&d.upper_leg_mesh, "meshes/", &indexed);
   note(&d.lower_leg_mesh, "meshes/", &indexed);
   note(&d.toes_mesh, "meshes/", &indexed);
-  note(&d.wing_mesh, "meshes/", &indexed);
-  note(&d.wing_left_mesh, "meshes/", &indexed);
-  note(&d.wing_left_texture, "textures/", &indexed);
-  note(&d.wing_left_tint_texture, "textures/", &indexed);
   for (auto& look : d.part_looks) {
     note(&look.texture, "textures/", &indexed);
     note(&look.tint_texture, "textures/", &indexed);
@@ -658,10 +644,7 @@ auto CharacterDef::SpazRequiredRefs_() const
       &d.torso_mesh,     &d.upper_arm_mesh,     &d.upper_leg_mesh,
       &d.lower_leg_mesh, &d.toes_mesh};
   // Optional parts join the check only when present.
-  for (const auto* opt :
-       {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh, &d.wing_mesh,
-        &d.wing_texture, &d.wing_tint_texture, &d.wing_left_mesh,
-        &d.wing_left_texture, &d.wing_left_tint_texture}) {
+  for (const auto* opt : {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh}) {
     if (!opt->name.empty()) {
       refs.push_back(opt);
     }
@@ -714,15 +697,6 @@ auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
   m.upper_leg_mesh = get->Mesh(d.upper_leg_mesh);
   m.lower_leg_mesh = get->Mesh(d.lower_leg_mesh);
   m.toes_mesh = get->Mesh(d.toes_mesh);
-  if (!d.wing_mesh.name.empty()) {
-    m.wing_mesh = get->Mesh(d.wing_mesh);
-  }
-  if (!d.wing_texture.name.empty()) {
-    m.wing_texture = get->Texture(d.wing_texture);
-  }
-  if (!d.wing_tint_texture.name.empty()) {
-    m.wing_tint_texture = get->Texture(d.wing_tint_texture);
-  }
   auto opt_texture = [get](const CharacterAssetRef& ref,
                            Object::Ref<TextureAsset>* out) {
     if (!ref.name.empty()) {
@@ -735,9 +709,6 @@ auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
       *out = get->Mesh(ref);
     }
   };
-  opt_mesh(d.wing_left_mesh, &m.wing_left_mesh);
-  opt_texture(d.wing_left_texture, &m.wing_left_texture);
-  opt_texture(d.wing_left_tint_texture, &m.wing_left_tint_texture);
   for (int i = 0; i < kCharacterBodyPartCount; ++i) {
     const auto& look = d.part_looks[i];
     auto& lmedia = m.part_looks[i];

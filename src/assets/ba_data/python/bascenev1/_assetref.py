@@ -285,7 +285,8 @@ def _make(
 
 #: What a wrapper carries per character: the json of its spaz def, the
 #: json of its icon depiction, and the logical path of its name string.
-type CharacterGroupData = dict[str, tuple[str, str, str]]
+#: A subdirectory of characters is a nested dict of the same.
+type CharacterGroupData = dict[str, 'tuple[str, str, str] | CharacterGroupData']
 
 # Where an activity keeps the scene objects made for characters (in its
 # customdata, so they go when it does).
@@ -361,8 +362,9 @@ class CharacterHandle:
 class CharacterGroup:
     """Dynamic accessor for one directory of an asset-package's characters.
 
-    Attribute access yields a :class:`CharacterHandle`; all real type
-    information lives in the wrapper's ``if TYPE_CHECKING:`` shadow.
+    Attribute access yields a :class:`CharacterHandle`, or another
+    group for a subdirectory; all real type information lives in the
+    wrapper's ``if TYPE_CHECKING:`` shadow.
     """
 
     __slots__ = ('_apvernum', '_data', '_prefix')
@@ -374,12 +376,15 @@ class CharacterGroup:
         self._data = data
         self._prefix = prefix
 
-    def __getattr__(self, name: str) -> CharacterHandle:
+    def __getattr__(self, name: str) -> 'CharacterHandle | CharacterGroup':
         try:
             data = self._data[name]
         except KeyError:
             raise AttributeError(name) from None
-        return CharacterHandle(self._apvernum, f'{self._prefix}/{name}', data)
+        path = f'{self._prefix}/{name}'
+        if isinstance(data, dict):
+            return CharacterGroup(self._apvernum, data, path)
+        return CharacterHandle(self._apvernum, path, data)
 
 
 def _split_ref(ref: str) -> tuple[ApverNum, str]:

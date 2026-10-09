@@ -454,9 +454,8 @@ class SpazNode : public Node {
   auto RandomDeathSound_() const -> base::SoundAsset*;
   auto RandomPickupSound_() const -> base::SoundAsset*;
   auto RandomFallSound_() const -> base::SoundAsset*;
-  auto WingMeshData_() const -> base::MeshAsset*;
-  auto WingTextureData_() const -> base::TextureAsset*;
-  auto WingTintTextureData_() const -> base::TextureAsset*;
+  void ApplyWingTransform_(base::RenderComponent* c, const Vector3f& wing_pos,
+                           bool legacy_frame) const;
   void UpdateJoints();
   auto PoseJoints_() -> SpazPose::Joints;
   // The main-sim joint behind a SpazJoint index.
@@ -713,7 +712,11 @@ class SpazNode : public Node {
   bool use_spaz_def_highlight_{};
   bool team_coloring_{};
   bool pirate_{};
+  // Arms are one long mesh: drawn shorter under boxing gloves.
   bool flippers_{};
+  // Forearm and hand meshes are never drawn (the legacy 'penguin'
+  // style only; a definition just doesn't name any).
+  bool hide_lower_arms_{};
   bool frosty_{};
   bool ninja_{};
   bool punch_right_{};
