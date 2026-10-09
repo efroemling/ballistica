@@ -206,6 +206,29 @@ auto Player::GetPyCloudIcon() -> PyObject* {
   return icon->NewPyRef();
 }
 
+void Player::SetNameDepictionJson(const std::string& json) {
+  if (json != name_depiction_json_) {
+    name_depiction_json_ = json;
+    name_depiction_.Clear();
+  }
+}
+
+auto Player::GetPyNameDepiction() -> PyObject* {
+  if (name_depiction_json_.empty()) {
+    Py_RETURN_NONE;
+  }
+  SceneV1Context* context = CurrentSceneContext_();
+  Object::Ref<SceneDepiction> depiction;
+  if (name_depiction_.exists()
+      && name_depiction_->scene() == context->GetMutableScene()) {
+    depiction = name_depiction_.get();
+  } else {
+    depiction = context->NewDepiction(name_depiction_json_);
+    name_depiction_ = depiction;
+  }
+  return depiction->NewPyRef();
+}
+
 void Player::SetPyColor(PyObject* c) { py_color_.Acquire(c); }
 auto Player::GetPyColor() -> PyObject* {
   return py_color_.exists() ? py_color_.get() : Py_None;

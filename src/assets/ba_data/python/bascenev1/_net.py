@@ -364,8 +364,9 @@ async def resolve_asset_packages_with_dialog(
 ) -> bool:
     """Resolve asset-packages, downloading with a cancelable dialog.
 
-    Shared by the pre-join (``connect_to_party``) and pre-playback
-    (``new_replay_session``) content-prep paths. Returns True when the
+    Shared by the pre-join (``connect_to_party``), pre-playback
+    (``new_replay_session``) and character-preview (classic's
+    ``_characterpreview``) content-prep paths. Returns True when the
     packages are locally available (having downloaded any that were
     missing), False if the user cancelled or a download failed (an
     error dialog / screen-message is shown in the failure case). The
@@ -373,6 +374,8 @@ async def resolve_asset_packages_with_dialog(
     the all-local common case stays instant with no dialog flash.
     ``task`` is the enclosing async task, cancelled if the user hits the
     dialog's cancel button; ``context`` is a short label for logs.
+
+    :meta private:
     """
     # The wrapper import stays deferred: bascenev1 is fully imported by
     # the time this runs; the cycle pylint sees is structural only.

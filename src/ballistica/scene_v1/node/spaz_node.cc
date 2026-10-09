@@ -36,6 +36,7 @@
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
+#include "ballistica/scene_v1/generated/spaz_rig.h"
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -68,9 +69,12 @@ enum LimbIndex {
 };
 // Points on the lower limb that the upper limb's mesh stretches to
 // reach (the lower joint's anchor2; the main-sim rig's construction
-// values).
-const Vector3f kArmStretchPoint{0.0f, 0.0f, -0.1f};
-const Vector3f kLegStretchPoint{0.0f, 0.0f, -0.05f};
+// values). Like every kSpazRig* constant, these come from
+// generated/spaz_rig.h, generated from the one home of the rig's
+// numbers (tools/bacommon/characterrig.py), which tools showing
+// characters outside the game read too. Change them there.
+const Vector3f kArmStretchPoint{kSpazRigArmStretchPoint};
+const Vector3f kLegStretchPoint{kSpazRigLegStretchPoint};
 
 // Initial limb joint targets when there are no main-sim limb joints to
 // read them from (bg limbs): what the constructor's joint creation
@@ -86,18 +90,57 @@ struct LimbJointSeed {
 };
 const int kLimbJointSeedCount = kSpazJointCount - kSpazJointUpperRightArm;
 const LimbJointSeed kLimbJointSeeds[kLimbJointSeedCount] = {
-    {{-0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},    // upper right arm
-    {{0.0f, 0.0f, 0.07f}, 0.0f, 0.0f, 0.0f},     // lower right arm
-    {{0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},     // upper left arm
-    {{0.0f, 0.0f, 0.07f}, 0.0f, 0.0f, 0.0f},     // lower left arm
-    {{-0.1f, -0.01f, 0.0f}, 0.0f, 0.0f, 0.0f},   // upper right leg
-    {{0.0f, 0.0f, 0.05f}, 0.0f, 0.0f, 0.0f},     // lower right leg
-    {{0.1f, -0.01f, 0.0f}, 0.0f, 0.0f, 0.0f},    // upper left leg
-    {{0.0f, 0.0f, 0.05f}, 0.0f, 0.0f, 0.0f},     // lower left leg
-    {{0.0f, 0.05f, 0.05f}, 0.0f, 0.0f, 0.0f},    // right toes
-    {{-0.1f, 0.05f, 0.05f}, 0.0f, 0.0f, 0.0f},   // right toes 2
-    {{0.0f, 0.05f, 0.05f}, 0.0f, 0.0f, 0.0f},    // left toes
-    {{0.1f, 0.05f, 0.05f}, 0.0f, 0.0f, 0.0f},    // left toes 2
+    // Upper arms: where the arms start out; the pose sets the real
+    // shoulder anchors (kSpazRigShoulderOnTorso) every step.
+    {{-0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},  // upper right arm
+    {{kSpazRigElbowOnUpperArm[0], kSpazRigElbowOnUpperArm[1],
+      kSpazRigElbowOnUpperArm[2]},
+     0.0f,
+     0.0f,
+     0.0f},                                   // lower right arm
+    {{0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},  // upper left arm
+    {{kSpazRigElbowOnUpperArm[0], kSpazRigElbowOnUpperArm[1],
+      kSpazRigElbowOnUpperArm[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower left arm
+    {{kSpazRigHipOnPelvis[0], kSpazRigHipOnPelvis[1], kSpazRigHipOnPelvis[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // upper right leg
+    {{kSpazRigKneeOnUpperLeg[0], kSpazRigKneeOnUpperLeg[1],
+      kSpazRigKneeOnUpperLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower right leg
+    {{-kSpazRigHipOnPelvis[0], kSpazRigHipOnPelvis[1], kSpazRigHipOnPelvis[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // upper left leg
+    {{kSpazRigKneeOnUpperLeg[0], kSpazRigKneeOnUpperLeg[1],
+      kSpazRigKneeOnUpperLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower left leg
+    {{kSpazRigAnkleOnLowerLeg[0], kSpazRigAnkleOnLowerLeg[1],
+      kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // right toes
+    // (The second toe joints sit off to one side, making a hinge.)
+    {{-0.1f, kSpazRigAnkleOnLowerLeg[1], kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // right toes 2
+    {{kSpazRigAnkleOnLowerLeg[0], kSpazRigAnkleOnLowerLeg[1],
+      kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // left toes
+    {{0.1f, kSpazRigAnkleOnLowerLeg[1], kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},                                      // left toes 2
     {{-0.1f, -0.4f, 0.0f}, 1.0f, 0.3f, 0.001f},  // right leg ik
     {{0.1f, -0.4f, 0.0f}, 1.0f, 0.3f, 0.001f},   // left leg ik
     {{-0.2f, -0.2f, 0.1f}, 0.0f, 0.0f, 0.0f},    // right arm ik
@@ -169,7 +212,7 @@ const float kBgLimbsPelvisMassHeight = 0.264f;
 // Wider pelvis collision box (0.25 -> 0.32; mass box unchanged) so a
 // ragdoll lying on it rolls less. Collision only: mass and inertia
 // come from the mass triple above.
-const float kBgLimbsPelvisWidth = 0.35f;
+const float kBgLimbsPelvisWidth = kSpazRigPelvisSize[0];
 
 // bg-limbs mode: the roller ball doubles as the leg surrogate when the
 // character is knocked out or frozen. The old rig let the ball vanish
@@ -199,7 +242,7 @@ const bool kBgLimbsDownBallBrakes = false;
 // state -- every peer derives identical bodies from a definition --
 // and the values are exactly the classic Zoe hair rig's, so
 // definition-form hair matches the legacy bool-driven rig body for
-// body. Mirrors AttachmentType in bamaster baserver/character.py.
+// body.
 struct AttachmentSegmentSpec {
   float geom_radius;
   float geom_length;
@@ -220,213 +263,13 @@ struct AttachmentTypeSpec {
   int segment_count;
   AttachmentSegmentSpec segments[4];
 };
+// The table itself, one entry per CharacterAttachmentType in order
+// (kStatic, the last, has no rig and no entry), is generated from
+// tools/bacommon/characterrig.py: the one home of these numbers, which
+// tools showing characters outside the game read too. Change them
+// there, never here.
 const AttachmentTypeSpec kAttachmentTypeSpecs[] = {
-    // kLegacyTuftLarge (the classic front-right tuft).
-    {1,
-     {{0.07f,
-       0.13f,
-       0.0f,
-       0.0f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, -0.08f, -0.12f},
-       0.2f,
-       0.01f,
-       0.00025f,
-       0.000001f,
-       RigidBody::kCollideAll}}},
-    // kLegacyTuftMedium (capsule midway between large and small; mass and
-    // springs are identical across the tuft sizes).
-    {1,
-     {{0.055f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, -0.08f, -0.12f},
-       0.2f,
-       0.01f,
-       0.00025f,
-       0.000001f,
-       RigidBody::kCollideAll}}},
-    // kLegacyTuftSmall (front-left; smaller capsule, same mass).
-    {1,
-     {{0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, -0.08f, -0.12f},
-       0.2f,
-       0.01f,
-       0.00025f,
-       0.000001f,
-       RigidBody::kCollideAll}}},
-    // kLegacyPonytail2 (stiffer root + floppy tip that collides with
-    // nothing; the tip chains off the root, so rotating the whole
-    // attachment carries the chain with it).
-    {2,
-     {{0.09f,
-       0.1f,
-       0.0f,
-       0.0f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, -0.01f, 0.1f},
-       1.0f,
-       0.03f,
-       0.0015f,
-       0.000003f,
-       RigidBody::kCollideAll},
-      {0.09f,
-       0.13f,
-       0.0f,
-       0.0f,
-       0.01f,
-       {0.0f, 0.01f, -0.1f},
-       {0.0f, -0.01f, 0.12f},
-       0.4f,
-       0.02f,
-       0.00025f,
-       0.000001f,
-       RigidBody::kCollideNone}}},
-    // kAntenna (antennas, ears, horns: the kLegacyTuftSmall body with 8x
-    // the tuft linear/angular spring stiffness, so it mostly holds
-    // its pose with a little life). Unlike the tufts' hair-shaped
-    // child anchor, the base sits squarely at the capsule's root end
-    // so the capsule extends straight out along the attachment's aim
-    // from wherever it is anchored.
-    {1,
-     {{0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll}}},
-    // kAntenna2 (two-segment kAntenna chain; each joint hinges at the
-    // center of the touching end-cap spheres, so the chain reads as a
-    // string of balls-and-rods).
-    {2,
-     {{0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll}}},
-    // kAntenna3 (three-segment kAntenna chain; see kAntenna2).
-    {3,
-     {{0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll}}},
-    // kAntenna4 (four-segment kAntenna chain; see kAntenna2).
-    {4,
-     {{0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.0f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll},
-      {0.04f,
-       0.13f,
-       0.07f,
-       0.13f,
-       0.01f,
-       {0.0f, 0.0f, 0.065f},
-       {0.0f, 0.0f, -0.065f},
-       0.8f,
-       0.0005f,
-       0.00001f,
-       0.00000001f,
-       RigidBody::kCollideAll}}},
+#include "ballistica/scene_v1/generated/spaz_attachment_rigs.inc"
 };
 
 const int kPunchDuration = 35;
@@ -808,7 +651,7 @@ SpazNode::SpazNode(Scene* scene)
       Object::New<RigidBody>(kHeadBodyID, &spaz_part_, RigidBody::Type::kBody,
                              RigidBody::Shape::kSphere,
                              RigidBody::kCollideActive, RigidBody::kCollideAll);
-  body_head_->SetDimensions(0.23f, 0, 0, 0.28f, 0, 0, 1.0f);
+  body_head_->SetDimensions(kSpazRigHeadRadius, 0, 0, 0.28f, 0, 0, 1.0f);
   body_head_->AddCallback(StaticCollideCallback, this);
 
   // Torso
@@ -832,7 +675,7 @@ SpazNode::SpazNode(Scene* scene)
       RigidBody::Shape::kSphere, RigidBody::kCollideActive,
       RigidBody::kCollideAll, nullptr, RigidBody::kIsRoller);
 
-  body_roller_->SetDimensions(0.3f, 0, 0, 0, 0, 0, 0.1f);
+  body_roller_->SetDimensions(kSpazRigRollerRadius, 0, 0, 0, 0, 0, 0.1f);
   body_roller_->AddCallback(StaticCollideCallback, this);
 
   // Stand Body
@@ -850,7 +693,8 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     upper_right_arm_body_->AddCallback(StaticCollideCallback, this);
-    upper_right_arm_body_->SetDimensions(0.06f, 0.16f, 0, 0, 0, 0,
+    upper_right_arm_body_->SetDimensions(kSpazRigUpperArmRadius,
+                                         kSpazRigUpperArmLength, 0, 0, 0, 0,
                                          kUpperArmDensity);
 
     // Lower Right Arm
@@ -859,8 +703,9 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     lower_right_arm_body_->AddCallback(StaticCollideCallback, this);
-    lower_right_arm_body_->SetDimensions(0.06f, 0.13f, 0, 0.06f, 0.16f, 0,
-                                         kLowerArmDensity);
+    lower_right_arm_body_->SetDimensions(kSpazRigLowerArmRadius,
+                                         kSpazRigLowerArmLength, 0, 0.06f,
+                                         0.16f, 0, kLowerArmDensity);
 
     // Upper Left Arm
     upper_left_arm_body_ = Object::New<RigidBody>(
@@ -868,7 +713,8 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     upper_left_arm_body_->AddCallback(StaticCollideCallback, this);
-    upper_left_arm_body_->SetDimensions(0.06f, 0.16f, 0, 0, 0, 0,
+    upper_left_arm_body_->SetDimensions(kSpazRigUpperArmRadius,
+                                        kSpazRigUpperArmLength, 0, 0, 0, 0,
                                         kUpperArmDensity);
 
     // Lower Left Arm
@@ -877,8 +723,9 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     lower_left_arm_body_->AddCallback(StaticCollideCallback, this);
-    lower_left_arm_body_->SetDimensions(0.06f, 0.13f, 0, 0.06f, 0.16f, 0,
-                                        kLowerArmDensity);
+    lower_left_arm_body_->SetDimensions(kSpazRigLowerArmRadius,
+                                        kSpazRigLowerArmLength, 0, 0.06f, 0.16f,
+                                        0, kLowerArmDensity);
 
     // Upper Right Leg
     upper_right_leg_body_ = Object::New<RigidBody>(
@@ -899,7 +746,8 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kSphere, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     right_toes_body_->AddCallback(StaticCollideCallback, this);
-    right_toes_body_->SetDimensions(0.075f, 0, 0, 0, 0, 0, kToesDensity);
+    right_toes_body_->SetDimensions(kSpazRigToesRadius, 0, 0, 0, 0, 0,
+                                    kToesDensity);
 
     // Upper Left Leg
     upper_left_leg_body_ = Object::New<RigidBody>(
@@ -921,7 +769,8 @@ SpazNode::SpazNode(Scene* scene)
         RigidBody::Shape::kSphere, RigidBody::kCollideActive,
         RigidBody::kCollideAll);
     left_toes_body_->AddCallback(StaticCollideCallback, this);
-    left_toes_body_->SetDimensions(0.075f, 0, 0, 0, 0, 0, kToesDensity);
+    left_toes_body_->SetDimensions(kSpazRigToesRadius, 0, 0, 0, 0, 0,
+                                   kToesDensity);
   }
 
   UpdateBodiesForStyle();
@@ -943,11 +792,11 @@ SpazNode::SpazNode(Scene* scene)
                                    0, 0);  // ang stiff/damp
 
   // Move anchor down a bit from torso towards pelvis.
-  pelvis_joint_->anchor1[1] -= 0.05f;
-  pelvis_joint_->anchor2[1] -= 0.05f;
+  pelvis_joint_->anchor1[1] -= kSpazRigPelvisJointDrop;
+  pelvis_joint_->anchor2[1] -= kSpazRigPelvisJointDrop;
 
   // Move anchor point forward a tiny bit (like the curvature of a spine).
-  pelvis_joint_->anchor2[2] += 0.05f;
+  pelvis_joint_->anchor2[2] += kSpazRigPelvisJointForward;
 
   if (main_sim_limbs_) {
     // Attach upper right arm to torso.
@@ -955,44 +804,44 @@ SpazNode::SpazNode(Scene* scene)
         body_torso_.get(), upper_right_arm_body_.get(), 0, 0, 0, 0);
 
     // Move anchor to top of arm.
-    upper_right_arm_joint_->anchor2[2] = -0.1f;
+    upper_right_arm_joint_->anchor2[2] = kSpazRigShoulderOnUpperArm[2];
 
     // Move anchor slightly in towards torso.
-    upper_right_arm_joint_->anchor2[0] += 0.02f;
+    upper_right_arm_joint_->anchor2[0] += kSpazRigShoulderOnUpperArm[0];
 
     // Attach lower right arm to upper right arm.
     lower_right_arm_joint_ = CreateFixedJoint(
         upper_right_arm_body_.get(), lower_right_arm_body_.get(), 0, 0, 0, 0);
 
-    lower_right_arm_joint_->anchor2[2] = -0.08f;
+    lower_right_arm_joint_->anchor2[2] = kSpazRigElbowOnLowerArm[2];
 
     // Attach upper left arm to torso.
     upper_left_arm_joint_ = CreateFixedJoint(
         body_torso_.get(), upper_left_arm_body_.get(), 0, 0, 0, 0);
 
     // Move anchor to top of arm.
-    upper_left_arm_joint_->anchor2[2] = -0.1f;
+    upper_left_arm_joint_->anchor2[2] = kSpazRigShoulderOnUpperArm[2];
 
     // Move anchor slightly in towards torso.
-    upper_left_arm_joint_->anchor2[0] += -0.02f;
+    upper_left_arm_joint_->anchor2[0] += -kSpazRigShoulderOnUpperArm[0];
 
     // Attach lower arm to upper arm.
     lower_left_arm_joint_ = CreateFixedJoint(
         upper_left_arm_body_.get(), lower_left_arm_body_.get(), 0, 0, 0, 0);
 
-    lower_left_arm_joint_->anchor2[2] = -0.08f;
+    lower_left_arm_joint_->anchor2[2] = kSpazRigElbowOnLowerArm[2];
 
     // Attach upper right leg to leg-mass.
     upper_right_leg_joint_ = CreateFixedJoint(
         body_pelvis_.get(), upper_right_leg_body_.get(), 0, 0, 0, 0);
 
-    upper_right_leg_joint_->anchor2[2] = -0.05f;
+    upper_right_leg_joint_->anchor2[2] = kSpazRigHipOnUpperLeg[2];
 
     // Attach lower right leg to upper right leg.
     lower_right_leg_joint_ = CreateFixedJoint(
         upper_right_leg_body_.get(), lower_right_leg_body_.get(), 0, 0, 0, 0);
 
-    lower_right_leg_joint_->anchor2[2] = -0.05f;
+    lower_right_leg_joint_->anchor2[2] = kSpazRigKneeOnLowerLeg[2];
 
     // Attach bottom of lower leg to pelvis.
     right_leg_ik_joint_ = CreateFixedJoint(
@@ -1011,7 +860,7 @@ SpazNode::SpazNode(Scene* scene)
                                          right_toes_body_.get(), 0, 0, 0, 0);
 
     right_toes_joint_->anchor1[1] += -0.0f;
-    right_toes_joint_->anchor2[1] += -0.04f;
+    right_toes_joint_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
     // And an anchor off to the side to make it hinge-like.
     right_toes_joint_2_ = nullptr;
@@ -1019,7 +868,7 @@ SpazNode::SpazNode(Scene* scene)
                                            right_toes_body_.get(), 0, 0, 0, 0);
 
     right_toes_joint_2_->anchor1[1] += -0.0f;
-    right_toes_joint_2_->anchor2[1] += -0.04f;
+    right_toes_joint_2_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
     right_toes_joint_2_->anchor1[0] += -0.1f;
     right_toes_joint_2_->anchor2[0] += -0.1f;
@@ -1028,13 +877,13 @@ SpazNode::SpazNode(Scene* scene)
     upper_left_leg_joint_ = CreateFixedJoint(
         body_pelvis_.get(), upper_left_leg_body_.get(), 0, 0, 0, 0);
 
-    upper_left_leg_joint_->anchor2[2] = -0.05f;
+    upper_left_leg_joint_->anchor2[2] = kSpazRigHipOnUpperLeg[2];
 
     // Attach lower left leg to upper left leg.
     lower_left_leg_joint_ = CreateFixedJoint(
         upper_left_leg_body_.get(), lower_left_leg_body_.get(), 0, 0, 0, 0);
 
-    lower_left_leg_joint_->anchor2[2] = -0.05f;
+    lower_left_leg_joint_->anchor2[2] = kSpazRigKneeOnLowerLeg[2];
 
     // Attach bottom of lower leg to pelvis.
     left_leg_ik_joint_ = CreateFixedJoint(
@@ -1054,7 +903,7 @@ SpazNode::SpazNode(Scene* scene)
                                         left_toes_body_.get(), 0, 0, 0, 0);
 
     right_toes_joint_->anchor1[1] += -0.0f;
-    left_toes_joint_->anchor2[1] += -0.04f;
+    left_toes_joint_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
     // And an anchor off to the side to make it hinge-like.
     left_toes_joint_2_ = nullptr;
@@ -1062,7 +911,7 @@ SpazNode::SpazNode(Scene* scene)
                                           left_toes_body_.get(), 0, 0, 0, 0);
 
     left_toes_joint_2_->anchor1[1] += -0.0f;
-    left_toes_joint_2_->anchor2[1] += -0.04f;
+    left_toes_joint_2_->anchor2[1] += kSpazRigAnkleOnToes[1];
     left_toes_joint_2_->anchor1[0] += 0.1f;
     left_toes_joint_2_->anchor2[0] += 0.1f;
 
@@ -1526,16 +1375,19 @@ void SpazNode::UpdateBodiesForStyle() {
     body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0, 3.0f);
 
     // Adjust hip and leg size.
-    body_pelvis_->SetDimensions(0.25f, 0.16f, 0.10f, 0.25f, 0.16f, 0.16f,
+    // (The old limbs' pelvis was narrower; its other sides are the
+    // rig's.)
+    body_pelvis_->SetDimensions(0.25f, kSpazRigPelvisSize[1],
+                                kSpazRigPelvisSize[2], 0.25f, 0.16f, 0.16f,
                                 kPelvisDensity);
   } else {
     // Same collision shapes; the core carries the limbs' mass (see the
     // kBgLimbs* constants).
     body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0,
                                kBgLimbsTorsoDensity);
-    body_pelvis_->SetDimensions(kBgLimbsPelvisWidth, 0.16f, 0.10f, 0.25f,
-                                kBgLimbsPelvisMassHeight, 0.16f,
-                                kPelvisDensity);
+    body_pelvis_->SetDimensions(
+        kBgLimbsPelvisWidth, kSpazRigPelvisSize[1], kSpazRigPelvisSize[2],
+        0.25f, kBgLimbsPelvisMassHeight, 0.16f, kPelvisDensity);
   }
 
   // (Re)build definition attachment rigs if their config changed. After
@@ -1548,16 +1400,18 @@ void SpazNode::UpdateBodiesForStyle() {
     return;
   }
   float thigh_rad = thigh_radius_;
-  upper_left_leg_body_->SetDimensions(thigh_rad, 0.12f, 0, 0.05f, 0.12f, 0,
-                                      kUpperLegDensity);
-  upper_right_leg_body_->SetDimensions(thigh_rad, 0.12f, 0, 0.05f, 0.12f, 0,
-                                       kUpperLegDensity);
+  upper_left_leg_body_->SetDimensions(thigh_rad, kSpazRigUpperLegLength, 0,
+                                      0.05f, 0.12f, 0, kUpperLegDensity);
+  upper_right_leg_body_->SetDimensions(thigh_rad, kSpazRigUpperLegLength, 0,
+                                       0.05f, 0.12f, 0, kUpperLegDensity);
 
   float ankle_rad = ankle_radius_;
-  lower_left_leg_body_->SetDimensions(ankle_rad, 0.26f - ankle_rad * 2.0f, 0,
-                                      0.07f, 0.12f, 0, kLowerLegDensity);
-  lower_right_leg_body_->SetDimensions(ankle_rad, 0.26f - ankle_rad * 2.0f, 0,
-                                       0.07f, 0.12f, 0, kLowerLegDensity);
+  lower_left_leg_body_->SetDimensions(ankle_rad,
+                                      kSpazRigLowerLegSpan - ankle_rad * 2.0f,
+                                      0, 0.07f, 0.12f, 0, kLowerLegDensity);
+  lower_right_leg_body_->SetDimensions(ankle_rad,
+                                       kSpazRigLowerLegSpan - ankle_rad * 2.0f,
+                                       0, 0.07f, 0.12f, 0, kLowerLegDensity);
 }
 
 auto SpazNode::CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls,
@@ -3679,9 +3533,10 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
       {
         auto xf = c->ScopedTransform();
         c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
-        c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+        c->Rotate(kSpazRigEyeballPitch + eyes_ud_smooth_, 1, 0, 0);
         c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-        c->Scale(0.09f, 0.09f, 0.09f);
+        c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale,
+                 kSpazRigEyeMeshScale);
         if (death_scale != 1.0f) {
           c->Scale(death_scale, death_scale, death_scale);
         }
@@ -3705,9 +3560,10 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
         {
           auto xf = c->ScopedTransform();
           c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
-          c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+          c->Rotate(kSpazRigEyeballPitch + eyes_ud_smooth_, 1, 0, 0);
           c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-          c->Scale(0.09f, 0.09f, 0.09f);
+          c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale,
+                   kSpazRigEyeMeshScale);
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
@@ -3776,7 +3632,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
     c->Rotate(eye_lid_angle_, 0, 0, 1);
     c->Rotate(a, 1, 0, 0);
-    c->Scale(0.09f, 0.09f, 0.09f);
+    c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale, kSpazRigEyeMeshScale);
 
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
@@ -3803,7 +3659,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
     c->Rotate(-eye_lid_angle_, 0, 0, 1);
     c->Rotate(a, 1, 0, 0);
-    c->Scale(-0.09f, 0.09f, 0.09f);
+    c->Scale(-kSpazRigEyeMeshScale, kSpazRigEyeMeshScale, kSpazRigEyeMeshScale);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
@@ -4065,14 +3921,14 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     }
     Vector3f p_root = root->GetTransform() * Vector3f(root_anchor);
     Vector3f p_lower = limb_m[lower] * lower_point;
-    return std::min(1.6f, (p_root - p_lower).Length() / rest);
+    return std::min(kSpazRigLimbStretchMax, (p_root - p_lower).Length() / rest);
   };
 
   // Right upper arm.
   float right_stretch =
       limb_stretch(kLimbLowerRightArm, body_torso_.get(),
                    joint_targets_[kSpazJointUpperRightArm].anchor1,
-                   kArmStretchPoint, 0.192f);
+                   kArmStretchPoint, kSpazRigArmStretchRest);
   // If we've got flippers instead of arms, shorten them if we've got gloves
   // on so they don't intersect as badly.
   if (flippers_ && have_boxing_gloves_) {
@@ -4098,9 +3954,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->MultMatrix(limb_m[kLimbLowerRightArm].m);
     {
       auto xf = c->ScopedTransform();
-      c->Translate(0, 0, 0.1f);
+      c->Translate(0, 0, kSpazRigForearmStretchPivot);
       c->Scale(1.0f, 1.0f, right_stretch);
-      c->Translate(0.0f, 0.0f, -0.1f);
+      c->Translate(0.0f, 0.0f, -kSpazRigForearmStretchPivot);
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
@@ -4112,11 +3968,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       }
     }
     if (!have_boxing_gloves_) {
-      c->Translate(0, 0, 0.04f);
+      c->Translate(0, 0, kSpazRigHandOffset);
       if (holding_something_) {
         c->Rotate(-50, 0, 1, 0);
       } else {
-        c->Rotate(10, 0, 1, 0);
+        c->Rotate(kSpazRigHandTurn, 0, 1, 0);
       }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
@@ -4137,7 +3993,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     float stretch =
         limb_stretch(kLimbLowerRightLeg, body_pelvis_.get(),
                      joint_targets_[kSpazJointUpperRightLeg].anchor1,
-                     kLegStretchPoint, 0.20f);
+                     kLegStretchPoint, kSpazRigLegStretchRest);
     c->Scale(1.0f, 1.0f, stretch);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
@@ -4178,9 +4034,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   c->FlipCullFace();
 
   // Left upper arm.
-  float left_stretch = limb_stretch(
-      kLimbLowerLeftArm, body_torso_.get(),
-      joint_targets_[kSpazJointUpperLeftArm].anchor1, kArmStretchPoint, 0.192f);
+  float left_stretch =
+      limb_stretch(kLimbLowerLeftArm, body_torso_.get(),
+                   joint_targets_[kSpazJointUpperLeftArm].anchor1,
+                   kArmStretchPoint, kSpazRigArmStretchRest);
   // If we've got flippers instead of arms, shorten them if we've got gloves
   // on so they don't intersect as badly.
   if (flippers_ && have_boxing_gloves_) {
@@ -4207,9 +4064,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->Scale(-1, 1, 1);
     {
       auto x = c->ScopedTransform();
-      c->Translate(0, 0, 0.1f);
+      c->Translate(0, 0, kSpazRigForearmStretchPivot);
       c->Scale(1, 1, left_stretch);
-      c->Translate(0, 0, -0.1f);
+      c->Translate(0, 0, -kSpazRigForearmStretchPivot);
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
@@ -4221,11 +4078,11 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       }
     }
     if (!have_boxing_gloves_) {
-      c->Translate(0, 0, 0.04f);
+      c->Translate(0, 0, kSpazRigHandOffset);
       if (holding_something_) {
         c->Rotate(-50, 0, 1, 0);
       } else {
-        c->Rotate(10, 0, 1, 0);
+        c->Rotate(kSpazRigHandTurn, 0, 1, 0);
       }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
@@ -4245,7 +4102,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->MultMatrix(limb_m[kLimbUpperLeftLeg].m);
     float stretch = limb_stretch(kLimbLowerLeftLeg, body_pelvis_.get(),
                                  joint_targets_[kSpazJointUpperLeftLeg].anchor1,
-                                 kLegStretchPoint, 0.20f);
+                                 kLegStretchPoint, kSpazRigLegStretchRest);
     c->Scale(-1.0f, 1.0f, stretch);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
@@ -5954,7 +5811,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Head
   b = body_head_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 2.25f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandHeadHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5963,7 +5820,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Torso
   b = body_torso_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.8f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandTorsoHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5972,7 +5829,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // pelvis
   b = body_pelvis_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.66f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandPelvisHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5981,7 +5838,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Roller
   b = body_roller_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.6f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandRollerHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5990,7 +5847,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Stand
   b = stand_body_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.8f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandTorsoHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -6551,31 +6408,35 @@ void SpazNode::BuildLimbRigConfig_(
   // Contact softness mirrors CollideCallback: upper limbs 10x10 (arms)
   // with the upper-leg scaling on top; lower arms 10/1; lower legs and
   // toes with their own scalings; toes also get a tenth the friction.
-  float ankle_len = 0.26f - ankle_radius_ * 2.0f;
-  add_body(torso, 0.06f, 0.16f, 0.0f, 0.0f, kUpperArmDensity, 100.0f, 1.0f,
+  float ankle_len = kSpazRigLowerLegSpan - ankle_radius_ * 2.0f;
+  add_body(torso, kSpazRigUpperArmRadius, kSpazRigUpperArmLength, 0.0f, 0.0f,
+           kUpperArmDensity, 100.0f, 1.0f,
            0.5f);  // 0 upper right arm
-  add_body(torso, 0.06f, 0.13f, 0.06f, 0.16f, kLowerArmDensity, 10.0f, 1.0f,
+  add_body(torso, kSpazRigLowerArmRadius, kSpazRigLowerArmLength, 0.06f, 0.16f,
+           kLowerArmDensity, 10.0f, 1.0f,
            0.5f);  // 1 lower right arm
-  add_body(torso, 0.06f, 0.16f, 0.0f, 0.0f, kUpperArmDensity, 100.0f, 1.0f,
+  add_body(torso, kSpazRigUpperArmRadius, kSpazRigUpperArmLength, 0.0f, 0.0f,
+           kUpperArmDensity, 100.0f, 1.0f,
            0.5f);  // 2 upper left arm
-  add_body(torso, 0.06f, 0.13f, 0.06f, 0.16f, kLowerArmDensity, 10.0f, 1.0f,
+  add_body(torso, kSpazRigLowerArmRadius, kSpazRigLowerArmLength, 0.06f, 0.16f,
+           kLowerArmDensity, 10.0f, 1.0f,
            0.5f);  // 3 lower left arm
-  add_body(pelvis, thigh_radius_, 0.12f, 0.05f, 0.12f, kUpperLegDensity,
-           10.0f * kUpperLegCollideStiffness * 10.0f,
+  add_body(pelvis, thigh_radius_, kSpazRigUpperLegLength, 0.05f, 0.12f,
+           kUpperLegDensity, 10.0f * kUpperLegCollideStiffness * 10.0f,
            1.0f * kUpperLegCollideDamping, 0.5f);  // 4 upper right leg
   add_body(pelvis, ankle_radius_, ankle_len, 0.07f, 0.12f, kLowerLegDensity,
            10.0f * kLowerLegCollideStiffness, 1.0f * kLowerLegCollideDamping,
            0.5f);  // 5 lower right leg
-  add_body(pelvis, thigh_radius_, 0.12f, 0.05f, 0.12f, kUpperLegDensity,
-           10.0f * kUpperLegCollideStiffness * 10.0f,
+  add_body(pelvis, thigh_radius_, kSpazRigUpperLegLength, 0.05f, 0.12f,
+           kUpperLegDensity, 10.0f * kUpperLegCollideStiffness * 10.0f,
            1.0f * kUpperLegCollideDamping, 0.5f);  // 6 upper left leg
   add_body(pelvis, ankle_radius_, ankle_len, 0.07f, 0.12f, kLowerLegDensity,
            10.0f * kLowerLegCollideStiffness, 1.0f * kLowerLegCollideDamping,
            0.5f);  // 7 lower left leg
-  add_body(pelvis, 0.075f, 0.0f, 0.0f, 0.0f, kToesDensity,
+  add_body(pelvis, kSpazRigToesRadius, 0.0f, 0.0f, 0.0f, kToesDensity,
            10.0f * kToesCollideStiffness, 1.0f * kToesCollideDamping,
            0.05f);  // 8 right toes
-  add_body(pelvis, 0.075f, 0.0f, 0.0f, 0.0f, kToesDensity,
+  add_body(pelvis, kSpazRigToesRadius, 0.0f, 0.0f, 0.0f, kToesDensity,
            10.0f * kToesCollideStiffness, 1.0f * kToesCollideDamping,
            0.05f);  // 9 left toes
 
@@ -6597,22 +6458,39 @@ void SpazNode::BuildLimbRigConfig_(
     j.anchor2[2] = a2z;
     j.positions_child = positions_child;
   };
-  add_joint(t_parent, 0, 0.02f, 0.0f, -0.1f, true);   // upper right arm
-  add_joint(0, 1, 0.0f, 0.0f, -0.08f, true);          // lower right arm
-  add_joint(t_parent, 2, -0.02f, 0.0f, -0.1f, true);  // upper left arm
-  add_joint(2, 3, 0.0f, 0.0f, -0.08f, true);          // lower left arm
-  add_joint(p_parent, 4, 0.0f, 0.0f, -0.05f, true);   // upper right leg
-  add_joint(4, 5, 0.0f, 0.0f, -0.05f, true);          // lower right leg
-  add_joint(p_parent, 6, 0.0f, 0.0f, -0.05f, true);   // upper left leg
-  add_joint(6, 7, 0.0f, 0.0f, -0.05f, true);          // lower left leg
-  add_joint(5, 8, 0.0f, -0.04f, 0.0f, true);          // right toes
-  add_joint(5, 8, -0.1f, -0.04f, 0.0f, false);        // right toes 2
-  add_joint(7, 9, 0.0f, -0.04f, 0.0f, true);          // left toes
-  add_joint(7, 9, 0.1f, -0.04f, 0.0f, false);         // left toes 2
-  add_joint(p_parent, 5, 0.0f, 0.0f, 0.05f, false);   // right leg ik
-  add_joint(p_parent, 7, 0.0f, 0.0f, 0.05f, false);   // left leg ik
-  add_joint(t_parent, 1, 0.0f, 0.0f, 0.07f, false);   // right arm ik
-  add_joint(t_parent, 3, 0.0f, 0.0f, 0.07f, false);   // left arm ik
+  const float* shoulder = kSpazRigShoulderOnUpperArm;
+  const float* elbow = kSpazRigElbowOnLowerArm;
+  const float* hip = kSpazRigHipOnUpperLeg;
+  const float* knee = kSpazRigKneeOnLowerLeg;
+  const float* ankle = kSpazRigAnkleOnToes;
+  // upper right arm
+  add_joint(t_parent, 0, shoulder[0], shoulder[1], shoulder[2], true);
+  // lower right arm
+  add_joint(0, 1, elbow[0], elbow[1], elbow[2], true);
+  // upper left arm
+  add_joint(t_parent, 2, -shoulder[0], shoulder[1], shoulder[2], true);
+  // lower left arm
+  add_joint(2, 3, elbow[0], elbow[1], elbow[2], true);
+  // upper right leg
+  add_joint(p_parent, 4, hip[0], hip[1], hip[2], true);
+  // lower right leg
+  add_joint(4, 5, knee[0], knee[1], knee[2], true);
+  // upper left leg
+  add_joint(p_parent, 6, hip[0], hip[1], hip[2], true);
+  // lower left leg
+  add_joint(6, 7, knee[0], knee[1], knee[2], true);
+  // right toes
+  add_joint(5, 8, ankle[0], ankle[1], ankle[2], true);
+  // right toes 2
+  add_joint(5, 8, -0.1f, ankle[1], ankle[2], false);
+  // left toes
+  add_joint(7, 9, ankle[0], ankle[1], ankle[2], true);
+  // left toes 2
+  add_joint(7, 9, 0.1f, ankle[1], ankle[2], false);
+  add_joint(p_parent, 5, 0.0f, 0.0f, 0.05f, false);  // right leg ik
+  add_joint(p_parent, 7, 0.0f, 0.0f, 0.05f, false);  // left leg ik
+  add_joint(t_parent, 1, 0.0f, 0.0f, 0.07f, false);  // right arm ik
+  add_joint(t_parent, 3, 0.0f, 0.0f, 0.07f, false);  // left arm ik
   static_assert(kSpazJointLeftArmIK - kSpazJointUpperRightArm + 1 == 16,
                 "limb joint list must cover every SpazJoint after pelvis");
 

@@ -1045,6 +1045,23 @@ class AssetSubsystem(AppSubsystem):
     # ---------------------------------------------------------------------
     # Dimensions, bucket coords, fallback policy.
 
+    def resolve_flavor(self) -> tuple[str, str, str]:
+        """The flavor we resolve asset packages with, as resolves send it.
+
+        ``(texture_profile, texture_tier, language)``: what a resolve
+        made right now would ask for. For telling the server ahead of
+        time (it can then have that flavor of a package built before
+        we go and ask for it). Logic thread.
+
+        :meta private:
+        """
+        assert _babase.in_logic_thread()
+        return (
+            self._texture_profile,
+            self._texture_tier,
+            _babase.app.locale.current_locale.value,
+        )
+
     @property
     def _texture_profile(self) -> str:
         """The active texture profile for resolves.

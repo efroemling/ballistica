@@ -261,11 +261,17 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
   {
     // Set the session as context.
     base::ScopedSetContext ssc(this);
-    accept = static_cast<bool>(
+    PythonRef result =
         session_py_obj_.GetAttr("_request_player")
             .Call(PythonRef(Py_BuildValue("(O)", player->BorrowPyRef()),
-                            PythonRef::kSteal))
-            .ValueAsInt());
+                            PythonRef::kSteal));
+
+    // A call that raised (it logs its own error and hands back nothing)
+    // or returned something non-truthy counts as a deny. Bailing out
+    // with an exception here instead would skip the removal below and
+    // leave a half-added player behind; user mods that wrap or patch
+    // the Python side make both cases reachable.
+    accept = result.exists() && PyObject_IsTrue(result.get()) == 1;
     if (accept) {
       player->set_accepted(true);
     } else {

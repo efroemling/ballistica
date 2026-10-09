@@ -141,6 +141,13 @@ class CodegenMakefileGenerator:
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
+            self._add_character_ranges_target(targets)
+
+        # Scene-v1 feature set bits.
+        if os.path.exists(
+            f'{self._projroot}/pconfig/featuresets/featureset_scene_v1.py'
+        ):
+            self._add_character_rig_targets(targets)
 
         # Asset-set groups: gates derived from each group's owning
         # feature set, and every dst validated against that owner's
@@ -268,6 +275,39 @@ class CodegenMakefileGenerator:
                 cmd='$(PCOMMAND) gen_python_enums_module $< $@',
             )
         )
+
+    def _add_character_ranges_target(self, targets: list[Target]) -> None:
+        """The engine's character value spans, from the shared table."""
+        targets.append(
+            Target(
+                src=[
+                    '$(TOOLS_DIR)/bacommon/characterranges.py',
+                    '$(TOOLS_DIR)/batools/character_ranges.py',
+                ],
+                dst=os.path.join(
+                    OUT_DIR_ROOT_CPP, 'base', 'generated', 'character_ranges.h'
+                ),
+                cmd='$(PCOMMAND) gen_character_ranges_cpp $@',
+                mkdir=True,
+            )
+        )
+
+    def _add_character_rig_targets(self, targets: list[Target]) -> None:
+        """The engine's character rig numbers, from the shared table."""
+        for name in ('spaz_attachment_rigs.inc', 'spaz_rig.h'):
+            targets.append(
+                Target(
+                    src=[
+                        '$(TOOLS_DIR)/bacommon/characterrig.py',
+                        '$(TOOLS_DIR)/batools/character_rig.py',
+                    ],
+                    dst=os.path.join(
+                        OUT_DIR_ROOT_CPP, 'scene_v1', 'generated', name
+                    ),
+                    cmd='$(PCOMMAND) gen_character_rig_cpp $@',
+                    mkdir=True,
+                )
+            )
 
     def _add_init_module_target(
         self, targets: list[Target], moduledir: str

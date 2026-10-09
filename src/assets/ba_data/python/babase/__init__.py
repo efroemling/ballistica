@@ -185,6 +185,7 @@ from babase._devconsole import (
     DevConsoleSubsystem,
     DevConsoleTab,
     DevConsoleTabEntry,
+    DevConsoleToggleDef,
 )
 from babase._emptyappmode import EmptyAppMode
 from babase._constructmode import ConstructAppMode
@@ -230,6 +231,7 @@ from babase._language import (
     langstr_value,
     resolve_langstrs,
     translate_server_text,
+    wrapper_langstr,
 )
 from babase._locale import LocaleSubsystem
 from babase._logging import (
@@ -345,6 +347,7 @@ __all__ = [
     'DevConsoleButtonDef',
     'DevConsoleTab',
     'DevConsoleTabEntry',
+    'DevConsoleToggleDef',
     'DevConsoleSubsystem',
     'device_haptics_supported',
     'DisplayTime',
@@ -513,6 +516,7 @@ __all__ = [
     'workspaces_in_use',
     'WorkspaceSubsystem',
     'wrap_text',
+    'wrapper_langstr',
     'DEFAULT_REQUEST_TIMEOUT_SECONDS',
 ]
 

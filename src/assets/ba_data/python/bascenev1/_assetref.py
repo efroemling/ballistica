@@ -30,7 +30,7 @@ from typing import TYPE_CHECKING
 
 import _bascenev1
 
-from babase import check_asset_package_load
+from babase import check_asset_package_load, wrapper_langstr
 from bacommon.assetpackage import ApverNum
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
@@ -41,6 +41,7 @@ from bacommon.assetspec import (
 )
 
 if TYPE_CHECKING:
+    import babase
     import bascenev1
     import bauiv1
 
@@ -280,6 +281,105 @@ def _make(
     if kind == 'ct':
         return CubeMapTextureHandle(apvernum, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')
+
+
+#: What a wrapper carries per character: the json of its spaz def, the
+#: json of its icon depiction, and the logical path of its name string.
+type CharacterGroupData = dict[str, tuple[str, str, str]]
+
+# Where an activity keeps the scene objects made for characters (in its
+# customdata, so they go when it does).
+_SPAZ_DEFS_KEY = '_ba_character_spaz_defs'
+_ICON_DEPICTIONS_KEY = '_ba_character_icon_depictions'
+
+
+class CharacterHandle:
+    """A character from an asset-package, ready to use in a scene.
+
+    Reached through a generated wrapper (``mypackage.characters.zoe``).
+    The scene objects it hands out belong to the current activity and
+    are made once per activity, so ask in the activity that will use
+    them and don't hold one beyond it.
+    """
+
+    __slots__ = ('_apvernum', '_path', '_data')
+
+    def __init__(
+        self, apvernum: ApverNum, path: str, data: tuple[str, str, str]
+    ) -> None:
+        self._apvernum = apvernum
+        self._path = path
+        self._data = data
+
+    def get_spaz_def(self) -> 'bascenev1.SpazDef':
+        """Return this character's spaz def for the current activity.
+
+        Assign it to a spaz node's ``spaz_def`` attr. The first call in
+        an activity makes it; later ones there return the same object.
+        Outside an activity (a session context) a new one is made each
+        call.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        activity = _bascenev1.getactivity(doraise=False)
+        if activity is None:
+            return _bascenev1.SpazDef(self._data[0])
+        made: dict[tuple[ApverNum, str], bascenev1.SpazDef] = (
+            activity.customdata.setdefault(_SPAZ_DEFS_KEY, {})
+        )
+        key = (self._apvernum, self._path)
+        spaz_def = made.get(key)
+        if spaz_def is None:
+            spaz_def = made[key] = _bascenev1.SpazDef(self._data[0])
+        return spaz_def
+
+    def get_icon_depiction(self) -> 'bascenev1.Depiction':
+        """Return this character's icon for the current activity.
+
+        In the character's own colors. Show it with a
+        ``depictiondisplay`` node or anything else accepting a
+        :class:`~bascenev1.Depiction`. Made once per activity, as
+        :meth:`get_spaz_def` is.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        activity = _bascenev1.getactivity(doraise=False)
+        if activity is None:
+            return _bascenev1.Depiction(self._data[1])
+        made: dict[tuple[ApverNum, str], bascenev1.Depiction] = (
+            activity.customdata.setdefault(_ICON_DEPICTIONS_KEY, {})
+        )
+        key = (self._apvernum, self._path)
+        depiction = made.get(key)
+        if depiction is None:
+            depiction = made[key] = _bascenev1.Depiction(self._data[1])
+        return depiction
+
+    def get_name(self) -> 'babase.LangStr':
+        """Return this character's name."""
+        return wrapper_langstr(self._apvernum, self._data[2])
+
+
+class CharacterGroup:
+    """Dynamic accessor for one directory of an asset-package's characters.
+
+    Attribute access yields a :class:`CharacterHandle`; all real type
+    information lives in the wrapper's ``if TYPE_CHECKING:`` shadow.
+    """
+
+    __slots__ = ('_apvernum', '_data', '_prefix')
+
+    def __init__(
+        self, apvernum: ApverNum, data: CharacterGroupData, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
+        self._data = data
+        self._prefix = prefix
+
+    def __getattr__(self, name: str) -> CharacterHandle:
+        try:
+            data = self._data[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        return CharacterHandle(self._apvernum, f'{self._prefix}/{name}', data)
 
 
 def _split_ref(ref: str) -> tuple[ApverNum, str]:

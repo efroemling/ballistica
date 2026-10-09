@@ -198,7 +198,7 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
   // Cheap modded-build signals. These replace the old blessing-hash
   // mechanism, which needed the plus feature-set (often gone by the
   // time we get here) and a server-side build->masterhash lookup that
-  // only ever existed on the v1 master-server. These three cost
+  // only ever existed on the v1 master-server. These four cost
   // nothing and catch obvious tinkering, which is all we need to keep
   // modded builds from drowning out real signal.
   if (recorded != nullptr) {
@@ -210,15 +210,18 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
       root.Add("rancmds", recorded->rancmds);
       root.Add("workspaces", recorded->workspaces);
       root.Add("custompy", recorded->custompy);
+      root.Add("userpy", recorded->userpy);
     } else {
       root.Add("coregone", true);
     }
   } else if (g_core != nullptr) {
     root.Add("modded", g_core->user_ran_commands || g_core->workspaces_in_use
-                           || g_core->using_custom_app_python_dir());
+                           || g_core->using_custom_app_python_dir()
+                           || g_core->user_python_present);
     root.Add("rancmds", g_core->user_ran_commands);
     root.Add("workspaces", g_core->workspaces_in_use);
     root.Add("custompy", g_core->using_custom_app_python_dir());
+    root.Add("userpy", g_core->user_python_present);
   } else {
     // Distinguish "we know it is clean" from "we could not tell".
     root.Add("coregone", true);

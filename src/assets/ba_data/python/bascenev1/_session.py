@@ -211,6 +211,24 @@ class Session:
         del activity  # Unused.
         return True
 
+    def get_fixed_profiles(self) -> list[str] | None:
+        """Return the only profiles this session's lobby offers, if any.
+
+        None (the default) offers each player their own profiles, with
+        the usual choice of a random one and (locally) of editing
+        them. A session made to show particular characters can return
+        those instead: each a character's json as a cloud profile's
+        arrives (name, icon and spaz parts, and optionally the profile
+        name it goes by). Every player is then offered exactly those
+        and nothing else -- no random entry, no editing -- and what
+        they pick isn't remembered as their usual profile.
+
+        Asked once, as the session's lobby is made (which is during
+        the base class's ``__init__``, before a subclass's own has
+        returned).
+        """
+        return None
+
     def on_player_request(self, player: bascenev1.SessionPlayer) -> bool:
         """Called when a new player wants to join the session.
 
@@ -809,6 +827,7 @@ class Session:
             highlight=chooser.get_highlight(),
             cloud_spaz_json=None if cloud_look is None else cloud_look[0],
             cloud_icon_json=None if cloud_look is None else cloud_look[1],
+            name_depiction_json=chooser.get_name_depiction_json(),
         )
 
         self.stats.register_sessionplayer(sessionplayer)

@@ -178,6 +178,18 @@ class Depiction : public Object {
   /// never falls in a gap).
   virtual auto GetContentBox(const DepictionBox& box) const -> DepictionBox;
 
+  /// Which debug-bounds switch outlines us, if any (see
+  /// DrawDebugBounds). None by default.
+  virtual auto GetDebugBoundsType() const -> std::optional<DebugBoundsType>;
+
+  /// Outline our bounds if that is switched on for our kind; hosts
+  /// call this right after Draw with the context they drew with and
+  /// their own whole box (in the same frame as context.box). Draws the
+  /// host's box -- the most room we could ever take -- and, in a second
+  /// color, the part of it we claim now (context.box, as fitted).
+  void DrawDebugBounds(const DepictionDrawContext& context,
+                       const DepictionBox& host_box) const;
+
   /// Whether we can draw in a host of this kind.
   virtual auto SupportsHost(DepictionHost host) const -> bool;
 

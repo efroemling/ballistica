@@ -20,6 +20,7 @@ from bauiv1lib.docui._layout import (
     SMALL_UI_TOOLBAR_CLEARANCE,
     TEXT_INSET,
 )
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep
 from bauiv1lib.docui.prep._button import (
     button_size,
@@ -519,7 +520,7 @@ def prep_page(
                     )
                 else:
                     last_selectable.show_buffer_bottom += ytop - y
-            if row.section.debug:
+            if wants_debug_draw(row.section.debug, DebugDrawKind.SECTIONS):
                 prepcalls2.prep_row_debug(
                     (
                         width
@@ -660,7 +661,7 @@ def prep_page(
                 packages=packages,
             )
             rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
-            if row.debug:
+            if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
                 prepcalls2.prep_row_debug(
                     (
                         width
@@ -743,7 +744,7 @@ def prep_page(
         )
         rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
 
-        if row.debug:
+        if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
             prepcalls2.prep_row_debug(
                 (
                     width
@@ -856,7 +857,7 @@ def prep_page(
             # by the h-scroll here so we have to draw a separate box for
             # the row title/subtitle. (Drawn ahead of the button's own
             # decorations.)
-            if row.debug:
+            if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
                 rowdebug: list[DecorationPrep] = []
                 prepcalls2.prep_row_debug_button(
                     (bwidthpadded, rowprep.height),

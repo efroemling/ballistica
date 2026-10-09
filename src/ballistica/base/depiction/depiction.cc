@@ -12,6 +12,7 @@
 #include "ballistica/base/depiction/depiction_kinds.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/rect_outline_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/logic/logic.h"
@@ -218,6 +219,39 @@ auto Depiction::GetContentBox(const DepictionBox& box) const -> DepictionBox {
   return box;
 }
 
+auto Depiction::GetDebugBoundsType() const -> std::optional<DebugBoundsType> {
+  return {};
+}
+
+void Depiction::DrawDebugBounds(const DepictionDrawContext& context,
+                                const DepictionBox& host_box) const {
+  auto type = GetDebugBoundsType();
+  if (!type || !g_base->graphics->debug_bounds(*type) || !context.transparent) {
+    return;
+  }
+  TextureAsset* white =
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
+
+  // Outlines just inside each box, about a pixel and a half wide
+  // whatever scale the host draws at. (Meshes made per draw; fine for
+  // a debugging aid.)
+  float thickness = 1.5f / std::max(0.001f, context.pixels_per_unit);
+  SimpleComponent c(context.pass);
+  c.SetTransparent(true);
+  c.SetTexture(white);
+  auto outline = [&c, &context, thickness](const DepictionBox& b) {
+    auto mesh = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
+                                             b.height, thickness);
+    c.DrawMesh(mesh.get());
+  };
+  // The room we have in red, then what we claim of it in green on top.
+  c.SetColor(1.0f, 0.15f, 0.15f, 1.0f);
+  outline(host_box);
+  c.SetColor(0.2f, 1.0f, 0.3f, 1.0f);
+  outline(context.box);
+  c.Submit();
+}
+
 auto Depiction::SupportsHost(DepictionHost host) const -> bool { return true; }
 
 void Depiction::Update(millisecs_t now) {}
@@ -262,27 +296,25 @@ class PlaceholderDepiction : public Depiction {
     float bright = context.StandardBrightness();
     TextureAsset* white =
         g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
-    MeshAsset* quad =
-        g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1);
 
-    // The outline: four thin rects just inside the box.
+    // The outline, just inside the box (remade only when the box
+    // moves; we draw every frame).
     float thickness = std::max(1.0f, std::min(b.width, b.height) * 0.03f);
+    if (!outline_.exists() || b.x != outline_box_.x || b.y != outline_box_.y
+        || b.width != outline_box_.width || b.height != outline_box_.height
+        || context.z != outline_z_) {
+      outline_ = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
+                                              b.height, thickness);
+      outline_box_ = b;
+      outline_z_ = context.z;
+    }
     {
       SimpleComponent c(context.pass);
       c.SetTransparent(true);
       c.SetTexture(white);
       float cmul = white->premultiplied() ? alpha : 1.0f;
       c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
-      auto rect = [&c, quad, &context](float x, float y, float w, float h) {
-        auto xf = c.ScopedTransform();
-        c.Translate(x + w * 0.5f, y + h * 0.5f, context.z);
-        c.Scale(w, h, 1.0f);
-        c.DrawMeshAsset(quad);
-      };
-      rect(b.x, b.y, b.width, thickness);
-      rect(b.x, b.y + b.height - thickness, b.width, thickness);
-      rect(b.x, b.y, thickness, b.height);
-      rect(b.x + b.width - thickness, b.y, thickness, b.height);
+      c.DrawMesh(outline_.get());
       c.Submit();
     }
 
@@ -313,6 +345,9 @@ class PlaceholderDepiction : public Depiction {
 
  private:
   TextGroup text_group_;
+  Object::Ref<RectOutlineMesh> outline_;
+  DepictionBox outline_box_;
+  float outline_z_{};
 };
 
 auto Factories()

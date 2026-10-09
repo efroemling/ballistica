@@ -39,6 +39,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     To use this class, access the single instance of it at 'ba.app.ui'.
     """
 
+    # pylint: disable=too-many-public-methods
+
     class RootUIElement(Enum):
         """Stuff provided by the root ui."""
 
@@ -117,6 +119,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
         self._last_win_recreate_time: float | None = None
         self._win_recreate_timer: babase.AppTimer | None = None
+        self._force_win_recreate = False
         self._base_ids: dict[str, int] = {}
 
         # Elements in our root UI will call anything here when
@@ -559,6 +562,17 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._schedule_main_win_recreate()
 
+    def request_main_window_recreate(self) -> None:
+        """Rebuild the main window in place, whatever it is, soon.
+
+        The same rebuild a ui-scale or screen-size change triggers (its
+        state saved and restored, so a window lays itself out anew
+        without starting over), for when something else it is built
+        from has changed.
+        """
+        self._force_win_recreate = True
+        self._schedule_main_win_recreate()
+
     def add_ui_cleanup_check(
         self,
         obj: Any,
@@ -795,6 +809,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             return
 
         mainwindow = self.get_main_window()
+        force = self._force_win_recreate
+        self._force_win_recreate = False
 
         # Can't recreate what doesn't exist.
         if mainwindow is None:
@@ -814,12 +830,17 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # outer-rect (or they have but we don't care) then we're done.
         # The outer rect matters even when virtual res is unchanged:
         # full-screen windows may fit their backings to it.
-        if uiscale is self._last_win_recreate_uiscale and (
-            (
-                virtual_screen_size == self._last_win_recreate_screen_size
-                and virtual_outer_rect == self._last_win_recreate_outer_rect
+        # (A requested recreate goes ahead regardless.)
+        if (
+            not force
+            and uiscale is self._last_win_recreate_uiscale
+            and (
+                (
+                    virtual_screen_size == self._last_win_recreate_screen_size
+                    and virtual_outer_rect == self._last_win_recreate_outer_rect
+                )
+                or not mainwindow.refreshes_on_screen_size_changes
             )
-            or not mainwindow.refreshes_on_screen_size_changes
         ):
             return
 

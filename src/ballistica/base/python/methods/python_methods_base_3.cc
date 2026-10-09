@@ -2441,6 +2441,90 @@ static PyMethodDef PySetDrawVirtualBoundsDef = {
     ":meta private:",
 };
 
+// -------------------------- get_debug_bounds ---------------------------------
+
+static auto DebugBoundsTypeArg_(const char* kind) -> DebugBoundsType {
+  auto type = Graphics::DebugBoundsTypeFromName(kind);
+  if (!type) {
+    throw Exception(std::string("Unknown debug-bounds kind '") + kind + "'.",
+                    PyExcType::kValue);
+  }
+  return *type;
+}
+
+static auto PyGetDebugBounds(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  const char* kind;
+  static const char* kwlist[] = {"kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &kind)) {
+    return nullptr;
+  }
+  if (g_base->graphics->debug_bounds(DebugBoundsTypeArg_(kind))) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugBoundsDef = {
+    "get_debug_bounds",             // name
+    (PyCFunction)PyGetDebugBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "get_debug_bounds(kind: str) -> bool\n"
+    "\n"
+    "Return whether bounds of a kind of thing are being outlined.\n"
+    "\n"
+    "See :func:`set_debug_bounds`.\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- set_debug_bounds ---------------------------------
+
+static auto PySetDebugBounds(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  const char* kind;
+  int value;
+  static const char* kwlist[] = {"kind", "value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sp",
+                                   const_cast<char**>(kwlist), &kind, &value)) {
+    return nullptr;
+  }
+  g_base->graphics->set_debug_bounds(DebugBoundsTypeArg_(kind), value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugBoundsDef = {
+    "set_debug_bounds",             // name
+    (PyCFunction)PySetDebugBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_debug_bounds(kind: str, value: bool) -> None\n"
+    "\n"
+    "Outline the bounds of a kind of thing on screen, for checking layout.\n"
+    "\n"
+    "The dev console's UI tab has a button for each kind. Kinds:\n"
+    "``'name_depictions'``, ``'image_depictions'`` and\n"
+    "``'character_icon_depictions'`` (each such depiction's whole box in\n"
+    "red and the part of it the depiction takes up in green). Not saved;\n"
+    "off at launch.\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------------- get_debug_draw ---------------------------------
 
 static auto PyGetDebugDraw(PyObject* self) -> PyObject* {
@@ -2962,6 +3046,8 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetDrawVirtualSafeAreaBoundsDef,
       PyGetDrawVirtualBoundsDef,
       PySetDrawVirtualBoundsDef,
+      PyGetDebugBoundsDef,
+      PySetDebugBoundsDef,
       PyGetDebugDrawDef,
       PySetDebugDrawDef,
       PyGetForceMaxVirtualBoundsMarginsDef,

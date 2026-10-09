@@ -26,8 +26,9 @@ from typing import TYPE_CHECKING
 
 import _bauiv1
 
-from babase import check_asset_package_load
+from babase import check_asset_package_load, wrapper_langstr
 from bacommon.assetpackage import ApverNum
+from bacommon.depiction import CharacterIconDepiction
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
@@ -35,6 +36,7 @@ from bacommon.assetspec import (
 )
 
 if TYPE_CHECKING:
+    import babase
     import bauiv1
 
 
@@ -161,6 +163,66 @@ def _make(
     if kind == 's':
         return SoundHandle(apvernum, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')
+
+
+#: What a wrapper carries per character: the json of its icon and the
+#: logical path of its name string.
+type CharacterGroupData = dict[str, tuple[str, str]]
+
+
+class CharacterHandle:
+    """A character from an asset-package, as the ui sees it.
+
+    Reached through a generated wrapper (``mypackage.characters.zoe``).
+    The ui form of :class:`bascenev1.CharacterHandle`: its name and its
+    icon, with no scene involved.
+    """
+
+    __slots__ = ('_apvernum', '_path', '_data')
+
+    def __init__(
+        self, apvernum: ApverNum, path: str, data: tuple[str, str]
+    ) -> None:
+        self._apvernum = apvernum
+        self._path = path
+        self._data = data
+
+    def get_icon_depiction(self) -> CharacterIconDepiction:
+        """Return this character's icon, in its own colors.
+
+        A new object each call, so its color override is the caller's
+        to set.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        return CharacterIconDepiction(self._data[0])
+
+    def get_name(self) -> 'babase.LangStr':
+        """Return this character's name."""
+        return wrapper_langstr(self._apvernum, self._data[1])
+
+
+class CharacterGroup:
+    """Dynamic accessor for one directory of an asset-package's characters.
+
+    Attribute access yields a :class:`CharacterHandle`; all real type
+    information lives in the wrapper's ``if TYPE_CHECKING:`` shadow.
+    """
+
+    __slots__ = ('_apvernum', '_data', '_prefix')
+
+    def __init__(
+        self, apvernum: ApverNum, data: CharacterGroupData, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
+        self._data = data
+        self._prefix = prefix
+
+    def __getattr__(self, name: str) -> CharacterHandle:
+        try:
+            data = self._data[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        return CharacterHandle(self._apvernum, f'{self._prefix}/{name}', data)
 
 
 def _split_ref(ref: str) -> tuple[ApverNum, str]:

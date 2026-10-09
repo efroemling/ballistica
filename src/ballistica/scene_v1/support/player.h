@@ -79,6 +79,18 @@ class Player : public Object {
     return cloud_icon_json_;
   }
 
+  /// The player's name as it shows on its own (a bacommon.depiction
+  /// name depiction, as json for the same reason as the cloud look), or
+  /// empty when nobody gave them one (GetName is the fallback).
+  void SetNameDepictionJson(const std::string& json);
+  auto name_depiction_json() const -> const std::string& {
+    return name_depiction_json_;
+  }
+
+  /// The player's name as a bascenev1.Depiction in the current
+  /// context's scene (as GetPyCloudSpazDef), or Py_None. New reference.
+  auto GetPyNameDepiction() -> PyObject*;
+
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
   void SetPyColor(PyObject* team);
 
@@ -195,6 +207,8 @@ class Player : public Object {
   // it must never outlive its scene's activity on our account).
   Object::WeakRef<SpazDef> cloud_spaz_def_;
   Object::WeakRef<SceneDepiction> cloud_icon_;
+  std::string name_depiction_json_;
+  Object::WeakRef<SceneDepiction> name_depiction_;
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;

@@ -41,6 +41,34 @@ Two Make targets, run rarely (only when refreshing ANGLE):
    build script statically links zlib via an overlay triplet precisely to
    avoid this class of problem.)
 
+## Local patches
+
+`buildanglewindows.ps1` carries our own ANGLE source patches inline (the
+`$AnglePatches` list) and applies them through vcpkg's `angle` port: each
+is written into `ports/angle/` and appended to the first `PATCHES` list
+in its `portfile.cmake`, after the port's own. They are inline because
+the script is the one file cloudshell syncs to the build host.
+
+Each patch must apply to the ANGLE commit the port pins. The script
+clones vcpkg unpinned, so a port update can break one; that fails the
+build loudly at "Applying patch", which is the prompt to rebase the
+patch or drop it once upstream has the fix.
+
+Current patches:
+
+- **`ba-001-input-layout-key-padding`** (2026-10-08). The D3D11 backend's
+  input-layout cache key, `rx::PackedAttributeLayout`, was a 32-bit count
+  followed by an array of 64-bit values, leaving 4 padding bytes that the
+  constructor never wrote. The cache hashes the key's raw bytes, so equal
+  keys could hash differently depending on stack garbage; the cache's
+  index and list drifted apart and a lookup could return an entry that
+  had already been destroyed. In the field this was an access violation
+  in `libGLESv2.dll` at `StateManager11::syncVertexBuffersAndInputLayout`
+  on NVIDIA and Intel alike, in release builds, anywhere from seconds to
+  half an hour into a run. The patch makes the count 64-bit so the struct
+  has no padding, and asserts that at compile time. Not fixed upstream as
+  of this writing; drop the patch when it is.
+
 ## vcpkg gotcha catalog
 
 Hard-won; all are baked into `buildanglewindows.ps1`, listed here so nobody

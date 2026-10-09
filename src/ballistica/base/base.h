@@ -109,6 +109,7 @@ class Networking;
 class NetworkReader;
 class NetworkWriter;
 class NinePatchMesh;
+class RectOutlineMesh;
 class ObjectComponent;
 class PythonClassUISound;
 class PythonContextCall;
@@ -186,6 +187,14 @@ enum class GraphicsQuality : uint8_t {
   kHigh,
   /// Graphics with full post-processing.
   kHigher,
+};
+
+/// Things whose bounds can be outlined on screen for checking layout
+/// (dev console UI tab, "Debug Drawing"; see Graphics::debug_bounds).
+enum class DebugBoundsType : uint8_t {
+  kNameDepictions,
+  kImageDepictions,
+  kCharacterIconDepictions,
 };
 
 enum class VSync : uint8_t { kUnset, kNever, kAlways, kAdaptive };
@@ -492,8 +501,8 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261007a
-inline constexpr const char* kBuiltinAssetsApvernum = "440";
+// Builtin asset-package: a-0.babuiltinassets.261009
+inline constexpr const char* kBuiltinAssetsApvernum = "486";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesAccountV2Icon,     // textures/account_v2_icon

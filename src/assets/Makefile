@@ -213,6 +213,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
+  $(BUILD_DIR)/ba_data/python/babase/_devconsoletabui.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
@@ -246,6 +247,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_baseassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_characterpreview.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_cloudprofiles.py \
@@ -446,6 +448,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_cache.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_debugdraw.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
@@ -596,6 +599,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/automationchannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterbuilder.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterranges.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterrig.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_account.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_chest.py \

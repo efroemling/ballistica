@@ -34,8 +34,9 @@ is saved and sent on the next launch — see
 
 It sends only what is immediately to hand — the message, a native stack
 trace when one is obtainable, compile-time build identity, the OS
-version, and three cheap modded-build signals (commands run,
-workspaces in use, custom app-scripts dir).
+version, and four cheap modded-build signals (commands run,
+workspaces in use, custom app-scripts dir, Python present in the mods
+dir).
 
 The OS version is read from `g_crash_info`, where it was recorded once
 core came up, rather than asked of the platform at fatal time. That
@@ -355,11 +356,22 @@ Now split into two orthogonal client-computed values on every
   calc (game_hash.py, kicked at pyembed init) hadn't finished, or a
   pre-field client. Debug builds are always unblessed.
 - `modified` (`md`): user-side taint — commands run, workspaces in
-  use, or custom app-scripts dir (`_babase.is_user_modified()`; the
-  same trio the [fatal-error reporter](#fatal-errors) sends).
-  Inherently latching within a run, so False = clean-so-far. Note
-  automation-channel execs latch it (by design — they run arbitrary
-  code).
+  use, custom app-scripts dir, or Python present in the mods dir
+  (`_babase.is_user_modified()`; the same four the
+  [fatal-error reporter](#fatal-errors) sends, there as `rancmds`,
+  `workspaces`, `custompy`, `userpy`). Inherently latching within a
+  run, so False = clean-so-far. Note automation-channel execs latch it
+  (by design — they run arbitrary code).
+
+  The mods-dir signal (builds after 23040) is what catches plugins,
+  which need no commands run to take effect. It is presence-based,
+  like the blessing hash: the startup meta-scan reports whether the
+  mods dir holds anything the import system could load, loaded or
+  not, and the flag is set when that scan completes — so a report
+  from the first moments of boot can still read clean. It and
+  `blessed` overlap without matching: the hash sees any `.py`
+  anywhere under mods, the scan sees importable modules of any form
+  (`.pyc`, zips and extensions included).
 
 Server side: `build=blessed|unblessed|unknown, modded=yes|no|unknown`
 in summary lines; `baBlessed`/`baModified` labels on every emitted
@@ -396,12 +408,46 @@ run; pair with raising logger verbosity via the fleet's cloud logger
 control config (above) — and filter the resulting reports on
 `levels=cloud` so user-tweaked clients don't muddy the picture.
 
+## Crashlytics (Google Play Android)
+
+The Google Play Android build also links Firebase Crashlytics. It is a
+third-party safety net beside the three channels above, not one of
+them: it reports to Firebase rather than to our servers, and exists
+only in that one build (`PlatformAndroidGoogle`). What it adds there
+is exactly what our own channels lack on Android — hard native
+crashes, uncaught Java exceptions, and ANRs, each with a symbolicated
+stack, device model and OS version.
+
+What we feed it:
+
+- **Breadcrumbs.** `Platform::LowLevelDebugLog()` forwards to
+  Crashlytics' log on this build (and is a no-op everywhere else).
+  App suspend/resume/active transitions and audio device pause/resume
+  go through it, so a report shows the lifecycle steps leading up to
+  the crash.
+- **The fatal-error message.** Our own fatal errors end in `abort()`,
+  so each one also arrives in Crashlytics as a SIGABRT whose stack ends
+  in `HandleFatalError`. Every fatal error therefore lands in the same
+  one or two Crashlytics issues regardless of cause; tell them apart by
+  the caller frame and by the `FATAL ERROR: ...` breadcrumb, which
+  `ReportFatalError` logs in builds after 23040. The same error is also
+  reported through the [fatal errors](#fatal-errors) channel — expect
+  both, and prefer ours for the message and build identity.
+- **Custom keys** via `Platform::SetDebugKey()`.
+
+Two reading traps: the "device" on a report is whatever the device
+claims to be (bursts of one model within minutes of an upload are
+automated store testing, not players), and 32-bit ARM stacks often
+arrive entirely unsymbolicated.
+
 ## Coverage gaps
 
 Known states no channel covers:
 
 - **Native crashes off Windows**, and on Windows outside the `generic`
   and `test_build` variants — see [Platform coverage](#platform-coverage).
+  The Google Play Android build is the exception, through
+  [Crashlytics](#crashlytics-google-play-android).
 - **A crash with no next launch.** If the user never relaunches, the
   record is never sent.
 - **Android, when the native library never loads** (a wrong-architecture

@@ -1126,6 +1126,14 @@ class ClassicAppMode(AppMode):
         _baclassic.set_root_ui_account_depiction(depiction=depiction)
 
     @override
+    def get_dev_console_ui_debug_draw_toggles(
+        self,
+    ) -> list[bui.DevConsoleToggleDef]:
+        from bauiv1lib.docui import get_debug_draw_toggles
+
+        return get_debug_draw_toggles()
+
+    @override
     def get_dev_console_ui_tab_buttons(
         self,
     ) -> list[bui.DevConsoleButtonDef]:

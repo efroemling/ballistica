@@ -697,6 +697,36 @@ def gen_base_asset_set_cpp() -> None:
     )
 
 
+def gen_character_ranges_cpp() -> None:
+    """Generate character_ranges.h from the shared span table.
+
+    Emits ``base/generated/character_ranges.h`` from
+    ``tools/bacommon/characterranges.py`` (see
+    :mod:`batools.character_ranges`).
+    """
+    import batools.character_ranges
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.character_ranges.write_cpp(sys.argv[2])
+
+
+def gen_character_rig_cpp() -> None:
+    """Generate one of the engine's character rig files.
+
+    Emits C++ from ``tools/bacommon/characterrig.py``; which file is
+    chosen by the output path's name (see
+    :mod:`batools.character_rig`).
+    """
+    import batools.character_rig
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.character_rig.write_cpp(sys.argv[2])
+
+
 def gen_scene_asset_set_py() -> None:
     """Generate bascenev1.SceneV1AssetSet from the scene-asset spec.
 

@@ -1,4 +1,21 @@
-### 1.8.0 (build 23040, api 9, 2026-10-07)
+### 1.8.0 (build 23042, api 9, 2026-10-08)
+- Fixed a crash on Windows (an access violation in `libGLESv2.dll`,
+  anywhere from seconds to half an hour into a run, on NVIDIA and Intel
+  graphics alike). It was a bug in ANGLE's Direct3D 11 backend: its
+  input-layout cache hashed a key struct that included uninitialized
+  padding bytes, so the cache could hand back an entry it had already
+  destroyed. Our Windows ANGLE build now carries a patch for it.
+- Fixed OpenGL errors at launch on Windows from the builtin black cube map,
+  whose compressed form was smaller than Direct3D 11 allows.
+- Fixed an Android crash when the text-editing dialog was dismissed after
+  the app had been sent to the background.
+- Hosting is more robust against misbehaving user mods: a player-join
+  request whose Python handling raises or returns nothing now counts as a
+  refusal instead of leaving a half-added player behind, and lobby choosers
+  built by older mods no longer fail every join.
+- Error reports now count any Python present in the mods directory as
+  'modded' (previously only commands run, workspaces or replaced app
+  scripts did, which missed plugins).
 - Fixed the game failing at launch ('Failed to load bundled builtin
   asset-packages') on Android devices whose graphics hardware lacks ASTC
   texture support (some older phones, x86 devices and emulators). Store

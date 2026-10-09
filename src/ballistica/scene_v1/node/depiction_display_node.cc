@@ -352,9 +352,10 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
   base::DepictionDrawContext context;
   context.pass = &pass;
   context.transparent = true;
-  context.box = base::FitDepictionBox(
-      {center_x_ - width_ * 0.5f, center_y_ - height_ * 0.5f, width_, height_},
-      *depiction_, h_align_, v_align_, suffix_.GetTrailingAspect());
+  base::DepictionBox host_box{center_x_ - width_ * 0.5f,
+                              center_y_ - height_ * 0.5f, width_, height_};
+  context.box = base::FitDepictionBox(host_box, *depiction_, h_align_, v_align_,
+                                      suffix_.GetTrailingAspect());
   const float* color_override = depiction_->EffectiveColorOverride(
       use_color_override_ ? color_override_ : nullptr);
   context.color_override = color_override;
@@ -370,6 +371,7 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
           : 1.0f;
   depiction_->Draw(context);
   suffix_.Draw(context, context.box, color_override);
+  depiction_->DrawDebugBounds(context, host_box);
 }
 
 }  // namespace ballistica::scene_v1

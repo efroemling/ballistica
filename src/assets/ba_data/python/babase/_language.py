@@ -291,6 +291,23 @@ class LangStrDir:
         return _NativeLstrMaker(self._apvernum, full)
 
 
+def wrapper_langstr(apvernum: ApverNum, path: str) -> babase.LangStr:
+    """The param-less string at a path a generated wrapper carries.
+
+    For wrapper runtimes holding a string's path as data instead of a
+    :class:`LangStrDir` tree: a character's name, say. Gated as a leaf
+    read through a :class:`LangStrDir` is.
+
+    :meta private:
+    """
+    # pylint: disable-next=cyclic-import
+    from babase._asset_packages import check_asset_package_load
+    from bacommon.langstr import LangStrSpecResource
+
+    check_asset_package_load(apvernum, path)
+    return _native_from_spec(LangStrSpecResource(apvernum, path))
+
+
 def get_legacy_langdata() -> dict[str, Any]:
     """Return the parsed legacy language-data blob (cached process-wide).
 

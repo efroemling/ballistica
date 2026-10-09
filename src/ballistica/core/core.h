@@ -186,6 +186,9 @@ class CoreFeatureSet {
   bool workspaces_in_use{};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
+  /// Whether the meta-scan found any importable Python in the user
+  /// python (mods) dir. Set once that scan completes; false before.
+  bool user_python_present{};
   int master_server_source{};
   std::vector<EventLoop*> suspendable_event_loops;
 

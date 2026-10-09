@@ -17,6 +17,7 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
     AnimTargetKind,
     AnimTargetPrep,
@@ -47,6 +48,7 @@ def prep_depiction(
     height = decoration.size[1] * bscale
     left = bcenter[0] + decoration.position[0] * bscale - width * 0.5
     bottom = bcenter[1] + decoration.position[1] * bscale - height * 0.5
+    debug = wants_debug_draw(decoration.debug, DebugDrawKind.DECORATIONS)
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -60,7 +62,7 @@ def prep_depiction(
                 transition_delay=tdelay,
                 transition_type='scale',
                 depth_range=decoration.depth_range,
-                depiction_debug=decoration.debug,
+                depiction_debug=debug,
                 depiction_suffix=suffix,
                 depiction_color_override=decoration.color_override,
                 depiction_use_color_override=(
@@ -83,7 +85,7 @@ def prep_depiction(
         )
     )
 
-    if decoration.debug:
+    if debug:
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(

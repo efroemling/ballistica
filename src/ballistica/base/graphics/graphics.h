@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -654,6 +655,24 @@ class Graphics {
     draw_virtual_bounds_ = val;
   }
 
+  /// Whether bounds of the given kind of thing get outlined on screen
+  /// (a layout-checking aid; whatever draws that kind checks this).
+  auto debug_bounds(DebugBoundsType type) const -> bool {
+    assert(g_base->InLogicThread());
+    return (debug_bounds_mask_ & (1u << static_cast<uint32_t>(type))) != 0;
+  }
+  void set_debug_bounds(DebugBoundsType type, bool val) {
+    assert(g_base->InLogicThread());
+    uint32_t bit = 1u << static_cast<uint32_t>(type);
+    debug_bounds_mask_ =
+        val ? (debug_bounds_mask_ | bit) : (debug_bounds_mask_ & ~bit);
+  }
+
+  /// A debug-bounds kind's name as scripts give it ("name_depictions"),
+  /// and back; unknown names give nothing.
+  static auto DebugBoundsTypeFromName(const std::string& name)
+      -> std::optional<DebugBoundsType>;
+
   auto draw_virtual_safe_area_bounds() const {
     return draw_virtual_safe_area_bounds_;
   }
@@ -744,6 +763,7 @@ class Graphics {
   bool got_screen_resolution_{};
   bool draw_virtual_safe_area_bounds_{};
   bool draw_virtual_bounds_{};
+  uint32_t debug_bounds_mask_{};
   bool force_max_virtual_bounds_margins_{};
   bool virtual_bounds_ab_showing_b_{};
   bool virtual_outer_rect_collapsed_{};
@@ -799,7 +819,15 @@ class Graphics {
   millisecs_t last_jitter_update_time_{};
   microsecs_t next_frame_number_filtered_increment_time_{};
   microsecs_t last_create_frame_def_time_microsecs_{};
+  void DrawGuideOutline_(RenderPass* pass, const Rect& rect, float z, float r,
+                         float g, float b, Object::Ref<RectOutlineMesh>* mesh,
+                         Rect* mesh_rect);
   Object::Ref<ImageMesh> screen_mesh_;
+  // The on-screen guides' outlines, remade when their rects change.
+  Object::Ref<RectOutlineMesh> virtual_safe_area_guide_mesh_;
+  Object::Ref<RectOutlineMesh> virtual_bounds_guide_mesh_;
+  Rect virtual_safe_area_guide_rect_{};
+  Rect virtual_bounds_guide_rect_{};
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;
   Object::Ref<ImageMesh> load_dot_mesh_;

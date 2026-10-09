@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "ballistica/scene_v1/generated/spaz_rig.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ode/ode_collision_util.h"
@@ -182,8 +183,10 @@ void SpazPose::UpdateSyntheticFist_(const StepInputs& in, float breath) {
     // Extended, and held there for the rest of the punch (the real
     // arm's IK anchor stays put after 200ms too). Inward is toward
     // x = 0, so it opposes the shoulder's own side.
-    float sx = (-0.15f + in.shoulder_offset_x) * -mirror + kFistInward * mirror;
-    float sy = 0.14f + in.shoulder_offset_y + breath * 0.012f + kFistLift;
+    float sx = (kSpazRigShoulderOnTorso[0] + in.shoulder_offset_x) * -mirror
+               + kFistInward * mirror;
+    float sy = kSpazRigShoulderOnTorso[1] + in.shoulder_offset_y
+               + breath * 0.012f + kFistLift;
     float sz = in.shoulder_offset_z + 0.05f;
     dVector3 p_world;
     dBodyGetRelPointPos(in.torso, sx, sy, sz, p_world);
@@ -567,9 +570,9 @@ void SpazPose::Step(const StepInputs& in, const Joints& joints,
 
       // Adjust our shoulder position.
       {
-        float x = -0.15f;
-        float y = 0.14f;
-        float z = 0.0f;
+        float x = kSpazRigShoulderOnTorso[0];
+        float y = kSpazRigShoulderOnTorso[1];
+        float z = kSpazRigShoulderOnTorso[2];
         float leftZOffset = 0.0f;
         float rightZOffset = 0.0f;
         x += in.shoulder_offset_x;

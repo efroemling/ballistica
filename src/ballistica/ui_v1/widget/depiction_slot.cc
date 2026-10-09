@@ -191,6 +191,9 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   context.team_coloring = depiction_->EffectiveTeamColoring(false);
   depiction_->Draw(context);
   suffix_.Draw(context, box, color_override);
+  depiction_->DrawDebugBounds(context, ScaledBox({args.offset_x, args.offset_y,
+                                                  args.width, args.height},
+                                                 args.scale));
   if (debug_ && args.transparent) {
     DrawDebugBox_(args, depiction_->GetContentBox(box));
   }

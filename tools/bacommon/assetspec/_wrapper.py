@@ -18,14 +18,20 @@ assets exist.
 
 from typing import TYPE_CHECKING
 
-from bacommon.assetspec._core import TextureSpec, MeshSpec, SoundSpec
+from bacommon.assetspec._core import (
+    TextureSpec,
+    MeshSpec,
+    SoundSpec,
+    CubeMapTextureSpec,
+)
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
 #: ``dict`` value is a subdirectory and a ``str`` value is a leaf asset
-#: whose string is its single-char kind code (see :func:`_make`).
+#: whose string is its kind code (see :func:`_make`): ``t`` a texture,
+#: ``m`` a mesh, ``s`` a sound, ``ct`` a cube-map texture.
 type AssetGroupTree = dict[str, 'str | AssetGroupTree']
 
 
@@ -50,7 +56,7 @@ class AssetGroup:
 
     def __getattr__(
         self, name: str
-    ) -> 'AssetGroup | TextureSpec | MeshSpec | SoundSpec':
+    ) -> 'AssetGroup | TextureSpec | MeshSpec | SoundSpec | CubeMapTextureSpec':
         try:
             child = self._node[name]
         except KeyError:
@@ -63,12 +69,14 @@ class AssetGroup:
 
 def _make(
     apvernum: ApverNum, path: str, kind: str
-) -> TextureSpec | MeshSpec | SoundSpec:
-    """Build a single leaf reference by its single-char kind code."""
+) -> TextureSpec | MeshSpec | SoundSpec | CubeMapTextureSpec:
+    """Build a single leaf reference by its kind code."""
     if kind == 't':
         return TextureSpec(apvernum, path)
     if kind == 'm':
         return MeshSpec(apvernum, path)
     if kind == 's':
         return SoundSpec(apvernum, path)
+    if kind == 'ct':
+        return CubeMapTextureSpec(apvernum, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')

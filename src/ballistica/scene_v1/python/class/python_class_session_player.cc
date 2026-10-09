@@ -645,14 +645,19 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
   PyObject* highlight_obj;
   PyObject* cloud_spaz_json_obj{Py_None};
   PyObject* cloud_icon_json_obj{Py_None};
-  static const char* kwlist[] = {
-      "team",      "character",       "color",
-      "highlight", "cloud_spaz_json", "cloud_icon_json",
-      nullptr};
+  PyObject* name_depiction_json_obj{Py_None};
+  static const char* kwlist[] = {"team",
+                                 "character",
+                                 "color",
+                                 "highlight",
+                                 "cloud_spaz_json",
+                                 "cloud_icon_json",
+                                 "name_depiction_json",
+                                 nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "OOOO|OO", const_cast<char**>(kwlist), &team_obj,
+          args, keywds, "OOOO|OOO", const_cast<char**>(kwlist), &team_obj,
           &character_obj, &color_obj, &highlight_obj, &cloud_spaz_json_obj,
-          &cloud_icon_json_obj)) {
+          &cloud_icon_json_obj, &name_depiction_json_obj)) {
     return nullptr;
   }
   Player* p = self->player_->get();
@@ -667,6 +672,9 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
                                      : Python::GetString(cloud_spaz_json_obj),
       cloud_icon_json_obj == Py_None ? std::string()
                                      : Python::GetString(cloud_icon_json_obj));
+  p->SetNameDepictionJson(name_depiction_json_obj == Py_None
+                              ? std::string()
+                              : Python::GetString(name_depiction_json_obj));
   p->SetPyColor(color_obj);
   p->SetPyHighlight(highlight_obj);
   Py_RETURN_NONE;
@@ -818,6 +826,33 @@ auto PythonClassSessionPlayer::GetIconDepictionJson(
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSessionPlayer::GetNameDepiction(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  return p->GetPyNameDepiction();  // (New ref.)
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassSessionPlayer::GetNameDepictionJson(
+    PythonClassSessionPlayer* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  if (p->name_depiction_json().empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(p->name_depiction_json().c_str());
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassSessionPlayer::GetIcon(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -931,7 +966,8 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
      "  color: Sequence[float], highlight: Sequence[float],\n"
      "  cloud_spaz_json: str | None = None,\n"
-     "  cloud_icon_json: str | None = None) -> None\n"
+     "  cloud_icon_json: str | None = None,\n"
+     "  name_depiction_json: str | None = None) -> None\n"
      "\n"
      "(internal)"},
     {"set_icon_info", (PyCFunction)SetIconInfo, METH_VARARGS | METH_KEYWORDS,
@@ -986,6 +1022,32 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "Return the json :meth:`get_icon_depiction` builds from, if any.\n"
      "\n"
      "For keeping a player's icon somewhere that outlives scenes (a\n"
+     "stats record, say).\n"
+     "\n"
+     ":meta private:"},
+    {"get_name_depiction", (PyCFunction)GetNameDepiction, METH_NOARGS,
+     "get_name_depiction() -> bascenev1.Depiction | None\n"
+     "\n"
+     "Return the player's name as a depiction, if they have one.\n"
+     "\n"
+     "This is the name as it shows on its own (an account's capsule, a\n"
+     "global profile's icon, or plain text), for places such as score\n"
+     "screens; players who joined through the lobby have one. It\n"
+     "carries the player's color (their team's in team games). Names\n"
+     "worked into other text should stay :meth:`getname`. Show it with\n"
+     "a ``depictiondisplay`` node or the\n"
+     ":class:`~bascenev1lib.actor.text.Text` actor. The usual pattern is\n"
+     "``player.get_name_depiction() or player.getname(full=True)``.\n"
+     "\n"
+     "The depiction is made in the current context's scene (scene\n"
+     "objects never cross scenes), so ask in the context it will be\n"
+     "shown in rather than holding one across activities."},
+    {"get_name_depiction_json", (PyCFunction)GetNameDepictionJson, METH_NOARGS,
+     "get_name_depiction_json() -> str | None\n"
+     "\n"
+     "Return the json :meth:`get_name_depiction` builds from, if any.\n"
+     "\n"
+     "For keeping a player's name somewhere that outlives scenes (a\n"
      "stats record, say).\n"
      "\n"
      ":meta private:"},

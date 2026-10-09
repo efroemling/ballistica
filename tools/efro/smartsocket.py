@@ -634,8 +634,10 @@ class SmartSocketAnomalyKind(Enum):
     #: bug.
     GAVE_UP_WHILE_REACHABLE = 'gave_up_while_reachable'
 
-    #: Resumed inside our own budget and were told the channel had
-    #: ended: we and the relay disagree about whether it was alive.
+    #: Resumed within a linger of last hearing from the relay and were
+    #: told the channel had ended: we and the relay disagree about
+    #: whether it was alive. (Silence longer than the linger -- an app
+    #: suspended in the background, say -- lets the relay end it.)
     ENDED_UNDER_US = 'ended_under_us'
 
     #: Many sessions with this label each died within seconds of
@@ -790,6 +792,12 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self.anomaly: SmartSocketAnomaly | None = None
         self._started_at = 0.0
         self._last_hello_at: float | None = None
+        #: When we last heard anything from the relay on a working
+        #: (helloed) connection: the last moment we know it held our
+        #: slot. What dates a loss we only noticed later -- a phone
+        #: suspended for minutes finds its socket dead on waking, long
+        #: after the relay noticed and started its linger clock.
+        self._last_heard_at: float | None = None
         #: Dials and hellos since a working connection was last lost
         #: (or since the start). What tells 'the network is down' from
         #: 'the relay is answering and we still can't get in'.
@@ -1167,6 +1175,8 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         while True:
             data = await transport.recv()
             self._last_inbound = _now()
+            if helloed:
+                self._last_heard_at = self._last_inbound
             try:
                 frame = dataclass_from_json(SmartSocketFrame, data)
             except Exception:  # pylint: disable=broad-except
@@ -1213,6 +1223,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         if frame.policy is not None:
             self.policy = frame.policy
         self._last_hello_at = _now()
+        self._last_heard_at = self._last_hello_at
         self._hellos_since_loss += 1
         # Anything at or below the relay's cursor is safe with it.
         self._trim(frame.last_recv)
@@ -1329,11 +1340,16 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             # Else the network went away and stayed away: not news.
         elif 4200 <= code < 4300:
             kind = kinds.PROTOCOL_ERROR
-        elif code == SS_CLOSE_CHANNEL_ENDED and self._last_hello_at is not None:
-            # We had a session, came back inside our own budget (past
-            # it we'd have given up rather than dialed), and the relay
-            # says it is gone. One of us is wrong about its lifetime.
-            kind = kinds.ENDED_UNDER_US
+        elif code == SS_CLOSE_CHANNEL_ENDED and self._last_heard_at is not None:
+            # We had a session, came back inside the relay's linger,
+            # and it says the channel is gone. One of us is wrong about
+            # its lifetime. Our own budget can't date that: it opens
+            # when we *notice* a loss, which for a suspended app is on
+            # waking, minutes after the relay noticed. Silence longer
+            # than the linger means the relay was entitled to end it.
+            linger = self.policy.linger_seconds if self.policy else 120.0
+            if _now() - self._last_heard_at <= linger:
+                kind = kinds.ENDED_UNDER_US
         return kind
 
     def _check_for_anomaly(self) -> None:

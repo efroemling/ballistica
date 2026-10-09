@@ -147,6 +147,10 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src/codegen',
                 'src/ballistica/shared/ballistica.h',
+                # The shared tables engine C++ is generated from (see
+                # batools.character_ranges / batools.character_rig).
+                'tools/bacommon/characterranges.py',
+                'tools/bacommon/characterrig.py',
                 '.efrocachemap',
             ],
             # Our codegen Makefile targets generally don't list tools

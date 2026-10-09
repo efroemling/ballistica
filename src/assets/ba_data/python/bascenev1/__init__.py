@@ -186,6 +186,7 @@ from bascenev1._assetref import (
     MeshHandle,
     SoundHandle,
     CollisionMeshHandle,
+    CharacterHandle,
 )
 from bascenev1._actor import Actor
 from bascenev1._actorhost import ActorHost
@@ -260,6 +261,7 @@ from bascenev1._net import (
     HostInfo,
     HostProbeOutcome,
     HostRequirements,
+    resolve_asset_packages_with_dialog,
 )
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
@@ -330,6 +332,7 @@ __all__ = [
     'set_scene_asset_set',
     'MeshHandle',
     'CollisionMeshHandle',
+    'CharacterHandle',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
@@ -506,6 +509,7 @@ __all__ = [
     'pushcall',
     'Quat',
     'register_map',
+    'resolve_asset_packages_with_dialog',
     'release_game_controller_input',
     'release_keyboard_input',
     'reload_hooks',

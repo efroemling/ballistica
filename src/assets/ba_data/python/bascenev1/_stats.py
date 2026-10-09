@@ -65,6 +65,7 @@ class PlayerRecord:
         # The json of the player's icon depiction, if any (scene
         # objects never cross scenes, and we outlive activities).
         self._icon_depiction_json: str | None = None
+        self._name_depiction_json: str | None = None
         self._sessionplayer: bascenev1.SessionPlayer | None = None
         self._sessionteam: weakref.ref[bascenev1.SessionTeam] | None = None
         self.streak = 0
@@ -117,6 +118,16 @@ class PlayerRecord:
             return None
         return _bascenev1.Depiction(self._icon_depiction_json)
 
+    def get_name_depiction(self) -> bascenev1.Depiction | None:
+        """Get the name depiction for this instance's player, if any.
+
+        See :meth:`bascenev1.SessionPlayer.get_name_depiction`. Kept
+        and made as :meth:`get_icon_depiction` is.
+        """
+        if self._name_depiction_json is None:
+            return None
+        return _bascenev1.Depiction(self._name_depiction_json)
+
     def cancel_multi_kill_timer(self) -> None:
         """Cancel any multi-kill timer for this player entry."""
         self._multi_kill_timer = None
@@ -137,6 +148,7 @@ class PlayerRecord:
         self._sessionteam = weakref.ref(sessionplayer.sessionteam)
         self.character = sessionplayer.character
         self._icon_depiction_json = sessionplayer.get_icon_depiction_json()
+        self._name_depiction_json = sessionplayer.get_name_depiction_json()
         self._last_sessionplayer = sessionplayer
         self._sessionplayer = sessionplayer
         self.streak = 0

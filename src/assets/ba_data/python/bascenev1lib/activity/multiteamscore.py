@@ -240,7 +240,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                playerrec.getname(full=True),
+                playerrec.get_name_depiction() or playerrec.getname(full=True),
                 maxwidth=160,
                 scale=0.75 * scale,
                 position=(

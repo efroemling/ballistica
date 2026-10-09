@@ -23,6 +23,7 @@
 #include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/mesh/rect_outline_mesh.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/debug_texture_view.h"
@@ -44,6 +45,9 @@
 namespace ballistica::base {
 
 const float kScreenTextZDepth{-0.06f};
+
+// How wide the on-screen guides' outlines are, in virtual units.
+const float kGuideOutlineThickness{6.0f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{250};
 const float kDebugImgZDepth{-0.04f};
@@ -2469,24 +2473,38 @@ void Graphics::UpdatePlaceholderSettings() {
 void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
   if (draw_virtual_safe_area_bounds_) {
-    SimpleComponent c(pass);
-    c.SetColor(1, 0, 0);
-    {
-      auto xf = c.ScopedTransform();
-
-      float width, height;
-
-      GetBaseVirtualRes(&width, &height);
-
-      // Slight offset in z to reduce z fighting.
-      c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
-                  0.0f);
-      c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
-    }
-    c.Submit();
+    float width, height;
+    GetBaseVirtualRes(&width, &height);
+    float left = 0.5f * (pass->virtual_width() - width);
+    float bottom = 0.5f * (pass->virtual_height() - height);
+    DrawGuideOutline_(pass, Rect(left, bottom, left + width, bottom + height),
+                      0.0f, 1.0f, 0.0f, 0.0f, &virtual_safe_area_guide_mesh_,
+                      &virtual_safe_area_guide_rect_);
+  } else {
+    // Hold nothing while switched off.
+    virtual_safe_area_guide_mesh_.Clear();
   }
+}
+
+void Graphics::DrawGuideOutline_(RenderPass* pass, const Rect& rect, float z,
+                                 float r, float g, float b,
+                                 Object::Ref<RectOutlineMesh>* mesh,
+                                 Rect* mesh_rect) {
+  // An outline of the same width on every side (in virtual units, so it
+  // keeps its share of the screen as the window changes size).
+  if (!mesh->exists() || rect.l != mesh_rect->l || rect.r != mesh_rect->r
+      || rect.b != mesh_rect->b || rect.t != mesh_rect->t) {
+    *mesh =
+        Object::New<RectOutlineMesh>(rect.l, rect.b, z, rect.width(),
+                                     rect.t - rect.b, kGuideOutlineThickness);
+    *mesh_rect = rect;
+  }
+  SimpleComponent c(pass);
+  c.SetTexture(
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite));
+  c.SetColor(r, g, b);
+  c.DrawMesh(mesh->get());
+  c.Submit();
 }
 
 void Graphics::ExtendFrustumToRenderRect(const Rect& render_rect,
@@ -2515,6 +2533,20 @@ void Graphics::ExtendFrustumToRenderRect(const Rect& render_rect,
   *t += height * ext_t;
 }
 
+auto Graphics::DebugBoundsTypeFromName(const std::string& name)
+    -> std::optional<DebugBoundsType> {
+  if (name == "name_depictions") {
+    return DebugBoundsType::kNameDepictions;
+  }
+  if (name == "image_depictions") {
+    return DebugBoundsType::kImageDepictions;
+  }
+  if (name == "character_icon_depictions") {
+    return DebugBoundsType::kCharacterIconDepictions;
+  }
+  return {};
+}
+
 void Graphics::DrawVirtualBounds(RenderPass* pass) {
   // Optionally show where our virtual coord system ends. With no cutout
   // inset this lands right at the edge of the drawn area; inset, it
@@ -2523,26 +2555,20 @@ void Graphics::DrawVirtualBounds(RenderPass* pass) {
   // out of. Green so it reads distinctly from the red safe-area guide
   // when both are on.
   if (draw_virtual_bounds_) {
-    SimpleComponent c(pass);
-    c.SetColor(0, 1, 0);
-    {
-      auto xf = c.ScopedTransform();
-
-      // The virtual bounds are exactly our virtual rect by definition,
-      // so this is the plain (0, 0)-(virtual-res) box. It only *looks*
-      // inset once the bounds are, since our projections then extend
-      // out past it.
-      float width = pass->virtual_width();
-      float height = pass->virtual_height();
-
-      // Slight offset in z to reduce z fighting, negative so we sit
-      // behind the safe-area guide where the two coincide.
-      c.Translate(0.5f * width, 0.5f * height, -0.02f);
-      c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
-    }
-    c.Submit();
+    // The virtual bounds are exactly our virtual rect by definition,
+    // so this is the plain (0, 0)-(virtual-res) box. It only *looks*
+    // inset once the bounds are, since our projections then extend
+    // out past it.
+    //
+    // Slight offset in z to reduce z fighting, negative so we sit
+    // behind the safe-area guide where the two coincide.
+    DrawGuideOutline_(
+        pass, Rect(0.0f, 0.0f, pass->virtual_width(), pass->virtual_height()),
+        -0.02f, 0.0f, 1.0f, 0.0f, &virtual_bounds_guide_mesh_,
+        &virtual_bounds_guide_rect_);
+  } else {
+    // Hold nothing while switched off.
+    virtual_bounds_guide_mesh_.Clear();
   }
 }
 

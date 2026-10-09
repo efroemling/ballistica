@@ -47,6 +47,10 @@ class CharacterIconDepiction : public Depiction {
 
   auto GetAspect() const -> std::optional<float> override { return 1.0f; }
 
+  auto GetDebugBoundsType() const -> std::optional<DebugBoundsType> override {
+    return DebugBoundsType::kCharacterIconDepictions;
+  }
+
   void Update(millisecs_t now) override {
     if (def_.has_icon() && !def_.icon_media_ready()
         && pacer_.Due(def_.media_pending(), now)) {
@@ -181,6 +185,10 @@ class NameDepiction : public Depiction {
       return Layout_(*cap, *width_).length / (2.0f * r);
     }
     return std::max(*width_, 1.0f) / kTextHeight;
+  }
+
+  auto GetDebugBoundsType() const -> std::optional<DebugBoundsType> override {
+    return DebugBoundsType::kNameDepictions;
   }
 
   auto GetMinAspect() const -> std::optional<float> override {
@@ -562,6 +570,10 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   ImageDepiction() : Depiction(kTypeImage) {}
 
   auto GetTintControl() -> DepictionTintControl* override { return this; }
+
+  auto GetDebugBoundsType() const -> std::optional<DebugBoundsType> override {
+    return DebugBoundsType::kImageDepictions;
+  }
 
   void SetFlatColor(const float* rgb, float flatness) override {
     std::copy(rgb, rgb + 3, flat_rgb_);

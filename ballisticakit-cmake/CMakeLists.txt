@@ -506,6 +506,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/mesh_renderer_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/nine_patch_mesh.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/nine_patch_mesh.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/rect_outline_mesh.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/sprite_mesh.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/text_mesh.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/mesh/text_mesh.h

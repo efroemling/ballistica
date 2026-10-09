@@ -25,6 +25,7 @@ from baclassic._net import MasterServerResponseType, master_server_v1_request
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
+from baclassic._characterpreview import CharacterPreview
 from baclassic._cloudprofiles import CloudProfiles
 from baclassic import _input
 
@@ -174,6 +175,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: The primary account's cloud profiles (synced + cached).
         self.cloud_profiles = CloudProfiles()
 
+        #: Shows characters at the master server's request (someone
+        #: trying one they are building; see ``_characterpreview``).
+        self.character_preview = CharacterPreview()
+
         # Main Menu.
         self.main_menu_last_news_fetch_time: float | None = None
 
@@ -287,6 +292,26 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 }
 
         return result
+
+    @final
+    async def show_character_preview(
+        self, request_id: str, apvernum: int, character: str
+    ) -> tuple[str, str | None]:
+        """Start (or report on) showing a character the server sent.
+
+        Returns ``(state, error)`` with state as the server is told
+        it. For the plus transport's handler, which can't reach
+        classic's own types; see ``_characterpreview``.
+
+        :meta private:
+        """
+        from bacommon.assetpackage import ApverNum
+
+        assert babase.in_logic_thread()
+        state, error = self.character_preview.show(
+            request_id, ApverNum(apvernum), character
+        )
+        return state.value, error
 
     def add_main_menu_close_callback(self, call: Callable[[], Any]) -> None:
         """:meta private:"""

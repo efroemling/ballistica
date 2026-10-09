@@ -10,7 +10,7 @@ import weakref
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from efro.dataclassio import dataclass_to_json
+from efro.dataclassio import dataclass_to_json, dataclass_from_json
 import bacommon.depiction as bdep
 import babase
 import _bascenev1
@@ -177,6 +177,12 @@ class ChangeMessage:
 class Chooser:
     """A character/team selector for a player."""
 
+    # Class-level default so choosers built by older user mods (a
+    # subclass or copy with its own __init__ that predates this
+    # attribute) still work with our methods instead of failing every
+    # join with an AttributeError.
+    _cloud_look_name: str | None = None
+
     def __del__(self) -> None:
         # Just kill off our base node; the rest should go down with it.
         if self._text_node:
@@ -246,7 +252,7 @@ class Chooser:
         # borrowing via the character-override button while keeping
         # the selected profile's name; None for the profile's own look.
         # Lasts until the profile selection changes.
-        self._cloud_look_name: str | None = None
+        self._cloud_look_name = None
 
         app = babase.app
         assert app.classic is not None
@@ -343,10 +349,19 @@ class Chooser:
         self._sessionplayer.send_feedback(event='join')
 
     def _select_initial_profile(self) -> int:
+        # pylint: disable=too-many-return-statements
         app = babase.app
         assert app.classic is not None
         profilenames = self._profilenames
         inputdevice = self._sessionplayer.inputdevice
+
+        # A session that fixes its profiles: everyone starts on the
+        # first of them. (Nothing remembered or account-related comes
+        # into it, and there may be no random one to fall back to.)
+        if self.lobby.fixed_profiles is not None and '_random' not in (
+            profilenames
+        ):
+            return 0
 
         # If we've got a set profile name for this device, work backwards
         # from that to get our index.
@@ -591,21 +606,32 @@ class Chooser:
             ):
                 profile[1]['character'] = 'Spaz'
 
+        # A session that fixes its profiles offers those and nothing
+        # more: no random one, and no editing. (Unless none of them
+        # was usable, which leaves the random one as the only way in.)
+        fixed = self.lobby.fixed_profiles is not None and bool(self._profiles)
+
         # Add in a random one so we're ok even if there's no user profiles.
-        self._profiles['_random'] = {}
+        if not fixed:
+            self._profiles['_random'] = {}
 
         # In kiosk mode we disable account profiles to force random.
         variant = babase.app.env.variant
         vart = type(variant)
         arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
 
-        if arcade_or_demo:
+        if arcade_or_demo and not fixed:
             if '__account__' in self._profiles:
                 del self._profiles['__account__']
 
         # For local devices, add it an 'edit' option which will pop up
         # the profile window.
-        if not is_remote and not is_test_input and not arcade_or_demo:
+        if (
+            not is_remote
+            and not is_test_input
+            and not arcade_or_demo
+            and not fixed
+        ):
             self._profiles['_edit'] = {}
 
         # Build a sorted name list we can iterate through.
@@ -747,8 +773,12 @@ class Chooser:
         """
         classic = babase.app.classic
         assert classic is not None
-        cloud_json: list[str] | None = None
-        if is_remote:
+        # (A session that fixes its profiles overrides everyone's own,
+        # in the same form.)
+        cloud_json: list[str] | None = self.lobby.fixed_profiles
+        if cloud_json is not None:
+            pass
+        elif is_remote:
             cloud_json = input_device.get_cloud_characters()
         elif not is_test_input:
             cloud_json = classic.cloud_profiles.get_usable_profiles()
@@ -1019,12 +1049,17 @@ class Chooser:
             have_custom_profiles = any(p not in special for p in self._profiles)
 
             profilekey = name + ' ' + unique_id
-            if profilename == '_random' and not have_custom_profiles:
+            if self.lobby.fixed_profiles is not None:
+                # (Not this player's pick among their own profiles;
+                # nothing to remember.)
+                pass
+            elif profilename == '_random' and not have_custom_profiles:
                 if profilekey in device_profiles:
                     del device_profiles[profilekey]
+                babase.app.config.commit()
             else:
                 device_profiles[profilekey] = profilename
-            babase.app.config.commit()
+                babase.app.config.commit()
 
             # Set this player's short and full name.
             self._sessionplayer.setname(
@@ -1215,6 +1250,36 @@ class Chooser:
         cloud sent with a remote player's profiles otherwise. Anything
         else -- legacy profiles, random, edit -- shows its plain name.
         """
+        depiction_json = self._get_name_depiction_json()
+        if (
+            self._name_depiction is None
+            or self._name_depiction[0] != depiction_json
+        ):
+            self._name_depiction = (
+                depiction_json,
+                _bascenev1.Depiction(depiction_json),
+            )
+        return self._name_depiction[1]
+
+    def get_name_depiction_json(self) -> str:
+        """Return our name as depiction json, for the player.
+
+        The name our own display shows (see
+        ``_get_name_depiction()``) with our color baked in as its
+        color override (and team coloring in a teams game), so
+        everything showing the player's name by itself follows, as with
+        the icon from :meth:`get_cloud_look_json`.
+        """
+        depiction = dataclass_from_json(
+            bdep.Depiction, self._get_name_depiction_json()
+        )
+        assert isinstance(depiction, bdep.NameDepiction)
+        red, green, blue = babase.safecolor(self.get_color())[:3]
+        depiction.color_override = (red, green, blue)
+        depiction.team_coloring = self.lobby.use_team_colors
+        return dataclass_to_json(depiction)
+
+    def _get_name_depiction_json(self) -> str:
         assert babase.app.classic is not None
         name = self._profilename
         depiction_json: str | None = None
@@ -1242,15 +1307,7 @@ class Chooser:
                     )
                 )
             )
-        if (
-            self._name_depiction is None
-            or self._name_depiction[0] != depiction_json
-        ):
-            self._name_depiction = (
-                depiction_json,
-                _bascenev1.Depiction(depiction_json),
-            )
-        return self._name_depiction[1]
+        return depiction_json
 
     def get_color(self) -> Sequence[float]:
         """Return the currently selected color."""
@@ -1462,6 +1519,10 @@ class Lobby:
         self.character_names_local_unlocked: list[str] = []
         self._vpos = 0
         self._warned_legacy_profiles = False
+
+        #: The only profiles choosers here offer, when the session
+        #: fixes them (see :meth:`Session.get_fixed_profiles`).
+        self.fixed_profiles: list[str] | None = session.get_fixed_profiles()
 
         # Grab available profiles.
         self.reload_profiles()

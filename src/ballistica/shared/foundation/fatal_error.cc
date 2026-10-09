@@ -141,6 +141,14 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
 
   fprintf(stderr, "%s\n", logmsg.c_str());
 
+  // Also hand the message to platform crash reporting (Crashlytics on
+  // our Google Play build), which otherwise sees only the abort()'s
+  // stack and can't tell one fatal error from another. Just the
+  // message; the crash report carries its own stack.
+  if (g_core && g_core->platform) {
+    g_core->platform->LowLevelDebugLog(reportmsg);
+  }
+
   // Fire off the report. Note this deliberately sends only the message
   // and trace -- never log history. Logs are the Python layer's domain
   // and we cannot know it is safe to touch that state from here.

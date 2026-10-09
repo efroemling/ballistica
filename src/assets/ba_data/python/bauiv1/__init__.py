@@ -38,6 +38,7 @@ from babase import (
     DevConsoleButtonDef,
     DevConsoleTab,
     DevConsoleTabEntry,
+    DevConsoleToggleDef,
     DevConsoleSubsystem,
     fullscreen_control_available,
     fullscreen_control_get,
@@ -175,6 +176,7 @@ from bauiv1._assetref import (
     TextureHandle,
     MeshHandle,
     SoundHandle,
+    CharacterHandle,
 )
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
@@ -223,10 +225,12 @@ __all__ = [
     'buttonwidget',
     'Call',
     'CallPartial',
+    'CharacterHandle',
     'CallStrict',
     'DevConsoleButtonDef',
     'DevConsoleTab',
     'DevConsoleTabEntry',
+    'DevConsoleToggleDef',
     'DevConsoleSubsystem',
     'fullscreen_control_available',
     'fullscreen_control_get',
