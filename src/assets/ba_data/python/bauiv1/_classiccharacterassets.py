@@ -2,7 +2,7 @@
 #
 # Auto-generated; do not edit by hand.
 """Asset-package wrapper for ``a-0.baclassiccharacterassets.261009b``
-(bascenev1).
+(bauiv1).
 
 Everything a classic character is made of: body textures and color masks, body
 part meshes, voice sounds, icons and icon color masks, and display names -- a
@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 from bacommon.assetpackage import ApverNum
 
-from bascenev1._assetref import AssetGroup, CharacterGroup
+from bauiv1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
@@ -31,7 +31,7 @@ from babase import LangStrDir
 _ASSET_PACKAGE = ApverNum(505)
 
 if TYPE_CHECKING:
-    from bascenev1._assetref import (
+    from bauiv1._assetref import (
         CharacterHandle,
         MeshHandle,
         SoundHandle,
@@ -1744,230 +1744,41 @@ _CHARACTERS = {
     'characters': {
         'agent_johnson': (
             (
-                '{"b":{"ct":{"a":505,"n":"textures/agent_color"},'
-                '"cm":{"a":505,"n":"textures/agent_color_mask"},'
-                '"mh":{"a":505,"n":"meshes/agent_head"},'
-                '"mt":{"a":505,"n":"meshes/agent_torso"},'
-                '"mua":{"a":505,"n":"meshes/agent_upper_arm"},'
-                '"mul":{"a":505,"n":"meshes/agent_upper_leg"},'
-                '"mll":{"a":505,"n":"meshes/agent_lower_leg"},'
-                '"mto":{"a":505,"n":"meshes/agent_toes"},'
-                '"mfa":{"a":505,"n":"meshes/agent_fore_arm"},'
-                '"mhn":{"a":505,"n":"meshes/agent_hand"},'
-                '"mp":{"a":505,"n":"meshes/agent_pelvis"},'
-                '"sj":[{"a":505,"n":"audio/agent1"},{"a":505,'
-                '"n":"audio/agent2"},{"a":505,"n":"audio/agent3"},'
-                '{"a":505,"n":"audio/agent4"}],"sa":[{"a":505,'
-                '"n":"audio/agent1"},{"a":505,"n":"audio/agent2"},'
-                '{"a":505,"n":"audio/agent3"},{"a":505,'
-                '"n":"audio/agent4"}],"si":[{"a":505,'
-                '"n":"audio/agent_hit1"},{"a":505,'
-                '"n":"audio/agent_hit2"}],"sd":[{"a":505,'
-                '"n":"audio/agent_death"}],"sp":[{"a":505,'
-                '"n":"audio/agent1"},{"a":505,"n":"audio/agent2"},'
-                '{"a":505,"n":"audio/agent3"},{"a":505,'
-                '"n":"audio/agent4"}],"sf":[{"a":505,'
-                '"n":"audio/agent_fall"}],"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,'
-                '0.3],"le":"n","re":"n","rs":0.2}}'
-            ),
-            (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/agent_icon\\"},'
-                '\\"cm\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/agent_icon_color_mask\\"},\\"cl\\":[0.3,'
-                '0.3,0.33],\\"hl\\":[1.0,0.5,0.3]}}","_t":"ci"}'
+                '{"b":{"tx":{"a":505,"n":"textures/agent_icon"},'
+                '"cm":{"a":505,"n":"textures/agent_icon_color_mask"},'
+                '"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/agent_johnson',
         ),
         'jack_morgan': (
             (
-                '{"b":{"ct":{"a":505,"n":"textures/jack_color"},'
-                '"cm":{"a":505,"n":"textures/jack_color_mask"},'
-                '"mh":{"a":505,"n":"meshes/jack_head"},'
-                '"mt":{"a":505,"n":"meshes/jack_torso"},'
-                '"mua":{"a":505,"n":"meshes/jack_upper_arm"},'
-                '"mul":{"a":505,"n":"meshes/jack_upper_leg"},'
-                '"mll":{"a":505,"n":"meshes/jack_lower_leg"},'
-                '"mto":{"a":505,"n":"meshes/jack_toes"},'
-                '"mfa":{"a":505,"n":"meshes/jack_fore_arm"},'
-                '"mhn":{"a":505,"n":"meshes/jack_hand"},'
-                '"mp":{"a":505,"n":"meshes/kronk_pelvis"},'
-                '"sj":[{"a":505,"n":"audio/jack01"},{"a":505,'
-                '"n":"audio/jack02"},{"a":505,"n":"audio/jack03"},'
-                '{"a":505,"n":"audio/jack04"},{"a":505,'
-                '"n":"audio/jack05"},{"a":505,"n":"audio/jack06"}],'
-                '"sa":[{"a":505,"n":"audio/jack01"},{"a":505,'
-                '"n":"audio/jack02"},{"a":505,"n":"audio/jack03"},'
-                '{"a":505,"n":"audio/jack04"},{"a":505,'
-                '"n":"audio/jack05"},{"a":505,"n":"audio/jack06"}],'
-                '"si":[{"a":505,"n":"audio/jack_hit01"},{"a":505,'
-                '"n":"audio/jack_hit02"},{"a":505,'
-                '"n":"audio/jack_hit03"},{"a":505,'
-                '"n":"audio/jack_hit04"},{"a":505,'
-                '"n":"audio/jack_hit05"},{"a":505,'
-                '"n":"audio/jack_hit06"},{"a":505,'
-                '"n":"audio/jack_hit07"}],"sd":[{"a":505,'
-                '"n":"audio/jack_death01"}],"sp":[{"a":505,'
-                '"n":"audio/jack01"},{"a":505,"n":"audio/jack02"},'
-                '{"a":505,"n":"audio/jack03"},{"a":505,'
-                '"n":"audio/jack04"},{"a":505,"n":"audio/jack05"},'
-                '{"a":505,"n":"audio/jack06"}],"sf":[{"a":505,'
-                '"n":"audio/jack_fall01"}],"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,'
-                '0.0],"tr":0.25,"so":[-0.04,0.03,0.0],"le":"n","lc":[0.3,0.2,'
-                '0.15]}}'
-            ),
-            (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/jack_icon\\"},'
-                '\\"cm\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/jack_icon_color_mask\\"},\\"cl\\":[1.0,'
-                '0.2,0.1],\\"hl\\":[1.0,1.0,0.0]}}","_t":"ci"}'
+                '{"b":{"tx":{"a":505,"n":"textures/jack_icon"},'
+                '"cm":{"a":505,"n":"textures/jack_icon_color_mask"},'
+                '"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,0.0]}}'
             ),
             'strings/characters/jack_morgan',
         ),
         'kronk': (
             (
-                '{"b":{"ct":{"a":505,"n":"textures/kronk"},'
-                '"cm":{"a":505,"n":"textures/kronk_color_mask"},'
-                '"mh":{"a":505,"n":"meshes/kronk_head"},'
-                '"mt":{"a":505,"n":"meshes/kronk_torso"},'
-                '"mua":{"a":505,"n":"meshes/kronk_upper_arm"},'
-                '"mul":{"a":505,"n":"meshes/kronk_upper_leg"},'
-                '"mll":{"a":505,"n":"meshes/kronk_lower_leg"},'
-                '"mto":{"a":505,"n":"meshes/kronk_toes"},'
-                '"mfa":{"a":505,"n":"meshes/kronk_fore_arm"},'
-                '"mhn":{"a":505,"n":"meshes/kronk_hand"},'
-                '"mp":{"a":505,"n":"meshes/kronk_pelvis"},'
-                '"sj":[{"a":505,"n":"audio/kronk1"},{"a":505,'
-                '"n":"audio/kronk2"},{"a":505,"n":"audio/kronk3"},'
-                '{"a":505,"n":"audio/kronk4"},{"a":505,'
-                '"n":"audio/kronk5"},{"a":505,"n":"audio/kronk6"},'
-                '{"a":505,"n":"audio/kronk7"},{"a":505,'
-                '"n":"audio/kronk8"},{"a":505,"n":"audio/kronk9"},'
-                '{"a":505,"n":"audio/kronk10"}],"sa":[{"a":505,'
-                '"n":"audio/kronk1"},{"a":505,"n":"audio/kronk2"},'
-                '{"a":505,"n":"audio/kronk3"},{"a":505,'
-                '"n":"audio/kronk4"},{"a":505,"n":"audio/kronk5"},'
-                '{"a":505,"n":"audio/kronk6"},{"a":505,'
-                '"n":"audio/kronk7"},{"a":505,"n":"audio/kronk8"},'
-                '{"a":505,"n":"audio/kronk9"},{"a":505,'
-                '"n":"audio/kronk10"}],"si":[{"a":505,'
-                '"n":"audio/kronk1"},{"a":505,"n":"audio/kronk2"},'
-                '{"a":505,"n":"audio/kronk3"},{"a":505,'
-                '"n":"audio/kronk4"},{"a":505,"n":"audio/kronk5"},'
-                '{"a":505,"n":"audio/kronk6"},{"a":505,'
-                '"n":"audio/kronk7"},{"a":505,"n":"audio/kronk8"},'
-                '{"a":505,"n":"audio/kronk9"},{"a":505,'
-                '"n":"audio/kronk10"}],"sd":[{"a":505,'
-                '"n":"audio/kronk_death"}],"sp":[{"a":505,'
-                '"n":"audio/kronk1"},{"a":505,"n":"audio/kronk2"},'
-                '{"a":505,"n":"audio/kronk3"},{"a":505,'
-                '"n":"audio/kronk4"},{"a":505,"n":"audio/kronk5"},'
-                '{"a":505,"n":"audio/kronk6"},{"a":505,'
-                '"n":"audio/kronk7"},{"a":505,"n":"audio/kronk8"},'
-                '{"a":505,"n":"audio/kronk9"},{"a":505,'
-                '"n":"audio/kronk10"}],"sf":[{"a":505,'
-                '"n":"audio/kronk_fall"}],"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,'
-                '0.3],"tr":0.2,"so":[-0.03,0.0,0.0],"es":0.8,"lc":[0.3,0.2,'
-                '0.1],"ln":20.0}}'
-            ),
-            (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/kronk_icon\\"},'
-                '\\"cm\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/kronk_icon_color_mask\\"},\\"cl\\":[0.4,'
-                '0.5,0.4],\\"hl\\":[1.0,0.5,0.3]}}","_t":"ci"}'
+                '{"b":{"tx":{"a":505,"n":"textures/kronk_icon"},'
+                '"cm":{"a":505,"n":"textures/kronk_icon_color_mask"},'
+                '"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/kronk',
         ),
         'spaz': (
             (
-                '{"b":{"ct":{"a":505,"n":"textures/neo_spaz_color"},'
-                '"cm":{"a":505,"n":"textures/neo_spaz_color_mask"},'
-                '"mh":{"a":505,"n":"meshes/neo_spaz_head"},'
-                '"mt":{"a":505,"n":"meshes/neo_spaz_torso"},'
-                '"mua":{"a":505,"n":"meshes/neo_spaz_upper_arm"},'
-                '"mul":{"a":505,"n":"meshes/neo_spaz_upper_leg"},'
-                '"mll":{"a":505,"n":"meshes/neo_spaz_lower_leg"},'
-                '"mto":{"a":505,"n":"meshes/neo_spaz_toes"},'
-                '"mfa":{"a":505,"n":"meshes/neo_spaz_fore_arm"},'
-                '"mhn":{"a":505,"n":"meshes/neo_spaz_hand"},'
-                '"mp":{"a":505,"n":"meshes/neo_spaz_pelvis"},'
-                '"sj":[{"a":505,"n":"audio/spaz_jump01"},{"a":505,'
-                '"n":"audio/spaz_jump02"},{"a":505,'
-                '"n":"audio/spaz_jump03"},{"a":505,'
-                '"n":"audio/spaz_jump04"}],"sa":[{"a":505,'
-                '"n":"audio/spaz_attack01"},{"a":505,'
-                '"n":"audio/spaz_attack02"},{"a":505,'
-                '"n":"audio/spaz_attack03"},{"a":505,'
-                '"n":"audio/spaz_attack04"}],"si":[{"a":505,'
-                '"n":"audio/spaz_impact01"},{"a":505,'
-                '"n":"audio/spaz_impact02"},{"a":505,'
-                '"n":"audio/spaz_impact03"},{"a":505,'
-                '"n":"audio/spaz_impact04"}],"sd":[{"a":505,'
-                '"n":"audio/spaz_death01"}],"sp":[{"a":505,'
-                '"n":"audio/spaz_pickup01"}],"sf":[{"a":505,'
-                '"n":"audio/spaz_fall01"}],"cl":[0.5,0.5,0.5]}}'
-            ),
-            (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/neo_spaz_icon\\"},'
-                '\\"cm\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/neo_spaz_icon_color_mask\\"}}}",'
-                '"_t":"ci"}'
+                '{"b":{"tx":{"a":505,"n":"textures/neo_spaz_icon"},'
+                '"cm":{"a":505,'
+                '"n":"textures/neo_spaz_icon_color_mask"}}}'
             ),
             'strings/characters/spaz',
         ),
         'zoe': (
             (
-                '{"b":{"ct":{"a":505,"n":"textures/zoe_color"},'
-                '"cm":{"a":505,"n":"textures/zoe_color_mask"},'
-                '"mh":{"a":505,"n":"meshes/zoe_head"},'
-                '"mt":{"a":505,"n":"meshes/zoe_torso"},'
-                '"mua":{"a":505,"n":"meshes/zoe_upper_arm"},'
-                '"mul":{"a":505,"n":"meshes/zoe_upper_leg"},'
-                '"mll":{"a":505,"n":"meshes/zoe_lower_leg"},'
-                '"mto":{"a":505,"n":"meshes/zoe_toes"},'
-                '"mfa":{"a":505,"n":"meshes/zoe_fore_arm"},'
-                '"mhn":{"a":505,"n":"meshes/zoe_hand"},'
-                '"mp":{"a":505,"n":"meshes/zoe_pelvis"},'
-                '"sj":[{"a":505,"n":"audio/zoe_jump01"},{"a":505,'
-                '"n":"audio/zoe_jump02"},{"a":505,'
-                '"n":"audio/zoe_jump03"}],"sa":[{"a":505,'
-                '"n":"audio/zoe_attack01"},{"a":505,'
-                '"n":"audio/zoe_attack02"},{"a":505,'
-                '"n":"audio/zoe_attack03"},{"a":505,'
-                '"n":"audio/zoe_attack04"}],"si":[{"a":505,'
-                '"n":"audio/zoe_impact01"},{"a":505,'
-                '"n":"audio/zoe_impact02"},{"a":505,'
-                '"n":"audio/zoe_impact03"},{"a":505,'
-                '"n":"audio/zoe_impact04"}],"sd":[{"a":505,'
-                '"n":"audio/zoe_death01"}],"sp":[{"a":505,'
-                '"n":"audio/zoe_pickup01"}],"sf":[{"a":505,'
-                '"n":"audio/zoe_fall01"}],"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,'
-                '0.0],"tr":0.11,"so":[0.03,0.0,-0.02],"lt":0.06,"la":0.045,'
-                '"ss":0.03,"ia":0.2,"aw":0.3,"iw":0.02,"es":0.95,"eo":[0.08,'
-                '-0.036,0.205],"ec":[0.55,0.3,0.7],"eb":[0.54,0.51,0.55],'
-                '"lc":[0.6,0.35,0.31],"ln":15.0,"at":{"h":[{"t":"an",'
-                '"s":[{"m":{"a":505,"n":"meshes/hair_tuft1"},"o":[1.0,'
-                '1.0,1.0,0.02,0.16,0.05]}],"p":[-0.173,0.124,0.153],'
-                '"q":[0.88999,-0.2665,-0.369995,0.0],"k":0.2,"d":0.7,'
-                '"r":0.375},{"t":"an","s":[{"m":{"a":505,'
-                '"n":"meshes/hair_tuft2"},"o":[1.0,1.0,1.0,-0.01,0.03,0.06,'
-                '0.976305,0.216397,0.0,0.0]}],"p":[0.196,0.098,0.118],'
-                '"q":[0.858162,-0.229591,0.45918,3e-06],"k":0.3,"d":0.7},'
-                '{"t":"a2","s":[{"m":{"a":505,"n":"meshes/hair_tuft3"},'
-                '"o":[1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0]},'
-                '{"m":{"a":505,"n":"meshes/hair_tuft4"},"o":[1.0,1.0,'
-                '1.0,0.0,0.0,0.04,0.0,0.0,1.0,0.0]}],"p":[0.0,0.28,-0.224],'
-                '"q":[0.0,0.0,0.852526,0.522685],"k":0.67,"d":0.8,"l":0.8,'
-                '"r":0.625,"kc":-0.26}]}}}'
-            ),
-            (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/zoe_icon\\"},\\"cm\\":{\\"a\\":505,'
-                '\\"n\\":\\"textures/zoe_icon_color_mask\\"},\\"cl\\":[0.6,'
-                '0.6,0.6],\\"hl\\":[0.0,1.0,0.0]}}","_t":"ci"}'
+                '{"b":{"tx":{"a":505,"n":"textures/zoe_icon"},'
+                '"cm":{"a":505,"n":"textures/zoe_icon_color_mask"},'
+                '"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,0.0]}}'
             ),
             'strings/characters/zoe',
         ),

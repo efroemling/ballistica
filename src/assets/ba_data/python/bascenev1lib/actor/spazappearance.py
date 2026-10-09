@@ -10,7 +10,7 @@ from bacommon.assetspec import TextureSpec
 from bacommon.assetpackage import ApverNum
 import babase
 import bascenev1 as bs
-from bascenev1 import _classiccatalogassets, _classiccharacterassets
+from bascenev1 import _classiccharacterassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -30,7 +30,7 @@ def _character_name_table() -> dict[str, babase.LangStr]:
     Alien/Gladiator/Robot/Warrior/Witch/Wrestler -- show their own
     name untranslated.
     """
-    c = _classiccatalogassets.strings.characters
+    c = _classiccharacterassets.strings.characters
     return {
         'Kronk': c.kronk,
         'Zoe': c.zoe,
@@ -179,8 +179,8 @@ def get_appearances(
 
 
 #: An appearance's texture field. Prefer a handle off an
-#: asset-package wrapper (``_classiccatalogassets.textures.zoe_icon``); the bare
-#: ``str`` form is the legacy asset name, kept so existing mods keep
+#: asset-package wrapper (``_classiccharacterassets.textures.zoe_icon``);
+#: the bare ``str`` form is the legacy asset name, kept so existing mods keep
 #: working, and goes away when api 9 support ends.
 type TexVal = str | bs.TextureHandle
 
@@ -255,12 +255,26 @@ def texture_spec(val: TexVal) -> TextureSpec:
     qualified = babase.resolve_legacy_asset_name(val, 'textures')
     apvernum, sep, name = qualified.partition(':')
     if not sep or not name or not apvernum.isdigit():
-        return _classiccatalogassets.textures.neo_spaz_icon
+        return _classiccharacterassets.textures.neo_spaz_icon
     return TextureSpec(ApverNum(int(apvernum)), name)
 
 
 class Appearance:
-    """Create and fill out one of these suckers to define a spaz appearance."""
+    """Create and fill out one of these suckers to define a spaz appearance.
+
+    An appearance's in-game look is given one of two ways:
+
+    - **A character**: set :attr:`character` to a character from an
+      asset-package wrapper (``mypackage.characters.zoe``), which is a
+      whole look in one piece: its body art, voice, proportions and
+      face. The individual mesh, texture, sound and ``style`` fields
+      are then not used.
+    - **Piece by piece** (the older way, which keeps working): leave
+      :attr:`character` unset and fill in every mesh, body texture and
+      sound list, plus a ``style`` preset.
+
+    Either way, the icon textures and default colors are set here.
+    """
 
     def __init__(self, name: str):
         assert bs.app.classic is not None
@@ -270,6 +284,11 @@ class Appearance:
                 f'spaz appearance name "{self.name}" already exists.'
             )
         bs.app.classic.spaz_appearances[self.name] = self
+
+        #: The whole in-game look as one character (see the class
+        #: docs); None to give it piece by piece below.
+        self.character: bs.CharacterHandle | None = None
+
         self.color_texture: TexVal = ''
         self.color_mask_texture: TexVal = ''
         self.icon_texture: TexVal = ''
@@ -304,83 +323,23 @@ def register_appearances() -> None:
     # Shorthands for the wrapper groups; these blocks are almost
     # entirely asset assignments and the full paths drown them out.
     tex = _classiccharacterassets.textures
-    uitex = _classiccatalogassets.textures
+    uitex = _classiccharacterassets.textures
     mesh = _classiccharacterassets.meshes
     snd = _classiccharacterassets.audio
+    chars = _classiccharacterassets.characters
     # Spaz #######################################
+    # (A character: its whole look is characters/spaz.bchar in the
+    # character package. The rest of these become the same in time.)
     a = Appearance('Spaz')
-    a.color_texture = tex.neo_spaz_color
-    a.color_mask_texture = tex.neo_spaz_color_mask
+    a.character = chars.spaz
     a.icon_texture = uitex.neo_spaz_icon
     a.icon_mask_texture = uitex.neo_spaz_icon_color_mask
-    a.head_mesh = mesh.neo_spaz_head
-    a.torso_mesh = mesh.neo_spaz_torso
-    a.pelvis_mesh = mesh.neo_spaz_pelvis
-    a.upper_arm_mesh = mesh.neo_spaz_upper_arm
-    a.forearm_mesh = mesh.neo_spaz_fore_arm
-    a.hand_mesh = mesh.neo_spaz_hand
-    a.upper_leg_mesh = mesh.neo_spaz_upper_leg
-    a.lower_leg_mesh = mesh.neo_spaz_lower_leg
-    a.toes_mesh = mesh.neo_spaz_toes
-    a.jump_sounds = [
-        snd.spaz_jump01,
-        snd.spaz_jump02,
-        snd.spaz_jump03,
-        snd.spaz_jump04,
-    ]
-    a.attack_sounds = [
-        snd.spaz_attack01,
-        snd.spaz_attack02,
-        snd.spaz_attack03,
-        snd.spaz_attack04,
-    ]
-    a.impact_sounds = [
-        snd.spaz_impact01,
-        snd.spaz_impact02,
-        snd.spaz_impact03,
-        snd.spaz_impact04,
-    ]
-    a.death_sounds = [snd.spaz_death01]
-    a.pickup_sounds = [snd.spaz_pickup01]
-    a.fall_sounds = [snd.spaz_fall01]
-    a.style = 'spaz'
 
     # Zoe #####################################
     a = Appearance('Zoe')
-    a.color_texture = tex.zoe_color
-    a.color_mask_texture = tex.zoe_color_mask
+    a.character = chars.zoe
     a.icon_texture = uitex.zoe_icon
     a.icon_mask_texture = uitex.zoe_icon_color_mask
-    a.head_mesh = mesh.zoe_head
-    a.torso_mesh = mesh.zoe_torso
-    a.pelvis_mesh = mesh.zoe_pelvis
-    a.upper_arm_mesh = mesh.zoe_upper_arm
-    a.forearm_mesh = mesh.zoe_fore_arm
-    a.hand_mesh = mesh.zoe_hand
-    a.upper_leg_mesh = mesh.zoe_upper_leg
-    a.lower_leg_mesh = mesh.zoe_lower_leg
-    a.toes_mesh = mesh.zoe_toes
-    a.jump_sounds = [
-        snd.zoe_jump01,
-        snd.zoe_jump02,
-        snd.zoe_jump03,
-    ]
-    a.attack_sounds = [
-        snd.zoe_attack01,
-        snd.zoe_attack02,
-        snd.zoe_attack03,
-        snd.zoe_attack04,
-    ]
-    a.impact_sounds = [
-        snd.zoe_impact01,
-        snd.zoe_impact02,
-        snd.zoe_impact03,
-        snd.zoe_impact04,
-    ]
-    a.death_sounds = [snd.zoe_death01]
-    a.pickup_sounds = [snd.zoe_pickup01]
-    a.fall_sounds = [snd.zoe_fall01]
-    a.style = 'female'
     a.default_color = (0.6, 0.6, 0.6)
     a.default_highlight = (0, 1, 0)
 
@@ -439,38 +398,9 @@ def register_appearances() -> None:
 
     # Barbarian #####################################
     a = Appearance('Kronk')
-    a.color_texture = tex.kronk
-    a.color_mask_texture = tex.kronk_color_mask
+    a.character = chars.kronk
     a.icon_texture = uitex.kronk_icon
     a.icon_mask_texture = uitex.kronk_icon_color_mask
-    a.head_mesh = mesh.kronk_head
-    a.torso_mesh = mesh.kronk_torso
-    a.pelvis_mesh = mesh.kronk_pelvis
-    a.upper_arm_mesh = mesh.kronk_upper_arm
-    a.forearm_mesh = mesh.kronk_fore_arm
-    a.hand_mesh = mesh.kronk_hand
-    a.upper_leg_mesh = mesh.kronk_upper_leg
-    a.lower_leg_mesh = mesh.kronk_lower_leg
-    a.toes_mesh = mesh.kronk_toes
-    kronk_sounds = [
-        snd.kronk1,
-        snd.kronk2,
-        snd.kronk3,
-        snd.kronk4,
-        snd.kronk5,
-        snd.kronk6,
-        snd.kronk7,
-        snd.kronk8,
-        snd.kronk9,
-        snd.kronk10,
-    ]
-    a.jump_sounds = kronk_sounds
-    a.attack_sounds = kronk_sounds
-    a.impact_sounds = kronk_sounds
-    a.death_sounds = [snd.kronk_death]
-    a.pickup_sounds = kronk_sounds
-    a.fall_sounds = [snd.kronk_fall]
-    a.style = 'kronk'
     a.default_color = (0.4, 0.5, 0.4)
     a.default_highlight = (1, 0.5, 0.3)
 
@@ -513,43 +443,9 @@ def register_appearances() -> None:
 
     # Pirate #######################################
     a = Appearance('Jack Morgan')
-    a.color_texture = tex.jack_color
-    a.color_mask_texture = tex.jack_color_mask
+    a.character = chars.jack_morgan
     a.icon_texture = uitex.jack_icon
     a.icon_mask_texture = uitex.jack_icon_color_mask
-    a.head_mesh = mesh.jack_head
-    a.torso_mesh = mesh.jack_torso
-    a.pelvis_mesh = mesh.kronk_pelvis
-    a.upper_arm_mesh = mesh.jack_upper_arm
-    a.forearm_mesh = mesh.jack_fore_arm
-    a.hand_mesh = mesh.jack_hand
-    a.upper_leg_mesh = mesh.jack_upper_leg
-    a.lower_leg_mesh = mesh.jack_lower_leg
-    a.toes_mesh = mesh.jack_toes
-    hit_sounds = [
-        snd.jack_hit01,
-        snd.jack_hit02,
-        snd.jack_hit03,
-        snd.jack_hit04,
-        snd.jack_hit05,
-        snd.jack_hit06,
-        snd.jack_hit07,
-    ]
-    sounds = [
-        snd.jack01,
-        snd.jack02,
-        snd.jack03,
-        snd.jack04,
-        snd.jack05,
-        snd.jack06,
-    ]
-    a.jump_sounds = sounds
-    a.attack_sounds = sounds
-    a.impact_sounds = hit_sounds
-    a.death_sounds = [snd.jack_death01]
-    a.pickup_sounds = sounds
-    a.fall_sounds = [snd.jack_fall01]
-    a.style = 'pirate'
     a.default_color = (1, 0.2, 0.1)
     a.default_highlight = (1, 1, 0)
 
@@ -804,36 +700,9 @@ def register_appearances() -> None:
 
     # Agent ###################################
     a = Appearance('Agent Johnson')
-    a.color_texture = tex.agent_color
-    a.color_mask_texture = tex.agent_color_mask
+    a.character = chars.agent_johnson
     a.icon_texture = uitex.agent_icon
     a.icon_mask_texture = uitex.agent_icon_color_mask
-    a.head_mesh = mesh.agent_head
-    a.torso_mesh = mesh.agent_torso
-    a.pelvis_mesh = mesh.agent_pelvis
-    a.upper_arm_mesh = mesh.agent_upper_arm
-    a.forearm_mesh = mesh.agent_fore_arm
-    a.hand_mesh = mesh.agent_hand
-    a.upper_leg_mesh = mesh.agent_upper_leg
-    a.lower_leg_mesh = mesh.agent_lower_leg
-    a.toes_mesh = mesh.agent_toes
-    agent_sounds = [
-        snd.agent1,
-        snd.agent2,
-        snd.agent3,
-        snd.agent4,
-    ]
-    agent_hit_sounds = [
-        snd.agent_hit1,
-        snd.agent_hit2,
-    ]
-    a.jump_sounds = agent_sounds
-    a.attack_sounds = agent_sounds
-    a.impact_sounds = agent_hit_sounds
-    a.death_sounds = [snd.agent_death]
-    a.pickup_sounds = agent_sounds
-    a.fall_sounds = [snd.agent_fall]
-    a.style = 'agent'
     a.default_color = (0.3, 0.3, 0.33)
     a.default_highlight = (1, 0.5, 0.3)
 

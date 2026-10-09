@@ -5,6 +5,7 @@
 import babase
 from bascenev1 import _builtinassets
 from bascenev1 import _classicassets, _classiccatalogassets, _uiv1assets
+from bascenev1 import _classiccharacterassets
 
 
 def make_base_asset_set() -> babase.BaseAssetSet:
@@ -43,8 +44,9 @@ def make_base_asset_set() -> babase.BaseAssetSet:
     assets.boxing_glove = msh.boxing_glove
     assets.boxing_gloves_color = tex.boxing_gloves_color
     assets.character_icon_mask = uitex.character_icon_mask
-    assets.standin_icon = uitex.neo_spaz_icon
-    assets.standin_icon_color_mask = uitex.neo_spaz_icon_color_mask
+    chartex = _classiccharacterassets.textures
+    assets.standin_icon = chartex.neo_spaz_icon
+    assets.standin_icon_color_mask = chartex.neo_spaz_icon_color_mask
     assets.depiction_spinner = _uiv1assets.textures.spinner
 
     # More effects.

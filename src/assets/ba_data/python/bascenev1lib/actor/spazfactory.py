@@ -258,6 +258,24 @@ class SpazFactory:
             'rsms', 500
         )
 
+    def get_look_attrs(self, character: str) -> dict[str, Any]:
+        """Return the spaz node attrs giving this character's look.
+
+        A node wears one of two forms. An appearance that is a
+        character (see
+        :class:`~bascenev1lib.actor.spazappearance.Appearance`) gives
+        the definition form: a single spaz def the node draws, voices
+        and proportions itself from. Any other gives the legacy form:
+        each mesh, texture and sound named on its own, plus a style
+        preset (which a node in the definition form ignores, so it is
+        only sent here).
+        """
+        assert bs.app.classic is not None
+        appearance = bs.app.classic.spaz_appearances[character]
+        if appearance.character is not None:
+            return {'spaz_def': appearance.character.get_spaz_def()}
+        return {**self.get_media(character), 'style': appearance.style}
+
     def get_style(self, character: str) -> str:
         """Return the named style for this character.
 

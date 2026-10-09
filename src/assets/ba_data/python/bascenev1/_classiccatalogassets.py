@@ -1,19 +1,21 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261007`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261009``
+(bascenev1).
 
-The catalog of classic content as menus and the store present it: character
-names and icons, map names and previews, game names and descriptions, co-op
-level names, and the currency and chest icons prizes and prices are drawn with.
-Deliberately small and slow-changing, because server-rendered pages (the store,
-profile editor) reference it and every viewer resolves a referenced package in
-full (asset-packages.md decision #40). Bundled with the game too, so menus never
-wait on it.
+The catalog of classic content as menus and the store present it: map names and
+previews, game names and descriptions, co-op level names, and the currency and
+chest icons prizes and prices are drawn with. (Character names and icons live
+with the characters, in BaClassicCharacterAssets.) Deliberately small and
+slow-changing, because server-rendered pages (the store, profile editor)
+reference it and every viewer resolves a referenced package in full
+(asset-packages.md decision #40). Bundled with the game too, so menus never wait
+on it.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 443
+# ba_meta require asset-package 500
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -27,8 +29,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccatalogassets.261007
-_ASSET_PACKAGE = ApverNum(443)
+# a-0.baclassiccatalogassets.261009
+_ASSET_PACKAGE = ApverNum(500)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -68,251 +70,6 @@ if TYPE_CHECKING:
 
         level_select_button_opaque: MeshHandle
         level_select_button_transparent: MeshHandle
-
-    class StringsCharactersGroup:
-        """
-        ::
-
-            Playable character display names. Mods can register their own
-            characters; those names are shown untranslated.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Translate the "Agent" title;
-        #:     keep/transliterate "Johnson".
-        #:
-        #:     English: "Agent Johnson"
-        agent_johnson: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Robot designation: keep as "B-9000"
-        #:     (transliterate letters/digits only where the script requires).
-        #:
-        #:     English: "B-9000"
-        b9000: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Bernard"
-        bernard: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. A warm, familiar granny-ish given name:
-        #:     keep/adapt "Betty" or use an equivalent common local name.
-        #:
-        #:     English: "Betty"
-        betty: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful nickname: playful
-        #:     diminutive/pet-name forms for "bones/skeleton" work well.
-        #:
-        #:     English: "Bones"
-        bones: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. playful given name; transliterate
-        #:     phonetically in non-Latin scripts, or keep an established
-        #:     cowboy-flavored rename.
-        #:
-        #:     English: "Butch"
-        butch: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's standard
-        #:     Easter-bunny term.
-        #:
-        #:     English: "Easter Bunny"
-        easter_bunny: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name: a frosty/snowy
-        #:     name-like form (playful beats a generic "snowman" where a natural
-        #:     option exists).
-        #:
-        #:     English: "Frosty"
-        frosty: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Gretel"
-        gretel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented wizardly pun name: "grumble" +
-        #:     a Gandalf/Dumbledore-style suffix. A local grumble-pun in the
-        #:     same shape is ideal; otherwise transliterate. Never a generic
-        #:     "wizard" word alone, and never an actual name from other fiction.
-        #:
-        #:     English: "Grumbledorf"
-        grumbledorf: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded. Use local name order conventions.
-        #:
-        #:     English: "Jack Morgan"
-        jack_morgan: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Kronk"
-        kronk: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. short proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Lee"
-        lee: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
-        #:     translate the meaning as a name-like form.
-        #:
-        #:     English: "Lucky"
-        lucky: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Mel"
-        mel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. a compound nickname meaning a neutral
-        #:     intermediary; a fitting localized equivalent works well.
-        #:
-        #:     English: "Middle-Man"
-        middle_man: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Pascal"
-        pascal: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. English puns pixel/pixie. Either keep
-        #:     "Pixel" (transliterated as needed) or use a fairy/sprite word
-        #:     that lands a similar double meaning.
-        #:
-        #:     English: "Pixel"
-        pixel: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's traditional
-        #:     gift-bringer name.
-        #:
-        #:     English: "Santa Claus"
-        santa_claus: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Descriptive name: translate the meaning
-        #:     (snake + shadow, ninja-flavored).
-        #:
-        #:     English: "Snake Shadow"
-        snake_shadow: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. the default character and series
-        #:     mascot; transliterate phonetically, or keep an established
-        #:     playful rename.
-        #:
-        #:     English: "Spaz"
-        spaz: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Chinese locales use the official mascot
-        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
-        #:     brand).
-        #:
-        #:     English: "Taobao Mascot"
-        taobao_mascot: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. invented proper name; transliterate
-        #:     phonetically in non-Latin scripts.
-        #:
-        #:     English: "Todd McBurton"
-        todd_mcburton: LangStr
-
-        #: ::
-        #:
-        #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
-        #:
-        #:     English: "Zoe"
-        zoe: LangStr
 
     class StringsCoopGroup:
         """
@@ -1142,13 +899,13 @@ if TYPE_CHECKING:
         """
         ::
 
-            Display names and descriptions for classic content: characters,
-            maps, games, and co-op levels.
+            Display names and descriptions for classic content: maps, games, and
+            co-op levels. (Character names live with the characters, in
+            BaClassicCharacterAssets.)
 
             See source for the full asset list.
         """
 
-        characters: StringsCharactersGroup
         coop: StringsCoopGroup
         coop_levels: StringsCoopLevelsGroup
         game_descriptions: StringsGameDescriptionsGroup
@@ -1168,25 +925,9 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero_icon: TextureHandle
-        action_hero_icon_color_mask: TextureHandle
-        agent_icon: TextureHandle
-        agent_icon_color_mask: TextureHandle
-        ali_icon: TextureHandle
-        ali_icon_color_mask: TextureHandle
-        alien_icon: TextureHandle
-        alien_icon_color_mask: TextureHandle
         always_land_preview: TextureHandle
-        assassin_icon: TextureHandle
-        assassin_icon_color_mask: TextureHandle
-        bear_icon: TextureHandle
-        bear_icon_color_mask: TextureHandle
         big_g_preview: TextureHandle
-        bones_icon: TextureHandle
-        bones_icon_color_mask: TextureHandle
         bridgit_preview: TextureHandle
-        bunny_icon: TextureHandle
-        bunny_icon_color_mask: TextureHandle
         character_icon_mask: TextureHandle
         chest_icon: TextureHandle
         chest_icon_tint: TextureHandle
@@ -1194,67 +935,23 @@ if TYPE_CHECKING:
         chest_open_icon_tint: TextureHandle
         coin: TextureHandle
         courtyard_preview: TextureHandle
-        cowboy_icon: TextureHandle
-        cowboy_icon_color_mask: TextureHandle
         crag_castle_preview: TextureHandle
-        cyborg_icon: TextureHandle
-        cyborg_icon_color_mask: TextureHandle
         doom_shroom_preview: TextureHandle
         football_stadium_preview: TextureHandle
-        frosty_icon: TextureHandle
-        frosty_icon_color_mask: TextureHandle
-        gladiator_icon: TextureHandle
-        gladiator_icon_color_mask: TextureHandle
         hockey_stadium_preview: TextureHandle
-        jack_icon: TextureHandle
-        jack_icon_color_mask: TextureHandle
-        jumpsuit_icon: TextureHandle
-        jumpsuit_icon_color_mask: TextureHandle
-        kronk_icon: TextureHandle
-        kronk_icon_color_mask: TextureHandle
         lake_frigid_preview: TextureHandle
         map_preview_mask: TextureHandle
-        mel_icon: TextureHandle
-        mel_icon_color_mask: TextureHandle
         monkey_face_preview: TextureHandle
-        neo_spaz_icon: TextureHandle
-        neo_spaz_icon_color_mask: TextureHandle
-        ninja_icon: TextureHandle
-        ninja_icon_color_mask: TextureHandle
-        old_lady_icon: TextureHandle
-        old_lady_icon_color_mask: TextureHandle
-        opera_singer_icon: TextureHandle
-        opera_singer_icon_color_mask: TextureHandle
-        penguin_icon: TextureHandle
-        penguin_icon_color_mask: TextureHandle
-        pixie_icon: TextureHandle
-        pixie_icon_color_mask: TextureHandle
         rampage_preview: TextureHandle
-        robot_icon: TextureHandle
-        robot_icon_color_mask: TextureHandle
         roundabout_preview: TextureHandle
-        santa_icon: TextureHandle
-        santa_icon_color_mask: TextureHandle
         step_right_up_preview: TextureHandle
-        superhero_icon: TextureHandle
-        superhero_icon_color_mask: TextureHandle
         the_pad_preview: TextureHandle
         tickets: TextureHandle
         tickets_purple: TextureHandle
         tip_top_preview: TextureHandle
         tower_d_preview: TextureHandle
         viewer_mask: TextureHandle
-        warrior_icon: TextureHandle
-        warrior_icon_color_mask: TextureHandle
-        witch_icon: TextureHandle
-        witch_icon_color_mask: TextureHandle
-        wizard_icon: TextureHandle
-        wizard_icon_color_mask: TextureHandle
-        wrestler_icon: TextureHandle
-        wrestler_icon_color_mask: TextureHandle
         zigzag_preview: TextureHandle
-        zoe_icon: TextureHandle
-        zoe_icon_color_mask: TextureHandle
 
     #: The ``audio`` group - 11 assets (``aww``, ``cork_pop2``, ``gasp``,
     #: ``nice``, ``ooh``, and 6 more). Full list in source.
@@ -1264,15 +961,14 @@ if TYPE_CHECKING:
     #: ``level_select_button_transparent``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 127 strings (``characters``, ``coop``,
-    #: ``coop_levels``, ``game_descriptions``, ``game_names``, and 122 more).
-    #: Full list in source.
+    #: The ``strings`` group - 103 strings (``coop``, ``coop_levels``,
+    #: ``game_descriptions``, ``game_names``, ``map_names``, and 98 more). Full
+    #: list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 87 assets (``action_hero_icon``,
-    #: ``action_hero_icon_color_mask``, ``agent_icon``,
-    #: ``agent_icon_color_mask``, ``ali_icon``, and 82 more). Full list in
-    #: source.
+    #: The ``textures`` group - 27 assets (``always_land_preview``,
+    #: ``big_g_preview``, ``bridgit_preview``, ``character_icon_mask``,
+    #: ``chest_icon``, and 22 more). Full list in source.
     textures: TexturesGroup
 
 _TREE = {
@@ -1294,32 +990,6 @@ _TREE = {
         'level_select_button_transparent': 'm',
     },
     'strings': {
-        'characters': {
-            'agent_johnson': (),
-            'b9000': (),
-            'bernard': (),
-            'betty': (),
-            'bones': (),
-            'butch': (),
-            'easter_bunny': (),
-            'frosty': (),
-            'gretel': (),
-            'grumbledorf': (),
-            'jack_morgan': (),
-            'kronk': (),
-            'lee': (),
-            'lucky': (),
-            'mel': (),
-            'middle_man': (),
-            'pascal': (),
-            'pixel': (),
-            'santa_claus': (),
-            'snake_shadow': (),
-            'spaz': (),
-            'taobao_mascot': (),
-            'todd_mcburton': (),
-            'zoe': (),
-        },
         'coop': {'player_count_abbreviated': ('count',)},
         'coop_levels': {
             'infinite_onslaught': (),
@@ -1433,25 +1103,9 @@ _TREE = {
         },
     },
     'textures': {
-        'action_hero_icon': 't',
-        'action_hero_icon_color_mask': 't',
-        'agent_icon': 't',
-        'agent_icon_color_mask': 't',
-        'ali_icon': 't',
-        'ali_icon_color_mask': 't',
-        'alien_icon': 't',
-        'alien_icon_color_mask': 't',
         'always_land_preview': 't',
-        'assassin_icon': 't',
-        'assassin_icon_color_mask': 't',
-        'bear_icon': 't',
-        'bear_icon_color_mask': 't',
         'big_g_preview': 't',
-        'bones_icon': 't',
-        'bones_icon_color_mask': 't',
         'bridgit_preview': 't',
-        'bunny_icon': 't',
-        'bunny_icon_color_mask': 't',
         'character_icon_mask': 't',
         'chest_icon': 't',
         'chest_icon_tint': 't',
@@ -1459,67 +1113,23 @@ _TREE = {
         'chest_open_icon_tint': 't',
         'coin': 't',
         'courtyard_preview': 't',
-        'cowboy_icon': 't',
-        'cowboy_icon_color_mask': 't',
         'crag_castle_preview': 't',
-        'cyborg_icon': 't',
-        'cyborg_icon_color_mask': 't',
         'doom_shroom_preview': 't',
         'football_stadium_preview': 't',
-        'frosty_icon': 't',
-        'frosty_icon_color_mask': 't',
-        'gladiator_icon': 't',
-        'gladiator_icon_color_mask': 't',
         'hockey_stadium_preview': 't',
-        'jack_icon': 't',
-        'jack_icon_color_mask': 't',
-        'jumpsuit_icon': 't',
-        'jumpsuit_icon_color_mask': 't',
-        'kronk_icon': 't',
-        'kronk_icon_color_mask': 't',
         'lake_frigid_preview': 't',
         'map_preview_mask': 't',
-        'mel_icon': 't',
-        'mel_icon_color_mask': 't',
         'monkey_face_preview': 't',
-        'neo_spaz_icon': 't',
-        'neo_spaz_icon_color_mask': 't',
-        'ninja_icon': 't',
-        'ninja_icon_color_mask': 't',
-        'old_lady_icon': 't',
-        'old_lady_icon_color_mask': 't',
-        'opera_singer_icon': 't',
-        'opera_singer_icon_color_mask': 't',
-        'penguin_icon': 't',
-        'penguin_icon_color_mask': 't',
-        'pixie_icon': 't',
-        'pixie_icon_color_mask': 't',
         'rampage_preview': 't',
-        'robot_icon': 't',
-        'robot_icon_color_mask': 't',
         'roundabout_preview': 't',
-        'santa_icon': 't',
-        'santa_icon_color_mask': 't',
         'step_right_up_preview': 't',
-        'superhero_icon': 't',
-        'superhero_icon_color_mask': 't',
         'the_pad_preview': 't',
         'tickets': 't',
         'tickets_purple': 't',
         'tip_top_preview': 't',
         'tower_d_preview': 't',
         'viewer_mask': 't',
-        'warrior_icon': 't',
-        'warrior_icon_color_mask': 't',
-        'witch_icon': 't',
-        'witch_icon_color_mask': 't',
-        'wizard_icon': 't',
-        'wizard_icon_color_mask': 't',
-        'wrestler_icon': 't',
-        'wrestler_icon_color_mask': 't',
         'zigzag_preview': 't',
-        'zoe_icon': 't',
-        'zoe_icon_color_mask': 't',
     },
 }
 

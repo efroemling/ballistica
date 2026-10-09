@@ -408,6 +408,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classiccatalogassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classiccharacterassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicuiassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \

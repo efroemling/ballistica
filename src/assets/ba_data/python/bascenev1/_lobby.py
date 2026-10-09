@@ -1378,7 +1378,7 @@ class Chooser:
             _builtinassets,
             _classicassets,
             _uiv1assets,
-            _classiccatalogassets,
+            _classiccharacterassets,
         )
 
         assert babase.app.classic is not None
@@ -1416,12 +1416,14 @@ class Chooser:
             self._sessionplayer.set_icon_info(
                 _assetref.qualified_ref(
                     spazappearance.texture_spec(
-                        _classiccatalogassets.textures.neo_spaz_icon
+                        _classiccharacterassets.textures.neo_spaz_icon
                     )
                 ),
                 _assetref.qualified_ref(
                     spazappearance.texture_spec(
-                        _classiccatalogassets.textures.neo_spaz_icon_color_mask
+                        (
+                            _classiccharacterassets.textures
+                        ).neo_spaz_icon_color_mask
                     )
                 ),
                 self.get_color(),
@@ -1453,8 +1455,9 @@ class Chooser:
             tintval = appearance.icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            texval = _classiccatalogassets.textures.neo_spaz_icon
-            tintval = _classiccatalogassets.textures.neo_spaz_icon_color_mask
+            chartex = _classiccharacterassets.textures
+            texval = chartex.neo_spaz_icon
+            tintval = chartex.neo_spaz_icon_color_mask
 
         tex = spazappearance.scene_texture(texval)
         tint_tex = spazappearance.scene_texture(tintval)

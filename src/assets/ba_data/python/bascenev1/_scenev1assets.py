@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bascenev1assets.261007`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bascenev1assets.261009`` (bascenev1).
 
 Art and sounds the scene_v1 node layer draws itself with -- character
 eyes/hair/wings, flag poles, shields, locators, scorch and shock-wave effects.
@@ -11,7 +11,7 @@ BombSquad scene system, so game-specific concepts are at home here.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 441
+# ba_meta require asset-package 506
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bacommon.assetpackage import ApverNum
 
 from bascenev1._assetref import AssetGroup
 
-# a-0.bascenev1assets.261007
-_ASSET_PACKAGE = ApverNum(441)
+# a-0.bascenev1assets.261009
+_ASSET_PACKAGE = ApverNum(506)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -58,11 +58,6 @@ if TYPE_CHECKING:
         eye_lid: MeshHandle
         flag_pole: MeshHandle
         flash: MeshHandle
-        hair_tuft1: MeshHandle
-        hair_tuft1b: MeshHandle
-        hair_tuft2: MeshHandle
-        hair_tuft3: MeshHandle
-        hair_tuft4: MeshHandle
         image1x1_full_screen: MeshHandle
         image1x1_vrfull_screen: MeshHandle
         locator: MeshHandle
@@ -99,8 +94,8 @@ if TYPE_CHECKING:
     #: ``sparkle03``, ``ticking_crazy``). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 21 assets (``cross_out``, ``eye_ball``,
-    #: ``eye_ball_iris``, ``eye_lid``, ``flag_pole``, and 16 more). Full list in
+    #: The ``meshes`` group - 16 assets (``cross_out``, ``eye_ball``,
+    #: ``eye_ball_iris``, ``eye_lid``, ``flag_pole``, and 11 more). Full list in
     #: source.
     meshes: MeshesGroup
 
@@ -123,11 +118,6 @@ _TREE = {
         'eye_lid': 'm',
         'flag_pole': 'm',
         'flash': 'm',
-        'hair_tuft1': 'm',
-        'hair_tuft1b': 'm',
-        'hair_tuft2': 'm',
-        'hair_tuft3': 'm',
-        'hair_tuft4': 'm',
         'image1x1_full_screen': 'm',
         'image1x1_vrfull_screen': 'm',
         'locator': 'm',

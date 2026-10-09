@@ -152,6 +152,12 @@ class Slot:
     #: whoever builds the set must supply it.
     default: str | None = None
 
+    #: Wrapper module ``default`` hangs off, when it is not the
+    #: group's own (a group's slots usually share a package, but
+    #: need not: the standin character icon lives with the
+    #: characters, the mask it is cut with with the menu art).
+    default_module: str | None = None
+
 
 @dataclass
 class Group:
@@ -273,7 +279,10 @@ def generate_python(projroot: str, out_path: str) -> None:
     # (not under TYPE_CHECKING) since the init lines call into them;
     # importing a wrapper only builds its tree, it loads no assets.
     for mod in dict.fromkeys(
-        g.default_module for g in spec.groups if g.default_module
+        mod
+        for g in spec.groups
+        for mod in (g.default_module, *(s.default_module for s in g.slots))
+        if mod
     ):
         out.append(f'from bauiv1 import {mod}')
     out += [
@@ -340,7 +349,8 @@ def generate_python(projroot: str, out_path: str) -> None:
         out.append('        # Slots ui_v1 has art of its own for start at it')
         out.append('        # (handles only; nothing is loaded here).')
     for group, slot in fills:
-        expr = f'{group.default_module}.{slot.default}'
+        dmod = slot.default_module or group.default_module
+        expr = f'{dmod}.{slot.default}'
         flat = f'        self.{slot.name} = {expr}'
         if len(flat) <= 79:
             out.append(flat)

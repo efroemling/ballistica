@@ -1,4 +1,4 @@
-### 1.8.0 (build 23044, api 9, 2026-10-09)
+### 1.8.0 (build 23045, api 9, 2026-10-09)
 - Fixed co-op high scores not being accepted from Android builds.
 - Fixed a crash on Windows (an access violation in `libGLESv2.dll`,
   anywhere from seconds to half an hour into a run, on NVIDIA and Intel
