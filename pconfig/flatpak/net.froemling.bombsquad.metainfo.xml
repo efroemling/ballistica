@@ -28,26 +28,22 @@
   <url type="bugtracker">https://github.com/efroemling/ballistica/issues</url>
   <url type="help">https://github.com/efroemling/ballistica/wiki</url>
   <url type="translate">https://legacy.ballistica.net/translate</url>
-  <url type="contact">mailto:support@froemling.net</url>
+  <url type="contact">https://ballistica.net/feedback</url>
   <url type="contribute">https://github.com/efroemling/ballistica/wiki/Contributing</url>
   <description>
     <p>Blow up your friends in mini-games ranging from capture-the-flag to hockey! Featuring 8
       player local/networked multiplayer, gratuitous explosions, advanced ragdoll face-plant
-      physics, pirates, ninjas, barbarians, insane chefs, and more.
-
-      BombSquad supports touch screens as well as a variety of controllers so all your friends can
-      get in on the action.
-      You can even use phones and tablets as controllers via the free 'BombSquad Remote' app.
-
-      Bombs away!
-</p>
+      physics, pirates, ninjas, barbarians, insane chefs, and more.</p>
+    <p>BombSquad supports touch screens as well as a variety of controllers so all your friends can
+      get in on the action. You can even use phones and tablets as controllers via the free
+      'BombSquad Remote' app.</p>
+    <p>Bombs away!</p>
   </description>
   <supports>
     <control>pointing</control>
     <control>keyboard</control>
     <control>touch</control>
     <control>console</control>
-    <control>gamepad</control>
   </supports>
   <recommends>
     <control>gamepad</control>
