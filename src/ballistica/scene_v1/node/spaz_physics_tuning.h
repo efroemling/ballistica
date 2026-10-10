@@ -260,7 +260,7 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .torso_density = 3.65,
     .pelvis_density = 6.25f, // 5.0f
     .pelvis_mass_height = 0.264f,
-    .roller_density = 0.125f, // 0.1f
+    .roller_density = 0.125f,// 0.1f
 
     .roller_joint_stiffness = 1500.0f, // 1000.0f
     .roller_joint_damping = 6.0f, // 0.2f
@@ -308,7 +308,7 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .roller_side_contact_stiffness = 2000.0f, // 8000.0f // 800.0f
     .roller_side_contact_damping = 0.005f, // 0.01f // 0.001f
     .roller_wall_kick_force = 100.0f,
-    .body_friction_scale = 0.3f,
+    .body_friction_scale = 0.1f, // 0.3f
 
     // 0.4 is a ball of radius 0.138; 0.108 is where a 0.6 ball with no
     // offset sat (the first tuning that felt right). Brakes while down
