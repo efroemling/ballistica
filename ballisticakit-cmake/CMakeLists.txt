@@ -798,6 +798,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/sound_node.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_node.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_physics_tuning.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_pose.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/spaz_pose.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/node/terrain_node.cc

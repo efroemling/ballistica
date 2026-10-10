@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <list>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -170,6 +171,13 @@ class AudioServer::ThreadSource_ : public Object {
   auto source_sound() const -> SoundAsset* {
     return source_sound_ ? source_sound_->get() : nullptr;
   }
+  /// When our current sound was asked to play.
+  auto play_start_time() const -> millisecs_t { return play_start_time_; }
+  /// Whether we are holding a looping play (which keeps us busy until
+  /// someone stops it, however long that takes).
+  auto HoldingLoop() const -> bool;
+  /// Whether the audio library says we are making sound right now.
+  auto DevicePlaying() const -> bool;
 
   void UpdatePitch();
   void UpdateVolume();
@@ -197,6 +205,7 @@ class AudioServer::ThreadSource_ : public Object {
   /// Whether currently playing as music.
   bool current_is_music_{};
   uint32_t play_count_{};
+  millisecs_t play_start_time_{};
   float fade_{1.0f};
   float gain_{1.0f};
   std::unique_ptr<AudioSource> client_source_;
@@ -1052,6 +1061,116 @@ void AudioServer::UpdateAvailableSources_() {
 #endif
 }
 
+void AudioServer::PushSourceCensusCall() {
+  event_loop()->PushCall([this] { LogSourceCensus_(); });
+}
+
+void AudioServer::LogSourceCensus_() {
+  assert(g_base->InAudioThread());
+
+  // Deliberately no availability update first: sources that have finished
+  // but not been handed back yet are one of the things we are counting.
+  millisecs_t now = g_core->AppTimeMillisecs();
+  int free_count{};
+  int looping_count{};
+  int playing_count{};
+  int finished_count{};
+  int queued_count{};
+  int held_count{};
+  millisecs_t held_oldest{};
+  int held_oldest_id{};
+  millisecs_t oneshot_oldest{-1};
+  std::string oneshot_oldest_name;
+  std::map<std::string, int> looping_names;
+  std::map<std::string, int> playing_names;
+
+  for (auto&& i : sources_) {
+    AudioSource* client = i->client_source();
+
+    // Can't lock it: some client call is holding it right now. That is
+    // normally over in microseconds, so an old one is a leak.
+    if (!client->TryLock(7)) {
+      held_count++;
+      millisecs_t age = now - client->last_lock_time();
+      if (age >= held_oldest) {
+        held_oldest = age;
+        held_oldest_id = client->lock_debug_id();
+      }
+      continue;
+    }
+    std::string name =
+        i->source_sound() ? i->source_sound()->file_name() : "(none)";
+    if (client->available()) {
+      free_count++;
+    } else if (client->client_queue_size() > 0) {
+      queued_count++;
+    } else if (i->HoldingLoop() && i->want_to_play()) {
+      looping_count++;
+      looping_names[name]++;
+    } else if (i->DevicePlaying()) {
+      playing_count++;
+      playing_names[name]++;
+      millisecs_t age = now - i->play_start_time();
+      if (age > oneshot_oldest) {
+        oneshot_oldest = age;
+        oneshot_oldest_name = name;
+      }
+    } else {
+      finished_count++;
+    }
+    client->Unlock();
+  }
+
+  // Most-used names first, capped so a full pool of distinct sounds
+  // stays one readable line.
+  auto describe = [](const std::map<std::string, int>& names) {
+    std::vector<std::pair<std::string, int>> sorted(names.begin(), names.end());
+    std::stable_sort(
+        sorted.begin(), sorted.end(),
+        [](const auto& a, const auto& b) { return a.second > b.second; });
+    const size_t kMaxNames{8};
+    std::string out;
+    for (size_t j = 0; j < sorted.size() && j < kMaxNames; j++) {
+      if (!out.empty()) {
+        out += ", ";
+      }
+      out += sorted[j].first;
+      if (sorted[j].second > 1) {
+        out += " x" + std::to_string(sorted[j].second);
+      }
+    }
+    if (sorted.size() > kMaxNames) {
+      out += ", +" + std::to_string(sorted.size() - kMaxNames) + " more";
+    }
+    return out;
+  };
+  auto secs = [](millisecs_t ms) {
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "%.1fs", static_cast<double>(ms) / 1000.0);
+    return std::string(buffer);
+  };
+
+  std::string msg =
+      "Audio source census: " + std::to_string(sources_.size()) + " total, "
+      + std::to_string(free_count) + " free, " + std::to_string(looping_count)
+      + " looping, " + std::to_string(playing_count) + " playing, "
+      + std::to_string(finished_count) + " finished-not-reclaimed, "
+      + std::to_string(queued_count) + " awaiting-commands, "
+      + std::to_string(held_count) + " client-held";
+  if (held_count > 0) {
+    msg += " (oldest " + secs(held_oldest) + ", debug id "
+           + std::to_string(held_oldest_id) + ")";
+  }
+  if (!looping_names.empty()) {
+    msg += "; looping: " + describe(looping_names);
+  }
+  if (!playing_names.empty()) {
+    msg += "; playing: " + describe(playing_names) + "; oldest playing: "
+           + oneshot_oldest_name + " " + secs(oneshot_oldest);
+  }
+  g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning, msg);
+}
+
 void AudioServer::StopSound(uint32_t play_id) {
   uint32_t source = SourceIdFromPlayId(play_id);
   uint32_t count = PlayCountFromPlayId(play_id);
@@ -1510,22 +1629,7 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
   // (regardless of its actual physical play state - music could be turned
   // off, stuttering, etc.). If it's non-looping, we check its play state
   // and snatch it if it's not playing.
-  bool busy;
-  if (looping_ || (is_streamed_ && streamer_.exists() && streamer_->loops())) {
-    busy = want_to_play_;
-  } else {
-    // If our context is suspended, we know nothing is playing (and we can't
-    // ask AL cuz we have no context).
-    if (g_base->audio_server->suspended_
-        || g_base->audio_server->shutting_down_) {
-      busy = false;
-    } else {
-      ALint state;
-      alGetSourcei(source_, AL_SOURCE_STATE, &state);
-      CHECK_AL_ERROR;
-      busy = (state == AL_PLAYING);
-    }
-  }
+  bool busy = HoldingLoop() ? want_to_play_ : DevicePlaying();
 
   // Ok, now if we can get a lock on the availability list, go ahead and
   // make this guy available; give him a new play id and reset his state. If
@@ -1550,6 +1654,31 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
   client_source_->Unlock();
 
 #endif  // BA_ENABLE_AUDIO
+}
+
+auto AudioServer::ThreadSource_::HoldingLoop() const -> bool {
+#if BA_ENABLE_AUDIO
+  return looping_ || (is_streamed_ && streamer_.exists() && streamer_->loops());
+#else
+  return false;
+#endif
+}
+
+auto AudioServer::ThreadSource_::DevicePlaying() const -> bool {
+#if BA_ENABLE_AUDIO
+  // If our context is suspended, we know nothing is playing (and we can't
+  // ask AL cuz we have no context).
+  if (g_base->audio_server->suspended_
+      || g_base->audio_server->shutting_down_) {
+    return false;
+  }
+  ALint state;
+  alGetSourcei(source_, AL_SOURCE_STATE, &state);
+  CHECK_AL_ERROR;
+  return state == AL_PLAYING;
+#else
+  return false;
+#endif
 }
 
 void AudioServer::ThreadSource_::Update() {
@@ -1680,6 +1809,7 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
 
   assert(source_sound_ == nullptr);
   source_sound_ = sound;
+  play_start_time_ = g_core->AppTimeMillisecs();
 
   if (!g_base->audio_server->using_null_device_
       && !g_base->audio_server->suspended_

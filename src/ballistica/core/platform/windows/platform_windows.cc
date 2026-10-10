@@ -1123,10 +1123,24 @@ std::string PlatformWindows::GetLocaleTag() {
     case 1038:
       return "hu_HU";
       break;  // Hungarian
-    default:
+    default: {
+      // Not in our table. Ask Windows for the locale's name instead
+      // ('es-ES', 'es-419', ...), which the locale resolver understands
+      // directly. This covers ids the table lacks (3082, the modern-sort
+      // Spanish - Spain, was the common one in the field) and the custom
+      // locale ids (0x2000, 0x0C00), which carry no language at all and
+      // can only be resolved by name.
+      wchar_t name[LOCALE_NAME_MAX_LENGTH];
+      if (GetUserDefaultLocaleName(name, LOCALE_NAME_MAX_LENGTH) > 0) {
+        std::string tag = UTF8Encode(name);
+        if (!tag.empty()) {
+          return tag;
+        }
+      }
       // This will fail to resolve to a Locale but it should generate a
       // warning so we know to fix it.
       return "lcid_" + std::to_string(lcid);
+    }
   }
 }
 

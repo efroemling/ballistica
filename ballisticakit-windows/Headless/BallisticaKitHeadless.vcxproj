@@ -655,6 +655,7 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\sound_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_node.h" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_physics_tuning.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_pose.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_pose.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\terrain_node.cc" />

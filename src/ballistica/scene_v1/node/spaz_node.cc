@@ -40,6 +40,7 @@
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/node/spaz_physics_tuning.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -177,11 +178,9 @@ auto GetRandomMedia(const std::vector<Object::Ref<T> >& list) -> T* {
 const float kSantaEyeScale = 0.9f;
 const float kSantaEyeTranslate = 0.03f;
 
-const float kRollerBallLinearStiffness = 1000.0f;
-const float kRollerBallLinearDamping = 0.2f;
-
-const float kPelvisDensity = 5.0f;
-
+// (Core-body masses, springs, motors and contact values live in
+// spaz_physics_tuning.h; what follows is the main-sim limbs, which only
+// the legacy physics has.)
 const float kUpperLegDensity = 2.0f;
 const float kUpperLegCollideStiffness = 100.0f;
 const float kUpperLegCollideDamping = 100.0f;
@@ -199,43 +198,41 @@ const float kUpperArmDensity = 2.0f;
 const float kLowerArmDensity = 2.0f;
 
 // bg-limbs mode (protocol 44+): the arm and leg bodies live on the
-// bg-dynamics rig, so the main-sim core carries their mass instead.
-// The old rig totalled 1.392 (arms 0.109, legs + toes 0.104); the arms'
-// share goes to the torso via density, the legs' to a taller pelvis
-// mass box (0.16 -> 0.264; same 0.25 x 0.16 footprint, mass 0.160 ->
-// 0.264), which also restores some tipping inertia. Mass also scales
-// area-blast damage (RigidBody::ApplyImpulse), so this closes part of
-// the missing-limb damage gap too. Main-sim-limbs mode keeps the old
-// values byte-for-byte; these only apply under !main_sim_limbs_.
-const float kBgLimbsTorsoDensity = 3.65f;
-const float kBgLimbsPelvisMassHeight = 0.264f;
-// Wider pelvis collision box (0.25 -> 0.32; mass box unchanged) so a
-// ragdoll lying on it rolls less. Collision only: mass and inertia
-// come from the mass triple above.
+// bg-dynamics rig, so the main-sim core carries their mass instead
+// (torso_density and pelvis_mass_height in kSpazPhysicsTuningBgLimbs).
+// Mass also scales area-blast damage (RigidBody::ApplyImpulse), so
+// that keeps the limbs' share of blast damage too.
+//
+// Wider pelvis collision box than the old rig's 0.25 so a ragdoll lying
+// on it rolls less. Collision only: mass and inertia come from the
+// tuning's mass values.
 const float kBgLimbsPelvisWidth = kSpazRigPelvisSize[0];
+const float kLegacyLimbsPelvisWidth = 0.25f;
 
 // bg-limbs mode: the roller ball doubles as the leg surrogate when the
-// character is knocked out or frozen. The old rig let the ball vanish
-// (size 0, retracted 0.3 up, contacts rejected) and the main-sim legs
-// took over as what the body landed on: a frozen character sank onto
-// locked legs and toppled, a ragdoll landed legs-first. The rig's legs
-// are display-only, so instead the ball only shrinks to this size
-// (0.4 -> radius 0.138) and is placed so its bottom sits
-// kBgLimbsDownBallBottomLift above the standing ball's bottom instead
-// of retracting (0.108 is where a 0.6 ball with no offset sat, the
-// first tuning that felt right), and its floor contacts go soft so it
-// cushions the drop and
-// then sinks under body weight instead of propping a lying ragdoll's
-// hips up. Not meant to keep anyone upright: freezing zeroes balance_,
-// so the statue topples naturally like it used to. Main-sim-limbs mode
-// keeps the old behavior byte-for-byte.
-const float kBgLimbsDownBallSize = 0.4f;
-const float kBgLimbsDownBallBottomLift = 0.108f;
-const float kBgLimbsDownBallStiffness = 400.0f;
-const float kBgLimbsDownBallDamping = 2.0f;
-// Lock the ball to the torso (full brakes) while knocked out; tried
-// and set aside 2026-09-08 (the free ball read better).
-const bool kBgLimbsDownBallBrakes = false;
+// character is knocked out or frozen (the down_ball_* tuning values).
+// The old rig let the ball vanish (size 0, retracted 0.3 up, contacts
+// rejected) and the main-sim legs took over as what the body landed
+// on: a frozen character sank onto locked legs and toppled, a ragdoll
+// landed legs-first. The rig's legs are display-only, so instead the
+// ball only shrinks, is placed so its bottom sits a set height above
+// the standing ball's bottom instead of retracting, and its floor
+// contacts go soft so it cushions the drop and then sinks under body
+// weight instead of propping a lying ragdoll's hips up. Not meant to
+// keep anyone upright: freezing zeroes balance_, so the statue topples
+// naturally like it used to. Main-sim-limbs mode keeps the old behavior
+// byte-for-byte.
+//
+// Roller-joint anchor offset that puts the down ball's bottom
+// down_ball_bottom_lift above the standing ball's (0.3 is the full ball
+// radius; a smaller ball hangs lower). Worked out at compile time from
+// the bg-limbs tuning, the only one that uses it.
+constexpr auto DownBallOffset(const SpazPhysicsTuning& t) -> float {
+  float r_down = 0.3f * (0.1f + 0.9f * t.down_ball_size);
+  return t.down_ball_bottom_lift - (0.3f - r_down);
+}
+constexpr float kBgLimbsDownBallOffset =
+    DownBallOffset(kSpazPhysicsTuningBgLimbs);
 
 // Per-attachment-type physique: capsule dims, mass, joint anchors,
 // spring stiffness/damping, and collision behavior. These are sim
@@ -636,6 +633,9 @@ SpazNode::SpazNode(Scene* scene)
   // Limb backend, fixed for our lifetime: main-sim limb bodies, or
   // none at all with the bg rig carrying them.
   main_sim_limbs_ = !UseBgLimbs_();
+  // And with it which physics tuning we run under.
+  tuning_ = main_sim_limbs_ ? &kSpazPhysicsTuningLegacyLimbs
+                            : &kSpazPhysicsTuningBgLimbs;
   // Likewise the punch: an activity asking for legacy limbs gets the
   // old arm-attached punch region with them (the old spaz physics in
   // full). It needs the arm bodies, so never without main-sim limbs.
@@ -651,7 +651,8 @@ SpazNode::SpazNode(Scene* scene)
       Object::New<RigidBody>(kHeadBodyID, &spaz_part_, RigidBody::Type::kBody,
                              RigidBody::Shape::kSphere,
                              RigidBody::kCollideActive, RigidBody::kCollideAll);
-  body_head_->SetDimensions(kSpazRigHeadRadius, 0, 0, 0.28f, 0, 0, 1.0f);
+  body_head_->SetDimensions(kSpazRigHeadRadius, 0, 0, 0.28f, 0, 0,
+                            tuning_->head_density);
   body_head_->AddCallback(StaticCollideCallback, this);
 
   // Torso
@@ -659,7 +660,7 @@ SpazNode::SpazNode(Scene* scene)
       Object::New<RigidBody>(kTorsoBodyID, &spaz_part_, RigidBody::Type::kBody,
                              RigidBody::Shape::kSphere,
                              RigidBody::kCollideActive, RigidBody::kCollideAll);
-  body_torso_->SetDimensions(0.11f, 0, 0, 0.2f, 0, 0, 3.0f);
+  body_torso_->SetDimensions(0.11f, 0, 0, 0.2f, 0, 0, tuning_->torso_density);
   body_torso_->AddCallback(StaticCollideCallback, this);
 
   // Pelvis
@@ -675,7 +676,8 @@ SpazNode::SpazNode(Scene* scene)
       RigidBody::Shape::kSphere, RigidBody::kCollideActive,
       RigidBody::kCollideAll, nullptr, RigidBody::kIsRoller);
 
-  body_roller_->SetDimensions(kSpazRigRollerRadius, 0, 0, 0, 0, 0, 0.1f);
+  body_roller_->SetDimensions(kSpazRigRollerRadius, 0, 0, 0, 0, 0,
+                              tuning_->roller_density);
   body_roller_->AddCallback(StaticCollideCallback, this);
 
   // Stand Body
@@ -930,8 +932,8 @@ SpazNode::SpazNode(Scene* scene)
 
   // Roller ball joint.
   roller_ball_joint_ = CreateFixedJoint(body_torso_.get(), body_roller_.get(),
-                                        kRollerBallLinearStiffness,
-                                        kRollerBallLinearDamping, 0, 0);
+                                        tuning_->roller_joint_stiffness,
+                                        tuning_->roller_joint_damping, 0, 0);
   base_pelvis_roller_anchor_offset_ = roller_ball_joint_->anchor1[1];
 
   // Stand joint on our torso.
@@ -1122,7 +1124,7 @@ void SpazNode::SetJumpPressed(bool val) {
       if (demo_mode_) {
         jump_ = 5;
       } else {
-        jump_ = 7;
+        jump_ = static_cast_check_fit<uint8_t>(tuning_->jump_steps);
       }
       last_jump_time_ = scene()->time();
     }
@@ -1273,7 +1275,7 @@ void SpazNode::ApplyJointTargets_() {
 
 void SpazNode::UpdateJoints() {
   // Limb rest pose and springs (or the frozen lock-down).
-  pose_.ApplyRestPose(PoseJoints_(), frozen_);
+  pose_.ApplyRestPose(PoseJoints_(), frozen_, *tuning_);
   if (frozen_) {
     // Lock each limb joint's rest rotation to its current angle, and
     // keep the targets in step so the per-step apply doesn't undo it.
@@ -1370,25 +1372,17 @@ void SpazNode::UpdateBodiesForStyle() {
     DestroyHair();
   }
 
-  if (main_sim_limbs_) {
-    // Adjust torso size.
-    body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0, 3.0f);
+  // Adjust torso size.
+  body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0,
+                             tuning_->torso_density);
 
-    // Adjust hip and leg size.
-    // (The old limbs' pelvis was narrower; its other sides are the
-    // rig's.)
-    body_pelvis_->SetDimensions(0.25f, kSpazRigPelvisSize[1],
-                                kSpazRigPelvisSize[2], 0.25f, 0.16f, 0.16f,
-                                kPelvisDensity);
-  } else {
-    // Same collision shapes; the core carries the limbs' mass (see the
-    // kBgLimbs* constants).
-    body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0,
-                               kBgLimbsTorsoDensity);
-    body_pelvis_->SetDimensions(
-        kBgLimbsPelvisWidth, kSpazRigPelvisSize[1], kSpazRigPelvisSize[2],
-        0.25f, kBgLimbsPelvisMassHeight, 0.16f, kPelvisDensity);
-  }
+  // Adjust hip size. (The old limbs' pelvis was narrower; its other
+  // sides are the rig's. Mass comes from the tuning; with bg limbs the
+  // core carries the limbs' mass.)
+  body_pelvis_->SetDimensions(
+      main_sim_limbs_ ? kLegacyLimbsPelvisWidth : kBgLimbsPelvisWidth,
+      kSpazRigPelvisSize[1], kSpazRigPelvisSize[2], 0.25f,
+      tuning_->pelvis_mass_height, 0.16f, tuning_->pelvis_density);
 
   // (Re)build definition attachment rigs if their config changed. After
   // the core bodies are sized: the rig's twins copy their shapes and
@@ -2389,6 +2383,7 @@ void SpazNode::Step() {
   // Limb and neck joint targets for this step.
   {
     SpazPose::StepInputs in;
+    in.tuning = tuning_;
     in.scenetime = scenetime;
     in.stepnum = scene()->stepnum();
     in.stream_id = stream_id();
@@ -2805,7 +2800,7 @@ void SpazNode::Step() {
     float tilt_lr, tilt_ud;
     dBodySetPosition(b, p_torso2[0], p_bot[1] + 0.2f, p_torso2[2]);
 
-    float rotate_tilt = 0.4f;
+    float rotate_tilt = tuning_->lean_amount;
 
     if (hockey_) {
       const dReal* b_vel_3 = dBodyGetLinearVel(body_roller_->body());
@@ -2945,16 +2940,17 @@ void SpazNode::Step() {
       // Crank up our balance when we're holding something otherwise we get a
       // bit soupy.
       if (holding_something_) {
-        mult *= 0.9f;
+        mult *= tuning_->stand_balance_scale_holding;
       } else {
-        mult *= 0.6f;
+        mult *= tuning_->stand_balance_scale;
       }
 
       {
         stand_joint_->linearStiffness = 0.0f;
         stand_joint_->linearDamping = 0.0f;
-        stand_joint_->angularStiffness = 180.0f * mult;
-        stand_joint_->angularDamping = 3.0f * mult;
+        stand_joint_->angularStiffness =
+            tuning_->stand_angular_stiffness * mult;
+        stand_joint_->angularDamping = tuning_->stand_angular_damping * mult;
       }
 
       // Crank down angular forces at low speeds to keep from looking too stiff.
@@ -2978,9 +2974,9 @@ void SpazNode::Step() {
       if (main_sim_limbs_) {
         ball_size_ = 0.0f;
       } else {
-        // Leg surrogate (see kBgLimbsDownBallSize): shrink to the down
-        // size, or keep growing toward it if we were caught mid-recovery.
-        ball_size_ = std::min(kBgLimbsDownBallSize, ball_size_ + 0.05f);
+        // Leg surrogate (see down_ball_size): shrink to the down size,
+        // or keep growing toward it if we were caught mid-recovery.
+        ball_size_ = std::min(tuning_->down_ball_size, ball_size_ + 0.05f);
       }
     } else {
       ball_size_ = std::min(1.0f, ball_size_ + 0.05f);
@@ -2990,7 +2986,7 @@ void SpazNode::Step() {
     body_roller_->SetDimensions(
         0.3f * sz, 0, 0, 0.3f, 0,
         0,  // keep its mass the same as its full-size self though
-        0.1f);
+        tuning_->roller_density);
   }
 
   // Push our roller-ball down for jumps and retract it when we're hurt.
@@ -3000,24 +2996,25 @@ void SpazNode::Step() {
     float offs = (1.0f - ball_size_) * 0.3f;
     if (!main_sim_limbs_) {
       // Leg surrogate: put the down-state ball's bottom
-      // kBgLimbsDownBallBottomLift above the standing ball's bottom
-      // whatever its size (a smaller ball hangs lower), blending back
-      // to no offset as it regrows.
-      float r_down = 0.3f * (0.1f + 0.9f * kBgLimbsDownBallSize);
-      float offs_down = kBgLimbsDownBallBottomLift - (0.3f - r_down);
-      float t = std::clamp((1.0f - ball_size_) / (1.0f - kBgLimbsDownBallSize),
-                           0.0f, 1.0f);
+      // down_ball_bottom_lift above the standing ball's bottom whatever
+      // its size (a smaller ball hangs lower), blending back to no
+      // offset as it regrows.
+      float offs_down = kBgLimbsDownBallOffset;
+      float t = std::clamp(
+          (1.0f - ball_size_) / (1.0f - tuning_->down_ball_size), 0.0f, 1.0f);
       offs = t * offs_down;
     }
     float ls_scale = 1.0f;
     float ld_scale = 1.0f;
     if (jump_ > 0 && !frozen_ && !knockout_) {
-      offs -= 0.3f;
-      ls_scale = 0.6f;
-      ld_scale = 0.2f;
+      offs -= tuning_->jump_push_distance;
+      ls_scale = tuning_->jump_roller_stiffness_scale;
+      ld_scale = tuning_->jump_roller_damping_scale;
     }
-    roller_ball_joint_->linearStiffness = kRollerBallLinearStiffness * ls_scale;
-    roller_ball_joint_->linearDamping = kRollerBallLinearDamping * ld_scale;
+    roller_ball_joint_->linearStiffness =
+        tuning_->roller_joint_stiffness * ls_scale;
+    roller_ball_joint_->linearDamping =
+        tuning_->roller_joint_damping * ld_scale;
     offs -= breath * 0.02f;
     roller_ball_joint_->anchor1[1] = base_pelvis_roller_anchor_offset_ + offs;
   }
@@ -3107,11 +3104,11 @@ void SpazNode::Step() {
             if (v[1] < 0.0f) {
               v[1] *= 2.0f;  // just scale our downward component up to bias the
                              // speed calc
-              walk_scale = 1.0f - v[1] * 0.1f;
+              walk_scale = 1.0f - v[1] * tuning_->downhill_boost;
             } else {
               // heading uphill - slow down
-              speed_scale = std::max(0.0f, 1.0f - v[1] * 0.2f);
-              walk_scale = std::max(0.0f, 1.0f - v[1] * 0.2f);
+              speed_scale = std::max(0.0f, 1.0f - v[1] * tuning_->uphill_slow);
+              walk_scale = std::max(0.0f, 1.0f - v[1] * tuning_->uphill_slow);
               v[1] = 0.0f;  // also don't count upward velocity towards our
                             // speed calc..
             }
@@ -3119,22 +3116,29 @@ void SpazNode::Step() {
 
           // our smoothed spead increases slowly and decreases fast
           float speed = dVector3Length(v) * speed_scale;
-          float speed_smoothing = (speed > speed_smoothed_) ? 0.985f : 0.94f;
+          float speed_smoothing = (speed > speed_smoothed_)
+                                      ? tuning_->speed_smoothing_up
+                                      : tuning_->speed_smoothing_down;
           speed_smoothed_ = speed_smoothing * speed_smoothed_
                             + (1.0f - speed_smoothing) * speed;
 
-          float gear_high = std::min(1.0f, speed_smoothed_ / 7.0f);
+          float gear_high =
+              std::min(1.0f, speed_smoothed_ / tuning_->gear_up_speed);
           float gear_low = 1.0f - gear_high;
 
           // as we 'shift up' in gears our max-force goes up and target velocity
           // goes down
-          float max_force = gear_low * 15.0f + gear_high * 15.0f;
-          float max_vel = walk_scale * 7.68f + gear_high * run_gas_ * 15.0f;
+          float max_force =
+              gear_low * tuning_->roller_motor_max_force_low_gear
+              + gear_high * tuning_->roller_motor_max_force_high_gear;
+          float max_vel = walk_scale * tuning_->walk_speed
+                          + gear_high * run_gas_ * tuning_->run_speed_add;
           dBodyEnable(body_roller_->body());
           dJointSetAMotorParam(a_motor_roller_, dParamFMax,
                                max_force * mult);  // change for 120hz
-          dJointSetAMotorParam(a_motor_roller_, dParamFMax2,
-                               500.0f * mult);  // 120hz change
+          dJointSetAMotorParam(
+              a_motor_roller_, dParamFMax2,
+              tuning_->roller_motor_max_force_vertical * mult);  // 120hz change
           dJointSetAMotorParam(a_motor_roller_, dParamFMax3,
                                max_force * mult);  // change for 120hz
           dJointSetAMotorParam(a_motor_roller_, dParamVel, -max_vel * ud_norm_);
@@ -3149,9 +3153,9 @@ void SpazNode::Step() {
   // Set brake motor strength.
   // bg limbs: the ball is the leg surrogate while knocked out, so lock
   // it to the torso like when frozen instead of letting the ragdoll
-  // roll around on it (kBgLimbsDownBallSize).
+  // roll around on it (down_ball_brakes).
   bool down_brakes =
-      kBgLimbsDownBallBrakes && !main_sim_limbs_ && knockout_ > 0;
+      tuning_->down_ball_brakes && !main_sim_limbs_ && knockout_ > 0;
   if (footing_ || frozen_ || dead_ || down_brakes) {
     float amt;
     // Full brakes if frozen. Otherwise crank up as our joystick magnitude goes
@@ -3163,11 +3167,12 @@ void SpazNode::Step() {
       amt = std::min(1.0f, dVector3Length(f) * 5.0f);
       amt = 1.0f - (amt * amt * amt);
       amt *= (1.0f - run_gas_);
-      amt *= 0.4f;
+      amt *= tuning_->brake_idle_scale;
     }
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax, 10.0f * amt);
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax2, 10.0f * amt);
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax3, 10.0f * amt);
+    float brake_force = tuning_->brake_max_force * amt;
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax, brake_force);
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax2, brake_force);
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax3, brake_force);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel, 0.0f);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel2, 0.0f);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel3, 0.0f);
@@ -5666,8 +5671,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
   }
 
   if (colliding_body->part() == &spaz_part_) {
-    float stiffness = 5000;
-    float damping = 0.001f;
+    float stiffness = tuning_->core_contact_stiffness;
+    float damping = tuning_->core_contact_damping;
     float erp, cfm;
     base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
     for (int i = 0; i < count; i++) {
@@ -5690,7 +5695,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     // sides).
     uint32_t f = opposing_body->flags();
     // bg limbs: the ball is the leg surrogate while down (see
-    // kBgLimbsDownBallSize): soft floor contacts, no wall kick.
+    // down_ball_size): soft floor contacts, no wall kick.
     bool down_ball = !main_sim_limbs_ && (knockout_ || frozen_);
     if (!(f & RigidBody::kIsBumper)) {
       for (int i = 0; i < count; i++) {
@@ -5707,14 +5712,15 @@ auto SpazNode::CollideCallback(dContact* c, int count,
           // give our roller a kick away from vertical terrain surfaces
           if ((f & RigidBody::kIsTerrain) && !down_ball) {
             dBodyID b = body_roller_->body();
-            dBodyAddForce(b, c[i].geom.normal[0] * 100.0f,
-                          c[i].geom.normal[1] * 100.0f,
-                          c[i].geom.normal[2] * 100.0f);
+            float kick = tuning_->roller_wall_kick_force;
+            dBodyAddForce(b, c[i].geom.normal[0] * kick,
+                          c[i].geom.normal[1] * kick,
+                          c[i].geom.normal[2] * kick);
           }
 
           // Override stiffness and damping on our little parts
-          float stiffness = 800.0f;
-          float damping = 0.001f;
+          float stiffness = tuning_->roller_side_contact_stiffness;
+          float damping = tuning_->roller_side_contact_damping;
           float erp, cfm;
           base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
           c[i].surface.soft_erp = erp;
@@ -5724,8 +5730,11 @@ auto SpazNode::CollideCallback(dContact* c, int count,
         } else {
           // trying to get a well-behaved floor-response...
           if (!hockey_) {
-            float stiffness = down_ball ? kBgLimbsDownBallStiffness : 7000.0f;
-            float damping = down_ball ? kBgLimbsDownBallDamping : 7.0f;
+            float stiffness = down_ball
+                                  ? tuning_->down_ball_contact_stiffness
+                                  : tuning_->roller_floor_contact_stiffness;
+            float damping = down_ball ? tuning_->down_ball_contact_damping
+                                      : tuning_->roller_floor_contact_damping;
             float erp, cfm;
             base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
             c[i].surface.soft_erp = erp;
@@ -5738,7 +5747,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
   } else if (colliding_body->id() != kRollerBodyID) {
     // Drop friction on all our non-roller-ball parts.
     for (int i = 0; i < count; i++) {
-      c[i].surface.mu *= 0.3f;
+      c[i].surface.mu *= tuning_->body_friction_scale;
     }
   }
 

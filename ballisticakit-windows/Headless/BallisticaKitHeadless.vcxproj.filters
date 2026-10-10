@@ -1414,6 +1414,9 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_node.h">
       <Filter>ballistica\scene_v1\node</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_physics_tuning.h">
+      <Filter>ballistica\scene_v1\node</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_pose.cc">
       <Filter>ballistica\scene_v1\node</Filter>
     </ClCompile>

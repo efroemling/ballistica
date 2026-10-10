@@ -55,6 +55,11 @@ class AudioServer {
   void PushSourceStopCall(uint32_t play_id);
   void PushSourceEndCall(uint32_t play_id);
 
+  /// Log what every source is currently doing. Asked for when a play
+  /// request finds no free source, to tell real saturation from a leak
+  /// from slow reclaiming.
+  void PushSourceCensusCall();
+
   // Fade a playing sound out over the given time. If it is already fading
   // or does not exist, does nothing.
   void FadeSoundOut(uint32_t play_id, uint32_t time);
@@ -107,6 +112,7 @@ class AudioServer {
 
   void UpdateTimerInterval_();
   void UpdateAvailableSources_();
+  void LogSourceCensus_();
   void UpdateMusicPlayState_();
   void ProcessSoundFades_();
 

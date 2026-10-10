@@ -152,6 +152,9 @@ void Audio::WarnNoSourceAvailable_() {
                          "No audio source available (all "
                              + std::to_string(client_sources_.size())
                              + " sources busy). Dropping this play request.");
+    // Have the audio thread say what they are all doing; this alone
+    // doesn't tell a busy moment from a leak.
+    g_base->audio_server->PushSourceCensusCall();
   }
 }
 

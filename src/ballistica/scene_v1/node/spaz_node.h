@@ -758,6 +758,9 @@ class SpazNode : public Node {
   // pointer stays null, the pose driver's limb targets feed only the
   // rig, and the punch region is always the synthetic fist.
   bool main_sim_limbs_{true};
+  // The physics tuning that goes with main_sim_limbs_ (set once at
+  // construction; see spaz_physics_tuning.h).
+  const SpazPhysicsTuning* tuning_{};
   // With main-sim limbs: whether the punch region rides the punching
   // arm's body as it did before protocol 44 (fixed for our lifetime;
   // see GlobalsNode::legacy_spaz_limbs).

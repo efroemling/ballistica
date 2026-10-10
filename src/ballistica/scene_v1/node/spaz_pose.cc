@@ -6,23 +6,20 @@
 #include <cmath>
 
 #include "ballistica/scene_v1/generated/spaz_rig.h"
+#include "ballistica/scene_v1/node/spaz_physics_tuning.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ode/ode_collision_util.h"
 
 namespace ballistica::scene_v1 {
 
-// Joint springs for the rig. The classic tuning; body densities and
-// contact stiffnesses live with the bodies in spaz_node.cc.
+// Joint springs for the rig's limbs. The classic tuning; the core
+// joints' springs (pelvis, neck), body densities and contact
+// stiffnesses are in spaz_physics_tuning.h.
 const float kRunJointLinearStiffness = 80.0f;
 const float kRunJointLinearDamping = 2.0f;
 const float kRunJointAngularStiffness = 0.2f;
 const float kRunJointAngularDamping = 0.002f;
-
-const float kPelvisLinearStiffness = 300.0f;
-const float kPelvisLinearDamping = 20.0f;
-const float kPelvisAngularStiffness = 1.5f;
-const float kPelvisAngularDamping = 0.06f;
 
 const float kUpperLegLinearStiffness = 300.0f;
 const float kUpperLegLinearDamping = 5.0f;
@@ -49,7 +46,8 @@ const float kLowerArmLinearDamping = 1.0f;
 const float kLowerArmAngularStiffness = 0.08f;
 const float kLowerArmAngularDamping = 0.008f;
 
-void SpazPose::ApplyRestPose(const Joints& joints, bool frozen) {
+void SpazPose::ApplyRestPose(const Joints& joints, bool frozen,
+                             const SpazPhysicsTuning& tuning) {
   // (neck joint gets set every step so no update here)
 
   float l_still_scale = 1.0f;
@@ -90,10 +88,12 @@ void SpazPose::ApplyRestPose(const Joints& joints, bool frozen) {
     dQSetIdentity(joints.left_toes->qrel);
   }
 
-  joints.pelvis->linearStiffness = kPelvisLinearStiffness * l_still_scale;
-  joints.pelvis->linearDamping = kPelvisLinearDamping * l_damp_scale;
-  joints.pelvis->angularStiffness = kPelvisAngularStiffness * a_stiff_scale;
-  joints.pelvis->angularDamping = kPelvisAngularDamping * a_damp_scale;
+  joints.pelvis->linearStiffness =
+      tuning.pelvis_linear_stiffness * l_still_scale;
+  joints.pelvis->linearDamping = tuning.pelvis_linear_damping * l_damp_scale;
+  joints.pelvis->angularStiffness =
+      tuning.pelvis_angular_stiffness * a_stiff_scale;
+  joints.pelvis->angularDamping = tuning.pelvis_angular_damping * a_damp_scale;
 
   joints.upper_right_leg->linearStiffness =
       kUpperLegLinearStiffness * l_still_scale;
@@ -317,16 +317,18 @@ void SpazPose::Step(const StepInputs& in, const Joints& joints,
   {
     SpazJointTarget* j = joints.neck;
     if (j) {
+      assert(in.tuning);
+      const SpazPhysicsTuning& t = *in.tuning;
       if (in.knockout) {
-        j->linearStiffness = 400.0f;
-        j->linearDamping = 1.0f;
-        j->angularStiffness = 5.0f;
-        j->angularDamping = 0.3f;
+        j->linearStiffness = t.neck_knockout_linear_stiffness;
+        j->linearDamping = t.neck_knockout_linear_damping;
+        j->angularStiffness = t.neck_knockout_angular_stiffness;
+        j->angularDamping = t.neck_knockout_angular_damping;
       } else {
-        j->linearStiffness = 500.0f;
-        j->linearDamping = 1.0f;
-        j->angularStiffness = 13.0f;
-        j->angularDamping = 0.8f;
+        j->linearStiffness = t.neck_linear_stiffness;
+        j->linearDamping = t.neck_linear_damping;
+        j->angularStiffness = t.neck_angular_stiffness;
+        j->angularDamping = t.neck_angular_damping;
       }
     }
   }
