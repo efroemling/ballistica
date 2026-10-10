@@ -43,6 +43,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libpango1.0-dev \
         libsdl3-dev \
         libvorbis-dev \
+        libzstd-dev \
         make \
         python3-pip \
         python3.14-dev \

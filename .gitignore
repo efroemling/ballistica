@@ -43,6 +43,7 @@ tools/bacloud
 
 # Project/tool files
 pconfig/localconfig.json
+pconfig/flatpak/net.froemling.bombsquad.png
 pconfig/.*
 .dir-locals.el
 .rgignore
