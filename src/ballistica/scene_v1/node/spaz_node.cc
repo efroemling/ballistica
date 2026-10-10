@@ -2345,10 +2345,11 @@ void SpazNode::Step() {
 
     // If we're jolting and have just been touched in the head and haven't been
     // pushed on by anything external recently (explosion, punch, etc), lets add
-    // some shock damage to ourself.
+    // some shock damage to ourself. Corpses skip the external-impulse check so
+    // their ragdolls still register head impacts after being hit.
     if (len > 3.0f && cur_time - last_pickup_time_ >= 500
         && cur_time - last_head_collide_time_ <= 30
-        && cur_time - last_external_impulse_time_ >= 300
+        && (dead_ || cur_time - last_external_impulse_time_ >= 300)
         && cur_time - last_impact_damage_dispatch_time_ > 500) {
       impact_damage_accum_ += len - 3.0f;
     } else if (impact_damage_accum_ > 0.0f) {
