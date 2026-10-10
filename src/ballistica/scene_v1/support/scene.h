@@ -121,8 +121,9 @@ class Scene : public Object {
   /// Start a new sound for something in this scene. Returns nullptr if
   /// there's none to be had (we're silent, or audio has none to
   /// spare). Finish with End() on what comes back, as with
-  /// Audio::SourceBeginNew().
-  auto NewAudioSource() -> base::AudioSource*;
+  /// Audio::SourceBeginNew() (for_sound means the same thing here).
+  auto NewAudioSource(base::SoundAsset* for_sound = nullptr)
+      -> base::AudioSource*;
 
   /// Give our sounds a listener of our own, in place of the audio
   /// system's (which follows the game camera); for scenes seen through

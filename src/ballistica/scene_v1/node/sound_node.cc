@@ -131,7 +131,7 @@ void SoundNode::SetMusic(bool val) {
 void SoundNode::Step() {
   // If we want to start playing, do so.
   if (!playing_ && sound_.exists()) {
-    base::AudioSource* s = scene()->NewAudioSource();
+    base::AudioSource* s = scene()->NewAudioSource(sound_->GetSoundData());
     if (s) {
       assert(position_.size() == 3);
       s->SetPosition(position_[0], position_[1], position_[2]);

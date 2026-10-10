@@ -63,11 +63,11 @@ auto Scene::bg_dynamics_world() const -> base::BGDynamicsWorld* {
   return g_base->bg_dynamics->main_world();
 }
 
-auto Scene::NewAudioSource() -> base::AudioSource* {
+auto Scene::NewAudioSource(base::SoundAsset* for_sound) -> base::AudioSource* {
   if (silent_) {
     return nullptr;
   }
-  base::AudioSource* source = g_base->audio->SourceBeginNew();
+  base::AudioSource* source = g_base->audio->SourceBeginNew(for_sound);
   if (source != nullptr && audio_listener_space_.has_value()) {
     source->SetListenerSpace(*audio_listener_space_);
   }
@@ -138,7 +138,7 @@ void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
     if (!g_base->audio->ShouldPlay(sound->GetSoundData())) {
       return;
     }
-    if (base::AudioSource* source = NewAudioSource()) {
+    if (base::AudioSource* source = NewAudioSource(sound->GetSoundData())) {
       source->SetGain(volume);
       source->SetPosition(x, y, z);
       source->Play(sound->GetSoundData());

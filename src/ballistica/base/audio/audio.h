@@ -46,7 +46,10 @@ class Audio {
   /// 0,0,0, etc.).
   /// Send the source any immediate commands and then unlock it.
   /// For later modifications, re-retrieve the sound with GetPlayingSound()
-  auto SourceBeginNew() -> AudioSource*;
+  ///
+  /// Pass the sound this is for when there is one; it is only used to
+  /// say what got dropped when no source is free.
+  auto SourceBeginNew(SoundAsset* for_sound = nullptr) -> AudioSource*;
 
   /// If a sound play id is playing, locks and returns its sound source.
   /// on success, you must unlock the source once done with it.
@@ -106,10 +109,14 @@ class Audio {
  private:
   /// Log (rate-limited) that SourceBeginNew() found nothing, so dropped
   /// plays are visible instead of silent.
-  void WarnNoSourceAvailable_();
+  void WarnNoSourceAvailable_(SoundAsset* for_sound);
 
   std::atomic<bool> server_ready_{};
   std::atomic<millisecs_t> last_no_source_warn_time_{-99999};
+  /// Plays dropped for want of a source since the last warning.
+  std::atomic<int> dropped_plays_since_warn_{};
+  /// Last value given to SetSoundPitch() (0.4 in slow motion).
+  std::atomic<float> sound_pitch_{1.0f};
   /// Flat list of client sources indexed by id.
   std::vector<AudioSource*> client_sources_;
 

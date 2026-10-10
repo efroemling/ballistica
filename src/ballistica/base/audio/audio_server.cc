@@ -334,6 +334,17 @@ void AudioServer::Start_() {
       }
     }
 
+    // Output on OpenSL can't be tagged as game audio, so the "is another
+    // app playing music" signal would see our own sound as someone
+    // else's music and we'd mute ours forever. (Covers the workaround
+    // above and the var being set from outside for testing.)
+    if (g_buildconfig.platform_android()
+        && g_core->platform->GetEnv("BA_OBOE_USE_OPENSLES").has_value()) {
+      g_core->platform->IgnoreOSMusicPlaying(
+          "audio output is using OpenSL, which can't be told apart from "
+          "another app's music");
+    }
+
     const char* al_device_name{};
 
 // On the rift build in vr mode we need to make sure we open the rift audio
@@ -459,6 +470,9 @@ void AudioServer::Start_() {
       }
       alcCloseDevice(device);
       g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
+      g_core->platform->IgnoreOSMusicPlaying(
+          "audio output fell back to OpenSL, which can't be told apart from "
+          "another app's music");
       device = alcOpenDevice(al_device_name);
       alGetError();  // Clear any errors.
       if (!device) {
