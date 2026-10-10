@@ -518,6 +518,25 @@ class PrivateGatherTab(GatherTab):
                 )
 
     def _build_join_tab(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+        if plus.get_v1_account_state() != 'signed_in':
+            bui.textwidget(
+                parent=self._container,
+                size=(0, 50),
+                h_align='center',
+                v_align='center',
+                maxwidth=self._c_width * 0.8,
+                scale=1.5,
+                color=(0.6, 0.56, 0.6),
+                position=(self._c_width * 0.5, self._c_height * 0.5),
+                text=classicassets.strings.account.not_signed_in,
+            )
+            self._showing_not_signed_in_screen = True
+            return
+
+        self._showing_not_signed_in_screen = False
+
         bui.textwidget(
             parent=self._container,
             position=(self._c_width * 0.5, self._c_height - 140),
