@@ -8,12 +8,44 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::scene_v1 {
+
+/// What a sound play in a scene can say about how it should contend for
+/// audio sources, in place of what its sound's asset says (see
+/// base::Audio::SourceBeginNew). This is the form that travels in scene
+/// streams (kPlaySoundEx and friends, sound node attrs).
+struct SoundPlayOptions {
+  /// Play group to count the play toward; empty for the sound's own.
+  std::string group;
+  /// Most plays of that group to allow at once; 0 for the default.
+  int group_cap{};
+  /// A SoundPriority value, or -1 for the sound's own.
+  int priority{-1};
+
+  /// Whether anything is set.
+  auto any() const -> bool {
+    return !group.empty() || group_cap > 0 || priority >= 0;
+  }
+
+  /// Hold our values to what content may ask for. Do this to anything
+  /// that came from elsewhere (a host, a replay) before using it.
+  void Sanitize();
+
+  /// Us as overrides for the audio system (sanitize first).
+  auto ToOverrides() const -> base::AudioPlayOverrides;
+
+  /// The name for a SoundPriority value as node attrs spell it
+  /// ('lower' ... 'higher'); empty for -1.
+  static auto PriorityName(int priority) -> std::string;
+  /// The reverse; -1 for an empty name. Throws on an unknown one.
+  static auto PriorityFromName(const std::string& name) -> int;
+};
 
 /// A place where nodes/actors/etc. live.
 class Scene : public Object {
@@ -25,8 +57,10 @@ class Scene : public Object {
   auto NewNode(const std::string& type, const std::string& name,
                PyObject* delegate) -> Node*;
   void PlaySoundAtPosition(SceneSound* sound, float volume, float x, float y,
-                           float z, bool host_only = false);
-  void PlaySound(SceneSound* sound, float volume, bool host_only = false);
+                           float z, bool host_only = false,
+                           const SoundPlayOptions& options = {});
+  void PlaySound(SceneSound* sound, float volume, bool host_only = false,
+                 const SoundPlayOptions& options = {});
   static auto GetNodeMessageType(const std::string& type_name)
       -> NodeMessageType;
   static auto GetNodeMessageTypeName(NodeMessageType t) -> std::string;
@@ -121,9 +155,13 @@ class Scene : public Object {
   /// Start a new sound for something in this scene. Returns nullptr if
   /// there's none to be had (we're silent, or audio has none to
   /// spare). Finish with End() on what comes back, as with
-  /// Audio::SourceBeginNew() (for_sound means the same thing here).
-  auto NewAudioSource(base::SoundAsset* for_sound = nullptr)
-      -> base::AudioSource*;
+  /// Audio::SourceBeginNew() (which see for what the spec is for).
+  auto NewAudioSource(const base::AudioPlaySpec& spec) -> base::AudioSource*;
+  /// Shorthand for the above with nothing overridden. Say what the
+  /// sound is and whether it will loop; both bear on whether there is a
+  /// source to be had.
+  auto NewAudioSource(base::SoundAsset* for_sound = nullptr,
+                      bool looping = false) -> base::AudioSource*;
 
   /// Give our sounds a listener of our own, in place of the audio
   /// system's (which follows the game camera); for scenes seen through
@@ -131,6 +169,21 @@ class Scene : public Object {
   void SetAudioListenerSpace(const base::AudioListenerSpace* space);
 
  private:
+  /// Whether a play is worth sending out our stream. Peers allow only
+  /// so many plays of a play group at once, with new ones replacing the
+  /// oldest, so past a cap's worth of starts within kPlayBurstMillisecs
+  /// any more would just cut sounds that have barely begun. (Peers
+  /// previously got every play there was, however many they then threw
+  /// away.) We can't go further than that: what is still playing on a
+  /// peer is not ours to know.
+  auto ShouldSendPlay_(SceneSound* sound, const SoundPlayOptions& options)
+      -> bool;
+  struct PlayBurst_ {
+    millisecs_t start_time{};
+    int count{};
+  };
+  /// Keyed by play group.
+  std::unordered_map<int, PlayBurst_> play_bursts_;
   bool silent_{};
   bool streamed_in_{};
   std::optional<base::AudioListenerSpace> audio_listener_space_;

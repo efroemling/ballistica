@@ -501,8 +501,8 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261009
-inline constexpr const char* kBuiltinAssetsApvernum = "486";
+// Builtin asset-package: a-0.babuiltinassets.261011
+inline constexpr const char* kBuiltinAssetsApvernum = "636";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesAccountV2Icon,     // textures/account_v2_icon

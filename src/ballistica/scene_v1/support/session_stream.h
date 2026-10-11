@@ -105,8 +105,9 @@ class SessionStream : public Object, public ClientControllerInterface {
   void SetNodeAttr(const NodeAttribute& attr,
                    const std::vector<SceneCollisionMesh*>& vals);
   void PlaySoundAtPosition(SceneSound* sound, float volume, float x, float y,
-                           float z);
-  void PlaySound(SceneSound* sound, float volume);
+                           float z, const SoundPlayOptions& options);
+  void PlaySound(SceneSound* sound, float volume,
+                 const SoundPlayOptions& options);
   void EmitBGDynamics(const base::BGDynamicsEmission& e);
   void EmitCameraShake(float intensity);
 

@@ -92,7 +92,14 @@ void AudioSource::SetFade(float val) {
 void AudioSource::SetLooping(bool val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+  g_base->audio->OnSourceLoopingSet(id_, play_id_, val);
   g_base->audio_server->PushSourceSetLoopingCall(play_id_, val);
+}
+
+void AudioSource::Retarget(uint32_t play_id_new) {
+  assert(AudioServer::SourceIdFromPlayId(play_id_new) == id_);
+  assert(!available_);
+  play_id_ = play_id_new;
 }
 
 auto AudioSource::Play(SoundAsset* ptr_in) -> uint32_t {

@@ -57,6 +57,7 @@ struct RenderViewRendererData : public Object {
   int camera_for_width{};
   int camera_for_height{};
   GraphicsQuality camera_for_quality{GraphicsQuality::kUnset};
+  int camera_for_msaa_generation{-1};
 
   // The look we're set to draw with (from the frame-def).
   bool shadow_ortho{};

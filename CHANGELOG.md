@@ -1,4 +1,36 @@
-### 1.8.0 (build 23049, api 9, 2026-10-11)
+### 1.8.0 (build 23050, api 9, 2026-10-11)
+- Reworked what happens when more sounds want to play than the game has
+  audio channels for (32). Previously the newest sound was simply
+  dropped, which in busy games (lots of bombs, epic mode) lost
+  explosions, footsteps and sometimes the score-screen music. Now:
+  - Every sound belongs to a 'play group', by default named for the
+    sound less any trailing number (so `explosion01` through
+    `explosion05` share one). Only a few sounds of a group play at once;
+    a new one cuts off the group's oldest.
+  - Sounds have priorities. With every channel busy, a new sound cuts
+    off the oldest playing sound of the lowest priority at or below its
+    own. Music and ui sounds outrank anything content can ask for.
+  - Looping sounds (bomb fuses and the like) are never cut off; one that
+    can't get a channel waits for one as before.
+  - The standard sounds have priorities set: music highest, then the
+    announcer and event stingers, with impacts, skids and swishes below
+    normal and footsteps and falling debris lowest.
+- `bascenev1.Sound.play()` gained `play_group`, `play_group_cap` and
+  `priority` arguments (see the new `bascenev1.SoundPriority`), and
+  `sound` nodes gained matching `play_group`, `play_group_cap` and
+  `priority` attrs. Sound assets can set a play group and priority of
+  their own in their workspace settings.
+- Hosts no longer send clients bursts of sound plays that would only cut
+  each other off on arrival.
+- Scene protocol is now 54 (for the above).
+- Retuned character physics to feel closer to 1.7 after the limbs rework:
+  less bouncy, steadier landings and less speed lost to bumps, and
+  knocked-out characters slide instead of sticking to the floor (thanks
+  TheMikirog!).
+- Added an MSAA option to graphics settings on desktop builds: Auto, Off,
+  or any sample count the graphics hardware supports. Auto behaves as
+  before (4x on Apple Silicon Macs, off elsewhere). Changes apply
+  immediately. Stored as the `MSAA` config value.
 - Reworked how character arms and legs stretch to stay connected: each
   segment keeps its far end in place and reaches its elbow or knee end
   to meet its neighbour, so limbs join cleanly at any pose. A limb whose

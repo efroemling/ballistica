@@ -482,6 +482,7 @@ void RendererGL::CheckGLCapabilities_() {
   // If we're running ES3, ask about our max multisample counts and whether
   // we can enable MSAA.
   msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = 0;  // start pessimistic
+  msaa_sample_counts_rgb8_.clear();
 
   bool have_gl_get_internal_format_iv{};
   if (gl_is_es()) {
@@ -519,6 +520,11 @@ void RendererGL::CheckGLCapabilities_() {
       glGetInternalformativ(GL_RENDERBUFFER, GL_RGB8, GL_SAMPLES, count,
                             &samples[0]);
       msaa_max_samples_rgb8_ = samples[0];
+      for (GLint s : samples) {
+        if (s > 1) {
+          msaa_sample_counts_rgb8_.push_back(s);
+        }
+      }
     } else {
       BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                   "Got 0 samplecounts for RGB8");
@@ -532,15 +538,31 @@ void RendererGL::CheckGLCapabilities_() {
     auto max_samples = GLGetIntOptional(GL_MAX_SAMPLES);
     if (max_samples.has_value()) {
       msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = *max_samples;
+      // We only get a max here; counts between are a safe assumption
+      // for powers of two.
+      for (int s = 2; s <= *max_samples; s *= 2) {
+        msaa_sample_counts_rgb8_.push_back(s);
+      }
     }
   }
+  std::sort(msaa_sample_counts_rgb8_.begin(), msaa_sample_counts_rgb8_.end());
+  msaa_sample_counts_rgb8_.erase(std::unique(msaa_sample_counts_rgb8_.begin(),
+                                             msaa_sample_counts_rgb8_.end()),
+                                 msaa_sample_counts_rgb8_.end());
 
   BA_DEBUG_CHECK_GL_ERROR;
 
   first_extension_check_ = false;
 }
 
+auto RendererGL::GetMSAASampleCounts() -> std::vector<int> {
+  return msaa_sample_counts_rgb8_;
+}
+
 auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
+  if (msaa_samples_explicit_ > 0) {
+    return msaa_samples_explicit_;
+  }
   if (g_buildconfig.platform_android()) {
     // We currently aim for 4 up to 800 height and 2 beyond that.
     if (height > 800) {
@@ -554,6 +576,29 @@ auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
 }
 
 void RendererGL::UpdateMSAAEnabled_() {
+  msaa_samples_explicit_ = 0;
+
+  // An explicit request (off or a sample count) overrides our own
+  // judgement below.
+  int requested = msaa_samples_requested();
+  if (requested != Graphics::kMSAASamplesAuto) {
+    // Go with the most samples we can do without exceeding the request
+    // (a config can come from a machine with different hardware).
+    int samples{};
+    for (int s : msaa_sample_counts_rgb8_) {
+      if (s <= requested) {
+        samples = s;
+      }
+    }
+    msaa_samples_explicit_ = samples;
+    enable_msaa_ = samples > 0;
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                         "MSAA: " + std::to_string(requested)
+                             + " sample(s) requested; using "
+                             + std::to_string(samples) + ".");
+    return;
+  }
+
   if (g_buildconfig.platform_macos()) {
     // Let's go ahead and flip this on for Apple Silicon Macs.
 #if __aarch64__
@@ -577,6 +622,9 @@ void RendererGL::UpdateMSAAEnabled_() {
   } else {
     enable_msaa_ = false;
   }
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kDebug,
+      std::string("MSAA: auto; ") + (enable_msaa_ ? "enabled." : "disabled."));
 }
 
 auto RendererGL::IsMSAAEnabled() const -> bool { return enable_msaa_; }

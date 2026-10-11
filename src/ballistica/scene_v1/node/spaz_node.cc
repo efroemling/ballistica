@@ -1184,7 +1184,7 @@ void SpazNode::SetPunchPressed(bool val) {
         }
         last_punch_time_ = scene()->time();
         if (base::SoundAsset* sound = RandomAttackSound_()) {
-          if (auto* source = scene()->NewAudioSource()) {
+          if (auto* source = scene()->NewAudioSource(sound)) {
             const dReal* p_head = dGeomGetPosition(body_head_->geom());
             g_base->audio->PushSourceStopSoundCall(voice_play_id_);
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
@@ -1210,7 +1210,7 @@ void SpazNode::SetJumpPressed(bool val) {
     }
     if (!can_fly_) {
       if (base::SoundAsset* sound = RandomJumpSound_()) {
-        if (auto* source = scene()->NewAudioSource()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           source->SetPosition(p_top[0], p_top[1], p_top[2]);
@@ -1615,7 +1615,7 @@ void SpazNode::Throw(bool with_bomb_button) {
     have_thrown_ = true;
 
     if (base::SoundAsset* sound = RandomAttackSound_()) {
-      if (auto* s = scene()->NewAudioSource()) {
+      if (auto* s = scene()->NewAudioSource(sound)) {
         const dReal* p = dGeomGetPosition(body_head_->geom());
         g_base->audio->PushSourceStopSoundCall(voice_play_id_);
         s->SetPosition(p[0], p[1], p[2]);
@@ -1682,7 +1682,7 @@ void SpazNode::HandleMessage(const char* data_in) {
         break;
       }
       if (base::SoundAsset* sound = RandomAttackSound_()) {
-        if (auto* source = scene()->NewAudioSource()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           source->SetPosition(p_top[0], p_top[1], p_top[2]);
@@ -1697,7 +1697,7 @@ void SpazNode::HandleMessage(const char* data_in) {
         break;
       }
       if (base::SoundAsset* sound = RandomJumpSound_()) {
-        if (auto* s = scene()->NewAudioSource()) {
+        if (auto* s = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           s->SetPosition(p_top[0], p_top[1], p_top[2]);
@@ -1909,20 +1909,20 @@ void SpazNode::DoFlyPress() {
     millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_sparkle_time > 200) {
       last_sparkle_time = t;
-      auto* s = scene()->NewAudioSource();
+      base::SoundAsset* sparkle;
+      int r = rand() % 100;  // NOLINT
+      if (r < 33) {
+        sparkle = g_scene_v1->assets().sparkle01.get();
+      } else if (r < 66) {
+        sparkle = g_scene_v1->assets().sparkle02.get();
+      } else {
+        sparkle = g_scene_v1->assets().sparkle03.get();
+      }
+      auto* s = scene()->NewAudioSource(sparkle);
       if (s) {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::SoundAsset* sparkle;
-        int r = rand() % 100;  // NOLINT
-        if (r < 33) {
-          sparkle = g_scene_v1->assets().sparkle01.get();
-        } else if (r < 66) {
-          sparkle = g_scene_v1->assets().sparkle02.get();
-        } else {
-          sparkle = g_scene_v1->assets().sparkle03.get();
-        }
         s->Play(sparkle);
         s->End();
       }
@@ -3371,7 +3371,7 @@ void SpazNode::Step() {
       if (!(voice_play_id_ == fall_play_id_
             && g_base->audio->IsSoundPlaying(fall_play_id_))) {
         if (base::SoundAsset* sound = RandomFallSound_()) {
-          if (auto* source = scene()->NewAudioSource()) {
+          if (auto* source = scene()->NewAudioSource(sound)) {
             g_base->audio->PushSourceStopSoundCall(voice_play_id_);
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
             voice_play_id_ = source->Play(sound);
@@ -6882,7 +6882,8 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
   // Start ticking sound.
   if (curse_death_time_ != 0) {
     if (tick_play_id_ == 0xFFFFFFFF) {
-      base::AudioSource* s = scene()->NewAudioSource();
+      base::AudioSource* s = scene()->NewAudioSource(
+          g_scene_v1->assets().ticking_crazy.get(), true);
       if (s) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
@@ -7011,7 +7012,7 @@ void SpazNode::SetDead(bool val) {
       // Only make sound if we're not shattered.
       if (!shattered_) {
         if (base::SoundAsset* sound = RandomDeathSound_()) {
-          if (base::AudioSource* source = scene()->NewAudioSource()) {
+          if (base::AudioSource* source = scene()->NewAudioSource(sound)) {
             const dReal* p_head = dGeomGetPosition(body_head_->geom());
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
             voice_play_id_ = source->Play(sound);
@@ -7889,7 +7890,7 @@ void SpazNode::SetHoldNode(Node* val) {
     {
       g_base->audio->PushSourceStopSoundCall(voice_play_id_);
       if (base::SoundAsset* sound = RandomPickupSound_()) {
-        if (auto* source = scene()->NewAudioSource()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_head = dGeomGetPosition(body_head_->geom());
           source->SetPosition(p_head[0], p_head[1], p_head[2]);
           voice_play_id_ = source->Play(sound);
@@ -8042,7 +8043,7 @@ void SpazNode::PlayHurtSound() {
     return;
   }
   if (base::SoundAsset* sound = RandomImpactSound_()) {
-    if (auto* source = scene()->NewAudioSource()) {
+    if (auto* source = scene()->NewAudioSource(sound)) {
       const dReal* p_top = dGeomGetPosition(body_head_->geom());
       g_base->audio->PushSourceStopSoundCall(voice_play_id_);
       source->SetPosition(p_top[0], p_top[1], p_top[2]);

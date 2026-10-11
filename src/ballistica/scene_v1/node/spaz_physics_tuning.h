@@ -257,20 +257,20 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     // used to (1.392 in all): the arms' 0.109 as torso density, the
     // legs' and toes' 0.104 as a taller pelvis mass box.
     .head_density = 1.0f,
-    .torso_density = 3.65f,  // Legacy: 3.0.
-    .pelvis_density = 5.0f,
+    .torso_density = 3.65f,        // Legacy: 3.0.
+    .pelvis_density = 6.25f,       // Legacy: 5.0.
     .pelvis_mass_height = 0.264f,  // Legacy: 0.16.
-    .roller_density = 0.1f,
+    .roller_density = 0.125f,      // Legacy: 0.1.
 
-    .roller_joint_stiffness = 1000.0f,
-    .roller_joint_damping = 0.2f,
+    .roller_joint_stiffness = 1500.0f,  // Legacy: 1000.0.
+    .roller_joint_damping = 6.0f,       // Legacy: 0.2.
     .jump_push_distance = 0.3f,
     .jump_steps = 7,
-    .jump_roller_stiffness_scale = 0.6f,
+    .jump_roller_stiffness_scale = 0.4f,  // Legacy: 0.6.
     .jump_roller_damping_scale = 0.2f,
 
-    .pelvis_linear_stiffness = 300.0f,
-    .pelvis_linear_damping = 20.0f,
+    .pelvis_linear_stiffness = 400.0f,  // Legacy: 300.0.
+    .pelvis_linear_damping = 40.0f,     // Legacy: 20.0.
     .pelvis_angular_stiffness = 1.5f,
     .pelvis_angular_damping = 0.06f,
     .neck_linear_stiffness = 500.0f,
@@ -282,8 +282,8 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .neck_knockout_angular_stiffness = 5.0f,
     .neck_knockout_angular_damping = 0.3f,
 
-    .stand_angular_stiffness = 180.0f,
-    .stand_angular_damping = 3.0f,
+    .stand_angular_stiffness = 270.0f,  // Legacy: 180.0.
+    .stand_angular_damping = 3.5f,      // Legacy: 3.0.
     .stand_balance_scale = 0.6f,
     .stand_balance_scale_holding = 0.9f,
     .lean_amount = 0.4f,
@@ -301,14 +301,14 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .brake_max_force = 10.0f,
     .brake_idle_scale = 0.4f,
 
-    .core_contact_stiffness = 5000.0f,
-    .core_contact_damping = 0.001f,
+    .core_contact_stiffness = 6000.0f,  // Legacy: 5000.0.
+    .core_contact_damping = 0.01f,      // Legacy: 0.001.
     .roller_floor_contact_stiffness = 7000.0f,
-    .roller_floor_contact_damping = 7.0f,
-    .roller_side_contact_stiffness = 800.0f,
-    .roller_side_contact_damping = 0.001f,
+    .roller_floor_contact_damping = 10.0f,     // Legacy: 7.0.
+    .roller_side_contact_stiffness = 2000.0f,  // Legacy: 800.0.
+    .roller_side_contact_damping = 0.005f,     // Legacy: 0.001.
     .roller_wall_kick_force = 100.0f,
-    .body_friction_scale = 0.3f,
+    .body_friction_scale = 0.1f,  // Legacy: 0.3.
 
     // 0.4 is a ball of radius 0.138; 0.108 is where a 0.6 ball with no
     // offset sat (the first tuning that felt right). Brakes while down

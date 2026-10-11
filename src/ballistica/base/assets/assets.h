@@ -323,6 +323,15 @@ class Assets {
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
 
+  /// Resolve a sound qualified-ref to the json file saying how its
+  /// plays contend for audio sources (part ``j.json`` in the package's
+  /// resolved ``audio/...`` bucket). Only the audio-less (NULL) flavor
+  /// that headless builds resolve carries these, and only for sounds
+  /// with something set; builds with audio get the same from tags in
+  /// the sound itself (see SoundAsset::ApplyPlaySettings). Returns
+  /// ``""`` if the name isn't a CAS ref or the sound has none.
+  auto FindCasSoundMetaPath(const std::string& name) -> std::string;
+
   /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
   /// resolve a mesh qualified-ref to its single bob CAS blob (part
   /// ``m.bob`` in the package's resolved ``meshes/...`` bucket).

@@ -1319,7 +1319,33 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         case SessionCommand::kPlaySound: {
           SceneSound* sound = GetSound(ReadInt32());
           float volume = ReadFloat();
-          g_base->audio->PlaySound(sound->GetSoundData(), volume);
+          g_base->audio->PlaySound(sound->GetSoundData(), volume,
+                                   base::AudioPlayOverrides());
+          break;
+        }
+        case SessionCommand::kPlaySoundEx:
+        case SessionCommand::kPlaySoundAtPositionEx: {
+          bool positional = (cmd == SessionCommand::kPlaySoundAtPositionEx);
+          int32_t vals[3];
+          ReadInt32_3(vals);
+          SceneSound* sound = GetSound(vals[0]);
+          float f[4];
+          ReadFloats(positional ? 4 : 1, f);
+          // (What a host says here is taken as a request: Sanitize
+          // holds it to what content is allowed to ask for.)
+          SoundPlayOptions options;
+          options.group_cap = vals[1];
+          options.priority = vals[2] - 1;
+          options.group = ReadString();
+          options.Sanitize();
+          if (positional) {
+            g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), f[0],
+                                               f[1], f[2], f[3],
+                                               options.ToOverrides());
+          } else {
+            g_base->audio->PlaySound(sound->GetSoundData(), f[0],
+                                     options.ToOverrides());
+          }
           break;
         }
         case SessionCommand::kScreenMessageBottom: {

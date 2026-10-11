@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_SUPPORT_GRAPHICS_CLIENT_CONTEXT_H_
 #define BALLISTICA_BASE_GRAPHICS_SUPPORT_GRAPHICS_CLIENT_CONTEXT_H_
 
+#include <vector>
+
 #include "ballistica/base/base.h"
 
 namespace ballistica::base {
@@ -24,6 +26,10 @@ struct GraphicsClientContext {
   GraphicsQuality auto_graphics_quality;
   TextureQuality auto_texture_quality;
   uint32_t texture_compression_types;
+
+  /// MSAA sample counts the user can choose from, ascending. Empty if
+  /// MSAA is unavailable or not user-configurable here.
+  std::vector<int> msaa_sample_counts;
 };
 
 }  // namespace ballistica::base

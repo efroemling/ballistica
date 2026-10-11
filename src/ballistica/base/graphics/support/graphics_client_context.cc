@@ -2,6 +2,7 @@
 
 #include "ballistica/base/graphics/support/graphics_client_context.h"
 
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 
@@ -13,7 +14,12 @@ GraphicsClientContext::GraphicsClientContext()
       auto_texture_quality{
           g_base->graphics_server->renderer()->GetAutoTextureQuality()},
       texture_compression_types{
-          g_base->graphics_server->texture_compression_types()} {}
+          g_base->graphics_server->texture_compression_types()} {
+  if (Graphics::SupportsMSAASetting()) {
+    msaa_sample_counts =
+        g_base->graphics_server->renderer()->GetMSAASampleCounts();
+  }
+}
 
 GraphicsClientContext::GraphicsClientContext(int dummy)
     : auto_graphics_quality{GraphicsQuality::kLow},

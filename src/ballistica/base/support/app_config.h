@@ -54,6 +54,7 @@ class AppConfig {
     kScreenInsets,
     kDevConsoleButtonStyle,
     kDevConsoleButtonAnchor,
+    kMSAA,
     kLast  // Sentinel.
   };
 

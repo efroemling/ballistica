@@ -1247,6 +1247,42 @@ static PyMethodDef PySupportsVSyncDef = {
     ":meta private:\n",
 };
 
+// ------------------------- get_msaa_sample_counts ----------------------------
+
+static auto PyGetMSAASampleCounts(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Empty where MSAA is not user-configurable (or we've not yet heard
+  // what the hardware can do).
+  std::vector<int> counts;
+  if (g_base->graphics->has_client_context()) {
+    counts = g_base->graphics->client_context()->msaa_sample_counts;
+  }
+  PythonRef list(PyList_New(0), PythonRef::kSteal);
+  for (int count : counts) {
+    PythonRef val(PyLong_FromLong(count), PythonRef::kSteal);
+    PyList_Append(list.get(), val.get());
+  }
+  return list.NewRef();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetMSAASampleCountsDef = {
+    "get_msaa_sample_counts",            // name
+    (PyCFunction)PyGetMSAASampleCounts,  // method
+    METH_NOARGS,                         // flags
+
+    "get_msaa_sample_counts() -> list[int]\n"
+    "\n"
+    "MSAA sample counts the user can choose between on this device.\n"
+    "\n"
+    "Empty where MSAA is not user-configurable. Must be called from the\n"
+    "logic thread.\n"
+    "\n"
+    ":meta private:\n",
+};
+
 // --------------------------- supports_max_fps --------------------------------
 
 static auto PySupportsMaxFPS(PyObject* self) -> PyObject* {
@@ -2231,6 +2267,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFullscreenControlAvailableDef,
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
+      PyGetMSAASampleCountsDef,
       PySupportsMaxFPSDef,
       PyGetLastFPSDef,
       PySupportsUnicodeDisplayDef,

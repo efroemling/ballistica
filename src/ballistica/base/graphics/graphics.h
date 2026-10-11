@@ -209,6 +209,19 @@ class Graphics {
   auto GraphicsQualityFromAppConfig() -> GraphicsQualityRequest;
   auto VSyncFromAppConfig() -> VSyncRequest;
 
+  /// The requested MSAA sample count from the app config:
+  /// kMSAASamplesAuto to let the renderer decide, 0 for off, or an
+  /// explicit count. Always kMSAASamplesAuto where SupportsMSAASetting()
+  /// is false.
+  auto MSAAFromAppConfig() -> int;
+
+  /// Whether MSAA is user-configurable in this build. Currently desktop
+  /// only; mobile GPUs get whatever the renderer decides (resolving
+  /// multisampled depth is costly and fragile there).
+  static auto SupportsMSAASetting() -> bool;
+
+  static constexpr int kMSAASamplesAuto = -1;
+
   static auto IsShaderTransparent(ShadingType c) -> bool;
   /// The environment cube map for a reflection type, from the
   /// app-mode-supplied base asset set (see babase.set_base_asset_set).

@@ -231,6 +231,17 @@ class BGDynamicsChannelWorker {
     }
   }
 
+  /// How many Sims are live right now.
+  auto live_count() const -> int {
+    int count = 0;
+    for (const auto& sim : sims_) {
+      if (sim) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   /// Do away with every Sim. For a world being taken down: Sims hold
   /// bodies and such in the world, so they have to go before it does.
   void Clear() {

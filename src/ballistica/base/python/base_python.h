@@ -111,6 +111,7 @@ class BasePython {
     kInputTypeClass,
     kPermissionClass,
     kSpecialCharClass,
+    kSoundPriorityClass,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,
@@ -189,6 +190,7 @@ class BasePython {
   auto IsPyEnum_InputType(PyObject* obj) -> bool;
   auto GetPyEnum_InputType(PyObject* obj) -> InputType;
   auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
+  auto GetPyEnum_SoundPriority(PyObject* obj) -> SoundPriority;
 
   auto PyQuitType(QuitType val) -> PythonRef;
 

@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/core/logging/logging.h"
@@ -24,6 +26,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/json_facade.h"
 
 namespace ballistica::base {
 
@@ -168,10 +171,12 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 // pipeline on authored mixes) marks the sound as always-listener-space.
 // Returns false without logging if the file can't be opened or parsed;
 // the full load paths downstream own error reporting and fallbacks.
-static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
-    -> bool {
+static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed,
+                     std::string* play_group, std::string* priority) -> bool {
   *is_streamed = false;
   *pre_mixed = false;
+  play_group->clear();
+  priority->clear();
 
   auto blob = AssetBlob::FromFile(file_name);
   if (!blob.exists()) {
@@ -201,9 +206,16 @@ static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
   if (comment != nullptr) {
     for (int i = 0; i < comment->comments; ++i) {
       const char* entry = comment->user_comments[i];
-      if (entry != nullptr && strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
+      if (entry == nullptr) {
+        continue;
+      }
+      if (strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
         *pre_mixed = true;
-        break;
+      } else if (strncmp(entry, "BA_PLAY_GROUP=", 14) == 0) {
+        // (See SoundAsset::ApplyPlaySettings for the values of these.)
+        *play_group = entry + 14;
+      } else if (strncmp(entry, "BA_PRIORITY=", 12) == 0) {
+        *priority = entry + 12;
       }
     }
   }
@@ -307,7 +319,74 @@ SoundAsset::SoundAsset(const std::string& file_name_in)
     : file_name_(file_name_in) {
   file_name_full_ =
       g_base->assets->FindAssetFile(Assets::FileType::kSound, file_name_in);
+  ApplyPlaySettings("", "");
+
+  // Builds with audio learn a sound's play settings from tags in the
+  // sound itself, at preload. A headless build has no sound to read
+  // them from, but hosting still wants them (they bear on which plays
+  // are worth sending to clients; see Scene::ShouldSendPlay_), so its
+  // packages carry them in a little json file for each sound that sets
+  // any. Sounds set alike share one file, so remember what each said.
+  if (g_core->HeadlessMode()) {
+    std::string meta_path = g_base->assets->FindCasSoundMetaPath(file_name_in);
+    if (!meta_path.empty()) {
+      static std::unordered_map<std::string,
+                                std::pair<std::string, std::string>>
+          settings_by_path;
+      auto i = settings_by_path.find(meta_path);
+      if (i == settings_by_path.end()) {
+        std::pair<std::string, std::string> settings;
+        auto blob = AssetBlob::FromFile(meta_path);
+        std::string text = blob.exists() ? blob.ToString() : "";
+        auto doc = JsonDoc::Parse(text, {.max_bytes = 4096});
+        if (doc && doc->root().is_object()) {
+          settings.first = doc->root()["play_group"].string_or("");
+          settings.second = doc->root()["priority"].string_or("");
+        } else {
+          g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                               "Unreadable play settings for sound '"
+                                   + file_name_in + "'; using defaults.");
+        }
+        i = settings_by_path.emplace(meta_path, settings).first;
+      }
+      ApplyPlaySettings(i->second.first, i->second.second);
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
+        return "Sound '" + file_name_ + "' has play settings (play_group='"
+               + g_base->audio->PlayGroupName(play_group_)
+               + "' priority=" + std::to_string(priority_.load()) + ").";
+      });
+    }
+  }
   valid_ = true;
+}
+
+void SoundAsset::ApplyPlaySettings(const std::string& group,
+                                   const std::string& priority) {
+  const char* custom_prefix = "custom:";
+  std::string group_name;
+  bool unique = (group == "unique");
+  if (group.rfind(custom_prefix, 0) == 0) {
+    group_name =
+        Audio::NormalizePlayGroupName(group.substr(strlen(custom_prefix)));
+  }
+  if (group_name.empty() && !unique) {
+    group_name = Audio::AutoPlayGroupName(file_name_);
+  }
+  // (A name with nothing left to go by gets a group of its own too.)
+  play_group_ = group_name.empty() ? g_base->audio->NewUniquePlayGroup()
+                                   : g_base->audio->InternPlayGroup(group_name);
+
+  AudioPriority priority_val = AudioPriority::kDefault;
+  if (priority == "lower") {
+    priority_val = AudioPriority::kLower;
+  } else if (priority == "low") {
+    priority_val = AudioPriority::kLow;
+  } else if (priority == "high") {
+    priority_val = AudioPriority::kHigh;
+  } else if (priority == "higher") {
+    priority_val = AudioPriority::kHigher;
+  }
+  priority_ = static_cast<int>(priority_val);
 }
 
 auto SoundAsset::GetAssetType() const -> AssetType { return AssetType::kSound; }
@@ -342,11 +421,19 @@ void SoundAsset::DoPreload() {
   // load-buffer here. Probe failures classify as non-streamed and fall
   // through to the full load path, which owns error reporting and
   // fallbacks.
-  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_);
+  std::string play_group;
+  std::string priority;
+  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_, &play_group,
+           &priority);
+  if (!play_group.empty() || !priority.empty()) {
+    ApplyPlaySettings(play_group, priority);
+  }
   g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
     return "Classified sound '" + file_name_
            + "' (streamed=" + std::to_string(is_streamed_)
-           + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
+           + " pre_mixed=" + std::to_string(pre_mixed_) + " play_group='"
+           + g_base->audio->PlayGroupName(play_group_)
+           + "' priority=" + std::to_string(priority_.load()) + ").";
   });
   if (!is_streamed_) {
     if (kUseDecodedAudioCache) {

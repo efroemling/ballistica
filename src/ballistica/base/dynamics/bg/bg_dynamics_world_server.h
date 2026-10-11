@@ -219,6 +219,11 @@ class BGDynamicsWorldServer {
   std::vector<BGDynamicsDrawSnapshot*> recycled_snapshots_;
   void RecycleSnapshotLocked_(BGDynamicsDrawSnapshot* snapshot);
   auto TakeRecycledSnapshot_() -> BGDynamicsDrawSnapshot*;
+  // Always-on step cost accounting: load_window_ fills over
+  // kLoadWindowSteps steps (sums and maxes), then becomes the per-step
+  // averages in load_stats_, which every bundle carries back.
+  BGDynamicsLoadStats load_window_;
+  BGDynamicsLoadStats load_stats_;
   // BA_DYNAMICS_PROFILE=1: per-phase step timing, logged every 300 steps.
   double profile_channels_ms_{};
   double profile_chunks_ms_{};

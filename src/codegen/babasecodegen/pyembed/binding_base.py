@@ -72,6 +72,7 @@ values = [
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
     enums.SpecialChar,  # kSpecialCharClass
+    enums.SoundPriority,  # kSoundPriorityClass
     _hooks.hash_strings,  # kHashStringsCall
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     _hooks.implicit_sign_in,  # kImplicitSignInCall

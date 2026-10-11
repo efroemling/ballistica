@@ -353,6 +353,9 @@ class GraphicsServer {
   }
 
   TextureQualityRequest texture_quality_requested_{};
+  // Latest value from settings (Graphics::kMSAASamplesAuto by default);
+  // kept here so a renderer created later still gets it.
+  int msaa_samples_requested_{-1};
   TextureQuality texture_quality_{};
   GraphicsQualityRequest graphics_quality_requested_{};
   GraphicsQuality graphics_quality_{};

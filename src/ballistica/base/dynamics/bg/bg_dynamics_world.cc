@@ -178,6 +178,7 @@ void BGDynamicsWorld::SetDrawSnapshot(BGDynamicsDrawSnapshot* s) {
 
 void BGDynamicsWorld::SetOutputBundle(BGDynamicsOutputBundle* bundle) {
   assert(g_base->InLogicThread());
+  load_stats_ = bundle->load_stats;
   BGDynamicsForEachPair(
       channels_, bundle->channels,
       [](auto& channel, auto& outputs) { channel.Adopt(&outputs); });
@@ -224,19 +225,40 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
     if (millisecs_since_bump_ >= 1000 && load_skip_ < 1.0f) {
       load_skip_ = std::min(1.0f, load_skip_ + 0.25f);
       millisecs_since_bump_ = 0;
-      // Warn, but no more than once per 30s: a machine hovering at the
+      // Warn, but no more than once per 60s: a machine hovering at the
       // threshold would otherwise bump, recover and bump forever.
-      if (millisecs_since_bump_log_ >= 30000) {
+      if (millisecs_since_bump_log_ >= 60000) {
         std::string suffix;
         if (unlogged_bumps_ > 0) {
           suffix = " (+" + std::to_string(unlogged_bumps_)
                    + " unlogged bumps since last warning)";
         }
-        char buf[200];
+        // Say where the bg thread's time has been going, so the field
+        // tells us what shedding could buy: wall well over cpu is a
+        // thread that isn't being run (nothing to shed); otherwise the
+        // phase shares and counts say whether it is rigs or expendables
+        // (debris, tendrils). The solve covers rigs and debris alike;
+        // the body and chunk counts are the only split of it.
+        const BGDynamicsLoadStats& ls = load_stats_;
+        double phases =
+            std::max(ls.channels_ms + ls.chunks_ms + ls.tendrils_ms
+                         + ls.worldstep_ms + ls.snapshot_ms + ls.publish_ms,
+                     1e-9);
+        char buf[640];
         snprintf(buf, sizeof(buf),
                  "bg-dynamics overloaded (%.0f%% of feeds dropped this"
-                 " second); character-rig load skip -> %.2f%s",
-                 100.0f * drop_ratio, load_skip_, suffix.c_str());
+                 " second); character-rig load skip -> %.2f%s; bg step"
+                 " %.1fms wall, %.1fms cpu over last %d steps (rigs %.0f%%,"
+                 " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
+                 " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
+                 " %d bodies, %d joints; logic step %dms",
+                 100.0f * drop_ratio, load_skip_, suffix.c_str(), ls.wall_ms,
+                 ls.cpu_ms, ls.steps, 100.0 * ls.channels_ms / phases,
+                 100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
+                 100.0 * ls.worldstep_ms / phases,
+                 100.0 * ls.snapshot_ms / phases,
+                 100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks,
+                 ls.tendrils, ls.bodies, ls.joints, step_millisecs);
         g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
         millisecs_since_bump_log_ = 0;
         unlogged_bumps_ = 0;

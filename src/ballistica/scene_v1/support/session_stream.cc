@@ -448,6 +448,10 @@ auto SessionCommandName(uint8_t cmd) -> const char* {
       return "SetNodeAttrDepictionNull";
     case SessionCommand::kScreenMessageTopDepiction:
       return "ScreenMessageTopDepiction";
+    case SessionCommand::kPlaySoundEx:
+      return "PlaySoundEx";
+    case SessionCommand::kPlaySoundAtPositionEx:
+      return "PlaySoundAtPositionEx";
     default:
       return "?";
   }
@@ -1954,16 +1958,26 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 
 void SessionStream::PlaySoundAtPosition(SceneSound* sound, float volume,
-                                        float x, float y, float z) {
+                                        float x, float y, float z,
+                                        const SoundPlayOptions& options) {
   assert(IsValidSound(sound));
   assert(IsValidScene(sound->scene()));
 
   // FIXME: We shouldn't need to be passing all these as full floats. :-(
-  WriteCommandInt64(SessionCommand::kPlaySoundAtPosition, sound->stream_id());
+  if (options.any()) {
+    WriteCommandInt64_3(SessionCommand::kPlaySoundAtPositionEx,
+                        sound->stream_id(), options.group_cap,
+                        options.priority + 1);
+  } else {
+    WriteCommandInt64(SessionCommand::kPlaySoundAtPosition, sound->stream_id());
+  }
   WriteFloat(volume);
   WriteFloat(x);
   WriteFloat(y);
   WriteFloat(z);
+  if (options.any()) {
+    WriteString(options.group);
+  }
   EndCommand();
 }
 
@@ -1999,13 +2013,22 @@ void SessionStream::EmitInputDeviceFeedback(int player_id,
   EndCommand();
 }
 
-void SessionStream::PlaySound(SceneSound* sound, float volume) {
+void SessionStream::PlaySound(SceneSound* sound, float volume,
+                              const SoundPlayOptions& options) {
   assert(IsValidSound(sound));
   assert(IsValidScene(sound->scene()));
 
   // FIXME: We shouldn't need to be passing all these as full floats. :-(
-  WriteCommandInt64(SessionCommand::kPlaySound, sound->stream_id());
+  if (options.any()) {
+    WriteCommandInt64_3(SessionCommand::kPlaySoundEx, sound->stream_id(),
+                        options.group_cap, options.priority + 1);
+  } else {
+    WriteCommandInt64(SessionCommand::kPlaySound, sound->stream_id());
+  }
   WriteFloat(volume);
+  if (options.any()) {
+    WriteString(options.group);
+  }
   EndCommand();
 }
 
