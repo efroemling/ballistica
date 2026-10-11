@@ -2,6 +2,7 @@
 
 #include "ballistica/base/audio/audio.h"
 
+#include <cstdio>
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
@@ -63,6 +64,7 @@ void Audio::SetVolumes(float music_volume, float sound_volume) {
 }
 
 void Audio::SetSoundPitch(float pitch) {
+  sound_pitch_ = pitch;
   g_base->audio_server->PushSetSoundPitchCall(pitch);
 }
 
@@ -90,7 +92,7 @@ void Audio::PushSourceFadeOutCall(uint32_t play_id, uint32_t time) {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "LocalValueEscapesScope"
 
-auto Audio::SourceBeginNew() -> AudioSource* {
+auto Audio::SourceBeginNew(SoundAsset* for_sound) -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
 
   AudioSource* s = nullptr;
@@ -120,18 +122,21 @@ auto Audio::SourceBeginNew() -> AudioSource* {
     }
   }
   if (!s) {
-    WarnNoSourceAvailable_();
+    WarnNoSourceAvailable_(for_sound);
   }
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
   return s;
 }
 
-void Audio::WarnNoSourceAvailable_() {
+void Audio::WarnNoSourceAvailable_(SoundAsset* for_sound) {
   // Nothing to say on headless or a null audio device (no sources ever
   // exist there).
   if (source_pool_empty()) {
     return;
   }
+  // Count every drop, including the ones the rate limit below keeps
+  // quiet, so a warning can say how many it stands for.
+  dropped_plays_since_warn_++;
   // Callers drop the play when we come up empty. One-shot sounds are
   // re-requested on the next event so a dropped one is harmless, but keep
   // this visible: it is the tell for the startup race where sounds get
@@ -142,16 +147,24 @@ void Audio::WarnNoSourceAvailable_() {
     return;
   }
   last_no_source_warn_time_ = now;
+  int dropped = dropped_plays_since_warn_.exchange(0);
   if (!server_ready_) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kWarning,
         "No audio source available; the audio server is still starting up "
         "(device open in progress). Dropping this play request.");
   } else {
-    g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
-                         "No audio source available (all "
-                             + std::to_string(client_sources_.size())
-                             + " sources busy). Dropping this play request.");
+    char pitch[16];
+    snprintf(pitch, sizeof(pitch), "%.2f", sound_pitch_.load());
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "No audio source available (all "
+            + std::to_string(client_sources_.size())
+            + " sources busy). Dropping play of "
+            + (for_sound ? "'" + for_sound->GetName() + "'" : "(unnamed)")
+            + "; " + std::to_string(dropped)
+            + " play(s) dropped since the last report; sound pitch " + pitch
+            + ".");
     // Have the audio thread say what they are all doing; this alone
     // doesn't tell a busy moment from a leak.
     g_base->audio_server->PushSourceCensusCall();
@@ -264,7 +277,7 @@ auto Audio::PlaySound(SoundAsset* sound, float volume)
   if (!ShouldPlay(sound)) {
     return play_id;
   }
-  AudioSource* s = SourceBeginNew();
+  AudioSource* s = SourceBeginNew(sound);
   if (s) {
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
@@ -297,7 +310,7 @@ auto Audio::PlaySoundAtPosition(SoundAsset* sound, float volume, float x,
     return play_id;
   }
   // Run locally.
-  if (AudioSource* source = SourceBeginNew()) {
+  if (AudioSource* source = SourceBeginNew(sound)) {
     source->SetGain(volume);
     source->SetPositional(true);
     source->SetPosition(x, y, z);

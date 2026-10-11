@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261007a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261010`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 442
+# ba_meta require asset-package 590
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261007a
-_ASSET_PACKAGE = ApverNum(442)
+# a-0.baclassicassets.261010
+_ASSET_PACKAGE = ApverNum(590)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (

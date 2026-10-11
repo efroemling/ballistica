@@ -572,6 +572,13 @@ class Platform {
   /// the logic thread for the Python music subsystem to act on.
   void SetOSMusicPlaying(bool playing);
 
+  /// Stop trusting SetOSMusicPlaying() reports for the rest of this run;
+  /// os_music_playing() reads false from here on (flipping back, with
+  /// the usual forwarding, if we were yielding). For when the platform's
+  /// signal can't tell our own audio from another app's (Android audio
+  /// output on OpenSL ES can't be tagged as game audio). Any thread.
+  void IgnoreOSMusicPlaying(const char* reason);
+
   /// Pass platform-specific misc-read-vals along to the OS (as a json
   /// string).
   virtual void SetPlatformMiscReadVals(const std::string& vals);
@@ -707,6 +714,12 @@ class Platform {
 
   // See os_music_playing(). Written from arbitrary platform threads.
   std::atomic<bool> os_music_playing_{};
+
+  // What the platform last reported, and whether we've stopped
+  // believing it (see IgnoreOSMusicPlaying()).
+  std::mutex os_music_mutex_;
+  bool os_music_reported_{};
+  bool os_music_ignored_{};
 };
 
 }  // namespace ballistica::core

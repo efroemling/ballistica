@@ -1,5 +1,15 @@
-### 1.8.0 (build 23047, api 9, 2026-10-09)
+### 1.8.0 (build 23048, api 9, 2026-10-10)
 - Fixed co-op high scores not being accepted from Android builds.
+- Fixed game music never playing on some Android devices (Android 8.1,
+  and devices whose audio output runs on OpenSL ES). The game's own sound
+  was being mistaken for another app's music, which game music politely
+  yields to. Yielding now needs Android 9+ and is skipped on OpenSL.
+- Trimmed long quiet tails from the explosion, impact, punch, drum-roll
+  and cymbal sounds (one explosion ran over 10 seconds) so busy fights,
+  especially in Epic mode, are less likely to run out of audio sources
+  and drop sounds. The dropped-sound warning now names the sound and
+  counts how many were dropped.
+- Fixed an error when enabling a public party.
 - Fixed a crash on Windows (an access violation in `libGLESv2.dll`,
   anywhere from seconds to half an hour into a run, on NVIDIA and Intel
   graphics alike). It was a bug in ANGLE's Direct3D 11 backend: its
