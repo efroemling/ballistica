@@ -15,6 +15,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
@@ -313,6 +314,11 @@ auto ClientSession::DoesFillScreen() const -> bool {
 }
 
 void ClientSession::Draw(base::FrameDef* f) {
+  // What we draw here was authored by whoever hosted (or recorded)
+  // this session; texture-role mismatches in it are theirs to hear
+  // about, not ours.
+  base::TextureAsset::ScopedSlotWarningSuppress slot_warning_suppress;
+
   // Just go through and draw all of our scenes.
   for (auto&& i : scenes_) {
     // NOTE - here we draw scenes in the order they were created, but

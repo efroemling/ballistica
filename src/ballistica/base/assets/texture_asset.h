@@ -95,7 +95,28 @@ class TextureAsset : public Asset {
     }
   }
 
+  /// Scope during which slot-mismatch warnings are withheld (logic
+  /// thread only). For drawing content authored elsewhere - a remote
+  /// host's scene or a replay - where the mismatch is someone else's
+  /// to fix and the local player can do nothing with the warning.
+  /// Withheld warnings are not consumed; the same texture still warns
+  /// if locally authored content misuses it later.
+  class ScopedSlotWarningSuppress {
+   public:
+    ScopedSlotWarningSuppress() : prev_{slot_warnings_suppressed_} {
+      slot_warnings_suppressed_ = true;
+    }
+    ~ScopedSlotWarningSuppress() { slot_warnings_suppressed_ = prev_; }
+    ScopedSlotWarningSuppress(const ScopedSlotWarningSuppress&) = delete;
+    auto operator=(const ScopedSlotWarningSuppress&)
+        -> ScopedSlotWarningSuppress& = delete;
+
+   private:
+    bool prev_;
+  };
+
  private:
+  static bool slot_warnings_suppressed_;
   void WarnSlotMismatch_(const char* slot);
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};

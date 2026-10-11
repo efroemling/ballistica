@@ -1,4 +1,18 @@
-### 1.8.0 (build 23048, api 9, 2026-10-10)
+### 1.8.0 (build 23049, api 9, 2026-10-11)
+- Reworked how character arms and legs stretch to stay connected: each
+  segment keeps its far end in place and reaches its elbow or knee end
+  to meet its neighbour, so limbs join cleanly at any pose. A limb whose
+  elbow or knee breaks in a shatter stops stretching; the rest keep
+  going.
+- Fixed sounds missing from some server messages (purchases, rewards,
+  league promotions and the like).
+- Texture-role mismatch warnings are no longer logged for content coming
+  from a remote host or a replay; they are meant for whoever authored it.
+- Android: the 'gl view aspect differs from window aspect' warning no
+  longer fires at launch while the system bars are still hiding; it now
+  only reports a mismatch that persists, with more detail.
+- `BA_NO_UDP=1` runs no longer log a spurious 'DoPoll called with neither
+  sd4 or sd6 set' error.
 - Fixed co-op high scores not being accepted from Android builds.
 - Fixed game music never playing on some Android devices (Android 8.1,
   and devices whose audio output runs on OpenSL ES). The game's own sound

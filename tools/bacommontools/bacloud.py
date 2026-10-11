@@ -1143,7 +1143,9 @@ class App:
         return (plan.finalize_command, dataclass_to_dict(commit))
 
     def _handle_downloads_signed(
-        self, downloads_signed: list[StandardResponseData.SignedDownloadEntry]
+        self,
+        downloads_signed: list[StandardResponseData.SignedDownloadEntry],
+        progress: StandardResponseData.SignedDownloadsProgress | None = None,
     ) -> None:
         """Handle direct-from-GCS streaming downloads via signed URLs.
 
@@ -1240,10 +1242,19 @@ class App:
         # get, the download phase is ~17s at 4 workers, ~5s at 16 and
         # ~3s at 32. We share the connection pool's worker count so
         # every worker keeps a reused connection.
-        total_count = len(downloads_signed)
-        total_bytes = sum(entry.size for entry in downloads_signed)
-        done_count = 0
-        done_bytes = 0
+        #
+        # When this batch is one of several making up a larger job, we
+        # report against the whole job instead of the batch.
+        if progress is not None:
+            total_count = progress.total_count
+            total_bytes = progress.total_bytes
+            done_count = progress.prior_count
+            done_bytes = progress.prior_bytes
+        else:
+            total_count = len(downloads_signed)
+            total_bytes = sum(entry.size for entry in downloads_signed)
+            done_count = 0
+            done_bytes = 0
         last_print_time = time.monotonic()
         with ThreadPoolExecutor(max_workers=_download_workers()) as executor:
             futures = {
@@ -1335,7 +1346,9 @@ class App:
         if response.downloads_inline:
             self._handle_downloads_inline(response.downloads_inline)
         if response.downloads_signed:
-            self._handle_downloads_signed(response.downloads_signed)
+            self._handle_downloads_signed(
+                response.downloads_signed, response.downloads_signed_progress
+            )
         if response.dir_prune_empty:
             self._handle_dir_prune_empty(response.dir_prune_empty)
         if response.workspace_snapshotid is not None:

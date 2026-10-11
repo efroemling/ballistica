@@ -610,7 +610,12 @@ void TextureAsset::DoUnload() {
   role_ = TextureRole::kUnknown;
 }
 
+bool TextureAsset::slot_warnings_suppressed_{};
+
 void TextureAsset::WarnSlotMismatch_(const char* slot) {
+  if (slot_warnings_suppressed_) {
+    return;
+  }
   // Once per texture: a mismatch repeats on every frame it is drawn.
   role_slot_warned_ = true;
   char buffer[512];

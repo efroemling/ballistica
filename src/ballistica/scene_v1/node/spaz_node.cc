@@ -68,14 +68,111 @@ enum LimbIndex {
   kLimbLeftToes,
   kLimbCount
 };
-// Points on the lower limb that the upper limb's mesh stretches to
-// reach (the lower joint's anchor2; the main-sim rig's construction
-// values). Like every kSpazRig* constant, these come from
-// generated/spaz_rig.h, generated from the one home of the rig's
-// numbers (tools/bacommon/characterrig.py), which tools showing
-// characters outside the game read too. Change them there.
-const Vector3f kArmStretchPoint{kSpazRigArmStretchPoint};
-const Vector3f kLegStretchPoint{kSpazRigLegStretchPoint};
+
+// How one limb segment's art stretches to keep meeting its neighbour
+// at their elbow or knee: the transform to draw it with, in the
+// segment's own space (so it goes on after the segment's matrix).
+//
+// Two points of the art are pinned. 'fixed', its far end, stays where
+// it is. 'own', its end at the joint, goes to the point midway between
+// itself and 'other', the joint's place on the neighbouring segment
+// (given in that segment's space). The art is stretched along the line
+// between the two and that line turned to its new heading, so nothing
+// across the segment changes size; the neighbour does the same from
+// its side and the two meet in the middle. With the joint together
+// the two ends are one point and this comes out as no change at all.
+//
+// The same math as the web character viewer's (bamaster's
+// bamaster_mesh_preview.ts), which is where it gets tuned. Like every
+// kSpazRig* constant, the points come from generated/spaz_rig.h,
+// generated from the one home of the rig's numbers
+// (tools/bacommon/characterrig.py), which tools showing characters
+// outside the game read too. Change them there.
+void CalcLimbStretch(const Matrix44f& seg, const Matrix44f& other_seg,
+                     const float* fixed, const float* own, const float* other,
+                     Matrix44f* out) {
+  // The neighbour's end of the joint, in our space (both matrices are
+  // rigid, so ours inverts as its transpose).
+  const float* s = seg.m;
+  const float* o = other_seg.m;
+  float w[3];
+  for (int i = 0; i < 3; ++i) {
+    w[i] = other[0] * o[i] + other[1] * o[4 + i] + other[2] * o[8 + i]
+           + o[12 + i] - s[12 + i];
+  }
+  float d[3];
+  float e[3];
+  for (int i = 0; i < 3; ++i) {
+    float theirs = w[0] * s[i * 4] + w[1] * s[i * 4 + 1] + w[2] * s[i * 4 + 2];
+    d[i] = own[i] - fixed[i];
+    e[i] = (own[i] + theirs) * 0.5f - fixed[i];
+  }
+  float ld = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  float le = sqrtf(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+  float* m = out->m;
+  if (ld < 0.0001f || le < 0.0001f) {
+    *out = kMatrix44fIdentity;
+    return;
+  }
+  float dh[3] = {d[0] / ld, d[1] / ld, d[2] / ld};
+  float eh[3] = {e[0] / le, e[1] / le, e[2] / le};
+  float grow = le / ld - 1.0f;
+
+  // The shortest turn from the old heading to the new (as a
+  // column-vector matrix), unless they are opposite: then no turn.
+  float c = dh[0] * eh[0] + dh[1] * eh[1] + dh[2] * eh[2];
+  float a[3][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+  if (c > -0.9999f) {
+    float v[3] = {dh[1] * eh[2] - dh[2] * eh[1], dh[2] * eh[0] - dh[0] * eh[2],
+                  dh[0] * eh[1] - dh[1] * eh[0]};
+    float k = 1.0f / (1.0f + c);
+    float vv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    for (int row = 0; row < 3; ++row) {
+      for (int col = 0; col < 3; ++col) {
+        a[row][col] += k * (v[row] * v[col] - (row == col ? vv : 0.0f));
+      }
+    }
+    a[0][1] -= v[2];
+    a[0][2] += v[1];
+    a[1][0] += v[2];
+    a[1][2] -= v[0];
+    a[2][0] -= v[1];
+    a[2][1] += v[0];
+  } else {
+    eh[0] = dh[0];
+    eh[1] = dh[1];
+    eh[2] = dh[2];
+  }
+  // Then the stretch along the old heading, which the turn carries to
+  // the new one.
+  for (int row = 0; row < 3; ++row) {
+    for (int col = 0; col < 3; ++col) {
+      a[row][col] += grow * eh[row] * dh[col];
+    }
+  }
+  // All of it about the fixed point.
+  for (int row = 0; row < 3; ++row) {
+    for (int col = 0; col < 3; ++col) {
+      m[col * 4 + row] = a[row][col];
+    }
+    m[12 + row] =
+        fixed[row]
+        - (a[row][0] * fixed[0] + a[row][1] * fixed[1] + a[row][2] * fixed[2]);
+  }
+  m[3] = m[7] = m[11] = 0.0f;
+  m[15] = 1.0f;
+}
+
+// The pinned far ends of the lower segments (see CalcLimbStretch): a
+// forearm's wrist, where its hand is drawn, and the middle of a lower
+// leg level with its ankle.
+const float kWristOnLowerArm[3]{0.0f, 0.0f, kSpazRigHandOffset};
+const float kHeelOnLowerLeg[3]{kSpazRigKneeOnLowerLeg[0],
+                               kSpazRigKneeOnLowerLeg[1],
+                               kSpazRigAnkleOnLowerLeg[2]};
+const float kShoulderOnUpperLeftArm[3]{-kSpazRigShoulderOnUpperArm[0],
+                                       kSpazRigShoulderOnUpperArm[1],
+                                       kSpazRigShoulderOnUpperArm[2]};
 
 // Initial limb joint targets when there are no main-sim limb joints to
 // read them from (bg limbs): what the constructor's joint creation
@@ -3947,32 +4044,53 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   for (int i = 0; i < kLimbCount; ++i) {
     limb_ok[i] = LimbRenderMatrix_(i, &limb_m[i]);
   }
-  // Upper limb meshes stretch to fill the gap between their root
-  // socket on the core body and their socket on the lower limb.
-  auto limb_stretch = [&](int lower, RigidBody* root, const float* root_anchor,
-                          const Vector3f& lower_point, float rest) -> float {
-    if (shattered_ || !limb_ok[lower]) {
-      return 1.0f;
+  // The two segments of each arm and leg stretch to keep meeting at
+  // their elbow or knee (see CalcLimbStretch), unless a shatter broke
+  // that joint: then neither side reaches for the other.
+  Matrix44f stretch_m[kLimbRightToes];
+  bool stretch_on[kLimbRightToes] = {};
+  auto stretch_pair = [&](int upper, const float* far_on_upper,
+                          const float* joint_on_upper,
+                          const float* joint_on_lower,
+                          const float* far_on_lower, uint32_t broken) {
+    int lower = upper + 1;
+    if (!limb_ok[upper] || !limb_ok[lower]
+        || (shattered_ && (shatter_damage_ & broken))) {
+      return;
     }
-    Vector3f p_root = root->GetTransform() * Vector3f(root_anchor);
-    Vector3f p_lower = limb_m[lower] * lower_point;
-    return std::min(kSpazRigLimbStretchMax, (p_root - p_lower).Length() / rest);
+    CalcLimbStretch(limb_m[upper], limb_m[lower], far_on_upper, joint_on_upper,
+                    joint_on_lower, &stretch_m[upper]);
+    CalcLimbStretch(limb_m[lower], limb_m[upper], far_on_lower, joint_on_lower,
+                    joint_on_upper, &stretch_m[lower]);
+    stretch_on[upper] = stretch_on[lower] = true;
   };
+  stretch_pair(kLimbUpperRightArm, kSpazRigShoulderOnUpperArm,
+               kSpazRigElbowOnUpperArm, kSpazRigElbowOnLowerArm,
+               kWristOnLowerArm, kLowerRightArmJointBroken);
+  stretch_pair(kLimbUpperLeftArm, kShoulderOnUpperLeftArm,
+               kSpazRigElbowOnUpperArm, kSpazRigElbowOnLowerArm,
+               kWristOnLowerArm, kLowerLeftArmJointBroken);
+  stretch_pair(kLimbUpperRightLeg, kSpazRigHipOnUpperLeg,
+               kSpazRigKneeOnUpperLeg, kSpazRigKneeOnLowerLeg, kHeelOnLowerLeg,
+               kLowerRightLegJointBroken);
+  stretch_pair(kLimbUpperLeftLeg, kSpazRigHipOnUpperLeg, kSpazRigKneeOnUpperLeg,
+               kSpazRigKneeOnLowerLeg, kHeelOnLowerLeg,
+               kLowerLeftLegJointBroken);
 
-  // Right upper arm.
-  float right_stretch =
-      limb_stretch(kLimbLowerRightArm, body_torso_.get(),
-                   joint_targets_[kSpazJointUpperRightArm].anchor1,
-                   kArmStretchPoint, kSpazRigArmStretchRest);
   // If we've got flippers instead of arms, shorten them if we've got gloves
   // on so they don't intersect as badly.
-  if (flippers_ && have_boxing_gloves_) {
-    right_stretch *= 0.5f;
-  }
+  const float arm_squash = (flippers_ && have_boxing_gloves_) ? 0.5f : 1.0f;
+
+  // Right upper arm.
   if (limb_ok[kLimbUpperRightArm]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbUpperRightArm].m);
-    c->Scale(1.0f, 1.0f, right_stretch);
+    if (stretch_on[kLimbUpperRightArm]) {
+      c->MultMatrix(stretch_m[kLimbUpperRightArm].m);
+    }
+    if (arm_squash != 1.0f) {
+      c->Scale(1.0f, 1.0f, arm_squash);
+    }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
@@ -3989,9 +4107,14 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->MultMatrix(limb_m[kLimbLowerRightArm].m);
     {
       auto xf = c->ScopedTransform();
-      c->Translate(0, 0, kSpazRigForearmStretchPivot);
-      c->Scale(1.0f, 1.0f, right_stretch);
-      c->Translate(0.0f, 0.0f, -kSpazRigForearmStretchPivot);
+      if (stretch_on[kLimbLowerRightArm]) {
+        c->MultMatrix(stretch_m[kLimbLowerRightArm].m);
+      }
+      if (arm_squash != 1.0f) {
+        c->Translate(0, 0, kSpazRigForearmStretchPivot);
+        c->Scale(1.0f, 1.0f, arm_squash);
+        c->Translate(0.0f, 0.0f, -kSpazRigForearmStretchPivot);
+      }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
@@ -4025,11 +4148,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   if (limb_ok[kLimbUpperRightLeg]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbUpperRightLeg].m);
-    float stretch =
-        limb_stretch(kLimbLowerRightLeg, body_pelvis_.get(),
-                     joint_targets_[kSpazJointUpperRightLeg].anchor1,
-                     kLegStretchPoint, kSpazRigLegStretchRest);
-    c->Scale(1.0f, 1.0f, stretch);
+    if (stretch_on[kLimbUpperRightLeg]) {
+      c->MultMatrix(stretch_m[kLimbUpperRightLeg].m);
+    }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
@@ -4043,6 +4164,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   if (limb_ok[kLimbLowerRightLeg]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbLowerRightLeg].m);
+    if (stretch_on[kLimbLowerRightLeg]) {
+      c->MultMatrix(stretch_m[kLimbLowerRightLeg].m);
+    }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
@@ -4074,20 +4198,15 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   // Left wing (mirrored, so with the left limbs).
   wing_attachments(true);
 
-  // Left upper arm.
-  float left_stretch =
-      limb_stretch(kLimbLowerLeftArm, body_torso_.get(),
-                   joint_targets_[kSpazJointUpperLeftArm].anchor1,
-                   kArmStretchPoint, kSpazRigArmStretchRest);
-  // If we've got flippers instead of arms, shorten them if we've got gloves
-  // on so they don't intersect as badly.
-  if (flippers_ && have_boxing_gloves_) {
-    left_stretch *= 0.5f;
-  }
+  // Left upper arm. (The left side's stretch is worked out on its
+  // bodies as they are, so it goes on before the mirroring.)
   if (limb_ok[kLimbUpperLeftArm]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbUpperLeftArm].m);
-    c->Scale(-1, 1, left_stretch);
+    if (stretch_on[kLimbUpperLeftArm]) {
+      c->MultMatrix(stretch_m[kLimbUpperLeftArm].m);
+    }
+    c->Scale(-1, 1, arm_squash);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
@@ -4102,12 +4221,17 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     auto xf = c->ScopedTransform();
 
     c->MultMatrix(limb_m[kLimbLowerLeftArm].m);
-    c->Scale(-1, 1, 1);
     {
       auto x = c->ScopedTransform();
-      c->Translate(0, 0, kSpazRigForearmStretchPivot);
-      c->Scale(1, 1, left_stretch);
-      c->Translate(0, 0, -kSpazRigForearmStretchPivot);
+      if (stretch_on[kLimbLowerLeftArm]) {
+        c->MultMatrix(stretch_m[kLimbLowerLeftArm].m);
+      }
+      c->Scale(-1, 1, 1);
+      if (arm_squash != 1.0f) {
+        c->Translate(0, 0, kSpazRigForearmStretchPivot);
+        c->Scale(1, 1, arm_squash);
+        c->Translate(0, 0, -kSpazRigForearmStretchPivot);
+      }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
@@ -4119,6 +4243,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       }
     }
     if (!have_boxing_gloves_) {
+      c->Scale(-1, 1, 1);
       c->Translate(0, 0, kSpazRigHandOffset);
       if (holding_something_) {
         c->Rotate(-50, 0, 1, 0);
@@ -4141,10 +4266,10 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   if (limb_ok[kLimbUpperLeftLeg]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbUpperLeftLeg].m);
-    float stretch = limb_stretch(kLimbLowerLeftLeg, body_pelvis_.get(),
-                                 joint_targets_[kSpazJointUpperLeftLeg].anchor1,
-                                 kLegStretchPoint, kSpazRigLegStretchRest);
-    c->Scale(-1.0f, 1.0f, stretch);
+    if (stretch_on[kLimbUpperLeftLeg]) {
+      c->MultMatrix(stretch_m[kLimbUpperLeftLeg].m);
+    }
+    c->Scale(-1.0f, 1.0f, 1.0f);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     if (auto* mesh = part_mesh(Part::kUpperLeg)) {
@@ -4157,6 +4282,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   if (limb_ok[kLimbLowerLeftLeg]) {
     auto xf = c->ScopedTransform();
     c->MultMatrix(limb_m[kLimbLowerLeftLeg].m);
+    if (stretch_on[kLimbLowerLeftLeg]) {
+      c->MultMatrix(stretch_m[kLimbLowerLeftLeg].m);
+    }
     c->Scale(-1.0f, 1.0f, 1.0f);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
