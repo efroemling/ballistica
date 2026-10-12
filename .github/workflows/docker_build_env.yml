@@ -39,8 +39,6 @@ on:
     paths:
       - pconfig/docker/Dockerfile
       - .github/workflows/docker_build_env.yml
-  schedule:
-    - cron: "0 4 * * 1"
   workflow_dispatch:
 
 permissions:
