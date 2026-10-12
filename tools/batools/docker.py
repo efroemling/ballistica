@@ -10,9 +10,10 @@ SERVICE_NAME = {0: 'bombsquad_gui', 1: 'bombsquad_server'}
 
 # Prebuilt copies of the Dockerfile's build-env stage live at
 # ghcr.io/<repo>/bombsquad_build_env:<tag> (published by
-# .github/workflows/docker_build_env.yml). The tag is derived from the
-# Dockerfile's contents, so any repo's image with a given tag is
-# equivalent; the current repo is tried first, then upstream.
+# .github/workflows/docker_build_env.yml, which takes the tag from
+# get_build_env_tag() below). The tag is derived from the stage's
+# contents, so any repo's image with a given tag is equivalent; the
+# current repo is tried first, then upstream.
 BUILD_ENV_IMAGE_NAME = 'bombsquad_build_env'
 BUILD_ENV_UPSTREAM_REPO = 'efroemling/ballistica'
 BUILD_ENV_LOCAL_STAGE = 'build-env'
@@ -21,17 +22,30 @@ BUILD_ENV_LOCAL_STAGE = 'build-env'
 def get_build_env_tag() -> str:
     """Return the bombsquad_build_env tag matching our Dockerfile.
 
-    Must match the tag computed in .github/workflows/docker_build_env.yml
-    (first 16 hex chars of the Dockerfile's sha256).
+    Hashes only what the build-env stage is built from: the global ARGs
+    before the first FROM plus the stage itself, minus comments and
+    blank lines. So edits to the other stages (or comments) don't call
+    for a new image.
     """
     import hashlib
 
-    with open(os.path.join(DOCKER_DIR, 'Dockerfile'), 'rb') as infile:
-        digest = hashlib.sha256(infile.read()).hexdigest()
+    with open(os.path.join(DOCKER_DIR, 'Dockerfile'), encoding='utf-8') as f:
+        lines = f.read().splitlines()
+    relevant: list[str] = []
+    in_scope = True  # The global ARGs before the first FROM count.
+    for line in lines:
+        line = line.strip()
+        words = line.split()
+        if words and words[0].upper() == 'FROM':
+            in_scope = words[-1] == BUILD_ENV_LOCAL_STAGE
+        if in_scope and line and not line.startswith('#'):
+            relevant.append(line)
+    digest = hashlib.sha256('\n'.join(relevant).encode()).hexdigest()
     return f'deps-{digest[:16]}'
 
 
-def _image_has_platform(image: str, platform: str) -> bool:
+def image_has_platform(image: str, platform: str) -> bool:
+    """Return whether a registry image has a variant for a platform."""
     import json
 
     try:
@@ -49,14 +63,11 @@ def _image_has_platform(image: str, platform: str) -> bool:
         json.JSONDecodeError,
     ):
         return False
-    for entry in manifest.get('manifests', []):
-        plat = entry.get('platform', {})
-        entry_platform = '/'.join(
-            [plat.get('os', ''), plat.get('architecture', '')]
-        )
-        if entry_platform == platform:
-            return True
-    return False
+    return any(
+        f"{e.get('platform', {}).get('os')}/"
+        f"{e.get('platform', {}).get('architecture')}" == platform
+        for e in manifest.get('manifests', [])
+    )
 
 
 def get_build_env_image(platform: str | None) -> str:
@@ -71,6 +82,7 @@ def get_build_env_image(platform: str | None) -> str:
     if forced:
         return forced
 
+    platform = platform or 'linux/amd64'
     tag = get_build_env_tag()
     repos = [BUILD_ENV_UPSTREAM_REPO]
     github_repo = os.environ.get('GITHUB_REPOSITORY', '').lower()
@@ -78,12 +90,12 @@ def get_build_env_image(platform: str | None) -> str:
         repos.insert(0, github_repo)
     for repo in repos:
         image = f'ghcr.io/{repo}/{BUILD_ENV_IMAGE_NAME}:{tag}'
-        if _image_has_platform(image, platform or 'linux/amd64'):
+        if image_has_platform(image, platform):
             print(f'Using prebuilt build-env image {image}', flush=True)
             return image
     print(
-        f'No prebuilt {BUILD_ENV_IMAGE_NAME}:{tag} for'
-        f' {platform or 'linux/amd64'}; building build deps locally.',
+        f'No prebuilt {BUILD_ENV_IMAGE_NAME}:{tag} for {platform};'
+        ' building build deps locally.',
         flush=True,
     )
     return BUILD_ENV_LOCAL_STAGE
@@ -99,7 +111,7 @@ def _docker_compose(
     headless_build: bool | str | None = None,
     version: str | None = None,
     build_number: str | None = None,
-    build_env_image: str | None = None,
+    build_env_image: str,
 ) -> None:
 
     build_cmd = [
@@ -123,8 +135,7 @@ def _docker_compose(
         env['BS_HEADLESS_BUILD'] = '1' if headless_build else '0'
     if platform is not None:
         env['PLATFORM'] = platform
-    if build_env_image is not None:
-        env['BS_BUILD_ENV_IMAGE'] = build_env_image
+    env['BS_BUILD_ENV_IMAGE'] = build_env_image
 
     subprocess.run(build_cmd, check=True, env=env)
 

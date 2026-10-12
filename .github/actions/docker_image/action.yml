@@ -27,6 +27,14 @@ runs:
     - name: Setup build env
       uses: ./.github/actions/bombsquad_build_env
 
+    # Exports ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN, which the
+    # docker build takes as secrets so its sccache can use the Actions
+    # cache (see pconfig/docker/Dockerfile and docker-compose.yml).
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.11
+      with:
+        disable_annotations: true
+
     - name: Docker login
       uses: docker/login-action@v4
       with:

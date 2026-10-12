@@ -106,12 +106,8 @@ runs:
         echo "BA_APP_RUN_ENABLE_BUILDS=1" >> $GITHUB_ENV
         echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
 
-    # Runs for every job: it only installs sccache and exports
-    # ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN, which make docker-*
-    # builds pass into the container as build secrets (see
-    # pconfig/docker/Dockerfile). The cache itself is only enabled by
-    # SCCACHE_GHA_ENABLED (cmake jobs above) or by those secrets.
     - name: Setup sccache
+      if: ${{ inputs.using-cmake == 'true' }}
       uses: mozilla-actions/sccache-action@v0.0.11
       with:
         disable_annotations: true

@@ -6,11 +6,11 @@ name: Docker Build Env Image
 # dev container image (see .devcontainer/).
 #
 # Tags:
-#  deps-<hash>  Content tag: first 16 hex chars of the Dockerfile's
-#               sha256. batools.docker looks this up for the
-#               checked-out Dockerfile and builds the stage locally
-#               when it's missing, so a Dockerfile change never breaks
-#               anything while this catches up.
+#  deps-<hash>  Content tag from batools.docker.get_build_env_tag()
+#               (a hash of the build-env stage only). batools.docker
+#               looks this up for the checked-out Dockerfile and builds
+#               the stage locally when it's missing, so a Dockerfile
+#               change never breaks anything while this catches up.
 #  <version>    The project version (pconfig/projectconfig.json) at
 #               each release tag, e.g. 1.8.0, pointing at that
 #               release's deps-<hash>. For picking an environment by
@@ -57,13 +57,20 @@ jobs:
       version: ${{ steps.info.outputs.version }}
       need_build: ${{ steps.check.outputs.need_build }}
     steps:
+      # batools.docker needs nothing beyond the stdlib, so the runner's
+      # own python3 runs it without a venv.
       - uses: actions/checkout@v7
-      # The hash must match batools.docker.get_build_env_tag().
+        with:
+          sparse-checkout: |
+            pconfig
+            tools/batools
       - name: Compute image and version
         id: info
+        env:
+          PYTHONPATH: tools
         run: |
-          hash=$(sha256sum pconfig/docker/Dockerfile | cut -c1-16)
-          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_build_env:deps-${hash}" >> "$GITHUB_OUTPUT"
+          tag=$(python3 -c 'from batools.docker import get_build_env_tag as t; print(t())')
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_build_env:${tag}" >> "$GITHUB_OUTPUT"
           version=$(jq -r .version pconfig/projectconfig.json)
           if ! [[ "$version" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
             echo "::error::Version '$version' is not a valid image tag."
@@ -80,17 +87,16 @@ jobs:
         id: check
         env:
           IMAGE: ${{ steps.info.outputs.image }}
+          PYTHONPATH: tools
         run: |
           if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             echo "Manual run; rebuilding $IMAGE."
             echo "need_build=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          platforms=$(docker buildx imagetools inspect --raw "$IMAGE" 2>/dev/null \
-            | jq -r '[.manifests[]?.platform | "\(.os)/\(.architecture)"] | join(" ")' \
-            || true)
-          if [[ " $platforms " == *" linux/amd64 "* \
-              && " $platforms " == *" linux/arm64 "* ]]; then
+          if python3 -c 'import sys
+          from batools.docker import image_has_platform as has
+          sys.exit(not all(has(sys.argv[1], f"linux/{a}") for a in ("amd64", "arm64")))' "$IMAGE"; then
             echo "$IMAGE exists; only adding tags."
             echo "need_build=false" >> "$GITHUB_OUTPUT"
           else
@@ -111,6 +117,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          sparse-checkout: pconfig/docker
       - name: Docker login
         uses: docker/login-action@v4
         with:
@@ -136,10 +144,7 @@ jobs:
     needs: [prepare, build]
     # Runs after a build, and also when the build was skipped because
     # the image already existed.
-    if: >-
-      always()
-      && needs.prepare.result == 'success'
-      && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - name: Docker login
