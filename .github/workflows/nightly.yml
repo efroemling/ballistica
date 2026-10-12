@@ -12,59 +12,28 @@ jobs:
   # without this every fork's nightly reports to the wrong people. A
   # fork can still run this by hand (workflow_dispatch).
 
-  make_docker_gui_debug_image:
+  make_docker_debug_image:
+    name: make_docker_${{ matrix.variant }}_debug_image
     if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [gui, server]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v4
+      - name: Build and push the image
+        uses: ./.github/actions/docker_image
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-gui-debug
-          make docker-save
+          make-target: docker-${{ matrix.variant }}-debug
+          image: bombsquad_${{ matrix.variant }}_debug
+          push-as: bombsquad_${{ matrix.variant }}:debug_nightly_x86_64
+          save: true
       - name: Upload the build
         uses: actions/upload-artifact@v7
         with:
-          name: docker_gui(debug)
-          path: build/docker/bombsquad_gui_debug_docker.tar
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
-
-  make_docker_server_debug_image:
-    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-server-debug
-          make docker-save
-      - name: Upload the build
-        uses: actions/upload-artifact@v7
-        with:
-          name: docker_server(debug)
-          path: build/docker/bombsquad_server_debug_docker.tar
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
+          name: docker_${{ matrix.variant }}(debug)
+          path: build/docker/bombsquad_${{ matrix.variant }}_debug_docker.tar
 
   make_docs:
     if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
@@ -94,35 +63,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Cache Flatpak data
-        id: cache-flatpak-sdk
-        uses: actions/cache@v5
-        env:
-          cache-name: cache-flatpak
-        with:
-          path: |
-            ~/.local/share/flatpak
-            .cache/flatpak/flatpak-builder
-            .cache/flatpak/repo
-            !.cache/flatpak/flatpak-builder/build
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml', 'pconfig/flatpak/python-build-env.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt install -y flatpak flatpak-builder
-      - name: Install flatpak build dependencies
-        run: |
-          flatpak remote-add --user --if-not-exists flathub \
-            https://flathub.org/repo/flathub.flatpakrepo
-          make flatpak-deps
-
       - name: Make the build
-        run: |
-          make flatpak-linux
+        uses: ./.github/actions/flatpak_build
       - name: Upload the build
         uses: actions/upload-artifact@v7
         with:

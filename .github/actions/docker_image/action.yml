@@ -1,0 +1,56 @@
+name: "Build BombSquad Docker Image"
+description: |
+  "Sets up the build env, logs in to ghcr.io, runs a make docker-*"
+  "target and pushes the result. Shared by the nightly and release"
+  "workflows. Expects a checkout and packages: write."
+
+inputs:
+  make-target:
+    description: "make target that builds the image, e.g. docker-gui-debug"
+    required: true
+  image:
+    description: "Local image it produces, e.g. bombsquad_gui_debug"
+    required: true
+  push-as:
+    description: |
+      "Name:tag to push it as under ghcr.io/<repo>/, e.g."
+      "bombsquad_gui:debug_nightly_x86_64"
+    required: true
+  save:
+    description: "Also run make docker-save (build/docker/<image>_docker.tar)"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup build env
+      uses: ./.github/actions/bombsquad_build_env
+
+    - name: Docker login
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ github.token }}
+
+    - name: Make the build
+      shell: bash
+      env:
+        MAKE_TARGET: ${{ inputs.make-target }}
+        SAVE: ${{ inputs.save }}
+      run: |
+        make "$MAKE_TARGET"
+        if [ "$SAVE" = true ]; then
+          make docker-save
+        fi
+
+    - name: Push to github image repository
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image }}
+        PUSH_AS: ${{ inputs.push-as }}
+      run: |
+        remote="ghcr.io/${GITHUB_REPOSITORY,,}/$PUSH_AS"
+        docker tag "$IMAGE:latest" "$remote"
+        docker push "$remote"
