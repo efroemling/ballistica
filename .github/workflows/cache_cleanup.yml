@@ -19,13 +19,15 @@ name: Cache Cleanup
 # sccache entries are content-addressed objects, not snapshots, so they
 # are left alone.
 #
-# Runs once a day rather than after every CI run: superseded entries
-# only cost space until the next prune, and LRU still covers them in
-# the meantime.
+# Runs after each Nightly Build (whatever its outcome, since a failed
+# run can still have saved caches), which writes the heaviest entries
+# (flatpak, assets). Anything superseded in between only costs space
+# until then, and LRU still covers it in the meantime.
 
 on:
-  schedule:
-    - cron: "0 7 * * *"
+  workflow_run:
+    workflows: ["Nightly Build"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -43,9 +45,6 @@ concurrency:
 
 jobs:
   prune:
-    # Scheduled runs only in the main repo (see nightly.yml for why);
-    # forks can still run it by hand.
-    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     steps:
       - name: Prune superseded caches
