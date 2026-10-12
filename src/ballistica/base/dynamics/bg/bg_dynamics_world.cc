@@ -25,6 +25,7 @@
 #include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/support/render_view.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -122,24 +123,43 @@ void BGDynamicsWorld::Step(const Vector3f& cam_pos, int step_millisecs) {
   // we need to throttle what we send or tell it to cut back if its behind
   int step_count = server_->step_count();
 
-  // If we're really getting behind, start pruning stuff.
-  // NOTE: unreachable as written -- the feed-skip below caps the pending
-  // count at 2 -- so this has been dead since that skip was added. The
-  // drop ratio tracked in UpdateLoadSkip_ is the live "behind" signal;
-  // re-base this on it (or drop it) when the chunk valve gets revisited.
-  if (step_count > 3) {
-    TooSlow();
+  // Scene steps arrive in bursts: a logic update owing several steps
+  // (a low frame rate, a hitch, a client receiving a packet of them)
+  // runs them back to back, faster than the bg thread can wake up and
+  // drain them. So whether the bg thread is keeping up can only be
+  // judged between updates: what matters is whether the previous
+  // update's steps were still pending when this one began. (Judging per
+  // step, as we used to, read an idle bg thread as overloaded whenever
+  // bursts ran past two steps, and ran the bg sim in slow motion.)
+  microsecs_t update_id = g_base->logic->display_time_microsecs();
+  if (update_id != feed_update_id_) {
+    feed_update_id_ = update_id;
+    feed_update_backlog_ = step_count;
+    feed_update_steps_ = 0;
   }
+  feed_update_steps_++;
+  feed_window_max_burst_ = std::max(feed_window_max_burst_, feed_update_steps_);
 
-  // If we're slightly behind, just don't send this step; the bg dynamics
-  // will slow down a bit but nothing will disappear this way, which should
-  // be less jarring.
-  //
-  // HMMM; wondering if this should be limited in some way; it might lead to
-  // oddly slow feeling bg sims if things are consistently slow.
-  bool feed_dropped = step_count > 1;
-  UpdateLoadSkip_(feed_dropped, step_millisecs);
-  if (feed_dropped) {
+  // NOTE: the debris pruning that used to hang off the pending count
+  // here (TooSlow) had been unreachable since feed skipping was added,
+  // and stays unwired: the drop ratio tracked in UpdateLoadSkip_ is the
+  // live "behind" signal; re-base pruning on it when the chunk valve
+  // gets revisited.
+
+  // If the bg thread is behind, don't send it this update's steps; the
+  // bg dynamics will slow down a bit but nothing will disappear this
+  // way, which should be less jarring.
+  bool behind = feed_update_backlog_ > 1;
+
+  // An enormous burst (catching up after a long stall) gets cut off so
+  // the bg thread isn't left with an unbounded queue. That says nothing
+  // about how the bg thread is doing, so it doesn't count as behind.
+  bool overflow = !behind && step_count >= kBGDynamicsMaxPendingSteps;
+  if (overflow) {
+    feed_window_overflowed_++;
+  }
+  UpdateLoadSkip_(behind, step_millisecs);
+  if (behind || overflow) {
     return;
   }
 
@@ -188,8 +208,8 @@ void BGDynamicsWorld::SetOutputBundle(BGDynamicsOutputBundle* bundle) {
 
 void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
   // Tally feeds over one-second windows. A dropped feed means the bg
-  // thread was still chewing on the previous two steps, i.e. the bg
-  // sim is running slower than we are.
+  // thread had not finished an earlier logic update's steps by the time
+  // this update began, i.e. the bg sim is running slower than we are.
   feed_window_millisecs_ += step_millisecs;
   feed_window_total_++;
   if (feed_dropped) {
@@ -203,18 +223,23 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
   float window_seconds = static_cast<float>(feed_window_millisecs_) / 1000.0f;
   float drop_ratio = static_cast<float>(feed_window_dropped_)
                      / static_cast<float>(std::max(feed_window_total_, 1));
+  int max_burst = feed_window_max_burst_;
+  int overflowed = feed_window_overflowed_;
   feed_window_millisecs_ = 0;
   feed_window_total_ = 0;
   feed_window_dropped_ = 0;
+  feed_window_max_burst_ = 0;
+  feed_window_overflowed_ = 0;
 
   // Under --dynamics-profile, report the feed health once a second so
   // the lever's bumps and recovery can be watched.
   if (g_base->bg_dynamics_server->profile()) {
-    char buf[120];
+    char buf[200];
     snprintf(buf, sizeof(buf),
-             "bg-dynamics feed: %.0f%% dropped this second; character-rig load"
+             "bg-dynamics feed: %.0f%% dropped this second (largest burst %d"
+             " steps, %d cut from oversize bursts); character-rig load"
              " skip %.2f",
-             100.0f * drop_ratio, load_skip_);
+             100.0f * drop_ratio, max_burst, overflowed, load_skip_);
     g_core->logging->Log(LogName::kBa, LogLevel::kInfo, buf);
   }
 
@@ -244,21 +269,23 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
             std::max(ls.channels_ms + ls.chunks_ms + ls.tendrils_ms
                          + ls.worldstep_ms + ls.snapshot_ms + ls.publish_ms,
                      1e-9);
-        char buf[640];
+        char buf[800];
         snprintf(buf, sizeof(buf),
                  "bg-dynamics overloaded (%.0f%% of feeds dropped this"
                  " second); character-rig load skip -> %.2f%s; bg step"
                  " %.1fms wall, %.1fms cpu over last %d steps (rigs %.0f%%,"
                  " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
                  " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
-                 " %d bodies, %d joints; logic step %dms",
+                 " %d bodies, %d joints; logic step %dms, largest burst %d"
+                 " steps, %d pending at this update's start",
                  100.0f * drop_ratio, load_skip_, suffix.c_str(), ls.wall_ms,
                  ls.cpu_ms, ls.steps, 100.0 * ls.channels_ms / phases,
                  100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
                  100.0 * ls.worldstep_ms / phases,
                  100.0 * ls.snapshot_ms / phases,
                  100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks,
-                 ls.tendrils, ls.bodies, ls.joints, step_millisecs);
+                 ls.tendrils, ls.bodies, ls.joints, step_millisecs, max_burst,
+                 feed_update_backlog_);
         g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
         millisecs_since_bump_log_ = 0;
         unlogged_bumps_ = 0;

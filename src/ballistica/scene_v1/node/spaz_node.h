@@ -27,6 +27,7 @@ class SpazNode : public Node {
   explicit SpazNode(Scene* scene);
   ~SpazNode() override;
   void Step() override;
+  void PostDynamicsStep() override;
   void HandleMessage(const char* data) override;
   void Draw(base::FrameDef* frame_def) override;
   auto GetRigidBody(int id) -> RigidBody* override;
@@ -655,6 +656,7 @@ class SpazNode : public Node {
   uint8_t balance_{};
   uint8_t dizzy_{};
   uint8_t knockout_{};
+  uint8_t wake_slide_{};
   uint8_t jump_{};
   uint8_t punch_{};
   uint8_t pickup_{};

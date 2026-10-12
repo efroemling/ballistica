@@ -35,6 +35,12 @@ class Node : public Object {
   /// Called for each step of the sim.
   virtual void Step() {}
 
+  /// Called for each step of the sim once dynamics have run, so bodies
+  /// are at the poses they will draw at. The place to give bg-dynamics
+  /// inputs that follow those poses; must not change the sim. Not
+  /// called in headless builds.
+  virtual void PostDynamicsStep() {}
+
   /// Called when screen size changes.
   virtual void OnScreenSizeChange() {}
 

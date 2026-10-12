@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicmapassets.261006`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicmapassets.261012`` (bascenev1).
 
 Everything a classic map is made of: terrain, backdrop, bumper, vr-fill and
 collision meshes and their textures -- exactly what the map classes in
@@ -10,7 +10,7 @@ BaClassicCatalogAssets. Bundled with the game.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 429
+# ba_meta require asset-package 646
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from bascenev1._assetref import AssetGroup
 
-# a-0.baclassicmapassets.261006
-_ASSET_PACKAGE = ApverNum(429)
+# a-0.baclassicmapassets.261012
+_ASSET_PACKAGE = ApverNum(646)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (

@@ -13,6 +13,7 @@ class BombNode : public PropNode {
   static auto InitType() -> NodeType*;
   explicit BombNode(Scene* scene);
   void Step() override;
+  void PostDynamicsStep() override;
   void Draw(base::FrameDef* frame_def) override;
   void OnCreate() override;
   auto fuse_length() const -> float { return fuse_length_; }

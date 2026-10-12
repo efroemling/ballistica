@@ -1,4 +1,4 @@
-### 1.8.0 (build 23051, api 9, 2026-10-12)
+### 1.8.0 (build 23052, api 9, 2026-10-12)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -23,6 +23,21 @@
 - Hosts no longer send clients bursts of sound plays that would only cut
   each other off on arrival.
 - Scene protocol is now 54 (for the above).
+- Fixed characters sometimes getting their pelvis stuck in the ground
+  after falling while knocked out or frozen, and characters getting flung
+  sideways as they got back up from a knockout. Scene protocol is now 55
+  (for these physics changes).
+- Character limbs, hair and bomb fuses are now simulated against the
+  poses their bodies are drawn at instead of the previous step's, which
+  removes a one-frame jump in the arms when a character starts or stops
+  a fast turn. Nodes get a new `PostDynamicsStep()` call for this
+  (engine-side). Debug drawing (F10) now shows background-simulated limbs
+  exactly where they are simulated.
+- Fixed background dynamics (debris, smoke, character limbs) wrongly
+  concluding it was overloaded at low frame rates in light scenes such as
+  menus, which made it skip limb simulation and run in slow motion for no
+  reason. Its overload warning now also reports how many steps arrived at
+  once.
 - Windows packages now include the Visual C++ runtime dlls (`msvcp140.dll`,
   `vcruntime140.dll`, `vcruntime140_1.dll`) next to the exe, taken from the
   toolset that compiled it, in place of the redist installer. Builds no

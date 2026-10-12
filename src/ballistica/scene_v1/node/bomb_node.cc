@@ -69,12 +69,20 @@ void BombNode::Step() {
     light_translate_.x = fuse_tip_pos[0] + body_->blend_offset().x;
     light_translate_.y = fuse_tip_pos[1] + body_->blend_offset().y;
     light_translate_.z = fuse_tip_pos[2] + body_->blend_offset().z;
+  }
+}
+
+void BombNode::PostDynamicsStep() {
+  PropNode::PostDynamicsStep();
 #if !BA_HEADLESS_BUILD
+  // Root the fuse on the bomb as this step left it; bg-dynamics draws
+  // the fuse itself, so this is what keeps it on the bomb we draw.
+  if (body_.exists()) {
     fuse_.SetTransform(Matrix44fTranslate(0, kFuseOffset * mesh_scale_, 0)
                        * body_->GetTransform());
     fuse_.SetLength(fuse_length_);
-#endif  // !BA_HEADLESS_BUILD
   }
+#endif  // !BA_HEADLESS_BUILD
 }
 
 void BombNode::Draw(base::FrameDef* frame_def) {

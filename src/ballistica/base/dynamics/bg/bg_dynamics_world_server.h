@@ -20,6 +20,11 @@
 
 namespace ballistica::base {
 
+/// The most steps the logic thread will leave queued for a bg-dynamics
+/// world. A single logic update can owe several (see
+/// BGDynamicsWorld::Step); this bounds a runaway one.
+const int kBGDynamicsMaxPendingSteps = 16;
+
 /// The bg-dynamics thread's side of one bg world: the far half of a
 /// logic-thread BGDynamicsWorld.
 ///

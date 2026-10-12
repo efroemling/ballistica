@@ -2490,7 +2490,7 @@ void BGDynamicsWorldServer::PushStep(StepData* data) {
   int pending = ++step_count_;
 
   // Client thread should stop feeding us if we get clogged up.
-  if (pending > 5) {
+  if (pending > kBGDynamicsMaxPendingSteps) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                 "BGDynamics step_count too high (" + std::to_string(pending)
                     + "); should not happen.");

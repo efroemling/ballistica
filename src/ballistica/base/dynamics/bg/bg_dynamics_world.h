@@ -108,6 +108,14 @@ class BGDynamicsWorld : public Object {
   int feed_window_millisecs_{};
   int feed_window_total_{};
   int feed_window_dropped_{};
+  int feed_window_max_burst_{};
+  int feed_window_overflowed_{};
+  // The logic update (by its display time) our current burst of steps
+  // belongs to, how many steps the bg thread still had pending when it
+  // began, and how many steps it has brought so far.
+  microsecs_t feed_update_id_{-1};
+  int feed_update_backlog_{};
+  int feed_update_steps_{};
   int millisecs_since_bump_{1000000};
   int millisecs_since_bump_log_{1000000};
   int unlogged_bumps_{};
