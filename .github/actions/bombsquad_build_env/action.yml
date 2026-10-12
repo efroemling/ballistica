@@ -86,17 +86,43 @@ runs:
 
     # Following steps only run for inputs.using-cmake == 'true'
 
+    # Caches the .deb archives rather than using cache-apt-pkgs-action:
+    # that action can't handle epoch versions such as libopenal-dev's
+    # 1:1.25.1-2, saved an empty cache, and then "restored" it without
+    # installing anything. A real apt-get install always runs here.
+    - name: Cache apt archives
+      if: ${{ inputs.using-cmake == 'true' }}
+      uses: actions/cache@v6
+      with:
+        path: .cache/apt-archives
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ hashFiles('.github/actions/bombsquad_build_env/action.yml') }}
     - name: Install build packages
       if: ${{ inputs.using-cmake == 'true' }}
-      uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
-      with:
-        packages: >-
-          libglut-dev
-          libopenal-dev
-          libvorbis-dev
-          libpango1.0-dev
-          ninja-build
+      shell: bash
+      run: |
+        # apt's fetch sandbox drops to the _apt user, which can't reach an
+        # archive dir inside the runner workspace -- apt notices and falls
+        # back to fetching as root anyway, just with a warning per package.
+        # Ask for that fallback explicitly so it isn't noise.
+        mkdir -p .cache/apt-archives/partial
+        sudo apt-get update -qq -o Acquire::Languages=none
+        sudo apt-get install -y --no-install-recommends \
+          -o Dir::Cache::archives="$PWD/.cache/apt-archives" \
+          -o APT::Sandbox::User=root \
+          libglut-dev \
+          libopenal-dev \
+          libvorbis-dev \
+          libpango1.0-dev \
+          ninja-build \
           libsdl3-dev
+
+        # Running unsandboxed means apt leaves root-owned droppings here.
+        # The .debs are 0644 and readable, but 'lock' is 0640 and 'partial'
+        # is root-owned too, which makes the cache save's tar bail out.
+        # Neither is worth caching, so drop them; chown the rest back so
+        # tar (running as the runner user) can read everything left.
+        sudo rm -rf .cache/apt-archives/lock .cache/apt-archives/partial
+        sudo chown -R "$(id -u):$(id -g)" .cache/apt-archives
 
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
