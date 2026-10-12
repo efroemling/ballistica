@@ -23,9 +23,9 @@ name: Docker Build Env Image
 # and public ghcr storage costs nothing against the Actions cache.
 #
 # The image is only rebuilt when its deps-<hash> tag is missing, or on
-# the weekly/manual runs, which re-publish the current tag with fresh
-# apt packages so security updates land without a Dockerfile change.
-# Release tags just add tags when the image already exists.
+# a manual run, which re-publishes the current tag with fresh apt
+# packages (the way to pick up security updates without a Dockerfile
+# change). Release tags just add tags when the image already exists.
 #
 # On main this only runs for Dockerfile changes: projectconfig.json is
 # deliberately not watched, since every build number bump rewrites it
@@ -51,8 +51,6 @@ concurrency:
 
 jobs:
   prepare:
-    # Scheduled runs only in the main repo (see nightly.yml for why).
-    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.info.outputs.image }}
@@ -83,9 +81,8 @@ jobs:
         env:
           IMAGE: ${{ steps.info.outputs.image }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = schedule ] \
-              || [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
-            echo "Refresh run; rebuilding $IMAGE."
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            echo "Manual run; rebuilding $IMAGE."
             echo "need_build=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
