@@ -11,9 +11,9 @@ name: Docker Build Env Image
 #               checked-out Dockerfile and builds the stage locally
 #               when it's missing, so a Dockerfile change never breaks
 #               anything while this catches up.
-#  <version>    The project version (pconfig/projectconfig.json) on
-#               main or a release tag, e.g. 1.8.0b20, pointing at that
-#               version's deps-<hash>. For picking an environment by
+#  <version>    The project version (pconfig/projectconfig.json) at
+#               each release tag, e.g. 1.8.0, pointing at that
+#               release's deps-<hash>. For picking an environment by
 #               version by hand (e.g. in .devcontainer/).
 #  latest       Whatever main currently uses (.devcontainer/ default).
 #
@@ -25,7 +25,12 @@ name: Docker Build Env Image
 # The image is only rebuilt when its deps-<hash> tag is missing, or on
 # the weekly/manual runs, which re-publish the current tag with fresh
 # apt packages so security updates land without a Dockerfile change.
-# Everything else (e.g. a version bump) just adds tags.
+# Release tags just add tags when the image already exists.
+#
+# On main this only runs for Dockerfile changes: projectconfig.json is
+# deliberately not watched, since every build number bump rewrites it
+# (most commits upstream). Path filters don't apply to tag pushes, so
+# release tags always run.
 
 on:
   push:
@@ -33,7 +38,6 @@ on:
     tags: ["v*"]
     paths:
       - pconfig/docker/Dockerfile
-      - pconfig/projectconfig.json
       - .github/workflows/docker_build_env.yml
   schedule:
     - cron: "0 4 * * 1"
@@ -157,10 +161,9 @@ jobs:
         run: |
           repo=${IMAGE%:*}
           tags=(--tag "$IMAGE")
-          # Version and latest tags only come from main and release
-          # tags, never from a manual run on some other branch.
-          if [ "$GITHUB_REF" = refs/heads/main ] \
-              || [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          # Version tags only come from release tags and latest only
+          # from main, never from a manual run on some other branch.
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             tags+=(--tag "$repo:$VERSION")
           fi
           if [ "$GITHUB_REF" = refs/heads/main ]; then
