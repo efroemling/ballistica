@@ -1,0 +1,135 @@
+name: Cache Cleanup
+
+# Actions caches share one 10 GB budget per repo and are evicted LRU.
+# Hash-keyed caches (flatpak, assets, ...) leave every superseded entry
+# behind until LRU reaches it, and in the meantime that dead weight
+# pushes out entries that are still useful (mostly sccache objects).
+# This prunes the dead weight:
+#
+#  * For each cache "family" on a ref, keep only the newest entry. A
+#    family is the key with its trailing content hash and any trailing
+#    -vN- version token stripped, so 'Linux-cache-bombsquad-assets-<h>'
+#    and 'Linux-cache-bombsquad-assets-v1-<h>' are one family and a
+#    version bump retires the old entries too. restore-keys prefix
+#    matching always picks the newest entry, so older ones can never
+#    be restored again.
+#  * Drop every cache belonging to a closed pull request; a PR ref's
+#    caches are only readable by that PR.
+#
+# sccache entries are content-addressed objects, not snapshots, so they
+# are left alone.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_run:
+    workflows: ["CI", "CD", "Nightly Build", "Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print what would be deleted"
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+  pull-requests: read
+
+concurrency:
+  group: cache-cleanup
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    # Scheduled runs only in the main repo (see nightly.yml for why);
+    # forks can still use the other triggers.
+    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prune superseded caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        shell: python
+        run: |
+          import json, os, re, subprocess
+          from collections import defaultdict
+
+          repo = os.environ['REPO']
+          dry_run = os.environ['DRY_RUN'] == 'true'
+
+          def gh(*args: str) -> str:
+              return subprocess.run(
+                  ['gh', 'api', *args], check=True, capture_output=True,
+                  text=True,
+              ).stdout
+
+          caches = [
+              json.loads(line)
+              for line in gh(
+                  '--paginate',
+                  f'repos/{repo}/actions/caches?per_page=100',
+                  '--jq', '.actions_caches[] | tojson',
+              ).splitlines()
+          ]
+
+          def family(key: str) -> str:
+              key = re.sub(r'-(?:[0-9a-f]{32,})?$', '', key)
+              return re.sub(r'-v\d+$', '', key)
+
+          doomed: dict[int, tuple[dict, str]] = {}
+
+          groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
+          for c in caches:
+              if not c['key'].startswith('sccache/'):
+                  groups[(family(c['key']), c['ref'])].append(c)
+          for group in groups.values():
+              group.sort(key=lambda c: c['created_at'], reverse=True)
+              for c in group[1:]:
+                  doomed[c['id']] = (c, f'superseded by {group[0]["key"]}')
+
+          pr_open: dict[str, bool] = {}
+          for c in caches:
+              m = re.fullmatch(r'refs/pull/(\d+)/merge', c['ref'])
+              if m is None:
+                  continue
+              num = m.group(1)
+              if num not in pr_open:
+                  state = gh(f'repos/{repo}/pulls/{num}', '--jq', '.state')
+                  pr_open[num] = state.strip() == 'open'
+              if not pr_open[num]:
+                  doomed[c['id']] = (c, f'PR #{num} is closed')
+
+          total = sum(c['size_in_bytes'] for c in caches)
+          freed = sum(c['size_in_bytes'] for c, _ in doomed.values())
+          print(f'{len(caches)} caches, {total / 1e9:.2f} GB total.')
+          print(
+              f'{"Would delete" if dry_run else "Deleting"} {len(doomed)}'
+              f' ({freed / 1e9:.2f} GB):'
+          )
+          # Closed PRs can own hundreds of sccache objects; one line each.
+          pr_sizes: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+          for c, why in sorted(
+              doomed.values(), key=lambda v: -v[0]['size_in_bytes']
+          ):
+              if why.endswith(' is closed'):
+                  pr_sizes[why][0] += 1
+                  pr_sizes[why][1] += c['size_in_bytes']
+              else:
+                  print(
+                      f'  {c["size_in_bytes"] / 1e6:8.1f} MB  {c["ref"]}'
+                      f'  {c["key"]}  ({why})'
+                  )
+          for why, (count, size) in sorted(pr_sizes.items()):
+              print(f'  {size / 1e6:8.1f} MB  {count} caches  ({why})')
+
+          for cid, (c, why) in doomed.items():
+              if not dry_run:
+                  try:
+                      gh('-X', 'DELETE', f'repos/{repo}/actions/caches/{cid}')
+                  except subprocess.CalledProcessError as exc:
+                      # Usually already evicted or deleted by an
+                      # overlapping run; not worth failing over.
+                      print(f'    delete failed: {exc.stderr.strip()}')

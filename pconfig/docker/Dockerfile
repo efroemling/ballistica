@@ -9,35 +9,38 @@ ARG headless_build=1
 # (pinned to 26.04, the first LTS shipping python3.14, which the build
 # requires exactly; see ballisticakit-cmake/CMakeLists.txt)
 ARG base_image=ubuntu:26.04
+# image the builder stage starts from: either the build-env stage
+# below or a prebuilt copy of it (see batools.docker and
+# .github/workflows/docker_build_env.yml, which publishes one to ghcr.io)
+ARG build_env_image=build-env
 
-#-------------------------------BUILDER--------------------------------
-# Start with the base image
-FROM ${base_image} AS builder
-
-# Renew the args
-ARG headless_build
-ARG cmake_build_type
+#------------------------------BUILD-ENV-------------------------------
+# Toolchain and libraries only; nothing here may depend on the source
+# tree or on build args, so the result can be published and reused.
+# The published image doubles as the dev container (.devcontainer/), so
+# the few dev-only extras (git, pkg-config) live here too.
+FROM ${base_image} AS build-env
 
 # Environment settings
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
-ENV CMAKE_BUILD_TYPE=${cmake_build_type}
-ENV HEADLESS_BUILD=${headless_build}
 
 # Install build dependencies
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=cache,target=/root/.cache/venv \
+# (each stage gets its own apt cache id; a shared locked cache made the
+# builder and runner apt steps wait on each other)
+RUN --mount=type=cache,id=apt-builder,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=aptlib-builder,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
+        ca-certificates \
         clang \
         clang-format \
         cmake \
         curl \
+        git \
         libglut-dev \
         libopenal-dev \
         libpango1.0-dev \
@@ -45,6 +48,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libvorbis-dev \
         libzstd-dev \
         make \
+        pkg-config \
         python3-pip \
         python3.14-dev \
         python3.14-venv \
@@ -53,6 +57,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Install uv (used by make env / make cmake-build for venv setup).
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+#-------------------------------BUILDER--------------------------------
+FROM ${build_env_image} AS builder
+
+# Renew the args
+ARG headless_build
+ARG cmake_build_type
+
+ENV CMAKE_BUILD_TYPE=${cmake_build_type}
+ENV HEADLESS_BUILD=${headless_build}
 
 # Copy source code
 COPY ./ /ballistica
@@ -88,8 +102,8 @@ ARG cmake_build_type
 LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+RUN --mount=type=cache,id=apt-runner,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=aptlib-runner,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y \
         python3.14-dev && \

@@ -3,6 +3,7 @@ name: bombsquad
 # ENV variables that affect build 
 # BS_CMAKE_BUILD_TYPE (defaults to Release)
 # BS_IMAGE_NAME (defaults to bombsquad_gui_release)
+# BS_BUILD_ENV_IMAGE (defaults to build-env; see batools.docker)
 
 services:
   bombsquad_gui:
@@ -12,6 +13,7 @@ services:
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
+        - build_env_image=${BS_BUILD_ENV_IMAGE:-build-env}
       labels:
         - org.opencontainers.image.description=BombSquad graphical docker image
         - org.opencontainers.image.licenses=MIT
@@ -40,6 +42,7 @@ services:
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}
+        - build_env_image=${BS_BUILD_ENV_IMAGE:-build-env}
       labels:
         - org.opencontainers.image.description=BombSquad headdless docker image
         - org.opencontainers.image.licenses=MIT

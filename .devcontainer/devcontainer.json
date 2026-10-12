@@ -1,0 +1,44 @@
+{
+  "name": "Ballistica Development",
+
+  // The docker build's toolchain image (the build-env stage of
+  // pconfig/docker/Dockerfile, published by
+  // .github/workflows/docker_build_env.yml), so the dev container and
+  // the docker build can't drift apart. :latest tracks main. To work
+  // on an older version, swap the tag for that version (e.g.
+  // :1.8.0b20) or for the deps-<hash> matching its Dockerfile. A fork
+  // that publishes its own can point this at
+  // ghcr.io/<owner>/ballistica/bombsquad_build_env instead.
+  "image": "ghcr.io/efroemling/ballistica/bombsquad_build_env:latest",
+
+  // The image sets en_US.UTF-8 without generating that locale, which
+  // is harmless for the build but makes interactive shells complain.
+  "containerEnv": {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "LANGUAGE": ""
+  },
+
+  "features": {
+    // Creates the non-root 'vscode' user (uid matched to the host's).
+    "ghcr.io/devcontainers/features/common-utils:2": {}
+  },
+  "remoteUser": "vscode",
+
+  // The repo lands in the default /workspaces/<repo> (the only option
+  // in Codespaces). The venv and the generated tools/pcommand wrappers
+  // record absolute paths, so when reusing a local checkout that
+  // already has a .venv from the host, run `make env-clean` and
+  // `rm -rf .venv` before `make env`.
+
+  // Bootstrap the dev env: .venv, tool configs, tools/pcommand.
+  "postCreateCommand": "make env",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-vscode.cpptools"]
+    }
+  },
+
+  "shutdownAction": "none"
+}

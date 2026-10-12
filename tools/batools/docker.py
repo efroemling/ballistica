@@ -8,6 +8,86 @@ import os
 DOCKER_DIR = os.path.abspath('pconfig/docker')
 SERVICE_NAME = {0: 'bombsquad_gui', 1: 'bombsquad_server'}
 
+# Prebuilt copies of the Dockerfile's build-env stage live at
+# ghcr.io/<repo>/bombsquad_build_env:<tag> (published by
+# .github/workflows/docker_build_env.yml). The tag is derived from the
+# Dockerfile's contents, so any repo's image with a given tag is
+# equivalent; the current repo is tried first, then upstream.
+BUILD_ENV_IMAGE_NAME = 'bombsquad_build_env'
+BUILD_ENV_UPSTREAM_REPO = 'efroemling/ballistica'
+BUILD_ENV_LOCAL_STAGE = 'build-env'
+
+
+def get_build_env_tag() -> str:
+    """Return the bombsquad_build_env tag matching our Dockerfile.
+
+    Must match the tag computed in .github/workflows/docker_build_env.yml
+    (first 16 hex chars of the Dockerfile's sha256).
+    """
+    import hashlib
+
+    with open(os.path.join(DOCKER_DIR, 'Dockerfile'), 'rb') as infile:
+        digest = hashlib.sha256(infile.read()).hexdigest()
+    return f'deps-{digest[:16]}'
+
+
+def _image_has_platform(image: str, platform: str) -> bool:
+    import json
+
+    try:
+        result = subprocess.run(
+            ['docker', 'buildx', 'imagetools', 'inspect', '--raw', image],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=60,
+        )
+        manifest = json.loads(result.stdout)
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        json.JSONDecodeError,
+    ):
+        return False
+    for entry in manifest.get('manifests', []):
+        plat = entry.get('platform', {})
+        entry_platform = '/'.join(
+            [plat.get('os', ''), plat.get('architecture', '')]
+        )
+        if entry_platform == platform:
+            return True
+    return False
+
+
+def get_build_env_image(platform: str | None) -> str:
+    """Return the image our Dockerfile's builder stage should start from.
+
+    That's a prebuilt bombsquad_build_env image when one matching the
+    current Dockerfile exists for the platform, otherwise the
+    Dockerfile's own build-env stage. Set BA_DOCKER_BUILD_ENV_IMAGE to
+    force a value (e.g. 'build-env' to always build locally).
+    """
+    forced = os.environ.get('BA_DOCKER_BUILD_ENV_IMAGE')
+    if forced:
+        return forced
+
+    tag = get_build_env_tag()
+    repos = [BUILD_ENV_UPSTREAM_REPO]
+    github_repo = os.environ.get('GITHUB_REPOSITORY', '').lower()
+    if github_repo and github_repo != BUILD_ENV_UPSTREAM_REPO:
+        repos.insert(0, github_repo)
+    for repo in repos:
+        image = f'ghcr.io/{repo}/{BUILD_ENV_IMAGE_NAME}:{tag}'
+        if _image_has_platform(image, platform or 'linux/amd64'):
+            print(f'Using prebuilt build-env image {image}', flush=True)
+            return image
+    print(
+        f'No prebuilt {BUILD_ENV_IMAGE_NAME}:{tag} for'
+        f' {platform or 'linux/amd64'}; building build deps locally.',
+        flush=True,
+    )
+    return BUILD_ENV_LOCAL_STAGE
+
 
 def _docker_compose(
     image_name: str,
@@ -19,6 +99,7 @@ def _docker_compose(
     headless_build: bool | str | None = None,
     version: str | None = None,
     build_number: str | None = None,
+    build_env_image: str | None = None,
 ) -> None:
 
     build_cmd = [
@@ -42,6 +123,8 @@ def _docker_compose(
         env['BS_HEADLESS_BUILD'] = '1' if headless_build else '0'
     if platform is not None:
         env['PLATFORM'] = platform
+    if build_env_image is not None:
+        env['BS_BUILD_ENV_IMAGE'] = build_env_image
 
     subprocess.run(build_cmd, check=True, env=env)
 
@@ -70,7 +153,8 @@ def docker_compose(
     print(
         '\n'
         + f'Building docker image \n\t{image_name} '
-        + f'\n\tversion {version_num}:{build_num}'
+        + f'\n\tversion {version_num}:{build_num}',
+        flush=True,
     )
 
     service_name = SERVICE_NAME[1] if headless_build else SERVICE_NAME[0]
@@ -84,6 +168,7 @@ def docker_compose(
         cmake_build_type=build_type,
         version=version_num,
         build_number=str(build_num),
+        build_env_image=get_build_env_image(platform),
     )
 
 
