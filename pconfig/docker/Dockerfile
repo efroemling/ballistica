@@ -95,28 +95,26 @@ COPY ./ /ballistica
 # Set the working directory
 WORKDIR /ballistica
 
-# Compile the application, through sccache when the build env has it.
-# In GitHub Actions the docker jobs pass the Actions cache credentials
-# in as secrets (see batools.docker), so objects land in the same
-# Actions cache the CI cmake builds use; elsewhere sccache keeps a
-# local disk cache in a BuildKit cache mount instead. Cache trouble of
-# any kind just means a plain compile (SCCACHE_IGNORE_SERVER_IO_ERROR).
-# The uv cache mount keeps make env from re-downloading the venv's
-# packages on every local rebuild (copy mode since it's a separate fs).
-ENV UV_LINK_MODE=copy
+# Compile the application through sccache. In GitHub Actions the docker
+# jobs pass the Actions cache credentials in as secrets (see
+# docker-compose.yml), so objects land in the Actions cache; elsewhere
+# the secrets are empty and sccache keeps a local disk cache in a
+# BuildKit cache mount. Cache trouble of any kind just means a plain
+# compile (SCCACHE_IGNORE_SERVER_IO_ERROR). The uv cache mount keeps
+# make env from re-downloading the venv's packages on every local
+# rebuild (copy mode since it's a separate fs).
+ENV CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache \
+-DCMAKE_CXX_COMPILER_LAUNCHER=sccache" \
+    SCCACHE_DIR=/root/.cache/sccache \
+    SCCACHE_IGNORE_SERVER_IO_ERROR=1 \
+    ACTIONS_CACHE_SERVICE_V2=on \
+    UV_LINK_MODE=copy
 RUN --mount=type=secret,id=actions_results_url,env=ACTIONS_RESULTS_URL \
     --mount=type=secret,id=actions_runtime_token,env=ACTIONS_RUNTIME_TOKEN \
     --mount=type=cache,id=sccache,target=/root/.cache/sccache \
     --mount=type=cache,id=uv,target=/root/.cache/uv \
-    if command -v sccache >/dev/null; then \
-        if [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ]; then \
-            export SCCACHE_GHA_ENABLED=true ACTIONS_CACHE_SERVICE_V2=on; \
-        else \
-            export SCCACHE_DIR=/root/.cache/sccache; \
-        fi && \
-        export SCCACHE_IGNORE_SERVER_IO_ERROR=1 \
-            CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache \
-                -DCMAKE_CXX_COMPILER_LAUNCHER=sccache"; \
+    if [ -n "$ACTIONS_RUNTIME_TOKEN" ]; then \
+        export SCCACHE_GHA_ENABLED=true; \
     fi && \
     mkdir /ballistica_cmake && \
     if [ "$HEADLESS_BUILD" != "0" ]; then \
@@ -127,7 +125,7 @@ RUN --mount=type=secret,id=actions_results_url,env=ACTIONS_RESULTS_URL \
         mv build/cmake/*/ballisticakit build/cmake/*/staged/; \
     fi && \
     mv build/cmake/*/staged/* /ballistica_cmake && \
-    if command -v sccache >/dev/null; then sccache --show-stats; fi
+    sccache --show-stats
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment

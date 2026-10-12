@@ -5,8 +5,9 @@ name: bombsquad
 # BS_IMAGE_NAME (defaults to bombsquad_gui_release)
 # BS_BUILD_ENV_IMAGE (defaults to build-env; see batools.docker)
 # ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN (GitHub Actions cache
-# credentials for sccache, passed as build secrets; batools.docker sets
-# them empty outside Actions, which means a local sccache disk cache)
+# credentials for sccache, exported by sccache-action and passed as
+# build secrets; unset outside Actions, which means a local sccache
+# disk cache)
 
 services:
   bombsquad_gui:
