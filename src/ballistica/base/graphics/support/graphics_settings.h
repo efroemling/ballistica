@@ -35,6 +35,8 @@ struct GraphicsSettings {
   float pixel_scale;
   GraphicsQualityRequest graphics_quality;
   TextureQualityRequest texture_quality;
+  // See Graphics::MSAAFromAppConfig().
+  int msaa_samples_requested;
 };
 
 }  // namespace ballistica::base

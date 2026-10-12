@@ -127,26 +127,17 @@ class SpazRig:
 
     # ---- How art is placed on the bodies. ----
 
-    #: An upper arm's art stretches along its length to reach from the
-    #: shoulder to this point on the lower arm (in the lower arm's
-    #: space), so the two always meet.
-    arm_stretch_point: Vec3 = (0.0, 0.0, -0.1)
+    # Arm and leg art is drawn straight on its body, then stretched so
+    # the two segments of an arm (or leg) keep meeting when their
+    # bodies are pulled apart. Each segment pins two points of its art:
+    # its far end stays put (an upper arm's shoulder and an upper leg's
+    # hip, on that segment; a forearm's wrist; a lower leg's middle,
+    # level with its ankle) and its elbow or knee end goes to the point
+    # midway between the joint's place on it and on its neighbour. With
+    # the joint together those are one point and nothing stretches.
 
-    #: The same for an upper leg, reaching from the hip to this point
-    #: on the lower leg.
-    leg_stretch_point: Vec3 = (0.0, 0.0, -0.05)
-
-    #: The reach at which an upper arm's art is drawn unstretched.
-    arm_stretch_rest: float = 0.192
-
-    #: The reach at which an upper leg's art is drawn unstretched.
-    leg_stretch_rest: float = 0.2
-
-    #: The most any limb art is ever stretched.
-    limb_stretch_max: float = 1.6
-
-    #: A forearm's art takes its arm's stretch too, about the point
-    #: this far along the lower arm.
+    #: The point this far along a forearm is the one its art shrinks
+    #: about when flippers draw at half length (under boxing gloves).
     forearm_stretch_pivot: float = 0.1
 
     #: A hand's art sits this far along the lower arm.

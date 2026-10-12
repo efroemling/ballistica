@@ -34,6 +34,14 @@
 
 namespace ballistica::ui_v1 {
 
+// For starting the count-up sound our meters animate to.
+static auto ScoreIncreaseSpec() -> base::AudioPlaySpec {
+  base::AudioPlaySpec spec;
+  spec.sound = g_ui_v1->assets().score_increase.get();
+  spec.overrides = base::Audio::EngineUIOverrides();
+  return spec;
+}
+
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
 static const float kBotLeftColorB{0.8f};
@@ -2601,7 +2609,8 @@ void RootWidget::UpdateLeagueRankDisplay_() {
 
       // Play score-increase sound only if we're improving.
       if (improving) {
-        if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+        if (base::AudioSource* s =
+                g_base->audio->SourceBeginNew(ScoreIncreaseSpec())) {
           s->SetPositional(false);
           league_rank_anim_sound_play_id_ =
               s->Play(g_ui_v1->assets().score_increase.get());
@@ -3237,7 +3246,8 @@ void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
   // Only do one of these sounds at a time; if we ever need multiple we'll
   // need multiple sound-play-ids.
   if (!chest_unlock_time_anim_sound_play_id_.has_value()) {
-    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+    if (base::AudioSource* s =
+            g_base->audio->SourceBeginNew(ScoreIncreaseSpec())) {
       s->SetPositional(false);
       chest_unlock_time_anim_sound_play_id_ =
           s->Play(g_ui_v1->assets().score_increase.get());
@@ -3259,7 +3269,8 @@ void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
   // Only do one of these sounds at a time; if we ever need multiple we'll
   // need multiple sound-play-ids.
   if (!tickets_anim_sound_play_id_.has_value()) {
-    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+    if (base::AudioSource* s =
+            g_base->audio->SourceBeginNew(ScoreIncreaseSpec())) {
       s->SetPositional(false);
       tickets_anim_sound_play_id_ =
           s->Play(g_ui_v1->assets().score_increase.get());
@@ -3281,7 +3292,8 @@ void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
   // Only do one of these sounds at a time; if we ever need multiple we'll
   // need multiple sound-play-ids.
   if (!tokens_anim_sound_play_id_.has_value()) {
-    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+    if (base::AudioSource* s =
+            g_base->audio->SourceBeginNew(ScoreIncreaseSpec())) {
       s->SetPositional(false);
       tokens_anim_sound_play_id_ =
           s->Play(g_ui_v1->assets().score_increase.get());

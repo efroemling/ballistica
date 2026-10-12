@@ -21,6 +21,7 @@ GraphicsSettings::GraphicsSettings()
           g_base->app_config->Resolve(AppConfig::FloatID::kScreenPixelScale),
           0.1f, 1.0f)},
       graphics_quality{g_base->graphics->GraphicsQualityFromAppConfig()},
-      texture_quality{g_base->graphics->TextureQualityFromAppConfig()} {}
+      texture_quality{g_base->graphics->TextureQualityFromAppConfig()},
+      msaa_samples_requested{g_base->graphics->MSAAFromAppConfig()} {}
 
 }  // namespace ballistica::base

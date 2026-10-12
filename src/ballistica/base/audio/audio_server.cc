@@ -157,6 +157,9 @@ class AudioServer::ThreadSource_ : public Object {
   void SetLooping(bool loop);
   auto Play(const Object::Ref<SoundAsset>* s) -> uint32_t;
   void Stop();
+  /// Drop whatever we are playing and start over under a play count a
+  /// client has issued (see AudioServer::PushSourceRetargetCall).
+  void Retarget(uint32_t play_count);
   auto play_count() -> uint32_t { return play_count_; }
   auto is_streamed() const -> bool { return is_streamed_; }
   auto current_is_music() const -> bool { return current_is_music_; }
@@ -644,8 +647,22 @@ void AudioServer::Start_() {
   alListenerfv(AL_ORIENTATION, listener_ori);
   CHECK_AL_ERROR;
 
-  // Create our sources.
-  int target_source_count = 30;
+  // Create our sources. Kept small on purpose: a pool this size keeps
+  // the soundscape readable, with what plays when it is full being a
+  // matter of priorities rather than of more sources.
+  int target_source_count = 32;
+  // Debug: BA_AUDIO_SOURCE_COUNT (test_game_run --audio-sources) sets
+  // the pool size, for seeing how play group caps and priorities hold
+  // up in a much smaller one.
+  if (const char* count_str = getenv("BA_AUDIO_SOURCE_COUNT")) {
+    int count = atoi(count_str);
+    if (count >= 1 && count <= 256) {
+      target_source_count = count;
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "BA_AUDIO_SOURCE_COUNT set; using "
+                               + std::to_string(count) + " audio sources.");
+    }
+  }
   for (int i = 0; i < target_source_count; i++) {
     bool valid = false;
     auto s(Object::New<AudioServer::ThreadSource_>(this, i, &valid));
@@ -985,6 +1002,24 @@ void AudioServer::PushSourceEndCall(uint32_t play_id) {
         s->client_source()->client_queue_size() - 1);
     assert(s->client_source()->client_queue_size() >= 0);
     s->client_source()->Unlock();
+  });
+}
+
+void AudioServer::PushSourceRetargetCall(uint32_t old_play_id,
+                                         uint32_t new_play_id) {
+  event_loop()->PushCall([this, old_play_id, new_play_id] {
+    uint32_t source = SourceIdFromPlayId(new_play_id);
+    assert(source == SourceIdFromPlayId(old_play_id));
+    assert(source < sources_.size());
+    if (source >= sources_.size()) {
+      return;
+    }
+    // Whoever took the source has a client command pending on it, which
+    // is what has kept us from handing it back (and issuing a play id of
+    // our own) in the meantime.
+    assert(sources_[source]->client_source()->client_queue_size() > 0);
+    assert(sources_[source]->play_count() == PlayCountFromPlayId(old_play_id));
+    sources_[source]->Retarget(PlayCountFromPlayId(new_play_id));
   });
 }
 
@@ -1660,7 +1695,7 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
       uint32_t old_play_id = play_id();
 #endif
       // Needs to always be a 16 bit value.
-      play_count_ = (play_count_ + 1) % 30000;
+      play_count_ = (play_count_ + 1) % kPlayCountWrap;
       assert(old_play_id != play_id());
       client_source_->MakeAvailable(play_id());
     }
@@ -1975,6 +2010,21 @@ void AudioServer::ThreadSource_::Stop() {
     want_to_play_ = false;
   }
 #endif  // BA_ENABLE_AUDIO
+}
+
+void AudioServer::ThreadSource_::Retarget(uint32_t play_count) {
+  assert(g_base->InAudioThread());
+  Stop();
+#if BA_ENABLE_AUDIO
+  // (Stop() only notes the intent while we're suspended; whatever the
+  // case, the sound we were playing is no longer ours to hold.)
+  if (source_sound_) {
+    g_base->audio_server->AddSoundRefDelete(source_sound_);
+    source_sound_ = nullptr;
+  }
+#endif
+  Reset();
+  play_count_ = play_count;
 }
 
 void AudioServer::ThreadSource_::ExecStop() {

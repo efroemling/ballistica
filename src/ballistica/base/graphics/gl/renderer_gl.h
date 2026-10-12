@@ -143,6 +143,7 @@ class RendererGL : public Renderer {
 
   auto GetAutoGraphicsQuality() -> GraphicsQuality override;
   auto GetAutoTextureQuality() -> TextureQuality override;
+  auto GetMSAASampleCounts() -> std::vector<int> override;
 
 #if BA_PLATFORM_ANDROID
   std::string GetAutoAndroidRes() override;
@@ -287,6 +288,9 @@ class RendererGL : public Renderer {
   // once at GL init. See docs/initiatives/low-end-device-tiering.md.
   bool low_end_device_{};
   bool enable_msaa_{};
+  // Explicit sample count to use when msaa is enabled by request; 0
+  // means go with our per-framebuffer defaults.
+  int msaa_samples_explicit_{};
   bool draw_at_equal_depth_{};
   bool depth_writing_enabled_{};
   bool depth_testing_enabled_{};
@@ -379,6 +383,8 @@ class RendererGL : public Renderer {
   GLfloat max_anisotropy_{};
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
+  // Usable counts (above 1) for RGB8 renderbuffers, ascending.
+  std::vector<int> msaa_sample_counts_rgb8_;
   bool gl_debug_output_available_{};
   // Whether the GL_KHR_debug extension is actually advertised. Proc
   // addresses alone can't be trusted for this (eglGetProcAddress may

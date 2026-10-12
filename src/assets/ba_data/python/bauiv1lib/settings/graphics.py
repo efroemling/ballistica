@@ -105,6 +105,10 @@ _RESOLUTION_DRAG_INTERVAL = 0.25
 #: Step size for the custom screen-insets slider.
 _SCREEN_INSETS_INCREMENT = 0.05
 
+#: The non-numeric 'MSAA' config values.
+_MSAA_AUTO = 'Auto'
+_MSAA_OFF = 'Off'
+
 
 class GraphicsRoute(DocUIRoute):
     """Family class for the graphics settings routes."""
@@ -148,6 +152,10 @@ class GraphicsState(DocUIState, state_id='settings.graphics'):
     resolution_scale: Annotated[float, IOAttrs('rs')] = 1.0
     vsync: Annotated[VSync, IOAttrs('vs')] = VSync.AUTO
 
+    #: One of the MSAA popup's choice values (see _msaa_choices()):
+    #: 'Auto', 'Off', or a sample count such as '4'.
+    msaa: Annotated[str, IOAttrs('ms')] = _MSAA_AUTO
+
     #: As typed; cleaned up and written by ApplyMaxFps.
     max_fps: Annotated[str, IOAttrs('mf')] = ''
     show_fps: Annotated[bool, IOAttrs('sf')] = False
@@ -167,6 +175,7 @@ class GraphicsState(DocUIState, state_id='settings.graphics'):
 _CONFIG_KEYS: dict[str, str] = {
     GraphicsState.key(lambda s: s.visuals): 'Graphics Quality',
     GraphicsState.key(lambda s: s.vsync): 'Vertical Sync',
+    GraphicsState.key(lambda s: s.msaa): 'MSAA',
     GraphicsState.key(lambda s: s.show_fps): 'Show FPS',
     GraphicsState.key(lambda s: s.thermal_throttling): 'Thermal Throttling',
 }
@@ -247,6 +256,9 @@ class GraphicsSettingsController(
             if self._fullscreen_available
             else False
         )
+        # Likewise logic-thread-only, and fixed for a given renderer.
+        # Empty where MSAA isn't user-configurable (no row then).
+        self._msaa_sample_counts = bui.get_msaa_sample_counts()
 
     @override
     @classmethod
@@ -356,12 +368,23 @@ class GraphicsSettingsController(
                 increment=_RESOLUTION_SCALE_INCREMENT,
             )
 
+        # A stored sample count this hardware can't do (a config from
+        # another machine, say) shows as the nearest lower one it can,
+        # which is what the renderer gives it.
+        msaachoices = _msaa_choices(self._msaa_sample_counts)
+        msaa = _MSAA_AUTO
+        if msaachoices:
+            msaa = _msaa_choice_for_config(
+                str(config.resolve('MSAA')), self._msaa_sample_counts
+            )
+
         state = GraphicsState(
             fullscreen=self._fullscreen,
             visuals=visuals,
             resolution=resolution,
             resolution_scale=resolution_scale,
             vsync=_enum_from_config(VSync, 'Vertical Sync', VSync.AUTO),
+            msaa=msaa,
             max_fps=str(config.resolve('Max FPS')),
             show_fps=bool(config.resolve('Show FPS')),
             screen_insets=_enum_from_config(
@@ -430,6 +453,16 @@ class GraphicsSettingsController(
                     on_drag=apply_res,
                     drag_interval=_RESOLUTION_DRAG_INTERVAL,
                     on_change=apply_res,
+                )
+            )
+        if msaachoices:
+            rows.append(
+                gstate.choice_row(
+                    lambda s: s.msaa,
+                    choices=msaachoices,
+                    # NEEDS_TRANSLATION
+                    label=LangStrSpecValue.literal('MSAA'),
+                    on_change=apply,
                 )
             )
         if bui.supports_vsync():
@@ -629,6 +662,33 @@ def _resolution_choices() -> list[tuple[str, LangStrSpec]]:
         if native_res[1] >= res:
             choices.append((f'{res}p', LangStrSpecValue.literal(f'{res}p')))
     return choices
+
+
+def _msaa_choices(sample_counts: list[int]) -> list[tuple[str, LangStrSpec]]:
+    """The MSAA popup's choices; empty if there's nothing to choose."""
+    if not sample_counts:
+        return []
+    valstrs = _commonassets.strings.values
+    choices: list[tuple[str, LangStrSpec]] = [
+        (_MSAA_AUTO, valstrs.auto.spec),
+        (_MSAA_OFF, valstrs.off.spec),
+    ]
+    for count in sample_counts:
+        choices.append((str(count), LangStrSpecValue.literal(f'{count}x')))
+    return choices
+
+
+def _msaa_choice_for_config(value: str, sample_counts: list[int]) -> str:
+    """The MSAA popup choice that a stored config value amounts to."""
+    if value in {_MSAA_AUTO, _MSAA_OFF}:
+        return value
+    try:
+        requested = int(value)
+    except ValueError:
+        # (The engine treats anything unrecognized as auto too.)
+        return _MSAA_AUTO
+    usable = [c for c in sample_counts if c <= requested]
+    return str(max(usable)) if usable else _MSAA_OFF
 
 
 def _apply_setting(context: DocUILocalAction) -> None:

@@ -87,6 +87,10 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
 #endif
     renderer_->set_pixel_scale(pixel_scale);
   }
+  msaa_samples_requested_ = settings->msaa_samples_requested;
+  if (renderer_) {
+    renderer_->set_msaa_samples_requested(msaa_samples_requested_);
+  }
   // Note: need to look at physical/virtual res plus the active render
   // rect and virtual bounds here; each can change independently of the
   // others (ui-scale changes can move virtual res alone; a tv-border
@@ -505,6 +509,10 @@ void GraphicsServer::LoadRenderer() {
 
   texture_quality_ = Graphics::TextureQualityFromRequest(
       texture_quality_requested_, renderer_->GetAutoTextureQuality());
+
+  // (The renderer may have been created since settings last came
+  // through.)
+  renderer_->set_msaa_samples_requested(msaa_samples_requested_);
 
   // Ok we've got our qualities figured out; now load/update the renderer.
   renderer_->Load();

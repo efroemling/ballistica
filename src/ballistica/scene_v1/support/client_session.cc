@@ -15,6 +15,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
@@ -313,6 +314,11 @@ auto ClientSession::DoesFillScreen() const -> bool {
 }
 
 void ClientSession::Draw(base::FrameDef* f) {
+  // What we draw here was authored by whoever hosted (or recorded)
+  // this session; texture-role mismatches in it are theirs to hear
+  // about, not ours.
+  base::TextureAsset::ScopedSlotWarningSuppress slot_warning_suppress;
+
   // Just go through and draw all of our scenes.
   for (auto&& i : scenes_) {
     // NOTE - here we draw scenes in the order they were created, but
@@ -1313,7 +1319,33 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         case SessionCommand::kPlaySound: {
           SceneSound* sound = GetSound(ReadInt32());
           float volume = ReadFloat();
-          g_base->audio->PlaySound(sound->GetSoundData(), volume);
+          g_base->audio->PlaySound(sound->GetSoundData(), volume,
+                                   base::AudioPlayOverrides());
+          break;
+        }
+        case SessionCommand::kPlaySoundEx:
+        case SessionCommand::kPlaySoundAtPositionEx: {
+          bool positional = (cmd == SessionCommand::kPlaySoundAtPositionEx);
+          int32_t vals[3];
+          ReadInt32_3(vals);
+          SceneSound* sound = GetSound(vals[0]);
+          float f[4];
+          ReadFloats(positional ? 4 : 1, f);
+          // (What a host says here is taken as a request: Sanitize
+          // holds it to what content is allowed to ask for.)
+          SoundPlayOptions options;
+          options.group_cap = vals[1];
+          options.priority = vals[2] - 1;
+          options.group = ReadString();
+          options.Sanitize();
+          if (positional) {
+            g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), f[0],
+                                               f[1], f[2], f[3],
+                                               options.ToOverrides());
+          } else {
+            g_base->audio->PlaySound(sound->GetSoundData(), f[0],
+                                     options.ToOverrides());
+          }
           break;
         }
         case SessionCommand::kScreenMessageBottom: {

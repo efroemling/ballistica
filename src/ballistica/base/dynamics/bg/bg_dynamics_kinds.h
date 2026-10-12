@@ -399,8 +399,37 @@ using BGDynamicsChannelWorkerTuple =
 /// Everything the worker hands back after one step: each channel's
 /// outputs, stamped with the bg step they came from. Built worker-side,
 /// pointer-passed to the logic thread, adopted whole.
+/// What the worker's steps have been costing lately: per-step averages
+/// over its most recent full measuring window, plus the most it was
+/// carrying during it. Rides back on every bundle so the logic thread
+/// can say where the time went when the worker falls behind.
+struct BGDynamicsLoadStats {
+  /// Steps in the window; zero until the first window completes.
+  int steps{};
+  /// Whole-step time on the wall clock and on the thread's own cpu
+  /// clock. Wall well above cpu means the thread wasn't being run.
+  double wall_ms{};
+  double cpu_ms{};
+  /// Channel sims' pre-world-step update (character rigs, mostly).
+  double channels_ms{};
+  /// Debris chunks and their terrain collision.
+  double chunks_ms{};
+  double tendrils_ms{};
+  /// The world step; rigs and debris solve together here, so the body
+  /// counts below are the only split we have.
+  double worldstep_ms{};
+  double snapshot_ms{};
+  double publish_ms{};
+  int rigs{};
+  int chunks{};
+  int tendrils{};
+  int bodies{};
+  int joints{};
+};
+
 struct BGDynamicsOutputBundle {
   int step_count{};
+  BGDynamicsLoadStats load_stats;
   BGDynamicsChannelOutputsTuple channels;
 };
 

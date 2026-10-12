@@ -101,6 +101,17 @@ class Renderer {
 
   virtual auto GetAutoAndroidRes() -> std::string;
 
+  /// Set the MSAA sample count to aim for: Graphics::kMSAASamplesAuto to
+  /// decide for ourself, 0 for none, or an explicit count (which gets
+  /// clamped to what the hardware supports). See
+  /// Graphics::MSAAFromAppConfig().
+  void set_msaa_samples_requested(int samples);
+  auto msaa_samples_requested() const { return msaa_samples_requested_; }
+
+  /// Multisample counts (above 1) usable for the world's MSAA buffer on
+  /// this hardware, ascending. Only valid once loaded.
+  virtual auto GetMSAASampleCounts() -> std::vector<int> = 0;
+
   void OnScreenSizeChange();
   auto has_camera_render_target() const -> bool {
     return view_data()->camera_render_target.exists();
@@ -344,6 +355,10 @@ class Renderer {
 
   float screen_gamma_{1.0f};
   float pixel_scale_requested_{1.0f};
+  int msaa_samples_requested_{-1};
+  // Bumped whenever the MSAA request changes so views holding camera
+  // targets built for an older one know to rebuild them.
+  int msaa_generation_{};
   float pixel_scale_{1.0f};
   Stats stats_;
 

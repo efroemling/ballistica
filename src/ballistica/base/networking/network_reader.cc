@@ -212,6 +212,13 @@ auto NetworkReader::RunThread_() -> int {
       bool can_read_4{};
       bool can_read_6{};
 
+      // Nothing to wait on if we have no sockets (UDP disabled via
+      // BA_NO_UDP, or the opens failed); head back out to the
+      // sleep-and-retry below.
+      if (sd4_ == -1 && sd6_ == -1) {
+        break;
+      }
+
       // A bit of history here: Had been using select() to wait for input
       // here, but recently I've started seeing newer versions of android
       // crashing due to file descriptor counts going over the standard set
@@ -431,8 +438,9 @@ void NetworkReader::OpenSockets_() {
   // 127.0.0.1.
   auto no_udp_env_var = g_core->platform->GetEnv("BA_NO_UDP");
   if (no_udp_env_var && *no_udp_env_var == "1") {
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kInfo,
-                         "BA_NO_UDP set; opening no UDP sockets.");
+    // (Once: our thread comes back through here every second.)
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kInfo,
+                "BA_NO_UDP set; opening no UDP sockets.");
     return;
   }
 

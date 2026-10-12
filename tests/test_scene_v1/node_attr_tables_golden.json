@@ -860,6 +860,18 @@
   [
    "sound",
    "sound"
+  ],
+  [
+   "play_group",
+   "string"
+  ],
+  [
+   "play_group_cap",
+   "int"
+  ],
+  [
+   "priority",
+   "string"
   ]
  ],
  "spaz": [

@@ -79,6 +79,10 @@ class AudioSource {
   auto available() const -> bool { return available_; }
   void set_available(bool val) { available_ = val; }
   void MakeAvailable(uint32_t play_id);
+  /// Switch to a new play id while out on a play: for a client taking
+  /// us over for another play (see Audio::SourceBeginNew). We must be
+  /// locked, with Audio's available-sources mutex held.
+  void Retarget(uint32_t play_id);
   auto client_queue_size() const -> int { return client_queue_size_; }
   void set_client_queue_size(int val) { client_queue_size_ = val; }
   auto play_id() const -> uint32_t { return play_id_; }

@@ -1,4 +1,50 @@
-### 1.8.0 (build 23048, api 9, 2026-10-10)
+### 1.8.0 (build 23050, api 9, 2026-10-11)
+- Reworked what happens when more sounds want to play than the game has
+  audio channels for (32). Previously the newest sound was simply
+  dropped, which in busy games (lots of bombs, epic mode) lost
+  explosions, footsteps and sometimes the score-screen music. Now:
+  - Every sound belongs to a 'play group', by default named for the
+    sound less any trailing number (so `explosion01` through
+    `explosion05` share one). Only a few sounds of a group play at once;
+    a new one cuts off the group's oldest.
+  - Sounds have priorities. With every channel busy, a new sound cuts
+    off the oldest playing sound of the lowest priority at or below its
+    own. Music and ui sounds outrank anything content can ask for.
+  - Looping sounds (bomb fuses and the like) are never cut off; one that
+    can't get a channel waits for one as before.
+  - The standard sounds have priorities set: music highest, then the
+    announcer and event stingers, with impacts, skids and swishes below
+    normal and footsteps and falling debris lowest.
+- `bascenev1.Sound.play()` gained `play_group`, `play_group_cap` and
+  `priority` arguments (see the new `bascenev1.SoundPriority`), and
+  `sound` nodes gained matching `play_group`, `play_group_cap` and
+  `priority` attrs. Sound assets can set a play group and priority of
+  their own in their workspace settings.
+- Hosts no longer send clients bursts of sound plays that would only cut
+  each other off on arrival.
+- Scene protocol is now 54 (for the above).
+- Retuned character physics to feel closer to 1.7 after the limbs rework:
+  less bouncy, steadier landings and less speed lost to bumps, and
+  knocked-out characters slide instead of sticking to the floor (thanks
+  TheMikirog!).
+- Added an MSAA option to graphics settings on desktop builds: Auto, Off,
+  or any sample count the graphics hardware supports. Auto behaves as
+  before (4x on Apple Silicon Macs, off elsewhere). Changes apply
+  immediately. Stored as the `MSAA` config value.
+- Reworked how character arms and legs stretch to stay connected: each
+  segment keeps its far end in place and reaches its elbow or knee end
+  to meet its neighbour, so limbs join cleanly at any pose. A limb whose
+  elbow or knee breaks in a shatter stops stretching; the rest keep
+  going.
+- Fixed sounds missing from some server messages (purchases, rewards,
+  league promotions and the like).
+- Texture-role mismatch warnings are no longer logged for content coming
+  from a remote host or a replay; they are meant for whoever authored it.
+- Android: the 'gl view aspect differs from window aspect' warning no
+  longer fires at launch while the system bars are still hiding; it now
+  only reports a mismatch that persists, with more detail.
+- `BA_NO_UDP=1` runs no longer log a spurious 'DoPoll called with neither
+  sd4 or sd6 set' error.
 - Fixed co-op high scores not being accepted from Android builds.
 - Fixed game music never playing on some Android devices (Android 8.1,
   and devices whose audio output runs on OpenSL ES). The game's own sound
@@ -57,6 +103,15 @@
 - Fixed keyboard/controller selection getting stuck on doc-ui pages with
   nothing selectable on them (an empty inbox, say): such a page now gets a
   subtle Ok button at its end that closes the window.
+- The `BA_DATA_DIR` environment variable now does what the `--data-dir`
+  arg does (the arg wins if both are given), for launchers that can set an
+  environment but not pass args. The Flatpak uses it, so the game no longer
+  needs a wrapper script to start from its data dir.
+- Under Flatpak the default config dir is now the app's own data dir
+  (`~/.var/app/<app-id>/.ballisticakit`) instead of a `--persist` mount
+  over `~/.ballisticakit`. It is the same folder on disk, so nothing moves,
+  but its path is now valid outside the sandbox too, which fixes 'Show Mods
+  Folder' doing nothing.
 - Touchscreen players on Android and iPhone now get haptic feedback from the
   device itself for the same events controllers rumble for (Android 10 and
   newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'

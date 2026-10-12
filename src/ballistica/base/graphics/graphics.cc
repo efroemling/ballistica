@@ -345,6 +345,34 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   return VSyncRequest::kNever;
 }
 
+auto Graphics::SupportsMSAASetting() -> bool {
+  return !g_buildconfig.headless_build() && !g_buildconfig.platform_android()
+         && !g_buildconfig.platform_ios_tvos() && !g_buildconfig.vr_build();
+}
+
+auto Graphics::MSAAFromAppConfig() -> int {
+  if (!SupportsMSAASetting()) {
+    return kMSAASamplesAuto;
+  }
+  std::string msaa = g_base->app_config->Resolve(AppConfig::StringID::kMSAA);
+  if (msaa == "Auto") {
+    return kMSAASamplesAuto;
+  } else if (msaa == "Off") {
+    return 0;
+  }
+  // Anything else should be a sample count. (The renderer clamps to
+  // what the hardware can actually do.)
+  char* end{};
+  auto samples = strtol(msaa.c_str(), &end, 10);
+  if (end == msaa.c_str() || *end != 0 || samples < 0 || samples > 64) {
+    g_core->logging->Log(
+        LogName::kBaGraphics, LogLevel::kError,
+        "Invalid 'MSAA' value: '" + msaa + "'; defaulting to auto.");
+    return kMSAASamplesAuto;
+  }
+  return static_cast<int>(samples);
+}
+
 auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   std::string gqualstr =
       g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
