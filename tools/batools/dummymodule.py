@@ -591,6 +591,10 @@ def _special_class_cases(classname: str) -> str:
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint3_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             "    text: babase.Lstr | babase.LangStr | str = ''\n"
+            "    suffix: babase.Lstr | babase.LangStr | str = ''\n"
+            '    color_override: Sequence[float] = (1.0, 1.0, 1.0)\n'
+            '    use_color_override: bool = False\n'
+            '    brightness: float = 1.0\n'
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'
             '    spaz_def: bascenev1.SpazDef | None = None\n'
@@ -725,6 +729,8 @@ def _special_class_cases(classname: str) -> str:
             '    use_spaz_def_color: bool = False\n'
             '    #: Available on spaz node.\n'
             '    use_spaz_def_highlight: bool = False\n'
+            '    #: Available on spaz and depictiondisplay nodes.\n'
+            '    team_coloring: bool = False\n'
             '    #: Available on spaz node.\n'
             '    boxing_gloves_mesh: bascenev1.Mesh | None = None\n'
             '    #: Available on spaz node.\n'

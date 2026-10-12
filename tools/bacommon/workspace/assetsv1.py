@@ -683,9 +683,8 @@ class Role(Enum):
     Drives mip-filtering math and encoder flags (asset-packages
     initiative decisions #19/#23). Intent-based rather than a bundle
     of low-level mechanical flags — the recipe maps each role to a
-    concrete filtering/encoding behavior. ``normal_map`` / ``data``
-    are reserved slots for when such content (and the compressed-
-    profile recipes) land.
+    concrete filtering/encoding behavior. ``normal_map`` is a
+    reserved slot for when such content lands.
     """
 
     #: sRGB color with straight opacity alpha. The pipeline
@@ -717,6 +716,16 @@ class Role(Enum):
     #: clear. Renders with ordinary straight-alpha blending.
     STRAIGHT_ALPHA = 'straight_alpha'
 
+    #: Not a picture. Each channel is an independent value a shader
+    #: reads on its own (colorize / tint masks and the like). Nothing
+    #: is premultiplied, mips filter every channel independently on
+    #: the stored values (no render_space transfer), the encoders
+    #: weight all channels equally instead of perceptually, and the
+    #: automatic quality search scores plain per-channel error instead
+    #: of a perceptual color difference. Ships in the same container
+    #: formats as color, so it needs nothing from the client.
+    DATA = 'data'
+
 
 class AstcBlockSize(Enum):
     """ASTC square block size — the mobile bitrate lever.
@@ -726,14 +735,31 @@ class AstcBlockSize(Enum):
     ``texture_quality`` set to ``CUSTOM``; otherwise the blanket
     ``LOW``/``DEFAULT``/``HIGH`` map to a value in this range
     (``LOW`` = ``TWELVE_BY_TWELVE``, ``HIGH`` = ``FOUR_BY_FOUR``).
+
+    This is every 2D block size ASTC defines. Every block is 128 bits
+    whatever its shape, so bits per texel is ``128 / (width * height)``
+    and the non-square sizes are simply finer steps along the same
+    size/quality scale.
+
+    **Members are ordered from highest quality (most bits per texel)
+    to lowest; keep them that way.** The automatic quality search
+    walks them in definition order as its ladder.
     """
 
-    FOUR_BY_FOUR = '4x4'
-    FIVE_BY_FIVE = '5x5'
-    SIX_BY_SIX = '6x6'
-    EIGHT_BY_EIGHT = '8x8'
-    TEN_BY_TEN = '10x10'
-    TWELVE_BY_TWELVE = '12x12'
+    FOUR_BY_FOUR = '4x4'  # 8.00 bpp
+    FIVE_BY_FOUR = '5x4'  # 6.40
+    FIVE_BY_FIVE = '5x5'  # 5.12
+    SIX_BY_FIVE = '6x5'  # 4.27
+    SIX_BY_SIX = '6x6'  # 3.56
+    EIGHT_BY_FIVE = '8x5'  # 3.20
+    EIGHT_BY_SIX = '8x6'  # 2.67
+    TEN_BY_FIVE = '10x5'  # 2.56
+    TEN_BY_SIX = '10x6'  # 2.13
+    EIGHT_BY_EIGHT = '8x8'  # 2.00
+    TEN_BY_EIGHT = '10x8'  # 1.60
+    TEN_BY_TEN = '10x10'  # 1.28
+    TWELVE_BY_TEN = '12x10'  # 1.07
+    TWELVE_BY_TWELVE = '12x12'  # 0.89
 
 
 class Bc7Rdo(Enum):
@@ -746,15 +772,90 @@ class Bc7Rdo(Enum):
     has its ``texture_quality`` set to ``CUSTOM``; otherwise the blanket
     ``LOW``/``DEFAULT``/``HIGH`` map to a value in this range
     (``LOW`` = ``FOUR``, ``HIGH`` = ``OFF``).
+
+    Members are declared weakest to strongest; the automatic quality
+    search walks them in that order, so keep it. Each doubling has one
+    value in between: measured on 60 catalog textures (2026-10-06),
+    that let the search land closer to its error cap and cut opaque
+    textures' download size by about 9% at low and default quality
+    (1% at high; next to nothing for textures with alpha, where RDO
+    only touches the fully opaque blocks).
     """
 
     OFF = 'off'
     ZERO_POINT_ONE_TWO_FIVE = '0.125'
+    ZERO_POINT_ONE_EIGHT_SEVEN_FIVE = '0.1875'
     ZERO_POINT_TWO_FIVE = '0.25'
+    ZERO_POINT_THREE_SEVEN_FIVE = '0.375'
     ZERO_POINT_FIVE = '0.5'
+    ZERO_POINT_SEVEN_FIVE = '0.75'
+    ONE = '1'
+    ONE_POINT_FIVE = '1.5'
+    TWO = '2'
+    THREE = '3'
+    FOUR = '4'
+
+
+class AstcEffort(Enum):
+    """How hard the ASTC encoder works per block (its search preset).
+
+    More effort = better quality at the same block size (so the same
+    output size), paid for in build time only. Consulted only when an
+    :class:`AstcSettings` has its ``texture_quality`` set to ``CUSTOM``;
+    otherwise the texture tier picks it (regular = ``MEDIUM``, ultra =
+    ``THOROUGH``).
+    """
+
+    FASTEST = 'fastest'
+    FAST = 'fast'
+    MEDIUM = 'medium'
+    THOROUGH = 'thorough'
+    VERY_THOROUGH = 'verythorough'
+
+
+class Bc7Effort(Enum):
+    """How hard the BC7 encoder works per block (its 'uber' level).
+
+    Paid for in build time only. Consulted only when a
+    :class:`Bc7Settings` has its ``texture_quality`` set to ``CUSTOM``;
+    otherwise every tier uses ``ZERO``.
+
+    ``ZERO`` is the default everywhere because, measured against the
+    metrics the quality search judges by, more effort does not
+    reliably buy anything: across 17 first-party textures the higher
+    levels stayed within about 1% of ``ZERO`` on average at every rdo
+    setting, with individual textures swinging a few percent either
+    way, for 1.2x-3x the encode time (2026-10). The odd texture does
+    respond (one character body improved ~20%), which is what this
+    knob remains for. ``TWO`` and ``THREE`` produce identical output.
+    """
+
+    ZERO = '0'
     ONE = '1'
     TWO = '2'
+    THREE = '3'
     FOUR = '4'
+
+
+class AlphaPriority(Enum):
+    """How much a texture's alpha matters relative to its color.
+
+    Both encoders spread a fixed bit budget across color and alpha;
+    this shifts the balance. Raising it sharpens alpha edges
+    (silhouettes, soft fades) at some cost in color accuracy, and vice
+    versa. It has no effect on a texture without alpha.
+
+    Consulted only when a format's ``texture_quality`` is ``CUSTOM``;
+    automatic quality always uses ``DEFAULT``. That is deliberate: the
+    automatic search already protects alpha by its own means (a
+    texture limited by its alpha edge gets a higher-quality setting),
+    whereas guessing a priority per texture and guessing wrong would
+    cost color silently.
+    """
+
+    LOW = 'low'
+    DEFAULT = 'default'
+    HIGH = 'high'
 
 
 @ioprepped
@@ -764,9 +865,17 @@ class AstcSettings:
 
     Consulted only when the texture's top-level ``texture_quality`` is
     ``CUSTOM``. Its own ``texture_quality`` may in turn be ``CUSTOM``
-    to use the explicit ``block_size``; otherwise ``LOW``/``DEFAULT``/
-    ``HIGH`` map to the encoder's block-size range. Fully defaulted so
-    a texture never has to store it explicitly.
+    to use explicit values; otherwise ``LOW``/``DEFAULT``/``HIGH``
+    select an automatic quality target, the same way at every texture
+    tier. Fully defaulted so a texture never has to store it
+    explicitly.
+
+    The explicit values come in two independent sets, one per texture
+    tier: ``block_size``/``effort``/``alpha_priority`` for regular and
+    the ``ultra_``-prefixed equivalents for ultra. The ultra set's
+    block size and effort default to maximum quality, so hand-tuning
+    the regular values can never leave ultra looking worse than
+    regular by accident.
     """
 
     texture_quality: Annotated[
@@ -777,6 +886,26 @@ class AstcSettings:
         AstcBlockSize.SIX_BY_SIX
     )
 
+    effort: Annotated[AstcEffort, IOAttrs('ef', store_default=False)] = (
+        AstcEffort.MEDIUM
+    )
+
+    alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('ap', store_default=False)
+    ] = AlphaPriority.DEFAULT
+
+    ultra_block_size: Annotated[
+        AstcBlockSize, IOAttrs('ubs', store_default=False)
+    ] = AstcBlockSize.FOUR_BY_FOUR
+
+    ultra_effort: Annotated[AstcEffort, IOAttrs('uef', store_default=False)] = (
+        AstcEffort.THOROUGH
+    )
+
+    ultra_alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('uap', store_default=False)
+    ] = AlphaPriority.DEFAULT
+
 
 @ioprepped
 @dataclass
@@ -785,9 +914,16 @@ class Bc7Settings:
 
     Consulted only when the texture's top-level ``texture_quality`` is
     ``CUSTOM``. Its own ``texture_quality`` may in turn be ``CUSTOM``
-    to use the explicit ``rdo`` lambda; otherwise ``LOW``/``DEFAULT``/
-    ``HIGH`` map to the encoder's RDO range. Fully defaulted so a
-    texture never has to store it explicitly.
+    to use explicit values; otherwise ``LOW``/``DEFAULT``/``HIGH``
+    select an automatic quality target, the same way at every texture
+    tier. Fully defaulted so a texture never has to store it
+    explicitly.
+
+    As with :class:`AstcSettings`, the explicit values come in a
+    regular set (``rdo``/``effort``/``alpha_priority``) and an
+    independent ``ultra_``-prefixed set whose rdo defaults to maximum
+    quality (off). Effort defaults to ``ZERO`` in both; see
+    :class:`Bc7Effort` for why.
     """
 
     texture_quality: Annotated[
@@ -795,6 +931,26 @@ class Bc7Settings:
     ] = TextureQuality.DEFAULT
 
     rdo: Annotated[Bc7Rdo, IOAttrs('rdo', store_default=False)] = Bc7Rdo.ONE
+
+    effort: Annotated[Bc7Effort, IOAttrs('ef', store_default=False)] = (
+        Bc7Effort.ZERO
+    )
+
+    alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('ap', store_default=False)
+    ] = AlphaPriority.DEFAULT
+
+    ultra_rdo: Annotated[Bc7Rdo, IOAttrs('urdo', store_default=False)] = (
+        Bc7Rdo.OFF
+    )
+
+    ultra_effort: Annotated[Bc7Effort, IOAttrs('uef', store_default=False)] = (
+        Bc7Effort.ZERO
+    )
+
+    ultra_alpha_priority: Annotated[
+        AlphaPriority, IOAttrs('uap', store_default=False)
+    ] = AlphaPriority.DEFAULT
 
 
 class TextureWrapping(Enum):
@@ -827,6 +983,30 @@ class TextureWrapping(Enum):
     #: Tile with every other copy flipped (``GL_MIRRORED_REPEAT``).
     #: Seamless by construction; mips filter with a mirrored kernel.
     MIRRORED_REPEAT = 'mirrored_repeat'
+
+
+class TextureAlpha(Enum):
+    """Whether a texture's alpha channel is meaningful.
+
+    Exists because stray transparency is easy to ship by accident: a
+    few unpainted texels in an otherwise opaque texture make the whole
+    thing build as a transparent one (losing the opaque-only encoder
+    weighting and making the quality search guard an alpha edge nobody
+    sees).
+    """
+
+    #: Detect from the pixels. Any texel with alpha below 255 makes the
+    #: texture transparent. A texture whose transparency looks
+    #: accidental gets a conventions finding asking for an explicit
+    #: choice.
+    AUTO = 'auto'
+
+    #: The transparency is intentional; keep it and never flag it.
+    YES = 'yes'
+
+    #: The texture is opaque; any transparency in the source is
+    #: discarded (alpha forced to fully opaque) when building.
+    NO = 'no'
 
 
 @ioprepped
@@ -889,6 +1069,15 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
         bool, IOAttrs('fallback_high_res', store_default=False)
     ] = False
 
+    #: Whether this texture's alpha channel is meaningful (see
+    #: :class:`TextureAlpha`). Like ``fallback_high_res`` this is
+    #: deliberately not exposed in the workspace web UI; edit
+    #: workspace.json directly to answer a stray-alpha conventions
+    #: finding.
+    texture_alpha: Annotated[
+        TextureAlpha, IOAttrs('texture_alpha', store_default=False)
+    ] = TextureAlpha.AUTO
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
@@ -901,18 +1090,23 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
         resolved result, only drops dead data so ``store_default=False``
         can strip it from workspace.json. Resolution consults the
         per-format settings only when the top-level ``texture_quality``
-        is ``CUSTOM``, and a format's explicit ``block_size``/``rdo`` only
-        when that format's own ``texture_quality`` is ``CUSTOM`` -- so
-        anything outside those paths is unused and gets cleared here.
+        is ``CUSTOM``, and a format's explicit values (both tiers' sets)
+        only when that format's own ``texture_quality`` is ``CUSTOM`` --
+        so anything outside those paths is unused and gets cleared here.
         """
         astc_defaults = AstcSettings()
         bc7_defaults = Bc7Settings()
 
-        # A non-CUSTOM format quality ignores the explicit value: clear it.
+        # A non-CUSTOM format quality ignores the explicit values: clear
+        # them (i.e. keep nothing but the quality itself).
         if self.astc_settings.texture_quality is not TextureQuality.CUSTOM:
-            self.astc_settings.block_size = astc_defaults.block_size
+            self.astc_settings = AstcSettings(
+                texture_quality=self.astc_settings.texture_quality
+            )
         if self.bc7_settings.texture_quality is not TextureQuality.CUSTOM:
-            self.bc7_settings.rdo = bc7_defaults.rdo
+            self.bc7_settings = Bc7Settings(
+                texture_quality=self.bc7_settings.texture_quality
+            )
 
         # Both formats on the same non-CUSTOM blanket value is identical to
         # just setting the top-level knob: collapse to it.
@@ -1160,13 +1354,65 @@ class AudioQuality(Enum):
     HIGH = 'high'
 
 
+class AudioPlayGroupMode(Enum):
+    """Which play group a sound's plays count toward.
+
+    The game plays only so many sounds at once, and only a few of any
+    one play group; past that, a new play of a group cuts off the
+    group's oldest. Groups are named, and names are shared across all
+    asset packages.
+
+    - ``AUTO`` — named for the sound's file, less any trailing number:
+      ``explosion01`` and ``explosion02`` (in any package) are both in
+      ``explosion``. Numbered variations of a sound thus limit each
+      other as one sound would.
+    - ``UNIQUE`` — a group of the sound's own. For a numbered sound
+      that is not a variation of its neighbors.
+    - ``CUSTOM`` — the group named by
+      :attr:`AssetsV1PathValsAudioV1.custom_play_group`.
+    """
+
+    AUTO = 'auto'
+    UNIQUE = 'unique'
+    CUSTOM = 'custom'
+
+
+class AudioPriority(Enum):
+    """How much a sound matters when more want to play than can.
+
+    With everything busy, a new sound cuts off the oldest playing sound
+    of the lowest priority at or below its own (looping sounds are never
+    cut off).
+    """
+
+    LOWER = 'lower'
+    LOW = 'low'
+    DEFAULT = 'default'
+    HIGH = 'high'
+    HIGHER = 'higher'
+
+
+#: Longest play group name (matches the engine's limit).
+AUDIO_PLAY_GROUP_NAME_MAX_LENGTH = 64
+
+
+def normalize_audio_play_group_name(name: str) -> str:
+    """Return a play group name as the engine will see it.
+
+    Trimmed and lowercased (so names differing only that way are one
+    group) and held to :data:`AUDIO_PLAY_GROUP_NAME_MAX_LENGTH`.
+    """
+    return name.strip()[:AUDIO_PLAY_GROUP_NAME_MAX_LENGTH].lower()
+
+
 @ioprepped
 @dataclass
 class AssetsV1PathValsAudioV1(AssetsV1PathVals):
     """Path-specific values for an audio source in an assets_v1 workspace.
 
     The per-sound authoring knobs (:class:`AudioRole`,
-    :class:`AudioQuality`) are module-level types in this module.
+    :class:`AudioQuality`, :class:`AudioPlayGroupMode`,
+    :class:`AudioPriority`) are module-level types in this module.
     """
 
     audio_role: Annotated[
@@ -1177,6 +1423,20 @@ class AssetsV1PathValsAudioV1(AssetsV1PathVals):
         AudioQuality, IOAttrs('audio_quality', store_default=False)
     ] = AudioQuality.DEFAULT
 
+    play_group: Annotated[
+        AudioPlayGroupMode, IOAttrs('play_group', store_default=False)
+    ] = AudioPlayGroupMode.AUTO
+
+    #: The group name for :attr:`AudioPlayGroupMode.CUSTOM` (ignored
+    #: otherwise).
+    custom_play_group: Annotated[
+        str, IOAttrs('custom_play_group', store_default=False)
+    ] = ''
+
+    priority: Annotated[
+        AudioPriority, IOAttrs('priority', store_default=False)
+    ] = AudioPriority.DEFAULT
+
     #: Optional free-form documentation for this asset, surfaced as a
     #: comment above the asset in generated wrapper modules (and in the
     #: Sphinx docs). Empty string means no docs.
@@ -1186,6 +1446,34 @@ class AssetsV1PathValsAudioV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.AUDIO_V1
+
+    def play_group_tag(self) -> str:
+        """Our play group setting as the engine reads it from a sound.
+
+        Empty for :attr:`AudioPlayGroupMode.AUTO` (the engine's default,
+        so nothing needs saying), ``unique``, or ``custom:<name>``. A
+        custom group with no usable name counts as auto.
+        """
+        match self.play_group:
+            case AudioPlayGroupMode.AUTO:
+                return ''
+            case AudioPlayGroupMode.UNIQUE:
+                return 'unique'
+            case AudioPlayGroupMode.CUSTOM:
+                name = normalize_audio_play_group_name(self.custom_play_group)
+                return f'custom:{name}' if name else ''
+        assert_never(self.play_group)
+
+    def priority_tag(self) -> str:
+        """Our priority as the engine reads it from a sound.
+
+        Empty for the default (nothing needs saying).
+        """
+        return (
+            ''
+            if self.priority is AudioPriority.DEFAULT
+            else self.priority.value
+        )
 
 
 class MeshRole(Enum):

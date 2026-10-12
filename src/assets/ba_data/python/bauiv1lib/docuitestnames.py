@@ -17,6 +17,7 @@ from dataclasses import replace
 
 from efro.dataclassio import dataclass_to_dict
 from bacommon.langstr import LangStrSpecValue
+from bacommon.text import SpecialChar
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
 
@@ -74,6 +75,8 @@ def test_page_names(
         h_align: dui2.HAlign = dui2.HAlign.CENTER,
         v_align: dui2.VAlign = dui2.VAlign.CENTER,
         color: tuple[float, float, float, float] | None = None,
+        suffix: str | None = None,
+        color_override: tuple[float, float, float] | None = None,
     ) -> dui2.Button:
         """A test button: a caption over a name in a box."""
         width = box[0] + 2.0 * _MARGIN
@@ -100,6 +103,12 @@ def test_page_names(
                     h_align=h_align,
                     v_align=v_align,
                     debug=debug,
+                    suffix=(
+                        None
+                        if suffix is None
+                        else LangStrSpecValue.literal(suffix)
+                    ),
+                    color_override=color_override,
                 ),
             ],
         )
@@ -136,7 +145,12 @@ def test_page_names(
     glow_capsule = _spec(tex.glow_circle)
     v2_badge = _spec(tex.account_v2_icon)
 
-    def _web_account(text: str, *, glow: float = 1.0) -> bdep.NameDepiction:
+    def _web_account(
+        text: str,
+        *,
+        glow: float = 1.0,
+        override_targets: list[str] | None = None,
+    ) -> bdep.NameDepiction:
         return _name(
             text,
             _WEB_TEXT,
@@ -149,6 +163,7 @@ def test_page_names(
                 icon_scale=0.8,
                 icon_edge=1.1,
                 text_glow=glow,
+                override_targets=override_targets,
             ),
         )
 
@@ -170,6 +185,7 @@ def test_page_names(
         ),
         *,
         tile: bool = True,
+        override_targets: list[str] | None = None,
     ) -> bdep.NameDepiction:
         return _name(
             text,
@@ -181,6 +197,7 @@ def test_page_names(
                 tile=tile,
                 tint_texture=None if tints is None else stripes_tint,
                 tint_colors=tints,
+                override_targets=override_targets,
             ),
         )
 
@@ -296,6 +313,133 @@ def test_page_names(
                             _name('Zoe'),
                             tall,
                             v_align=dui2.VAlign.BOTTOM,
+                        ),
+                    ],
+                ),
+                _row(
+                    'Glyph',
+                    'A global profile: an icon glyph before the text.',
+                    [
+                        _button(
+                            'logo',
+                            _name(
+                                'efro', (0.4, 1.0, 0.4), glyph=SpecialChar.LOGO
+                            ),
+                            wide,
+                        ),
+                        _button(
+                            'flag (own colors)',
+                            _name(
+                                'efro',
+                                (1.0, 0.6, 0.2),
+                                glyph=SpecialChar.FLAG_CANADA,
+                            ),
+                            wide,
+                        ),
+                        _button(
+                            'with capsule: capsule wins',
+                            _name(
+                                'efro',
+                                _ACCOUNT_TEXT,
+                                _capsule(color=_ACCOUNT_CAPSULE),
+                                glyph=SpecialChar.LOGO,
+                            ),
+                            wide,
+                        ),
+                    ],
+                ),
+                _row(
+                    'Suffix',
+                    'Trailing text fitted into the box with the name (and'
+                    ' drawn in its color override, if any).',
+                    [
+                        _button(
+                            'suffix, left',
+                            _name('efro', (0.4, 1.0, 0.4)),
+                            wide,
+                            h_align=dui2.HAlign.LEFT,
+                            suffix='(ready)',
+                        ),
+                        _button(
+                            'suffix, center',
+                            _name('Zoe'),
+                            wide,
+                            suffix='(ready)',
+                        ),
+                        _button(
+                            'long + suffix shrink together',
+                            _name('A Rather Long Name Indeed'),
+                            (200.0, 60.0),
+                            suffix='(ready)',
+                        ),
+                    ],
+                ),
+                _row(
+                    'Color override',
+                    'A host color imposed on a name: its text by default;'
+                    ' a capsule routes it to any of text, capsule, tint'
+                    ' channels and icon. Glyphs keep their own colors.',
+                    [
+                        _button(
+                            'glyph, blue',
+                            _name(
+                                'efro', (1.0, 0.6, 0.2), glyph=SpecialChar.LOGO
+                            ),
+                            wide,
+                            suffix='(ready)',
+                            color_override=(0.4, 0.6, 1.0),
+                        ),
+                        _button(
+                            'flag glyph keeps colors',
+                            _name(
+                                'efro',
+                                (1.0, 0.6, 0.2),
+                                glyph=SpecialChar.FLAG_CANADA,
+                            ),
+                            wide,
+                            color_override=(1.0, 0.3, 0.3),
+                        ),
+                        _button(
+                            'account look: no override',
+                            _web_account('efro', override_targets=['t', 'c']),
+                            wide,
+                            color=_WEB_BG,
+                        ),
+                        _button(
+                            'account look: blue -> text+capsule',
+                            _web_account('efro', override_targets=['t', 'c']),
+                            wide,
+                            color=_WEB_BG,
+                            h_align=dui2.HAlign.LEFT,
+                            suffix='(ready)',
+                            color_override=(0.4, 0.6, 1.0),
+                        ),
+                        _button(
+                            'capsule, red -> text (default)',
+                            _web_account('efro'),
+                            wide,
+                            color=_WEB_BG,
+                            color_override=(1.0, 0.3, 0.3),
+                        ),
+                        _button(
+                            'capsule, red -> capsule only',
+                            _web_account('efro', override_targets=['c']),
+                            wide,
+                            color=_WEB_BG,
+                            color_override=(1.0, 0.3, 0.3),
+                        ),
+                        _button(
+                            'striped, blue -> tint 1 only',
+                            _striped('efro', festive, override_targets=['t1']),
+                            wide,
+                            color_override=(0.2, 0.4, 1.0),
+                        ),
+                        _button(
+                            'blue -> icon only',
+                            _web_account('efro', override_targets=['i']),
+                            wide,
+                            color=_WEB_BG,
+                            color_override=(0.3, 0.5, 1.0),
                         ),
                     ],
                 ),
@@ -594,11 +738,14 @@ def _name(
     text: str,
     color: tuple[float, float, float] | None = None,
     capsule: dict[str, Any] | None = None,
+    *,
+    glyph: SpecialChar | None = None,
 ) -> bdep.NameDepiction:
-    """A name depiction: basic text (+ color), optionally a capsule.
+    """A name depiction: basic text (+ color), optionally a capsule
+    and/or a glyph.
 
     Hand-built in the cloud's name-definition form (the schema is
-    server-private; see bamaster ``baserver/character.py``).
+    server-private; see bamaster ``baserver/namedef.py``).
     """
     basic: dict[str, Any] = {'t': text}
     if color is not None:
@@ -606,6 +753,8 @@ def _name(
     block: dict[str, Any] = {'b': basic}
     if capsule is not None:
         block['c'] = capsule
+    if glyph is not None:
+        block['g'] = {'i': glyph.value}
     return bdep.NameDepiction(json.dumps(block, separators=(',', ':')))
 
 
@@ -623,6 +772,7 @@ def _capsule(
     text_glow: float | None = None,
     insets: tuple[float, float] | None = None,
     tile: bool | None = None,
+    override_targets: list[str] | None = None,
     tint_texture: dict[str, Any] | None = None,
     tint_colors: (
         tuple[
@@ -641,6 +791,7 @@ def _capsule(
         ('ct', texture),
         ('cx', None if insets is None else list(insets)),
         ('cf', None if tile is None else (1 if tile else 0)),
+        ('ot', override_targets),
         ('ctt', tint_texture),
         ('ctc1', None if tint_colors is None else list(tint_colors[0])),
         ('ctc2', None if tint_colors is None else list(tint_colors[1])),

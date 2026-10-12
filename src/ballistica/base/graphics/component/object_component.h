@@ -11,13 +11,21 @@ class ObjectComponent : public RenderComponent {
  public:
   explicit ObjectComponent(RenderPass* pass) : RenderComponent(pass) {}
 
+  // (These also note the kind of slot each texture goes into; see
+  // TextureAsset::ExpectPictureSlot.)
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
   void SetColorizeTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("colorize");
+    }
     colorize_texture_ = t;
   }
 

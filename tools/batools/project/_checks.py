@@ -610,6 +610,9 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
         'classiccharacterassets': (
             pydir / 'bascenev1/_classiccharacterassets.py'
         ),
+        'classiccharacterassets2': (
+            pydir / 'bascenev1/_classiccharacterassets2.py'
+        ),
         'classicmapassets': pydir / 'bascenev1/_classicmapassets.py',
         'bauiv1assets': pydir / 'bauiv1/_uiv1assets.py',
         'scenev1assets': pydir / 'bascenev1/_scenev1assets.py',

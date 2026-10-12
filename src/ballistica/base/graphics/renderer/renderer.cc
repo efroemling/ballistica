@@ -593,8 +593,10 @@ void Renderer::UpdateTextureViewTargets(FrameDef* frame_def) {
     if (!view_data()->camera_render_target.exists()
         || view_data()->camera_for_width != fview->width()
         || view_data()->camera_for_height != fview->height()
-        || view_data()->camera_for_quality != fview->quality()) {
+        || view_data()->camera_for_quality != fview->quality()
+        || view_data()->camera_for_msaa_generation != msaa_generation_) {
       view_data()->camera_render_target.Clear();
+      view_data()->camera_for_msaa_generation = msaa_generation_;
       view_data()->camera_for_width = fview->width();
       view_data()->camera_for_height = fview->height();
       view_data()->camera_for_quality = fview->quality();
@@ -1106,6 +1108,20 @@ auto Renderer::GetZBufferValueForDistance(RenderPass* pass, float dist)
   float z_clip = m[10] * z_view + m[14];
   float w_clip = m[11] * z_view + m[15];
   return GetZBufferValue(pass, w_clip != 0.0f ? z_clip / w_clip : 1.0f);
+}
+
+void Renderer::set_msaa_samples_requested(int samples) {
+  assert(g_base->app_adapter->InGraphicsContext());
+  if (samples == msaa_samples_requested_) {
+    return;
+  }
+  msaa_samples_requested_ = samples;
+  msaa_generation_++;
+  msaa_enabled_dirty_ = true;
+
+  // Camera targets get rebuilt (and our msaa state reevaluated) the
+  // same way as for a screen size change.
+  OnScreenSizeChange();
 }
 
 auto Renderer::GetAutoAndroidRes() -> std::string {

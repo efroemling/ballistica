@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
@@ -327,7 +329,7 @@ void TextureAsset::DoPreload() {
                  preload_datas_[0].formats, preload_datas_[0].sizes,
                  &preload_datas_[0].base_level,
                  &preload_datas_[0].premultiplied, &preload_datas_[0].wrap_h,
-                 &preload_datas_[0].wrap_v);
+                 &preload_datas_[0].wrap_v, &preload_datas_[0].role);
       } else if (matches(".android_dds")) {
         // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
@@ -434,7 +436,7 @@ void TextureAsset::DoPreload() {
               preload_datas_[d].heights,        preload_datas_[d].formats,
               preload_datas_[d].sizes,          &preload_datas_[d].base_level,
               &preload_datas_[d].premultiplied, &preload_datas_[d].wrap_h,
-              &preload_datas_[d].wrap_v};
+              &preload_datas_[d].wrap_v,        &preload_datas_[d].role};
         }
         auto blob = OpenCasTextureBlob(file_name_full_);
         LoadKTX2CubeMap(blob, file_name_full_, faces);
@@ -591,6 +593,9 @@ void TextureAsset::DoLoad() {
   // about to be cleared. Re-read on every (re)load, like base_level_.
   premultiplied_ = preload_datas_[0].premultiplied;
 
+  // Likewise the authored role, for the draw-time slot checks.
+  role_ = preload_datas_[0].role;
+
   // If we're done, kill our preload data.
   preload_datas_.clear();
 }
@@ -602,6 +607,43 @@ void TextureAsset::DoUnload() {
   renderer_data_.Clear();
   base_level_ = 0;
   premultiplied_ = false;
+  role_ = TextureRole::kUnknown;
+}
+
+bool TextureAsset::slot_warnings_suppressed_{};
+
+void TextureAsset::WarnSlotMismatch_(const char* slot) {
+  if (slot_warnings_suppressed_) {
+    return;
+  }
+  // Once per texture: a mismatch repeats on every frame it is drawn.
+  role_slot_warned_ = true;
+  char buffer[512];
+  if (role_ == TextureRole::kData) {
+    snprintf(buffer, sizeof(buffer),
+             "Texture '%s' has the 'data' role (independent channel values,"
+             " as for a mask or tint) but is being drawn as a picture."
+             " Give it a color role, or use a separate picture texture.",
+             file_name_.c_str());
+  } else {
+    snprintf(buffer, sizeof(buffer),
+             "Texture '%s' is being used as a %s texture but does not have"
+             " the 'data' role, so it was built as a picture (channels"
+             " weighted by visibility, color multiplied by alpha) and may"
+             " shade slightly wrong. Set its texture role to 'data'.",
+             file_name_.c_str(), slot);
+  }
+  // The texture name alone rarely pins down who bound it; the stack
+  // names the drawing widget/node/component. (Once per texture, so the
+  // cost doesn't matter; in all builds since field reports are where
+  // these mostly show up.)
+  std::unique_ptr<NativeStackTrace> trace(
+      g_core->platform->GetNativeStackTrace());
+  g_core->logging->Log(
+      LogName::kBaAssets, LogLevel::kWarning,
+      std::string(buffer) + "\nBound from:\n"
+          + (trace ? trace->FormatForDisplay()
+                   : std::string("<native trace unavailable>")));
 }
 
 }  // namespace ballistica::base

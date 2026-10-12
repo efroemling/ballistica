@@ -42,7 +42,30 @@ class DepictionTypeID(Enum):
 
 
 class Depiction(IOMultiType[DepictionTypeID]):
-    """Something for a client to draw; see the module docs."""
+    """Something for a client to draw; see the module docs.
+
+    Every kind carries an optional ``color_override``: one rgb color
+    imposed on the depiction, baked in. It is the static form of the
+    color override a host can impose live (a display node's
+    ``color_override``, say), and a host's wins where both are set.
+    Each kind decides what it applies to (a name's text and whatever
+    its capsule routes it to, a character icon's main color); kinds
+    with nothing to apply it to ignore it. A player's icon in a teams
+    game carries its team's color this way, so it shows in that color
+    wherever it is drawn.
+
+    Every kind likewise carries ``team_coloring``: the depiction's main
+    color is a team's and should stay its clearly dominant one. Each
+    kind decides what that means, toning its other colors down (a
+    character icon's highlights; the parts of a name its override isn't
+    routed to); kinds with nothing to tone ignore it. The main color is
+    the color override if there is one, else whatever the kind takes as
+    its own. Hosts can also turn it on live (a display node's
+    ``team_coloring``).
+
+    (Both are declared on each kind rather than here, as this base
+    holds no fields; they are ``co`` and ``tco`` on the wire for all.)
+    """
 
     @override
     @classmethod
@@ -160,6 +183,14 @@ class ImageDepiction(Depiction):
         None
     )
 
+    #: See :class:`Depiction`. (Images ignore it for now.)
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`.
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
+
     @override
     @classmethod
     def get_type_id(cls) -> DepictionTypeID:
@@ -175,9 +206,21 @@ class CharacterIconDepiction(Depiction):
     character's icon component on its own; the schema is server-private,
     see bamaster ``baserver/character.py``), tinted by its own colors. A
     standard-character standin shows while the art isn't local.
+
+    A color override replaces the icon's main color, the way a team's
+    color replaces a character's own on its spaz; highlights stay the
+    icon's own.
     """
 
     icon: Annotated[str, IOAttrs('j')]
+
+    #: See :class:`Depiction`.
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`.
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
 
     @override
     @classmethod
@@ -201,6 +244,14 @@ class NameDepiction(Depiction):
 
     name: Annotated[str, IOAttrs('j')]
 
+    #: See :class:`Depiction`.
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`.
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
+
     @override
     @classmethod
     def get_type_id(cls) -> DepictionTypeID:
@@ -221,6 +272,15 @@ class CharacterViewerDepiction(Depiction):
     """
 
     spaz: Annotated[str, IOAttrs('j')]
+
+    #: See :class:`Depiction`. (Viewers ignore it; the definition alone
+    #: decides the character's colors.)
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`.
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
 
     @override
     @classmethod

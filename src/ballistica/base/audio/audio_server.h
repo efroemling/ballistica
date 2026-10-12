@@ -25,6 +25,15 @@ class AudioServer {
     return play_id >> 16u;
   }
 
+  /// Play counts wrap here (they need to fit 16 bits).
+  static const uint32_t kPlayCountWrap = 30000;
+
+  /// The play id a source gets after the given one.
+  static auto NextPlayId(uint32_t play_id) -> uint32_t {
+    return (((PlayCountFromPlayId(play_id) + 1) % kPlayCountWrap) << 16u)
+           | SourceIdFromPlayId(play_id);
+  }
+
   AudioServer();
   void OnMainThreadStartApp();
 
@@ -54,6 +63,15 @@ class AudioServer {
   void PushSourcePlayCall(uint32_t play_id, Object::Ref<SoundAsset>* sound);
   void PushSourceStopCall(uint32_t play_id);
   void PushSourceEndCall(uint32_t play_id);
+  /// A client has taken over a source that was out on one play for
+  /// another (see Audio::SourceBeginNew): cut whatever it was doing and
+  /// have it answer to the new play id from here on.
+  void PushSourceRetargetCall(uint32_t old_play_id, uint32_t new_play_id);
+
+  /// Log what every source is currently doing. Asked for when a play
+  /// request finds no free source, to tell real saturation from a leak
+  /// from slow reclaiming.
+  void PushSourceCensusCall();
 
   // Fade a playing sound out over the given time. If it is already fading
   // or does not exist, does nothing.
@@ -107,6 +125,7 @@ class AudioServer {
 
   void UpdateTimerInterval_();
   void UpdateAvailableSources_();
+  void LogSourceCensus_();
   void UpdateMusicPlayState_();
   void ProcessSoundFades_();
 

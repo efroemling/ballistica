@@ -68,7 +68,56 @@ class TextureAsset : public Asset {
   /// base_level_.
   auto premultiplied() const -> bool { return premultiplied_; }
 
+  /// What this texture was authored as (read from the KTX2 key/value
+  /// data at load). kUnknown until loaded and for anything that did not
+  /// come from the asset pipeline.
+  auto role() const -> TextureRole { return role_; }
+
+  /// Note that this texture is being bound to a slot a shader reads as
+  /// a picture. Warns (once per texture) if it was built as data. The
+  /// render components call these from their texture setters, so every
+  /// draw is covered without call sites having to remember; they cost a
+  /// compare per call.
+  void ExpectPictureSlot() {
+    if (role_ == TextureRole::kData && !role_slot_warned_) {
+      WarnSlotMismatch_("color");
+    }
+  }
+
+  /// Note that this texture is being bound to a slot whose channels a
+  /// shader reads as independent values (``slot`` names it for the
+  /// message: "colorize", "mask"). Warns (once per texture) if it was
+  /// built as a picture. Textures of unknown role are never flagged.
+  void ExpectDataSlot(const char* slot) {
+    if (role_ != TextureRole::kData && role_ != TextureRole::kUnknown
+        && !role_slot_warned_) {
+      WarnSlotMismatch_(slot);
+    }
+  }
+
+  /// Scope during which slot-mismatch warnings are withheld (logic
+  /// thread only). For drawing content authored elsewhere - a remote
+  /// host's scene or a replay - where the mismatch is someone else's
+  /// to fix and the local player can do nothing with the warning.
+  /// Withheld warnings are not consumed; the same texture still warns
+  /// if locally authored content misuses it later.
+  class ScopedSlotWarningSuppress {
+   public:
+    ScopedSlotWarningSuppress() : prev_{slot_warnings_suppressed_} {
+      slot_warnings_suppressed_ = true;
+    }
+    ~ScopedSlotWarningSuppress() { slot_warnings_suppressed_ = prev_; }
+    ScopedSlotWarningSuppress(const ScopedSlotWarningSuppress&) = delete;
+    auto operator=(const ScopedSlotWarningSuppress&)
+        -> ScopedSlotWarningSuppress& = delete;
+
+   private:
+    bool prev_;
+  };
+
  private:
+  static bool slot_warnings_suppressed_;
+  void WarnSlotMismatch_(const char* slot);
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
   int render_view_id_{};
@@ -90,6 +139,8 @@ class TextureAsset : public Asset {
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
   bool premultiplied_{};
+  TextureRole role_{TextureRole::kUnknown};
+  bool role_slot_warned_{};
 };
 
 }  // namespace ballistica::base

@@ -226,6 +226,18 @@
             ]
         },
         {
+            "name": "a_dead_channel_after_silence_past_linger_is_not_an_anomaly",
+            "why": "Our reconnect budget opens when we notice a loss; a phone suspended for minutes notices on waking, long after the relay's linger ran out. Found 2026-10-07 on an iPad: every backgrounding over 2 minutes logged ended_under_us.",
+            "policy": {"lg": 120, "pi": 30, "mx": 7200},
+            "steps": [
+                {"t": 0, "op": "start"},
+                {"t": 10, "op": "silent", "on": true},
+                {"t": 140, "op": "silent", "on": false},
+                {"t": 140, "op": "reject", "code": 4107},
+                {"t": 200, "op": "expect", "dead": 4107, "anomaly": null}
+            ]
+        },
+        {
             "name": "a_gap_from_the_relay_is_death_not_silent_loss",
             "why": "Accepting seq 3 after 1 would make 2 look like a duplicate when it arrived. Two relay bugs found 2026-09-17 produced exactly this.",
             "policy": {"lg": 120, "pi": 30, "mx": 7200},

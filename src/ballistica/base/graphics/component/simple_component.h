@@ -22,13 +22,24 @@ class SimpleComponent : public RenderComponent {
     transparent_ = val;
   }
 
+  // The texture setters below also note which kind of slot the texture
+  // is going into, so a texture built for the other kind (a data-role
+  // mask drawn as a picture, or a picture used as a mask) gets a
+  // one-time warning. See TextureAsset::ExpectPictureSlot.
+
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
   void SetTexture(const Object::Ref<TextureAsset>& t) {
     EnsureConfiguring();
+    if (t.exists()) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
@@ -36,6 +47,9 @@ class SimpleComponent : public RenderComponent {
   /// multiplied by colorize-color1 and green areas by colorize-color2.
   void SetColorizeTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("colorize");
+    }
     colorize_texture_ = t;
   }
 
@@ -43,11 +57,17 @@ class SimpleComponent : public RenderComponent {
   /// white (currently requires colorize1 and colorize 2 to be set).
   void SetMaskTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("mask");
+    }
     mask_texture_ = t;
   }
 
   void SetMaskUV2Texture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("mask");
+    }
     mask_uv2_texture_ = t;
   }
 

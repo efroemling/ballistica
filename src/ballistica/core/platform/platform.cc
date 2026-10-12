@@ -1031,9 +1031,36 @@ void Platform::MusicPlayerSetVolume(float volume) {
                        "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
+void Platform::IgnoreOSMusicPlaying(const char* reason) {
+  bool was_yielding;
+  {
+    std::scoped_lock lock(os_music_mutex_);
+    if (os_music_ignored_) {
+      return;
+    }
+    os_music_ignored_ = true;
+    was_yielding = os_music_playing_.exchange(false);
+  }
+  g_core->logging->Log(
+      LogName::kBaAudio, LogLevel::kWarning,
+      std::string("Game music will not yield to other apps' music on this "
+                  "run: ")
+          + reason + (was_yielding ? " (it was yielding; resuming)." : "."));
+  if (was_yielding && g_base_soft) {
+    g_base_soft->OnOSMusicPlayingChanged(false);
+  }
+}
+
 void Platform::SetOSMusicPlaying(bool playing) {
-  if (os_music_playing_.exchange(playing) == playing) {
-    return;
+  {
+    std::scoped_lock lock(os_music_mutex_);
+    os_music_reported_ = playing;
+    if (os_music_ignored_) {
+      return;
+    }
+    if (os_music_playing_.exchange(playing) == playing) {
+      return;
+    }
   }
   g_core->logging->Log(
       LogName::kBaAudio, LogLevel::kInfo,

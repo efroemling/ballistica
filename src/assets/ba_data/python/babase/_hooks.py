@@ -74,6 +74,11 @@ def set_config_fullscreen_off() -> None:
     _babase.app.config.apply_and_commit()
 
 
+def commit_config() -> None:
+    """The native layer has written config values and wants them saved."""
+    _babase.app.config.commit()
+
+
 def not_signed_in_screen_message() -> None:
     from babase import _builtinassets
 

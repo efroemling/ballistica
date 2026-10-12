@@ -197,12 +197,19 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   }
 
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
-  // AND that value differs from baenv's default.
+  // AND that value differs from where this build's scripts normally live.
+  // That is the platform's wholesale override when there is one (Android
+  // serving scripts from the apk) and baenv's default otherwise; comparing
+  // against baenv's default alone flagged every such build as modded.
   auto standard_app_python_dir =
       envcfg.GetAttr("standard_app_python_dir").ValueAsString();
+  auto app_python_dir_override =
+      platform->GetAppPythonDirectoryMonolithicOverride();
   using_custom_app_python_dir_ =
       ba_env_app_python_dir_.has_value()
-      && *ba_env_app_python_dir_ != standard_app_python_dir;
+      && *ba_env_app_python_dir_
+             != (app_python_dir_override.has_value() ? *app_python_dir_override
+                                                     : standard_app_python_dir);
 
   // As a sanity check, die if the data dir we were given doesn't contain a
   // 'ba_data' dir — except on platforms serving bundled assets directly

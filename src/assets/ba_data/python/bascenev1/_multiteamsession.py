@@ -66,7 +66,9 @@ class MultiTeamSession(Session):
         self._series_length: int = int(cfg.get('Teams Series Length', 7))
         self._ffa_series_length: int = int(cfg.get('FFA Series Length', 24))
 
-        show_tutorial = cfg.get('Show Tutorial', True)
+        show_tutorial = (
+            cfg.get('Show Tutorial', True) and self.allows_tutorial()
+        )
 
         # Special case: don't show tutorial while stress testing.
         if classic.stress_test_update_timer is not None:
@@ -95,7 +97,16 @@ class MultiTeamSession(Session):
 
         playlists = cfg.get(self._playlists_var, {})
 
-        if (
+        # (None from us; a subclass may say otherwise.)
+        # pylint: disable-next=assignment-from-none
+        fixed_playlist = self.get_fixed_playlist()
+        if fixed_playlist is not None:
+            # A session that says what it plays: the player's own
+            # choice of playlist (and of its order) doesn't come into
+            # it.
+            playlist = copy.deepcopy(fixed_playlist)
+            self._playlist_randomize = False
+        elif (
             self._playlist_name != '__default__'
             and self._playlist_name in playlists
         ):
@@ -136,6 +147,28 @@ class MultiTeamSession(Session):
 
         # Start in our custom join screen.
         self.setactivity(_bascenev1.newactivity(MultiTeamJoinActivity))
+
+    def get_fixed_playlist(self) -> list[dict[str, Any]] | None:
+        """Return the playlist this session always plays, if it has one.
+
+        None (the default) plays whichever playlist the player has
+        chosen in their config. A subclass made for one purpose (a
+        session that exists to show one game, say) can return its own:
+        entries as a config playlist holds them, a ``type`` and
+        ``settings`` each. It is asked while the session is being set
+        up, before its own ``__init__`` has returned.
+        """
+        return None
+
+    def allows_tutorial(self) -> bool:
+        """Return whether this session may open with the tutorial.
+
+        A player who hasn't seen the tutorial gets it at the start of
+        their first session; a session that isn't a first game in that
+        sense can say no here. (Asked during setup, as
+        :meth:`get_fixed_playlist` is.)
+        """
+        return True
 
     def get_ffa_series_length(self) -> int:
         """Return free-for-all series length."""

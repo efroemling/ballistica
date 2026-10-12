@@ -24,6 +24,21 @@ namespace ballistica::core {
 
 PlatformLinux::PlatformLinux() {}
 
+auto PlatformLinux::DoGetConfigDirectoryMonolithicDefault()
+    -> std::optional<std::string> {
+  // Under Flatpak, keep config in the app's own data dir
+  // (~/.var/app/<app-id>) rather than the usual ~/.ballisticakit. That
+  // path is the same inside and outside the sandbox, so dirs we hand to
+  // the desktop (e.g. 'Show Mods Folder' via the OpenURI portal) resolve.
+  auto flatpak_id = GetEnv("FLATPAK_ID");
+  auto home = GetEnv("HOME");
+  if (flatpak_id.has_value() && !flatpak_id->empty() && home.has_value()
+      && !home->empty()) {
+    return *home + "/.var/app/" + *flatpak_id + "/.ballisticakit";
+  }
+  return Platform::DoGetConfigDirectoryMonolithicDefault();
+}
+
 auto PlatformLinux::CanShowBlockingFatalErrorDialog() -> bool {
   // Linux has no trivial native dialog, so we lean on SDL where present.
   return g_buildconfig.sdl_build();

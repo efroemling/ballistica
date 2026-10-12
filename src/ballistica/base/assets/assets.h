@@ -247,7 +247,10 @@ class Assets {
       -> std::string;
 
   auto CharStr(SpecialChar id) -> std::string;
-  auto CompileResourceString(const std::string& s, bool* valid = nullptr)
+  /// Pass a lower ``fail_log_level`` for strings we didn't make and so
+  /// can't fix (from a host running an older build, say).
+  auto CompileResourceString(const std::string& s, bool* valid = nullptr,
+                             LogLevel fail_log_level = LogLevel::kError)
       -> std::string;
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }
@@ -319,6 +322,15 @@ class Assets {
   /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
+
+  /// Resolve a sound qualified-ref to the json file saying how its
+  /// plays contend for audio sources (part ``j.json`` in the package's
+  /// resolved ``audio/...`` bucket). Only the audio-less (NULL) flavor
+  /// that headless builds resolve carries these, and only for sounds
+  /// with something set; builds with audio get the same from tags in
+  /// the sound itself (see SoundAsset::ApplyPlaySettings). Returns
+  /// ``""`` if the name isn't a CAS ref or the sound has none.
+  auto FindCasSoundMetaPath(const std::string& name) -> std::string;
 
   /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
   /// resolve a mesh qualified-ref to its single bob CAS blob (part

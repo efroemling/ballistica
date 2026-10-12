@@ -147,6 +147,10 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src/codegen',
                 'src/ballistica/shared/ballistica.h',
+                # The shared tables engine C++ is generated from (see
+                # batools.character_ranges / batools.character_rig).
+                'tools/bacommon/characterranges.py',
+                'tools/bacommon/characterrig.py',
                 '.efrocachemap',
             ],
             # Our codegen Makefile targets generally don't list tools
@@ -840,3 +844,14 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+
+def in_claude_sandbox() -> bool:
+    """Are we running inside Claude Code's command sandbox?
+
+    There, all network egress is forced through an authenticating proxy
+    that the JVM/Gradle won't use, so Gradle can only work offline.
+    """
+    return bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))

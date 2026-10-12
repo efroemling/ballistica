@@ -370,6 +370,7 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\mesh_renderer_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\nine_patch_mesh.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\rect_outline_mesh.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\sprite_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\mesh\text_mesh.h" />
@@ -661,6 +662,7 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\sound_node.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_node.h" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_physics_tuning.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\spaz_pose.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\node\spaz_pose.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\node\terrain_node.cc" />

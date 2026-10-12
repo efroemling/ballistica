@@ -55,6 +55,7 @@ struct CrashInfo {
   bool rancmds;
   bool workspaces;
   bool custompy;
+  bool userpy;
   /// Whether g_core was alive at fault time. Distinguishes "we know
   /// these flags are right" from "we could not tell" -- the same
   /// distinction the fatal-error path draws with its 'coregone' field,
@@ -83,7 +84,8 @@ struct CrashInfo {
 /// would report garbage.
 ///
 /// 2: added os_version.
-const uint32_t kCrashInfoFormatVersion = 2;
+/// 3: added userpy.
+const uint32_t kCrashInfoFormatVersion = 3;
 
 /// Minidump user-stream type carrying a CrashInfo. Must be above
 /// LastReservedStream (0xffff); the value itself is arbitrary.

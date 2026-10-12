@@ -31,6 +31,7 @@ from _babase import (
     AppTimer,
     atexit,
     asset_loads_allowed,
+    brightened_color,
     fullscreen_control_available,
     fullscreen_control_get,
     fullscreen_control_key_shortcut,
@@ -58,6 +59,7 @@ from _babase import (
     get_immediate_return_code,
     get_input_idle_time,
     get_max_graphics_quality,
+    get_msaa_sample_counts,
     get_replays_dir,
     get_string_height,
     get_string_width,
@@ -184,6 +186,7 @@ from babase._devconsole import (
     DevConsoleSubsystem,
     DevConsoleTab,
     DevConsoleTabEntry,
+    DevConsoleToggleDef,
 )
 from babase._emptyappmode import EmptyAppMode
 from babase._constructmode import ConstructAppMode
@@ -229,6 +232,7 @@ from babase._language import (
     langstr_value,
     resolve_langstrs,
     translate_server_text,
+    wrapper_langstr,
 )
 from babase._locale import LocaleSubsystem
 from babase._logging import (
@@ -247,6 +251,7 @@ from babase._generated.enums import (
     InputType,
     Permission,
     QuitType,
+    SoundPriority,
     SpecialChar,
     UIScale,
 )
@@ -319,6 +324,7 @@ __all__ = [
     'AssetResolveError',
     'atexit',
     'balog',
+    'brightened_color',
     'Call',
     'CallPartial',
     'CallStrict',
@@ -343,6 +349,7 @@ __all__ = [
     'DevConsoleButtonDef',
     'DevConsoleTab',
     'DevConsoleTabEntry',
+    'DevConsoleToggleDef',
     'DevConsoleSubsystem',
     'device_haptics_supported',
     'DisplayTime',
@@ -367,6 +374,7 @@ __all__ = [
     'get_ip_address_type',
     'get_legacy_langdata',
     'get_max_graphics_quality',
+    'get_msaa_sample_counts',
     'get_replays_dir',
     'get_string_height',
     'get_string_width',
@@ -482,6 +490,7 @@ __all__ = [
     'TextureHandle',
     'MeshHandle',
     'suppress_config_and_state_writes',
+    'SoundPriority',
     'SpecialChar',
     'storagename',
     'StringEditAdapter',
@@ -511,6 +520,7 @@ __all__ = [
     'workspaces_in_use',
     'WorkspaceSubsystem',
     'wrap_text',
+    'wrapper_langstr',
     'DEFAULT_REQUEST_TIMEOUT_SECONDS',
 ]
 

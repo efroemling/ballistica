@@ -207,7 +207,7 @@ class MainWindow(Window):
                             ' selectable widgets must be assigned unique'
                             ' ids for selection-preserving to work'
                             ' properly.',
-                            self,
+                            self.window_describe(),
                             sel,
                         )
                 else:

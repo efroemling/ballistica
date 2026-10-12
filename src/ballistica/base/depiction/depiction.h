@@ -43,9 +43,15 @@ class Depiction;
 /// aspect means the depiction has no shape of its own and takes the
 /// whole box. The one place alignment math happens, so no kind (and no
 /// host) does its own.
+///
+/// ``trailing_aspect`` is room a host keeps right after the depiction
+/// (a suffix; see DepictionSuffix), as a width per unit of the
+/// depiction's height: the depiction and that room are fitted and
+/// aligned together as one shape, and the box returned is the
+/// depiction's part of it (the room follows its right edge).
 auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
-                     DepictionHAlign h_align, DepictionVAlign v_align)
-    -> DepictionBox;
+                     DepictionHAlign h_align, DepictionVAlign v_align,
+                     float trailing_aspect = 0.0f) -> DepictionBox;
 
 /// What a host hands a depiction to draw.
 struct DepictionDrawContext {
@@ -84,6 +90,29 @@ struct DepictionDrawContext {
   /// frame_color. Null for none.
   TextureAsset* mask_texture{};
   float frame_color[3]{1.0f, 1.0f, 1.0f};
+
+  /// The color override (rgb) in effect, or null for none: one color
+  /// imposed on a depiction (a lobby chooser's player or team color,
+  /// say), by its host or baked into the depiction itself (hosts fill
+  /// this in from Depiction::EffectiveColorOverride, which settles
+  /// the two). Each kind decides what it applies to; kinds that don't say
+  /// ignore it. Names: their text (and its glow), plus whatever parts
+  /// of a capsule its override targets route it to (see
+  /// CapsuleNameDef); glyphs with colors of their own keep them.
+  /// Character icons: their main color (highlights stay). For
+  /// flashes use brightness, which every standard draw follows.
+  const float* color_override{};
+
+  /// Whether team coloring is in effect: the depiction's main color is
+  /// a team's, and should stay its clearly dominant one. Set by its
+  /// host or baked into the depiction (hosts fill this in from
+  /// Depiction::EffectiveTeamColoring). Each kind decides what that
+  /// means, toning its other colors down with
+  /// Graphics::ToneForTeamColor; kinds with nothing to tone ignore it.
+  /// 'Its main color' is the color override if there is one, else
+  /// whatever the kind takes as its own (a character icon's color, a
+  /// name's text color).
+  bool team_coloring{};
 
   /// The standard look: what to draw with, host state applied. A
   /// disabled host fades its depiction and greys its colors, the way a
@@ -149,6 +178,18 @@ class Depiction : public Object {
   /// never falls in a gap).
   virtual auto GetContentBox(const DepictionBox& box) const -> DepictionBox;
 
+  /// Which debug-bounds switch outlines us, if any (see
+  /// DrawDebugBounds). None by default.
+  virtual auto GetDebugBoundsType() const -> std::optional<DebugBoundsType>;
+
+  /// Outline our bounds if that is switched on for our kind; hosts
+  /// call this right after Draw with the context they drew with and
+  /// their own whole box (in the same frame as context.box). Draws the
+  /// host's box -- the most room we could ever take -- and, in a second
+  /// color, the part of it we claim now (context.box, as fitted).
+  void DrawDebugBounds(const DepictionDrawContext& context,
+                       const DepictionBox& host_box) const;
+
   /// Whether we can draw in a host of this kind.
   virtual auto SupportsHost(DepictionHost host) const -> bool;
 
@@ -179,6 +220,37 @@ class Depiction : public Object {
   /// Our kind's wire type id (bacommon.depiction.DepictionTypeID).
   auto type_id() const -> const std::string& { return type_id_; }
 
+  /// The color override a host should draw us with (see
+  /// DepictionDrawContext::color_override): the host's own if it has
+  /// one (pass null if not), else the one baked into us (any kind's
+  /// json can carry one; the static form of a host's), else null.
+  auto EffectiveColorOverride(const float* host_override) const -> const
+      float* {
+    if (host_override) {
+      return host_override;
+    }
+    return has_color_override_ ? color_override_ : nullptr;
+  }
+
+  /// Set our baked color override (rgb); the registry does this from
+  /// our json.
+  void SetColorOverride(const float* rgb) {
+    color_override_[0] = rgb[0];
+    color_override_[1] = rgb[1];
+    color_override_[2] = rgb[2];
+    has_color_override_ = true;
+  }
+
+  /// Whether a host should draw us with team coloring (see
+  /// DepictionDrawContext::team_coloring): if it asks for it itself or
+  /// it is baked into us (any kind's json can say so).
+  auto EffectiveTeamColoring(bool host_team_coloring) const -> bool {
+    return host_team_coloring || team_coloring_;
+  }
+
+  /// Set our baked team coloring; the registry does this from our json.
+  void set_team_coloring(bool val) { team_coloring_ = val; }
+
   /// Hosts call this each frame they show us (see Update).
   void MarkShown();
 
@@ -189,6 +261,40 @@ class Depiction : public Object {
  private:
   std::string type_id_;
   seconds_t last_shown_time_{};
+  float color_override_[3]{};
+  bool has_color_override_{};
+  bool team_coloring_{};
+};
+
+/// Text a host draws right after its depiction ("(ready)" after a
+/// player's name), sized to the depiction's height and fitted into the
+/// host's box along with it. Each machine measures it in its own fonts,
+/// so hosts that lay out from afar (a game host placing a chooser) need
+/// not know its width. Logic thread only.
+class DepictionSuffix {
+ public:
+  DepictionSuffix();
+  ~DepictionSuffix();
+
+  /// Set the (already translated) text; empty for none.
+  void SetText(const std::string& text);
+  auto empty() const -> bool { return text_.empty(); }
+
+  /// Room the suffix needs after a depiction, as a width per unit of
+  /// the depiction's height (see FitDepictionBox): 0 when there's no
+  /// text, and while its measure is still pending in the background.
+  auto GetTrailingAspect() const -> float;
+
+  /// Draw after ``depiction_box`` (a depiction's fitted box) in ``rgb``
+  /// (null for white), with the context's opacity and brightness.
+  void Draw(const DepictionDrawContext& context,
+            const DepictionBox& depiction_box, const float* rgb);
+
+ private:
+  std::string text_;
+  // Measured lazily (and possibly late), so even const queries fill it.
+  mutable std::optional<float> width_;
+  Object::Ref<TextGroup> text_group_;
 };
 
 /// Where depiction kinds are made.

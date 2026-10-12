@@ -32,6 +32,24 @@ class DevConsoleButtonDef:
         self.sound = sound
 
 
+class DevConsoleToggleDef:
+    """A barebones way to define a custom on/off toggle for the dev console.
+
+    Shown as a button reading ``<name> ON`` or ``<name> OFF``; a press
+    passes the opposite of what ``get_call`` returns to ``set_call``.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        get_call: Callable[[], bool],
+        set_call: Callable[[bool], Any],
+    ) -> None:
+        self.name = name
+        self.get_call = get_call
+        self.set_call = set_call
+
+
 class DevConsoleTab:
     """Base class for a :class:`~babase.DevConsoleSubsystem` tab."""
 
@@ -169,11 +187,11 @@ class DevConsoleSubsystem:
         from babase._devconsoletabs import (
             DevConsoleTabPython,
             DevConsoleTabAppModes,
-            DevConsoleTabUI,
             DevConsoleTabGameplay,
             DevConsoleTabLogging,
             DevConsoleTabTest,
         )
+        from babase._devconsoletabui import DevConsoleTabUI
 
         #: All tabs in the dev-console. Add your own stuff here via
         #: plugins or whatnot to customize the console.

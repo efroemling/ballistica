@@ -15,6 +15,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
@@ -313,6 +314,11 @@ auto ClientSession::DoesFillScreen() const -> bool {
 }
 
 void ClientSession::Draw(base::FrameDef* f) {
+  // What we draw here was authored by whoever hosted (or recorded)
+  // this session; texture-role mismatches in it are theirs to hear
+  // about, not ours.
+  base::TextureAsset::ScopedSlotWarningSuppress slot_warning_suppress;
+
   // Just go through and draw all of our scenes.
   for (auto&& i : scenes_) {
     // NOTE - here we draw scenes in the order they were created, but
@@ -639,6 +645,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           }
           assert(!scenes_[id].exists());
           scenes_[id] = Object::New<Scene>(starttime);
+          scenes_[id]->set_streamed_in(true);
           scenes_[id]->set_stream_id(id);
           scenes_[id]->set_protocol_version(stream_protocol());
           break;
@@ -1312,7 +1319,33 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         case SessionCommand::kPlaySound: {
           SceneSound* sound = GetSound(ReadInt32());
           float volume = ReadFloat();
-          g_base->audio->PlaySound(sound->GetSoundData(), volume);
+          g_base->audio->PlaySound(sound->GetSoundData(), volume,
+                                   base::AudioPlayOverrides());
+          break;
+        }
+        case SessionCommand::kPlaySoundEx:
+        case SessionCommand::kPlaySoundAtPositionEx: {
+          bool positional = (cmd == SessionCommand::kPlaySoundAtPositionEx);
+          int32_t vals[3];
+          ReadInt32_3(vals);
+          SceneSound* sound = GetSound(vals[0]);
+          float f[4];
+          ReadFloats(positional ? 4 : 1, f);
+          // (What a host says here is taken as a request: Sanitize
+          // holds it to what content is allowed to ask for.)
+          SoundPlayOptions options;
+          options.group_cap = vals[1];
+          options.priority = vals[2] - 1;
+          options.group = ReadString();
+          options.Sanitize();
+          if (positional) {
+            g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), f[0],
+                                               f[1], f[2], f[3],
+                                               options.ToOverrides());
+          } else {
+            g_base->audio->PlaySound(sound->GetSoundData(), f[0],
+                                     options.ToOverrides());
+          }
           break;
         }
         case SessionCommand::kScreenMessageBottom: {
@@ -1329,7 +1362,12 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
                   return "ClientSession: lang-str screen-message: " + val;
                 });
           }
-          g_base->ScreenMessage(val, color, literal);
+          // Text from whoever wrote the stream (possibly an older
+          // build); a bad resource string there isn't ours to fix, so
+          // it shouldn't log as an error.
+          g_base->graphics->screenmessages->AddScreenMessage(
+              val, literal, color, false, nullptr, nullptr, {1, 1, 1},
+              {1, 1, 1}, {1, 1, 1}, LogLevel::kDebug);
           break;
         }
         case SessionCommand::kScreenMessageTop: {
@@ -1352,7 +1390,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
               s, literal, Vector3f(f[0], f[1], f[2]), true,
               texture->texture_data(), tint_texture->texture_data(),
               Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]),
-              Vector3f(f[9], f[10], f[11]));
+              Vector3f(f[9], f[10], f[11]), LogLevel::kDebug);
           break;
         }
         case SessionCommand::kScreenMessageTopDepiction: {
@@ -2046,6 +2084,20 @@ void ClientSession::DumpFullState(SessionStream* out) {
   for (auto&& i : collision_meshes()) {
     if (SceneCollisionMesh* s = i.get()) {
       out->AddCollisionMesh(s);
+    }
+  }
+
+  // Spaz defs and depictions must exist before any node referencing
+  // them (as in HostSession::DumpFullState); a snapshot without them
+  // fails every node attr pointing at one on restore.
+  for (auto&& i : spaz_defs()) {
+    if (SpazDef* d = i.get()) {
+      out->AddSpazDef(d);
+    }
+  }
+  for (auto&& i : depictions()) {
+    if (SceneDepiction* d = i.get()) {
+      out->AddDepiction(d);
     }
   }
 

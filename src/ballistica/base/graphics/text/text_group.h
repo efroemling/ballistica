@@ -72,8 +72,8 @@ class TextGroup : public Object {
     assert(index < static_cast<int>(entries_.size()));
     return g_base->assets->BuiltinTexture(
         entries_[index]->type == TextMeshEntryType::kOSRendered
-            ? BuiltinTextureID::kTexturesSoftRect2
-            : BuiltinTextureID::kTexturesSoftRect);
+            ? BuiltinTextureID::kTexturesSoftRect2Mask
+            : BuiltinTextureID::kTexturesSoftRectMask);
   }
 
   void SetText(const std::string& text,

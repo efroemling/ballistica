@@ -213,6 +213,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
+  $(BUILD_DIR)/ba_data/python/babase/_devconsoletabui.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
@@ -246,6 +247,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_baseassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_characterpreview.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_cloudprofiles.py \
@@ -284,6 +286,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classiccatalogassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classiccharacterassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classiccharacterassets2.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_classicmapassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
@@ -406,6 +409,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classiccatalogassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classiccharacterassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classiccharacterassets2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicuiassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
@@ -427,6 +432,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpreviewui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/chestui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
@@ -446,12 +452,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_cache.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_debugdraw.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popuptext.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_timing.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_typed.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
@@ -595,6 +603,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/automationchannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterbuilder.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterranges.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/characterrig.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_account.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_chest.py \
@@ -615,6 +626,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_base.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classiccharacterpreview.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicinbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicleaguepresidency.py \

@@ -134,6 +134,11 @@ def instantiate_page_prep(
     # whatnot as we go.
     assert pageprep.rootcall is not None
     subcontainer = pageprep.rootcall(parent=scrollwidget)
+
+    # On a page with nothing selectable (an empty list showing only a
+    # message, say) this container itself ends up as the selection.
+    # There is nothing in that worth saving or restoring.
+    bui.widget(edit=subcontainer, allow_preserve_selection=False)
     for rowprep in pageprep.rows:
         _instantiate_row(
             rowprep, subcontainer=subcontainer, window=window, out=outrows

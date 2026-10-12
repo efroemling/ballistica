@@ -80,8 +80,9 @@ void CrashInfoUpdateRuntime(uint32_t app_state) {
     g_crash_info.rancmds = g_core->user_ran_commands;
     g_crash_info.workspaces = g_core->workspaces_in_use;
     g_crash_info.custompy = g_core->using_custom_app_python_dir();
+    g_crash_info.userpy = g_core->user_python_present;
     g_crash_info.modded = g_crash_info.rancmds || g_crash_info.workspaces
-                          || g_crash_info.custompy;
+                          || g_crash_info.custompy || g_crash_info.userpy;
   } else {
     g_crash_info.core_alive = false;
   }

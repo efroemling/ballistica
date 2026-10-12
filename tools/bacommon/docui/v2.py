@@ -722,6 +722,21 @@ class Depiction(Decoration):
     #: a page sharing an id animates together.
     anim_id: Annotated[str | None, IOAttrs('ai', store_default=False)] = None
 
+    #: Text drawn right after the depiction (a player's "(ready)" after
+    #: their name, say), sized to its height and fitted into the box
+    #: along with it.
+    suffix: Annotated[
+        LangStrSpec | int | None, IOAttrs('sx', store_default=False)
+    ] = None
+
+    #: A color imposed on the depiction (None for none). Each kind
+    #: decides what it applies to: a name's text, or whatever parts of
+    #: its capsule the capsule's override targets name; never glyphs
+    #: with colors of their own. The suffix draws in it too.
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
     @override
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:

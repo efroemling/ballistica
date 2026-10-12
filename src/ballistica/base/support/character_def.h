@@ -53,6 +53,11 @@ constexpr int kCharacterBodyPartCount = 9;
 /// Optional tint colors for one piece of a character (a body part, a
 /// wing, an attachment segment): each present one stands in for the
 /// character's own color / highlight / highlight2 on that piece.
+///
+/// A piece can likewise set how strongly team coloring tones its
+/// highlights (Graphics::ToneForTeamColor's strength, 0-1; negative
+/// = unset, the character's own applies), so a piece borrowed from
+/// another character reacts to team colors as it does there.
 struct CharacterTintDef {
   bool has_color{};
   bool has_highlight{};
@@ -60,6 +65,8 @@ struct CharacterTintDef {
   float color[3]{1.0f, 1.0f, 1.0f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
 };
 
 /// Body an attachment hangs off. Mirrors AttachTarget in bamaster
@@ -75,6 +82,13 @@ struct CharacterTintDef {
 /// covers both sides, mirrored on the left exactly as the limb mesh
 /// is; a kLeft* target, when present in a definition (even empty),
 /// replaces it for the left side.
+///
+/// The wing targets are a pair of the same sort with no mesh of their
+/// own: each is a frame at the torso that swings and flaps as a wing
+/// does, and whatever is attached there is the wing. A character has
+/// wings exactly when something is attached to one. Static only, and
+/// sided as limbs are (kWing covers both, mirrored on the left;
+/// kLeftWing, when present, replaces it there).
 enum class CharacterAttachTarget : uint8_t {
   kHead,
   kTorso,
@@ -91,7 +105,10 @@ enum class CharacterAttachTarget : uint8_t {
   kLeftUpperLeg,
   kLeftLowerLeg,
   kLeftToes,
-  kLast = kLeftToes,
+  // (After the limbs so those keep their part-index arithmetic.)
+  kWing,
+  kLeftWing,
+  kLast = kLeftWing,
 };
 constexpr int kCharacterAttachTargetCount =
     static_cast<int>(CharacterAttachTarget::kLast) + 1;
@@ -143,6 +160,11 @@ struct BasicIconDef {
   float color[3]{0.5f, 0.5f, 0.5f};
   float highlight[3]{0.5f, 0.5f, 0.5f};
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  // How strongly team coloring tones each highlight
+  // (Graphics::ToneForTeamColor's strength, 0-1); negative = unset,
+  // the standard strength applies.
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
 };
 
 /// The loaded media for a BasicIconDef.
@@ -212,6 +234,12 @@ struct BasicSpazDef {
   float highlight[3]{0.5f, 0.5f, 0.5f};
   // Through the color mask's blue channel; white (the no-op) unless set.
   float highlight2[3]{1.0f, 1.0f, 1.0f};
+  // How strongly team coloring tones each highlight
+  // (Graphics::ToneForTeamColor's strength, 0-1); negative = unset,
+  // the standard strength applies. Pieces can set their own (see
+  // CharacterTintDef).
+  float highlight_team_coloring_strength{-1.0f};
+  float highlight2_team_coloring_strength{-1.0f};
   // Physique (sim state; must never depend on media).
   float torso_radius{0.15f};
   float shoulder_offset[3]{0.0f, 0.0f, 0.0f};
@@ -234,24 +262,8 @@ struct BasicSpazDef {
   float eyelid_angle{0.0f};
   float reflection_scale{0.1f};
   bool flippers{};
-  // Optional wings (present = winged, drawn with this mesh). An absent
-  // wing texture means the wings share the character's color texture;
-  // an absent wing tint mask means they share the character's color
-  // mask (so one-atlas characters get colorizable wings for free, and
-  // an explicit black mask opts out of tinting entirely).
-  CharacterAssetRef wing_mesh;
-  CharacterAssetRef wing_texture;
-  CharacterAssetRef wing_tint_texture;
-  // Optional left-wing overrides, by the same rule as body parts: the
-  // mesh is authored as a right wing and mirrored; absent = the
-  // (right) wing's own mesh / texture / tint mask.
-  CharacterAssetRef wing_left_mesh;
-  CharacterAssetRef wing_left_texture;
-  CharacterAssetRef wing_left_tint_texture;
-  // Optional wing tint colors (left, then these, then the
-  // character's).
-  CharacterTintDef wing_tint;
-  CharacterTintDef wing_left_tint;
+  // (Wings are attachments on the wing targets; see
+  // CharacterAttachTarget.)
   // Attachments (hair tufts, antennas, static props), per target
   // body. Cosmetic only: simulated client-side on the bg-dynamics
   // thread and drawn relative to the target body.
@@ -338,12 +350,6 @@ struct BasicSpazMedia {
   Object::Ref<MeshAsset> upper_leg_mesh;
   Object::Ref<MeshAsset> lower_leg_mesh;
   Object::Ref<MeshAsset> toes_mesh;
-  Object::Ref<MeshAsset> wing_mesh;
-  Object::Ref<TextureAsset> wing_texture;
-  Object::Ref<TextureAsset> wing_tint_texture;
-  Object::Ref<MeshAsset> wing_left_mesh;
-  Object::Ref<TextureAsset> wing_left_texture;
-  Object::Ref<TextureAsset> wing_left_tint_texture;
   // Parallel to BasicSpazDef::part_looks.
   struct PartLookMedia {
     Object::Ref<TextureAsset> texture;

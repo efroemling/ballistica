@@ -9,7 +9,7 @@ from dataclasses import dataclass
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from babase import AppIntent, DevConsoleButtonDef
+    from babase import AppIntent, DevConsoleButtonDef, DevConsoleToggleDef
 
 
 class ControlPermission(Enum):
@@ -255,5 +255,16 @@ class AppMode:
 
         This can be useful for exposing UI code examples or debugging
         functionality.
+        """
+        return []
+
+    def get_dev_console_ui_debug_draw_toggles(
+        self,
+    ) -> list[DevConsoleToggleDef]:
+        """Define debug-drawing toggles to show up in the UI dev console.
+
+        These join the tab's own in its 'Debug Drawing' row (in the
+        console's expanded view). For ui that the tab itself can't know
+        about, such as a ui package's layout guides.
         """
         return []

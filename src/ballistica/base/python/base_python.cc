@@ -721,6 +721,10 @@ auto BasePython::GetPyEnum_QuitType(PyObject* obj) -> QuitType {
   return GetPyEnum_<QuitType>(ObjID::kQuitTypeClass, obj);
 }
 
+auto BasePython::GetPyEnum_SoundPriority(PyObject* obj) -> SoundPriority {
+  return GetPyEnum_<SoundPriority>(ObjID::kSoundPriorityClass, obj);
+}
+
 auto BasePython::IsPyEnum_InputType(PyObject* obj) -> bool {
   return IsPyEnum_<InputType>(ObjID::kInputTypeClass, obj);
 }

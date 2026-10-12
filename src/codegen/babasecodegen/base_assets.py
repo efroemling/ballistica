@@ -163,7 +163,7 @@ SPEC = BaseAssetSpec(
                     name='character_icon_mask',
                     kind=Kind.TEXTURE,
                     doc='Round mask for character icons.',
-                    default='textures.white',
+                    default='textures.white_data',
                 ),
                 Slot(
                     name='standin_icon',
@@ -175,7 +175,7 @@ SPEC = BaseAssetSpec(
                     name='standin_icon_color_mask',
                     kind=Kind.TEXTURE,
                     doc='Colorize mask for the standin icon.',
-                    default='textures.white',
+                    default='textures.white_data',
                 ),
                 Slot(
                     name='depiction_spinner',

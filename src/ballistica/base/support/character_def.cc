@@ -12,6 +12,7 @@
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/generated/character_ranges.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -19,39 +20,15 @@
 
 namespace ballistica::base {
 
-// Allowed spans per numeric field. Physique spans are exactly what
-// the legacy style presets covered (sim state; pushing them changes
-// gameplay); the look spans are loosened beyond legacy for future
-// characters' visual headroom. Must match BASIC_SPAZ_RANGES and
-// BASIC_ICON_RANGES in bamaster baserver/character.py; widen only
-// alongside them.
+// The allowed span of every numeric field (the kCharacterRange*
+// constants) comes from generated/character_ranges.h, which is
+// generated from the one table the cloud and the authoring tools also
+// read (tools/bacommon/characterranges.py). Change a span there, never
+// here.
 namespace {
 
-struct Range {
-  float lo;
-  float hi;
-};
-
-const Range kRangeColor{0.0f, 1.0f};
-const Range kRangeHighlight{0.0f, 1.0f};
-const Range kRangeTorsoRadius{0.11f, 0.3f};
-const Range kRangeShoulderOffset{-0.05f, 0.03f};
-const Range kRangeThighRadius{0.04f, 0.06f};
-const Range kRangeAnkleRadius{0.045f, 0.07f};
-const Range kRangeStepSeparation{0.03f, 0.08f};
-const Range kRangeIdleArmStiffness{0.2f, 1.0f};
-const Range kRangeArmSwing{0.3f, 0.6f};
-const Range kRangeIdleSway{0.02f, 0.05f};
-const Range kRangeEyeScale{0.5f, 2.0f};
-const Range kRangeEyeOffset{-0.5f, 0.5f};
-const Range kRangeEyeColor{0.0f, 2.0f};
-const Range kRangeEyeballColor{0.0f, 1.0f};
-const Range kRangeEyelidColor{0.0f, 1.0f};
-const Range kRangeEyelidAngle{-30.0f, 30.0f};
-const Range kRangeReflectionScale{0.0f, 2.0f};
-
 void ReadFloat(const JsonRef& obj, const char* key, float* out,
-               const Range& range) {
+               const CharacterRange& range) {
   if (auto val = obj[key].as_double()) {
     *out = std::clamp(static_cast<float>(*val), range.lo, range.hi);
   }
@@ -59,7 +36,7 @@ void ReadFloat(const JsonRef& obj, const char* key, float* out,
 
 // Returns whether the key held a 3-element array (and so was applied).
 auto ReadFloat3(const JsonRef& obj, const char* key, float* out,
-                const Range& range) -> bool {
+                const CharacterRange& range) -> bool {
   JsonRef arr = obj[key];
   if (!arr.is_array() || arr.size() != 3) {
     return false;
@@ -72,16 +49,31 @@ auto ReadFloat3(const JsonRef& obj, const char* key, float* out,
   return true;
 }
 
+// The team-coloring strengths for the two highlights: keys are
+// ``prefix`` + 'hls' / 'hl2s' + ``suffix``. Left as is if absent.
+void ReadTeamColoringStrengths(const JsonRef& obj, const std::string& prefix,
+                               const std::string& suffix, float* highlight,
+                               float* highlight2) {
+  ReadFloat(obj, (prefix + "hls" + suffix).c_str(), highlight,
+            kCharacterRangeTeamColoringStrength);
+  ReadFloat(obj, (prefix + "hl2s" + suffix).c_str(), highlight2,
+            kCharacterRangeTeamColoringStrength);
+}
+
 // A piece's optional tint colors: keys are ``prefix`` + 'cl' / 'hl' /
-// 'hl2' + ``suffix`` (the base color keys, wrapped).
+// 'hl2' + ``suffix`` (the base color keys, wrapped), plus its
+// team-coloring strengths.
 void ReadTint(const JsonRef& obj, const std::string& prefix,
               const std::string& suffix, CharacterTintDef* out) {
+  ReadTeamColoringStrengths(obj, prefix, suffix,
+                            &out->highlight_team_coloring_strength,
+                            &out->highlight2_team_coloring_strength);
   out->has_color = ReadFloat3(obj, (prefix + "cl" + suffix).c_str(), out->color,
-                              kRangeColor);
+                              kCharacterRangeColor);
   out->has_highlight = ReadFloat3(obj, (prefix + "hl" + suffix).c_str(),
-                                  out->highlight, kRangeHighlight);
+                                  out->highlight, kCharacterRangeHighlight);
   out->has_highlight2 = ReadFloat3(obj, (prefix + "hl2" + suffix).c_str(),
-                                   out->highlight2, kRangeHighlight);
+                                   out->highlight2, kCharacterRangeHighlight);
 }
 
 void ReadBool(const JsonRef& obj, const char* key, bool* out) {
@@ -106,18 +98,19 @@ void ReadEyeStyle(const JsonRef& obj, const char* key, CharacterEyeStyle* out) {
   }
 }
 
-const Range kRangeAttachmentPosition{-0.5f, 0.5f};
 // Attachment calibration scalars get a one-time warning on
 // out-of-range values (unlike the silently-clamping numeric fields):
-// the 0-1 dial is the whole range, and modders poking at definitions
-// should learn they can't overdrive the springs.
+// the dial's span is its whole range, and modders poking at
+// definitions should learn they can't overdrive the springs.
 void ReadAttachmentScalar(const JsonRef& obj, const char* key, float* out,
-                          float lo = 0.0f, float hi = 1.0f) {
+                          const CharacterRange& range) {
   auto val = obj[key].as_double();
   if (!val) {
     return;
   }
   auto fval = static_cast<float>(*val);
+  float lo = range.lo;
+  float hi = range.hi;
   if (fval < lo || fval > hi) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                 "Character attachment scalar '" + std::string(key)
@@ -260,18 +253,28 @@ void ReadAttachmentList(const JsonRef& arr, bool static_only,
     if (static_only && adef.type != CharacterAttachmentType::kStatic) {
       continue;
     }
-    ReadFloat3(entry, "p", adef.position, kRangeAttachmentPosition);
-    ReadAttachmentScalar(entry, "k", &adef.stiffness);
-    ReadAttachmentScalar(entry, "d", &adef.damping);
-    ReadAttachmentScalar(entry, "dg", &adef.drag);
-    ReadAttachmentScalar(entry, "c", &adef.curl, -1.0f, 1.0f);
-    ReadAttachmentScalar(entry, "l", &adef.length);
-    ReadAttachmentScalar(entry, "r", &adef.radius);
-    ReadAttachmentScalar(entry, "cc", &adef.curl_change, -1.0f, 1.0f);
-    ReadAttachmentScalar(entry, "lc", &adef.length_change, -1.0f, 1.0f);
-    ReadAttachmentScalar(entry, "rc", &adef.radius_change, -1.0f, 1.0f);
-    ReadAttachmentScalar(entry, "kc", &adef.stiffness_change, -1.0f, 1.0f);
-    ReadAttachmentScalar(entry, "dc", &adef.damping_change, -1.0f, 1.0f);
+    ReadFloat3(entry, "p", adef.position, kCharacterRangeAttachmentPosition);
+    ReadAttachmentScalar(entry, "k", &adef.stiffness,
+                         kCharacterRangeAttachmentStiffness);
+    ReadAttachmentScalar(entry, "d", &adef.damping,
+                         kCharacterRangeAttachmentDamping);
+    ReadAttachmentScalar(entry, "dg", &adef.drag,
+                         kCharacterRangeAttachmentDrag);
+    ReadAttachmentScalar(entry, "c", &adef.curl, kCharacterRangeAttachmentCurl);
+    ReadAttachmentScalar(entry, "l", &adef.length,
+                         kCharacterRangeAttachmentLength);
+    ReadAttachmentScalar(entry, "r", &adef.radius,
+                         kCharacterRangeAttachmentRadius);
+    ReadAttachmentScalar(entry, "cc", &adef.curl_change,
+                         kCharacterRangeAttachmentCurlChange);
+    ReadAttachmentScalar(entry, "lc", &adef.length_change,
+                         kCharacterRangeAttachmentLengthChange);
+    ReadAttachmentScalar(entry, "rc", &adef.radius_change,
+                         kCharacterRangeAttachmentRadiusChange);
+    ReadAttachmentScalar(entry, "kc", &adef.stiffness_change,
+                         kCharacterRangeAttachmentStiffnessChange);
+    ReadAttachmentScalar(entry, "dc", &adef.damping_change,
+                         kCharacterRangeAttachmentDampingChange);
     JsonRef quat = entry["q"];
     if (quat.is_array() && quat.size() == 4) {
       for (size_t qi = 0; qi < 4; ++qi) {
@@ -361,6 +364,8 @@ void ReadAttachments(const JsonRef& obj, const char* key,
       {"lul", CharacterAttachTarget::kLeftUpperLeg},
       {"lll", CharacterAttachTarget::kLeftLowerLeg},
       {"lto", CharacterAttachTarget::kLeftToes},
+      {"w", CharacterAttachTarget::kWing},
+      {"lw", CharacterAttachTarget::kLeftWing},
   };
   for (const auto& entry : kTargets) {
     int ti = static_cast<int>(entry.target);
@@ -396,9 +401,11 @@ auto ReadIcon(const JsonRef& basic, BasicIconDef* out) -> bool {
                 "Character icon block is missing asset refs; using standin.");
     return false;
   }
-  ReadFloat3(basic, "cl", d.color, kRangeColor);
-  ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
-  ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
+  ReadFloat3(basic, "cl", d.color, kCharacterRangeColor);
+  ReadFloat3(basic, "hl", d.highlight, kCharacterRangeHighlight);
+  ReadFloat3(basic, "hl2", d.highlight2, kCharacterRangeHighlight);
+  ReadTeamColoringStrengths(basic, "", "", &d.highlight_team_coloring_strength,
+                            &d.highlight2_team_coloring_strength);
   *out = std::move(d);
   return true;
 }
@@ -435,16 +442,6 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   ReadPackageAssetRef(basic, "mfa", &d.forearm_mesh);
   ReadPackageAssetRef(basic, "mhn", &d.hand_mesh);
   ReadPackageAssetRef(basic, "mp", &d.pelvis_mesh);
-  // Optional wings: mesh presence is what makes a character winged;
-  // the texture alone does nothing.
-  ReadPackageAssetRef(basic, "mw", &d.wing_mesh);
-  ReadPackageAssetRef(basic, "tw", &d.wing_texture);
-  ReadPackageAssetRef(basic, "wm", &d.wing_tint_texture);
-  ReadPackageAssetRef(basic, "lmw", &d.wing_left_mesh);
-  ReadPackageAssetRef(basic, "ltw", &d.wing_left_texture);
-  ReadPackageAssetRef(basic, "lwm", &d.wing_left_tint_texture);
-  ReadTint(basic, "", "w", &d.wing_tint);
-  ReadTint(basic, "l", "w", &d.wing_left_tint);
   // Optional per-part looks. Keys are a prefix plus the part's suffix
   // (the one its mesh key uses): 't' texture, 'tm' tint mask, and
   // 'cl' / 'hl' / 'hl2' tint colors; for paired parts 'lm' / 'lt' /
@@ -473,28 +470,31 @@ auto ReadSpaz(const JsonRef& basic, BasicSpazDef* out) -> bool {
   ReadPackageAssetRefs(basic, "sp", &d.pickup_sounds);
   ReadPackageAssetRefs(basic, "sf", &d.fall_sounds);
 
-  d.has_color = ReadFloat3(basic, "cl", d.color, kRangeColor);
-  ReadFloat3(basic, "hl", d.highlight, kRangeHighlight);
-  ReadFloat3(basic, "hl2", d.highlight2, kRangeHighlight);
+  d.has_color = ReadFloat3(basic, "cl", d.color, kCharacterRangeColor);
+  ReadFloat3(basic, "hl", d.highlight, kCharacterRangeHighlight);
+  ReadFloat3(basic, "hl2", d.highlight2, kCharacterRangeHighlight);
+  ReadTeamColoringStrengths(basic, "", "", &d.highlight_team_coloring_strength,
+                            &d.highlight2_team_coloring_strength);
 
-  ReadFloat(basic, "tr", &d.torso_radius, kRangeTorsoRadius);
-  ReadFloat3(basic, "so", d.shoulder_offset, kRangeShoulderOffset);
-  ReadFloat(basic, "lt", &d.thigh_radius, kRangeThighRadius);
-  ReadFloat(basic, "la", &d.ankle_radius, kRangeAnkleRadius);
-  ReadFloat(basic, "ss", &d.step_separation, kRangeStepSeparation);
-  ReadFloat(basic, "ia", &d.idle_arm_stiffness, kRangeIdleArmStiffness);
-  ReadFloat(basic, "aw", &d.arm_swing, kRangeArmSwing);
-  ReadFloat(basic, "iw", &d.idle_sway, kRangeIdleSway);
+  ReadFloat(basic, "tr", &d.torso_radius, kCharacterRangeTorsoRadius);
+  ReadFloat3(basic, "so", d.shoulder_offset, kCharacterRangeShoulderOffset);
+  ReadFloat(basic, "lt", &d.thigh_radius, kCharacterRangeThighRadius);
+  ReadFloat(basic, "la", &d.ankle_radius, kCharacterRangeAnkleRadius);
+  ReadFloat(basic, "ss", &d.step_separation, kCharacterRangeStepSeparation);
+  ReadFloat(basic, "ia", &d.idle_arm_stiffness,
+            kCharacterRangeIdleArmStiffness);
+  ReadFloat(basic, "aw", &d.arm_swing, kCharacterRangeArmSwing);
+  ReadFloat(basic, "iw", &d.idle_sway, kCharacterRangeIdleSway);
 
   ReadEyeStyle(basic, "le", &d.eye_style_left);
   ReadEyeStyle(basic, "re", &d.eye_style_right);
-  ReadFloat(basic, "es", &d.eye_scale, kRangeEyeScale);
-  ReadFloat3(basic, "eo", d.eye_offset, kRangeEyeOffset);
-  ReadFloat3(basic, "ec", d.eye_color, kRangeEyeColor);
-  ReadFloat3(basic, "eb", d.eyeball_color, kRangeEyeballColor);
-  ReadFloat3(basic, "lc", d.eyelid_color, kRangeEyelidColor);
-  ReadFloat(basic, "ln", &d.eyelid_angle, kRangeEyelidAngle);
-  ReadFloat(basic, "rs", &d.reflection_scale, kRangeReflectionScale);
+  ReadFloat(basic, "es", &d.eye_scale, kCharacterRangeEyeScale);
+  ReadFloat3(basic, "eo", d.eye_offset, kCharacterRangeEyeOffset);
+  ReadFloat3(basic, "ec", d.eye_color, kCharacterRangeEyeColor);
+  ReadFloat3(basic, "eb", d.eyeball_color, kCharacterRangeEyeballColor);
+  ReadFloat3(basic, "lc", d.eyelid_color, kCharacterRangeEyelidColor);
+  ReadFloat(basic, "ln", &d.eyelid_angle, kCharacterRangeEyelidAngle);
+  ReadFloat(basic, "rs", &d.reflection_scale, kCharacterRangeReflectionScale);
   ReadBool(basic, "fl", &d.flippers);
 
   *out = std::move(d);
@@ -593,8 +593,6 @@ void CharacterDef::LoadSpazMedia_() {
   std::vector<MediaBlock::IndexedRef> indexed;
   note(&d.color_texture, "textures/", &indexed);
   note(&d.color_mask_texture, "textures/", &indexed);
-  note(&d.wing_texture, "textures/", &indexed);
-  note(&d.wing_tint_texture, "textures/", &indexed);
   note(&d.head_mesh, "meshes/", &indexed);
   note(&d.torso_mesh, "meshes/", &indexed);
   note(&d.pelvis_mesh, "meshes/", &indexed);
@@ -604,10 +602,6 @@ void CharacterDef::LoadSpazMedia_() {
   note(&d.upper_leg_mesh, "meshes/", &indexed);
   note(&d.lower_leg_mesh, "meshes/", &indexed);
   note(&d.toes_mesh, "meshes/", &indexed);
-  note(&d.wing_mesh, "meshes/", &indexed);
-  note(&d.wing_left_mesh, "meshes/", &indexed);
-  note(&d.wing_left_texture, "textures/", &indexed);
-  note(&d.wing_left_tint_texture, "textures/", &indexed);
   for (auto& look : d.part_looks) {
     note(&look.texture, "textures/", &indexed);
     note(&look.tint_texture, "textures/", &indexed);
@@ -650,10 +644,7 @@ auto CharacterDef::SpazRequiredRefs_() const
       &d.torso_mesh,     &d.upper_arm_mesh,     &d.upper_leg_mesh,
       &d.lower_leg_mesh, &d.toes_mesh};
   // Optional parts join the check only when present.
-  for (const auto* opt :
-       {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh, &d.wing_mesh,
-        &d.wing_texture, &d.wing_tint_texture, &d.wing_left_mesh,
-        &d.wing_left_texture, &d.wing_left_tint_texture}) {
+  for (const auto* opt : {&d.forearm_mesh, &d.hand_mesh, &d.pelvis_mesh}) {
     if (!opt->name.empty()) {
       refs.push_back(opt);
     }
@@ -706,15 +697,6 @@ auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
   m.upper_leg_mesh = get->Mesh(d.upper_leg_mesh);
   m.lower_leg_mesh = get->Mesh(d.lower_leg_mesh);
   m.toes_mesh = get->Mesh(d.toes_mesh);
-  if (!d.wing_mesh.name.empty()) {
-    m.wing_mesh = get->Mesh(d.wing_mesh);
-  }
-  if (!d.wing_texture.name.empty()) {
-    m.wing_texture = get->Texture(d.wing_texture);
-  }
-  if (!d.wing_tint_texture.name.empty()) {
-    m.wing_tint_texture = get->Texture(d.wing_tint_texture);
-  }
   auto opt_texture = [get](const CharacterAssetRef& ref,
                            Object::Ref<TextureAsset>* out) {
     if (!ref.name.empty()) {
@@ -727,9 +709,6 @@ auto CharacterDef::LoadSpazMediaWith_(const BasicSpazDef& d, MediaGetter* get)
       *out = get->Mesh(ref);
     }
   };
-  opt_mesh(d.wing_left_mesh, &m.wing_left_mesh);
-  opt_texture(d.wing_left_texture, &m.wing_left_texture);
-  opt_texture(d.wing_left_tint_texture, &m.wing_left_tint_texture);
   for (int i = 0; i < kCharacterBodyPartCount; ++i) {
     const auto& look = d.part_looks[i];
     auto& lmedia = m.part_looks[i];

@@ -100,6 +100,10 @@ class Slot:
     #: free to be named differently (see ``scorch_mesh``).
     default: str
 
+    #: Wrapper module ``default`` hangs off, when it is not the
+    #: group's own.
+    default_module: str | None = None
+
 
 @dataclass
 class Group:
@@ -195,7 +199,12 @@ def generate_python(projroot: str, out_path: str) -> None:
     # Wrapper modules the defaults hang off. Imported for real since
     # the init lines reference them; importing a wrapper only builds
     # its tree, it loads no assets.
-    for mod in dict.fromkeys(g.default_module for g in spec.groups):
+    for mod in dict.fromkeys(
+        mod
+        for g in spec.groups
+        for mod in (g.default_module, *(s.default_module for s in g.slots))
+        if mod
+    ):
         out.append(f'from bascenev1 import {mod}')
     out += [
         '',
@@ -243,7 +252,8 @@ def generate_python(projroot: str, out_path: str) -> None:
         '        # nothing is loaded here).',
     ]
     for group, slot in pairs:
-        expr = f'{group.default_module}.{slot.default}'
+        dmod = slot.default_module or group.default_module
+        expr = f'{dmod}.{slot.default}'
         flat = f'        self.{slot.name} = {expr}'
         if len(flat) <= 79:
             out.append(flat)

@@ -2,6 +2,7 @@
 
 #include "ballistica/scene_v1/node/sound_node.h"
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/audio/audio.h"
@@ -25,6 +26,9 @@ class SoundNodeType : public NodeType {
   BA_BOOL_ATTR(music, music, SetMusic);
   BA_BOOL_ATTR(loop, loop, SetLoop);
   BA_SOUND_ATTR(sound, sound, SetSound);
+  BA_STRING_ATTR(play_group, play_group, SetPlayGroup);
+  BA_INT_ATTR(play_group_cap, play_group_cap, SetPlayGroupCap);
+  BA_STRING_ATTR(priority, priority, SetPriority);
 #undef BA_NODE_TYPE_CLASS
   SoundNodeType()
       : NodeType("sound", CreateSound),
@@ -33,7 +37,10 @@ class SoundNodeType : public NodeType {
         positional(this),
         music(this),
         loop(this),
-        sound(this) {}
+        sound(this),
+        play_group(this),
+        play_group_cap(this),
+        priority(this) {}
 };
 static NodeType* node_type{};
 
@@ -103,6 +110,39 @@ void SoundNode::SetSound(SceneSound* s) {
   // (which can't happen after we start playing)
 }
 
+// The three below only bear on getting a source, so (like 'loop') they
+// have to be set before we start playing. Their values get held to what
+// content may ask for, here and on every peer.
+
+void SoundNode::SetPlayGroup(const std::string& val) {
+  play_options_.group = val;
+  play_options_.Sanitize();
+}
+
+void SoundNode::SetPlayGroupCap(int val) {
+  play_options_.group_cap = val;
+  play_options_.Sanitize();
+}
+
+auto SoundNode::priority() const -> std::string {
+  return SoundPlayOptions::PriorityName(play_options_.priority);
+}
+
+void SoundNode::SetPriority(const std::string& val) {
+  // A bad value is the caller's mistake when set locally; arriving from
+  // a host it is just something to ignore.
+  if (scene()->streamed_in()) {
+    try {
+      play_options_.priority = SoundPlayOptions::PriorityFromName(val);
+    } catch (const std::exception&) {
+      play_options_.priority = -1;
+    }
+  } else {
+    play_options_.priority = SoundPlayOptions::PriorityFromName(val);
+  }
+  play_options_.Sanitize();
+}
+
 void SoundNode::SetPositional(bool val) {
   if (val == positional_) {
     return;
@@ -131,7 +171,15 @@ void SoundNode::SetMusic(bool val) {
 void SoundNode::Step() {
   // If we want to start playing, do so.
   if (!playing_ && sound_.exists()) {
-    base::AudioSource* s = scene()->NewAudioSource();
+    base::AudioPlaySpec spec;
+    spec.sound = sound_->GetSoundData();
+    spec.looping = loop_;
+    spec.overrides = play_options_.ToOverrides();
+    // Music outranks whatever content can ask for.
+    if (music_) {
+      spec.overrides.priority = base::AudioPriority::kEngineMusic;
+    }
+    base::AudioSource* s = scene()->NewAudioSource(spec);
     if (s) {
       assert(position_.size() == 3);
       s->SetPosition(position_[0], position_[1], position_[2]);

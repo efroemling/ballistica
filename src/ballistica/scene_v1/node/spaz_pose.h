@@ -9,6 +9,8 @@
 
 namespace ballistica::scene_v1 {
 
+struct SpazPhysicsTuning;
+
 /// Which of the rig's joints a shatter broke (bit flags; the pose
 /// driver zeroes the springs of every broken joint).
 enum SpazShatterDamage : uint32_t {
@@ -99,6 +101,8 @@ class SpazPose {
   /// core bodies; the held object's body (if any) is the one foreign
   /// body, for where the hands reach.
   struct StepInputs {
+    // Core-joint spring strengths (the neck here); never null.
+    const SpazPhysicsTuning* tuning{};
     millisecs_t scenetime{};
     int64_t stepnum{};
     int stream_id{};
@@ -154,8 +158,10 @@ class SpazPose {
   /// the normal standing pose, or the frozen treatment (springs go hard
   /// and the rest rotations are left alone so the backend can lock
   /// them to the joints' current angles). Called when the style or
-  /// frozen state changes, not per step.
-  void ApplyRestPose(const Joints& joints, bool frozen);
+  /// frozen state changes, not per step. The pelvis springs come from
+  /// the tuning; limb springs are fixed.
+  void ApplyRestPose(const Joints& joints, bool frozen,
+                     const SpazPhysicsTuning& tuning);
 
   /// Run-cycle phase (radians, wraps); synced host-to-client with the
   /// rest of the rig state.

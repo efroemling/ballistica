@@ -1,4 +1,117 @@
-### 1.8.0 (build 23037, api 9, 2026-10-04)
+### 1.8.0 (build 23050, api 9, 2026-10-11)
+- Reworked what happens when more sounds want to play than the game has
+  audio channels for (32). Previously the newest sound was simply
+  dropped, which in busy games (lots of bombs, epic mode) lost
+  explosions, footsteps and sometimes the score-screen music. Now:
+  - Every sound belongs to a 'play group', by default named for the
+    sound less any trailing number (so `explosion01` through
+    `explosion05` share one). Only a few sounds of a group play at once;
+    a new one cuts off the group's oldest.
+  - Sounds have priorities. With every channel busy, a new sound cuts
+    off the oldest playing sound of the lowest priority at or below its
+    own. Music and ui sounds outrank anything content can ask for.
+  - Looping sounds (bomb fuses and the like) are never cut off; one that
+    can't get a channel waits for one as before.
+  - The standard sounds have priorities set: music highest, then the
+    announcer and event stingers, with impacts, skids and swishes below
+    normal and footsteps and falling debris lowest.
+- `bascenev1.Sound.play()` gained `play_group`, `play_group_cap` and
+  `priority` arguments (see the new `bascenev1.SoundPriority`), and
+  `sound` nodes gained matching `play_group`, `play_group_cap` and
+  `priority` attrs. Sound assets can set a play group and priority of
+  their own in their workspace settings.
+- Hosts no longer send clients bursts of sound plays that would only cut
+  each other off on arrival.
+- Scene protocol is now 54 (for the above).
+- Retuned character physics to feel closer to 1.7 after the limbs rework:
+  less bouncy, steadier landings and less speed lost to bumps, and
+  knocked-out characters slide instead of sticking to the floor (thanks
+  TheMikirog!).
+- Added an MSAA option to graphics settings on desktop builds: Auto, Off,
+  or any sample count the graphics hardware supports. Auto behaves as
+  before (4x on Apple Silicon Macs, off elsewhere). Changes apply
+  immediately. Stored as the `MSAA` config value.
+- Reworked how character arms and legs stretch to stay connected: each
+  segment keeps its far end in place and reaches its elbow or knee end
+  to meet its neighbour, so limbs join cleanly at any pose. A limb whose
+  elbow or knee breaks in a shatter stops stretching; the rest keep
+  going.
+- Fixed sounds missing from some server messages (purchases, rewards,
+  league promotions and the like).
+- Texture-role mismatch warnings are no longer logged for content coming
+  from a remote host or a replay; they are meant for whoever authored it.
+- Android: the 'gl view aspect differs from window aspect' warning no
+  longer fires at launch while the system bars are still hiding; it now
+  only reports a mismatch that persists, with more detail.
+- `BA_NO_UDP=1` runs no longer log a spurious 'DoPoll called with neither
+  sd4 or sd6 set' error.
+- Fixed co-op high scores not being accepted from Android builds.
+- Fixed game music never playing on some Android devices (Android 8.1,
+  and devices whose audio output runs on OpenSL ES). The game's own sound
+  was being mistaken for another app's music, which game music politely
+  yields to. Yielding now needs Android 9+ and is skipped on OpenSL.
+- Trimmed long quiet tails from the explosion, impact, punch, drum-roll
+  and cymbal sounds (one explosion ran over 10 seconds) so busy fights,
+  especially in Epic mode, are less likely to run out of audio sources
+  and drop sounds. The dropped-sound warning now names the sound and
+  counts how many were dropped.
+- Fixed an error when enabling a public party.
+- Fixed a crash on Windows (an access violation in `libGLESv2.dll`,
+  anywhere from seconds to half an hour into a run, on NVIDIA and Intel
+  graphics alike). It was a bug in ANGLE's Direct3D 11 backend: its
+  input-layout cache hashed a key struct that included uninitialized
+  padding bytes, so the cache could hand back an entry it had already
+  destroyed. Our Windows ANGLE build now carries a patch for it.
+- Fixed OpenGL errors at launch on Windows from the builtin black cube map,
+  whose compressed form was smaller than Direct3D 11 allows.
+- Fixed an Android crash when the text-editing dialog was dismissed after
+  the app had been sent to the background.
+- Hosting is more robust against misbehaving user mods: a player-join
+  request whose Python handling raises or returns nothing now counts as a
+  refusal instead of leaving a half-added player behind, and lobby choosers
+  built by older mods no longer fail every join.
+- Error reports now count any Python present in the mods directory as
+  'modded' (previously only commands run, workspaces or replaced app
+  scripts did, which missed plugins).
+- Fixed the game failing at launch ('Failed to load bundled builtin
+  asset-packages') on Android devices whose graphics hardware lacks ASTC
+  texture support (some older phones, x86 devices and emulators). Store
+  builds bundle most asset-packages in ASTC form only; only the builtin
+  package is required at launch now, and such devices download the rest in
+  a form they can use on first run. That fatal error also now says what
+  went wrong.
+- Fixed all Android builds being treated as having modified scripts, which
+  mislabeled their error reports.
+- In team games a player's cloud character, its icon and the lobby's name
+  and icon displays now keep the team's color clearly dominant: the
+  character's other tint colors are toned toward it ('team coloring'), and
+  icons take the team color as the character itself does. Spaz and
+  depictiondisplay nodes gain a `team_coloring` attr, and any depiction can
+  carry a `color_override` and `team_coloring` of its own. Scene protocol 53.
+- Asset-package textures now carry the role they were authored with, and the
+  engine checks it where a texture is used: a `data` texture (a mask or tint,
+  whose channels are independent values) drawn as a picture, or a picture
+  bound as a colorize/mask texture, logs a one-time warning naming the
+  texture. Masks built with the `data` role are no longer premultiplied by
+  their alpha; the masked image shader applies mask alpha itself for those.
+  Textures that did not come from an asset package are not checked.
+- Doc-ui pages (the settings pages, inbox, etc.) open faster, most noticeably
+  on slower devices: asset-packages already resolved this run are no longer
+  resolved again for every page shown. A page or asset resolve that takes
+  over a second for purely local reasons (nothing fetched from the network)
+  now logs a warning saying where the time went.
+- Fixed keyboard/controller selection getting stuck on doc-ui pages with
+  nothing selectable on them (an empty inbox, say): such a page now gets a
+  subtle Ok button at its end that closes the window.
+- The `BA_DATA_DIR` environment variable now does what the `--data-dir`
+  arg does (the arg wins if both are given), for launchers that can set an
+  environment but not pass args. The Flatpak uses it, so the game no longer
+  needs a wrapper script to start from its data dir.
+- Under Flatpak the default config dir is now the app's own data dir
+  (`~/.var/app/<app-id>/.ballisticakit`) instead of a `--persist` mount
+  over `~/.ballisticakit`. It is the same folder on disk, so nothing moves,
+  but its path is now valid outside the sandbox too, which fixes 'Show Mods
+  Folder' doing nothing.
 - Touchscreen players on Android and iPhone now get haptic feedback from the
   device itself for the same events controllers rumble for (Android 10 and
   newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'

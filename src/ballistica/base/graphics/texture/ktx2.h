@@ -92,7 +92,7 @@ void LoadKTX2(const AssetBlob& blob, const std::string& file_name,
               unsigned char** buffers, int* widths, int* heights,
               TextureFormat* formats, size_t* sizes, int* base_level,
               bool* premultiplied, TextureWrapping* wrap_h,
-              TextureWrapping* wrap_v);
+              TextureWrapping* wrap_v, TextureRole* role);
 
 /// One face's output destination for a cube-map KTX2 load — the same
 /// array set :func:`LoadKTX2` fills for a single 2D image.
@@ -106,6 +106,7 @@ struct KTX2FaceTarget {
   bool* premultiplied;
   TextureWrapping* wrap_h;
   TextureWrapping* wrap_v;
+  TextureRole* role;
 };
 
 /// Load a ``faceCount=6`` cube-map KTX 2.0 file (asset-packages decision

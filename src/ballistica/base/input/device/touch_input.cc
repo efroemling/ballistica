@@ -1053,19 +1053,22 @@ auto TouchInput::HandleTouchUp(void* touch, float x, float y) -> bool {
   if (touch == d_pad_drag_touch_) {
     d_pad_drag_touch_ = nullptr;
 
-    // Write the current frac to our config.
+    // Write the current frac to our config (and to disk; raw writes
+    // alone are lost on restart unless something else commits).
     g_base->python->SetRawConfigValue("Touch DPad X", d_pad_default_frac_x_);
     g_base->python->SetRawConfigValue("Touch DPad Y", d_pad_default_frac_y_);
+    g_base->python->objs().Get(BasePython::ObjID::kCommitConfigCall).Call();
   }
 
   if (touch == buttons_drag_touch_) {
     buttons_drag_touch_ = nullptr;
 
-    // Write the current frac to our config.
+    // Write the current frac to our config (and to disk; see above).
     g_base->python->SetRawConfigValue("Touch Buttons X",
                                       buttons_default_frac_x_);
     g_base->python->SetRawConfigValue("Touch Buttons Y",
                                       buttons_default_frac_y_);
+    g_base->python->objs().Get(BasePython::ObjID::kCommitConfigCall).Call();
   }
 
   // Release on button touch.

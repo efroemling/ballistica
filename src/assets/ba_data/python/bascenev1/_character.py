@@ -16,11 +16,17 @@ class CharacterParts:
     :class:`bacommon.depiction.CharacterIconDepiction`, ``name`` for a
     :class:`bacommon.depiction.NameDepiction` (see :func:`name_text`
     for its plain text).
+
+    A cloud profile's character also carries ``profile``: the profile's
+    own name, its identity (what profiles are keyed and remembered by).
+    ``name`` is how it *shows*, usually the same text -- but an
+    ``__account__`` profile shows the account's name, say.
     """
 
     name: str | None
     icon: str | None
     spaz: str | None
+    profile: str | None = None
 
 
 def split_character(character_json: str) -> CharacterParts:
@@ -41,7 +47,13 @@ def split_character(character_json: str) -> CharacterParts:
             return None
         return json.dumps(part, separators=(',', ':'))
 
-    return CharacterParts(name=_part('n'), icon=_part('i'), spaz=_part('s'))
+    profile = bundle.get('p')
+    return CharacterParts(
+        name=_part('n'),
+        icon=_part('i'),
+        spaz=_part('s'),
+        profile=profile if isinstance(profile, str) and profile else None,
+    )
 
 
 def name_text(name_json: str | None) -> str | None:

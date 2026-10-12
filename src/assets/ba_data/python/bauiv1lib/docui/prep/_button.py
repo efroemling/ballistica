@@ -15,6 +15,7 @@ from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
     AnimTargetKind,
     AnimTargetPrep,
@@ -98,7 +99,9 @@ def _depiction_kwds(button: dui2.Button) -> dict:
         'depiction_h_align': h_align_arg(button.depiction_h_align),
         'depiction_v_align': v_align_arg(button.depiction_v_align),
         'depiction_hit_area': button.depiction_hit_area,
-        'depiction_debug': button.debug,
+        'depiction_debug': wants_debug_draw(
+            button.debug, DebugDrawKind.BUTTONS
+        ),
     }
 
 
@@ -203,7 +206,7 @@ def prep_button(
     if button.icon is not None:
         buttonprep.textures['icon'] = refstr(button.icon)
 
-    if button.debug:
+    if wants_debug_draw(button.debug, DebugDrawKind.BUTTONS):
         prep_button_debug(
             (bwidth * bscale, bheight * bscale),
             (center_x, center_y),

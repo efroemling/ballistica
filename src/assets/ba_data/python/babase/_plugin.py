@@ -42,6 +42,25 @@ class PluginSubsystem(AppSubsystem):
         #: The set of live active plugin instances.
         self.active_plugins: list[babase.Plugin] = []
 
+    def user_code_summary(self) -> str:
+        """Whether this run carries user code, for slow-load reports.
+
+        Edited system scripts and plugins can keep the logic thread or
+        the app threadpool busy, so a report of local slowness should
+        say up front whether either is in play.
+
+        :meta private:
+        """
+        # (baenv is long since imported by the time anything can call
+        # this; the cycle is structural only.)
+        import baenv  # pylint: disable=cyclic-import
+
+        userscripts = baenv.get_env_config().is_user_app_python_dir
+        return (
+            f'user system scripts {'in use' if userscripts else 'not in use'},'
+            f' {len(self.active_plugins)} active plugin(s)'
+        )
+
     def on_meta_scan_complete(self) -> None:
         """Called when meta-scanning is complete.
 

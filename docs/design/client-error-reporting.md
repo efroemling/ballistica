@@ -34,8 +34,9 @@ is saved and sent on the next launch — see
 
 It sends only what is immediately to hand — the message, a native stack
 trace when one is obtainable, compile-time build identity, the OS
-version, and three cheap modded-build signals (commands run,
-workspaces in use, custom app-scripts dir).
+version, and four cheap modded-build signals (commands run,
+workspaces in use, custom app-scripts dir, Python present in the mods
+dir).
 
 The OS version is read from `g_crash_info`, where it was recorded once
 core came up, rather than asked of the platform at fatal time. That
@@ -62,9 +63,6 @@ Decisions, and why:
   `PlusFeatureSet` method that bailed out entirely when plus was
   absent — so the engine-couldn't-start failures most worth reporting
   were the most likely to be dropped.
-- **Logging is the only side effect on receipt.** No datastore write:
-  reports are forgeable, so persisting them would let anyone grow the
-  storage bill. Cloud Logging already provides retention and search.
 - **cpp-httplib, confined to this one translation unit.** It returns
   errors as values rather than throwing, which matters in a fatal
   handler, and it is built with `CPPHTTPLIB_NO_EXCEPTIONS`. The header
@@ -105,27 +103,6 @@ back yet) looked exactly like the app silently vanishing.
   the payload's `t` still carries when the error actually happened.
 - A send that completes after the handler gave up on it produces one
   duplicate report; accepted.
-
-### Reading them
-
-```bash
-tools/pcommand cloud_log_query --message 'client fatal' --freshness 1d
-# Only the ones delivered a launch late:
-tools/pcommand cloud_log_query --message 'DEFERRED' --freshness 1d
-```
-
-Lines look like `client fatal: <message> | build=… version=…
-platform=…/… os=… variant=… devbuild=… modded=… coregone=… addr=…`,
-with the stack trace on following lines. `os=` is omitted when unknown.
-
-**Don't filter with `--service global`.** The master server emits these
-from whichever Cloud Run service processes the event (`bg` in
-practice); `resource.type=global` is for logs relayed from elsewhere,
-so that filter excludes exactly these entries. Omit `--service`.
-
-**`devbuild` doesn't separate us from users.** The public repo strips
-the developer-build flag, so public-CI builds report `devbuild=False`
-exactly like a player's.
 
 ### Testing
 
@@ -227,29 +204,6 @@ a crash handler that fills the fault fields and writes the record, plus
 a `GetPendingCrashRecordPath()` override; the struct, the next-launch
 submit, and everything server-side are already platform-neutral.
 
-### Reading them
-
-```bash
-tools/pcommand cloud_log_query --message 'CRASH' --freshness 1d
-```
-
-They are `client fatal` lines whose message starts `CRASH:`, with the
-crash block appended to the first line:
-
-```
-client fatal: CRASH: 0xC0000005 in libGLESv2.dll+0x212863 | build=… …
-  | fault=0xC0000005 at=libGLESv2.dll+0x212863 acc=0@0x0 appstate=1
-    frame=2464 uptime=81s renderer=ANGLE (NVIDIA, …, D3D11-…) | OpenGL ES …
-```
-
-`acc=0@0x0` — a read of address zero — is the classic null
-dereference. When the fault is outside every module we can name, `at=`
-falls back to the absolute address, since an offset would mean nothing.
-
-The renderer string is message text, not a label: it is near-unique
-per GPU + driver combination, so it is something you search, not
-something you slice by.
-
 ### From an address to code
 
 Crash reports carry an address; resolving it is a manual, local step —
@@ -327,31 +281,6 @@ to log what — is planned; document it here as it lands.
   queries can filter for clients showing exactly the levels the
   server configured.
 
-### Integrity signals (blessed / modified)
-
-Successors to the v1 system where clients sent their master-hash
-(camouflaged as `newsShow`) + `userRanCommands`/`userModded` and the
-legacy server derived `blessed` from a per-build Blessing record.
-Now split into two orthogonal client-computed values on every
-`ClientLogReportMessage`, sampled at each slice send:
-
-- `blessed` (`bl`, tri-state): pure build integrity — non-debug build
-  with an embedded blessing hash whose computed script hash checks
-  out (`_baplus.get_blessing_state()`). `None` = the background hash
-  calc (game_hash.py, kicked at pyembed init) hadn't finished, or a
-  pre-field client. Debug builds are always unblessed.
-- `modified` (`md`): user-side taint — commands run, workspaces in
-  use, or custom app-scripts dir (`_babase.is_user_modified()`; the
-  same trio the [fatal-error reporter](#fatal-errors) sends).
-  Inherently latching within a run, so False = clean-so-far. Note
-  automation-channel execs latch it (by design — they run arbitrary
-  code).
-
-Server side: `build=blessed|unblessed|unknown, modded=yes|no|unknown`
-in summary lines; `baBlessed`/`baModified` labels on every emitted
-line (omitted when unknown). Gold-standard field-data filter:
-`baBlessed=1, baModified=0, baCloudControlledLogging=1`.
-
 ### Mechanics
 
 - Pre-roll ships immediately on trigger (no arm delay); follow-up slices
@@ -366,21 +295,37 @@ line (omitted when unknown). Gold-standard field-data filter:
 - Pure logic + tests: `bacommon/logreporting.py` /
   `tests/test_bacommon/`.
 
-### Reading reports
+## Crashlytics (Google Play Android)
 
-- `tools/pcommand cloud_log_query --src client` on prod, or the
-  dev-log search on dev. Summary line:
-  `client log report from b<build> <tag>: N entries at index I`.
-- Query mechanics — including the `--message` tokenization trap that
-  silently breaks per-build attribution and the strict post-filter
-  recipe for it — live in the `cloud-logs` Claude skill.
+The Google Play Android build also links Firebase Crashlytics. It is a
+third-party safety net beside the three channels above, not one of
+them: it reports to Firebase rather than to our servers, and exists
+only in that one build (`PlatformAndroidGoogle`). What it adds there
+is exactly what our own channels lack on Android — hard native
+crashes, uncaught Java exceptions, and ANRs, each with a symbolicated
+stack, device model and OS version.
 
-### Driving an investigation
+What we feed it:
 
-Set a phrase trigger + windows on the fleet, have the target clients
-run; pair with raising logger verbosity via the fleet's cloud logger
-control config (above) — and filter the resulting reports on
-`levels=cloud` so user-tweaked clients don't muddy the picture.
+- **Breadcrumbs.** `Platform::LowLevelDebugLog()` forwards to
+  Crashlytics' log on this build (and is a no-op everywhere else).
+  App suspend/resume/active transitions and audio device pause/resume
+  go through it, so a report shows the lifecycle steps leading up to
+  the crash.
+- **The fatal-error message.** Our own fatal errors end in `abort()`,
+  so each one also arrives in Crashlytics as a SIGABRT whose stack ends
+  in `HandleFatalError`. Every fatal error therefore lands in the same
+  one or two Crashlytics issues regardless of cause; tell them apart by
+  the caller frame and by the `FATAL ERROR: ...` breadcrumb, which
+  `ReportFatalError` logs in builds after 23040. The same error is also
+  reported through the [fatal errors](#fatal-errors) channel — expect
+  both, and prefer ours for the message and build identity.
+- **Custom keys** via `Platform::SetDebugKey()`.
+
+Two reading traps: the "device" on a report is whatever the device
+claims to be (bursts of one model within minutes of an upload are
+automated store testing, not players), and 32-bit ARM stacks often
+arrive entirely unsymbolicated.
 
 ## Coverage gaps
 
@@ -388,6 +333,8 @@ Known states no channel covers:
 
 - **Native crashes off Windows**, and on Windows outside the `generic`
   and `test_build` variants — see [Platform coverage](#platform-coverage).
+  The Google Play Android build is the exception, through
+  [Crashlytics](#crashlytics-google-play-android).
 - **A crash with no next launch.** If the user never relaunches, the
   record is never sent.
 - **Android, when the native library never loads** (a wrong-architecture

@@ -1166,6 +1166,15 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         player.actor = spaz
         assert spaz.node
 
+        # A cloud look in a team game: the team's color stays the
+        # dominant one, with every other tint the look has (its own
+        # highlights, per-piece tints) toned down as needed. That takes
+        # the look's own highlights rather than the player's one stored
+        # highlight, which only ever covered the first of them.
+        if player.cloud_spaz_def is not None and self.session.use_team_colors:
+            spaz.node.use_spaz_def_highlight = True
+            spaz.node.team_coloring = True
+
         # If this is co-op and we're on Courtyard or Runaround, add the
         # material that allows us to collide with the player-walls.
         # FIXME: Need to generalize this.

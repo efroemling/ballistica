@@ -484,6 +484,52 @@ static PyMethodDef PySafeColorDef = {
     "dark colors, etc.",
 };
 
+// ---------------------------- brightened_color -------------------------------
+
+static auto PyBrightenedColor(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* color_obj;
+  float brightness;
+  static const char* kwlist[] = {"color", "brightness", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Of",
+                                   const_cast<char**>(kwlist), &color_obj,
+                                   &brightness)) {
+    return nullptr;
+  }
+  std::vector<float> color = Python::GetFloats(color_obj);
+  if (color.size() != 3 && color.size() != 4) {
+    throw Exception("Expected a 3 or 4 length sequence; got "
+                        + Python::ObjToString(color_obj) + ".",
+                    PyExcType::kValue);
+  }
+  Graphics::BrightenColor(color.data(), brightness);
+  if (color.size() == 3) {
+    return Py_BuildValue("(fff)", color[0], color[1], color[2]);
+  }
+  return Py_BuildValue("(ffff)", color[0], color[1], color[2], color[3]);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBrightenedColorDef = {
+    "brightened_color",              // name
+    (PyCFunction)PyBrightenedColor,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "brightened_color(color: Sequence[float], brightness: float)\n"
+    "  -> tuple[float, ...]\n"
+    "\n"
+    "Return a color brightened by a multiplier, blowing out to white.\n"
+    "\n"
+    "A plain multiply until the brightest channel reaches 1; past that\n"
+    "the color (hue kept, at full intensity) whitens by how far it\n"
+    "overshot, so even a fully saturated color visibly brightens and a\n"
+    "big enough multiplier gives white. Accepts tuples of length 3 or 4\n"
+    "(alpha passes through untouched). Works in sRGB for now.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------------ get_max_graphics_quality ---------------------------
 
 static auto PyGetMaxGraphicsQuality(PyObject* self) -> PyObject* {
@@ -1197,6 +1243,42 @@ static PyMethodDef PySupportsVSyncDef = {
     METH_NOARGS,                   // flags
 
     "supports_vsync() -> bool\n"
+    "\n"
+    ":meta private:\n",
+};
+
+// ------------------------- get_msaa_sample_counts ----------------------------
+
+static auto PyGetMSAASampleCounts(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  // Empty where MSAA is not user-configurable (or we've not yet heard
+  // what the hardware can do).
+  std::vector<int> counts;
+  if (g_base->graphics->has_client_context()) {
+    counts = g_base->graphics->client_context()->msaa_sample_counts;
+  }
+  PythonRef list(PyList_New(0), PythonRef::kSteal);
+  for (int count : counts) {
+    PythonRef val(PyLong_FromLong(count), PythonRef::kSteal);
+    PyList_Append(list.get(), val.get());
+  }
+  return list.NewRef();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetMSAASampleCountsDef = {
+    "get_msaa_sample_counts",            // name
+    (PyCFunction)PyGetMSAASampleCounts,  // method
+    METH_NOARGS,                         // flags
+
+    "get_msaa_sample_counts() -> list[int]\n"
+    "\n"
+    "MSAA sample counts the user can choose between on this device.\n"
+    "\n"
+    "Empty where MSAA is not user-configurable. Must be called from the\n"
+    "logic thread.\n"
     "\n"
     ":meta private:\n",
 };
@@ -2180,10 +2262,12 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyEvaluateLstrDef,
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
+      PyBrightenedColorDef,
       PyCharStrDef,
       PyFullscreenControlAvailableDef,
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
+      PyGetMSAASampleCountsDef,
       PySupportsMaxFPSDef,
       PyGetLastFPSDef,
       PySupportsUnicodeDisplayDef,

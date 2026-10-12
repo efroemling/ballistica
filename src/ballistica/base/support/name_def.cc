@@ -30,6 +30,7 @@ const Range kRangeTextInset{-1.0f, 1.0f};
 const Range kRangeIconEdge{0.0f, 2.0f};
 const Range kRangeTextGlow{0.0f, 4.0f};
 const Range kRangeInset{0.0f, 0.5f};
+const Range kRangeTeamColoringStrength{0.0f, 1.0f};
 
 void ReadFloat(const JsonRef& obj, const char* key, float* out,
                const Range& range) {
@@ -78,12 +79,46 @@ auto ReadCapsule(const JsonRef& tier) -> std::optional<CapsuleNameDef> {
   if (auto fill = tier["cf"].as_double()) {
     d.capsule_tile = (*fill == 1.0);
   }
+  // Override targets, by name; names this build doesn't know are
+  // ignored (later ones degrade to not taking the override).
+  if (JsonRef targets = tier["ot"]; targets.is_array()) {
+    d.override_text = false;
+    for (size_t i = 0; i < targets.size(); ++i) {
+      auto target = targets[i].as_string();
+      if (!target) {
+        continue;
+      }
+      if (*target == "t") {
+        d.override_text = true;
+      } else if (*target == "c") {
+        d.override_capsule = true;
+      } else if (*target == "t1") {
+        d.override_tints[0] = true;
+      } else if (*target == "t2") {
+        d.override_tints[1] = true;
+      } else if (*target == "t3") {
+        d.override_tints[2] = true;
+      } else if (*target == "i") {
+        d.override_icon = true;
+      }
+    }
+  }
   ReadPackageAssetRef(tier, "ctt", &d.capsule_tint_texture);
   ReadColor(tier, "ctc1", d.capsule_tint_colors[0], 3);
   ReadColor(tier, "ctc2", d.capsule_tint_colors[1], 3);
   ReadColor(tier, "ctc3", d.capsule_tint_colors[2], 3);
   ReadPackageAssetRef(tier, "it", &d.icon_texture);
   ReadColor(tier, "ic", d.icon_color, 4);
+  ReadFloat(tier, "ccs", &d.capsule_team_coloring_strength,
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs1", &d.capsule_tint_team_coloring_strengths[0],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs2", &d.capsule_tint_team_coloring_strengths[1],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ctcs3", &d.capsule_tint_team_coloring_strengths[2],
+            kRangeTeamColoringStrength);
+  ReadFloat(tier, "ics", &d.icon_team_coloring_strength,
+            kRangeTeamColoringStrength);
   ReadFloat(tier, "is", &d.icon_scale, kRangeIconScale);
   ReadFloat(tier, "ie", &d.icon_edge, kRangeIconEdge);
   ReadOptionalFloat(tier, "ti", &d.text_inset, kRangeTextInset);
@@ -124,6 +159,15 @@ auto NameDef::Parse(const JsonRef& block) -> std::optional<NameDef> {
   ReadColor(basic, "c", d.basic.color, 3);
   if (JsonRef capsule = block["c"]; capsule.is_object()) {
     d.capsule = ReadCapsule(capsule);
+  }
+  if (JsonRef glyph = block["g"]; glyph.is_object()) {
+    auto icon = glyph["i"].as_string();
+    if (icon && !icon->empty()) {
+      d.glyph = GlyphNameDef{std::string(*icon)};
+    } else {
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                  "Name glyph tier has no icon; ignoring it.");
+    }
   }
   return d;
 }

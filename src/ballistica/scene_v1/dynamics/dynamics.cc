@@ -948,7 +948,8 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
 
                 if (volume > 1) volume = 1;
                 assert(i.sound.exists());
-                if (base::AudioSource* source = scene_->NewAudioSource()) {
+                if (base::AudioSource* source =
+                        scene_->NewAudioSource(i.sound->GetSoundData())) {
                   source->SetGain(volume * i.volume);
                   source->SetPosition(apx, apy, apz);
                   source->Play(i.sound->GetSoundData());
@@ -991,7 +992,8 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                 } else if (real_time - p1->last_skid_sound_time() >= 250
                            || real_time - p2->last_skid_sound_time() > 250) {
                   assert(i.sound.exists());
-                  if (base::AudioSource* source = scene_->NewAudioSource()) {
+                  if (base::AudioSource* source = scene_->NewAudioSource(
+                          i.sound->GetSoundData(), true)) {
                     source->SetLooping(true);
                     source->SetGain(volume * i.volume);
                     source->SetPosition(apx, apy, apz);
@@ -1042,7 +1044,8 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
                 } else if (real_time - p1->last_roll_sound_time() >= 250
                            || real_time - p2->last_roll_sound_time() > 250) {
                   assert(i.sound.exists());
-                  if (base::AudioSource* source = scene_->NewAudioSource()) {
+                  if (base::AudioSource* source = scene_->NewAudioSource(
+                          i.sound->GetSoundData(), true)) {
                     source->SetLooping(true);
                     source->SetGain(volume * i.volume);
                     source->SetPosition(apx, apy, apz);
@@ -1088,7 +1091,8 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
     if (play_collide_sounds) {
       for (auto&& i : cc1->connect_sounds) {
         assert(i.sound.exists());
-        if (base::AudioSource* source = scene_->NewAudioSource()) {
+        if (base::AudioSource* source =
+                scene_->NewAudioSource(i.sound->GetSoundData())) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);
           source->Play(i.sound->GetSoundData());
@@ -1097,7 +1101,8 @@ void Dynamics::CollideCallback_(dGeomID o1, dGeomID o2) {
       }
       for (auto&& i : cc2->connect_sounds) {
         assert(i.sound.exists());
-        if (base::AudioSource* source = scene_->NewAudioSource()) {
+        if (base::AudioSource* source =
+                scene_->NewAudioSource(i.sound->GetSoundData())) {
           source->SetPosition(apx, apy, apz);
           source->SetGain(i.volume);
           source->Play(i.sound->GetSoundData());

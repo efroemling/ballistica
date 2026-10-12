@@ -502,6 +502,14 @@ def key_press(keycode: int, *, tag: str = 'key') -> None:
     that only create keyboard devices when a hardware keyboard is
     attached (iOS), call :func:`ensure_keyboard` first.
 
+    For modifier combos, press the modifier key first and release it
+    last: the engine derives modifier state from held keys, so a
+    held left-alt (``226 | (1 << 30)``) turns a delete (127) into
+    alt+delete. Non-printable keycodes are the scancode with bit 30
+    set (left-ctrl 224, left-shift 225, left-alt 226, left-gui 227).
+    Space the events across frames (an apptimer chain), since they
+    are queued.
+
     Emits ``[automation] <tag> fail not_compiled_in`` when the build
     was made without ``BA_ENABLE_AUTOMATION``.
     """

@@ -9,6 +9,7 @@ import bacommon.docui.routes.docuitest as rt
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _uiv1assets, _classiccatalogassets
+from bauiv1 import _classiccharacterassets
 from bauiv1 import _classicassets
 
 from bauiv1lib.docui import DocUIWindow, TypedDocUIController
@@ -676,12 +677,12 @@ def _test_v2_page_root(
                             decorations=[
                                 dui2.Image(
                                     texture=(
-                                        _classiccatalogassets.textures
+                                        _classiccharacterassets.textures
                                     ).zoe_icon,
                                     position=(0, 0),
                                     size=(70, 70),
                                     tint_texture=(
-                                        _classiccatalogassets.textures
+                                        _classiccharacterassets.textures
                                     ).zoe_icon_color_mask,
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),

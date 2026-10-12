@@ -14,6 +14,8 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
@@ -645,6 +647,10 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 // gate) send ONLY it -- 'm' may be absent entirely.
                 auto m = root["m"].as_string();
                 auto m2 = root["m2"].as_string();
+                // Text from the host (possibly an older build); a bad
+                // resource string there isn't ours to fix, so it
+                // shouldn't log as an error.
+                auto* screenmessages = g_base->graphics->screenmessages;
                 if (m2.has_value() && !m2->empty()
                     && IsLangStrWireTagged(std::string(*m2))) {
                   auto [text, literal] =
@@ -655,9 +661,14 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                                " screen-message: "
                                + text;
                       });
-                  g_base->ScreenMessage(text, {r, g, b}, literal);
+                  screenmessages->AddScreenMessage(
+                      text, literal, {r, g, b}, false, nullptr, nullptr,
+                      {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, LogLevel::kDebug);
                 } else if (m.has_value()) {
-                  g_base->ScreenMessage(std::string(*m), {r, g, b});
+                  screenmessages->AddScreenMessage(
+                      std::string(*m), false, {r, g, b}, false, nullptr,
+                      nullptr, {1, 1, 1}, {1, 1, 1}, {1, 1, 1},
+                      LogLevel::kDebug);
                 }
                 break;
               }

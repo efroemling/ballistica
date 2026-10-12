@@ -30,7 +30,7 @@ from bacommon.docui.routes import PressSound
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
-from bauiv1lib.docui import _bgrunner, _cache
+from bauiv1lib.docui import _bgrunner, _cache, _timing
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._menu import DocUIMenuWindow
 from bauiv1lib.docui._popuptext import DocUIPopupTextWindow
@@ -206,6 +206,8 @@ class DocUIController:
         if not isinstance(request, (dui1.Request, dui2.Request)):
             raise RuntimeError(f'Unsupported docui request: {type(request)}')
 
+        _timing.note_network_fulfill()
+
         # The v1 and v2 method enums share wire values; normalize to v1
         # for our http dispatch below.
         method = dui1.RequestMethod(request.method.value)
@@ -311,6 +313,8 @@ class DocUIController:
         import bacommon.cloud
 
         request = _as_request(request)
+
+        _timing.note_network_fulfill()
 
         bui.uilog.debug(
             'Fetching doc-ui request from cloud (domain=%r).', domain
@@ -628,6 +632,7 @@ class DocUIController:
                 immediate=cached is not None,
                 explicit_response=cached,
                 shown_time=time.monotonic(),
+                timing=self._new_timing(request),
             )
         )
         return win
@@ -765,6 +770,7 @@ class DocUIController:
                 explicit_error=explicit_error,
                 explicit_response=explicit_response,
                 shown_time=time.monotonic(),
+                timing=self._new_timing(win.request),
             )
         )
         return win
@@ -872,8 +878,14 @@ class DocUIController:
                 idprefix=win.main_window_id_prefix,
                 immediate=True,
                 explicit_error=explicit_error,
+                timing=self._new_timing(win.request),
             )
         )
+
+    def _new_timing(self, request: DocUIRequest) -> _timing.PageTiming:
+        """Start timing a request we're about to submit for bg prep."""
+        path = getattr(request, 'path', '?')
+        return _timing.PageTiming(f'{type(self).__name__} {path!r}')
 
     def run_action(
         self,
@@ -1271,6 +1283,7 @@ class DocUIController:
         explicit_error: ErrorType | None = None,
         explicit_response: DocUIResponse | None = None,
         shown_time: float | None = None,
+        timing: _timing.PageTiming | None = None,
     ) -> None:
         """Wrangle a request from within a background thread.
 
@@ -1279,7 +1292,14 @@ class DocUIController:
         ``shown_time`` (a ``time.monotonic()`` value) is when the window
         this request fills appeared; transitions are sped up for content
         that arrives soon after it (see _transition_scale()).
+
+        ``timing`` follows the request through to the built page, so a
+        page that was slow for local reasons can say where the time
+        went (see the _timing module).
         """
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         import bacommon.docui.v2 as dui2
         from bauiv1lib.docui import prep
@@ -1294,13 +1314,24 @@ class DocUIController:
         # re-prepped; see _resolve.deindex_response().
         prepresponse: dui2.Response | None = None
 
+        if timing is None:
+            timing = self._new_timing(request)
+        t_start = time.monotonic()
+        timing.queue = t_start - timing.submitted_at
+
+        # Lets whatever fulfills or resolves this say it used the network.
+        _timing.set_current(timing)
+
         if explicit_error is not None:
             error = explicit_error
         elif explicit_response is not None:
             response = explicit_response
         else:
             try:
-                response = self.fulfill_request(request)
+                try:
+                    response = self.fulfill_request(request)
+                finally:
+                    timing.fulfill = time.monotonic() - t_start
             except CleanError as exc:
                 # The one exception case we officially handle. Translate
                 # this to an error response with a custom message.
@@ -1342,7 +1373,12 @@ class DocUIController:
                         # from; the page then preps and renders natively.
                         from bauiv1lib.docui import _resolve
 
-                        _resolve.resolve_packages(response)
+                        t_resolve = time.monotonic()
+                        try:
+                            _resolve.resolve_packages(response)
+                        finally:
+                            t_deindex = time.monotonic()
+                            timing.resolve = t_deindex - t_resolve
 
                         # De-indexing rewrites the page in place, so it
                         # gets a copy and the wire response stays
@@ -1351,6 +1387,7 @@ class DocUIController:
                         # points into the copy.
                         prepresponse = copy.deepcopy(response)
                         _resolve.deindex_response(prepresponse)
+                        timing.deindex = time.monotonic() - t_deindex
                     except Exception:
                         bui.uilog.exception(
                             'Error resolving v2 doc-ui response.'
@@ -1379,6 +1416,9 @@ class DocUIController:
         assert isinstance(response, dui2.Response)
         assert prepresponse is not None
 
+        _timing.set_current(None)
+        t_prep = time.monotonic()
+
         pageprep = prep.prep_page(
             prepresponse.page,
             packages=list(prepresponse.packages),
@@ -1390,12 +1430,16 @@ class DocUIController:
             immediate=immediate,
             transition_scale=_transition_scale(shown_time),
             idprefix=idprefix,
+            description=timing.description,
         )
 
         # Carry the de-indexed display-time effects along on the prep;
         # the response we hand to the ui thread is un-de-indexed, so
         # its own copies are not the runnable form.
         pageprep.client_effects = prepresponse.client_effects
+
+        timing.handed_off_at = time.monotonic()
+        timing.prep = timing.handed_off_at - t_prep
 
         # Go ahead and just push the response along with our weakref
         # back to the logic thread for handling. We could quick-out here
@@ -1408,6 +1452,7 @@ class DocUIController:
                 response,
                 weakwin,
                 pageprep,
+                timing,
             ),
             from_other_thread=True,
         )
@@ -1417,10 +1462,13 @@ class DocUIController:
         response: DocUIResponse,
         weakwin: weakref.ref[DocUIWindow],
         pageprep: prep.PagePrep,
+        timing: _timing.PageTiming | None = None,
     ) -> None:
         import bacommon.docui.v2 as dui2
 
         assert bui.in_logic_thread()
+
+        t_start = time.monotonic()
 
         # If our target window died since we made the request, no
         # biggie.
@@ -1451,6 +1499,13 @@ class DocUIController:
 
         # Set the UI.
         win.instantiate_ui(pageprep)
+
+        # The page is up; if that took long for reasons of our own
+        # (nothing to do with the network), say where the time went.
+        if timing is not None and timing.handed_off_at is not None:
+            timing.hop = t_start - timing.handed_off_at
+            timing.instantiate = time.monotonic() - t_start
+            timing.report_if_slow()
 
         state = self._get_win_data(win).state
 

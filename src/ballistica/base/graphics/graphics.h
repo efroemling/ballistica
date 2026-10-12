@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -208,6 +209,19 @@ class Graphics {
   auto GraphicsQualityFromAppConfig() -> GraphicsQualityRequest;
   auto VSyncFromAppConfig() -> VSyncRequest;
 
+  /// The requested MSAA sample count from the app config:
+  /// kMSAASamplesAuto to let the renderer decide, 0 for off, or an
+  /// explicit count. Always kMSAASamplesAuto where SupportsMSAASetting()
+  /// is false.
+  auto MSAAFromAppConfig() -> int;
+
+  /// Whether MSAA is user-configurable in this build. Currently desktop
+  /// only; mobile GPUs get whatever the renderer decides (resolving
+  /// multisampled depth is costly and fragile there).
+  static auto SupportsMSAASetting() -> bool;
+
+  static constexpr int kMSAASamplesAuto = -1;
+
   static auto IsShaderTransparent(ShadingType c) -> bool;
   /// The environment cube map for a reflection type, from the
   /// app-mode-supplied base asset set (see babase.set_base_asset_set).
@@ -257,6 +271,37 @@ class Graphics {
 
   static void GetSafeColor(float* r, float* g, float* b,
                            float target_intensity = 0.6f);
+
+  /// Brighten an rgb color in place by a multiplier, blowing out toward
+  /// white rather than clipping: a plain multiply until the brightest
+  /// channel reaches 1, then the color (at full intensity, hue kept)
+  /// lerps toward white by 1 - 1/overshoot -- so a saturated color
+  /// still visibly brightens. Done in sRGB for now (linear light would
+  /// be more even across colors). Use it where a color tints something
+  /// white-ish (text, flat shapes); a multiply can't whiten art with
+  /// colors of its own. Exposed to Python as babase.brightened_color.
+  static void BrightenColor(float* rgb, float brightness);
+
+  /// Tone an rgb color down in place so ``main_rgb`` stays the
+  /// dominant color of whatever both are drawn on: 'team coloring',
+  /// where main is a team's color and the others are a character's
+  /// (or a name capsule's) secondary tints. ``strength`` runs from 0
+  /// (the color as it was) to 1 (main's own tint at the color's
+  /// brightness); in between the color's hue and saturation move
+  /// toward main's while its brightness holds. Colors already near
+  /// main's barely move at any strength. The one rule every
+  /// team-colored thing shares (spaz nodes, character icons, names),
+  /// so they stay in step.
+  static void ToneForTeamColor(const float* main_rgb, float* rgb,
+                               float strength);
+
+  /// As above, at the standard strength.
+  static void ToneForTeamColor(const float* main_rgb, float* rgb) {
+    ToneForTeamColor(main_rgb, rgb, TeamColoringStrength());
+  }
+
+  /// The standard team-coloring strength (see ToneForTeamColor).
+  static auto TeamColoringStrength() -> float;
 
   // Fade the local screen in or out over the given time period.
   void FadeScreen(bool to, millisecs_t time, PyObject* endcall);
@@ -623,6 +668,24 @@ class Graphics {
     draw_virtual_bounds_ = val;
   }
 
+  /// Whether bounds of the given kind of thing get outlined on screen
+  /// (a layout-checking aid; whatever draws that kind checks this).
+  auto debug_bounds(DebugBoundsType type) const -> bool {
+    assert(g_base->InLogicThread());
+    return (debug_bounds_mask_ & (1u << static_cast<uint32_t>(type))) != 0;
+  }
+  void set_debug_bounds(DebugBoundsType type, bool val) {
+    assert(g_base->InLogicThread());
+    uint32_t bit = 1u << static_cast<uint32_t>(type);
+    debug_bounds_mask_ =
+        val ? (debug_bounds_mask_ | bit) : (debug_bounds_mask_ & ~bit);
+  }
+
+  /// A debug-bounds kind's name as scripts give it ("name_depictions"),
+  /// and back; unknown names give nothing.
+  static auto DebugBoundsTypeFromName(const std::string& name)
+      -> std::optional<DebugBoundsType>;
+
   auto draw_virtual_safe_area_bounds() const {
     return draw_virtual_safe_area_bounds_;
   }
@@ -713,6 +776,7 @@ class Graphics {
   bool got_screen_resolution_{};
   bool draw_virtual_safe_area_bounds_{};
   bool draw_virtual_bounds_{};
+  uint32_t debug_bounds_mask_{};
   bool force_max_virtual_bounds_margins_{};
   bool virtual_bounds_ab_showing_b_{};
   bool virtual_outer_rect_collapsed_{};
@@ -768,7 +832,15 @@ class Graphics {
   millisecs_t last_jitter_update_time_{};
   microsecs_t next_frame_number_filtered_increment_time_{};
   microsecs_t last_create_frame_def_time_microsecs_{};
+  void DrawGuideOutline_(RenderPass* pass, const Rect& rect, float z, float r,
+                         float g, float b, Object::Ref<RectOutlineMesh>* mesh,
+                         Rect* mesh_rect);
   Object::Ref<ImageMesh> screen_mesh_;
+  // The on-screen guides' outlines, remade when their rects change.
+  Object::Ref<RectOutlineMesh> virtual_safe_area_guide_mesh_;
+  Object::Ref<RectOutlineMesh> virtual_bounds_guide_mesh_;
+  Rect virtual_safe_area_guide_rect_{};
+  Rect virtual_bounds_guide_rect_{};
   Object::Ref<ImageMesh> progress_bar_bottom_mesh_;
   Object::Ref<ImageMesh> progress_bar_top_mesh_;
   Object::Ref<ImageMesh> load_dot_mesh_;

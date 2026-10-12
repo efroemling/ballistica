@@ -155,6 +155,12 @@ class ScanResults:
     asset_packages: dict[ApverNum, list[str]] = field(default_factory=dict)
     incorrect_api_modules: list[str] = field(default_factory=list)
     announce_errors_occurred: bool = False
+    #: Number of top-level modules/packages found under each scanned
+    #: path (keyed by the path as passed in). Counts everything the
+    #: import system could load from there, with or without ba_meta
+    #: directives; the engine uses it to tell whether a user's mods
+    #: dir holds any Python at all.
+    module_counts: dict[str, int] = field(default_factory=dict)
 
     def exports_by_name(self, name: str) -> list[str]:
         """Return exports matching a given name."""
@@ -266,6 +272,8 @@ class DirectoryScan:
                         finder = pkgutil.get_importer(path)
                         if finder is None:
                             continue
+                        modinfos = list(pkgutil.iter_modules([path]))
+                        self.results.module_counts[path] = len(modinfos)
                         futures += [
                             pool.submit(
                                 self._scan_module_tree,
@@ -274,7 +282,7 @@ class DirectoryScan:
                                 modinfo.name,
                                 modinfo.ispkg,
                             )
-                            for modinfo in pkgutil.iter_modules([path])
+                            for modinfo in modinfos
                         ]
                     except Exception:
                         logging.exception(

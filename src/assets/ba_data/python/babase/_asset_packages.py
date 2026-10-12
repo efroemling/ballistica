@@ -12,8 +12,10 @@ the resolved ``logical_path → CAS hash`` mappings into the C++
 GIL-free in C++.
 """
 
+import os
 import json
 import logging
+import traceback
 from typing import TYPE_CHECKING
 
 import _babase
@@ -219,7 +221,30 @@ def register_resolved_apvernums(apvernums: list[ApverNum]) -> None:
         _resolved_apvernums.append(apvernum)
 
 
-def load_bundled_asset_packages() -> None:
+def load_bundled_asset_packages() -> str | None:
+    """Register builtin asset-packages, reporting failure as a string.
+
+    The native bootstrapping entry point. Returns ``None`` on success
+    and a short one-line description of the cause on failure (exception
+    type, message, and the innermost few frames), which the native side
+    puts in its fatal-error text. That text is the only part of a
+    failure here that reaches us from the field; the logged exception
+    stays on the device.
+    """
+    try:
+        _load_bundled_asset_packages()
+    except Exception as exc:
+        _lifecyclelog.exception('Error loading bundled asset-packages.')
+        frames = traceback.extract_tb(exc.__traceback__)[-4:]
+        where = ' < '.join(
+            f'{os.path.basename(f.filename)}:{f.lineno} {f.name}'
+            for f in reversed(frames)
+        )
+        return f'{type(exc).__name__}: {str(exc)[:400]} ({where})'
+    return None
+
+
+def _load_bundled_asset_packages() -> None:
     """Register builtin asset-packages at their best LOCAL flavor.
 
     Called once during native bootstrapping, *before* ``StartLoading``'s
@@ -245,7 +270,8 @@ def load_bundled_asset_packages() -> None:
 
     bundle = json.loads(manifest_text)
 
-    # The bundled packages are builtin by definition. Record them (so
+    # Bundled packages start out builtin (those that turn out to have
+    # no usable local flavor are dropped again below). Record them (so
     # _is_builtin and ref-construction see them) before resolving, then let
     # the AssetSubsystem register the best-local flavor of each.
     apvernums = [apvernum for apvernum, _ in _iter_manifest_packages(bundle)]
@@ -253,12 +279,36 @@ def load_bundled_asset_packages() -> None:
         if apvernum not in _builtin_apvernums:
             _builtin_apvernums.append(apvernum)
     if apvernums:
+        # Only the construct package is mandatory this early: it alone
+        # is guaranteed a usable flavor in every bundle, and it is all
+        # construct-mode needs to come up and download the rest. Any
+        # other bundled package is a bonus that registers when the
+        # bundle happens to hold a flavor this device can use (a store
+        # bundle carries only the native texture flavor of those).
+        #
+        # Deferred: this module is imported while babase itself is still
+        # coming up, well before the wrapper is importable.
+        # pylint: disable-next=cyclic-import
+        from babase import _builtinassets
+
+        # Package identity for the construct pin, not a path.
+        # pylint: disable-next=protected-access
+        construct = _builtinassets._ASSET_PACKAGE
+        optional = {a for a in apvernums if a != construct}
+
         # resolve_local registers the packages' buckets (including
         # ``language/<locale>``) and rebuilds the native language string
         # table from them — so this is what actually populates the table
         # at startup (the boot-time ``setlanguage`` may have run earlier,
         # before any packages were loaded).
-        _babase.app.assets.resolve_local(apvernums)
+        result = _babase.app.assets.resolve_local(apvernums, optional=optional)
+
+        # A skipped package is not builtin for this run: nothing of it
+        # is registered and it has no bundled floor to fall back on, so
+        # construct-mode's resolve must treat it as a plain download.
+        for apvernum in apvernums:
+            if apvernum not in result.apvernums:
+                _builtin_apvernums.remove(apvernum)
 
 
 def _iter_manifest_packages(

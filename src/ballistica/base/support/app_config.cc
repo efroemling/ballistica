@@ -212,6 +212,9 @@ void AppConfig::SetupEntries_() {
       StringEntry("Graphics Quality", "Auto");
   string_entries_[StringID::kVerticalSync] =
       StringEntry("Vertical Sync", "Auto");
+  // 'Auto', 'Off', or a sample count such as '4'. See
+  // Graphics::MSAAFromAppConfig().
+  string_entries_[StringID::kMSAA] = StringEntry("MSAA", "Auto");
   string_entries_[StringID::kVRHeadRelativeAudio] =
       StringEntry("VR Head Relative Audio", "Auto");
   string_entries_[StringID::kMacControllerSubsystem] =

@@ -280,6 +280,15 @@ class Player[TeamT]:
         assert not self._expired
         return self._sessionplayer.get_icon_depiction()
 
+    def get_name_depiction(self) -> bascenev1.Depiction | None:
+        """Return the player's name as a depiction, if they have one.
+
+        See :meth:`bascenev1.SessionPlayer.get_name_depiction`.
+        """
+        assert self._postinited
+        assert not self._expired
+        return self._sessionplayer.get_name_depiction()
+
     def assigninput(
         self,
         inputtype: babase.InputType | tuple[babase.InputType, ...],

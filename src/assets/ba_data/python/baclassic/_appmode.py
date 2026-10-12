@@ -29,6 +29,7 @@ import _baclassic
 import bascenev1
 from bascenev1 import _scenev1assets
 from bascenev1 import _classiccharacterassets, _classicmapassets
+from bascenev1 import _classiccharacterassets2
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal, Iterable
@@ -183,6 +184,9 @@ class ClassicAppMode(AppMode):
                 'classiccatalogassets': (_classiccatalogassets._ASSET_PACKAGE),
                 'classiccharacterassets': (
                     _classiccharacterassets._ASSET_PACKAGE
+                ),
+                'classiccharacterassets2': (
+                    _classiccharacterassets2._ASSET_PACKAGE
                 ),
                 'classicmapassets': _classicmapassets._ASSET_PACKAGE,
             }
@@ -1124,6 +1128,14 @@ class ClassicAppMode(AppMode):
         assert classic is not None
         classic.account_name_depiction = depiction
         _baclassic.set_root_ui_account_depiction(depiction=depiction)
+
+    @override
+    def get_dev_console_ui_debug_draw_toggles(
+        self,
+    ) -> list[bui.DevConsoleToggleDef]:
+        from bauiv1lib.docui import get_debug_draw_toggles
+
+        return get_debug_draw_toggles()
 
     @override
     def get_dev_console_ui_tab_buttons(

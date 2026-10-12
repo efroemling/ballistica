@@ -9,6 +9,7 @@ keep that module under the line limit.
 """
 
 import sys
+import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -170,18 +171,45 @@ def _assemble_and_merge(
     for apverid, tprofile, tier, language in triples:
         groups.setdefault((apverid, tprofile, tier), []).append(language)
 
-    merged: dict[str, dict] = {'asset_package_versions': {}}
-    for i, ((apverid, tprofile, tier), languages) in enumerate(
-        groups.items(), 1
-    ):
-        print(
-            f'  [{i}/{len(groups)}] {apverid} {tprofile}.{tier}'
-            f' ({len(languages)} language(s))',
-            flush=True,
+    from concurrent.futures import ThreadPoolExecutor
+
+    names = _package_names(projroot)
+
+    def run_one(
+        indexed: tuple[int, tuple[tuple[str, str, str], list[str]]],
+    ) -> dict[str, Any]:
+        i, ((apverid, tprofile, tier), languages) = indexed
+        # Lead with the readable string id; the numeric one (what the
+        # bundle and the engine actually key on) follows for reference.
+        name = names.get(apverid)
+        label = f'{name} (#{apverid})' if name is not None else f'#{apverid}'
+        # Several of these run at once, so every line a call prints
+        # carries a short tag saying whose it is.
+        tag = f'{i}/{len(groups)}'
+        _say(
+            f'  [{tag}] {label} {tprofile}.{tier}'
+            f' ({len(languages)} language(s))'
         )
         t_one = time.monotonic()
-        one = _assemble_with_retry(projroot, apverid, tprofile, tier, languages)
-        print(f'    ({time.monotonic() - t_one:.1f}s)', flush=True)
+        one = _assemble_with_retry(
+            projroot, apverid, tprofile, tier, languages, tag=tag
+        )
+        _say(f'  [{tag}] done ({time.monotonic() - t_one:.1f}s)')
+        return one
+
+    # Assemble a few packages at a time. Each call mostly waits -- on
+    # the server building, then on its own downloads -- so overlapping
+    # them is nearly free here, and server-side it lets one package's
+    # builds run while another's are queued. Capped low on purpose:
+    # every in-flight call is a live poll against the master's
+    # front-end, which is not the place to fan out wide.
+    with ThreadPoolExecutor(max_workers=_ASSEMBLE_CONCURRENCY) as pool:
+        results = list(pool.map(run_one, enumerate(groups.items(), 1)))
+
+    merged: dict[str, dict] = {'asset_package_versions': {}}
+    # Merged in plan order (pool.map preserves it), so the manifest does
+    # not depend on which call happened to finish first.
+    for one in results:
         for apv, entry in one['asset_package_versions'].items():
             dst = merged['asset_package_versions'].setdefault(apv, {})
             for key, val in entry.items():
@@ -190,6 +218,42 @@ def _assemble_and_merge(
                 else:
                     dst[key] = val
     return merged
+
+
+def _package_names(projroot: str) -> dict[str, str]:
+    """Numeric asset-package-version id (as text) -> readable string id.
+
+    For progress output only, and best-effort: bundles are planned and
+    keyed purely by numeric id, which tells a person nothing. Every
+    generated wrapper module carries both forms -- its ``# ba_meta
+    require asset-package <num>`` line and an ``Asset-package wrapper
+    for ``<string id>``` docstring line -- so we read the pairing off
+    those. A package with no wrapper in the tree is simply absent (the
+    caller falls back to the bare number).
+    """
+    import os
+    import re
+
+    re_num = re.compile(r'^# ba_meta require asset-package (\d+)\s*$', re.M)
+    re_name = re.compile(r'Asset-package wrapper for ``([^`]+)``')
+    names: dict[str, str] = {}
+    root = os.path.join(projroot, 'src/assets/ba_data/python')
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for filename in filenames:
+            if not filename.endswith('assets.py'):
+                continue
+            try:
+                with open(
+                    os.path.join(dirpath, filename), encoding='utf-8'
+                ) as infile:
+                    text = infile.read()
+            except OSError:
+                continue
+            num = re_num.search(text)
+            name = re_name.search(text)
+            if num is not None and name is not None:
+                names[num.group(1)] = name.group(1)
+    return names
 
 
 def _bundle_satisfies(
@@ -219,6 +283,17 @@ _SESSION_LOSS_MARKERS = ('session closed', 'reconnect budget')
 
 _ASSEMBLE_ATTEMPTS = 4
 
+#: How many package assembles run at once (see ``_assemble_and_merge``).
+_ASSEMBLE_CONCURRENCY = 3
+
+_g_say_lock = threading.Lock()
+
+
+def _say(line: str) -> None:
+    """Print one whole line; safe from the concurrent assemble threads."""
+    with _g_say_lock:
+        print(line, flush=True)
+
 
 def _assemble_with_retry(
     projroot: str,
@@ -226,6 +301,8 @@ def _assemble_with_retry(
     texture_profile: str,
     texture_tier: str,
     languages: list[str],
+    *,
+    tag: str,
 ) -> dict[str, Any]:
     """``_assemble_one`` with a bounded retry on session loss."""
     import time
@@ -235,19 +312,53 @@ def _assemble_with_retry(
     for attempt in range(1, _ASSEMBLE_ATTEMPTS + 1):
         try:
             return _assemble_one(
-                projroot, apverid, texture_profile, texture_tier, languages
+                projroot,
+                apverid,
+                texture_profile,
+                texture_tier,
+                languages,
+                tag=tag,
             )
         except CleanError as exc:
             lost = any(m in str(exc) for m in _SESSION_LOSS_MARKERS)
             if not lost or attempt == _ASSEMBLE_ATTEMPTS:
                 raise
-            print(
-                f'    (bacloud session lost; retrying assemble,'
-                f' attempt {attempt + 1} of {_ASSEMBLE_ATTEMPTS})',
-                flush=True,
+            _say(
+                f'  [{tag}] (bacloud session lost; retrying assemble,'
+                f' attempt {attempt + 1} of {_ASSEMBLE_ATTEMPTS})'
             )
             time.sleep(5.0)
     raise RuntimeError('unreachable')
+
+
+def _run_tagged(
+    cmd: list[str], env: dict[str, str], tag: str
+) -> tuple[int, str]:
+    """Run a command, relaying its stdout live; return (exit code, stderr).
+
+    Stdout is relayed line by line as it arrives, each line tagged with
+    which assemble it belongs to (several run at once), so a slow
+    build's progress still streams out live. Stderr -- where bacloud
+    reports why it failed, quoting the master server verbatim -- is
+    captured so a failure can be explained precisely; it goes to a file
+    rather than a pipe so nothing can stall on a full pipe while we are
+    reading stdout.
+    """
+    import tempfile
+    import subprocess
+
+    with (
+        tempfile.TemporaryFile(mode='w+') as errfile,
+        subprocess.Popen(
+            cmd, env=env, stdout=subprocess.PIPE, stderr=errfile, text=True
+        ) as proc,
+    ):
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            _say(f'  [{tag}] {line.rstrip()}')
+        returncode = proc.wait()
+        errfile.seek(0)
+        return returncode, errfile.read()
 
 
 def _assemble_one(
@@ -256,6 +367,8 @@ def _assemble_one(
     texture_profile: str,
     texture_tier: str,
     languages: list[str],
+    *,
+    tag: str,
 ) -> dict[str, Any]:
     """Assemble one (package, texture-profile) x languages via bacloud.
 
@@ -285,13 +398,9 @@ def _assemble_one(
     _version, build_number = get_current_version(str(projroot))
     env = dict(os.environ)
     env['BA_BUILD_NUMBER'] = str(build_number)
-    # Capture stderr (where bacloud reports why it failed, quoting the
-    # master server verbatim) so a failure can be explained precisely,
-    # while leaving stdout inherited so a slow build's progress lines
-    # still stream out live.
     errtext = ''
     try:
-        proc = subprocess.run(
+        returncode, errtext = _run_tagged(
             [
                 f'{projroot}/tools/bacloud',
                 'assetpackage',
@@ -305,14 +414,11 @@ def _assemble_one(
                 '--bundle-path',
                 tmppath,
             ],
-            check=False,
-            env=env,
-            stderr=subprocess.PIPE,
-            text=True,
+            env,
+            tag,
         )
-        errtext = proc.stderr or ''
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError(proc.returncode, 'bacloud')
+        if returncode != 0:
+            raise subprocess.CalledProcessError(returncode, 'bacloud')
         # Succeeded, but bacloud may still have had something to say
         # (retry notices, verbose diagnostics); don't eat it.
         if errtext:

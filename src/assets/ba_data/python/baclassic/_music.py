@@ -151,6 +151,7 @@ class MusicSubsystem:
         # Recent change times, for spotting a flapping platform signal.
         self._os_music_change_times: list[float] = []
         self._warned_os_music_flapping = False
+        self._warned_first_os_music_yield = False
         # Set while another app's music has stopped but we're holding off
         # resuming ours (see _OS_MUSIC_RESUME_DELAY_SECONDS).
         self._os_music_resume_timer: babase.AppTimer | None = None
@@ -429,6 +430,20 @@ class MusicSubsystem:
             # requested type above, so it resumes when that stops).
             os_music_playing = self._os_music_yielding()
             if os_music_playing:
+                if not self._warned_first_os_music_yield:
+                    # Once per run, loud enough to reach us from the
+                    # field: a platform signal that mistakes our own
+                    # audio for another app's shows up as the same
+                    # devices doing this seconds into every launch.
+                    self._warned_first_os_music_yield = True
+                    babase.audiolog.warning(
+                        'Game music is yielding to another app\'s music'
+                        ' for the first time this run (%.1fs after launch,'
+                        ' platform %s). If no other app is playing music,'
+                        ' this is a bug.',
+                        babase.apptime(),
+                        babase.app.env.platform.value,
+                    )
                 babase.audiolog.debug(
                     'do_play_music: OS reports music playing;'
                     ' playing nothing instead of %s.',

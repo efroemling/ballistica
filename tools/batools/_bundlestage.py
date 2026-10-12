@@ -10,9 +10,12 @@ referenced CAS blobs) into a staged ``ba_data/``. Split out of
 import os
 
 
-def _collect_bundle_hashes(
-    projroot: str, bundle_manifest_path: str
-) -> set[str]:
+def assetdata_blob_path(hashval: str) -> str:
+    """Project-relative path of a blob in the local content store."""
+    return f'.cache/assetdata/{hashval[:2]}/{hashval[2:]}'
+
+
+def collect_bundle_hashes(projroot: str, bundle_manifest_path: str) -> set[str]:
     """Walk the top-level bundle and return every transitively
     referenced CAS hash (bucket-manifest blobs plus the data
     blobs those manifests reference)."""
@@ -29,10 +32,7 @@ def _collect_bundle_hashes(
     for flavor_manifests in flavor_manifest_maps:
         for manifest_hash in flavor_manifests.values():
             hashes.add(manifest_hash)
-            blob_path = (
-                f'{projroot}/.cache/assetdata/'
-                f'{manifest_hash[:2]}/{manifest_hash[2:]}'
-            )
+            blob_path = f'{projroot}/{assetdata_blob_path(manifest_hash)}'
             with open(blob_path, encoding='utf-8') as infile:
                 flavor_manifest = json.loads(infile.read())
             # Each entry is a part-keyed component map (decision #16);
@@ -187,7 +187,7 @@ def sync_asset_bundle(
     # of the packages we're staging (see the function docstring).
     _verify_builtin_package_bundled(projroot, profile, bundle_manifest_path)
 
-    wanted_hashes = _collect_bundle_hashes(projroot, bundle_manifest_path)
+    wanted_hashes = collect_bundle_hashes(projroot, bundle_manifest_path)
     wanted: set[tuple[str, str]] = {
         (h[:2], h[2:] + blob_suffix) for h in wanted_hashes
     }
@@ -224,7 +224,7 @@ def sync_asset_bundle(
     def _copy_one(item: tuple[str, str]) -> None:
         prefix, rest = item
         srcname = rest.removesuffix(blob_suffix) if blob_suffix else rest
-        src = f'{projroot}/.cache/assetdata/{prefix}/{srcname}'
+        src = f'{projroot}/{assetdata_blob_path(prefix + srcname)}'
         blobdst = f'{assets_root}/{prefix}/{rest}'
         shutil.copyfile(src, blobdst)
         shutil.copystat(src, blobdst)

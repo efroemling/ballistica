@@ -11,6 +11,9 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/depiction/depiction_kinds.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/rect_outline_mesh.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
@@ -19,8 +22,11 @@
 namespace ballistica::base {
 
 auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
-                     DepictionHAlign h_align, DepictionVAlign v_align)
-    -> DepictionBox {
+                     DepictionHAlign h_align, DepictionVAlign v_align,
+                     float trailing_aspect) -> DepictionBox {
+  // We fit the whole shape (depiction plus any trailing room), then
+  // hand back the depiction's part of it.
+  float trailing = std::max(0.0f, trailing_aspect);
   float width = box.width;
   float height = box.height;
   std::optional<float> aspect = depiction.GetAspect();
@@ -30,17 +36,21 @@ auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
     float squeezed = (min_aspect.has_value() && *min_aspect > 0.0f)
                          ? std::min(*min_aspect, *aspect)
                          : *aspect;
+    float whole = *aspect + trailing;
+    float whole_squeezed = squeezed + trailing;
     float box_aspect = box.width / box.height;
-    if (box_aspect > *aspect) {
+    if (box_aspect > whole) {
       height = box.height;
-      width = box.height * *aspect;
-    } else if (box_aspect < squeezed) {
+      width = box.height * whole;
+    } else if (box_aspect < whole_squeezed) {
       width = box.width;
-      height = box.width / squeezed;
+      height = box.width / whole_squeezed;
     }
     // (Otherwise the box is between our two shapes: take it whole.)
   }
   DepictionBox out{box.x, box.y, width, height};
+  // (A shapeless depiction fills what the trailing room leaves.)
+  float dep_width = std::max(0.0f, width - trailing * height);
   switch (h_align) {
     case DepictionHAlign::kLeft:
       break;
@@ -61,7 +71,106 @@ auto FitDepictionBox(const DepictionBox& box, const Depiction& depiction,
       out.y += box.height - height;
       break;
   }
+  out.width = dep_width;
   return out;
+}
+
+namespace {
+
+/// A suffix's text scale, per unit of its depiction's height: the
+/// basic name tier's (a ~40-unit line of small text fills its box).
+constexpr float kSuffixScalePerHeight{1.0f / 40.0f};
+
+/// The gap between a depiction and its suffix, in depiction heights.
+constexpr float kSuffixGap{0.15f};
+
+}  // namespace
+
+DepictionSuffix::DepictionSuffix() = default;
+DepictionSuffix::~DepictionSuffix() = default;
+
+void DepictionSuffix::SetText(const std::string& text) {
+  if (text == text_) {
+    return;
+  }
+  text_ = text;
+  width_.reset();
+  if (text_.empty()) {
+    text_group_.Clear();
+    return;
+  }
+  if (!text_group_.exists()) {
+    text_group_ = Object::New<TextGroup>();
+  }
+  text_group_->SetText(text_, TextMesh::HAlign::kLeft,
+                       TextMesh::VAlign::kCenter);
+}
+
+auto DepictionSuffix::GetTrailingAspect() const -> float {
+  if (text_.empty()) {
+    return 0.0f;
+  }
+  // Measure without stalling (cold OS-span measures run in the
+  // background; until then we take no room and draw nothing).
+  if (!width_) {
+    width_ = g_base->text_graphics->TryGetStringWidth(text_);
+  }
+  if (!width_) {
+    return 0.0f;
+  }
+  return kSuffixGap + *width_ * kSuffixScalePerHeight;
+}
+
+void DepictionSuffix::Draw(const DepictionDrawContext& context,
+                           const DepictionBox& depiction_box,
+                           const float* rgb) {
+  if (!context.transparent || !width_ || !text_group_.exists()) {
+    return;
+  }
+  float h = depiction_box.height;
+  float scale = h * kSuffixScalePerHeight;
+  float x = depiction_box.x + depiction_box.width + kSuffixGap * h;
+  float y = depiction_box.y + h * 0.5f;
+  float color[3]{1.0f, 1.0f, 1.0f};
+  if (rgb) {
+    std::copy(rgb, rgb + 3, color);
+  }
+  context.StandardColor(color);
+  // Brightens toward white, as a name's text does (see
+  // Graphics::BrightenColor); own-colored glyphs just multiply.
+  float brightness = context.StandardBrightness();
+  Graphics::BrightenColor(color, brightness);
+  float alpha = context.StandardOpacity();
+  SimpleComponent c(context.pass);
+  c.SetTransparent(true);
+  int elem_count = text_group_->GetElementCount();
+  for (int e = 0; e < elem_count; e++) {
+    TextureAsset* t = text_group_->GetElementTexture(e);
+    if (!t->preloaded()) {
+      continue;
+    }
+    c.SetTexture(t);
+    c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
+                -0.004f * text_group_->GetElementVScale(e), 0.0f,
+                0.5f * alpha * alpha);
+    c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
+    float cmul = t->premultiplied() ? alpha : 1.0f;
+    const float* ergb = text_group_->GetElementCanColor(e) ? color : nullptr;
+    if (ergb) {
+      c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
+    } else {
+      float plain = cmul * brightness;
+      c.SetColor(plain, plain, plain, alpha);
+    }
+    c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), 1.0f));
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(x, y, context.z);
+      c.Scale(scale, scale, 1.0f);
+      c.DrawMesh(text_group_->GetElementMesh(e));
+    }
+  }
+  c.Submit();
 }
 
 namespace {
@@ -110,6 +219,39 @@ auto Depiction::GetContentBox(const DepictionBox& box) const -> DepictionBox {
   return box;
 }
 
+auto Depiction::GetDebugBoundsType() const -> std::optional<DebugBoundsType> {
+  return {};
+}
+
+void Depiction::DrawDebugBounds(const DepictionDrawContext& context,
+                                const DepictionBox& host_box) const {
+  auto type = GetDebugBoundsType();
+  if (!type || !g_base->graphics->debug_bounds(*type) || !context.transparent) {
+    return;
+  }
+  TextureAsset* white =
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
+
+  // Outlines just inside each box, about a pixel and a half wide
+  // whatever scale the host draws at. (Meshes made per draw; fine for
+  // a debugging aid.)
+  float thickness = 1.5f / std::max(0.001f, context.pixels_per_unit);
+  SimpleComponent c(context.pass);
+  c.SetTransparent(true);
+  c.SetTexture(white);
+  auto outline = [&c, &context, thickness](const DepictionBox& b) {
+    auto mesh = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
+                                             b.height, thickness);
+    c.DrawMesh(mesh.get());
+  };
+  // The room we have in red, then what we claim of it in green on top.
+  c.SetColor(1.0f, 0.15f, 0.15f, 1.0f);
+  outline(host_box);
+  c.SetColor(0.2f, 1.0f, 0.3f, 1.0f);
+  outline(context.box);
+  c.Submit();
+}
+
 auto Depiction::SupportsHost(DepictionHost host) const -> bool { return true; }
 
 void Depiction::Update(millisecs_t now) {}
@@ -154,27 +296,25 @@ class PlaceholderDepiction : public Depiction {
     float bright = context.StandardBrightness();
     TextureAsset* white =
         g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
-    MeshAsset* quad =
-        g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1);
 
-    // The outline: four thin rects just inside the box.
+    // The outline, just inside the box (remade only when the box
+    // moves; we draw every frame).
     float thickness = std::max(1.0f, std::min(b.width, b.height) * 0.03f);
+    if (!outline_.exists() || b.x != outline_box_.x || b.y != outline_box_.y
+        || b.width != outline_box_.width || b.height != outline_box_.height
+        || context.z != outline_z_) {
+      outline_ = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
+                                              b.height, thickness);
+      outline_box_ = b;
+      outline_z_ = context.z;
+    }
     {
       SimpleComponent c(context.pass);
       c.SetTransparent(true);
       c.SetTexture(white);
       float cmul = white->premultiplied() ? alpha : 1.0f;
       c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
-      auto rect = [&c, quad, &context](float x, float y, float w, float h) {
-        auto xf = c.ScopedTransform();
-        c.Translate(x + w * 0.5f, y + h * 0.5f, context.z);
-        c.Scale(w, h, 1.0f);
-        c.DrawMeshAsset(quad);
-      };
-      rect(b.x, b.y, b.width, thickness);
-      rect(b.x, b.y + b.height - thickness, b.width, thickness);
-      rect(b.x, b.y, thickness, b.height);
-      rect(b.x + b.width - thickness, b.y, thickness, b.height);
+      c.DrawMesh(outline_.get());
       c.Submit();
     }
 
@@ -205,6 +345,9 @@ class PlaceholderDepiction : public Depiction {
 
  private:
   TextGroup text_group_;
+  Object::Ref<RectOutlineMesh> outline_;
+  DepictionBox outline_box_;
+  float outline_z_{};
 };
 
 auto Factories()
@@ -267,6 +410,19 @@ auto DepictionRegistry::Create(const std::string& json, DepictionHost host,
   if (!out->SupportsHost(host)) {
     WarnPlaceholder(type_id, "this kind can't draw in this host.");
     return Object::New<Depiction, PlaceholderDepiction>(type_id);
+  }
+  // Any kind's json can carry a baked color override ([r, g, b]).
+  if (JsonRef arr = root["co"]; arr.is_array() && arr.size() == 3) {
+    float rgb[3];
+    for (size_t i = 0; i < 3; ++i) {
+      auto val = arr[i].as_double();
+      rgb[i] = std::clamp(static_cast<float>(val ? *val : 0.0), 0.0f, 2.0f);
+    }
+    out->SetColorOverride(rgb);
+  }
+  // Likewise baked team coloring.
+  if (auto val = root["tco"].as_bool(); val && *val) {
+    out->set_team_coloring(true);
   }
   return out;
 }

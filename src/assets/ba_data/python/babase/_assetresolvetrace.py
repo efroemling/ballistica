@@ -26,6 +26,76 @@ SLOW_RESOLVE_SECONDS = 10.0
 #: Queue wait (behind other resolves) that alone counts as troubled.
 _TROUBLED_QUEUE_SECONDS = 5.0
 
+#: A resolve that downloaded nothing yet took at least this long (once
+#: through the queue) gets its stages logged; see
+#: :class:`LocalResolveTimes`.
+SLOW_LOCAL_RESOLVE_SECONDS = 1.0
+
+#: Slow-local-resolve reports logged per run, at most. A slow device
+#: would otherwise log one for every package it resolves.
+_MAX_LOCAL_REPORTS = 5
+
+_g_local_report_count = 0
+
+
+@dataclass
+class LocalResolveTimes:
+    """Where a resolve that needed no downloads spent its time.
+
+    Such a resolve touches only this device: a scan of what is on disk,
+    a registration with the engine, a rebuild of the string table and a
+    manifest write. It should take a fraction of a second. When it
+    doesn't, the cause is local -- slow storage, a busy thread pool, a
+    busy logic thread -- and which of those shows in how each stage's
+    time splits between waiting for a pool thread, running, and getting
+    back onto the logic thread afterwards.
+    """
+
+    #: ``(stage, pool wait, run, wake)`` for each stage run on the pool.
+    pooled: list[tuple[str, float, float, float]] = field(default_factory=list)
+
+    #: ``(stage, seconds)`` for each stage run on the logic thread.
+    inline: list[tuple[str, float]] = field(default_factory=list)
+
+    def summary(
+        self,
+        label: str,
+        apvernums: list[ApverNum],
+        seconds: float,
+        *,
+        pool: str,
+        modding: str,
+    ) -> str | None:
+        """A one-line account, or None if this one isn't worth logging.
+
+        ``pool`` describes the app threadpool's current load and
+        ``modding`` what user code this run carries.
+        """
+        global _g_local_report_count  # pylint: disable=global-statement
+
+        if (
+            seconds < SLOW_LOCAL_RESOLVE_SECONDS
+            or _g_local_report_count >= _MAX_LOCAL_REPORTS
+        ):
+            return None
+        _g_local_report_count += 1
+        stages = [
+            f'{name} {run:.2f}s (pool wait {wait:.2f}s, wake {wake:.2f}s)'
+            for name, wait, run, wake in self.pooled
+        ] + [f'{name} {secs:.2f}s (logic thread)' for name, secs in self.inline]
+        return (
+            f"Asset resolve '{label}' took {seconds:.2f}s with nothing to"
+            f' download ({len(apvernums)} pkg(s): {apvernums}): '
+            + '; '.join(stages)
+            + f'. App threadpool: {pool}. Modding: {modding}.'
+            + (
+                ' (Further slow-local-resolve reports are suppressed'
+                ' this run.)'
+                if _g_local_report_count >= _MAX_LOCAL_REPORTS
+                else ''
+            )
+        )
+
 
 @dataclass
 class Tier1Attempt:

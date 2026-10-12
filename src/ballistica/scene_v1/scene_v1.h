@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 51;
+const int kProtocolVersionHostMin = 54;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 51;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 51;
+const int kProtocolVersionMax = 54;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 51;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 50;
+const int kProtocolVersionDevGapMax = 53;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -420,6 +420,34 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     it get main-sim limbs AND the pre-44 arm-attached punch region.
 //     That changes the tutorial (back to the punch its recorded input
 //     was calibrated against) and is what 'legacy_spaz_physics' sets.
+//
+// 52: Depictiondisplay nodes gain 'color_override' (rgb) and
+//     'use_color_override' (a host color imposed on the depiction; each
+//     kind decides what it applies to -- a name's text, or the capsule
+//     parts its override targets name), 'brightness' (scales everything
+//     drawn; choosers animate it to flash) and 'suffix' (text, as a text
+//     node's, drawn right after the depiction and fitted into the box
+//     with it; "(ready)" after a chooser's name). All appended (cloud
+//     profiles D16, 2026-10-06).
+//
+// 53: Spaz and depictiondisplay nodes gain 'team_coloring' (bool,
+//     appended): the thing's main color is a team's and should stay
+//     its clearly dominant one, so its other tints are toned down
+//     (base::Graphics::ToneForTeamColor) -- a spaz's highlights and
+//     piece tints, a character icon's highlights, the parts of a name
+//     its color override isn't routed to. Purely how things draw
+//     (2026-10-07).
+//
+// 54: Sound plays can say how they contend for audio sources (see
+//     base::Audio::SourceBeginNew): a play group to count toward in
+//     place of the sound's own, a cap on that group, and a priority.
+//     kPlaySoundEx / kPlaySoundAtPositionEx (appended) carry them for
+//     plays that set any (plain plays keep the old commands), and sound
+//     nodes gain 'play_group' (string), 'play_group_cap' (int) and
+//     'priority' (string), all appended. Clients treat what arrives as
+//     untrusted (SoundPlayOptions::ToOverrides). Hosts also stop
+//     sending bursts of plays that clients would only cut straight
+//     away (Scene::ShouldSendPlay_) (2026-10-11).
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.
@@ -561,6 +589,7 @@ class ClientSessionReplay;
 class RigidBody;
 class SessionStream;
 class Scene;
+struct SoundPlayOptions;
 class SceneV1FeatureSet;
 class Session;
 class SceneSound;
@@ -780,7 +809,15 @@ enum class SessionCommand {
   // (protocol 48+) A top screen-message whose icon is a session-level
   // depiction (a player's cloud icon) rather than kScreenMessageTop's
   // texture pair: (depiction-id), the message string, then its rgb.
-  kScreenMessageTopDepiction
+  kScreenMessageTopDepiction,
+
+  // (protocol 54+) kPlaySound / kPlaySoundAtPosition for plays that say
+  // how they contend for audio sources (see SoundPlayOptions). Ints:
+  // sound id, group cap (0 for unset), priority + 1 (0 for unset); then
+  // floats: volume (and x, y, z for the positional one); then the play
+  // group name as a string (empty for unset).
+  kPlaySoundEx,
+  kPlaySoundAtPositionEx
 };
 
 enum class NodeCollideAttr {

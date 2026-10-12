@@ -63,11 +63,20 @@ auto Scene::bg_dynamics_world() const -> base::BGDynamicsWorld* {
   return g_base->bg_dynamics->main_world();
 }
 
-auto Scene::NewAudioSource() -> base::AudioSource* {
+auto Scene::NewAudioSource(base::SoundAsset* for_sound, bool looping)
+    -> base::AudioSource* {
+  base::AudioPlaySpec spec;
+  spec.sound = for_sound;
+  spec.looping = looping;
+  return NewAudioSource(spec);
+}
+
+auto Scene::NewAudioSource(const base::AudioPlaySpec& spec)
+    -> base::AudioSource* {
   if (silent_) {
     return nullptr;
   }
-  base::AudioSource* source = g_base->audio->SourceBeginNew();
+  base::AudioSource* source = g_base->audio->SourceBeginNew(spec);
   if (source != nullptr && audio_listener_space_.has_value()) {
     source->SetListenerSpace(*audio_listener_space_);
   }
@@ -124,10 +133,105 @@ Scene::~Scene() {
   }
 }
 
+// How long a burst of plays of one play group is (see ShouldSendPlay_).
+// Matches how long a sound keeps another play of itself from starting
+// (base::Audio::ShouldPlay).
+const millisecs_t kPlayBurstMillisecs = 50;
+
+void SoundPlayOptions::Sanitize() {
+  group = base::Audio::NormalizePlayGroupName(group);
+  if (group_cap < 0) {
+    group_cap = 0;
+  }
+  if (group_cap > base::kMaxRemotePlayGroupCap) {
+    group_cap = base::kMaxRemotePlayGroupCap;
+  }
+  if (priority < -1) {
+    priority = -1;
+  }
+  if (priority > static_cast<int>(base::kAudioPriorityAssetMax)) {
+    priority = static_cast<int>(base::kAudioPriorityAssetMax);
+  }
+}
+
+auto SoundPlayOptions::ToOverrides() const -> base::AudioPlayOverrides {
+  base::AudioPlayOverrides overrides;
+  if (!group.empty()) {
+    overrides.group = g_base->audio->InternPlayGroup(group);
+  }
+  overrides.group_cap = group_cap;
+  if (priority >= 0) {
+    overrides.priority = static_cast<base::AudioPriority>(priority);
+  }
+  return overrides;
+}
+
+auto SoundPlayOptions::PriorityName(int priority) -> std::string {
+  switch (priority) {
+    case static_cast<int>(SoundPriority::kLower):
+      return "lower";
+    case static_cast<int>(SoundPriority::kLow):
+      return "low";
+    case static_cast<int>(SoundPriority::kDefault):
+      return "default";
+    case static_cast<int>(SoundPriority::kHigh):
+      return "high";
+    case static_cast<int>(SoundPriority::kHigher):
+      return "higher";
+    default:
+      return "";
+  }
+}
+
+auto SoundPlayOptions::PriorityFromName(const std::string& name) -> int {
+  if (name.empty()) {
+    return -1;
+  }
+  for (int i = 0; i < static_cast<int>(SoundPriority::kLast); ++i) {
+    if (PriorityName(i) == name) {
+      return i;
+    }
+  }
+  throw Exception("Invalid sound priority '" + name
+                      + "' (expected 'lower', 'low', 'default', 'high',"
+                        " 'higher' or '').",
+                  PyExcType::kValue);
+}
+
+auto Scene::ShouldSendPlay_(SceneSound* sound, const SoundPlayOptions& options)
+    -> bool {
+  int group = options.group.empty()
+                  ? sound->GetSoundData()->play_group()
+                  : g_base->audio->InternPlayGroup(options.group);
+  if (group < 0) {
+    return true;
+  }
+  int cap =
+      options.group_cap > 0 ? options.group_cap : base::kDefaultPlayGroupCap;
+  millisecs_t now = g_core->AppTimeMillisecs();
+  PlayBurst_& burst = play_bursts_[group];
+  if (burst.count == 0 || now - burst.start_time >= kPlayBurstMillisecs) {
+    burst.start_time = now;
+    burst.count = 0;
+  }
+  if (burst.count >= cap) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [sound, group] {
+      return "Not sending play of '" + sound->GetSoundData()->GetName()
+             + "' (burst of play group '" + g_base->audio->PlayGroupName(group)
+             + "').";
+    });
+    return false;
+  }
+  burst.count++;
+  return true;
+}
+
 void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
-                                float y, float z, bool host_only) {
-  if (output_stream_.exists() && !host_only) {
-    output_stream_->PlaySoundAtPosition(sound, volume, x, y, z);
+                                float y, float z, bool host_only,
+                                const SoundPlayOptions& options) {
+  if (output_stream_.exists() && !host_only
+      && ShouldSendPlay_(sound, options)) {
+    output_stream_->PlaySoundAtPosition(sound, volume, x, y, z, options);
   }
   if (silent_) {
     return;
@@ -138,7 +242,10 @@ void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
     if (!g_base->audio->ShouldPlay(sound->GetSoundData())) {
       return;
     }
-    if (base::AudioSource* source = NewAudioSource()) {
+    base::AudioPlaySpec spec;
+    spec.sound = sound->GetSoundData();
+    spec.overrides = options.ToOverrides();
+    if (base::AudioSource* source = NewAudioSource(spec)) {
       source->SetGain(volume);
       source->SetPosition(x, y, z);
       source->Play(sound->GetSoundData());
@@ -146,12 +253,15 @@ void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
     }
     return;
   }
-  g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z);
+  g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z,
+                                     options.ToOverrides());
 }
 
-void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
-  if (output_stream_.exists() && !host_only) {
-    output_stream_->PlaySound(sound, volume);
+void Scene::PlaySound(SceneSound* sound, float volume, bool host_only,
+                      const SoundPlayOptions& options) {
+  if (output_stream_.exists() && !host_only
+      && ShouldSendPlay_(sound, options)) {
+    output_stream_->PlaySound(sound, volume, options);
   }
   if (silent_) {
     return;
@@ -160,7 +270,8 @@ void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
   if (audio_listener_space_.has_value()) {
     volume *= audio_listener_space_->gain;
   }
-  g_base->audio->PlaySound(sound->GetSoundData(), volume);
+  g_base->audio->PlaySound(sound->GetSoundData(), volume,
+                           options.ToOverrides());
 }
 
 auto Scene::IsOutOfBounds(float x, float y, float z) -> bool {

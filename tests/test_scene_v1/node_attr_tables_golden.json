@@ -860,6 +860,18 @@
   [
    "sound",
    "sound"
+  ],
+  [
+   "play_group",
+   "string"
+  ],
+  [
+   "play_group_cap",
+   "int"
+  ],
+  [
+   "priority",
+   "string"
   ]
  ],
  "spaz": [
@@ -1218,6 +1230,10 @@
   [
    "boxing_gloves_scale",
    "float"
+  ],
+  [
+   "team_coloring",
+   "bool"
   ]
  ],
  "region": [
@@ -1363,6 +1379,26 @@
   ],
   [
    "front",
+   "bool"
+  ],
+  [
+   "color_override",
+   "float-array"
+  ],
+  [
+   "use_color_override",
+   "bool"
+  ],
+  [
+   "brightness",
+   "float"
+  ],
+  [
+   "suffix",
+   "string"
+  ],
+  [
+   "team_coloring",
    "bool"
   ]
  ]

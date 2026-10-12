@@ -654,6 +654,29 @@ class StandardResponseData(ResponseData):
 
     @ioprepped
     @dataclass
+    class SignedDownloadsProgress:
+        """Where one ``downloads_signed`` batch sits in a larger job.
+
+        A job too big for one response (a workspace get, for instance)
+        arrives as several batches chained by ``end_command``. This
+        lets the client report progress against the whole job instead
+        of just the batch in hand.
+        """
+
+        #: Files delivered by earlier batches of this job.
+        prior_count: Annotated[int, IOAttrs('pc')]
+
+        #: Bytes delivered by earlier batches of this job.
+        prior_bytes: Annotated[int, IOAttrs('pb')]
+
+        #: Files the whole job will deliver.
+        total_count: Annotated[int, IOAttrs('tc')]
+
+        #: Bytes the whole job will deliver.
+        total_bytes: Annotated[int, IOAttrs('tb')]
+
+    @ioprepped
+    @dataclass
     class UploadPlan:
         """Declarative plan for uploading a set of local files.
 
@@ -878,6 +901,15 @@ class StandardResponseData(ResponseData):
     downloads_signed: Annotated[
         list[SignedDownloadEntry] | None,
         IOAttrs('dsgn', store_default=False),
+    ] = None
+
+    #: If present alongside ``downloads_signed``, that batch is part of
+    #: a multi-batch job and progress should be shown against the whole
+    #: job. Purely cosmetic; clients that don't know it report progress
+    #: per batch.
+    downloads_signed_progress: Annotated[
+        SignedDownloadsProgress | None,
+        IOAttrs('dsgp', store_default=False),
     ] = None
 
     #: If present, the assemble ran in CAS-delivery mode: data blobs are

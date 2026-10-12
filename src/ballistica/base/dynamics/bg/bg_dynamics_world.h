@@ -111,6 +111,8 @@ class BGDynamicsWorld : public Object {
   int millisecs_since_bump_{1000000};
   int millisecs_since_bump_log_{1000000};
   int unlogged_bumps_{};
+  // The bg thread's latest step-cost averages (off its last bundle).
+  BGDynamicsLoadStats load_stats_;
 
   /// Return a cached grow-only index buffer holding the canonical
   /// quad pattern (0,1,2, 1,3,2, 4,5,6, ...) covering at least

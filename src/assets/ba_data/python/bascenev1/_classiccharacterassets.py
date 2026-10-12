@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets.260911``
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261009h``
 (bascenev1).
 
 Everything a classic character is made of: body textures and color masks, body
-part meshes, and voice sounds -- exactly what the builtin appearance table
-(bamaster spazcharacters.json) names, minus icons, which live in
-BaClassicCatalogAssets. Bundled with the game; a newer version is fetched on
-demand when a server-delivered character definition references it, and CAS
-dedupe means that costs roughly the new character's own art.
+part meshes, voice sounds, icons and icon color masks, and display names -- a
+whole character from one package, which is what a .bchar character definition
+here needs. Bundled with the game; a newer version is fetched on demand when a
+server-delivered character definition references it, and CAS dedupe means that
+costs roughly the new character's own art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 316
+# ba_meta require asset-package 546
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,13 +23,21 @@ from typing import TYPE_CHECKING
 
 from bacommon.assetpackage import ApverNum
 
-from bascenev1._assetref import AssetGroup
+from bascenev1._assetref import AssetGroup, CharacterGroup
 
-# a-0.baclassiccharacterassets.260911
-_ASSET_PACKAGE = ApverNum(316)
+from babase import LangStrDir
+
+# a-0.baclassiccharacterassets.261009h
+_ASSET_PACKAGE = ApverNum(546)
 
 if TYPE_CHECKING:
-    from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle
+    from bascenev1._assetref import (
+        CharacterHandle,
+        MeshHandle,
+        SoundHandle,
+        TextureHandle,
+    )
+    from babase import LangStr
 
     class AudioGroup:
         """
@@ -40,14 +48,6 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero1: SoundHandle
-        action_hero2: SoundHandle
-        action_hero3: SoundHandle
-        action_hero4: SoundHandle
-        action_hero_death: SoundHandle
-        action_hero_fall: SoundHandle
-        action_hero_hit1: SoundHandle
-        action_hero_hit2: SoundHandle
         agent1: SoundHandle
         agent2: SoundHandle
         agent3: SoundHandle
@@ -56,14 +56,6 @@ if TYPE_CHECKING:
         agent_fall: SoundHandle
         agent_hit1: SoundHandle
         agent_hit2: SoundHandle
-        ali1: SoundHandle
-        ali2: SoundHandle
-        ali3: SoundHandle
-        ali4: SoundHandle
-        ali_death: SoundHandle
-        ali_fall: SoundHandle
-        ali_hit1: SoundHandle
-        ali_hit2: SoundHandle
         alien1: SoundHandle
         alien2: SoundHandle
         alien3: SoundHandle
@@ -102,14 +94,6 @@ if TYPE_CHECKING:
         bunny_hit1: SoundHandle
         bunny_hit2: SoundHandle
         bunny_jump: SoundHandle
-        cowboy1: SoundHandle
-        cowboy2: SoundHandle
-        cowboy3: SoundHandle
-        cowboy4: SoundHandle
-        cowboy_death: SoundHandle
-        cowboy_fall: SoundHandle
-        cowboy_hit1: SoundHandle
-        cowboy_hit2: SoundHandle
         cyborg1: SoundHandle
         cyborg2: SoundHandle
         cyborg3: SoundHandle
@@ -151,14 +135,6 @@ if TYPE_CHECKING:
         jack_hit05: SoundHandle
         jack_hit06: SoundHandle
         jack_hit07: SoundHandle
-        jumpsuit1: SoundHandle
-        jumpsuit2: SoundHandle
-        jumpsuit3: SoundHandle
-        jumpsuit4: SoundHandle
-        jumpsuit_death: SoundHandle
-        jumpsuit_fall: SoundHandle
-        jumpsuit_hit1: SoundHandle
-        jumpsuit_hit2: SoundHandle
         kronk1: SoundHandle
         kronk10: SoundHandle
         kronk2: SoundHandle
@@ -208,14 +184,6 @@ if TYPE_CHECKING:
         old_lady_fall: SoundHandle
         old_lady_hit1: SoundHandle
         old_lady_hit2: SoundHandle
-        opera_singer1: SoundHandle
-        opera_singer2: SoundHandle
-        opera_singer3: SoundHandle
-        opera_singer4: SoundHandle
-        opera_singer_death: SoundHandle
-        opera_singer_fall: SoundHandle
-        opera_singer_hit1: SoundHandle
-        opera_singer_hit2: SoundHandle
         penguin1: SoundHandle
         penguin2: SoundHandle
         penguin3: SoundHandle
@@ -266,14 +234,6 @@ if TYPE_CHECKING:
         spaz_jump03: SoundHandle
         spaz_jump04: SoundHandle
         spaz_pickup01: SoundHandle
-        superhero1: SoundHandle
-        superhero2: SoundHandle
-        superhero3: SoundHandle
-        superhero4: SoundHandle
-        superhero_death: SoundHandle
-        superhero_fall: SoundHandle
-        superhero_hit1: SoundHandle
-        superhero_hit2: SoundHandle
         warrior1: SoundHandle
         warrior2: SoundHandle
         warrior3: SoundHandle
@@ -330,15 +290,6 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_hero_fore_arm: MeshHandle
-        action_hero_hand: MeshHandle
-        action_hero_head: MeshHandle
-        action_hero_lower_leg: MeshHandle
-        action_hero_pelvis: MeshHandle
-        action_hero_toes: MeshHandle
-        action_hero_torso: MeshHandle
-        action_hero_upper_arm: MeshHandle
-        action_hero_upper_leg: MeshHandle
         agent_fore_arm: MeshHandle
         agent_hand: MeshHandle
         agent_head: MeshHandle
@@ -348,15 +299,6 @@ if TYPE_CHECKING:
         agent_torso: MeshHandle
         agent_upper_arm: MeshHandle
         agent_upper_leg: MeshHandle
-        ali_fore_arm: MeshHandle
-        ali_hand: MeshHandle
-        ali_head: MeshHandle
-        ali_lower_leg: MeshHandle
-        ali_pelvis: MeshHandle
-        ali_toes: MeshHandle
-        ali_torso: MeshHandle
-        ali_upper_arm: MeshHandle
-        ali_upper_leg: MeshHandle
         alien_fore_arm: MeshHandle
         alien_hand: MeshHandle
         alien_head: MeshHandle
@@ -402,15 +344,6 @@ if TYPE_CHECKING:
         bunny_torso: MeshHandle
         bunny_upper_arm: MeshHandle
         bunny_upper_leg: MeshHandle
-        cowboy_fore_arm: MeshHandle
-        cowboy_hand: MeshHandle
-        cowboy_head: MeshHandle
-        cowboy_lower_leg: MeshHandle
-        cowboy_pelvis: MeshHandle
-        cowboy_toes: MeshHandle
-        cowboy_torso: MeshHandle
-        cowboy_upper_arm: MeshHandle
-        cowboy_upper_leg: MeshHandle
         cyborg_fore_arm: MeshHandle
         cyborg_hand: MeshHandle
         cyborg_head: MeshHandle
@@ -438,6 +371,11 @@ if TYPE_CHECKING:
         gladiator_torso: MeshHandle
         gladiator_upper_arm: MeshHandle
         gladiator_upper_leg: MeshHandle
+        hair_tuft1: MeshHandle
+        hair_tuft1b: MeshHandle
+        hair_tuft2: MeshHandle
+        hair_tuft3: MeshHandle
+        hair_tuft4: MeshHandle
         jack_fore_arm: MeshHandle
         jack_hand: MeshHandle
         jack_head: MeshHandle
@@ -446,15 +384,6 @@ if TYPE_CHECKING:
         jack_torso: MeshHandle
         jack_upper_arm: MeshHandle
         jack_upper_leg: MeshHandle
-        jumpsuit_fore_arm: MeshHandle
-        jumpsuit_hand: MeshHandle
-        jumpsuit_head: MeshHandle
-        jumpsuit_lower_leg: MeshHandle
-        jumpsuit_pelvis: MeshHandle
-        jumpsuit_toes: MeshHandle
-        jumpsuit_torso: MeshHandle
-        jumpsuit_upper_arm: MeshHandle
-        jumpsuit_upper_leg: MeshHandle
         kronk_fore_arm: MeshHandle
         kronk_hand: MeshHandle
         kronk_head: MeshHandle
@@ -499,15 +428,6 @@ if TYPE_CHECKING:
         old_lady_torso: MeshHandle
         old_lady_upper_arm: MeshHandle
         old_lady_upper_leg: MeshHandle
-        opera_singer_fore_arm: MeshHandle
-        opera_singer_hand: MeshHandle
-        opera_singer_head: MeshHandle
-        opera_singer_lower_leg: MeshHandle
-        opera_singer_pelvis: MeshHandle
-        opera_singer_toes: MeshHandle
-        opera_singer_torso: MeshHandle
-        opera_singer_upper_arm: MeshHandle
-        opera_singer_upper_leg: MeshHandle
         penguin_fore_arm: MeshHandle
         penguin_hand: MeshHandle
         penguin_head: MeshHandle
@@ -526,6 +446,7 @@ if TYPE_CHECKING:
         pixie_torso: MeshHandle
         pixie_upper_arm: MeshHandle
         pixie_upper_leg: MeshHandle
+        pixie_wing: MeshHandle
         robot_fore_arm: MeshHandle
         robot_hand: MeshHandle
         robot_head: MeshHandle
@@ -543,15 +464,6 @@ if TYPE_CHECKING:
         santa_torso: MeshHandle
         santa_upper_arm: MeshHandle
         santa_upper_leg: MeshHandle
-        superhero_fore_arm: MeshHandle
-        superhero_hand: MeshHandle
-        superhero_head: MeshHandle
-        superhero_lower_leg: MeshHandle
-        superhero_pelvis: MeshHandle
-        superhero_toes: MeshHandle
-        superhero_torso: MeshHandle
-        superhero_upper_arm: MeshHandle
-        superhero_upper_leg: MeshHandle
         warrior_fore_arm: MeshHandle
         warrior_hand: MeshHandle
         warrior_head: MeshHandle
@@ -598,101 +510,361 @@ if TYPE_CHECKING:
         zoe_upper_arm: MeshHandle
         zoe_upper_leg: MeshHandle
 
-    class TexturesGroup:
+    class StringsCharactersGroup:
         """
         ::
 
-            Character body textures and their color masks.
+            Playable character display names. Mods can register their own
+            characters; those names are shown untranslated.
 
             See source for the full asset list.
         """
 
-        action_hero_color: TextureHandle
-        action_hero_color_mask: TextureHandle
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Translate the "Agent" title;
+        #:     keep/transliterate "Johnson".
+        #:
+        #:     English: "Agent Johnson"
+        agent_johnson: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Robot designation: keep as "B-9000"
+        #:     (transliterate letters/digits only where the script requires).
+        #:
+        #:     English: "B-9000"
+        b9000: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Bernard"
+        bernard: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. A warm, familiar granny-ish given name:
+        #:     keep/adapt "Betty" or use an equivalent common local name.
+        #:
+        #:     English: "Betty"
+        betty: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful nickname: playful
+        #:     diminutive/pet-name forms for "bones/skeleton" work well.
+        #:
+        #:     English: "Bones"
+        bones: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Use each culture's standard
+        #:     Easter-bunny term.
+        #:
+        #:     English: "Easter Bunny"
+        easter_bunny: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful name: a frosty/snowy
+        #:     name-like form (playful beats a generic "snowman" where a natural
+        #:     option exists).
+        #:
+        #:     English: "Frosty"
+        frosty: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented wizardly pun name: "grumble" +
+        #:     a Gandalf/Dumbledore-style suffix. A local grumble-pun in the
+        #:     same shape is ideal; otherwise transliterate. Never a generic
+        #:     "wizard" word alone, and never an actual name from other fiction.
+        #:
+        #:     English: "Grumbledorf"
+        grumbledorf: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded. Use local name order conventions.
+        #:
+        #:     English: "Jack Morgan"
+        jack_morgan: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Kronk"
+        kronk: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
+        #:     translate the meaning as a name-like form.
+        #:
+        #:     English: "Lucky"
+        lucky: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Mel"
+        mel: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Pascal"
+        pascal: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. English puns pixel/pixie. Either keep
+        #:     "Pixel" (transliterated as needed) or use a fairy/sprite word
+        #:     that lands a similar double meaning.
+        #:
+        #:     English: "Pixel"
+        pixel: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Use each culture's traditional
+        #:     gift-bringer name.
+        #:
+        #:     English: "Santa Claus"
+        santa_claus: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Descriptive name: translate the meaning
+        #:     (snake + shadow, ninja-flavored).
+        #:
+        #:     English: "Snake Shadow"
+        snake_shadow: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. the default character and series
+        #:     mascot; transliterate phonetically, or keep an established
+        #:     playful rename.
+        #:
+        #:     English: "Spaz"
+        spaz: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Zoe"
+        zoe: LangStr
+
+    class StringsGroup:
+        """
+        ::
+
+            Character display names.
+
+            See source for the full asset list.
+        """
+
+        characters: StringsCharactersGroup
+
+    class TexturesGroup:
+        """
+        ::
+
+            Character body textures and their color masks, and each character's
+            icon and icon color mask.
+
+            See source for the full asset list.
+        """
+
         agent_color: TextureHandle
         agent_color_mask: TextureHandle
-        ali_color: TextureHandle
-        ali_color_mask: TextureHandle
+        agent_icon: TextureHandle
+        agent_icon_color_mask: TextureHandle
         alien_color: TextureHandle
         alien_color_mask: TextureHandle
+        alien_icon: TextureHandle
+        alien_icon_color_mask: TextureHandle
         assassin_color: TextureHandle
         assassin_color_mask: TextureHandle
+        assassin_icon: TextureHandle
+        assassin_icon_color_mask: TextureHandle
         bear_color: TextureHandle
         bear_color_mask: TextureHandle
+        bear_icon: TextureHandle
+        bear_icon_color_mask: TextureHandle
         bones_color: TextureHandle
         bones_color_mask: TextureHandle
+        bones_icon: TextureHandle
+        bones_icon_color_mask: TextureHandle
         bunny_color: TextureHandle
         bunny_color_mask: TextureHandle
-        cowboy_color: TextureHandle
-        cowboy_color_mask: TextureHandle
+        bunny_icon: TextureHandle
+        bunny_icon_color_mask: TextureHandle
         cyborg_color: TextureHandle
         cyborg_color_mask: TextureHandle
+        cyborg_icon: TextureHandle
+        cyborg_icon_color_mask: TextureHandle
         frosty_color: TextureHandle
         frosty_color_mask: TextureHandle
+        frosty_icon: TextureHandle
+        frosty_icon_color_mask: TextureHandle
         gladiator_color: TextureHandle
         gladiator_color_mask: TextureHandle
+        gladiator_icon: TextureHandle
+        gladiator_icon_color_mask: TextureHandle
         jack_color: TextureHandle
         jack_color_mask: TextureHandle
-        jumpsuit_color: TextureHandle
-        jumpsuit_color_mask: TextureHandle
+        jack_icon: TextureHandle
+        jack_icon_color_mask: TextureHandle
         kronk: TextureHandle
         kronk_color_mask: TextureHandle
+        kronk_icon: TextureHandle
+        kronk_icon_color_mask: TextureHandle
         mel_color: TextureHandle
         mel_color_mask: TextureHandle
+        mel_icon: TextureHandle
+        mel_icon_color_mask: TextureHandle
         neo_spaz_color: TextureHandle
         neo_spaz_color_mask: TextureHandle
+        neo_spaz_icon: TextureHandle
+        neo_spaz_icon_color_mask: TextureHandle
         ninja_color: TextureHandle
         ninja_color_mask: TextureHandle
+        ninja_icon: TextureHandle
+        ninja_icon_color_mask: TextureHandle
         old_lady_color: TextureHandle
         old_lady_color_mask: TextureHandle
-        opera_singer_color: TextureHandle
-        opera_singer_color_mask: TextureHandle
+        old_lady_icon: TextureHandle
+        old_lady_icon_color_mask: TextureHandle
         penguin_color: TextureHandle
         penguin_color_mask: TextureHandle
+        penguin_icon: TextureHandle
+        penguin_icon_color_mask: TextureHandle
         pixie_color: TextureHandle
         pixie_color_mask: TextureHandle
+        pixie_icon: TextureHandle
+        pixie_icon_color_mask: TextureHandle
+        pixie_wings: TextureHandle
+        pixie_wings_color_mask: TextureHandle
         robot_color: TextureHandle
         robot_color_mask: TextureHandle
+        robot_icon: TextureHandle
+        robot_icon_color_mask: TextureHandle
         santa_color: TextureHandle
         santa_color_mask: TextureHandle
-        superhero_color: TextureHandle
-        superhero_color_mask: TextureHandle
+        santa_icon: TextureHandle
+        santa_icon_color_mask: TextureHandle
         warrior_color: TextureHandle
         warrior_color_mask: TextureHandle
+        warrior_icon: TextureHandle
+        warrior_icon_color_mask: TextureHandle
         witch_color: TextureHandle
         witch_color_mask: TextureHandle
+        witch_icon: TextureHandle
+        witch_icon_color_mask: TextureHandle
         wizard_color: TextureHandle
         wizard_color_mask: TextureHandle
+        wizard_icon: TextureHandle
+        wizard_icon_color_mask: TextureHandle
         wrestler_color: TextureHandle
         wrestler_color_mask: TextureHandle
+        wrestler_icon: TextureHandle
+        wrestler_icon_color_mask: TextureHandle
         zoe_color: TextureHandle
         zoe_color_mask: TextureHandle
+        zoe_icon: TextureHandle
+        zoe_icon_color_mask: TextureHandle
 
-    #: The ``audio`` group - 280 assets (``action_hero1``, ``action_hero2``,
-    #: ``action_hero3``, ``action_hero4``, ``action_hero_death``, and 275 more).
-    #: Full list in source.
+    class CharactersGroup:
+        """Character-group type; see source for the full list."""
+
+        agent_johnson: CharacterHandle
+        b9000: CharacterHandle
+        bernard: CharacterHandle
+        betty: CharacterHandle
+        bones: CharacterHandle
+        easter_bunny: CharacterHandle
+        frosty: CharacterHandle
+        grumbledorf: CharacterHandle
+        jack_morgan: CharacterHandle
+        kronk: CharacterHandle
+        lucky: CharacterHandle
+        mel: CharacterHandle
+        pascal: CharacterHandle
+        pixel: CharacterHandle
+        santa_claus: CharacterHandle
+        snake_shadow: CharacterHandle
+        spaz: CharacterHandle
+        zoe: CharacterHandle
+
+    #: The ``audio`` group - 232 assets (``agent1``, ``agent2``, ``agent3``,
+    #: ``agent4``, ``agent_death``, and 227 more). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 267 assets (``action_hero_fore_arm``,
-    #: ``action_hero_hand``, ``action_hero_head``, ``action_hero_lower_leg``,
-    #: ``action_hero_pelvis``, and 262 more). Full list in source.
+    #: The ``meshes`` group - 219 assets (``agent_fore_arm``, ``agent_hand``,
+    #: ``agent_head``, ``agent_lower_leg``, ``agent_pelvis``, and 214 more).
+    #: Full list in source.
     meshes: MeshesGroup
 
-    #: The ``textures`` group - 60 assets (``action_hero_color``,
-    #: ``action_hero_color_mask``, ``agent_color``, ``agent_color_mask``,
-    #: ``ali_color``, and 55 more). Full list in source.
+    #: The ``strings`` group - 18 strings (``characters``, and 17 more). Full
+    #: list in source.
+    strings: StringsGroup
+
+    #: The ``textures`` group - 98 assets (``agent_color``,
+    #: ``agent_color_mask``, ``agent_icon``, ``agent_icon_color_mask``,
+    #: ``alien_color``, and 93 more). Full list in source.
     textures: TexturesGroup
+
+    #: The ``characters`` group - 18 characters (``agent_johnson``, ``b9000``,
+    #: ``bernard``, ``betty``, ``bones``, and 13 more). Full list in source.
+    characters: CharactersGroup
 
 _TREE = {
     'audio': {
-        'action_hero1': 's',
-        'action_hero2': 's',
-        'action_hero3': 's',
-        'action_hero4': 's',
-        'action_hero_death': 's',
-        'action_hero_fall': 's',
-        'action_hero_hit1': 's',
-        'action_hero_hit2': 's',
         'agent1': 's',
         'agent2': 's',
         'agent3': 's',
@@ -701,14 +873,6 @@ _TREE = {
         'agent_fall': 's',
         'agent_hit1': 's',
         'agent_hit2': 's',
-        'ali1': 's',
-        'ali2': 's',
-        'ali3': 's',
-        'ali4': 's',
-        'ali_death': 's',
-        'ali_fall': 's',
-        'ali_hit1': 's',
-        'ali_hit2': 's',
         'alien1': 's',
         'alien2': 's',
         'alien3': 's',
@@ -747,14 +911,6 @@ _TREE = {
         'bunny_hit1': 's',
         'bunny_hit2': 's',
         'bunny_jump': 's',
-        'cowboy1': 's',
-        'cowboy2': 's',
-        'cowboy3': 's',
-        'cowboy4': 's',
-        'cowboy_death': 's',
-        'cowboy_fall': 's',
-        'cowboy_hit1': 's',
-        'cowboy_hit2': 's',
         'cyborg1': 's',
         'cyborg2': 's',
         'cyborg3': 's',
@@ -796,14 +952,6 @@ _TREE = {
         'jack_hit05': 's',
         'jack_hit06': 's',
         'jack_hit07': 's',
-        'jumpsuit1': 's',
-        'jumpsuit2': 's',
-        'jumpsuit3': 's',
-        'jumpsuit4': 's',
-        'jumpsuit_death': 's',
-        'jumpsuit_fall': 's',
-        'jumpsuit_hit1': 's',
-        'jumpsuit_hit2': 's',
         'kronk1': 's',
         'kronk10': 's',
         'kronk2': 's',
@@ -853,14 +1001,6 @@ _TREE = {
         'old_lady_fall': 's',
         'old_lady_hit1': 's',
         'old_lady_hit2': 's',
-        'opera_singer1': 's',
-        'opera_singer2': 's',
-        'opera_singer3': 's',
-        'opera_singer4': 's',
-        'opera_singer_death': 's',
-        'opera_singer_fall': 's',
-        'opera_singer_hit1': 's',
-        'opera_singer_hit2': 's',
         'penguin1': 's',
         'penguin2': 's',
         'penguin3': 's',
@@ -911,14 +1051,6 @@ _TREE = {
         'spaz_jump03': 's',
         'spaz_jump04': 's',
         'spaz_pickup01': 's',
-        'superhero1': 's',
-        'superhero2': 's',
-        'superhero3': 's',
-        'superhero4': 's',
-        'superhero_death': 's',
-        'superhero_fall': 's',
-        'superhero_hit1': 's',
-        'superhero_hit2': 's',
         'warrior1': 's',
         'warrior2': 's',
         'warrior3': 's',
@@ -967,15 +1099,6 @@ _TREE = {
         'zoe_pickup01': 's',
     },
     'meshes': {
-        'action_hero_fore_arm': 'm',
-        'action_hero_hand': 'm',
-        'action_hero_head': 'm',
-        'action_hero_lower_leg': 'm',
-        'action_hero_pelvis': 'm',
-        'action_hero_toes': 'm',
-        'action_hero_torso': 'm',
-        'action_hero_upper_arm': 'm',
-        'action_hero_upper_leg': 'm',
         'agent_fore_arm': 'm',
         'agent_hand': 'm',
         'agent_head': 'm',
@@ -985,15 +1108,6 @@ _TREE = {
         'agent_torso': 'm',
         'agent_upper_arm': 'm',
         'agent_upper_leg': 'm',
-        'ali_fore_arm': 'm',
-        'ali_hand': 'm',
-        'ali_head': 'm',
-        'ali_lower_leg': 'm',
-        'ali_pelvis': 'm',
-        'ali_toes': 'm',
-        'ali_torso': 'm',
-        'ali_upper_arm': 'm',
-        'ali_upper_leg': 'm',
         'alien_fore_arm': 'm',
         'alien_hand': 'm',
         'alien_head': 'm',
@@ -1039,15 +1153,6 @@ _TREE = {
         'bunny_torso': 'm',
         'bunny_upper_arm': 'm',
         'bunny_upper_leg': 'm',
-        'cowboy_fore_arm': 'm',
-        'cowboy_hand': 'm',
-        'cowboy_head': 'm',
-        'cowboy_lower_leg': 'm',
-        'cowboy_pelvis': 'm',
-        'cowboy_toes': 'm',
-        'cowboy_torso': 'm',
-        'cowboy_upper_arm': 'm',
-        'cowboy_upper_leg': 'm',
         'cyborg_fore_arm': 'm',
         'cyborg_hand': 'm',
         'cyborg_head': 'm',
@@ -1075,6 +1180,11 @@ _TREE = {
         'gladiator_torso': 'm',
         'gladiator_upper_arm': 'm',
         'gladiator_upper_leg': 'm',
+        'hair_tuft1': 'm',
+        'hair_tuft1b': 'm',
+        'hair_tuft2': 'm',
+        'hair_tuft3': 'm',
+        'hair_tuft4': 'm',
         'jack_fore_arm': 'm',
         'jack_hand': 'm',
         'jack_head': 'm',
@@ -1083,15 +1193,6 @@ _TREE = {
         'jack_torso': 'm',
         'jack_upper_arm': 'm',
         'jack_upper_leg': 'm',
-        'jumpsuit_fore_arm': 'm',
-        'jumpsuit_hand': 'm',
-        'jumpsuit_head': 'm',
-        'jumpsuit_lower_leg': 'm',
-        'jumpsuit_pelvis': 'm',
-        'jumpsuit_toes': 'm',
-        'jumpsuit_torso': 'm',
-        'jumpsuit_upper_arm': 'm',
-        'jumpsuit_upper_leg': 'm',
         'kronk_fore_arm': 'm',
         'kronk_hand': 'm',
         'kronk_head': 'm',
@@ -1136,15 +1237,6 @@ _TREE = {
         'old_lady_torso': 'm',
         'old_lady_upper_arm': 'm',
         'old_lady_upper_leg': 'm',
-        'opera_singer_fore_arm': 'm',
-        'opera_singer_hand': 'm',
-        'opera_singer_head': 'm',
-        'opera_singer_lower_leg': 'm',
-        'opera_singer_pelvis': 'm',
-        'opera_singer_toes': 'm',
-        'opera_singer_torso': 'm',
-        'opera_singer_upper_arm': 'm',
-        'opera_singer_upper_leg': 'm',
         'penguin_fore_arm': 'm',
         'penguin_hand': 'm',
         'penguin_head': 'm',
@@ -1163,6 +1255,7 @@ _TREE = {
         'pixie_torso': 'm',
         'pixie_upper_arm': 'm',
         'pixie_upper_leg': 'm',
+        'pixie_wing': 'm',
         'robot_fore_arm': 'm',
         'robot_hand': 'm',
         'robot_head': 'm',
@@ -1180,15 +1273,6 @@ _TREE = {
         'santa_torso': 'm',
         'santa_upper_arm': 'm',
         'santa_upper_leg': 'm',
-        'superhero_fore_arm': 'm',
-        'superhero_hand': 'm',
-        'superhero_head': 'm',
-        'superhero_lower_leg': 'm',
-        'superhero_pelvis': 'm',
-        'superhero_toes': 'm',
-        'superhero_torso': 'm',
-        'superhero_upper_arm': 'm',
-        'superhero_upper_leg': 'm',
         'warrior_fore_arm': 'm',
         'warrior_hand': 'm',
         'warrior_head': 'm',
@@ -1235,67 +1319,888 @@ _TREE = {
         'zoe_upper_arm': 'm',
         'zoe_upper_leg': 'm',
     },
+    'strings': {
+        'characters': {
+            'agent_johnson': (),
+            'b9000': (),
+            'bernard': (),
+            'betty': (),
+            'bones': (),
+            'easter_bunny': (),
+            'frosty': (),
+            'grumbledorf': (),
+            'jack_morgan': (),
+            'kronk': (),
+            'lucky': (),
+            'mel': (),
+            'pascal': (),
+            'pixel': (),
+            'santa_claus': (),
+            'snake_shadow': (),
+            'spaz': (),
+            'zoe': (),
+        }
+    },
     'textures': {
-        'action_hero_color': 't',
-        'action_hero_color_mask': 't',
         'agent_color': 't',
         'agent_color_mask': 't',
-        'ali_color': 't',
-        'ali_color_mask': 't',
+        'agent_icon': 't',
+        'agent_icon_color_mask': 't',
         'alien_color': 't',
         'alien_color_mask': 't',
+        'alien_icon': 't',
+        'alien_icon_color_mask': 't',
         'assassin_color': 't',
         'assassin_color_mask': 't',
+        'assassin_icon': 't',
+        'assassin_icon_color_mask': 't',
         'bear_color': 't',
         'bear_color_mask': 't',
+        'bear_icon': 't',
+        'bear_icon_color_mask': 't',
         'bones_color': 't',
         'bones_color_mask': 't',
+        'bones_icon': 't',
+        'bones_icon_color_mask': 't',
         'bunny_color': 't',
         'bunny_color_mask': 't',
-        'cowboy_color': 't',
-        'cowboy_color_mask': 't',
+        'bunny_icon': 't',
+        'bunny_icon_color_mask': 't',
         'cyborg_color': 't',
         'cyborg_color_mask': 't',
+        'cyborg_icon': 't',
+        'cyborg_icon_color_mask': 't',
         'frosty_color': 't',
         'frosty_color_mask': 't',
+        'frosty_icon': 't',
+        'frosty_icon_color_mask': 't',
         'gladiator_color': 't',
         'gladiator_color_mask': 't',
+        'gladiator_icon': 't',
+        'gladiator_icon_color_mask': 't',
         'jack_color': 't',
         'jack_color_mask': 't',
-        'jumpsuit_color': 't',
-        'jumpsuit_color_mask': 't',
+        'jack_icon': 't',
+        'jack_icon_color_mask': 't',
         'kronk': 't',
         'kronk_color_mask': 't',
+        'kronk_icon': 't',
+        'kronk_icon_color_mask': 't',
         'mel_color': 't',
         'mel_color_mask': 't',
+        'mel_icon': 't',
+        'mel_icon_color_mask': 't',
         'neo_spaz_color': 't',
         'neo_spaz_color_mask': 't',
+        'neo_spaz_icon': 't',
+        'neo_spaz_icon_color_mask': 't',
         'ninja_color': 't',
         'ninja_color_mask': 't',
+        'ninja_icon': 't',
+        'ninja_icon_color_mask': 't',
         'old_lady_color': 't',
         'old_lady_color_mask': 't',
-        'opera_singer_color': 't',
-        'opera_singer_color_mask': 't',
+        'old_lady_icon': 't',
+        'old_lady_icon_color_mask': 't',
         'penguin_color': 't',
         'penguin_color_mask': 't',
+        'penguin_icon': 't',
+        'penguin_icon_color_mask': 't',
         'pixie_color': 't',
         'pixie_color_mask': 't',
+        'pixie_icon': 't',
+        'pixie_icon_color_mask': 't',
+        'pixie_wings': 't',
+        'pixie_wings_color_mask': 't',
         'robot_color': 't',
         'robot_color_mask': 't',
+        'robot_icon': 't',
+        'robot_icon_color_mask': 't',
         'santa_color': 't',
         'santa_color_mask': 't',
-        'superhero_color': 't',
-        'superhero_color_mask': 't',
+        'santa_icon': 't',
+        'santa_icon_color_mask': 't',
         'warrior_color': 't',
         'warrior_color_mask': 't',
+        'warrior_icon': 't',
+        'warrior_icon_color_mask': 't',
         'witch_color': 't',
         'witch_color_mask': 't',
+        'witch_icon': 't',
+        'witch_icon_color_mask': 't',
         'wizard_color': 't',
         'wizard_color_mask': 't',
+        'wizard_icon': 't',
+        'wizard_icon_color_mask': 't',
         'wrestler_color': 't',
         'wrestler_color_mask': 't',
+        'wrestler_icon': 't',
+        'wrestler_icon_color_mask': 't',
         'zoe_color': 't',
         'zoe_color_mask': 't',
+        'zoe_icon': 't',
+        'zoe_icon_color_mask': 't',
+    },
+}
+
+_CHARACTERS = {
+    'characters': {
+        'agent_johnson': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/agent_color"},'
+                '"cm":{"a":546,"n":"textures/agent_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/agent_head"},'
+                '"mt":{"a":546,"n":"meshes/agent_torso"},'
+                '"mua":{"a":546,"n":"meshes/agent_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/agent_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/agent_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/agent_toes"},'
+                '"mfa":{"a":546,"n":"meshes/agent_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/agent_hand"},'
+                '"mp":{"a":546,"n":"meshes/agent_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/agent1"},{"a":546,'
+                '"n":"audio/agent2"},{"a":546,"n":"audio/agent3"},'
+                '{"a":546,"n":"audio/agent4"}],"sa":[{"a":546,'
+                '"n":"audio/agent1"},{"a":546,"n":"audio/agent2"},'
+                '{"a":546,"n":"audio/agent3"},{"a":546,'
+                '"n":"audio/agent4"}],"si":[{"a":546,'
+                '"n":"audio/agent_hit1"},{"a":546,'
+                '"n":"audio/agent_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/agent_death"}],"sp":[{"a":546,'
+                '"n":"audio/agent1"},{"a":546,"n":"audio/agent2"},'
+                '{"a":546,"n":"audio/agent3"},{"a":546,'
+                '"n":"audio/agent4"}],"sf":[{"a":546,'
+                '"n":"audio/agent_fall"}],"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,'
+                '0.3],"le":"n","re":"n","rs":0.2}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/agent_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/agent_icon_color_mask\\"},\\"cl\\":[0.3,'
+                '0.3,0.33],\\"hl\\":[1.0,0.5,0.3]}}","_t":"ci"}'
+            ),
+            'strings/characters/agent_johnson',
+        ),
+        'b9000': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/cyborg_color"},'
+                '"cm":{"a":546,"n":"textures/cyborg_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/cyborg_head"},'
+                '"mt":{"a":546,"n":"meshes/cyborg_torso"},'
+                '"mua":{"a":546,"n":"meshes/cyborg_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/cyborg_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/cyborg_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/cyborg_toes"},'
+                '"mfa":{"a":546,"n":"meshes/cyborg_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/cyborg_hand"},'
+                '"mp":{"a":546,"n":"meshes/cyborg_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/cyborg1"},{"a":546,'
+                '"n":"audio/cyborg2"},{"a":546,"n":"audio/cyborg3"},'
+                '{"a":546,"n":"audio/cyborg4"}],"sa":[{"a":546,'
+                '"n":"audio/cyborg1"},{"a":546,"n":"audio/cyborg2"},'
+                '{"a":546,"n":"audio/cyborg3"},{"a":546,'
+                '"n":"audio/cyborg4"}],"si":[{"a":546,'
+                '"n":"audio/cyborg_hit1"},{"a":546,'
+                '"n":"audio/cyborg_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/cyborg_death"}],"sp":[{"a":546,'
+                '"n":"audio/cyborg1"},{"a":546,"n":"audio/cyborg2"},'
+                '{"a":546,"n":"audio/cyborg3"},{"a":546,'
+                '"n":"audio/cyborg4"}],"sf":[{"a":546,'
+                '"n":"audio/cyborg_fall"}],"cl":[0.5,0.5,0.5],"hl":[1.0,0.0,'
+                '0.0],"le":"n","re":"n","rs":0.85}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/cyborg_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/cyborg_icon_color_mask\\"},'
+                '\\"hl\\":[1.0,0.0,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/b9000',
+        ),
+        'bernard': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/bear_color"},'
+                '"cm":{"a":546,"n":"textures/bear_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/bear_head"},'
+                '"mt":{"a":546,"n":"meshes/bear_torso"},'
+                '"mua":{"a":546,"n":"meshes/bear_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/bear_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/bear_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/bear_toes"},'
+                '"mfa":{"a":546,"n":"meshes/bear_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/bear_hand"},'
+                '"mp":{"a":546,"n":"meshes/bear_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/bear1"},{"a":546,'
+                '"n":"audio/bear2"},{"a":546,"n":"audio/bear3"},'
+                '{"a":546,"n":"audio/bear4"}],"sa":[{"a":546,'
+                '"n":"audio/bear1"},{"a":546,"n":"audio/bear2"},'
+                '{"a":546,"n":"audio/bear3"},{"a":546,'
+                '"n":"audio/bear4"}],"si":[{"a":546,'
+                '"n":"audio/bear_hit1"},{"a":546,'
+                '"n":"audio/bear_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/bear_death"}],"sp":[{"a":546,'
+                '"n":"audio/bear1"},{"a":546,"n":"audio/bear2"},'
+                '{"a":546,"n":"audio/bear3"},{"a":546,'
+                '"n":"audio/bear4"}],"sf":[{"a":546,'
+                '"n":"audio/bear_fall"}],"cl":[0.7,0.5,0.0],"tr":0.25,'
+                '"so":[-0.02,-0.01,0.01],"le":"l","re":"l","es":0.73,'
+                '"eo":[0.065,0.064,0.205],"ec":[0.0,0.0,0.0],"eb":[0.5,0.5,'
+                '0.5],"lc":[0.2,0.1,0.1],"rs":0.05}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bear_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bear_icon_color_mask\\"},\\"cl\\":[0.7,'
+                '0.5,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/bernard',
+        ),
+        'betty': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/old_lady_color"},'
+                '"cm":{"a":546,"n":"textures/old_lady_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/old_lady_head"},'
+                '"mt":{"a":546,"n":"meshes/old_lady_torso"},'
+                '"mua":{"a":546,"n":"meshes/old_lady_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/old_lady_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/old_lady_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/old_lady_toes"},'
+                '"mfa":{"a":546,"n":"meshes/old_lady_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/old_lady_hand"},'
+                '"sj":[{"a":546,"n":"audio/old_lady1"},{"a":546,'
+                '"n":"audio/old_lady2"},{"a":546,"n":"audio/old_lady3"},'
+                '{"a":546,"n":"audio/old_lady4"}],"sa":[{"a":546,'
+                '"n":"audio/old_lady1"},{"a":546,"n":"audio/old_lady2"},'
+                '{"a":546,"n":"audio/old_lady3"},{"a":546,'
+                '"n":"audio/old_lady4"}],"si":[{"a":546,'
+                '"n":"audio/old_lady_hit1"},{"a":546,'
+                '"n":"audio/old_lady_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/old_lady_death"}],"sp":[{"a":546,'
+                '"n":"audio/old_lady1"},{"a":546,"n":"audio/old_lady2"},'
+                '{"a":546,"n":"audio/old_lady3"},{"a":546,'
+                '"n":"audio/old_lady4"}],"sf":[{"a":546,'
+                '"n":"audio/old_lady_fall"}],"cl":[0.2,1.0,1.0],"hl":[0.5,'
+                '0.25,1.0],"le":"n","re":"n"}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/old_lady_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/old_lady_icon_color_mask\\"},'
+                '\\"cl\\":[0.2,1.0,1.0],\\"hl\\":[0.5,0.25,1.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/betty',
+        ),
+        'bones': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/bones_color"},'
+                '"cm":{"a":546,"n":"textures/bones_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/bones_head"},'
+                '"mt":{"a":546,"n":"meshes/bones_torso"},'
+                '"mua":{"a":546,"n":"meshes/bones_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/bones_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/bones_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/bones_toes"},'
+                '"mfa":{"a":546,"n":"meshes/bones_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/bones_hand"},'
+                '"mp":{"a":546,"n":"meshes/bones_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/bones1"},{"a":546,'
+                '"n":"audio/bones2"},{"a":546,"n":"audio/bones3"}],'
+                '"sa":[{"a":546,"n":"audio/bones1"},{"a":546,'
+                '"n":"audio/bones2"},{"a":546,"n":"audio/bones3"}],'
+                '"si":[{"a":546,"n":"audio/bones1"},{"a":546,'
+                '"n":"audio/bones2"},{"a":546,"n":"audio/bones3"}],'
+                '"sd":[{"a":546,"n":"audio/bones_death"}],'
+                '"sp":[{"a":546,"n":"audio/bones1"},{"a":546,'
+                '"n":"audio/bones2"},{"a":546,"n":"audio/bones3"}],'
+                '"sf":[{"a":546,"n":"audio/bones_fall"}],"cl":[0.6,0.9,'
+                '1.0],"hl":[0.6,0.9,1.0],"le":"n","re":"n"}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bones_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bones_icon_color_mask\\"},\\"cl\\":[0.6,'
+                '0.9,1.0],\\"hl\\":[0.6,0.9,1.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/bones',
+        ),
+        'easter_bunny': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/bunny_color"},'
+                '"cm":{"a":546,"n":"textures/bunny_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/bunny_head"},'
+                '"mt":{"a":546,"n":"meshes/bunny_torso"},'
+                '"mua":{"a":546,"n":"meshes/bunny_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/bunny_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/bunny_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/bunny_toes"},'
+                '"mfa":{"a":546,"n":"meshes/bunny_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/bunny_hand"},'
+                '"sj":[{"a":546,"n":"audio/bunny_jump"}],'
+                '"sa":[{"a":546,"n":"audio/bunny1"},{"a":546,'
+                '"n":"audio/bunny2"},{"a":546,"n":"audio/bunny3"},'
+                '{"a":546,"n":"audio/bunny4"}],"si":[{"a":546,'
+                '"n":"audio/bunny_hit1"},{"a":546,'
+                '"n":"audio/bunny_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/bunny_death"}],"sp":[{"a":546,'
+                '"n":"audio/bunny1"},{"a":546,"n":"audio/bunny2"},'
+                '{"a":546,"n":"audio/bunny3"},{"a":546,'
+                '"n":"audio/bunny4"}],"sf":[{"a":546,'
+                '"n":"audio/bunny_fall"}],"cl":[1.0,1.0,1.0],"hl":[1.0,0.5,'
+                '0.5],"tr":0.13,"so":[0.03,-0.05,0.0],"es":1.2,"eo":[0.07,'
+                '-0.08,0.05],"eb":[0.6,0.6,0.6],"lc":[0.6,0.5,0.5],"ln":-5.0,'
+                '"rs":0.02}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bunny_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/bunny_icon_color_mask\\"},\\"cl\\":[1.0,'
+                '1.0,1.0],\\"hl\\":[1.0,0.5,0.5]}}","_t":"ci"}'
+            ),
+            'strings/characters/easter_bunny',
+        ),
+        'frosty': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/frosty_color"},'
+                '"cm":{"a":546,"n":"textures/frosty_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/frosty_head"},'
+                '"mt":{"a":546,"n":"meshes/frosty_torso"},'
+                '"mua":{"a":546,"n":"meshes/frosty_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/frosty_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/frosty_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/frosty_toes"},'
+                '"mfa":{"a":546,"n":"meshes/frosty_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/frosty_hand"},'
+                '"mp":{"a":546,"n":"meshes/frosty_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/frosty01"},{"a":546,'
+                '"n":"audio/frosty02"},{"a":546,"n":"audio/frosty03"},'
+                '{"a":546,"n":"audio/frosty04"},{"a":546,'
+                '"n":"audio/frosty05"}],"sa":[{"a":546,'
+                '"n":"audio/frosty01"},{"a":546,"n":"audio/frosty02"},'
+                '{"a":546,"n":"audio/frosty03"},{"a":546,'
+                '"n":"audio/frosty04"},{"a":546,"n":"audio/frosty05"}],'
+                '"si":[{"a":546,"n":"audio/frosty_hit01"},{"a":546,'
+                '"n":"audio/frosty_hit02"},{"a":546,'
+                '"n":"audio/frosty_hit03"}],"sd":[{"a":546,'
+                '"n":"audio/frosty_death"}],"sp":[{"a":546,'
+                '"n":"audio/frosty01"},{"a":546,"n":"audio/frosty02"},'
+                '{"a":546,"n":"audio/frosty03"},{"a":546,'
+                '"n":"audio/frosty04"},{"a":546,"n":"audio/frosty05"}],'
+                '"sf":[{"a":546,"n":"audio/frosty_fall"}],"cl":[0.5,0.5,'
+                '1.0],"hl":[1.0,0.5,0.0],"tr":0.3,"so":[-0.04,0.03,0.0],'
+                '"le":"n","re":"n"}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/frosty_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/frosty_icon_color_mask\\"},'
+                '\\"cl\\":[0.5,0.5,1.0],\\"hl\\":[1.0,0.5,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/frosty',
+        ),
+        'grumbledorf': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/wizard_color"},'
+                '"cm":{"a":546,"n":"textures/wizard_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/wizard_head"},'
+                '"mt":{"a":546,"n":"meshes/wizard_torso"},'
+                '"mua":{"a":546,"n":"meshes/wizard_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/wizard_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/wizard_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/wizard_toes"},'
+                '"mfa":{"a":546,"n":"meshes/wizard_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/wizard_hand"},'
+                '"mp":{"a":546,"n":"meshes/wizard_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/wizard1"},{"a":546,'
+                '"n":"audio/wizard2"},{"a":546,"n":"audio/wizard3"},'
+                '{"a":546,"n":"audio/wizard4"}],"sa":[{"a":546,'
+                '"n":"audio/wizard1"},{"a":546,"n":"audio/wizard2"},'
+                '{"a":546,"n":"audio/wizard3"},{"a":546,'
+                '"n":"audio/wizard4"}],"si":[{"a":546,'
+                '"n":"audio/wizard_hit1"},{"a":546,'
+                '"n":"audio/wizard_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/wizard_death"}],"sp":[{"a":546,'
+                '"n":"audio/wizard1"},{"a":546,"n":"audio/wizard2"},'
+                '{"a":546,"n":"audio/wizard3"},{"a":546,'
+                '"n":"audio/wizard4"}],"sf":[{"a":546,'
+                '"n":"audio/wizard_fall"}],"cl":[0.2,0.4,1.0],"hl":[0.06,'
+                '0.15,0.4]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/wizard_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/wizard_icon_color_mask\\"},'
+                '\\"cl\\":[0.2,0.4,1.0],\\"hl\\":[0.06,0.15,0.4]}}",'
+                '"_t":"ci"}'
+            ),
+            'strings/characters/grumbledorf',
+        ),
+        'jack_morgan': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/jack_color"},'
+                '"cm":{"a":546,"n":"textures/jack_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/jack_head"},'
+                '"mt":{"a":546,"n":"meshes/jack_torso"},'
+                '"mua":{"a":546,"n":"meshes/jack_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/jack_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/jack_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/jack_toes"},'
+                '"mfa":{"a":546,"n":"meshes/jack_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/jack_hand"},'
+                '"mp":{"a":546,"n":"meshes/kronk_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/jack01"},{"a":546,'
+                '"n":"audio/jack02"},{"a":546,"n":"audio/jack03"},'
+                '{"a":546,"n":"audio/jack04"},{"a":546,'
+                '"n":"audio/jack05"},{"a":546,"n":"audio/jack06"}],'
+                '"sa":[{"a":546,"n":"audio/jack01"},{"a":546,'
+                '"n":"audio/jack02"},{"a":546,"n":"audio/jack03"},'
+                '{"a":546,"n":"audio/jack04"},{"a":546,'
+                '"n":"audio/jack05"},{"a":546,"n":"audio/jack06"}],'
+                '"si":[{"a":546,"n":"audio/jack_hit01"},{"a":546,'
+                '"n":"audio/jack_hit02"},{"a":546,'
+                '"n":"audio/jack_hit03"},{"a":546,'
+                '"n":"audio/jack_hit04"},{"a":546,'
+                '"n":"audio/jack_hit05"},{"a":546,'
+                '"n":"audio/jack_hit06"},{"a":546,'
+                '"n":"audio/jack_hit07"}],"sd":[{"a":546,'
+                '"n":"audio/jack_death01"}],"sp":[{"a":546,'
+                '"n":"audio/jack01"},{"a":546,"n":"audio/jack02"},'
+                '{"a":546,"n":"audio/jack03"},{"a":546,'
+                '"n":"audio/jack04"},{"a":546,"n":"audio/jack05"},'
+                '{"a":546,"n":"audio/jack06"}],"sf":[{"a":546,'
+                '"n":"audio/jack_fall01"}],"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,'
+                '0.0],"tr":0.25,"so":[-0.04,0.03,0.0],"le":"n","lc":[0.3,0.2,'
+                '0.15]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/jack_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/jack_icon_color_mask\\"},\\"cl\\":[1.0,'
+                '0.2,0.1],\\"hl\\":[1.0,1.0,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/jack_morgan',
+        ),
+        'kronk': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/kronk"},'
+                '"cm":{"a":546,"n":"textures/kronk_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/kronk_head"},'
+                '"mt":{"a":546,"n":"meshes/kronk_torso"},'
+                '"mua":{"a":546,"n":"meshes/kronk_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/kronk_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/kronk_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/kronk_toes"},'
+                '"mfa":{"a":546,"n":"meshes/kronk_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/kronk_hand"},'
+                '"mp":{"a":546,"n":"meshes/kronk_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/kronk1"},{"a":546,'
+                '"n":"audio/kronk2"},{"a":546,"n":"audio/kronk3"},'
+                '{"a":546,"n":"audio/kronk4"},{"a":546,'
+                '"n":"audio/kronk5"},{"a":546,"n":"audio/kronk6"},'
+                '{"a":546,"n":"audio/kronk7"},{"a":546,'
+                '"n":"audio/kronk8"},{"a":546,"n":"audio/kronk9"},'
+                '{"a":546,"n":"audio/kronk10"}],"sa":[{"a":546,'
+                '"n":"audio/kronk1"},{"a":546,"n":"audio/kronk2"},'
+                '{"a":546,"n":"audio/kronk3"},{"a":546,'
+                '"n":"audio/kronk4"},{"a":546,"n":"audio/kronk5"},'
+                '{"a":546,"n":"audio/kronk6"},{"a":546,'
+                '"n":"audio/kronk7"},{"a":546,"n":"audio/kronk8"},'
+                '{"a":546,"n":"audio/kronk9"},{"a":546,'
+                '"n":"audio/kronk10"}],"si":[{"a":546,'
+                '"n":"audio/kronk1"},{"a":546,"n":"audio/kronk2"},'
+                '{"a":546,"n":"audio/kronk3"},{"a":546,'
+                '"n":"audio/kronk4"},{"a":546,"n":"audio/kronk5"},'
+                '{"a":546,"n":"audio/kronk6"},{"a":546,'
+                '"n":"audio/kronk7"},{"a":546,"n":"audio/kronk8"},'
+                '{"a":546,"n":"audio/kronk9"},{"a":546,'
+                '"n":"audio/kronk10"}],"sd":[{"a":546,'
+                '"n":"audio/kronk_death"}],"sp":[{"a":546,'
+                '"n":"audio/kronk1"},{"a":546,"n":"audio/kronk2"},'
+                '{"a":546,"n":"audio/kronk3"},{"a":546,'
+                '"n":"audio/kronk4"},{"a":546,"n":"audio/kronk5"},'
+                '{"a":546,"n":"audio/kronk6"},{"a":546,'
+                '"n":"audio/kronk7"},{"a":546,"n":"audio/kronk8"},'
+                '{"a":546,"n":"audio/kronk9"},{"a":546,'
+                '"n":"audio/kronk10"}],"sf":[{"a":546,'
+                '"n":"audio/kronk_fall"}],"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,'
+                '0.3],"tr":0.2,"so":[-0.03,0.0,0.0],"es":0.8,"lc":[0.3,0.2,'
+                '0.1],"ln":20.0}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/kronk_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/kronk_icon_color_mask\\"},\\"cl\\":[0.4,'
+                '0.5,0.4],\\"hl\\":[1.0,0.5,0.3]}}","_t":"ci"}'
+            ),
+            'strings/characters/kronk',
+        ),
+        'lucky': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/assassin_color"},'
+                '"cm":{"a":546,"n":"textures/assassin_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/assassin_head"},'
+                '"mt":{"a":546,"n":"meshes/assassin_torso"},'
+                '"mua":{"a":546,"n":"meshes/assassin_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/assassin_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/assassin_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/assassin_toes"},'
+                '"mfa":{"a":546,"n":"meshes/assassin_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/assassin_hand"},'
+                '"mp":{"a":546,"n":"meshes/assassin_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/assassin1"},{"a":546,'
+                '"n":"audio/assassin2"},{"a":546,"n":"audio/assassin3"},'
+                '{"a":546,"n":"audio/assassin4"}],"sa":[{"a":546,'
+                '"n":"audio/assassin1"},{"a":546,"n":"audio/assassin2"},'
+                '{"a":546,"n":"audio/assassin3"},{"a":546,'
+                '"n":"audio/assassin4"}],"si":[{"a":546,'
+                '"n":"audio/assassin_hit1"},{"a":546,'
+                '"n":"audio/assassin_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/assassin_death"}],"sp":[{"a":546,'
+                '"n":"audio/assassin1"},{"a":546,"n":"audio/assassin2"},'
+                '{"a":546,"n":"audio/assassin3"},{"a":546,'
+                '"n":"audio/assassin4"}],"sf":[{"a":546,'
+                '"n":"audio/assassin_fall"}],"cl":[0.2,1.0,0.5],"hl":[1.0,'
+                '0.3,0.0]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/assassin_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/assassin_icon_color_mask\\"},'
+                '\\"cl\\":[0.2,1.0,0.5],\\"hl\\":[1.0,0.3,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/lucky',
+        ),
+        'mel': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/mel_color"},'
+                '"cm":{"a":546,"n":"textures/mel_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/mel_head"},'
+                '"mt":{"a":546,"n":"meshes/mel_torso"},'
+                '"mua":{"a":546,"n":"meshes/mel_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/mel_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/mel_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/mel_toes"},'
+                '"mfa":{"a":546,"n":"meshes/mel_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/mel_hand"},'
+                '"mp":{"a":546,"n":"meshes/kronk_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/mel01"},{"a":546,'
+                '"n":"audio/mel02"},{"a":546,"n":"audio/mel03"},'
+                '{"a":546,"n":"audio/mel04"},{"a":546,'
+                '"n":"audio/mel05"},{"a":546,"n":"audio/mel06"},'
+                '{"a":546,"n":"audio/mel07"},{"a":546,'
+                '"n":"audio/mel08"},{"a":546,"n":"audio/mel09"},'
+                '{"a":546,"n":"audio/mel10"}],"sa":[{"a":546,'
+                '"n":"audio/mel01"},{"a":546,"n":"audio/mel02"},'
+                '{"a":546,"n":"audio/mel03"},{"a":546,'
+                '"n":"audio/mel04"},{"a":546,"n":"audio/mel05"},'
+                '{"a":546,"n":"audio/mel06"},{"a":546,'
+                '"n":"audio/mel07"},{"a":546,"n":"audio/mel08"},'
+                '{"a":546,"n":"audio/mel09"},{"a":546,'
+                '"n":"audio/mel10"}],"si":[{"a":546,"n":"audio/mel01"},'
+                '{"a":546,"n":"audio/mel02"},{"a":546,'
+                '"n":"audio/mel03"},{"a":546,"n":"audio/mel04"},'
+                '{"a":546,"n":"audio/mel05"},{"a":546,'
+                '"n":"audio/mel06"},{"a":546,"n":"audio/mel07"},'
+                '{"a":546,"n":"audio/mel08"},{"a":546,'
+                '"n":"audio/mel09"},{"a":546,"n":"audio/mel10"}],'
+                '"sd":[{"a":546,"n":"audio/mel_death01"}],'
+                '"sp":[{"a":546,"n":"audio/mel01"},{"a":546,'
+                '"n":"audio/mel02"},{"a":546,"n":"audio/mel03"},'
+                '{"a":546,"n":"audio/mel04"},{"a":546,'
+                '"n":"audio/mel05"},{"a":546,"n":"audio/mel06"},'
+                '{"a":546,"n":"audio/mel07"},{"a":546,'
+                '"n":"audio/mel08"},{"a":546,"n":"audio/mel09"},'
+                '{"a":546,"n":"audio/mel10"}],"sf":[{"a":546,'
+                '"n":"audio/mel_fall01"}],"cl":[1.0,1.0,1.0],"hl":[0.1,0.6,'
+                '0.1],"tr":0.23,"so":[-0.04,0.03,0.0],"es":1.05,"eo":[0.075,'
+                '-0.026,0.165],"eb":[0.63,0.53,0.49],"lc":[0.8,0.55,0.45]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/mel_icon\\"},\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/mel_icon_color_mask\\"},\\"cl\\":[1.0,'
+                '1.0,1.0],\\"hl\\":[0.1,0.6,0.1]}}","_t":"ci"}'
+            ),
+            'strings/characters/mel',
+        ),
+        'pascal': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/penguin_color"},'
+                '"cm":{"a":546,"n":"textures/penguin_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/penguin_head"},'
+                '"mt":{"a":546,"n":"meshes/penguin_torso"},'
+                '"mua":{"a":546,"n":"meshes/penguin_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/penguin_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/penguin_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/penguin_toes"},'
+                '"mp":{"a":546,"n":"meshes/penguin_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/penguin1"},{"a":546,'
+                '"n":"audio/penguin2"},{"a":546,"n":"audio/penguin3"},'
+                '{"a":546,"n":"audio/penguin4"}],"sa":[{"a":546,'
+                '"n":"audio/penguin1"},{"a":546,"n":"audio/penguin2"},'
+                '{"a":546,"n":"audio/penguin3"},{"a":546,'
+                '"n":"audio/penguin4"}],"si":[{"a":546,'
+                '"n":"audio/penguin_hit1"},{"a":546,'
+                '"n":"audio/penguin_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/penguin_death"}],"sp":[{"a":546,'
+                '"n":"audio/penguin1"},{"a":546,"n":"audio/penguin2"},'
+                '{"a":546,"n":"audio/penguin3"},{"a":546,'
+                '"n":"audio/penguin4"}],"sf":[{"a":546,'
+                '"n":"audio/penguin_fall"}],"cl":[0.3,0.5,0.8],"hl":[1.0,0.0,'
+                '0.0],"tr":0.25,"so":[-0.02,-0.01,0.0],"le":"l","re":"l",'
+                '"es":0.65,"eo":[0.065,0.014,0.155],"ec":[0.0,0.0,0.0],'
+                '"eb":[0.5,0.5,0.5],"lc":[0.1,0.1,0.1],"rs":0.2,"fl":true}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/penguin_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/penguin_icon_color_mask\\"},'
+                '\\"cl\\":[0.3,0.5,0.8],\\"hl\\":[1.0,0.0,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/pascal',
+        ),
+        'pixel': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/pixie_color"},'
+                '"cm":{"a":546,"n":"textures/pixie_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/pixie_head"},'
+                '"mt":{"a":546,"n":"meshes/pixie_torso"},'
+                '"mua":{"a":546,"n":"meshes/pixie_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/pixie_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/pixie_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/pixie_toes"},'
+                '"mfa":{"a":546,"n":"meshes/pixie_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/pixie_hand"},'
+                '"mp":{"a":546,"n":"meshes/pixie_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/pixie1"},{"a":546,'
+                '"n":"audio/pixie2"},{"a":546,"n":"audio/pixie3"},'
+                '{"a":546,"n":"audio/pixie4"}],"sa":[{"a":546,'
+                '"n":"audio/pixie1"},{"a":546,"n":"audio/pixie2"},'
+                '{"a":546,"n":"audio/pixie3"},{"a":546,'
+                '"n":"audio/pixie4"}],"si":[{"a":546,'
+                '"n":"audio/pixie_hit1"},{"a":546,'
+                '"n":"audio/pixie_hit2"}],"sd":[{"a":546,'
+                '"n":"audio/pixie_death"}],"sp":[{"a":546,'
+                '"n":"audio/pixie1"},{"a":546,"n":"audio/pixie2"},'
+                '{"a":546,"n":"audio/pixie3"},{"a":546,'
+                '"n":"audio/pixie4"}],"sf":[{"a":546,'
+                '"n":"audio/pixie_fall"}],"cl":[0.0,1.0,0.7],"hl":[0.65,0.35,'
+                '0.75],"tr":0.11,"so":[0.03,0.0,-0.02],"lt":0.06,"la":0.045,'
+                '"ss":0.03,"ia":0.2,"aw":0.3,"iw":0.02,"es":0.85,"eo":[0.083,'
+                '0.004,0.2],"ec":[0.1,0.3,0.1],"eb":[0.58,0.55,0.6],'
+                '"lc":[0.73,0.53,0.6],"ln":10.0,"rs":0.35,'
+                '"at":{"w":[{"t":"fx","s":[{"m":{"a":546,'
+                '"n":"meshes/pixie_wing"},"t":{"a":546,'
+                '"n":"textures/pixie_wings"},"tm":{"a":546,'
+                '"n":"textures/pixie_wings_color_mask"}}]}]}}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/pixie_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/pixie_icon_color_mask\\"},\\"cl\\":[0.0,'
+                '1.0,0.7],\\"hl\\":[0.65,0.35,0.75]}}","_t":"ci"}'
+            ),
+            'strings/characters/pixel',
+        ),
+        'santa_claus': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/santa_color"},'
+                '"cm":{"a":546,"n":"textures/santa_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/santa_head"},'
+                '"mt":{"a":546,"n":"meshes/santa_torso"},'
+                '"mua":{"a":546,"n":"meshes/santa_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/santa_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/santa_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/santa_toes"},'
+                '"mfa":{"a":546,"n":"meshes/santa_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/santa_hand"},'
+                '"mp":{"a":546,"n":"meshes/kronk_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/santa01"},{"a":546,'
+                '"n":"audio/santa02"},{"a":546,"n":"audio/santa03"},'
+                '{"a":546,"n":"audio/santa04"},{"a":546,'
+                '"n":"audio/santa05"}],"sa":[{"a":546,'
+                '"n":"audio/santa01"},{"a":546,"n":"audio/santa02"},'
+                '{"a":546,"n":"audio/santa03"},{"a":546,'
+                '"n":"audio/santa04"},{"a":546,"n":"audio/santa05"}],'
+                '"si":[{"a":546,"n":"audio/santa_hit01"},{"a":546,'
+                '"n":"audio/santa_hit02"},{"a":546,'
+                '"n":"audio/santa_hit03"},{"a":546,'
+                '"n":"audio/santa_hit04"}],"sd":[{"a":546,'
+                '"n":"audio/santa_death"}],"sp":[{"a":546,'
+                '"n":"audio/santa01"},{"a":546,"n":"audio/santa02"},'
+                '{"a":546,"n":"audio/santa03"},{"a":546,'
+                '"n":"audio/santa04"},{"a":546,"n":"audio/santa05"}],'
+                '"sf":[{"a":546,"n":"audio/santa_fall"}],"cl":[1.0,0.0,'
+                '0.0],"hl":[1.0,1.0,1.0],"tr":0.2,"so":[-0.04,0.03,0.0],'
+                '"es":0.9,"eo":[0.065,-0.016,0.235],"lc":[0.5,0.4,0.3]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/santa_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/santa_icon_color_mask\\"},\\"cl\\":[1.0,'
+                '0.0,0.0],\\"hl\\":[1.0,1.0,1.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/santa_claus',
+        ),
+        'snake_shadow': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/ninja_color"},'
+                '"cm":{"a":546,"n":"textures/ninja_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/ninja_head"},'
+                '"mt":{"a":546,"n":"meshes/ninja_torso"},'
+                '"mua":{"a":546,"n":"meshes/ninja_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/ninja_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/ninja_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/ninja_toes"},'
+                '"mfa":{"a":546,"n":"meshes/ninja_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/ninja_hand"},'
+                '"mp":{"a":546,"n":"meshes/ninja_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/ninja_attack1"},'
+                '{"a":546,"n":"audio/ninja_attack2"},{"a":546,'
+                '"n":"audio/ninja_attack3"},{"a":546,'
+                '"n":"audio/ninja_attack4"},{"a":546,'
+                '"n":"audio/ninja_attack5"},{"a":546,'
+                '"n":"audio/ninja_attack6"},{"a":546,'
+                '"n":"audio/ninja_attack7"}],"sa":[{"a":546,'
+                '"n":"audio/ninja_attack1"},{"a":546,'
+                '"n":"audio/ninja_attack2"},{"a":546,'
+                '"n":"audio/ninja_attack3"},{"a":546,'
+                '"n":"audio/ninja_attack4"},{"a":546,'
+                '"n":"audio/ninja_attack5"},{"a":546,'
+                '"n":"audio/ninja_attack6"},{"a":546,'
+                '"n":"audio/ninja_attack7"}],"si":[{"a":546,'
+                '"n":"audio/ninja_hit1"},{"a":546,'
+                '"n":"audio/ninja_hit2"},{"a":546,'
+                '"n":"audio/ninja_hit3"},{"a":546,'
+                '"n":"audio/ninja_hit4"},{"a":546,'
+                '"n":"audio/ninja_hit5"},{"a":546,'
+                '"n":"audio/ninja_hit6"},{"a":546,'
+                '"n":"audio/ninja_hit7"},{"a":546,'
+                '"n":"audio/ninja_hit8"}],"sd":[{"a":546,'
+                '"n":"audio/ninja_death1"}],"sp":[{"a":546,'
+                '"n":"audio/ninja_attack1"},{"a":546,'
+                '"n":"audio/ninja_attack2"},{"a":546,'
+                '"n":"audio/ninja_attack3"},{"a":546,'
+                '"n":"audio/ninja_attack4"},{"a":546,'
+                '"n":"audio/ninja_attack5"},{"a":546,'
+                '"n":"audio/ninja_attack6"},{"a":546,'
+                '"n":"audio/ninja_attack7"}],"sf":[{"a":546,'
+                '"n":"audio/ninja_fall1"}],"cl":[1.0,1.0,1.0],"hl":[0.55,0.8,'
+                '0.55],"ss":0.056,"ec":[0.2,0.1,0.0],"ln":20.0,"rs":0.15}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/ninja_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/ninja_icon_color_mask\\"},\\"cl\\":[1.0,'
+                '1.0,1.0],\\"hl\\":[0.55,0.8,0.55]}}","_t":"ci"}'
+            ),
+            'strings/characters/snake_shadow',
+        ),
+        'spaz': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/neo_spaz_color"},'
+                '"cm":{"a":546,"n":"textures/neo_spaz_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/neo_spaz_head"},'
+                '"mt":{"a":546,"n":"meshes/neo_spaz_torso"},'
+                '"mua":{"a":546,"n":"meshes/neo_spaz_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/neo_spaz_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/neo_spaz_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/neo_spaz_toes"},'
+                '"mfa":{"a":546,"n":"meshes/neo_spaz_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/neo_spaz_hand"},'
+                '"mp":{"a":546,"n":"meshes/neo_spaz_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/spaz_jump01"},{"a":546,'
+                '"n":"audio/spaz_jump02"},{"a":546,'
+                '"n":"audio/spaz_jump03"},{"a":546,'
+                '"n":"audio/spaz_jump04"}],"sa":[{"a":546,'
+                '"n":"audio/spaz_attack01"},{"a":546,'
+                '"n":"audio/spaz_attack02"},{"a":546,'
+                '"n":"audio/spaz_attack03"},{"a":546,'
+                '"n":"audio/spaz_attack04"}],"si":[{"a":546,'
+                '"n":"audio/spaz_impact01"},{"a":546,'
+                '"n":"audio/spaz_impact02"},{"a":546,'
+                '"n":"audio/spaz_impact03"},{"a":546,'
+                '"n":"audio/spaz_impact04"}],"sd":[{"a":546,'
+                '"n":"audio/spaz_death01"}],"sp":[{"a":546,'
+                '"n":"audio/spaz_pickup01"}],"sf":[{"a":546,'
+                '"n":"audio/spaz_fall01"}],"cl":[0.5,0.5,0.5]}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/neo_spaz_icon\\"},'
+                '\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/neo_spaz_icon_color_mask\\"}}}",'
+                '"_t":"ci"}'
+            ),
+            'strings/characters/spaz',
+        ),
+        'zoe': (
+            (
+                '{"b":{"ct":{"a":546,"n":"textures/zoe_color"},'
+                '"cm":{"a":546,"n":"textures/zoe_color_mask"},'
+                '"mh":{"a":546,"n":"meshes/zoe_head"},'
+                '"mt":{"a":546,"n":"meshes/zoe_torso"},'
+                '"mua":{"a":546,"n":"meshes/zoe_upper_arm"},'
+                '"mul":{"a":546,"n":"meshes/zoe_upper_leg"},'
+                '"mll":{"a":546,"n":"meshes/zoe_lower_leg"},'
+                '"mto":{"a":546,"n":"meshes/zoe_toes"},'
+                '"mfa":{"a":546,"n":"meshes/zoe_fore_arm"},'
+                '"mhn":{"a":546,"n":"meshes/zoe_hand"},'
+                '"mp":{"a":546,"n":"meshes/zoe_pelvis"},'
+                '"sj":[{"a":546,"n":"audio/zoe_jump01"},{"a":546,'
+                '"n":"audio/zoe_jump02"},{"a":546,'
+                '"n":"audio/zoe_jump03"}],"sa":[{"a":546,'
+                '"n":"audio/zoe_attack01"},{"a":546,'
+                '"n":"audio/zoe_attack02"},{"a":546,'
+                '"n":"audio/zoe_attack03"},{"a":546,'
+                '"n":"audio/zoe_attack04"}],"si":[{"a":546,'
+                '"n":"audio/zoe_impact01"},{"a":546,'
+                '"n":"audio/zoe_impact02"},{"a":546,'
+                '"n":"audio/zoe_impact03"},{"a":546,'
+                '"n":"audio/zoe_impact04"}],"sd":[{"a":546,'
+                '"n":"audio/zoe_death01"}],"sp":[{"a":546,'
+                '"n":"audio/zoe_pickup01"}],"sf":[{"a":546,'
+                '"n":"audio/zoe_fall01"}],"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,'
+                '0.0],"tr":0.11,"so":[0.03,0.0,-0.02],"lt":0.06,"la":0.045,'
+                '"ss":0.03,"ia":0.2,"aw":0.3,"iw":0.02,"es":0.95,"eo":[0.08,'
+                '-0.036,0.205],"ec":[0.55,0.3,0.7],"eb":[0.54,0.51,0.55],'
+                '"lc":[0.6,0.35,0.31],"ln":15.0,"at":{"h":[{"t":"an",'
+                '"s":[{"m":{"a":546,"n":"meshes/hair_tuft1"},"o":[1.0,'
+                '1.0,1.0,0.02,0.16,0.05]}],"p":[-0.173,0.124,0.153],'
+                '"q":[0.88999,-0.2665,-0.369995,0.0],"k":0.2,"d":0.7,'
+                '"r":0.375},{"t":"an","s":[{"m":{"a":546,'
+                '"n":"meshes/hair_tuft2"},"o":[1.0,1.0,1.0,-0.01,0.03,0.06,'
+                '0.976305,0.216397,0.0,0.0]}],"p":[0.196,0.098,0.118],'
+                '"q":[0.858162,-0.229591,0.45918,3e-06],"k":0.3,"d":0.7},'
+                '{"t":"a2","s":[{"m":{"a":546,"n":"meshes/hair_tuft3"},'
+                '"o":[1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0]},'
+                '{"m":{"a":546,"n":"meshes/hair_tuft4"},"o":[1.0,1.0,'
+                '1.0,0.0,0.0,0.04,0.0,0.0,1.0,0.0]}],"p":[0.0,0.28,-0.224],'
+                '"q":[0.0,0.0,0.852526,0.522685],"k":0.67,"d":0.8,"l":0.8,'
+                '"r":0.625,"kc":-0.26}]}}}'
+            ),
+            (
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/zoe_icon\\"},\\"cm\\":{\\"a\\":546,'
+                '\\"n\\":\\"textures/zoe_icon_color_mask\\"},\\"cl\\":[0.6,'
+                '0.6,0.6],\\"hl\\":[0.0,1.0,0.0]}}","_t":"ci"}'
+            ),
+            'strings/characters/zoe',
+        ),
     },
 }
 
@@ -1303,4 +2208,8 @@ _TREE = {
 if not TYPE_CHECKING:
     audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
     meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
     textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')
+    characters = CharacterGroup(
+        _ASSET_PACKAGE, _CHARACTERS['characters'], 'characters'
+    )

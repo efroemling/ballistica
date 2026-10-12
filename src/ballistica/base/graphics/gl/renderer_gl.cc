@@ -482,6 +482,7 @@ void RendererGL::CheckGLCapabilities_() {
   // If we're running ES3, ask about our max multisample counts and whether
   // we can enable MSAA.
   msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = 0;  // start pessimistic
+  msaa_sample_counts_rgb8_.clear();
 
   bool have_gl_get_internal_format_iv{};
   if (gl_is_es()) {
@@ -519,6 +520,11 @@ void RendererGL::CheckGLCapabilities_() {
       glGetInternalformativ(GL_RENDERBUFFER, GL_RGB8, GL_SAMPLES, count,
                             &samples[0]);
       msaa_max_samples_rgb8_ = samples[0];
+      for (GLint s : samples) {
+        if (s > 1) {
+          msaa_sample_counts_rgb8_.push_back(s);
+        }
+      }
     } else {
       BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                   "Got 0 samplecounts for RGB8");
@@ -532,15 +538,31 @@ void RendererGL::CheckGLCapabilities_() {
     auto max_samples = GLGetIntOptional(GL_MAX_SAMPLES);
     if (max_samples.has_value()) {
       msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = *max_samples;
+      // We only get a max here; counts between are a safe assumption
+      // for powers of two.
+      for (int s = 2; s <= *max_samples; s *= 2) {
+        msaa_sample_counts_rgb8_.push_back(s);
+      }
     }
   }
+  std::sort(msaa_sample_counts_rgb8_.begin(), msaa_sample_counts_rgb8_.end());
+  msaa_sample_counts_rgb8_.erase(std::unique(msaa_sample_counts_rgb8_.begin(),
+                                             msaa_sample_counts_rgb8_.end()),
+                                 msaa_sample_counts_rgb8_.end());
 
   BA_DEBUG_CHECK_GL_ERROR;
 
   first_extension_check_ = false;
 }
 
+auto RendererGL::GetMSAASampleCounts() -> std::vector<int> {
+  return msaa_sample_counts_rgb8_;
+}
+
 auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
+  if (msaa_samples_explicit_ > 0) {
+    return msaa_samples_explicit_;
+  }
   if (g_buildconfig.platform_android()) {
     // We currently aim for 4 up to 800 height and 2 beyond that.
     if (height > 800) {
@@ -554,6 +576,29 @@ auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
 }
 
 void RendererGL::UpdateMSAAEnabled_() {
+  msaa_samples_explicit_ = 0;
+
+  // An explicit request (off or a sample count) overrides our own
+  // judgement below.
+  int requested = msaa_samples_requested();
+  if (requested != Graphics::kMSAASamplesAuto) {
+    // Go with the most samples we can do without exceeding the request
+    // (a config can come from a machine with different hardware).
+    int samples{};
+    for (int s : msaa_sample_counts_rgb8_) {
+      if (s <= requested) {
+        samples = s;
+      }
+    }
+    msaa_samples_explicit_ = samples;
+    enable_msaa_ = samples > 0;
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                         "MSAA: " + std::to_string(requested)
+                             + " sample(s) requested; using "
+                             + std::to_string(samples) + ".");
+    return;
+  }
+
   if (g_buildconfig.platform_macos()) {
     // Let's go ahead and flip this on for Apple Silicon Macs.
 #if __aarch64__
@@ -577,6 +622,9 @@ void RendererGL::UpdateMSAAEnabled_() {
   } else {
     enable_msaa_ = false;
   }
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kDebug,
+      std::string("MSAA: auto; ") + (enable_msaa_ ? "enabled." : "disabled."));
 }
 
 auto RendererGL::IsMSAAEnabled() const -> bool { return enable_msaa_; }
@@ -610,17 +658,41 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
     case TextureFormat::kASTC_4x4:
       return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
       break;
-    case TextureFormat::kASTC_6x6:
-      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
-      break;
-    case TextureFormat::kASTC_8x8:
-      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+    case TextureFormat::kASTC_5x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
       break;
     case TextureFormat::kASTC_5x5:
       return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
       break;
+    case TextureFormat::kASTC_6x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+      break;
+    case TextureFormat::kASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x5:
+      return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+      break;
+    case TextureFormat::kASTC_8x6:
+      return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+      break;
+    case TextureFormat::kASTC_10x5:
+      return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+      break;
+    case TextureFormat::kASTC_10x6:
+      return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+      break;
+    case TextureFormat::kASTC_10x8:
+      return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+      break;
     case TextureFormat::kASTC_10x10:
       return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      break;
+    case TextureFormat::kASTC_12x10:
+      return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
       break;
     case TextureFormat::kASTC_12x12:
       return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
@@ -1447,9 +1519,11 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetMaskTexture(buffer->GetTexture());
             // Blending is off here, so the premult additive-frame fade
-            // never applies; set 0 explicitly since the program object is
-            // shared with the transparent masked path.
+            // and the straight-mask alpha scale never apply; set 0
+            // explicitly since the program object is shared with the
+            // transparent masked path.
             p->SetTexPremultiplied(0.0f);
+            p->SetMaskStraight(0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentColorized: {
@@ -1492,10 +1566,16 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
             p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetColorizeTexture(buffer->GetTexture());
-            p->SetMaskTexture(buffer->GetTexture());
+            const TextureAsset* t_mask = buffer->GetTexture();
+            p->SetMaskTexture(t_mask);
             // Lets the shader fade the mask's additive frame term for
             // premult textures (straight-alpha gets it free at blend time).
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
+            // Under premult blend, a mask that is not itself premultiplied
+            // (a data-role mask, or a straight one from a mod) needs the
+            // shader to apply its alpha to its color contribution.
+            p->SetMaskStraight(premult && !t_mask->premultiplied() ? 1.0f
+                                                                   : 0.0f);
             break;
           }
           case ShadingType::kObject: {

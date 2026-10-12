@@ -26,6 +26,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/thread_cpu_time.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 
@@ -35,6 +36,11 @@ namespace ballistica::base {
 // this way... If that doesn't work we'll crank this up and add collision
 // simplification.
 const int kMaxBGDynamicsContacts = 20;
+
+// Steps per load-stats window: short enough that what the logic thread
+// holds is current when it reports an overload (it looks once a second).
+const int kLoadWindowSteps = 30;
+const double kLoadWindowMillisecs = 500.0;
 
 const float kSmokeBaseGlow = 0.0f;
 const float kSmokeGlow = 400.0f;
@@ -2207,6 +2213,15 @@ void BGDynamicsWorldServer::Step(StepData* step_data) {
   step_seconds_ = step_milliseconds_ / 1000.0f;
 
   const bool profile = g_base->bg_dynamics_server->profile();
+  using Clock = std::chrono::steady_clock;
+  auto ms = [](Clock::time_point a, Clock::time_point b) {
+    return std::chrono::duration<double, std::milli>(b - a).count();
+  };
+  // The whole step, by the wall and by our own cpu clock (the debug
+  // padding below included: it reads as a thread that isn't being run,
+  // which is the case it stands in for).
+  auto t_begin = Clock::now();
+  double cpu_begin = ThreadCPUTimeMillisecs();
   // Debug: fake an overloaded bg thread by padding every step
   // (BA_BG_DYNAMICS_SLOW_MS; test_game_run --bg-dynamics-slow-ms), to
   // exercise the logic-side backpressure paths (feed skipping, the
@@ -2219,10 +2234,6 @@ void BGDynamicsWorldServer::Step(StepData* step_data) {
       std::this_thread::sleep_for(std::chrono::milliseconds(slow_ms));
     }
   }
-  using Clock = std::chrono::steady_clock;
-  auto ms = [](Clock::time_point a, Clock::time_point b) {
-    return std::chrono::duration<double, std::milli>(b - a).count();
-  };
   auto t0 = Clock::now();
 
   // Last step's contact joints go before anything (channel sims
@@ -2263,6 +2274,55 @@ void BGDynamicsWorldServer::Step(StepData* step_data) {
       channel_workers_, bundle->channels,
       [](auto& worker, auto& outputs) { worker.Publish(&outputs); });
   auto t5 = Clock::now();
+
+  // Tally this step's costs; each full window becomes the averages that
+  // go back with every bundle.
+  {
+    BGDynamicsLoadStats& w = load_window_;
+    w.steps++;
+    w.wall_ms += ms(t_begin, t5);
+    w.cpu_ms += ThreadCPUTimeMillisecs() - cpu_begin;
+    w.channels_ms += ms(t0, t1);
+    w.chunks_ms += ms(t1, t2);
+    w.tendrils_ms += ms(t2, t3);
+    w.worldstep_ms += ms(t3, t4);
+    w.snapshot_ms += ms(t4, t4b);
+    w.publish_ms += ms(t4b, t5);
+    w.chunks = std::max(w.chunks, chunk_count_);
+    w.tendrils =
+        std::max(w.tendrils, tendril_count_thick_ + tendril_count_thin_);
+    w.bodies = std::max(w.bodies, ode_world_->nb);
+    w.joints = std::max(w.joints, ode_world_->nj);
+    // A window is done at its step count or its time limit, whichever
+    // comes first (slow steps are exactly when this gets read). Before
+    // the first one is done, go with what there is so far.
+    bool done =
+        w.steps >= kLoadWindowSteps || w.wall_ms >= kLoadWindowMillisecs;
+    if (done || load_stats_.steps == 0) {
+      BGDynamicsLoadStats s = w;
+      s.rigs = std::get<BGDynamicsChannelWorker<BGDynamicsCharacterKind>>(
+                   channel_workers_)
+                   .live_count();
+      double steps = s.steps;
+      s.wall_ms /= steps;
+      s.cpu_ms /= steps;
+      s.channels_ms /= steps;
+      s.chunks_ms /= steps;
+      s.tendrils_ms /= steps;
+      s.worldstep_ms /= steps;
+      s.snapshot_ms /= steps;
+      s.publish_ms /= steps;
+      if (done) {
+        load_stats_ = s;
+        w = BGDynamicsLoadStats{};
+      } else {
+        bundle->load_stats = s;
+      }
+    }
+    if (load_stats_.steps > 0) {
+      bundle->load_stats = load_stats_;
+    }
+  }
 
   if (profile) {
     profile_channels_ms_ += ms(t0, t1);

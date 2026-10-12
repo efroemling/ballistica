@@ -19,13 +19,22 @@ namespace ballistica::base {
 // Vulkan format constants we recognize. Just the ones the asset-package
 // recipes emit today; expand as new TextureProfile variants come online.
 static constexpr uint32_t kVkFormatR8G8B8A8SRGB = 43;
-static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;        // DESKTOP_V1
-static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC5x5SRGBBlock = 162;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC10x10SRGBBlock = 180;  // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC12x12SRGBBlock = 184;  // MOBILE_V1
+static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;  // DESKTOP_V1
+// MOBILE_V1: every 2D ASTC block size.
+static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;
+static constexpr uint32_t kVkFormatASTC5x4SRGBBlock = 160;
+static constexpr uint32_t kVkFormatASTC5x5SRGBBlock = 162;
+static constexpr uint32_t kVkFormatASTC6x5SRGBBlock = 164;
+static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;
+static constexpr uint32_t kVkFormatASTC8x5SRGBBlock = 168;
+static constexpr uint32_t kVkFormatASTC8x6SRGBBlock = 170;
+static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;
+static constexpr uint32_t kVkFormatASTC10x5SRGBBlock = 174;
+static constexpr uint32_t kVkFormatASTC10x6SRGBBlock = 176;
+static constexpr uint32_t kVkFormatASTC10x8SRGBBlock = 178;
+static constexpr uint32_t kVkFormatASTC10x10SRGBBlock = 180;
+static constexpr uint32_t kVkFormatASTC12x10SRGBBlock = 182;
+static constexpr uint32_t kVkFormatASTC12x12SRGBBlock = 184;
 
 // Translate a ``vkFormat`` to our engine's ``TextureFormat`` enum.
 // Throws on anything unsupported so the caller surfaces a clear error.
@@ -38,14 +47,30 @@ static auto VkFormatToInternal(uint32_t vk_format, const std::string& file_name)
       return TextureFormat::kBC7;
     case kVkFormatASTC4x4SRGBBlock:
       return TextureFormat::kASTC_4x4;
-    case kVkFormatASTC6x6SRGBBlock:
-      return TextureFormat::kASTC_6x6;
-    case kVkFormatASTC8x8SRGBBlock:
-      return TextureFormat::kASTC_8x8;
+    case kVkFormatASTC5x4SRGBBlock:
+      return TextureFormat::kASTC_5x4;
     case kVkFormatASTC5x5SRGBBlock:
       return TextureFormat::kASTC_5x5;
+    case kVkFormatASTC6x5SRGBBlock:
+      return TextureFormat::kASTC_6x5;
+    case kVkFormatASTC6x6SRGBBlock:
+      return TextureFormat::kASTC_6x6;
+    case kVkFormatASTC8x5SRGBBlock:
+      return TextureFormat::kASTC_8x5;
+    case kVkFormatASTC8x6SRGBBlock:
+      return TextureFormat::kASTC_8x6;
+    case kVkFormatASTC8x8SRGBBlock:
+      return TextureFormat::kASTC_8x8;
+    case kVkFormatASTC10x5SRGBBlock:
+      return TextureFormat::kASTC_10x5;
+    case kVkFormatASTC10x6SRGBBlock:
+      return TextureFormat::kASTC_10x6;
+    case kVkFormatASTC10x8SRGBBlock:
+      return TextureFormat::kASTC_10x8;
     case kVkFormatASTC10x10SRGBBlock:
       return TextureFormat::kASTC_10x10;
+    case kVkFormatASTC12x10SRGBBlock:
+      return TextureFormat::kASTC_12x10;
     case kVkFormatASTC12x12SRGBBlock:
       return TextureFormat::kASTC_12x12;
     default:
@@ -73,6 +98,31 @@ static auto BytesPerPixelForFormat(TextureFormat fmt) -> size_t {
 static const char* kKvdKeyWrapH = "baTextureWrappingH";
 static const char* kKvdKeyWrapV = "baTextureWrappingV";
 
+// Key/value key carrying the texture's authored role, written for every
+// role but the default one (so a file with no such key IS the default
+// role). Wire value -- never rename.
+static const char* kKvdKeyRole = "baTextureRole";
+
+// Map a role wire string to its enum. Unknown values (a newer pipeline
+// emitting a role this build predates) become kUnknown, which nothing
+// checks -- better to stay quiet than to warn about a role we cannot
+// judge.
+static auto RoleFromString(const char* val) -> TextureRole {
+  if (!strcmp(val, "data")) {
+    return TextureRole::kData;
+  }
+  if (!strcmp(val, "source_premultiplied")) {
+    return TextureRole::kSourcePremultiplied;
+  }
+  if (!strcmp(val, "straight_alpha")) {
+    return TextureRole::kStraightAlpha;
+  }
+  if (!strcmp(val, "default")) {
+    return TextureRole::kDefault;
+  }
+  return TextureRole::kUnknown;
+}
+
 // Map a wrapping wire string to its enum. Unknown values (a newer
 // pipeline emitting a mode this build predates) fall back to clamp,
 // which is the safe default: it can only ever look wrong on a texture
@@ -87,17 +137,18 @@ static auto WrappingFromString(const char* val) -> TextureWrapping {
   return TextureWrapping::kClamp;
 }
 
-// Read our wrapping keys out of a KTX2 key/value data section.
+// Read our wrapping and role keys out of a KTX2 key/value data section.
 //
 // Layout per entry (spec 3.11): uint32 keyAndValueByteLength, then a
 // NUL-terminated UTF-8 key followed by the value, then zero padding to
-// the next 4-byte boundary. We only emit KVD for non-clamp wrapping, so
-// the overwhelmingly common case is kvd_byte_length == 0 and this is a
-// no-op. Anything malformed leaves the defaults rather than throwing --
-// wrapping is a rendering nicety, not worth failing a texture load over.
-static void ReadWrappingFromKVD(const AssetBlob& blob, const KTX2Header& hdr,
-                                TextureWrapping* wrap_h,
-                                TextureWrapping* wrap_v) {
+// the next 4-byte boundary. We only emit KVD for non-clamp wrapping or
+// a non-default role, so the overwhelmingly common case is
+// kvd_byte_length == 0 and this is a no-op. Anything malformed leaves
+// the defaults rather than throwing -- neither is worth failing a
+// texture load over.
+static void ReadKVD(const AssetBlob& blob, const KTX2Header& hdr,
+                    TextureWrapping* wrap_h, TextureWrapping* wrap_v,
+                    TextureRole* role) {
   // Sanity-bound the section so a corrupt header can't make us allocate
   // wildly. Our own sections are a few dozen bytes.
   const uint32_t kMaxKVDBytes = 64 * 1024;
@@ -130,6 +181,8 @@ static void ReadWrappingFromKVD(const AssetBlob& blob, const KTX2Header& hdr,
           *wrap_h = WrappingFromString(val);
         } else if (!strcmp(key, kKvdKeyWrapV)) {
           *wrap_v = WrappingFromString(val);
+        } else if (!strcmp(key, kKvdKeyRole)) {
+          *role = RoleFromString(val);
         }
       }
     }
@@ -156,6 +209,7 @@ static void LoadKTX2Impl(const AssetBlob& blob, const std::string& file_name,
     *targets[fi].premultiplied = false;
     *targets[fi].wrap_h = TextureWrapping::kClamp;
     *targets[fi].wrap_v = TextureWrapping::kClamp;
+    *targets[fi].role = TextureRole::kUnknown;
   }
 
   if (!blob.exists()) {
@@ -225,14 +279,19 @@ static void LoadKTX2Impl(const AssetBlob& blob, const std::string& file_name,
       premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
     }
   }
-  // Per-axis wrapping from the key/value data. Absent (the common case
-  // -- we only emit KVD for non-clamp wrapping) leaves both clamped.
-  ReadWrappingFromKVD(blob, hdr, &wrap_h, &wrap_v);
+  // Per-axis wrapping and the authored role from the key/value data.
+  // Absent (the common case -- we only emit KVD for non-clamp wrapping
+  // or a non-default role) leaves both axes clamped and the role
+  // default: every file this loader reads came from the asset pipeline,
+  // which writes the role key for every role but that one.
+  TextureRole role{TextureRole::kDefault};
+  ReadKVD(blob, hdr, &wrap_h, &wrap_v, &role);
 
   for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
     *targets[fi].premultiplied = premultiplied;
     *targets[fi].wrap_h = wrap_h;
     *targets[fi].wrap_v = wrap_v;
+    *targets[fi].role = role;
   }
 
   // No quality-driven base_level bump: asset-package textures load all
@@ -305,9 +364,9 @@ void LoadKTX2(const AssetBlob& blob, const std::string& file_name,
               unsigned char** buffers, int* widths, int* heights,
               TextureFormat* formats, size_t* sizes, int* base_level,
               bool* premultiplied, TextureWrapping* wrap_h,
-              TextureWrapping* wrap_v) {
+              TextureWrapping* wrap_v, TextureRole* role) {
   KTX2FaceTarget target{buffers,    widths,        heights, formats, sizes,
-                        base_level, premultiplied, wrap_h,  wrap_v};
+                        base_level, premultiplied, wrap_h,  wrap_v,  role};
   LoadKTX2Impl(blob, file_name, 1, &target);
 }
 

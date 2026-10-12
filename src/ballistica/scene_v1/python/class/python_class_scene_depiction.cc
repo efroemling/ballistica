@@ -61,10 +61,11 @@ void PythonClassSceneDepiction::SetupType(PyTypeObject* cls) {
       "long as something references it (this object or a node attr)\n"
       "and leaves the session automatically once nothing does.\n"
       "\n"
-      "Must be created in a host activity or host session context. One\n"
-      "created in a session context can be assigned to nodes in any of\n"
-      "that session's activities; one created in an activity context\n"
-      "only to nodes of that activity.\n";
+      "Must be created in a host activity or host session context, and\n"
+      "can only be assigned to nodes of that same scene (scene objects\n"
+      "never cross scenes; the session's lobby has its own). To show\n"
+      "the same thing in another activity, build another from the same\n"
+      "json there.\n";
   // clang-format on
 
   cls->tp_methods = tp_methods;

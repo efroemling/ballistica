@@ -1143,7 +1143,9 @@ class App:
         return (plan.finalize_command, dataclass_to_dict(commit))
 
     def _handle_downloads_signed(
-        self, downloads_signed: list[StandardResponseData.SignedDownloadEntry]
+        self,
+        downloads_signed: list[StandardResponseData.SignedDownloadEntry],
+        progress: StandardResponseData.SignedDownloadsProgress | None = None,
     ) -> None:
         """Handle direct-from-GCS streaming downloads via signed URLs.
 
@@ -1159,7 +1161,9 @@ class App:
         connection.
         """
         import hashlib
-        from concurrent.futures import ThreadPoolExecutor
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from efro.util import data_size_str
 
         # 1 MiB read chunk — large enough to keep per-chunk overhead
         # negligible, small enough that peak memory stays bounded even
@@ -1232,11 +1236,47 @@ class App:
 
         if not downloads_signed:
             return
-        # Cap parallelism at 4: enough to saturate a typical client
-        # uplink without piling pressure on GCS or running the client
-        # out of fds.
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            list(executor.map(_fetch, downloads_signed))
+
+        # Workspaces tend to be many small files, so per-request latency
+        # (not bandwidth) is what bounds us; measured on a 586 file/45MB
+        # get, the download phase is ~17s at 4 workers, ~5s at 16 and
+        # ~3s at 32. We share the connection pool's worker count so
+        # every worker keeps a reused connection.
+        #
+        # When this batch is one of several making up a larger job, we
+        # report against the whole job instead of the batch.
+        if progress is not None:
+            total_count = progress.total_count
+            total_bytes = progress.total_bytes
+            done_count = progress.prior_count
+            done_bytes = progress.prior_bytes
+        else:
+            total_count = len(downloads_signed)
+            total_bytes = sum(entry.size for entry in downloads_signed)
+            done_count = 0
+            done_bytes = 0
+        last_print_time = time.monotonic()
+        with ThreadPoolExecutor(max_workers=_download_workers()) as executor:
+            futures = {
+                executor.submit(_fetch, entry): entry
+                for entry in downloads_signed
+            }
+            for future in as_completed(futures):
+                future.result()
+                done_count += 1
+                done_bytes += futures[future].size
+
+                # Quick syncs stay quiet; long ones get a line every
+                # couple seconds.
+                now = time.monotonic()
+                if now - last_print_time >= 2.0 and done_count < total_count:
+                    last_print_time = now
+                    print(
+                        f'{Clr.BLU}Downloaded {done_count}/{total_count}'
+                        f' files ({data_size_str(done_bytes)} of'
+                        f' {data_size_str(total_bytes)})...{Clr.RST}',
+                        flush=True,
+                    )
 
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
@@ -1306,7 +1346,9 @@ class App:
         if response.downloads_inline:
             self._handle_downloads_inline(response.downloads_inline)
         if response.downloads_signed:
-            self._handle_downloads_signed(response.downloads_signed)
+            self._handle_downloads_signed(
+                response.downloads_signed, response.downloads_signed_progress
+            )
         if response.dir_prune_empty:
             self._handle_dir_prune_empty(response.dir_prune_empty)
         if response.workspace_snapshotid is not None:

@@ -176,6 +176,10 @@ class SpazNode : public Node {
     return use_spaz_def_highlight_;
   }
   void SetUseSpazDefHighlight(bool val);
+  // Our color is a team's; every other tint we draw with is toned
+  // down so it stays dominant (base::Graphics::ToneForTeamColor).
+  auto team_coloring() const -> bool { return team_coloring_; }
+  void set_team_coloring(bool val) { team_coloring_ = val; }
   // Boxing-glove look overrides; unset media means the stock gloves.
   auto boxing_gloves_mesh() const -> SceneMesh* {
     return boxing_gloves_mesh_.get();
@@ -414,6 +418,10 @@ class SpazNode : public Node {
     const float* color;
     const float* highlight;
     const float* highlight2;
+    // Team-coloring strengths for the two highlights; negative = the
+    // standard strength.
+    float highlight_strength{-1.0f};
+    float highlight2_strength{-1.0f};
     auto operator==(const PieceTint_& other) const -> bool = default;
   };
   // What one body part draws with: its mesh plus color texture and
@@ -437,7 +445,7 @@ class SpazNode : public Node {
   // the definition's base ones do); highlight2 has no attr, so always.
   void ApplyPieceTint_(const base::CharacterTintDef& def,
                        PieceTint_* tint) const;
-  static void SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint);
+  void SetPieceTint_(base::ObjectComponent* c, const PieceTint_& tint) const;
   auto ColorTextureData_() const -> base::TextureAsset*;
   auto ColorMaskTextureData_() const -> base::TextureAsset*;
   auto RandomJumpSound_() const -> base::SoundAsset*;
@@ -446,9 +454,8 @@ class SpazNode : public Node {
   auto RandomDeathSound_() const -> base::SoundAsset*;
   auto RandomPickupSound_() const -> base::SoundAsset*;
   auto RandomFallSound_() const -> base::SoundAsset*;
-  auto WingMeshData_() const -> base::MeshAsset*;
-  auto WingTextureData_() const -> base::TextureAsset*;
-  auto WingTintTextureData_() const -> base::TextureAsset*;
+  void ApplyWingTransform_(base::RenderComponent* c, const Vector3f& wing_pos,
+                           bool legacy_frame) const;
   void UpdateJoints();
   auto PoseJoints_() -> SpazPose::Joints;
   // The main-sim joint behind a SpazJoint index.
@@ -703,8 +710,13 @@ class SpazNode : public Node {
   std::vector<float> color_attr_{1.0f, 1.0f, 1.0f};
   bool use_spaz_def_color_{};
   bool use_spaz_def_highlight_{};
+  bool team_coloring_{};
   bool pirate_{};
+  // Arms are one long mesh: drawn shorter under boxing gloves.
   bool flippers_{};
+  // Forearm and hand meshes are never drawn (the legacy 'penguin'
+  // style only; a definition just doesn't name any).
+  bool hide_lower_arms_{};
   bool frosty_{};
   bool ninja_{};
   bool punch_right_{};
@@ -746,6 +758,9 @@ class SpazNode : public Node {
   // pointer stays null, the pose driver's limb targets feed only the
   // rig, and the punch region is always the synthetic fist.
   bool main_sim_limbs_{true};
+  // The physics tuning that goes with main_sim_limbs_ (set once at
+  // construction; see spaz_physics_tuning.h).
+  const SpazPhysicsTuning* tuning_{};
   // With main-sim limbs: whether the punch region rides the punching
   // arm's body as it did before protocol 44 (fixed for our lifetime;
   // see GlobalsNode::legacy_spaz_limbs).

@@ -1759,7 +1759,11 @@ auto ClassicAppMode::TryStartInternalMusic_(base::SoundAsset* music,
                                             float volume, bool loop) -> bool {
   assert(g_base->InLogicThread());
   assert(!internal_music_play_id_);
-  base::AudioSource* s = g_base->audio->SourceBeginNew();
+  base::AudioPlaySpec spec;
+  spec.sound = music;
+  spec.looping = loop;
+  spec.overrides.priority = base::AudioPriority::kEngineMusic;
+  base::AudioSource* s = g_base->audio->SourceBeginNew(spec);
   if (!s) {
     return false;
   }

@@ -848,17 +848,39 @@ static PyMethodDef PyUserRanCommandsDef = {
     ":meta private:",
 };
 
+// ------------------------ set_user_python_present ----------------------------
+
+static auto PySetUserPythonPresent(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_core);
+  g_core->user_python_present = true;
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetUserPythonPresentDef = {
+    "set_user_python_present",            // name
+    (PyCFunction)PySetUserPythonPresent,  // method
+    METH_NOARGS,                          // flags
+
+    "set_user_python_present() -> None\n"
+    "\n"
+    "Note that the user python (mods) dir holds importable Python.\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------------- is_user_modified --------------------------------
 
 static auto PyIsUserModified(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   // The cheap user-side taint signals: has anything user-driven had a
-  // chance to alter engine behavior this run? Same trio the
+  // chance to alter engine behavior this run? Same set the
   // fatal-error reporter sends (fatal_error_report.cc); these flags
   // only ever go one way within a run, so a False is a "clean so far".
   assert(g_core);
   if (g_core->user_ran_commands || g_core->workspaces_in_use
-      || g_core->using_custom_app_python_dir()) {
+      || g_core->using_custom_app_python_dir() || g_core->user_python_present) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -873,7 +895,8 @@ static PyMethodDef PyIsUserModifiedDef = {
     "is_user_modified() -> bool\n"
     "\n"
     "Whether user actions could have modified engine behavior this\n"
-    "run (commands run, workspaces in use, or custom app scripts).\n"
+    "run (commands run, workspaces in use, custom app scripts, or\n"
+    "Python present in the mods dir).\n"
     "\n"
     ":meta private:",
 };
@@ -2418,6 +2441,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMusicPlayerStopDef,
       PyAppInstanceUUIDDef,
       PyUserRanCommandsDef,
+      PySetUserPythonPresentDef,
       PyIsUserModifiedDef,
       PyReloadMediaDef,
       PyReloadChangedMediaDef,

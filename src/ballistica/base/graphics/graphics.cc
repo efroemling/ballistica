@@ -23,6 +23,7 @@
 #include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/graphics/mesh/rect_outline_mesh.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/debug_texture_view.h"
@@ -44,6 +45,9 @@
 namespace ballistica::base {
 
 const float kScreenTextZDepth{-0.06f};
+
+// How wide the on-screen guides' outlines are, in virtual units.
+const float kGuideOutlineThickness{6.0f};
 const float kProgressBarZDepth{0.0f};
 const int kProgressBarFadeTime{250};
 const float kDebugImgZDepth{-0.04f};
@@ -341,6 +345,34 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   return VSyncRequest::kNever;
 }
 
+auto Graphics::SupportsMSAASetting() -> bool {
+  return !g_buildconfig.headless_build() && !g_buildconfig.platform_android()
+         && !g_buildconfig.platform_ios_tvos() && !g_buildconfig.vr_build();
+}
+
+auto Graphics::MSAAFromAppConfig() -> int {
+  if (!SupportsMSAASetting()) {
+    return kMSAASamplesAuto;
+  }
+  std::string msaa = g_base->app_config->Resolve(AppConfig::StringID::kMSAA);
+  if (msaa == "Auto") {
+    return kMSAASamplesAuto;
+  } else if (msaa == "Off") {
+    return 0;
+  }
+  // Anything else should be a sample count. (The renderer clamps to
+  // what the hardware can actually do.)
+  char* end{};
+  auto samples = strtol(msaa.c_str(), &end, 10);
+  if (end == msaa.c_str() || *end != 0 || samples < 0 || samples > 64) {
+    g_core->logging->Log(
+        LogName::kBaGraphics, LogLevel::kError,
+        "Invalid 'MSAA' value: '" + msaa + "'; defaulting to auto.");
+    return kMSAASamplesAuto;
+  }
+  return static_cast<int>(samples);
+}
+
 auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   std::string gqualstr =
       g_base->app_config->Resolve(AppConfig::StringID::kGraphicsQuality);
@@ -615,6 +647,76 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
       *blue = std::min(1.0f, (*blue) + 0.1140f * remaining);
     } else {
       break;
+    }
+  }
+}
+
+void Graphics::BrightenColor(float* rgb, float brightness) {
+  assert(rgb);
+  float b = std::max(0.0f, brightness);
+  float m{};
+  for (int i = 0; i < 3; ++i) {
+    rgb[i] = std::max(0.0f, rgb[i]) * b;
+    m = std::max(m, rgb[i]);
+  }
+  if (m <= 1.0f) {
+    return;
+  }
+  // Past the knee: hue at full intensity, whitened by the overshoot.
+  float whiten = 1.0f - 1.0f / m;
+  for (int i = 0; i < 3; ++i) {
+    float c = rgb[i] / m;
+    rgb[i] = c + (1.0f - c) * whiten;
+  }
+}
+
+auto Graphics::TeamColoringStrength() -> float {
+  // The standard strength (Eric, 2026-10-07). Definitions can set
+  // their own per color; see CharacterTintDef and CapsuleNameDef.
+  const float kStandard{0.5f};
+
+  // Tuning aid: BA_TEAM_COLORING_STRENGTH overrides it, re-read a few
+  // times a second so it can be changed in a running game.
+  static millisecs_t last_check{-1000};
+  static float current{kStandard};
+  millisecs_t now = g_core->AppTimeMillisecs();
+  if (now - last_check >= 250) {
+    last_check = now;
+    current = kStandard;
+    if (const char* val = getenv("BA_TEAM_COLORING_STRENGTH")) {
+      if (val[0] != 0) {
+        current = std::clamp(static_cast<float>(atof(val)), 0.0f, 1.0f);
+      }
+    }
+  }
+  return current;
+}
+
+void Graphics::ToneForTeamColor(const float* main_rgb, float* rgb,
+                                float strength) {
+  assert(main_rgb && rgb);
+  float t = std::clamp(strength, 0.0f, 1.0f);
+  float main_max{};
+  float v{};
+  for (int i = 0; i < 3; ++i) {
+    main_max = std::max(main_max, main_rgb[i]);
+    v = std::max(v, rgb[i]);
+  }
+  if (t <= 0.0f || main_max <= 0.0f || v <= 0.0f) {
+    return;
+  }
+  // Blend toward main's own tint at this color's brightness, then put
+  // the brightness (its brightest channel) back where it was: only
+  // hue and saturation move.
+  float blended_max{};
+  for (int i = 0; i < 3; ++i) {
+    float target = std::max(0.0f, main_rgb[i]) / main_max * v;
+    rgb[i] = std::max(0.0f, rgb[i]) + (target - std::max(0.0f, rgb[i])) * t;
+    blended_max = std::max(blended_max, rgb[i]);
+  }
+  if (blended_max > 0.0f) {
+    for (int i = 0; i < 3; ++i) {
+      rgb[i] *= v / blended_max;
     }
   }
 }
@@ -2399,24 +2501,38 @@ void Graphics::UpdatePlaceholderSettings() {
 void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
   if (draw_virtual_safe_area_bounds_) {
-    SimpleComponent c(pass);
-    c.SetColor(1, 0, 0);
-    {
-      auto xf = c.ScopedTransform();
-
-      float width, height;
-
-      GetBaseVirtualRes(&width, &height);
-
-      // Slight offset in z to reduce z fighting.
-      c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
-                  0.0f);
-      c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
-    }
-    c.Submit();
+    float width, height;
+    GetBaseVirtualRes(&width, &height);
+    float left = 0.5f * (pass->virtual_width() - width);
+    float bottom = 0.5f * (pass->virtual_height() - height);
+    DrawGuideOutline_(pass, Rect(left, bottom, left + width, bottom + height),
+                      0.0f, 1.0f, 0.0f, 0.0f, &virtual_safe_area_guide_mesh_,
+                      &virtual_safe_area_guide_rect_);
+  } else {
+    // Hold nothing while switched off.
+    virtual_safe_area_guide_mesh_.Clear();
   }
+}
+
+void Graphics::DrawGuideOutline_(RenderPass* pass, const Rect& rect, float z,
+                                 float r, float g, float b,
+                                 Object::Ref<RectOutlineMesh>* mesh,
+                                 Rect* mesh_rect) {
+  // An outline of the same width on every side (in virtual units, so it
+  // keeps its share of the screen as the window changes size).
+  if (!mesh->exists() || rect.l != mesh_rect->l || rect.r != mesh_rect->r
+      || rect.b != mesh_rect->b || rect.t != mesh_rect->t) {
+    *mesh =
+        Object::New<RectOutlineMesh>(rect.l, rect.b, z, rect.width(),
+                                     rect.t - rect.b, kGuideOutlineThickness);
+    *mesh_rect = rect;
+  }
+  SimpleComponent c(pass);
+  c.SetTexture(
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite));
+  c.SetColor(r, g, b);
+  c.DrawMesh(mesh->get());
+  c.Submit();
 }
 
 void Graphics::ExtendFrustumToRenderRect(const Rect& render_rect,
@@ -2445,6 +2561,20 @@ void Graphics::ExtendFrustumToRenderRect(const Rect& render_rect,
   *t += height * ext_t;
 }
 
+auto Graphics::DebugBoundsTypeFromName(const std::string& name)
+    -> std::optional<DebugBoundsType> {
+  if (name == "name_depictions") {
+    return DebugBoundsType::kNameDepictions;
+  }
+  if (name == "image_depictions") {
+    return DebugBoundsType::kImageDepictions;
+  }
+  if (name == "character_icon_depictions") {
+    return DebugBoundsType::kCharacterIconDepictions;
+  }
+  return {};
+}
+
 void Graphics::DrawVirtualBounds(RenderPass* pass) {
   // Optionally show where our virtual coord system ends. With no cutout
   // inset this lands right at the edge of the drawn area; inset, it
@@ -2453,26 +2583,20 @@ void Graphics::DrawVirtualBounds(RenderPass* pass) {
   // out of. Green so it reads distinctly from the red safe-area guide
   // when both are on.
   if (draw_virtual_bounds_) {
-    SimpleComponent c(pass);
-    c.SetColor(0, 1, 0);
-    {
-      auto xf = c.ScopedTransform();
-
-      // The virtual bounds are exactly our virtual rect by definition,
-      // so this is the plain (0, 0)-(virtual-res) box. It only *looks*
-      // inset once the bounds are, since our projections then extend
-      // out past it.
-      float width = pass->virtual_width();
-      float height = pass->virtual_height();
-
-      // Slight offset in z to reduce z fighting, negative so we sit
-      // behind the safe-area guide where the two coincide.
-      c.Translate(0.5f * width, 0.5f * height, -0.02f);
-      c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
-    }
-    c.Submit();
+    // The virtual bounds are exactly our virtual rect by definition,
+    // so this is the plain (0, 0)-(virtual-res) box. It only *looks*
+    // inset once the bounds are, since our projections then extend
+    // out past it.
+    //
+    // Slight offset in z to reduce z fighting, negative so we sit
+    // behind the safe-area guide where the two coincide.
+    DrawGuideOutline_(
+        pass, Rect(0.0f, 0.0f, pass->virtual_width(), pass->virtual_height()),
+        -0.02f, 0.0f, 1.0f, 0.0f, &virtual_bounds_guide_mesh_,
+        &virtual_bounds_guide_rect_);
+  } else {
+    // Hold nothing while switched off.
+    virtual_bounds_guide_mesh_.Clear();
   }
 }
 

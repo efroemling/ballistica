@@ -29,6 +29,7 @@ import time
 import random
 import asyncio
 import tempfile
+import functools
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from dataclasses import dataclass, field, replace
@@ -36,7 +37,11 @@ from typing import TYPE_CHECKING, Annotated, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
-from babase._assetresolvetrace import ResolveTrace, Tier1Attempt
+from babase._assetresolvetrace import (
+    ResolveTrace,
+    Tier1Attempt,
+    LocalResolveTimes,
+)
 from babase._logging import assetmanagerlog as logger
 
 from efro.error import (
@@ -44,6 +49,7 @@ from efro.error import (
     is_urllib3_communication_error,
 )
 from efro.util import strip_exception_tracebacks
+from efro.threadpool import queue_depth, live_thread_count, busy_workers
 from efro.dataclassio import (
     ioprepped,
     IOAttrs,
@@ -424,6 +430,17 @@ class ResolveResult:
     #: as ``{desired_coord: chosen_coord}``, merged across the resolved
     #: packages.
     fell_back: dict[str, str] = field(default_factory=dict)
+
+    #: Whether anything had to be fetched (as opposed to everything
+    #: already being local).
+    downloaded: bool = False
+
+    #: Time spent queued behind other resolves before this one ran.
+    queue_seconds: float = 0.0
+
+    #: Whether the whole request was already in place from an earlier
+    #: resolve this run, so no work was done at all.
+    already_resolved: bool = False
 
 
 class ResolvePhase(Enum):
@@ -814,6 +831,14 @@ class AssetSubsystem(AppSubsystem):
         self._pinned_apvernums: set[ApverNum] = set()
         self._pinned_fm_hashes: set[str] = set()
 
+        # Packages an async resolve has committed this run at exactly
+        # the flavors asked for, with the desired coords they were
+        # committed at. Asking for one again at the same coords is a
+        # no-op (see _already_resolved); anything else -- a new locale,
+        # a package that fell back to a lesser flavor -- takes the full
+        # path, which updates or drops the entry. Logic-thread only.
+        self._settled_coords: dict[ApverNum, dict[str, str]] = {}
+
         # Progress for the in-flight resolve. Single-in-flight (see
         # _gate), so one running snapshot is enough; the callback is set
         # per-resolve by resolve(on_progress=...).
@@ -1019,6 +1044,23 @@ class AssetSubsystem(AppSubsystem):
 
     # ---------------------------------------------------------------------
     # Dimensions, bucket coords, fallback policy.
+
+    def resolve_flavor(self) -> tuple[str, str, str]:
+        """The flavor we resolve asset packages with, as resolves send it.
+
+        ``(texture_profile, texture_tier, language)``: what a resolve
+        made right now would ask for. For telling the server ahead of
+        time (it can then have that flavor of a package built before
+        we go and ask for it). Logic thread.
+
+        :meta private:
+        """
+        assert _babase.in_logic_thread()
+        return (
+            self._texture_profile,
+            self._texture_tier,
+            _babase.app.locale.current_locale.value,
+        )
 
     @property
     def _texture_profile(self) -> str:
@@ -1227,6 +1269,19 @@ class AssetSubsystem(AppSubsystem):
         """
         assert _babase.in_logic_thread()
 
+        # Everything asked for is already in place from an earlier
+        # resolve this run: nothing to scan, register or write, and no
+        # reason to wait behind whatever holds the queue.
+        if self._already_resolved(apvernums, language):
+            logger.debug(
+                'resolve: %d package(s) already resolved; skipping: %s.',
+                len(apvernums),
+                apvernums,
+            )
+            return ResolveResult(
+                apvernums=list(apvernums), already_resolved=True
+            )
+
         # Priority-ordered serial admission: exactly one resolve runs at a
         # time, but foreground (interactive, dialog-backed) resolves jump
         # ahead of queued background (decorative/prefetch) ones. Contended
@@ -1278,9 +1333,11 @@ class AssetSubsystem(AppSubsystem):
         # and the GC sweep always see the real bundle.
         self._bundle_hidden = not self._reuse_bundle and allow_downloads
         try:
-            return await self._resolve(
+            result = await self._resolve(
                 apvernums, allow_downloads, on_download_starting, language
             )
+            result.queue_seconds = trace.queue_seconds
+            return result
         except Exception as exc:
             outcome = f'failed ({type(exc).__name__}: {exc})'
             # TLS cert-verify failures against our own nodes are
@@ -1314,6 +1371,32 @@ class AssetSubsystem(AppSubsystem):
             self._bundle_hidden = False
             await self._gate.release()
             logger.debug('resolve: released (background=%s).', background)
+
+    def _already_resolved(
+        self, apvernums: list[ApverNum], language: Locale | None
+    ) -> bool:
+        """Is every one of these in place at exactly what's being asked for?
+
+        True only for packages a resolve committed this run at their
+        desired flavors in the requested locale. Committed packages are
+        pinned (never retracted or collected while we run), so a repeat
+        resolve could only re-register the same buckets, rebuild the
+        same string table and rewrite the same manifest.
+
+        Packages on a fallback flavor never count: resolving those again
+        is how the better flavor gets picked up.
+        """
+        # Bundle-hiding exists to force real downloads; stay out of its way.
+        if not self._reuse_bundle:
+            return False
+        if language is None:
+            language = _babase.app.locale.current_locale
+        desired = self._desired_coords(language)
+        return all(
+            self._settled_coords.get(apvernum) == desired
+            and apvernum not in self._fallback_apvernums
+            for apvernum in apvernums
+        )
 
     def describe_activity(self) -> str:
         """Describe what the resolve queue is doing right now.
@@ -1484,6 +1567,42 @@ class AssetSubsystem(AppSubsystem):
                 ) from exc
             raise
 
+    async def _run_in_pool_timed[T](
+        self,
+        times: LocalResolveTimes,
+        stage: str,
+        call: Callable[..., T],
+        *args: object,
+    ) -> T:
+        """:meth:`_run_in_pool` on the app pool, noting where time went.
+
+        Records how long ``call`` waited for a pool thread, how long it
+        ran, and how long the logic thread took to pick the result up.
+        """
+        submitted = time.monotonic()
+        started: list[float] = []
+        ended: list[float] = []
+
+        def _run() -> T:
+            started.append(time.monotonic())
+            try:
+                return call(*args)
+            finally:
+                ended.append(time.monotonic())
+
+        # Keeps the pool's own diagnostics naming the real call.
+        functools.update_wrapper(_run, call)
+
+        try:
+            return await self._run_in_pool(_run)
+        finally:
+            done = time.monotonic()
+            start = started[0] if started else done
+            end = ended[0] if ended else done
+            times.pooled.append(
+                (stage, start - submitted, end - start, done - end)
+            )
+
     def _apply_build_progress(
         self, apvernum: ApverNum, bp: AssetPackageBuildProgress
     ) -> None:
@@ -1532,8 +1651,18 @@ class AssetSubsystem(AppSubsystem):
         )
         self._emit_progress()
 
-    def resolve_local(self, apvernums: list[ApverNum]) -> ResolveResult:
+    def resolve_local(
+        self,
+        apvernums: list[ApverNum],
+        optional: set[ApverNum] | None = None,
+    ) -> ResolveResult:
         """Synchronously register the best LOCAL flavor of each package.
+
+        A package in ``optional`` that has no usable local flavor is
+        skipped rather than failing the call; the returned
+        ``apvernums`` holds only those actually registered. Any other
+        package failing raises :class:`AssetResolveError` and nothing
+        is registered.
 
         A downloads-disabled, fully-synchronous resolve: for each apvernum it
         registers the desired flavor when that flavor's blobs are already on
@@ -1553,20 +1682,43 @@ class AssetSubsystem(AppSubsystem):
         """
         assert _babase.in_logic_thread()
         desired = self._desired_coords(_babase.app.locale.current_locale)
-        results = [self._resolve_one_local(apv, desired) for apv in apvernums]
+        resolved: list[ApverNum] = []
+        results: list[_OneResult] = []
+        for apvernum in apvernums:
+            try:
+                result = self._resolve_one_local(apvernum, desired)
+            except AssetResolveError as exc:
+                if optional is None or apvernum not in optional:
+                    raise
+                # Expected on some devices; e.g. a store bundle carries
+                # only the native texture flavor of these, which a gpu
+                # lacking it can't use. A later downloading resolve
+                # fetches a flavor it can.
+                logger.info(
+                    'Bundled package %s not usable locally (%s);'
+                    ' leaving it to a downloading resolve.',
+                    apvernum,
+                    exc,
+                )
+                strip_exception_tracebacks(exc)
+                continue
+            resolved.append(apvernum)
+            results.append(result)
         register_specs, manifest_pkgs, fell_back_by_pkg = (
-            self._accumulate_results(apvernums, results)
+            self._accumulate_results(resolved, results)
         )
         fell_back = _flatten_fell_back(fell_back_by_pkg)
         _babase.register_asset_package_buckets(register_specs)
         self._pin(manifest_pkgs)
         self._reload_language()
+        skipped = len(apvernums) - len(resolved)
         logger.info(
-            'Registered %d builtin package(s) at best-local flavor%s.',
-            len(apvernums),
+            'Registered %d builtin package(s) at best-local flavor%s%s.',
+            len(resolved),
             f' ({len(fell_back)} on fallback)' if fell_back else '',
+            f'; {skipped} left to download' if skipped else '',
         )
-        return ResolveResult(apvernums=list(apvernums), fell_back=fell_back)
+        return ResolveResult(apvernums=resolved, fell_back=fell_back)
 
     def get_package_strings(
         self, apvernum: ApverNum, locale: Locale
@@ -1702,8 +1854,9 @@ class AssetSubsystem(AppSubsystem):
         # the whole set in a single off-thread pass — no per-package round-
         # trips, no download machinery, no network. The per-package async
         # path below is used only when something must actually be fetched.
-        offline = await self._run_in_pool(
-            self._resolve_offline_sync, apvernums, language
+        times = LocalResolveTimes()
+        offline = await self._run_in_pool_timed(
+            times, 'local scan', self._resolve_offline_sync, apvernums, language
         )
         if offline is not None:
             register_specs, manifest_pkgs, fell_back_by_pkg = offline
@@ -1727,8 +1880,11 @@ class AssetSubsystem(AppSubsystem):
         # real work on a weak phone, resolves now also run mid-game
         # (background character-media acquisition), and the registry is
         # built for concurrent registration.
-        await self._run_in_pool(
-            _babase.register_asset_package_buckets, register_specs
+        await self._run_in_pool_timed(
+            times,
+            'native register',
+            _babase.register_asset_package_buckets,
+            register_specs,
         )
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
@@ -1748,8 +1904,42 @@ class AssetSubsystem(AppSubsystem):
         if any(
             coord.startswith('language/') for _apv, coord, _e in register_specs
         ):
+            t_reload = time.monotonic()
             self._reload_language()
-        await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
+            times.inline.append(
+                ('language reload', time.monotonic() - t_reload)
+            )
+        await self._run_in_pool_timed(
+            times, 'manifest write', self._commit_manifest, manifest_pkgs, now
+        )
+
+        # A resolve with nothing to download is all local work and
+        # should be quick; when it isn't, say which part was slow.
+        if mode == 'offline':
+            trace = self._active_trace
+            summary = times.summary(
+                trace.label if trace is not None else '(unlabeled)',
+                apvernums,
+                _babase.apptime() - t_start,
+                pool=(
+                    f'{busy_workers(_babase.app.threadpool)} busy of'
+                    f' {live_thread_count(_babase.app.threadpool)} threads,'
+                    f' {queue_depth(_babase.app.threadpool)} queued'
+                ),
+                modding=_babase.app.plugins.user_code_summary(),
+            )
+            if summary is not None:
+                logger.warning('%s', summary)
+
+        # Remember what is now fully in place so asking again is free
+        # (see _already_resolved). Done last, so a commit that failed
+        # partway leaves nothing marked.
+        desired = self._desired_coords(language)
+        for apvernum in apvernums:
+            if fell_back_by_pkg.get(apvernum):
+                self._settled_coords.pop(apvernum, None)
+            else:
+                self._settled_coords[apvernum] = desired
 
         logger.info(
             'Resolved %d package(s): %d bucket(s) registered%s'
@@ -1763,7 +1953,11 @@ class AssetSubsystem(AppSubsystem):
             self._progress.bytes_done / (1024.0 * 1024.0),
         )
         self._report_flavor_quality(allow_downloads, fell_back_by_pkg)
-        return ResolveResult(apvernums=list(apvernums), fell_back=fell_back)
+        return ResolveResult(
+            apvernums=list(apvernums),
+            fell_back=fell_back,
+            downloaded=mode == 'online',
+        )
 
     def _report_flavor_quality(
         self,
@@ -2497,9 +2691,23 @@ class AssetSubsystem(AppSubsystem):
         what the node reports for comm errors on *its* hop). Structured
         outcomes that a retry can't change (auth/access/too-old/content
         errors, unknown ids, bad dimensions) surface immediately.
+
+        The attempt budget covers a *stall*, not the whole build: a
+        failure that arrives after the server's build visibly advanced
+        since our previous failure starts the count over. A long cold
+        build on a struggling server can drop several polls along the
+        way without being in any real trouble, and giving up on it
+        throws away a build that is still getting somewhere (seen
+        2026-10-05 against an overloaded dev server). A hard ceiling on
+        total attempts keeps this finite whatever the server reports.
         """
         attempt = 1
         max_attempts = 3
+        total_attempts = 0
+        max_total_attempts = 30
+        # Units the server had reported done as of our last failure;
+        # None until we've had one.
+        done_at_last_failure: int | None = None
         while True:
             trace = self._active_trace
             start = time.monotonic()
@@ -2527,7 +2735,22 @@ class AssetSubsystem(AppSubsystem):
                 transient = exc.code is (
                     AssetPackageResolveError.INTERNAL
                 ) or isinstance(exc.__cause__, CommunicationError)
-                if not transient or attempt >= max_attempts:
+                total_attempts += 1
+                units = self._build_units.get(apvernum)
+                done = units[0] if units is not None else 0
+                if (
+                    done_at_last_failure is not None
+                    and done > done_at_last_failure
+                ):
+                    # The build moved since we last failed; this is a
+                    # fresh stall, not the same one continuing.
+                    attempt = 1
+                done_at_last_failure = done
+                if (
+                    not transient
+                    or attempt >= max_attempts
+                    or total_attempts >= max_total_attempts
+                ):
                     raise
                 delay = 2.0 * attempt
                 logger.info(

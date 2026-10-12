@@ -77,10 +77,11 @@ class HostSession : public Session {
     assert(scene_.exists());
     return scene_.get();
   }
-  /// Create a session-scene SpazDef (the lobby's choosers build players'
-  /// cloud-profile looks here, before any activity has them) or
-  /// depiction. Same lifecycle as HostActivity's: refcounted, marked
-  /// dead at session teardown, dumped for late joiners.
+  /// Create a session-scene SpazDef or depiction (the lobby's choosers
+  /// show players' cloud looks with these). Like everything in a scene,
+  /// only for that scene's own nodes. Same lifecycle as HostActivity's:
+  /// refcounted, marked dead at session teardown, dumped for late
+  /// joiners.
   auto NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> override;
   auto NewDepiction(const std::string& json)
       -> Object::Ref<SceneDepiction> override;

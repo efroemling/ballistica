@@ -202,7 +202,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ).autoretain()
                 assert mvp_name is not None
                 Text(
-                    mvp_name,
+                    mvp.get_name_depiction() or mvp_name,
                     position=(280, ts_height / 2 - 55 + 15 - 5),
                     h_align=Text.HAlign.LEFT,
                     v_align=Text.VAlign.CENTER,
@@ -256,7 +256,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mvp_name is not None
             Text(
-                mvp_name,
+                mvp.get_name_depiction() or mvp_name,
                 position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -309,7 +309,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mkp_name is not None
             Text(
-                mkp_name,
+                mkp.get_name_depiction() or mkp_name,
                 position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -358,7 +358,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                name,
+                prec.get_name_depiction() or name,
                 position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,

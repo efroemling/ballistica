@@ -166,20 +166,20 @@ class EditProfileWindow(
         )
         self._is_account_profile = self._name == '__account__'
 
-        # If we just picked a random character, see if it has specific
-        # colors/highlights associated with it and assign them if so.
+        # If we just picked a random character, start in the colors its
+        # appearance suggests, if it suggests any; otherwise the random
+        # ones we already have stay. (An appearance that is a character
+        # suggests none: a character's definition is opaque to us, and
+        # need not have a highlight at all.)
         if assigned_random_char:
             assert bui.app.classic is not None
-            clr = bui.app.classic.spaz_appearances[
+            appearance = bui.app.classic.spaz_appearances[
                 self._spazzes[icon_index]
-            ].default_color
-            if clr is not None:
-                self._color = clr
-            highlight = bui.app.classic.spaz_appearances[
-                self._spazzes[icon_index]
-            ].default_highlight
-            if highlight is not None:
-                self._highlight = highlight
+            ]
+            if appearance.default_color is not None:
+                self._color = appearance.default_color
+            if appearance.default_highlight is not None:
+                self._highlight = appearance.default_highlight
 
         # Assign a random name if they had none.
         if self._name == '':

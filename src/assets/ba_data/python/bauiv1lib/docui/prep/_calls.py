@@ -20,6 +20,7 @@ from bauiv1lib.docui._layout import (
     SMALL_UI_TOOLBAR_CLEARANCE,
     TEXT_INSET,
 )
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep
 from bauiv1lib.docui.prep._button import (
     button_size,
@@ -119,12 +120,16 @@ def prep_page(
     idprefix: str,
     immediate: bool = False,
     transition_scale: float = 1.0,
+    description: str = '(unnamed)',
 ) -> PagePrep:
     # pylint: disable=too-many-statements
     """Prep a page.
 
     ``transition_scale`` multiplies every scale-in delay (0 pops the
     page in instantly, like ``immediate``; 1 is full speed).
+
+    ``description`` names the page (its controller and path) in
+    anything logged about it.
     """
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -159,7 +164,9 @@ def prep_page(
     # with each section expanded in place into its heading, its rows and
     # its note (sections remember which entries are their rows, for
     # their backings).
-    page_rows_filtered, section_spans = _sections.layout_entries(page)
+    page_rows_filtered, section_spans = _sections.layout_entries(
+        page, description
+    )
 
     # Ok; we've got some buttons. Build our full UI.
 
@@ -506,12 +513,14 @@ def prep_page(
                 )
                 if last_selectable is None:
                     bui.uilog.warning(
-                        'Doc-ui Section note has no selectable row before'
-                        ' it; navigation cannot bring it into view.'
+                        'Doc-ui page %s: Section note has no selectable'
+                        ' row before it; navigation cannot bring it into'
+                        ' view.',
+                        description,
                     )
                 else:
                     last_selectable.show_buffer_bottom += ytop - y
-            if row.section.debug:
+            if wants_debug_draw(row.section.debug, DebugDrawKind.SECTIONS):
                 prepcalls2.prep_row_debug(
                     (
                         width
@@ -652,7 +661,7 @@ def prep_page(
                 packages=packages,
             )
             rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
-            if row.debug:
+            if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
                 prepcalls2.prep_row_debug(
                     (
                         width
@@ -735,7 +744,7 @@ def prep_page(
         )
         rowprep.bounds_top, rowprep.bounds_bottom = ydebugtop, y
 
-        if row.debug:
+        if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
             prepcalls2.prep_row_debug(
                 (
                     width
@@ -848,7 +857,7 @@ def prep_page(
             # by the h-scroll here so we have to draw a separate box for
             # the row title/subtitle. (Drawn ahead of the button's own
             # decorations.)
-            if row.debug:
+            if wants_debug_draw(row.debug, DebugDrawKind.ROWS):
                 rowdebug: list[DecorationPrep] = []
                 prepcalls2.prep_row_debug_button(
                     (bwidthpadded, rowprep.height),
@@ -885,11 +894,11 @@ def prep_page(
 
         y -= row.spacing_bottom
 
-    if pending_top_attach is not None:
-        bui.uilog.warning(
-            'Doc-ui Section heading has no selectable row after it;'
-            ' navigation cannot bring it into view.'
-        )
+    # A heading with nothing selectable after it: the last selectable
+    # row above it keeps it in view instead. (There always is one; a
+    # page with nothing selectable gets an Ok button at its end.)
+    if pending_top_attach is not None and last_selectable is not None:
+        last_selectable.show_buffer_bottom += pending_top_attach
 
     _sections.prep_section_backings(
         section_spans,

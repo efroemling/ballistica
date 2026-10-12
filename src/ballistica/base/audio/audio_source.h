@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_AUDIO_AUDIO_SOURCE_H_
 #define BALLISTICA_BASE_AUDIO_AUDIO_SOURCE_H_
 
+#include <atomic>
 #include <mutex>
 
 #include "ballistica/base/base.h"
@@ -67,14 +68,21 @@ class AudioSource {
   void Unlock();
   explicit AudioSource(int id);
   auto id() const -> int { return id_; }
-#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
+  /// When we were last locked and by which call site. Readable without
+  /// holding the lock (that is the point: it says who has held us for a
+  /// long time).
   auto last_lock_time() const -> millisecs_t { return last_lock_time_; }
   auto lock_debug_id() const -> int { return lock_debug_id_; }
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   auto locked() const -> bool { return locked_; }
 #endif
   auto available() const -> bool { return available_; }
   void set_available(bool val) { available_ = val; }
   void MakeAvailable(uint32_t play_id);
+  /// Switch to a new play id while out on a play: for a client taking
+  /// us over for another play (see Audio::SourceBeginNew). We must be
+  /// locked, with Audio's available-sources mutex held.
+  void Retarget(uint32_t play_id);
   auto client_queue_size() const -> int { return client_queue_size_; }
   void set_client_queue_size(int val) { client_queue_size_ = val; }
   auto play_id() const -> uint32_t { return play_id_; }
@@ -86,9 +94,9 @@ class AudioSource {
   /// always actually play listener-relative then).
   bool wants_positional_{true};
   std::mutex mutex_;
+  std::atomic<millisecs_t> last_lock_time_{};
+  std::atomic<int> lock_debug_id_{};
 #if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
-  millisecs_t last_lock_time_{};
-  int lock_debug_id_{};
   bool locked_{};
 #endif
   int client_queue_size_{};

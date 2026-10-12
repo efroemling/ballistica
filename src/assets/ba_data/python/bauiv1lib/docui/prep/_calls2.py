@@ -14,6 +14,7 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
     AnimTargetKind,
     AnimTargetPrep,
@@ -137,6 +138,11 @@ def prep_decorations(
                 tdelay,
                 out_decoration_preps,
                 highlight=highlight,
+                suffix=(
+                    None
+                    if decoration.suffix is None
+                    else _native(decoration.suffix, packages).evaluate()
+                ),
             )
         else:
             assert_never(dectypeid)
@@ -248,7 +254,7 @@ def prep_text(
             )
         )
     # Draw square around max width/height in debug mode.
-    if text.debug:
+    if wants_debug_draw(text.debug, DebugDrawKind.DECORATIONS):
         mwfull = bscale * text.size[0]
         mhfull = bscale * text.size[1]
 
@@ -572,7 +578,7 @@ def prep_image(
 
     # Show the box in debug mode. Worth having separately from the art:
     # a texture with a transparent margin draws smaller than its bounds.
-    if image.debug:
+    if wants_debug_draw(image.debug, DebugDrawKind.DECORATIONS):
         out_decoration_preps.append(
             _debug_rect(
                 (xoffsfin, yoffsfin),

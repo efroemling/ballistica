@@ -136,36 +136,17 @@ class Spaz(bs.Actor):
         # session-level bs.SpazDef built from an opaque definition; the
         # node draws, voices, and proportions itself from it) or the
         # legacy explicit-media form (every mesh/texture/sound named
-        # individually plus a style preset). Only a cloud look (a
-        # player's cloud profile, composed by the master server) takes
-        # the definition form; everything else -- bots, offline play,
-        # players with no cloud look -- wears the legacy form (the
-        # client carries no character json of its own; cloud-profiles
-        # D11).
+        # individually plus a style preset). A cloud look (a player's
+        # cloud profile, composed by the master server) takes the
+        # definition form, as does any appearance that is a character
+        # (from an asset-package wrapper); an appearance given piece
+        # by piece -- the builtins not yet converted, and mods' --
+        # wears the legacy form.
         media_attrs: dict[str, Any]
         if cloud_spaz_def is not None:
             media_attrs = {'spaz_def': cloud_spaz_def}
         else:
-            media = factory.get_media(character)
-            media_attrs = {
-                'jump_sounds': media['jump_sounds'],
-                'attack_sounds': media['attack_sounds'],
-                'impact_sounds': media['impact_sounds'],
-                'death_sounds': media['death_sounds'],
-                'pickup_sounds': media['pickup_sounds'],
-                'fall_sounds': media['fall_sounds'],
-                'color_texture': media['color_texture'],
-                'color_mask_texture': media['color_mask_texture'],
-                'head_mesh': media['head_mesh'],
-                'torso_mesh': media['torso_mesh'],
-                'pelvis_mesh': media['pelvis_mesh'],
-                'upper_arm_mesh': media['upper_arm_mesh'],
-                'forearm_mesh': media['forearm_mesh'],
-                'hand_mesh': media['hand_mesh'],
-                'upper_leg_mesh': media['upper_leg_mesh'],
-                'lower_leg_mesh': media['lower_leg_mesh'],
-                'toes_mesh': media['toes_mesh'],
-            }
+            media_attrs = factory.get_look_attrs(character)
 
         self.node: bs.Node = bs.newnode(
             type='spaz',
@@ -176,7 +157,6 @@ class Spaz(bs.Actor):
                 'demo_mode': demo_mode,
                 'highlight': highlight,
                 **media_attrs,
-                'style': factory.get_style(character),
                 'fly': self.fly,
                 'hockey': self._hockey,
                 'materials': materials,
