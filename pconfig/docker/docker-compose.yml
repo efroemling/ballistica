@@ -4,6 +4,9 @@ name: bombsquad
 # BS_CMAKE_BUILD_TYPE (defaults to Release)
 # BS_IMAGE_NAME (defaults to bombsquad_gui_release)
 # BS_BUILD_ENV_IMAGE (defaults to build-env; see batools.docker)
+# ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN (GitHub Actions cache
+# credentials for sccache, passed as build secrets; batools.docker sets
+# them empty outside Actions, which means a local sccache disk cache)
 
 services:
   bombsquad_gui:
@@ -14,6 +17,9 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
         - build_env_image=${BS_BUILD_ENV_IMAGE:-build-env}
+      secrets:
+        - actions_results_url
+        - actions_runtime_token
       labels:
         - org.opencontainers.image.description=BombSquad graphical docker image
         - org.opencontainers.image.licenses=MIT
@@ -43,6 +49,9 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}
         - build_env_image=${BS_BUILD_ENV_IMAGE:-build-env}
+      secrets:
+        - actions_results_url
+        - actions_runtime_token
       labels:
         - org.opencontainers.image.description=BombSquad headdless docker image
         - org.opencontainers.image.licenses=MIT
@@ -56,3 +65,9 @@ services:
     # volumes:
     #   - ${BS_CONFIG_PATH:-./config}:/path/in/container/config
     #   - ${BS_MODS_PATH:-./mods}:/path/in/container/mods
+
+secrets:
+  actions_results_url:
+    environment: ACTIONS_RESULTS_URL
+  actions_runtime_token:
+    environment: ACTIONS_RUNTIME_TOKEN

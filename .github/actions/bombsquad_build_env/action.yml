@@ -9,6 +9,13 @@ inputs:
     required: false
     type: boolean
     default: false
+  using-docker:
+    description: |
+      "Set to true for make docker-* builds: sets up sccache so its"
+      "GitHub Actions cache credentials reach the docker build (see"
+      "batools.docker and pconfig/docker/Dockerfile)"
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -106,8 +113,10 @@ runs:
         echo "BA_APP_RUN_ENABLE_BUILDS=1" >> $GITHUB_ENV
         echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
 
+    # Also exports ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN, which
+    # docker builds pass into the container as build secrets.
     - name: Setup sccache
-      if: ${{ inputs.using-cmake == 'true' }}
+      if: ${{ inputs.using-cmake == 'true' || inputs.using-docker == 'true' }}
       uses: mozilla-actions/sccache-action@v0.0.11
       with:
         disable_annotations: true

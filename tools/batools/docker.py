@@ -125,6 +125,12 @@ def _docker_compose(
         env['PLATFORM'] = platform
     if build_env_image is not None:
         env['BS_BUILD_ENV_IMAGE'] = build_env_image
+    # Build secrets for sccache's GitHub Actions cache backend (exported
+    # by mozilla-actions/sccache-action). Compose wants every declared
+    # secret to exist, and empty ones make the Dockerfile fall back to
+    # a local sccache disk cache.
+    for var in ('ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'):
+        env.setdefault(var, '')
 
     subprocess.run(build_cmd, check=True, env=env)
 

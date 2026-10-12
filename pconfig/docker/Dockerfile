@@ -58,6 +58,27 @@ RUN --mount=type=cache,id=apt-builder,target=/var/cache/apt,sharing=locked \
 # Install uv (used by make env / make cmake-build for venv setup).
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
 
+# Install sccache (compiler cache used by the builder stage below).
+# Pinned and checksummed; to bump, take the new sha256 digests of the
+# *-unknown-linux-musl.tar.gz assets from the GitHub release.
+ARG TARGETARCH
+ARG sccache_version=0.18.0
+RUN case "$TARGETARCH" in \
+        amd64) arch=x86_64; \
+            sha=45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89;; \
+        arm64) arch=aarch64; \
+            sha=2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a;; \
+        *) echo "no sccache for $TARGETARCH" >&2; exit 1;; \
+    esac && \
+    name=sccache-v${sccache_version}-${arch}-unknown-linux-musl && \
+    url=https://github.com/mozilla/sccache/releases/download && \
+    curl -fsSL -o /tmp/sccache.tar.gz \
+        "$url/v${sccache_version}/${name}.tar.gz" && \
+    echo "$sha  /tmp/sccache.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/sccache.tar.gz -C /usr/local/bin --strip-components=1 \
+        ${name}/sccache && \
+    rm /tmp/sccache.tar.gz
+
 #-------------------------------BUILDER--------------------------------
 FROM ${build_env_image} AS builder
 
@@ -74,8 +95,30 @@ COPY ./ /ballistica
 # Set the working directory
 WORKDIR /ballistica
 
-# Compile the application
-RUN mkdir /ballistica_cmake && \
+# Compile the application, through sccache when the build env has it.
+# In GitHub Actions the docker jobs pass the Actions cache credentials
+# in as secrets (see batools.docker), so objects land in the same
+# Actions cache the CI cmake builds use; elsewhere sccache keeps a
+# local disk cache in a BuildKit cache mount instead. Cache trouble of
+# any kind just means a plain compile (SCCACHE_IGNORE_SERVER_IO_ERROR).
+# The uv cache mount keeps make env from re-downloading the venv's
+# packages on every local rebuild (copy mode since it's a separate fs).
+ENV UV_LINK_MODE=copy
+RUN --mount=type=secret,id=actions_results_url,env=ACTIONS_RESULTS_URL \
+    --mount=type=secret,id=actions_runtime_token,env=ACTIONS_RUNTIME_TOKEN \
+    --mount=type=cache,id=sccache,target=/root/.cache/sccache \
+    --mount=type=cache,id=uv,target=/root/.cache/uv \
+    if command -v sccache >/dev/null; then \
+        if [ -n "${ACTIONS_RUNTIME_TOKEN:-}" ]; then \
+            export SCCACHE_GHA_ENABLED=true ACTIONS_CACHE_SERVICE_V2=on; \
+        else \
+            export SCCACHE_DIR=/root/.cache/sccache; \
+        fi && \
+        export SCCACHE_IGNORE_SERVER_IO_ERROR=1 \
+            CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=sccache"; \
+    fi && \
+    mkdir /ballistica_cmake && \
     if [ "$HEADLESS_BUILD" != "0" ]; then \
         make cmake-server-build && \
         mv build/cmake/*/ballisticakit_headless build/cmake/*/staged/dist; \
@@ -83,7 +126,8 @@ RUN mkdir /ballistica_cmake && \
         make cmake-build && \
         mv build/cmake/*/ballisticakit build/cmake/*/staged/; \
     fi && \
-    mv build/cmake/*/staged/* /ballistica_cmake
+    mv build/cmake/*/staged/* /ballistica_cmake && \
+    if command -v sccache >/dev/null; then sccache --show-stats; fi
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
