@@ -78,7 +78,6 @@ from batools.pcommands import (
     lazy_increment_build,
     androidaddr,
     push_ipa,
-    push_ipa_to_archive,
     printcolors,
     prune_includes,
     python_version_android,
@@ -129,6 +128,14 @@ from batools.pcommands import (
 )
 from batools.pcommands2 import (
     gen_builtin_asset_ids,
+    gen_base_asset_set_py,
+    gen_base_asset_set_cpp,
+    gen_character_ranges_cpp,
+    gen_character_rig_cpp,
+    gen_scene_asset_set_py,
+    gen_scene_asset_set_cpp,
+    gen_ui_asset_set_py,
+    gen_ui_asset_set_cpp,
     gen_python_init_module,
     gen_monolithic_register_modules,
     py_examine,
@@ -158,7 +165,11 @@ from batools.pcommands3 import (
     save_docker_images,
     remove_docker_images,
     generate_flathub_manifest,
+    generate_flatpak_build_env,
+    flatpak_add_release,
+    flatpak_prebuilt_inputs,
     gen_pyembed,
+    require_unsandboxed,
 )
 from batools.pcommands4 import (
     ios_sim_run,
@@ -166,6 +177,9 @@ from batools.pcommands4 import (
     assetworkspace,
     cst_test,
     prefab_symbols_fetch,
+    dump_symbols_fetch,
+    push_ipa_to_archive,
+    push_apk_to_archive,
 )
 
 # pylint: enable=unused-import

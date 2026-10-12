@@ -72,6 +72,7 @@ class Spaz(bs.Actor):
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
+        cloud_spaz_def: bs.SpazDef | None = None,
         source_player: bs.Player | None = None,
         start_invincible: bool = True,
         can_accept_powerups: bool = True,
@@ -89,8 +90,6 @@ class Spaz(bs.Actor):
 
         classic = bs.app.classic
         assert classic is not None
-
-        protocol_version = classic.scene_v1_protocol_version()
 
         self._allow_punch_grab = classic.allow_punch_grab
 
@@ -130,38 +129,34 @@ class Spaz(bs.Actor):
             roller_materials.append(pam)
             extras_material.append(pam)
 
-        media = factory.get_media(character)
         punchmats = (factory.punch_material, shared.attack_material)
         pickupmats = (factory.pickup_material, shared.pickup_material)
+
+        # A spaz node wears one of two forms: the definition form (a
+        # session-level bs.SpazDef built from an opaque definition; the
+        # node draws, voices, and proportions itself from it) or the
+        # legacy explicit-media form (every mesh/texture/sound named
+        # individually plus a style preset). A cloud look (a player's
+        # cloud profile, composed by the master server) takes the
+        # definition form, as does any appearance that is a character
+        # (from an asset-package wrapper); an appearance given piece
+        # by piece -- the builtins not yet converted, and mods' --
+        # wears the legacy form.
+        media_attrs: dict[str, Any]
+        if cloud_spaz_def is not None:
+            media_attrs = {'spaz_def': cloud_spaz_def}
+        else:
+            media_attrs = factory.get_look_attrs(character)
 
         self.node: bs.Node = bs.newnode(
             type='spaz',
             delegate=self,
             attrs={
                 'color': color,
-                'behavior_version': (
-                    0 if demo_mode else 1 if protocol_version < 37 else 2
-                ),
+                'behavior_version': 0 if demo_mode else 2,
                 'demo_mode': demo_mode,
                 'highlight': highlight,
-                'jump_sounds': media['jump_sounds'],
-                'attack_sounds': media['attack_sounds'],
-                'impact_sounds': media['impact_sounds'],
-                'death_sounds': media['death_sounds'],
-                'pickup_sounds': media['pickup_sounds'],
-                'fall_sounds': media['fall_sounds'],
-                'color_texture': media['color_texture'],
-                'color_mask_texture': media['color_mask_texture'],
-                'head_mesh': media['head_mesh'],
-                'torso_mesh': media['torso_mesh'],
-                'pelvis_mesh': media['pelvis_mesh'],
-                'upper_arm_mesh': media['upper_arm_mesh'],
-                'forearm_mesh': media['forearm_mesh'],
-                'hand_mesh': media['hand_mesh'],
-                'upper_leg_mesh': media['upper_leg_mesh'],
-                'lower_leg_mesh': media['lower_leg_mesh'],
-                'toes_mesh': media['toes_mesh'],
-                'style': factory.get_style(character),
+                **media_attrs,
                 'fly': self.fly,
                 'hockey': self._hockey,
                 'materials': materials,
@@ -1409,7 +1404,7 @@ class Spaz(bs.Actor):
         if self._cursed and self.node:
             self.shatter(extreme=True)
             self.handlemessage(bs.DieMessage())
-            activity = self._activity()
+            activity = self.getactivity(doraise=False)
             if activity:
                 Blast(
                     position=self.node.position,

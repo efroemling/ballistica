@@ -2,46 +2,38 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light.h"
 
-#include "ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_kinds.h"
 
 namespace ballistica::base {
 
-BGDynamicsVolumeLight::BGDynamicsVolumeLight() {
+BGDynamicsVolumeLight::BGDynamicsVolumeLight(BGDynamicsWorld* world)
+    : world_(world) {
   assert(g_base->InLogicThread());
-  // allocate our light data... we'll pass this to the BGDynamics thread,
-  // which will then own it
-  data_ = new BGDynamicsVolumeLightData();
-  assert(g_base->bg_dynamics_server);
-  g_base->bg_dynamics_server->PushAddVolumeLightCall(data_);
+  slot_ = world_->channel<BGDynamicsVolumeLightKind>().Create(
+      BGDynamicsVolumeLightKind::Config{});
 }
 
 BGDynamicsVolumeLight::~BGDynamicsVolumeLight() {
   assert(g_base->InLogicThread());
-
-  // let the data know the client side is dead,
-  // so we're no longer included in step messages
-  // (since by the time the worker gets it the data will be gone)
-  data_->client_dead = true;
-
-  assert(g_base->bg_dynamics_server);
-  g_base->bg_dynamics_server->PushRemoveVolumeLightCall(data_);
+  world_->channel<BGDynamicsVolumeLightKind>().Destroy(slot_);
 }
 
 void BGDynamicsVolumeLight::SetPosition(const Vector3f& pos) {
   assert(g_base->InLogicThread());
-  data_->pos_client = pos;
+  world_->channel<BGDynamicsVolumeLightKind>().input(slot_).position = pos;
 }
 
 void BGDynamicsVolumeLight::SetRadius(float radius) {
   assert(g_base->InLogicThread());
-  data_->radius_client = radius;
+  world_->channel<BGDynamicsVolumeLightKind>().input(slot_).radius = radius;
 }
 
 void BGDynamicsVolumeLight::SetColor(float r, float g, float b) {
   assert(g_base->InLogicThread());
-  data_->r_client = r;
-  data_->g_client = g;
-  data_->b_client = b;
+  auto& input = world_->channel<BGDynamicsVolumeLightKind>().input(slot_);
+  input.r = r;
+  input.g = g;
+  input.b = b;
 }
 
 }  // namespace ballistica::base

@@ -24,6 +24,7 @@ values = [
     _hooks.store_config_fullscreen_off,  # kStoreConfigFullscreenOffCall
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
+    _hooks.commit_config,  # kCommitConfigCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall
     _hooks.temporarily_unavailable_message,  # kTemporarilyUnavailableMessageCall
     _hooks.in_progress_message,  # kInProgressMessageCall
@@ -71,6 +72,7 @@ values = [
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
     enums.SpecialChar,  # kSpecialCharClass
+    enums.SoundPriority,  # kSoundPriorityClass
     _hooks.hash_strings,  # kHashStringsCall
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     _hooks.implicit_sign_in,  # kImplicitSignInCall
@@ -89,4 +91,7 @@ values = [
     _hooks.v2_auth_data,  # kV2AuthDataCall
     _hooks.start_native_repl,  # kStartNativeReplCall
     _simpledialog.dispatch_button,  # kSimpleDialogButtonPressCall
+    _hooks.wanted_asset_packages_changed,  # kWantedAssetPackagesChangedCall
+    _hooks.purchase_pending_notice,  # kPurchasePendingNoticeCall
+    _hooks.os_music_playing_changed,  # kOSMusicPlayingChangedCall
 ]

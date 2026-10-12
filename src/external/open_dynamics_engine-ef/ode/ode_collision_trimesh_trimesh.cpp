@@ -169,9 +169,11 @@ dCollideTTL(dxGeom* g1, dxGeom* g2, int Flags, dContactGeom* Contacts, int Strid
     // TLRotation2 = column-major order
     const dMatrix3& TLRotation2 = *(const dMatrix3*) dGeomGetRotation(TriMesh2);
 
-  AABBTreeCollider& Collider{*TriMesh1->_AABBTreeCollider};
+  AABBTreeCollider& Collider{TriMesh1->_AABBTreeCollider};
 
-    static BVTCache ColCache;
+    // ericf change: was static (shared across calls/threads). Temporal
+    // coherence is off for this collider so a fresh cache costs nothing.
+    BVTCache ColCache;
     ColCache.Model0 = &TriMesh1->Data->BVTree;
     ColCache.Model1 = &TriMesh2->Data->BVTree;
 

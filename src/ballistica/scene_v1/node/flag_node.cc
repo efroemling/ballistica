@@ -9,8 +9,10 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -52,6 +54,11 @@ const float kDragStrength{0.1f};
 
 class FlagNode::FullShadowSet : public Object {
  public:
+  explicit FullShadowSet(base::BGDynamicsWorld* world)
+      : shadow_pole_bottom_(world),
+        shadow_pole_middle_(world),
+        shadow_pole_top_(world),
+        shadow_flag_(world) {}
   base::BGDynamicsShadow shadow_pole_bottom_;
   base::BGDynamicsShadow shadow_pole_middle_;
   base::BGDynamicsShadow shadow_pole_top_;
@@ -59,6 +66,7 @@ class FlagNode::FullShadowSet : public Object {
 };
 class FlagNode::SimpleShadowSet : public Object {
  public:
+  explicit SimpleShadowSet(base::BGDynamicsWorld* world) : shadow_(world) {}
   base::BGDynamicsShadow shadow_;
 };
 
@@ -178,10 +186,11 @@ void FlagNode::SetIsAreaOfInterest(bool val) {
     // Either make one or kill the one we had.
     if (val) {
       assert(area_of_interest_ == nullptr);
-      area_of_interest_ = g_base->graphics->camera()->NewAreaOfInterest(false);
+      area_of_interest_ =
+          scene()->render_view()->camera()->NewAreaOfInterest(false);
     } else {
       assert(area_of_interest_ != nullptr);
-      g_base->graphics->camera()->DeleteAreaOfInterest(area_of_interest_);
+      scene()->render_view()->camera()->DeleteAreaOfInterest(area_of_interest_);
       area_of_interest_ = nullptr;
     }
   }
@@ -197,7 +206,7 @@ void FlagNode::SetMaterials(const std::vector<Material*>& vals) {
 
 void FlagNode::UpdateDimensions() {
   float density_scale =
-      (g_base->graphics->camera()->happy_thoughts_mode()) ? 0.3f : 1.0f;
+      (scene()->render_view()->camera()->happy_thoughts_mode()) ? 0.3f : 1.0f;
   body_->SetDimensions(kFlagRadius, kFlagHeight - 2 * kFlagRadius, 0,
                        kFlagMassRadius, kFlagMassHeight, 0.0f,
                        kFlagDensity * density_scale);
@@ -205,7 +214,7 @@ void FlagNode::UpdateDimensions() {
 
 FlagNode::~FlagNode() {
   if (area_of_interest_)
-    g_base->graphics->camera()->DeleteAreaOfInterest(area_of_interest_);
+    scene()->render_view()->camera()->DeleteAreaOfInterest(area_of_interest_);
 }
 
 void FlagNode::HandleMessage(const char* data_in) {
@@ -335,32 +344,32 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
         {
           full_shadows->shadow_pole_bottom_.GetValues(&s_scale, &s_density);
           const Vector3f& p(full_shadows->shadow_pole_bottom_.GetPosition());
-          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                       s_density * 0.25f);
+          scene()->render_view()->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                             s_density * 0.25f);
         }
 
         // Pole middle.
         {
           full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
           const Vector3f& p(full_shadows->shadow_pole_middle_.GetPosition());
-          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                       s_density * 0.25f);
+          scene()->render_view()->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                             s_density * 0.25f);
         }
 
         // Pole top.
         {
           full_shadows->shadow_pole_middle_.GetValues(&s_scale, &s_density);
           const Vector3f& p(full_shadows->shadow_pole_top_.GetPosition());
-          g_base->graphics->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
-                                       s_density * 0.25f);
+          scene()->render_view()->DrawBlotch(p, 0.4f * s_scale, 0, 0, 0,
+                                             s_density * 0.25f);
         }
 
         // Flag center.
         {
           full_shadows->shadow_flag_.GetValues(&s_scale, &s_density);
           const Vector3f& p(full_shadows->shadow_flag_.GetPosition());
-          g_base->graphics->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
-                                       s_density * 0.3f);
+          scene()->render_view()->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
+                                             s_density * 0.3f);
         }
 
       } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.get()) {
@@ -368,25 +377,26 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
         simple_shadows->shadow_.SetPosition(Vector3f(p));
         simple_shadows->shadow_.GetValues(&s_scale, &s_density);
         const Vector3f& p(simple_shadows->shadow_.GetPosition());
-        g_base->graphics->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
-                                     s_density * 0.5f);
+        scene()->render_view()->DrawBlotch(p, 0.8f * s_scale, 0, 0, 0,
+                                           s_density * 0.5f);
       }
     }
     c.Submit();
   }
 
-  // Flag pole.
-  {
+  // Flag pole. In debug-draw mode, draw its physics capsule instead.
+  if (g_base->graphics->debug_draw()
+      && body_->DrawDebug(frame_def->beauty_pass())) {
+    // Drew the physics shape.
+  } else {
     base::ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesFlagPoleColor));
+    c.SetTexture(g_base->assets->base_assets().flag_pole_color.get());
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
     {
       auto xf = c.ScopedTransform();
       body_->ApplyToRenderComponent(&c);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesFlagPole));
+      c.DrawMeshAsset(g_scene_v1->assets().flag_pole.get());
     }
     c.Submit();
   }
@@ -402,7 +412,8 @@ void FlagNode::UpdateAreaOfInterest() {
 
 void FlagNode::Step() {
   // On happy thoughts, keep us on the 2d plane.
-  if (g_base->graphics->camera()->happy_thoughts_mode() && body_.exists()) {
+  if (scene()->render_view()->camera()->happy_thoughts_mode()
+      && body_.exists()) {
     dBodyID b;
     const dReal *p, *v;
     b = body_->body();
@@ -677,10 +688,12 @@ void FlagNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
 void FlagNode::UpdateForGraphicsQuality(base::GraphicsQuality quality) {
   if (!g_core->HeadlessMode()) {
     if (quality >= base::GraphicsQuality::kMedium) {
-      full_shadow_set_ = Object::New<FullShadowSet>();
+      full_shadow_set_ =
+          Object::New<FullShadowSet>(scene()->bg_dynamics_world());
       simple_shadow_set_.Clear();
     } else {
-      simple_shadow_set_ = Object::New<SimpleShadowSet>();
+      simple_shadow_set_ =
+          Object::New<SimpleShadowSet>(scene()->bg_dynamics_world());
       full_shadow_set_.Clear();
     }
   }

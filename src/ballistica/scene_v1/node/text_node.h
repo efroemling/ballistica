@@ -88,6 +88,8 @@ class TextNode : public Node {
  private:
   enum class HAlign { kLeft, kCenter, kRight };
   enum class VAlign { kNone, kTop, kCenter, kBottom };
+  void UpdateTranslation_();
+  void PrefetchTextMeasures_();
   enum class HAttach { kLeft, kCenter, kRight };
   enum class VAttach { kTop, kCenter, kBottom };
   void Update();

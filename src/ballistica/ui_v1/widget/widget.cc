@@ -144,7 +144,7 @@ void Widget::GlobalSelect() {
   }
 }
 
-void Widget::ScrollIntoView() {
+void Widget::ScrollIntoView(bool animate) {
   assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
@@ -152,7 +152,7 @@ void Widget::ScrollIntoView() {
     return;
   }
   while (true) {
-    c->ShowWidget(w);
+    c->ShowWidget(w, animate);
     w = c;
     c = c->parent_widget();
     if (!c) {
@@ -186,6 +186,8 @@ void Widget::WidgetPointToScreen(float* x, float* y) const {
 auto Widget::GetDrawBrightness(millisecs_t current_time) const -> float {
   return 1.0f;
 }
+
+auto Widget::IsDrawDisabled() const -> bool { return false; }
 
 void Widget::ScreenPointToWidget(float* x, float* y) const {
 #if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD

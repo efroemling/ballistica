@@ -138,96 +138,6 @@ class DevConsoleTabAppModes(DevConsoleTab):
         _babase.apptimer(0.1, self.request_refresh)
 
 
-class DevConsoleTabUI(DevConsoleTab):
-    """Tab to debug/test UI stuff."""
-
-    @override
-    def refresh(self) -> None:
-        from babase._generated.enums import UIScale
-
-        xoffs = -305.0
-        yoffs = 10.0
-
-        custom_buttons = _babase.app.mode.get_dev_console_ui_tab_buttons()
-        cboffs = 50
-        cbwidth = 180
-        cbspacing = 10
-
-        if custom_buttons:
-            cbtotalwidth = (
-                len(custom_buttons) * cbwidth
-                + max(0, len(custom_buttons) - 1) * cbspacing
-                + cboffs
-            )
-        else:
-            cbtotalwidth = 0
-
-        xoffs -= cbtotalwidth * 0.5
-
-        self.text(
-            'A UI should either fit in the virtual safe area'
-            ' or dynamically respond to screen size changes.',
-            scale=0.6,
-            pos=(xoffs + 8, yoffs + 65),
-            h_align='left',
-            v_align='center',
-        )
-
-        ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
-        self.button(
-            'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
-            pos=(xoffs + 10, yoffs + 10),
-            size=(200, 30),
-            label_scale=0.6,
-            call=self.toggle_ui_overlay,
-            style='bright' if ui_overlay else 'normal',
-        )
-        x = 300
-        self.text(
-            'UI-Scale',
-            pos=(xoffs + x - 5, yoffs + 15),
-            h_align='right',
-            v_align='none',
-            scale=0.6,
-        )
-
-        bwidth = 100
-        for scale in UIScale:
-            self.button(
-                scale.name.capitalize(),
-                pos=(xoffs + x, yoffs + 10),
-                size=(bwidth, 30),
-                label_scale=0.6,
-                call=partial(_babase.app.set_ui_scale, scale),
-                style=(
-                    'bright'
-                    if scale.name.lower() == _babase.get_ui_scale()
-                    else 'normal'
-                ),
-            )
-            x += bwidth + 2
-
-        if custom_buttons:
-            x += cboffs
-            for custom_button in custom_buttons:
-                self.button(
-                    custom_button.name,
-                    pos=(xoffs + x, yoffs + 15),
-                    size=(cbwidth, 40),
-                    label_scale=0.6,
-                    call=custom_button.call,
-                    corner_radius=10.0,
-                )
-                x += cbwidth + cbspacing
-
-    def toggle_ui_overlay(self) -> None:
-        """Toggle UI overlay drawing."""
-        _babase.set_draw_virtual_safe_area_bounds(
-            not _babase.get_draw_virtual_safe_area_bounds()
-        )
-        self.request_refresh()
-
-
 class Table[T]:
     """Used to show controls for arbitrarily large data in a grid form."""
 
@@ -445,6 +355,42 @@ class Table[T]:
         page -= 1
         self.set_focus_entry_index(page * self._entries_per_page)
         tab.request_refresh()
+
+
+class DevConsoleTabGameplay(DevConsoleTab):
+    """Tab for debugging/testing gameplay stuff."""
+
+    @override
+    def refresh(self) -> None:
+        # Match the UI tab's button strip: one row of 40-high buttons
+        # centered horizontally.
+        bheight = 40.0
+        bwidth = 160.0
+        by = 15.0
+        xoffs = -bwidth * 0.5
+
+        debug_draw = _babase.get_debug_draw()
+        self.button(
+            'Debug Drawing ON' if debug_draw else 'Debug Drawing OFF',
+            pos=(xoffs, by),
+            size=(bwidth, bheight),
+            label_scale=0.5,
+            call=self.toggle_debug_draw,
+            style='bright' if debug_draw else 'normal',
+        )
+        self.text(
+            'Debug drawing shows rigid-body and joint guides in the scene'
+            ' (same as the F10 key).',
+            scale=0.6,
+            pos=(0, by + bheight + 20),
+            h_align='center',
+            v_align='center',
+        )
+
+    def toggle_debug_draw(self) -> None:
+        """Toggle engine debug drawing (same as the F10 key)."""
+        _babase.set_debug_draw(not _babase.get_debug_draw())
+        self.request_refresh()
 
 
 class DevConsoleTabLogging(DevConsoleTab):

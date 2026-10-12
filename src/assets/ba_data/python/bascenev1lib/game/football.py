@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, override
 
 import babase
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -150,11 +150,11 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = Scoreboard()
 
         # Load some media we need.
-        self._cheer_sound = classicassets.audio.cheer.get()
-        self._chant_sound = classicassets.audio.crowd_chant.get()
-        self._score_sound = classicassets.audio.score.get()
-        self._swipsound = classicassets.audio.swip.get()
-        self._whistle_sound = classicassets.audio.ref_whistle.get()
+        self._cheer_sound = _classicassets.audio.cheer.get()
+        self._chant_sound = _classicassets.audio.crowd_chant.get()
+        self._score_sound = _classicassets.audio.score.get()
+        self._swipsound = _classicassets.audio.swip.get()
+        self._whistle_sound = _classicassets.audio.ref_whistle.get()
         self._score_region_material = bs.Material()
         self._score_region_material.add_actions(
             conditions=('they_have_material', FlagFactory.get().flagmaterial),
@@ -437,18 +437,18 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         # are gated until construct-mode hands off, and class bodies
         # run at import.
         self.tips = [
-            classicassets.strings.tips.pickup_flag(
+            _classicassets.strings.tips.pickup_flag(
                 pickup=babase.charstr(babase.SpecialChar.TOP_BUTTON)
             )
         ]
 
         # Load some media we need.
-        self._cheer_sound = classicassets.audio.cheer.get()
-        self._boo_sound = classicassets.audio.boo.get()
-        self._chant_sound = classicassets.audio.crowd_chant.get()
-        self._score_sound = classicassets.audio.score.get()
-        self._swipsound = classicassets.audio.swip.get()
-        self._whistle_sound = classicassets.audio.ref_whistle.get()
+        self._cheer_sound = _classicassets.audio.cheer.get()
+        self._boo_sound = _classicassets.audio.boo.get()
+        self._chant_sound = _classicassets.audio.crowd_chant.get()
+        self._score_sound = _classicassets.audio.score.get()
+        self._swipsound = _classicassets.audio.swip.get()
+        self._whistle_sound = _classicassets.audio.ref_whistle.get()
         self._score_to_win = 21
         self._score_region_material = bs.Material()
         self._score_region_material.add_actions(
@@ -898,7 +898,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
                                 )
                         self._bots.stop_moving()
                         self.show_zoom_message(
-                            classicassets.strings.game.victory,
+                            _classicassets.strings.game.victory,
                             scale=1.0,
                             duration=4.0,
                         )

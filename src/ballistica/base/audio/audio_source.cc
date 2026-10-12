@@ -32,9 +32,26 @@ void AudioSource::SetIsMusic(bool val) {
   g_base->audio_server->PushSourceSetIsMusicCall(play_id_, val);
 }
 
+void AudioSource::SetListenerSpace(const AudioListenerSpace& space) {
+  assert(g_base->audio_server);
+  assert(client_queue_size_ > 0);
+  listener_space_ = space;
+  has_listener_space_ = true;
+  wants_positional_ = true;
+  g_base->audio_server->PushSourceSetPositionalCall(play_id_, false);
+  SetGain(1.0f);
+}
+
 void AudioSource::SetPositional(bool val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+
+  // With a listener of our own we always play listener-relative, and
+  // just note whether positions are world ones for us to place.
+  if (has_listener_space_) {
+    wants_positional_ = val;
+    return;
+  }
   g_base->audio_server->PushSourceSetPositionalCall(play_id_, val);
 }
 
@@ -47,12 +64,22 @@ void AudioSource::SetPosition(float x, float y, float z) {
                          "Got nan value in AudioSource::SetPosition.");
   }
 #endif
-  g_base->audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));
+  Vector3f pos{x, y, z};
+  if (has_listener_space_ && wants_positional_) {
+    const AudioListenerSpace& s{listener_space_};
+    Vector3f offs = pos - s.origin;
+    pos = Vector3f(offs.Dot(s.right) * s.pan_scale, offs.Dot(s.up),
+                   offs.Dot(s.back));
+  }
+  g_base->audio_server->PushSourceSetPositionCall(play_id_, pos);
 }
 
 void AudioSource::SetGain(float val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+  if (has_listener_space_) {
+    val *= listener_space_.gain;
+  }
   g_base->audio_server->PushSourceSetGainCall(play_id_, val);
 }
 
@@ -65,7 +92,14 @@ void AudioSource::SetFade(float val) {
 void AudioSource::SetLooping(bool val) {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
+  g_base->audio->OnSourceLoopingSet(id_, play_id_, val);
   g_base->audio_server->PushSourceSetLoopingCall(play_id_, val);
+}
+
+void AudioSource::Retarget(uint32_t play_id_new) {
+  assert(AudioServer::SourceIdFromPlayId(play_id_new) == id_);
+  assert(!available_);
+  play_id_ = play_id_new;
 }
 
 auto AudioSource::Play(SoundAsset* ptr_in) -> uint32_t {
@@ -101,9 +135,9 @@ void AudioSource::End() {
 void AudioSource::Lock(int debug_id) {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   mutex_.lock();
-#if BA_DEBUG_BUILD
   last_lock_time_ = g_core->AppTimeMillisecs();
   lock_debug_id_ = debug_id;
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   locked_ = true;
 #endif
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
@@ -111,13 +145,13 @@ void AudioSource::Lock(int debug_id) {
 
 auto AudioSource::TryLock(int debug_id) -> bool {
   bool locked = mutex_.try_lock();
-#if (BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD)
   if (locked) {
-    locked_ = true;
     last_lock_time_ = g_core->AppTimeMillisecs();
     lock_debug_id_ = debug_id;
-  }
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
+    locked_ = true;
 #endif
+  }
   return locked;
 }
 

@@ -25,6 +25,7 @@ Two ingredients, deliberately split by what kind of thing they are:
   wrongly.
 """
 
+import math
 from typing import TYPE_CHECKING
 
 from bacommon.loctext import evaluate
@@ -121,6 +122,11 @@ def duration_str(
     with neither, negatives render as magnitude plus a leading ``-``
     (D-neg, same caveats).
 
+    The smallest unit shown rounds down, except for ``future`` (a
+    countdown), which rounds up like ``timedelta_str(round_up=True)``:
+    "1s" until the moment actually arrives rather than "0s" for the
+    whole final second.
+
     Raises :class:`KeyError` if the components package is missing an
     entry -- the decode path turns that into the usual fail-visible
     ``LANGSTR_ERROR`` sentinel rather than letting it escape.
@@ -136,7 +142,34 @@ def duration_str(
             -millis, locale, values, maxparts=maxparts, decimals=decimals
         )
         return f'-{rendered}'
+    text, quantum = _duration_parts(millis, locale, values, maxparts, decimals)
+    if direction == 'future':
+        # Round up to a whole number of the smallest unit shown, then
+        # render that (the tolerance keeps float noise in an exact
+        # multiple from costing a whole extra step).
+        rounded = math.ceil(millis / quantum - 1e-9) * quantum
+        if rounded > millis:
+            text, _ = _duration_parts(
+                rounded, locale, values, maxparts, decimals
+            )
+    return text
+
+
+def _duration_parts(
+    millis: float,
+    locale: 'Locale',
+    values: 'dict[str, str | StringSelector]',
+    maxparts: int,
+    decimals: int,
+) -> tuple[str, float]:
+    """Render a non-negative length; also return its smallest step.
+
+    The step is the length in milliseconds of the last unit shown (a
+    fraction of one when it shows decimals) -- how coarsely the text
+    measures.
+    """
     seconds = millis / 1000.0
+    quantum = 1000.0
 
     def _render(entry: str, amount: str) -> str:
         return evaluate(
@@ -163,12 +196,14 @@ def duration_str(
             continue
         if decimals and (len(parts) >= maxparts - 1 or is_seconds_rung):
             amount = format_number(frac_total, decimals, locale)
+            quantum = scale * 1000.0 / 10**decimals
         else:
             amount = str(whole)
+            quantum = scale * 1000.0
         parts.append(_render(entry, amount))
         if len(parts) >= maxparts:
             break
-    return locale.resolved.duration_separator.join(parts)
+    return locale.resolved.duration_separator.join(parts), quantum
 
 
 def render_display_param(

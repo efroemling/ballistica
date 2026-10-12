@@ -9,6 +9,27 @@
 
 namespace ballistica::base {
 
+/// How a 9-patch fills the space between its corners along one axis.
+enum class NinePatchFill {
+  /// Scale the texture's middle region to fill the span.
+  kStretch,
+  /// Repeat the middle region at the corners' scale, scaled slightly so
+  /// a whole number of copies fits (Godot's TILE_FIT, CSS's ``round``).
+  /// The middle region's art must tile seamlessly.
+  kTileFit,
+};
+
+/// Where a 9-patch's texture splits into corners, edges, and middle,
+/// as fractions of the texture's width/height from each side. The
+/// default splits every axis at its middle, so the middle region is a
+/// single line of texels.
+struct NinePatchSourceInsets {
+  float left{0.5f};
+  float bottom{0.5f};
+  float right{0.5f};
+  float top{0.5f};
+};
+
 /// A mesh set up to draw images as 9-patches. Border values are provided
 /// as ratios of total width/height. For example, setting all borders
 /// to 0.3333 will result in a mesh that looks like a uniform 3x3 grid.
@@ -17,6 +38,15 @@ class NinePatchMesh : public MeshIndexedSimpleFull {
   NinePatchMesh(float x, float y, float z, float width, float height,
                 float border_left, float border_bottom, float border_right,
                 float border_top);
+
+  /// As above, but with explicit source insets and per-axis fill modes.
+  /// For tiling, a tile's natural size comes from the corners: the
+  /// scale they're drawn at (output size over source size) applied to
+  /// the source middle region.
+  NinePatchMesh(float x, float y, float z, float width, float height,
+                float border_left, float border_bottom, float border_right,
+                float border_top, const NinePatchSourceInsets& source,
+                NinePatchFill fill_h, NinePatchFill fill_v);
 
   /// Calculate a border value for a NinePatchMesh based on dimensions and a
   /// desired max corner radius. For calculating left or right borders,

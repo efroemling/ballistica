@@ -7,6 +7,7 @@
 """Small handy bits of functionality."""
 
 import os
+import math
 import time
 import random
 import weakref
@@ -880,6 +881,7 @@ def timedelta_str(
     *,
     maxparts: int = 2,
     decimals: int = 0,
+    round_up: bool = False,
 ) -> str:
     """Return a simple human readable time string for a length of time.
 
@@ -891,11 +893,15 @@ def timedelta_str(
     - ``"23d 1h"``        (with maxparts == 2)
     - ``"23d 1.08h"``     (with maxparts == 2 and decimals == 2)
 
+    The smallest unit shown normally rounds down, which suits elapsed
+    times ("0s" until a full second has passed). Pass ``round_up`` for
+    countdowns, which conventionally round up instead: "1s" until the
+    time actually runs out rather than "0s" for the whole final second
+    (and "1h 0m" for 59m 59.5s left).
+
     Note that this is hard-coded in English and probably not especially
     performant.
     """
-    # pylint: disable=too-many-locals
-
     if isinstance(timeval, float | int):
         timevalfin = datetime.timedelta(seconds=timeval)
     else:
@@ -903,7 +909,33 @@ def timedelta_str(
 
     # Internally we only handle positive values.
     if timevalfin.total_seconds() < 0:
-        return f'-{timedelta_str(timeval=-timeval, maxparts=maxparts)}'
+        return '-' + timedelta_str(
+            -timevalfin, maxparts=maxparts, decimals=decimals, round_up=round_up
+        )
+
+    text, quantum = _timedelta_str_parts(timevalfin, maxparts, decimals)
+    if round_up:
+        # Round up to a whole number of the smallest unit shown, then
+        # render that. (The tolerance keeps float noise in an exact
+        # multiple from rounding it up a whole extra step.)
+        total = timevalfin.total_seconds()
+        rounded = math.ceil(total / quantum - 1e-9) * quantum
+        if rounded > total:
+            text, _ = _timedelta_str_parts(
+                datetime.timedelta(seconds=rounded), maxparts, decimals
+            )
+    return text
+
+
+def _timedelta_str_parts(
+    timevalfin: datetime.timedelta, maxparts: int, decimals: int
+) -> tuple[str, float]:
+    """Render a non-negative length; also return its smallest step.
+
+    The step is the length in seconds of the last unit shown (a fraction
+    of one when it shows decimals) -- how coarsely the text measures.
+    """
+    # pylint: disable=too-many-locals
 
     years = timevalfin.days // 365
     days = timevalfin.days % 365
@@ -937,22 +969,25 @@ def timedelta_str(
         years_f = days_f = hours_f = minutes_f = seconds_f = 0.0
 
     parts: list[str] = []
-    for part, part_f, suffix in (
-        (years, years_f, 'y'),
-        (days, days_f, 'd'),
-        (hours, hours_f, 'h'),
-        (minutes, minutes_f, 'm'),
-        (seconds, seconds_f, 's'),
+    quantum = 1.0
+    for part, part_f, suffix, unit in (
+        (years, years_f, 'y', 365 * 86400.0),
+        (days, days_f, 'd', 86400.0),
+        (hours, hours_f, 'h', 3600.0),
+        (minutes, minutes_f, 'm', 60.0),
+        (seconds, seconds_f, 's', 1.0),
     ):
         if part or parts or (not parts and suffix == 's'):
             # Do decimal version only for the last part.
             if decimals and (len(parts) >= maxparts - 1 or suffix == 's'):
                 parts.append(f'{part+part_f:.{decimals}f}{suffix}')
+                quantum = unit / 10**decimals
             else:
                 parts.append(f'{part}{suffix}')
+                quantum = unit
             if len(parts) >= maxparts:
                 break
-    return ' '.join(parts)
+    return ' '.join(parts), quantum
 
 
 def ago_str(

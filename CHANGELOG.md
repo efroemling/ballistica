@@ -1,5 +1,195 @@
-### 1.8.0 (build 22991, api 9, 2026-08-19)
+### 1.8.0 (build 23050, api 9, 2026-10-11)
+- Reworked what happens when more sounds want to play than the game has
+  audio channels for (32). Previously the newest sound was simply
+  dropped, which in busy games (lots of bombs, epic mode) lost
+  explosions, footsteps and sometimes the score-screen music. Now:
+  - Every sound belongs to a 'play group', by default named for the
+    sound less any trailing number (so `explosion01` through
+    `explosion05` share one). Only a few sounds of a group play at once;
+    a new one cuts off the group's oldest.
+  - Sounds have priorities. With every channel busy, a new sound cuts
+    off the oldest playing sound of the lowest priority at or below its
+    own. Music and ui sounds outrank anything content can ask for.
+  - Looping sounds (bomb fuses and the like) are never cut off; one that
+    can't get a channel waits for one as before.
+  - The standard sounds have priorities set: music highest, then the
+    announcer and event stingers, with impacts, skids and swishes below
+    normal and footsteps and falling debris lowest.
+- `bascenev1.Sound.play()` gained `play_group`, `play_group_cap` and
+  `priority` arguments (see the new `bascenev1.SoundPriority`), and
+  `sound` nodes gained matching `play_group`, `play_group_cap` and
+  `priority` attrs. Sound assets can set a play group and priority of
+  their own in their workspace settings.
+- Hosts no longer send clients bursts of sound plays that would only cut
+  each other off on arrival.
+- Scene protocol is now 54 (for the above).
+- Retuned character physics to feel closer to 1.7 after the limbs rework:
+  less bouncy, steadier landings and less speed lost to bumps, and
+  knocked-out characters slide instead of sticking to the floor (thanks
+  TheMikirog!).
+- Added an MSAA option to graphics settings on desktop builds: Auto, Off,
+  or any sample count the graphics hardware supports. Auto behaves as
+  before (4x on Apple Silicon Macs, off elsewhere). Changes apply
+  immediately. Stored as the `MSAA` config value.
+- Reworked how character arms and legs stretch to stay connected: each
+  segment keeps its far end in place and reaches its elbow or knee end
+  to meet its neighbour, so limbs join cleanly at any pose. A limb whose
+  elbow or knee breaks in a shatter stops stretching; the rest keep
+  going.
+- Fixed sounds missing from some server messages (purchases, rewards,
+  league promotions and the like).
+- Texture-role mismatch warnings are no longer logged for content coming
+  from a remote host or a replay; they are meant for whoever authored it.
+- Android: the 'gl view aspect differs from window aspect' warning no
+  longer fires at launch while the system bars are still hiding; it now
+  only reports a mismatch that persists, with more detail.
+- `BA_NO_UDP=1` runs no longer log a spurious 'DoPoll called with neither
+  sd4 or sd6 set' error.
+- Fixed co-op high scores not being accepted from Android builds.
+- Fixed game music never playing on some Android devices (Android 8.1,
+  and devices whose audio output runs on OpenSL ES). The game's own sound
+  was being mistaken for another app's music, which game music politely
+  yields to. Yielding now needs Android 9+ and is skipped on OpenSL.
+- Trimmed long quiet tails from the explosion, impact, punch, drum-roll
+  and cymbal sounds (one explosion ran over 10 seconds) so busy fights,
+  especially in Epic mode, are less likely to run out of audio sources
+  and drop sounds. The dropped-sound warning now names the sound and
+  counts how many were dropped.
+- Fixed an error when enabling a public party.
+- Fixed a crash on Windows (an access violation in `libGLESv2.dll`,
+  anywhere from seconds to half an hour into a run, on NVIDIA and Intel
+  graphics alike). It was a bug in ANGLE's Direct3D 11 backend: its
+  input-layout cache hashed a key struct that included uninitialized
+  padding bytes, so the cache could hand back an entry it had already
+  destroyed. Our Windows ANGLE build now carries a patch for it.
+- Fixed OpenGL errors at launch on Windows from the builtin black cube map,
+  whose compressed form was smaller than Direct3D 11 allows.
+- Fixed an Android crash when the text-editing dialog was dismissed after
+  the app had been sent to the background.
+- Hosting is more robust against misbehaving user mods: a player-join
+  request whose Python handling raises or returns nothing now counts as a
+  refusal instead of leaving a half-added player behind, and lobby choosers
+  built by older mods no longer fail every join.
+- Error reports now count any Python present in the mods directory as
+  'modded' (previously only commands run, workspaces or replaced app
+  scripts did, which missed plugins).
+- Fixed the game failing at launch ('Failed to load bundled builtin
+  asset-packages') on Android devices whose graphics hardware lacks ASTC
+  texture support (some older phones, x86 devices and emulators). Store
+  builds bundle most asset-packages in ASTC form only; only the builtin
+  package is required at launch now, and such devices download the rest in
+  a form they can use on first run. That fatal error also now says what
+  went wrong.
+- Fixed all Android builds being treated as having modified scripts, which
+  mislabeled their error reports.
+- In team games a player's cloud character, its icon and the lobby's name
+  and icon displays now keep the team's color clearly dominant: the
+  character's other tint colors are toned toward it ('team coloring'), and
+  icons take the team color as the character itself does. Spaz and
+  depictiondisplay nodes gain a `team_coloring` attr, and any depiction can
+  carry a `color_override` and `team_coloring` of its own. Scene protocol 53.
+- Asset-package textures now carry the role they were authored with, and the
+  engine checks it where a texture is used: a `data` texture (a mask or tint,
+  whose channels are independent values) drawn as a picture, or a picture
+  bound as a colorize/mask texture, logs a one-time warning naming the
+  texture. Masks built with the `data` role are no longer premultiplied by
+  their alpha; the masked image shader applies mask alpha itself for those.
+  Textures that did not come from an asset package are not checked.
+- Doc-ui pages (the settings pages, inbox, etc.) open faster, most noticeably
+  on slower devices: asset-packages already resolved this run are no longer
+  resolved again for every page shown. A page or asset resolve that takes
+  over a second for purely local reasons (nothing fetched from the network)
+  now logs a warning saying where the time went.
+- Fixed keyboard/controller selection getting stuck on doc-ui pages with
+  nothing selectable on them (an empty inbox, say): such a page now gets a
+  subtle Ok button at its end that closes the window.
+- The `BA_DATA_DIR` environment variable now does what the `--data-dir`
+  arg does (the arg wins if both are given), for launchers that can set an
+  environment but not pass args. The Flatpak uses it, so the game no longer
+  needs a wrapper script to start from its data dir.
+- Under Flatpak the default config dir is now the app's own data dir
+  (`~/.var/app/<app-id>/.ballisticakit`) instead of a `--persist` mount
+  over `~/.ballisticakit`. It is the same folder on disk, so nothing moves,
+  but its path is now valid outside the sandbox too, which fixes 'Show Mods
+  Folder' doing nothing.
+- Touchscreen players on Android and iPhone now get haptic feedback from the
+  device itself for the same events controllers rumble for (Android 10 and
+  newer on devices with a vibrator; iPhones but not iPads). An 'Enable Haptics'
+  checkbox on the touchscreen settings page turns it off; it is dimmed where
+  the device can't do it.
+- Android graphics settings gained a 'Thermal Throttling' checkbox (on by
+  default) controlling whether the game drops to 60hz when the device gets
+  too hot. The notice shown when that happens now points there.
+- The economy and player-profile strings moved out of the ui-chrome
+  asset package into a new `baclassicuiassets` package, and 'global
+  profile' and profile 'icon' now read the same way everywhere in every
+  language (built on new shared translation terms).
+- Fixed bots (and other non-cloud characters) drawing with their character
+  definition's highlight instead of their own (e.g. Impact Bot Pro's red
+  hair showing up green). Only cloud-profile looks use character
+  definitions now; everything else uses the classic appearance path.
+- Spaz nodes gained `use_spaz_def_color` and `use_spaz_def_highlight`
+  (default False): when set, a spaz wearing a `bascenev1.SpazDef` draws the
+  definition's own color/highlight instead of the `color`/`highlight`
+  attrs. The `highlight` attr is now honored for definition-form spazzes,
+  and the `color`/`highlight` attrs read back as set. Scene protocol 49.
+- Prop and bomb nodes gained `stickiness` (a float from 0.01 to 10.0, default
+  1.0), which scales how strongly a `sticky` node sticks to things. Scene
+  protocol 51.
+- Added a `legacy_spaz_physics` server config option (default false) which
+  gives spazzes the pre-1.8 physics (limbs and punch simulated in the main
+  sim), for servers whose players miss the 'bomb-jump' trick. Expect server
+  bandwidth to double or triple with it on. Scripts can do the same by
+  setting `babase.app.classic.legacy_spaz_physics` to True; activities
+  started while it is set are affected. An activity can also ask for it
+  itself with `legacy_spaz_limbs = True`, which now brings back the old
+  punch placement along with the old limbs (the tutorial does this).
+- Spaz nodes gained `boxing_gloves_mesh`, `boxing_gloves_color_texture`,
+  `boxing_gloves_color` (a multiply tint, default white) and
+  `boxing_gloves_scale` (default 1.0) for customizing how boxing gloves
+  look. Leaving the mesh or texture unset gives the stock gloves. The mesh is
+  the right-hand glove (the left is mirrored), and scale is visual only;
+  punch reach is unchanged.
+- `bascenev1lib.actor.image.Image.Attach` now covers all nine attach points
+  the image node supports (added `TOP_RIGHT`, `CENTER_LEFT`, `CENTER_RIGHT`,
+  `BOTTOM_LEFT` and `BOTTOM_RIGHT`), and `bascenev1lib.actor.text.Text.VAlign`
+  gained `TOP` and `BOTTOM`.
+- Fixed a spaz sharing a `bascenev1.SpazDef` with another sometimes keeping
+  the stand-in look (gray hair, default eyes) after the definition's media
+  finished loading.
+- Shield nodes gained `health_bar_display`, a `bascenev1.HealthBarDisplay`
+  value (`DEFAULT`, `AFTER_DAMAGE`, `ALWAYS`, `NEVER`) controlling when
+  their health bar shows; `DEFAULT` defers to the existing
+  `always_show_health_bar`, which keeps working. Based on a community PR
+  (#966) by anasdhaoidi.
+- `bauiv1.textwidget()` gained `on_apply_call`, which runs (with the new
+  text) whenever an edit is applied: a string-edit dialog closing with a value,
+  inline editing ending via return or focus leaving the widget, or the clear
+  button. Not per character, and only when the text actually changed.
+- `bauiv1.textwidget()`'s `on_return_press_call` / `invoke_return_press` args
+  are now `on_submit_call` / `invoke_submit` (the old names still work with a
+  deprecation warning until api 9 support ends; see CHANGELOG_API_VERSIONS.md).
+- Android: fixed the game staying at 60hz on devices where switching to
+  the display's fastest mode is a non-seamless mode change (many
+  ColorOS/MediaTek phones, e.g. Realme). The frame-rate vote now derives
+  the display's peak rate from all supported modes at the current
+  resolution instead of only the seamlessly-switchable ones, and also
+  requests the display mode at the window level, which some OEM display
+  policies honor where a plain surface frame-rate vote is ignored.
+- Android: the thermal frame-rate back-off now waits for the OS to report
+  severe throttling for a sustained 10 seconds before dropping to 60hz
+  (some devices report it spuriously right at launch), and when it does
+  drop on a faster-than-60hz display it now shows a one-time screen
+  message explaining why.
 - Fully implemented asset packages (more on this soon)
+- The asset-package wrapper modules bundled with the engine are now all
+  private: `babase.builtinassets`, `bascenev1.builtinassets`, and
+  `bauiv1.builtinassets` are now `_builtinassets`, and
+  `bascenev1.classicassets` / `bauiv1.classicassets` are now
+  `_classicassets` (joining the already-private `_commonassets`). Mods can
+  bundle their own generated wrapper modules for whatever packages they
+  use, so there is no reason for ours to be public API we would then have
+  to keep stable.
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
   through the `plus` feature-set; the engine can now persist its config with
@@ -59,6 +249,20 @@
   table is restored to its historical layout (with `rotate` now after
   `fuse_length`), and a golden test now pins every node type's attr indices
   so table shifts get caught in CI. This bumps the scene-v1 protocol to 43.
+- Joining a server that runs an older version of the game now shows a
+  yellow screen-message warning that some newer characters may show up as
+  older ones there (groundwork for on-the-fly character downloads). This
+  bumps the scene-v1 protocol to 44.
+- New `bascenev1.Character`: a session-level character definition built
+  from an opaque json description and assigned to a spaz node's new
+  `character` attr. When set, the node draws, voices, and proportions
+  itself from the definition (falling back to a standard-spaz standin
+  until the definition's media is available locally), and the legacy
+  per-part mesh/texture/sound attrs, `style`, and `highlight` are ignored.
+  Definitions live and die with their references like materials do. All
+  builtin characters now spawn this way; mod-defined appearances without a
+  definition keep using the legacy explicit-media form. (Part of the
+  protocol-44 changes.)
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).
@@ -106,6 +310,42 @@
   the new rotation value on the prop node. For example, to point a prop in
   random heading (rotating around the up axis) you can do:
   `"rotate": bs.Quat.from_angles(heading=random.uniform(0.0, 360.0))`
+- Added wrapping params for textures (clamp by default), and relaxed the
+  requirement that texture dimensions be a power-of-two. That requirement now
+  only applies to wrapped dimensions (where there are some subtle technical
+  benefits). In other cases they can be any size (though dimensions must be
+  divisible by 4).
+- Android builds should now properly respect camera cutouts and round corners.
+  Please holler if you see any UI elements being cut off at this point.
+- OS Text rendering (Asian languages, emoji, etc.) is now more efficient and
+  renders more cleanly in the background, meaning it should never cause frame
+  hitches. The credits window used to be a major offender here and should now
+  come up smoothly.
+- On Android, frame-rate should now be the native device frame-rate instead of
+  60 by default, and should respond to game-mode and thermal settings so it
+  drops to 60 if the device is getting hot or the user puts it into energy-saver
+  mode via game-overlays or whatnot.
+- The dev-console on-screen button can now be dragged around.
+- Improved caching and restore behavior on DocUI - re-opening the store should
+  generally now be instant after it has loaded once successfully/etc.
+- Finally added a slider widget! - `bauiv1.sliderwidget()`.
+- Assets for bauiv1 and bascenev2 are now fed in through Python - this means it
+  will be possible to replace them with custom assets using mods; no need to
+  hack system scripts.
+- Android builds now access their bundled Python files and assets directly from
+  their APK, which speeds up booting and eliminates the 'finishing
+  install..please wait' dialog at launch.
+- Finally resurrected my old debug-draw mode from many years ago. Press F10 or
+  use the new gameplay dev-console tab to toggle it.
+- Control guides at the start of games now properly show controls for the local
+  client; not for the host.
+- You can now click to place the cursor in direct-input text boxes.
+- Game music now automatically stops playing anytime external music is playing
+  on Android 8.1+ (and upcoming iOS) devices.
+- Private/LAN parties hosted from the game now verify joiners' accounts
+  when possible (so their cloud profiles come along) without requiring it:
+  joiners who are signed out or offline, or a host that is offline, still
+  connect just as before. Public parties still require sign-in.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

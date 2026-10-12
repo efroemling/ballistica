@@ -85,6 +85,34 @@ MESSAGES: list[Message] = [
         doc='ConnectivityManager network availability changed.',
     ),
     Message(
+        name='OSMusicPlayingChanged',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[Field('playing', BOOL)],
+        doc=(
+            'Whether another app is playing music (a started USAGE_MEDIA'
+            ' player in the AudioPlaybackCallback list); game music'
+            ' yields to it. Sent on change and re-seeded on every onStart.'
+        ),
+    ),
+    Message(
+        name='DisplayInsetsChanged',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[
+            Field('left', FLOAT),
+            Field('right', FLOAT),
+            Field('bottom', FLOAT),
+            Field('top', FLOAT),
+        ],
+        doc=(
+            'Display-cutout safe insets changed, as fractions (0-1) of'
+            ' the window in each direction. Fractions rather than'
+            ' pixels because the GL surface is often a scaled-down'
+            ' version of the window; sending pixels invites applying'
+            " window-space values in surface space. Sent on rotation"
+            ' and any other insets update.'
+        ),
+    ),
+    Message(
         name='SetRunning',
         direction=Dir.JAVA_TO_NATIVE,
         fields=[Field('running', BOOL)],
@@ -217,6 +245,15 @@ MESSAGES: list[Message] = [
         doc='Show the "temporarily unavailable" message.',
     ),
     Message(
+        name='ThermalFrameRateCapNotice',
+        direction=Dir.JAVA_TO_NATIVE,
+        doc=(
+            'Show the "device is running hot; frame rate reduced" screen'
+            ' message. Sent once per run when the thermal frame-rate'
+            ' back-off engages on a display faster than 60hz.'
+        ),
+    ),
+    Message(
         name='InProgressMessage',
         direction=Dir.JAVA_TO_NATIVE,
         doc='Show the "in progress" message.',
@@ -235,6 +272,16 @@ MESSAGES: list[Message] = [
         name='PurchaseAlreadyInProgressError',
         direction=Dir.JAVA_TO_NATIVE,
         doc='Show the "purchase already in progress" error message.',
+    ),
+    Message(
+        name='PurchasePendingNotice',
+        direction=Dir.JAVA_TO_NATIVE,
+        doc=(
+            'Show the "payment pending" dialog. Sent when a purchase flow'
+            ' the user just initiated comes back PENDING (UPI, cash, some'
+            ' bank methods): nothing is granted until the order clears,'
+            ' so without this the flow just silently closes.'
+        ),
     ),
     Message(
         name='CardboardRingPull',
@@ -341,6 +388,16 @@ MESSAGES: list[Message] = [
         direction=Dir.JAVA_TO_NATIVE,
         fields=[Field('login_type', STR)],
         doc='Java reports an implicit sign-out.',
+    ),
+    Message(
+        name='DeviceHapticsSupported',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[Field('supported', BOOL)],
+        doc=(
+            'Whether the device itself can play our haptic effects: it'
+            ' has a vibrator and the OS is new enough for predefined'
+            ' effects (API 29+). Sent once when native init completes.'
+        ),
     ),
     # ---- Native -> Java ----
     Message(
@@ -486,6 +543,43 @@ MESSAGES: list[Message] = [
             Field('increment', INT),
         ],
         doc='Raw Google Play Player Analytics counter increment (2-arg form).',
+    ),
+    Message(
+        name='SetGameLoading',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('loading', BOOL)],
+        doc=(
+            "Tell the OS whether the game is in a loading phase, via "
+            "Android's GameState API (API 33+). The Java side also flips "
+            'this on by itself when it kicks off native-layer init; the '
+            'engine sends false when the construct-mode asset gate opens '
+            '(bring-up complete). Devices whose Power HAL wires the '
+            'GAME_LOADING power mode can boost clocks for the duration.'
+        ),
+    ),
+    Message(
+        name='SetThermalThrottling',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('enabled', BOOL)],
+        doc=(
+            "Whether we drop our frame rate under severe thermal pressure"
+            " (the 'Thermal Throttling' graphics setting). Sent each time"
+            ' graphics settings are applied; while off, Java tracks'
+            ' thermal state but neither caps the rate nor shows the'
+            ' notice.'
+        ),
+    ),
+    Message(
+        name='DeviceHaptic',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('effect', INT)],
+        doc=(
+            'Play a predefined haptic effect on the device itself (not a'
+            ' controller). The value is an Android'
+            ' VibrationEffect.EFFECT_* id; which effect an event gets is'
+            ' decided on the native side. Ignored where'
+            ' DeviceHapticsSupported reported false.'
+        ),
     ),
     # ---- Native -> Java (flavor-specific actions) ----
     Message(

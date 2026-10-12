@@ -95,8 +95,15 @@ auto Matrix44fFrustum(float left, float right, float bottom, float top,
   float m_persp[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0};
   m_persp[0] = (2.0f * nearval) / (right - left);
   m_persp[5] = (2.0f * nearval) / (top - bottom);
-  m_persp[10] = -(farval + nearval) / (farval - nearval);
-  m_persp[8] = -(right + left) / (right - left);
+  // Note the horizontal off-center term is NOT negated. It used to be,
+  // which was invisible for as long as every caller passed a symmetric
+  // frustum (right == -left makes this term zero), and wrong the
+  // moment one didn't: an off-center frustum came out mirrored
+  // horizontally about the view axis, shifting the world by twice the
+  // off-centeredness while leaving the (correct) vertical term alone.
+  // Found via virtual-bounds A/B testing, which builds a deliberately
+  // asymmetric frustum; see docs/initiatives/active-render-rect.md.
+  m_persp[8] = (right + left) / (right - left);
   m_persp[9] = (top + bottom) / (top - bottom);
   m_persp[10] = -(farval + nearval) / (farval - nearval);
   m_persp[14] = -2 * farval * nearval / (farval - nearval);

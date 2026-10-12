@@ -15,7 +15,7 @@
 // values stay unchanged. Nothing here depends on SDL or any build flag;
 // this is the engine's own input vocabulary.
 //
-// See docs/initiatives/sdl-type-decoupling.md.
+// See docs/design/sdl-builds.md.
 
 typedef int32_t BAKeycode;
 

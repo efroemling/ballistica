@@ -26,7 +26,9 @@ from typing import TYPE_CHECKING
 
 import _bauiv1
 
-from babase import check_asset_package_load
+from babase import check_asset_package_load, wrapper_langstr
+from bacommon.assetpackage import ApverNum
+from bacommon.depiction import CharacterIconDepiction
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
@@ -34,6 +36,7 @@ from bacommon.assetspec import (
 )
 
 if TYPE_CHECKING:
+    import babase
     import bauiv1
 
 
@@ -49,10 +52,21 @@ class TextureHandle(_TextureSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _TextureSpec) -> 'TextureHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apvernum, spec._name)
+
     def get(self) -> 'bauiv1.Texture':
         """Resolve and return the live engine texture for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.aptextureget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apvernum, self._name)
+        return _bauiv1.aptextureget(self._apvernum, self._name)
 
 
 class MeshHandle(_MeshSpec):
@@ -60,10 +74,21 @@ class MeshHandle(_MeshSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _MeshSpec) -> 'MeshHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apvernum, spec._name)
+
     def get(self) -> 'bauiv1.Mesh':
         """Resolve and return the live engine mesh for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.apmeshget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apvernum, self._name)
+        return _bauiv1.apmeshget(self._apvernum, self._name)
 
 
 class SoundHandle(_SoundSpec):
@@ -71,10 +96,21 @@ class SoundHandle(_SoundSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _SoundSpec) -> 'SoundHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apvernum, spec._name)
+
     def get(self) -> 'bauiv1.Sound':
         """Resolve and return the live engine sound for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.apsoundget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apvernum, self._name)
+        return _bauiv1.apsoundget(self._apvernum, self._name)
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -94,10 +130,12 @@ class AssetGroup:
     in what its leaves' ``get()`` loads (ui vs scene assets).
     """
 
-    __slots__ = ('_apverid', '_node', '_prefix')
+    __slots__ = ('_apvernum', '_node', '_prefix')
 
-    def __init__(self, apverid: str, node: AssetGroupTree, prefix: str) -> None:
-        self._apverid = apverid
+    def __init__(
+        self, apvernum: ApverNum, node: AssetGroupTree, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
         self._node = node
         self._prefix = prefix
 
@@ -110,18 +148,137 @@ class AssetGroup:
             raise AttributeError(name) from None
         path = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return AssetGroup(self._apverid, child, path)
-        return _make(self._apverid, path, child)
+            return AssetGroup(self._apvernum, child, path)
+        return _make(self._apvernum, path, child)
 
 
 def _make(
-    apverid: str, path: str, kind: str
+    apvernum: ApverNum, path: str, kind: str
 ) -> TextureHandle | MeshHandle | SoundHandle:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureHandle(apverid, path)
+        return TextureHandle(apvernum, path)
     if kind == 'm':
-        return MeshHandle(apverid, path)
+        return MeshHandle(apvernum, path)
     if kind == 's':
-        return SoundHandle(apverid, path)
-    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
+        return SoundHandle(apvernum, path)
+    raise ValueError(f'Invalid asset-ref kind {kind!r} for {apvernum}:{path}.')
+
+
+#: What a wrapper carries per character: the json of its icon and the
+#: logical path of its name string. A subdirectory of characters is a
+#: nested dict of the same.
+type CharacterGroupData = dict[str, 'tuple[str, str] | CharacterGroupData']
+
+
+class CharacterHandle:
+    """A character from an asset-package, as the ui sees it.
+
+    Reached through a generated wrapper (``mypackage.characters.zoe``).
+    The ui form of :class:`bascenev1.CharacterHandle`: its name and its
+    icon, with no scene involved.
+    """
+
+    __slots__ = ('_apvernum', '_path', '_data')
+
+    def __init__(
+        self, apvernum: ApverNum, path: str, data: tuple[str, str]
+    ) -> None:
+        self._apvernum = apvernum
+        self._path = path
+        self._data = data
+
+    def get_icon_depiction(self) -> CharacterIconDepiction:
+        """Return this character's icon, in its own colors.
+
+        A new object each call, so its color override is the caller's
+        to set.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        return CharacterIconDepiction(self._data[0])
+
+    def get_name(self) -> 'babase.LangStr':
+        """Return this character's name."""
+        return wrapper_langstr(self._apvernum, self._data[1])
+
+
+class CharacterGroup:
+    """Dynamic accessor for one directory of an asset-package's characters.
+
+    Attribute access yields a :class:`CharacterHandle`, or another
+    group for a subdirectory; all real type information lives in the
+    wrapper's ``if TYPE_CHECKING:`` shadow.
+    """
+
+    __slots__ = ('_apvernum', '_data', '_prefix')
+
+    def __init__(
+        self, apvernum: ApverNum, data: CharacterGroupData, prefix: str
+    ) -> None:
+        self._apvernum = apvernum
+        self._data = data
+        self._prefix = prefix
+
+    def __getattr__(self, name: str) -> 'CharacterHandle | CharacterGroup':
+        try:
+            data = self._data[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        path = f'{self._prefix}/{name}'
+        if isinstance(data, dict):
+            return CharacterGroup(self._apvernum, data, path)
+        return CharacterHandle(self._apvernum, path, data)
+
+
+def _split_ref(ref: str) -> tuple[ApverNum, str]:
+    """Split a qualified ``<apvernum>:<name>`` ref into its two parts.
+
+    **Boundary use only.** Asset identity inside the app is a typed
+    handle from a generated wrapper module; nothing here builds or
+    accepts a path string. But refs do still arrive from *outside* as
+    strings -- server-sent content, saved app-config, the scene wire,
+    stored player profiles -- and something has to turn those into
+    assets. That conversion happens here, in one named place, rather
+    than ambiently.
+
+    New code should hold a handle and call its ``get()`` instead.
+    """
+    apvernum, sep, name = ref.partition(':')
+    if not sep:
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}'. Legacy bare"
+            f' names load through the legacy get* calls instead.'
+        )
+    if not apvernum.isdigit():
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}' (its package"
+            f' is not a numeric id).'
+        )
+    return ApverNum(int(apvernum)), name
+
+
+def texture_from_ref(ref: str) -> 'bauiv1.Texture':
+    """Load a texture from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apvernum, assetname = _split_ref(ref)
+    return _bauiv1.aptextureget(apvernum, assetname)
+
+
+def mesh_from_ref(ref: str) -> 'bauiv1.Mesh':
+    """Load a mesh from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apvernum, assetname = _split_ref(ref)
+    return _bauiv1.apmeshget(apvernum, assetname)
+
+
+def sound_from_ref(ref: str) -> 'bauiv1.Sound':
+    """Load a sound from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apvernum, assetname = _split_ref(ref)
+    return _bauiv1.apsoundget(apvernum, assetname)

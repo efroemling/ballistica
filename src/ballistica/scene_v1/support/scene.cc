@@ -7,8 +7,10 @@
 
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -27,6 +29,66 @@ namespace ballistica::scene_v1 {
 
 auto Scene::GetSceneStream() const -> SessionStream* {
   return output_stream_.get();
+}
+
+auto Scene::render_view() const -> base::RenderView* {
+  if (render_view_.exists()) {
+    return render_view_.get();
+  }
+  return g_base->graphics->main_view();
+}
+
+void Scene::set_render_view(base::RenderView* view) {
+  // Nodes register things with their scene's view (its camera, for
+  // one) as they are made, so this can't change out from under them.
+  assert(nodes_.empty());
+  render_view_ = view;
+
+  // A world with a view of its own gets bg-dynamics of its own to go
+  // with it, so its debris, smoke, and shadows are its alone. (Headless
+  // builds have no bg-dynamics at all.)
+  bg_dynamics_world_.Clear();
+  if (view != nullptr && g_base->bg_dynamics != nullptr) {
+    bg_dynamics_world_ = Object::New<base::BGDynamicsWorld>(view);
+  }
+}
+
+auto Scene::bg_dynamics_world() const -> base::BGDynamicsWorld* {
+  if (bg_dynamics_world_.exists()) {
+    return bg_dynamics_world_.get();
+  }
+  if (g_base->bg_dynamics == nullptr) {
+    return nullptr;
+  }
+  return g_base->bg_dynamics->main_world();
+}
+
+auto Scene::NewAudioSource(base::SoundAsset* for_sound, bool looping)
+    -> base::AudioSource* {
+  base::AudioPlaySpec spec;
+  spec.sound = for_sound;
+  spec.looping = looping;
+  return NewAudioSource(spec);
+}
+
+auto Scene::NewAudioSource(const base::AudioPlaySpec& spec)
+    -> base::AudioSource* {
+  if (silent_) {
+    return nullptr;
+  }
+  base::AudioSource* source = g_base->audio->SourceBeginNew(spec);
+  if (source != nullptr && audio_listener_space_.has_value()) {
+    source->SetListenerSpace(*audio_listener_space_);
+  }
+  return source;
+}
+
+void Scene::SetAudioListenerSpace(const base::AudioListenerSpace* space) {
+  if (space == nullptr) {
+    audio_listener_space_.reset();
+  } else {
+    audio_listener_space_ = *space;
+  }
 }
 
 void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
@@ -71,19 +133,145 @@ Scene::~Scene() {
   }
 }
 
-void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
-                                float y, float z, bool host_only) {
-  if (output_stream_.exists() && !host_only) {
-    output_stream_->PlaySoundAtPosition(sound, volume, x, y, z);
+// How long a burst of plays of one play group is (see ShouldSendPlay_).
+// Matches how long a sound keeps another play of itself from starting
+// (base::Audio::ShouldPlay).
+const millisecs_t kPlayBurstMillisecs = 50;
+
+void SoundPlayOptions::Sanitize() {
+  group = base::Audio::NormalizePlayGroupName(group);
+  if (group_cap < 0) {
+    group_cap = 0;
   }
-  g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z);
+  if (group_cap > base::kMaxRemotePlayGroupCap) {
+    group_cap = base::kMaxRemotePlayGroupCap;
+  }
+  if (priority < -1) {
+    priority = -1;
+  }
+  if (priority > static_cast<int>(base::kAudioPriorityAssetMax)) {
+    priority = static_cast<int>(base::kAudioPriorityAssetMax);
+  }
 }
 
-void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
-  if (output_stream_.exists() && !host_only) {
-    output_stream_->PlaySound(sound, volume);
+auto SoundPlayOptions::ToOverrides() const -> base::AudioPlayOverrides {
+  base::AudioPlayOverrides overrides;
+  if (!group.empty()) {
+    overrides.group = g_base->audio->InternPlayGroup(group);
   }
-  g_base->audio->PlaySound(sound->GetSoundData(), volume);
+  overrides.group_cap = group_cap;
+  if (priority >= 0) {
+    overrides.priority = static_cast<base::AudioPriority>(priority);
+  }
+  return overrides;
+}
+
+auto SoundPlayOptions::PriorityName(int priority) -> std::string {
+  switch (priority) {
+    case static_cast<int>(SoundPriority::kLower):
+      return "lower";
+    case static_cast<int>(SoundPriority::kLow):
+      return "low";
+    case static_cast<int>(SoundPriority::kDefault):
+      return "default";
+    case static_cast<int>(SoundPriority::kHigh):
+      return "high";
+    case static_cast<int>(SoundPriority::kHigher):
+      return "higher";
+    default:
+      return "";
+  }
+}
+
+auto SoundPlayOptions::PriorityFromName(const std::string& name) -> int {
+  if (name.empty()) {
+    return -1;
+  }
+  for (int i = 0; i < static_cast<int>(SoundPriority::kLast); ++i) {
+    if (PriorityName(i) == name) {
+      return i;
+    }
+  }
+  throw Exception("Invalid sound priority '" + name
+                      + "' (expected 'lower', 'low', 'default', 'high',"
+                        " 'higher' or '').",
+                  PyExcType::kValue);
+}
+
+auto Scene::ShouldSendPlay_(SceneSound* sound, const SoundPlayOptions& options)
+    -> bool {
+  int group = options.group.empty()
+                  ? sound->GetSoundData()->play_group()
+                  : g_base->audio->InternPlayGroup(options.group);
+  if (group < 0) {
+    return true;
+  }
+  int cap =
+      options.group_cap > 0 ? options.group_cap : base::kDefaultPlayGroupCap;
+  millisecs_t now = g_core->AppTimeMillisecs();
+  PlayBurst_& burst = play_bursts_[group];
+  if (burst.count == 0 || now - burst.start_time >= kPlayBurstMillisecs) {
+    burst.start_time = now;
+    burst.count = 0;
+  }
+  if (burst.count >= cap) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [sound, group] {
+      return "Not sending play of '" + sound->GetSoundData()->GetName()
+             + "' (burst of play group '" + g_base->audio->PlayGroupName(group)
+             + "').";
+    });
+    return false;
+  }
+  burst.count++;
+  return true;
+}
+
+void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
+                                float y, float z, bool host_only,
+                                const SoundPlayOptions& options) {
+  if (output_stream_.exists() && !host_only
+      && ShouldSendPlay_(sound, options)) {
+    output_stream_->PlaySoundAtPosition(sound, volume, x, y, z, options);
+  }
+  if (silent_) {
+    return;
+  }
+  // With a listener of our own, go through one of our sources so it
+  // places the sound for it.
+  if (audio_listener_space_.has_value()) {
+    if (!g_base->audio->ShouldPlay(sound->GetSoundData())) {
+      return;
+    }
+    base::AudioPlaySpec spec;
+    spec.sound = sound->GetSoundData();
+    spec.overrides = options.ToOverrides();
+    if (base::AudioSource* source = NewAudioSource(spec)) {
+      source->SetGain(volume);
+      source->SetPosition(x, y, z);
+      source->Play(sound->GetSoundData());
+      source->End();
+    }
+    return;
+  }
+  g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z,
+                                     options.ToOverrides());
+}
+
+void Scene::PlaySound(SceneSound* sound, float volume, bool host_only,
+                      const SoundPlayOptions& options) {
+  if (output_stream_.exists() && !host_only
+      && ShouldSendPlay_(sound, options)) {
+    output_stream_->PlaySound(sound, volume, options);
+  }
+  if (silent_) {
+    return;
+  }
+  // Unplaced sounds just take our listener's gain.
+  if (audio_listener_space_.has_value()) {
+    volume *= audio_listener_space_->gain;
+  }
+  g_base->audio->PlaySound(sound->GetSoundData(), volume,
+                           options.ToOverrides());
 }
 
 auto Scene::IsOutOfBounds(float x, float y, float z) -> bool {
@@ -99,6 +287,16 @@ auto Scene::IsOutOfBounds(float x, float y, float z) -> bool {
 }
 
 void Scene::Draw(base::FrameDef* frame_def) {
+  // With bg-dynamics of our own, seeing to it is up to us. (The main
+  // world's is shared by scenes that come and go, so Graphics sees to
+  // that.) Nodes that show its results read them while drawing, so
+  // pull the latest in first, waiting briefly for a step still in
+  // flight.
+  base::BGDynamicsWorld* own_bg_world = bg_dynamics_world_.get();
+  if (own_bg_world != nullptr) {
+    own_bg_world->AdoptResults(true);
+  }
+
   // Draw our nodes.
   for (auto&& i : nodes_) {
     g_base->graphics->PreNodeDraw();
@@ -108,6 +306,10 @@ void Scene::Draw(base::FrameDef* frame_def) {
 
   // Draw any dynamics debugging extras.
   dynamics_->Draw(frame_def);
+
+  if (own_bg_world != nullptr) {
+    own_bg_world->Draw(frame_def);
+  }
 }
 
 auto Scene::GetNodeMessageType(const std::string& type) -> NodeMessageType {
@@ -165,12 +367,14 @@ void Scene::Step() {
   }
 
   // And step things locally.
-  if (is_foreground) {
+  // The main world's bg-dynamics is shared by whichever scenes draw
+  // through the main view, and steps with the one in the foreground. A
+  // scene with its own steps its own, foreground or no.
+  if (is_foreground || bg_dynamics_world_.exists()) {
     Vector3f cam_pos = {0.0f, 0.0f, 0.0f};
-    g_base->graphics->camera()->get_position(&cam_pos.x, &cam_pos.y,
-                                             &cam_pos.z);
-    if (!g_core->HeadlessMode()) {
-      g_base->bg_dynamics->Step(cam_pos, kGameStepMilliseconds);
+    render_view()->camera()->get_position(&cam_pos.x, &cam_pos.y, &cam_pos.z);
+    if (base::BGDynamicsWorld* world = bg_dynamics_world()) {
+      world->Step(cam_pos, kGameStepMilliseconds);
     }
   }
 
@@ -374,6 +578,14 @@ void Scene::DumpNodes(SessionStream* out) {
             out->SetNodeAttr(attr, attr.GetAsTexture());
             break;
           }
+          case NodeAttributeType::kSpazDef: {
+            out->SetNodeAttr(attr, attr.GetAsSpazDef());
+            break;
+          }
+          case NodeAttributeType::kDepiction: {
+            out->SetNodeAttr(attr, attr.GetAsDepiction());
+            break;
+          }
           case NodeAttributeType::kTextureArray: {
             out->SetNodeAttr(attr, attr.GetAsTextures());
             break;
@@ -445,7 +657,55 @@ void Scene::DumpNodes(SessionStream* out) {
   }
 }
 
+auto Scene::GetCorrectionMessageCompact_(bool blended) -> std::vector<uint8_t> {
+  // Body payload first; the node count goes in front as a varint once
+  // we know it.
+  std::vector<uint8_t> payload;
+  uint32_t node_count = 0;
+  std::vector<RigidBody*> dynamic_bodies;
+  for (auto&& i : nodes_) {
+    Node* n = i.get();
+    assert(n);
+    if (!n || n->parts().empty()) {
+      continue;
+    }
+    dynamic_bodies.clear();
+    for (auto&& j : n->parts()) {
+      for (auto&& k : j->rigid_bodies()) {
+        if (k->type() == RigidBody::Type::kBody) {
+          dynamic_bodies.push_back(k);
+        }
+      }
+    }
+    if (dynamic_bodies.empty()) {
+      continue;
+    }
+    node_count++;
+    AppendVarint(&payload, static_cast_check_fit<uint32_t>(n->stream_id()));
+    payload.push_back(static_cast_check_fit<uint8_t>(dynamic_bodies.size()));
+    for (auto* b : dynamic_bodies) {
+      payload.push_back(static_cast_check_fit<uint8_t>(b->id()));
+      b->EmbedCompact(&payload);
+    }
+    std::vector<uint8_t> resync = n->GetResyncData();
+    AppendVarint(&payload, static_cast_check_fit<uint32_t>(resync.size()));
+    payload.insert(payload.end(), resync.begin(), resync.end());
+  }
+  // An empty correction is 3 bytes here (callers treat <= 4 as empty).
+  std::vector<uint8_t> message;
+  message.reserve(payload.size() + 8);
+  message.push_back(BA_MESSAGE_SESSION_DYNAMICS_CORRECTION);
+  message.push_back(static_cast<uint8_t>(blended));
+  AppendVarint(&message, node_count);
+  message.insert(message.end(), payload.begin(), payload.end());
+  return message;
+}
+
 auto Scene::GetCorrectionMessage(bool blended) -> std::vector<uint8_t> {
+  if (protocol_version() >= kProtocolVersionCompactCorrections) {
+    return GetCorrectionMessageCompact_(blended);
+  }
+
   // Let's loop over our nodes sending a bit of correction data.
 
   // Go through until we find at least 1 node to send corrections for,

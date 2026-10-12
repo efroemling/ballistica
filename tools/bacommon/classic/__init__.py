@@ -8,9 +8,7 @@
   it in mod code.
 """
 
-from bacommon.classic._account import (
-    ClassicLiveAccountClientData,
-)
+from bacommon.classic._account import ClassicLiveAccountClientData
 from bacommon.classic._classic import (
     TOKENS1_COUNT,
     TOKENS2_COUNT,
@@ -20,12 +18,20 @@ from bacommon.classic._classic import (
 from bacommon.classic._chest import (
     ClassicChestAppearance,
     ClassicChestDisplayItem,
+    ChestTints,
+    chest_tint3,
+    CHEST_APPEARANCE_TINTS,
+    CHEST_APPEARANCE_TINT_DEFAULT,
+    CHEST_APPEARANCE_COLORS,
+    CHEST_APPEARANCE_COLOR_DEFAULT,
 )
 from bacommon.classic._msg import (
     GetClassicLeaguePresidentButtonInfoMessage,
     GetClassicLeaguePresidentButtonInfoResponse,
     ChestInfoMessage,
     ChestInfoResponse,
+    GetClassicProfilesMessage,
+    GetClassicProfilesResponse,
     GetClassicPurchasesMessage,
     GetClassicPurchasesResponse,
     GlobalProfileCheckMessage,
@@ -48,8 +54,16 @@ __all__ = [
     'ClassicLiveAccountClientData',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
+    'ChestTints',
+    'chest_tint3',
+    'CHEST_APPEARANCE_TINTS',
+    'CHEST_APPEARANCE_TINT_DEFAULT',
+    'CHEST_APPEARANCE_COLORS',
+    'CHEST_APPEARANCE_COLOR_DEFAULT',
     'GetClassicLeaguePresidentButtonInfoMessage',
     'GetClassicLeaguePresidentButtonInfoResponse',
+    'GetClassicProfilesMessage',
+    'GetClassicProfilesResponse',
     'GetClassicPurchasesMessage',
     'GetClassicPurchasesResponse',
     'GlobalProfileCheckMessage',

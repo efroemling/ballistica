@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
 #include "ode/ode.h"
 
 namespace ballistica::base {
@@ -26,6 +28,16 @@ class CollisionMeshAsset : public Asset {
   auto GetMeshData() -> dTriMeshDataID;
   auto GetBGMeshData() -> dTriMeshDataID;
 
+  /// A flat-shaded renderable version of the collision geometry (unshared
+  /// verts, one face normal per triangle) for debug drawing. Built lazily
+  /// on first call; logic thread only.
+  auto GetDebugMesh() -> MeshIndexedObjectSplit*;
+
+  /// The collision geometry's unique edges as a line mesh (draw with
+  /// kMeshDrawFlagLines) for debug wireframes. Built lazily on first
+  /// call; logic thread only.
+  auto GetDebugWireMesh() -> MeshIndexedSimpleFull*;
+
  private:
   std::string file_name_;
   std::string file_name_full_;
@@ -34,6 +46,8 @@ class CollisionMeshAsset : public Asset {
   std::vector<dReal> normals_;
   dTriMeshDataID tri_mesh_data_{};
   dTriMeshDataID tri_mesh_data_bg_{};
+  Object::Ref<MeshIndexedObjectSplit> debug_mesh_;
+  Object::Ref<MeshIndexedSimpleFull> debug_wire_mesh_;
 };
 
 }  // namespace ballistica::base

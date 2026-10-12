@@ -242,6 +242,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
     //   Log(LogLevel::kInfo, "GOT OTHER..");
     // }
     loaded_ = true;
+    renderer_->stats()->target_pixels += static_cast<int64_t>(width_) * height_;
   }
 
   void Unload() {
@@ -284,6 +285,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
       BA_DEBUG_CHECK_GL_ERROR;
     }
     loaded_ = false;
+    renderer_->stats()->target_pixels -= static_cast<int64_t>(width_) * height_;
   }
 
   void Bind() {

@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_DYNAMICS_DYNAMICS_H_
 #define BALLISTICA_SCENE_V1_DYNAMICS_DYNAMICS_H_
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -104,6 +105,16 @@ class Dynamics : public Object {
   int roll_sound_count_{};
   int collision_count_{};
   bool in_process_{};
+  // BA_DYNAMICS_PROFILE=1: per-phase step timing, logged every 5s.
+  bool profile_checked_{};
+  bool profile_{};
+  double profile_collide_ms_{};
+  double profile_step_ms_{};
+  double profile_other_ms_{};
+  int profile_steps_{};
+  int64_t profile_contacts_{};
+  int profile_bodies_max_{};
+  int profile_joints_max_{};
   bool in_collide_message_{};
   bool collide_message_reverse_order_{};
   bool processing_collisions_{};
@@ -118,7 +129,7 @@ class Dynamics : public Object {
   Object::WeakRef<Node> active_collide_dst_node_;
   std::vector<dGeomID> trimeshes_;
   std::unique_ptr<Impl_> impl_;
-  std::unique_ptr<base::CollisionCache> collision_cache_;
+  std::unique_ptr<base::TerrainCollider> terrain_collider_;
 };
 
 }  // namespace ballistica::scene_v1

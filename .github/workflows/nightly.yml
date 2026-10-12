@@ -6,7 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Every job here skips SCHEDULED runs outside the main repo (the 'if'
+  # on each). A fork inherits our schedule, and GitHub mails a scheduled
+  # run's failures to whoever last edited the cron line -- us -- so
+  # without this every fork's nightly reports to the wrong people. A
+  # fork can still run this by hand (workflow_dispatch).
+
   make_docker_gui_debug_image:
+    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -33,6 +40,7 @@ jobs:
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
 
   make_docker_server_debug_image:
+    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -59,6 +67,7 @@ jobs:
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
 
   make_docs:
+    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -73,6 +82,7 @@ jobs:
           path: build/docs
 
   make_flatpak_gui_debug:
+    if: github.event_name != 'schedule' || github.repository == 'efroemling/ballistica'
     strategy:
       fail-fast: false
       matrix:
@@ -95,30 +105,23 @@ jobs:
           path: |
             ~/.local/share/flatpak
             .cache/flatpak/flatpak-builder
-            .cache/flatpak/build_dir
             .cache/flatpak/repo
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}
+            !.cache/flatpak/flatpak-builder/build
+          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml', 'pconfig/flatpak/python-build-env.yml') }}
           restore-keys: |
             ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt install -y flatpak flatpak-builder
-
-      # This works but its nice to have precise control over the cache
-      # - name: Build Flatpak
-      #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-      #   with:
-      #     bundle: bombsquad.flatpak
-      #     manifest-path: pconfig/flatpak/net.froemling.BombSquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
+      - name: Install flatpak build dependencies
+        run: |
+          flatpak remote-add --user --if-not-exists flathub \
+            https://flathub.org/repo/flathub.flatpakrepo
+          make flatpak-deps
 
       - name: Make the build
         run: |
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y flathub org.freedesktop.Sdk//25.08
-          sudo flatpak install -y flathub org.freedesktop.Platform//25.08
-          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
           make flatpak-linux
       - name: Upload the build
         uses: actions/upload-artifact@v7

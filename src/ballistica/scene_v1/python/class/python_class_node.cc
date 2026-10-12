@@ -8,6 +8,7 @@
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/scene_v1/support/local_scene_context.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -21,6 +22,14 @@ namespace ballistica::scene_v1 {
 #pragma ide diagnostic ignored "RedundantCast"
 
 PyNumberMethods PythonClassNode::as_number_;
+
+// Whether a node lives in a context where game code runs on it: a host
+// activity or a local scene (local displays, scene viewers).
+static auto NodeContextIsLive_(Node* node) -> bool {
+  const ContextRefSceneV1& context_ref = node->context_ref();
+  return context_ref.GetHostActivity() != nullptr
+         || context_ref.GetContextTyped<LocalSceneContext>() != nullptr;
+}
 
 auto PythonClassNode::type_name() -> const char* { return "Node"; }
 
@@ -277,8 +286,7 @@ auto PythonClassNode::HandleMessage(PythonClassNode* self, PyObject* args)
   // Should we fail if the node doesn't exist??
   Node* node = self->node_->get();
   if (node) {
-    HostActivity* host_activity = node->context_ref().GetHostActivity();
-    if (!host_activity) {
+    if (!NodeContextIsLive_(node)) {
       throw Exception("Invalid context_ref.", PyExcType::kContext);
     }
     // For user messages we pass them directly to the node
@@ -309,10 +317,9 @@ auto PythonClassNode::AddDeathAction(PythonClassNode* self, PyObject* args)
     throw Exception(PyExcType::kNodeNotFound);
   }
 
-  // We don't have to go through a host-activity but lets make sure we're in
-  // one.
-  HostActivity* host_activity = n->context_ref().GetHostActivity();
-  if (!host_activity) {
+  // We don't have to go through the node's context but lets make sure
+  // it is one of the sorts we expect.
+  if (!NodeContextIsLive_(n)) {
     throw Exception("Invalid context_ref.", PyExcType::kContext);
   }
   n->AddNodeDeathAction(call_obj);

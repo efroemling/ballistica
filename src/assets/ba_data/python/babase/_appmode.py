@@ -9,7 +9,7 @@ from dataclasses import dataclass
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from babase import AppIntent, DevConsoleButtonDef
+    from babase import AppIntent, DevConsoleButtonDef, DevConsoleToggleDef
 
 
 class ControlPermission(Enum):
@@ -53,6 +53,40 @@ class ControlPermissionRequest:
     requester_key: str | None = None
 
 
+class AppModeConfig:
+    """Base class for app-mode configuration objects.
+
+    An app-mode defines how it should be set up by returning one of
+    these from :meth:`AppMode.new_app_mode_config`. The framework
+    builds a fresh one for each activation, offers it to plugins
+    (:meth:`~babase.Plugin.on_app_mode_config`), and then hands it to
+    the mode's :meth:`AppMode.on_activate`, where the mode configures
+    itself and any app-subsystems it uses from it.
+
+    Each mode defines its own config subclass, so the config *type*
+    identifies the mode to anyone amending it. By convention a config
+    only *describes* -- building or mutating one changes nothing
+    live; values take effect when the mode activates and reads them.
+    That convention is what makes configs safe for mode subclasses
+    and plugins to amend.
+
+    Configs are deliberately owned by their mode rather than being
+    one framework-wide object with a part per subsystem: the mode
+    that builds a config is also the one that consumes it, so the
+    framework never needs to know what any particular config holds
+    and nothing has to be registered to apply one.
+
+    When writing a config type, make any value that has no sensible
+    default a required constructor argument of whatever object holds
+    it, and leave everything a plain mutable attribute afterward.
+    That way a type checker catches a mode that forgets a required
+    value, while subclasses and plugins can still reassign anything.
+    Prefer holding cheap descriptions (asset handles rather than
+    loaded assets, for example) so that building a config stays free
+    of side effects and replaced defaults are never loaded.
+    """
+
+
 class AppMode:
     """A low level mode the app can be in.
 
@@ -93,8 +127,30 @@ class AppMode:
         del request  # Unused.
         on_result(ControlPermission.CANNOT_ASK)
 
-    def on_activate(self) -> None:
-        """Called when the mode is becoming the active one fro the app."""
+    def new_app_mode_config(self) -> AppModeConfig:
+        """Create a fresh config describing how this mode should run.
+
+        Called by the framework each time this mode is about to become
+        the active one. Override to return your mode's own
+        :class:`~babase.AppModeConfig` subclass, built with the mode's
+        defaults; the framework then offers it to plugins and passes
+        the final result to :meth:`on_activate`.
+
+        A fresh instance is built per activation, so nothing can
+        persist between modes (or activations) by construction.
+        """
+        return AppModeConfig()
+
+    def on_activate(self, config: AppModeConfig) -> None:
+        """Called when the mode is becoming the active one for the app.
+
+        ``config`` is the object created by
+        :meth:`new_app_mode_config` for this activation, possibly
+        amended by plugins. Modes that define their own config type
+        should begin with ``assert isinstance(config, TheirConfig)``
+        to recover the concrete type, then set themselves (and any
+        app-subsystems they use) up from it.
+        """
 
     def on_deactivate(self) -> None:
         """Called when the mode stops being the active one for the app.
@@ -141,7 +197,7 @@ class AppMode:
         # pylint: disable=cyclic-import
         import babase
 
-        from babase import builtinassets
+        from babase import _builtinassets
 
         del item_id  # Unused.
 
@@ -150,13 +206,13 @@ class AppMode:
             return
 
         babase.screenmessage(
-            builtinassets.strings.account.updating_account,
+            _builtinassets.strings.account.updating_account,
             color=(0, 1, 0),
         )
         # Ick; we can be called early in the bootstrapping process
         # before we're allowed to load assets. Guard against that.
         if babase.asset_loads_allowed():
-            builtinassets.audio.click01.get().play()
+            _builtinassets.audio.click01.get().play()
 
     def on_purchase_process_end(
         self, item_id: str, user_initiated: bool, applied: bool
@@ -185,19 +241,30 @@ class AppMode:
 
         # By default just announce the item id we got. Real app-modes
         # probably want to do something more specific based on item-id.
-        from babase import builtinassets
+        from babase import _builtinassets
 
         babase.screenmessage(
-            builtinassets.strings.account.you_got_item(item=item_id),
+            _builtinassets.strings.account.you_got_item(item=item_id),
             color=(0, 1, 0),
         )
         if babase.asset_loads_allowed():
-            builtinassets.audio.cash_register.get().play()
+            _builtinassets.audio.cash_register.get().play()
 
     def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
         """Define buttons to show up in the UI dev console.
 
         This can be useful for exposing UI code examples or debugging
         functionality.
+        """
+        return []
+
+    def get_dev_console_ui_debug_draw_toggles(
+        self,
+    ) -> list[DevConsoleToggleDef]:
+        """Define debug-drawing toggles to show up in the UI dev console.
+
+        These join the tab's own in its 'Debug Drawing' row (in the
+        console's expanded view). For ui that the tab itself can't know
+        about, such as a ui package's layout guides.
         """
         return []

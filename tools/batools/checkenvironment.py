@@ -226,7 +226,7 @@ def _write_mypy_ini(projroot: str, out_root: str) -> None:
     fixed_format_cache = True
 
     enable_error_code = redundant-expr, truthy-bool, \
-truthy-function, unused-awaitable, explicit-override
+truthy-function, unused-awaitable, explicit-override, deprecated
     """).strip()
     body = body.replace(
         '__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings

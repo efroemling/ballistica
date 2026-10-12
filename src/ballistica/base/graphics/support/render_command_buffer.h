@@ -228,6 +228,56 @@ class RenderCommandBuffer {
     *f = f15;
   }
 
+  void PutFloats(float f1, float f2, float f3, float f4, float f5, float f6,
+                 float f7, float f8, float f9, float f10, float f11, float f12,
+                 float f13) {
+    assert(!finalized_);
+    int s = static_cast<int>(fvals_.size());
+    fvals_.resize(fvals_.size() + 13);
+    float* f = &(fvals_[s]);
+    *f++ = f1;
+    *f++ = f2;
+    *f++ = f3;
+    *f++ = f4;
+    *f++ = f5;
+    *f++ = f6;
+    *f++ = f7;
+    *f++ = f8;
+    *f++ = f9;
+    *f++ = f10;
+    *f++ = f11;
+    *f++ = f12;
+    *f = f13;
+  }
+
+  void PutFloats(float f1, float f2, float f3, float f4, float f5, float f6,
+                 float f7, float f8, float f9, float f10, float f11, float f12,
+                 float f13, float f14, float f15, float f16, float f17,
+                 float f18) {
+    assert(!finalized_);
+    int s = static_cast<int>(fvals_.size());
+    fvals_.resize(fvals_.size() + 18);
+    float* f = &(fvals_[s]);
+    *f++ = f1;
+    *f++ = f2;
+    *f++ = f3;
+    *f++ = f4;
+    *f++ = f5;
+    *f++ = f6;
+    *f++ = f7;
+    *f++ = f8;
+    *f++ = f9;
+    *f++ = f10;
+    *f++ = f11;
+    *f++ = f12;
+    *f++ = f13;
+    *f++ = f14;
+    *f++ = f15;
+    *f++ = f16;
+    *f++ = f17;
+    *f = f18;
+  }
+
   void PutFloatArray16(const float* f_in) {
     assert(!finalized_);
     int s = static_cast<int>(fvals_.size());
@@ -447,6 +497,52 @@ class RenderCommandBuffer {
     *f13 = fvals_[fvals_index_++];
     *f14 = fvals_[fvals_index_++];
     *f15 = fvals_[fvals_index_++];
+  }
+
+  void GetFloats(float* f1, float* f2, float* f3, float* f4, float* f5,
+                 float* f6, float* f7, float* f8, float* f9, float* f10,
+                 float* f11, float* f12, float* f13) {
+    assert(finalized_);
+    assert(fvals_index_ + 13 <= fvals_.size());
+    *f1 = fvals_[fvals_index_++];
+    *f2 = fvals_[fvals_index_++];
+    *f3 = fvals_[fvals_index_++];
+    *f4 = fvals_[fvals_index_++];
+    *f5 = fvals_[fvals_index_++];
+    *f6 = fvals_[fvals_index_++];
+    *f7 = fvals_[fvals_index_++];
+    *f8 = fvals_[fvals_index_++];
+    *f9 = fvals_[fvals_index_++];
+    *f10 = fvals_[fvals_index_++];
+    *f11 = fvals_[fvals_index_++];
+    *f12 = fvals_[fvals_index_++];
+    *f13 = fvals_[fvals_index_++];
+  }
+
+  void GetFloats(float* f1, float* f2, float* f3, float* f4, float* f5,
+                 float* f6, float* f7, float* f8, float* f9, float* f10,
+                 float* f11, float* f12, float* f13, float* f14, float* f15,
+                 float* f16, float* f17, float* f18) {
+    assert(finalized_);
+    assert(fvals_index_ + 18 <= fvals_.size());
+    *f1 = fvals_[fvals_index_++];
+    *f2 = fvals_[fvals_index_++];
+    *f3 = fvals_[fvals_index_++];
+    *f4 = fvals_[fvals_index_++];
+    *f5 = fvals_[fvals_index_++];
+    *f6 = fvals_[fvals_index_++];
+    *f7 = fvals_[fvals_index_++];
+    *f8 = fvals_[fvals_index_++];
+    *f9 = fvals_[fvals_index_++];
+    *f10 = fvals_[fvals_index_++];
+    *f11 = fvals_[fvals_index_++];
+    *f12 = fvals_[fvals_index_++];
+    *f13 = fvals_[fvals_index_++];
+    *f14 = fvals_[fvals_index_++];
+    *f15 = fvals_[fvals_index_++];
+    *f16 = fvals_[fvals_index_++];
+    *f17 = fvals_[fvals_index_++];
+    *f18 = fvals_[fvals_index_++];
   }
 
   auto GetMatrix() -> Matrix44f* {

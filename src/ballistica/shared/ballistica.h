@@ -126,6 +126,22 @@ enum class QuitType : uint8_t {
   kLast  // Sentinel.
 };
 
+// BA_EXPORT_PYTHON_ENUM
+/// How much a sound matters when more sounds want to play than can at
+/// once. When everything is busy, a new sound takes the place of the
+/// oldest playing sound of the lowest priority at or below its own
+/// (sounds that loop are never cut off this way).
+///
+/// Sounds are 'default' unless their asset says otherwise.
+enum class SoundPriority : uint8_t {
+  kLower,
+  kLow,
+  kDefault,
+  kHigh,
+  kHigher,
+  kLast  // Sentinel.
+};
+
 typedef int64_t TimerMedium;
 
 // BA_EXPORT_PYTHON_ENUM
@@ -265,6 +281,7 @@ enum class SpecialChar : uint8_t {
   kPotato,
   kPalmTree,
   kBoxingGlove,
+  kPopupIcon,
   kLast  // Sentinel
 };
 
@@ -490,6 +507,12 @@ extern const char* kEngineVersion;
 extern const int kEngineApiVersion;
 
 const int kDefaultPort = 43210;
+
+// Suffix given to bundled CAS asset blobs packed inside an archive
+// (the Android apk) so suffix-matched packaging rules can store them
+// uncompressed for zero-copy span serving. Kept in sync with the
+// build side (bundled_blob_suffix in batools staging).
+inline constexpr const char* kBundledCasBlobSuffix = ".bablob";
 
 // Magic numbers at the start of our file types.
 // Python source of truth for cob compilation is

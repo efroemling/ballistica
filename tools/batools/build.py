@@ -3,6 +3,7 @@
 """General functionality related to running builds."""
 
 import os
+import re
 import sys
 import socket
 import subprocess
@@ -146,6 +147,10 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'src/codegen',
                 'src/ballistica/shared/ballistica.h',
+                # The shared tables engine C++ is generated from (see
+                # batools.character_ranges / batools.character_rig).
+                'tools/bacommon/characterranges.py',
+                'tools/bacommon/characterrig.py',
                 '.efrocachemap',
             ],
             # Our codegen Makefile targets generally don't list tools
@@ -577,6 +582,30 @@ def _get_server_config_raw_contents(projroot: str) -> str:
     return textwrap.dedent('\n'.join(lines[firstline : lastline + 1]))
 
 
+def get_scene_v1_protocol_version_max(projroot: str) -> int | None:
+    """Return kProtocolVersionMax as declared in scene_v1.h.
+
+    Tooling that runs without an engine (server-config template
+    generation, etc.) reads the newest protocol we support straight
+    from the header so it can never drift from the C++ side.
+
+    Returns None if the project has no scene_v1.h (spinoffs that
+    omit the scene_v1 feature-set).
+    """
+    path = os.path.join(projroot, 'src', 'ballistica', 'scene_v1', 'scene_v1.h')
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding='utf-8') as infile:
+        match = re.search(
+            r'^const int kProtocolVersionMax = (\d+);$',
+            infile.read(),
+            flags=re.MULTILINE,
+        )
+    if match is None:
+        raise CleanError(f'Could not find kProtocolVersionMax in {path}.')
+    return int(match.group(1))
+
+
 def _get_server_config_template_toml(projroot: str) -> str:
     from tomlkit import document, dumps
     from bacommon.servermanager import ServerConfig
@@ -591,7 +620,13 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 38
+    # In spinoffs without the scene_v1 feature-set there is no header
+    # to read; the template value is purely illustrative there, so use
+    # a stand-in.
+    protocol_version_max = get_scene_v1_protocol_version_max(projroot)
+    cfg.protocol_version = (
+        44 if protocol_version_max is None else protocol_version_max
+    )
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
@@ -677,8 +712,6 @@ def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
     needing to enumerate them individually. No-op on Linux, where packages
     live at stable paths with no Cellar directories.
     """
-    import re
-
     cmake_cache_path = os.path.join(dirname, 'CMakeCache.txt')
     if not os.path.isfile(cmake_cache_path):
         return False
@@ -811,3 +844,14 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     else:
         if verbose:
             print(f'{Clr.BLD}{title}:{Clr.RST} Keeping existing build dir.')
+
+
+def in_claude_sandbox() -> bool:
+    """Are we running inside Claude Code's command sandbox?
+
+    There, all network egress is forced through an authenticating proxy
+    that the JVM/Gradle won't use, so Gradle can only work offline.
+    """
+    return bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))

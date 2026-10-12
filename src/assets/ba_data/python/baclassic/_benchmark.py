@@ -57,16 +57,29 @@ class _StressTestArgs:
     player_count: int
     round_duration: int
     attract_mode: bool
+    randomize: bool
+    churn: bool
 
 
 def run_stress_test(
+    *,
     playlist_type: str = 'Random',
     playlist_name: str = '__default__',
     player_count: int = 8,
     round_duration: int = 30,
     attract_mode: bool = False,
+    randomize: bool = True,
+    churn: bool = True,
 ) -> None:
-    """Run a stress test."""
+    """Run a stress test.
+
+    With ``randomize`` False the playlist plays in its listed order
+    instead of shuffled, so repeated runs exercise the same games in
+    the same sequence. With ``churn`` False all fake players join at
+    once and none ever leave, instead of trickling in over ~30s and
+    dropping out every so often. Both are for repeatable performance
+    measurements; the in-game stress test leaves both on.
+    """
 
     with babase.ContextRef.empty():
         if not attract_mode:
@@ -81,6 +94,8 @@ def run_stress_test(
                 player_count=player_count,
                 round_duration=round_duration,
                 attract_mode=attract_mode,
+                randomize=randomize,
+                churn=churn,
             )
         )
 
@@ -90,7 +105,7 @@ def stop_stress_test() -> None:
 
     assert babase.app.classic is not None
 
-    _baclassic.set_stress_testing(False, 0, False)
+    _baclassic.set_stress_testing(False, 0, False, True)
     babase.app.classic.stress_test_update_timer = None
     babase.app.classic.stress_test_update_timer_2 = None
 
@@ -124,7 +139,7 @@ def _start_stress_test(args: _StressTestArgs) -> None:
 
     if playlist_type == 'Teams':
         appconfig['Team Tournament Playlist Selection'] = args.playlist_name
-        appconfig['Team Tournament Playlist Randomize'] = 1
+        appconfig['Team Tournament Playlist Randomize'] = int(args.randomize)
         babase.apptimer(
             1.0,
             babase.CallStrict(
@@ -134,7 +149,7 @@ def _start_stress_test(args: _StressTestArgs) -> None:
         )
     else:
         appconfig['Free-for-All Playlist Selection'] = args.playlist_name
-        appconfig['Free-for-All Playlist Randomize'] = 1
+        appconfig['Free-for-All Playlist Randomize'] = int(args.randomize)
         babase.apptimer(
             1.0,
             babase.CallStrict(
@@ -144,7 +159,9 @@ def _start_stress_test(args: _StressTestArgs) -> None:
                 ),
             ),
         )
-    _baclassic.set_stress_testing(True, args.player_count, args.attract_mode)
+    _baclassic.set_stress_testing(
+        True, args.player_count, args.attract_mode, args.churn
+    )
     classic.stress_test_update_timer = babase.AppTimer(
         args.round_duration, babase.CallStrict(_reset_stress_test, args)
     )
@@ -162,7 +179,7 @@ def _update_attract_mode_test(args: _StressTestArgs) -> None:
 
 
 def _reset_stress_test(args: _StressTestArgs) -> None:
-    _baclassic.set_stress_testing(False, args.player_count, False)
+    _baclassic.set_stress_testing(False, args.player_count, False, True)
     if not args.attract_mode:
         babase.screenmessage('Resetting stress test...')
     session = bascenev1.get_foreground_host_session()
@@ -193,13 +210,6 @@ def run_media_reload_benchmark() -> None:
                 ).replace('${TIME}', str(babase.apptime() - start_time_2))
             )
             babase.print_load_info()
-            if babase.app.config.resolve('Texture Quality') != 'High':
-                babase.screenmessage(
-                    babase.app.lang.get_resource(
-                        'debugWindow.reloadBenchmarkBestResultsText'
-                    ),
-                    color=(1, 1, 0),
-                )
 
         babase.add_clean_frame_callback(babase.CallStrict(doit, start_time))
 

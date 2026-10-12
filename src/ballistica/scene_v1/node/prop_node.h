@@ -43,6 +43,9 @@ class PropNode : public Node {
   void set_light_mesh(SceneMesh* val) { light_mesh_ = val; }
   auto sticky() const -> bool { return sticky_; }
   void set_sticky(bool val) { sticky_ = val; }
+  // How strongly a sticky prop sticks; 1.0 is the classic behavior.
+  auto stickiness() const -> float { return stickiness_; }
+  void SetStickiness(float val);
   auto shadow_size() const -> float { return shadow_size_; }
   void set_shadow_size(float val) { shadow_size_ = val; }
   auto stick_to_owner() const -> bool { return stick_to_owner_; }
@@ -110,6 +113,7 @@ class PropNode : public Node {
   std::vector<float> extra_acceleration_{0.0, 0.0, 0.0};
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
   bool sticky_{};
+  float stickiness_{1.0f};
   Object::WeakRef<Node> owner_;
   bool flashing_{};
   bool stick_to_owner_{};
@@ -166,6 +170,7 @@ class PropNodeType : public NodeType {
   // macro so subclass attrs keep their indices; see the
   // protocol-changes list in scene_v1.h (42/43).
   BA_FLOAT_ARRAY_ATTR_LATE(rotate, GetRotate, SetRotate);
+  BA_FLOAT_ATTR_LATE(stickiness, stickiness, SetStickiness);
 #undef BA_NODE_TYPE_CLASS
 
   explicit PropNodeType(const char* sub_type_name = nullptr,
@@ -194,7 +199,8 @@ class PropNodeType : public NodeType {
         body(this),
         extra_acceleration(this),
         gravity_scale(this),
-        rotate(this) {}
+        rotate(this),
+        stickiness(this) {}
 };
 
 }  // namespace ballistica::scene_v1

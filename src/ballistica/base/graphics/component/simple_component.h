@@ -22,13 +22,24 @@ class SimpleComponent : public RenderComponent {
     transparent_ = val;
   }
 
+  // The texture setters below also note which kind of slot the texture
+  // is going into, so a texture built for the other kind (a data-role
+  // mask drawn as a picture, or a picture used as a mask) gets a
+  // one-time warning. See TextureAsset::ExpectPictureSlot.
+
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
   void SetTexture(const Object::Ref<TextureAsset>& t) {
     EnsureConfiguring();
+    if (t.exists()) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
@@ -36,6 +47,9 @@ class SimpleComponent : public RenderComponent {
   /// multiplied by colorize-color1 and green areas by colorize-color2.
   void SetColorizeTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("colorize");
+    }
     colorize_texture_ = t;
   }
 
@@ -43,11 +57,17 @@ class SimpleComponent : public RenderComponent {
   /// white (currently requires colorize1 and colorize 2 to be set).
   void SetMaskTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("mask");
+    }
     mask_texture_ = t;
   }
 
   void SetMaskUV2Texture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("mask");
+    }
     mask_uv2_texture_ = t;
   }
 
@@ -96,15 +116,41 @@ class SimpleComponent : public RenderComponent {
     colorize_color2_g_ = g;
     colorize_color2_b_ = b;
     colorize_color2_a_ = a;
-    do_colorize_2_ = true;
   }
 
-  void SetShadow(float offset_x, float offset_y, float blur, float opacity) {
+  /// Tint applied through the colorize texture's blue channel. White
+  /// (the default) is an exact no-op, so masks with stray blue data
+  /// cost nothing until a caller actually sets this.
+  void SetColorizeColor3(float r, float g, float b, float a = 1.0f) {
+    EnsureConfiguring();
+    colorize_color3_r_ = r;
+    colorize_color3_g_ = g;
+    colorize_color3_b_ = b;
+    colorize_color3_a_ = a;
+  }
+
+  /// A soft shadow under the texture's alpha (text drop shadows). Its
+  /// color defaults to black; a bright color with no offset makes a
+  /// glow, and ``spread`` widens it (extra blur, as mip bias; the
+  /// glyph's padding in its atlas bounds how far it can usefully go).
+  ///
+  /// ``text_glow`` > 0 draws with the text-glow shader variant instead: the
+  /// same shadow, plus the glyph's interior lifted toward white (a
+  /// neon look) at that strength (1 = standard). Its own program, used
+  /// only when > 0, so plain text never pays for it.
+  void SetShadow(float offset_x, float offset_y, float blur, float opacity,
+                 float r = 0.0f, float g = 0.0f, float b = 0.0f,
+                 float spread = 0.0f, float text_glow = 0.0f) {
     EnsureConfiguring();
     shadow_offset_x_ = offset_x;
     shadow_offset_y_ = offset_y;
     shadow_blur_ = blur;
     shadow_opacity_ = opacity;
+    shadow_color_r_ = r;
+    shadow_color_g_ = g;
+    shadow_color_b_ = b;
+    shadow_spread_ = spread;
+    shadow_text_glow_ = text_glow;
   }
 
   void SetGlow(float amount, float blur) {
@@ -122,7 +168,6 @@ class SimpleComponent : public RenderComponent {
   void WriteConfig() override;
 
  protected:
-  bool do_colorize_2_{};
   bool transparent_{};
   bool premultiplied_{};
   bool have_color_{};
@@ -139,10 +184,19 @@ class SimpleComponent : public RenderComponent {
   float colorize_color2_g_{1.0f};
   float colorize_color2_b_{1.0f};
   float colorize_color2_a_{1.0f};
+  float colorize_color3_r_{1.0f};
+  float colorize_color3_g_{1.0f};
+  float colorize_color3_b_{1.0f};
+  float colorize_color3_a_{1.0f};
   float shadow_offset_x_{};
   float shadow_offset_y_{};
   float shadow_blur_{};
   float shadow_opacity_{};
+  float shadow_color_r_{};
+  float shadow_color_g_{};
+  float shadow_color_b_{};
+  float shadow_spread_{};
+  float shadow_text_glow_{};
   float glow_amount_{};
   float glow_blur_{};
   float flatness_{};

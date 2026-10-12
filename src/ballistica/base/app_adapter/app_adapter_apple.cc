@@ -4,11 +4,15 @@
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/apple/from_swift.h"
+#include "ballistica/base/app_platform/apple/uikit_pasteboard.h"
 #include "ballistica/base/app_platform/support/min_sdl_key_names.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -237,10 +241,14 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #endif
 }
 
+std::atomic<bool> AppAdapterApple::fullscreen_control_value_{false};
+
 void AppAdapterApple::OnFullscreenChanged(bool fullscreen) {
   // Pushed from Swift's NSWindow fullscreen delegate callbacks (main thread);
   // read on the logic thread via FullscreenControlGet. An atomic bool is all
-  // the synchronization a single published flag needs.
+  // the synchronization a single published flag needs. Static (no g_base
+  // access) because window state restoration can fire this during launch
+  // before the engine exists.
   fullscreen_control_value_.store(fullscreen);
 }
 
@@ -419,6 +427,72 @@ void AppAdapterApple::StopJoystickFeedback(JoystickInput* device) {
   });
 }
 
+// What UIKitFromCpp.playDeviceHaptic takes as its style: the five
+// UIImpactFeedbackGenerator styles, then the 'error' notification
+// pattern (the one multi-beat effect on offer).
+constexpr int kDeviceHapticLight{0};
+constexpr int kDeviceHapticMedium{1};
+constexpr int kDeviceHapticHeavy{2};
+constexpr int kDeviceHapticRigid{4};
+constexpr int kDeviceHapticError{5};
+
+/// How each feedback type is rendered on the device itself (an iPhone's
+/// Taptic Engine), for touchscreen players.
+struct AppleDeviceTypeRender_ {
+  int style;
+
+  /// 0-1. Ignored by the error pattern, which has a fixed strength.
+  float intensity;
+};
+
+/// Indexed by FeedbackEvent::Type; see the static_assert below.
+static constexpr AppleDeviceTypeRender_ kAppleDeviceTypeRender[] = {
+    // join -- substantial and final.
+    {kDeviceHapticHeavy, 0.8f},
+    // collect -- the lightest thing we emit.
+    {kDeviceHapticLight, 0.7f},
+    // grab -- a shade fuller than a collect.
+    {kDeviceHapticMedium, 0.7f},
+    // impact-dealt -- crisp; confirming something you did.
+    {kDeviceHapticRigid, 0.8f},
+    // impact-received -- heavier; something happened to you.
+    {kDeviceHapticHeavy, 1.0f},
+    // death -- the one multi-beat effect, so it reads as an outlier.
+    {kDeviceHapticError, 1.0f},
+};
+
+static_assert(std::size(kAppleDeviceTypeRender)
+                  == static_cast<size_t>(FeedbackEvent::Type::kLast),
+              "Every FeedbackEvent::Type needs an Apple device render"
+              " mapping, in enum order.");
+
+auto AppAdapterApple::DeviceFeedbackSupported() -> bool {
+#if BA_PLATFORM_IOS
+  return BallisticaKit::UIKitFromCpp::deviceHapticsSupported();
+#else
+  return false;
+#endif
+}
+
+auto AppAdapterApple::ApplyDeviceFeedback(const FeedbackEvent& event) -> int {
+#if BA_PLATFORM_IOS
+  if (!DeviceFeedbackSupported()) {
+    return 0;
+  }
+  auto index = static_cast<size_t>(event.type);
+  assert(index < std::size(kAppleDeviceTypeRender));
+  auto style = kAppleDeviceTypeRender[index].style;
+  auto intensity = kAppleDeviceTypeRender[index].intensity;
+
+  // Feedback generators are main-thread-only.
+  PushMainThreadCall([style, intensity] {
+    BallisticaKit::UIKitFromCpp::playDeviceHaptic(style, intensity);
+  });
+#endif
+  // These effects have no length we control.
+  return 0;
+}
+
 auto AppAdapterApple::HasDirectKeyboardInput() -> bool {
   // Mac feeds the engine real key and text events (see CocoaGLView), so
   // widgets can be edited inline there. iOS/tvOS deliver no text events
@@ -448,6 +522,8 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardIsSupported();
+#elif BA_PLATFORM_IOS
+  return true;
 #else
   return AppAdapter::DoClipboardIsSupported();
 #endif
@@ -456,6 +532,8 @@ auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 auto AppAdapterApple::DoClipboardHasText() -> bool {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardHasText();
+#elif BA_PLATFORM_IOS
+  return UIKitPasteboardHasText();
 #else
   return AppAdapter::DoClipboardHasText();
 #endif
@@ -464,6 +542,8 @@ auto AppAdapterApple::DoClipboardHasText() -> bool {
 void AppAdapterApple::DoClipboardSetText(const std::string& text) {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::clipboardSetText(text);
+#elif BA_PLATFORM_IOS
+  UIKitPasteboardSetText(text);
 #else
   AppAdapter::DoClipboardSetText(text);
 #endif
@@ -476,8 +556,45 @@ auto AppAdapterApple::DoClipboardGetText() -> std::string {
     return std::string(contents.get());
   }
   throw Exception("No text on clipboard.");
+#elif BA_PLATFORM_IOS
+  // Synchronous reads can block on an OS permission prompt here, which
+  // would hang the logic thread; we deliberately support only the async
+  // path (iOS shipped after the sync call was deprecated, so nothing
+  // legitimately relies on this).
+  BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+              "Synchronous clipboard reads are not supported on this"
+              " platform; use clipboard_get_text_async().");
+  throw Exception(
+      "Synchronous clipboard reads are not supported on this platform;"
+      " use clipboard_get_text_async().",
+      PyExcType::kRuntime);
 #else
   return AppAdapter::DoClipboardGetText();
+#endif
+}
+
+void AppAdapterApple::DoClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> completion_call) {
+#if BA_PLATFORM_IOS
+  assert(g_base->InLogicThread());
+
+  // The completion may hold thread-affine state, so park it here on the
+  // logic thread and send a state-free completion down to the ObjC
+  // layer; results marshal back to the logic thread and complete FIFO
+  // (safe since reads run on a serial queue, preserving order).
+  clipboard_get_text_calls_.push_back(std::move(completion_call));
+  UIKitPasteboardGetTextAsync([](std::optional<std::string> text) {
+    // (Runs on the pasteboard background queue.)
+    g_base->logic->event_loop()->PushCall([text = std::move(text)] {
+      auto* adapter = AppAdapterApple::Get(g_base);
+      assert(!adapter->clipboard_get_text_calls_.empty());
+      auto call = std::move(adapter->clipboard_get_text_calls_.front());
+      adapter->clipboard_get_text_calls_.pop_front();
+      call(std::move(text));
+    });
+  });
+#else
+  AppAdapter::DoClipboardGetTextAsync(std::move(completion_call));
 #endif
 }
 

@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/core/logging/logging.h"
@@ -17,17 +19,30 @@
 #endif
 #endif  // BA_ENABLE_AUDIO
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/audio/ogg_blob_source.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/json_facade.h"
 
 namespace ballistica::base {
 
 #if BA_ENABLE_AUDIO
 
 const int kReadBufferSize = 32768;  // 32 KB buffers
+
+// Whether to cache decoded PCM on disk (LoadCachedOgg) instead of
+// decoding oggs on every load. Disabled 2026-09-29 and likely to be
+// removed soon: now that sounds load lazily a few at a time, the cache
+// saves ~1-3 ms per sound while its first-load writes add ~10%, it
+// never gets pruned (content-hash asset paths leave orphans on every
+// asset update), and its mtime check can't stat sounds served from
+// inside the Android APK (so there it rewrote files it never read).
+// Removing it also means clearing out the old <cache>/audio dir once.
+constexpr bool kUseDecodedAudioCache = false;
 
 // Decoded-PCM-size threshold above which a sound plays via the streaming
 // path instead of being fully decoded into a static buffer at preload.
@@ -40,22 +55,6 @@ const int kReadBufferSize = 32768;  // 32 KB buffers
 // music-streams/sounds-preload classification exactly.
 const size_t kStreamDecodedSizeThreshold = 1792 * 1024;
 
-static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
-                         void* data_source) -> size_t {
-  return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
-}
-static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
-    -> int {
-  return fseek(static_cast<FILE*>(data_source),
-               static_cast_check_fit<long>(offset), whence);  // NOLINT
-}
-static auto CallbackClose(void* data_source) -> int {
-  return fclose(static_cast<FILE*>(data_source));
-}
-static long CallbackTell(void* data_source) {  // NOLINT (vorbis uses long)
-  return ftell(static_cast<FILE*>(data_source));
-}
-
 // This function loads a .ogg file into a memory buffer and returns
 // the format and frequency.  return value is true on success or false if a
 // fallback was used
@@ -64,12 +63,10 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   int bit_stream;
   int bytes;
   char array[kReadBufferSize];  // Local fixed size array
-  FILE* f;
   bool fallback = false;
 
-  // Open for binary reading.
-  f = g_core->platform->FOpen(file_name, "rb");
-  if (f == nullptr) {
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
     fallback = true;
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
                          std::string("Can't open sound file '") + file_name
@@ -77,37 +74,35 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
-    if (f == nullptr)
+    blob = AssetBlob::FromFile(file_name);
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
   }
 
   vorbis_info* p_info;
   OggVorbis_File ogg_file;
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  OggBlobSource blob_source{&blob};
 
   // Try opening the given file
-  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kError,
         std::string("Error decoding sound file '") + file_name + "'");
 
-    fclose(f);
-
     // Attempt fallback.
     file_name = "data/global/audio/blank.ogg";
-    f = g_core->platform->FOpen(file_name, "rb");
+    blob = AssetBlob::FromFile(file_name);
 
     // If fallback doesn't work, throw in the towel.
-    if (f == nullptr)
+    if (!blob.exists())
       throw Exception(std::string("Can't open fallback sound file '")
                       + file_name + "' for reading...");
-    if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0)
+    blob_source = OggBlobSource{&blob};
+    if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0,
+                          OggBlobCallbacks())
+        != 0)
       throw Exception(std::string("Error decoding fallback sound file '")
                       + file_name + "'");
   }
@@ -176,25 +171,22 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 // pipeline on authored mixes) marks the sound as always-listener-space.
 // Returns false without logging if the file can't be opened or parsed;
 // the full load paths downstream own error reporting and fallbacks.
-static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
-    -> bool {
+static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed,
+                     std::string* play_group, std::string* priority) -> bool {
   *is_streamed = false;
   *pre_mixed = false;
+  play_group->clear();
+  priority->clear();
 
-  FILE* f = g_core->platform->FOpen(file_name, "rb");
-  if (f == nullptr) {
+  auto blob = AssetBlob::FromFile(file_name);
+  if (!blob.exists()) {
     return false;
   }
-
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  OggBlobSource blob_source{&blob};
 
   OggVorbis_File ogg_file;
-  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    fclose(f);
+  if (ov_open_callbacks(&blob_source, &ogg_file, nullptr, 0, OggBlobCallbacks())
+      != 0) {
     return false;
   }
 
@@ -214,9 +206,16 @@ static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
   if (comment != nullptr) {
     for (int i = 0; i < comment->comments; ++i) {
       const char* entry = comment->user_comments[i];
-      if (entry != nullptr && strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
+      if (entry == nullptr) {
+        continue;
+      }
+      if (strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
         *pre_mixed = true;
-        break;
+      } else if (strncmp(entry, "BA_PLAY_GROUP=", 14) == 0) {
+        // (See SoundAsset::ApplyPlaySettings for the values of these.)
+        *play_group = entry + 14;
+      } else if (strncmp(entry, "BA_PRIORITY=", 12) == 0) {
+        *priority = entry + 12;
       }
     }
   }
@@ -320,7 +319,74 @@ SoundAsset::SoundAsset(const std::string& file_name_in)
     : file_name_(file_name_in) {
   file_name_full_ =
       g_base->assets->FindAssetFile(Assets::FileType::kSound, file_name_in);
+  ApplyPlaySettings("", "");
+
+  // Builds with audio learn a sound's play settings from tags in the
+  // sound itself, at preload. A headless build has no sound to read
+  // them from, but hosting still wants them (they bear on which plays
+  // are worth sending to clients; see Scene::ShouldSendPlay_), so its
+  // packages carry them in a little json file for each sound that sets
+  // any. Sounds set alike share one file, so remember what each said.
+  if (g_core->HeadlessMode()) {
+    std::string meta_path = g_base->assets->FindCasSoundMetaPath(file_name_in);
+    if (!meta_path.empty()) {
+      static std::unordered_map<std::string,
+                                std::pair<std::string, std::string>>
+          settings_by_path;
+      auto i = settings_by_path.find(meta_path);
+      if (i == settings_by_path.end()) {
+        std::pair<std::string, std::string> settings;
+        auto blob = AssetBlob::FromFile(meta_path);
+        std::string text = blob.exists() ? blob.ToString() : "";
+        auto doc = JsonDoc::Parse(text, {.max_bytes = 4096});
+        if (doc && doc->root().is_object()) {
+          settings.first = doc->root()["play_group"].string_or("");
+          settings.second = doc->root()["priority"].string_or("");
+        } else {
+          g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                               "Unreadable play settings for sound '"
+                                   + file_name_in + "'; using defaults.");
+        }
+        i = settings_by_path.emplace(meta_path, settings).first;
+      }
+      ApplyPlaySettings(i->second.first, i->second.second);
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
+        return "Sound '" + file_name_ + "' has play settings (play_group='"
+               + g_base->audio->PlayGroupName(play_group_)
+               + "' priority=" + std::to_string(priority_.load()) + ").";
+      });
+    }
+  }
   valid_ = true;
+}
+
+void SoundAsset::ApplyPlaySettings(const std::string& group,
+                                   const std::string& priority) {
+  const char* custom_prefix = "custom:";
+  std::string group_name;
+  bool unique = (group == "unique");
+  if (group.rfind(custom_prefix, 0) == 0) {
+    group_name =
+        Audio::NormalizePlayGroupName(group.substr(strlen(custom_prefix)));
+  }
+  if (group_name.empty() && !unique) {
+    group_name = Audio::AutoPlayGroupName(file_name_);
+  }
+  // (A name with nothing left to go by gets a group of its own too.)
+  play_group_ = group_name.empty() ? g_base->audio->NewUniquePlayGroup()
+                                   : g_base->audio->InternPlayGroup(group_name);
+
+  AudioPriority priority_val = AudioPriority::kDefault;
+  if (priority == "lower") {
+    priority_val = AudioPriority::kLower;
+  } else if (priority == "low") {
+    priority_val = AudioPriority::kLow;
+  } else if (priority == "high") {
+    priority_val = AudioPriority::kHigh;
+  } else if (priority == "higher") {
+    priority_val = AudioPriority::kHigher;
+  }
+  priority_ = static_cast<int>(priority_val);
 }
 
 auto SoundAsset::GetAssetType() const -> AssetType { return AssetType::kSound; }
@@ -334,14 +400,17 @@ void SoundAsset::DoPreload() {
 
   // Guard against non-ogg sources slipping in — but only when the path
   // visibly carries an extension. CAS blob paths are bare content
-  // hashes (no extension); the probe below handles those (and anything
-  // else that isn't really ogg-vorbis) gracefully. Match either slash
-  // flavor; Windows blob paths use backslashes and a leading '.\' which
-  // a forward-slash-only search would mistake for an extension.
+  // hashes (no extension, or the archive-serving blob suffix, which is
+  // not a content-type extension); the probe below handles those (and
+  // anything else that isn't really ogg-vorbis) gracefully. Match
+  // either slash flavor; Windows blob paths use backslashes and a
+  // leading '.\' which a forward-slash-only search would mistake for
+  // an extension.
   auto slash_pos = file_name_full_.find_last_of("/\\");
   auto base_start = slash_pos == std::string::npos ? 0 : slash_pos + 1;
   bool has_extension =
-      file_name_full_.find('.', base_start) != std::string::npos;
+      file_name_full_.find('.', base_start) != std::string::npos
+      && !file_name_full_.ends_with(kBundledCasBlobSuffix);
   if (has_extension && !strstr(file_name_full_.c_str(), ".ogg")) {
     throw Exception("Unsupported sound file (needs to end in .ogg): '"
                     + file_name_full_ + "'");
@@ -352,14 +421,26 @@ void SoundAsset::DoPreload() {
   // load-buffer here. Probe failures classify as non-streamed and fall
   // through to the full load path, which owns error reporting and
   // fallbacks.
-  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_);
+  std::string play_group;
+  std::string priority;
+  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_, &play_group,
+           &priority);
+  if (!play_group.empty() || !priority.empty()) {
+    ApplyPlaySettings(play_group, priority);
+  }
   g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
     return "Classified sound '" + file_name_
            + "' (streamed=" + std::to_string(is_streamed_)
-           + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
+           + " pre_mixed=" + std::to_string(pre_mixed_) + " play_group='"
+           + g_base->audio->PlayGroupName(play_group_)
+           + "' priority=" + std::to_string(priority_.load()) + ").";
   });
   if (!is_streamed_) {
-    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    if (kUseDecodedAudioCache) {
+      LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    } else {
+      LoadOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
+    }
   }
 #endif  // BA_ENABLE_AUDIO
 }

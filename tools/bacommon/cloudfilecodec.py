@@ -1,7 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 """zstd (de)compression for cloud-file blobs.
 
-Holds the :class:`CompressionType` enum (how a stored blob is encoded)
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
+Holds the ``CompressionType`` enum (how a stored blob is encoded)
 plus the codec dispatch mapping each type to a concrete zstd operation --
 including which pre-shared dictionary a dict-based type uses. Lives in
 ``bacommon`` so both server components (which compress on store) and
@@ -11,7 +16,7 @@ mapping and load identical dictionary bytes.
 
 Compression is always expressed relative to a cloud-file's *canonical*
 (uncompressed) content: a blob's stored bytes are the canonical content
-run through its :class:`CompressionType`. ``UNCOMPRESSED`` means the
+run through its ``CompressionType``. ``UNCOMPRESSED`` means the
 stored bytes *are* the canonical content.
 """
 

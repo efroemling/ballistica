@@ -69,6 +69,12 @@ class NodeAttributeUnbound {
   virtual auto GetAsTexture(Node* node) -> SceneTexture*;
   virtual void Set(Node* node, SceneTexture* value);
 
+  virtual auto GetAsSpazDef(Node* node) -> SpazDef*;
+  virtual void Set(Node* node, SpazDef* value);
+
+  virtual auto GetAsDepiction(Node* node) -> SceneDepiction*;
+  virtual void Set(Node* node, SceneDepiction* value);
+
   virtual auto GetAsTextures(Node* node) -> std::vector<SceneTexture*>;
   virtual void Set(Node* node, const std::vector<SceneTexture*>& values);
 
@@ -206,6 +212,12 @@ class NodeAttribute {
     return attr->GetAsTexture(node);
   }
   void Set(SceneTexture* value) const { attr->Set(node, value); }
+  auto GetAsSpazDef() const -> SpazDef* { return attr->GetAsSpazDef(node); }
+  void Set(SpazDef* value) const { attr->Set(node, value); }
+  auto GetAsDepiction() const -> SceneDepiction* {
+    return attr->GetAsDepiction(node);
+  }
+  void Set(SceneDepiction* value) const { attr->Set(node, value); }
   auto GetAsTextures() const -> std::vector<SceneTexture*> {
     return attr->GetAsTextures(node);
   }
@@ -452,6 +464,36 @@ class NodeAttributeUnboundTexture : public NodeAttributeUnbound {
   void Set(Node* node, SceneTexture* val) override { NotWritableError(node); }
 };
 
+// SpazDef attr (a session-level spaz definition ref).
+class NodeAttributeUnboundSpazDef : public NodeAttributeUnbound {
+ public:
+  NodeAttributeUnboundSpazDef(NodeType* node_type, const std::string& name,
+                              uint32_t flags)
+      : NodeAttributeUnbound(node_type, NodeAttributeType::kSpazDef, name,
+                             flags) {}
+  // Override these:
+  auto GetAsSpazDef(Node* node) -> SpazDef* override {
+    NotReadableError(node);
+    return nullptr;
+  }
+  void Set(Node* node, SpazDef* val) override { NotWritableError(node); }
+};
+
+// Depiction attr (a session-level SceneDepiction ref).
+class NodeAttributeUnboundDepiction : public NodeAttributeUnbound {
+ public:
+  NodeAttributeUnboundDepiction(NodeType* node_type, const std::string& name,
+                                uint32_t flags)
+      : NodeAttributeUnbound(node_type, NodeAttributeType::kDepiction, name,
+                             flags) {}
+  // Override these:
+  auto GetAsDepiction(Node* node) -> SceneDepiction* override {
+    NotReadableError(node);
+    return nullptr;
+  }
+  void Set(Node* node, SceneDepiction* val) override { NotWritableError(node); }
+};
+
 // Texture array attr.
 class NodeAttributeUnboundTextureArray : public NodeAttributeUnbound {
  public:
@@ -576,6 +618,27 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
    public:                                                                \
     explicit Attr_##NAME(NodeType* node_type)                             \
         : NodeAttributeUnboundFloat(node_type, #NAME, 0) {}               \
+    auto GetAsFloat(Node* node) -> float override {                       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, float val) override {                            \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Like BA_FLOAT_ATTR but with deferred wire-index assignment; see
+// BA_FLOAT_ARRAY_ATTR_LATE.
+#define BA_FLOAT_ATTR_LATE(NAME, GETTER, SETTER)                          \
+  class Attr_##NAME : public NodeAttributeUnboundFloat {                  \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundFloat(node_type, #NAME,                     \
+                                    kNodeAttributeFlagLateIndex) {}       \
     auto GetAsFloat(Node* node) -> float override {                       \
       BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
       assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
@@ -963,6 +1026,46 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
       return tnode->GETTER();                                             \
     }                                                                     \
     void Set(Node* node, SceneTexture* val) override {                    \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Defines a spaz-def attr subclass that interfaces with specific
+// getter/setter calls.
+#define BA_SPAZ_DEF_ATTR(NAME, GETTER, SETTER)                            \
+  class Attr_##NAME : public NodeAttributeUnboundSpazDef {                \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundSpazDef(node_type, #NAME, 0) {}             \
+    auto GetAsSpazDef(Node* node) -> SpazDef* override {                  \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, SpazDef* val) override {                         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(val);                                                 \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Defines a depiction attr subclass that interfaces with specific
+// getter/setter calls.
+#define BA_DEPICTION_ATTR(NAME, GETTER, SETTER)                           \
+  class Attr_##NAME : public NodeAttributeUnboundDepiction {              \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundDepiction(node_type, #NAME, 0) {}           \
+    auto GetAsDepiction(Node* node) -> SceneDepiction* override {         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, SceneDepiction* val) override {                  \
       BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
       assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
       tnode->SETTER(val);                                                 \

@@ -10,8 +10,8 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
-#include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/globals_node.h"
@@ -93,7 +93,7 @@ auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
   } else if (arg == "headScale") {
     *outval = ValueTestFloat(&vr_test_head_scale_, absval, deltaval);
   } else if (arg == "vrCamOffsetY") {
-    Camera* camera = g_base->graphics->camera();
+    GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       Vector3f val = camera->vr_extra_offset();
       if (deltaval) {
@@ -105,7 +105,7 @@ auto GraphicsVR::ValueTest(const std::string& arg, double* absval,
       *outval = camera->vr_extra_offset().y;
     }
   } else if (arg == "vrCamOffsetZ") {
-    Camera* camera = g_base->graphics->camera();
+    GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       Vector3f val = camera->vr_extra_offset();
       if (deltaval) {
@@ -306,8 +306,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
   if (false) {
     ObjectComponent c(frame_def->beauty_pass());
     c.SetColor(1, 0, 0);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        BuiltinTextureID::kTexturesBoxingGlovesColor));
+    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     {
@@ -315,8 +314,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
       c.VRTransformToHead();
       c.Translate(0, 0, 5);
       c.Scale(2, 2, 2);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
     }
     c.Submit();
   }
@@ -329,16 +327,14 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kDaydreamRemote: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 1, 0);
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesBoxingGlovesColor));
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
         auto xf = c.ScopedTransform();
         c.VRTransformToRightHand();
         c.Scale(10, 10, 10);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       }
       c.Submit();
       break;
@@ -351,16 +347,14 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kOculusTouchL: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 0, 1);
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesBoxingGlovesColor));
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
         auto xf = c.ScopedTransform();
         c.VRTransformToLeftHand();
         c.Scale(10, 10, 10);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       }
       c.Submit();
       break;

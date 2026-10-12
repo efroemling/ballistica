@@ -67,6 +67,57 @@ button in `ui.cc`. `ObjectComponent` does the same premultiply centrally in
 its `WriteConfig` (transparent, non-`SetPremultiplied` case), so its callers
 (e.g. `terrain_node`, mesh fades) get it for free.
 
+## The masked-draw additive frame term
+
+The `SHD_MASKED` path in `program_simple_gl.h` (character icons: an icon
+texture + colorize tint + `characterIconMask`) *adds* a frame term with zero
+alpha on top of the modulated texture:
+
+```glsl
+... * vec4(vec3(mask.r), mask.a)
+    + vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)
+```
+
+Under straight blend the hardware weights all source RGB by fragment alpha at
+blend time, so that frame faded with the modulate alpha for free. Under
+premult blend (`GL_ONE`) nothing weights it — so faded icons kept a
+full-brightness frame ring until the very end (screen-message icons,
+elimination scoreboard icons; fixed 2026-08). The shader now scales the
+additive term by `mix(1.0, color.a, texPremultiplied)`, with the uniform fed
+from the masked shading types in `renderer_gl.cc` (the opaque masked case
+sets 0 explicitly since the program object is shared). Callers need no
+changes for this term — but their base `SetColor` premultiply (the convention
+above) is still required for the texture part of the draw.
+
+### Masks that are not premultiplied
+
+The reasoning above assumes the mask texture itself is premultiplied
+(`mask.rgb` already scaled by `mask.a`), which is what the pipeline's
+default texture role produces. A mask authored with the **data** role is
+not premultiplied — its channels are independent values — and neither is a
+straight-alpha mask from a mod. Under straight blending the hardware applied
+`mask.a` to the color at blend time; under premult blend nothing does, so
+such a mask would draw full-brightness color where its alpha fades.
+
+The masked program therefore has a `maskStraight` uniform (0/1). The
+renderer sets it to 1 for a premult-blended draw whose mask texture reports
+`premultiplied() == false`, and the shader scales both the `mask.r` term and
+the additive frame term by `mix(1.0, mask.a, maskStraight)`. A premultiplied
+mask leaves it at 0 and renders exactly as before.
+
+### Texture roles are checked at the slot
+
+Asset-package textures carry their authored role in the file
+(`baTextureRole` in the KTX2 key/value data; absent means the default
+picture role), surfaced as `TextureAsset::role()`. The render components'
+texture setters note what each slot expects — `SetTexture` a picture,
+`SetColorizeTexture` / `SetMaskTexture` / `SetMaskUV2Texture` data — and a
+mismatch logs one warning per texture, in release builds too. Textures of
+unknown role (legacy formats, OS-decoded images, text, render targets) are
+never flagged. A texture needed in both kinds of slot gets a data twin
+rather than a role change (`black_data`, `white_data`, `soft_rect_mask`,
+`soft_rect2_mask` in the builtin package).
+
 ## `SetPremultiplied(true)` means "I manage premult myself"
 
 Additive / glow effects (shields, explosions, the text-widget gradient

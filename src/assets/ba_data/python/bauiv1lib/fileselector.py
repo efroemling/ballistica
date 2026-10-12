@@ -9,8 +9,8 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -74,13 +74,13 @@ class FileSelectorWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             text=(
-                classicassets.strings.file_selector.select_folder
+                _classicassets.strings.file_selector.select_folder
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    classicassets.strings.file_selector.select_file
+                    _classicassets.strings.file_selector.select_file
                     if not allow_folders
                     else (
-                        classicassets.strings.file_selector
+                        _classicassets.strings.file_selector
                     ).select_file_or_folder
                 )
             ),
@@ -112,9 +112,9 @@ class FileSelectorWindow(bui.MainWindow):
             on_activate_call=self._on_back_press,
         )
 
-        self._folder_tex = classicassets.textures.folder.get()
+        self._folder_tex = _classicassets.textures.folder.get()
         self._folder_color = (1.1, 0.8, 0.2)
-        self._file_tex = classicassets.textures.file.get()
+        self._file_tex = _classicassets.textures.file.get()
         self._file_color = (1, 1, 1)
         self._use_folder_button: bui.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
@@ -175,12 +175,11 @@ class FileSelectorWindow(bui.MainWindow):
         self._on_entry_activated('..')
 
     def _on_back_press(self) -> None:
+        # (Disabled, and so never called, with nowhere to go back to.)
         if len(self._recent_paths) > 1:
-            builtinassets.audio.swish.get().play()
+            bui.play_swish()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
-        else:
-            builtinassets.audio.error.get().play()
 
     def _on_folder_entry_activated(self) -> None:
         if self._callback is not None:
@@ -198,22 +197,22 @@ class FileSelectorWindow(bui.MainWindow):
                     if new_path == '':
                         new_path = '/'
                 else:
-                    builtinassets.audio.error.get().play()
+                    _builtinassets.audio.error.get().play()
             else:
                 if self._path == '/':
                     test_path = self._path + entry
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    builtinassets.audio.swish.get().play()
+                    bui.play_swish()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        builtinassets.audio.swish.get().play()
+                        bui.play_swish()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
-                        builtinassets.audio.error.get().play()
+                        _builtinassets.audio.error.get().play()
                 else:
                     print(
                         (
@@ -270,7 +269,6 @@ class FileSelectorWindow(bui.MainWindow):
         self._RefreshThread(path, self._refresh).start()
 
     def _refresh(self, file_names: list[str], error: str | None) -> None:
-        # pylint: disable=too-many-branches
         if not self._root_widget:
             return
 
@@ -290,26 +288,20 @@ class FileSelectorWindow(bui.MainWindow):
             assert self._path is not None
             folder_name = os.path.basename(self._path)
 
-        b_color = (0.6, 0.53, 0.63)
-        b_color_disabled = (0.65, 0.65, 0.65)
-
-        if len(self._recent_paths) < 2:
-            bui.buttonwidget(
-                edit=self._back_button,
-                color=b_color_disabled,
-                textcolor=(0.5, 0.5, 0.5),
-            )
-        else:
-            bui.buttonwidget(
-                edit=self._back_button,
-                color=b_color,
-                textcolor=(0.75, 0.7, 0.8),
-            )
+        # Nowhere to go back to: disabled (greyed; a press sounds an
+        # error).
+        bui.buttonwidget(
+            edit=self._back_button, enabled=len(self._recent_paths) >= 2
+        )
 
         max_str_width = 300.0
         str_width = min(
             max_str_width,
-            bui.get_string_width(folder_name, suppress_warning=True),
+            bui.get_string_width(
+                folder_name,
+                suppress_warning=True,
+                suppress_logic_thread_warning=True,
+            ),
         )
         bui.textwidget(
             edit=self._path_text, text=folder_name, maxwidth=max_str_width
@@ -408,7 +400,7 @@ class FileSelectorWindow(bui.MainWindow):
                         self._height - 67,
                     ),
                     size=(self._button_width, 50),
-                    label=classicassets.strings.file_selector.use_this_folder,
+                    label=_classicassets.strings.file_selector.use_this_folder,
                     on_activate_call=self._on_folder_entry_activated,
                 )
                 bui.widget(

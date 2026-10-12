@@ -47,6 +47,33 @@ openal-apple, …) or of `src/ballistica/base/app_platform/apple/*.swift`.
    manual `git rm` in the public staging clone between pubsync begin and
    push — NO_SYNC only stops future syncs, it doesn't retract history.
 
+## What is NOT on this list: Xcode project membership
+
+Adding a Swift file to the Xcode project itself is **automatic** — do
+not hand-edit `project.pbxproj`. `update_xcode_project`
+(`tools/batools/xcodeproject.py`) already includes `.swift` in the
+suffixes it manages, so `make update` adds/removes file refs, build
+files, and build-phase entries for you.
+
+**Target membership comes from the filename**, via
+`_target_names_for_file` in that same module:
+
+| Filename pattern | Targets |
+|------------------|---------|
+| `Cocoa*.swift` | the three macOS targets |
+| `UIKit*.swift` | iOS + tvOS |
+| `StoreKitContext.swift`, `GameCenterContext.swift` | iOS, tvOS, macOS AppStore |
+| anything else | **every** target |
+
+That convention is load-bearing, and its failure mode is quiet: a
+UIKit-only file named something other than `UIKit*` falls into the
+catch-all and gets compiled into the macOS targets too, where UIKit
+does not exist — so name new platform-specific Swift files for the
+platform layer they belong to (or extend the rules there).
+
+So for a new Swift file the only hand-maintained step is list 2 below
+(`internal_source_files`), which is about *privacy*, not compilation.
+
 ## Failure-surface map
 
 Local `make preflight` catches **only one** of the three

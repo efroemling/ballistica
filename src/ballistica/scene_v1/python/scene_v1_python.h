@@ -47,6 +47,10 @@ class SceneV1Python {
   static auto GetPyMaterial(PyObject* o, bool allow_empty_ref = false,
                             bool allow_none = false) -> Material*;
   static auto GetPyMaterials(PyObject* o) -> std::vector<Material*>;
+  static auto GetPySpazDef(PyObject* o, bool allow_empty_ref = false,
+                           bool allow_none = false) -> SpazDef*;
+  static auto GetPySceneDepiction(PyObject* o, bool allow_empty_ref = false,
+                                  bool allow_none = false) -> SceneDepiction*;
   static auto GetPySceneTexture(PyObject* o, bool allow_empty_ref = false,
                                 bool allow_none = false) -> SceneTexture*;
   static auto GetPySceneTextures(PyObject* o) -> std::vector<SceneTexture*>;
@@ -107,6 +111,7 @@ class SceneV1Python {
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
     kHostInfoClass,
+    kLocalDisplayClass,
     kLast  // Sentinel; must be at end.
   };
 

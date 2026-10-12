@@ -116,6 +116,10 @@
   [
    "gravity",
    "float-array"
+  ],
+  [
+   "legacy_spaz_limbs",
+   "bool"
   ]
  ],
  "sessionglobals": [
@@ -224,6 +228,10 @@
   [
    "rotate",
    "float-array"
+  ],
+  [
+   "stickiness",
+   "float"
   ]
  ],
  "flag": [
@@ -348,6 +356,10 @@
   [
    "rotate",
    "float-array"
+  ],
+  [
+   "stickiness",
+   "float"
   ]
  ],
  "explosion": [
@@ -392,6 +404,10 @@
   [
    "always_show_health_bar",
    "bool"
+  ],
+  [
+   "health_bar_display",
+   "int"
   ]
  ],
  "light": [
@@ -644,6 +660,14 @@
   [
    "in_world",
    "bool"
+  ],
+  [
+   "flash",
+   "bool"
+  ],
+  [
+   "tint3_color",
+   "float-array"
   ]
  ],
  "terrain": [
@@ -836,6 +860,18 @@
   [
    "sound",
    "sound"
+  ],
+  [
+   "play_group",
+   "string"
+  ],
+  [
+   "play_group_cap",
+   "int"
+  ],
+  [
+   "priority",
+   "string"
   ]
  ],
  "spaz": [
@@ -1166,6 +1202,38 @@
   [
    "pickup_release_time_ms",
    "float"
+  ],
+  [
+   "spaz_def",
+   "spaz-def"
+  ],
+  [
+   "use_spaz_def_color",
+   "bool"
+  ],
+  [
+   "use_spaz_def_highlight",
+   "bool"
+  ],
+  [
+   "boxing_gloves_mesh",
+   "mesh"
+  ],
+  [
+   "boxing_gloves_color_texture",
+   "texture"
+  ],
+  [
+   "boxing_gloves_color",
+   "float-array"
+  ],
+  [
+   "boxing_gloves_scale",
+   "float"
+  ],
+  [
+   "team_coloring",
+   "bool"
   ]
  ],
  "region": [
@@ -1259,6 +1327,78 @@
   ],
   [
    "showsubseconds",
+   "bool"
+  ]
+ ],
+ "localdisplay": [
+  [
+   "config",
+   "string"
+  ],
+  [
+   "visible",
+   "bool"
+  ]
+ ],
+ "depictiondisplay": [
+  [
+   "depiction",
+   "depiction"
+  ],
+  [
+   "position",
+   "float-array"
+  ],
+  [
+   "scale",
+   "float-array"
+  ],
+  [
+   "opacity",
+   "float"
+  ],
+  [
+   "attach",
+   "string"
+  ],
+  [
+   "h_align",
+   "string"
+  ],
+  [
+   "v_align",
+   "string"
+  ],
+  [
+   "vr_depth",
+   "float"
+  ],
+  [
+   "host_only",
+   "bool"
+  ],
+  [
+   "front",
+   "bool"
+  ],
+  [
+   "color_override",
+   "float-array"
+  ],
+  [
+   "use_color_override",
+   "bool"
+  ],
+  [
+   "brightness",
+   "float"
+  ],
+  [
+   "suffix",
+   "string"
+  ],
+  [
+   "team_coloring",
    "bool"
   ]
  ]

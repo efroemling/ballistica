@@ -3,20 +3,27 @@
 #ifndef BALLISTICA_BASE_DYNAMICS_BG_BG_DYNAMICS_FUSE_H_
 #define BALLISTICA_BASE_DYNAMICS_BG_BG_DYNAMICS_FUSE_H_
 
-#include "ballistica/base/base.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_channel.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
+#include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::base {
 
-// Client controlled fuse.
+// A bomb-fuse client-side handle; feed it the fuse root transform and
+// remaining length and bg-dynamics simulates and draws the trailing
+// fuse with sparks (in the bg-dynamics world it was made in, which it
+// keeps around for as long as it exists).
 class BGDynamicsFuse {
  public:
-  BGDynamicsFuse();
+  explicit BGDynamicsFuse(BGDynamicsWorld* world);
   ~BGDynamicsFuse();
   void SetTransform(const Matrix44f& m);
   void SetLength(float l);
 
  private:
-  BGDynamicsFuseData* data_;
+  Object::Ref<BGDynamicsWorld> world_;
+  BGDynamicsSlot slot_;
 };
 
 }  // namespace ballistica::base

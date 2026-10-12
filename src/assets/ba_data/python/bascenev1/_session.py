@@ -211,6 +211,49 @@ class Session:
         del activity  # Unused.
         return True
 
+    def get_fixed_profiles(self) -> list[str] | None:
+        """Return the only profiles this session's lobby offers, if any.
+
+        None (the default) offers each player their own profiles, with
+        the usual choice of a random one and (locally) of editing
+        them. A session made to show particular characters can return
+        those instead: each a character's json as a cloud profile's
+        arrives (name, icon and spaz parts, and optionally the profile
+        name it goes by). Every player is then offered exactly those
+        and nothing else -- no random entry, and no editing unless
+        :meth:`can_edit_fixed_profiles` says so -- and what they pick
+        isn't remembered as their usual profile.
+
+        Asked as the session's lobby is made (which is during the
+        base class's ``__init__``, before a subclass's own has
+        returned), and again whenever the lobby reloads profiles
+        (send the session a
+        :class:`~bascenev1.PlayerProfilesChangedMessage` after
+        changing what this returns).
+        """
+        return None
+
+    def can_edit_fixed_profiles(self) -> bool:
+        """Return whether the lobby offers editing its fixed profiles.
+
+        Only asked of a session with fixed profiles (see
+        :meth:`get_fixed_profiles`). If so, local players get the
+        lobby's usual edit entry, and choosing it calls
+        :meth:`edit_fixed_profiles` instead of opening their own
+        profiles. Asked whenever the fixed profiles are.
+        """
+        return False
+
+    def edit_fixed_profiles(self) -> None:
+        """Open whatever edits the lobby's fixed profiles.
+
+        Called (with no context set) when a local player chooses the
+        lobby's edit entry in a session where
+        :meth:`can_edit_fixed_profiles` is True. Whatever opens
+        should end by changing what :meth:`get_fixed_profiles` returns
+        and telling the session so (see there).
+        """
+
     def on_player_request(self, player: bascenev1.SessionPlayer) -> bool:
         """Called when a new player wants to join the session.
 
@@ -219,7 +262,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _builtinassets, _classicassets
 
         # Limit player counts *unless* we're in a stress test.
         if (
@@ -229,9 +272,9 @@ class Session:
             if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.session.player_limit_reached(
+                    _classicassets.strings.session.player_limit_reached(
                         count=self.max_players
                     ),
                     color=(0.8, 0.0, 0.0),
@@ -249,7 +292,7 @@ class Session:
                     _g_player_rejoin_cooldown - babase.apptime() + leave_time
                 )
                 _bascenev1.broadcastmessage(
-                    builtinassets.strings.session.join_cooldown(seconds=diff),
+                    _builtinassets.strings.session.join_cooldown(seconds=diff),
                     color=(1, 1, 0),
                     clients=[player.inputdevice.client_id],
                     transient=True,
@@ -257,7 +300,7 @@ class Session:
                 return False
             self._player_requested_identifiers[player.id] = identifier
 
-        classicassets.audio.dripity.get().play()
+        _classicassets.audio.dripity.get().play()
         return True
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
@@ -265,7 +308,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         if sessionplayer not in self.sessionplayers:
             print(
@@ -274,7 +317,7 @@ class Session:
             )
             return
 
-        classicassets.audio.player_left.get().play()
+        _classicassets.audio.player_left.get().play()
 
         activity = self._activity_weak()
 
@@ -304,7 +347,7 @@ class Session:
             assert sessionteam is not None
 
             _bascenev1.broadcastmessage(
-                classicassets.strings.session.player_left(
+                _classicassets.strings.session.player_left(
                     player=sessionplayer.getname(full=True)
                 )
             )
@@ -663,7 +706,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _builtinassets, _classicassets
 
         lobby = chooser.lobby
         activity = self._activity_weak()
@@ -691,12 +734,12 @@ class Session:
                 self._complete_end_activity(activity, {})
             else:
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.session.not_enough_players(
+                    _classicassets.strings.session.not_enough_players(
                         count=min_players
                     ),
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
 
         # Otherwise just add players on the fly.
         else:
@@ -735,7 +778,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
         from bascenev1._team import SessionTeam
 
         sessionplayer = chooser.getplayer()
@@ -767,7 +810,7 @@ class Session:
                 pass_to_activity = False
                 with self.context:
                     _bascenev1.broadcastmessage(
-                        classicassets.strings.session.player_delayed_join(
+                        _classicassets.strings.session.player_delayed_join(
                             player=sessionplayer.getname(full=True)
                         ),
                         color=(0, 1, 0),
@@ -801,11 +844,15 @@ class Session:
 
         assert sessionplayer not in sessionteam.players
         sessionteam.players.append(sessionplayer)
+        cloud_look = chooser.get_cloud_look_json()
         sessionplayer.setdata(
             team=sessionteam,
             character=chooser.get_character_name(),
             color=chooser.get_color(),
             highlight=chooser.get_highlight(),
+            cloud_spaz_json=None if cloud_look is None else cloud_look[0],
+            cloud_icon_json=None if cloud_look is None else cloud_look[1],
+            name_depiction_json=chooser.get_name_depiction_json(),
         )
 
         self.stats.register_sessionplayer(sessionplayer)

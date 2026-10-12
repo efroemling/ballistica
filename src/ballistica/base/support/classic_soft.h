@@ -51,7 +51,7 @@ class ClassicSoftInterface {
                                           std::string* texclosed,
                                           std::string* texclosedtint,
                                           Vector3f* color, Vector3f* tint,
-                                          Vector3f* tint2) = 0;
+                                          Vector3f* tint2, Vector3f* tint3) = 0;
 };
 
 }  // namespace ballistica::base

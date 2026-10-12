@@ -65,6 +65,31 @@ class GarbageCollectionSubsystem(AppSubsystem):
     things under our warning thresholds so runaway memory usage never
     becomes a problem.
 
+    Rules
+    =====
+
+    - Never call :func:`gc.collect` from app code, and never enable
+      automatic collection or touch the collector's debug flags. To
+      request a pass, call :meth:`collect` on this subsystem, and only
+      from a spot where a hitch can't be seen (a screen fade or similar
+      transition). That method honors the current :attr:`mode` and its
+      own pacing, and it knows how to examine and then *actually* free
+      what it collected: :attr:`~Mode.STANDARD` mode runs with
+      :obj:`gc.DEBUG_SAVEALL` set, so a raw :func:`gc.collect` merely
+      parks unreachable objects in :data:`gc.garbage` (and clears their
+      weak references, which can make them look freed when they aren't).
+    - The pacing, including the occasional randomly skipped pass, is
+      deliberate: it lets object-cleanup checks (windows outliving their
+      widgets, activities outliving their sessions, etc.) catch
+      reference cycles rather than having a conveniently timed pass hide
+      them. When such a check fires, fix the cycle; don't add a
+      collection to make the warning go away.
+    - Diagnostics may *inspect* the collector freely
+      (:func:`gc.get_referrers`, :func:`gc.get_objects` and friends are
+      read-only); they just must not collect. The collecting helpers in
+      :mod:`efro.debug` are for interactive debugging sessions, not for
+      app code.
+
     Usage
     =====
 

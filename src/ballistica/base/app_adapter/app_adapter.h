@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 
+#include <functional>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/base.h"
@@ -94,6 +96,20 @@ class AppAdapter {
   /// nothing.
   virtual void StopJoystickFeedback(JoystickInput* device);
 
+  /// Return whether the device we are running on (a phone or tablet
+  /// itself, as opposed to a controller attached to it) can play haptic
+  /// feedback. Callable from any thread. Default is false.
+  virtual auto DeviceFeedbackSupported() -> bool;
+
+  /// Play haptic feedback on the device itself; the counterpart of
+  /// ApplyJoystickFeedback for touchscreen players, and everything said
+  /// there about rendering applies here too. Returns the render length
+  /// in milliseconds (0 if nothing was rendered or the platform gives no
+  /// control over the length).
+  ///
+  /// Called in the logic thread. Default does nothing.
+  virtual auto ApplyDeviceFeedback(const FeedbackEvent& event) -> int;
+
   /// Should return whether the current thread and/or context setup is the
   /// one where graphics calls should be made. For the default
   /// implementation, this simply returns true in the main thread. Note
@@ -160,6 +176,20 @@ class AppAdapter {
   /// Must be called from the logic thread.
   virtual auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string>;
+
+  /// Return the current size of the app's OS window in logical units,
+  /// for adapters running in a desktop window (SDL builds). Returns
+  /// false where unsupported (no desktop window). Must be called from
+  /// the main thread.
+  virtual auto GetWindowSize(int* width, int* height) -> bool;
+
+  /// Resize the app's OS window, for adapters running in a desktop
+  /// window (SDL builds). Only functions in windowed mode; returns
+  /// false where unsupported or currently fullscreen. The OS may clamp
+  /// the result (e.g. macOS to display bounds); follow with
+  /// GetWindowSize() for the size actually applied. Must be called
+  /// from the main thread.
+  virtual auto SetWindowSize(int width, int height) -> bool;
 
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
@@ -270,6 +300,16 @@ class AppAdapter {
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+  /// Fetch clipboard text asynchronously. Called in the logic thread,
+  /// and only when DoClipboardIsSupported() is true. Implementations
+  /// must (eventually) invoke completion_call in the logic thread with
+  /// the fetched text or an empty optional if none could be fetched;
+  /// the default implementation simply reads synchronously. Note that
+  /// completion_call may hold thread-affine state, so implementations
+  /// must not copy/destroy it in other threads.
+  virtual void DoClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> completion_call);
 
   virtual auto SupportsPurchases() -> bool;
 

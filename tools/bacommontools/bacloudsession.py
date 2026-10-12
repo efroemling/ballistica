@@ -2,6 +2,11 @@
 #
 """bacloud's live session to a basn node.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 One SmartSocket session replaces the request-per-HTTPS-handshake
 conversation bacloud used to have. There is no mint step and no HTTPS
 request at all: the client dials ``/bacloudsession`` on the node it
@@ -24,7 +29,7 @@ never on this channel -- uploads and downloads go direct to storage
 on their own connections -- so nothing here needs to overlap.
 
 **Threading.** bacloud is synchronous and stays that way. The session
-runs an asyncio loop on its own thread and :meth:`BacloudSession.request`
+runs an asyncio loop on its own thread and ``BacloudSession.request()``
 is an ordinary blocking call, so nothing above it has to know a socket
 is involved.
 
@@ -48,6 +53,7 @@ streamcall-smartsocket.md`` ("Consumer #2").
 """
 
 import os
+import json
 import queue
 import asyncio
 import logging
@@ -56,11 +62,14 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.smartsocket import (
+    MAX_MESSAGE_BYTES,
     SmartSocketClosed,
     SmartSocketEndpoint,
 )
+from efro.dataclassio import dataclass_from_json
 from bacommon.bacloud import (
     BACLOUD_VERSION,
+    ChunkedResponse,
     RequestData,
     ResponseData,
     SessionHandleResponse,
@@ -70,6 +79,8 @@ from bacommon.bacloud import (
 
 if TYPE_CHECKING:
     from websockets.asyncio.client import ClientConnection
+
+    from efro.smartsocket import SmartSocketAnomaly
     from websockets.exceptions import ConnectionClosed
 
     from bacommon.bacloud import StandardRequestData
@@ -94,6 +105,11 @@ _OPEN_TIMEOUT_SECONDS = 15.0
 #: moment; it is never worth hanging an exit.
 _END_TIMEOUT_SECONDS = 2.0
 
+#: Bound on the close handshake itself, deliberately under
+#: :data:`_END_TIMEOUT_SECONDS` so the session thread always finishes
+#: before the join covering it gives up. See its use in ``_dial``.
+_CLOSE_TIMEOUT_SECONDS = 1.5
+
 
 class BacloudSession:
     """A live conversation with the bacloud server.
@@ -105,9 +121,17 @@ class BacloudSession:
     context is, rather than here.
     """
 
-    def __init__(self, ws_url: str, bearer: str | None) -> None:
+    def __init__(
+        self,
+        ws_url: str,
+        bearer: str | None,
+        client_log_url: str | None = None,
+    ) -> None:
         self._ws_url = ws_url
         self._bearer = bearer
+        #: Where a should-be-impossible ending gets reported (the
+        #: master's client-log endpoint), or None to keep it local.
+        self._client_log_url = client_log_url
         #: Handed to us in-band once the channel exists; presented on
         #: any reconnect. None until then, which is fine -- a first
         #: attach is the one that doesn't need it.
@@ -127,27 +151,46 @@ class BacloudSession:
             SmartSocketEndpoint[RequestData, ResponseData] | None
         ) = None
         self._inbox: queue.Queue[ResponseData | None] = queue.Queue()
+
+        # Slices of a response being reassembled. The session is
+        # gapless and in order and a sender finishes one response
+        # before starting the next, so a plain list is enough -- there
+        # is nothing to interleave with.
+        self._chunks: list[str] = []
         #: Set once a connection has actually completed its hello.
         #: Until then a dial failure means 'no session here', not 'a
         #: session to recover'.
         self._ever_connected = False
         self._ready = threading.Event()
         self._ended = threading.Event()
+        #: Asks the loop to say goodbye and wind down; see :meth:`end`.
+        #: Built here rather than in :meth:`_run` so :meth:`end` can
+        #: never race its creation -- an ``asyncio.Event`` binds to no
+        #: loop until it is first awaited, so constructing it off the
+        #: session thread is fine.
+        self._end_requested = asyncio.Event()
         self._thread = threading.Thread(
             target=self._thread_main, name='bacloud-session', daemon=True
         )
         self._closed_error: str | None = None
 
     @classmethod
-    def open(cls, server: str, bearer: str | None) -> BacloudSession | None:
+    def open(
+        cls,
+        server: str,
+        bearer: str | None,
+        *,
+        client_log_url: str | None = None,
+    ) -> BacloudSession | None:
         """Open a session to ``server``, or return None.
 
         ``server`` is the host bacloud already resolved -- the same
         one its requests went to before -- so this adds no lookup and
-        no hop.
+        no hop. ``client_log_url`` is where anomalies get reported;
+        see ``_report_anomaly``.
         """
         ws_url = f'wss://{server}/bacloudsession'
-        session = cls(ws_url, bearer)
+        session = cls(ws_url, bearer, client_log_url)
         session._thread.start()
         session._ready.wait(timeout=_OPEN_TIMEOUT_SECONDS)
         if not session._ready.is_set() or session._ended.is_set():
@@ -241,32 +284,38 @@ class BacloudSession:
         not coming back, and a relay that is told so releases the
         channel (and its node-side task) now instead of holding the
         slot through the whole linger window.
+
+        We only *ask*; ``_end_when_requested`` does the saying, on
+        the session thread. That split is load-bearing in two ways.
+
+        It is the only place the goodbye can work at all: once
+        ``endpoint.run()`` has returned, the transport is already gone
+        and ``endpoint.end()`` has nothing left to send -- so a
+        goodbye issued from out here was silently a no-op in exactly
+        the case it was written for.
+
+        And scheduling a *coroutine* in from out here is not merely
+        useless but unsafe. ``run_coroutine_threadsafe`` creates a
+        task, and creating one while ``asyncio.run`` is tearing the
+        loop down races the C ``_asyncio`` accelerator's task
+        bookkeeping and segfaults the interpreter. That window is not
+        exotic: the node closes the channel when a command finishes,
+        so a run whose last command just completed arrives here with
+        the loop already unwinding. (Reported from a build 2026-08-19;
+        the ``_ended`` flag could not guard it, since it is set only
+        after ``asyncio.run`` has fully returned.)
+        ``call_soon_threadsafe`` is the one loop method documented as
+        thread-safe, creates no task, and raises rather than crashing
+        if the loop is already closed.
         """
         loop = self._loop
-        endpoint = self._endpoint
-        if (
-            loop is not None
-            and endpoint is not None
-            and not self._ended.is_set()
-        ):
-            # Build the coroutine only once we know we can schedule
-            # it, and close it by hand if we can't. A session that
-            # died on its own (refused, unreachable node) leaves a
-            # loop that has already stopped, and handing it a
-            # coroutine there produces a 'never awaited' RuntimeWarning
-            # on the user's terminal -- on what is a completely normal
-            # path, since the run just falls back to the other
-            # transport.
-            coro = endpoint.end('client exiting')
+        if loop is not None:
             try:
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-            except Exception:  # pylint: disable=broad-except
-                coro.close()
-            else:
-                try:
-                    future.result(timeout=_END_TIMEOUT_SECONDS)
-                except Exception:  # pylint: disable=broad-except
-                    pass
+                loop.call_soon_threadsafe(self._end_requested.set)
+            except RuntimeError:
+                # Loop already closed -- the session is gone and there
+                # is nobody left to say goodbye to.
+                pass
         self._thread.join(timeout=_END_TIMEOUT_SECONDS)
 
     # --- session thread ----------------------------------------
@@ -290,6 +339,8 @@ class BacloudSession:
             recv_type=ResponseData,
             on_message=self._on_message,
             logger=_session_logger(),
+            label='bacloud',
+            on_anomaly=self._report_anomaly,
         )
         self._endpoint = endpoint
 
@@ -299,15 +350,33 @@ class BacloudSession:
         # behind a hang. Wait for the connection, then let the caller
         # go.
         waiter = asyncio.create_task(self._await_connected(endpoint))
+        ender = asyncio.create_task(self._end_when_requested(endpoint))
         try:
             await endpoint.run()
         finally:
             waiter.cancel()
+            ender.cancel()
             if endpoint.close_code and not _is_clean_close(endpoint.close_code):
                 self._closed_error = (
                     f'bacloud session closed'
                     f' ({endpoint.close_code} {endpoint.close_reason}).'
                 )
+
+    async def _end_when_requested(
+        self, endpoint: SmartSocketEndpoint[RequestData, ResponseData]
+    ) -> None:
+        """Say goodbye once :meth:`end` asks for one.
+
+        Lives on the session thread for the whole life of the loop so
+        the goodbye is sent from *inside* the loop that owns the
+        connection rather than injected into it from outside (see
+        :meth:`end` for why that distinction is not cosmetic). Ending
+        the endpoint is what makes ``endpoint.run()`` return, which
+        unwinds :meth:`_run` and finishes the thread -- so the join in
+        :meth:`end` is what waits for this to land.
+        """
+        await self._end_requested.wait()
+        await endpoint.end('client exiting')
 
     async def _await_connected(
         self, endpoint: SmartSocketEndpoint[RequestData, ResponseData]
@@ -320,7 +389,80 @@ class BacloudSession:
                 return
             await asyncio.sleep(0.05)
 
+    def _report_anomaly(self, anomaly: SmartSocketAnomaly) -> None:
+        """Send a should-be-impossible ending home, best-effort.
+
+        This endpoint's logger is deliberately silent (users must not
+        see transport noise) and it runs on dev machines where nothing
+        ships logs, so without this an anomaly here would be seen by
+        nobody. A fire-and-forget POST to the master's client-log
+        endpoint from a daemon thread, with a short timeout: never
+        surfaced to the user, never allowed to delay or fail the
+        command. (Decided 2026-09-17 over a field on the next request,
+        which would have touched the wire protocol for something a
+        side channel does as well.)
+        """
+        url = self._client_log_url
+        if url is None:
+            return
+        body = json.dumps(
+            {
+                'level': 'warning',
+                'msg': f'smartsocket anomaly: {anomaly.kind.value}',
+                'ctx': {
+                    'label': anomaly.label,
+                    'code': anomaly.close_code,
+                    'reason': anomaly.close_reason,
+                    'age': f'{anomaly.session_age:.1f}',
+                    'since_hello': (
+                        'never'
+                        if anomaly.since_hello is None
+                        else f'{anomaly.since_hello:.1f}'
+                    ),
+                    'attempts': anomaly.attempts,
+                    'hellos': anomaly.hellos,
+                    'unacked': anomaly.unacked_bytes,
+                    'channel': self._channel_id or '',
+                    'bacloud_version': BACLOUD_VERSION,
+                },
+            }
+        ).encode()
+
+        def _post() -> None:
+            import urllib.request
+
+            try:
+                request = urllib.request.Request(
+                    url,
+                    data=body,
+                    headers={'Content-Type': 'application/json'},
+                    method='POST',
+                )
+                with urllib.request.urlopen(request, timeout=3.0):
+                    pass
+            except Exception:  # pylint: disable=broad-except
+                pass  # Best effort, by design.
+
+        threading.Thread(
+            target=_post, name='bacloud-anomaly-report', daemon=True
+        ).start()
+
     async def _on_message(self, response: ResponseData) -> None:
+        if isinstance(response, ChunkedResponse):
+            # A response too large for one message, arriving in
+            # ordered slices. Collect, and decode only once the last
+            # one lands -- nothing above this layer ever learns the
+            # response was split.
+            self._chunks.append(response.data)
+            if response.index + 1 < response.count:
+                return
+            joined = ''.join(self._chunks)
+            self._chunks.clear()
+            # Slices are of the serialized response, so rejoining
+            # yields exactly what an unsplit send would have.
+            self._inbox.put(dataclass_from_json(ResponseData, joined))
+            return
+
         if isinstance(response, SessionHandleResponse):
             # Not an answer to anything -- the node telling us how to
             # get back in. Hold it; don't hand it to a waiting caller.
@@ -376,10 +518,28 @@ class BacloudSession:
             subprotocols=[websockets.Subprotocol(_WS_SUBPROTOCOL)],
             additional_headers=headers,
             open_timeout=_OPEN_TIMEOUT_SECONDS,
+            # Must stay under _END_TIMEOUT_SECONDS. The goodbye is a
+            # close handshake -- a Close frame out, the peer's echo
+            # back -- and websockets' 10s default for that is five
+            # times the budget end() gives the whole wind-down. A peer
+            # that never echoes would leave this thread parked in
+            # close() well past the point end() stops joining, and
+            # since it is a daemon the process would then finalize
+            # around a thread still inside websockets and TLS. Capping
+            # it below the join means the thread always finishes on its
+            # own first, so that never comes up.
+            close_timeout=_CLOSE_TIMEOUT_SECONDS,
             # SmartSocket runs its own app-level ping/pong on a
             # policy-driven interval; a second liveness mechanism
             # would only add ways to disagree.
             ping_interval=None,
+            # Pin the receive limit to the protocol's own cap rather
+            # than inheriting whatever this library defaults to. They
+            # happened to match, but only by luck -- and the relay had
+            # no matching per-message limit, so a response between this
+            # and the relay's 4 MB buffer cap was sent and never
+            # received, presenting as an unexplained hang.
+            max_size=MAX_MESSAGE_BYTES,
         )
 
 

@@ -2,11 +2,75 @@
 #
 """Functionality related to android builds."""
 
+import pathlib
+import subprocess
+import sys
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
+from efro.error import CleanError
+
 if TYPE_CHECKING:
     pass
+
+
+def push_apk_to_archive(
+    root: pathlib.Path,
+    apk_path: pathlib.Path,
+    archive_id: str,
+) -> None:
+    """Publish an already-built apk as a new bamaster archive version.
+
+    The android analogue of :func:`efrotools.ios.push_ipa_to_archive`,
+    minus the ipa construction -- gradle has already produced the apk,
+    so this only stages it alongside a small ``install_meta.json``
+    sidecar and publishes the pair as a single archive version. The
+    version arg is omitted so the archive system auto-assigns the next
+    integer after the latest published one.
+
+    There is deliberately no manifest counterpart to the ios OTA plist:
+    android installs from a plain https download of the apk, so the
+    sidecar carries only what the installs page displays.
+    """
+    import json
+    import shutil
+    import socket
+    import tempfile
+
+    if not apk_path.is_file():
+        raise CleanError(f"Apk not found at '{apk_path}'.")
+
+    meta = {
+        'title': 'BallisticaKit',
+        'apk_filename': apk_path.name,
+        # Which machine actually produced this build. Same reasoning as
+        # the ios sidecar's build_host: with more than one build host
+        # publishing here, nothing else tells two versions apart.
+        'build_host': socket.gethostname(),
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        shutil.copy2(apk_path, pathlib.Path(tmpdir, apk_path.name))
+        with pathlib.Path(tmpdir, 'install_meta.json').open(
+            'w', encoding='utf-8'
+        ) as outfile:
+            json.dump(meta, outfile)
+
+        print(f'Publishing {archive_id} to archive...')
+        sys.stdout.flush()
+        subprocess.run(
+            [
+                str(pathlib.Path(root, 'tools', 'bacloud')),
+                'admin',
+                'archive',
+                'publish',
+                archive_id,
+                tmpdir,
+            ],
+            check=True,
+        )
+
+    print('Android build published to archive successfully!')
 
 
 @dataclass

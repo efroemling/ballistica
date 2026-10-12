@@ -105,6 +105,12 @@ struct dxBody : public dObject {
   dxAutoDisable adis;		// auto-disable parameters
   dReal adis_timeleft;		// time left to be idle
   int adis_stepsleft;		// steps left to be idle
+
+  // (ballistica) quickstep iteration hint: an island solves with the
+  // largest hint among its bodies, or the world's count if none is set
+  // (0). Lets cheap islands (debris) and demanding ones (character
+  // rigs) share a world.
+  int solver_iterations;
 };
 
 

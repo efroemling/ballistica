@@ -58,12 +58,44 @@ class Player : public Object {
   auto GetPyCharacter() -> PyObject*;  // Returns a borrowed ref.
   void SetPyCharacter(PyObject* team);
 
+  /// The player's cloud look as json: the spaz part of the
+  /// cloud-composed profile they picked and its icon (a
+  /// bacommon.depiction icon depiction), or empty when they are on a
+  /// legacy profile / random look (the legacy appearance-name
+  /// 'character' stays the fallback). Kept as json rather than scene
+  /// objects because scene objects are confined to one scene and a
+  /// player outlives activities; see GetPyCloudSpazDef.
+  void SetCloudLook(const std::string& spaz_json, const std::string& icon_json);
+
+  /// The player's cloud look as a bascenev1.SpazDef in the current
+  /// context's scene (made on first ask in each scene and reused while
+  /// anything holds it), or Py_None without one. New reference.
+  auto GetPyCloudSpazDef() -> PyObject*;
+
+  /// The player's cloud icon as a bascenev1.Depiction in the current
+  /// context's scene (as GetPyCloudSpazDef), or Py_None. New reference.
+  auto GetPyCloudIcon() -> PyObject*;
+  auto cloud_icon_json() const -> const std::string& {
+    return cloud_icon_json_;
+  }
+
+  /// The player's name as it shows on its own (a bacommon.depiction
+  /// name depiction, as json for the same reason as the cloud look), or
+  /// empty when nobody gave them one (GetName is the fallback).
+  void SetNameDepictionJson(const std::string& json);
+  auto name_depiction_json() const -> const std::string& {
+    return name_depiction_json_;
+  }
+
+  /// The player's name as a bascenev1.Depiction in the current
+  /// context's scene (as GetPyCloudSpazDef), or Py_None. New reference.
+  auto GetPyNameDepiction() -> PyObject*;
+
   auto GetPyColor() -> PyObject*;  // Returns a borrowed ref.
   void SetPyColor(PyObject* team);
 
   auto GetPyHighlight() -> PyObject*;  // Returns a borrowed ref.
   void SetPyHighlight(PyObject* team);
-
   auto GetPyActivityPlayer() -> PyObject*;  // Returns a borrowed ref.
   void SetPyActivityPlayer(PyObject* team);
 
@@ -91,7 +123,8 @@ class Player : public Object {
 
   void SetIcon(const std::string& tex_name, const std::string& tint_tex_name,
                const std::vector<float>& tint_color,
-               const std::vector<float>& tint2_color);
+               const std::vector<float>& tint2_color,
+               const std::vector<float>& tint3_color);
 
   auto icon_tex_name() const -> const std::string& {
     BA_PRECONDITION(icon_set_);
@@ -109,6 +142,10 @@ class Player : public Object {
     BA_PRECONDITION(icon_set_);
     return icon_tint2_color_;
   }
+  auto icon_tint3_color() const -> const std::vector<float>& {
+    BA_PRECONDITION(icon_set_);
+    return icon_tint3_color_;
+  }
   void set_accepted(bool value) { accepted_ = value; }
   auto time_out() const -> millisecs_t { return time_out_; }
   void set_time_out(millisecs_t value) { time_out_ = value; }
@@ -124,6 +161,7 @@ class Player : public Object {
   std::string icon_tint_tex_name_;
   std::vector<float> icon_tint_color_;
   std::vector<float> icon_tint2_color_;
+  std::vector<float> icon_tint3_color_{1.0f, 1.0f, 1.0f};
   Object::WeakRef<HostSession> host_session_;
   Object::WeakRef<HostActivity> host_activity_;
   Object::WeakRef<Node> node_;
@@ -163,6 +201,14 @@ class Player : public Object {
   // PythonRef py_actor_;
   PythonRef py_team_weak_ref_;
   PythonRef py_character_;
+  std::string cloud_spaz_json_;
+  std::string cloud_icon_json_;
+  // The last made of each (weak: whatever uses one keeps it alive, and
+  // it must never outlive its scene's activity on our account).
+  Object::WeakRef<SpazDef> cloud_spaz_def_;
+  Object::WeakRef<SceneDepiction> cloud_icon_;
+  std::string name_depiction_json_;
+  Object::WeakRef<SceneDepiction> name_depiction_;
   PythonRef py_color_;
   PythonRef py_highlight_;
   PythonRef py_activityplayer_;

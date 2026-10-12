@@ -150,6 +150,7 @@ def push_ipa_to_archive(
     """
     import json
     import shutil
+    import socket
     import plistlib
     import tempfile
 
@@ -167,6 +168,14 @@ def push_ipa_to_archive(
             or info.get('CFBundleName')
             or 'BallisticaKit'
         ),
+        # Which machine actually produced this build. Now that more than
+        # one host can publish here, this is the only thing that
+        # distinguishes otherwise identical-looking archive versions.
+        # Recorded where the build lands rather than passed in, so it
+        # stays right for hand-run builds too (and, on the cloudshell
+        # path, names the machine that ran xcodebuild rather than the
+        # one that kicked it off).
+        'build_host': socket.gethostname(),
     }
 
     # Stage the IPA + sidecar in a clean dir and publish them together as

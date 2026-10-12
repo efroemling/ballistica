@@ -5,6 +5,7 @@
 #if BA_PLATFORM_LINUX
 
 #include <list>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,8 @@ class PlatformLinux : public Platform {
  public:
   PlatformLinux();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
+  auto DoGetConfigDirectoryMonolithicDefault()
+      -> std::optional<std::string> override;
   auto DoHasTouchScreen() -> bool override;
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;
@@ -28,7 +31,7 @@ class PlatformLinux : public Platform {
 #if BA_ENABLE_OS_FONT_RENDERING
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
-  auto GetTextLineBreakOffsets(const std::string& text)
+  auto DoGetTextLineBreakOffsets(const std::string& text)
       -> std::vector<int> override;
   void FreeTextTexture(void* tex) override;
   auto CreateTextTexture(int width, int height,

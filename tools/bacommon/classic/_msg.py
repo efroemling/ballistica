@@ -9,7 +9,7 @@ from typing import Annotated, override
 from efro.dataclassio import ioprepped, IOAttrs
 from efro.message import Message, Response
 
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bacommon.clouddialog as cdlg
 import bacommon.clienteffect as clfx
 from bacommon.classic._chest import ClassicChestAppearance
@@ -33,7 +33,9 @@ class GetClassicLeaguePresidentButtonInfoMessage(Message):
 class GetClassicLeaguePresidentButtonInfoResponse(Response):
     """Here's that info about the president you asked for boss."""
 
-    # Lstr for the name shown on the button.
+    #: Display text for the name shown on the button (an account's
+    #: logo glyph + tag), shown verbatim; not an Lstr or translation key.
+    #: ``None`` when there's no president.
     name: Annotated[str | None, IOAttrs('n')]
 
 
@@ -54,6 +56,34 @@ class GetClassicPurchasesResponse(Response):
     """Here's those classic purchases ya asked for boss."""
 
     purchases: Annotated[set[str], IOAttrs('p')]
+
+
+@ioprepped
+@dataclass
+class GetClassicProfilesMessage(Message):
+    """Asking for the current account's cloud profiles.
+
+    Clients send this when the ``profiles_state`` in their live account
+    data differs from the state of the profiles they have cached.
+    """
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [GetClassicProfilesResponse]
+
+
+@ioprepped
+@dataclass
+class GetClassicProfilesResponse(Response):
+    """The current account's cloud profiles."""
+
+    #: State id these profiles correspond to (compare against the live
+    #: account data's ``profiles_state``); None if unavailable.
+    profiles_state: Annotated[str | None, IOAttrs('s')]
+
+    #: One character json string per profile, composed by the cloud.
+    profiles: Annotated[list[str], IOAttrs('p')]
 
 
 @ioprepped
@@ -152,7 +182,7 @@ class ChestInfoResponse(Response):
             """A possible set of prizes for this chest."""
 
             weight: Annotated[float, IOAttrs('w')]
-            contents: Annotated[list[ditm.Wrapper], IOAttrs('c')]
+            contents: Annotated[list[lditm.Wrapper], IOAttrs('c')]
 
         appearance: Annotated[
             ClassicChestAppearance,

@@ -15,4 +15,9 @@ fset = FeatureSet.get_active()
 #
 # Ideally we shouldn't need scene_v1_lib, but things are tangled for
 # historical reasons.
-fset.requirements = {'core', 'base', 'classic', 'scene_v1_lib'}
+#
+# We need ui_v1 for scene viewers, which draw scenes to ui textures.
+fset.requirements = {'core', 'base', 'classic', 'scene_v1_lib', 'ui_v1'}
+
+# We provide 'ba*.app.scene_v1'.
+fset.has_python_app_subsystem = True

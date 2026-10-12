@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_WIDGET_H_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -76,7 +77,28 @@ class Widget : public Object {
   void GlobalSelect();
 
   /// Show this widget if possible (by scrolling to it, etc).
-  void ScrollIntoView();
+  /// Ask our ancestor scrolls to bring us into view. Pass animate=false
+  /// to snap rather than glide -- see WidgetMessage::animate.
+  void ScrollIntoView(bool animate = true);
+
+  /// Where a scrolling widget is scrolled to, plus the extents that say
+  /// whether that offset still means the same thing later: the content's
+  /// size and our visible size along the scroll axis. Offsets are in the
+  /// widget's own terms; only feed one back to the same kind of widget.
+  struct ScrollState {
+    float offset;
+    float content_extent;
+    float visible_extent;
+  };
+
+  /// Our scroll state, if we are a scrolling widget.
+  virtual auto GetScrollState() -> std::optional<ScrollState> {
+    return std::nullopt;
+  }
+
+  /// Jump straight to a scroll offset (clamped to our content; no glide,
+  /// any inertia stopped). Returns false if we are not a scrolling widget.
+  virtual auto SetScrollOffset(float offset) -> bool { return false; }
 
   /// Returns true if the widget is the currently selected child of its
   /// parent. Note that this does not mean that the parent is selected,
@@ -148,6 +170,14 @@ class Widget : public Object {
   auto depth_range_min() const -> float { return depth_range_min_; }
   auto depth_range_max() const -> float { return depth_range_max_; }
 
+  // In a single-depth container (where siblings otherwise all share the
+  // full depth slice and can depth-fight where they overlap), draw in a
+  // thin slice behind every sibling not doing the same; for backings
+  // laid beneath other widgets. Other containers already give each child
+  // its own slice in creation order, so they ignore this.
+  void set_draw_behind(bool val) { draw_behind_ = val; }
+  auto draw_behind() const -> bool { return draw_behind_; }
+
   // For use by ContainerWidgets (we probably should just add this
   // functionality to all widgets).
   void set_parent_widget(ContainerWidget* c) { parent_widget_ = c; }
@@ -205,8 +235,20 @@ class Widget : public Object {
   // parts after. (and they need to line up visually)
   virtual auto GetDrawBrightness(millisecs_t current_time) const -> float;
 
+  /// Whether children we draw-control should draw disabled (greyed and
+  /// faded; see DepictionDrawContext). A standard-disabled button says
+  /// yes.
+  virtual auto IsDrawDisabled() const -> bool;
+
   /// Is this widget in the process of transitioning out before dying?
   virtual auto IsTransitioningOut() const -> bool;
+
+  /// Return whether this widget currently covers the entire visible
+  /// screen (the virtual outer rect) with fully opaque drawing. Used to skip
+  /// rendering the world/scene behind the UI. Implementations must be
+  /// conservative: a false negative merely misses an optimization while
+  /// a false positive visibly breaks rendering.
+  virtual auto CoversScreenOpaquely() const -> bool { return false; }
 
   // Extra buffer added around widgets when they are centered-on.
   void set_show_buffer_top(float b) { show_buffer_top_ = b; }
@@ -292,6 +334,7 @@ class Widget : public Object {
   float scale_{1.0f};
   float depth_range_min_{};
   float depth_range_max_{1.0f};
+  bool draw_behind_{};
   bool selected_{};
   bool visible_in_container_{true};
   bool neighbors_locked_{};

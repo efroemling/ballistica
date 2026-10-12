@@ -117,7 +117,17 @@ the asyncio loop has been closed.
 `BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE=1` bypasses real platform
 monitoring and runs a detached thread that flips state every 5s,
 starting in `false`. Used for testing consumers without actually
-severing the network. Implemented as a `std::thread(...).detach()`
+severing the network at the OS level -- but, since 2026-09-17, the
+v2transport drops its primary session on every `true → false` edge
+while the toggle is active (`_debug_toggle_active`, read from the env
+var at init; the same drop `debug_drop_transport_session` performs),
+because a real path loss kills sockets and a session that survives
+"offline" made the simulation miss the whole reconnect dance
+(discovered testing lazy character-media acquisition, whose resolves
+sailed through every toggle). Launches stay refused while
+unavailable, so a run sees drop → gated → recover-wake → reconnect.
+Plain HTTP fetches already in flight (urllib3 CAS blob downloads) are
+not severed. Implemented as a `std::thread(...).detach()`
 running an infinite 5s-toggle loop; tiny shutdown-race window
 accepted since the feature is opt-in. Comment at the spawn site
 documents the joinable-thread upgrade path if we ever want to close

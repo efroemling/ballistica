@@ -45,8 +45,12 @@ def resize_image() -> None:
     if not src.endswith('.png'):
         raise RuntimeError(f'src must be a png; got "{src}"')
     print('Creating: ' + os.path.basename(dst), file=sys.stderr)
+    # ImageMagick 7 names its tool 'magick' and warns on every use of
+    # the old 'convert'; ImageMagick 6 only has 'convert'. Use whichever
+    # this machine has, preferring the new name.
     subprocess.run(
-        f'convert "{src}" -resize {width}x{height} "{dst}"',
+        f'$(command -v magick || command -v convert)'
+        f' "{src}" -resize {width}x{height} "{dst}"',
         shell=True,
         check=True,
     )
@@ -183,31 +187,6 @@ def push_ipa() -> None:
     modename = args[0].lower()
     efrotools.ios.push_ipa(
         pcommand.PROJROOT, modename, signing_config=signing_config
-    )
-
-
-def push_ipa_to_archive() -> None:
-    """Construct an ios IPA and publish it to a bamaster archive.
-
-    Like push_ipa but uploads into the archive system (signed-URL GCS
-    storage) instead of rsyncing to the staging server. Pass
-    --archive-id to override the default ('ios-test-builds').
-    """
-    from efro.util import extract_arg
-    import efrotools.ios
-
-    args = sys.argv[2:]
-    signing_config = extract_arg(args, '--signing-config')
-    archive_id = extract_arg(args, '--archive-id')
-
-    if len(args) != 1:
-        raise RuntimeError('Expected 1 mode arg (debug or release).')
-    modename = args[0].lower()
-    efrotools.ios.push_ipa_to_archive(
-        pcommand.PROJROOT,
-        modename,
-        signing_config=signing_config,
-        archive_id=('ios-test-builds' if archive_id is None else archive_id),
     )
 
 
@@ -742,12 +721,23 @@ def _camel_case_split(string: str) -> list[str]:
 
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
-    import os
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
+    from batools.build import in_claude_sandbox
 
     args = ['./gradlew'] + sys.argv[2:]
+    in_sandbox = in_claude_sandbox()
+
+    # The gradle task being run (the last non-option arg), which decides
+    # which ``EFRO_IF`` sections of the build file get enabled below.
+    # Captured BEFORE we append any options of our own: reading it off
+    # ``args[-1]`` afterwards saw our own '--offline' instead of the
+    # task, so every sandboxed google build silently ran with the
+    # google-services + crashlytics plugins left out (shipping an .aab
+    # with no Firebase config) and symbol pushes failed with "task not
+    # found" (caught 2026-10-05).
+    target = next((a for a in reversed(args[1:]) if not a.startswith('-')), '')
 
     # Under Claude Code's sandbox, all network egress is forced through
     # an authenticating proxy that the JVM/Gradle won't use, so any
@@ -756,9 +746,6 @@ def efro_gradle() -> None:
     # caches (populated by normal, unsandboxed builds). No-op outside
     # the sandbox, where nothing sets these env vars.
     forced_offline = False
-    in_sandbox = bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
-        'ALL_PROXY', ''
-    ).startswith(('socks5://', 'socks5h://'))
     if in_sandbox and '--offline' not in args:
         args.append('--offline')
         forced_offline = True
@@ -772,7 +759,7 @@ def efro_gradle() -> None:
 
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
-    target_words = [w.lower() for w in _camel_case_split(args[-1])]
+    target_words = [w.lower() for w in _camel_case_split(target)]
     if 'google' in target_words:
         # Augment rather than replace; otherwise we lose the 'true'
         # tag and the single-arch flavor declarations (arm/arm64/

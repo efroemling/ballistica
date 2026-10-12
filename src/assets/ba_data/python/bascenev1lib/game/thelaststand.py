@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
-from bascenev1 import builtinassets
+from bascenev1 import _classicassets
+from bascenev1 import _builtinassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -76,11 +76,11 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         # Set here rather than as a class attribute: string accessors
         # are gated until construct-mode hands off, and class bodies
         # run at import.
-        self.tips = [classicassets.strings.tips.endless_high_score]
+        self.tips = [_classicassets.strings.tips.endless_high_score]
 
-        self._new_wave_sound = classicassets.audio.score_hit01.get()
-        self._winsound = classicassets.audio.score.get()
-        self._cashregistersound = builtinassets.audio.cash_register.get()
+        self._new_wave_sound = _classicassets.audio.score_hit01.get()
+        self._winsound = _classicassets.audio.score.get()
+        self._cashregistersound = _builtinassets.audio.cash_register.get()
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)
@@ -90,8 +90,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = None
         self._score = 0
         self._bots = SpazBotSet()
-        self._dingsound = classicassets.audio.ding_small.get()
-        self._dingsoundhigh = classicassets.audio.ding_small_high.get()
+        self._dingsound = _classicassets.audio.ding_small.get()
+        self._dingsoundhigh = _classicassets.audio.ding_small_high.get()
         self._tntspawner: TNTSpawner | None = None
         self._bot_update_interval: float | None = None
         self._bot_update_timer: bs.Timer | None = None
@@ -120,7 +120,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
         self._scoreboard = Scoreboard(
-            label=classicassets.strings.game.score, score_split=0.5
+            label=_classicassets.strings.game.score, score_split=0.5
         )
 
     @override

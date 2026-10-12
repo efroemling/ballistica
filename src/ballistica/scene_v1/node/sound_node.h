@@ -3,9 +3,11 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_SOUND_NODE_H_
 #define BALLISTICA_SCENE_V1_NODE_SOUND_NODE_H_
 
+#include <string>
 #include <vector>
 
 #include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
 
@@ -27,8 +29,15 @@ class SoundNode : public Node {
   void SetLoop(bool val);
   auto sound() const -> SceneSound* { return sound_.get(); }
   void SetSound(SceneSound* s);
+  auto play_group() const -> std::string { return play_options_.group; }
+  void SetPlayGroup(const std::string& val);
+  auto play_group_cap() const -> int { return play_options_.group_cap; }
+  void SetPlayGroupCap(int val);
+  auto priority() const -> std::string;
+  void SetPriority(const std::string& val);
 
  private:
+  SoundPlayOptions play_options_;
   Object::Ref<SceneSound> sound_;
   millisecs_t last_position_update_time_{};
   std::vector<float> position_{0.0f, 0.0f, 0.0f};

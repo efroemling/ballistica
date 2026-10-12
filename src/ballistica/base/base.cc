@@ -3,6 +3,8 @@
 #include "ballistica/base/base.h"
 
 #include <cstdio>
+#include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -17,6 +19,7 @@
 #include "ballistica/base/automation/automation.h"
 #endif
 #include "ballistica/base/discord/discord.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -364,6 +367,10 @@ void BaseFeatureSet::SuspendApp() {
       }
       return;
     }
+    // Don't spin at full speed while we wait; we'd be pinning a core at
+    // 100% at exactly the moment the audio thread is trying to ramp its
+    // volume down cleanly (and the OS is snapshotting us/etc).
+    core::Platform::SleepMillisecs(1);
   } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 
@@ -712,6 +719,23 @@ void BaseFeatureSet::PushDevConsolePrintCall(
   ui->PushDevConsolePrintCall(std::move(entries));
 }
 
+void BaseFeatureSet::OnOSMusicPlayingChanged(bool playing) {
+  // Nothing to tell before the app is up; the Python music subsystem
+  // reads Platform::os_music_playing() directly whenever it plays
+  // anything, so an early change is picked up then.
+  if (!IsAppStarted()) {
+    return;
+  }
+  logic->event_loop()->PushCall([playing] {
+    auto& objs = g_base->python->objs();
+    auto id = BasePython::ObjID::kOSMusicPlayingChangedCall;
+    if (objs.Exists(id)) {
+      objs.Get(id).Call(PythonRef::Stolen(
+          Py_BuildValue("(O)", playing ? Py_True : Py_False)));
+    }
+  });
+}
+
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
   switch (exctype) {
     case PyExcType::kContext:
@@ -931,6 +955,17 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
                     PyExcType::kRuntime);
   }
   return app_adapter->DoClipboardGetText();
+}
+
+void BaseFeatureSet::ClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> call) {
+  BA_PRECONDITION(InLogicThread());
+
+  if (!ClipboardIsSupported()) {
+    logic->event_loop()->PushCall([call = std::move(call)] { call({}); });
+    return;
+  }
+  app_adapter->DoClipboardGetTextAsync(std::move(call));
 }
 
 void BaseFeatureSet::SetAppActive(bool active) {

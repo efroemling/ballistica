@@ -6,8 +6,7 @@ from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _classicassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -66,11 +65,13 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         if resource_type == 'tickets':
             yoffs -= 20
-            rdesc = classicassets.strings.resource_type_info.tickets_description
-            tex = classicassets.textures.tickets.get()
+            rdesc = (
+                _classicassets.strings.resource_type_info.tickets_description
+            )
+            tex = _classiccatalogassets.textures.tickets.get()
         elif resource_type == 'tokens':
-            rdesc = classicassets.strings.resource_type_info.tokens_description
-            tex = classicassets.textures.coin.get()
+            rdesc = _classicassets.strings.resource_type_info.tokens_description
+            tex = _classiccatalogassets.textures.coin.get()
             bwidth = 200
             bheight = 50
 
@@ -87,7 +88,7 @@ class ResourceTypeInfoWindow(PopupWindow):
                     ),
                     color=bg_color,
                     textcolor=(0.8, 0.8, 0.8),
-                    label=classicassets.strings.resource_type_info.get_tokens,
+                    label=_classicassets.strings.resource_type_info.get_tokens,
                     size=(bwidth, bheight),
                     autoselect=True,
                     on_activate_call=bui.WeakCallStrict(
@@ -97,10 +98,10 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         elif resource_type == 'trophies':
             rdesc = 'TODO: Will show trophies & league rankings.'
-            tex = classicassets.textures.cross_out.get()
+            tex = _classicassets.textures.cross_out.get()
         elif resource_type == 'xp':
             rdesc = 'TODO: Will describe xp/levels.'
-            tex = classicassets.textures.cross_out.get()
+            tex = _classicassets.textures.cross_out.get()
         else:
             assert_never(resource_type)
 
@@ -142,5 +143,5 @@ class ResourceTypeInfoWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()

@@ -26,7 +26,9 @@ from babase._assetsubsystem import (
 )
 
 if TYPE_CHECKING:
-    from babase import AppIntent, LangStr
+    from babase import AppIntent, AppModeConfig, LangStr
+    from bacommon.assetpackage import ApverNum
+
     from babase._assetsubsystem import AssetSubsystem
 
 
@@ -122,7 +124,7 @@ class ConstructAppMode(AppMode):
 
         # Stashed resolve inputs so the dialog's Retry button can re-run.
         self._assets: AssetSubsystem | None = None
-        self._required: list[str] = []
+        self._required: list[ApverNum] = []
 
     @override
     @classmethod
@@ -138,7 +140,9 @@ class ConstructAppMode(AppMode):
         raise RuntimeError('ConstructAppMode does not handle intents.')
 
     @override
-    def on_activate(self) -> None:
+    def on_activate(self, config: AppModeConfig) -> None:
+        del config  # Unused.
+
         # Bring-up runs as an async task on the logic thread's event loop;
         # the hand-off to the real app-mode happens once it completes.
         # (Server-mode start and other stdin commands wait safely until the
@@ -194,7 +198,7 @@ class ConstructAppMode(AppMode):
         logger.info(
             'Construct-mode resolving %d asset-package(s): %s',
             len(required),
-            ', '.join(required),
+            ', '.join(str(a) for a in required),
         )
 
         # Stash inputs so the Retry button can re-run, then go.
@@ -221,13 +225,13 @@ class ConstructAppMode(AppMode):
 
             if outcome is _ResolveOutcome.AUTH_REQUIRED:
                 # Wait for auto-sign-in to settle, then retry.
-                from babase import builtinassets
+                from babase import _builtinassets
 
                 logger.info(
                     'Construct-mode: resolve needs authentication;'
                     ' waiting for sign-in.'
                 )
-                self._set_status(builtinassets.strings.assets.authenticating)
+                self._set_status(_builtinassets.strings.assets.authenticating)
                 signed_in = await self._wait_for_sign_in()
                 if not signed_in:
                     # No sign-in is coming on its own (typically no
@@ -235,7 +239,7 @@ class ConstructAppMode(AppMode):
                     # browser-based one (gui only).
                     signed_in = await self._sign_in_via_browser()
                 if not signed_in:
-                    self._fail(builtinassets.strings.assets.sign_in_failed)
+                    self._fail(_builtinassets.strings.assets.sign_in_failed)
                     return
                 outcome = await self._resolve_signed_in(
                     self._assets, self._required
@@ -256,14 +260,14 @@ class ConstructAppMode(AppMode):
             # Safety net: an unexpected orchestration error must not leave a
             # stuck modal progress dialog. Surface it as a failure (Retry on
             # gui / exit on headless).
-            from babase import builtinassets
+            from babase import _builtinassets
 
             logger.exception('Construct-mode bring-up crashed.')
-            self._fail(builtinassets.strings.assets.load_error)
+            self._fail(_builtinassets.strings.assets.load_error)
             strip_exception_tracebacks(exc)
 
     async def _resolve_signed_in(
-        self, assets: AssetSubsystem, required: list[str]
+        self, assets: AssetSubsystem, required: list[ApverNum]
     ) -> _ResolveOutcome:
         """Resolve now that we're signed in, tolerating account-channel lag.
 
@@ -303,7 +307,7 @@ class ConstructAppMode(AppMode):
     async def _attempt(
         self,
         assets: AssetSubsystem,
-        required: list[str],
+        required: list[ApverNum],
         *,
         auth_recoverable: bool,
     ) -> _ResolveOutcome:
@@ -315,15 +319,16 @@ class ConstructAppMode(AppMode):
         caller to recover from (sign in + retry) or treated as a terminal
         failure (we already tried signing in).
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
-        strs = builtinassets.strings.assets
+        strs = _builtinassets.strings.assets
         try:
             await assets.resolve(
                 required,
                 allow_downloads=True,
                 on_download_starting=self._on_download_starting,
                 on_progress=make_progress_reporter(self._on_resolve_progress),
+                label='construct-mode',
             )
             return _ResolveOutcome.SUCCESS
         except AssetAuthRequiredError as exc:
@@ -440,7 +445,7 @@ class ConstructAppMode(AppMode):
 
         Returns whether a primary account is now established.
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         plus = _babase.app.plus
         if plus is None:
@@ -478,21 +483,21 @@ class ConstructAppMode(AppMode):
         if dialog is not None:
             if is_browser_likely_available():
                 dialog.update(
-                    title=builtinassets.strings.ui.sign_in,
+                    title=_builtinassets.strings.ui.sign_in,
                     message=(
-                        builtinassets.strings.assets.sign_in_needed_browser(
+                        _builtinassets.strings.assets.sign_in_needed_browser(
                             address=address_pretty
                         )
                     ),
                     progress=None,
-                    button_label=builtinassets.strings.ui.sign_in,
+                    button_label=_builtinassets.strings.ui.sign_in,
                     on_button=lambda: _babase.open_url(address),
                 )
             else:
                 # No browser on this device (vr/tv/etc.); show the
                 # address to visit from another device. (A QR code would
                 # be ideal here; that's a planned follow-up.)
-                strs = builtinassets.strings
+                strs = _builtinassets.strings
                 dialog.update(
                     title=strs.ui.sign_in,
                     message=strs.assets.sign_in_needed_other_device(
@@ -553,8 +558,8 @@ class ConstructAppMode(AppMode):
         # validates and the resolve re-runs (gui only).
         if dialog is not None:
             dialog.update(
-                title=builtinassets.strings.ui.updating,
-                message=builtinassets.strings.assets.signing_in,
+                title=_builtinassets.strings.ui.updating,
+                message=_builtinassets.strings.assets.signing_in,
                 progress=None,
                 button_label=None,
                 on_button=None,
@@ -591,14 +596,14 @@ class ConstructAppMode(AppMode):
         with the generic 'updating' title and a zeroed bar; callers set the
         message / progress / button.
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         if not _babase.app.env.gui:
             return None
         self._begin_visible()
         if self._dialog is None:
             self._dialog = SimpleDialog(
-                title=builtinassets.strings.ui.updating, progress=0.0
+                title=_builtinassets.strings.ui.updating, progress=0.0
             )
         return self._dialog
 
@@ -684,7 +689,7 @@ class ConstructAppMode(AppMode):
         self-heal); ``--no-auto-restart``, direct-binary runs, and BASN task
         orchestration can read the code to treat it as a definitive failure.
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         logger.warning('Construct-mode: %s', _logtext(message))
 
@@ -696,10 +701,10 @@ class ConstructAppMode(AppMode):
         dialog = self._ensure_dialog()
         assert dialog is not None
         dialog.update(
-            title=builtinassets.strings.ui.error,
+            title=_builtinassets.strings.ui.error,
             message=message,
             progress=None,
-            button_label=builtinassets.strings.ui.retry,
+            button_label=_builtinassets.strings.ui.retry,
             on_button=self._on_retry,
         )
 
@@ -710,11 +715,11 @@ class ConstructAppMode(AppMode):
         title, removes the Retry button (so a second press can't fire while we
         re-resolve), and shows that work has resumed.
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         if self._dialog is not None:
             self._dialog.update(
-                title=builtinassets.strings.ui.updating,
+                title=_builtinassets.strings.ui.updating,
                 message='',
                 progress=0.0,
                 button_label=None,

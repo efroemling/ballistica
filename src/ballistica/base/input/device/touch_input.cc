@@ -7,10 +7,11 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
@@ -441,8 +442,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) sc2 *= 0.6f;
 
       if (movement_control_type_ == MovementControlType::kSwipe) {
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            BuiltinTextureID::kTexturesTouchArrows));
+        c.SetTexture(g_base->assets->base_assets().touch_arrows.get());
         if (editing_) {
           float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
@@ -499,8 +499,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
       float sc2{sc_actions * 0.6f};
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesTouchArrowsActions));
+      c.SetTexture(g_base->assets->base_assets().touch_arrows_actions.get());
       if (editing_) {
         float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
@@ -559,8 +558,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      auto* tex = g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesActionButtons);
+      auto* tex = g_base->assets->base_assets().action_buttons.get();
       premult_tex = tex->premultiplied();
       c.SetTexture(tex);
     }
@@ -662,8 +660,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonRight));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_right.get());
         }
       }
 
@@ -691,8 +689,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonLeft));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_left.get());
         }
       }
 
@@ -719,8 +717,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonBottom));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_bottom.get());
         }
       }
 
@@ -749,8 +747,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonTop));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_top.get());
         }
       }
 
@@ -806,8 +804,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     SimpleComponent c2(draw_in_world ? frame_def->overlay_3d_pass()
                                      : frame_def->GetOverlayFlatPass());
     c2.SetTransparent(true);
-    auto* tex =
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesArrow);
+    auto* tex = g_base->assets->base_assets().arrow.get();
     float a{0.45f};
     float cmul = tex->premultiplied() ? a : 1.0f;
     if (buttons_touch_) {
@@ -866,20 +863,28 @@ void TouchInput::Draw(FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -0.5f, 0.0f);
         c2.Scale(0.15f, dist, 0.2f);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowBack));
+        c2.DrawMeshAsset(g_base->assets->base_assets().arrow_back.get());
       }
 
       {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
         c2.Scale(0.45f, 0.3f, 0.3f);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowFront));
+        c2.DrawMeshAsset(g_base->assets->base_assets().arrow_front.get());
       }
     }
     c2.Submit();
   }
+}
+
+auto TouchInput::DoApplyFeedback(const FeedbackEvent& event) -> int {
+  // Someone playing on the touchscreen is holding the device, so the
+  // device itself is what should buzz. The player's own setting gets the
+  // final say (the host only ever requests).
+  if (!haptics_enabled_) {
+    return 0;
+  }
+  return g_base->app_adapter->ApplyDeviceFeedback(event);
 }
 
 void TouchInput::ApplyAppConfig() {
@@ -914,6 +919,8 @@ void TouchInput::ApplyAppConfig() {
       AppConfig::FloatID::kTouchControlsScaleActions);
   swipe_controls_hidden_ =
       g_base->app_config->Resolve(AppConfig::BoolID::kTouchControlsSwipeHidden);
+  haptics_enabled_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kTouchControlsHaptics);
 
   // Start with defaults.
   switch (g_base->ui->uiscale()) {
@@ -1046,19 +1053,22 @@ auto TouchInput::HandleTouchUp(void* touch, float x, float y) -> bool {
   if (touch == d_pad_drag_touch_) {
     d_pad_drag_touch_ = nullptr;
 
-    // Write the current frac to our config.
+    // Write the current frac to our config (and to disk; raw writes
+    // alone are lost on restart unless something else commits).
     g_base->python->SetRawConfigValue("Touch DPad X", d_pad_default_frac_x_);
     g_base->python->SetRawConfigValue("Touch DPad Y", d_pad_default_frac_y_);
+    g_base->python->objs().Get(BasePython::ObjID::kCommitConfigCall).Call();
   }
 
   if (touch == buttons_drag_touch_) {
     buttons_drag_touch_ = nullptr;
 
-    // Write the current frac to our config.
+    // Write the current frac to our config (and to disk; see above).
     g_base->python->SetRawConfigValue("Touch Buttons X",
                                       buttons_default_frac_x_);
     g_base->python->SetRawConfigValue("Touch Buttons Y",
                                       buttons_default_frac_y_);
+    g_base->python->objs().Get(BasePython::ObjID::kCommitConfigCall).Call();
   }
 
   // Release on button touch.

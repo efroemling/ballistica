@@ -25,6 +25,8 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
   auto GetPlayerProfiles() const -> PyObject* override;
   // Return classic-purchases list if available; otherwise nullptr.
   auto GetClassicPurchases() const -> PyObject* override;
+  // Return cloud-composed character json list if available; else nullptr.
+  auto GetCloudCharacters() const -> PyObject* override;
   auto IsRemoteClient() const -> bool override;
 
  private:

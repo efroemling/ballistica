@@ -6,8 +6,8 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets
-from bascenev1 import classicassets
+from bascenev1 import _builtinassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -89,25 +89,25 @@ class PowerupBoxFactory:
 
         shared = SharedObjects.get()
         self._lastpoweruptype: str | None = None
-        self.mesh = classicassets.meshes.powerup.get()
-        self.mesh_simple = classicassets.meshes.powerup_simple.get()
-        self.tex_bomb = classicassets.textures.powerup_bomb.get()
-        self.tex_punch = classicassets.textures.powerup_punch.get()
-        self.tex_ice_bombs = classicassets.textures.powerup_ice_bombs.get()
+        self.mesh = _classicassets.meshes.powerup.get()
+        self.mesh_simple = _classicassets.meshes.powerup_simple.get()
+        self.tex_bomb = _classicassets.textures.powerup_bomb.get()
+        self.tex_punch = _classicassets.textures.powerup_punch.get()
+        self.tex_ice_bombs = _classicassets.textures.powerup_ice_bombs.get()
         self.tex_sticky_bombs = (
-            classicassets.textures.powerup_sticky_bombs.get()
+            _classicassets.textures.powerup_sticky_bombs.get()
         )
-        self.tex_shield = classicassets.textures.powerup_shield.get()
+        self.tex_shield = _classicassets.textures.powerup_shield.get()
         self.tex_impact_bombs = (
-            classicassets.textures.powerup_impact_bombs.get()
+            _classicassets.textures.powerup_impact_bombs.get()
         )
-        self.tex_health = classicassets.textures.powerup_health.get()
-        self.tex_land_mines = classicassets.textures.powerup_land_mines.get()
-        self.tex_curse = classicassets.textures.powerup_curse.get()
-        self.health_powerup_sound = classicassets.audio.health_powerup.get()
-        self.powerup_sound = classicassets.audio.powerup01.get()
-        self.powerdown_sound = builtinassets.audio.powerdown01.get()
-        self.drop_sound = classicassets.audio.box_drop.get()
+        self.tex_health = _classicassets.textures.powerup_health.get()
+        self.tex_land_mines = _classicassets.textures.powerup_land_mines.get()
+        self.tex_curse = _classicassets.textures.powerup_curse.get()
+        self.health_powerup_sound = _classicassets.audio.health_powerup.get()
+        self.powerup_sound = _classicassets.audio.powerup01.get()
+        self.powerdown_sound = _builtinassets.audio.powerdown01.get()
+        self.drop_sound = _classicassets.audio.box_drop.get()
 
         # Material for powerups.
         self.powerup_material = bs.Material()

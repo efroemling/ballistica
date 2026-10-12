@@ -423,7 +423,9 @@ class RPCEndpoint:
                 )
             if close_on_error:
                 self.close()
-            raise CommunicationError() from exc
+            raise CommunicationError(
+                'Message cancelled while in flight.'
+            ) from exc
         except Exception as exc:
             # If our timer timed-out or anything else went wrong with
             # the stream, lump it in as a communication error.
@@ -445,8 +447,16 @@ class RPCEndpoint:
                 if close_on_error:
                     self.close()
 
-                # Let the user know something went wrong.
-                raise CommunicationError() from exc
+                # Let the user know something went wrong. Say *how*
+                # so a consumer's log can tell a timeout from a dropped
+                # connection (and either from a never-sent message).
+                if isinstance(exc, asyncio.TimeoutError):
+                    reason = 'timed out waiting for response'
+                else:
+                    reason = f'connection failed ({type(exc).__name__})'
+                raise CommunicationError(
+                    f'Message failed in flight: {reason}.'
+                ) from exc
 
             # Some unexpected error; let it bubble up.
             raise

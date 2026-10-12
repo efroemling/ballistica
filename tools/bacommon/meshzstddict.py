@@ -1,6 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 """Zstandard dictionaries for compressing display-mesh (``.bob``) data.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 These dictionaries are trained on the corpus of display-mesh blobs and
 substantially improve zstd compression of individual meshes (small
 files that share a lot of structure). They live in ``bacommon`` so that

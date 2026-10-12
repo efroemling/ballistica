@@ -95,6 +95,10 @@ namespace ballistica::base {
 #define BA_SCENEPACKET_MESSAGE_UNRELIABLE 18
 #define BA_SCENEPACKET_DISCONNECT 19
 #define BA_SCENEPACKET_KEEPALIVE 20
+// One part of an unreliable message too big for a packet; the receiver
+// reassembles and applies all-or-nothing (protocol
+// kProtocolVersionUnreliableParts+).
+#define BA_SCENEPACKET_MESSAGE_UNRELIABLE_PART 21
 
 // Messages is our high level layer that sits on top of scene-packets.
 // They can be any size and will always arrive in the order they were sent

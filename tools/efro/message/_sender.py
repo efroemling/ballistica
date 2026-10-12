@@ -416,20 +416,26 @@ class MessageSender:
             local_exception = raw_response.get_local_exception()
             raw_response.clear_local_exception()
 
+            # Fold the local cause's text into what we raise so
+            # str(exc) alone says what went wrong (a bare 'Error in
+            # MessageSender' hides whether the transport had no
+            # session or lost the message in flight). The chain below
+            # still carries the full cause for tracebacks.
+            errmsg = raw_response.error_message
+            if local_exception is not None and str(local_exception):
+                base = errmsg.rstrip('.')
+                errmsg = f'{base} ({local_exception})'
+
             if (
                 raw_response.error_type
                 is ErrorSysResponse.ErrorType.COMMUNICATION
             ):
-                raise CommunicationError(
-                    raw_response.error_message
-                ) from local_exception
+                raise CommunicationError(errmsg) from local_exception
 
             # If something went wrong on *our* end of the connection,
             # don't say it was a remote error.
             if raw_response.error_type is ErrorSysResponse.ErrorType.LOCAL:
-                raise RuntimeError(
-                    raw_response.error_message
-                ) from local_exception
+                raise RuntimeError(errmsg) from local_exception
 
             # If they want to support clean errors, do those.
             if (
@@ -437,22 +443,18 @@ class MessageSender:
                 and raw_response.error_type
                 is ErrorSysResponse.ErrorType.REMOTE_CLEAN
             ):
-                raise CleanError(
-                    raw_response.error_message
-                ) from local_exception
+                raise CleanError(errmsg) from local_exception
 
             if (
                 self.protocol.forward_communication_errors
                 and raw_response.error_type
                 is ErrorSysResponse.ErrorType.REMOTE_COMMUNICATION
             ):
-                raise CommunicationError(
-                    raw_response.error_message
-                ) from local_exception
+                raise CommunicationError(errmsg) from local_exception
 
             # Everything else gets lumped in as a remote error.
             raise RemoteError(
-                raw_response.error_message,
+                errmsg,
                 peer_desc=(
                     'peer'
                     if self._peer_desc_call is None

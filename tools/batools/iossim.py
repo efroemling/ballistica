@@ -17,7 +17,7 @@ from efro.error import CleanError
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Sequence
 
 # The engine's os_log subsystem (see EmitPlatformLog on Apple). Overridable via
 # env for spinoffs.
@@ -68,20 +68,31 @@ def run(
 
 
 def build_for_sim(
-    *, project: str, scheme: str, configuration: str, platform: str
+    *,
+    project: str,
+    scheme: str,
+    configuration: str,
+    platform: str,
+    extra_cc_defines: Sequence[str] | None = None,
 ) -> tuple[str, str]:
     """Build the scheme for the simulator.
 
     Returns ``(app_path, bundle_id)`` for the built product. Also used
     by external drivers (e.g. test_game_run's ios leg) that manage
     their own install/launch lifecycle.
+
+    ``extra_cc_defines`` entries (e.g. ``FOO=1``) are appended to the
+    build's ``GCC_PREPROCESSOR_DEFINITIONS`` on top of the project's
+    own (C-family only; Swift compilation conditions are separate).
     """
     if platform not in _PLATFORM_INFO:
         raise CleanError(f"Unknown platform '{platform}'.")
     info = _PLATFORM_INFO[platform]
 
     # Resolve product (.app) + bundle-id, then build.
-    settings = _build_settings(project, scheme, configuration, info)
+    settings = _build_settings(
+        project, scheme, configuration, info, extra_cc_defines
+    )
     app_path = os.path.join(
         settings['TARGET_BUILD_DIR'], settings['FULL_PRODUCT_NAME']
     )
@@ -92,7 +103,7 @@ def build_for_sim(
         f'{platform} simulator...{Clr.RST}',
         flush=True,
     )
-    _build(project, scheme, configuration, info)
+    _build(project, scheme, configuration, info, extra_cc_defines)
     return app_path, bundle_id
 
 
@@ -134,9 +145,13 @@ def stream_log(udid: str, subsystem: str) -> None:
 
 
 def _xcodebuild_base(
-    project: str, scheme: str, configuration: str, info: dict[str, str]
+    project: str,
+    scheme: str,
+    configuration: str,
+    info: dict[str, str],
+    extra_cc_defines: Sequence[str] | None = None,
 ) -> list[str]:
-    return [
+    cmd = [
         'xcodebuild',
         '-project',
         project,
@@ -148,14 +163,24 @@ def _xcodebuild_base(
         info['destination'],
         'CODE_SIGNING_ALLOWED=NO',
     ]
+    if extra_cc_defines:
+        # A command-line build setting overrides the project's, so pull
+        # the project-level values back in via $(inherited).
+        defs = ' '.join(extra_cc_defines)
+        cmd.append(f'GCC_PREPROCESSOR_DEFINITIONS=$(inherited) {defs}')
+    return cmd
 
 
 def _build_settings(
-    project: str, scheme: str, configuration: str, info: dict[str, str]
+    project: str,
+    scheme: str,
+    configuration: str,
+    info: dict[str, str],
+    extra_cc_defines: Sequence[str] | None = None,
 ) -> dict[str, str]:
     """Resolve build settings (product path, bundle id) for the sim build."""
     out = subprocess.run(
-        _xcodebuild_base(project, scheme, configuration, info)
+        _xcodebuild_base(project, scheme, configuration, info, extra_cc_defines)
         + ['-showBuildSettings', '-json'],
         capture_output=True,
         check=True,
@@ -178,10 +203,14 @@ def _build_settings(
 
 
 def _build(
-    project: str, scheme: str, configuration: str, info: dict[str, str]
+    project: str,
+    scheme: str,
+    configuration: str,
+    info: dict[str, str],
+    extra_cc_defines: Sequence[str] | None = None,
 ) -> None:
     subprocess.run(
-        _xcodebuild_base(project, scheme, configuration, info)
+        _xcodebuild_base(project, scheme, configuration, info, extra_cc_defines)
         + ['-quiet', 'build'],
         check=True,
     )

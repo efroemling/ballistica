@@ -39,6 +39,10 @@ auto NodeAttributeUnbound::GetNodeAttributeTypeName(NodeAttributeType t)
       return "material-array";
     case NodeAttributeType::kTexture:
       return "texture";
+    case NodeAttributeType::kSpazDef:
+      return "spaz-def";
+    case NodeAttributeType::kDepiction:
+      return "depiction";
     case NodeAttributeType::kTextureArray:
       return "texture-array";
     case NodeAttributeType::kSound:
@@ -214,6 +218,24 @@ auto NodeAttributeUnbound::GetAsTexture(Node* node) -> SceneTexture* {
 void NodeAttributeUnbound::Set(Node* node, SceneTexture* value) {
   throw Exception("Can't set attr '" + name() + "' on node type '"
                   + node_type()->name() + "' as a texture.");
+}
+
+auto NodeAttributeUnbound::GetAsSpazDef(Node* node) -> SpazDef* {
+  throw Exception("Can't get attr '" + name() + "' on node type '"
+                  + node_type()->name() + "' as a spaz-def.");
+}
+void NodeAttributeUnbound::Set(Node* node, SpazDef* value) {
+  throw Exception("Can't set attr '" + name() + "' on node type '"
+                  + node_type()->name() + "' as a spaz-def.");
+}
+
+auto NodeAttributeUnbound::GetAsDepiction(Node* node) -> SceneDepiction* {
+  throw Exception("Can't get attr '" + name() + "' on node type '"
+                  + node_type()->name() + "' as a depiction.");
+}
+void NodeAttributeUnbound::Set(Node* node, SceneDepiction* value) {
+  throw Exception("Can't set attr '" + name() + "' on node type '"
+                  + node_type()->name() + "' as a depiction.");
 }
 
 auto NodeAttributeUnbound::GetAsTextures(Node* node)

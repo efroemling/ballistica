@@ -11,12 +11,14 @@
 
 namespace ballistica::classic {
 
-void StressTest::Set(bool enable, int player_count, bool attract_mode) {
+void StressTest::Set(bool enable, int player_count, bool attract_mode,
+                     bool churn) {
   assert(g_base->InLogicThread());
   bool was_stress_testing = stress_testing_;
   stress_testing_ = enable;
   stress_test_player_count_ = player_count;
   attract_mode_ = attract_mode;
+  churn_ = churn;
 
   // If we're turning on, reset our intervals and things.
   if (!was_stress_testing && stress_testing_) {
@@ -65,16 +67,21 @@ void StressTest::ProcessInputs(int player_count) {
     test_inputs_.pop_front();
   }
 
-  // If we have less than full test-inputs, add one randomly.
-  if (static_cast<int>(test_inputs_.size()) < player_count
-      && ((rand() % 1000 < 10))) {  // NOLINT
+  if (!churn_) {
+    // Benchmark mode: fill up right away and never drop anyone.
+    while (static_cast<int>(test_inputs_.size()) < player_count) {
+      test_inputs_.push_back(new base::TestInput());
+    }
+  } else if (static_cast<int>(test_inputs_.size()) < player_count
+             && ((rand() % 1000 < 10))) {  // NOLINT
+    // If we have less than full test-inputs, add one randomly.
     test_inputs_.push_back(new base::TestInput());
   }
 
   // Every so often lets kill the oldest one off (less often in attract-mode
   // though).
   int odds = attract_mode_ ? 10000 : 2000;
-  if (explicit_bool(true)) {
+  if (churn_) {
     if (test_inputs_.size() > 0 && (rand() % odds < 3)) {  // NOLINT
       stress_test_last_leave_time_ = time;
 

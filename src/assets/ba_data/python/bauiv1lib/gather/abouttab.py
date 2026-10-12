@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.gather import GatherWindow
@@ -56,10 +56,10 @@ class AboutGatherTab(GatherTab):
         # (nested fragments never wrap themselves), and paragraph gaps
         # come from the block heights here.
         message_blocks: list[tuple[bui.LangStr, float]] = [
-            (classicassets.strings.gather.about_intro, 75 * msquish),
-            (classicassets.strings.gather.about_parties_info, 110 * msquish),
+            (_classicassets.strings.gather.about_intro, 75 * msquish),
+            (_classicassets.strings.gather.about_parties_info, 110 * msquish),
             (
-                classicassets.strings.gather.about_party_button(
+                _classicassets.strings.gather.about_party_button(
                     party=bui.charstr(bui.SpecialChar.PARTY_ICON),
                     button=bui.charstr(bui.SpecialChar.TOP_BUTTON),
                 ),
@@ -69,7 +69,7 @@ class AboutGatherTab(GatherTab):
         if show_message_extra:
             message_blocks.append(
                 (
-                    classicassets.strings.gather.about_local_multiplayer_extra,
+                    _classicassets.strings.gather.about_local_multiplayer_extra,
                     105 * msquish,
                 )
             )
@@ -82,10 +82,24 @@ class AboutGatherTab(GatherTab):
         if show_discord:
             c_height += discord_height
 
+        # Our scroll extends over any screen margins on the left/right/
+        # bottom (matching the window's backing imagery); content is
+        # inset by those same amounts so it stays put.
+        margin_left = self.window.margin_left
+        margin_right = self.window.margin_right
+        margin_bottom = self.window.margin_bottom
+        c_height += margin_bottom
+
         scroll_widget = bui.scrollwidget(
             parent=parent_widget,
-            position=(region_left, region_bottom),
-            size=(region_width, region_height),
+            position=(
+                region_left - margin_left,
+                region_bottom - margin_bottom,
+            ),
+            size=(
+                region_width + margin_left + margin_right,
+                region_height + margin_bottom,
+            ),
             highlight=False,
             border_opacity=0,
         )
@@ -93,10 +107,12 @@ class AboutGatherTab(GatherTab):
         container = bui.containerwidget(
             parent=scroll_widget,
             position=(
-                region_left,
-                region_bottom + (region_height - c_height) * 0.5,
+                region_left - margin_left,
+                region_bottom
+                - margin_bottom
+                + (region_height + margin_bottom - c_height) * 0.5,
             ),
-            size=(region_width, c_height),
+            size=(region_width + margin_left + margin_right, c_height),
             background=False,
             selectable=show_invite or show_discord,
         )
@@ -109,7 +125,7 @@ class AboutGatherTab(GatherTab):
             for block_text, block_height in message_blocks:
                 bui.textwidget(
                     parent=container,
-                    position=(region_width * 0.5, y),
+                    position=(margin_left + region_width * 0.5, y),
                     color=(0.6, 1.0, 0.6),
                     scale=msc_scale,
                     size=(0, 0),
@@ -124,7 +140,7 @@ class AboutGatherTab(GatherTab):
         if show_invite:
             bui.textwidget(
                 parent=container,
-                position=(region_width * 0.57, y),
+                position=(margin_left + region_width * 0.57, y),
                 color=(0, 1, 0),
                 scale=0.6,
                 size=(0, 0),
@@ -132,18 +148,18 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=classicassets.strings.gather.invite_a_friend(
+                text=_classicassets.strings.gather.invite_a_friend(
                     count=str(try_tickets)
                 ),
             )
             invite_button = bui.buttonwidget(
                 parent=container,
                 id=f'{idprefix}|invitefriend',
-                position=(region_width * 0.59, y - 25),
+                position=(margin_left + region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0, 1, 0),
-                label=classicassets.strings.gather.invite_friends,
+                label=_classicassets.strings.gather.invite_friends,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(self._invite_to_try_press),
                 up_widget=tab_button,
@@ -156,7 +172,7 @@ class AboutGatherTab(GatherTab):
         if show_discord:
             bui.textwidget(
                 parent=container,
-                position=(region_width * 0.57, y),
+                position=(margin_left + region_width * 0.57, y),
                 color=(0.6, 0.6, 1),
                 scale=0.6,
                 size=(0, 0),
@@ -164,16 +180,16 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=classicassets.strings.gather.discord_friends,
+                text=_classicassets.strings.gather.discord_friends,
             )
             discord_button = bui.buttonwidget(
                 parent=container,
                 id=f'{idprefix}|discordjoin',
-                position=(region_width * 0.59, y - 25),
+                position=(margin_left + region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0.6, 0.6, 1),
-                label=classicassets.strings.gather.discord_join,
+                label=_classicassets.strings.gather.discord_join,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._join_the_discord_press

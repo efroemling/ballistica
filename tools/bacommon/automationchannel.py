@@ -2,10 +2,15 @@
 #
 """Payload types for the automation SmartSocket channel kind.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 One root pair per channel kind (see the hierarchy-per-contract rule
 in ``streamcall-smartsocket.md``): a driver sends
-:class:`AutomationCommand` up, the device answers with
-:class:`AutomationEvent`. The relay never decodes either -- a new
+``AutomationCommand`` up, the device answers with
+``AutomationEvent``. The relay never decodes either -- a new
 payload type must never require a basn rollout.
 
 The channel is a sibling of the cloud console's, deliberately: both
@@ -28,6 +33,23 @@ from dataclasses import dataclass, field
 
 from efro.logging import LogEntry
 from efro.dataclassio import ioprepped, IOMultiType, IOAttrs
+
+
+def automation_device_id_for_key(key: str) -> str:
+    """The non-secret automation-device id for a device key.
+
+    A registered automation device is looked up by this id; only its
+    key authorizes driving it. Derived rather than separately
+    assigned, so the device and a driver holding the key agree on it
+    with nothing else to exchange. Domain-separated from the plain
+    key hash the node checks, so the id reveals nothing that hash
+    does. **Wire-stable**: the cloud stores devices under it.
+    """
+    import hashlib
+
+    return hashlib.sha256(f'ba-automation-device:{key}'.encode()).hexdigest()[
+        :16
+    ]
 
 
 class AutomationCommandTypeID(Enum):
@@ -136,6 +158,7 @@ class AutomationEventTypeID(Enum):
     LOG_ENTRIES = 'l'
     SCREENSHOT = 's'
     GAP = 'g'
+    CHUNK = 'c'
 
 
 class AutomationEvent(IOMultiType[AutomationEventTypeID]):
@@ -160,6 +183,8 @@ class AutomationEvent(IOMultiType[AutomationEventTypeID]):
             out = ScreenshotEvent
         elif type_id is AutomationEventTypeID.GAP:
             out = GapEvent
+        elif type_id is AutomationEventTypeID.CHUNK:
+            out = ChunkEvent
         else:
             raise ValueError(f'Unrecognized type-id {type_id}.')
         return out
@@ -307,3 +332,43 @@ class GapEvent(AutomationEvent):
     @classmethod
     def get_type_id(cls) -> AutomationEventTypeID:
         return AutomationEventTypeID.GAP
+
+
+@ioprepped
+@dataclass
+class ChunkEvent(AutomationEvent):
+    """One ordered slice of an event too large for a single message.
+
+    The transport caps a single message on purpose (see
+    ``efro.smartsocket.MAX_MESSAGE_BYTES``), and exceeding it does not
+    fail cleanly -- the relay retains and retries a message the far
+    socket refuses. An event past the cap is therefore split here,
+    above the transport, and rejoined by the driver before it decodes
+    anything. A lossless screenshot is the case that motivated this;
+    the mechanism is type-agnostic.
+
+    No correlation id and no total-length field: the channel delivers
+    gaplessly and in order, and the device handles one command at a
+    time, so "collect until ``index == count - 1``" cannot interleave
+    with another chunk sequence. Log traffic is never chunked -- it
+    sheds as a :class:`GapEvent` instead -- so nothing else can start
+    one either.
+
+    ``data`` is a slice of the *serialized* event, not a serialized
+    slice, so rejoining is string concatenation and the result decodes
+    exactly as it would have unsplit.
+    """
+
+    #: Position of this slice, from zero.
+    index: Annotated[int, IOAttrs('i')]
+
+    #: How many slices the whole event was split into.
+    count: Annotated[int, IOAttrs('n')]
+
+    #: This slice of the serialized event.
+    data: Annotated[str, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AutomationEventTypeID:
+        return AutomationEventTypeID.CHUNK

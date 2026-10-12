@@ -189,7 +189,7 @@ class ServerController:
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         if self._executing_shutdown:
             return
@@ -197,7 +197,7 @@ class ServerController:
         timestrval = time.strftime('%c')
         if self._shutdown_reason is ShutdownReason.RESTARTING:
             bascenev1.broadcastmessage(
-                classicassets.strings.server.restarting,
+                _classicassets.strings.server.restarting,
                 color=(1, 0.5, 0.0),
             )
             print(
@@ -206,7 +206,7 @@ class ServerController:
             )
         else:
             bascenev1.broadcastmessage(
-                classicassets.strings.server.shutting_down,
+                _classicassets.strings.server.shutting_down,
                 color=(1, 0.5, 0.0),
             )
             print(
@@ -432,6 +432,7 @@ class ServerController:
         classic.ffa_series_length = self._config.ffa_series_length
 
         classic.allow_punch_grab = self._config.allow_punch_grab
+        classic.legacy_spaz_physics = self._config.legacy_spaz_physics
 
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting

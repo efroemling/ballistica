@@ -113,7 +113,7 @@ class AccountV2Subsystem:
 
         :meta private:
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -161,7 +161,7 @@ class AccountV2Subsystem:
                     f' will be activated at next app launch.',
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
             return
 
         # Ok; no workspace to worry about; carry on.
@@ -220,7 +220,7 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def auth_request(
-        self, global_app_instance_id: str
+        self, global_app_instance_id: str, *, optional: bool = False
     ) -> None | tuple[bool, str, int | None]:
         """Start/process an auth request.
 
@@ -231,6 +231,12 @@ class AccountV2Subsystem:
         accompanying a failure (the native layer renders a recognized
         reason as its own localized builtin string, falling back to
         the error text otherwise).
+
+        ``optional`` (the host lets us join without auth) fails fast
+        when we couldn't get a token anyway (signed out, or not
+        connected to the cloud) rather than waiting for a connection.
+
+        :meta private:
         """
         import bacommon.cloud
 
@@ -258,6 +264,8 @@ class AccountV2Subsystem:
                     'You must sign in to do this.',
                     bacommon.cloud.JoinRejectReason.MUST_SIGN_IN.value,
                 )
+            if optional and not plus.cloud.connected:
+                return (False, 'Not connected.', None)
         if (
             auth_request is None
             and plus.cloud.connected
@@ -344,7 +352,7 @@ class AccountV2Subsystem:
 
         :meta private:
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -375,12 +383,12 @@ class AccountV2Subsystem:
             ):
                 service_str: LangStr | None
                 if login_type is LoginType.GPGS:
-                    service_str = builtinassets.strings.ui.google_play
+                    service_str = _builtinassets.strings.ui.google_play
                 elif login_type is LoginType.GAME_CENTER:
                     # Note: Apparently Game Center is just called 'Game
                     # Center' in all languages. Can revisit if not true.
                     # https://developer.apple.com/forums/thread/725779
-                    service_str = builtinassets.strings.ui.game_center
+                    service_str = _builtinassets.strings.ui.game_center
                 elif login_type is LoginType.EMAIL:
                     # Not possible; just here for exhaustive coverage.
                     service_str = None
@@ -394,7 +402,7 @@ class AccountV2Subsystem:
                         2.0,
                         partial(
                             _babase.screenmessage,
-                            builtinassets.strings.account.not_using_account(
+                            _builtinassets.strings.account.not_using_account(
                                 service=service_str
                             ),
                             (1, 0.5, 0),
@@ -532,7 +540,7 @@ class AccountV2Subsystem:
         result: LoginAdapter.SignInResult | Exception,
     ) -> None:
         """A sign-in has completed that the user asked for explicitly."""
-        from babase import builtinassets
+        from babase import _builtinassets
 
         del adapter  # Unused.
 
@@ -552,10 +560,10 @@ class AccountV2Subsystem:
 
             # For now just show 'error'. Should do better than this.
             _babase.screenmessage(
-                builtinassets.strings.account.sign_in_error,
+                _builtinassets.strings.account.sign_in_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
             # Also I suppose we should sign them out in this case since
             # it could be misleading to be still signed in with the old

@@ -22,8 +22,16 @@ class TextMesh : public MeshIndexedDualTextureFull {
                TextMeshEntryType entry_type, TextPacker* packer);
   auto text() const -> const std::string& { return text_; }
 
+  /// Whether the last SetText() built full geometry. False when any
+  /// OS-rendered span's measure was still cold on the logic thread (a
+  /// background measure was kicked; the affected spans got placeholder
+  /// geometry). Watch TextGraphics::os_span_measure_epoch() and re-run
+  /// SetText() to complete (see TextGroup's self-healing).
+  auto complete() const -> bool { return complete_; }
+
  private:
   std::string text_;
+  bool complete_{true};
 };
 
 }  // namespace ballistica::base

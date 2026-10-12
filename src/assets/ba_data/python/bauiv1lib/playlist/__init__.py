@@ -11,7 +11,7 @@ class PlaylistTypeVars:
 
     def __init__(self, sessiontype: type[bs.Session]):
         from bascenev1 import (
-            classicassets,
+            _classicassets,
             get_default_teams_playlist,
             get_default_free_for_all_playlist,
         )
@@ -19,20 +19,20 @@ class PlaylistTypeVars:
         self.sessiontype: type[bs.Session]
 
         if issubclass(sessiontype, bs.DualTeamSession):
-            play_mode_name = classicassets.strings.play_modes.teams
+            play_mode_name = _classicassets.strings.play_modes.teams
             self.get_default_list_call = get_default_teams_playlist
             self.session_type_name = 'bascenev1.DualTeamSession'
             self.config_name = 'Team Tournament'
-            self.window_title_name = classicassets.strings.play_modes.teams
+            self.window_title_name = _classicassets.strings.play_modes.teams
             self.sessiontype = bs.DualTeamSession
 
         elif issubclass(sessiontype, bs.FreeForAllSession):
-            play_mode_name = classicassets.strings.play_modes.free_for_all
+            play_mode_name = _classicassets.strings.play_modes.free_for_all
             self.get_default_list_call = get_default_free_for_all_playlist
             self.session_type_name = 'bascenev1.FreeForAllSession'
             self.config_name = 'Free-for-All'
             self.window_title_name = (
-                classicassets.strings.play_modes.free_for_all
+                _classicassets.strings.play_modes.free_for_all
             )
             self.sessiontype = bs.FreeForAllSession
 
@@ -41,12 +41,12 @@ class PlaylistTypeVars:
                 f'Playlist type vars undefined for sessiontype: {sessiontype}'
             )
         self.default_list_name = (
-            classicassets.strings.playlist.default_list_name(
+            _classicassets.strings.playlist.default_list_name(
                 playmode=play_mode_name
             )
         )
         self.default_new_list_name = (
-            classicassets.strings.playlist.default_new_list_name(
+            _classicassets.strings.playlist.default_new_list_name(
                 playmode=play_mode_name
             )
         )

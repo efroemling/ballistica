@@ -48,6 +48,9 @@ class ClientSessionNet : public ClientSession {
   millisecs_t last_base_time_receive_time_{};
   millisecs_t leading_base_time_received_{};
   millisecs_t leading_base_time_receive_time_{};
+  // --stream-stats (BA_STREAM_STATS): periodic pacing log.
+  bool stats_enabled_{};
+  millisecs_t stats_last_log_time_{};
   Object::WeakRef<ConnectionToHost> connection_to_host_;
   std::vector<SampleBucket> buckets_{5};
   ReplayWriter* replay_writer_{};

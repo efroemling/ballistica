@@ -208,7 +208,21 @@ if TYPE_CHECKING:
 #               hop and basn's streamcall WS fan-out. ``MIN_VERSION``
 #               tracks ``BACLOUD_VERSION`` as usual; prod and
 #               push-public land together.
-BACLOUD_VERSION = 28
+# 29 (2026-08): Responses larger than one SmartSocket message are
+#               split across several. Adds ``ResponseTypeID.CHUNK``
+#               and ``ChunkedResponse``: the session sender slices a
+#               too-large serialized response into ordered pieces and
+#               the client rejoins them before decoding. The transport
+#               caps a single message deliberately (they are
+#               load-bearing for the relay's resend-buffer and linger
+#               math), so a big response has to be split *above* it --
+#               previously nothing did, and a ~1.5 MB vendored asset
+#               package was simply retained and retried by the relay
+#               forever, presenting as a half-hour hang. ``MIN_VERSION``
+#               tracks ``BACLOUD_VERSION`` as usual, so older clients
+#               get the standard "please update" rejection rather than
+#               an undecodable type id.
+BACLOUD_VERSION = 29
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -281,6 +295,7 @@ class ResponseTypeID(Enum):
     STANDARD = 's'
     SESSION_HANDLE = 'sh'
     STREAM_OUTPUT = 'so'
+    CHUNK = 'ch'
 
 
 class ResponseData(IOMultiType[ResponseTypeID]):
@@ -319,6 +334,9 @@ class ResponseData(IOMultiType[ResponseTypeID]):
             return out
         if type_id is ResponseTypeID.STREAM_OUTPUT:
             out = StreamOutputResponse
+            return out
+        if type_id is ResponseTypeID.CHUNK:
+            out = ChunkedResponse
             return out
         raise ValueError(f'Unrecognized type-id {type_id}.')
 
@@ -636,6 +654,29 @@ class StandardResponseData(ResponseData):
 
     @ioprepped
     @dataclass
+    class SignedDownloadsProgress:
+        """Where one ``downloads_signed`` batch sits in a larger job.
+
+        A job too big for one response (a workspace get, for instance)
+        arrives as several batches chained by ``end_command``. This
+        lets the client report progress against the whole job instead
+        of just the batch in hand.
+        """
+
+        #: Files delivered by earlier batches of this job.
+        prior_count: Annotated[int, IOAttrs('pc')]
+
+        #: Bytes delivered by earlier batches of this job.
+        prior_bytes: Annotated[int, IOAttrs('pb')]
+
+        #: Files the whole job will deliver.
+        total_count: Annotated[int, IOAttrs('tc')]
+
+        #: Bytes the whole job will deliver.
+        total_bytes: Annotated[int, IOAttrs('tb')]
+
+    @ioprepped
+    @dataclass
     class UploadPlan:
         """Declarative plan for uploading a set of local files.
 
@@ -862,6 +903,15 @@ class StandardResponseData(ResponseData):
         IOAttrs('dsgn', store_default=False),
     ] = None
 
+    #: If present alongside ``downloads_signed``, that batch is part of
+    #: a multi-batch job and progress should be shown against the whole
+    #: job. Purely cosmetic; clients that don't know it report progress
+    #: per batch.
+    downloads_signed_progress: Annotated[
+        SignedDownloadsProgress | None,
+        IOAttrs('dsgp', store_default=False),
+    ] = None
+
     #: If present, the assemble ran in CAS-delivery mode: data blobs are
     #: delivered from a basn node's ``/casblob`` warm cache (see
     #: :class:`CasDelivery`) instead of per-blob GCS signed URLs.
@@ -960,6 +1010,44 @@ class StreamOutputResponse(ResponseData):
     @classmethod
     def get_type_id(cls) -> ResponseTypeID:
         return ResponseTypeID.STREAM_OUTPUT
+
+
+@ioprepped
+@dataclass
+class ChunkedResponse(ResponseData):
+    """One ordered slice of a response too large for a single message.
+
+    The transport caps a single message on purpose -- that cap is what
+    the relay's resend-buffer and linger math are sized against, so it
+    does not grow to fit one caller's payload. A response past it is
+    therefore split here, above the transport, and rejoined by the
+    reader before it decodes anything.
+
+    No correlation id and no total-length field: the session delivers
+    gaplessly and in order (that is its whole invariant), and a sender
+    finishes one response before starting the next, so "collect until
+    ``index == count - 1``" is sufficient and cannot interleave. A
+    reader that sees a gap has already lost the session.
+
+    ``data`` is a slice of the *serialized* response, not a serialized
+    slice -- rejoining is string concatenation, and the result decodes
+    exactly as it would have unsplit. That keeps every existing
+    response type carryable with no per-type awareness here.
+    """
+
+    #: Position of this slice, from zero.
+    index: Annotated[int, IOAttrs('i')]
+
+    #: How many slices the whole response was split into.
+    count: Annotated[int, IOAttrs('n')]
+
+    #: This slice of the serialized response.
+    data: Annotated[str, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.CHUNK
 
 
 @ioprepped

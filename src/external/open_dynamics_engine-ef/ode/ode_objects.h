@@ -98,6 +98,12 @@ int   dBodyGetAutoDisableFlag (dBodyID);
 void  dBodySetAutoDisableFlag (dBodyID, int do_auto_disable);
 void  dBodySetAutoDisableDefaults (dBodyID);
 
+/* (ballistica) per-body quickstep iteration hint: the island a body is
+ * in solves with the largest hint among its bodies, or the world's
+ * count (dWorldSetQuickStepNumIterations) when no body sets one (0). */
+void  dBodySetSolverIterations (dBodyID, int iterations);
+int   dBodyGetSolverIterations (dBodyID);
+
 /* bodies */
 
 dBodyID dBodyCreate (dWorldID);

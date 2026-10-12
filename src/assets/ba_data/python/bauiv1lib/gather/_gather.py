@@ -5,15 +5,13 @@
 import weakref
 import logging
 from enum import Enum
-from typing import override, TYPE_CHECKING
+from typing import override
 
 from bauiv1lib.tabs import TabRow
+from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
-from bauiv1 import classicassets
-from bauiv1 import builtinassets
-
-if TYPE_CHECKING:
-    from bauiv1lib.play import PlaylistSelectContext
+from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 
 
 class GatherTab:
@@ -122,6 +120,18 @@ class GatherWindow(bui.MainWindow):
         self._scroll_bottom = yoffs - 93 - self._scroll_height
         self._scroll_left = (self._width - self._scroll_width) * 0.5
 
+        # In small ui (where we cover the screen), our backing imagery
+        # and region-spanning scrolls extend out to cover any margins
+        # between the virtual rect and the visible screen edges on the
+        # left/right/bottom (the top edge carries the tab row and stays
+        # put). Tabs consult these to extend their own region-spanning
+        # bits, insetting content to match so it stays put.
+        self.margin_left, self.margin_right, self.margin_bottom = (
+            get_screen_margins(scale)[:3]
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -144,12 +154,21 @@ class GatherWindow(bui.MainWindow):
             )
             self._back_button = None
         else:
+            # Sized to match doc-ui windows' back buttons on screen
+            # (as of 2026-09-30), centered where the old 60x60-at-1.1
+            # sat.
+            back_size = (60.0, 55.0)
+            back_scale = 0.9 if uiscale is bui.UIScale.MEDIUM else 0.87
+            back_center = (103.0, yoffs - 10.0)
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|back',
-                position=(70, yoffs - 43),
-                size=(60, 60),
-                scale=1.1,
+                position=(
+                    back_center[0] - 0.5 * back_size[0] * back_scale,
+                    back_center[1] - 0.5 * back_size[1] * back_scale,
+                ),
+                size=back_size,
+                scale=back_scale,
                 autoselect=True,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
@@ -175,26 +194,30 @@ class GatherWindow(bui.MainWindow):
             scale=1.3 if uiscale is bui.UIScale.SMALL else 1.0,
             h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=(classicassets.strings.gather.title),
+            text=(_classicassets.strings.gather.title),
             maxwidth=135 if uiscale is bui.UIScale.SMALL else 320,
         )
 
         # Build up the set of tabs we want.
         tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr | bui.LangStr]] = [
-            (self.TabID.ABOUT, classicassets.strings.gather.about)
+            (self.TabID.ABOUT, _classicassets.strings.gather.about)
         ]
         if plus.get_v1_account_misc_read_val('enablePublicParties', True):
             tabdefs.append(
                 (
                     self.TabID.INTERNET,
-                    classicassets.strings.gather.public,
+                    _classicassets.strings.gather.public,
                 )
             )
         tabdefs.append(
-            (self.TabID.PRIVATE, classicassets.strings.gather.private)
+            (self.TabID.PRIVATE, _classicassets.strings.gather.private)
         )
-        tabdefs.append((self.TabID.NEARBY, classicassets.strings.gather.nearby))
-        tabdefs.append((self.TabID.MANUAL, classicassets.strings.gather.manual))
+        tabdefs.append(
+            (self.TabID.NEARBY, _classicassets.strings.gather.nearby)
+        )
+        tabdefs.append(
+            (self.TabID.MANUAL, _classicassets.strings.gather.manual)
+        )
 
         tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
 
@@ -238,15 +261,20 @@ class GatherWindow(bui.MainWindow):
             )
 
         # Not actually using a scroll widget anymore; just an image.
+        # It extends left/right/bottom across any screen margins; the
+        # top edge stays put since the tab row hangs off it.
         bui.imagewidget(
             parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
+            size=(
+                self._scroll_width + self.margin_left + self.margin_right,
+                self._scroll_height + self.margin_bottom,
             ),
-            texture=builtinassets.textures.scroll_widget.get(),
-            mesh_transparent=builtinassets.meshes.soft_edge_outside.get(),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5 - self.margin_left,
+                self._scroll_bottom - self.margin_bottom,
+            ),
+            texture=_uiv1assets.textures.scroll_widget.get(),
+            mesh_transparent=_uiv1assets.meshes.soft_edge_outside.get(),
             opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None
@@ -271,29 +299,29 @@ class GatherWindow(bui.MainWindow):
     def on_main_window_close(self) -> None:
         self._save_state()
 
-    def playlist_select(
-        self,
-        origin_widget: bui.Widget,
-        context: PlaylistSelectContext,
-    ) -> None:
-        """Called by the private-hosting tab to select a playlist."""
-        from bauiv1lib.play import PlayWindow
+    def playlist_select(self, origin_widget: bui.Widget) -> None:
+        """Called by the private-hosting tab to select a playlist.
+
+        Opens the play page in select mode, leading to the playlist
+        browsers' select mode; confirming a playlist there records it in
+        the config and comes back here.
+        """
+        # pylint: disable=cyclic-import
+        from bauiv1lib.playdocui import PlaySelectController, Root
 
         # Avoid redundant window spawns.
         if not self.main_window_has_control():
             return
 
-        new_window = self.main_window_replace(
-            lambda: PlayWindow(
-                origin_widget=origin_widget, playlist_select_context=context
-            )
+        ctrl = PlaySelectController
+        self.main_window_replace(
+            lambda: ctrl().create_window(
+                Root(select=True),
+                origin_widget=origin_widget,
+                auxiliary_style=False,
+            ),
+            extra_type_id=ctrl.get_window_extra_type_id(),
         )
-        assert new_window is not None
-
-        # Grab the newly-set main-window's back-state; that will lead us
-        # back here once we're done going down our main-window
-        # rabbit-hole for playlist selection.
-        context.back_state = new_window.main_window_back_state
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:

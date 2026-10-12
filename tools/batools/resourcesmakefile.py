@@ -252,8 +252,12 @@ class ResourcesMakefileGenerator:
                 testbuild,
             ),
         ]:
+            # ('magick' on ImageMagick 7, which warns on every use of
+            # the old 'convert'; 'convert' on 6, which has no 'magick'.
+            # Resolved when the recipe runs, so the generated Makefile
+            # works on either.)
             cmd = (
-                'convert '
+                '$$(command -v magick || command -v convert) '
                 + ''.join([' "' + f + '"' for f in all_icons])
                 + ' "'
                 + path

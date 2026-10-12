@@ -9,7 +9,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -125,8 +125,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
-        self._score_sound = classicassets.audio.score.get()
-        self._swipsound = classicassets.audio.swip.get()
+        self._score_sound = _classicassets.audio.score.get()
+        self._swipsound = _classicassets.audio.swip.get()
         self._extraflagmat = bs.Material()
         self._flags: list[ConquestFlag] = []
         self._epic_mode = bool(settings['Epic Mode'])

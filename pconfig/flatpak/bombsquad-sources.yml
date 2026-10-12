@@ -1,0 +1,33 @@
+# The bombsquad module's project source, included by name from
+# net.froemling.bombsquad.yml. Locally that's this working tree. Flathub
+# builds get a generated copy of this file instead, with git at the
+# release tag plus the release's prebuilt-inputs archive (see
+# generate_flathub_manifest in tools/batools/pcommands3.py).
+- type: dir
+  path: ./../../
+  skip:
+    # Host-built state the sandbox rebuilds for itself anyway (the venv
+    # is bound to the host's interpreter path, the cmake trees to host
+    # paths); copying it in is just wasted I/O and churns
+    # flatpak-builder's cache for this module.
+    - .venv
+    - build/cmake
+    - build/spinofftest
+    - build/dummymodules
+    # Never read by the build. (The build makes its own empty
+    # .cache/efrocache; everything it would fetch is prefetched.)
+    - .git
+    - .idea
+    - .cache/efrocache
+    - .cache/bacloud
+    - .cache/buildlocks
+    - .cache/checkenv
+    - .cache/check_cpplint
+    - .cache/check_pylint
+    - .cache/format_project_cpp_files
+    - .cache/format_project_python_files
+    - .cache/pcommandbatch
+    # flatpak-builder's own scratch space, which lives inside the
+    # project; copying it into the build would be circular.
+    - .cache/flatpak
+    - build/flatpak

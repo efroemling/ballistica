@@ -23,6 +23,22 @@ class TextureAsset : public Asset {
                         TextureMinQuality min_quality_in);
   explicit TextureAsset(const std::string& qr_url);
 
+  /// Create the texture that a view drawing to a texture draws to. We
+  /// hold no pixels of our own in this case; we stand for whatever the
+  /// renderer last drew of that view's world, so that anything able to
+  /// draw a texture can draw it.
+  explicit TextureAsset(RenderView* view);
+
+  auto GetRenderView() const -> RenderView* override;
+
+  /// The id of the view that draws to us, or 0 if we're not that kind
+  /// of texture. (Unlike the view itself, this can be asked from any
+  /// thread and keeps its value once the view is gone.)
+  auto render_view_id() const -> int { return render_view_id_; }
+
+  /// Called by our view as it goes away. Logic thread only.
+  void ClearRenderView();
+
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
@@ -52,24 +68,79 @@ class TextureAsset : public Asset {
   /// base_level_.
   auto premultiplied() const -> bool { return premultiplied_; }
 
+  /// What this texture was authored as (read from the KTX2 key/value
+  /// data at load). kUnknown until loaded and for anything that did not
+  /// come from the asset pipeline.
+  auto role() const -> TextureRole { return role_; }
+
+  /// Note that this texture is being bound to a slot a shader reads as
+  /// a picture. Warns (once per texture) if it was built as data. The
+  /// render components call these from their texture setters, so every
+  /// draw is covered without call sites having to remember; they cost a
+  /// compare per call.
+  void ExpectPictureSlot() {
+    if (role_ == TextureRole::kData && !role_slot_warned_) {
+      WarnSlotMismatch_("color");
+    }
+  }
+
+  /// Note that this texture is being bound to a slot whose channels a
+  /// shader reads as independent values (``slot`` names it for the
+  /// message: "colorize", "mask"). Warns (once per texture) if it was
+  /// built as a picture. Textures of unknown role are never flagged.
+  void ExpectDataSlot(const char* slot) {
+    if (role_ != TextureRole::kData && role_ != TextureRole::kUnknown
+        && !role_slot_warned_) {
+      WarnSlotMismatch_(slot);
+    }
+  }
+
+  /// Scope during which slot-mismatch warnings are withheld (logic
+  /// thread only). For drawing content authored elsewhere - a remote
+  /// host's scene or a replay - where the mismatch is someone else's
+  /// to fix and the local player can do nothing with the warning.
+  /// Withheld warnings are not consumed; the same texture still warns
+  /// if locally authored content misuses it later.
+  class ScopedSlotWarningSuppress {
+   public:
+    ScopedSlotWarningSuppress() : prev_{slot_warnings_suppressed_} {
+      slot_warnings_suppressed_ = true;
+    }
+    ~ScopedSlotWarningSuppress() { slot_warnings_suppressed_ = prev_; }
+    ScopedSlotWarningSuppress(const ScopedSlotWarningSuppress&) = delete;
+    auto operator=(const ScopedSlotWarningSuppress&)
+        -> ScopedSlotWarningSuppress& = delete;
+
+   private:
+    bool prev_;
+  };
+
  private:
+  static bool slot_warnings_suppressed_;
+  void WarnSlotMismatch_(const char* slot);
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
+  int render_view_id_{};
+  // Not a reference; our view tells us when it goes (it holds us, so
+  // we can outlive it but not the other way around).
+  RenderView* render_view_{};
   std::string file_name_;
   std::string file_name_full_;
-  /// Explicit container type for the file at ``file_name_full_``,
-  /// when the path's suffix doesn't itself convey it (CAS blobs are
-  /// named by hash with no extension). Empty for legacy filename-on-
-  /// disk assets, in which case the loader dispatches on the path's
-  /// suffix. Values match the suffix-dispatch keys: ``.dds``,
-  /// ``.android_dds``, ``.ktx``, ``.pvr``, ``.nop``.
-  std::string container_;
+  /// Whether ``file_name_full_`` is an asset-package CAS blob (named
+  /// by content hash — bare or with the bundled transport suffix —
+  /// never by a content extension). CAS blobs dispatch on content
+  /// magic bytes at preload; legacy on-disk assets dispatch on the
+  /// path's suffix (``.dds``, ``.android_dds``, ``.ktx``, ``.pvr``,
+  /// ``.nop``).
+  bool is_cas_blob_{};
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};
   TextureMinQuality min_quality_{TextureMinQuality::kLow};
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
   bool premultiplied_{};
+  TextureRole role_{TextureRole::kUnknown};
+  bool role_slot_warned_{};
 };
 
 }  // namespace ballistica::base

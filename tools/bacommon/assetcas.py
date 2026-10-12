@@ -1,6 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 """Shared content-addressed asset-blob download primitive.
 
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+
 Used by both the game client's asset subsystem and the ``bacloud`` CLI to
 fetch content-addressed blobs from a basn node's ``/casblob`` endpoint,
 verify them, and write them into a local content-addressed cache. The

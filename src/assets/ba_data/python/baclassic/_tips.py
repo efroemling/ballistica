@@ -7,7 +7,7 @@ These can be shown at opportune times such as between rounds."""
 from typing import TYPE_CHECKING
 
 import babase
-from babase import builtinassets
+from babase import _builtinassets
 
 if TYPE_CHECKING:
     pass
@@ -16,23 +16,23 @@ if TYPE_CHECKING:
 def get_all_tips() -> list[babase.LangStr]:
     """Return the complete list of tips.
 
-    Tips are authored strings (``classicassets.strings.tips``) rather
+    Tips are authored strings (``_classicassets.strings.tips``) rather
     than English text run through the legacy translate path, so they
     re-render on a language change like everything else. Which tips
     apply still depends on the platform.
     """
     # Safe up-call: bascenev1 is fully imported by the time a tip can
     # be shown; the cycle pylint sees is structural only. (baclassic
-    # has no wrapper of its own -- its modules pull classicassets from
+    # has no wrapper of its own -- its modules pull _classicassets from
     # bascenev1, same as _achievement.py.)
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    t = classicassets.strings.tips
+    t = _classicassets.strings.tips
     app = babase.app
 
     tips: list[babase.LangStr] = [
-        t.remote_app(remote_app_name=builtinassets.strings.ui.remote_app_name),
+        t.remote_app(remote_app_name=_builtinassets.strings.ui.remote_app_name),
         t.create_profiles,
         t.aim_punches,
         t.curse_health_powerup,

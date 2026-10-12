@@ -9,12 +9,14 @@
 #include "ballistica/scene_v1/node/anim_curve_node.h"
 #include "ballistica/scene_v1/node/bomb_node.h"
 #include "ballistica/scene_v1/node/combine_node.h"
+#include "ballistica/scene_v1/node/depiction_display_node.h"
 #include "ballistica/scene_v1/node/explosion_node.h"
 #include "ballistica/scene_v1/node/flag_node.h"
 #include "ballistica/scene_v1/node/flash_node.h"
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/node/image_node.h"
 #include "ballistica/scene_v1/node/light_node.h"
+#include "ballistica/scene_v1/node/local_display_node.h"
 #include "ballistica/scene_v1/node/locator_node.h"
 #include "ballistica/scene_v1/node/math_node.h"
 #include "ballistica/scene_v1/node/null_node.h"
@@ -32,12 +34,14 @@
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::scene_v1 {
 
 core::CoreFeatureSet* g_core{};
 base::BaseFeatureSet* g_base{};
 SceneV1FeatureSet* g_scene_v1{};
+ui_v1::UIV1FeatureSet* g_ui_v1{};
 
 void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   // Ok, our feature-set's Python module is getting imported.
@@ -70,6 +74,10 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);
   g_base = base::BaseFeatureSet::Import();
 
+  // Scene viewers hand their pictures to ui as ui textures.
+  assert(g_ui_v1 == nullptr);
+  g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
+
   g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_bascenev1 exec end");
 }
@@ -99,7 +107,9 @@ SceneV1FeatureSet::SceneV1FeatureSet()
                                  ScorchNode::InitType(),
                                  FlashNode::InitType(),
                                  TextureSequenceNode::InitType(),
-                                 TimeDisplayNode::InitType()};
+                                 TimeDisplayNode::InitType(),
+                                 LocalDisplayNode::InitType(),
+                                 DepictionDisplayNode::InitType()};
 
   int next_type_id{};
   for (auto* t : init_node_types) {
