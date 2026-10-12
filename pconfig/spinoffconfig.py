@@ -199,6 +199,8 @@ ctx.filter_file_names = {
     'mirror_repository.yml',
     'nightly.yml',
     'release.yml',
+    'cache_cleanup.yml',
+    'docker_build_env.yml',
     'ballistica_dev_dockerfile',
     'ballistica_dev_image.yaml',
     'ci.yaml',
