@@ -19,4 +19,25 @@
       <AdditionalManifestFiles>$(MSBuildThisFileDirectory)utf8.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
+  <!--
+    Copy the Visual C++ runtime dlls next to every Release exe, taken
+    from the redist dir of the very toolset doing the compile so they
+    always match it. Shipping these app-local means a build runs on a
+    machine with an older (or no) installed runtime; an exe built by a
+    newer toolset can crash at launch inside an older msvcp140.dll.
+    Release only: the debug runtime is not redistributable. Packaging
+    (the windows-*-package Makefile targets; see WIN_CRT_DLLS there,
+    which must list the same files) picks these up from the output dir.
+    vcruntime140_1.dll does not exist for 32 bit.
+  -->
+  <Target Name="BACopyVCRuntime" AfterTargets="Build" Condition="'$(ConfigurationType)'=='Application' and '$(Configuration)'=='Release'">
+    <PropertyGroup>
+      <BAVCRuntimeDir>$(VCToolsRedistInstallDir)$(PlatformShortName)\Microsoft.VC$(PlatformToolsetVersion).CRT\</BAVCRuntimeDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <BAVCRuntimeFiles Include="$(BAVCRuntimeDir)msvcp140.dll;$(BAVCRuntimeDir)vcruntime140.dll" />
+      <BAVCRuntimeFiles Include="$(BAVCRuntimeDir)vcruntime140_1.dll" Condition="'$(Platform)'!='Win32'" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BAVCRuntimeFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

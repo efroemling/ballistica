@@ -1,4 +1,4 @@
-### 1.8.0 (build 23050, api 9, 2026-10-11)
+### 1.8.0 (build 23051, api 9, 2026-10-12)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -23,6 +23,11 @@
 - Hosts no longer send clients bursts of sound plays that would only cut
   each other off on arrival.
 - Scene protocol is now 54 (for the above).
+- Windows packages now include the Visual C++ runtime dlls (`msvcp140.dll`,
+  `vcruntime140.dll`, `vcruntime140_1.dll`) next to the exe, taken from the
+  toolset that compiled it, in place of the redist installer. Builds no
+  longer depend on whichever runtime version is installed on the machine;
+  an older installed one could crash the game at launch.
 - Retuned character physics to feel closer to 1.7 after the limbs rework:
   less bouncy, steadier landings and less speed lost to bumps, and
   knocked-out characters slide instead of sticking to the floor (thanks

@@ -3490,7 +3490,6 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
-  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe \
   $(BUILD_DIR)/windows/Win32/zlib1.dll
 
 # Rule to copy src extras to build.
@@ -3567,7 +3566,6 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe \
   $(BUILD_DIR)/windows/x64/zlib1.dll
 
 # Rule to copy src extras to build.
@@ -3638,8 +3636,7 @@ EXTRAS_TARGETS_WIN_ARM64 = \
   $(BUILD_DIR)/windows/ARM64/python314_d.dll \
   $(BUILD_DIR)/windows/ARM64/python_d.exe \
   $(BUILD_DIR)/windows/ARM64/pythonw.exe \
-  $(BUILD_DIR)/windows/ARM64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/ARM64/vc_redist.arm64.exe
+  $(BUILD_DIR)/windows/ARM64/pythonw_d.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_ARM64) : ../../.efrocachemap
