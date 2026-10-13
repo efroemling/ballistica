@@ -143,7 +143,9 @@ jobs:
     needs: [prepare, build]
     # Runs after a build, and also when the build was skipped because
     # the image already existed.
-    if: ${{ !failure() && !cancelled() }}
+    if: >-
+      ${{ !cancelled() && needs.prepare.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.build.result) }}
     runs-on: ubuntu-latest
     steps:
       - name: Docker login
