@@ -373,11 +373,11 @@ class DocUIWindow(bui.MainWindow):
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
                 autoselect=True,
-                label=bui.charstr(
+                label=(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style
                     else bui.SpecialChar.BACK
-                ),
+                ).value,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button

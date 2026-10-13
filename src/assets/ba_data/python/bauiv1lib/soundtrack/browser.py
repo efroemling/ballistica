@@ -74,7 +74,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 position=(50, yoffs - 60),
                 size=(60, 60),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 autoselect=True,
             )

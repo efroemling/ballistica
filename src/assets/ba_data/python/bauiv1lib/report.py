@@ -37,7 +37,7 @@ class ReportPlayerWindow(bui.Window):
             scale=0.7,
             position=(40, self._height - 50),
             size=(50, 50),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,

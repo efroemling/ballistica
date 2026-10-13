@@ -138,7 +138,7 @@ class EditProfileWindow(
         if 'icon' in profile:
             self._icon = profile['icon']
         else:
-            self._icon = bui.charstr(bui.SpecialChar.LOGO)
+            self._icon = bui.SpecialChar.LOGO.value
 
         assigned_random_char = False
 
@@ -214,6 +214,8 @@ class EditProfileWindow(
 
         self._upgrade_button = None
         if self._is_account_profile:
+            # (v1 sign-in state on purpose: the name comes from the v1
+            # account.)
             if plus.get_v1_account_state() == 'signed_in':
                 sval = plus.get_v1_account_display_string()
             else:
@@ -689,7 +691,7 @@ class EditProfileWindow(
 
         icons_str = ' '.join(
             [
-                bui.charstr(n)
+                n.value
                 for n in [
                     bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO,
                     bui.SpecialChar.GAME_CENTER_LOGO,
@@ -948,6 +950,8 @@ class EditProfileWindow(
             return
         name = self.getname()
         if name == '__account__':
+            # (v1 sign-in state on purpose: the name comes from the v1
+            # account.)
             name = (
                 plus.get_v1_account_name()
                 if plus.get_v1_account_state() == 'signed_in'

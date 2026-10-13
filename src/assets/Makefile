@@ -221,7 +221,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/__init__.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/base_asset_set.py \
-  $(BUILD_DIR)/ba_data/python/babase/_generated/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
   $(BUILD_DIR)/ba_data/python/babase/_locale.py \
@@ -654,6 +653,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/basntosandbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/sandboxtobasn.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/nativeenums.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/packetzstddict.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/__init__.py \

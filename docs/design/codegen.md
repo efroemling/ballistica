@@ -36,8 +36,7 @@ src/assets/ba_data/python/bascenev1/_generated/
 ```
 
 These hold generated `.py` modules (e.g.,
-`babase/_generated/enums.py` — enum classes mirroring the C++
-enum values).
+`babase/_generated/base_asset_set.py`).
 
 The Python underscore prefix is the conventional "private package"
 marker; the C++ side has no equivalent need for it.
@@ -111,19 +110,35 @@ from the package's `__init__.py`:
 
 ```python
 # babase/__init__.py
-from babase._generated.enums import (
-    InputType,
-    Permission,
-    QuitType,
-    SpecialChar,
-    UIScale,
+from babase._generated.base_asset_set import (
+    BaseAssetSet,
+    set_base_asset_set,
 )
 ```
 
-Consumers then see `babase.InputType` rather than
-`babase._generated.enums.InputType`. The generated module stays
-inside `_generated` (and inherits its gitignore/spinoff/file-list
+Consumers then see `babase.BaseAssetSet` rather than
+`babase._generated.base_asset_set.BaseAssetSet`. The generated module
+stays inside `_generated` (and inherits its gitignore/spinoff/file-list
 treatment); the public surface is curated through `__init__.py`.
+
+### Direction: Python is the source, C++ is generated
+
+When the same list has to exist in both languages, write it in Python
+and generate the C++ from it, not the reverse: Python objects can be
+imported and inspected directly, where going the other way means
+text-parsing C++. Two generators do this today:
+
+- `batools.cpp_enums` turns the enums in `bacommon/nativeenums.py`
+  (`InputType`, `QuitType`, `SoundPriority`, `UIScale`, `Permission`)
+  into `shared/generated/enums.h`, which `shared/ballistica.h`
+  includes. To add an enum that both sides need, add a class there; to
+  add a member, add it there. It lives in `bacommon` rather than
+  `babase` because every project needs the header, including a
+  core-only spinoff with no `babase`; `babase` re-exports the names.
+  That module may import nothing but `enum`.
+- `batools.special_chars` turns `bacommon.text.SpecialChar` into
+  `base/generated/special_chars.h` (the enum plus each character's
+  UTF-8 form).
 
 ## Caveat: `.cc` generation
 

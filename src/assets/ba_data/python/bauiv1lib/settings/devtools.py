@@ -37,6 +37,7 @@ _devstrs = _classicassets.strings.settings.dev_tools
 
 _SHOW_BUTTON_KEY = 'Show Dev Console Button'
 _BUTTON_SIZE_KEY = 'Dev Console Button Size'
+_BUTTON_OPACITY_KEY = 'Dev Console Button Opacity'
 _BUTTON_STYLE_KEY = 'Dev Console Button Style'
 _BUTTON_POS_KEYS = (
     'Dev Console Button Pos X',
@@ -44,8 +45,9 @@ _BUTTON_POS_KEYS = (
     'Dev Console Button Anchor',
 )
 
-# How often a size drag re-applies the config (the button resizes live).
-_SIZE_DRAG_INTERVAL = 0.1
+# How often a slider drag re-applies the config (the button updates
+# live).
+_DRAG_INTERVAL = 0.1
 
 
 class DevConsoleButtonStyle(Enum):
@@ -88,6 +90,7 @@ class DevToolsState(DocUIState, state_id='settings.devtools'):
 
     show_dev_console_button: Annotated[bool, IOAttrs('sb')] = False
     dev_console_button_size: Annotated[float, IOAttrs('bs')] = 1.0
+    dev_console_button_opacity: Annotated[float, IOAttrs('bo')] = 1.0
     dev_console_button_style: Annotated[
         DevConsoleButtonStyle, IOAttrs('bt')
     ] = DevConsoleButtonStyle.GREY
@@ -247,6 +250,7 @@ def _page() -> dui2.Response:
     state = DevToolsState(
         show_dev_console_button=bool(config.resolve(_SHOW_BUTTON_KEY)),
         dev_console_button_size=float(config.resolve(_BUTTON_SIZE_KEY)),
+        dev_console_button_opacity=float(config.resolve(_BUTTON_OPACITY_KEY)),
         dev_console_button_style=_style_from_config(),
     )
     enabled = state.show_dev_console_button
@@ -266,7 +270,19 @@ def _page() -> dui2.Response:
             decimals=1,
             label=_devstrs.size.spec,
             on_drag=apply_drag,
-            drag_interval=_SIZE_DRAG_INTERVAL,
+            drag_interval=_DRAG_INTERVAL,
+            on_change=apply,
+            disabled=not enabled,
+        ),
+        DevToolsState.slider_row(
+            lambda s: s.dev_console_button_opacity,
+            min_value=0.0,
+            max_value=1.0,
+            increment=0.1,
+            decimals=1,
+            label=_devstrs.opacity.spec,
+            on_drag=apply_drag,
+            drag_interval=_DRAG_INTERVAL,
             on_change=apply,
             disabled=not enabled,
         ),
@@ -346,12 +362,13 @@ def _apply_show_button(context: DocUILocalAction) -> None:
 
 
 def _apply_button_setting(context: DocUILocalAction, *, commit: bool) -> None:
-    """Write the changed size or style to the config."""
+    """Write the changed size, opacity or style to the config."""
     state = context.state(DevToolsState)
     if state is None:
         return
     cfg = bui.app.config
     cfg[_BUTTON_SIZE_KEY] = state.dev_console_button_size
+    cfg[_BUTTON_OPACITY_KEY] = state.dev_console_button_opacity
     cfg[_BUTTON_STYLE_KEY] = state.dev_console_button_style.value
     if commit:
         cfg.apply_and_commit()
@@ -360,10 +377,12 @@ def _apply_button_setting(context: DocUILocalAction, *, commit: bool) -> None:
 
 
 def _reset_button() -> None:
-    # Drop our stored size, style, and custom position; applying then
-    # reverts the button to its default look in its default docked spot.
+    # Drop our stored size, opacity, style, and custom position; applying
+    # then reverts the button to its default look in its default docked
+    # spot.
     cfg = bui.app.config
     cfg.pop(_BUTTON_SIZE_KEY, None)
+    cfg.pop(_BUTTON_OPACITY_KEY, None)
     cfg.pop(_BUTTON_STYLE_KEY, None)
     for key in _BUTTON_POS_KEYS:
         cfg.pop(key, None)

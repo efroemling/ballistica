@@ -998,7 +998,10 @@ class PublicGatherTab(GatherTab):
         # If any new party infos have come in, apply some of them.
         self._process_pending_party_infos()
 
-        # Anytime we sign in/out, make sure we refresh our list.
+        # Anytime we sign in/out, make sure we refresh our list. (v1
+        # sign-in state on purpose, throughout this tab: the public
+        # party list and our own listing go through the v1 master
+        # server.)
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if self._signed_in != signed_in:
             self._signed_in = signed_in
@@ -1231,7 +1234,8 @@ class PublicGatherTab(GatherTab):
             )
         )
 
-        # If signed out or errored, show no parties.
+        # If signed out or errored, show no parties. (v1 sign-in state
+        # on purpose; see _update().)
         if (
             plus.get_v1_account_state() != 'signed_in'
             or not self._have_valid_server_list
@@ -1285,6 +1289,8 @@ class PublicGatherTab(GatherTab):
             self._last_server_list_query_time = now
             if DEBUG_SERVER_COMMUNICATION:
                 print('REQUESTING SERVER LIST')
+            # (v1 sign-in state on purpose: this query is a v1
+            # transaction.)
             if plus.get_v1_account_state() == 'signed_in':
                 plus.add_v1_account_transaction(
                     {
@@ -1437,6 +1443,8 @@ class PublicGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
+        # (v1 sign-in state on purpose: advertising a party registers it
+        # with the v1 master server.)
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return

@@ -100,12 +100,18 @@ class InventoryUIController(
 
         response: DocUIResponse
         cloud_ok = False
+        show_cloud_toggle = False
 
         if self._player_profiles_only and self._legacy_profiles:
             # Legacy profiles alone need no cloud at all.
             response = dui2.Response(
                 page=dui2.Page(title=profstrs.title.spec, rows=[])
             )
+            # The only way here is the cloud view's 'Show Legacy
+            # Profiles' toggle, so offer the way back without asking
+            # the cloud. (Should it be gone by then, the cloud view
+            # falls back to these same profiles, minus the toggle.)
+            show_cloud_toggle = True
         else:
             # The rest of our inventory (and, for new-enough servers,
             # our cloud profiles) comes from the cloud. The root page
@@ -132,6 +138,7 @@ class InventoryUIController(
                 return response
 
             cloud_ok = response.status is dui2.ResponseStatus.SUCCESS
+            show_cloud_toggle = cloud_ok
 
             # If anything went wrong, replace the error page they sent
             # us with a minimal placeholder page saying why the rest of
@@ -197,9 +204,25 @@ class InventoryUIController(
         # when the cloud page (and thus cloud profiles) is unavailable.
         if self._legacy_profiles or not cloud_ok:
             response.page.rows = (
-                self._get_legacy_profile_rows(show_cloud_toggle=cloud_ok)
+                self._get_legacy_profile_rows(
+                    show_cloud_toggle=show_cloud_toggle
+                )
                 + response.page.rows
             )
+
+        # Profiles alone make for a short page, shown in a wider-layout
+        # window (see baclassic's profile_browser_window()). Trim the
+        # space above and below so both flavors fit it without
+        # scrolling (their rows are the same sizes) even when a
+        # subtitle wraps to a second line, and center whatever room
+        # is left.
+        if self._player_profiles_only:
+            page = response.page
+            page.center_vertically = True
+            page.padding_top = page.padding_bottom = -22.0
+            lastrow = page.rows[-1] if page.rows else None
+            if isinstance(lastrow, dui2.ButtonRow):
+                lastrow.spacing_bottom = 0.0
 
         return response
 
@@ -376,6 +399,8 @@ class InventoryUIController(
         items = list(profiles.items())
         items.sort(key=lambda x: asserttype(x[0], str).lower())
 
+        # (v1 sign-in state on purpose: the name comes from the v1
+        # account.)
         account_name: str | None
         if plus.get_v1_account_state() == 'signed_in':
             account_name = plus.get_v1_account_display_string()

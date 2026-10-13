@@ -2110,8 +2110,8 @@ void ContainerWidget::PrintExitListInstructions(
       g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
       g_base->ScreenMessage(
           base::BuiltinStrings::Ui::ArrowsToExitList(
-              g_base->assets->CharStr(SpecialChar::kLeftArrow),
-              g_base->assets->CharStr(SpecialChar::kRightArrow))
+              g_base->assets->CharStr(base::SpecialChar::kLeftArrow),
+              g_base->assets->CharStr(base::SpecialChar::kRightArrow))
               ->Evaluate());
     }
   }

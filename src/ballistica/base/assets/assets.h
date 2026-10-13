@@ -13,6 +13,7 @@
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/generated/base_asset_set.h"
+#include "ballistica/base/generated/special_chars.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -419,7 +420,6 @@ class Assets {
   void LoadBuiltinCubeMapTexture(BuiltinCubeMapTextureID id, const char* name);
   void LoadBuiltinSound(BuiltinSoundID id, const char* name);
   void LoadBuiltinMesh(BuiltinMeshID id, const char* name);
-  void InitSpecialChars();
 
   template <typename T>
   auto GetAssetPendingLoadCount(
@@ -486,8 +486,6 @@ class Assets {
   std::shared_ptr<const LangStrTables> lang_str_tables_;
   std::mutex language_mutex_;
   std::shared_ptr<const LanguageData> language_data_;
-  std::mutex special_char_mutex_;
-  std::unordered_map<SpecialChar, std::string> special_char_strings_;
 };
 
 }  // namespace ballistica::base

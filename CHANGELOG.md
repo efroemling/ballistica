@@ -1,4 +1,4 @@
-### 1.8.0 (build 23055, api 9, 2026-10-13)
+### 1.8.0 (build 23056, api 9, 2026-10-13)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -377,6 +377,12 @@
   when possible (so their cloud profiles come along) without requiring it:
   joiners who are signed out or offline, or a host that is offline, still
   connect just as before. Public parties still require sign-in.
+- `ba*.SpecialChar` values are now the characters themselves, so
+  `ba*.SpecialChar.BACK.value` can be used directly as text, and
+  `ba*.charstr()` is deprecated in favor of that (see
+  CHANGELOG_API_VERSIONS.md). The engine's own list of these characters is
+  now generated from `bacommon.text.SpecialChar` instead of being kept in
+  sync by hand.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

@@ -396,40 +396,6 @@ static PyMethodDef PySetCameraManualDef = {
     ":meta private:",
 };
 
-// -------------------------------- charstr ------------------------------------
-
-static auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  PyObject* name_obj;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
-                                   const_cast<char**>(kwlist), &name_obj)) {
-    return nullptr;
-  }
-  assert(g_base->logic);
-  auto id(g_base->python->GetPyEnum_SpecialChar(name_obj));
-  assert(Utils::IsValidUTF8(g_base->assets->CharStr(id)));
-  return PyUnicode_FromString(g_base->assets->CharStr(id).c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCharStrDef = {
-    "charstr",                     // name
-    (PyCFunction)PyCharStr,        // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "charstr(char_id: babase.SpecialChar) -> str\n"
-    "\n"
-    "Return a unicode string representing a special character.\n"
-    "\n"
-    "Note that these utilize the private-use block of unicode characters\n"
-    "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
-    "them elsewhere will be meaningless.\n"
-    "\n"
-    "See :class:`~babase.SpecialChar` for the list of available characters.",
-};
-
 // ------------------------------- safecolor -----------------------------------
 
 static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2263,7 +2229,6 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
       PyBrightenedColorDef,
-      PyCharStrDef,
       PyFullscreenControlAvailableDef,
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,

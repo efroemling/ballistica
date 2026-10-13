@@ -716,9 +716,9 @@ class TournamentButton:
             if final_fee == 0:
                 final_fee_str = _classicassets.strings.ui.free
             else:
-                final_fee_str = bui.charstr(
-                    bui.SpecialChar.TICKET_BACKING
-                ) + str(final_fee)
+                final_fee_str = bui.SpecialChar.TICKET_BACKING.value + str(
+                    final_fee
+                )
 
         assert bui.app.classic is not None
         ad_tries_remaining = bui.app.classic.accounts.tournament_info[

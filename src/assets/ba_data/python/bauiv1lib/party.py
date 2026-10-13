@@ -73,7 +73,7 @@ class PartyWindow(bui.Window):
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button

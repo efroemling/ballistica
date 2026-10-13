@@ -6,12 +6,36 @@ import time
 import logging
 from typing import TYPE_CHECKING, overload
 
+# ``deprecated`` is available from the stdlib in Python 3.13+, but
+# typing_extensions keeps one import path for everything.
+from typing_extensions import deprecated
+
 import _babase
 
 if TYPE_CHECKING:
     from typing import Literal
 
+    from bacommon.text import SpecialChar
     import babase
+
+
+@deprecated(
+    'charstr() will be removed when api 9 support ends;'
+    ' use the .value of the SpecialChar instead.'
+)
+def charstr(char_id: SpecialChar) -> str:
+    """Return a unicode string representing a special character.
+
+    .. deprecated:: 1.8.0
+       Use the ``value`` of the :class:`~babase.SpecialChar` instead
+       (``SpecialChar.BACK.value``). This will be removed when api 9
+       support ends.
+
+    Note that these utilize the private-use block of unicode characters
+    (U+E000-U+F8FF) and are specific to the game; exporting or rendering
+    them elsewhere will be meaningless.
+    """
+    return char_id.value
 
 
 def _timestring_parts(

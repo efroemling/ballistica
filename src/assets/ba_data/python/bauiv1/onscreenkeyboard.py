@@ -58,7 +58,7 @@ class OnScreenKeyboardWindow(Window):
             scale=0.6,
             position=(30, self._height - 55),
             size=(50, 50),
-            label=babase.charstr(babase.SpecialChar.CLOSE),
+            label=babase.SpecialChar.CLOSE.value,
             enable_sound=False,
             on_activate_call=self._cancel,
             autoselect=True,
@@ -171,7 +171,7 @@ class OnScreenKeyboardWindow(Window):
                     autoselect=True,
                     textcolor=key_textcolor,
                     color=key_color_dark,
-                    label=babase.charstr(babase.SpecialChar.SHIFT),
+                    label=babase.SpecialChar.SHIFT.value,
                     enable_sound=False,
                     extra_touch_border_scale=0.3,
                     button_type='square',
@@ -207,7 +207,7 @@ class OnScreenKeyboardWindow(Window):
                     repeat=True,
                     textcolor=key_textcolor,
                     color=key_color_dark,
-                    label=babase.charstr(babase.SpecialChar.DELETE),
+                    label=babase.SpecialChar.DELETE.value,
                     button_type='square',
                     on_activate_call=self._del,
                 )
@@ -236,7 +236,7 @@ class OnScreenKeyboardWindow(Window):
                         enable_sound=False,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
+                        label=babase.SpecialChar.LOGO_FLAT.value,
                         extra_touch_border_scale=0.3,
                         button_type='square',
                     )
@@ -313,7 +313,7 @@ class OnScreenKeyboardWindow(Window):
                     if self._mode == 'caps'
                     else self._key_color_dark
                 ),
-                label=babase.charstr(babase.SpecialChar.SHIFT),
+                label=babase.SpecialChar.SHIFT.value,
                 on_activate_call=self._shift,
             )
             _bauiv1.buttonwidget(
@@ -324,7 +324,7 @@ class OnScreenKeyboardWindow(Window):
             _bauiv1.buttonwidget(
                 edit=self._emoji_button,
                 color=self._key_color_dark,
-                label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
+                label=babase.SpecialChar.LOGO_FLAT.value,
                 on_activate_call=self._next_mode,
             )
         else:
@@ -346,7 +346,7 @@ class OnScreenKeyboardWindow(Window):
             _bauiv1.buttonwidget(
                 edit=self._emoji_button,
                 color=self._key_color_dark,
-                label=babase.charstr(babase.SpecialChar.LOGO_FLAT),
+                label=babase.SpecialChar.LOGO_FLAT.value,
                 on_activate_call=self._next_mode,
             )
 

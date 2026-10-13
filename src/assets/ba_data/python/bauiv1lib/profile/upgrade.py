@@ -180,7 +180,7 @@ class ProfileUpgradeWindow(bui.Window):
                 )
                 bui.textwidget(
                     edit=self._price_text,
-                    text=bui.charstr(bui.SpecialChar.TICKET) + str(self._cost),
+                    text=bui.SpecialChar.TICKET.value + str(self._cost),
                 )
                 self._status = None
             else:

@@ -63,6 +63,17 @@ static const float kDevConsoleButtonHeldGrow = kDevConsoleButtonPunchGrow;
 static const float kDevConsoleButtonSizeScaleMin = 0.5f;
 static const float kDevConsoleButtonSizeScaleMax = 4.0f;
 
+// Bounds for the configurable opacity (a multiple of the regular look).
+// Zero is allowed: an invisible button still takes presses, for a
+// designated spot with nothing drawn there at rest.
+static const float kDevConsoleButtonOpacityMin = 0.0f;
+static const float kDevConsoleButtonOpacityMax = 1.0f;
+
+// The least opacity the button draws at while it is being interacted
+// with (hovered, pressed or dragged, or flashing after an activation), so
+// that a fully transparent one still shows where it is and that it fired.
+static const float kDevConsoleButtonInteractOpacityMin = 0.1f;
+
 /// Modulate colors for the non-grey button styles (grey is untinted).
 static const float kDevConsoleButtonGreen[3] = {0.45f, 1.0f, 0.5f};
 static const float kDevConsoleButtonPurple[3] = {0.8f, 0.5f, 1.0f};
@@ -294,6 +305,9 @@ void UI::ApplyAppConfig() {
   dev_console_button_size_scale_ = std::clamp(
       g_base->app_config->Resolve(AppConfig::FloatID::kDevConsoleButtonSize),
       kDevConsoleButtonSizeScaleMin, kDevConsoleButtonSizeScaleMax);
+  dev_console_button_opacity_ = std::clamp(
+      g_base->app_config->Resolve(AppConfig::FloatID::kDevConsoleButtonOpacity),
+      kDevConsoleButtonOpacityMin, kDevConsoleButtonOpacityMax);
   {
     auto style = g_base->app_config->Resolve(
         AppConfig::StringID::kDevConsoleButtonStyle);
@@ -1151,11 +1165,11 @@ void UI::DevConsoleButtonCenter_(float* x, float* y) const {
     *y = vheight * 0.5f * static_cast<float>(dev_console_button_anchor_y_)
          + dev_console_button_custom_y_;
   } else {
-    // Default: docked at the right edge, 75% of the way up. Virtual
+    // Default: docked at the left edge, 75% of the way up. Virtual
     // coords span the virtual *bounds* (which cutout insets already
     // shape), so this stays clear of camera cutouts — unlike a
     // previous vertically-centered default, which could overlap them.
-    *x = vwidth - bszh;
+    *x = bszh;
     *y = vheight * 0.75f;
   }
   // Never let the button get stranded out of reach (dragged towards an
@@ -1179,13 +1193,6 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 }
 
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
-  if (!dev_console_button_txt_.exists()) {
-    dev_console_button_txt_ = Object::New<TextGroup>();
-    dev_console_button_txt_->SetText("dev");
-  }
-  auto& grp(*dev_console_button_txt_);
-  float bsz = DevConsoleButtonSize_();
-
   // Three layers of feedback: a hover lift (mouse), a held look while a
   // press sits on the button, and an activation punch -- extra grow,
   // brightness and a flash to white -- easing out over a moment so that
@@ -1194,13 +1201,37 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
               && dev_console_button_press_over_;
   bool hovered = dev_console_button_hovered_ && !dev_console_button_pressed_;
   float punch;
+  float punch_remaining;
   {
     seconds_t since_activate{g_base->logic->display_time()
                              - dev_console_button_activate_time_};
-    auto remaining = static_cast<float>(std::clamp(
+    punch_remaining = static_cast<float>(std::clamp(
         1.0 - since_activate / kDevConsoleButtonPunchSeconds, 0.0, 1.0));
-    punch = remaining * remaining * remaining;
+    punch = punch_remaining * punch_remaining * punch_remaining;
   }
+
+  // Interaction holds the opacity up to a floor, which fades back out
+  // over the tail of the punch rather than popping off at its end. With
+  // nothing to show (a fully transparent button at rest) we draw nothing.
+  float opacity;
+  {
+    float interact = (hovered || dev_console_button_pressed_)
+                         ? 1.0f
+                         : std::min(1.0f, 3.0f * punch_remaining);
+    opacity = std::max(dev_console_button_opacity_,
+                       kDevConsoleButtonInteractOpacityMin * interact);
+  }
+  if (opacity <= 0.0f) {
+    return;
+  }
+
+  if (!dev_console_button_txt_.exists()) {
+    dev_console_button_txt_ = Object::New<TextGroup>();
+    dev_console_button_txt_->SetText("dev");
+  }
+  auto& grp(*dev_console_button_txt_);
+  float bsz = DevConsoleButtonSize_();
+
   float highlight = std::max(held ? 1.0f : 0.0f, punch);
   float brightness = held ? 1.0f : hovered ? 0.7f : 0.5f;
   brightness += kDevConsoleButtonPunchGlow * punch;
@@ -1226,7 +1257,11 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
                 : hovered ? kDevConsoleButtonHowdyHoverBrightness
                           : 1.0f)
                + kDevConsoleButtonPunchGlow * punch;
-    c.SetColor(fb, fb, fb, 1.0f);
+    // (Premultiplying rgb by alpha for a premultiplied texture; see
+    // docs/design/premultiplied-alpha.md.)
+    float fa = opacity;
+    float fmul = face_tex->premultiplied() ? fa : 1.0f;
+    c.SetColor(fb * fmul, fb * fmul, fb * fmul, fa);
     c.SetFlatness(kDevConsoleButtonPunchFlatness * punch);
     {
       auto xf = c.ScopedTransform();
@@ -1244,9 +1279,10 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
       g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow);
   c.SetTexture(button_tex);
   // Premultiply rgb by alpha for the premultiplied texture so the faded
-  // (alpha 0.8) button composites 'over' correctly (see
-  // docs/design/premultiplied-alpha.md).
-  float cmul = button_tex->premultiplied() ? 0.8f : 1.0f;
+  // (alpha 0.8, times the effective opacity) button composites 'over'
+  // correctly (see docs/design/premultiplied-alpha.md).
+  float alpha = 0.8f * opacity;
+  float cmul = button_tex->premultiplied() ? alpha : 1.0f;
   float bl = brightness * cmul;
   float tint[3];
   switch (dev_console_button_style_) {
@@ -1265,7 +1301,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
       tint[2] = kDevConsoleButtonPurple[2];
       break;
   }
-  c.SetColor(bl * tint[0], bl * tint[1], bl * tint[2], 0.8f);
+  c.SetColor(bl * tint[0], bl * tint[1], bl * tint[2], alpha);
   // The flash lifts the circle's alpha-present texels toward white
   // (brightness alone can only scale what color they have).
   c.SetFlatness(kDevConsoleButtonPunchFlatness * punch);
@@ -1283,9 +1319,11 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
       // Text darkens as the button brightens, keeping it readable against
       // the lit-up circle.
       float tl = 0.15f * (1.0f - highlight);
-      c.SetColor(tl, tl, tl, 1.0f);
       for (int e = 0; e < text_elem_count; e++) {
-        c.SetTexture(grp.GetElementTexture(e));
+        auto* text_tex = grp.GetElementTexture(e);
+        float tmul = text_tex->premultiplied() ? opacity : 1.0f;
+        c.SetColor(tl * tmul, tl * tmul, tl * tmul, opacity);
+        c.SetTexture(text_tex);
         c.SetFlatness(0.0f);
         c.DrawMesh(grp.GetElementMesh(e));
       }

@@ -2,9 +2,7 @@
 #
 """Session and Activity for displaying the main menu bg."""
 
-import time
 import random
-import weakref
 from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
@@ -52,7 +50,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._ts = 0.86
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
-        self._news: NewsDisplay | None = None
         self._attract_mode_timer: bs.Timer | None = None
         self._logo_rotate_timer: bs.Timer | None = None
 
@@ -154,11 +151,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         bs.add_clean_frame_callback(bs.WeakCallStrict(self._start_preloads))
 
         random.seed()
-
-        # Need to update this for toolbar mode; currenly doesn't fit.
-        # if bool(False):
-        #     if not (env.demo or env.arcade):
-        #         self._news = NewsDisplay(self)
 
         self._attract_mode_timer = bs.Timer(
             3.12, self._update_attract_mode, repeat=True
@@ -655,170 +647,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 round_duration=20,
                 attract_mode=True,
             )
-
-
-class NewsDisplay:
-    """Wrangles news display."""
-
-    def __init__(self, activity: bs.Activity):
-        self._valid = True
-        self._message_duration = 10.0
-        self._message_spacing = 2.0
-        self._text: bs.NodeActor | None = None
-        self._activity = weakref.ref(activity)
-        self._phrases: list[str] = []
-        self._used_phrases: list[str] = []
-        self._phrase_change_timer: bs.Timer | None = None
-
-        # If we're signed in, fetch news immediately. Otherwise wait
-        # until we are signed in.
-        self._fetch_timer: bs.Timer | None = bs.Timer(
-            1.0, bs.WeakCallStrict(self._try_fetching_news), repeat=True
-        )
-        self._try_fetching_news()
-
-    # We now want to wait until we're signed in before fetching news.
-    def _try_fetching_news(self) -> None:
-        plus = bui.app.plus
-        assert plus is not None
-
-        if plus.get_v1_account_state() == 'signed_in':
-            self._fetch_news()
-            self._fetch_timer = None
-
-    def _fetch_news(self) -> None:
-        plus = bui.app.plus
-        assert plus is not None
-
-        assert bs.app.classic is not None
-        bs.app.classic.main_menu_last_news_fetch_time = time.time()
-
-        # UPDATE - We now just pull news from MRVs.
-        news = plus.get_v1_account_misc_read_val('n', None)
-        if news is not None:
-            self._got_news(news)
-
-    def _change_phrase(self) -> None:
-        from bascenev1lib.actor.text import Text
-
-        app = bs.app
-        assert app.classic is not None
-
-        # If our news is way out of date, lets re-request it; otherwise,
-        # rotate our phrase.
-        assert app.classic.main_menu_last_news_fetch_time is not None
-        if time.time() - app.classic.main_menu_last_news_fetch_time > 600.0:
-            self._fetch_news()
-            self._text = None
-        else:
-            if self._text is not None:
-                if not self._phrases:
-                    for phr in self._used_phrases:
-                        self._phrases.insert(0, phr)
-                val = self._phrases.pop()
-                if val == '__ACH__':
-                    vrmode = app.env.vr
-                    Text(
-                        _classicassets.strings.main_menu.next_achievements,
-                        color=((1, 1, 1, 1) if vrmode else (0.95, 0.9, 1, 0.4)),
-                        host_only=True,
-                        maxwidth=200,
-                        position=(-300, -35),
-                        h_align=Text.HAlign.RIGHT,
-                        transition=Text.Transition.FADE_IN,
-                        scale=0.9 if vrmode else 0.7,
-                        flatness=1.0 if vrmode else 0.6,
-                        shadow=1.0 if vrmode else 0.5,
-                        h_attach=Text.HAttach.CENTER,
-                        v_attach=Text.VAttach.TOP,
-                        transition_delay=1.0,
-                        transition_out_delay=self._message_duration,
-                    ).autoretain()
-                    achs = [
-                        a
-                        for a in app.classic.ach.achievements
-                        if not a.complete
-                    ]
-                    if achs:
-                        ach = achs.pop(random.randrange(min(4, len(achs))))
-                        ach.create_display(
-                            -180,
-                            -35,
-                            1.0,
-                            outdelay=self._message_duration,
-                            style='news',
-                        )
-                    if achs:
-                        ach = achs.pop(random.randrange(min(8, len(achs))))
-                        ach.create_display(
-                            180,
-                            -35,
-                            1.25,
-                            outdelay=self._message_duration,
-                            style='news',
-                        )
-                else:
-                    spc = self._message_spacing
-                    keys = {
-                        spc: 0.0,
-                        spc + 1.0: 1.0,
-                        spc + self._message_duration - 1.0: 1.0,
-                        spc + self._message_duration: 0.0,
-                    }
-                    assert self._text.node
-                    bs.animate(self._text.node, 'opacity', keys)
-                    # {k: v
-                    #  for k, v in list(keys.items())})
-                    self._text.node.text = val
-
-    def _got_news(self, news: str) -> None:
-        # Run this stuff in the context of our activity since we need to
-        # make nodes and stuff.. should fix the serverget call so it.
-        activity = self._activity()
-        if activity is None or activity.expired:
-            return
-        with activity.context:
-            self._phrases.clear()
-
-            # Show upcoming achievements in non-vr versions (currently
-            # too hard to read in vr).
-            self._used_phrases = (['__ACH__'] if not bs.app.env.vr else []) + [
-                s for s in news.split('<br>\n') if s != ''
-            ]
-            self._phrase_change_timer = bs.Timer(
-                (self._message_duration + self._message_spacing),
-                bs.WeakCallStrict(self._change_phrase),
-                repeat=True,
-            )
-
-            assert bs.app.classic is not None
-            scl = (
-                1.2
-                if (bs.app.ui_v1.uiscale is bs.UIScale.SMALL or bs.app.env.vr)
-                else 0.8
-            )
-
-            color2 = (1, 1, 1, 1) if bs.app.env.vr else (0.7, 0.65, 0.75, 1.0)
-            shadow = 1.0 if bs.app.env.vr else 0.4
-            self._text = bs.NodeActor(
-                bs.newnode(
-                    'text',
-                    attrs={
-                        'v_attach': 'top',
-                        'h_attach': 'center',
-                        'h_align': 'center',
-                        'vr_depth': -20,
-                        'shadow': shadow,
-                        'flatness': 0.8,
-                        'v_align': 'top',
-                        'color': color2,
-                        'scale': scl,
-                        'maxwidth': 900.0 / scl,
-                        'position': (0, -10),
-                    },
-                )
-            )
-            self._change_phrase()
 
 
 def _preload1() -> None:

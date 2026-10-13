@@ -263,7 +263,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             on_activate_call=self._do_back,
             autoselect=True,
             color=(0.55, 0.5, 0.6),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
         )
 
@@ -355,7 +355,8 @@ class SendInfoWindowLegacyModal(bui.Window):
         )
 
         # Used for things like unlocking shared playlists or linking
-        # accounts: talk directly to V1 server via transactions.
+        # accounts: talk directly to V1 server via transactions (hence
+        # the v1 sign-in state check).
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
                 _classicassets.strings.account.not_signed_in, color=(1, 0, 0)

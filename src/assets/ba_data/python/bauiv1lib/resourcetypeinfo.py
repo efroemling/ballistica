@@ -5,6 +5,7 @@
 from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow
+from bauiv1lib.docui._layout import scale_like_windows
 import bauiv1 as bui
 from bauiv1 import _classicassets, _classiccatalogassets
 
@@ -24,12 +25,9 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         self._uiopenstate = bui.UIOpenState(f'resourcetypeinfo{resource_type}')
 
-        uiscale = bui.app.ui_v1.uiscale
-        scale = (
-            2.0
-            if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 0.8
-        )
+        # Tuned at small ui-scale; medium and large keep that proportion
+        # to doc-ui windows.
+        scale = scale_like_windows(1.8)
         self._transitioning_out = False
         self._width = 570
         self._height = 400
@@ -53,7 +51,7 @@ class ResourceTypeInfoWindow(PopupWindow):
             color=bg_color,
             on_activate_call=self._on_cancel_press,
             autoselect=True,
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
         )
 

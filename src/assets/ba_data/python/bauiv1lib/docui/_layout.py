@@ -486,6 +486,21 @@ def root_scale(uiscale: bui.UIScale) -> float:
             assert_never(uiscale)
 
 
+def scale_like_windows(
+    small_scale: float, uiscale: bui.UIScale | None = None
+) -> float:
+    """Scale something tuned at small ui-scale as doc-ui windows scale.
+
+    Given the scale that looks right at small ui-scale, returns the
+    scale keeping it in the same proportion to doc-ui windows at
+    ``uiscale`` (the current ui-scale by default). For non-doc-ui
+    windows that should size themselves in step with doc-ui.
+    """
+    if uiscale is None:
+        uiscale = bui.app.ui_v1.uiscale
+    return small_scale * root_scale(uiscale) / SMALL_UI_ROOT_SCALE
+
+
 def popup_scale(uiscale: bui.UIScale | None = None) -> float:
     """Scale for doc-ui popups (menus, popup text) at a ui-scale.
 

@@ -132,7 +132,7 @@ class TournamentEntryWindow(PopupWindow):
             position=(40, self._height - 34),
             size=(60, 60),
             scale=0.5,
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             color=bg_color,
             on_activate_call=self._on_cancel,
@@ -578,12 +578,12 @@ class TournamentEntryWindow(PopupWindow):
             bui.buttonwidget(
                 id=f'{self._idprefix}|ticketcost',
                 edit=self._get_tickets_button,
-                label=bui.charstr(bui.SpecialChar.TICKET) + t_str,
+                label=bui.SpecialChar.TICKET.value + t_str,
             )
         if self._ticket_count_text:
             bui.textwidget(
                 edit=self._ticket_count_text,
-                text=bui.charstr(bui.SpecialChar.TICKET) + t_str,
+                text=bui.SpecialChar.TICKET.value + t_str,
             )
 
     def _launch(self, practice: bool = False) -> None:

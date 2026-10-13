@@ -60,8 +60,8 @@ class AboutGatherTab(GatherTab):
             (_classicassets.strings.gather.about_parties_info, 110 * msquish),
             (
                 _classicassets.strings.gather.about_party_button(
-                    party=bui.charstr(bui.SpecialChar.PARTY_ICON),
-                    button=bui.charstr(bui.SpecialChar.TOP_BUTTON),
+                    party=bui.SpecialChar.PARTY_ICON.value,
+                    button=bui.SpecialChar.TOP_BUTTON.value,
                 ),
                 145 * msquish,
             ),
@@ -214,6 +214,8 @@ class AboutGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
+        # (v1 sign-in state on purpose: friend codes are fetched with a
+        # v1 transaction.)
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return

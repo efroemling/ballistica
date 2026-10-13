@@ -145,7 +145,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(45 + x_inset, height - 82 + y_extra2 + yoffs),
             size=(60, 48) if is_add else (180, 65),
             label=(
-                bui.charstr(bui.SpecialChar.BACK)
+                bui.SpecialChar.BACK.value
                 if is_add
                 else _commonassets.strings.actions.cancel
             ),

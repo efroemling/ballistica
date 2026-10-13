@@ -289,6 +289,9 @@ class ClassicAppMode(AppMode):
             self._root_ui_chest_slot_pressed, 3
         )
 
+        # The legacy v1 account client runs only while we're active.
+        plus.set_v1_account_client_active(True)
+
         # We want to be informed when connectivity changes.
         self._on_connectivity_changed_callback = (
             plus.cloud.on_connectivity_changed_callbacks.register(
@@ -322,6 +325,10 @@ class ClassicAppMode(AppMode):
 
         # Remove anything following any current account.
         self._update_for_primary_account(None)
+
+        # Nothing outside of us wants the legacy v1 account client.
+        if bui.app.plus is not None:
+            bui.app.plus.set_v1_account_client_active(False)
 
         # Save where we were in the UI so we return there next time.
         if classic is not None:

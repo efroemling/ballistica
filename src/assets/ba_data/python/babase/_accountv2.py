@@ -518,11 +518,9 @@ class AccountV2Subsystem:
         # not be what they want (A user signing out and then restarting
         # may be auto-signed back in).
         connected = plus.cloud.is_connected()
-        signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
         if (
             connected
-            and not signed_in_v1
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
@@ -601,9 +599,8 @@ class AccountV2Subsystem:
         # in case the user has since explicitly signed in since we
         # kicked off.
         connected = plus.cloud.is_connected()
-        signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
-        if connected and not signed_in_v1 and not signed_in_v2:
+        if connected and not signed_in_v2:
             plus.accounts.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:

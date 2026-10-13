@@ -916,16 +916,21 @@ def android_sdk_utils() -> None:
     run(projroot=str(pcommand.PROJROOT), args=sys.argv[2:])
 
 
-def gen_python_enums_module() -> None:
-    """Update our procedurally generated python enums."""
-    from batools.enumspython import generate
+def gen_cpp_enums() -> None:
+    """Generate C++ enums from a module of Python ones.
+
+    Takes the Python source file and the header to write (see
+    :mod:`batools.cpp_enums`).
+    """
+    from efro.error import CleanError
+    from batools.cpp_enums import write_cpp
 
     if len(sys.argv) != 4:
-        raise RuntimeError('Expected infile and outfile args.')
-    generate(
+        raise CleanError('Expected infile and outfile args.')
+    write_cpp(
+        src_path=sys.argv[2],
+        out_path=sys.argv[3],
         projroot=str(pcommand.PROJROOT),
-        infilename=sys.argv[2],
-        outfilename=sys.argv[3],
     )
 
 

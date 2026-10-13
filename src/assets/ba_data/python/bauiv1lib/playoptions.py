@@ -185,7 +185,7 @@ class PlayOptionsWindow(PopupWindow):
             position=(25, self._height - 53),
             size=(50, 50),
             scale=0.7,
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             color=(0.42, 0.73, 0.2),
             on_activate_call=self._on_cancel_press,

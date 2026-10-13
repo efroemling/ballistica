@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261011`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261013a`` (bauiv1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 635
+# ba_meta require asset-package 663
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261011
-_ASSET_PACKAGE = ApverNum(635)
+# a-0.baclassicassets.261013a
+_ASSET_PACKAGE = ApverNum(663)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -7740,6 +7740,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Slider label setting how see-through the on-screen dev console
+        #:     button is.
+        #:
+        #:     English: "Opacity"
+        opacity: LangStr
+
+        #: ::
+        #:
         #:     Button resetting the on-screen dev-console button to its default
         #:     position (it can be moved by dragging it).
         #:
@@ -9744,8 +9752,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1010 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1005 more). Full list in
+    #: The ``strings`` group - 1011 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1006 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10907,6 +10915,7 @@ _TREE = {
                 'dev_console_button': (),
                 'drag_to_reposition': (),
                 'enable': (),
+                'opacity': (),
                 'reset_button_position': (),
                 'show_dev_console_button': (),
                 'size': (),

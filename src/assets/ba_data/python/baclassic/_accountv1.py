@@ -34,14 +34,13 @@ class AccountV1Subsystem:
     def on_app_loading(self) -> None:
         """Called when the app is done bootstrapping."""
 
-        # Auto-sign-in to a local account in a moment if we're set to.
+        # Headless builds sign in to a local v1 account in a moment;
+        # their listing on the v1 master server's game list needs it.
+        # Gui builds only ever get a v1 sign-in by way of a v2 one.
         def do_auto_sign_in() -> None:
             if babase.app.plus is None:
                 return
-            if (
-                babase.app.env.headless
-                or babase.app.config.get('Auto Account State') == 'Local'
-            ):
+            if babase.app.env.headless:
                 babase.app.plus.sign_in_v1('Local')
 
         babase.pushcall(do_auto_sign_in)
@@ -200,7 +199,9 @@ class AccountV1Subsystem:
         plus = babase.app.plus
         if plus is None:
             return
-        # This only applies when we're signed in.
+        # This only applies when we're signed in. (v1 sign-in state on
+        # purpose: the profile is named from the v1 account, which we
+        # can only read once that sign-in has completed.)
         if plus.get_v1_account_state() != 'signed_in':
             return
 
@@ -298,6 +299,7 @@ class AccountV1Subsystem:
         if plus is None:
             return
         # Run any pending promo codes we had queued up while not signed in.
+        # (v1 sign-in state on purpose: codes go out as v1 transactions.)
         if (
             plus.get_v1_account_state() == 'signed_in'
             and self.pending_promo_codes
@@ -339,7 +341,8 @@ class AccountV1Subsystem:
 
         # If we're not signed in, queue up the code to run the next time we
         # are and issue a warning if we haven't signed in within the next
-        # few seconds.
+        # few seconds. (v1 sign-in state on purpose: codes go out as v1
+        # transactions.)
         if plus.get_v1_account_state() != 'signed_in':
 
             def check_pending_codes() -> None:

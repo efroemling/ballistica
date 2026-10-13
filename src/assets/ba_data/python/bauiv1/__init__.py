@@ -44,7 +44,6 @@ from babase import (
     fullscreen_control_get,
     fullscreen_control_key_shortcut,
     fullscreen_control_set,
-    charstr,
     clipboard_is_supported,
     clipboard_set_text,
     commit_app_config,
@@ -134,6 +133,7 @@ from babase import (
 # imported separately so the deprecation ignore stays targeted.
 from babase import Call  # type: ignore[deprecated]
 from babase import WeakCall  # type: ignore[deprecated]
+from babase import charstr  # type: ignore[deprecated]
 
 from _bauiv1 import (
     buttonwidget,

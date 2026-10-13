@@ -53,6 +53,16 @@ class PlusAppSubsystem(AppSubsystem):
         console_session_manager.notify_app_mode_activated()
 
     @staticmethod
+    def set_v1_account_client_active(active: bool) -> None:
+        """Switch the legacy v1 account client on or off.
+
+        It only runs while the classic app-mode is active.
+
+        :meta private:
+        """
+        _baplus.set_v1_account_client_active(active)
+
+    @staticmethod
     def add_v1_account_transaction(
         transaction: dict, callback: Callable | None = None
     ) -> None:

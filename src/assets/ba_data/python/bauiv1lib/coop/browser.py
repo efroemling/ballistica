@@ -93,7 +93,7 @@ class CoopBrowserWindow(bui.MainWindow):
         self._height = (
             1200
             if uiscale is bui.UIScale.SMALL
-            else 730 if uiscale is bui.UIScale.MEDIUM else 800
+            else 847 if uiscale is bui.UIScale.MEDIUM else 928
         )
         self._r = 'coopSelectWindow'
         top_extra = 0 if uiscale is bui.UIScale.SMALL else 0
@@ -143,15 +143,15 @@ class CoopBrowserWindow(bui.MainWindow):
         # offset by half the width/height of our target area.
         yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
+        # (At medium/large the scroll area's top sits a bit below the
+        # back button and title; its bottom stays where the target
+        # area's would put it.)
+        scroll_top_gap = 27 if uiscale is bui.UIScale.SMALL else 55
         self._scroll_width = target_width
         self._scroll_height = target_height - (
-            -5 if uiscale is bui.UIScale.SMALL else 40
+            -5 if uiscale is bui.UIScale.SMALL else scroll_top_gap - 30
         )
-        self._scroll_bottom = (
-            yoffs
-            - (27 if uiscale is bui.UIScale.SMALL else 70)
-            - self._scroll_height
-        )
+        self._scroll_bottom = yoffs - scroll_top_gap - self._scroll_height
 
         # In small ui (where we cover the screen), extend our scroll
         # area (and the horizontal rows within it) out to cover any
@@ -203,7 +203,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 size=back_size,
                 scale=back_scale,
                 autoselect=True,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
@@ -866,7 +866,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         # Say 'unavailable' if there are zero tournaments, and if we're
         # not signed in add that as well (that's probably why we see no
-        # tournaments).
+        # tournaments). (v1 sign-in state on purpose: tournaments come
+        # from the v1 master server.)
         if self._tournament_button_count == 0:
             unavailable_text = _commonassets.strings.status.unavailable_status
             if plus.get_v1_account_state() != 'signed_in':
@@ -1212,6 +1213,8 @@ class CoopBrowserWindow(bui.MainWindow):
         classic = bui.app.classic
         assert classic is not None
 
+        # (v1 sign-in state on purpose: tournaments are entered through
+        # the v1 master server.)
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return

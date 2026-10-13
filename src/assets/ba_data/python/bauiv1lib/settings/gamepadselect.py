@@ -81,7 +81,7 @@ class GamepadSelectWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(20, height - 60),
                 size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 scale=0.8,
                 on_activate_call=self.main_window_back,

@@ -25,7 +25,6 @@ clean:
 sources: \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/base_asset_set.py \
-  $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/__init__.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py \
@@ -36,6 +35,7 @@ sources: \
   $(PROJ_SRC_DIR)/ballistica/base/generated/character_ranges.h \
   $(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base.inc \
   $(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base_app.inc \
+  $(PROJ_SRC_DIR)/ballistica/base/generated/special_chars.h \
   $(PROJ_SRC_DIR)/ballistica/classic/generated/pyembed/binding_classic.inc \
   $(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/binding_core.inc \
   $(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/env.inc \
@@ -45,6 +45,7 @@ sources: \
   $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set_unpack.inc \
   $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/spaz_attachment_rigs.inc \
   $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/spaz_rig.h \
+  $(PROJ_SRC_DIR)/ballistica/shared/generated/enums.h \
   $(PROJ_SRC_DIR)/ballistica/template_fs/generated/pyembed/binding_template_fs.inc \
   $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc \
   $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set.h \
@@ -77,15 +78,20 @@ $(PROJ_SRC_DIR)/ballistica/template_fs/generated/pyembed/binding_template_fs.inc
 $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc : bauiv1codegen/pyembed/binding_ui_v1.py
 	@$(PCOMMAND) gen_binding_code $< $@
 
+$(PROJ_SRC_DIR)/ballistica/shared/generated/enums.h : $(TOOLS_DIR)/bacommon/nativeenums.py $(TOOLS_DIR)/batools/cpp_enums.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/shared/generated"
+	@$(PCOMMAND) gen_cpp_enums $< $@
+
 $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py : $(TOOLS_DIR)/batools/pcommands.py
 	@$(PCOMMAND) gen_python_init_module $@
-
-$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py : $(PROJ_DIR)/src/ballistica/shared/ballistica.h $(TOOLS_DIR)/batools/enumspython.py
-	@$(PCOMMAND) gen_python_enums_module $< $@
 
 $(PROJ_SRC_DIR)/ballistica/base/generated/character_ranges.h : $(TOOLS_DIR)/bacommon/characterranges.py $(TOOLS_DIR)/batools/character_ranges.py
 	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/base/generated"
 	@$(PCOMMAND) gen_character_ranges_cpp $@
+
+$(PROJ_SRC_DIR)/ballistica/base/generated/special_chars.h : $(TOOLS_DIR)/bacommon/text.py $(TOOLS_DIR)/batools/special_chars.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/base/generated"
+	@$(PCOMMAND) gen_special_chars_cpp $@
 
 $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/spaz_attachment_rigs.inc : $(TOOLS_DIR)/bacommon/characterrig.py $(TOOLS_DIR)/batools/character_rig.py
 	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated"
@@ -154,7 +160,6 @@ $(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py : $(TOOLS_DI
 efrocache-list:
 	@echo "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/base_asset_set.py" \
-        "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/__init__.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py" \
@@ -165,6 +170,7 @@ efrocache-list:
         "$(PROJ_SRC_DIR)/ballistica/base/generated/character_ranges.h" \
         "$(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base.inc" \
         "$(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base_app.inc" \
+        "$(PROJ_SRC_DIR)/ballistica/base/generated/special_chars.h" \
         "$(PROJ_SRC_DIR)/ballistica/classic/generated/pyembed/binding_classic.inc" \
         "$(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/binding_core.inc" \
         "$(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/env.inc" \
@@ -174,6 +180,7 @@ efrocache-list:
         "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set_unpack.inc" \
         "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/spaz_attachment_rigs.inc" \
         "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/spaz_rig.h" \
+        "$(PROJ_SRC_DIR)/ballistica/shared/generated/enums.h" \
         "$(PROJ_SRC_DIR)/ballistica/template_fs/generated/pyembed/binding_template_fs.inc" \
         "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc" \
         "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set.h" \

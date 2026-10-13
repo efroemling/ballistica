@@ -863,6 +863,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     'scores': our_high_scores_all,
                 }
             )
+        # (v1 sign-in state on purpose: scores are submitted to the v1
+        # master server.)
         if plus.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
             if not arcade_or_demo:

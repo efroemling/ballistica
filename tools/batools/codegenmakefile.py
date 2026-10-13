@@ -135,13 +135,17 @@ class CodegenMakefileGenerator:
         self._add_monolithic_register_modules_target(targets)
         self._add_pyembed_targets(targets)
 
+        # Needed by everything (shared/ballistica.h includes its output),
+        # so not tied to any one feature set.
+        self._add_cpp_enums_target(targets)
+
         # Base feature set bits.
         if os.path.exists(
             f'{self._projroot}/pconfig/featuresets/featureset_base.py'
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
-            self._add_base_enums_module_target(targets)
             self._add_character_ranges_target(targets)
+            self._add_special_chars_target(targets)
 
         # Scene-v1 feature set bits.
         if os.path.exists(
@@ -264,15 +268,19 @@ class CodegenMakefileGenerator:
 
         return out
 
-    def _add_base_enums_module_target(self, targets: list[Target]) -> None:
+    def _add_cpp_enums_target(self, targets: list[Target]) -> None:
+        """The engine's C++ enums that are defined in Python."""
         targets.append(
             Target(
                 src=[
-                    '$(PROJ_DIR)/src/ballistica/shared/ballistica.h',
-                    '$(TOOLS_DIR)/batools/enumspython.py',
+                    '$(TOOLS_DIR)/bacommon/nativeenums.py',
+                    '$(TOOLS_DIR)/batools/cpp_enums.py',
                 ],
-                dst=os.path.join(OUT_DIR_BASE_PYTHON, 'enums.py'),
-                cmd='$(PCOMMAND) gen_python_enums_module $< $@',
+                dst=os.path.join(
+                    OUT_DIR_ROOT_CPP, 'shared', 'generated', 'enums.h'
+                ),
+                cmd='$(PCOMMAND) gen_cpp_enums $< $@',
+                mkdir=True,
             )
         )
 
@@ -288,6 +296,22 @@ class CodegenMakefileGenerator:
                     OUT_DIR_ROOT_CPP, 'base', 'generated', 'character_ranges.h'
                 ),
                 cmd='$(PCOMMAND) gen_character_ranges_cpp $@',
+                mkdir=True,
+            )
+        )
+
+    def _add_special_chars_target(self, targets: list[Target]) -> None:
+        """The engine's special-character table, from the shared enum."""
+        targets.append(
+            Target(
+                src=[
+                    '$(TOOLS_DIR)/bacommon/text.py',
+                    '$(TOOLS_DIR)/batools/special_chars.py',
+                ],
+                dst=os.path.join(
+                    OUT_DIR_ROOT_CPP, 'base', 'generated', 'special_chars.h'
+                ),
+                cmd='$(PCOMMAND) gen_special_chars_cpp $@',
                 mkdir=True,
             )
         )

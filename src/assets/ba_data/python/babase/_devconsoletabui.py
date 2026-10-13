@@ -30,7 +30,7 @@ class DevConsoleTabUI(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
-        from babase._generated.enums import UIScale
+        from bacommon.nativeenums import UIScale
 
         # Chosen so the row of fixed elements (toggles + UI-Scale; they
         # span x 10..861) sits centered; the custom-button adjustment

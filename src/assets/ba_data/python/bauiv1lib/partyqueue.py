@@ -287,7 +287,7 @@ class PartyQueueWindow(bui.Window):
             scale=1.0,
             position=(60, self._height - 80),
             size=(50, 50),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
@@ -527,7 +527,7 @@ class PartyQueueWindow(bui.Window):
                         scale=0.9,
                         h_align='center',
                         v_align='center',
-                        text=bui.charstr(bui.SpecialChar.TICKET)
+                        text=bui.SpecialChar.TICKET.value
                         + str(self._boost_tickets),
                         maxwidth=150,
                     )
@@ -620,8 +620,7 @@ class PartyQueueWindow(bui.Window):
         if self._boost_price is not None:
             bui.textwidget(
                 edit=self._boost_price,
-                text=bui.charstr(bui.SpecialChar.TICKET)
-                + str(self._boost_tickets),
+                text=bui.SpecialChar.TICKET.value + str(self._boost_tickets),
             )
 
         # Update boost button color based on if we have enough moola.
@@ -638,12 +637,12 @@ class PartyQueueWindow(bui.Window):
         # Update ticket-count.
         if self._tickets_text is not None:
             if self._boost_button is not None:
+                # (v1 sign-in state on purpose: tickets live in the v1
+                # account.)
                 if plus.get_v1_account_state() == 'signed_in':
-                    val = bui.charstr(bui.SpecialChar.TICKET) + str(
-                        classic.tickets
-                    )
+                    val = bui.SpecialChar.TICKET.value + str(classic.tickets)
                 else:
-                    val = bui.charstr(bui.SpecialChar.TICKET) + '???'
+                    val = bui.SpecialChar.TICKET.value + '???'
                 bui.textwidget(edit=self._tickets_text, text=val)
             else:
                 bui.textwidget(edit=self._tickets_text, text='')

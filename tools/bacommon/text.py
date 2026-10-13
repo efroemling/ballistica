@@ -13,7 +13,14 @@ if TYPE_CHECKING:
 class SpecialChar(Enum):
     """Custom unicode characters the engine can display.
 
-    Keep this in sync with babase._generated.enums.SpecialChar.
+    Each value is the character itself, ready to drop into a string.
+    These utilize the private-use block of unicode characters
+    (U+E000-U+F8FF) and are specific to the game; exporting or
+    rendering them elsewhere will be meaningless.
+
+    This is the one list of these characters; the engine's own table
+    is generated from it. It is also available as
+    ``babase.SpecialChar`` and ``bauiv1.SpecialChar``.
     """
 
     LEFT_ARROW = '\ue001'

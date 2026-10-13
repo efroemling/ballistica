@@ -123,7 +123,7 @@ class DiscordWindow(bui.Window):
                 edit=self._back_button,
                 button_type='backSmall',
                 size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
             )
 
     def _do_back(self) -> None:

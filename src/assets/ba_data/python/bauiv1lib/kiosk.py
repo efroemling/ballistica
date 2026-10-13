@@ -437,7 +437,7 @@ class KioskWindow(bui.MainWindow):
 
         # Kiosk-mode is designed to be used signed-out... try for force
         # the issue.
-        if plus.get_v1_account_state() == 'signed_in':
+        if plus.accounts.primary is not None:
             # _bs.sign_out()
             # FIXME: Try to delete player profiles here too.
             pass

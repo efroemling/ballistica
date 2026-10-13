@@ -45,7 +45,7 @@ class GameTip:
 def get_trophy_string(trophy_id: str) -> str:
     """Given a trophy id, returns a string to visualize it."""
     if trophy_id in TROPHY_CHARS:
-        return babase.charstr(TROPHY_CHARS[trophy_id])
+        return TROPHY_CHARS[trophy_id].value
     return '?'
 
 

@@ -110,7 +110,6 @@ class BasePython {
     kQuitTypeClass,
     kInputTypeClass,
     kPermissionClass,
-    kSpecialCharClass,
     kSoundPriorityClass,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
@@ -186,7 +185,6 @@ class BasePython {
   void SetRawConfigValue(const char* name, float value);
 
   auto GetPyEnum_Permission(PyObject* obj) -> Permission;
-  auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
   auto IsPyEnum_InputType(PyObject* obj) -> bool;
   auto GetPyEnum_InputType(PyObject* obj) -> InputType;
   auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;

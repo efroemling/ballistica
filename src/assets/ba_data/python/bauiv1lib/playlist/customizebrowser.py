@@ -118,7 +118,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 scale=0.77,
                 autoselect=True,
                 text_scale=1.3,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
             )
 
@@ -499,7 +499,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # Gotta be signed in for this to work.
+        # Gotta be signed in for this to work. (v1 sign-in state on
+        # purpose: playlist sharing runs on v1 transactions.)
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
                 _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
@@ -534,7 +535,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # Gotta be signed in for this to work.
+        # Gotta be signed in for this to work. (v1 sign-in state on
+        # purpose: playlist sharing runs on v1 transactions.)
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
                 _classicassets.strings.account.not_signed_in, color=(1, 0, 0)

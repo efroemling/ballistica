@@ -50,11 +50,11 @@ class JoinInfo:
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | babase.LangStr = babase.charstr(
-            babase.SpecialChar.LEFT_BUTTON
+        self._press_to_punch: str | babase.LangStr = (
+            babase.SpecialChar.LEFT_BUTTON.value
         )
-        self._press_to_bomb: str | babase.LangStr = babase.charstr(
-            babase.SpecialChar.RIGHT_BUTTON
+        self._press_to_bomb: str | babase.LangStr = (
+            babase.SpecialChar.RIGHT_BUTTON.value
         )
         self._joinmsg: babase.LangStr = (
             _classicassets.strings.lobby.press_any_button_to_join
@@ -92,9 +92,9 @@ class JoinInfo:
         else:
             msg1 = _classicassets.strings.lobby.press_to_select_profile(
                 buttons=(
-                    babase.charstr(babase.SpecialChar.UP_ARROW)
+                    babase.SpecialChar.UP_ARROW.value
                     + ' '
-                    + babase.charstr(babase.SpecialChar.DOWN_ARROW)
+                    + babase.SpecialChar.DOWN_ARROW.value
                 )
             )
             msg2 = _classicassets.strings.lobby.press_to_override_character(
@@ -108,9 +108,9 @@ class JoinInfo:
                     [
                         _classicassets.strings.lobby.press_to_select_team(
                             buttons=(
-                                babase.charstr(babase.SpecialChar.LEFT_ARROW)
+                                babase.SpecialChar.LEFT_ARROW.value
                                 + ' '
-                                + babase.charstr(babase.SpecialChar.RIGHT_ARROW)
+                                + babase.SpecialChar.RIGHT_ARROW.value
                             )
                         )
                     ]
@@ -938,7 +938,7 @@ class Chooser:
                         icon = (
                             self._profiles[name_raw]['icon']
                             if 'icon' in self._profiles[name_raw]
-                            else babase.charstr(babase.SpecialChar.LOGO)
+                            else babase.SpecialChar.LOGO.value
                         )
                         name = icon + name
                 except Exception:

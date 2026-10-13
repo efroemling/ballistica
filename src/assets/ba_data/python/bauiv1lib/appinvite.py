@@ -59,7 +59,7 @@ class ShowFriendCodeWindow(bui.Window):
             scale=0.7,
             position=(50, self._height - 50),
             size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
@@ -145,7 +145,9 @@ class ShowFriendCodeWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
 
-        # If somehow we got signed out.
+        # If somehow we got signed out. (v1 sign-in state on purpose:
+        # friend codes come from the v1 account, and the message below
+        # uses its name.)
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
                 _classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
