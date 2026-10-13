@@ -11,14 +11,6 @@
   // ghcr.io/<owner>/ballistica/bombsquad_build_env instead.
   "image": "ghcr.io/efroemling/ballistica/bombsquad_build_env:latest",
 
-  // The image sets en_US.UTF-8 without generating that locale, which
-  // is harmless for the build but makes interactive shells complain.
-  "containerEnv": {
-    "LANG": "C.UTF-8",
-    "LC_ALL": "C.UTF-8",
-    "LANGUAGE": ""
-  },
-
   // Ubuntu images (23.04+) already have a non-root 'ubuntu' user at
   // uid 1000, so use that one: a separate 'vscode' user would get uid
   // 1001, and its uid can't be remapped to the host's (1000 is taken),

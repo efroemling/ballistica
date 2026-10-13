@@ -3,7 +3,8 @@ name: bombsquad
 # ENV variables that affect build 
 # BS_CMAKE_BUILD_TYPE (defaults to Release)
 # BS_IMAGE_NAME (defaults to bombsquad_gui_release)
-# BS_BUILD_ENV_IMAGE (defaults to build-env; see batools.docker)
+# BS_BUILD_ENV_IMAGE (make docker-* picks a prebuilt image or build-env;
+#   set it to override; see batools.docker)
 # ACTIONS_RESULTS_URL / ACTIONS_RUNTIME_TOKEN (GitHub Actions cache
 # credentials for sccache, exported by sccache-action and passed as
 # build secrets; unset outside Actions, which means a local sccache

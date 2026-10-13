@@ -80,18 +80,20 @@ jobs:
               return re.sub(r'-v\d+$', '', key)
 
           # Closed PR caches go first; superseded only lists the rest.
+          # Open PRs are the small set, so fetch those once and treat any
+          # other PR as closed.
+          open_prs = set(
+              gh(
+                  '--paginate',
+                  f'repos/{repo}/pulls?state=open&per_page=100',
+                  '--jq', '.[].number',
+              ).split()
+          )
           closed: dict[str, list[dict]] = defaultdict(list)
-          pr_open: dict[str, bool] = {}
           for c in caches:
               m = re.fullmatch(r'refs/pull/(\d+)/merge', c['ref'])
-              if m is None:
-                  continue
-              num = m.group(1)
-              if num not in pr_open:
-                  state = gh(f'repos/{repo}/pulls/{num}', '--jq', '.state')
-                  pr_open[num] = state.strip() == 'open'
-              if not pr_open[num]:
-                  closed[num].append(c)
+              if m is not None and m.group(1) not in open_prs:
+                  closed[m.group(1)].append(c)
           closed_ids = {c['id'] for group in closed.values() for c in group}
 
           groups: dict[tuple[str, str], list[dict]] = defaultdict(list)

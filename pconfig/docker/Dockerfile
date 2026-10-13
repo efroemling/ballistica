@@ -21,17 +21,18 @@ ARG build_env_image=build-env
 # the few dev-only extras (git, pkg-config) live here too.
 FROM ${base_image} AS build-env
 
-# Environment settings
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+# Environment settings (C.UTF-8 ships with the base image; en_US.UTF-8
+# would need the locales package and a locale-gen, and interactive
+# shells in the dev container complain when it's missing)
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install build dependencies
 # (each stage gets its own apt cache id; a shared locked cache made the
-# builder and runner apt steps wait on each other)
-RUN --mount=type=cache,id=apt-builder,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,id=aptlib-builder,target=/var/lib/apt,sharing=locked \
+# build-env and runner apt steps wait on each other)
+RUN --mount=type=cache,id=apt-build-env,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=aptlib-build-env,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \

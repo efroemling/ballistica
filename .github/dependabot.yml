@@ -1,7 +1,11 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" only covers .github/workflows; the composite actions hold
+    # most of the pins, so list them too.
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "monthly"
     labels:

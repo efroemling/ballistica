@@ -90,15 +90,30 @@ runs:
     # that action can't handle epoch versions such as libopenal-dev's
     # 1:1.25.1-2, saved an empty cache, and then "restored" it without
     # installing anything. A real apt-get install always runs here.
+    #
+    # Keyed on the package list alone, so unrelated edits to this file
+    # (dependabot bumps, comments) don't throw the archives away.
+    - name: List apt packages
+      if: ${{ inputs.using-cmake == 'true' }}
+      id: apt-pkgs
+      shell: bash
+      run: |
+        pkgs="libglut-dev libopenal-dev libvorbis-dev libpango1.0-dev"
+        pkgs+=" ninja-build libsdl3-dev"
+        echo "list=$pkgs" >> "$GITHUB_OUTPUT"
+        echo "hash=$(echo "$pkgs" | sha256sum | cut -d' ' -f1)" \
+          >> "$GITHUB_OUTPUT"
     - name: Cache apt archives
       if: ${{ inputs.using-cmake == 'true' }}
       uses: actions/cache@v6
       with:
         path: .cache/apt-archives
-        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ hashFiles('.github/actions/bombsquad_build_env/action.yml') }}
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ steps.apt-pkgs.outputs.hash }}
     - name: Install build packages
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
+      env:
+        PKGS: ${{ steps.apt-pkgs.outputs.list }}
       run: |
         # apt's fetch sandbox drops to the _apt user, which can't reach an
         # archive dir inside the runner workspace -- apt notices and falls
@@ -109,12 +124,7 @@ runs:
         sudo apt-get install -y --no-install-recommends \
           -o Dir::Cache::archives="$PWD/.cache/apt-archives" \
           -o APT::Sandbox::User=root \
-          libglut-dev \
-          libopenal-dev \
-          libvorbis-dev \
-          libpango1.0-dev \
-          ninja-build \
-          libsdl3-dev
+          $PKGS
 
         # Running unsandboxed means apt leaves root-owned droppings here.
         # The .debs are 0644 and readable, but 'lock' is 0640 and 'partial'

@@ -44,8 +44,11 @@ def get_build_env_tag() -> str:
     return f'deps-{digest[:16]}'
 
 
-def image_has_platform(image: str, platform: str) -> bool:
-    """Return whether a registry image has a variant for a platform."""
+def image_platforms(image: str) -> set[str]:
+    """Return the 'os/arch' platforms a registry image has variants for.
+
+    Empty when the image doesn't exist or can't be inspected.
+    """
     import json
 
     try:
@@ -62,12 +65,12 @@ def image_has_platform(image: str, platform: str) -> bool:
         subprocess.TimeoutExpired,
         json.JSONDecodeError,
     ):
-        return False
-    return any(
+        return set()
+    return {
         f"{e.get('platform', {}).get('os')}/"
-        f"{e.get('platform', {}).get('architecture')}" == platform
+        f"{e.get('platform', {}).get('architecture')}"
         for e in manifest.get('manifests', [])
-    )
+    }
 
 
 def get_build_env_image(platform: str | None) -> str:
@@ -75,10 +78,11 @@ def get_build_env_image(platform: str | None) -> str:
 
     That's a prebuilt bombsquad_build_env image when one matching the
     current Dockerfile exists for the platform, otherwise the
-    Dockerfile's own build-env stage. Set BA_DOCKER_BUILD_ENV_IMAGE to
-    force a value (e.g. 'build-env' to always build locally).
+    Dockerfile's own build-env stage. Set BS_BUILD_ENV_IMAGE (the
+    docker-compose.yml variable this feeds) to force a value (e.g.
+    'build-env' to always build locally).
     """
-    forced = os.environ.get('BA_DOCKER_BUILD_ENV_IMAGE')
+    forced = os.environ.get('BS_BUILD_ENV_IMAGE')
     if forced:
         return forced
 
@@ -90,7 +94,7 @@ def get_build_env_image(platform: str | None) -> str:
         repos.insert(0, github_repo)
     for repo in repos:
         image = f'ghcr.io/{repo}/{BUILD_ENV_IMAGE_NAME}:{tag}'
-        if image_has_platform(image, platform):
+        if platform in image_platforms(image):
             print(f'Using prebuilt build-env image {image}', flush=True)
             return image
     print(

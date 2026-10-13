@@ -94,9 +94,8 @@ jobs:
             echo "need_build=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if python3 -c 'import sys
-          from batools.docker import image_has_platform as has
-          sys.exit(not all(has(sys.argv[1], f"linux/{a}") for a in ("amd64", "arm64")))' "$IMAGE"; then
+          if python3 -c 'import sys; from batools.docker import image_platforms as p
+          sys.exit(not {"linux/amd64", "linux/arm64"} <= p(sys.argv[1]))' "$IMAGE"; then
             echo "$IMAGE exists; only adding tags."
             echo "need_build=false" >> "$GITHUB_OUTPUT"
           else

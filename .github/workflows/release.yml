@@ -144,12 +144,9 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           image=ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_$VARIANT
-          for name in "$TAG" latest; do
-            docker manifest create "$image:$name" \
-              --amend "$image:release_${TAG}_x86_64" \
-              --amend "$image:release_${TAG}_arm64"
-            docker manifest push "$image:$name"
-          done
+          docker buildx imagetools create \
+            --tag "$image:$TAG" --tag "$image:latest" \
+            "$image:release_${TAG}_x86_64" "$image:release_${TAG}_arm64"
 
   ################################################################################
   #                                                                              #
