@@ -2348,7 +2348,7 @@ void RootWidget::SetAccountDepiction(const std::string& json) {
   account_depiction_json_ = json;
   if (auto* btn = account_button_) {
     DepictionSlot& slot{btn->widget->GetDepictionSlot()};
-    slot.set_h_align(base::DepictionHAlign::kLeft);
+    slot.set_h_align(base::DepictionHAlign::kCenter);
     slot.SetDepiction(json);
   }
   UpdateAccountButtonLabel_();

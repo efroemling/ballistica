@@ -475,36 +475,54 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
 
         if (flags & SHD_TEXT_GLOW) {
           // Text glow (a neon look) of strength textGlow (0 = none, 1 =
-          // standard), from blurrier samples of the glyph's alpha:
-          //  * A halo: the text's own color at textGlow x a
-          //    blurrier (two mips down) alpha, max'd (not added) with
-          //    the glyph, so it spills past the edges without pushing
-          //    them toward white.
-          //  * A hot core: white added where a slightly blurrier (one
-          //    mip down) alpha runs from 0.9 to 1, so thick parts go
+          // standard), drawn as a single layer in place of the glyph:
+          // a blurred copy of the glyph's alpha, the average of four
+          // samples, one out along each diagonal by a quarter of the
+          // shadow offset (shadowParams.xy) x textGlow. That offset is
+          // in the text's own space, so the glow is the same width
+          // relative to the text at any size (mip-bias blur is not: it
+          // is roughly fixed in screen pixels).
+          //  * Its alpha is the blurred alpha x (1 + textGlow)
+          //    (capped at 1), so it spills past the glyph's edges.
+          //  * Its color runs from the text's own to white as the
+          //    blurred alpha goes from 0.7 to 0.9, so interiors go
           //    white-hot while edges keep the text color. The white
-          //    added scales with textGlow (full white at strength 1;
-          //    clamped above that), so lower strengths warm
-          //    evenly rather than greying. (Premultiplied texts add it
-          //    scaled by their alpha.)
-          s += "   " BA_GLSL_MEDIUMP "float glowHaloSrc = min("
-               BA_GLSL_TEXTURE2D "(colorTex, vUV, 2.0).a * textGlow,"
-               " 1.0)"
+          //    scales with textGlow (full white at strength 1).
+          // All three fall away with textGlow, so strength 0 would be
+          // the plain glyph: no offset, alpha as is, no white.
+          s += "   " BA_GLSL_MEDIUMP "vec2 glowOffs = 0.25 * textGlow *"
+               " shadowParams.xy;\n"
+               "   " BA_GLSL_MEDIUMP "vec2 glowOffs2 = vec2("
+               "glowOffs.x, -glowOffs.y);\n"
+               // Each sample is blurred (mip bias) to cover the gap to
+               // its neighbors: they sit twice the offset apart, a
+               // sample at bias b covers about 2^b screen pixels, so b
+               // is log2 of that gap in pixels (never sharper than
+               // normal). Without this the four show as separate
+               // copies once the offset spans several pixels.
+               "   " BA_GLSL_MEDIUMP "vec2 glowOffsPx = abs(glowOffs)"
+               " / max(fwidth(vUV), vec2(0.000001));\n"
+               "   " BA_GLSL_MEDIUMP "float glowBias = max(0.0, log2(2.0"
+               " * max(glowOffsPx.x, glowOffsPx.y)));\n"
+               "   " BA_GLSL_MEDIUMP "float glowBlur = 0.25 * ("
+               BA_GLSL_TEXTURE2D "(colorTex, vUV + glowOffs, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV - glowOffs, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV + glowOffs2, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV - glowOffs2, glowBias).a);\n"
+               "   " BA_GLSL_MEDIUMP "float glowA = min(glowBlur * (1.0 +"
+               " textGlow), 1.0)"
                // Faded out toward the glyph quad's edges like shadows are,
-               // so the halo never shows the quad's outline.
+               // so the glow never shows the quad's outline.
                " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a;\n"
-               "   " BA_GLSL_MEDIUMP "float glowHaloA = glowHaloSrc *"
-               " color.a;\n"
-               "   " BA_GLSL_FRAGCOLOR " = mix(vec4(" BA_GLSL_FRAGCOLOR
-               ".rgb, max(" BA_GLSL_FRAGCOLOR ".a, glowHaloA)),"
-               " max(" BA_GLSL_FRAGCOLOR ", vec4(color.rgb * glowHaloSrc,"
-               " glowHaloA)), texPremultiplied);\n"
-               "   " BA_GLSL_MEDIUMP "float glowCore = clamp(("
-               BA_GLSL_TEXTURE2D "(colorTex, vUV, 1.0).a"
-               " - 0.9) / 0.1, 0.0, 1.0) * textGlow;\n"
-               "   " BA_GLSL_FRAGCOLOR ".rgb = min(" BA_GLSL_FRAGCOLOR
-               ".rgb + vec3(glowCore * mix(1.0, " BA_GLSL_FRAGCOLOR
-               ".a, texPremultiplied)), vec3(1.0));\n";
+               "   " BA_GLSL_MEDIUMP "float glowWhite = min(clamp((glowBlur"
+               " - 0.7) / 0.2, 0.0, 1.0) * textGlow, 1.0);\n"
+               // (A premultiplied text's color arrives scaled by its
+               // alpha, so its white is that alpha.)
+               "   " BA_GLSL_MEDIUMP "vec3 glowRGB = mix(color.rgb,"
+               " mix(vec3(1.0), vec3(color.a), texPremultiplied),"
+               " glowWhite);\n"
+               "   " BA_GLSL_FRAGCOLOR " = vec4(glowRGB * mix(1.0, glowA,"
+               " texPremultiplied), glowA * color.a);\n";
         }
 
         if (flags & SHD_SHADOW) {

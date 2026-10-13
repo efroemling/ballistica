@@ -519,18 +519,21 @@ class NameDepiction : public Depiction {
         continue;
       }
       c.SetTexture(t);
-      float shadow_opacity;
-      float text_glow = TextGlow_();
-      if (text_glow > 0.0f) {
-        // Glowing text: the glow is its whole surround (no shadow).
-        shadow_opacity = 0.0f;
-        c.SetShadow(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, text_glow);
-      } else {
-        shadow_opacity = 0.5f * alpha * alpha;
-        c.SetShadow(-0.004f * text_group_.GetElementUScale(e),
-                    -0.004f * text_group_.GetElementVScale(e), 0.0f,
-                    shadow_opacity);
-      }
+      // Our drop shadow (the usual one unless our capsule says
+      // otherwise), glowing or not (a glow draws over it).
+      // A glow also sizes itself from the shadow's offset: it blurs by
+      // sampling a fraction of that far out in each diagonal
+      // direction, so its width follows the text's size like the
+      // shadow's does. Glyphs with colors of their own (icon chars,
+      // and OS text, which may hold emojis) never glow: a glow draws
+      // the glyph's shape in one color, which would flatten them to
+      // silhouettes.
+      float text_glow = text_group_.GetElementCanGlow(e) ? TextGlow_() : 0.0f;
+      float shadow_opacity =
+          0.5f * alpha * alpha * (cap ? cap->text_shadow : 1.0f);
+      c.SetShadow(-0.004f * text_group_.GetElementUScale(e),
+                  -0.004f * text_group_.GetElementVScale(e), 0.0f,
+                  shadow_opacity, 0.0f, 0.0f, 0.0f, 0.0f, text_glow);
       if (shadow_opacity > 0 || text_glow > 0) {
         c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
       } else {
@@ -540,7 +543,8 @@ class NameDepiction : public Depiction {
       float cmul = t->premultiplied() ? alpha : 1.0f;
       const float* ergb = text_group_.GetElementCanColor(e) ? rgb : rgb_plain;
       c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
-      c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e), 1.0f));
+      c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e),
+                             cap ? cap->text_flatness : 1.0f));
       {
         auto xf = c.ScopedTransform();
         c.Translate(cx, cy, context.z);

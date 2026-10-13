@@ -96,9 +96,18 @@ struct CapsuleNameDef {
   std::optional<float> text_inset;
 
   /// How much the text glows like neon: white-hot interiors and a soft
-  /// glow in the text's own color, in place of its drop shadow (0 =
-  /// none and a normal drop shadow, 1 = standard).
+  /// glow in the text's own color, over its usual drop shadow (0 =
+  /// none, 1 = standard, up to 2 = overdriven: a wide glow that is
+  /// hard to read, for brief effects).
   float text_glow{};
+
+  /// How strong the text's drop shadow is (0 = none, 1 = standard).
+  float text_shadow{1.0f};
+
+  /// How flat the text draws (0 = with its font's own clay-like
+  /// shading, 1 = a flat color; the standard). A glow covers it either
+  /// way.
+  float text_flatness{1.0f};
 
   /// Package manifest ('pk') and domain digest ('dg') for indexed
   /// texture refs (see PackageAssetRef).

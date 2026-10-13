@@ -163,7 +163,24 @@ def test_page_names(
                 icon_scale=0.8,
                 icon_edge=1.1,
                 text_glow=glow,
+                # (As the real account name: no drop shadow.)
+                text_shadow=0.0,
                 override_targets=override_targets,
+            ),
+        )
+
+    # Bare text (an invisible capsule), for the text's own controls.
+    def _bare(
+        *, shadow: float | None = None, flatness: float | None = None
+    ) -> bdep.NameDepiction:
+        return _name(
+            'efro',
+            (1.0, 0.6, 0.2),
+            _capsule(
+                radius=1.6,
+                color=(1.0, 1.0, 1.0, 0.0),
+                text_shadow=shadow,
+                text_flatness=flatness,
             ),
         )
 
@@ -243,7 +260,8 @@ def test_page_names(
                     'Text glow',
                     'A neon look by amount (text_glow): white-hot'
                     ' interiors and a soft glow in the text\'s own color,'
-                    ' in place of its drop shadow. 0 is plain text.',
+                    ' over its usual drop shadow. 0 is plain text, 1 the'
+                    ' standard look, 2 the most allowed (overdriven).',
                     [
                         _button(
                             f'text glow {amount}',
@@ -251,7 +269,32 @@ def test_page_names(
                             glow_box,
                             color=_WEB_BG,
                         )
-                        for amount in (0.0, 0.5, 1.0)
+                        for amount in (0.0, 0.5, 1.0, 2.0)
+                    ],
+                ),
+                _row(
+                    'Text shadow and flatness',
+                    'The text\'s drop shadow by strength (text_shadow; 1'
+                    ' is the standard) and how flat it draws'
+                    ' (text_flatness; 1, the standard, is a flat color'
+                    ' and 0 shows the font\'s own shading).',
+                    [
+                        *(
+                            _button(
+                                f'text shadow {amount}',
+                                _bare(shadow=amount),
+                                glow_box,
+                            )
+                            for amount in (1.0, 0.5, 0.0)
+                        ),
+                        *(
+                            _button(
+                                f'text flatness {amount}',
+                                _bare(flatness=amount),
+                                glow_box,
+                            )
+                            for amount in (1.0, 0.5, 0.0)
+                        ),
                     ],
                 ),
                 _row(
@@ -770,6 +813,8 @@ def _capsule(
     icon_edge: float | None = None,
     text_inset: float | None = None,
     text_glow: float | None = None,
+    text_shadow: float | None = None,
+    text_flatness: float | None = None,
     insets: tuple[float, float] | None = None,
     tile: bool | None = None,
     override_targets: list[str] | None = None,
@@ -803,6 +848,8 @@ def _capsule(
         ('ie', icon_edge),
         ('ti', text_inset),
         ('tg', text_glow),
+        ('ts', text_shadow),
+        ('tf', text_flatness),
     ):
         if val is not None:
             out[key] = val
