@@ -325,7 +325,7 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .down_ball_bottom_lift = 0.108f,
     .down_ball_contact_stiffness = 1600.0f,
     .down_ball_contact_damping = 8.0f,
-    .down_ball_brakes = false,
+    .down_ball_brakes = true,
     // 0.2 seconds.
     .wake_slide_steps = 25,
 };

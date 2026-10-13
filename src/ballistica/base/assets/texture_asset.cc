@@ -612,26 +612,44 @@ void TextureAsset::DoUnload() {
 
 bool TextureAsset::slot_warnings_suppressed_{};
 
-void TextureAsset::WarnSlotMismatch_(const char* slot) {
+// A role's name as authored in a workspace, for messages.
+static auto RoleName(TextureRole role) -> const char* {
+  switch (role) {
+    case TextureRole::kUnknown:
+      return "unknown";
+    case TextureRole::kDefault:
+      return "default";
+    case TextureRole::kSourcePremultiplied:
+      return "source_premultiplied";
+    case TextureRole::kStraightAlpha:
+      return "straight_alpha";
+    case TextureRole::kData:
+      return "data";
+    case TextureRole::kPremultipliedData:
+      return "premultiplied_data";
+  }
+  return "unknown";
+}
+
+void TextureAsset::WarnSlotMismatch_(const char* slot, const char* wanted) {
   if (slot_warnings_suppressed_) {
     return;
   }
   // Once per texture: a mismatch repeats on every frame it is drawn.
   role_slot_warned_ = true;
   char buffer[512];
-  if (role_ == TextureRole::kData) {
+  if (slot == nullptr) {
     snprintf(buffer, sizeof(buffer),
-             "Texture '%s' has the 'data' role (independent channel values,"
+             "Texture '%s' has the '%s' role (channel values for a shader,"
              " as for a mask or tint) but is being drawn as a picture."
              " Give it a color role, or use a separate picture texture.",
-             file_name_.c_str());
+             file_name_.c_str(), RoleName(role_));
   } else {
     snprintf(buffer, sizeof(buffer),
-             "Texture '%s' is being used as a %s texture but does not have"
-             " the 'data' role, so it was built as a picture (channels"
-             " weighted by visibility, color multiplied by alpha) and may"
-             " shade slightly wrong. Set its texture role to 'data'.",
-             file_name_.c_str(), slot);
+             "Texture '%s' is being used as a %s texture but has the '%s'"
+             " role, which is built differently from what that slot reads,"
+             " so it may shade slightly wrong. Set its texture role to %s.",
+             file_name_.c_str(), slot, RoleName(role_), wanted);
   }
   // The texture name alone rarely pins down who bound it; the stack
   // names the drawing widget/node/component. (Once per texture, so the

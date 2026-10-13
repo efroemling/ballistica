@@ -398,6 +398,33 @@ class _OneResult:
 
 
 @dataclass
+class _LocalScan:
+    """What one pass over local state has already read (internal).
+
+    A pass asks the same questions several times over: every package
+    wants the bundle and cache manifests, and a flavor is checked for
+    completeness when scanning and again when chosen. Each answer is
+    read once and kept here.
+
+    Lives for one synchronous pass only. Never reuse one across a
+    download: a flavor found incomplete stays that way in here.
+    """
+
+    #: The bundle manifest, once read.
+    bundle: dict[ApverNum, dict[str, str]] | None = None
+    #: The cache manifest, once loaded.
+    manifest: _CacheManifest | None = None
+    #: ``flavor-manifest hash -> registry entries``, or None for a
+    #: flavor that isn't fully present.
+    flavors: dict[str, dict[str, dict[str, str]] | None] = field(
+        default_factory=dict
+    )
+    #: Data blobs checked for presence, and how long that took in all.
+    blob_checks: int = 0
+    blob_check_seconds: float = 0.0
+
+
+@dataclass
 class _PkgManifests:
     """One package's Tier-1 result, before its blobs are fetched (internal).
 
@@ -1577,17 +1604,22 @@ class AssetSubsystem(AppSubsystem):
         """:meth:`_run_in_pool` on the app pool, noting where time went.
 
         Records how long ``call`` waited for a pool thread, how long it
-        ran, and how long the logic thread took to pick the result up.
+        ran, how much of that run its thread actually spent on the cpu,
+        and how long the logic thread took to pick the result up.
         """
         submitted = time.monotonic()
         started: list[float] = []
         ended: list[float] = []
+        cpu: list[float] = []
 
         def _run() -> T:
             started.append(time.monotonic())
+            # Cpu time is per thread, so it has to be read in here.
+            cpu_start = time.thread_time()
             try:
                 return call(*args)
             finally:
+                cpu.append(time.thread_time() - cpu_start)
                 ended.append(time.monotonic())
 
         # Keeps the pool's own diagnostics naming the real call.
@@ -1600,7 +1632,13 @@ class AssetSubsystem(AppSubsystem):
             start = started[0] if started else done
             end = ended[0] if ended else done
             times.pooled.append(
-                (stage, start - submitted, end - start, done - end)
+                (
+                    stage,
+                    start - submitted,
+                    end - start,
+                    cpu[0] if cpu else 0.0,
+                    done - end,
+                )
             )
 
     def _apply_build_progress(
@@ -1684,9 +1722,10 @@ class AssetSubsystem(AppSubsystem):
         desired = self._desired_coords(_babase.app.locale.current_locale)
         resolved: list[ApverNum] = []
         results: list[_OneResult] = []
+        scan = _LocalScan()
         for apvernum in apvernums:
             try:
-                result = self._resolve_one_local(apvernum, desired)
+                result = self._resolve_one_local(apvernum, desired, scan)
             except AssetResolveError as exc:
                 if optional is None or apvernum not in optional:
                     raise
@@ -1856,7 +1895,12 @@ class AssetSubsystem(AppSubsystem):
         # path below is used only when something must actually be fetched.
         times = LocalResolveTimes()
         offline = await self._run_in_pool_timed(
-            times, 'local scan', self._resolve_offline_sync, apvernums, language
+            times,
+            'local scan',
+            self._resolve_offline_sync,
+            apvernums,
+            language,
+            times,
         )
         if offline is not None:
             register_specs, manifest_pkgs, fell_back_by_pkg = offline
@@ -2264,7 +2308,10 @@ class AssetSubsystem(AppSubsystem):
         self._wanted_next_try[apvernum] = now + delay * random.uniform(0.9, 1.1)
 
     def _resolve_offline_sync(
-        self, apvernums: list[ApverNum], language: Locale
+        self,
+        apvernums: list[ApverNum],
+        language: Locale,
+        times: LocalResolveTimes | None = None,
     ) -> _ResolveAccum | None:
         """Resolve the whole set from local state, in one off-thread pass.
 
@@ -2275,20 +2322,33 @@ class AssetSubsystem(AppSubsystem):
         the caller falls back to the per-package online path (which handles
         downloads + builtin fallback exactly as before). Synchronous; runs
         in a single executor hop.
+
+        If ``times`` is passed, how long the pass spent checking blobs on
+        disk is noted there.
         """
         desired = self._desired_coords(language)
         results: list[_OneResult] = []
-        for apvernum in apvernums:
-            local, missing = self._scan_local(apvernum, desired)
-            if missing:
-                # Not fully local; let the online path handle this set
-                # (download desired flavors / builtin fallback / fail).
-                return None
-            results.append(
-                self._finalize_one(
-                    apvernum, desired, local, self._is_builtin(apvernum)
+        scan = _LocalScan()
+        try:
+            for apvernum in apvernums:
+                local, missing = self._scan_local(apvernum, desired, scan)
+                if missing:
+                    # Not fully local; let the online path handle this set
+                    # (download desired flavors / builtin fallback / fail).
+                    return None
+                results.append(
+                    self._finalize_one(
+                        apvernum,
+                        desired,
+                        local,
+                        self._is_builtin(apvernum),
+                        scan,
+                    )
                 )
-            )
+        finally:
+            if times is not None:
+                times.blob_checks = scan.blob_checks
+                times.blob_check_seconds = scan.blob_check_seconds
         return self._accumulate_results(apvernums, results)
 
     async def _resolve_online(
@@ -2322,7 +2382,9 @@ class AssetSubsystem(AppSubsystem):
         # once) so we know the full set of work before starting any of it.
         scans = await asyncio.gather(
             *[
-                self._run_in_pool(self._scan_local, apvernum, desired)
+                self._run_in_pool(
+                    self._scan_local, apvernum, desired, _LocalScan()
+                )
                 for apvernum in apvernums
             ]
         )
@@ -2354,6 +2416,8 @@ class AssetSubsystem(AppSubsystem):
                     desired,
                     {**locals_by_id[apvernum], **downloaded.get(apvernum, {})},
                     self._is_builtin(apvernum),
+                    # Fresh: the scans above predate the downloads.
+                    _LocalScan(),
                 )
                 for apvernum in apvernums
             ]
@@ -2481,7 +2545,7 @@ class AssetSubsystem(AppSubsystem):
             self._pinned_fm_hashes.update(coords.values())
 
     def _resolve_one_local(
-        self, apvernum: ApverNum, desired: dict[str, str]
+        self, apvernum: ApverNum, desired: dict[str, str], scan: _LocalScan
     ) -> _OneResult:
         """Best-local resolve of one package: scan local + finalize.
 
@@ -2490,24 +2554,24 @@ class AssetSubsystem(AppSubsystem):
         only) the bundled fallback, else raises. Building block of
         :meth:`resolve_local`; ``available`` is just the local coords.
         """
-        local, _missing = self._scan_local(apvernum, desired)
+        local, _missing = self._scan_local(apvernum, desired, scan)
         return self._finalize_one(
-            apvernum, desired, local, self._is_builtin(apvernum)
+            apvernum, desired, local, self._is_builtin(apvernum), scan
         )
 
     def _scan_local(
-        self, apvernum: ApverNum, desired: dict[str, str]
+        self, apvernum: ApverNum, desired: dict[str, str], scan: _LocalScan
     ) -> tuple[dict[str, str], set[str]]:
         """Local coord→hash map + which desired buckets aren't fully local.
 
         Off-thread; reads the bundle + cache manifests and the referenced
         flavor-manifest blobs.
         """
-        local = self._local_coords(apvernum)
+        local = self._local_coords(apvernum, scan)
         missing: set[str] = set()
         for bucket, coord in desired.items():
             fm_hash = local.get(coord)
-            if fm_hash is None or not self._coord_complete(fm_hash):
+            if fm_hash is None or self._flavor_entries(fm_hash, scan) is None:
                 missing.add(bucket)
         return local, missing
 
@@ -2517,6 +2581,7 @@ class AssetSubsystem(AppSubsystem):
         desired: dict[str, str],
         available: dict[str, str],
         is_builtin: bool,
+        scan: _LocalScan,
     ) -> _OneResult:
         """Per-bucket flavor selection + registry-entry read. Off-thread.
 
@@ -2538,15 +2603,23 @@ class AssetSubsystem(AppSubsystem):
             # whether it arrived now or was already local.
             chosen: str | None = None
             chosen_hash: str | None = None
+            chosen_entries: dict[str, dict[str, str]] | None = None
             for cand in self._flavor_candidates(bucket, desired_coord):
                 cand_hash = available.get(cand)
-                if cand_hash is not None and self._coord_complete(cand_hash):
+                if cand_hash is None:
+                    continue
+                chosen_entries = self._flavor_entries(cand_hash, scan)
+                if chosen_entries is not None:
                     chosen = cand
                     chosen_hash = cand_hash
                     break
-            if chosen is not None and chosen_hash is not None:
+            if (
+                chosen is not None
+                and chosen_hash is not None
+                and chosen_entries is not None
+            ):
                 coords[chosen] = chosen_hash
-                entries[chosen] = self._read_entries(chosen_hash)
+                entries[chosen] = chosen_entries
                 if chosen != desired_coord:
                     fell_back[desired_coord] = chosen
                 continue
@@ -2555,13 +2628,18 @@ class AssetSubsystem(AppSubsystem):
                 fb_hash = (
                     available.get(fallback) if fallback is not None else None
                 )
+                fb_entries = (
+                    self._flavor_entries(fb_hash, scan)
+                    if fb_hash is not None
+                    else None
+                )
                 if (
                     fallback is not None
                     and fb_hash is not None
-                    and self._coord_complete(fb_hash)
+                    and fb_entries is not None
                 ):
                     coords[fallback] = fb_hash
-                    entries[fallback] = self._read_entries(fb_hash)
+                    entries[fallback] = fb_entries
                     fell_back[desired_coord] = fallback
                     continue
             raise AssetResolveError(
@@ -2570,7 +2648,9 @@ class AssetSubsystem(AppSubsystem):
             )
         return _OneResult(coords=coords, entries=entries, fell_back=fell_back)
 
-    def _local_coords(self, apvernum: ApverNum) -> dict[str, str]:
+    def _local_coords(
+        self, apvernum: ApverNum, scan: _LocalScan
+    ) -> dict[str, str]:
         """Locally-known ``coord -> flavor-manifest hash`` (bundle ∪ cache).
 
         The cache's (downloaded/ideal) hash supersedes the bundle's for a
@@ -2588,12 +2668,19 @@ class AssetSubsystem(AppSubsystem):
         (there's no floor to fall through to); their completeness is
         checked downstream by :meth:`_scan_local` / :meth:`_finalize_one`.
         """
+        if scan.bundle is None:
+            scan.bundle = self._read_bundle_manifest()
+        if scan.manifest is None:
+            scan.manifest = self._load_manifest()
         coords: dict[str, str] = {}
-        coords.update(self._read_bundle_manifest().get(apvernum, {}))
-        pkg = self._load_manifest().packages.get(apvernum)
+        coords.update(scan.bundle.get(apvernum, {}))
+        pkg = scan.manifest.packages.get(apvernum)
         if pkg is not None:
             for coord, fm_hash in pkg.flavor_manifests.items():
-                if coord not in coords or self._coord_complete(fm_hash):
+                if (
+                    coord not in coords
+                    or self._flavor_entries(fm_hash, scan) is not None
+                ):
                     coords[coord] = fm_hash
         return coords
 
@@ -2618,28 +2705,55 @@ class AssetSubsystem(AppSubsystem):
             for key, entry in manifest.get('asset_package_versions', {}).items()
         }
 
-    def _coord_complete(self, fm_hash: str) -> bool:
-        """Is this flavor fully present? (fm blob + all its data blobs)."""
+    def _flavor_entries(
+        self, fm_hash: str, scan: _LocalScan
+    ) -> dict[str, dict[str, str]] | None:
+        """A flavor's registry entries, or None if it isn't fully present.
+
+        Fully present means its flavor-manifest blob and every data blob
+        that names. The entries are ``{logical_path: {part: data-hash}}``
+        (a null asset is ``{}``). Answered once per ``scan``.
+        """
+        if fm_hash not in scan.flavors:
+            scan.flavors[fm_hash] = self._flavor_entries_uncached(fm_hash, scan)
+        return scan.flavors[fm_hash]
+
+    def _flavor_entries_uncached(
+        self, fm_hash: str, scan: _LocalScan
+    ) -> dict[str, dict[str, str]] | None:
         fm_data = self._read_blob(fm_hash, hide_bundle=True)
         if fm_data is None:
-            return False
+            return None
         try:
             parsed = json.loads(fm_data)
         except Exception as exc:
             logger.exception('Error reading flavor-manifest %s.', fm_hash)
             strip_exception_tracebacks(exc)
-            return False
-        return all(
-            self._present(comp['h'], comp['s'])
-            for info in parsed['e'].values()
-            for comp in info.values()
-        )
+            return None
+        infos: dict[str, dict[str, dict]] = parsed['e']
+        # Timed as a whole: this is the part that touches storage once
+        # per blob, so it is where a slow disk shows up.
+        t_start = time.monotonic()
+        try:
+            if not all(
+                self._present(comp['h'], comp['s'])
+                for info in infos.values()
+                for comp in info.values()
+            ):
+                return None
+        finally:
+            scan.blob_checks += sum(len(info) for info in infos.values())
+            scan.blob_check_seconds += time.monotonic() - t_start
+        return {
+            p: {part: comp['h'] for part, comp in info.items()}
+            for p, info in infos.items()
+        }
 
     def _read_entries(self, fm_hash: str) -> dict[str, dict[str, str]]:
         """Read a flavor-manifest blob → ``{logical_path: data-blob hash}``.
 
-        Caller must have confirmed the flavor is complete (see
-        :meth:`_coord_complete`).
+        Caller must know the flavor is complete (it was registered, or
+        :meth:`_flavor_entries` returned it).
         """
         fm_data = self._read_blob(fm_hash)
         assert fm_data is not None

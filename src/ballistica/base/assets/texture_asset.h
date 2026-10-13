@@ -79,19 +79,45 @@ class TextureAsset : public Asset {
   /// draw is covered without call sites having to remember; they cost a
   /// compare per call.
   void ExpectPictureSlot() {
-    if (role_ == TextureRole::kData && !role_slot_warned_) {
-      WarnSlotMismatch_("color");
+    if ((role_ == TextureRole::kData
+         || role_ == TextureRole::kPremultipliedData)
+        && !role_slot_warned_) {
+      WarnSlotMismatch_(nullptr, nullptr);
     }
   }
 
   /// Note that this texture is being bound to a slot whose channels a
   /// shader reads as independent values (``slot`` names it for the
-  /// message: "colorize", "mask"). Warns (once per texture) if it was
-  /// built as a picture. Textures of unknown role are never flagged.
+  /// message: "colorize"). Such a slot wants the 'data' role; warns
+  /// (once per texture) for anything else, a picture or data that was
+  /// multiplied by its alpha alike. Textures of unknown role are never
+  /// flagged, here or in the two checks below.
   void ExpectDataSlot(const char* slot) {
     if (role_ != TextureRole::kData && role_ != TextureRole::kUnknown
         && !role_slot_warned_) {
-      WarnSlotMismatch_(slot);
+      WarnSlotMismatch_(slot, "'data'");
+    }
+  }
+
+  /// Note that this texture is being bound to a frame-mask slot, whose
+  /// channels the shader scales by the mask's own alpha. Such a slot
+  /// wants the 'premultiplied_data' role, where the pipeline has done
+  /// that scaling before filtering; plain data gets it per fragment
+  /// instead, after the sampler has blended each channel on its own,
+  /// which fringes the mask's edges.
+  void ExpectFrameMaskSlot() {
+    if (role_ != TextureRole::kPremultipliedData
+        && role_ != TextureRole::kUnknown && !role_slot_warned_) {
+      WarnSlotMismatch_("frame mask", "'premultiplied_data'");
+    }
+  }
+
+  /// Note that this texture is being bound to a slot that reads its
+  /// alpha only. Either data role will do.
+  void ExpectAlphaMaskSlot() {
+    if (role_ != TextureRole::kData && role_ != TextureRole::kPremultipliedData
+        && role_ != TextureRole::kUnknown && !role_slot_warned_) {
+      WarnSlotMismatch_("alpha mask", "'data'");
     }
   }
 
@@ -117,7 +143,9 @@ class TextureAsset : public Asset {
 
  private:
   static bool slot_warnings_suppressed_;
-  void WarnSlotMismatch_(const char* slot);
+  /// ``slot`` and ``wanted`` (the role name(s) to suggest, quoted) are
+  /// null for a picture slot.
+  void WarnSlotMismatch_(const char* slot, const char* wanted);
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
   int render_view_id_{};

@@ -338,9 +338,11 @@ enum class TextureWrapping : uint8_t {
 /// What a texture was authored as (its role in the asset workspace),
 /// delivered in the KTX2 key/value data. Lets a texture be checked
 /// against the kind of shader slot it is bound to: a kData texture
-/// (mask/tint; independent channel values) in a picture slot, or a
-/// picture in a mask slot, shades subtly wrong and is otherwise easy to
-/// miss. kUnknown is anything that did not come from the asset pipeline
+/// (tint/color mask; independent channel values) in a picture slot, a
+/// picture in a mask slot, or plain kData in a frame-mask slot (which
+/// wants kPremultipliedData: data whose other channels the pipeline has
+/// multiplied by its alpha) shades subtly wrong and is otherwise easy
+/// to miss. kUnknown is anything that did not come from the asset pipeline
 /// (legacy formats, OS-decoded images, text, render targets), a texture
 /// that has not loaded yet, or a role newer than this build knows; such
 /// textures are never checked. A pipeline texture with no role key is
@@ -351,6 +353,7 @@ enum class TextureRole : uint8_t {
   kSourcePremultiplied,
   kStraightAlpha,
   kData,
+  kPremultipliedData,
 };
 
 enum class TextureMinQuality : uint8_t {

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261009`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261012`` (bauiv1).
 
 The catalog of classic content as menus and the store present it: map names and
 previews, game names and descriptions, co-op level names, and the currency and
@@ -14,7 +14,7 @@ on it.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 500
+# ba_meta require asset-package 648
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -28,8 +28,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccatalogassets.261009
-_ASSET_PACKAGE = ApverNum(500)
+# a-0.baclassiccatalogassets.261012
+_ASSET_PACKAGE = ApverNum(648)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle

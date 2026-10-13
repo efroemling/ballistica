@@ -111,6 +111,9 @@ static auto RoleFromString(const char* val) -> TextureRole {
   if (!strcmp(val, "data")) {
     return TextureRole::kData;
   }
+  if (!strcmp(val, "premultiplied_data")) {
+    return TextureRole::kPremultipliedData;
+  }
   if (!strcmp(val, "source_premultiplied")) {
     return TextureRole::kSourcePremultiplied;
   }

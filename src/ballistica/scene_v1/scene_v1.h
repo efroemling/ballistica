@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 55;
+const int kProtocolVersionHostMin = 56;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 55;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 55;
+const int kProtocolVersionMax = 56;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 55;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 54;
+const int kProtocolVersionDevGapMax = 55;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -457,6 +457,11 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     springing up slides instead of being flung sideways
 //     (SpazPhysicsTuning down_ball_* and wake_slide_steps)
 //     (2026-10-12).
+//
+// 56: Spaz physics retune, bg-limbs mode only (nothing new on the
+//     wire): the roller ball a knocked-out character rests on gets
+//     its full brakes, so the character stops sliding along the
+//     ground (SpazPhysicsTuning down_ball_brakes) (2026-10-12).
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

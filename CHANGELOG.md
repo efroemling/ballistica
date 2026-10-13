@@ -1,4 +1,4 @@
-### 1.8.0 (build 23052, api 9, 2026-10-12)
+### 1.8.0 (build 23053, api 9, 2026-10-12)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -20,6 +20,11 @@
   `sound` nodes gained matching `play_group`, `play_group_cap` and
   `priority` attrs. Sound assets can set a play group and priority of
   their own in their workspace settings.
+- Fixed a pale line around the cutout of masked images, most visible on the
+  character viewer's frame. Frame masks (the `mask_texture` of images and
+  buttons) now use a new `premultiplied_data` texture role, where the asset
+  pipeline scales the mask's channels by its alpha before filtering; a mask
+  with the plain `data` role in that slot now logs the one-time role warning.
 - Hosts no longer send clients bursts of sound plays that would only cut
   each other off on arrival.
 - Scene protocol is now 54 (for the above).
@@ -27,6 +32,12 @@
   after falling while knocked out or frozen, and characters getting flung
   sideways as they got back up from a knockout. Scene protocol is now 55
   (for these physics changes).
+- Fixed knocked-out characters sliding along the ground too easily. Scene
+  protocol is now 56 (for this physics change).
+- Fixed game music on Android cutting out for a few seconds shortly after
+  launch on builds with ads (loading a video ad was mistaken for another
+  app's music). Another app's music now has to play for a second and a
+  half before game music gives way to it.
 - Character limbs, hair and bomb fuses are now simulated against the
   poses their bodies are drawn at instead of the previous step's, which
   removes a one-frame jump in the arms when a character starts or stops

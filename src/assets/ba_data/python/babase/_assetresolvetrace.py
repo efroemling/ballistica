@@ -49,13 +49,31 @@ class LocalResolveTimes:
     busy logic thread -- and which of those shows in how each stage's
     time splits between waiting for a pool thread, running, and getting
     back onto the logic thread afterwards.
+
+    A stage's run time is further told apart by its cpu time and, for
+    the scan, its blob-check time:
+
+    - Cpu close to the run time: the stage really had that much to do.
+    - Little cpu, but blob checks account for the run: slow storage.
+    - Little cpu and quick blob checks: the thread spent the run
+      waiting to execute at all. Python code on a pool thread only
+      advances while the logic thread (or other Python threads) leave
+      the interpreter free, so a busy logic thread stretches it.
     """
 
-    #: ``(stage, pool wait, run, wake)`` for each stage run on the pool.
-    pooled: list[tuple[str, float, float, float]] = field(default_factory=list)
+    #: ``(stage, pool wait, run, cpu, wake)`` for each stage run on the
+    #: pool. ``cpu`` is how much of ``run`` the thread was executing.
+    pooled: list[tuple[str, float, float, float, float]] = field(
+        default_factory=list
+    )
 
     #: ``(stage, seconds)`` for each stage run on the logic thread.
     inline: list[tuple[str, float]] = field(default_factory=list)
+
+    #: Data blobs the scan checked for on disk, and how long that took
+    #: in all (wall time, so it includes waiting on storage).
+    blob_checks: int = 0
+    blob_check_seconds: float = 0.0
 
     def summary(
         self,
@@ -80,9 +98,15 @@ class LocalResolveTimes:
             return None
         _g_local_report_count += 1
         stages = [
-            f'{name} {run:.2f}s (pool wait {wait:.2f}s, wake {wake:.2f}s)'
-            for name, wait, run, wake in self.pooled
+            f'{name} {run:.2f}s (cpu {cpu:.2f}s, pool wait {wait:.2f}s,'
+            f' wake {wake:.2f}s)'
+            for name, wait, run, cpu, wake in self.pooled
         ] + [f'{name} {secs:.2f}s (logic thread)' for name, secs in self.inline]
+        if self.blob_checks:
+            stages.append(
+                f'{self.blob_checks} blob check(s) in the scan'
+                f' {self.blob_check_seconds:.2f}s'
+            )
         return (
             f"Asset resolve '{label}' took {seconds:.2f}s with nothing to"
             f' download ({len(apvernums)} pkg(s): {apvernums}): '
