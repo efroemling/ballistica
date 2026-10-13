@@ -19,11 +19,18 @@
     "LANGUAGE": ""
   },
 
+  // Ubuntu images (23.04+) already have a non-root 'ubuntu' user at
+  // uid 1000, so use that one: a separate 'vscode' user would get uid
+  // 1001, and its uid can't be remapped to the host's (1000 is taken),
+  // which leaves it unable to write the bind-mounted checkout.
+  // common-utils just sets that user up (sudo, shell); the uid is
+  // matched to the host's at startup.
   "features": {
-    // Creates the non-root 'vscode' user (uid matched to the host's).
-    "ghcr.io/devcontainers/features/common-utils:2": {}
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "ubuntu"
+    }
   },
-  "remoteUser": "vscode",
+  "remoteUser": "ubuntu",
 
   // The repo lands in the default /workspaces/<repo> (the only option
   // in Codespaces). The venv and the generated tools/pcommand wrappers
