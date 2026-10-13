@@ -1558,17 +1558,15 @@ class AssetsV1PathValsGroupV1(AssetsV1PathVals):
 class AssetsV1PathValsCubeMapV1(AssetsV1PathVals):
     """Path-specific values for a cube map (``.cubemap`` dir) in a workspace.
 
-    Cube maps are reflection textures with no Python API (decision #24),
-    so they aren't wrapper-visible. This currently carries only optional
-    ``docs`` -- stored for completeness/consistency with other asset
-    kinds, but not yet consumed by anything (it'll have a home if/when
-    cube maps gain a Python surface). Keyed in ``workspace.json``'s
-    ``path`` dict by the ``.cubemap`` directory path.
+    Cube maps have no build-time settings (decision #24), so this
+    currently carries only optional ``docs``. Keyed in
+    ``workspace.json``'s ``path`` dict by the ``.cubemap`` directory
+    path.
     """
 
-    #: Optional free-form documentation for this cube map. Stored but not
-    #: yet surfaced anywhere (cube maps have no wrapper entry). Empty
-    #: string means no docs.
+    #: Optional free-form documentation for this asset, surfaced as a
+    #: comment above the asset in generated wrapper modules (and in the
+    #: Sphinx docs). Empty string means no docs.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
     @override

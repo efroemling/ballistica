@@ -1,4 +1,4 @@
-### 1.8.0 (build 23053, api 9, 2026-10-12)
+### 1.8.0 (build 23054, api 9, 2026-10-12)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
