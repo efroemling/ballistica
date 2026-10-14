@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261013`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261014`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 667
+# ba_meta require asset-package 671
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-# a-0.babuiltinassets.261013
-_ASSET_PACKAGE = ApverNum(667)
+# a-0.babuiltinassets.261014
+_ASSET_PACKAGE = ApverNum(671)
 
 if TYPE_CHECKING:
     import datetime

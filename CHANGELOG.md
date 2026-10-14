@@ -1,4 +1,4 @@
-### 1.8.0 (build 23056, api 9, 2026-10-13)
+### 1.8.0 (build 23058, api 9, 2026-10-13)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -383,6 +383,12 @@
   CHANGELOG_API_VERSIONS.md). The engine's own list of these characters is
   now generated from `bacommon.text.SpecialChar` instead of being kept in
   sync by hand.
+- Added three icons celebrating the game's 15th anniversary (a cake, a spaz
+  and a bomb), available as premium icons in the store. Thanks to Discontt,
+  vladdos and E328 for making them.
+- `SpecialChar` members have a `min_engine_build` property giving the first
+  engine build able to draw them, so servers can avoid offering a character
+  to a client that would show it as a blank.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
