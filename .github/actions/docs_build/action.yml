@@ -1,0 +1,82 @@
+name: "Build BombSquad Docs"
+description: |
+  "Sets up the build env and runs make docs into build/docs, reusing the"
+  "previous run's sphinx state. Shared by the docs, nightly and release"
+  "workflows. Expects a checkout."
+
+runs:
+  using: "composite"
+  steps:
+    # make docs builds a headless binary to generate the dummy modules;
+    # using-cmake routes that through sccache, and since it builds in
+    # build/cmake/server-debug like the CI server build it reuses those
+    # cache objects.
+    - name: Setup build env
+      uses: ./.github/actions/bombsquad_build_env
+      with:
+        using-cmake: true
+
+    # Sphinx is already incremental (batools.docs keeps its doctrees in
+    # .cache/sphinx, and viewcode skips any [source] page newer than its
+    # module), but only if the previous output survives and the sources
+    # keep their old modtimes, which a fresh checkout resets. So carry
+    # the output over, along with the modtime each tracked .py file had
+    # (see the restore/record steps below). The key prefix covers what
+    # the output is generated with, so changing that starts afresh.
+    - name: Restore docs cache
+      uses: actions/cache@v6
+      with:
+        path: |
+          build/docs
+          .cache/sphinx
+          .cache/docs_modtimes.json
+        key: ${{ runner.os }}-docs-${{ hashFiles('tools/batools/docs.py', 'src/assets/sphinx/**', 'pconfig/requirements_lock.txt') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-docs-${{ hashFiles('tools/batools/docs.py', 'src/assets/sphinx/**', 'pconfig/requirements_lock.txt') }}-
+
+    # Give every tracked .py file whose content (git blob hash) is what
+    # it was in the cached build back its modtime from then; changed
+    # files keep their fresh checkout modtime and so get regenerated.
+    - name: Restore source modtimes
+      shell: python
+      run: |
+        import json, os, subprocess
+
+        try:
+            with open('.cache/docs_modtimes.json', encoding='utf-8') as f:
+                recorded = json.load(f)
+        except FileNotFoundError:
+            recorded = {}
+        out = subprocess.run(
+            ['git', 'ls-files', '-s', '--', '*.py'],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        restored = 0
+        for line in out.splitlines():
+            meta, path = line.split('\t', 1)
+            sha = meta.split()[1]
+            entry = recorded.get(path)
+            if entry is not None and entry[0] == sha:
+                os.utime(path, (entry[1], entry[1]))
+                restored += 1
+        print(f'Restored modtimes for {restored} unchanged source files.')
+
+    - name: Make the build
+      shell: bash
+      run: make docs
+
+    - name: Record source modtimes
+      shell: python
+      run: |
+        import json, os, subprocess
+
+        out = subprocess.run(
+            ['git', 'ls-files', '-s', '--', '*.py'],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        recorded = {}
+        for line in out.splitlines():
+            meta, path = line.split('\t', 1)
+            recorded[path] = [meta.split()[1], os.path.getmtime(path)]
+        with open('.cache/docs_modtimes.json', 'w', encoding='utf-8') as f:
+            json.dump(recorded, f)

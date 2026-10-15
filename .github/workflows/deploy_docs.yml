@@ -25,10 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
       - name: Build documentation
-        run: make docs
+        uses: ./.github/actions/docs_build
       - name: Upload the build
         uses: actions/upload-pages-artifact@v5
         with:
