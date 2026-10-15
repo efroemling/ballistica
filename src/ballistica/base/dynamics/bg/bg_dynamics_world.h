@@ -118,6 +118,10 @@ class BGDynamicsWorld : public Object {
   int feed_update_steps_{};
   int millisecs_since_bump_{1000000};
   int millisecs_since_bump_log_{1000000};
+  // Consecutive one-second windows with over half the feeds dropped;
+  // only a run of them sheds load or warns.
+  int overloaded_windows_{};
+  int millisecs_since_light_log_{1000000};
   int unlogged_bumps_{};
   // The bg thread's latest step-cost averages (off its last bundle).
   BGDynamicsLoadStats load_stats_;

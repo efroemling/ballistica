@@ -19,16 +19,6 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-def _tex(name: str) -> str:
-    """Qualified _classicassets ref for a button image texture."""
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
-
-
 @dataclass
 class _ButtonDef:
     itemid: str
@@ -41,7 +31,7 @@ class _ButtonDef:
 
 @dataclass
 class _ImgDef:
-    tex: str
+    tex: bui.TextureHandle
     pos: tuple[float, float]
     size: tuple[float, float]
     color: tuple[float, float, float] = (1, 1, 1)
@@ -101,14 +91,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        _tex('tokens1'),
+                        _classicassets.textures.tokens1,
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        _tex('window_bottom_cap'),
+                        _classicassets.textures.window_bottom_cap,
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -140,14 +130,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        _tex('tokens2'),
+                        _classicassets.textures.tokens2,
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        _tex('window_bottom_cap'),
+                        _classicassets.textures.window_bottom_cap,
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -179,14 +169,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        _tex('tokens3'),
+                        _classicassets.textures.tokens3,
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        _tex('window_bottom_cap'),
+                        _classicassets.textures.window_bottom_cap,
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -218,14 +208,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        _tex('tokens4'),
+                        _classicassets.textures.tokens4,
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        _tex('window_bottom_cap'),
+                        _classicassets.textures.window_bottom_cap,
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -257,13 +247,13 @@ class GetTokensWindow(bui.MainWindow):
                 color=pcolor,
                 imgdefs=[
                     _ImgDef(
-                        _tex('gold_pass'),
+                        _classicassets.textures.gold_pass,
                         pos=(-7, 102),
                         size=(312, 156),
                         draw_controller_mult=0.3,
                     ),
                     _ImgDef(
-                        _tex('window_bottom_cap'),
+                        _classicassets.textures.window_bottom_cap,
                         pos=(8, 4),
                         size=(bwidthwide * 0.923, 116),
                         color=(0.25, 0.12, 0.15),
@@ -451,7 +441,7 @@ class GetTokensWindow(bui.MainWindow):
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
             for bimg in bdef.imgdefs:
-                bui.texture_from_ref(bimg.tex)
+                bimg.tex.get()
 
         self._state = self.State.LOADING
 
@@ -681,7 +671,7 @@ class GetTokensWindow(bui.MainWindow):
                     draw_controller=btn,
                     draw_controller_mult=imgdef.draw_controller_mult,
                     color=imgdef.color,
-                    texture=bui.texture_from_ref(imgdef.tex),
+                    texture=imgdef.tex.get(),
                     transition_delay=tdelay,
                     opacity=imgdef.opacity,
                 )

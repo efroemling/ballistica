@@ -409,11 +409,47 @@ def render_enum_block(result: BuildResult) -> str:
                 else:
                     lines.append(f'{part}  {comment}')
             lines.append('};')
+            lines.append('')
+            lines.extend(_render_ref_func(result, kind, entries))
         lines.append('')
     # Drop the trailing blank line so the closing marker sits flush.
     if lines and lines[-1] == '':
         lines.pop()
     return '\n'.join(lines)
+
+
+def _render_ref_func(
+    result: BuildResult, kind: AssetKind, entries: list[AssetEntry]
+) -> list[str]:
+    """C++ ``BuiltinAssetRef()`` overload for one kind's enum.
+
+    Code that needs a builtin asset's qualified ``<apvernum>:<name>``
+    ref as a string (to hand to a loader that takes names) goes through
+    this rather than gluing ``kBuiltinAssetsApvernum`` to a literal
+    name, so an asset dropped from the package fails to compile instead
+    of failing at runtime.
+    """
+    enum = kind.cpp_enum_name
+    lines = [
+        f'/// Qualified ``<apvernum>:<name>`` ref for a {enum}.',
+        f'inline auto BuiltinAssetRef({enum} id) -> const char* {{',
+        '  switch (id) {',
+    ]
+    for entry in entries:
+        lines.append(f'    case {enum}::{entry.cpp_enum_entry}:')
+        ref = f'"{result.apvernum}:{entry.logical_name}";'
+        if len(f'      return {ref}') <= 80:
+            lines.append(f'      return {ref}')
+        else:
+            # Wrap the way clang-format does.
+            lines.append('      return')
+            lines.append(f'          {ref}')
+    lines += [
+        '  }',
+        '  return "";  // Unreachable; the switch is exhaustive.',
+        '}',
+    ]
+    return lines
 
 
 def render_load_block(result: BuildResult) -> str:

@@ -54,6 +54,12 @@ class Assets {
   auto FindAssetFile(FileType fileType, const std::string& file_in)
       -> std::string;
 
+  /// What FindAssetFile() returns for a bare texture name that exists
+  /// nowhere (legacy names from mods or old hosts). TextureAsset turns
+  /// it into an engine-generated white fill; no package ships a plain
+  /// white texture anymore.
+  static constexpr const char* kMissingTextureFile = "<missing-texture>";
+
   /// Unload renderer-specific bits only (gl display lists, etc) - used when
   /// recreating/adjusting the renderer.
   void UnloadRendererBits(bool textures, bool meshes);

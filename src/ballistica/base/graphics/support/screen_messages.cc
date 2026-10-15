@@ -3,6 +3,7 @@
 #include "ballistica/base/graphics/support/screen_messages.h"
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -60,6 +61,8 @@ class ScreenMessages::ScreenMessageEntry {
   Object::Ref<TextureAsset> tint_texture;
   /// An icon drawn by a depiction instead of the texture pair.
   Object::Ref<Depiction> depiction;
+  /// Authored by a remote host or replay (see AddScreenMessage()).
+  bool remote_content{};
   float v_smoothed{};
   bool translation_dirty{true};
   bool mesh_dirty{true};
@@ -457,6 +460,10 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
         } else if (i->texture.exists()) {
           c.Submit();
 
+          std::optional<TextureAsset::ScopedSlotWarningSuppress> suppress;
+          if (i->remote_content) {
+            suppress.emplace();
+          }
           SimpleComponent c2(pass);
           c2.SetTransparent(true);
           c2.SetTexture(i->texture);
@@ -532,7 +539,8 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
 void ScreenMessages::AddScreenMessage(
     const std::string& msg, bool literal, const Vector3f& color, bool top,
     TextureAsset* texture, TextureAsset* tint_texture, const Vector3f& tint,
-    const Vector3f& tint2, const Vector3f& tint3, LogLevel fail_log_level) {
+    const Vector3f& tint2, const Vector3f& tint3, LogLevel fail_log_level,
+    bool remote_content) {
   assert(g_base->InLogicThread());
 
   // With no renderer there is nothing to ever display OR trim these;
@@ -554,12 +562,14 @@ void ScreenMessages::AddScreenMessage(
     screen_messages_top_.emplace_back(
         m, literal, true, g_core->AppTimeMillisecs(), color, texture,
         tint_texture, tint, tint2, tint3, fail_log_level);
+    screen_messages_top_.back().remote_content = remote_content;
     screen_messages_top_.back().v_smoothed = start_v;
     screen_messages_top_.back().PrefetchTextMeasures();
   } else {
     screen_messages_.emplace_back(m, literal, false, g_core->AppTimeMillisecs(),
                                   color, texture, tint_texture, tint, tint2,
                                   tint3, fail_log_level);
+    screen_messages_.back().remote_content = remote_content;
     screen_messages_.back().PrefetchTextMeasures();
   }
 }

@@ -2282,6 +2282,9 @@ void BGDynamicsWorldServer::Step(StepData* step_data) {
     w.steps++;
     w.wall_ms += ms(t_begin, t5);
     w.cpu_ms += ThreadCPUTimeMillisecs() - cpu_begin;
+    double queue_wait = ms(step_data->push_time, t_begin);
+    w.queue_wait_ms += queue_wait;
+    w.queue_wait_max_ms = std::max(w.queue_wait_max_ms, queue_wait);
     w.channels_ms += ms(t0, t1);
     w.chunks_ms += ms(t1, t2);
     w.tendrils_ms += ms(t2, t3);
@@ -2306,6 +2309,7 @@ void BGDynamicsWorldServer::Step(StepData* step_data) {
       double steps = s.steps;
       s.wall_ms /= steps;
       s.cpu_ms /= steps;
+      s.queue_wait_ms /= steps;
       s.channels_ms /= steps;
       s.chunks_ms /= steps;
       s.tendrils_ms /= steps;
@@ -2487,6 +2491,7 @@ void BGDynamicsWorldServer::TakeResults(BGDynamicsDrawSnapshot** snapshot,
 
 void BGDynamicsWorldServer::PushStep(StepData* data) {
   // Increase our step count and ship it.
+  data->push_time = std::chrono::steady_clock::now();
   int pending = ++step_count_;
 
   // Client thread should stop feeding us if we get clogged up.

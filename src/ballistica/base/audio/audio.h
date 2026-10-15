@@ -217,8 +217,9 @@ class Audio {
 
  private:
   /// Log (rate-limited) that SourceBeginNew() found nothing, so dropped
-  /// plays are visible instead of silent.
-  void WarnNoSourceAvailable_(SoundAsset* for_sound);
+  /// plays are visible instead of silent. Drops below default priority
+  /// are the priority system working as designed and only log at debug.
+  void WarnNoSourceAvailable_(SoundAsset* for_sound, AudioPriority priority);
 
   /// What we last started on a source. Current only while the source is
   /// still out with the play id recorded here (sources come back, and

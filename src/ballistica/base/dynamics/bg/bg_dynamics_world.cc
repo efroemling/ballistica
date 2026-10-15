@@ -32,6 +32,11 @@
 
 namespace ballistica::base {
 
+// Consecutive one-second windows of heavy feed dropping before we call
+// it sustained (shedding load, warning). Single bad seconds are the
+// norm in the field and recover on their own.
+const int kBGDynamicsSustainedOverloadWindows = 3;
+
 BGDynamicsWorld::BGDynamicsWorld(RenderView* view)
     : view_(view), server_(BGDynamicsWorldServer::Create()) {
   assert(g_base->InLogicThread());
@@ -243,10 +248,45 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
     g_core->logging->Log(LogName::kBa, LogLevel::kInfo, buf);
   }
 
+  // Only sustained trouble counts: a single bad second is nearly always
+  // the logic thread catching up after a hitch (one big burst), which
+  // the field shows recovering on its own.
   if (drop_ratio > 0.5f) {
-    // Emergency: the bg sim is at half speed or worse. Shed rig load
-    // in 25% steps, no faster than once a second, and say so -- this
-    // is a lever we don't expect to need.
+    overloaded_windows_++;
+  } else {
+    overloaded_windows_ = 0;
+  }
+  const BGDynamicsLoadStats& stats = load_stats_;
+
+  // Whether the bg thread's own work is a real share of the step
+  // budget. Field reports show most drops come with almost no bg work
+  // (often no bodies at all): the thread isn't being run promptly, and
+  // shedding rigs would only cost visuals. (No stats yet: assume busy.)
+  bool bg_busy = stats.steps == 0
+                 || stats.wall_ms >= 0.25 * static_cast<double>(step_millisecs);
+  millisecs_since_light_log_ += static_cast<int>(window_seconds * 1000.0f);
+
+  if (overloaded_windows_ >= kBGDynamicsSustainedOverloadWindows && !bg_busy) {
+    // Say so now and then, with the scheduling numbers, but shed
+    // nothing.
+    if (millisecs_since_light_log_ >= 10 * 60 * 1000) {
+      millisecs_since_light_log_ = 0;
+      char buf[400];
+      snprintf(buf, sizeof(buf),
+               "bg-dynamics feeds dropping (%.0f%% for %d+ seconds) with"
+               " light bg work (%.2fms wall, %.2fms cpu per step of %dms);"
+               " steps queued %.1fms avg, %.1fms max before the bg thread"
+               " ran them; largest burst %d steps. Not shedding load.",
+               100.0f * drop_ratio, overloaded_windows_, stats.wall_ms,
+               stats.cpu_ms, step_millisecs, stats.queue_wait_ms,
+               stats.queue_wait_max_ms, max_burst);
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
+    }
+  } else if (overloaded_windows_ >= kBGDynamicsSustainedOverloadWindows) {
+    // Emergency: the bg sim has been at half speed or worse for a
+    // while and its own work is why. Shed rig load in 25% steps, no
+    // faster than once a second, and say so -- this is a lever we
+    // don't expect to need.
     if (millisecs_since_bump_ >= 1000 && load_skip_ < 1.0f) {
       load_skip_ = std::min(1.0f, load_skip_ + 0.25f);
       millisecs_since_bump_ = 0;
@@ -269,23 +309,25 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
             std::max(ls.channels_ms + ls.chunks_ms + ls.tendrils_ms
                          + ls.worldstep_ms + ls.snapshot_ms + ls.publish_ms,
                      1e-9);
-        char buf[800];
-        snprintf(buf, sizeof(buf),
-                 "bg-dynamics overloaded (%.0f%% of feeds dropped this"
-                 " second); character-rig load skip -> %.2f%s; bg step"
-                 " %.1fms wall, %.1fms cpu over last %d steps (rigs %.0f%%,"
-                 " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
-                 " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
-                 " %d bodies, %d joints; logic step %dms, largest burst %d"
-                 " steps, %d pending at this update's start",
-                 100.0f * drop_ratio, load_skip_, suffix.c_str(), ls.wall_ms,
-                 ls.cpu_ms, ls.steps, 100.0 * ls.channels_ms / phases,
-                 100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
-                 100.0 * ls.worldstep_ms / phases,
-                 100.0 * ls.snapshot_ms / phases,
-                 100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks,
-                 ls.tendrils, ls.bodies, ls.joints, step_millisecs, max_burst,
-                 feed_update_backlog_);
+        char buf[900];
+        snprintf(
+            buf, sizeof(buf),
+            "bg-dynamics overloaded (%.0f%% of feeds dropped, %d"
+            " seconds running); character-rig load skip -> %.2f%s; bg"
+            " step %.1fms wall, %.1fms cpu over last %d steps, queued"
+            " %.1fms avg %.1fms max (rigs %.0f%%,"
+            " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
+            " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
+            " %d bodies, %d joints; logic step %dms, largest burst %d"
+            " steps, %d pending at this update's start",
+            100.0f * drop_ratio, overloaded_windows_, load_skip_,
+            suffix.c_str(), ls.wall_ms, ls.cpu_ms, ls.steps, ls.queue_wait_ms,
+            ls.queue_wait_max_ms, 100.0 * ls.channels_ms / phases,
+            100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
+            100.0 * ls.worldstep_ms / phases, 100.0 * ls.snapshot_ms / phases,
+            100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks, ls.tendrils,
+            ls.bodies, ls.joints, step_millisecs, max_burst,
+            feed_update_backlog_);
         g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
         millisecs_since_bump_log_ = 0;
         unlogged_bumps_ = 0;

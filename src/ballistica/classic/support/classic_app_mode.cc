@@ -346,6 +346,16 @@ void ClassicAppMode::HostScanCycle() {
         switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
           case ENETUNREACH:
             break;
+          case EPERM:
+          case EACCES:
+            // The network, a VPN, or the OS forbids broadcasts; the
+            // LAN scan just finds nothing. Repeats every scan, so say
+            // it once.
+            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kInfo,
+                        "Broadcasts not permitted here ("
+                            + g_core->platform->GetSocketErrorString()
+                            + "); LAN game scan will find nothing.");
+            break;
           default:
             g_core->logging->Log(
                 LogName::kBaNetworking, LogLevel::kError,

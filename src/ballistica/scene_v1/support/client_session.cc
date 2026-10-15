@@ -1390,7 +1390,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
               s, literal, Vector3f(f[0], f[1], f[2]), true,
               texture->texture_data(), tint_texture->texture_data(),
               Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]),
-              Vector3f(f[9], f[10], f[11]), LogLevel::kDebug);
+              Vector3f(f[9], f[10], f[11]), LogLevel::kDebug, true);
           break;
         }
         case SessionCommand::kScreenMessageTopDepiction: {

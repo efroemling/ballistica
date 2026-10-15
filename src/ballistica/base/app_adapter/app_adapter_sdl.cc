@@ -250,7 +250,7 @@ static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
 
 auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
   auto img = Assets::LoadBundledFallbackTextureRGBA(
-      std::string(kBuiltinAssetsApvernum) + ":textures/cursor");
+      BuiltinAssetRef(BuiltinTextureID::kTexturesCursor));
   if (!img.has_value() || img->mips.empty()) {
     return nullptr;
   }

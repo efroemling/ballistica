@@ -99,87 +99,19 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
       assert(preload_data->buffers[base_src_level]);
       GraphicsQuality q = g_base->graphics_server->quality();
 
-      // Determine whether to use anisotropic sampling on this texture:
-      // basically all the UI stuff that is only ever seen from straight on
-      // doesn't need it.
-      bool allow_ani = true;
-
-      // FIXME: filtering based on filename. Once we get this stuff on a
-      // server we should include this as metadata instead.
-      const char* n = tex_media_->file_name().c_str();
-
-      // The following exceptions should *never* need aniso-sampling.
-      {
-        if (!strcmp(n, "fontBig")) {
-          allow_ani = false;
-
-          // Lets splurge on this for higher but not high (names over
-          // characters might benefit, though most text doesnt).
-        } else if (strstr(n, "Icon")) {
-          allow_ani = false;
-        } else if (strstr(n, "characterIconMask")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "bg")) {
-          allow_ani = false;
-        } else if (strstr(n, "light")) {
-          allow_ani = false;
-        } else if (strstr(n, "shadow")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "sparks")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "smoke")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "scorch")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "scorchBig")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "white")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonBomb")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonJump")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonPickUp")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonPunch")) {
-          allow_ani = false;
-        } else if (strstr(n, "touchArrows")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "actionButtons")) {
-          allow_ani = false;
-        }
-      }
-
-      // The following are considered 'nice to have' - we turn aniso. off for
-      // them in anything less than 'higher' mode.
-      if (allow_ani && (q < GraphicsQuality::kHigher)) {
-        if (strstr(n, "ColorMask")) {
-          allow_ani = false;  // character color-masks
-        } else if (strstr(n, "softRect")) {
-          allow_ani = false;
-        } else if (strstr(n, "BG")) {
-          allow_ani = false;  // level backgrounds
-        } else if (!strcmp(n, "explosion")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "bar")) {
-          allow_ani = false;
-        }
-      }
-
-      // In higher quality we do anisotropic trilinear mipmap.
-      if (q >= GraphicsQuality::kHigher) {
+      // In high quality and up we do anisotropic trilinear mipmap, on
+      // every texture. Straight-on draws (ui, text, icons) cost nothing
+      // extra, since hardware only takes extra samples for oblique
+      // footprints. (We used to exclude textures by legacy file name;
+      // that list went dead with qualified asset refs, and the savings
+      // weren't worth per-texture build metadata.)
+      if (q >= GraphicsQuality::kHigh) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                         GL_LINEAR_MIPMAP_LINEAR);
-        if (renderer_->anisotropic_support() && allow_ani) {
+        if (renderer_->anisotropic_support()) {
           glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                           std::min(16.0f, renderer_->max_anisotropy()));
         }
-      } else if (q >= GraphicsQuality::kHigh) {
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                        GL_LINEAR_MIPMAP_LINEAR);
-        if (renderer_->anisotropic_support() && allow_ani)
-          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                          std::min(16.0f, renderer_->max_anisotropy()));
       } else if (q >= GraphicsQuality::kMedium) {
         // In medium quality we don't do anisotropy but do trilinear.
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,

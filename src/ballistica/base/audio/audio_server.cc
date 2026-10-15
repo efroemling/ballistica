@@ -248,6 +248,29 @@ static void ALEventCallback_(ALenum eventType, ALuint object, ALuint param,
                              + std::to_string(static_cast<int>(eventType)));
   }
 }
+
+#if BA_PLATFORM_ANDROID
+// Output on OpenSL ES can't be tagged as game audio, so the "is another
+// app playing music" signal would take our own sound for another app's
+// music and we'd mute ours for good. Oboe lands on OpenSL whenever we ask
+// it to (see BA_OBOE_USE_OPENSLES above) but also on its own when AAudio
+// is missing or fails to open, so we ask what each opened stream actually
+// got rather than guessing. Ignoring lasts for the rest of the run.
+static void CheckAndroidOutputAudioApi_() {
+  // Values are oboe::AudioApi.
+  int api = alcGetCustomAndroidOboeAudioApi();
+  if (api == 1) {
+    g_core->platform->IgnoreOSMusicPlaying(
+        "audio output is using OpenSL, which can't be told apart from "
+        "another app's music");
+  } else if (api != 2) {
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "Unexpected Oboe audio api " + std::to_string(api)
+            + " after opening audio output; expected AAudio or OpenSL.");
+  }
+}
+#endif  // BA_PLATFORM_ANDROID
 static void ALCEventCallback_(ALCenum eventType, ALCenum deviceType,
                               ALCdevice* eventDevice, ALCsizei msgLen,
                               const ALCchar* msg, void* user) noexcept {
@@ -335,17 +358,6 @@ void AudioServer::Start_() {
           g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
         }
       }
-    }
-
-    // Output on OpenSL can't be tagged as game audio, so the "is another
-    // app playing music" signal would see our own sound as someone
-    // else's music and we'd mute ours forever. (Covers the workaround
-    // above and the var being set from outside for testing.)
-    if (g_buildconfig.platform_android()
-        && g_core->platform->GetEnv("BA_OBOE_USE_OPENSLES").has_value()) {
-      g_core->platform->IgnoreOSMusicPlaying(
-          "audio output is using OpenSL, which can't be told apart from "
-          "another app's music");
     }
 
     const char* al_device_name{};
@@ -473,9 +485,6 @@ void AudioServer::Start_() {
       }
       alcCloseDevice(device);
       g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
-      g_core->platform->IgnoreOSMusicPlaying(
-          "audio output fell back to OpenSL, which can't be told apart from "
-          "another app's music");
       device = alcOpenDevice(al_device_name);
       alGetError();  // Clear any errors.
       if (!device) {
@@ -516,6 +525,10 @@ void AudioServer::Start_() {
     BA_PRECONDITION_FATAL(impl_->alc_context);
     BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
     CHECK_AL_ERROR;
+
+#if BA_PLATFORM_ANDROID
+    CheckAndroidOutputAudioApi_();
+#endif
 
     // Log some general OpenAL info if desired:
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo, [device] {
@@ -1339,6 +1352,9 @@ void AudioServer::ProcessDefaultDeviceChange_() {
     if (alcReopenDeviceSOFT(device, nullptr, nullptr)) {
       g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
                            "Device re-opened for default-device-change.");
+#if BA_PLATFORM_ANDROID
+      CheckAndroidOutputAudioApi_();
+#endif
     } else {
       g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
                            "Device re-open for default-device-change failed.");
@@ -1397,6 +1413,9 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         openalsoft_android_log_ += "DEVICE RESET CALL SUCCESSFUL\n";
       }
+#if BA_PLATFORM_ANDROID
+      CheckAndroidOutputAudioApi_();
+#endif
     } else {
       if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);

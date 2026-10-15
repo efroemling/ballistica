@@ -19,16 +19,6 @@ if TYPE_CHECKING:
     from bascenev1lib.actor.spazbot import DemoSpazBotSet
 
 
-def _tex(name: str) -> str:
-    """Qualified _classicassets ref for a logo texture name."""
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
-
-
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
 
@@ -37,7 +27,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._logo_node: bs.Node | None = None
-        self._custom_logo_tex_name: str | None = None
+        self._custom_logo_tex: bs.TextureHandle | None = None
         self._word_actors: list[bs.Actor] = []
         self.my_name: bs.NodeActor | None = None
         self._host_is_navigating_text: bs.NodeActor | None = None
@@ -165,14 +155,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         # Update logo in case it changes.
         if self._logo_node:
-            custom_texture = self._get_custom_logo_tex_name()
-            if custom_texture != self._custom_logo_tex_name:
-                self._custom_logo_tex_name = custom_texture
-                self._logo_node.texture = bs.texture_from_ref(
+            custom_texture = self._get_custom_logo_tex()
+            if custom_texture != self._custom_logo_tex:
+                self._custom_logo_tex = custom_texture
+                self._logo_node.texture = (
                     custom_texture
                     if custom_texture is not None
-                    else _tex('logo')
-                )
+                    else _classicassets.textures.logo
+                ).get()
                 self._logo_node.mesh_opaque = (
                     None
                     if custom_texture is not None
@@ -217,7 +207,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     113 + y + 1.2 * y_extra,
                     0.34 * base_scale,
                     delay=base_delay + 0.1,
-                    custom_texture=_tex('ch_title_char1'),
+                    custom_texture=_classicassets.textures.ch_title_char1,
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -228,7 +218,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.31 * base_scale,
                     delay=base_delay + 0.15,
-                    custom_texture=_tex('ch_title_char2'),
+                    custom_texture=_classicassets.textures.ch_title_char2,
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -239,7 +229,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.3 * base_scale,
                     delay=base_delay + 0.25,
-                    custom_texture=_tex('ch_title_char3'),
+                    custom_texture=_classicassets.textures.ch_title_char3,
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -250,7 +240,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.31 * base_scale,
                     delay=base_delay + 0.3,
-                    custom_texture=_tex('ch_title_char4'),
+                    custom_texture=_classicassets.textures.ch_title_char4,
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -261,7 +251,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     105 + y + 1.2 * y_extra,
                     0.34 * base_scale,
                     delay=base_delay + 0.35,
-                    custom_texture=_tex('ch_title_char5'),
+                    custom_texture=_classicassets.textures.ch_title_char5,
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -489,12 +479,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 {delay: 0.0, delay + 0.1: scale * 1.1, delay + 0.2: scale},
             )
 
-    def _get_custom_logo_tex_name(self) -> str | None:
+    def _get_custom_logo_tex(self) -> bs.TextureHandle | None:
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_misc_read_val('easter', False):
-            return _tex('logo_easter')
+            return _classicassets.textures.logo_easter
         return None
 
     # Pop the logo and menu in.
@@ -505,17 +495,19 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         scale: float,
         delay: float,
         *,
-        custom_texture: str | None = None,
+        custom_texture: bs.TextureHandle | None = None,
         jitter_scale: float = 1.0,
         rotate: float = 0.0,
         vr_depth_offset: float = 0.0,
     ) -> None:
         if custom_texture is None:
-            custom_texture = self._get_custom_logo_tex_name()
-        self._custom_logo_tex_name = custom_texture
-        ltex = bs.texture_from_ref(
-            custom_texture if custom_texture is not None else _tex('logo')
-        )
+            custom_texture = self._get_custom_logo_tex()
+        self._custom_logo_tex = custom_texture
+        ltex = (
+            custom_texture
+            if custom_texture is not None
+            else _classicassets.textures.logo
+        ).get()
         mopaque = (
             None
             if custom_texture is not None
@@ -661,18 +653,18 @@ def _preload1() -> None:
     ~250ms of decode work at every launch on a phone (the factories
     load theirs when a game builds them).
     """
-    for mname in [
-        'plasticEyesTransparent',
-        'playerLineup1Transparent',
-        'playerLineup2Transparent',
-        'playerLineup3Transparent',
-        'playerLineup4Transparent',
-        'angryComputerTransparent',
-        'scrollWidgetShort',
-        'windowBGBlotch',
+    meshes = _classicassets.meshes
+    for mesh in [
+        meshes.plastic_eyes_transparent,
+        meshes.player_lineup1_transparent,
+        meshes.player_lineup2_transparent,
+        meshes.player_lineup3_transparent,
+        meshes.player_lineup4_transparent,
+        meshes.angry_computer_transparent,
+        meshes.scroll_widget_short,
+        meshes.window_bgblotch,
     ]:
-        bs.getmesh(mname)
-    # Asset-package textures warm up through their wrappers.
+        _ = mesh.get()
     _ = _classiccatalogassets.textures.character_icon_mask.get()
     _ = _classicassets.textures.player_lineup.get()
     _ = _uiv1assets.textures.lock.get()
@@ -686,8 +678,8 @@ def _preload2() -> None:
     # These mirror the meshes and textures the classic factories
     # (PowerupBoxFactory, BombFactory, FlagFactory) load. We don't just
     # instantiate the factories here because they load their sounds too.
-    for mname in ['powerup', 'powerupSimple']:
-        bs.getmesh(mname)
+    _ = _classicassets.meshes.powerup.get()
+    _ = _classicassets.meshes.powerup_simple.get()
     _ = _classicassets.textures.powerup_bomb.get()
     _ = _classicassets.textures.powerup_speed.get()
     _ = _classicassets.textures.powerup_punch.get()
@@ -702,8 +694,9 @@ def _preload2() -> None:
 
 
 def _preload3() -> None:
-    for mname in ['bomb', 'bombSticky', 'impactBomb']:
-        bs.getmesh(mname)
+    _ = _classicassets.meshes.bomb.get()
+    _ = _classicassets.meshes.bomb_sticky.get()
+    _ = _classicassets.meshes.impact_bomb.get()
     _ = _classicassets.meshes.land_mine.get()
     _ = _classicassets.meshes.tnt.get()
     _ = _classicassets.textures.bomb_color.get()
@@ -722,8 +715,9 @@ def _preload4() -> None:
     _ = _classicassets.textures.null.get()
     _ = _classicassets.textures.flag_color.get()
     _ = _classicassets.textures.achievement_outline.get()
-    for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
-        bs.getmesh(mname)
+    _ = _classicassets.meshes.frame_inset.get()
+    _ = _classicassets.meshes.meter_transparent.get()
+    _ = _classicassets.meshes.achievement_outline.get()
 
 
 class MainMenuSession(bs.Session):

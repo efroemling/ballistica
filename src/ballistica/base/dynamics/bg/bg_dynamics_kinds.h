@@ -410,6 +410,12 @@ struct BGDynamicsLoadStats {
   /// clock. Wall well above cpu means the thread wasn't being run.
   double wall_ms{};
   double cpu_ms{};
+  /// How long steps sat queued between the logic thread pushing them
+  /// and this thread starting them (average and worst). High waits
+  /// with light per-step work mean the thread isn't getting scheduled
+  /// promptly, which shedding work can't fix.
+  double queue_wait_ms{};
+  double queue_wait_max_ms{};
   /// Channel sims' pre-world-step update (character rigs, mostly).
   double channels_ms{};
   /// Debris chunks and their terrain collision.

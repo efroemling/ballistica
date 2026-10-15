@@ -1413,22 +1413,20 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   if (type == FileType::kSound) {
     // The legacy bare-name blank sound is gone; fall back to the
     // builtin asset-package's copy.
-    std::string fallback = std::string(kBuiltinAssetsApvernum) + ":audio/blank";
+    std::string fallback = BuiltinAssetRef(BuiltinSoundID::kAudioBlank);
     if (name != fallback) {
       g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
                            "Unable to load audio: '" + name + "'.");
       return FindAssetFile(type, fallback);
     }
   } else if (type == FileType::kTexture) {
-    // The legacy bare-name white texture is gone; fall back to the
-    // builtin asset-package's copy.
-    std::string fallback =
-        std::string(kBuiltinAssetsApvernum) + ":textures/white";
-    if (name != fallback) {
-      g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
-                           "Unable to load texture: '" + name + "'.");
-      return FindAssetFile(type, fallback);
-    }
+    // TextureAsset draws this as an engine-generated white fill. (It
+    // used to fall back to the builtin package's textures/white, which
+    // no longer exists; that turned an unknown legacy name sent by a
+    // host into a fatal client-session error.)
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load texture: '" + name + "'.");
+    return kMissingTextureFile;
   }
 
   throw Exception("Can't find asset: \"" + name + "\"");

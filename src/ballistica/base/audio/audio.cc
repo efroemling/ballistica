@@ -216,7 +216,7 @@ auto Audio::SourceBeginNew(const AudioPlaySpec& spec) -> AudioSource* {
   // a group at its cap with nothing to replace is working as intended;
   // only a one-shot that found every source spoken for is a lost sound.
   if (!s && !spec.looping && !at_group_cap) {
-    WarnNoSourceAvailable_(sound);
+    WarnNoSourceAvailable_(sound, priority);
   }
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
   return s;
@@ -340,10 +340,24 @@ auto Audio::AutoPlayGroupName(const std::string& asset_name) -> std::string {
   return NormalizePlayGroupName(base);
 }
 
-void Audio::WarnNoSourceAvailable_(SoundAsset* for_sound) {
+void Audio::WarnNoSourceAvailable_(SoundAsset* for_sound,
+                                   AudioPriority priority) {
   // Nothing to say on headless or a null audio device (no sources ever
   // exist there).
   if (source_pool_empty()) {
+    return;
+  }
+  // Below-default sounds (footsteps, debris, swishes) are the ones the
+  // priority scheme exists to drop when every source is busy; in a big
+  // fight that happens constantly and is fine. Only losing something at
+  // default priority or above is worth a warning (and a census).
+  if (server_ready_ && priority < AudioPriority::kDefault) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [for_sound] {
+      return "No audio source available; dropping low-priority play of "
+             + (for_sound ? "'" + for_sound->GetName() + "'"
+                          : std::string("(unnamed)"))
+             + ".";
+    });
     return;
   }
   // Count every drop, including the ones the rate limit below keeps

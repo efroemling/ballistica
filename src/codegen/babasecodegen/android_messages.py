@@ -108,7 +108,7 @@ MESSAGES: list[Message] = [
             ' the window in each direction. Fractions rather than'
             ' pixels because the GL surface is often a scaled-down'
             ' version of the window; sending pixels invites applying'
-            " window-space values in surface space. Sent on rotation"
+            ' window-space values in surface space. Sent on rotation'
             ' and any other insets update.'
         ),
     ),
@@ -549,7 +549,7 @@ MESSAGES: list[Message] = [
         direction=Dir.NATIVE_TO_JAVA,
         fields=[Field('loading', BOOL)],
         doc=(
-            "Tell the OS whether the game is in a loading phase, via "
+            'Tell the OS whether the game is in a loading phase, via '
             "Android's GameState API (API 33+). The Java side also flips "
             'this on by itself when it kicks off native-layer init; the '
             'engine sends false when the construct-mode asset gate opens '
@@ -562,7 +562,7 @@ MESSAGES: list[Message] = [
         direction=Dir.NATIVE_TO_JAVA,
         fields=[Field('enabled', BOOL)],
         doc=(
-            "Whether we drop our frame rate under severe thermal pressure"
+            'Whether we drop our frame rate under severe thermal pressure'
             " (the 'Thermal Throttling' graphics setting). Sent each time"
             ' graphics settings are applied; while off, Java tracks'
             ' thermal state but neither caps the rate nor shows the'

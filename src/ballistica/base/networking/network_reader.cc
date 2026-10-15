@@ -88,9 +88,11 @@ void NetworkReader::PokeSelf_() {
       ssize_t sresult =
           sendto(sd, b, 1, 0, (struct sockaddr*)(&t_addr), sizeof(t_addr));
       if (sresult == -1) {
-        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                             "Error on poke socket send: "
-                                 + g_core->platform->GetSocketErrorString());
+        // Seen in the field as 'Operation not permitted' (restricted
+        // network states); it recurs, so once per run is enough.
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Error on poke socket send: "
+                        + g_core->platform->GetSocketErrorString());
       }
     }
     g_core->platform->CloseSocket(sd);

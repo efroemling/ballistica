@@ -48,10 +48,9 @@ TextureAsset::TextureAsset() = default;
 /// dummy — carries an extension for the loader's path-suffix sniff.
 /// Keying on the *resolved* path shape (rather than whether the
 /// *requested* name was a qualified ``<apverid>:<name>`` ref) matters
-/// because bare legacy names can still resolve to CAS blobs: a
-/// missing texture falls back to the builtin package's
-/// ``textures/white``, and that fallback must load rather than fail
-/// the asset (which is fatal if the render path later touches it).
+/// because bare legacy names can still resolve to CAS blobs (via
+/// asset-name compat), and those must load rather than fail the asset
+/// (which is fatal if the render path later touches it).
 /// The blob's actual container format is decided at preload from its
 /// content magic bytes, never from its name.
 static auto IsCasBlobPath(const std::string& path) -> bool {
@@ -88,6 +87,12 @@ TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
       type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
                                      : Assets::FileType::kTexture,
       file_in);
+  if (file_name_full_ == Assets::kMissingTextureFile) {
+    // Already logged by FindAssetFile; draw a plain white fill.
+    solid_color_ = SolidTextureColor::kWhite;
+    valid_ = true;
+    return;
+  }
   is_cas_blob_ = IsCasBlobPath(file_name_full_);
   valid_ = true;
 }
@@ -694,17 +699,7 @@ void TextureAsset::WarnSlotMismatch_(const char* slot, const char* wanted) {
              " so it may shade slightly wrong. Set its texture role to %s.",
              file_name_.c_str(), slot, RoleName(role_), wanted);
   }
-  // The texture name alone rarely pins down who bound it; the stack
-  // names the drawing widget/node/component. (Once per texture, so the
-  // cost doesn't matter; in all builds since field reports are where
-  // these mostly show up.)
-  std::unique_ptr<NativeStackTrace> trace(
-      g_core->platform->GetNativeStackTrace());
-  g_core->logging->Log(
-      LogName::kBaAssets, LogLevel::kWarning,
-      std::string(buffer) + "\nBound from:\n"
-          + (trace ? trace->FormatForDisplay()
-                   : std::string("<native trace unavailable>")));
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
 }
 
 }  // namespace ballistica::base

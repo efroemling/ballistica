@@ -1,9 +1,33 @@
+### 1.8.2 (build 23063, api 9, 2026-10-15)
+- Fixed joining a server that uses a texture name the game no longer
+  has (common on modded servers) dropping the player back to the main
+  menu; such textures now draw as plain white, as they did before 1.8.1.
+- On Android devices where the audio system quietly falls back to its
+  older OpenSL ES backend (seen on Fire TV), the game's own music no
+  longer gets mistaken for another app's and stops a few seconds after
+  launch.
+- Anisotropic texture filtering now applies to all textures at High and
+  Higher graphics quality.
+- Fewer spurious texture-role warnings: icons in screen messages from
+  remote hosts and replays no longer trigger them, and release builds
+  no longer attach a native stack trace to them.
+- Fixed the purchase/reward sounds the server asks for (ding, cash
+  register, gun cocking) failing to play since 1.8.1.
+- BG Dynamics cleanup; momentary hitches no longer reduce character and
+  debris detail. That now takes sustained background-physics overload,
+  and the overload warning reports how long steps wait for the
+  background thread.
+- The Flatpak now runs natively on Wayland, falling back to X11 only
+  where Wayland isn't available (it previously always used X11).
+
 ### 1.8.1 (build 23061, api 9, 2026-10-14)
 - Players whose legacy profiles haven't moved to cloud profiles yet now
   get their legacy profiles in the lobby (locally and when joining
   servers) instead of only a random character. Profiles also now move
   to the cloud on first sign-in rather than when the inventory is
   first opened.
+- Fixed a crash (stack overflow in the physics engine) in games with
+  very large numbers of bodies and joints.
 
 ### 1.8.0 (build 23058, api 9, 2026-10-13)
 - Reworked what happens when more sounds want to play than the game has

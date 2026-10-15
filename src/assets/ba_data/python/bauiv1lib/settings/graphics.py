@@ -460,8 +460,7 @@ class GraphicsSettingsController(
                 gstate.choice_row(
                     lambda s: s.msaa,
                     choices=msaachoices,
-                    # NEEDS_TRANSLATION
-                    label=LangStrSpecValue.literal('MSAA'),
+                    label=_gfxstrs.msaa.spec,
                     on_change=apply,
                 )
             )
