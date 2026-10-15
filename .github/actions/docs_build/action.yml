@@ -2,7 +2,7 @@ name: "Build BombSquad Docs"
 description: |
   "Sets up the build env and runs make docs into build/docs, reusing the"
   "previous run's sphinx state. Shared by the docs, nightly and release"
-  "workflows. Expects a checkout."
+  "workflows. Expects a checkout on the cmake jobs' runner (ubuntu-26.04)."
 
 runs:
   using: "composite"

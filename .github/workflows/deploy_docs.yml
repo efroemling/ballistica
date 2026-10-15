@@ -22,7 +22,9 @@ jobs:
 
   build:
     needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
+    # Same runner as the cmake jobs: docs_build installs their build
+    # packages (libsdl3-dev needs 26.04) and shares their sccache objects.
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
       - name: Build documentation
