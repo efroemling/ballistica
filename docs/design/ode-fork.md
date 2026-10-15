@@ -109,6 +109,29 @@ rules below.
   merge rule so a demanding body always gets its count even if a cheap
   one ends up in its island.
 
+## Stack vs heap scratch memory
+
+Stock ODE `alloca`s its per-step scratch arrays, sized by object
+counts. Our physics runs on event-loop threads with 1 MB stacks
+(`event_loop.cc`), and modded games push object counts far past
+anything the stock game does, so **any scratch allocation whose size
+scales with a count goes through `TRIXY_ALLOCA` /
+`TRIXY_ALLOCA_THRESHOLD` (`ode_util.h`)**: `alloca` below a byte
+threshold (fast, the normal case) and a scoped heap buffer above it.
+Converted sites: quickstep's working arrays, `dxProcessIslands`' body,
+joint and island-stack lists (one combined block, since all three live
+for the whole call), and `dJointGroupEmpty`'s joint list. The hash
+space's collide (`ode_collision_space.cpp`) does the same by hand with
+its own thresholds.
+
+The thresholds are 12000 bytes. For scale, an 8-player stress test
+(2026-10-14) peaked at ~4900 bytes in `dxProcessIslands` (213 bodies,
+201 joints) and ~620 bytes for the contact group. The unconverted
+`dxProcessIslands` was a real field crash (SIGSEGV writing its lists,
+Crashlytics issue `ee1fe6a0`, 1.7.41 through 1.8.0). To test the heap
+path, temporarily set the thresholds to 0 and run a stress test; every
+non-empty allocation then takes it.
+
 ## Known remaining globals
 
 These are the only cross-world shared state left; each is either

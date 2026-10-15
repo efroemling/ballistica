@@ -1238,7 +1238,10 @@ void dJointGroupEmpty (dJointGroupID group)
 
   dAASSERT (group);
   int i;
-  dxJoint **jlist = (dxJoint**) ALLOCA (group->num * sizeof(dxJoint*));
+  // ericf change: heap for big groups instead of always alloca (see
+  // TRIXY_ALLOCA).
+  dxJoint **jlist;
+  TRIXY_ALLOCA(jlist, dxJoint*, group->num * sizeof(dxJoint*));
   dxJoint *j = (dxJoint*) group->stack.rewind();
   for (i=0; i < group->num; i++) {
     jlist[i] = j;

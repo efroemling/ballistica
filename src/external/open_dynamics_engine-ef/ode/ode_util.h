@@ -25,6 +25,9 @@
 
 #include "ode/ode_objects_private.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+
 
 void dInternalHandleAutoDisabling (dxWorld *world, dReal stepsize);
 void dxStepBody (dxBody *b, dReal h);
@@ -42,6 +45,56 @@ void dxProcessIslands (dxWorld *world, dReal stepsize, dstepper_fn_t stepper);
 // Set to 1 to printf whenever heap allocation is used instead of alloca.
 // Useful for checking whether alloca thresholds are sized appropriately.
 #define BA_ODE_ALLOCA_DEBUG 0
+
+// ericf addition: a bare-bones scoped heap buffer, used by TRIXY_ALLOCA
+// below for allocations too big to safely put on the stack.
+class dxHeapBuffer {
+public:
+  dxHeapBuffer() : _ptr(NULL) {}
+  ~dxHeapBuffer() { free(_ptr); }
+  void allocate(size_t size) {
+    free(_ptr);
+    _ptr = malloc(size);
+    dIASSERT(_ptr);
+  }
+  void* getPtr() const { return _ptr; }
+private:
+  dxHeapBuffer(const dxHeapBuffer&);
+  dxHeapBuffer& operator=(const dxHeapBuffer&);
+  void* _ptr;
+};
+
+// ericf addition: alloca for small sizes (fast), heap for big ones.
+// alloca'd memory lives until the *calling function* returns, so big
+// counts (modded games spawning thousands of objects) can otherwise blow
+// past the thread's stack. Heap memory is freed when `name ## BUF` goes
+// out of scope, so declare it at the scope the memory must live for.
+#if BA_ODE_ALLOCA_DEBUG
+#define TRIXY_ALLOCA_THRESHOLD(name, type, n, threshold)                 \
+  dxHeapBuffer name##BUF;                                              \
+  if ((size_t)(n) > (size_t)(threshold)) {                             \
+    printf("ODE_ALLOCA_DEBUG: TRIXY_ALLOCA heap: " #name               \
+           " size=%lu threshold=%lu\n",                                \
+           (unsigned long)(n), (unsigned long)(threshold));            \
+    name##BUF.allocate((n));                                           \
+    name = (type*)name##BUF.getPtr();                                  \
+  } else {                                                             \
+    name = (type*)dALLOCA16((n));                                      \
+    dIASSERT(name);                                                    \
+  }
+#else
+#define TRIXY_ALLOCA_THRESHOLD(name, type, n, threshold)                 \
+  dxHeapBuffer name##BUF;                                              \
+  if ((size_t)(n) > (size_t)(threshold)) {                             \
+    name##BUF.allocate((n));                                           \
+    name = (type*)name##BUF.getPtr();                                  \
+  } else {                                                             \
+    name = (type*)dALLOCA16((n));                                      \
+    dIASSERT(name);                                                    \
+  }
+#endif
+
+#define TRIXY_ALLOCA(name, type, n) TRIXY_ALLOCA_THRESHOLD(name, type, n, 12000)
 
 #if VALUE_TESTING
 extern FILE *f;

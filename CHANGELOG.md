@@ -1,4 +1,4 @@
-### 1.8.1 (build 23060, api 9, 2026-10-14)
+### 1.8.1 (build 23061, api 9, 2026-10-14)
 - Players whose legacy profiles haven't moved to cloud profiles yet now
   get their legacy profiles in the lobby (locally and when joining
   servers) instead of only a random character. Profiles also now move
