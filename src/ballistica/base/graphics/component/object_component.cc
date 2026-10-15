@@ -11,12 +11,12 @@ void ObjectComponent::WriteConfig() {
   // This is not a common case and easier than forking all our shaders to
   // create non-textured versions.
   if (!texture_.exists()) {
-    texture_ = g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
+    texture_ = g_base->assets->SolidTexture(SolidTextureColor::kWhite);
   }
   // A premultiplied-alpha texture (KTX2 DFD flag; decision #23) forces
   // premult-blend, OR'd with the caller's manual flag (which still
   // independently forces it for additive effects). The default white
-  // builtin above is straight, so unprovided-texture draws are unaffected.
+  // fill above is straight, so unprovided-texture draws are unaffected.
   bool premult_blend = premultiplied_ || texture_->premultiplied();
 
   // For a premultiplied texture drawn with a *straight* modulate color, the

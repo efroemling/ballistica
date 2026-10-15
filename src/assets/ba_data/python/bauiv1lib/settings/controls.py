@@ -23,7 +23,7 @@ from bacommon.docui.routes import (
     family_members,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets, _builtinassets
+from bauiv1 import _commonassets, _classicassets
 from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
@@ -274,7 +274,7 @@ def _apply_xinput(context: DocUILocalAction) -> None:
     bui.screenmessage(
         _commonassets.strings.status.must_restart, color=(1, 1, 0)
     )
-    _builtinassets.audio.gun_cocking.get().play()
+    _commonassets.audio.gun_cocking.get().play()
     cfg = bui.app.config
     cfg[_XINPUT_KEY] = state.disable_xinput
     cfg.apply_and_commit()

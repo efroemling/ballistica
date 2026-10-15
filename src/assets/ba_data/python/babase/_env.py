@@ -324,6 +324,7 @@ def _do_pycache_upkeep() -> None:
     """Take a quick pass at generating pycs for all .py files."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
+    import shutil
     import py_compile
     import importlib.util
 
@@ -427,7 +428,27 @@ def _do_pycache_upkeep() -> None:
                     )
                     return
 
-    pycdir = os.path.join(env.cache_directory, 'pyc')
+    pycroot = os.path.join(env.cache_directory, 'pyc')
+    pycdir = sys.pycache_prefix or pycroot
+
+    # Where installs freeze file mtimes, each build gets its own pyc dir
+    # under pycroot (see baenv.frozen_source_mtimes()); everything else
+    # there is left over from other builds (or from before this layout)
+    # and nothing will ever read it again.
+    if pycdir != pycroot and os.path.dirname(pycdir) == pycroot:
+        keep = os.path.basename(pycdir)
+        for name in os.listdir(pycroot):
+            if name == keep:
+                continue
+            stale = os.path.join(pycroot, name)
+            try:
+                cachelog.debug('pycache-upkeep: pruning stale \'%s\'.', stale)
+                if os.path.isdir(stale):
+                    shutil.rmtree(stale)
+                else:
+                    os.unlink(stale)
+            except Exception as exc:
+                complain(f'Failed to prune "{stale}": {exc}')
 
     # Sanity test: make sure these pyc paths appear to be under our
     # designated cache dir.

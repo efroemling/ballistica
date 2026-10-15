@@ -123,6 +123,21 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
   valid_ = true;
 }
 
+TextureAsset::TextureAsset(SolidTextureColor color, TextureType type)
+    : solid_color_(color), type_(type) {
+  switch (color) {
+    case SolidTextureColor::kWhite:
+      file_name_ = "<solid-white";
+      break;
+    case SolidTextureColor::kBlack:
+      file_name_ = "<solid-black";
+      break;
+  }
+  file_name_ += (type == TextureType::kCubeMap) ? "-cube>" : ">";
+  file_name_full_ = file_name_;
+  valid_ = true;
+}
+
 TextureAsset::TextureAsset(RenderView* view)
     : render_view_id_(view->id()), render_view_(view) {
   assert(g_base->InLogicThread());
@@ -154,9 +169,10 @@ auto TextureAsset::GetNameFull() const -> std::string {
 auto TextureAsset::ReResolveSource() -> bool {
   // Only file-backed CAS textures (qualified ``<apverid>:<name>`` refs) can
   // change their underlying blob when the asset-package registry is
-  // re-resolved. Text-textures and QR codes are generated in-engine, and
-  // legacy bare-filename textures resolve to a fixed on-disk path.
-  if (packer_.exists() || is_qr_code_ || render_view_id_ != 0
+  // re-resolved. Text-textures, QR codes and solid fills are generated
+  // in-engine, and legacy bare-filename textures resolve to a fixed
+  // on-disk path.
+  if (packer_.exists() || is_qr_code_ || solid_color_ || render_view_id_ != 0
       || file_name_.find(':') == std::string::npos) {
     return false;
   }
@@ -268,6 +284,33 @@ void TextureAsset::DoPreload() {
     TextureAssetPreloadData::rgba8888_to_rgba4444_in_place(buffer, buffer_size);
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_4444;
 
+  } else if (solid_color_) {
+    // A few texels of one opaque color, on one face or all six of a cube
+    // map. (Same well-trodden format as QR codes; no alpha needed.)
+    int width = 4;
+    int height = 4;
+    uint16_t value{};
+    switch (*solid_color_) {
+      case SolidTextureColor::kWhite:
+        value = 0xffff;
+        break;
+      case SolidTextureColor::kBlack:
+        value = 0;
+        break;
+    }
+    size_t faces = (type_ == TextureType::kCubeMap) ? 6 : 1;
+    preload_datas_.resize(faces);
+    size_t pixel_count =
+        static_cast<size_t>(width) * static_cast<size_t>(height);
+    for (auto& data : preload_datas_) {
+      auto* buffer = static_cast<uint16_t*>(malloc(pixel_count * 2u));
+      std::fill(buffer, buffer + pixel_count, value);
+      data.buffers[0] = reinterpret_cast<uint8_t*>(buffer);
+      data.widths[0] = width;
+      data.heights[0] = height;
+      data.formats[0] = TextureFormat::kRGB_565;
+      data.base_level = 0;
+    }
   } else if (is_qr_code_) {
     const qrcodegen::QrCode qr2{qrcodegen::QrCode::encodeText(
         file_name_.c_str(), qrcodegen::QrCode::Ecc::HIGH)};

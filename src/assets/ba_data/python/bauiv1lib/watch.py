@@ -593,7 +593,7 @@ class WatchWindow(bui.MainWindow):
                     bui.increment_analytics_count('Replay rename')
                     os.rename(old_name_full, new_name_full)
                     self._refresh_my_replays()
-                    _builtinassets.audio.gun_cocking.get().play()
+                    _commonassets.audio.gun_cocking.get().play()
         except Exception:
             logging.exception(
                 "Error renaming replay '%s' to '%s'.", replay, new_name

@@ -5340,8 +5340,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5349,8 +5348,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw target.
@@ -5360,8 +5358,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5369,8 +5366,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
     }
 
@@ -5397,7 +5393,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     base::MeshAsset* glove_mesh =
         boxing_gloves_mesh_.exists()
             ? boxing_gloves_mesh_->mesh_data()
-            : g_base->assets->base_assets().boxing_glove.get();
+            : g_base->assets->base_assets().boxing_glove();
     if (frozen_) {
       c.SetColor(gr, gg, gb);
       c.SetAddColor(0.1f, 0.1f, 0.4f);
@@ -5431,7 +5427,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kObject);
     c.SetTexture(boxing_gloves_color_texture_.exists()
                      ? boxing_gloves_color_texture_->texture_data()
-                     : g_base->assets->base_assets().boxing_gloves_color.get());
+                     : g_base->assets->base_assets().boxing_gloves_color());
 
     Matrix44f m;
     if (LimbRenderMatrix_(kLimbLowerRightArm, &m)) {

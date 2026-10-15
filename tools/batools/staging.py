@@ -614,9 +614,6 @@ class BuildStager:
             '--delete-excluded',
             '--prune-empty-dirs',
         ]
-        if self.include_pycache_prewarm:
-            self._build_pycache_prewarm()
-
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the
             # deletion pass (a plain exclude wouldn't survive
@@ -662,9 +659,6 @@ class BuildStager:
             assert self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
-
-        if self.include_pycache_prewarm:
-            self._build_pycache_prewarm()
 
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the

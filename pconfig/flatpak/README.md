@@ -21,7 +21,7 @@ There is one manifest, `net.froemling.bombsquad.yml`, used two ways:
 | `bombsquad-sources.yml` | The `bombsquad` module's project source: the project directory itself (`type: dir`). The Flathub generator writes its own copy of this file with a git source plus the release's prebuilt-inputs archive instead. |
 | `python-build-env.yml` | Generated module supplying `uv` plus one wheel per package in `pconfig/requirements_build_lock.txt`, so the build can create its venv offline. Do not edit by hand. |
 | `net.froemling.bombsquad.metainfo.xml` | AppStream metadata (description, screenshots, content rating, branding) shown on Flathub and in software centers. |
-| `net.froemling.bombsquad.releases.xml` | AppStream release history, installed alongside the metainfo. The release workflow adds each new version's entry (see below). |
+| `net.froemling.bombsquad.releases.xml` | AppStream release history, installed alongside the metainfo. Not in git: generated from `CHANGELOG.md` (see below). |
 | `net.froemling.bombsquad.desktop` | Desktop entry that launches `ballisticakit`. |
 
 ## How the build works
@@ -71,7 +71,9 @@ travel into the sandbox with the sources:
   `arm64`;
 - the app icon, `pconfig/flatpak/net.froemling.bombsquad.png`, fetched
   from files.ballistica.net and checked against a pinned sha256 (it isn't
-  in git).
+  in git);
+- `pconfig/flatpak/net.froemling.bombsquad.releases.xml`, generated from
+  `CHANGELOG.md` (see "Release history" below; also not in git).
 
 Inside the sandbox those make targets then find their outputs already in
 place and up to date, so nothing is downloaded. Two build steps make
@@ -193,9 +195,8 @@ from git, pinned to the release tag and its commit, and the few things git
 doesn't have from one release asset,
 `bombsquad_prebuilt_inputs.tar.xz` (about 4MB), written by `make
 flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
-what `make flatpak-prefetch` fetches (see above), icon included, plus
-`releases.xml` with this release's entry, and is extracted over the git
-checkout.
+what `make flatpak-prefetch` fetches (see above), icon and
+`releases.xml` included, and is extracted over the git checkout.
 
 Two jobs in `.github/workflows/release.yml` handle this. They only run
 when the repo owner is `efroemling` or `Loup-Garou911XD`.
@@ -204,7 +205,7 @@ when the repo owner is `efroemling` or `Loup-Garou911XD`.
 git tag v1.x.y ─► release.yml
                    │
                    ├─ release_flatpak_prebuilt_inputs
-                   │    pcommand flatpak_add_release <tag>   (adds the entry to releases.xml)
+                   │    pcommand flatpak_add_release <tag>   (generates releases.xml up to <tag>)
                    │    make flatpak-prebuilt-inputs  ─► bombsquad_prebuilt_inputs.tar.xz
                    │    attach it to the GitHub release
                    │
@@ -214,11 +215,21 @@ git tag v1.x.y ─► release.yml
                         commit + push to <owner>/flathub (net.froemling.bombsquad branch)
 ```
 
-`pcommand flatpak_add_release <version>` prepends a `<release>` entry,
-dated today, to `net.froemling.bombsquad.releases.xml`, built from
-that version's `CHANGELOG.md` entries, with links to the GitHub release
-and its source archive. A version that's already listed is left alone, so
-you can also commit the entry ahead of time.
+### Release history
+
+`net.froemling.bombsquad.releases.xml` is generated, never edited or
+committed: `CHANGELOG.md` is the only record of releases. `pcommand
+flatpak_add_release [version]` rewrites the whole file from it, listing
+the newest 10 changelog versions up to and including `version` (default:
+the newest, which is what `make flatpak-prefetch` uses when the file is
+missing or older than `CHANGELOG.md`). Each entry takes its date from its
+changelog heading and has a one-line description plus a link to its
+section of the public repo's `CHANGELOG.md`. The changelog itself is
+written for modders and goes into code detail, so it isn't copied into
+the descriptions that software centers show players.
+
+Tags are the only trigger for Flathub: untagged pushes never touch this
+file, and the nightly flatpak build only generates a throwaway copy.
 
 `make flatpak-generate-flathub-manifest` runs `pcommand
 generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:

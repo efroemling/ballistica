@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_ASSETS_TEXTURE_ASSET_H_
 #define BALLISTICA_BASE_ASSETS_TEXTURE_ASSET_H_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -22,6 +23,10 @@ class TextureAsset : public Asset {
   explicit TextureAsset(const std::string& file_in, TextureType type_in,
                         TextureMinQuality min_quality_in);
   explicit TextureAsset(const std::string& qr_url);
+
+  /// Create a small opaque texture (or cube map) of one plain color,
+  /// generated in the engine (see Assets::SolidTexture()).
+  TextureAsset(SolidTextureColor color, TextureType type);
 
   /// Create the texture that a view drawing to a texture draws to. We
   /// hold no pixels of our own in this case; we stand for whatever the
@@ -148,6 +153,7 @@ class TextureAsset : public Asset {
   void WarnSlotMismatch_(const char* slot, const char* wanted);
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
+  std::optional<SolidTextureColor> solid_color_;
   int render_view_id_{};
   // Not a reference; our view tells us when it goes (it holds us, so
   // we can outlive it but not the other way around).

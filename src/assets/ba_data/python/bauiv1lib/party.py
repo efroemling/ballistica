@@ -575,7 +575,7 @@ class PartyWindow(bui.Window):
                 'name': name,
             }
             config.commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 _classicassets.strings.gather.added_to_favorites(name=name),
                 color=(0, 1, 0),

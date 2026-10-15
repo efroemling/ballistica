@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override, assert_never
 from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.routes.docuitest as rt
 import bauiv1 as bui
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 from bauiv1 import _uiv1assets, _classiccatalogassets
 from bauiv1 import _classiccharacterassets
 from bauiv1 import _classicassets
@@ -222,7 +222,7 @@ def _test_v2_page_root(
     The full v1 test root page, with all text authored as
     language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
     package, textures/meshes as typed refs from
-    ``_builtinassets``/``_classicassets``, and multi-line labels wrapped via
+    ``_commonassets``/``_classicassets``, and multi-line labels wrapped via
     definition-time :class:`~bacommon.langstr.WrapParams` on the
     package's string definitions (decision D-t) instead of v1's
     hand-baked newlines. The client resolves the referenced packages
@@ -344,7 +344,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            _builtinassets.audio
+                                            _commonassets.audio
                                         ).cash_register,
                                     ),
                                     clfx.Delay(1.0),
@@ -356,7 +356,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            _builtinassets.audio
+                                            _commonassets.audio
                                         ).cash_register,
                                     ),
                                 ]
@@ -630,7 +630,7 @@ def _test_v2_page_root(
                         # Testing image drawing vs bounds
                         dui2.Button(
                             label=strs.layout.bounds_test.spec,
-                            texture=_builtinassets.textures.white,
+                            texture=_commonassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
                             debug=debug,
@@ -879,12 +879,12 @@ def _test_v2_page_root(
                 message=strs.effects.response_effects_hello.spec,
                 color=(0, 1, 0),
             ),
-            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_commonassets.audio.cash_register),
             clfx.Delay(1.0),
             clfx.ScreenMessageV2(
                 message=strs.effects.effect_success.spec, color=(0, 1, 0)
             ),
-            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_commonassets.audio.cash_register),
         ]
 
     # Include a local-action if they ask (the 'Response LocalAction'

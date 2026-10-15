@@ -22,6 +22,7 @@ _DEBUG_BOUNDS_KINDS = (
     ('name_depictions', 'Name Depictions'),
     ('image_depictions', 'Image Depictions'),
     ('character_icon_depictions', 'Character Icons'),
+    ('text', 'Text Quads'),
 )
 
 
@@ -167,18 +168,22 @@ class DevConsoleTabUI(DevConsoleTab):
         )
         x = xoffs + 10.0
 
+        # Narrower than the tab's other buttons so a full row fits.
+        bwidth = 140.0
+        bstep = bwidth + 5.0
+
         # Our own: kinds of thing whose bounds can be outlined.
         for kind, label in _DEBUG_BOUNDS_KINDS:
             enabled = _babase.get_debug_bounds(kind)
             self.button(
                 f'{label} ON' if enabled else f'{label} OFF',
                 pos=(x, y),
-                size=(160, bheight),
+                size=(bwidth, bheight),
                 label_scale=0.5,
                 call=partial(self.toggle_debug_bounds, kind),
                 style='bright' if enabled else 'normal',
             )
-            x += 170.0
+            x += bstep
 
         # Plus whatever the app-mode offers (for ui we can't know about
         # here).
@@ -188,12 +193,12 @@ class DevConsoleTabUI(DevConsoleTab):
             self.button(
                 f'{toggle.name} ON' if enabled else f'{toggle.name} OFF',
                 pos=(x, y),
-                size=(160, bheight),
+                size=(bwidth, bheight),
                 label_scale=0.5,
                 call=partial(self.toggle_custom_debug_draw, toggle),
                 style='bright' if enabled else 'normal',
             )
-            x += 170.0
+            x += bstep
 
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""

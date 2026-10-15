@@ -241,14 +241,15 @@ class AppMode:
 
         # By default just announce the item id we got. Real app-modes
         # probably want to do something more specific based on item-id.
-        from babase import _builtinassets
+        from babase import _builtinassets, _commonassets
+        from babase._asset_packages import construct_assets_complete
 
         babase.screenmessage(
             _builtinassets.strings.account.you_got_item(item=item_id),
             color=(0, 1, 0),
         )
-        if babase.asset_loads_allowed():
-            _builtinassets.audio.cash_register.get().play()
+        if construct_assets_complete():
+            _commonassets.audio.cash_register.get().play()
 
     def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
         """Define buttons to show up in the UI dev console.

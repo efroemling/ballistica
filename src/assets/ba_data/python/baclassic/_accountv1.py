@@ -61,7 +61,7 @@ class AccountV1Subsystem:
 
         (internal)
         """
-        from babase import _builtinassets
+        from babase import _commonassets
 
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
@@ -73,7 +73,7 @@ class AccountV1Subsystem:
             _classicuiassets.strings.economy.received_tickets(count=count),
             color=(0, 1, 0),
         )
-        _builtinassets.audio.cash_register.get().play()
+        _commonassets.audio.cash_register.get().play()
 
     def cache_league_rank_data(self, data: Any) -> None:
         """(internal)"""

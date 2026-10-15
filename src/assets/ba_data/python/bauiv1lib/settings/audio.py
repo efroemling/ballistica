@@ -23,7 +23,7 @@ from bacommon.docui.routes import (
     family_members,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets, _builtinassets
+from bauiv1 import _commonassets, _classicassets
 from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
@@ -273,7 +273,7 @@ def _open_soundtracks(context: DocUILocalAction) -> None:
     # We require disk access for soundtracks; request it if we don't
     # have it.
     if not bui.have_permission(bui.Permission.STORAGE):
-        _builtinassets.audio.ding.get().play()
+        _commonassets.audio.ding.get().play()
         bui.screenmessage(
             _commonassets.strings.status.storage_permission_needed,
             color=(0.5, 1, 0.5),

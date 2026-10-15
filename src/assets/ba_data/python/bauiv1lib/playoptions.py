@@ -507,7 +507,7 @@ class PlayOptionsWindow(PopupWindow):
             else:
                 raise RuntimeError('Only teams and ffa currently supported')
             cfg['Private Party Host Session Type'] = typename
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
 
             self._transition_out(transition='out_left')
             if self._delegate is not None:

@@ -64,10 +64,17 @@ class WorkspaceSubsystem:
         _builtinassets.audio.error.get().play()
 
     def _successmsg(self, msg: str | babase.LangStr) -> None:
-        from babase import _builtinassets
+        from babase._asset_packages import call_after_construct
+
+        # Workspaces activate during app loading, before the sound this
+        # plays is up; hold the notice until construct-mode succeeds.
+        call_after_construct(partial(self._show_success, msg))
+
+    def _show_success(self, msg: str | babase.LangStr) -> None:
+        from babase import _commonassets
 
         _babase.screenmessage(msg, color=(0, 1, 0))
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
 
     def _set_active_workspace_bg(
         self,

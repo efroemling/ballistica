@@ -107,6 +107,16 @@ class Assets {
   auto BuiltinSound(BuiltinSoundID id) -> SoundAsset*;
   auto BuiltinMesh(BuiltinMeshID id) -> MeshAsset*;
 
+  /// A small opaque texture of one plain color, generated in the engine
+  /// rather than loaded from any asset-package. For engine-internal
+  /// plain fills only (a draw given no texture, an empty colorize
+  /// mask); available from the moment builtin assets are.
+  auto SolidTexture(SolidTextureColor color) -> TextureAsset*;
+
+  /// The cube-map form of SolidTexture(). (A black one makes a
+  /// reflection a no-op, since reflections are additive.)
+  auto SolidCubeMapTexture(SolidTextureColor color) -> TextureAsset*;
+
   /// Load/cache custom assets. Make sure you hold a AssetListLock.
   auto GetTexture(const std::string& file_name) -> Object::Ref<TextureAsset>;
   auto GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset>;
@@ -147,21 +157,26 @@ class Assets {
 
   /// Classic-flavored art base draws itself with (debris, smoke, VR
   /// hands, reflections), supplied by the active app-mode (see
-  /// babase.set_base_asset_set). Boot-filled with neutral builtin
+  /// babase.set_base_asset_set). Boot-filled with neutral engine
   /// placeholders and *restored* to them (never cleared) at app-mode
   /// switches, so it is always complete -- base draws before and
-  /// between app-modes.
+  /// between app-modes. Read slots via their accessors, which warn
+  /// when handing out a placeholder.
   auto base_assets() -> const BaseAssetSet& {
     assert(base_assets_.complete());
     return base_assets_;
   }
-  void set_base_assets(const BaseAssetSet& assets) { base_assets_ = assets; }
+
+  /// Apply an app-mode's set; any slot it leaves empty gets its
+  /// placeholder.
+  void SetBaseAssets(const BaseAssetSet& assets);
   void RestoreBaseAssetPlaceholders();
 
  private:
   // Body of the above; caller must hold the asset-list lock (the boot
   // path calls this from inside the builtin load, which already does).
   void RestoreBaseAssetPlaceholdersLocked_();
+  void FillBaseAssetPlaceholders_(BaseAssetSet* out);
 
  public:
   auto total_mesh_count() const -> uint32_t {
@@ -455,6 +470,8 @@ class Assets {
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_;
   std::vector<Object::Ref<MeshAsset> > builtin_meshes_;
+  std::vector<Object::Ref<TextureAsset> > solid_textures_;
+  std::vector<Object::Ref<TextureAsset> > solid_cube_map_textures_;
 
   // All existing assets by filename (including internal).
   std::unordered_map<std::string, Object::Ref<TextureAsset> > textures_;

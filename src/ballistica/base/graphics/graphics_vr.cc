@@ -306,7 +306,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
   if (false) {
     ObjectComponent c(frame_def->beauty_pass());
     c.SetColor(1, 0, 0);
-    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color());
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     {
@@ -314,7 +314,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
       c.VRTransformToHead();
       c.Translate(0, 0, 5);
       c.Scale(2, 2, 2);
-      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
     }
     c.Submit();
   }
@@ -327,14 +327,14 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kDaydreamRemote: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 1, 0);
-      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
         auto xf = c.ScopedTransform();
         c.VRTransformToRightHand();
         c.Scale(10, 10, 10);
-        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
       }
       c.Submit();
       break;
@@ -347,14 +347,14 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kOculusTouchL: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 0, 1);
-      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
         auto xf = c.ScopedTransform();
         c.VRTransformToLeftHand();
         c.Scale(10, 10, 10);
-        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
       }
       c.Submit();
       break;

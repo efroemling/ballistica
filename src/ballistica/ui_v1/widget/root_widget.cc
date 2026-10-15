@@ -1310,9 +1310,9 @@ void RootWidget::StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt) {
       g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
       league_rank_anim_sound_play_id_.reset();
     }
-    g_base->audio->SafePlayBuiltinSound(
-        improving ? base::BuiltinSoundID::kAudioCashRegister
-                  : base::BuiltinSoundID::kAudioPowerdown01);
+    g_base->audio->SafePlaySound(improving
+                                     ? g_ui_v1->assets().cash_register.get()
+                                     : g_ui_v1->assets().powerdown01.get());
     league_rank_text_->widget->SetText(
         "#" + std::to_string(league_rank_vis_value_));
     trophy_meter_mult_ = {1.0f, 1.0f, 1.0f};
@@ -1375,7 +1375,7 @@ void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tickets_meter_animating_ = false;
-      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
+      // g_base->audio->SafePlaySound(g_ui_v1->assets().cash_register.get());
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -1433,7 +1433,7 @@ void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tokens_meter_animating_ = false;
-      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
+      // g_base->audio->SafePlaySound(g_ui_v1->assets().cash_register.get());
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -2540,7 +2540,7 @@ void RootWidget::UpdateInboxDisplay_() {
   if (flash) {
     inbox_animating_ = true;
     inbox_anim_flash_time_ = g_base->logic->display_time() + 1.5;
-    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioDing);
+    g_base->audio->SafePlaySound(g_ui_v1->assets().ding.get());
   }
 }
 

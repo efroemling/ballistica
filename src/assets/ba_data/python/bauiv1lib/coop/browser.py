@@ -530,7 +530,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         if difficulty != self._campaign_difficulty:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
                 difficulty = 'easy'

@@ -271,7 +271,7 @@ class ProfileUpgradeWindow(bui.Window):
                     ' original edit window gone'
                 )
                 return
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             edit_profile_window.reload_window()
 
     def _cancel(self) -> None:

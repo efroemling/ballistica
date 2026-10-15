@@ -93,21 +93,28 @@ namespace {
 // listings: sha256 over (apverid, NUL, each name + LF, NUL) per package
 // in manifest order, hex, first 16 chars -- exactly
 // bacommon.assetspec.AssetIndexContext.domain_digest(). Cached per
-// manifest (listings are immutable per apverid). Logic thread only
+// manifest, valid while the registry hands out the same listings (it
+// rebuilds one when its package is re-registered). Logic thread only
 // (hashing goes through Python's hashlib).
 auto DomainDigest(
     const std::vector<std::string>& packages,
     const std::vector<std::shared_ptr<const std::vector<std::string>>>&
         listings) -> std::string {
   assert(g_base->InLogicThread());
-  static std::unordered_map<std::string, std::string> cache;
+  // Holding the listings keeps their addresses from being reused.
+  static std::unordered_map<
+      std::string,
+      std::pair<std::vector<std::shared_ptr<const std::vector<std::string>>>,
+                std::string>>
+      cache;
   std::string key;
   for (const auto& apverid : packages) {
     key += apverid;
     key += '\n';
   }
-  if (auto it = cache.find(key); it != cache.end()) {
-    return it->second;
+  if (auto it = cache.find(key);
+      it != cache.end() && it->second.first == listings) {
+    return it->second.second;
   }
   std::string buffer;
   for (size_t i = 0; i < packages.size(); ++i) {
@@ -121,7 +128,7 @@ auto DomainDigest(
   }
   std::string digest = g_base->python->Sha256Hex(buffer).substr(0, 16);
   if (!digest.empty()) {
-    cache.emplace(std::move(key), digest);
+    cache[key] = {listings, digest};
   }
   return digest;
 }

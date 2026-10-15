@@ -1557,17 +1557,25 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-# Everything a flatpak build would otherwise download mid-build: built
-# assets, resources, the prefab plus lib for each flatpak arch, and the
-# app icon. The build sandbox has no network (Flathub forbids it), so
-# these have to be in the tree it is handed: the local tree for
-# flatpak-linux, or the release's prebuilt-inputs archive (below) for
-# Flathub.
+# Everything a flatpak build would otherwise download or generate
+# mid-build: built assets, resources, the prefab plus lib for each
+# flatpak arch, the app icon, and releases.xml. The build sandbox has no
+# network (Flathub forbids it), so these have to be in the tree it is
+# handed: the local tree for flatpak-linux, or the release's
+# prebuilt-inputs archive (below) for Flathub.
 FLATPAK_ICON = pconfig/flatpak/net.froemling.bombsquad.png
+FLATPAK_RELEASES = pconfig/flatpak/net.froemling.bombsquad.releases.xml
 
-flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) \
+flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) $(FLATPAK_RELEASES) \
  build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
  build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+# AppStream release history, generated from CHANGELOG.md (not in git).
+# This lists the newest changelog versions; the release workflow runs
+# flatpak_add_release with its tag first, so a release's archive stops
+# at that release.
+$(FLATPAK_RELEASES): CHANGELOG.md
+	$(PCOMMAND) flatpak_add_release
 
 # The app icon isn't in git; fetch it, checksum-verified.
 $(FLATPAK_ICON):
@@ -1577,8 +1585,8 @@ $(FLATPAK_ICON):
  " $@.tmp" | sha256sum -c -
 	mv $@.tmp $@
 
-# Pack what flatpak-prefetch produced, plus this release's releases.xml
-# entry, into build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
+# Pack what flatpak-prefetch produced into
+# build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
 # a Flathub build's tree that are not in git. Flathub builds take the
 # source from git at the release tag and lay this archive over it; see
 # flatpak_prebuilt_inputs and generate_flathub_manifest in

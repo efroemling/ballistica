@@ -1136,7 +1136,7 @@ class AssetSubsystem(AppSubsystem):
         """
         return {
             'constant': 'constant',
-            'language': f'language/{language.value}',
+            'language': self._language_coord(language),
             # Cube maps share this bucket -- same profile/render_space/tier
             # dimensions as 2D textures (decision #24).
             'textures': (
@@ -1150,6 +1150,11 @@ class AssetSubsystem(AppSubsystem):
             # need no entry — they ride 'constant'.
             'meshes': f'meshes/{self._mesh_profile}.{self._mesh_tier}',
         }
+
+    @staticmethod
+    def _language_coord(language: Locale) -> str:
+        """The ``language`` bucket's coord for a locale."""
+        return f'language/{language.value}'
 
     def _flavor_candidates(self, bucket: str, desired_coord: str) -> list[str]:
         """Coords acceptable for ``bucket`` this run, best first.
@@ -1693,6 +1698,7 @@ class AssetSubsystem(AppSubsystem):
         self,
         apvernums: list[ApverNum],
         optional: set[ApverNum] | None = None,
+        language_only: bool = False,
     ) -> ResolveResult:
         """Synchronously register the best LOCAL flavor of each package.
 
@@ -1701,6 +1707,11 @@ class AssetSubsystem(AppSubsystem):
         ``apvernums`` holds only those actually registered. Any other
         package failing raises :class:`AssetResolveError` and nothing
         is registered.
+
+        ``language_only`` registers each package's ``language/<locale>``
+        bucket and nothing else -- usable before graphics are up, since
+        it never consults the texture profile. Registration replaces a
+        package's whole bucket set, so a later full call supersedes it.
 
         A downloads-disabled, fully-synchronous resolve: for each apvernum it
         registers the desired flavor when that flavor's blobs are already on
@@ -1719,7 +1730,16 @@ class AssetSubsystem(AppSubsystem):
         Must be called on the logic thread.
         """
         assert _babase.in_logic_thread()
-        desired = self._desired_coords(_babase.app.locale.current_locale)
+        locale = _babase.app.locale.current_locale
+        # Language-only registers just the strings (see
+        # load_bundled_language): unlike the other buckets they need no
+        # graphics, so they can come up before the texture profile is
+        # knowable. The full resolve later replaces this registration.
+        desired = (
+            {'language': self._language_coord(locale)}
+            if language_only
+            else self._desired_coords(locale)
+        )
         resolved: list[ApverNum] = []
         results: list[_OneResult] = []
         scan = _LocalScan()
@@ -1752,8 +1772,9 @@ class AssetSubsystem(AppSubsystem):
         self._reload_language()
         skipped = len(apvernums) - len(resolved)
         logger.info(
-            'Registered %d builtin package(s) at best-local flavor%s%s.',
+            'Registered %d builtin package(s) at best-local flavor%s%s%s.',
             len(resolved),
+            ' (language only)' if language_only else '',
             f' ({len(fell_back)} on fallback)' if fell_back else '',
             f'; {skipped} left to download' if skipped else '',
         )
@@ -1803,7 +1824,7 @@ class AssetSubsystem(AppSubsystem):
             parse_language_components,
         )
 
-        coord = f'language/{locale.value}'
+        coord = self._language_coord(locale)
 
         # The language flavor-manifest hash: downloaded packages live in the
         # cache manifest, builtin ones in the bundle manifest.

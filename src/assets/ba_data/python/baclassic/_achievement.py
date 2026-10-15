@@ -15,6 +15,7 @@ import babase
 import bascenev1
 from bascenev1 import _classicassets
 from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 
 if TYPE_CHECKING:
     import bauiv1
@@ -1316,7 +1317,7 @@ class Achievement:
         else:
             bascenev1.timer(
                 0.5,
-                lambda: _builtinassets.audio.ding.get().play(host_only=True),
+                lambda: _commonassets.audio.ding.get().play(host_only=True),
             )
 
         in_time = 0.300

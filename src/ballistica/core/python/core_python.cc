@@ -121,6 +121,22 @@ void CorePython::InitPython() {
   // If we've calced a cache-dir, we can calc pycache-dir.
   if (cache_dir.has_value()) {
     pycache_prefix = *cache_dir + BA_DIRSLASH + "pyc";
+
+    // Where installs give every file the same frozen mtime across
+    // versions (flatpak/ostree: 0; nix: 1), Python's mtime+size pyc
+    // check can't tell a changed same-size .py from the old one, so
+    // updates silently keep running old bytecode. Give each build its
+    // own pyc dir there. MUST match baenv._pycache_prefix(), which
+    // recomputes this; babase's pycache upkeep prunes other builds'.
+    struct BA_STAT stbuf {};
+    auto probe = g_core->platform->GetDataDirectoryMonolithicDefault()
+                 + BA_DIRSLASH + "ba_data" + BA_DIRSLASH + "python"
+                 + BA_DIRSLASH + "baenv.py";
+    if (g_core->platform->Stat(probe.c_str(), &stbuf) == 0
+        && stbuf.st_mtime <= 1) {
+      *pycache_prefix +=
+          std::string(BA_DIRSLASH) + "b" + std::to_string(kEngineBuildNumber);
+    }
   }
 
   if (pycache_prefix.has_value()) {

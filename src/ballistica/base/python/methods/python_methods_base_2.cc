@@ -2023,8 +2023,7 @@ static auto PySetBaseAssetSet(PyObject* self, PyObject* args) -> PyObject* {
   if (!BaseAssetSetFromPyArgs(args, &assets)) {
     return nullptr;
   }
-  assert(assets.complete());
-  g_base->assets->set_base_assets(assets);
+  g_base->assets->SetBaseAssets(assets);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -2038,14 +2037,14 @@ static PyMethodDef PySetBaseAssetSetDef = {
     "set_base_asset_set_native(*args: bacommon.assetspec.TextureSpec"
     " | bacommon.assetspec.CubeMapTextureSpec"
     " | bacommon.assetspec.MeshSpec"
-    " | bacommon.assetspec.SoundSpec) -> None\n"
+    " | bacommon.assetspec.SoundSpec | None) -> None\n"
     "\n"
     "(internal) Supply the classic-flavored art base draws with.\n"
     "\n"
     "Do not call this directly -- babase.set_base_asset_set() is the\n"
     "entry point. Args arrive positionally in spec order; both sides\n"
     "are generated from src/codegen/babasecodegen/base_assets.py, so\n"
-    "they cannot drift.",
+    "they cannot drift. None leaves a slot to its engine placeholder.",
 };
 
 // ------------------- restore_base_asset_placeholders

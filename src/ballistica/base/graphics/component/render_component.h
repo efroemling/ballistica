@@ -110,6 +110,10 @@ class RenderComponent {
   void DrawMesh(Mesh* m, int flags = 0) {
     EnsureDrawing();
     if (m->IsValid()) {
+      if (m->is_text()
+          && g_base->graphics->debug_bounds(DebugBoundsType::kText)) {
+        flags |= kMeshDrawFlagDebugFill;
+      }
       cmd_buffer_->frame_def()->AddMesh(m);
       cmd_buffer_->PutCommand(RenderCommandBuffer::Command::kDrawMesh);
       cmd_buffer_->PutInt(flags);

@@ -17,7 +17,7 @@ from bacommon.displayitem import (
     DisplayItemStyle,
     DepictionAssets,
 )
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 from bauiv1 import _classiccatalogassets
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ def depiction_assets() -> DepictionAssets:
         )
 
         _g_assets = DepictionAssets(
-            white=_builtinassets.textures.white,
+            white=_commonassets.textures.white,
             coin=_classiccatalogassets.textures.coin,
             tickets=_classiccatalogassets.textures.tickets,
             tickets_purple=_classiccatalogassets.textures.tickets_purple,

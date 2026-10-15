@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261014`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261014b`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 671
+# ba_meta require asset-package 689
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261014
-_ASSET_PACKAGE = ApverNum(671)
+# a-0.babuiltinassets.261014b
+_ASSET_PACKAGE = ApverNum(689)
 
 if TYPE_CHECKING:
     import datetime
@@ -35,34 +35,27 @@ if TYPE_CHECKING:
         """
         ::
 
-            Sounds needed during engine bootstrap and early UI (clicks, errors,
-            and other always-available effects).
+            Sounds the engine plays before construct-mode hands off (dev console
+            and dialog feedback), plus the silent stand-in for missing sounds.
 
             See source for the full asset list.
         """
 
         blank: SoundHandle
         blip: SoundHandle
-        cash_register: SoundHandle
         click01: SoundHandle
-        ding: SoundHandle
         error: SoundHandle
-        gun_cocking: SoundHandle
-        powerdown01: SoundHandle
-        tap: SoundHandle
 
     class MeshesGroup:
         """
         ::
 
-            Meshes needed during engine bootstrap and early UI.
+            Meshes the engine draws before construct-mode hands off.
 
             See source for the full asset list.
         """
 
-        box: MeshHandle
         image1x1: MeshHandle
-        overlay_guide: MeshHandle
         vr_fade: MeshHandle
         vr_overlay: MeshHandle
 
@@ -1534,20 +1527,12 @@ if TYPE_CHECKING:
         """
         ::
 
-            Textures needed during engine bootstrap and early UI, including the
-            reflection cube-maps.
+            Textures the engine draws before construct-mode hands off: fonts,
+            text backings, the cursor, and dev-console/dialog chrome.
 
             See source for the full asset list.
         """
 
-        account_v2_icon: TextureHandle
-        black: TextureHandle
-
-        #: ::
-        #:
-        #:     Data-role twin of black.png for shader slots that read channels
-        #:     as values (tint and mask slots); the original stays a picture.
-        black_data: TextureHandle
         circle: TextureHandle
         circle_shadow: TextureHandle
         cursor: TextureHandle
@@ -1565,12 +1550,9 @@ if TYPE_CHECKING:
         font_small5: TextureHandle
         font_small6: TextureHandle
         font_small7: TextureHandle
-        glow_circle: TextureHandle
         howdy: TextureHandle
         shadow: TextureHandle
         shadow_sharp: TextureHandle
-        soft_rect: TextureHandle
-        soft_rect2: TextureHandle
 
         #: ::
         #:
@@ -1586,50 +1568,27 @@ if TYPE_CHECKING:
         #:     picture.
         soft_rect_mask: TextureHandle
         soft_rect_vertical: TextureHandle
-        white: TextureHandle
 
-        #: ::
-        #:
-        #:     Data-role twin of white.png for shader slots that read channels
-        #:     as values (tint and mask slots); the original stays a picture.
-        white_data: TextureHandle
-
-    #: The ``audio`` group - 9 assets (``blank``, ``blip``, ``cash_register``,
-    #: ``click01``, ``ding``, and 4 more). Full list in source.
+    #: The ``audio`` group - 4 assets (``blank``, ``blip``, ``click01``,
+    #: ``error``). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 5 assets (``box``, ``image1x1``,
-    #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
+    #: The ``meshes`` group - 3 assets (``image1x1``, ``vr_fade``,
+    #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
     #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
     #: ``device``, ``input``, and 130 more). Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 31 assets (``account_v2_icon``, ``black``,
-    #: ``black_data``, ``circle``, ``circle_shadow``, and 26 more). Full list in
+    #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
+    #: ``cursor``, ``font_big``, ``font_extras``, and 18 more). Full list in
     #: source.
     textures: TexturesGroup
 
 _TREE = {
-    'audio': {
-        'blank': 's',
-        'blip': 's',
-        'cash_register': 's',
-        'click01': 's',
-        'ding': 's',
-        'error': 's',
-        'gun_cocking': 's',
-        'powerdown01': 's',
-        'tap': 's',
-    },
-    'meshes': {
-        'box': 'm',
-        'image1x1': 'm',
-        'overlay_guide': 'm',
-        'vr_fade': 'm',
-        'vr_overlay': 'm',
-    },
+    'audio': {'blank': 's', 'blip': 's', 'click01': 's', 'error': 's'},
+    'meshes': {'image1x1': 'm', 'vr_fade': 'm', 'vr_overlay': 'm'},
     'strings': {
         'account': {
             'must_sign_in': (),
@@ -1789,9 +1748,6 @@ _TREE = {
         },
     },
     'textures': {
-        'account_v2_icon': 't',
-        'black': 't',
-        'black_data': 't',
         'circle': 't',
         'circle_shadow': 't',
         'cursor': 't',
@@ -1809,17 +1765,12 @@ _TREE = {
         'font_small5': 't',
         'font_small6': 't',
         'font_small7': 't',
-        'glow_circle': 't',
         'howdy': 't',
         'shadow': 't',
         'shadow_sharp': 't',
-        'soft_rect': 't',
-        'soft_rect2': 't',
         'soft_rect2_mask': 't',
         'soft_rect_mask': 't',
         'soft_rect_vertical': 't',
-        'white': 't',
-        'white_data': 't',
     },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}

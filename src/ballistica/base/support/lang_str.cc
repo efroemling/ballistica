@@ -28,6 +28,37 @@ namespace ballistica::base {
 // Substitution keyword pattern: [a-z][a-z0-9_]* (mirrors the Python
 // loctext _SUB_RE).
 static auto IsSubKeyStart_(char c) -> bool { return c >= 'a' && c <= 'z'; }
+
+// Error text for a table-backed value whose package has no loaded
+// strings. Names the string and the table state so a field report
+// says what was evaluated and whether it was simply too early.
+//
+// The builtin package's strings are meant to be available from
+// bring-up on, so evaluating one before they're loaded is an ordering
+// bug in the caller: fatal on debug builds (as with
+// AssetPackageRegistry::CheckPreConstructAccess) so it surfaces in
+// local runs instead of as unexplained field warnings.
+static auto MissingPackageError_(const LangStr& ls, const LangStrTables* tables)
+    -> std::string {
+  std::string what = ls.form == LangStr::Form::kResourceIndexed
+                         ? "#" + std::to_string(ls.index)
+                         : "'" + ls.name + "'";
+  std::string state = tables == nullptr
+                          ? "no language tables built yet"
+                          : "tables hold "
+                                + std::to_string(tables->packages.size())
+                                + " package(s)";
+  auto msg = "no values for package '" + ls.apverid + "' (string " + what + "; "
+             + state + ")";
+  if (ls.apverid == kBuiltinAssetsApvernum && g_buildconfig.debug_build()) {
+    FatalError("Builtin language string " + what + " (package "
+               + kBuiltinAssetsApvernum
+               + ") evaluated before the builtin language tables were"
+                 " loaded; "
+               + state + ".");
+  }
+  return msg;
+}
 static auto IsSubKeyChar_(char c) -> bool {
   return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
 }
@@ -1105,11 +1136,11 @@ static auto EvalNode_(const LangStr& ls, int depth, LangStrEvalState_* state)
     }
   } else {
     if (!tables) {
-      return std::unexpected("no language tables loaded");
+      return std::unexpected(MissingPackageError_(ls, nullptr));
     }
     auto pkg = tables->packages.find(ls.apverid);
     if (pkg == tables->packages.end()) {
-      return std::unexpected("no values for package '" + ls.apverid + "'");
+      return std::unexpected(MissingPackageError_(ls, tables.get()));
     }
     pkgtable = &pkg->second;
     const LangStrTableEntry* tableentry{};

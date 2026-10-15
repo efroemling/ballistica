@@ -686,7 +686,7 @@ class ManualGatherTab(GatherTab):
             # Notify about incorrect port? I'm lazy; simply leave old value.
             pass
         bui.app.config.commit()
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
         self._refresh_favorites()
 
         bui.containerwidget(
@@ -869,7 +869,7 @@ class ManualGatherTab(GatherTab):
                 'name': addr,
             }
             config.commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 _classicassets.strings.gather.added_to_favorites(name=addr),
                 color=(0, 1, 0),

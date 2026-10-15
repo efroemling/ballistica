@@ -249,10 +249,10 @@ SPEC = SceneAssetSpec(
             ],
         ),
         Group(
-            name='builtin',
-            default_module='_builtinassets',
+            name='utility',
+            default_module='_commonassets',
             doc=(
-                'Utility art from the builtin asset package that the'
+                'Utility art from the common asset package that the'
                 ' node layer leans on directly.'
             ),
             slots=[

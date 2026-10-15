@@ -114,7 +114,7 @@ void RenderView::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light.get());
+    c.SetTexture(g_base->assets->base_assets().light());
     c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -127,7 +127,7 @@ void RenderView::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light_soft.get());
+    c.SetTexture(g_base->assets->base_assets().light_soft());
     c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -140,7 +140,7 @@ void RenderView::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_base->assets->base_assets().light_soft.get());
+    c.SetTexture(g_base->assets->base_assets().light_soft());
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }

@@ -20,9 +20,10 @@ from typing import TYPE_CHECKING
 
 import _babase
 from bacommon.assetpackage import ApverNum
+from efro.util import strip_exception_tracebacks
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     from bacommon.assetspec import AssetBucketKind
 
@@ -76,6 +77,37 @@ def mark_construct_complete() -> None:
     # the rest of the boot trace, where construct-mode's own hand-off
     # log is over on ba.assetmanager.
     _lifecyclelog.info('Construct-mode asset gate opened.')
+
+    # Run whatever was waiting on us (see call_after_construct()), each
+    # as its own call so one failing can't stop the rest or the
+    # hand-off itself.
+    pending = list(_g_after_construct_calls)
+    _g_after_construct_calls.clear()
+    for call in pending:
+        _babase.pushcall(call)
+
+
+# Calls waiting on construct-mode success (see call_after_construct()).
+_g_after_construct_calls: list[Callable[[], None]] = []
+
+
+def call_after_construct(call: Callable[[], None]) -> None:
+    """Run a call once construct-mode has succeeded.
+
+    Runs it soon (on the logic thread) if construct-mode already has;
+    otherwise queues it until the asset gate opens. For things that use
+    non-builtin assets but can come up during app loading -- a notice
+    that plays a sound, say -- and would rather wait than go without.
+
+    Queued calls run only on *success*: if construct-mode never
+    finishes (the user quits, or this build is too old to load current
+    assets), they never run. Logic thread only.
+    """
+    assert _babase.in_logic_thread()
+    if _g_construct_complete:
+        _babase.pushcall(call)
+    else:
+        _g_after_construct_calls.append(call)
 
 
 def construct_assets_complete() -> bool:
@@ -242,6 +274,47 @@ def load_bundled_asset_packages() -> str | None:
         )
         return f'{type(exc).__name__}: {str(exc)[:400]} ({where})'
     return None
+
+
+def load_bundled_language() -> None:
+    """Register the construct package's strings ahead of everything else.
+
+    Builtin strings are usable from the moment the boot ``setlanguage``
+    runs; this is what makes that true. The full bundled load
+    (:func:`load_bundled_asset_packages`) has to wait for graphics,
+    since picking a texture flavor needs GPU caps, and on a slow or
+    backgrounded Android launch that wait can last seconds. Strings
+    need no graphics, so the construct package's ``language`` bucket
+    is registered here, before the first table rebuild. The full load
+    later replaces this registration with the package's complete
+    bucket set.
+
+    A no-op once any builtin package is registered (or when the build
+    bundles none). Failure is logged, not fatal: the full load runs the
+    same resolve moments later and fails loudly if it's real.
+    """
+    if _builtin_apvernums:
+        return
+    manifest_text = _babase.bundled_asset_manifest_text()
+    if manifest_text is None:
+        return
+    # Deferred: this module is imported while babase itself is still
+    # coming up, well before the wrapper is importable.
+    # pylint: disable-next=cyclic-import
+    from babase import _builtinassets
+
+    # Package identity for the construct pin, not a path.
+    # pylint: disable-next=protected-access
+    construct = _builtinassets._ASSET_PACKAGE
+    bundle = json.loads(manifest_text)
+    if construct not in (a for a, _ in _iter_manifest_packages(bundle)):
+        return
+    _builtin_apvernums.append(construct)
+    try:
+        _babase.app.assets.resolve_local([construct], language_only=True)
+    except Exception as exc:
+        _lifecyclelog.exception('Error registering builtin language strings.')
+        strip_exception_tracebacks(exc)
 
 
 def _load_bundled_asset_packages() -> None:

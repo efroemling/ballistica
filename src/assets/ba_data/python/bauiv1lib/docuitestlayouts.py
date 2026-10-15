@@ -334,7 +334,7 @@ def test_page_wide_fit(
 
 def test_page_bounds() -> bacommon.docui.v2.Response:
     """Button-style bounds tests (v2 mirror of '/boundstests')."""
-    from bauiv1 import _builtinassets, _docuiv2testassets
+    from bauiv1 import _commonassets, _docuiv2testassets
 
     strs = _docuiv2testassets.strings
 
@@ -358,9 +358,7 @@ def test_page_bounds() -> bacommon.docui.v2.Response:
                     label=strs.layout.hello.spec,
                     size=size,
                     style=style,
-                    texture=(
-                        _builtinassets.textures.white if texture else None
-                    ),
+                    texture=(_commonassets.textures.white if texture else None),
                     color=(1, 0, 0, 0.3) if texture else None,
                     debug=True,
                 )

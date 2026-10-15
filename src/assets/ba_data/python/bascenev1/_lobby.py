@@ -776,7 +776,8 @@ class Chooser:
         ``_cloud_json_by_name`` and rewrites ``_profiles`` in the legacy
         shape the rest of the chooser reads (name and the standin
         appearance name for anything still reading ``character``).
-        None from the source leaves the legacy profiles in place.
+        None (or an empty list: an account whose legacy profiles
+        haven't been migrated yet) leaves the legacy profiles in place.
         """
         classic = babase.app.classic
         assert classic is not None
@@ -786,9 +787,11 @@ class Chooser:
         if cloud_json is not None:
             pass
         elif is_remote:
-            cloud_json = input_device.get_cloud_characters()
+            # (Empty means legacy profiles not migrated yet; a migrated
+            # account always has __account__. Same below.)
+            cloud_json = input_device.get_cloud_characters() or None
         elif not is_test_input:
-            cloud_json = classic.cloud_profiles.get_usable_profiles()
+            cloud_json = classic.cloud_profiles.get_usable_profiles() or None
             plus = babase.app.plus
             if (
                 cloud_json is None
@@ -1375,7 +1378,6 @@ class Chooser:
         # pylint: disable-next=cyclic-import
         from bascenev1 import (
             _commonassets,
-            _builtinassets,
             _classicassets,
             _uiv1assets,
             _classiccharacterassets,
@@ -1432,8 +1434,8 @@ class Chooser:
             return
 
         if self._profilenames[self._profileindex] == '_edit':
-            tex = _builtinassets.textures.black.get()
-            tint_tex = _builtinassets.textures.black_data.get()
+            tex = _commonassets.textures.black.get()
+            tint_tex = _commonassets.textures.black_data.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex

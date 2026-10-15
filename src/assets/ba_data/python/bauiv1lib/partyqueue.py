@@ -267,7 +267,7 @@ class PartyQueueWindow(bui.Window):
         self.eyes_mesh: bui.Mesh = (
             _classicassets.meshes.plastic_eyes_transparent.get()
         )
-        self._white_tex = _builtinassets.textures.white.get()
+        self._white_tex = _commonassets.textures.white.get()
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(

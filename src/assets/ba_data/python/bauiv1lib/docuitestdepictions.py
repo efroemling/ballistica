@@ -308,8 +308,8 @@ def test_page_depictions(
 ) -> bacommon.docui.v2.Response:
     """Testing depictions."""
     from bauiv1 import (
-        _builtinassets,
         _classiccatalogassets,
+        _commonassets,
         _docuiv2testassets,
     )
 
@@ -434,7 +434,7 @@ def test_page_depictions(
         ),
     ]
 
-    white = _builtinassets.textures.white
+    white = _commonassets.textures.white
 
     def _precise_button(
         size: tuple[float, float],

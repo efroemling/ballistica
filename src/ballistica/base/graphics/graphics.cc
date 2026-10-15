@@ -1211,7 +1211,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0, 7, -3.3f);
         c.Scale(10, 10, 10);
         c.Rotate(a, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
       }
       c.Submit();
     }
@@ -1219,7 +1219,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -1227,7 +1227,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
       }
       c.Submit();
     }
@@ -1242,7 +1242,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
       }
       c.Submit();
     }
@@ -2347,17 +2347,17 @@ auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
   const auto& assets = g_base->assets->base_assets();
   switch (reflection_type) {
     case ReflectionType::kChar:
-      return assets.reflection_char.get();
+      return assets.reflection_char();
     case ReflectionType::kPowerup:
-      return assets.reflection_powerup.get();
+      return assets.reflection_powerup();
     case ReflectionType::kSoft:
-      return assets.reflection_soft.get();
+      return assets.reflection_soft();
     case ReflectionType::kSharp:
-      return assets.reflection_sharp.get();
+      return assets.reflection_sharp();
     case ReflectionType::kSharper:
-      return assets.reflection_sharper.get();
+      return assets.reflection_sharper();
     case ReflectionType::kSharpest:
-      return assets.reflection_sharpest.get();
+      return assets.reflection_sharpest();
     default:
       throw Exception();
   }
@@ -2528,8 +2528,7 @@ void Graphics::DrawGuideOutline_(RenderPass* pass, const Rect& rect, float z,
     *mesh_rect = rect;
   }
   SimpleComponent c(pass);
-  c.SetTexture(
-      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite));
+  c.SetTexture(g_base->assets->SolidTexture(SolidTextureColor::kWhite));
   c.SetColor(r, g, b);
   c.DrawMesh(mesh->get());
   c.Submit();
@@ -2571,6 +2570,9 @@ auto Graphics::DebugBoundsTypeFromName(const std::string& name)
   }
   if (name == "character_icon_depictions") {
     return DebugBoundsType::kCharacterIconDepictions;
+  }
+  if (name == "text") {
+    return DebugBoundsType::kText;
   }
   return {};
 }

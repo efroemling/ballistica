@@ -20,6 +20,7 @@ from bacommon.langstr import LangStrSpecValue
 from bacommon.text import SpecialChar
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
+from bauiv1 import _builtinassets, _commonassets, _docuiv2testassets
 
 if TYPE_CHECKING:
     # Any: the name payloads here are hand-built json dicts with mixed
@@ -59,8 +60,6 @@ def test_page_names(
     route: bacommon.docui.routes.docuitest.Names,
 ) -> bacommon.docui.v2.Response:
     """Testing name depictions."""
-    from bauiv1 import _builtinassets, _docuiv2testassets
-
     strs = _docuiv2testassets.strings
     debug = route.debug
     tex = _builtinassets.textures
@@ -142,8 +141,8 @@ def test_page_names(
     # capsule (a white 9-patch tinted green) and the V2 badge. Sizes
     # from the CSS: a 54px capsule around 32px text, a 40px badge with
     # a 4px gap, 20px of right padding.
-    glow_capsule = _spec(tex.glow_circle)
-    v2_badge = _spec(tex.account_v2_icon)
+    glow_capsule = _spec(_commonassets.textures.glow_circle)
+    v2_badge = _spec(_commonassets.textures.account_v2_icon)
 
     def _web_account(
         text: str,

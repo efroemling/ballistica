@@ -611,7 +611,7 @@ class TournamentEntryWindow(PopupWindow):
                     bui.apptimer(
                         0.1, _classicassets.audio.drum_roll_short.get().play
                     )
-                    # bui.apptimer(0.1, _builtinassets.audio.cash_register.play)
+                    # bui.apptimer(0.1, _commonassets.audio.cash_register.play)
                     bui.screenmessage(
                         _classicassets.strings.tournament_entry.entering,
                         color=(0, 1, 0),
@@ -638,7 +638,7 @@ class TournamentEntryWindow(PopupWindow):
                 bui.apptimer(
                     0.1, _classicassets.audio.drum_roll_short.get().play
                 )
-                # bui.apptimer(0.1, _builtinassets.audio.cash_register.play)
+                # bui.apptimer(0.1, _commonassets.audio.cash_register.play)
                 bui.screenmessage(
                     _classicassets.strings.tournament_entry.entering,
                     color=(0, 1, 0),

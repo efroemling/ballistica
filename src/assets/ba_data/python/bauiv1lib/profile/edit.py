@@ -1027,7 +1027,7 @@ class EditProfileWindow(
                 bui.balog.exception('Error in _on_profile_save cb.')
 
         if transition_out:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
 
         # Delete old in case we're renaming.
         if self._existing_profile and self._existing_profile != new_name:

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 from bascenev1 import _classicassets
 
 from bascenev1lib.actor.popuptext import PopupText
@@ -185,7 +185,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         self._new_wave_sound = _classicassets.audio.score_hit01.get()
         self._winsound = _classicassets.audio.score.get()
-        self._cashregistersound = _builtinassets.audio.cash_register.get()
+        self._cashregistersound = _commonassets.audio.cash_register.get()
         self._a_player_has_been_hurt = False
         self._player_has_dropped_bomb = False
 
@@ -242,7 +242,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         _classicassets.strings.tips.land_mines_speedy,
                         icon=_classicassets.textures.powerup_land_mines.get(),
-                        sound=_builtinassets.audio.ding.get(),
+                        sound=_commonassets.audio.ding.get(),
                     )
                 ]
 
@@ -255,7 +255,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         _classicassets.strings.tips.tnt_box,
                         icon=_classicassets.textures.tnt.get(),
-                        sound=_builtinassets.audio.ding.get(),
+                        sound=_commonassets.audio.ding.get(),
                     )
                 ]
 
@@ -268,7 +268,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         _classicassets.strings.tips.curse_boxes,
                         icon=_classicassets.textures.powerup_curse.get(),
-                        sound=_builtinassets.audio.ding.get(),
+                        sound=_commonassets.audio.ding.get(),
                     )
                 ]
 

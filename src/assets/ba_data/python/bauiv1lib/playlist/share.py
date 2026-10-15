@@ -50,7 +50,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             ),
             color=(0, 1, 0),
         )
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
         if self._on_success_callback is not None:
             self._on_success_callback()
         bui.containerwidget(
@@ -98,7 +98,7 @@ class SharePlaylistResultsWindow(bui.Window):
                 darken_behind=True,
             )
         )
-        _builtinassets.audio.cash_register.get().play()
+        _commonassets.audio.cash_register.get().play()
         bui.play_swish()
 
         self._cancel_button = bui.buttonwidget(

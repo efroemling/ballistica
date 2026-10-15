@@ -190,8 +190,9 @@ auto AssetPackageRegistry::FlatListing(const std::string& apverid) const
   {
     std::scoped_lock lock(mutex_);
     auto cached = flat_listings_.find(apverid);
-    if (cached != flat_listings_.end()) {
-      return cached->second;
+    if (cached != flat_listings_.end()
+        && cached->second.first == pkg_it->second) {
+      return cached->second.second;
     }
   }
   // Build outside the lock (this is the O(package) part); a concurrent
@@ -219,7 +220,7 @@ auto AssetPackageRegistry::FlatListing(const std::string& apverid) const
   std::shared_ptr<const std::vector<std::string>> result = listing;
   {
     std::scoped_lock lock(mutex_);
-    flat_listings_.emplace(apverid, result);
+    flat_listings_[apverid] = {pkg_it->second, result};
   }
   return result;
 }

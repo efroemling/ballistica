@@ -170,9 +170,13 @@ void Input::AnnounceConnects_() {
                                 newly_connected_controllers_.front())
                                 ->Evaluate());
     }
+    // (Silent until an app-mode supplies the jingle; devices can come
+    // and go before then.)
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlaySound(
-          g_base->assets->base_assets().gun_cocking.get());
+      if (auto* sound =
+              g_base->assets->base_assets().gun_cocking_if_supplied()) {
+        g_base->audio->SafePlaySound(sound);
+      }
     }
   }
   newly_connected_controllers_.clear();
@@ -191,8 +195,12 @@ void Input::AnnounceDisconnects_() {
                               newly_disconnected_controllers_.front())
                               ->Evaluate());
   }
+  // (Silent until an app-mode supplies the jingle; devices can come and
+  // go before then.)
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->SafePlaySound(g_base->assets->base_assets().cork_pop.get());
+    if (auto* sound = g_base->assets->base_assets().cork_pop_if_supplied()) {
+      g_base->audio->SafePlaySound(sound);
+    }
   }
 
   newly_disconnected_controllers_.clear();

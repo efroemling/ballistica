@@ -6,7 +6,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 from bascenev1 import _classicassets
 
 from bascenev1lib.gameutils import SharedObjects
@@ -106,7 +106,7 @@ class PowerupBoxFactory:
         self.tex_curse = _classicassets.textures.powerup_curse.get()
         self.health_powerup_sound = _classicassets.audio.health_powerup.get()
         self.powerup_sound = _classicassets.audio.powerup01.get()
-        self.powerdown_sound = _builtinassets.audio.powerdown01.get()
+        self.powerdown_sound = _commonassets.audio.powerdown01.get()
         self.drop_sound = _classicassets.audio.box_drop.get()
 
         # Material for powerups.

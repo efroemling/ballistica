@@ -51,7 +51,7 @@ class ShowFriendCodeWindow(bui.Window):
             )
         )
         self._data = copy.deepcopy(data)
-        _builtinassets.audio.cash_register.get().play()
+        _commonassets.audio.cash_register.get().play()
         bui.play_swish()
 
         self._cancel_button = bui.buttonwidget(

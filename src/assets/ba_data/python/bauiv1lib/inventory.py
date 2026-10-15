@@ -177,7 +177,7 @@ class InventoryUIController(
                         buttons=[
                             dui2.Button(
                                 offline_msg,
-                                texture=_builtinassets.textures.white,
+                                texture=_commonassets.textures.white,
                                 size=(600, 100),
                                 color=(1, 1, 1, 0.0),
                                 label_scale=0.7,
@@ -433,7 +433,7 @@ class InventoryUIController(
 
             buttons.append(
                 dui2.Button(
-                    texture=_builtinassets.textures.white,
+                    texture=_commonassets.textures.white,
                     size=(145, 175),
                     action=sroutes.EditProfile(profile=p_name).local(),
                     # color=(0.6, 0.5, 0.7, 1.0),

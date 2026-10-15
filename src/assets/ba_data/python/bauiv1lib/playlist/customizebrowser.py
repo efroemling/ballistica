@@ -664,5 +664,5 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
         self._refresh(select_playlist=test_name)
