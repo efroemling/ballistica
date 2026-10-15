@@ -1,4 +1,11 @@
-### 1.8.0 (build 23059, api 9, 2026-10-14)
+### 1.8.1 (build 23060, api 9, 2026-10-14)
+- Players whose legacy profiles haven't moved to cloud profiles yet now
+  get their legacy profiles in the lobby (locally and when joining
+  servers) instead of only a random character. Profiles also now move
+  to the cloud on first sign-in rather than when the inventory is
+  first opened.
+
+### 1.8.0 (build 23058, api 9, 2026-10-13)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
