@@ -1,0 +1,179 @@
+name: Docker Build Env Image
+
+# Publishes the Dockerfile's build-env stage (toolchain + libraries, no
+# source) as ghcr.io/<repo>/bombsquad_build_env, used both as the base
+# of the docker image builds (saves a minute or two of apt) and as the
+# dev container image (see .devcontainer/).
+#
+# Tags:
+#  deps-<hash>  Content tag from batools.docker.get_build_env_tag()
+#               (a hash of the build-env stage only). batools.docker
+#               looks this up for the checked-out Dockerfile and builds
+#               the stage locally when it's missing, so a Dockerfile
+#               change never breaks anything while this catches up.
+#  <version>    The project version (pconfig/projectconfig.json) at
+#               each release tag, e.g. 1.8.0, pointing at that
+#               release's deps-<hash>. For picking an environment by
+#               version by hand (e.g. in .devcontainer/).
+#  latest       Whatever main currently uses (.devcontainer/ default).
+#
+# DO NOT PRUNE old deps-* or version tags. They are how old versions
+# of the project get their exact build environment back (Ubuntu's
+# archive moves on, so an old Dockerfile can stop building locally),
+# and public ghcr storage costs nothing against the Actions cache.
+#
+# The image is only rebuilt when its deps-<hash> tag is missing, or on
+# a manual run, which re-publishes the current tag with fresh apt
+# packages (the way to pick up security updates without a Dockerfile
+# change). Release tags just add tags when the image already exists.
+#
+# On main this only runs for Dockerfile changes: projectconfig.json is
+# deliberately not watched, since every build number bump rewrites it
+# (most commits upstream). Path filters don't apply to tag pushes, so
+# release tags always run.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - pconfig/docker/Dockerfile
+      - .github/workflows/docker_build_env.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-build-env
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.info.outputs.image }}
+      version: ${{ steps.info.outputs.version }}
+      need_build: ${{ steps.check.outputs.need_build }}
+    steps:
+      # batools.docker needs nothing beyond the stdlib, so the runner's
+      # own python3 runs it without a venv.
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            pconfig
+            tools/batools
+      - name: Compute image and version
+        id: info
+        env:
+          PYTHONPATH: tools
+        run: |
+          tag=$(python3 -c 'from batools.docker import get_build_env_tag as t; print(t())')
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_build_env:${tag}" >> "$GITHUB_OUTPUT"
+          version=$(jq -r .version pconfig/projectconfig.json)
+          if ! [[ "$version" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
+            echo "::error::Version '$version' is not a valid image tag."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Docker login
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for existing image
+        id: check
+        env:
+          IMAGE: ${{ steps.info.outputs.image }}
+          PYTHONPATH: tools
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            echo "Manual run; rebuilding $IMAGE."
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if python3 -c 'import sys; from batools.docker import image_platforms as p
+          sys.exit(not {"linux/amd64", "linux/arm64"} <= p(sys.argv[1]))' "$IMAGE"; then
+            echo "$IMAGE exists; only adding tags."
+            echo "need_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$IMAGE missing; building it."
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.need_build == 'true'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: pconfig/docker
+      - name: Docker login
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        run: |
+          docker buildx build \
+            --file pconfig/docker/Dockerfile \
+            --target build-env \
+            --platform linux/${{ matrix.arch }} \
+            --pull \
+            --provenance=false \
+            --label org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }} \
+            --label "org.opencontainers.image.description=BombSquad build environment" \
+            --label "org.opencontainers.image.version=${{ needs.prepare.outputs.version }}" \
+            --tag ${{ needs.prepare.outputs.image }}-${{ matrix.arch }} \
+            --push \
+            pconfig/docker
+
+  tag:
+    needs: [prepare, build]
+    # Runs after a build, and also when the build was skipped because
+    # the image already existed.
+    if: >-
+      ${{ !cancelled() && needs.prepare.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.build.result) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker login
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create tags
+        env:
+          IMAGE: ${{ needs.prepare.outputs.image }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          BUILT: ${{ needs.build.result == 'success' }}
+        run: |
+          repo=${IMAGE%:*}
+          tags=(--tag "$IMAGE")
+          # Version tags only come from release tags and latest only
+          # from main, never from a manual run on some other branch.
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tags+=(--tag "$repo:$VERSION")
+          fi
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            tags+=(--tag "$repo:latest")
+          fi
+          if [ "$BUILT" = true ]; then
+            sources=("$IMAGE-amd64" "$IMAGE-arm64")
+          else
+            sources=("$IMAGE")
+          fi
+          echo "Tagging: ${tags[*]}"
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"

@@ -1,0 +1,42 @@
+name: "Build BombSquad Flatpak"
+description: |
+  "Sets up the build env and builds build/flatpak/bombsquad.flatpak"
+  "(make flatpak-linux), with the flatpak SDK and builder state cached."
+  "Shared by the nightly and release workflows. Expects a checkout."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup build env
+      uses: ./.github/actions/bombsquad_build_env
+
+    # The key spells out the old 'cache-flatpak' env var inline, so
+    # existing caches (and the cache_cleanup.yml families) carry over.
+    - name: Cache Flatpak data
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.local/share/flatpak
+          .cache/flatpak/flatpak-builder
+          .cache/flatpak/repo
+          !.cache/flatpak/flatpak-builder/build
+        key: ${{ runner.os }}-${{ runner.arch }}-cache-flatpak-${{ hashFiles('pconfig/flatpak/net.froemling.bombsquad.yml', 'pconfig/flatpak/python-build-env.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-cache-flatpak-
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt install -y flatpak flatpak-builder
+
+    - name: Install flatpak build dependencies
+      shell: bash
+      run: |
+        flatpak remote-add --user --if-not-exists flathub \
+          https://flathub.org/repo/flathub.flatpakrepo
+        make flatpak-deps
+
+    - name: Make the build
+      shell: bash
+      run: make flatpak-linux

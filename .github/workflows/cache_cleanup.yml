@@ -1,0 +1,140 @@
+name: Cache Cleanup
+
+# Actions caches share one 10 GB budget per repo and are evicted LRU.
+# Hash-keyed caches (flatpak, assets, ...) leave every superseded entry
+# behind until LRU reaches it, and in the meantime that dead weight
+# pushes out entries that are still useful (mostly sccache objects).
+# This prunes the dead weight:
+#
+#  * For each cache "family" on a ref, keep only the newest entry. A
+#    family is the key with its trailing content hash and any trailing
+#    -vN- version token stripped, so 'Linux-cache-bombsquad-assets-<h>'
+#    and 'Linux-cache-bombsquad-assets-v1-<h>' are one family and a
+#    version bump retires the old entries too. restore-keys prefix
+#    matching always picks the newest entry, so older ones can never
+#    be restored again.
+#  * Drop every cache belonging to a closed pull request; a PR ref's
+#    caches are only readable by that PR.
+#
+# sccache entries are content-addressed objects, not snapshots, so they
+# are left alone.
+#
+# Runs after each Nightly Build or Release (whatever the outcome, since
+# a failed run can still have saved caches), which write the heaviest
+# entries (flatpak, assets). Anything superseded in between only costs
+# space until then, and LRU still covers it in the meantime.
+
+on:
+  workflow_run:
+    workflows: ["Nightly Build", "Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print what would be deleted"
+        type: boolean
+        default: true
+
+permissions:
+  actions: write
+  pull-requests: read
+
+concurrency:
+  group: cache-cleanup
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prune superseded caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        shell: python
+        run: |
+          import json, os, re, subprocess
+          from collections import defaultdict
+
+          repo = os.environ['REPO']
+          dry_run = os.environ['DRY_RUN'] == 'true'
+
+          def gh(*args: str) -> str:
+              return subprocess.run(
+                  ['gh', 'api', *args], check=True, capture_output=True,
+                  text=True,
+              ).stdout
+
+          caches = [
+              json.loads(line)
+              for line in gh(
+                  '--paginate',
+                  f'repos/{repo}/actions/caches?per_page=100',
+                  '--jq', '.actions_caches[] | tojson',
+              ).splitlines()
+          ]
+
+          def family(key: str) -> str:
+              key = re.sub(r'-(?:[0-9a-f]{32,})?$', '', key)
+              return re.sub(r'-v\d+$', '', key)
+
+          # Closed PR caches go first; superseded only lists the rest.
+          # Open PRs are the small set, so fetch those once and treat any
+          # other PR as closed.
+          open_prs = set(
+              gh(
+                  '--paginate',
+                  f'repos/{repo}/pulls?state=open&per_page=100',
+                  '--jq', '.[].number',
+              ).split()
+          )
+          closed: dict[str, list[dict]] = defaultdict(list)
+          for c in caches:
+              m = re.fullmatch(r'refs/pull/(\d+)/merge', c['ref'])
+              if m is not None and m.group(1) not in open_prs:
+                  closed[m.group(1)].append(c)
+          closed_ids = {c['id'] for group in closed.values() for c in group}
+
+          groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
+          for c in caches:
+              if not c['key'].startswith('sccache/') and c['id'] not in closed_ids:
+                  groups[(family(c['key']), c['ref'])].append(c)
+          superseded: list[tuple[dict, str]] = []
+          for group in groups.values():
+              group.sort(key=lambda c: c['created_at'], reverse=True)
+              superseded += [(c, group[0]['key']) for c in group[1:]]
+
+          doomed = [c for c, _ in superseded] + [
+              c for group in closed.values() for c in group
+          ]
+          total = sum(c['size_in_bytes'] for c in caches)
+          freed = sum(c['size_in_bytes'] for c in doomed)
+          print(f'{len(caches)} caches, {total / 1e9:.2f} GB total.')
+          print(
+              f'{"Would delete" if dry_run else "Deleting"} {len(doomed)}'
+              f' ({freed / 1e9:.2f} GB):'
+          )
+          for c, newest in sorted(
+              superseded, key=lambda v: -v[0]['size_in_bytes']
+          ):
+              print(
+                  f'  {c["size_in_bytes"] / 1e6:8.1f} MB  {c["ref"]}'
+                  f'  {c["key"]}  (superseded by {newest})'
+              )
+          # Closed PRs can own hundreds of sccache objects; one line each.
+          for num, group in sorted(closed.items()):
+              size = sum(c['size_in_bytes'] for c in group)
+              print(
+                  f'  {size / 1e6:8.1f} MB  {len(group)} caches'
+                  f'  (PR #{num} is closed)'
+              )
+
+          if not dry_run:
+              for c in doomed:
+                  try:
+                      gh('-X', 'DELETE', f'repos/{repo}/actions/caches/{c["id"]}')
+                  except subprocess.CalledProcessError as exc:
+                      # Usually already evicted or deleted by an
+                      # overlapping run; not worth failing over.
+                      print(f'    delete failed: {exc.stderr.strip()}')
