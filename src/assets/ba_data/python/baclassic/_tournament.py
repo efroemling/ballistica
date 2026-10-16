@@ -53,7 +53,7 @@ def get_tournament_prize_strings(
 
         if ticket_prize is not None and include_tickets:
             pvval = (
-                babase.charstr(babase.SpecialChar.TICKET_BACKING)
+                babase.SpecialChar.TICKET_BACKING.value
                 + str(ticket_prize)
                 + pvval
             )

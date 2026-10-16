@@ -152,6 +152,7 @@ class RendererGL : public Renderer {
  protected:
   void DrawDebug() override;
   void FlushDebugDraw_();
+  void DrawMeshDebugFill_(MeshDataGL* mesh);
   void CheckForErrors() override;
   void GenerateCameraBufferBlurPasses() override;
   void FlipCullFace() override;
@@ -319,7 +320,6 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_shadow_prog_{};
   ProgramSimpleGL* simple_tex_mod_shadow_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_text_glow_prog_{};
-  ProgramSimpleGL* simple_tex_mod_text_glow_flatness_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};

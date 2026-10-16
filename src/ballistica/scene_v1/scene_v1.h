@@ -38,7 +38,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 54;
+const int kProtocolVersionHostMin = 56;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 54;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 54;
+const int kProtocolVersionMax = 56;
 
 // The 1.8 development protocols (38 through the one before 1.8's
 // final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
@@ -56,7 +56,7 @@ const int kProtocolVersionMax = 54;
 // version rather than mis-decoded. Raise the max alongside
 // kProtocolVersionMax for any further bump before 1.8 ships.
 const int kProtocolVersionDevGapMin = 38;
-const int kProtocolVersionDevGapMax = 53;
+const int kProtocolVersionDevGapMax = 55;
 static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
               "Every 1.8 dev protocol below the current one is in the gap.");
 
@@ -448,6 +448,20 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     untrusted (SoundPlayOptions::ToOverrides). Hosts also stop
 //     sending bursts of plays that clients would only cut straight
 //     away (Scene::ShouldSendPlay_) (2026-10-11).
+//
+// 55: Spaz physics retune, bg-limbs mode only (nothing new on the
+//     wire): the roller ball a knocked-out or frozen character rests
+//     on is bigger and firmer (falls were punching through it and
+//     wedging the pelvis in the ground), and the ball's contacts have
+//     no friction for a moment after a knockout ends, so a character
+//     springing up slides instead of being flung sideways
+//     (SpazPhysicsTuning down_ball_* and wake_slide_steps)
+//     (2026-10-12).
+//
+// 56: Spaz physics retune, bg-limbs mode only (nothing new on the
+//     wire): the roller ball a knocked-out character rests on gets
+//     its full brakes, so the character stops sliding along the
+//     ground (SpazPhysicsTuning down_ball_brakes) (2026-10-12).
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

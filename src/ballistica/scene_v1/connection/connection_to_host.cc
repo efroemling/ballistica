@@ -121,8 +121,7 @@ ConnectionToHost::~ConnectionToHost() {
       }
       // (Evaluated text, possibly holding peer-chosen names: literal.)
       g_base->ScreenMessage(s, {1, 0.5f, 0.0f}, true);
-      g_base->audio->SafePlaySound(
-          g_base->assets->base_assets().cork_pop.get());
+      g_base->audio->SafePlaySound(g_base->assets->base_assets().cork_pop());
     } else {
       g_base->ScreenMessage(
           base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
@@ -706,7 +705,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 ->Evaluate(),
             {0.5f, 1.0f, 0.5f}, true);
         g_base->audio->SafePlaySound(
-            g_base->assets->base_assets().gun_cocking.get());
+            g_base->assets->base_assets().gun_cocking());
       }
       break;
     }
@@ -722,8 +721,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 PlayerSpec(&(str_buffer[0])).GetDisplayString())
                 ->Evaluate(),
             {1, 0.5f, 0.0f}, true);
-        g_base->audio->SafePlaySound(
-            g_base->assets->base_assets().cork_pop.get());
+        g_base->audio->SafePlaySound(g_base->assets->base_assets().cork_pop());
       }
       break;
     }
@@ -882,8 +880,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     }
     // (Evaluated text holding a peer-chosen name: literal.)
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f}, true);
-    g_base->audio->SafePlaySound(
-        g_base->assets->base_assets().gun_cocking.get());
+    g_base->audio->SafePlaySound(g_base->assets->base_assets().gun_cocking());
 
     // Our cloud profiles reach a host through v2-auth (so only when we
     // actually sent a token -- an optional offer we couldn't take

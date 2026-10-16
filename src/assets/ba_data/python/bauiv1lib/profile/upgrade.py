@@ -180,7 +180,7 @@ class ProfileUpgradeWindow(bui.Window):
                 )
                 bui.textwidget(
                     edit=self._price_text,
-                    text=bui.charstr(bui.SpecialChar.TICKET) + str(self._cost),
+                    text=bui.SpecialChar.TICKET.value + str(self._cost),
                 )
                 self._status = None
             else:
@@ -271,7 +271,7 @@ class ProfileUpgradeWindow(bui.Window):
                     ' original edit window gone'
                 )
                 return
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             edit_profile_window.reload_window()
 
     def _cancel(self) -> None:

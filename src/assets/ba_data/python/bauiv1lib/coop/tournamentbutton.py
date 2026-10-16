@@ -79,7 +79,7 @@ class TournamentButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=self.lsbt,
             mesh_opaque=self.lsbo,
-            texture=_builtinassets.textures.black.get(),
+            texture=_commonassets.textures.black.get(),
             opacity=0.2,
             mask_texture=_classiccatalogassets.textures.map_preview_mask.get(),
         )
@@ -228,7 +228,7 @@ class TournamentButton:
         self.prize_chest_1_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -262,7 +262,7 @@ class TournamentButton:
         self.prize_chest_2_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -296,7 +296,7 @@ class TournamentButton:
         self.prize_chest_3_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -662,7 +662,7 @@ class TournamentButton:
         #     bui.textwidget(edit=self.button_text, text='-')
         #     bui.imagewidget(
         #         edit=self.image,
-        #         texture=_builtinassets.textures.black,
+        #         texture=_commonassets.textures.black,
         #         opacity=0.2,
         #     )
         # else:
@@ -716,9 +716,9 @@ class TournamentButton:
             if final_fee == 0:
                 final_fee_str = _classicassets.strings.ui.free
             else:
-                final_fee_str = bui.charstr(
-                    bui.SpecialChar.TICKET_BACKING
-                ) + str(final_fee)
+                final_fee_str = bui.SpecialChar.TICKET_BACKING.value + str(
+                    final_fee
+                )
 
         assert bui.app.classic is not None
         ad_tries_remaining = bui.app.classic.accounts.tournament_info[

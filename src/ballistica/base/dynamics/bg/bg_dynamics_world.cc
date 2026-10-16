@@ -25,11 +25,17 @@
 #include "ballistica/base/graphics/mesh/mesh_indexed_smoke_full.h"
 #include "ballistica/base/graphics/mesh/sprite_mesh.h"
 #include "ballistica/base/graphics/support/render_view.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
+
+// Consecutive one-second windows of heavy feed dropping before we call
+// it sustained (shedding load, warning). Single bad seconds are the
+// norm in the field and recover on their own.
+const int kBGDynamicsSustainedOverloadWindows = 3;
 
 BGDynamicsWorld::BGDynamicsWorld(RenderView* view)
     : view_(view), server_(BGDynamicsWorldServer::Create()) {
@@ -122,24 +128,43 @@ void BGDynamicsWorld::Step(const Vector3f& cam_pos, int step_millisecs) {
   // we need to throttle what we send or tell it to cut back if its behind
   int step_count = server_->step_count();
 
-  // If we're really getting behind, start pruning stuff.
-  // NOTE: unreachable as written -- the feed-skip below caps the pending
-  // count at 2 -- so this has been dead since that skip was added. The
-  // drop ratio tracked in UpdateLoadSkip_ is the live "behind" signal;
-  // re-base this on it (or drop it) when the chunk valve gets revisited.
-  if (step_count > 3) {
-    TooSlow();
+  // Scene steps arrive in bursts: a logic update owing several steps
+  // (a low frame rate, a hitch, a client receiving a packet of them)
+  // runs them back to back, faster than the bg thread can wake up and
+  // drain them. So whether the bg thread is keeping up can only be
+  // judged between updates: what matters is whether the previous
+  // update's steps were still pending when this one began. (Judging per
+  // step, as we used to, read an idle bg thread as overloaded whenever
+  // bursts ran past two steps, and ran the bg sim in slow motion.)
+  microsecs_t update_id = g_base->logic->display_time_microsecs();
+  if (update_id != feed_update_id_) {
+    feed_update_id_ = update_id;
+    feed_update_backlog_ = step_count;
+    feed_update_steps_ = 0;
   }
+  feed_update_steps_++;
+  feed_window_max_burst_ = std::max(feed_window_max_burst_, feed_update_steps_);
 
-  // If we're slightly behind, just don't send this step; the bg dynamics
-  // will slow down a bit but nothing will disappear this way, which should
-  // be less jarring.
-  //
-  // HMMM; wondering if this should be limited in some way; it might lead to
-  // oddly slow feeling bg sims if things are consistently slow.
-  bool feed_dropped = step_count > 1;
-  UpdateLoadSkip_(feed_dropped, step_millisecs);
-  if (feed_dropped) {
+  // NOTE: the debris pruning that used to hang off the pending count
+  // here (TooSlow) had been unreachable since feed skipping was added,
+  // and stays unwired: the drop ratio tracked in UpdateLoadSkip_ is the
+  // live "behind" signal; re-base pruning on it when the chunk valve
+  // gets revisited.
+
+  // If the bg thread is behind, don't send it this update's steps; the
+  // bg dynamics will slow down a bit but nothing will disappear this
+  // way, which should be less jarring.
+  bool behind = feed_update_backlog_ > 1;
+
+  // An enormous burst (catching up after a long stall) gets cut off so
+  // the bg thread isn't left with an unbounded queue. That says nothing
+  // about how the bg thread is doing, so it doesn't count as behind.
+  bool overflow = !behind && step_count >= kBGDynamicsMaxPendingSteps;
+  if (overflow) {
+    feed_window_overflowed_++;
+  }
+  UpdateLoadSkip_(behind, step_millisecs);
+  if (behind || overflow) {
     return;
   }
 
@@ -188,8 +213,8 @@ void BGDynamicsWorld::SetOutputBundle(BGDynamicsOutputBundle* bundle) {
 
 void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
   // Tally feeds over one-second windows. A dropped feed means the bg
-  // thread was still chewing on the previous two steps, i.e. the bg
-  // sim is running slower than we are.
+  // thread had not finished an earlier logic update's steps by the time
+  // this update began, i.e. the bg sim is running slower than we are.
   feed_window_millisecs_ += step_millisecs;
   feed_window_total_++;
   if (feed_dropped) {
@@ -203,25 +228,65 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
   float window_seconds = static_cast<float>(feed_window_millisecs_) / 1000.0f;
   float drop_ratio = static_cast<float>(feed_window_dropped_)
                      / static_cast<float>(std::max(feed_window_total_, 1));
+  int max_burst = feed_window_max_burst_;
+  int overflowed = feed_window_overflowed_;
   feed_window_millisecs_ = 0;
   feed_window_total_ = 0;
   feed_window_dropped_ = 0;
+  feed_window_max_burst_ = 0;
+  feed_window_overflowed_ = 0;
 
   // Under --dynamics-profile, report the feed health once a second so
   // the lever's bumps and recovery can be watched.
   if (g_base->bg_dynamics_server->profile()) {
-    char buf[120];
+    char buf[200];
     snprintf(buf, sizeof(buf),
-             "bg-dynamics feed: %.0f%% dropped this second; character-rig load"
+             "bg-dynamics feed: %.0f%% dropped this second (largest burst %d"
+             " steps, %d cut from oversize bursts); character-rig load"
              " skip %.2f",
-             100.0f * drop_ratio, load_skip_);
+             100.0f * drop_ratio, max_burst, overflowed, load_skip_);
     g_core->logging->Log(LogName::kBa, LogLevel::kInfo, buf);
   }
 
+  // Only sustained trouble counts: a single bad second is nearly always
+  // the logic thread catching up after a hitch (one big burst), which
+  // the field shows recovering on its own.
   if (drop_ratio > 0.5f) {
-    // Emergency: the bg sim is at half speed or worse. Shed rig load
-    // in 25% steps, no faster than once a second, and say so -- this
-    // is a lever we don't expect to need.
+    overloaded_windows_++;
+  } else {
+    overloaded_windows_ = 0;
+  }
+  const BGDynamicsLoadStats& stats = load_stats_;
+
+  // Whether the bg thread's own work is a real share of the step
+  // budget. Field reports show most drops come with almost no bg work
+  // (often no bodies at all): the thread isn't being run promptly, and
+  // shedding rigs would only cost visuals. (No stats yet: assume busy.)
+  bool bg_busy = stats.steps == 0
+                 || stats.wall_ms >= 0.25 * static_cast<double>(step_millisecs);
+  millisecs_since_light_log_ += static_cast<int>(window_seconds * 1000.0f);
+
+  if (overloaded_windows_ >= kBGDynamicsSustainedOverloadWindows && !bg_busy) {
+    // Say so now and then, with the scheduling numbers, but shed
+    // nothing.
+    if (millisecs_since_light_log_ >= 10 * 60 * 1000) {
+      millisecs_since_light_log_ = 0;
+      char buf[400];
+      snprintf(buf, sizeof(buf),
+               "bg-dynamics feeds dropping (%.0f%% for %d+ seconds) with"
+               " light bg work (%.2fms wall, %.2fms cpu per step of %dms);"
+               " steps queued %.1fms avg, %.1fms max before the bg thread"
+               " ran them; largest burst %d steps. Not shedding load.",
+               100.0f * drop_ratio, overloaded_windows_, stats.wall_ms,
+               stats.cpu_ms, step_millisecs, stats.queue_wait_ms,
+               stats.queue_wait_max_ms, max_burst);
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
+    }
+  } else if (overloaded_windows_ >= kBGDynamicsSustainedOverloadWindows) {
+    // Emergency: the bg sim has been at half speed or worse for a
+    // while and its own work is why. Shed rig load in 25% steps, no
+    // faster than once a second, and say so -- this is a lever we
+    // don't expect to need.
     if (millisecs_since_bump_ >= 1000 && load_skip_ < 1.0f) {
       load_skip_ = std::min(1.0f, load_skip_ + 0.25f);
       millisecs_since_bump_ = 0;
@@ -244,21 +309,25 @@ void BGDynamicsWorld::UpdateLoadSkip_(bool feed_dropped, int step_millisecs) {
             std::max(ls.channels_ms + ls.chunks_ms + ls.tendrils_ms
                          + ls.worldstep_ms + ls.snapshot_ms + ls.publish_ms,
                      1e-9);
-        char buf[640];
-        snprintf(buf, sizeof(buf),
-                 "bg-dynamics overloaded (%.0f%% of feeds dropped this"
-                 " second); character-rig load skip -> %.2f%s; bg step"
-                 " %.1fms wall, %.1fms cpu over last %d steps (rigs %.0f%%,"
-                 " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
-                 " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
-                 " %d bodies, %d joints; logic step %dms",
-                 100.0f * drop_ratio, load_skip_, suffix.c_str(), ls.wall_ms,
-                 ls.cpu_ms, ls.steps, 100.0 * ls.channels_ms / phases,
-                 100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
-                 100.0 * ls.worldstep_ms / phases,
-                 100.0 * ls.snapshot_ms / phases,
-                 100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks,
-                 ls.tendrils, ls.bodies, ls.joints, step_millisecs);
+        char buf[900];
+        snprintf(
+            buf, sizeof(buf),
+            "bg-dynamics overloaded (%.0f%% of feeds dropped, %d"
+            " seconds running); character-rig load skip -> %.2f%s; bg"
+            " step %.1fms wall, %.1fms cpu over last %d steps, queued"
+            " %.1fms avg %.1fms max (rigs %.0f%%,"
+            " debris %.0f%%, tendrils %.0f%%, solve %.0f%%, snapshot"
+            " %.0f%%, publish %.0f%%); %d rigs, %d chunks, %d tendrils,"
+            " %d bodies, %d joints; logic step %dms, largest burst %d"
+            " steps, %d pending at this update's start",
+            100.0f * drop_ratio, overloaded_windows_, load_skip_,
+            suffix.c_str(), ls.wall_ms, ls.cpu_ms, ls.steps, ls.queue_wait_ms,
+            ls.queue_wait_max_ms, 100.0 * ls.channels_ms / phases,
+            100.0 * ls.chunks_ms / phases, 100.0 * ls.tendrils_ms / phases,
+            100.0 * ls.worldstep_ms / phases, 100.0 * ls.snapshot_ms / phases,
+            100.0 * ls.publish_ms / phases, ls.rigs, ls.chunks, ls.tendrils,
+            ls.bodies, ls.joints, step_millisecs, max_burst,
+            feed_update_backlog_);
         g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buf);
         millisecs_since_bump_log_ = 0;
         unlogged_bumps_ = 0;
@@ -342,7 +411,7 @@ void BGDynamicsWorld::Draw(FrameDef* frame_def) {
     c.SetCameraAligned(true);
     c.SetColor(2.0f, 2.0f, 2.0f, 1.0f);
     c.SetOverlay(draw_in_overlay);
-    c.SetTexture(g_base->assets->base_assets().sparks.get());
+    c.SetTexture(g_base->assets->base_assets().sparks());
     c.DrawMesh(sparks_mesh_.get(), kMeshDrawFlagNoReflection);
     c.Submit();
   }
@@ -357,7 +426,7 @@ void BGDynamicsWorld::Draw(FrameDef* frame_def) {
     lights_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->light_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light_soft.get());
+    c.SetTexture(g_base->assets->base_assets().light_soft());
     c.DrawMesh(lights_mesh_.get());
     c.Submit();
   }
@@ -373,7 +442,7 @@ void BGDynamicsWorld::Draw(FrameDef* frame_def) {
     shadows_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->shadow_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->base_assets().light.get());
+    c.SetTexture(g_base->assets->base_assets().light());
     c.DrawMesh(shadows_mesh_.get());
     c.Submit();
   }
@@ -426,7 +495,7 @@ void BGDynamicsWorld::Draw(FrameDef* frame_def) {
         Object::Ref<MeshBuffer<VertexSimpleFull>>(ds->fuse_vertices));
     {  // Draw!
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_base->assets->base_assets().fuse.get());
+      c.SetTexture(g_base->assets->base_assets().fuse());
       c.DrawMesh(fuses_mesh_.get(), kMeshDrawFlagNoReflection);
       c.Submit();
     }
@@ -508,16 +577,16 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
   MeshAsset* mesh;
   switch (chunk_type) {
     case BGDynamicsChunkType::kFlagStand:
-      mesh = g_base->assets->base_assets().flag_stand.get();
+      mesh = g_base->assets->base_assets().flag_stand();
       break;
     case BGDynamicsChunkType::kSplinter:
-      mesh = g_base->assets->base_assets().shrapnel_board.get();
+      mesh = g_base->assets->base_assets().shrapnel_board();
       break;
     case BGDynamicsChunkType::kSlime:
-      mesh = g_base->assets->base_assets().shrapnel_slime.get();
+      mesh = g_base->assets->base_assets().shrapnel_slime();
       break;
     default:
-      mesh = g_base->assets->base_assets().shrapnel_rock.get();
+      mesh = g_base->assets->base_assets().shrapnel_rock();
       break;
   }
   ObjectComponent c(frame_def->beauty_pass());
@@ -525,20 +594,20 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
   // Set up shading.
   switch (chunk_type) {
     case BGDynamicsChunkType::kRock: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.2f, 0.2f, 0.2f);
       c.SetColor(0.6f, 0.6f, 0.5f);
       break;
     }
     case BGDynamicsChunkType::kIce: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSharp);
       c.SetAddColor(0.5f, 0.5f, 0.9f);
       break;
     }
     case BGDynamicsChunkType::kSlime: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSharper);
       c.SetReflectionScale(3.0f, 3.0f, 3.0f);
       c.SetColor(0.0f, 0.0f, 0.0f);
@@ -546,13 +615,13 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kMetal: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kPowerup);
       c.SetColor(0.5f, 0.5f, 0.55f);
       break;
     }
     case BGDynamicsChunkType::kSpark: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSharp);
       c.SetColor(0.0f, 0.0f, 0.0f, 1.0f);
       c.SetReflectionScale(4.0f, 3.0f, 2.0f);
@@ -560,7 +629,7 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kSplinter: {
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSoft);
       c.SetColor(1.0f, 0.8f, 0.5f);
       break;
@@ -569,7 +638,7 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
       c.SetTransparent(true);
       c.SetPremultiplied(true);
       c.SetLightShadow(LightShadowType::kNone);
-      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color.get());
+      c.SetTexture(g_base->assets->base_assets().shrapnel_rock_color());
       c.SetReflection(ReflectionType::kSharp);
       c.SetReflectionScale(0.5f, 0.4f, 0.3f);
       c.SetColor(0.2f, 0.15f, 0.15f, 0.07f);
@@ -577,7 +646,7 @@ void BGDynamicsWorld::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kFlagStand: {
-      c.SetTexture(g_base->assets->base_assets().flag_pole_color.get());
+      c.SetTexture(g_base->assets->base_assets().flag_pole_color());
       c.SetReflection(ReflectionType::kSharp);
       c.SetColor(0.9f, 0.6f, 0.3f, 1.0f);
       break;

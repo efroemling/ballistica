@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -80,7 +80,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
         self._new_wave_sound = _classicassets.audio.score_hit01.get()
         self._winsound = _classicassets.audio.score.get()
-        self._cashregistersound = _builtinassets.audio.cash_register.get()
+        self._cashregistersound = _commonassets.audio.cash_register.get()
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)

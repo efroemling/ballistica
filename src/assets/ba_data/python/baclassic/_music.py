@@ -5,7 +5,7 @@
 import copy
 import time
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum
 
@@ -40,86 +40,60 @@ class MusicPlayMode(Enum):
 class AssetSoundtrackEntry:
     """A music entry using an internal asset."""
 
-    assetname: str
+    sound: bascenev1.SoundHandle
     volume: float = 1.0
     loop: bool = True
 
 
-def _audioref(name: str) -> str:
-    """Qualified asset-package ref for a _classicassets audio asset."""
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_classicassets._ASSET_PACKAGE}:audio/{name}'
-
-
-# What gets played by default for our different music types:
-ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
-    MusicType.MENU: AssetSoundtrackEntry(_audioref('menu_music')),
-    MusicType.VICTORY: AssetSoundtrackEntry(
-        _audioref('victory_music'), volume=1.2, loop=False
-    ),
-    MusicType.CHAR_SELECT: AssetSoundtrackEntry(
-        _audioref('char_select_music'), volume=0.4
-    ),
-    MusicType.RUN_AWAY: AssetSoundtrackEntry(
-        _audioref('run_away_music'), volume=1.2
-    ),
-    MusicType.ONSLAUGHT: AssetSoundtrackEntry(
-        _audioref('run_away_music'), volume=1.2
-    ),
-    MusicType.KEEP_AWAY: AssetSoundtrackEntry(
-        _audioref('run_away_music'), volume=1.2
-    ),
-    MusicType.RACE: AssetSoundtrackEntry(
-        _audioref('run_away_music'), volume=1.2
-    ),
-    MusicType.EPIC_RACE: AssetSoundtrackEntry(
-        _audioref('slow_epic_music'), volume=1.2
-    ),
-    MusicType.SCORES: AssetSoundtrackEntry(
-        _audioref('scores_epic_music'), volume=0.6, loop=False
-    ),
-    MusicType.GRAND_ROMP: AssetSoundtrackEntry(
-        _audioref('grand_romp_music'), volume=1.2
-    ),
-    MusicType.TO_THE_DEATH: AssetSoundtrackEntry(
-        _audioref('to_the_death_music'), volume=1.2
-    ),
-    MusicType.CHOSEN_ONE: AssetSoundtrackEntry(
-        _audioref('survival_music'), volume=0.8
-    ),
-    MusicType.FORWARD_MARCH: AssetSoundtrackEntry(
-        _audioref('forward_march_music'), volume=0.8
-    ),
-    MusicType.FLAG_CATCHER: AssetSoundtrackEntry(
-        _audioref('flag_catcher_music'), volume=1.2
-    ),
-    MusicType.SURVIVAL: AssetSoundtrackEntry(
-        _audioref('survival_music'), volume=0.8
-    ),
-    MusicType.EPIC: AssetSoundtrackEntry(
-        _audioref('slow_epic_music'), volume=1.2
-    ),
-    MusicType.SPORTS: AssetSoundtrackEntry(
-        _audioref('sports_music'), volume=0.8
-    ),
-    MusicType.HOCKEY: AssetSoundtrackEntry(
-        _audioref('sports_music'), volume=0.8
-    ),
-    MusicType.FOOTBALL: AssetSoundtrackEntry(
-        _audioref('sports_music'), volume=0.8
-    ),
-    MusicType.FLYING: AssetSoundtrackEntry(
-        _audioref('flying_music'), volume=0.8
-    ),
-    MusicType.SCARY: AssetSoundtrackEntry(_audioref('scary_music'), volume=0.8),
-    MusicType.MARCHING: AssetSoundtrackEntry(
-        _audioref('when_johnny_comes_marching_home_music'), volume=0.8
-    ),
-}
+def asset_soundtrack_entry(musictype: MusicType) -> AssetSoundtrackEntry:
+    """What gets played by default for a music type."""
+    # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-branches
+    audio = _classicassets.audio
+    match musictype:
+        case MusicType.MENU:
+            return AssetSoundtrackEntry(audio.menu_music)
+        case MusicType.VICTORY:
+            return AssetSoundtrackEntry(
+                audio.victory_music, volume=1.2, loop=False
+            )
+        case MusicType.CHAR_SELECT:
+            return AssetSoundtrackEntry(audio.char_select_music, volume=0.4)
+        case (
+            MusicType.RUN_AWAY
+            | MusicType.ONSLAUGHT
+            | MusicType.KEEP_AWAY
+            | MusicType.RACE
+        ):
+            return AssetSoundtrackEntry(audio.run_away_music, volume=1.2)
+        case MusicType.EPIC_RACE | MusicType.EPIC:
+            return AssetSoundtrackEntry(audio.slow_epic_music, volume=1.2)
+        case MusicType.SCORES:
+            return AssetSoundtrackEntry(
+                audio.scores_epic_music, volume=0.6, loop=False
+            )
+        case MusicType.GRAND_ROMP:
+            return AssetSoundtrackEntry(audio.grand_romp_music, volume=1.2)
+        case MusicType.TO_THE_DEATH:
+            return AssetSoundtrackEntry(audio.to_the_death_music, volume=1.2)
+        case MusicType.CHOSEN_ONE | MusicType.SURVIVAL:
+            return AssetSoundtrackEntry(audio.survival_music, volume=0.8)
+        case MusicType.FORWARD_MARCH:
+            return AssetSoundtrackEntry(audio.forward_march_music, volume=0.8)
+        case MusicType.FLAG_CATCHER:
+            return AssetSoundtrackEntry(audio.flag_catcher_music, volume=1.2)
+        case MusicType.SPORTS | MusicType.HOCKEY | MusicType.FOOTBALL:
+            return AssetSoundtrackEntry(audio.sports_music, volume=0.8)
+        case MusicType.FLYING:
+            return AssetSoundtrackEntry(audio.flying_music, volume=0.8)
+        case MusicType.SCARY:
+            return AssetSoundtrackEntry(audio.scary_music, volume=0.8)
+        case MusicType.MARCHING:
+            return AssetSoundtrackEntry(
+                audio.when_johnny_comes_marching_home_music, volume=0.8
+            )
+        case _:
+            assert_never(musictype)
 
 
 class MusicSubsystem:
@@ -541,23 +515,9 @@ class MusicSubsystem:
 
         # Start up new internal music.
         if musictype is not None:
-            entry = ASSET_SOUNDTRACK_ENTRIES.get(musictype)
-            if entry is None:
-                print(f"Unknown music: '{musictype}'")
-                entry = ASSET_SOUNDTRACK_ENTRIES[MusicType.FLAG_CATCHER]
-
-            # self._music_node = _bascenev1.newnode(
-            #     type='sound',
-            #     attrs={
-            #         'sound': _bascenev1.getsound(entry.assetname),
-            #         'positional': False,
-            #         'music': True,
-            #         'volume': entry.volume * 5.0,
-            #         'loop': entry.loop,
-            #     },
-            # )
+            entry = asset_soundtrack_entry(musictype)
             bascenev1.set_internal_music(
-                babase.simple_sound_from_ref(entry.assetname),
+                entry.sound.simple().get(),
                 volume=entry.volume * 5.0,
                 loop=entry.loop,
             )

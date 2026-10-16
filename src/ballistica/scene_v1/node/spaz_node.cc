@@ -1930,6 +1930,24 @@ void SpazNode::DoFlyPress() {
   }
 }
 
+void SpazNode::PostDynamicsStep() {
+  // Feed the character rig every anchor body's transform as this step
+  // left it. Its results draw relative to these same bodies, so giving
+  // it the poses we will draw at keeps limbs and attachments in step
+  // with the torso (fed before dynamics ran, they were always drawn a
+  // step's worth of body motion off, which showed as a one-frame jump
+  // whenever a turn started or stopped).
+  if (attachment_rig_) {
+    for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
+      RigidBody* body =
+          AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
+      if (body) {
+        attachment_rig_->SetAnchor(ti, body->GetTransform());
+      }
+    }
+  }
+}
+
 void SpazNode::Step() {
   // Standin -> real look upgrade (character form): re-attempt the
   // definition's media the moment the registry moved (a background
@@ -1949,16 +1967,9 @@ void SpazNode::Step() {
     }
   }
 
-  // Feed the character rig every anchor body's transform (results come
-  // back a step or two later and draw relative to the bodies).
+  // The character rig's per-step settings. (Its anchor transforms go
+  // over in PostDynamicsStep, once our bodies have moved.)
   if (attachment_rig_) {
-    for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
-      RigidBody* body =
-          AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
-      if (body) {
-        attachment_rig_->SetAnchor(ti, body->GetTransform());
-      }
-    }
     if (rig_snap_) {
       attachment_rig_->Snap();
       rig_snap_ = false;
@@ -2783,7 +2794,12 @@ void SpazNode::Step() {
     knockout_--;
     if (knockout_ == 0) {
       dBodyEnable(body_head_->body());
+      wake_slide_ = tuning_->wake_slide_steps;
     }
+  } else if (wake_slide_ > 0) {
+    // Frictionless ball for a moment after getting up (see
+    // wake_slide_steps).
+    wake_slide_--;
   }
 
   // if we're wanting to throw something...
@@ -4522,17 +4538,18 @@ void SpazNode::DrawDebugBodies_(base::FrameDef* frame_def) {
         }
         c.Submit();
       }
-      // bg limbs, exactly where their display meshes draw.
+      // bg limbs, at their true simmed poses like the attachments
+      // below. (Their display meshes instead draw re-anchored onto the
+      // live torso/pelvis -- see LimbRenderMatrix_ -- which hides the
+      // bg sim trailing the main one by a step; here we want to see
+      // exactly what the bg sim holds.)
       if (bg_limbs && static_cast<int>(out->limbs.size()) > 0) {
         base::ObjectComponent c(pass);
         c.SetFacingRatio(true);
         c.SetLightShadow(base::LightShadowType::kObject);
         for (int i = 0;
              i < static_cast<int>(out->limbs.size()) && i < kLimbCount; ++i) {
-          Matrix44f m;
-          if (!LimbRenderMatrix_(i, &m)) {
-            continue;
-          }
+          const Matrix44f& m = out->limbs[i].world;
           // bg-simulated: blue-tinted like every other bg body.
           float r = i < kLimbUpperRightLeg ? ar : lr;
           float g = i < kLimbUpperRightLeg ? ag : lg;
@@ -5323,8 +5340,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5332,8 +5348,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw target.
@@ -5343,8 +5358,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5352,8 +5366,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
     }
 
@@ -5380,7 +5393,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     base::MeshAsset* glove_mesh =
         boxing_gloves_mesh_.exists()
             ? boxing_gloves_mesh_->mesh_data()
-            : g_base->assets->base_assets().boxing_glove.get();
+            : g_base->assets->base_assets().boxing_glove();
     if (frozen_) {
       c.SetColor(gr, gg, gb);
       c.SetAddColor(0.1f, 0.1f, 0.4f);
@@ -5414,7 +5427,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kObject);
     c.SetTexture(boxing_gloves_color_texture_.exists()
                      ? boxing_gloves_color_texture_->texture_data()
-                     : g_base->assets->base_assets().boxing_gloves_color.get());
+                     : g_base->assets->base_assets().boxing_gloves_color());
 
     Matrix44f m;
     if (LimbRenderMatrix_(kLimbLowerRightArm, &m)) {
@@ -5870,6 +5883,13 @@ auto SpazNode::CollideCallback(dContact* c, int count,
             c[i].surface.mu *= 1.0f;
           }
         }
+      }
+    }
+    // Just got up from a knockout: slide instead of pivoting over the
+    // ball (see wake_slide_steps).
+    if (wake_slide_ > 0) {
+      for (int i = 0; i < count; i++) {
+        c[i].surface.mu = 0.0f;
       }
     }
   } else if (colliding_body->id() != kRollerBodyID) {

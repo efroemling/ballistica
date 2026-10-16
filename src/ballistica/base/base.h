@@ -195,6 +195,9 @@ enum class DebugBoundsType : uint8_t {
   kNameDepictions,
   kImageDepictions,
   kCharacterIconDepictions,
+  /// Every text mesh's glyph quads, filled translucent red (so a glyph's
+  /// art can be checked against where its quad actually lands).
+  kText,
 };
 
 enum class VSync : uint8_t { kUnset, kNever, kAlways, kAdaptive };
@@ -335,12 +338,22 @@ enum class TextureWrapping : uint8_t {
   kMirroredRepeat,
 };
 
+/// The plain fills the engine generates itself rather than loading from
+/// an asset-package (see Assets::SolidTexture()), so drawing with no
+/// texture or an empty colorize mask needs no package at all.
+enum class SolidTextureColor : uint8_t {
+  kWhite,
+  kBlack,
+};
+
 /// What a texture was authored as (its role in the asset workspace),
 /// delivered in the KTX2 key/value data. Lets a texture be checked
 /// against the kind of shader slot it is bound to: a kData texture
-/// (mask/tint; independent channel values) in a picture slot, or a
-/// picture in a mask slot, shades subtly wrong and is otherwise easy to
-/// miss. kUnknown is anything that did not come from the asset pipeline
+/// (tint/color mask; independent channel values) in a picture slot, a
+/// picture in a mask slot, or plain kData in a frame-mask slot (which
+/// wants kPremultipliedData: data whose other channels the pipeline has
+/// multiplied by its alpha) shades subtly wrong and is otherwise easy
+/// to miss. kUnknown is anything that did not come from the asset pipeline
 /// (legacy formats, OS-decoded images, text, render targets), a texture
 /// that has not loaded yet, or a role newer than this build knows; such
 /// textures are never checked. A pipeline texture with no role key is
@@ -351,6 +364,7 @@ enum class TextureRole : uint8_t {
   kSourcePremultiplied,
   kStraightAlpha,
   kData,
+  kPremultipliedData,
 };
 
 enum class TextureMinQuality : uint8_t {
@@ -392,6 +406,9 @@ enum MeshDrawFlags : uint8_t {
   kMeshDrawFlagNoReflection = 1,
   /// Draw the mesh's indices as line pairs instead of triangles.
   kMeshDrawFlagLines = 1 << 1,
+  /// Also fill the mesh's triangles translucent red on top (text-quad
+  /// debug drawing; see DebugBoundsType::kText).
+  kMeshDrawFlagDebugFill = 1 << 2,
 };
 
 enum class LightShadowType : uint8_t {
@@ -501,13 +518,10 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261011
-inline constexpr const char* kBuiltinAssetsApvernum = "636";
+// Builtin asset-package: a-0.babuiltinassets.261014b
+inline constexpr const char* kBuiltinAssetsApvernum = "689";
 
 enum class BuiltinTextureID : uint16_t {
-  kTexturesAccountV2Icon,     // textures/account_v2_icon
-  kTexturesBlack,             // textures/black
-  kTexturesBlackData,         // textures/black_data
   kTexturesCircle,            // textures/circle
   kTexturesCircleShadow,      // textures/circle_shadow
   kTexturesCursor,            // textures/cursor
@@ -525,42 +539,109 @@ enum class BuiltinTextureID : uint16_t {
   kTexturesFontSmall5,        // textures/font_small5
   kTexturesFontSmall6,        // textures/font_small6
   kTexturesFontSmall7,        // textures/font_small7
-  kTexturesGlowCircle,        // textures/glow_circle
   kTexturesHowdy,             // textures/howdy
   kTexturesShadow,            // textures/shadow
   kTexturesShadowSharp,       // textures/shadow_sharp
-  kTexturesSoftRect,          // textures/soft_rect
-  kTexturesSoftRect2,         // textures/soft_rect2
   kTexturesSoftRect2Mask,     // textures/soft_rect2_mask
   kTexturesSoftRectMask,      // textures/soft_rect_mask
   kTexturesSoftRectVertical,  // textures/soft_rect_vertical
-  kTexturesWhite,             // textures/white
-  kTexturesWhiteData,         // textures/white_data
 };
 
-enum class BuiltinCubeMapTextureID : uint16_t {
-  kTexturesBlackCube,  // textures/black_cube
-};
+/// Qualified ``<apvernum>:<name>`` ref for a BuiltinTextureID.
+inline auto BuiltinAssetRef(BuiltinTextureID id) -> const char* {
+  switch (id) {
+    case BuiltinTextureID::kTexturesCircle:
+      return "689:textures/circle";
+    case BuiltinTextureID::kTexturesCircleShadow:
+      return "689:textures/circle_shadow";
+    case BuiltinTextureID::kTexturesCursor:
+      return "689:textures/cursor";
+    case BuiltinTextureID::kTexturesFontBig:
+      return "689:textures/font_big";
+    case BuiltinTextureID::kTexturesFontExtras:
+      return "689:textures/font_extras";
+    case BuiltinTextureID::kTexturesFontExtras2:
+      return "689:textures/font_extras2";
+    case BuiltinTextureID::kTexturesFontExtras3:
+      return "689:textures/font_extras3";
+    case BuiltinTextureID::kTexturesFontExtras4:
+      return "689:textures/font_extras4";
+    case BuiltinTextureID::kTexturesFontExtras5:
+      return "689:textures/font_extras5";
+    case BuiltinTextureID::kTexturesFontSmall0:
+      return "689:textures/font_small0";
+    case BuiltinTextureID::kTexturesFontSmall1:
+      return "689:textures/font_small1";
+    case BuiltinTextureID::kTexturesFontSmall2:
+      return "689:textures/font_small2";
+    case BuiltinTextureID::kTexturesFontSmall3:
+      return "689:textures/font_small3";
+    case BuiltinTextureID::kTexturesFontSmall4:
+      return "689:textures/font_small4";
+    case BuiltinTextureID::kTexturesFontSmall5:
+      return "689:textures/font_small5";
+    case BuiltinTextureID::kTexturesFontSmall6:
+      return "689:textures/font_small6";
+    case BuiltinTextureID::kTexturesFontSmall7:
+      return "689:textures/font_small7";
+    case BuiltinTextureID::kTexturesHowdy:
+      return "689:textures/howdy";
+    case BuiltinTextureID::kTexturesShadow:
+      return "689:textures/shadow";
+    case BuiltinTextureID::kTexturesShadowSharp:
+      return "689:textures/shadow_sharp";
+    case BuiltinTextureID::kTexturesSoftRect2Mask:
+      return "689:textures/soft_rect2_mask";
+    case BuiltinTextureID::kTexturesSoftRectMask:
+      return "689:textures/soft_rect_mask";
+    case BuiltinTextureID::kTexturesSoftRectVertical:
+      return "689:textures/soft_rect_vertical";
+  }
+  return "";  // Unreachable; the switch is exhaustive.
+}
+
+enum class BuiltinCubeMapTextureID : uint16_t {};
 
 enum class BuiltinSoundID : uint16_t {
-  kAudioBlank,         // audio/blank
-  kAudioBlip,          // audio/blip
-  kAudioCashRegister,  // audio/cash_register
-  kAudioClick01,       // audio/click01
-  kAudioDing,          // audio/ding
-  kAudioError,         // audio/error
-  kAudioGunCocking,    // audio/gun_cocking
-  kAudioPowerdown01,   // audio/powerdown01
-  kAudioTap,           // audio/tap
+  kAudioBlank,    // audio/blank
+  kAudioBlip,     // audio/blip
+  kAudioClick01,  // audio/click01
+  kAudioError,    // audio/error
 };
 
+/// Qualified ``<apvernum>:<name>`` ref for a BuiltinSoundID.
+inline auto BuiltinAssetRef(BuiltinSoundID id) -> const char* {
+  switch (id) {
+    case BuiltinSoundID::kAudioBlank:
+      return "689:audio/blank";
+    case BuiltinSoundID::kAudioBlip:
+      return "689:audio/blip";
+    case BuiltinSoundID::kAudioClick01:
+      return "689:audio/click01";
+    case BuiltinSoundID::kAudioError:
+      return "689:audio/error";
+  }
+  return "";  // Unreachable; the switch is exhaustive.
+}
+
 enum class BuiltinMeshID : uint16_t {
-  kMeshesBox,           // meshes/box
-  kMeshesImage1x1,      // meshes/image1x1
-  kMeshesOverlayGuide,  // meshes/overlay_guide
-  kMeshesVrFade,        // meshes/vr_fade
-  kMeshesVrOverlay,     // meshes/vr_overlay
+  kMeshesImage1x1,   // meshes/image1x1
+  kMeshesVrFade,     // meshes/vr_fade
+  kMeshesVrOverlay,  // meshes/vr_overlay
 };
+
+/// Qualified ``<apvernum>:<name>`` ref for a BuiltinMeshID.
+inline auto BuiltinAssetRef(BuiltinMeshID id) -> const char* {
+  switch (id) {
+    case BuiltinMeshID::kMeshesImage1x1:
+      return "689:meshes/image1x1";
+    case BuiltinMeshID::kMeshesVrFade:
+      return "689:meshes/vr_fade";
+    case BuiltinMeshID::kMeshesVrOverlay:
+      return "689:meshes/vr_overlay";
+  }
+  return "";  // Unreachable; the switch is exhaustive.
+}
 // __AUTOGENERATED_BUILTIN_ASSET_IDS_END__
 
 // The screen, no matter what size/aspect, will always fit this virtual

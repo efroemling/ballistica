@@ -17,6 +17,7 @@ import babase
 from babase import AppMode, AppModeConfig
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 from bauiv1 import _classicassets
 from bauiv1 import _uiv1assets
 from bauiv1 import _classicuiassets
@@ -178,6 +179,7 @@ class ClassicAppMode(AppMode):
         babase.set_asset_name_compat_versions(
             {
                 'builtinassets': _builtinassets._ASSET_PACKAGE,
+                'commonassets': _commonassets._ASSET_PACKAGE,
                 'classicassets': _classicassets._ASSET_PACKAGE,
                 'bauiv1assets': _uiv1assets._ASSET_PACKAGE,
                 'scenev1assets': _scenev1assets._ASSET_PACKAGE,
@@ -289,6 +291,9 @@ class ClassicAppMode(AppMode):
             self._root_ui_chest_slot_pressed, 3
         )
 
+        # The legacy v1 account client runs only while we're active.
+        plus.set_v1_account_client_active(True)
+
         # We want to be informed when connectivity changes.
         self._on_connectivity_changed_callback = (
             plus.cloud.on_connectivity_changed_callbacks.register(
@@ -322,6 +327,10 @@ class ClassicAppMode(AppMode):
 
         # Remove anything following any current account.
         self._update_for_primary_account(None)
+
+        # Nothing outside of us wants the legacy v1 account client.
+        if bui.app.plus is not None:
+            bui.app.plus.set_v1_account_client_active(False)
 
         # Save where we were in the UI so we return there next time.
         if classic is not None:
@@ -417,7 +426,7 @@ class ClassicAppMode(AppMode):
                     ).spec,
                     color=(0, 1, 0),
                 ),
-                clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
+                clfx.PlaySoundV2(sound=_commonassets.audio.cash_register),
             ]
             bui.app.classic.run_bs_client_effects(effects)
 
@@ -429,7 +438,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                _builtinassets.audio.cash_register.get().play()
+                _commonassets.audio.cash_register.get().play()
 
         else:
 
@@ -442,7 +451,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                _builtinassets.audio.cash_register.get().play()
+                _commonassets.audio.cash_register.get().play()
 
     def on_engine_will_reset(self) -> None:
         """Called just before classic resets the engine.

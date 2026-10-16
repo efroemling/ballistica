@@ -201,7 +201,7 @@ class PlaylistEditWindow(bui.MainWindow):
             position=(h, v),
             size=(42, 35),
             on_activate_call=self._move_up,
-            label=bui.charstr(bui.SpecialChar.UP_ARROW),
+            label=bui.SpecialChar.UP_ARROW.value,
             button_type='square',
             color=b_color,
             textcolor=b_textcolor,
@@ -218,7 +218,7 @@ class PlaylistEditWindow(bui.MainWindow):
             button_type='square',
             color=b_color,
             textcolor=b_textcolor,
-            label=bui.charstr(bui.SpecialChar.DOWN_ARROW),
+            label=bui.SpecialChar.DOWN_ARROW.value,
             repeat=True,
         )
 
@@ -302,7 +302,7 @@ class PlaylistEditWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        _builtinassets.audio.powerdown01.get().play()
+        _commonassets.audio.powerdown01.get().play()
         self.main_window_back()
 
     def _add(self) -> None:
@@ -384,7 +384,7 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
 
         self.main_window_back()
 

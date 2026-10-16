@@ -23,9 +23,10 @@ class SimpleComponent : public RenderComponent {
   }
 
   // The texture setters below also note which kind of slot the texture
-  // is going into, so a texture built for the other kind (a data-role
-  // mask drawn as a picture, or a picture used as a mask) gets a
-  // one-time warning. See TextureAsset::ExpectPictureSlot.
+  // is going into, so a texture built for another kind (a data-role
+  // mask drawn as a picture, a picture used as a mask, plain data used
+  // as a frame mask) gets a one-time warning. See
+  // TextureAsset::ExpectPictureSlot.
 
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
@@ -54,19 +55,22 @@ class SimpleComponent : public RenderComponent {
   }
 
   /// Red multiplies source color, green adds colorize1-color, and blue adds
-  /// white (currently requires colorize1 and colorize 2 to be set).
+  /// white (currently requires colorize1 and colorize 2 to be set). All
+  /// three are scaled by the mask's alpha, which also cuts the shape
+  /// out, so this slot wants a 'premultiplied_data' texture.
   void SetMaskTexture(TextureAsset* t) {
     EnsureConfiguring();
     if (t != nullptr) {
-      t->ExpectDataSlot("mask");
+      t->ExpectFrameMaskSlot();
     }
     mask_texture_ = t;
   }
 
+  /// Only the alpha of this one is read.
   void SetMaskUV2Texture(TextureAsset* t) {
     EnsureConfiguring();
     if (t != nullptr) {
-      t->ExpectDataSlot("mask");
+      t->ExpectAlphaMaskSlot();
     }
     mask_uv2_texture_ = t;
   }
@@ -135,9 +139,11 @@ class SimpleComponent : public RenderComponent {
   /// glyph's padding in its atlas bounds how far it can usefully go).
   ///
   /// ``text_glow`` > 0 draws with the text-glow shader variant instead: the
-  /// same shadow, plus the glyph's interior lifted toward white (a
-  /// neon look) at that strength (1 = standard). Its own program, used
-  /// only when > 0, so plain text never pays for it.
+  /// same shadow, under a blurred copy of the glyph in place of the
+  /// glyph itself, its interior lifted toward white (a neon look) at
+  /// that strength (1 = standard). The blur's width is a fraction of
+  /// the shadow's offset, so pass one even at zero opacity. Its own
+  /// program, used only when > 0, so plain text never pays for it.
   void SetShadow(float offset_x, float offset_y, float blur, float opacity,
                  float r = 0.0f, float g = 0.0f, float b = 0.0f,
                  float spread = 0.0f, float text_glow = 0.0f) {

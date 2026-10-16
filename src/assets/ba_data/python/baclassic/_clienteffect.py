@@ -13,6 +13,7 @@ from efro.util import strict_partial, strip_exception_tracebacks
 from bacommon.logging import ClientLoggerName
 
 import bauiv1
+from bauiv1 import _builtinassets, _commonassets
 
 import _baclassic
 
@@ -312,27 +313,25 @@ def _run_effects(
         elif effecttype is clfx.EffectTypeID.SOUND:
             assert isinstance(effect, clfx.PlaySound)
             scls = clfx.Sound
-            soundfile: str | None = None
+            sound: bauiv1.SoundHandle | None = None
             if effect.sound is scls.UNKNOWN:
                 # Server should avoid sending us sounds we don't
                 # support. Make some noise if it happens.
                 logging.error('Got unrecognized bacommon.classic.Sound.')
             elif effect.sound is scls.CASH_REGISTER:
-                soundfile = 'cashRegister'
+                sound = _commonassets.audio.cash_register
             elif effect.sound is scls.ERROR:
-                soundfile = 'error'
+                sound = _builtinassets.audio.error
             elif effect.sound is scls.POWER_DOWN:
-                soundfile = 'powerdown01'
+                sound = _commonassets.audio.powerdown01
             elif effect.sound is scls.GUN_COCKING:
-                soundfile = 'gunCocking'
+                sound = _commonassets.audio.gun_cocking
             else:
                 assert_never(effect.sound)
-            if soundfile is not None:
+            if sound is not None:
                 bauiv1.apptimer(
                     delay,
-                    strict_partial(
-                        bauiv1.getsound(soundfile).play, volume=effect.volume
-                    ),
+                    strict_partial(sound.get().play, volume=effect.volume),
                 )
 
         elif effecttype is clfx.EffectTypeID.DELAY:

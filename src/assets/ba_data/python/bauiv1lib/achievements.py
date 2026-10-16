@@ -141,11 +141,11 @@ class AchievementsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|back',
                 autoselect=True,
                 **_back_button_geometry(uiscale, auxiliary_style, yoffs),
-                label=bui.charstr(
+                label=(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style
                     else bui.SpecialChar.BACK
-                ),
+                ).value,
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
             )

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261011`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261015`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 635
+# ba_meta require asset-package 704
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261011
-_ASSET_PACKAGE = ApverNum(635)
+# a-0.baclassicassets.261015
+_ASSET_PACKAGE = ApverNum(704)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -7747,6 +7747,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Slider label setting how see-through the on-screen dev console
+        #:     button is.
+        #:
+        #:     English: "Opacity"
+        opacity: LangStr
+
+        #: ::
+        #:
         #:     Button resetting the on-screen dev-console button to its default
         #:     position (it can be moved by dragging it).
         #:
@@ -7885,6 +7893,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Max FPS"
         max_fps: LangStr
+
+        #: ::
+        #:
+        #:     Label of the multisample anti-aliasing setting in the graphics
+        #:     settings.
+        #:
+        #:     English: "MSAA"
+        msaa: LangStr
 
         #: ::
         #:
@@ -9757,8 +9773,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1010 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1005 more). Full list in
+    #: The ``strings`` group - 1012 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1007 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10921,6 +10937,7 @@ _TREE = {
                 'dev_console_button': (),
                 'drag_to_reposition': (),
                 'enable': (),
+                'opacity': (),
                 'reset_button_position': (),
                 'show_dev_console_button': (),
                 'size': (),
@@ -10940,6 +10957,7 @@ _TREE = {
                 'fullscreen': (),
                 'fullscreen_shortcut_format': ('name', 'shortcut'),
                 'max_fps': (),
+                'msaa': (),
                 'native': (),
                 'resolution': (),
                 'screen_insets': (),

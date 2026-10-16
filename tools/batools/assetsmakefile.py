@@ -4,6 +4,7 @@
 
 import json
 import os
+import datetime
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
@@ -16,6 +17,39 @@ ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
 
 _PY_GENERATED_ROOT_PARENT = f'{ASSETS_SRC}/ba_data/python'
+
+# Generated files whose generators have been retired. Existing trees
+# (CI workspaces, spinoff dsts, people's checkouts) can still hold
+# these since they are gitignored; the coverage check below removes
+# them instead of failing on them.
+#
+# Each entry maps to the date it should be dropped by, once old trees
+# have had time to cycle. Past that date, update fails in the internal
+# repo (only there, so nobody else's checkout breaks on a calendar
+# date) until the entry is removed.
+_RETIRED_GENERATED_FILES: dict[str, datetime.date] = {
+    # Enums are defined in bacommon.nativeenums now (2026-10).
+    f'{_PY_GENERATED_ROOT_PARENT}/babase/_generated/enums.py': datetime.date(
+        2027, 1, 15
+    ),
+}
+
+
+def _check_retired_generated_files_expiry(projroot: str) -> None:
+    """Complain about retired-generated-file entries past their date."""
+    # Only where we can act on it (this dir is private to the internal
+    # repo).
+    if not os.path.isdir(os.path.join(projroot, 'tools', 'batoolsinternal')):
+        return
+    today = datetime.date.today()
+    for path, expiry in sorted(_RETIRED_GENERATED_FILES.items()):
+        if today >= expiry:
+            raise CleanError(
+                f"The retired-generated-file entry for '{path}' in"
+                f' tools/batools/assetsmakefile.py was due to be removed'
+                f' by {expiry}; old trees have had time to cycle, so'
+                ' delete the entry.'
+            )
 
 
 def _is_generated_python_dir(rel_root: str) -> bool:
@@ -43,6 +77,8 @@ def _check_codegen_coverage(
 
     Fail loudly on both here, where update/update-check always runs.
     """
+    _check_retired_generated_files_expiry(projroot)
+
     declared: set[str] = set()
     for manifest in codegen_manifests.values():
         declared.update(json.loads(manifest))
@@ -72,6 +108,13 @@ def _check_codegen_coverage(
             if fname == '.DS_Store':
                 continue
             relpath = f'{rel_root}/{fname}'
+            if relpath in _RETIRED_GENERATED_FILES and relpath not in declared:
+                # A leftover from before its generator went away; these
+                # are gitignored, so only long-lived trees have them.
+                # Clear it out so those trees heal on their own.
+                print(f"Removing retired generated file '{relpath}'.")
+                os.remove(os.path.join(projroot, relpath))
+                continue
             if relpath not in declared:
                 raise CleanError(
                     f"File '{relpath}' lives in a codegen '_generated'"

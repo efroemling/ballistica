@@ -4,7 +4,7 @@
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 
 from bacommon.app import AppArchitecture, AppPlatform, AppVariant
-from babase._generated import enums
+from bacommon import nativeenums as enums
 
 from babase import (
     _language,
@@ -71,7 +71,6 @@ values = [
     enums.QuitType,  # kQuitTypeClass
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
-    enums.SpecialChar,  # kSpecialCharClass
     enums.SoundPriority,  # kSoundPriorityClass
     _hooks.hash_strings,  # kHashStringsCall
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall

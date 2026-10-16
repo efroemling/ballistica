@@ -1,5 +1,5 @@
 {
-  "assets": "a-0.babuiltinassets.261011",
+  "assets": "a-0.babuiltinassets.261014b",
   "code_source_dirs": [
     "src/ballistica"
   ],
@@ -23,13 +23,13 @@
     "bauiv1lib": "buil"
   },
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
-  "engine_build_number": 23050,
+  "engine_build_number": 23063,
   "name": "BallisticaKit",
   "public": true,
   "python_paths": [
     "src/assets/ba_data/python",
     "build/dummymodules",
-    "src/meta",
+    "src/codegen",
     "tools",
     "tests"
   ],
@@ -38,10 +38,10 @@
     "src/assets/server_package",
     "src/assets/workspace",
     "src/assets/sphinx/static",
-    "src/meta",
+    "src/codegen",
     "tools",
     "tests",
     "config"
   ],
-  "version": "1.8.0b20"
+  "version": "1.8.2"
 }

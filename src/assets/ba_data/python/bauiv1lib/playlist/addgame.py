@@ -76,7 +76,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(58 + x_inset, yoffs - 53),
                 size=(60, 48),
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 autoselect=True,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,

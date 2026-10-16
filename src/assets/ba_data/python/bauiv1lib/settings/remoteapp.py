@@ -71,7 +71,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
                 position=(40, yoffs - 67),
                 size=(60, 60),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 text_scale=1.1,
                 autoselect=True,

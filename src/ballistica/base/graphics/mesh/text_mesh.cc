@@ -16,7 +16,9 @@ namespace ballistica::base {
 // drawn just above text itself).
 static constexpr bool kDebugShowTexturePages{false};
 
-TextMesh::TextMesh() : MeshIndexedDualTextureFull(MeshDrawType::kStatic) {}
+TextMesh::TextMesh() : MeshIndexedDualTextureFull(MeshDrawType::kStatic) {
+  set_is_text(true);
+}
 
 void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
                        VAlign alignment_v, bool big, uint32_t min_val,

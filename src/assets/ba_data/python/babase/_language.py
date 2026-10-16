@@ -485,7 +485,14 @@ class LanguageSubsystem(AppSubsystem):
         # language asset-package buckets. English is the bundled fallback
         # flavor, so this currently always yields English (strings
         # migration Step A); switching to other locales lands in Step B.
-        from babase._asset_packages import loaded_asset_package_apvernums
+        from babase._asset_packages import (
+            load_bundled_language,
+            loaded_asset_package_apvernums,
+        )
+
+        # At boot, bring the builtin strings up now rather than when
+        # the graphics-gated bundled load gets to them (a no-op after).
+        load_bundled_language()
 
         curlocale = _babase.app.locale.current_locale.resolved
         _babase.reload_language(

@@ -20,6 +20,7 @@ from bacommon.langstr import LangStrSpecValue
 from bacommon.text import SpecialChar
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
+from bauiv1 import _builtinassets, _commonassets, _docuiv2testassets
 
 if TYPE_CHECKING:
     # Any: the name payloads here are hand-built json dicts with mixed
@@ -59,8 +60,6 @@ def test_page_names(
     route: bacommon.docui.routes.docuitest.Names,
 ) -> bacommon.docui.v2.Response:
     """Testing name depictions."""
-    from bauiv1 import _builtinassets, _docuiv2testassets
-
     strs = _docuiv2testassets.strings
     debug = route.debug
     tex = _builtinassets.textures
@@ -142,8 +141,8 @@ def test_page_names(
     # capsule (a white 9-patch tinted green) and the V2 badge. Sizes
     # from the CSS: a 54px capsule around 32px text, a 40px badge with
     # a 4px gap, 20px of right padding.
-    glow_capsule = _spec(tex.glow_circle)
-    v2_badge = _spec(tex.account_v2_icon)
+    glow_capsule = _spec(_commonassets.textures.glow_circle)
+    v2_badge = _spec(_commonassets.textures.account_v2_icon)
 
     def _web_account(
         text: str,
@@ -163,7 +162,24 @@ def test_page_names(
                 icon_scale=0.8,
                 icon_edge=1.1,
                 text_glow=glow,
+                # (As the real account name: no drop shadow.)
+                text_shadow=0.0,
                 override_targets=override_targets,
+            ),
+        )
+
+    # Bare text (an invisible capsule), for the text's own controls.
+    def _bare(
+        *, shadow: float | None = None, flatness: float | None = None
+    ) -> bdep.NameDepiction:
+        return _name(
+            'efro',
+            (1.0, 0.6, 0.2),
+            _capsule(
+                radius=1.6,
+                color=(1.0, 1.0, 1.0, 0.0),
+                text_shadow=shadow,
+                text_flatness=flatness,
             ),
         )
 
@@ -243,7 +259,8 @@ def test_page_names(
                     'Text glow',
                     'A neon look by amount (text_glow): white-hot'
                     ' interiors and a soft glow in the text\'s own color,'
-                    ' in place of its drop shadow. 0 is plain text.',
+                    ' over its usual drop shadow. 0 is plain text, 1 the'
+                    ' standard look, 2 the most allowed (overdriven).',
                     [
                         _button(
                             f'text glow {amount}',
@@ -251,7 +268,32 @@ def test_page_names(
                             glow_box,
                             color=_WEB_BG,
                         )
-                        for amount in (0.0, 0.5, 1.0)
+                        for amount in (0.0, 0.5, 1.0, 2.0)
+                    ],
+                ),
+                _row(
+                    'Text shadow and flatness',
+                    'The text\'s drop shadow by strength (text_shadow; 1'
+                    ' is the standard) and how flat it draws'
+                    ' (text_flatness; 1, the standard, is a flat color'
+                    ' and 0 shows the font\'s own shading).',
+                    [
+                        *(
+                            _button(
+                                f'text shadow {amount}',
+                                _bare(shadow=amount),
+                                glow_box,
+                            )
+                            for amount in (1.0, 0.5, 0.0)
+                        ),
+                        *(
+                            _button(
+                                f'text flatness {amount}',
+                                _bare(flatness=amount),
+                                glow_box,
+                            )
+                            for amount in (1.0, 0.5, 0.0)
+                        ),
                     ],
                 ),
                 _row(
@@ -770,6 +812,8 @@ def _capsule(
     icon_edge: float | None = None,
     text_inset: float | None = None,
     text_glow: float | None = None,
+    text_shadow: float | None = None,
+    text_flatness: float | None = None,
     insets: tuple[float, float] | None = None,
     tile: bool | None = None,
     override_targets: list[str] | None = None,
@@ -803,6 +847,8 @@ def _capsule(
         ('ie', icon_edge),
         ('ti', text_inset),
         ('tg', text_glow),
+        ('ts', text_shadow),
+        ('tf', text_flatness),
     ):
         if val is not None:
             out[key] = val

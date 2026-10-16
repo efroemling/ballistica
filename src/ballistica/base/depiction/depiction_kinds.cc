@@ -63,8 +63,8 @@ class CharacterIconDepiction : public Depiction {
       return;
     }
     const BaseAssetSet& assets = g_base->assets->base_assets();
-    TextureAsset* tex = assets.standin_icon.get();
-    TextureAsset* tint = assets.standin_icon_color_mask.get();
+    TextureAsset* tex = assets.standin_icon();
+    TextureAsset* tint = assets.standin_icon_color_mask();
     float color[3] = {0.5f, 0.5f, 0.5f};
     float highlight[3] = {0.5f, 0.5f, 0.5f};
     float highlight2[3] = {1.0f, 1.0f, 1.0f};
@@ -122,7 +122,7 @@ class CharacterIconDepiction : public Depiction {
       c.SetColorizeColor2(highlight[0], highlight[1], highlight[2]);
       c.SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
     }
-    c.SetMaskTexture(assets.character_icon_mask.get());
+    c.SetMaskTexture(assets.character_icon_mask());
     {
       auto xf = c.ScopedTransform();
       c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
@@ -151,6 +151,10 @@ class CharacterIconDepiction : public Depiction {
 ///   too narrow for it, the capsule keeps the box's height (and the
 ///   icon its size) and only the text shrinks to fit, down to
 ///   kMinTextShrink of its size, past which everything shrinks.
+///   A capsule draws only once its art is here; until then we are
+///   exactly the basic tier (its text and color, the part every form
+///   of a name shares), never a capsule missing pieces it was designed
+///   around.
 ///
 /// Our shape is known once our text is measured (in the background
 /// for cold OS-drawn text); until then we report none and draw nothing,
@@ -206,8 +210,8 @@ class NameDepiction : public Depiction {
     if (!width_ && !shown_text_.empty()) {
       width_ = g_base->text_graphics->TryGetStringWidth(shown_text_);
     }
-    if (const CapsuleNameDef* cap = Capsule_()) {
-      LoadCapsuleMedia_(*cap, now);
+    if (name_.capsule) {
+      LoadCapsuleMedia_(*name_.capsule, now);
     }
   }
 
@@ -255,8 +259,19 @@ class NameDepiction : public Depiction {
   /// its size) before the whole capsule shrinks instead.
   static constexpr float kMinTextShrink{0.4f};
 
+  /// Our capsule tier if it can draw as authored: all the art it
+  /// references is here (one referencing none -- a plain circle by
+  /// design -- always can). Null otherwise, which makes us exactly the
+  /// basic tier in size and look until it can.
   auto Capsule_() const -> const CapsuleNameDef* {
-    return name_.capsule ? &*name_.capsule : nullptr;
+    if (!name_.capsule) {
+      return nullptr;
+    }
+    const CapsuleNameDef& cap = *name_.capsule;
+    bool needs_art = cap.capsule_texture.present()
+                     || cap.capsule_tint_texture.present()
+                     || cap.icon_texture.present();
+    return (!needs_art || block_.ready()) ? &cap : nullptr;
   }
 
   /// The capsule's radius at text scale 1 (radius 1.0 = cap height).
@@ -362,9 +377,9 @@ class NameDepiction : public Depiction {
 
   void DrawCapsuleBody_(const DepictionDrawContext& context,
                         const CapsuleNameDef& cap, float r) {
-    // Our own art once it's here; a plain circle until then (or if we
-    // have none). Only the look changes when it arrives, never sizes.
-    bool ours = cap.capsule_texture.present() && block_.ready();
+    // Our own art (here by now; see Capsule_), or a plain circle if we
+    // have none.
+    bool ours = cap.capsule_texture.present();
     TextureAsset* tex =
         ours
             ? capsule_texture_asset_.get()
@@ -519,18 +534,21 @@ class NameDepiction : public Depiction {
         continue;
       }
       c.SetTexture(t);
-      float shadow_opacity;
-      float text_glow = TextGlow_();
-      if (text_glow > 0.0f) {
-        // Glowing text: the glow is its whole surround (no shadow).
-        shadow_opacity = 0.0f;
-        c.SetShadow(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, text_glow);
-      } else {
-        shadow_opacity = 0.5f * alpha * alpha;
-        c.SetShadow(-0.004f * text_group_.GetElementUScale(e),
-                    -0.004f * text_group_.GetElementVScale(e), 0.0f,
-                    shadow_opacity);
-      }
+      // Our drop shadow (the usual one unless our capsule says
+      // otherwise), glowing or not (a glow draws over it).
+      // A glow also sizes itself from the shadow's offset: it blurs by
+      // sampling a fraction of that far out in each diagonal
+      // direction, so its width follows the text's size like the
+      // shadow's does. Glyphs with colors of their own (icon chars,
+      // and OS text, which may hold emojis) never glow: a glow draws
+      // the glyph's shape in one color, which would flatten them to
+      // silhouettes.
+      float text_glow = text_group_.GetElementCanGlow(e) ? TextGlow_() : 0.0f;
+      float shadow_opacity =
+          0.5f * alpha * alpha * (cap ? cap->text_shadow : 1.0f);
+      c.SetShadow(-0.004f * text_group_.GetElementUScale(e),
+                  -0.004f * text_group_.GetElementVScale(e), 0.0f,
+                  shadow_opacity, 0.0f, 0.0f, 0.0f, 0.0f, text_glow);
       if (shadow_opacity > 0 || text_glow > 0) {
         c.SetMaskUV2Texture(text_group_.GetElementMaskUV2Texture(e));
       } else {
@@ -540,7 +558,8 @@ class NameDepiction : public Depiction {
       float cmul = t->premultiplied() ? alpha : 1.0f;
       const float* ergb = text_group_.GetElementCanColor(e) ? rgb : rgb_plain;
       c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
-      c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e), 1.0f));
+      c.SetFlatness(std::min(text_group_.GetElementMaxFlatness(e),
+                             cap ? cap->text_flatness : 1.0f));
       {
         auto xf = c.ScopedTransform();
         c.Translate(cx, cy, context.z);
@@ -708,8 +727,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   static void DrawLoading_(const DepictionDrawContext& context,
                            MeshAsset* quad) {
     const DepictionBox& b = context.box;
-    TextureAsset* spinner =
-        g_base->assets->base_assets().depiction_spinner.get();
+    TextureAsset* spinner = g_base->assets->base_assets().depiction_spinner();
     if (!spinner) {
       return;
     }

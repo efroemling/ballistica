@@ -121,7 +121,7 @@ class NetTestingWindow(bui.MainWindow):
                 position=(46, yoffs - 77),
                 size=(60, 60),
                 scale=0.9,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 autoselect=True,
                 on_activate_call=self.main_window_back,
@@ -363,6 +363,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         _print('\nComparing local time to V2 server...')
         _print_test_results(_test_v2_time)
 
+        # (v1 sign-in state on purpose: this tests the v1 server path.)
         if plus.get_v1_account_state() == 'signed_in':
             _print('\nRunning V1 transaction...')
             _print_test_results(_test_v1_transaction)
@@ -427,6 +428,7 @@ def _test_v1_transaction() -> None:
     plus = bui.app.plus
     assert plus is not None
 
+    # (v1 sign-in state on purpose: this tests the v1 server path.)
     if plus.get_v1_account_state() != 'signed_in':
         raise RuntimeError('Not signed in.')
 

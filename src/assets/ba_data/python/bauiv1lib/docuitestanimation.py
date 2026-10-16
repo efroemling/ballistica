@@ -63,7 +63,7 @@ def _effects() -> list[clfx.Effect]:
 
 def test_page_animation() -> bacommon.docui.v2.Response:
     """Testing keyframe animation of decorations."""
-    from bauiv1 import _builtinassets
+    from bauiv1 import _commonassets
 
     effects = _effects()
     return dui2.Response(
@@ -78,7 +78,7 @@ def test_page_animation() -> bacommon.docui.v2.Response:
                             style=dui2.ButtonStyle.SQUARE,
                             decorations=[
                                 dui2.Image(
-                                    texture=_builtinassets.textures.white,
+                                    texture=_commonassets.textures.white,
                                     position=(0.0, 30.0),
                                     size=(120.0, 120.0),
                                     color=(0.3, 0.8, 0.4, 1.0),

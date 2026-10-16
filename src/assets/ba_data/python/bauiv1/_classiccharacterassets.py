@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261009h`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261012`` (bauiv1).
 
 Everything a classic character is made of: body textures and color masks, body
 part meshes, voice sounds, icons and icon color masks, and display names -- a
@@ -12,7 +12,7 @@ costs roughly the new character's own art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 546
+# ba_meta require asset-package 645
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -26,8 +26,8 @@ from bauiv1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccharacterassets.261009h
-_ASSET_PACKAGE = ApverNum(546)
+# a-0.baclassiccharacterassets.261012
+_ASSET_PACKAGE = ApverNum(645)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import (
@@ -1446,144 +1446,144 @@ _CHARACTERS = {
     'characters': {
         'agent_johnson': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/agent_icon"},'
-                '"cm":{"a":546,"n":"textures/agent_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/agent_icon"},'
+                '"cm":{"a":645,"n":"textures/agent_icon_color_mask"},'
                 '"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/agent_johnson',
         ),
         'b9000': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/cyborg_icon"},'
-                '"cm":{"a":546,"n":"textures/cyborg_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/cyborg_icon"},'
+                '"cm":{"a":645,"n":"textures/cyborg_icon_color_mask"},'
                 '"hl":[1.0,0.0,0.0]}}'
             ),
             'strings/characters/b9000',
         ),
         'bernard': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/bear_icon"},'
-                '"cm":{"a":546,"n":"textures/bear_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/bear_icon"},'
+                '"cm":{"a":645,"n":"textures/bear_icon_color_mask"},'
                 '"cl":[0.7,0.5,0.0]}}'
             ),
             'strings/characters/bernard',
         ),
         'betty': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/old_lady_icon"},'
-                '"cm":{"a":546,"n":"textures/old_lady_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/old_lady_icon"},'
+                '"cm":{"a":645,"n":"textures/old_lady_icon_color_mask"},'
                 '"cl":[0.2,1.0,1.0],"hl":[0.5,0.25,1.0]}}'
             ),
             'strings/characters/betty',
         ),
         'bones': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/bones_icon"},'
-                '"cm":{"a":546,"n":"textures/bones_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/bones_icon"},'
+                '"cm":{"a":645,"n":"textures/bones_icon_color_mask"},'
                 '"cl":[0.6,0.9,1.0],"hl":[0.6,0.9,1.0]}}'
             ),
             'strings/characters/bones',
         ),
         'easter_bunny': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/bunny_icon"},'
-                '"cm":{"a":546,"n":"textures/bunny_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/bunny_icon"},'
+                '"cm":{"a":645,"n":"textures/bunny_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[1.0,0.5,0.5]}}'
             ),
             'strings/characters/easter_bunny',
         ),
         'frosty': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/frosty_icon"},'
-                '"cm":{"a":546,"n":"textures/frosty_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/frosty_icon"},'
+                '"cm":{"a":645,"n":"textures/frosty_icon_color_mask"},'
                 '"cl":[0.5,0.5,1.0],"hl":[1.0,0.5,0.0]}}'
             ),
             'strings/characters/frosty',
         ),
         'grumbledorf': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/wizard_icon"},'
-                '"cm":{"a":546,"n":"textures/wizard_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/wizard_icon"},'
+                '"cm":{"a":645,"n":"textures/wizard_icon_color_mask"},'
                 '"cl":[0.2,0.4,1.0],"hl":[0.06,0.15,0.4]}}'
             ),
             'strings/characters/grumbledorf',
         ),
         'jack_morgan': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/jack_icon"},'
-                '"cm":{"a":546,"n":"textures/jack_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/jack_icon"},'
+                '"cm":{"a":645,"n":"textures/jack_icon_color_mask"},'
                 '"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,0.0]}}'
             ),
             'strings/characters/jack_morgan',
         ),
         'kronk': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/kronk_icon"},'
-                '"cm":{"a":546,"n":"textures/kronk_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/kronk_icon"},'
+                '"cm":{"a":645,"n":"textures/kronk_icon_color_mask"},'
                 '"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/kronk',
         ),
         'lucky': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/assassin_icon"},'
-                '"cm":{"a":546,"n":"textures/assassin_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/assassin_icon"},'
+                '"cm":{"a":645,"n":"textures/assassin_icon_color_mask"},'
                 '"cl":[0.2,1.0,0.5],"hl":[1.0,0.3,0.0]}}'
             ),
             'strings/characters/lucky',
         ),
         'mel': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/mel_icon"},'
-                '"cm":{"a":546,"n":"textures/mel_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/mel_icon"},'
+                '"cm":{"a":645,"n":"textures/mel_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[0.1,0.6,0.1]}}'
             ),
             'strings/characters/mel',
         ),
         'pascal': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/penguin_icon"},'
-                '"cm":{"a":546,"n":"textures/penguin_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/penguin_icon"},'
+                '"cm":{"a":645,"n":"textures/penguin_icon_color_mask"},'
                 '"cl":[0.3,0.5,0.8],"hl":[1.0,0.0,0.0]}}'
             ),
             'strings/characters/pascal',
         ),
         'pixel': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/pixie_icon"},'
-                '"cm":{"a":546,"n":"textures/pixie_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/pixie_icon"},'
+                '"cm":{"a":645,"n":"textures/pixie_icon_color_mask"},'
                 '"cl":[0.0,1.0,0.7],"hl":[0.65,0.35,0.75]}}'
             ),
             'strings/characters/pixel',
         ),
         'santa_claus': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/santa_icon"},'
-                '"cm":{"a":546,"n":"textures/santa_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/santa_icon"},'
+                '"cm":{"a":645,"n":"textures/santa_icon_color_mask"},'
                 '"cl":[1.0,0.0,0.0],"hl":[1.0,1.0,1.0]}}'
             ),
             'strings/characters/santa_claus',
         ),
         'snake_shadow': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/ninja_icon"},'
-                '"cm":{"a":546,"n":"textures/ninja_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/ninja_icon"},'
+                '"cm":{"a":645,"n":"textures/ninja_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[0.55,0.8,0.55]}}'
             ),
             'strings/characters/snake_shadow',
         ),
         'spaz': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/neo_spaz_icon"},'
-                '"cm":{"a":546,'
+                '{"b":{"tx":{"a":645,"n":"textures/neo_spaz_icon"},'
+                '"cm":{"a":645,'
                 '"n":"textures/neo_spaz_icon_color_mask"}}}'
             ),
             'strings/characters/spaz',
         ),
         'zoe': (
             (
-                '{"b":{"tx":{"a":546,"n":"textures/zoe_icon"},'
-                '"cm":{"a":546,"n":"textures/zoe_icon_color_mask"},'
+                '{"b":{"tx":{"a":645,"n":"textures/zoe_icon"},'
+                '"cm":{"a":645,"n":"textures/zoe_icon_color_mask"},'
                 '"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,0.0]}}'
             ),
             'strings/characters/zoe',

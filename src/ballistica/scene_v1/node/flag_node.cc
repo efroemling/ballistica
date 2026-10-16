@@ -390,7 +390,7 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
     // Drew the physics shape.
   } else {
     base::ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_base->assets->base_assets().flag_pole_color.get());
+    c.SetTexture(g_base->assets->base_assets().flag_pole_color());
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
     {

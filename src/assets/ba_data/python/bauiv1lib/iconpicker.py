@@ -57,7 +57,7 @@ class IconPicker(PopupWindow):
 
         assert bui.app.classic is not None
         self._icons = [
-            bui.charstr(bui.SpecialChar.LOGO)
+            bui.SpecialChar.LOGO.value
         ] + bui.app.classic.accounts.get_purchased_icons()
         count = len(self._icons)
         columns = 4

@@ -68,6 +68,17 @@ class TextGroup : public Object {
     return entries_[index]->can_color;
   }
 
+  /// Whether an element can take single-color effects that replace its
+  /// own pixels (a text glow, say). Not pre-colored chars, and not OS
+  /// text: that holds emojis, which unlike a color multiply this would
+  /// flatten to silhouettes (and we can't tell them from its plain
+  /// text; see the flatness note in SetText).
+  auto GetElementCanGlow(int index) const -> bool {
+    assert(index < static_cast<int>(entries_.size()));
+    return entries_[index]->can_color
+           && entries_[index]->type != TextMeshEntryType::kOSRendered;
+  }
+
   auto GetElementMaskUV2Texture(int index) const -> TextureAsset* {
     assert(index < static_cast<int>(entries_.size()));
     return g_base->assets->BuiltinTexture(

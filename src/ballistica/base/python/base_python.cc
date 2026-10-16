@@ -713,10 +713,6 @@ auto BasePython::GetPyEnum_Permission(PyObject* obj) -> Permission {
   return GetPyEnum_<Permission>(ObjID::kPermissionClass, obj);
 }
 
-auto BasePython::GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar {
-  return GetPyEnum_<SpecialChar>(ObjID::kSpecialCharClass, obj);
-}
-
 auto BasePython::GetPyEnum_QuitType(PyObject* obj) -> QuitType {
   return GetPyEnum_<QuitType>(ObjID::kQuitTypeClass, obj);
 }

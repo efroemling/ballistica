@@ -37,7 +37,7 @@ class QRCodeWindow(PopupWindow):
             position=(50, self._height - 30),
             size=(50, 50),
             scale=0.5,
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             color=bg_color,
             on_activate_call=self._on_cancel_press,

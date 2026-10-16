@@ -179,9 +179,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: trying one they are building; see ``_characterpreview``).
         self.character_preview = CharacterPreview()
 
-        # Main Menu.
-        self.main_menu_last_news_fetch_time: float | None = None
-
         # Spaz.
         self.spaz_appearances: dict[str, spazappearance.Appearance] = {}
         self.last_spaz_turbo_warn_time = babase.AppTime(-99999.0)
@@ -923,6 +920,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
+        import bacommon.docui.v2 as dui2
         import bacommon.docui.routes.classicstore as sroutes
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
@@ -942,6 +940,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 uiopenstateid='classicinventory',
                 transition=transition,
                 origin_widget=origin_widget,
+                # Just the one row of profiles; a full-size window
+                # would be mostly empty.
+                layout=dui2.WindowLayout.WIDER,
             ),
             is_top_level=True,
             back_state=None,

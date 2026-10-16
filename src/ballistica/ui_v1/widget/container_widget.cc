@@ -649,8 +649,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_base->audio->SafePlayBuiltinSound(
-                    base::BuiltinSoundID::kAudioTap);
+                g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -1829,7 +1828,7 @@ void ContainerWidget::SelectDownWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -1897,7 +1896,7 @@ void ContainerWidget::SelectUpWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -1953,7 +1952,7 @@ void ContainerWidget::SelectLeftWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -2009,7 +2008,7 @@ void ContainerWidget::SelectRightWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -2092,7 +2091,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kNextSelected);
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+      g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
       return;
     }
     i++;
@@ -2110,8 +2109,8 @@ void ContainerWidget::PrintExitListInstructions(
       g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
       g_base->ScreenMessage(
           base::BuiltinStrings::Ui::ArrowsToExitList(
-              g_base->assets->CharStr(SpecialChar::kLeftArrow),
-              g_base->assets->CharStr(SpecialChar::kRightArrow))
+              g_base->assets->CharStr(base::SpecialChar::kLeftArrow),
+              g_base->assets->CharStr(base::SpecialChar::kRightArrow))
               ->Evaluate());
     }
   }
@@ -2173,7 +2172,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kPrevSelected);
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+      g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
       return;
     }
     i++;

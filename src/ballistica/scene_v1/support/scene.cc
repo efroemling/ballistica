@@ -366,7 +366,23 @@ void Scene::Step() {
     output_stream_->StepScene(this);
   }
 
-  // And step things locally.
+  // Step our sim.
+  dynamics_->Process();
+
+  // Bodies are now where this step leaves them, which is where they
+  // will draw. Let nodes hand bg-dynamics anything that follows those
+  // poses (character rig anchors, fuse roots) before we feed it its
+  // step, so its results line up with what they are drawn against
+  // instead of trailing by a step.
+  if (!g_core->HeadlessMode()) {
+    in_step_ = true;
+    for (auto&& i : nodes_) {
+      i->PostDynamicsStep();
+    }
+    in_step_ = false;
+  }
+
+  // And step bg-dynamics.
   // The main world's bg-dynamics is shared by whichever scenes draw
   // through the main view, and steps with the one in the foreground. A
   // scene with its own steps its own, foreground or no.
@@ -377,9 +393,6 @@ void Scene::Step() {
       world->Step(cam_pos, kGameStepMilliseconds);
     }
   }
-
-  // Lastly step our sim.
-  dynamics_->Process();
 
   time_ += kGameStepMilliseconds;
   stepnum_++;

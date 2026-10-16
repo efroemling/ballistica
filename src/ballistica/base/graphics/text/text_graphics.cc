@@ -325,7 +325,7 @@ TextGraphics::TextGraphics() {
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
               || index == 79 || index == 100 || index == 101 || index == 102
-              || index == 103) {
+              || index == 103 || index == 104 || index == 105 || index == 106) {
             g.pen_offset_y += 0.31f;
             if (index == 70) {
               g.pen_offset_y -= 0.02f;
@@ -360,6 +360,23 @@ TextGraphics::TextGraphics() {
             extra_advance += 0.08f;
             g.x_size *= 0.55f;
             g.y_size *= 0.55f;
+
+            // Anniversary icons draw a bit bigger than the rest (and
+            // cake & spaz art runs smaller than the bomb's, so they get
+            // more). Grows about the center: the advance (derived from
+            // x_size below) keeps it centered horizontally, so only y
+            // needs shifting.
+            if (index >= 104 && index <= 106) {
+              float s = 1.1f;
+              if (index == 104) {
+                s *= 1.3f;
+              } else if (index == 105) {
+                s *= 1.15f;
+              }
+              g.pen_offset_y -= g.y_size * (s - 1.0f) * 0.5f;
+              g.x_size *= s;
+              g.y_size *= s;
+            }
           }
         }
         // Special handling of tokens icon.

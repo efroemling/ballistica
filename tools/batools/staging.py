@@ -511,14 +511,12 @@ class BuildStager:
                     'ucrtbased.dll',
                 ]
 
-        # Include the runtime redistributables in release builds.
-        if not self.debug:
-            if self.win_platform == 'x64':
-                toplevelfiles.append('vc_redist.x64.exe')
-            elif self.win_platform == 'Win32':
-                toplevelfiles.append('vc_redist.x86.exe')
-            else:
-                raise RuntimeError(f'Invalid win_platform {self.win_platform}')
+        # Note: the Visual C++ runtime dlls a release build needs are
+        # not staged here; the compile itself leaves them beside the
+        # exe, taken from the toolset doing the compiling (see
+        # BACopyVCRuntime in ballisticakit-windows/Directory.Build.props
+        # and the WIN_CRT_DLLS vars in the Makefile). We used to bundle
+        # a redist installer for the user to run instead.
 
         cmd2 = (
             ['rsync', '--times']
@@ -616,9 +614,6 @@ class BuildStager:
             '--delete-excluded',
             '--prune-empty-dirs',
         ]
-        if self.include_pycache_prewarm:
-            self._build_pycache_prewarm()
-
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the
             # deletion pass (a plain exclude wouldn't survive
@@ -664,9 +659,6 @@ class BuildStager:
             assert self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
-
-        if self.include_pycache_prewarm:
-            self._build_pycache_prewarm()
 
         if self.include_payload_pycs:
             # Shield our generated side-by-side .pyc files from the

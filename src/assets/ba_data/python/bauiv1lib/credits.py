@@ -396,7 +396,7 @@ class CreditsWindow(bui.MainWindow):
                 ),
                 size=(60, 55),
                 scale=back_scale,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
                 autoselect=True,

@@ -229,8 +229,7 @@ void Depiction::DrawDebugBounds(const DepictionDrawContext& context,
   if (!type || !g_base->graphics->debug_bounds(*type) || !context.transparent) {
     return;
   }
-  TextureAsset* white =
-      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
+  TextureAsset* white = g_base->assets->SolidTexture(SolidTextureColor::kWhite);
 
   // Outlines just inside each box, about a pixel and a half wide
   // whatever scale the host draws at. (Meshes made per draw; fine for
@@ -295,7 +294,7 @@ class PlaceholderDepiction : public Depiction {
     float alpha = 0.4f * context.StandardOpacity();
     float bright = context.StandardBrightness();
     TextureAsset* white =
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
+        g_base->assets->SolidTexture(SolidTextureColor::kWhite);
 
     // The outline, just inside the box (remade only when the box
     // moves; we draw every frame).

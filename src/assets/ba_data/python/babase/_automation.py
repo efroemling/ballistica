@@ -85,7 +85,9 @@ def end_exec_result_capture() -> list[tuple[str, str, str]]:
     return results
 
 
-def _emit(tag: str, status: str, payload: str = '') -> None:
+def _emit(
+    tag: str, status: str, payload: str = '', *, redact_log: bool = False
+) -> None:
     """Print the standard ``[automation] <tag> <status> <payload>`` line.
 
     Always logs at INFO so external watchers don't need to opt in to a
@@ -93,11 +95,14 @@ def _emit(tag: str, status: str, payload: str = '') -> None:
     ``not_implemented``; ``payload`` is a free-form trailing string
     callers can include identifiers, timings, error messages, etc. in.
     Lines emitted while a driver's exec runs also go back to that
-    driver as results.
+    driver as results. With ``redact_log``, the payload goes to the
+    driver only and the log line says it was redacted (for secrets).
     """
     if _g_exec_results is not None:
         _g_exec_results.append((tag, status, payload))
-    if payload:
+    if redact_log:
+        automationlog.info('[automation] %s %s (redacted)', tag, status)
+    elif payload:
         automationlog.info('[automation] %s %s %s', tag, status, payload)
     else:
         automationlog.info('[automation] %s %s', tag, status)

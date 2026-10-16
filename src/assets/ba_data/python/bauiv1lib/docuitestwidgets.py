@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, assert_never
 
 from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 
 if TYPE_CHECKING:
     import bacommon.docui.v2
@@ -218,7 +218,7 @@ def test_page_widgets(
                     debug=debug,
                     buttons=[
                         dui2.Button(
-                            texture=_builtinassets.textures.white,
+                            texture=_commonassets.textures.white,
                             # Fits a small layout's column (600, less
                             # row buffers and h-scroll insets; 540
                             # overflowed its h-scroll by 4).

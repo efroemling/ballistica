@@ -46,7 +46,7 @@ def get_human_readable_user_scripts_path() -> str:
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
     from babase import _builtinassets
-    from babase._generated.enums import Permission
+    from bacommon.nativeenums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):
         _builtinassets.audio.error.get().play()

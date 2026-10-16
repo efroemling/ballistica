@@ -586,7 +586,7 @@ void RootWidget::Setup() {
       td.x = -2.0f;
       td.y = 0.0f;
       td.width = bd.width * 0.9f;
-      td.text = g_base->assets->CharStr(SpecialChar::kBack);
+      td.text = g_base->assets->CharStr(base::SpecialChar::kBack);
       td.color_a = 1.0f;
       td.scale = 1.8f;
       td.flatness = 0.0f;
@@ -1310,9 +1310,9 @@ void RootWidget::StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt) {
       g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
       league_rank_anim_sound_play_id_.reset();
     }
-    g_base->audio->SafePlayBuiltinSound(
-        improving ? base::BuiltinSoundID::kAudioCashRegister
-                  : base::BuiltinSoundID::kAudioPowerdown01);
+    g_base->audio->SafePlaySound(improving
+                                     ? g_ui_v1->assets().cash_register.get()
+                                     : g_ui_v1->assets().powerdown01.get());
     league_rank_text_->widget->SetText(
         "#" + std::to_string(league_rank_vis_value_));
     trophy_meter_mult_ = {1.0f, 1.0f, 1.0f};
@@ -1375,7 +1375,7 @@ void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tickets_meter_animating_ = false;
-      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
+      // g_base->audio->SafePlaySound(g_ui_v1->assets().cash_register.get());
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -1433,7 +1433,7 @@ void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tokens_meter_animating_ = false;
-      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
+      // g_base->audio->SafePlaySound(g_ui_v1->assets().cash_register.get());
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -2101,11 +2101,11 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       if (root_widget_toolbar_cancel_button_style_
           == ToolbarCancelButtonStyle::kBack) {
         back_button_text_->widget->SetText(
-            g_base->assets->CharStr(SpecialChar::kBack));
+            g_base->assets->CharStr(base::SpecialChar::kBack));
       } else if (root_widget_toolbar_cancel_button_style_
                  == ToolbarCancelButtonStyle::kClose) {
         back_button_text_->widget->SetText(
-            g_base->assets->CharStr(SpecialChar::kClose));
+            g_base->assets->CharStr(base::SpecialChar::kClose));
       }
       root_widget_toolbar_cancel_button_style_vis_ =
           root_widget_toolbar_cancel_button_style_;
@@ -2348,7 +2348,7 @@ void RootWidget::SetAccountDepiction(const std::string& json) {
   account_depiction_json_ = json;
   if (auto* btn = account_button_) {
     DepictionSlot& slot{btn->widget->GetDepictionSlot()};
-    slot.set_h_align(base::DepictionHAlign::kLeft);
+    slot.set_h_align(base::DepictionHAlign::kCenter);
     slot.SetDepiction(json);
   }
   UpdateAccountButtonLabel_();
@@ -2367,7 +2367,8 @@ void RootWidget::UpdateAccountButtonLabel_() {
     return;
   }
   if (account_button_signed_in_) {
-    w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + account_name_);
+    w->SetText(g_base->assets->CharStr(base::SpecialChar::kV2Logo)
+               + account_name_);
     w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
     w->set_shadow(0.2f);
     w->set_flatness(1.0f);
@@ -2539,7 +2540,7 @@ void RootWidget::UpdateInboxDisplay_() {
   if (flash) {
     inbox_animating_ = true;
     inbox_anim_flash_time_ = g_base->logic->display_time() + 1.5;
-    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioDing);
+    g_base->audio->SafePlaySound(g_ui_v1->assets().ding.get());
   }
 }
 

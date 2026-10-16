@@ -1150,8 +1150,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           pressed_activate_ =
               (click_count == 2 || click_activate_) && !editable_;
           if (click_count == 1) {
-            g_base->audio->SafePlayBuiltinSound(
-                base::BuiltinSoundID::kAudioTap);
+            g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
           }
         }
         return true;
@@ -1177,7 +1176,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           text_translation_dirty_ = true;
           carat_position_ = 0;
           text_group_dirty_ = true;
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
           ApplyText();
         }
 

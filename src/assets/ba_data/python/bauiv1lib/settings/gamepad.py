@@ -699,7 +699,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                     edit=self._textwidgets['buttonDown' + ext],
                     text=self.get_control_value_name('buttonDown' + ext),
                 )
-                _builtinassets.audio.gun_cocking.get().play()
+                _commonassets.audio.gun_cocking.get().play()
                 dialog.die()
 
         elif control == 'analogStickLR' + ext:
@@ -713,7 +713,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                         edit=self._textwidgets['analogStickLR' + ext],
                         text=self.get_control_value_name('analogStickLR' + ext),
                     )
-                    _builtinassets.audio.gun_cocking.get().play()
+                    _commonassets.audio.gun_cocking.get().play()
                     dialog.die()
 
                     # Now launch the up/down listener.
@@ -744,7 +744,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                                 'analogStickLR' + ext
                             ),
                         )
-                        _builtinassets.audio.gun_cocking.get().play()
+                        _commonassets.audio.gun_cocking.get().play()
                         dialog.die()
         else:
             # For other buttons we just want a button-press.
@@ -757,7 +757,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                     edit=self._textwidgets[control],
                     text=self.get_control_value_name(control),
                 )
-                _builtinassets.audio.gun_cocking.get().play()
+                _commonassets.audio.gun_cocking.get().play()
                 dialog.die()
 
     def _capture_button(
@@ -865,7 +865,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pass
 
         self._rebuild_ui(is_reset=True)
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
 
     def _do_more(self) -> None:
         """Show a burger menu with extra settings."""
@@ -954,7 +954,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                 },
             )
             bui.app.config.apply_and_commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
         else:
             _builtinassets.audio.error.get().play()
 

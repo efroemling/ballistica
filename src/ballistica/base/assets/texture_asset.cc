@@ -48,10 +48,9 @@ TextureAsset::TextureAsset() = default;
 /// dummy — carries an extension for the loader's path-suffix sniff.
 /// Keying on the *resolved* path shape (rather than whether the
 /// *requested* name was a qualified ``<apverid>:<name>`` ref) matters
-/// because bare legacy names can still resolve to CAS blobs: a
-/// missing texture falls back to the builtin package's
-/// ``textures/white``, and that fallback must load rather than fail
-/// the asset (which is fatal if the render path later touches it).
+/// because bare legacy names can still resolve to CAS blobs (via
+/// asset-name compat), and those must load rather than fail the asset
+/// (which is fatal if the render path later touches it).
 /// The blob's actual container format is decided at preload from its
 /// content magic bytes, never from its name.
 static auto IsCasBlobPath(const std::string& path) -> bool {
@@ -88,6 +87,12 @@ TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
       type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
                                      : Assets::FileType::kTexture,
       file_in);
+  if (file_name_full_ == Assets::kMissingTextureFile) {
+    // Already logged by FindAssetFile; draw a plain white fill.
+    solid_color_ = SolidTextureColor::kWhite;
+    valid_ = true;
+    return;
+  }
   is_cas_blob_ = IsCasBlobPath(file_name_full_);
   valid_ = true;
 }
@@ -123,6 +128,21 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
   valid_ = true;
 }
 
+TextureAsset::TextureAsset(SolidTextureColor color, TextureType type)
+    : solid_color_(color), type_(type) {
+  switch (color) {
+    case SolidTextureColor::kWhite:
+      file_name_ = "<solid-white";
+      break;
+    case SolidTextureColor::kBlack:
+      file_name_ = "<solid-black";
+      break;
+  }
+  file_name_ += (type == TextureType::kCubeMap) ? "-cube>" : ">";
+  file_name_full_ = file_name_;
+  valid_ = true;
+}
+
 TextureAsset::TextureAsset(RenderView* view)
     : render_view_id_(view->id()), render_view_(view) {
   assert(g_base->InLogicThread());
@@ -154,9 +174,10 @@ auto TextureAsset::GetNameFull() const -> std::string {
 auto TextureAsset::ReResolveSource() -> bool {
   // Only file-backed CAS textures (qualified ``<apverid>:<name>`` refs) can
   // change their underlying blob when the asset-package registry is
-  // re-resolved. Text-textures and QR codes are generated in-engine, and
-  // legacy bare-filename textures resolve to a fixed on-disk path.
-  if (packer_.exists() || is_qr_code_ || render_view_id_ != 0
+  // re-resolved. Text-textures, QR codes and solid fills are generated
+  // in-engine, and legacy bare-filename textures resolve to a fixed
+  // on-disk path.
+  if (packer_.exists() || is_qr_code_ || solid_color_ || render_view_id_ != 0
       || file_name_.find(':') == std::string::npos) {
     return false;
   }
@@ -268,6 +289,33 @@ void TextureAsset::DoPreload() {
     TextureAssetPreloadData::rgba8888_to_rgba4444_in_place(buffer, buffer_size);
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_4444;
 
+  } else if (solid_color_) {
+    // A few texels of one opaque color, on one face or all six of a cube
+    // map. (Same well-trodden format as QR codes; no alpha needed.)
+    int width = 4;
+    int height = 4;
+    uint16_t value{};
+    switch (*solid_color_) {
+      case SolidTextureColor::kWhite:
+        value = 0xffff;
+        break;
+      case SolidTextureColor::kBlack:
+        value = 0;
+        break;
+    }
+    size_t faces = (type_ == TextureType::kCubeMap) ? 6 : 1;
+    preload_datas_.resize(faces);
+    size_t pixel_count =
+        static_cast<size_t>(width) * static_cast<size_t>(height);
+    for (auto& data : preload_datas_) {
+      auto* buffer = static_cast<uint16_t*>(malloc(pixel_count * 2u));
+      std::fill(buffer, buffer + pixel_count, value);
+      data.buffers[0] = reinterpret_cast<uint8_t*>(buffer);
+      data.widths[0] = width;
+      data.heights[0] = height;
+      data.formats[0] = TextureFormat::kRGB_565;
+      data.base_level = 0;
+    }
   } else if (is_qr_code_) {
     const qrcodegen::QrCode qr2{qrcodegen::QrCode::encodeText(
         file_name_.c_str(), qrcodegen::QrCode::Ecc::HIGH)};
@@ -612,38 +660,46 @@ void TextureAsset::DoUnload() {
 
 bool TextureAsset::slot_warnings_suppressed_{};
 
-void TextureAsset::WarnSlotMismatch_(const char* slot) {
+// A role's name as authored in a workspace, for messages.
+static auto RoleName(TextureRole role) -> const char* {
+  switch (role) {
+    case TextureRole::kUnknown:
+      return "unknown";
+    case TextureRole::kDefault:
+      return "default";
+    case TextureRole::kSourcePremultiplied:
+      return "source_premultiplied";
+    case TextureRole::kStraightAlpha:
+      return "straight_alpha";
+    case TextureRole::kData:
+      return "data";
+    case TextureRole::kPremultipliedData:
+      return "premultiplied_data";
+  }
+  return "unknown";
+}
+
+void TextureAsset::WarnSlotMismatch_(const char* slot, const char* wanted) {
   if (slot_warnings_suppressed_) {
     return;
   }
   // Once per texture: a mismatch repeats on every frame it is drawn.
   role_slot_warned_ = true;
   char buffer[512];
-  if (role_ == TextureRole::kData) {
+  if (slot == nullptr) {
     snprintf(buffer, sizeof(buffer),
-             "Texture '%s' has the 'data' role (independent channel values,"
+             "Texture '%s' has the '%s' role (channel values for a shader,"
              " as for a mask or tint) but is being drawn as a picture."
              " Give it a color role, or use a separate picture texture.",
-             file_name_.c_str());
+             file_name_.c_str(), RoleName(role_));
   } else {
     snprintf(buffer, sizeof(buffer),
-             "Texture '%s' is being used as a %s texture but does not have"
-             " the 'data' role, so it was built as a picture (channels"
-             " weighted by visibility, color multiplied by alpha) and may"
-             " shade slightly wrong. Set its texture role to 'data'.",
-             file_name_.c_str(), slot);
+             "Texture '%s' is being used as a %s texture but has the '%s'"
+             " role, which is built differently from what that slot reads,"
+             " so it may shade slightly wrong. Set its texture role to %s.",
+             file_name_.c_str(), slot, RoleName(role_), wanted);
   }
-  // The texture name alone rarely pins down who bound it; the stack
-  // names the drawing widget/node/component. (Once per texture, so the
-  // cost doesn't matter; in all builds since field reports are where
-  // these mostly show up.)
-  std::unique_ptr<NativeStackTrace> trace(
-      g_core->platform->GetNativeStackTrace());
-  g_core->logging->Log(
-      LogName::kBaAssets, LogLevel::kWarning,
-      std::string(buffer) + "\nBound from:\n"
-          + (trace ? trace->FormatForDisplay()
-                   : std::string("<native trace unavailable>")));
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
 }
 
 }  // namespace ballistica::base

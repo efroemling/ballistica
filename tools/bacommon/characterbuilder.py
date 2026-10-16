@@ -298,7 +298,9 @@ class BasicSpazBuilder(CharacterBuilderData):
     mask texture: the mask's red channel takes the character's color,
     its green channel the highlight and its blue channel the second
     highlight. Arm and leg meshes are authored
-    for the character's right side and mirrored for the left.
+    for the character's right side and mirrored for the left; a
+    ``left_`` version of any of them gives the left side a mesh of
+    its own.
 
     Numbers left out take the standard spaz's values, so a builder
     need only state what makes its character different.
@@ -340,6 +342,31 @@ class BasicSpazBuilder(CharacterBuilderData):
     ] = None
     pelvis_mesh: Annotated[
         str | None, IOAttrs('pelvis_mesh', store_default=False)
+    ] = None
+    #: Optional left-side versions of the arm and leg meshes, for a
+    #: character whose two sides differ (one clawed hand, a peg leg).
+    #: Each replaces the mesh of the same name for the character's left
+    #: side only; left out, the left side draws that mesh as usual. A
+    #: left mesh is still authored as a right-side part and drawn
+    #: mirrored, exactly as the shared one is. (A side can't be given
+    #: nothing this way: leaving one out means 'same as the right'.)
+    left_upper_arm_mesh: Annotated[
+        str | None, IOAttrs('left_upper_arm_mesh', store_default=False)
+    ] = None
+    left_forearm_mesh: Annotated[
+        str | None, IOAttrs('left_forearm_mesh', store_default=False)
+    ] = None
+    left_hand_mesh: Annotated[
+        str | None, IOAttrs('left_hand_mesh', store_default=False)
+    ] = None
+    left_upper_leg_mesh: Annotated[
+        str | None, IOAttrs('left_upper_leg_mesh', store_default=False)
+    ] = None
+    left_lower_leg_mesh: Annotated[
+        str | None, IOAttrs('left_lower_leg_mesh', store_default=False)
+    ] = None
+    left_toes_mesh: Annotated[
+        str | None, IOAttrs('left_toes_mesh', store_default=False)
     ] = None
 
     # ---- Highlights ----

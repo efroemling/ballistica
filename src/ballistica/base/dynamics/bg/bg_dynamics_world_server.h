@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_DYNAMICS_BG_BG_DYNAMICS_WORLD_SERVER_H_
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <list>
 #include <memory>
@@ -19,6 +20,11 @@
 #include "ode/ode.h"
 
 namespace ballistica::base {
+
+/// The most steps the logic thread will leave queued for a bg-dynamics
+/// world. A single logic update can owe several (see
+/// BGDynamicsWorld::Step); this bounds a runaway one.
+const int kBGDynamicsMaxPendingSteps = 16;
 
 /// The bg-dynamics thread's side of one bg world: the far half of a
 /// logic-thread BGDynamicsWorld.
@@ -74,6 +80,8 @@ class BGDynamicsWorldServer {
     }
     GraphicsQuality graphics_quality{};
     int step_millisecs{};
+    /// When the logic thread pushed this step (for queue-wait stats).
+    std::chrono::steady_clock::time_point push_time{};
     Vector3f cam_pos{0.0f, 0.0f, 0.0f};
     /// Debug-draw mode: chunk draw matrices then carry only the physics
     /// transform (no shrink/sink/flicker display effects).

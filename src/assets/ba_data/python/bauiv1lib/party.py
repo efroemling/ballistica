@@ -73,7 +73,7 @@ class PartyWindow(bui.Window):
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button
@@ -575,7 +575,7 @@ class PartyWindow(bui.Window):
                 'name': name,
             }
             config.commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 _classicassets.strings.gather.added_to_favorites(name=name),
                 color=(0, 1, 0),

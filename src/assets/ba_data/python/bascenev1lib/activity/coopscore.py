@@ -96,9 +96,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self._game_service_leaderboards_texture = None
             self._account_has_achievements = False
 
-        self._cashregistersound = _builtinassets.audio.cash_register.get()
-        self._gun_cocking_sound = _builtinassets.audio.gun_cocking.get()
-        self._dingsound = _builtinassets.audio.ding.get()
+        self._cashregistersound = _commonassets.audio.cash_register.get()
+        self._gun_cocking_sound = _commonassets.audio.gun_cocking.get()
+        self._dingsound = _commonassets.audio.ding.get()
         self._score_link: str | None = None
         self._root_ui: bui.Widget | None = None
         self._background: bs.Actor | None = None
@@ -863,6 +863,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     'scores': our_high_scores_all,
                 }
             )
+        # (v1 sign-in state on purpose: scores are submitted to the v1
+        # master server.)
         if plus.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
             if not arcade_or_demo:

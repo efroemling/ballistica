@@ -184,6 +184,10 @@ struct SpazPhysicsTuning {
   // Whether to lock the ball to the torso (full brakes) while knocked
   // out, instead of letting the ragdoll roll on it.
   bool down_ball_brakes;
+  // Sim steps after a knockout ends during which the ball's contacts
+  // have no friction, so a character springing up slides on the ball
+  // instead of pivoting over it and getting flung sideways. 0 is off.
+  uint8_t wake_slide_steps;
 };
 
 // The original (main-sim limbs) physics. DO NOT CHANGE; see above.
@@ -248,6 +252,7 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningLegacyLimbs = {
     .down_ball_contact_stiffness = 0.0f,
     .down_ball_contact_damping = 0.0f,
     .down_ball_brakes = false,
+    .wake_slide_steps = 0,
 };
 
 // The current (bg-dynamics limbs) physics. Tune these. A trailing
@@ -310,14 +315,19 @@ inline constexpr SpazPhysicsTuning kSpazPhysicsTuningBgLimbs = {
     .roller_wall_kick_force = 100.0f,
     .body_friction_scale = 0.1f,  // Legacy: 0.3.
 
-    // 0.4 is a ball of radius 0.138; 0.108 is where a 0.6 ball with no
+    // 0.5 is a ball of radius 0.165; 0.108 is where a 0.6 ball with no
     // offset sat (the first tuning that felt right). Brakes while down
-    // were tried and set aside (the free ball read better).
-    .down_ball_size = 0.4f,
+    // were tried and set aside (the free ball read better). The ball
+    // was 0.4 (radius 0.138) with a 400/2 contact spring until falls
+    // were found to punch through it and wedge the pelvis in the
+    // ground.
+    .down_ball_size = 0.5f,
     .down_ball_bottom_lift = 0.108f,
-    .down_ball_contact_stiffness = 400.0f,
-    .down_ball_contact_damping = 2.0f,
-    .down_ball_brakes = false,
+    .down_ball_contact_stiffness = 1600.0f,
+    .down_ball_contact_damping = 8.0f,
+    .down_ball_brakes = true,
+    // 0.2 seconds.
+    .wake_slide_steps = 25,
 };
 
 }  // namespace ballistica::scene_v1

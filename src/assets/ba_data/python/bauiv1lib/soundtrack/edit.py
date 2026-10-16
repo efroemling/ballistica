@@ -388,7 +388,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             None if musictype not in soundtrack else soundtrack[musictype]
         )
         if existing_entry != entry:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
 
         # Make sure this doesn't get mucked with after we get it.
         if entry is not None:
@@ -543,7 +543,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         cfg['Soundtrack'] = new_name
 
         cfg.commit()
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
 
         # Resets music back to normal.
         music.set_music_play_mode(

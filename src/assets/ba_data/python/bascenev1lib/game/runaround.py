@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, Sequence, override
 
 import bascenev1 as bs
-from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 from bascenev1 import _classicassets
 
 from bascenev1lib.actor.popuptext import PopupText
@@ -146,7 +146,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._player_death_sound = _classicassets.audio.player_death.get()
         self._new_wave_sound = _classicassets.audio.score_hit01.get()
         self._winsound = _classicassets.audio.score.get()
-        self._cashregistersound = _builtinassets.audio.cash_register.get()
+        self._cashregistersound = _commonassets.audio.cash_register.get()
         self._bad_guy_score_sound = _classicassets.audio.shield_down.get()
         self._heart_tex = _classicassets.textures.heart.get()
         self._heart_mesh_opaque = _classicassets.meshes.heart_opaque.get()

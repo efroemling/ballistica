@@ -170,7 +170,7 @@ class GatherWindow(bui.MainWindow):
                 size=back_size,
                 scale=back_scale,
                 autoselect=True,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )

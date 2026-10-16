@@ -246,6 +246,10 @@ jobs:
           git fetch origin net.froemling.bombsquad
           git checkout -b net.froemling.bombsquad FETCH_HEAD
       - name: Generate Flathub manifest
+        env:
+          # (Authenticates its GitHub API call; anonymous ones hit the
+          # shared runner rate limit.)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: make flatpak-generate-flathub-manifest
       - name: Push changes
         env:

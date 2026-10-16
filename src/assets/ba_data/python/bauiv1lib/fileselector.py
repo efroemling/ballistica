@@ -108,7 +108,7 @@ class FileSelectorWindow(bui.MainWindow):
             textcolor=(0.75, 0.7, 0.8),
             enable_sound=False,
             size=(55, 35),
-            label=bui.charstr(bui.SpecialChar.LEFT_ARROW),
+            label=bui.SpecialChar.LEFT_ARROW.value,
             on_activate_call=self._on_back_press,
         )
 

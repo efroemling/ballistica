@@ -28,7 +28,10 @@ const Range kRangeEdge{0.5f, 1.0f};
 const Range kRangeIconScale{0.1f, 2.0f};
 const Range kRangeTextInset{-1.0f, 1.0f};
 const Range kRangeIconEdge{0.0f, 2.0f};
-const Range kRangeTextGlow{0.0f, 4.0f};
+// (Past 2 the glow fills in the letters' gaps and stops reading as text.)
+const Range kRangeTextGlow{0.0f, 2.0f};
+const Range kRangeTextShadow{0.0f, 1.0f};
+const Range kRangeTextFlatness{0.0f, 1.0f};
 const Range kRangeInset{0.0f, 0.5f};
 const Range kRangeTeamColoringStrength{0.0f, 1.0f};
 
@@ -123,6 +126,8 @@ auto ReadCapsule(const JsonRef& tier) -> std::optional<CapsuleNameDef> {
   ReadFloat(tier, "ie", &d.icon_edge, kRangeIconEdge);
   ReadOptionalFloat(tier, "ti", &d.text_inset, kRangeTextInset);
   ReadFloat(tier, "tg", &d.text_glow, kRangeTextGlow);
+  ReadFloat(tier, "ts", &d.text_shadow, kRangeTextShadow);
+  ReadFloat(tier, "tf", &d.text_flatness, kRangeTextFlatness);
   ReadPackageManifest(tier, &d.packages, &d.domain_digest);
   for (const auto* ref :
        {&d.capsule_texture, &d.capsule_tint_texture, &d.icon_texture}) {

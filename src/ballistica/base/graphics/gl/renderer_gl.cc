@@ -1402,8 +1402,12 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             float shadow_r, shadow_g, shadow_b, shadow_spread, text_glow;
             buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread,
                               &text_glow);
+            // Text glow replaces the glyph's color outright, so flatness
+            // has nothing to act on there; glowing text uses the plain
+            // glow program. (A glow+flatness variant had its flatness
+            // uniform compiled out by stricter drivers such as Mesa.)
             ProgramSimpleGL* p = text_glow > 0.0f
-                                     ? simple_tex_mod_text_glow_flatness_prog_
+                                     ? simple_tex_mod_text_glow_prog_
                                      : simple_tex_mod_shadow_flatness_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
@@ -1419,7 +1423,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
               p->SetTextGlow(text_glow);
             }
             p->SetMaskUV2Texture(t_mask);
-            p->SetFlatness(flatness);
+            if (text_glow <= 0.0f) {
+              p->SetFlatness(flatness);
+            }
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
@@ -2221,6 +2227,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
         mesh->Bind();
         mesh->Draw((flags & kMeshDrawFlagLines) ? DrawType::kLines
                                                 : DrawType::kTriangles);
+        if (flags & kMeshDrawFlagDebugFill) {
+          DrawMeshDebugFill_(mesh);
+        }
         break;
       }
       case RenderCommandBuffer::Command::kDrawScreenQuad: {
@@ -2870,10 +2879,6 @@ void RendererGL::Load() {
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW
                                     | SHD_TEXT_GLOW | SHD_MASK_UV2);
   RetainShader_(p);
-  p = simple_tex_mod_text_glow_flatness_prog_ = new ProgramSimpleGL(
-      this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW | SHD_TEXT_GLOW
-                | SHD_MASK_UV2 | SHD_FLATNESS);
-  RetainShader_(p);
   p = simple_tex_mod_glow_prog_ =
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_GLOW);
   RetainShader_(p);
@@ -3078,7 +3083,6 @@ void RendererGL::Unload() {
   simple_tex_mod_shadow_prog_ = nullptr;
   simple_tex_mod_shadow_flatness_prog_ = nullptr;
   simple_tex_mod_text_glow_prog_ = nullptr;
-  simple_tex_mod_text_glow_flatness_prog_ = nullptr;
   simple_tex_mod_glow_prog_ = nullptr;
   simple_tex_mod_glow_maskuv2_prog_ = nullptr;
   simple_tex_mod_colorized_prog_ = nullptr;
@@ -3362,6 +3366,25 @@ void RendererGL::CheckForErrors() {
     error_check_counter_ = 0;
     BA_CHECK_GL_ERROR;
   }
+}
+
+void RendererGL::DrawMeshDebugFill_(MeshDataGL* mesh) {
+  // Redraw the (already bound) mesh as flat translucent red, then put
+  // back the program and blend state its component set up, since more
+  // draws in that component may follow.
+  ProgramGL* prev_program = current_program_;
+  bool prev_blend = blend_;
+  bool prev_blend_premult = blend_premult_;
+  SetBlend(true);
+  SetBlendPremult(true);
+  ProgramSimpleGL* p = simple_color_prog_;
+  p->Bind();
+  p->SetColor(0.3f, 0.0f, 0.0f, 0.3f);
+  p->PrepareToDraw();
+  mesh->Draw(DrawType::kTriangles);
+  SetBlendPremult(prev_blend_premult);
+  SetBlend(prev_blend);
+  UseProgram_(prev_program);
 }
 
 void RendererGL::FlushDebugDraw_() {

@@ -288,12 +288,12 @@ class PrivateGatherTab(GatherTab):
         if self._get_tokens_button:
             bui.buttonwidget(
                 edit=self._get_tokens_button,
-                label=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
+                label=bui.SpecialChar.TOKEN.value + t_str,
             )
         if self._token_count_text:
             bui.textwidget(
                 edit=self._token_count_text,
-                text=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
+                text=bui.SpecialChar.TOKEN.value + t_str,
             )
 
     def _update(self) -> None:
@@ -319,6 +319,8 @@ class PrivateGatherTab(GatherTab):
                     or now - self._last_hosting_state_query_time > 15.0
                 ):
                     self._debug_server_comm('querying private party state')
+                    # (v1 sign-in state on purpose: this query is a v1
+                    # transaction.)
                     if plus.get_v1_account_state() == 'signed_in':
                         plus.add_v1_account_transaction(
                             {
@@ -867,7 +869,7 @@ class PrivateGatherTab(GatherTab):
             if hostingstate.unavailable_error is not None:
                 btnlabel = _classicassets.strings.gather.hosting_unavailable
             elif hostingstate.party_code is None:
-                ticon = bui.charstr(bui.SpecialChar.TOKEN)
+                ticon = bui.SpecialChar.TOKEN.value
                 nowtokens = hostingstate.tokens_to_host_now
                 if nowtokens > 0 and not havegoldpass:
                     btnlabel = _classicassets.strings.gather.start_hosting_paid(
@@ -966,6 +968,8 @@ class PrivateGatherTab(GatherTab):
         ):
             return
 
+        # (v1 sign-in state on purpose: starting and stopping a private
+        # party goes through the v1 master server.)
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(_classicassets.strings.account.not_signed_in)
             _builtinassets.audio.error.get().play()

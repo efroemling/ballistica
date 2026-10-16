@@ -1672,7 +1672,6 @@
  "windows/ARM64/python_d.exe",
  "windows/ARM64/pythonw.exe",
  "windows/ARM64/pythonw_d.exe",
- "windows/ARM64/vc_redist.arm64.exe",
  "windows/Win32/DLLs/_asyncio.pyd",
  "windows/Win32/DLLs/_asyncio_d.pyd",
  "windows/Win32/DLLs/_bz2.pyd",
@@ -2240,7 +2239,6 @@
  "windows/Win32/python_d.exe",
  "windows/Win32/pythonw.exe",
  "windows/Win32/pythonw_d.exe",
- "windows/Win32/vc_redist.x86.exe",
  "windows/Win32/zlib1.dll",
  "windows/x64/DLLs/_asyncio.pyd",
  "windows/x64/DLLs/_asyncio_d.pyd",
@@ -2809,6 +2807,5 @@
  "windows/x64/python_d.exe",
  "windows/x64/pythonw.exe",
  "windows/x64/pythonw_d.exe",
- "windows/x64/vc_redist.x64.exe",
  "windows/x64/zlib1.dll"
 ]

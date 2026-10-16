@@ -18,13 +18,16 @@ Reads ``babasecodegen.base_assets`` and emits:
 The placeholder fill is what makes base different from ui/scene:
 base draws *before and between* app-modes (boot, construct-mode,
 mode switches), so its set can never be allowed to be incomplete.
-Instead of zombie guards in hot draw paths, the set self-fills from
-builtin placeholder art (white texture, black cube map, box mesh) at
-builtin-load time and is *restored* to that state -- not cleared --
-at app-mode switches. A mode that supplies nothing gets a plain
-white-boxes world rather than crashes or another mode's art; a black
-cube map specifically makes missing reflections a no-op, since
-reflections are additive.
+Instead of zombie guards in hot draw paths, every slot an app-mode
+leaves unsupplied holds a placeholder, and the set is *restored* to
+placeholders -- not cleared -- at app-mode switches. Placeholders are
+chosen by slot kind and need no asset-package art: solid white
+textures and black cube maps the engine generates itself, plus the
+builtin ``image1x1`` mesh and ``blank`` sound (which the engine keeps
+builtin for its own use anyway). A mode that supplies nothing gets a
+plain world rather than crashes or another mode's art; a black cube
+map specifically makes missing reflections a no-op, since reflections
+are additive.
 
 Not imported at runtime -- this is build-time only.
 """
@@ -59,10 +62,10 @@ class _KindInfo:
     #: Assets:: accessor loading one from (package key, name).
     loader: str
 
-    #: Boot-safe qualified-name getter used by the placeholder-restore
-    #: emission (the GetPackage* forms' pre-construct access check is
-    #: not boot-safe).
-    qualified_loader: str
+    #: Assets:: call (from inside Assets) giving this kind's placeholder.
+    #: Boot-safe and package-free, or as good as: only things the engine
+    #: generates or keeps builtin for its own use.
+    placeholder: str
 
 
 KIND_INFO = {
@@ -70,25 +73,25 @@ KIND_INFO = {
         handletype='TextureSpec',
         cpptype='base::TextureAsset',
         loader='GetPackageTexture',
-        qualified_loader='GetTexture',
+        placeholder='SolidTexture(SolidTextureColor::kWhite)',
     ),
     Kind.CUBE_MAP_TEXTURE: _KindInfo(
         handletype='CubeMapTextureSpec',
         cpptype='base::TextureAsset',
         loader='GetPackageCubeMapTexture',
-        qualified_loader='GetCubeMapTexture',
+        placeholder='SolidCubeMapTexture(SolidTextureColor::kBlack)',
     ),
     Kind.MESH: _KindInfo(
         handletype='MeshSpec',
         cpptype='base::MeshAsset',
         loader='GetPackageMesh',
-        qualified_loader='GetMesh',
+        placeholder='BuiltinMesh(BuiltinMeshID::kMeshesImage1x1)',
     ),
     Kind.SOUND: _KindInfo(
         handletype='SoundSpec',
         cpptype='base::SoundAsset',
         loader='GetPackageSound',
-        qualified_loader='GetSound',
+        placeholder='BuiltinSound(BuiltinSoundID::kAudioBlank)',
     ),
 }
 
@@ -106,10 +109,6 @@ class Slot:
     #: One-line description, emitted as docs on both sides.
     doc: str
 
-    #: Attr path of this slot's default art on the group's
-    #: ``default_module``.
-    default: str
-
 
 @dataclass
 class Group:
@@ -120,9 +119,6 @@ class Group:
 
     #: One-line description of what this group covers.
     doc: str
-
-    #: Wrapper module the slots' ``default`` paths hang off.
-    default_module: str
 
     #: The slots it holds.
     slots: list[Slot] = field(default_factory=list)
@@ -157,14 +153,6 @@ def load_spec(projroot: str) -> BaseAssetSpec:
     for group in spec.groups:
         if not group.slots:
             raise RuntimeError(f'base-asset group {group.name} is empty.')
-        if group.default_module != '_builtinassets':
-            # The placeholder restore loads every slot's default by
-            # qualified builtin-package name at boot, so defaults must
-            # live there.
-            raise RuntimeError(
-                f'base-asset group {group.name} defaults must come from'
-                f' _builtinassets.'
-            )
         for slot in group.slots:
             if slot.name in seen:
                 raise RuntimeError(
@@ -208,17 +196,12 @@ def generate_python(projroot: str, out_path: str) -> None:
         '',
         'import _babase',
         '',
-    ]
-    for mod in dict.fromkeys(g.default_module for g in spec.groups):
-        out.append(f'from babase import {mod}')
-    out += [
-        '',
         'if TYPE_CHECKING:',
         # Slots are annotated with the *spec base types*: the set's
         # contract is exactly a spec (a package id + name pair), so any
         # wrapper flavor's handle satisfies it -- classic supplies
-        # bascenev1-flavor handles while the placeholder defaults are
-        # babase-flavor, and both are spec subclasses.
+        # bascenev1-flavor handles, and every flavor's handles are spec
+        # subclasses.
         '    from bacommon.assetspec import (',
         '        CubeMapTextureSpec,',
         '        MeshSpec,',
@@ -239,12 +222,13 @@ def generate_python(projroot: str, out_path: str) -> None:
         '    that art.',
         '',
         '    Slots hold asset *references* (any wrapper flavor works);',
-        '    nothing loads until the set is',
-        '    applied. Every slot defaults to a neutral builtin',
-        '    placeholder (white texture, black cube map, box mesh), so a',
-        '    bare ``BaseAssetSet()`` is complete and renders a plain but',
-        '    coherent world: white debris, no reflections (a black cube',
-        '    map contributes nothing, since reflections are additive).',
+        '    nothing loads until the set is applied. A slot left at',
+        '    ``None`` gets a neutral placeholder the engine provides',
+        '    itself (white texture, black cube map, flat quad mesh,',
+        '    silent sound), so a bare ``BaseAssetSet()`` renders a plain',
+        '    but coherent world: white debris, no reflections (a black',
+        '    cube map contributes nothing, since reflections are',
+        '    additive).',
         '    """',
         '',
         '    # One attr per slot is the whole point of this class; the',
@@ -258,24 +242,14 @@ def generate_python(projroot: str, out_path: str) -> None:
         for slot in group.slots:
             htype = KIND_INFO[slot.kind].handletype
             out += _wrap(slot.doc, '    #: ')
-            out.append(f'    {slot.name}: {htype}')
+            out.append(f'    {slot.name}: {htype} | None')
     out += [
         '',
         '    def __init__(self) -> None:',
-        '        # All slots start at neutral builtin placeholders',
-        '        # (handles only; nothing is loaded here).',
+        '        # All slots start unsupplied (engine placeholders).',
     ]
-    for group, slot in pairs:
-        expr = f'{group.default_module}.{slot.default}'
-        flat = f'        self.{slot.name} = {expr}'
-        if len(flat) <= 79:
-            out.append(flat)
-        else:
-            out += [
-                f'        self.{slot.name} = (',
-                f'            {expr}',
-                '        )',
-            ]
+    for _group, slot in pairs:
+        out.append(f'        self.{slot.name} = None')
     out += [
         '',
         '',
@@ -286,8 +260,8 @@ def generate_python(projroot: str, out_path: str) -> None:
         '    :meth:`~babase.AppMode.on_activate`, with the',
         f'    :class:`{TOP_CLASS}` carried by its app-mode config).',
         '',
-        '    Loading happens native-side as the set is applied, so',
-        '    replaced placeholders are never loaded. At every app-mode',
+        '    Loading happens native-side as the set is applied. Slots',
+        '    left at ``None`` get engine placeholders. At every app-mode',
         '    switch the native set is *restored to placeholders* (not',
         '    cleared -- base draws between modes too), so a mode can',
         "    never inherit a previous mode's art.",
@@ -344,28 +318,67 @@ def _gen_cpp_header(spec: BaseAssetSpec) -> str:
         '',
         'namespace ballistica::base {',
         '',
+        '/// Warn (once per slot) that a base asset slot handed out its',
+        '/// placeholder. Defined in assets.cc.',
+        'void NoteBaseAssetPlaceholderUse(const char* slot);',
+        '',
         '/// Classic-flavored art base draws itself with, supplied by',
         '/// the active app-mode (see babase.set_base_asset_set).',
-        '/// Boot-filled with neutral builtin placeholders and restored',
-        '/// to them at app-mode switches, so it is never incomplete --',
-        '/// base draws before and between app-modes.',
+        '/// Boot-filled with neutral engine placeholders and restored',
+        '/// to them at app-mode switches (and any slot a mode leaves',
+        '/// unsupplied gets one), so it is never incomplete -- base',
+        '/// draws before and between app-modes.',
+        '///',
+        '/// Read slots through their accessors (``smoke()``, ...), not',
+        '/// the ``*_ref`` members: an accessor warns (once per slot) when',
+        '/// what it hands back is a placeholder, so art that never got',
+        '/// supplied shows up in the log rather than as an unexplained',
+        '/// white flash.',
         f'struct {TOP_CLASS} {{',
     ]
+    allslots = [s for _g, s in _slots(spec)]
+    if len(allslots) > 64:
+        raise RuntimeError('base-asset placeholder bits overflow uint64_t.')
+    index = 0
     for i, group in enumerate(spec.groups):
         if i:
             out.append('')
         out += _wrap(f'-- {group.doc}', '  /// ')
         for slot in group.slots:
             cpptype = KIND_INFO[slot.kind].cpptype
-            out.append(f'  /// {slot.doc}')
-            out.append(f'  Object::Ref<{cpptype}> {slot.name};')
-    allslots = [s for _g, s in _slots(spec)]
+            out += [
+                f'  /// {slot.doc}',
+                f'  auto {slot.name}() const -> {cpptype}* {{',
+                f'    if (placeholders & (uint64_t{{1}} << {index})) {{',
+                f'      NoteBaseAssetPlaceholderUse("{slot.name}");',
+                '    }',
+                f'    return {slot.name}_ref.get();',
+                '  }',
+            ]
+            if slot.kind is Kind.SOUND:
+                # Sounds can simply be skipped, which beats a silent
+                # placeholder for things that may fire before any
+                # app-mode supplies the set (device jingles).
+                out += [
+                    '  /// The same, or nullptr (and no warning) while it',
+                    '  /// holds its placeholder.',
+                    f'  auto {slot.name}_if_supplied() const -> {cpptype}* {{',
+                    f'    return (placeholders & (uint64_t{{1}} << {index}))',
+                    '               ? nullptr',
+                    f'               : {slot.name}_ref.get();',
+                    '  }',
+                ]
+            out += [f'  Object::Ref<{cpptype}> {slot.name}_ref;']
+            index += 1
     out += [
+        '',
+        '  /// Bit per slot (spec order): set while it holds a placeholder.',
+        '  uint64_t placeholders{};',
         '',
         '  /// True once every member has been supplied.',
         '  auto complete() const -> bool {',
         '    return '
-        + '\n           && '.join(f'{s.name}.exists()' for s in allslots)
+        + '\n           && '.join(f'{s.name}_ref.exists()' for s in allslots)
         + ';',
         '  }',
         '};',
@@ -389,7 +402,8 @@ def _gen_cpp_unpack(spec: BaseAssetSpec) -> str:
         '// Args arrive positionally in spec order; each is an asset',
         '// handle whose private (_apvernum, _name) parts are read here',
         '// and the base-level asset loaded from them (the sanctioned',
-        '// boundary for those attrs; see batools.scene_assets).',
+        '// boundary for those attrs; see batools.scene_assets), or',
+        '// None, which leaves the slot empty for the placeholder fill.',
     ]
     for i in range(n):
         out.append(f'PyObject* a{i};')
@@ -414,9 +428,9 @@ def _gen_cpp_unpack(spec: BaseAssetSpec) -> str:
     for i, (_group, slot) in enumerate(pairs):
         loader = KIND_INFO[slot.kind].loader
         out += [
-            '{',
+            f'if (a{i} != Py_None) {{',
             f'  PythonRef h(a{i}, PythonRef::kAcquire);',
-            f'  out->{slot.name} = g_base->assets->{loader}(',
+            f'  out->{slot.name}_ref = g_base->assets->{loader}(',
             '      std::to_string(h.GetAttr("_apvernum").ValueAsInt()),',
             '      h.GetAttr("_name").ValueAsString());',
             '}',
@@ -428,18 +442,20 @@ def _gen_cpp_unpack(spec: BaseAssetSpec) -> str:
 def _gen_cpp_placeholders(spec: BaseAssetSpec) -> str:
     out = _cppheader() + [
         '',
-        f'// Body of the {TOP_CLASS} placeholder restore; included from',
-        '// a hand-written .cc. Fills every slot with its spec default',
-        '// (always a builtin-package asset; load_spec enforces that)',
-        '// via the boot-safe qualified-name getters. Expects a local',
-        "// 'prefix' (the builtin package key + ':') plus 'out'. This is",
-        '// what keeps the set complete before and between app-modes;',
-        '// see batools.base_assets.',
+        f'// Body of the {TOP_CLASS} placeholder fill; included from',
+        '// a hand-written Assets method. Fills every empty slot in',
+        "// 'out' with its kind's engine placeholder (package-free and",
+        '// boot-safe). This is what keeps the set complete before and',
+        '// between app-modes; see batools.base_assets.',
     ]
-    for _group, slot in _slots(spec):
-        getter = KIND_INFO[slot.kind].qualified_loader
-        path = slot.default.replace('.', '/')
-        out.append(f'out->{slot.name} = {getter}(prefix + "{path}");')
+    for index, (_group, slot) in enumerate(_slots(spec)):
+        expr = KIND_INFO[slot.kind].placeholder
+        out += [
+            f'if (!out->{slot.name}_ref.exists()) {{',
+            f'  out->{slot.name}_ref = {expr};',
+            f'  out->placeholders |= uint64_t{{1}} << {index};',
+            '}',
+        ]
     return '\n'.join(out) + '\n'
 
 

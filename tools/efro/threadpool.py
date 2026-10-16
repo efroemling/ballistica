@@ -5,6 +5,7 @@
 import time
 import logging
 import functools
+import contextvars
 import threading
 from collections import Counter
 from typing import TYPE_CHECKING, ParamSpec, TypeVar, cast, override
@@ -547,7 +548,17 @@ def _stable_callable_name(call: Callable[..., Any]) -> str:
     # Depth-capped so a pathological __wrapped__ cycle can't spin.
     for _ in range(10):
         if isinstance(target, functools.partial):
-            target = target.func
+            # asyncio.to_thread() submits partial(ctx.run, func, ...);
+            # the work is func, not the Context.run that hosts it.
+            if (
+                isinstance(
+                    getattr(target.func, '__self__', None), contextvars.Context
+                )
+                and target.args
+            ):
+                target = target.args[0]
+            else:
+                target = target.func
         else:
             wrapped = getattr(target, '__wrapped__', None)
             if wrapped is None:

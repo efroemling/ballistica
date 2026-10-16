@@ -396,40 +396,6 @@ static PyMethodDef PySetCameraManualDef = {
     ":meta private:",
 };
 
-// -------------------------------- charstr ------------------------------------
-
-static auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  PyObject* name_obj;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
-                                   const_cast<char**>(kwlist), &name_obj)) {
-    return nullptr;
-  }
-  assert(g_base->logic);
-  auto id(g_base->python->GetPyEnum_SpecialChar(name_obj));
-  assert(Utils::IsValidUTF8(g_base->assets->CharStr(id)));
-  return PyUnicode_FromString(g_base->assets->CharStr(id).c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCharStrDef = {
-    "charstr",                     // name
-    (PyCFunction)PyCharStr,        // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "charstr(char_id: babase.SpecialChar) -> str\n"
-    "\n"
-    "Return a unicode string representing a special character.\n"
-    "\n"
-    "Note that these utilize the private-use block of unicode characters\n"
-    "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
-    "them elsewhere will be meaningless.\n"
-    "\n"
-    "See :class:`~babase.SpecialChar` for the list of available characters.",
-};
-
 // ------------------------------- safecolor -----------------------------------
 
 static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2057,8 +2023,7 @@ static auto PySetBaseAssetSet(PyObject* self, PyObject* args) -> PyObject* {
   if (!BaseAssetSetFromPyArgs(args, &assets)) {
     return nullptr;
   }
-  assert(assets.complete());
-  g_base->assets->set_base_assets(assets);
+  g_base->assets->SetBaseAssets(assets);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -2072,14 +2037,14 @@ static PyMethodDef PySetBaseAssetSetDef = {
     "set_base_asset_set_native(*args: bacommon.assetspec.TextureSpec"
     " | bacommon.assetspec.CubeMapTextureSpec"
     " | bacommon.assetspec.MeshSpec"
-    " | bacommon.assetspec.SoundSpec) -> None\n"
+    " | bacommon.assetspec.SoundSpec | None) -> None\n"
     "\n"
     "(internal) Supply the classic-flavored art base draws with.\n"
     "\n"
     "Do not call this directly -- babase.set_base_asset_set() is the\n"
     "entry point. Args arrive positionally in spec order; both sides\n"
     "are generated from src/codegen/babasecodegen/base_assets.py, so\n"
-    "they cannot drift.",
+    "they cannot drift. None leaves a slot to its engine placeholder.",
 };
 
 // ------------------- restore_base_asset_placeholders
@@ -2263,7 +2228,6 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyGetMaxGraphicsQualityDef,
       PySafeColorDef,
       PyBrightenedColorDef,
-      PyCharStrDef,
       PyFullscreenControlAvailableDef,
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,

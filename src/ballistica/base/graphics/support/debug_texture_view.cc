@@ -42,7 +42,7 @@ void DebugTextureView::DrawWorld(FrameDef* frame_def) {
 
   {
     ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
+    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color());
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     c.SetLightShadow(LightShadowType::kObject);
@@ -54,7 +54,7 @@ void DebugTextureView::DrawWorld(FrameDef* frame_def) {
       c.Translate(1.0f, 0.8f, 0.0f);
       c.Scale(6.0f, 6.0f, 6.0f);
       c.Rotate(angle, 0.0f, 1.0f, 0.0f);
-      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
+      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove());
     }
     c.Submit();
   }

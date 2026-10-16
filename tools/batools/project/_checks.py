@@ -605,6 +605,7 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
     # bascenev1 flavor, while the others do.
     wrapper_for_key = {
         'builtinassets': pydir / 'bascenev1/_builtinassets.py',
+        'commonassets': pydir / 'bascenev1/_commonassets.py',
         'classicassets': pydir / 'bascenev1/_classicassets.py',
         'classiccatalogassets': (pydir / 'bascenev1/_classiccatalogassets.py'),
         'classiccharacterassets': (

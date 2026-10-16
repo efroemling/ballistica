@@ -31,6 +31,7 @@ class AppConfig {
     kGoogleVRRenderTargetScale,
     kCustomScreenInsets,
     kDevConsoleButtonSize,
+    kDevConsoleButtonOpacity,
     kLast  // Sentinel.
   };
 

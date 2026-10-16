@@ -50,11 +50,11 @@ class JoinInfo:
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | babase.LangStr = babase.charstr(
-            babase.SpecialChar.LEFT_BUTTON
+        self._press_to_punch: str | babase.LangStr = (
+            babase.SpecialChar.LEFT_BUTTON.value
         )
-        self._press_to_bomb: str | babase.LangStr = babase.charstr(
-            babase.SpecialChar.RIGHT_BUTTON
+        self._press_to_bomb: str | babase.LangStr = (
+            babase.SpecialChar.RIGHT_BUTTON.value
         )
         self._joinmsg: babase.LangStr = (
             _classicassets.strings.lobby.press_any_button_to_join
@@ -92,9 +92,9 @@ class JoinInfo:
         else:
             msg1 = _classicassets.strings.lobby.press_to_select_profile(
                 buttons=(
-                    babase.charstr(babase.SpecialChar.UP_ARROW)
+                    babase.SpecialChar.UP_ARROW.value
                     + ' '
-                    + babase.charstr(babase.SpecialChar.DOWN_ARROW)
+                    + babase.SpecialChar.DOWN_ARROW.value
                 )
             )
             msg2 = _classicassets.strings.lobby.press_to_override_character(
@@ -108,9 +108,9 @@ class JoinInfo:
                     [
                         _classicassets.strings.lobby.press_to_select_team(
                             buttons=(
-                                babase.charstr(babase.SpecialChar.LEFT_ARROW)
+                                babase.SpecialChar.LEFT_ARROW.value
                                 + ' '
-                                + babase.charstr(babase.SpecialChar.RIGHT_ARROW)
+                                + babase.SpecialChar.RIGHT_ARROW.value
                             )
                         )
                     ]
@@ -776,7 +776,8 @@ class Chooser:
         ``_cloud_json_by_name`` and rewrites ``_profiles`` in the legacy
         shape the rest of the chooser reads (name and the standin
         appearance name for anything still reading ``character``).
-        None from the source leaves the legacy profiles in place.
+        None (or an empty list: an account whose legacy profiles
+        haven't been migrated yet) leaves the legacy profiles in place.
         """
         classic = babase.app.classic
         assert classic is not None
@@ -786,9 +787,11 @@ class Chooser:
         if cloud_json is not None:
             pass
         elif is_remote:
-            cloud_json = input_device.get_cloud_characters()
+            # (Empty means legacy profiles not migrated yet; a migrated
+            # account always has __account__. Same below.)
+            cloud_json = input_device.get_cloud_characters() or None
         elif not is_test_input:
-            cloud_json = classic.cloud_profiles.get_usable_profiles()
+            cloud_json = classic.cloud_profiles.get_usable_profiles() or None
             plus = babase.app.plus
             if (
                 cloud_json is None
@@ -938,7 +941,7 @@ class Chooser:
                         icon = (
                             self._profiles[name_raw]['icon']
                             if 'icon' in self._profiles[name_raw]
-                            else babase.charstr(babase.SpecialChar.LOGO)
+                            else babase.SpecialChar.LOGO.value
                         )
                         name = icon + name
                 except Exception:
@@ -1375,7 +1378,6 @@ class Chooser:
         # pylint: disable-next=cyclic-import
         from bascenev1 import (
             _commonassets,
-            _builtinassets,
             _classicassets,
             _uiv1assets,
             _classiccharacterassets,
@@ -1432,8 +1434,8 @@ class Chooser:
             return
 
         if self._profilenames[self._profileindex] == '_edit':
-            tex = _builtinassets.textures.black.get()
-            tint_tex = _builtinassets.textures.black_data.get()
+            tex = _commonassets.textures.black.get()
+            tint_tex = _commonassets.textures.black_data.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex

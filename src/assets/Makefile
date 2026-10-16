@@ -221,7 +221,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/__init__.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/base_asset_set.py \
-  $(BUILD_DIR)/ba_data/python/babase/_generated/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
   $(BUILD_DIR)/ba_data/python/babase/_locale.py \
@@ -654,6 +653,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/basntosandbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/sandboxtobasn.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/nativeenums.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/packetzstddict.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/__init__.py \
@@ -3490,7 +3490,6 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
-  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe \
   $(BUILD_DIR)/windows/Win32/zlib1.dll
 
 # Rule to copy src extras to build.
@@ -3567,7 +3566,6 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe \
   $(BUILD_DIR)/windows/x64/zlib1.dll
 
 # Rule to copy src extras to build.
@@ -3638,8 +3636,7 @@ EXTRAS_TARGETS_WIN_ARM64 = \
   $(BUILD_DIR)/windows/ARM64/python314_d.dll \
   $(BUILD_DIR)/windows/ARM64/python_d.exe \
   $(BUILD_DIR)/windows/ARM64/pythonw.exe \
-  $(BUILD_DIR)/windows/ARM64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/ARM64/vc_redist.arm64.exe
+  $(BUILD_DIR)/windows/ARM64/pythonw_d.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_ARM64) : ../../.efrocachemap

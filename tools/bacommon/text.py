@@ -3,8 +3,8 @@
 """Text related bits."""
 
 from enum import Enum
-
-from typing import TYPE_CHECKING
+from functools import cached_property
+from typing import TYPE_CHECKING, assert_never
 
 if TYPE_CHECKING:
     pass
@@ -13,7 +13,14 @@ if TYPE_CHECKING:
 class SpecialChar(Enum):
     """Custom unicode characters the engine can display.
 
-    Keep this in sync with babase._generated.enums.SpecialChar.
+    Each value is the character itself, ready to drop into a string.
+    These utilize the private-use block of unicode characters
+    (U+E000-U+F8FF) and are specific to the game; exporting or
+    rendering them elsewhere will be meaningless.
+
+    This is the one list of these characters; the engine's own table
+    is generated from it. It is also available as
+    ``babase.SpecialChar`` and ``bauiv1.SpecialChar``.
     """
 
     LEFT_ARROW = '\ue001'
@@ -118,4 +125,137 @@ class SpecialChar(Enum):
     POTATO = '\ue065'
     PALM_TREE = '\ue066'
     BOXING_GLOVE = '\ue067'
+    ANNIVERSARY_15_CAKE = '\ue068'
+    ANNIVERSARY_15_SPAZ = '\ue069'
+    ANNIVERSARY_15_BOMB = '\ue06a'
     POPUP_ICON = '\ue018'
+
+    @cached_property
+    def min_engine_build(self) -> int:
+        """The first engine build able to draw this character.
+
+        Older builds have no glyph for it and show a blank, so anything
+        offering characters to a particular client (a store, an icon
+        picker) should leave out ones newer than that client's build.
+
+        When adding a character, give it its own case here returning
+        the build number that first ships its glyph. Everything that
+        predates this property returns 0 (we don't know when those
+        were added, and every client we talk to can draw them).
+        """
+        cls = type(self)
+        match self:
+            case (
+                cls.LEFT_ARROW
+                | cls.RIGHT_ARROW
+                | cls.UP_ARROW
+                | cls.DOWN_ARROW
+                | cls.LEFT_BUTTON
+                | cls.TOP_BUTTON
+                | cls.RIGHT_BUTTON
+                | cls.BOTTOM_BUTTON
+                | cls.DELETE
+                | cls.SHIFT
+                | cls.BACK
+                | cls.LOGO_FLAT
+                | cls.REWIND_BUTTON
+                | cls.PLAY_PAUSE_BUTTON
+                | cls.FAST_FORWARD_BUTTON
+                | cls.DPAD_CENTER_BUTTON
+                | cls.PLAY_STATION_CROSS_BUTTON
+                | cls.PLAY_STATION_CIRCLE_BUTTON
+                | cls.PLAY_STATION_TRIANGLE_BUTTON
+                | cls.PLAY_STATION_SQUARE_BUTTON
+                | cls.PLAY_BUTTON
+                | cls.PAUSE_BUTTON
+                | cls.CLOSE
+                | cls.OUYA_BUTTON_O
+                | cls.OUYA_BUTTON_U
+                | cls.OUYA_BUTTON_Y
+                | cls.OUYA_BUTTON_A
+                | cls.TOKEN
+                | cls.LOGO
+                | cls.TICKET
+                | cls.GOOGLE_PLAY_GAMES_LOGO
+                | cls.GAME_CENTER_LOGO
+                | cls.DICE_BUTTON1
+                | cls.DICE_BUTTON2
+                | cls.DICE_BUTTON3
+                | cls.DICE_BUTTON4
+                | cls.DISCORD_LOGO
+                | cls.PARTY_ICON
+                | cls.TEST_ACCOUNT
+                | cls.TICKET_BACKING
+                | cls.TROPHY1
+                | cls.TROPHY2
+                | cls.TROPHY3
+                | cls.TROPHY0A
+                | cls.TROPHY0B
+                | cls.TROPHY4
+                | cls.LOCAL_ACCOUNT
+                | cls.EXPLODINARY_LOGO
+                | cls.FLAG_UNITED_STATES
+                | cls.FLAG_MEXICO
+                | cls.FLAG_GERMANY
+                | cls.FLAG_BRAZIL
+                | cls.FLAG_RUSSIA
+                | cls.FLAG_CHINA
+                | cls.FLAG_UNITED_KINGDOM
+                | cls.FLAG_CANADA
+                | cls.FLAG_INDIA
+                | cls.FLAG_JAPAN
+                | cls.FLAG_FRANCE
+                | cls.FLAG_INDONESIA
+                | cls.FLAG_ITALY
+                | cls.FLAG_SOUTH_KOREA
+                | cls.FLAG_NETHERLANDS
+                | cls.FEDORA
+                | cls.HAL
+                | cls.CROWN
+                | cls.YIN_YANG
+                | cls.EYE_BALL
+                | cls.SKULL
+                | cls.HEART
+                | cls.DRAGON
+                | cls.HELMET
+                | cls.MUSHROOM
+                | cls.NINJA_STAR
+                | cls.VIKING_HELMET
+                | cls.MOON
+                | cls.SPIDER
+                | cls.FIREBALL
+                | cls.FLAG_UNITED_ARAB_EMIRATES
+                | cls.FLAG_QATAR
+                | cls.FLAG_EGYPT
+                | cls.FLAG_KUWAIT
+                | cls.FLAG_ALGERIA
+                | cls.FLAG_SAUDI_ARABIA
+                | cls.FLAG_MALAYSIA
+                | cls.FLAG_CZECH_REPUBLIC
+                | cls.FLAG_AUSTRALIA
+                | cls.FLAG_SINGAPORE
+                | cls.OCULUS_LOGO
+                | cls.STEAM_LOGO
+                | cls.NVIDIA_LOGO
+                | cls.FLAG_IRAN
+                | cls.FLAG_POLAND
+                | cls.FLAG_ARGENTINA
+                | cls.FLAG_PHILIPPINES
+                | cls.FLAG_CHILE
+                | cls.MIKIROG
+                | cls.V2_LOGO
+                | cls.SANTA_HAT
+                | cls.POTATO
+                | cls.PALM_TREE
+                | cls.BOXING_GLOVE
+                | cls.POPUP_ICON
+            ):
+                return 0
+            case (
+                cls.ANNIVERSARY_15_CAKE
+                | cls.ANNIVERSARY_15_SPAZ
+                | cls.ANNIVERSARY_15_BOMB
+            ):
+                return 23057
+            case _:
+                assert_never(self)

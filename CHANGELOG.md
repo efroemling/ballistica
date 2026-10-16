@@ -1,4 +1,35 @@
-### 1.8.0 (build 23050, api 9, 2026-10-11)
+### 1.8.2 (build 23063, api 9, 2026-10-15)
+- Fixed joining a server that uses a texture name the game no longer
+  has (common on modded servers) dropping the player back to the main
+  menu; such textures now draw as plain white, as they did before 1.8.1.
+- On Android devices where the audio system quietly falls back to its
+  older OpenSL ES backend (seen on Fire TV), the game's own music no
+  longer gets mistaken for another app's and stops a few seconds after
+  launch.
+- Anisotropic texture filtering now applies to all textures at High and
+  Higher graphics quality.
+- Fewer spurious texture-role warnings: icons in screen messages from
+  remote hosts and replays no longer trigger them, and release builds
+  no longer attach a native stack trace to them.
+- Fixed the purchase/reward sounds the server asks for (ding, cash
+  register, gun cocking) failing to play since 1.8.1.
+- BG Dynamics cleanup; momentary hitches no longer reduce character and
+  debris detail. That now takes sustained background-physics overload,
+  and the overload warning reports how long steps wait for the
+  background thread.
+- The Flatpak now runs natively on Wayland, falling back to X11 only
+  where Wayland isn't available (it previously always used X11).
+
+### 1.8.1 (build 23061, api 9, 2026-10-14)
+- Players whose legacy profiles haven't moved to cloud profiles yet now
+  get their legacy profiles in the lobby (locally and when joining
+  servers) instead of only a random character. Profiles also now move
+  to the cloud on first sign-in rather than when the inventory is
+  first opened.
+- Fixed a crash (stack overflow in the physics engine) in games with
+  very large numbers of bodies and joints.
+
+### 1.8.0 (build 23058, api 9, 2026-10-13)
 - Reworked what happens when more sounds want to play than the game has
   audio channels for (32). Previously the newest sound was simply
   dropped, which in busy games (lots of bombs, epic mode) lost
@@ -20,9 +51,40 @@
   `sound` nodes gained matching `play_group`, `play_group_cap` and
   `priority` attrs. Sound assets can set a play group and priority of
   their own in their workspace settings.
+- Fixed a pale line around the cutout of masked images, most visible on the
+  character viewer's frame. Frame masks (the `mask_texture` of images and
+  buttons) now use a new `premultiplied_data` texture role, where the asset
+  pipeline scales the mask's channels by its alpha before filtering; a mask
+  with the plain `data` role in that slot now logs the one-time role warning.
 - Hosts no longer send clients bursts of sound plays that would only cut
   each other off on arrival.
 - Scene protocol is now 54 (for the above).
+- Fixed characters sometimes getting their pelvis stuck in the ground
+  after falling while knocked out or frozen, and characters getting flung
+  sideways as they got back up from a knockout. Scene protocol is now 55
+  (for these physics changes).
+- Fixed knocked-out characters sliding along the ground too easily. Scene
+  protocol is now 56 (for this physics change).
+- Fixed game music on Android cutting out for a few seconds shortly after
+  launch on builds with ads (loading a video ad was mistaken for another
+  app's music). Another app's music now has to play for a second and a
+  half before game music gives way to it.
+- Character limbs, hair and bomb fuses are now simulated against the
+  poses their bodies are drawn at instead of the previous step's, which
+  removes a one-frame jump in the arms when a character starts or stops
+  a fast turn. Nodes get a new `PostDynamicsStep()` call for this
+  (engine-side). Debug drawing (F10) now shows background-simulated limbs
+  exactly where they are simulated.
+- Fixed background dynamics (debris, smoke, character limbs) wrongly
+  concluding it was overloaded at low frame rates in light scenes such as
+  menus, which made it skip limb simulation and run in slow motion for no
+  reason. Its overload warning now also reports how many steps arrived at
+  once.
+- Windows packages now include the Visual C++ runtime dlls (`msvcp140.dll`,
+  `vcruntime140.dll`, `vcruntime140_1.dll`) next to the exe, taken from the
+  toolset that compiled it, in place of the redist installer. Builds no
+  longer depend on whichever runtime version is installed on the machine;
+  an older installed one could crash the game at launch.
 - Retuned character physics to feel closer to 1.7 after the limbs rework:
   less bouncy, steadier landings and less speed lost to bumps, and
   knocked-out characters slide instead of sticking to the floor (thanks
@@ -346,6 +408,18 @@
   when possible (so their cloud profiles come along) without requiring it:
   joiners who are signed out or offline, or a host that is offline, still
   connect just as before. Public parties still require sign-in.
+- `ba*.SpecialChar` values are now the characters themselves, so
+  `ba*.SpecialChar.BACK.value` can be used directly as text, and
+  `ba*.charstr()` is deprecated in favor of that (see
+  CHANGELOG_API_VERSIONS.md). The engine's own list of these characters is
+  now generated from `bacommon.text.SpecialChar` instead of being kept in
+  sync by hand.
+- Added three icons celebrating the game's 15th anniversary (a cake, a spaz
+  and a bomb), available as premium icons in the store. Thanks to Discontt,
+  vladdos and E328 for making them.
+- `SpecialChar` members have a `min_engine_build` property giving the first
+  engine build able to draw them, so servers can avoid offering a character
+  to a client that would show it as a blank.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

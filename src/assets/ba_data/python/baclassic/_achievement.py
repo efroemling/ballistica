@@ -15,6 +15,7 @@ import babase
 import bascenev1
 from bascenev1 import _classicassets
 from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 
 if TYPE_CHECKING:
     import bauiv1
@@ -618,6 +619,10 @@ class Achievement:
         # signed in, lets not show them (otherwise we tend to get
         # confusing 'controller connected' achievements popping up while
         # waiting to sign in which can be confusing).
+        #
+        # (v1 sign-in state on purpose: completed achievements live in
+        # the v1 account, so until that sign-in finishes we don't know
+        # which ones the player already has.)
         if plus.get_v1_account_state() != 'signed_in':
             return
 
@@ -1054,7 +1059,7 @@ class Achievement:
 
             # objs.append(
             #     Text(
-            #         babase.charstr(babase.SpecialChar.TICKET),
+            #         babase.SpecialChar.TICKET.value,
             #         host_only=True,
             #         position=(x + award_x + 33, y + 7),
             #         transition=Text.Transition.FADE_IN,
@@ -1129,7 +1134,7 @@ class Achievement:
                     award_x = -100
                     # objs.append(
                     #     Text(
-                    #         babase.charstr(babase.SpecialChar.TICKET),
+                    #         babase.SpecialChar.TICKET.value,
                     #         host_only=True,
                     #         position=(x + award_x + 33, y + 7),
                     #         transition=Text.Transition.IN_RIGHT,
@@ -1312,7 +1317,7 @@ class Achievement:
         else:
             bascenev1.timer(
                 0.5,
-                lambda: _builtinassets.audio.ding.get().play(host_only=True),
+                lambda: _commonassets.audio.ding.get().play(host_only=True),
             )
 
         in_time = 0.300
@@ -1526,7 +1531,7 @@ class Achievement:
         objt.node.host_only = True
 
         # objt = Text(
-        #     babase.charstr(babase.SpecialChar.TICKET),
+        #     babase.SpecialChar.TICKET.value,
         #     position=(-120 - 170 + 5, 75 + y_offs - 20),
         #     front=True,
         #     v_attach=Text.VAttach.BOTTOM,

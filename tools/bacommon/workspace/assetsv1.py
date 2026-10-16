@@ -726,6 +726,17 @@ class Role(Enum):
     #: formats as color, so it needs nothing from the client.
     DATA = 'data'
 
+    #: Data whose channels a shader scales by the texture's own alpha
+    #: (frame masks: a cutout's coverage plus the tint and highlight
+    #: drawn around it). Built exactly like ``DATA`` except that the
+    #: pipeline first multiplies the other channels by alpha and sets
+    #: the ``ALPHA_PREMULTIPLIED`` DFD flag, so the client uses them as
+    #: stored. Doing that multiply before filtering is the point: left
+    #: to the shader it happens after the sampler has blended each
+    #: channel on its own, which at an edge where a channel rises as
+    #: alpha falls gives a bright fringe.
+    PREMULTIPLIED_DATA = 'premultiplied_data'
+
 
 class AstcBlockSize(Enum):
     """ASTC square block size — the mobile bitrate lever.
@@ -1547,17 +1558,15 @@ class AssetsV1PathValsGroupV1(AssetsV1PathVals):
 class AssetsV1PathValsCubeMapV1(AssetsV1PathVals):
     """Path-specific values for a cube map (``.cubemap`` dir) in a workspace.
 
-    Cube maps are reflection textures with no Python API (decision #24),
-    so they aren't wrapper-visible. This currently carries only optional
-    ``docs`` -- stored for completeness/consistency with other asset
-    kinds, but not yet consumed by anything (it'll have a home if/when
-    cube maps gain a Python surface). Keyed in ``workspace.json``'s
-    ``path`` dict by the ``.cubemap`` directory path.
+    Cube maps have no build-time settings (decision #24), so this
+    currently carries only optional ``docs``. Keyed in
+    ``workspace.json``'s ``path`` dict by the ``.cubemap`` directory
+    path.
     """
 
-    #: Optional free-form documentation for this cube map. Stored but not
-    #: yet surfaced anywhere (cube maps have no wrapper entry). Empty
-    #: string means no docs.
+    #: Optional free-form documentation for this asset, surfaced as a
+    #: comment above the asset in generated wrapper modules (and in the
+    #: Sphinx docs). Empty string means no docs.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
     @override

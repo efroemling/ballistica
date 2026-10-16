@@ -7,7 +7,7 @@ from typing import override
 import random
 
 import bauiv1 as bui
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _classiccharacterassets
 from bauiv1 import _builtinassets
 
 from bauiv1lib.utils import get_screen_margins
@@ -115,7 +115,7 @@ class HelpWindow(bui.MainWindow):
                 ),
                 size=(60, 55),
                 scale=back_scale,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 extra_touch_border_scale=2.0,
                 autoselect=True,
@@ -487,7 +487,13 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazAttack0', 4
+                self._play_sound,
+                [
+                    _classiccharacterassets.audio.spaz_attack01,
+                    _classiccharacterassets.audio.spaz_attack02,
+                    _classiccharacterassets.audio.spaz_attack03,
+                    _classiccharacterassets.audio.spaz_attack04,
+                ],
             ),
         )
 
@@ -517,7 +523,14 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'explosion0', 5
+                self._play_sound,
+                [
+                    _classicassets.audio.explosion01,
+                    _classicassets.audio.explosion02,
+                    _classicassets.audio.explosion03,
+                    _classicassets.audio.explosion04,
+                    _classicassets.audio.explosion05,
+                ],
             ),
         )
 
@@ -548,7 +561,8 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazPickup0', 1
+                self._play_sound,
+                [_classiccharacterassets.audio.spaz_pickup01],
             ),
         )
 
@@ -578,7 +592,13 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazJump0', 4
+                self._play_sound,
+                [
+                    _classiccharacterassets.audio.spaz_jump01,
+                    _classiccharacterassets.audio.spaz_jump02,
+                    _classiccharacterassets.audio.spaz_jump03,
+                    _classiccharacterassets.audio.spaz_jump04,
+                ],
             ),
         )
 
@@ -781,8 +801,8 @@ class HelpWindow(bui.MainWindow):
                 res_scale=0.5,
             )
 
-    def _play_sound(self, text: str, num: int) -> None:
-        bui.getsound(text + str(random.randint(1, num))).play()
+    def _play_sound(self, sounds: list[bui.SoundHandle]) -> None:
+        random.choice(sounds).get().play()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

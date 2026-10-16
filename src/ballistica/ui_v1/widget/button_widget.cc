@@ -140,7 +140,7 @@ void ButtonWidget::SetAccessory(Accessory val) {
       accessory_text_->SetHeight(0.0f);
 
       accessory_text_->SetText(
-          g_base->assets->CharStr(SpecialChar::kPopupIcon));
+          g_base->assets->CharStr(base::SpecialChar::kPopupIcon));
       break;
   }
 }

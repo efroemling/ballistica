@@ -10,6 +10,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -195,10 +196,11 @@ class AssetPackageRegistry {
   /// domain self-contained wire content (character definitions) indexes
   /// against -- the union rather than one bucket because the two ends
   /// bucket the same paths differently (mirrors the Python
-  /// ``package_asset_listing``). Cached per apverid: an exact apverid's
-  /// contents are immutable, so the listing is built once and shared
-  /// thereafter, which keeps per-instance resolves (every character
-  /// spawn, every icon widget) to a map lookup instead of an
+  /// ``package_asset_listing``). Cached per registration of an apverid
+  /// (built once per registered bucket set and shared thereafter;
+  /// re-registering a package rebuilds it), which keeps per-instance
+  /// resolves (every character spawn, every icon widget) to a map
+  /// lookup instead of an
   /// O(package) copy-and-sort on the logic thread. Null if the package
   /// isn't registered *right now* (a cached entry is never handed out
   /// for a package that has since been unregistered).
@@ -237,6 +239,11 @@ class AssetPackageRegistry {
   /// construction. Opens the gate enforced by
   /// :meth:`CheckPreConstructAccess`.
   void SetConstructComplete();
+
+  /// Whether construct-mode has finished (see :meth:`SetConstructComplete`).
+  auto construct_complete() const -> bool {
+    return construct_complete_.load(std::memory_order_acquire);
+  }
 
   /// Complain if ``apverid`` is accessed before construct-mode finished.
   ///
@@ -282,12 +289,16 @@ class AssetPackageRegistry {
   // map is never mutated after publish.
   std::shared_ptr<const PackagesMap> packages_;
 
-  // Per-apverid flat listings (see FlatListing). Guarded by mutex_;
-  // entries are immutable once built and never need invalidating
-  // (contents are fixed per apverid; registration status is checked
-  // against the live snapshot on every lookup).
-  mutable std::unordered_map<std::string,
-                             std::shared_ptr<const std::vector<std::string>>>
+  // Per-apverid flat listings (see FlatListing), each with the bucket
+  // map it was built from. Guarded by mutex_; entries are immutable
+  // once built. An apverid's contents are fixed but its registered
+  // bucket set is not (boot registers the construct package's language
+  // bucket alone, then its full set), so a lookup uses an entry only
+  // while that same bucket map is the live one. Registration status is
+  // checked against the live snapshot on every lookup.
+  mutable std::unordered_map<
+      std::string, std::pair<std::shared_ptr<const BucketMap>,
+                             std::shared_ptr<const std::vector<std::string>>>>
       flat_listings_;
 
   // Bumped under mutex_ on every registration; read lock-free by

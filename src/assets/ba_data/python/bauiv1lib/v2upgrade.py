@@ -54,10 +54,10 @@ class V2UpgradeWindow(bui.Window):
             h_align='center',
             v_align='center',
             text=(
-                bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT)
+                bui.SpecialChar.LOCAL_ACCOUNT.value
                 + login_name
                 + '    ---->    '
-                + bui.charstr(bui.SpecialChar.V2_LOGO)
+                + bui.SpecialChar.V2_LOGO.value
                 + login_name
             ),
             maxwidth=self._width * 0.95,

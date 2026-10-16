@@ -74,7 +74,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 position=(50, yoffs - 60),
                 size=(60, 60),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 autoselect=True,
             )
@@ -373,7 +373,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         # If it varies from current, commit and play.
         if current_soundtrack != name and self._allow_changing_soundtracks:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             cfg['Soundtrack'] = self._selected_soundtrack
             cfg.commit()
 
@@ -509,7 +509,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             self._refresh(select_soundtrack=new_soundtrack)
 
     def _save_state(self) -> None:

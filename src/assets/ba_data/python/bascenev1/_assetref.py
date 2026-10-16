@@ -30,7 +30,11 @@ from typing import TYPE_CHECKING
 
 import _bascenev1
 
-from babase import check_asset_package_load, wrapper_langstr
+from babase import (
+    SimpleSoundHandle,
+    check_asset_package_load,
+    wrapper_langstr,
+)
 from bacommon.assetpackage import ApverNum
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
@@ -183,6 +187,14 @@ class SoundHandle(_SoundSpec):
         import bauiv1
 
         return bauiv1.SoundHandle(self._apvernum, self._name)
+
+    def simple(self) -> SimpleSoundHandle:
+        """This same verified reference, as a context-free simple sound.
+
+        For engine-level playback that belongs to no scene, such as
+        the internal music player.
+        """
+        return SimpleSoundHandle(self._apvernum, self._name)
 
 
 class CollisionMeshHandle(_CollisionMeshSpec):

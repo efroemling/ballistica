@@ -193,6 +193,10 @@ void AppConfig::SetupEntries_() {
   float_entries_[FloatID::kDevConsoleButtonSize] =
       FloatEntry("Dev Console Button Size", 1.0f);
 
+  // Dev-console button opacity, as a multiple of its regular look.
+  float_entries_[FloatID::kDevConsoleButtonOpacity] =
+      FloatEntry("Dev Console Button Opacity", 1.0f);
+
   optional_float_entries_[OptionalFloatID::kIdleExitMinutes] =
       OptionalFloatEntry("Idle Exit Minutes", std::optional<float>());
   // Custom dev-console button center (virtual-screen coords; set by

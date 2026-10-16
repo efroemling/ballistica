@@ -948,7 +948,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     subs=[
                         (
                             '${PICKUP}',
-                            babase.charstr(babase.SpecialChar.TOP_BUTTON),
+                            babase.SpecialChar.TOP_BUTTON.value,
                         )
                     ],
                 )

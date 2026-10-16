@@ -130,10 +130,14 @@ def error_message() -> None:
 
 
 def success_message() -> None:
-    from babase import _builtinassets
+    from babase import _builtinassets, _commonassets
+    from babase._asset_packages import construct_assets_complete
 
     if _babase.app.env.gui:
-        _builtinassets.audio.ding.get().play()
+        # (Common assets aren't available until construct-mode is done;
+        # the message alone will do before then.)
+        if construct_assets_complete():
+            _commonassets.audio.ding.get().play()
         _babase.screenmessage(
             _builtinassets.strings.ui.success, color=(0, 1, 0)
         )
@@ -483,7 +487,8 @@ def unsupported_controller_message(name: str) -> None:
 def copy_dev_console_history() -> None:
     """Copy log history from the dev console."""
     import baenv
-    from babase import _builtinassets
+    from babase import _builtinassets, _commonassets
+    from babase._asset_packages import construct_assets_complete
 
     if not _babase.clipboard_is_supported():
         _builtinassets.audio.error.get().play()
@@ -516,7 +521,10 @@ def copy_dev_console_history() -> None:
     _babase.screenmessage(
         _builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
     )
-    _builtinassets.audio.gun_cocking.get().play()
+    # The dev console works before construct-mode is done; common
+    # assets don't, so stay silent until then.
+    if construct_assets_complete():
+        _commonassets.audio.gun_cocking.get().play()
 
 
 def start_native_repl() -> bool:

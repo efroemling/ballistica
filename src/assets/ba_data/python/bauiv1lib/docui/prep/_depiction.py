@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, assert_never
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 
 from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
@@ -97,7 +97,7 @@ def prep_depiction(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': _texname(_builtinassets.textures.white)},
+                textures={'texture': _texname(_commonassets.textures.white)},
                 meshes={},
                 highlight=True,
             )

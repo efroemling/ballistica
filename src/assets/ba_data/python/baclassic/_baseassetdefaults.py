@@ -3,7 +3,7 @@
 """The base asset set classic hands to the engine."""
 
 import babase
-from bascenev1 import _builtinassets
+from bascenev1 import _commonassets
 from bascenev1 import _classicassets, _classiccatalogassets, _uiv1assets
 from bascenev1 import _classiccharacterassets
 
@@ -65,10 +65,9 @@ def make_base_asset_set() -> babase.BaseAssetSet:
     assets.arrow_back = msh.arrow_back
     assets.arrow_front = msh.arrow_front
 
-    # Jingles. cork_pop's art is ours now; gun_cocking's wav is
-    # babase-python-pinned so it stays in the builtin package and we
-    # simply point our slot at it there.
+    # Jingles. cork_pop's art is ours now; gun_cocking's wav lives in
+    # the common package and we simply point our slot at it there.
     assets.cork_pop = _classicassets.audio.cork_pop
-    assets.gun_cocking = _builtinassets.audio.gun_cocking
+    assets.gun_cocking = _commonassets.audio.gun_cocking
 
     return assets

@@ -277,9 +277,11 @@ class UI {
   Rect text_edit_rect_{};
   Rect text_edit_rect_norm_prev_{};
   // Dev-console button look, from the config: its size as a multiple of
-  // the ui-scale default, and its color scheme.
+  // the ui-scale default, its opacity as a multiple of its regular look,
+  // and its color scheme.
   enum class DevConsoleButtonStyle_ { kGrey, kGreen, kPurple, kHowdy };
   float dev_console_button_size_scale_{1.0f};
+  float dev_console_button_opacity_{1.0f};
   DevConsoleButtonStyle_ dev_console_button_style_{
       DevConsoleButtonStyle_::kGrey};
   // Dev-console button custom position (active once the button has been

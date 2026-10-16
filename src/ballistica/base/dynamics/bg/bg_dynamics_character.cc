@@ -286,6 +286,10 @@ void BGDynamicsCharacterKind::Sim::CreateBodies_(
     dMassSetSphereTotal(&m, config_.anchors[i].mass * 1000.0f, 0.28f);
     dBodySetMass(twins_[i], &m);
     dBodySetGravityMode(twins_[i], 0);
+    // Each step turns it from its anchor's last pose to the new one at
+    // a constant spin; integrate that as the finite rotation it is so
+    // it lands on the pose (a fast turn is tens of degrees a step).
+    dBodySetFiniteRotationMode(twins_[i], 1);
     // This world auto-sleeps slow bodies (chunks); a resting rig must
     // keep simulating or its springs freeze mid-droop.
     dBodySetAutoDisableFlag(twins_[i], 0);
@@ -706,17 +710,23 @@ void BGDynamicsCharacterKind::Sim::Step(BGDynamicsWorldServer* server) {
     fresh = true;
   }
 
-  // Drive the twins: poses straight from the feed, linear velocities
-  // from the pose deltas so the springs feel the anchors' motion. Also
-  // note each anchor's motion since the last step (world space), for
-  // carrying a skipped rig along.
+  // Drive the twins. The feed carries each anchor's pose at the END of
+  // this step (the main sim has already stepped; see
+  // SpazNode::PostDynamicsStep), so a twin starts where the last step
+  // left its anchor and is given the velocity that lands it on the new
+  // pose: the springs feel the anchor's real motion over the step, and
+  // our results come out for the same instant the anchor bodies will be
+  // drawn at. (Placing the twin on the fed pose and then letting it
+  // coast would run it, and everything hung off it, a step ahead.)
+  // Also note each anchor's motion since the last step (world space),
+  // for carrying a skipped rig along.
   float step_seconds = server->step_seconds();
   bool snap = fresh || input_.snap_count != last_snap_count_;
   Matrix44f anchor_deltas[kMaxAnchors];
   for (int i = 0; i < anchor_count_; ++i) {
     const Matrix44f& anchor = input_.anchors[i];
-    SetBodyFromMatrix(twins_[i], anchor);
     if (have_prev_anchors_ && !snap && step_seconds > 0.0f) {
+      SetBodyFromMatrix(twins_[i], prev_anchors_[i]);
       Vector3f vel = (anchor.GetTranslate() - prev_anchors_[i].GetTranslate())
                      / step_seconds;
       dBodySetLinearVel(twins_[i], vel.x, vel.y, vel.z);
@@ -726,6 +736,7 @@ void BGDynamicsCharacterKind::Sim::Step(BGDynamicsWorldServer* server) {
           AngularVelocityBetween(prev_anchors_[i], anchor, step_seconds);
       dBodySetAngularVel(twins_[i], avel.x, avel.y, avel.z);
     } else {
+      SetBodyFromMatrix(twins_[i], anchor);
       dBodySetLinearVel(twins_[i], 0, 0, 0);
       dBodySetAngularVel(twins_[i], 0, 0, 0);
     }
@@ -742,7 +753,11 @@ void BGDynamicsCharacterKind::Sim::Step(BGDynamicsWorldServer* server) {
   } else if (!input_.shattered && !TakeStep_()) {
     // Sitting this one out: ride the anchors rigidly, solve nothing.
     // (A shattered character never sits out: its loose pieces have no
-    // anchor to ride and must keep falling.)
+    // anchor to ride and must keep falling.) Nothing will integrate, so
+    // the twins go straight to where their anchors now are.
+    for (int i = 0; i < anchor_count_; ++i) {
+      SetBodyFromMatrix(twins_[i], input_.anchors[i]);
+    }
     CarryWithAnchors_(anchor_deltas);
     SetBodiesEnabled_(false);
     return;

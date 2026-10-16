@@ -156,11 +156,11 @@ class LeagueRankWindow(bui.MainWindow):
                 size=back_size,
                 scale=back_scale,
                 autoselect=True,
-                label=bui.charstr(
+                label=(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style
                     else bui.SpecialChar.BACK
-                ),
+                ).value,
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
             )
@@ -260,7 +260,8 @@ class LeagueRankWindow(bui.MainWindow):
         self._season: str | None = None
 
         # Take note of our account state; we'll refresh later if this
-        # changes.
+        # changes. (v1 sign-in state on purpose, here and below: league
+        # rank data comes from the v1 master server.)
         self._account_state = plus.get_v1_account_state()
 
         self._refresh()
@@ -426,7 +427,8 @@ class LeagueRankWindow(bui.MainWindow):
 
         cur_time = bui.apptime()
 
-        # If our account state has changed, refresh our UI.
+        # If our account state has changed, refresh our UI. (v1 sign-in
+        # state on purpose; see __init__.)
         account_state = plus.get_v1_account_state()
         if account_state != self._account_state:
             self._account_state = account_state
@@ -1001,6 +1003,7 @@ class LeagueRankWindow(bui.MainWindow):
         finished_season_unranked = False
         self._can_do_more_button = True
         extra_text = ''
+        # (v1 sign-in state on purpose; see __init__.)
         if plus.get_v1_account_state() != 'signed_in':
             status_text = (
                 '('

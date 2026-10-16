@@ -346,7 +346,7 @@ class CloudSubsystem(babase.AppSubsystem):
 
         self._update_available_notice_pending = False
 
-        from babase import _builtinassets
+        from babase import _builtinassets, _commonassets
 
         notice = _builtinassets.strings.ui.update_available
 
@@ -363,7 +363,7 @@ class CloudSubsystem(babase.AppSubsystem):
             )
             return
 
-        _builtinassets.audio.ding.get().play()
+        _commonassets.audio.ding.get().play()
 
         babase.screenmessage(notice, color=(0.4, 1.0, 0.4))
 

@@ -65,6 +65,9 @@ class AccountSettingsWindow(bui.MainWindow):
 
         self._r = 'accountSettingsWindow'
         self._needs_refresh = False
+        # (v1 sign-in state on purpose, here and below: this window
+        # shows v1 account details (such as the account type) alongside
+        # the v2 ones and refreshes when either moves.)
         self._v1_signed_in = plus.get_v1_account_state() == 'signed_in'
         self._v1_account_state_num = plus.get_v1_account_state_num()
         self._check_sign_in_timer = bui.AppTimer(
@@ -190,11 +193,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 autoselect=True,
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
-                label=bui.charstr(
+                label=(
                     bui.SpecialChar.CLOSE
                     if auxiliary_style
                     else bui.SpecialChar.BACK
-                ),
+                ).value,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
@@ -360,7 +363,7 @@ class AccountSettingsWindow(bui.MainWindow):
                         and ladapter is not None
                         and ladapter.is_back_end_active()
                     ):
-                        via_lines.append(f'{bui.charstr(lchar)}{linfo.name}')
+                        via_lines.append(f'{lchar.value}{linfo.name}')
 
                 # Discord is a global service (not platform-scoped), so
                 # server attachment is the source of truth; no SDK-
@@ -368,17 +371,14 @@ class AccountSettingsWindow(bui.MainWindow):
                 linfo = accounts.primary.logins.get(LoginType.DISCORD)
                 if linfo is not None:
                     via_lines.append(
-                        f'{bui.charstr(bui.SpecialChar.DISCORD_LOGO)}'
-                        f'{linfo.name}'
+                        f'{bui.SpecialChar.DISCORD_LOGO.value}' f'{linfo.name}'
                     )
 
                 # TEMP TESTING
                 if bool(False):
-                    icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
+                    icontxt = bui.SpecialChar.GAME_CENTER_LOGO.value
                     via_lines.append(f'{icontxt}FloofDibble')
-                    icontxt = bui.charstr(
-                        bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO
-                    )
+                    icontxt = bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO.value
                     via_lines.append(f'{icontxt}StinkBobble')
 
         # Extra room above the via lines so they clear the account
@@ -727,7 +727,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 autoselect=True,
                 size=(button_width, 60),
                 label=_commonassets.strings.compose.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                    icon=bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO.value,
                     label=_classicassets.strings.account.sign_in_with(
                         service=_classicassets.strings.ui.google_play
                     ),
@@ -756,7 +756,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
                 label=_commonassets.strings.compose.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                    icon=bui.SpecialChar.GAME_CENTER_LOGO.value,
                     label=_classicassets.strings.account.sign_in_with(
                         service=_classicassets.strings.ui.game_center
                     ),
@@ -787,7 +787,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 # (same pattern Game Center uses); the surrounding
                 # "Sign in with..." comes from a translated resource.
                 label=_commonassets.strings.compose.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.DISCORD_LOGO),
+                    icon=bui.SpecialChar.DISCORD_LOGO.value,
                     label=_classicassets.strings.account.sign_in_with(
                         service='Discord'
                     ),
@@ -836,7 +836,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     v + (17 if v2infotext is not None else 10),
                 ),
                 text=_commonassets.strings.compose.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.V2_LOGO),
+                    icon=bui.SpecialChar.V2_LOGO.value,
                     label=v2labeltext,
                 ),
                 maxwidth=button_width * 0.8,
@@ -942,7 +942,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 # https://developer.apple.com/forums/thread/725779
                 game_center_button_label = (
                     _commonassets.strings.compose.icon_label(
-                        icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                        icon=bui.SpecialChar.GAME_CENTER_LOGO.value,
                         label=_classicassets.strings.ui.game_center,
                     )
                 )

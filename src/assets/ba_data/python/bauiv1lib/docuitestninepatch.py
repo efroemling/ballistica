@@ -96,7 +96,7 @@ def test_page_nine_patch(
 
     def _bounds_check(size: tuple[float, float]) -> dui2.Button:
         """An opaque white 9-patch: exactly as big as its debug box."""
-        from bauiv1 import _builtinassets
+        from bauiv1 import _commonassets
 
         width, height = size
         return dui2.Button(
@@ -104,7 +104,7 @@ def test_page_nine_patch(
             color=(0.1, 0.1, 0.1, 1.0),
             decorations=[
                 dui2.Image(
-                    texture=_builtinassets.textures.white,
+                    texture=_commonassets.textures.white,
                     position=(0.0, 0.0),
                     size=size,
                     color=(1.0, 0.3, 0.3, 1.0),

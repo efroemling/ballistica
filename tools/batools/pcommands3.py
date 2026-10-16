@@ -261,8 +261,8 @@ def flatpak_prebuilt_inputs() -> None:
     Writes build/flatpak/bombsquad_prebuilt_inputs.tar.xz: what
     `make flatpak-prefetch` fetched (built assets, resources, the
     prebuilt plus lib for each arch, the gui asset bundle and the
-    content-store blobs it references, the app icon) plus releases.xml,
-    which the release workflow adds this release's entry to. Flathub
+    content-store blobs it references, the app icon, and releases.xml,
+    generated from CHANGELOG.md; see flatpak_add_release). Flathub
     builds take the code from git and extract this over it.
 
     The archive also carries a list of its own files,
@@ -328,31 +328,72 @@ def flatpak_prebuilt_inputs() -> None:
 
 
 def flatpak_add_release() -> None:
-    """Add a release entry to the flatpak releases.xml.
+    """Generate the flatpak releases.xml from CHANGELOG.md.
 
-    Args: <version>
+    Args: [version]
 
     Writes pconfig/flatpak/net.froemling.bombsquad.releases.xml, which
-    the flatpak build installs. The release workflow runs this before
-    packing the prebuilt-inputs archive that carries it to Flathub;
-    committing the entry ahead of time works too (an existing version
-    is left alone). The release date is today (UTC).
+    the flatpak build installs. The file is not in git; it is rebuilt
+    whole each time, so CHANGELOG.md stays the only record of releases.
+    It lists the newest few changelog versions, up to and including
+    ``version`` (default: the newest), each dated from its changelog
+    heading and linking to its changelog section. The release
+    workflow runs this with the release tag before packing the
+    prebuilt-inputs archive that carries the file to Flathub.
     """
-    # pylint: disable=too-many-locals
     import os
-    import datetime
+    import re
     from xml.etree import ElementTree as ET
 
     from efro.error import CleanError
     from efro.terminal import Clr
-    from batools.changelog import get_version_changelog
+    from batools.changelog import changelog_version, get_changelog_releases
+
+    # How many releases to list. Software centers show the newest one
+    # or two; older history lives in the linked changelog.
+    max_releases = 10
 
     args = pcommand.get_args()
-    if len(args) != 1:
-        raise CleanError('Expected args: <version>')
-    version = args[0].removeprefix('v')
-    release_date = datetime.datetime.now(datetime.UTC).date().isoformat()
-    github_repo = _github_repo()
+    if len(args) > 1:
+        raise CleanError('Expected args: [version]')
+
+    releases = get_changelog_releases(str(pcommand.PROJROOT))
+    if not releases:
+        raise CleanError('No versions found in CHANGELOG.md.')
+    if args:
+        version = changelog_version(args[0].removeprefix('v'))
+        versions = [r[0] for r in releases]
+        if version not in versions:
+            raise CleanError(f'No CHANGELOG.md section for version {version}.')
+        releases = releases[versions.index(version) :]
+    releases = releases[:max_releases]
+
+    # Always the public repo's changelog, whichever repo or fork runs
+    # this.
+    changelog_url = (
+        'https://github.com/efroemling/ballistica/blob/main/CHANGELOG.md'
+    )
+
+    root = ET.Element('releases')
+    root.append(
+        ET.Comment(' Generated from CHANGELOG.md by flatpak_add_release. ')
+    )
+    for version, date, heading in releases:
+        release = ET.SubElement(
+            root, 'release', version=version, date=date, type='stable'
+        )
+        description = ET.SubElement(release, 'description')
+        ET.SubElement(description, 'p').text = (
+            f'BombSquad {version}. The full list of changes is in the'
+            f' changelog.'
+        )
+        # GitHub's heading anchor: lowercased, punctuation dropped,
+        # spaces to dashes.
+        anchor = re.sub(r'[^a-z0-9 _-]', '', heading.lower()).replace(' ', '-')
+        ET.SubElement(release, 'url', type='details').text = (
+            f'{changelog_url}#{anchor}'
+        )
+    ET.indent(root, space='    ')
 
     releases_xml_path = os.path.join(
         pcommand.PROJROOT,
@@ -360,95 +401,13 @@ def flatpak_add_release() -> None:
         'flatpak',
         'net.froemling.bombsquad.releases.xml',
     )
-
-    print(f'{Clr.BLD}Adding release {version} to releases.xml...{Clr.RST}')
-
-    # Parse the existing releases.xml
-    if not os.path.exists(releases_xml_path):
-        raise CleanError(f'releases.xml not found at {releases_xml_path}')
-
-    try:
-        tree = ET.parse(releases_xml_path)
-        root = tree.getroot()
-    except ET.ParseError as e:
-        raise CleanError(f'Failed to parse releases.xml: {e}') from e
-
-    # Check if release with this version already exists
-    existing_release = root.find(f".//release[@version='{version}']")
-    if existing_release is not None:
-        print(
-            f'{Clr.YLW}Warning: Release {version} '
-            f'already exists in releases.xml, skipping...{Clr.RST}'
-        )
-        return
-
-    # Create new release element
-    new_release = ET.Element('release')
-    new_release.set('version', version)
-    new_release.set('date', release_date)
-    new_release.set('urgency', 'low')
-    new_release.set('type', 'stable')
-
-    # Add description
-    description = ET.SubElement(new_release, 'description')
-    changelog_list = get_version_changelog(
-        version, projroot=str(pcommand.PROJROOT)
+    ET.ElementTree(root).write(
+        releases_xml_path, encoding='utf-8', xml_declaration=True
     )
-    ul = ET.SubElement(description, 'ul')
-    for line in changelog_list:
-        li = ET.SubElement(ul, 'li')
-        li.text = line
-
-    # Add URL element for release page
-    release_url = ET.SubElement(new_release, 'url')
-    release_url.text = (
-        f'https://github.com/{github_repo}/releases/tag/v{version}'
+    print(
+        f'{Clr.GRN}Wrote {releases_xml_path}'
+        f' ({releases[0][0]} back to {releases[-1][0]}).{Clr.RST}'
     )
-
-    # Add artifacts section with binary information
-    artifacts = ET.SubElement(new_release, 'artifacts')
-
-    # Add source artifact
-    source_artifact = ET.SubElement(artifacts, 'artifact')
-    source_artifact.set('type', 'source')
-
-    source_location = ET.SubElement(source_artifact, 'location')
-    source_location.text = (
-        f'https://github.com/{github_repo}/archive/refs/tags/v{version}.tar.gz'
-    )
-
-    # Insert the new release at the beginning (after the root element)
-    root.insert(0, new_release)
-
-    # Format the XML with proper indentation
-    def _indent(elem: ET.Element[str], level: int = 0) -> None:
-        """Add pretty-printing indentation to XML tree."""
-        indent_str = '\n' + ('    ' * level)
-        if len(elem):
-            if not elem.text or not elem.text.strip():
-                elem.text = indent_str + '    '
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = indent_str
-            child: ET.Element | None = None
-            for child in elem:
-                _indent(child, level + 1)
-            if child and (not child.tail or not child.tail.strip()):
-                child.tail = indent_str
-        else:
-            if level and (not elem.tail or not elem.tail.strip()):
-                elem.tail = indent_str
-
-    _indent(root)
-
-    # Write back to file
-    try:
-        tree.write(releases_xml_path, encoding='utf-8', xml_declaration=True)
-        print(
-            f'{Clr.GRN}Added release {version} to'
-            f' {releases_xml_path}.{Clr.RST}'
-        )
-    except Exception as e:
-        raise CleanError(f'Failed to write releases.xml: {e}') from e
 
 
 def gen_pyembed() -> None:

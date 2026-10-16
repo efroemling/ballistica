@@ -411,6 +411,25 @@ WINPREVSP = x64
 # Associated name for our PrefabPlatform enum.
 WINPREPLT = windows_x86_64
 
+# Visual C++ runtime dlls that a Release build leaves next to its exe,
+# per Visual Studio platform (the BACopyVCRuntime target in
+# ballisticakit-windows/Directory.Build.props copies them from the
+# compiling toolset; keep these lists matching it). Release prefab
+# builds and packages ship these beside the exe so nothing needs to be
+# installed. Debug builds get none (the debug runtime is not
+# redistributable) and vcruntime140_1.dll does not exist for 32 bit.
+WIN_CRT_DLLS_Win32 = msvcp140.dll vcruntime140.dll
+WIN_CRT_DLLS_x64 = msvcp140.dll vcruntime140.dll vcruntime140_1.dll
+WIN_CRT_DLLS_ARM64 = msvcp140.dll vcruntime140.dll vcruntime140_1.dll
+
+# The above for the prefab platform, as paths in the release prefab
+# build dirs.
+WIN_PREFAB_GUI_CRT = $(addprefix \
+ build/prefab/full/windows_x86_64_gui/release/,$(WIN_CRT_DLLS_$(WINPREVSP)))
+WIN_PREFAB_SERVER_CRT = $(addprefix \
+ build/prefab/full/windows_x86_64_server/release/dist/,\
+$(WIN_CRT_DLLS_$(WINPREVSP)))
+
 # Mac gui debug:
 
 RUN_PREFAB_MAC_X86_64_GUI_DEBUG = cd build/prefab/full/mac_x86_64_gui/debug \
@@ -691,9 +710,16 @@ prefab-windows-x86-64-gui-release: prefab-windows-x86-64-gui-release-build
 
 prefab-windows-x86-64-gui-release-build: env \
    assets-windows-$(WINPREVSP) \
-   build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe
+   build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe \
+   $(WIN_PREFAB_GUI_CRT)
 	@$(STAGE_BUILD) -win-$(WINPREVSP) -release \
       build/prefab/full/windows_x86_64_gui/release
+
+# The Visual C++ runtime dlls matching the exe above: each rule re-runs
+# the same remote MSBuild as the exe rule (an incremental no-op when the
+# exe is already built), which leaves them beside the built exe.
+$(WIN_PREFAB_GUI_CRT): .efrocachemap
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
@@ -741,9 +767,15 @@ prefab-windows-x86-64-server-release: prefab-windows-x86-64-server-release-build
 
 prefab-windows-x86-64-server-release-build: env \
    assets-windows-server-$(WINPREVSP) \
- build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe
+ build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe \
+   $(WIN_PREFAB_SERVER_CRT)
 	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -release \
       build/prefab/full/windows_x86_64_server/release
+
+# The Visual C++ runtime dlls matching the exe below (see the gui
+# release equivalents above).
+$(WIN_PREFAB_SERVER_CRT): .efrocachemap
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
@@ -1525,17 +1557,25 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-# Everything a flatpak build would otherwise download mid-build: built
-# assets, resources, the prefab plus lib for each flatpak arch, and the
-# app icon. The build sandbox has no network (Flathub forbids it), so
-# these have to be in the tree it is handed: the local tree for
-# flatpak-linux, or the release's prebuilt-inputs archive (below) for
-# Flathub.
+# Everything a flatpak build would otherwise download or generate
+# mid-build: built assets, resources, the prefab plus lib for each
+# flatpak arch, the app icon, and releases.xml. The build sandbox has no
+# network (Flathub forbids it), so these have to be in the tree it is
+# handed: the local tree for flatpak-linux, or the release's
+# prebuilt-inputs archive (below) for Flathub.
 FLATPAK_ICON = pconfig/flatpak/net.froemling.bombsquad.png
+FLATPAK_RELEASES = pconfig/flatpak/net.froemling.bombsquad.releases.xml
 
-flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) \
+flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) $(FLATPAK_RELEASES) \
  build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
  build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+# AppStream release history, generated from CHANGELOG.md (not in git).
+# This lists the newest changelog versions; the release workflow runs
+# flatpak_add_release with its tag first, so a release's archive stops
+# at that release.
+$(FLATPAK_RELEASES): CHANGELOG.md
+	$(PCOMMAND) flatpak_add_release
 
 # The app icon isn't in git; fetch it, checksum-verified.
 $(FLATPAK_ICON):
@@ -1545,8 +1585,8 @@ $(FLATPAK_ICON):
  " $@.tmp" | sha256sum -c -
 	mv $@.tmp $@
 
-# Pack what flatpak-prefetch produced, plus this release's releases.xml
-# entry, into build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
+# Pack what flatpak-prefetch produced into
+# build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
 # a Flathub build's tree that are not in git. Flathub builds take the
 # source from git at the release tag and lay this archive over it; see
 # flatpak_prebuilt_inputs and generate_flathub_manifest in
@@ -1846,6 +1886,20 @@ WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
+
+# Visual C++ runtime dlls sitting next to the exe for the current
+# windows configuration and platform (see WIN_CRT_DLLS_x64 and friends;
+# none for Debug).
+ifeq ($(WINDOWS_CONFIGURATION),Release)
+  WIN_CRT_DLLS = $(WIN_CRT_DLLS_$(WINDOWS_PLATFORM))
+else
+  WIN_CRT_DLLS =
+endif
+
+# The above as cloudshell --out args, for pulling them back from a
+# cloud build alongside the exe.
+WIN_CRT_OUT_ARGS = $(foreach f,$(WIN_CRT_DLLS),--out \
+ build/windows/$(WINCFG)_$(WINPLT)/$(f))
 
 # Our cmake dir acts as a secondary project root for some IDEs/tools.
 # Expose .clang-format there too so clangd picks it up for files whose

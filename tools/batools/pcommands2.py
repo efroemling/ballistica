@@ -712,6 +712,20 @@ def gen_character_ranges_cpp() -> None:
     batools.character_ranges.write_cpp(sys.argv[2])
 
 
+def gen_special_chars_cpp() -> None:
+    """Generate special_chars.h from the shared special-char enum.
+
+    Emits ``base/generated/special_chars.h`` from
+    ``tools/bacommon/text.py`` (see :mod:`batools.special_chars`).
+    """
+    import batools.special_chars
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.special_chars.write_cpp(sys.argv[2])
+
+
 def gen_character_rig_cpp() -> None:
     """Generate one of the engine's character rig files.
 

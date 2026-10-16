@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, assert_never
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 
 from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
@@ -60,14 +60,9 @@ def _native(
     return bui.LangStr(dataclass_to_json(lstr), packages=packages, wrap=wrap)
 
 
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    # LEGACY: builds a qualified path by hand, which nothing should
-    # do -- the parts are private now precisely to flag it. Kept
-    # only until this file's callers hold handles instead; see
-    # docs/followups.md "hand-built asset paths".
-    # pylint: disable-next=protected-access
-    return f'{_builtinassets._ASSET_PACKAGE}:textures/{name}'
+def _white() -> str:
+    """Qualified engine name for the plain white texture."""
+    return _refstr(_commonassets.textures.white)
 
 
 def _refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
@@ -166,7 +161,7 @@ def _debug_rect(
             transition_delay=tdelay,
             transition_type='scale',
         ),
-        textures={'texture': _btex('white')},
+        textures={'texture': _white()},
         meshes={},
         highlight=True,
     )
@@ -287,7 +282,7 @@ def prep_text(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': _btex('white')},
+                textures={'texture': _white()},
                 meshes={},
                 highlight=True,
             )
@@ -598,7 +593,7 @@ def prep_row_debug(
 ) -> None:
     """Prep debug decorations for a row."""
 
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     # Shrink the square we draw a tiny bit so rows butted up to
     # eachother can be seen.
@@ -672,9 +667,7 @@ def prep_section_backing(
                 transition_delay=tdelay,
             ),
             textures={
-                'texture': (
-                    _btex('white') if texture is None else _refstr(texture)
-                )
+                'texture': (_white() if texture is None else _refstr(texture))
             },
             meshes={},
             highlight=False,
@@ -692,7 +685,7 @@ def prep_row_debug_button(
     xoffs = bcorner[0]
     yoffs = bcorner[1]
 
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -719,7 +712,7 @@ def prep_button_debug(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a button."""
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     out_decoration_preps.append(
         DecorationPrep(

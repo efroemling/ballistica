@@ -2519,8 +2519,9 @@ static PyMethodDef PySetDebugBoundsDef = {
     "The dev console's UI tab has a button for each kind. Kinds:\n"
     "``'name_depictions'``, ``'image_depictions'`` and\n"
     "``'character_icon_depictions'`` (each such depiction's whole box in\n"
-    "red and the part of it the depiction takes up in green). Not saved;\n"
-    "off at launch.\n"
+    "red and the part of it the depiction takes up in green), and\n"
+    "``'text'`` (every glyph quad of all text filled translucent red).\n"
+    "Not saved; off at launch.\n"
     "\n"
     ":meta private:",
 };

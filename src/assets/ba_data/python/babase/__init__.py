@@ -37,7 +37,6 @@ from _babase import (
     fullscreen_control_key_shortcut,
     fullscreen_control_set,
     can_display_chars,
-    charstr,
     clipboard_get_text_async,
     clipboard_has_text,
     clipboard_is_supported,
@@ -247,14 +246,6 @@ from babase._logging import (
     userlog,
 )
 from babase._login import LoginAdapter, LoginInfo, discord_sign_in
-from babase._generated.enums import (
-    InputType,
-    Permission,
-    QuitType,
-    SoundPriority,
-    SpecialChar,
-    UIScale,
-)
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
 from babase._assetsubsystem import (
@@ -275,7 +266,24 @@ from babase._stringedit import (
     StringEditSubsystem,
 )
 from babase._text import timestring
+
+# (Deprecated; kept for compat. See the note on deprecated names above.)
+from babase._text import charstr  # type: ignore[deprecated]
 from babase._workspace import WorkspaceSubsystem
+
+# The engine's special-char list lives in bacommon so servers and
+# tools can share it; the C++ side is generated from it.
+from bacommon.text import SpecialChar
+
+# Enums shared with the native layer live there too (their C++ twins
+# are generated from them, for every project including base-less ones).
+from bacommon.nativeenums import (
+    InputType,
+    Permission,
+    QuitType,
+    SoundPriority,
+    UIScale,
+)
 
 #: The :class:`~babase.App` singleton for the current process. Also
 #: exposed at ``bauiv1.app``, ``bascenev1.app``, etc. — they all
