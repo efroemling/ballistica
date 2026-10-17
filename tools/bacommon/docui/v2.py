@@ -181,6 +181,18 @@ class WindowLayout(Enum):
     #: at small ui-scale (full width, unlike a small layout).
     WIDE = 'w'
 
+    #: A wide layout's width, but taller at medium/large ui-scale
+    #: (about a small-tall layout's height); for wide content that
+    #: needs more room than a wide layout's height gives it. The same
+    #: as a wide layout at small ui-scale.
+    WIDE_TALL = 'wt'
+
+    #: A wide layout's width, but with a height following the screen's
+    #: at medium/large ui-scale (as a small-taller layout's does); for
+    #: lots of scrolling wide content. The same as a wide layout at
+    #: small ui-scale.
+    WIDE_TALLER = 'wtr'
+
     #: A wide layout's height, but wider at medium/large ui-scale; for
     #: content expected to be wider than the screen (a long row of
     #: items, say), where showing as much as possible means less
@@ -190,10 +202,83 @@ class WindowLayout(Enum):
     #: The standard full-size window.
     LARGE = 'l'
 
+    #: A viewer layout with its column two thirds as wide, leaving more
+    #: of the room to its viewer pane (in a window 10% narrower at
+    #: medium/large ui-scale); for pages with few, simple controls
+    #: beside a big view.
+    VIEWER_NARROW = 'vn'
+
     #: A small layout's column at the right of a full-size window, the
     #: rest to its left reserved for a viewer pane (a live character
     #: view, say).
     VIEWER = 'v'
+
+    @property
+    def minimum_build_number(self) -> int:
+        """The earliest client build that knows this layout (0 for all).
+
+        Older clients fall back to another layout for one they don't
+        know, so check this before relying on a new one's shape.
+        """
+        match self:
+            case (
+                WindowLayout.SMALL
+                | WindowLayout.SMALL_TALL
+                | WindowLayout.SMALL_TALLER
+                | WindowLayout.WIDE
+                | WindowLayout.WIDER
+                | WindowLayout.LARGE
+                | WindowLayout.VIEWER
+            ):
+                return 0
+            case (
+                WindowLayout.WIDE_TALL
+                | WindowLayout.WIDE_TALLER
+                | WindowLayout.VIEWER_NARROW
+            ):
+                return 23064
+            case _:
+                assert_never(self)
+
+
+class ScrollEdgeStyle(Enum):
+    """How a doc-ui window's scroll area meets the window around it.
+
+    Chosen alongside the window's layout (see
+    :attr:`Browse.scroll_edge_style`); by default the layout decides.
+    Either way, content gets the same space and sits in the same place;
+    only how its edges look differs. (At small ui-scale, where windows
+    fill the screen, content always fades toward the toolbars.)
+    """
+
+    #: A soft outline around the scroll area (when it has anything to
+    #: scroll).
+    OUTLINE = 'o'
+
+    #: No outline; content fades into the window backing as it nears
+    #: the scroll area's edges, which reach out toward the window's own
+    #: (and up behind its title).
+    FADE = 'f'
+
+
+class ViewerStyle(Enum):
+    """How a doc-ui window's viewer pane (if its layout has one) looks.
+
+    Chosen when the window opens (see :attr:`Browse.viewer_style`),
+    since the pane is drawn before any page arrives: an overlay pane
+    showing a frame for a moment while its page loads would look
+    broken. So pick it knowing what the window will show, as with its
+    layout.
+    """
+
+    #: A framed pane with a backing of its own; its viewer draws within
+    #: the frame. What an empty or loading pane shows too.
+    FRAMED = 'f'
+
+    #: No frame or backing; the viewer draws straight over the window.
+    #: Viewers able to keep transparency (a mesh viewer) composite over
+    #: it; others (a character's scene) draw as a plain rectangle.
+    OVERLAY = 'o'
 
 
 @ioprepped
@@ -222,6 +307,25 @@ class Browse(Action):
         WindowLayout,
         IOAttrs('lo', store_default=False, enum_fallback=WindowLayout.LARGE),
     ] = WindowLayout.LARGE
+
+    #: The new window's scroll edge style, or None to let its layout
+    #: decide. Clients predating this ignore it (their layout decides).
+    scroll_edge_style: Annotated[
+        ScrollEdgeStyle | None,
+        IOAttrs(
+            'ses',
+            store_default=False,
+            enum_fallback=ScrollEdgeStyle.FADE,
+        ),
+    ] = None
+
+    #: The new window's viewer pane style, or None for the default
+    #: (framed). Clients predating this ignore it (their panes are
+    #: framed).
+    viewer_style: Annotated[
+        ViewerStyle | None,
+        IOAttrs('vs', store_default=False, enum_fallback=ViewerStyle.FRAMED),
+    ] = None
 
     @override
     @classmethod

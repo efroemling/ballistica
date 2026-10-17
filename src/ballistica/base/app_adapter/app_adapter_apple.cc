@@ -221,6 +221,27 @@ void AppAdapterApple::TerminateApp() {
 #endif
 }
 
+auto AppAdapterApple::CanSoftQuit() -> bool {
+  // On iPad a soft quit closes our window, which is a standard action
+  // there (it is what the system window controls' close button does).
+  // iPhone and tvOS have no window concept and apps there must never quit
+  // themselves, so nothing for them.
+#if BA_PLATFORM_IOS
+  return BallisticaKit::UIKitFromCpp::isTablet();
+#else
+  return false;
+#endif
+}
+
+void AppAdapterApple::DoSoftQuit() {
+#if BA_PLATFORM_IOS
+  // (Swift hops to main itself.)
+  BallisticaKit::UIKitFromCpp::closeScene();
+#else
+  FatalError("Soft quit is not supported here.");
+#endif
+}
+
 auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
   // Currently Mac only. Any window-management stuff elsewhere such as
   // iPadOS is out of our hands.

@@ -924,6 +924,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         import bacommon.docui.routes.classicstore as sroutes
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
+        from bauiv1lib.docui import WindowOptions
         from bauiv1lib.inventory import InventoryUIController
 
         main_window = babase.app.ui_v1.get_main_window()
@@ -942,7 +943,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 origin_widget=origin_widget,
                 # Just the one row of profiles; a full-size window
                 # would be mostly empty.
-                layout=dui2.WindowLayout.WIDER,
+                options=WindowOptions(layout=dui2.WindowLayout.WIDER),
             ),
             is_top_level=True,
             back_state=None,

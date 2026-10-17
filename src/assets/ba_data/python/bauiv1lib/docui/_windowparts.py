@@ -8,8 +8,7 @@ from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 
 import bauiv1 as bui
-from bauiv1 import _classiccatalogassets
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1 import _classiccatalogassets, _commonassets
 
 if TYPE_CHECKING:
     import bacommon.depiction as bdep
@@ -23,8 +22,9 @@ _VIEWER_FRAME_COLOR = (0.45, 0.4, 0.62)
 #: What the viewer pane shows while it has nothing to (and what its
 #: content fades in from): the window backing's color as it reads on
 #: screen (the default container tint times its texture, measured off a
-#: screenshot), so an empty pane blends into the window around it.
-_VIEWER_BLANK_COLOR = (0.3, 0.28, 0.37)
+#: screenshot), so an empty pane blends into the window around it. Also
+#: what live viewers show behind their content by default.
+VIEWER_BLANK_COLOR = (0.3, 0.28, 0.37)
 
 #: The depiction each pane key last showed, so a rebuilt window's pane
 #: carries on showing it until its page arrives (see ViewerPane).
@@ -49,6 +49,8 @@ class ViewerPane:
         parent: bui.Widget,
         position: tuple[float, float],
         size: tuple[float, float],
+        *,
+        overlay: bool = False,
     ) -> None:
         # Live viewers are kept by key so that what they show carries on
         # through the window showing it being rebuilt (as happens
@@ -63,15 +65,27 @@ class ViewerPane:
             size=size,
             depiction_key=self._key,
             depiction_take_input=True,
-            # Rounded edges and a frame.
-            mask_texture=_classiccatalogassets.textures.viewer_mask.get(),
-            depiction_frame_color=_VIEWER_FRAME_COLOR,
-            depiction_backing_color=_VIEWER_BLANK_COLOR,
+            # A '?' for something we can't show goes small in our
+            # middle; one filling us would read as our frame.
+            depiction_small_placeholder=True,
             # Until our page arrives, carry on showing whatever we last
             # showed (a rebuilt window's page arrives a moment after it
             # does; the page then decides).
             depiction=_g_last_depictions.get(self._key, ''),
         )
+        if overlay:
+            # No frame, backing or rounding: what we show goes straight
+            # over the window (keeping its transparency, where it can).
+            bui.imagewidget(edit=self.widget, depiction_overlay=True)
+        else:
+            # Rounded edges and a frame, and a backing blending into the
+            # window while there's nothing to show.
+            bui.imagewidget(
+                edit=self.widget,
+                mask_texture=_classiccatalogassets.textures.viewer_mask.get(),
+                depiction_frame_color=_VIEWER_FRAME_COLOR,
+                depiction_backing_color=VIEWER_BLANK_COLOR,
+            )
 
     def apply_response(self, response: DocUIResponse | None) -> None:
         """Show what a response's page says to (nothing, if not v2)."""
@@ -123,21 +137,39 @@ def show_vis_area_bounds(
         )
 
 
-def add_toolbar_scroll_fades(
-    root: bui.Widget,
-    position: tuple[float, float],
-    size: tuple[float, float],
-    *,
-    bottom: bool,
+def show_scroll_bounds(
+    parent: bui.Widget,
+    left: float,
+    bottom: float,
+    width: float,
+    height: float,
 ) -> None:
-    """Fade a full-screen scroll area's content toward the toolbars.
+    """Outline the rect a window scrolls selected rows into.
 
-    Along the top always; along the bottom only with ``bottom`` (a
-    minimal toolbar has nothing down there).
+    That is its scroll area's outline form; a fading scroll area
+    reaches past it (see :class:`~bauiv1lib.docui.DebugDrawKind`).
+    Drawn over the page, which doesn't move it.
+
+    :meta private:
     """
-    scroll_fade_top(root, position[0], position[1], size[0], size[1])
-    if bottom:
-        scroll_fade_bottom(root, position[0], position[1], size[0], size[1])
+    thickness = 2.0
+    half = 0.5 * thickness
+    edges = [
+        (left - half, bottom - half, width + thickness, thickness),
+        (left - half, bottom + height - half, width + thickness, thickness),
+        (left - half, bottom - half, thickness, height + thickness),
+        (left + width - half, bottom - half, thickness, height + thickness),
+    ]
+    for x, y, w, h in edges:
+        edge = bui.imagewidget(
+            parent=parent,
+            position=(x, y),
+            size=(w, h),
+            texture=_commonassets.textures.white.get(),
+            color=(1.0, 0.2, 1.0),
+            opacity=0.8,
+        )
+        bui.widget(edit=edge, depth_range=(0.95, 1.0))
 
 
 # How the busy-spinner shown over a pressed widget (a button, an input
@@ -157,13 +189,15 @@ def make_busy_spinner(
     spinner_positions: list[tuple[bui.Widget, tuple[float, float]]],
     root_widget: bui.Widget,
     window_center: tuple[float, float],
-    restored: bool,
 ) -> bui.Widget:
     """Make the spinner a doc-ui window shows while it is busy.
 
     A press shows its spinner where the press was: in the pressed
     widget's parent, at the spot registered for that widget if any,
     else its center. Otherwise the spinner goes at the window's center.
+    The two look different: right over a widget the simple spinner
+    reads best, while over the window backing (with or without content
+    under it) we use the bomb.
     """
     parent = None if origin_widget is None else origin_widget.parent
     if parent is not None:
@@ -177,6 +211,7 @@ def make_busy_spinner(
             parent=parent,
             position=position,
             size=48,
+            style='simple',
             fade_delay=REFRESH_SPINNER_FADE_DELAY,
             fade_duration=REFRESH_SPINNER_FADE_DURATION,
         )
@@ -184,9 +219,6 @@ def make_busy_spinner(
         parent=root_widget,
         position=window_center,
         size=48,
-        # With restored windows we're likely to have stuff under the
-        # spinner. Bomb looks nicer but simple is more readable in those
-        # cases.
-        style='simple' if restored else 'bomb',
+        style='bomb',
         # (Default fade timing: this one was never instant.)
     )

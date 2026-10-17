@@ -346,13 +346,13 @@ void BGDynamicsCharacterKind::Sim::CreateBodies_(
           sspec.linear_damping, sspec.angular_stiffness, sspec.angular_damping,
           a1, sspec.child_anchor, true);
       // Rest orientation: every joint bends by its segment's curl --
-      // curl * 90 degrees about the local x axis, negative so a
+      // curl * 180 degrees about the local x axis, negative so a
       // positive curl lifts the chain toward local +y (a positive x
       // rotation would tip +z down). The root's bend sits on top of
       // the attachment rotation, in the rotated frame.
       dQuaternion curl_q;
       {
-        float half = -sspec.curl * 0.25f * kPi;
+        float half = -sspec.curl * 0.5f * kPi;
         curl_q[0] = std::cos(half);
         curl_q[1] = std::sin(half);
         curl_q[2] = 0.0f;

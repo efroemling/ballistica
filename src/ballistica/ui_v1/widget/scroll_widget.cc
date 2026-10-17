@@ -3,10 +3,13 @@
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_dual_texture_full.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
@@ -25,6 +28,15 @@ static const float kFadingThumbThickness{8.0f};
 static const float kFadingThumbInset{5.0f};
 static const float kFadingThumbTrackInset{5.0f};
 static const float kFadingThumbGrabWidth{20.0f};
+
+/// With EdgeStyle::kFade, our content is squeezed into depth 0 to this
+/// and our fade band drawn just in front, so both thumb styles (the
+/// fading one at 0.75, the classic at 0.8 - 0.9) still land on top.
+static const float kFadeEdgeDepth{0.7f};
+static const float kFadeEdgeBandDepth{0.72f};
+
+/// How far past our edges our fade band reaches (see DrawFadeEdges_()).
+static const float kFadeEdgeOverlap{2.0f};
 
 ScrollWidget::ScrollWidget() : create_time_{g_base->logic->display_time()} {
   set_background(false);  // Influences default event handling.
@@ -139,6 +151,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMoveUp:
+      // Already all the way up? Let selection move on past us.
+      if (move_out_at_ends_ && child_offset_v_ <= 0.0f) {
+        return false;
+      }
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ -= 60.0f;
@@ -148,6 +164,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
 
     case base::WidgetMessage::Type::kMoveDown:
+      // Already all the way down? Let selection move on past us.
+      if (move_out_at_ends_ && child_offset_v_ >= child_max_offset_) {
+        return false;
+      }
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ += 60.0f;
@@ -1056,9 +1076,25 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     }
 
-    // Draw all our widgets at our z level.
-    DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
-                 1.0f);
+    // Draw all our widgets at our z level. Our fade edges have to land
+    // in front of all content but behind our thumb (0.8 - 0.9), so in
+    // that style we squeeze content into the depth below them.
+    {
+      auto xf = c.ScopedTransform();
+      if (edge_style_ == EdgeStyle::kFade) {
+        c.Scale(1.0f, 1.0f, kFadeEdgeDepth);
+      }
+      c.Submit();
+      DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
+                   1.0f);
+    }
+    c.Submit();
+  }
+
+  // Fade edges go over our content but under either style of thumb, so
+  // draw them first.
+  if (draw_transparent && edge_style_ == EdgeStyle::kFade) {
+    DrawFadeEdges_(pass);
   }
 
   // Fading scroll bar.
@@ -1177,7 +1213,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   // Outline shadow (depth 0.9 to 1.0).
-  if (draw_transparent) {
+  if (draw_transparent && edge_style_ == EdgeStyle::kOutline) {
     if (shadow_dirty_) {
       float r2 = l + width();
       float l2 = l;
@@ -1248,6 +1284,177 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
     c.Submit();
   }
+}
+
+void ScrollWidget::DrawFadeEdges_(base::RenderPass* pass) {
+  ContainerWidget::BackingDrawInfo backing;
+  ContainerWidget* parent = parent_widget();
+  if (parent == nullptr || !parent->GetBackingDrawInfo(&backing)) {
+    BA_LOG_ONCE(LogName::kBaUI, LogLevel::kWarning,
+                "ScrollWidget fade edge style needs a parent container"
+                " drawing a backing; drawing no edges.");
+    return;
+  }
+  float bg_width = backing.rect.width();
+  float bg_height = backing.rect.height();
+  if (bg_width <= 0.0f || bg_height <= 0.0f) {
+    return;
+  }
+
+  float w = width();
+  float h = height();
+  float s = scale();
+  std::array<float, 17> inputs{w,
+                               h,
+                               tx(),
+                               ty(),
+                               s,
+                               backing.rect.l,
+                               backing.rect.b,
+                               backing.rect.r,
+                               backing.rect.t,
+                               edge_fade_left_,
+                               edge_fade_bottom_,
+                               edge_fade_right_,
+                               edge_fade_top_,
+                               edge_fade_inset_left_,
+                               edge_fade_inset_bottom_,
+                               edge_fade_inset_right_,
+                               edge_fade_inset_top_};
+  if (!fade_edge_mesh_.exists() || inputs != fade_edge_mesh_inputs_) {
+    fade_edge_mesh_inputs_ = inputs;
+
+    // Along each axis our band is: a solid inset, a fade, the open
+    // middle, a fade, and a solid inset. That gives a 5x5 grid of cells
+    // (any may be empty), of which we skip the middle one.
+    // Any side with a band also reaches a bit past our edge: our content
+    // clip snaps to whole pixels and can let a sliver more through than
+    // our exact bounds. (Out there we just draw backing over itself.)
+    auto grid_lines = [](float size, float inset_lo, float fade_lo,
+                         float inset_hi, float fade_hi) {
+      float pad_lo = (inset_lo + fade_lo > 0.0f) ? kFadeEdgeOverlap : 0.0f;
+      float pad_hi = (inset_hi + fade_hi > 0.0f) ? kFadeEdgeOverlap : 0.0f;
+      std::array<float, 6> lines{-pad_lo,
+                                 inset_lo,
+                                 inset_lo + fade_lo,
+                                 size - inset_hi - fade_hi,
+                                 size - inset_hi,
+                                 size + pad_hi};
+      for (int i = 1; i < 5; ++i) {
+        lines[i] = std::clamp(lines[i], std::max(lines[i - 1], 0.0f), size);
+      }
+      lines[5] = std::max(lines[5], lines[4]);
+      return lines;
+    };
+    auto xs = grid_lines(w, edge_fade_inset_left_, edge_fade_left_,
+                         edge_fade_inset_right_, edge_fade_right_);
+    auto ys = grid_lines(h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                         edge_fade_inset_top_, edge_fade_top_);
+
+    // We draw in our own local space, which maps into our parent's
+    // child space (where its backing rect lives) as our translate plus
+    // our scale times the point. Texture v runs top-down.
+    auto u_at = [&](float x) {
+      return static_cast<uint16_t>(std::lround(
+          std::clamp((tx() + s * x - backing.rect.l) / bg_width, 0.0f, 1.0f)
+          * 65535.0f));
+    };
+    auto v_at = [&](float y) {
+      return static_cast<uint16_t>(std::lround(
+          std::clamp(1.0f - (ty() + s * y - backing.rect.b) / bg_height, 0.0f,
+                     1.0f)
+          * 65535.0f));
+    };
+
+    // Our fade coords (uv2; see SimpleComponent::SetUV2Fade()): along
+    // each axis, 0 where we draw fully (out to an edge) up to 1 once a
+    // fade has run its course; the nearer side's fade wins. A side with
+    // an inset but no fade cuts off sharply at the inset, so cells
+    // decide that by their middle (``mid``).
+    auto fade_coord = [](float p, float mid, float size, float inset_lo,
+                         float fade_lo, float inset_hi, float fade_hi) {
+      auto side_amt = [](float d, float dmid, float inset, float fade) {
+        if (fade > 0.0f) {
+          return std::clamp((d - inset) / fade, 0.0f, 1.0f);
+        }
+        return dmid < inset ? 0.0f : 1.0f;
+      };
+      float amt = std::min(side_amt(p, mid, inset_lo, fade_lo),
+                           side_amt(size - p, size - mid, inset_hi, fade_hi));
+      return static_cast<uint16_t>(std::lround(amt * 65535.0f));
+    };
+
+    std::vector<base::VertexDualTextureFull> verts;
+    std::vector<uint16_t> indices;
+    for (int row = 0; row < 5; ++row) {
+      if (ys[row + 1] <= ys[row]) {
+        continue;
+      }
+      for (int col = 0; col < 5; ++col) {
+        if ((row == 2 && col == 2) || xs[col + 1] <= xs[col]) {
+          continue;
+        }
+        float x0 = xs[col];
+        float x1 = xs[col + 1];
+        float y0 = ys[row];
+        float y1 = ys[row + 1];
+        float xmid = (x0 + x1) * 0.5f;
+        float ymid = (y0 + y1) * 0.5f;
+        uint16_t fx0 =
+            fade_coord(x0, xmid, w, edge_fade_inset_left_, edge_fade_left_,
+                       edge_fade_inset_right_, edge_fade_right_);
+        uint16_t fx1 =
+            fade_coord(x1, xmid, w, edge_fade_inset_left_, edge_fade_left_,
+                       edge_fade_inset_right_, edge_fade_right_);
+        uint16_t fy0 =
+            fade_coord(y0, ymid, h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                       edge_fade_inset_top_, edge_fade_top_);
+        uint16_t fy1 =
+            fade_coord(y1, ymid, h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                       edge_fade_inset_top_, edge_fade_top_);
+
+        // Nothing to draw where we've fully faded along both axes.
+        if (fx0 == 65535 && fx1 == 65535 && fy0 == 65535 && fy1 == 65535) {
+          continue;
+        }
+        auto base = static_cast<uint16_t>(verts.size());
+        verts.push_back({{x0, y0, 0.0f}, {u_at(x0), v_at(y0)}, {fx0, fy0}});
+        verts.push_back({{x1, y0, 0.0f}, {u_at(x1), v_at(y0)}, {fx1, fy0}});
+        verts.push_back({{x1, y1, 0.0f}, {u_at(x1), v_at(y1)}, {fx1, fy1}});
+        verts.push_back({{x0, y1, 0.0f}, {u_at(x0), v_at(y1)}, {fx0, fy1}});
+        for (uint16_t i : {0, 1, 2, 0, 2, 3}) {
+          indices.push_back(static_cast<uint16_t>(base + i));
+        }
+      }
+    }
+
+    // All fades zero; nothing to draw.
+    if (indices.empty()) {
+      fade_edge_mesh_.Clear();
+      return;
+    }
+    fade_edge_mesh_ = Object::New<base::MeshIndexedDualTextureFull>();
+    fade_edge_mesh_->SetIndexData(Object::New<base::MeshIndexBuffer16>(
+        static_cast<int>(indices.size()), indices.data()));
+    fade_edge_mesh_->SetData(
+        Object::New<base::MeshBuffer<base::VertexDualTextureFull>>(
+            static_cast<int>(verts.size()), verts.data()));
+  }
+  if (!fade_edge_mesh_.exists()) {
+    return;
+  }
+
+  base::SimpleComponent c(pass);
+  c.SetTransparent(true);
+  c.SetColor(backing.red, backing.green, backing.blue, backing.alpha);
+  c.SetTexture(backing.texture);
+  c.SetUV2Fade(true);
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(0.0f, 0.0f, kFadeEdgeBandDepth);
+    c.DrawMesh(fade_edge_mesh_.get());
+  }
+  c.Submit();
 }
 
 }  // namespace ballistica::ui_v1

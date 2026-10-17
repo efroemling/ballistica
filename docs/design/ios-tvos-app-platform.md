@@ -253,6 +253,24 @@ Two contracts worth knowing before touching this:
   report a close, or the engine's already-set open flag wedges every
   later attempt.
 
+## Windowed iPad: window controls and closing
+
+- **The window controls ('traffic lights') auto-hide only under
+  `prefersHomeIndicatorAutoHidden = true`** on the root view controller.
+  Hiding the status bar does not do it, and no
+  `preferredWindowingControlStyle` hides them (`.minimal` just shrinks
+  them). Without the flag they sit permanently over our top-left UI.
+  Learned from Blink shell's source (verified on-device 2026-10-16).
+- **Quit on iPad closes the window.** `AppAdapterApple::CanSoftQuit()`
+  is true on iPad only; `DoSoftQuit()` calls
+  `UIKitFromCpp.closeScene()`, which does
+  `requestSceneSessionDestruction` -- the same thing the red window
+  control does, so the process stays alive and a relaunch connects a
+  fresh scene. The main menu shows a "Close Game" button there.
+  Soft quit skips the shutdown fade (that lives in the full-shutdown
+  path), matching the system's own instant close. iPhone and tvOS
+  never quit themselves.
+
 ## Platform identity on iOS vs tvOS
 
 Two separate platform signals reach Python, and they disagreed until
@@ -367,13 +385,10 @@ platform-specific pieces worth knowing:
   `tools/batools/iossim.py`; pcommands `ios_sim_run` / `ios_sim_log` in
   `tools/batools/pcommands4.py`). Order, no config needed:
   `IOS_SIM_DEVICE` override (name or udid) → reuse an already-booted
-  device → the Simulator app's `CurrentDeviceUDID` (`defaults read
-  com.apple.iphonesimulator`) → newest available, booted on demand. The
-  `CurrentDeviceUDID` step matters: `open -a Simulator` auto-boots the
-  app's last-used device, so a disagreeing pick yields TWO sim windows.
-  Booting is async — always `simctl bootstatus -b` before install, and
-  boot BEFORE opening Simulator.app (opening first races the auto-boot
-  → "Unable to boot device in current state: Booted").
+  device → newest available, booted on demand. Booting is async —
+  always `simctl bootstatus -b` before install, then open the viewer.
+  (A step that preferred Simulator.app's `CurrentDeviceUDID` was removed
+  2026-10-15: that app is gone in Xcode 27, so the pref is frozen.)
 
 ### Testing the software keyboard in the Simulator
 
@@ -385,7 +400,9 @@ Verifying anything keyboard-related needs setup the sim fights you on
   `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard
   -bool false` is **blocked by the unsandboxed-Bash hook**, and `simctl
   ui` has no equivalent — so ask Eric to hit ⌘⇧K (I/O ▸ Keyboard ▸
-  Connect Hardware Keyboard) once the sim is up.
+  Connect Hardware Keyboard) once the sim is up. (Those are the old
+  Simulator.app menus; where DeviceHub puts this on Xcode 27 is
+  unverified.)
 - iOS then shows a one-time **swipe-typing intro** covering the keyboard;
   `xcrun simctl spawn booted defaults write
   com.apple.keyboard.ContinuousPath DidShowContinuousPathIntroduction
@@ -401,6 +418,26 @@ Verifying anything keyboard-related needs setup the sim fights you on
   tested; Gboard's **stylus-handwriting onboarding** blocks the keyboard
   until `adb shell settings put secure stylus_handwriting_enabled 0`.
 
+### Keep the Simulator window visible
+
+A booted sim must always have its window on screen. Leaving it booted
+when you're done is fine, but an app running in a windowless sim keeps
+using CPU and playing audio with nothing to show for it, and nobody
+notices for hours. `test_game_run --platform ios|tvos` and `make
+ios`/`make tvos` handle this (`iossim._boot` opens the viewer on every
+run, warning if it can't), so run the app through them, including
+repeated cold launches (`test_game_run --launches N`). Anything that
+still drives `simctl boot`/`launch` directly must run `open -a
+DeviceHub` (unsandboxed) first.
+
+**The viewer is DeviceHub, not Simulator.app.** Xcode 27 removed
+Simulator.app; `DeviceHub.app` (`com.apple.dt.Devices`, under
+`Xcode.app/Contents/Applications/`) shows running sims instead. Until
+2026-10-15 our tooling still ran `open -a Simulator` and ignored the
+failure, so every sim run since the mid-September Xcode 27 install was
+windowless. One cold-launch loop left the game playing music in a
+hidden sim for about four hours. Older Xcodes aren't supported here.
+
 ### Simulator build/launch recipe (verified 2026-06-18)
 
 For a no-signing sim smoke-test, build for a simulator destination
@@ -413,7 +450,7 @@ tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
     -destination 'platform=iOS Simulator,name=iPhone 17' \
     -derivedDataPath build/ios_sim_dd build
 xcrun simctl boot "iPhone 17"
-open -a Simulator                             # unsandboxed (GUI)
+open -a DeviceHub                             # unsandboxed (GUI)
 APP=build/ios_sim_dd/Build/Products/Debug-iphonesimulator/BallisticaKit.app
 xcrun simctl install booted "$APP"
 xcrun simctl launch booted com.ericfroemling.ballisticakit
@@ -424,18 +461,15 @@ Bundle id: `com.ericfroemling.ballisticakit`. tvOS mirrors this with
 `make tvos-staging`, scheme `"BallisticaKit tvOS"`, destination
 `platform=tvOS Simulator,name=Apple TV 4K (3rd generation)`.
 `simctl boot/install/list` work *sandboxed*; only the GUI
-`open -a Simulator` and console/pty attaches need unsandboxed.
+`open -a DeviceHub` and console/pty attaches need unsandboxed.
 
-For intermittent launch crashes, a Release cold-launch loop (alive after
-~7s == booted past GL init):
+For intermittent launch crashes, use a Release cold-launch series
+through `test_game_run` (unsandboxed). Don't hand-roll a `simctl launch`
+loop. That skips the window and cleanup handling above, and is exactly
+how the 2026-10-15 hidden sim happened.
 
 ```bash
-tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
-    -scheme "BallisticaKit iOS" -configuration Release \
-    -destination 'platform=iOS Simulator,id=<udid>' \
-    -derivedDataPath build/ios_sim_rel_dd build
-D=<udid>; B=com.ericfroemling.ballisticakit
-xcrun simctl install $D build/ios_sim_rel_dd/Build/Products/Release-iphonesimulator/BallisticaKit.app
-for i in $(seq 1 15); do xcrun simctl terminate $D $B; xcrun simctl launch $D $B; sleep 7; \
-  xcrun simctl spawn $D launchctl list | grep -qi ballisticakit && echo "$i alive" || echo "$i CRASH"; done
+# 20 cold launches of one install, each held 12s (past the point where
+# downloaded per-GPU textures swap in); fails if any exits early.
+tools/pcommand test_game_run --platform ios --release --launches 20 --timeout 12
 ```

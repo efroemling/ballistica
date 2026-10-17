@@ -52,13 +52,18 @@ void ReadPackageManifest(const JsonRef& obj, std::vector<std::string>* out,
 /// on demand on the audio thread and never affect the look.
 class MediaGetter {
  public:
-  explicit MediaGetter(std::vector<Object::Ref<Asset>>* pending);
+  /// ``failure`` gets a description of the first ref handed in that
+  /// can never be satisfied (an asset its package doesn't have, or of
+  /// another kind); its handle comes back empty.
+  MediaGetter(std::vector<Object::Ref<Asset>>* pending, std::string* failure);
   auto Texture(const PackageAssetRef& ref) -> Object::Ref<TextureAsset>;
+  auto CubeMapTexture(const PackageAssetRef& ref) -> Object::Ref<TextureAsset>;
   auto Mesh(const PackageAssetRef& ref) -> Object::Ref<MeshAsset>;
   auto Sound(const PackageAssetRef& ref) -> Object::Ref<SoundAsset>;
 
  private:
   std::vector<Object::Ref<Asset>>* pending_;
+  std::string* failure_;
 };
 
 /// One self-contained block of media in a definition (a character's
@@ -106,9 +111,22 @@ class MediaBlock {
   /// Handles held, waiting on the asset pipeline (see Load).
   auto pending() const -> bool { return pending_; }
 
+  /// Whether the block's media can never be had: the definition itself
+  /// is broken (an index outside its manifest, a domain that doesn't
+  /// match, an asset its package doesn't have or of the wrong kind) or
+  /// a package it needs doesn't exist. Load gives up for good once
+  /// this is set; what was wrong is in failure(). Anything that might
+  /// still come right (a download) leaves the block waiting instead.
+  auto failed() const -> bool { return failed_; }
+  auto failure() const -> const std::string& { return failure_; }
+
  private:
+  void Fail_(const std::string& reason);
+
   bool ready_{};
   bool pending_{};
+  bool failed_{};
+  std::string failure_;
   std::vector<Object::Ref<Asset>> pending_assets_;
 };
 

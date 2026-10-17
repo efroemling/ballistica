@@ -667,8 +667,16 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
     const DepictionBox& b = context.box;
     MeshAsset* quad =
         g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1);
+    if (block_.failed()) {
+      // Our art can never be had (broken refs, a package that doesn't
+      // exist); say so rather than look busy forever.
+      placeholder_.Draw(context);
+      return;
+    }
     if (!block_.ready()) {
-      DrawLoading_(context, quad);
+      // (Loads that might still come right retry indefinitely; ones
+      // that never will show the placeholder above.)
+      DrawDepictionLoading(context);
       return;
     }
     SimpleComponent c(context.pass);
@@ -721,36 +729,6 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   }
 
  private:
-  /// Standin while the art isn't local: the app's busy spinner, mostly
-  /// faded and turning, a third of the box. (Loads retry indefinitely,
-  /// so there's no failed look; see depictions.md, Image.)
-  static void DrawLoading_(const DepictionDrawContext& context,
-                           MeshAsset* quad) {
-    const DepictionBox& b = context.box;
-    TextureAsset* spinner = g_base->assets->base_assets().depiction_spinner();
-    if (!spinner) {
-      return;
-    }
-    float alpha = 0.25f * context.StandardOpacity();
-    float cmul = (spinner->premultiplied() ? alpha : 1.0f)
-                 * context.StandardBrightness();
-    float size = std::min(b.width, b.height) / 3.0f;
-    auto turns = static_cast<float>(std::fmod(
-        static_cast<double>(g_core->AppTimeMillisecs()) / 1000.0, 1.0));
-    SimpleComponent c(context.pass);
-    c.SetTransparent(true);
-    c.SetTexture(spinner);
-    c.SetColor(cmul, cmul, cmul, alpha);
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
-      c.Scale(size, size, 1.0f);
-      c.Rotate(-360.0f * turns, 0.0f, 0.0f, 1.0f);
-      c.DrawMeshAsset(quad);
-    }
-    c.Submit();
-  }
-
   static auto ReadFloats(const JsonRef& root, const char* key, float* out,
                          size_t count) -> bool {
     JsonRef arr = root[key];
@@ -784,6 +762,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   float flatness_{};
   MediaBlock block_;
   MediaRetryPacer pacer_;
+  DepictionPlaceholder placeholder_;
   Object::Ref<TextureAsset> texture_asset_;
   Object::Ref<TextureAsset> mask_texture_asset_;
   Object::Ref<TextureAsset> tint_texture_asset_;

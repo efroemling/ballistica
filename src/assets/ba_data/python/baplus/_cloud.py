@@ -222,6 +222,16 @@ class CloudSubsystem(babase.AppSubsystem):
         """
         return None
 
+    def on_app_instance_info_changed(self) -> None:
+        """Called when something reported in our app-instance-info changes.
+
+        Notably the current locale. Lets the cloud keep its view of us
+        current (it renders some text server-side in our language)
+        without waiting for a reconnect.
+
+        :meta private:
+        """
+
     def on_connectivity_changed(self, connected: bool) -> None:
         """Called when cloud connectivity state changes.
 

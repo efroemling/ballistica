@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261007`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261015`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 455
+# ba_meta require asset-package 703
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261007
-_ASSET_PACKAGE = ApverNum(455)
+# a-0.baclassicuiassets.261015
+_ASSET_PACKAGE = ApverNum(703)
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -131,6 +131,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Character"
         character_label: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after saving a previewed character's colors.
+        #:
+        #:     English: "Character updated."
+        character_updated: LangStr
 
         def checking_availability(self, *, name: str | LangStr) -> LangStr:
             """
@@ -332,10 +339,33 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error page shown when a character preview has expired or is
+        #:     someone else's (deliberately not told apart).
+        #:
+        #:     English: "This preview has ended. Press play on the character's
+        #:     page to start another."
+        preview_ended: LangStr
+
+        #: ::
+        #:
         #:     Error when a profile name is already taken.
         #:
         #:     English: "A profile with that name already exists."
         profile_already_exists: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after deleting a profile.
+        #:
+        #:     English: "Profile deleted."
+        profile_deleted: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after saving a profile.
+        #:
+        #:     English: "Profile saved."
+        profile_saved: LangStr
 
         #: ::
         #:
@@ -539,8 +569,8 @@ if TYPE_CHECKING:
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 59 strings (``economy``, ``profile``,
-    #: ``profiles``, and 56 more). Full list in source.
+    #: The ``strings`` group - 63 strings (``economy``, ``profile``,
+    #: ``profiles``, and 60 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -558,6 +588,7 @@ _TREE = {
             'cant_edit_here': (),
             'character': (),
             'character_label': (),
+            'character_updated': (),
             'checking_availability': ('name',),
             'choose_character': (),
             'choose_icon': (),
@@ -584,7 +615,10 @@ _TREE = {
             'name_not_empty': (),
             'not_enough_tickets': (),
             'nothing_selected': (),
+            'preview_ended': (),
             'profile_already_exists': (),
+            'profile_deleted': (),
+            'profile_saved': (),
             'profile_upgraded': (),
             'purchasing': (),
             'random_name': (),

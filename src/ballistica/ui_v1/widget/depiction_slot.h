@@ -78,6 +78,12 @@ class DepictionSlot {
   /// GetContentBox), for checking that what it draws matches what it
   /// reports -- and so where a hit-tested host takes presses.
   void set_debug(bool val) { debug_ = val; }
+  /// Whether we show our depiction as an overlay (see
+  /// base::DepictionDrawContext::overlay).
+  void set_overlay(bool val) { overlay_ = val; }
+  /// Whether placeholders draw small in the middle of our box (see
+  /// base::DepictionDrawContext::small_placeholder).
+  void set_small_placeholder(bool val) { small_placeholder_ = val; }
   void set_frame_color(float r, float g, float b) {
     frame_color_[0] = r;
     frame_color_[1] = g;
@@ -142,6 +148,8 @@ class DepictionSlot {
   bool pressed_{};
   bool debug_{};
   float frame_color_[3]{1.0f, 1.0f, 1.0f};
+  bool overlay_{};
+  bool small_placeholder_{};
   bool has_backing_{};
   float backing_color_[3]{};
   bool use_color_override_{};

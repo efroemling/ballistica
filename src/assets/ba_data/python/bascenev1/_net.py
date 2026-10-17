@@ -55,6 +55,12 @@ _REQS_MAX_PAGES = 64
 # latest-wins behavior).
 _g_prejoin_task: asyncio.Task[None] | None = None
 
+# The address/port of the in-flight pre-join, plus an id unique to that
+# request. Set synchronously by connect_to_party (the task itself only
+# starts on a later loop pass) so repeat requests are caught at once.
+_g_prejoin_target: tuple[str, int, int] | None = None
+_g_next_prejoin_id = 0
+
 
 @dataclass
 class HostInfo:
@@ -327,7 +333,7 @@ def _fetch_requirements_page(
 
 def connect_to_party(
     address: str, port: int = 43210, print_progress: bool = True
-) -> None:
+) -> bool:
     """Attempt to connect to a party at a given address.
 
     Runs the pre-join requirements exchange first: the prospective host
@@ -339,21 +345,66 @@ def connect_to_party(
     connect; hosts new enough to require the exchange never get an
     unprepped connect (a failed exchange fails the join).
 
+    A request for the host a join is already in progress to is ignored
+    (players tend to tap a join button repeatedly, and restarting the
+    join each time would keep it from ever completing). Returns whether
+    a new join attempt was started.
+
     (internal)
     """
+    # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target, _g_next_prejoin_id
     assert babase.in_logic_thread()
+
+    if _is_join_pending(address, port):
+        netlog.debug(
+            'Ignoring connect request for %s:%d; already joining it.',
+            address,
+            port,
+        )
+        return False
 
     # Latest-wins: a new connect request cancels any pre-join exchange
     # still in flight (the user clicked a different party).
-    global _g_prejoin_task  # pylint: disable=global-statement
     if _g_prejoin_task is not None and not _g_prejoin_task.done():
         _g_prejoin_task.cancel()
     _g_prejoin_task = None
 
+    prejoin_id = _g_next_prejoin_id
+    _g_next_prejoin_id += 1
+    _g_prejoin_target = (address, port, prejoin_id)
+
+    # Give immediate feedback; the requirements exchange can take a few
+    # seconds before the actual connect starts.
+    if print_progress:
+        # The wrapper import stays deferred: bascenev1 is fully imported
+        # by the time this runs; the cycle pylint sees is structural
+        # only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _builtinassets
+
+        babase.screenmessage(_builtinassets.strings.net.connecting)
+
     babase.app.create_async_task(
-        _prejoin_and_connect(address, port, print_progress),
+        _prejoin_and_connect(address, port, print_progress, prejoin_id),
         name=f'connect_to_party {address}:{port}',
     )
+    return True
+
+
+def _is_join_pending(address: str, port: int) -> bool:
+    """Is a join to this host already underway?
+
+    Covers both the pre-join exchange and the native connection attempt
+    that follows it (which gets cleared if it fails or times out).
+    """
+    if _g_prejoin_target is not None and _g_prejoin_target[:2] == (
+        address,
+        port,
+    ):
+        return True
+    info = _bascenev1.get_connection_to_host_info_2()
+    return info is not None and (info.address, info.port) == (address, port)
 
 
 async def resolve_asset_packages_with_dialog(
@@ -584,10 +635,10 @@ def _interpret_probe_result(
 
 
 async def _prejoin_and_connect(
-    address: str, port: int, print_progress: bool
+    address: str, port: int, print_progress: bool, prejoin_id: int
 ) -> None:
     """Requirements exchange + content downloads + the actual connect."""
-    global _g_prejoin_task  # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target  # pylint: disable=global-statement
     task = asyncio.current_task()
     _g_prejoin_task = task
     password = ''
@@ -642,3 +693,5 @@ async def _prejoin_and_connect(
     finally:
         if _g_prejoin_task is task:
             _g_prejoin_task = None
+        if _g_prejoin_target == (address, port, prejoin_id):
+            _g_prejoin_target = None

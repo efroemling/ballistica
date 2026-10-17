@@ -213,9 +213,14 @@ class ClassicAppMode(AppMode):
         # pylint: disable-next=cyclic-import
         from bascenev1lib.characterviewer import CharacterViewer
 
+        from bauiv1lib.meshviewer import MeshViewer
+
         bui.app.ui_v1.live_depictions[
             bacommon.depiction.DepictionTypeID.CHARACTER_VIEWER.value
         ] = CharacterViewer.for_depiction
+        bui.app.ui_v1.live_depictions[
+            bacommon.depiction.DepictionTypeID.MESH_VIEWER.value
+        ] = MeshViewer.for_depiction
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()

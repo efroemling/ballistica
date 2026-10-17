@@ -84,6 +84,13 @@ class RenderView : public Object {
   auto clear_color() const -> const Vector3f& { return clear_color_; }
   void set_clear_color(const Vector3f& val) { clear_color_ = val; }
 
+  /// Whether our texture has an alpha channel and starts each frame
+  /// fully transparent (clear color ignored), so what we draw can be
+  /// composited over whatever is behind it (texture views only). Our
+  /// texture is premultiplied, so draw it as such.
+  auto transparent() const -> bool { return transparent_; }
+  void set_transparent(bool val) { transparent_ = val; }
+
   /// The texture we draw to (texture views only). Draw this anywhere
   /// a texture can be drawn; its being drawn in a frame is what gets
   /// our world drawn for that frame, so a view nothing is showing
@@ -236,6 +243,7 @@ class RenderView : public Object {
   int height_{};
   GraphicsQuality max_quality_{GraphicsQuality::kHigher};
   Vector3f clear_color_{0.0f, 0.0f, 0.0f};
+  bool transparent_{};
   int64_t last_drawn_frame_number_{-1};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<Camera> camera_;

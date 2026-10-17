@@ -192,7 +192,12 @@ from bascenev1._assetref import (
 from bascenev1._actor import Actor
 from bascenev1._actorhost import ActorHost
 from bascenev1._campaign import init_campaigns, Campaign
-from bascenev1._character import CharacterParts, name_text, split_character
+from bascenev1._character import (
+    CharacterParts,
+    name_text,
+    plain_name_json,
+    split_character,
+)
 from bascenev1._collision import Collision, getcollision
 from bascenev1._coopgame import CoopGameActivity
 from bascenev1._coopsession import CoopSession
@@ -501,6 +506,7 @@ __all__ = [
     'PlayerNotFoundError',
     'PlayerRecord',
     'PlayerScoredMessage',
+    'plain_name_json',
     'Plugin',
     'PowerupAcceptMessage',
     'PowerupMessage',

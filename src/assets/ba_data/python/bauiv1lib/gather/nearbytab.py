@@ -64,17 +64,21 @@ class NetScanner:
 
     def _on_activate(self, host: dict[str, Any]) -> None:
 
+        # Repeat taps while a join to this host is underway are ignored
+        # there; only count/act on actual attempts.
+        if not bs.connect_to_party(host['address']):
+            return
+
         bui.app.analytics.submit_event(
             ClassicAnalyticsEvent(
                 ClassicAnalyticsEvent.EventType.JOIN_NEARBY_PARTY
             )
         )
 
-        # Store UI location to return to when done.
+        # Store UI location to return to when done. (The connect itself
+        # happens asynchronously, after this.)
         if bs.app.classic is not None:
             bs.app.classic.save_ui_state()
-
-        bs.connect_to_party(host['address'])
 
     def _update(self) -> None:
         """(internal)"""

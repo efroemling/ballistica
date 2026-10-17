@@ -4,6 +4,8 @@
 
 from typing import TYPE_CHECKING
 
+from bacommon.app import AppPlatform
+
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
@@ -188,13 +190,15 @@ class QuitWindow:
         if swish:
             bui.play_swish()
 
-        # Generally Macs say Quit and other stuff says Exit
+        # Generally Macs say Quit, iPads say Close (quitting there closes
+        # our window), and other stuff says Exit.
         strs = _classicassets.strings.ui
-        confirmstr = (
-            strs.quit_app_confirm
-            if platform is type(platform).MACOS
-            else strs.exit_app_confirm
-        )
+        if platform is AppPlatform.MACOS:
+            confirmstr = strs.quit_app_confirm
+        elif platform is AppPlatform.IOS:
+            confirmstr = strs.close_app_confirm
+        else:
+            confirmstr = strs.exit_app_confirm
         quit_text = confirmstr(app_name=strs.app_name)
 
         self._root_widget = ui.quit_window = ConfirmWindow(

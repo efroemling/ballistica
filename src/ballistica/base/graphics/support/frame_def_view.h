@@ -69,6 +69,8 @@ class FrameDefView {
   void set_depth_of_field(const DepthOfField& val) { depth_of_field_ = val; }
 
   auto clear_color() const -> const Vector3f& { return clear_color_; }
+  /// See RenderView::transparent().
+  auto transparent() const -> bool { return transparent_; }
   auto orbiting() const -> bool { return orbiting_; }
   auto shadow_offset() const -> const Vector3f& { return shadow_offset_; }
   auto shadow_scale() const -> const Vector2f& { return shadow_scale_; }
@@ -88,6 +90,7 @@ class FrameDefView {
   bool orbiting_{};
   bool shadow_ortho_{};
   Vector3f clear_color_{0.0f, 0.0f, 0.0f};
+  bool transparent_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

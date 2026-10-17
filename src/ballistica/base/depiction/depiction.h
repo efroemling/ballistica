@@ -91,6 +91,19 @@ struct DepictionDrawContext {
   TextureAsset* mask_texture{};
   float frame_color[3]{1.0f, 1.0f, 1.0f};
 
+  /// Whether the host shows the depiction as an overlay: straight over
+  /// whatever is behind, with no backing or frame of its own around it
+  /// (a doc-ui overlay viewer pane). Kinds able to then draw with
+  /// transparency where there's nothing (a live picture keeps its
+  /// alpha); others just draw as usual.
+  bool overlay{};
+
+  /// Whether a placeholder (see DepictionPlaceholder) draws small in
+  /// the middle of the box rather than filling it: where the box is a
+  /// pane (a doc-ui viewer), a '?' outline hugging all of it would read
+  /// as the pane's frame rather than as something broken in it.
+  bool small_placeholder{};
+
   /// The color override (rgb) in effect, or null for none: one color
   /// imposed on a depiction (a lobby chooser's player or team color,
   /// say), by its host or baked into the depiction itself (hosts fill
@@ -296,6 +309,37 @@ class DepictionSuffix {
   mutable std::optional<float> width_;
   Object::Ref<TextGroup> text_group_;
 };
+
+/// Draws the standard broken-depiction placeholder: an outlined box
+/// with a question mark, like a browser's broken image. Says "something
+/// belongs here" without pretending to be it, and fills the same box
+/// the real thing would, so nothing around it shifts. What hosts show
+/// for depictions they can't draw, and what a kind shows once it finds
+/// its data unusable. Logic thread only.
+class DepictionPlaceholder {
+ public:
+  DepictionPlaceholder();
+  ~DepictionPlaceholder();
+
+  /// Draw into the context's box, or a small square in its middle when
+  /// the context asks for small placeholders (in its transparent pass;
+  /// a no-op in the opaque one).
+  void Draw(const DepictionDrawContext& context);
+
+ private:
+  Object::Ref<TextGroup> text_group_;
+  Object::Ref<RectOutlineMesh> outline_;
+  DepictionBox outline_box_;
+  float outline_z_{};
+};
+
+/// Draw the standard still-loading standin over the context's box: the
+/// app's busy spinner, mostly faded and turning, ``size`` (a fraction of
+/// the box's shorter side) across. What a depiction shows while art it
+/// needs isn't local yet. (In its transparent pass; a no-op in the
+/// opaque one.) Logic thread only.
+void DrawDepictionLoading(const DepictionDrawContext& context,
+                          float size = 1.0f / 3.0f);
 
 /// Where depiction kinds are made.
 ///

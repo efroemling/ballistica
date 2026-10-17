@@ -28,7 +28,7 @@ from typing import Annotated, override, assert_never
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 from bacommon.assetpackage import ApverNum
-from bacommon.assetspec import TextureSpec
+from bacommon.assetspec import CubeMapTextureSpec, MeshSpec, TextureSpec
 
 
 class DepictionTypeID(Enum):
@@ -39,6 +39,7 @@ class DepictionTypeID(Enum):
     CHARACTER_ICON = 'ci'
     NAME = 'n'
     CHARACTER_VIEWER = 'cv'
+    MESH_VIEWER = 'mv'
 
 
 class Depiction(IOMultiType[DepictionTypeID]):
@@ -86,6 +87,8 @@ class Depiction(IOMultiType[DepictionTypeID]):
             return NameDepiction
         if type_id is t.CHARACTER_VIEWER:
             return CharacterViewerDepiction
+        if type_id is t.MESH_VIEWER:
+            return MeshViewerDepiction
         assert_never(type_id)
 
     @override
@@ -286,3 +289,179 @@ class CharacterViewerDepiction(Depiction):
     @classmethod
     def get_type_id(cls) -> DepictionTypeID:
         return DepictionTypeID.CHARACTER_VIEWER
+
+
+@ioprepped
+@dataclass
+class MeshViewerEntry:
+    """One mesh shown by a :class:`MeshViewerDepiction`, and where."""
+
+    #: The mesh, as a full spec or an index into the depiction's
+    #: :attr:`~MeshViewerDepiction.packages` domain.
+    mesh: Annotated[MeshSpec | int, IOAttrs('m')]
+
+    #: Its texture, likewise; with none it draws in :attr:`color`
+    #: alone.
+    texture: Annotated[
+        TextureSpec | int | None, IOAttrs('t', store_default=False)
+    ] = None
+
+    #: Multiplied into its texture (or its whole color, untextured):
+    #: rgba. Alpha only shows when :attr:`transparent`.
+    color: Annotated[
+        tuple[float, float, float, float], IOAttrs('c', store_default=False)
+    ] = (1.0, 1.0, 1.0, 1.0)
+
+    #: Whether it's blended (by :attr:`color`'s alpha and its texture's)
+    #: rather than solid. Blended entries draw after every solid one.
+    #: Blending and tinting don't combine: a blended entry's tint is
+    #: ignored (with a warning).
+    transparent: Annotated[bool, IOAttrs('tr', store_default=False)] = False
+
+    #: A cube map it reflects (a full spec or an index); None for none.
+    reflection: Annotated[
+        CubeMapTextureSpec | int | None, IOAttrs('rf', store_default=False)
+    ] = None
+
+    #: Multiplied into what it reflects (rgb).
+    reflection_scale: Annotated[
+        tuple[float, float, float], IOAttrs('rs', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+    #: A texture whose red, green and blue channels say where
+    #: :attr:`tint_color`, :attr:`tint2_color` and :attr:`tint3_color`
+    #: apply (a character's color mask, say); None for no tinting.
+    tint_texture: Annotated[
+        TextureSpec | int | None, IOAttrs('tt', store_default=False)
+    ] = None
+
+    #: Tint through the tint texture's red channel.
+    tint_color: Annotated[
+        tuple[float, float, float], IOAttrs('tc1', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+    #: Tint through the tint texture's green channel.
+    tint2_color: Annotated[
+        tuple[float, float, float], IOAttrs('tc2', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+    #: Tint through the tint texture's blue channel.
+    tint3_color: Annotated[
+        tuple[float, float, float], IOAttrs('tc3', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+    #: Where it sits, relative to the others.
+    position: Annotated[
+        tuple[float, float, float], IOAttrs('p', store_default=False)
+    ] = (0.0, 0.0, 0.0)
+
+    #: How it's turned, in degrees about x, then y, then z.
+    rotation: Annotated[
+        tuple[float, float, float], IOAttrs('r', store_default=False)
+    ] = (0.0, 0.0, 0.0)
+
+    #: How it's stretched along each axis.
+    scale: Annotated[
+        tuple[float, float, float], IOAttrs('s', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+
+@ioprepped
+@dataclass
+class MeshViewerCamera:
+    """A :class:`MeshViewerDepiction`'s camera, placed by hand.
+
+    In the depiction's own space: the same one its entries'
+    :attr:`~MeshViewerEntry.position` values place them in.
+    """
+
+    #: Where it looks from.
+    position: Annotated[tuple[float, float, float], IOAttrs('p')]
+
+    #: What it looks at.
+    target: Annotated[tuple[float, float, float], IOAttrs('t')]
+
+    #: Its vertical field of view, in degrees (between 0 and 180).
+    fov_y: Annotated[float, IOAttrs('f')]
+
+
+@ioprepped
+@dataclass
+class MeshViewerDepiction(Depiction):
+    """A few meshes, live in 3D and slowly turning.
+
+    Its :attr:`entries` are placed relative to one another; the client
+    frames them all to fill the picture (by the bounds meshes carry),
+    turns them slowly, and lets them be swung around by dragging, much
+    as the asset browser's mesh preview does. A host keeps the viewer
+    running across updates, so changed entries reframe in place.
+    """
+
+    entries: Annotated[list[MeshViewerEntry], IOAttrs('e')]
+
+    #: Whether it turns on its own. (When it doesn't, it always shows
+    #: exactly its :attr:`view_yaw` to start with.)
+    spin: Annotated[bool, IOAttrs('sp', store_default=False)] = True
+
+    #: Whether dragging on it swings it around. Off, with :attr:`spin`
+    #: off too, it's a completely fixed view.
+    draggable: Annotated[bool, IOAttrs('dr', store_default=False)] = True
+
+    #: How big an area it frames, relative to the bounds of everything
+    #: in it (about the same center): 2.0 frames twice as much, so its
+    #: meshes look half as big. Meant for shrinking (1 and up); below 1
+    #: crops in, and the nearest parts may get clipped away.
+    bounds_scale: Annotated[float, IOAttrs('bs', store_default=False)] = 1.0
+
+    #: Degrees the turntable starts turned (about the vertical axis);
+    #: with :attr:`spin` off, the side that faces the camera.
+    view_yaw: Annotated[float, IOAttrs('vy', store_default=False)] = 0.0
+
+    #: Degrees the camera starts looking down at what it frames (0 head
+    #: on, up to just short of 90 straight down; negative looks up);
+    #: None for the usual, about 29.
+    view_pitch: Annotated[float | None, IOAttrs('vp', store_default=False)] = (
+        None
+    )
+
+    #: A camera placed by hand, for a set shot. When given, nothing is
+    #: framed automatically (:attr:`bounds_scale` and :attr:`view_pitch`
+    #: don't apply) and dragging up and down does nothing. The turntable
+    #: still turns everything about the origin (with :attr:`spin`,
+    #: :attr:`view_yaw`, and side to side drags).
+    camera: Annotated[
+        MeshViewerCamera | None, IOAttrs('cam', store_default=False)
+    ] = None
+
+    #: What shows behind the meshes; None for the host's usual viewer
+    #: background (a doc-ui viewer pane's own blank color, say).
+    background_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('bg', store_default=False)
+    ] = None
+
+    #: Packages laid out (in order) as the index domain integer slots
+    #: index into; None when every slot is a full spec (see
+    #: :class:`ImageDepiction`).
+    packages: Annotated[
+        list[ApverNum] | None, IOAttrs('pk', store_default=False)
+    ] = None
+
+    #: Producer's (prefix) digest of that domain (see
+    #: :class:`ImageDepiction`).
+    domain_digest: Annotated[str | None, IOAttrs('dg', store_default=False)] = (
+        None
+    )
+
+    #: See :class:`Depiction`. (Ignored; entries carry their own
+    #: colors.)
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`. (Ignored, as above.)
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DepictionTypeID:
+        return DepictionTypeID.MESH_VIEWER

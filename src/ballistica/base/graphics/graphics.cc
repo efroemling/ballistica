@@ -71,6 +71,7 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
     case ShadingType::kSimpleTexModulatedTransShadowFlatness:
     case ShadingType::kSimpleTextureModulatedTransparentGlow:
     case ShadingType::kSimpleTextureModulatedTransparentGlowMaskUV2:
+    case ShadingType::kSimpleTextureModulatedTransparentUV2Fade:
     case ShadingType::kSpecial:
     case ShadingType::kShield:
     case ShadingType::kSmoke:

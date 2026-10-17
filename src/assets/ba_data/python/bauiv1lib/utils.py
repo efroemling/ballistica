@@ -2,13 +2,13 @@
 #
 """Useful bits to use with UIs."""
 
-from typing import TYPE_CHECKING
-
 import bauiv1 as bui
-from bauiv1 import _classicassets, _uiv1assets
 
-if TYPE_CHECKING:
-    pass
+#: How far in from the top/bottom of a full-screen (small ui-scale)
+#: scroll area :func:`apply_toolbar_scroll_fades` fades content, in the
+#: scroll area's local units. Calibrated against the toolbars, so it
+#: assumes the scroll area's top and bottom sit at the virtual rect's.
+TOOLBAR_SCROLL_FADE = 85.0
 
 
 def get_screen_margins(root_scale: float) -> tuple[float, float, float, float]:
@@ -24,7 +24,9 @@ def get_screen_margins(root_scale: float) -> tuple[float, float, float, float]:
     backing elements such as scroll areas outward by these amounts
     (insetting their content by the same amounts so it stays put) so
     the backing reaches the true screen edges instead of stopping at
-    the virtual rect.
+    the virtual rect. A scroll area using
+    :func:`apply_toolbar_scroll_fades` should only do so at its sides,
+    keeping its top and bottom at the virtual rect's.
     """
     outer = bui.get_virtual_outer_rect()
     vsize = bui.get_virtual_screen_size()
@@ -36,124 +38,27 @@ def get_screen_margins(root_scale: float) -> tuple[float, float, float, float]:
     )
 
 
-def scroll_fade_top(
-    container: bui.Widget,
-    scrollleft: float,
-    scrollbottom: float,
-    scrollwidth: float,
-    scrollheight: float,
+def apply_toolbar_scroll_fades(
+    scrollwidget: bui.Widget,
     *,
-    yscale: float = 1.0,
-    yoffs_extra: float = 0.0,
+    top_fade: float = TOOLBAR_SCROLL_FADE,
+    bottom_fade: float = TOOLBAR_SCROLL_FADE,
+    left_fade: float = 0.0,
 ) -> None:
-    """Make content appear to fade towards the top of a scroll area.
+    """Fade a full-screen scroll area's content out toward the toolbars.
 
-    This works by drawing background-texture-ish soft shapes obscuring
-    the edge of the scroll area. The most opaque part of the shapes
-    lands on the top edge of the provided scroll rect; use
-    ``yoffs_extra`` to nudge them up or down from there (e.g. to
-    center them on a title above the scroll area).
+    For scroll areas filling the screen at small ui-scale. Content fades
+    into the window backing over ``top_fade``/``bottom_fade`` units in
+    from the top/bottom (zero for none). The sides get nothing by
+    default, as content just scrolls off the screen there; a scroll
+    area whose left edge is on screen instead (beside a viewer pane,
+    say) can fade that one over ``left_fade``. The scroll area must be
+    a direct child of a window with a backing, with its top and bottom
+    at the virtual rect's (not extended into screen margins), which the
+    default :data:`TOOLBAR_SCROLL_FADE` is calibrated against.
     """
-    return _scroll_fade(
-        container,
-        scrollleft,
-        scrollbottom,
-        scrollwidth,
-        scrollheight,
-        yoffs=scrollheight + yoffs_extra,
-        center=True,
-        yscale=yscale,
+    bui.scrollwidget(
+        edit=scrollwidget,
+        edge_style='fade',
+        edge_fade=(left_fade, bottom_fade, 0.0, top_fade),
     )
-
-
-def scroll_fade_bottom(
-    container: bui.Widget,
-    scrollleft: float,
-    scrollbottom: float,
-    scrollwidth: float,
-    scrollheight: float,
-    *,
-    center: bool = False,
-    yscale: float = 1.0,
-    yoffs_extra: float = 0.0,
-) -> None:
-    """Make content appear to fade towards the bottom of a scroll area.
-
-    This works by drawing background-texture-ish soft shapes obscuring
-    the edge of the scroll area. The most opaque part of the shapes
-    lands on the bottom edge of the provided scroll rect; use
-    ``yoffs_extra`` to nudge them up or down from there (e.g. to
-    center them on a note below the scroll area).
-    """
-    return _scroll_fade(
-        container,
-        scrollleft,
-        scrollbottom,
-        scrollwidth,
-        scrollheight,
-        yoffs=yoffs_extra,
-        center=center,
-        yscale=yscale,
-    )
-
-
-def _scroll_fade(
-    container: bui.Widget,
-    scrollleft: float,
-    scrollbottom: float,
-    scrollwidth: float,
-    scrollheight: float,
-    *,
-    yoffs: float,
-    center: bool,
-    yscale: float,
-) -> None:
-
-    del scrollheight  # Unused.
-
-    clr = (0.4, 0.37, 0.49)
-    # clr = (1, 0, 0)
-
-    blotchwidth = scrollwidth * 0.57
-    blotchheight = scrollwidth * 0.23
-    bimg = bui.imagewidget(
-        parent=container,
-        texture=_uiv1assets.textures.ui_atlas.get(),
-        mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
-        position=(
-            scrollleft + 60.0 - blotchwidth * 0.5,
-            scrollbottom + yoffs - yscale * blotchheight * 0.5,
-        ),
-        size=(blotchwidth, yscale * blotchheight),
-        color=clr,
-        match_backing_glow=True,
-    )
-    bui.widget(edit=bimg, depth_range=(0.9, 1.0))
-    bimg = bui.imagewidget(
-        parent=container,
-        texture=_uiv1assets.textures.ui_atlas.get(),
-        mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
-        position=(
-            scrollleft + scrollwidth - 60.0 - blotchwidth * 0.5,
-            scrollbottom + yoffs - yscale * blotchheight * 0.5,
-        ),
-        size=(blotchwidth, yscale * blotchheight),
-        color=clr,
-        match_backing_glow=True,
-    )
-    bui.widget(edit=bimg, depth_range=(0.9, 1.0))
-
-    if center:
-        bimg = bui.imagewidget(
-            parent=container,
-            texture=_uiv1assets.textures.ui_atlas.get(),
-            mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
-            position=(
-                scrollleft + scrollwidth * 0.5 - blotchwidth * 0.5,
-                scrollbottom + yoffs - yscale * blotchheight * 0.5,
-            ),
-            size=(blotchwidth, yscale * blotchheight),
-            color=clr,
-            match_backing_glow=True,
-        )
-        bui.widget(edit=bimg, depth_range=(0.9, 1.0))

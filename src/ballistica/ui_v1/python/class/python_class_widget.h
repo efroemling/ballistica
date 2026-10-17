@@ -45,6 +45,7 @@ class PythonClassWidget : public PythonClass {
   static auto ScrollIntoView(PythonClassWidget* self, PyObject* args,
                              PyObject* keywds) -> PyObject*;
   static auto GetScrollState(PythonClassWidget* self) -> PyObject*;
+  static auto GetBackingOpaqueRect(PythonClassWidget* self) -> PyObject*;
   static auto SetScrollOffset(PythonClassWidget* self, PyObject* args,
                               PyObject* keywds) -> PyObject*;
   Object::WeakRef<Widget>* widget_;

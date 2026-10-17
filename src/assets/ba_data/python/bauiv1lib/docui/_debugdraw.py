@@ -15,12 +15,16 @@ class DebugDrawKind(Enum):
     Each element of a page can ask for its own debug drawing (its
     ``debug`` flag); switching a kind on here draws it for every such
     element on every page, whatever the page says.
+    :attr:`SCROLL_BOUNDS` is the window's own (no page asks for it):
+    the rect selection keeps rows scrolled into, which is the scroll
+    area's outline form whatever edge style is drawn.
     """
 
     ROWS = 'rows'
     SECTIONS = 'sections'
     BUTTONS = 'buttons'
     DECORATIONS = 'decorations'
+    SCROLL_BOUNDS = 'scroll_bounds'
 
 
 _enabled: set[DebugDrawKind] = set()
@@ -66,6 +70,8 @@ def _toggle_label(kind: DebugDrawKind) -> str:
             return 'DocUI Buttons'
         case DebugDrawKind.DECORATIONS:
             return 'DocUI Decorations'
+        case DebugDrawKind.SCROLL_BOUNDS:
+            return 'DocUI Scroll Bounds'
         case _:
             assert_never(kind)
 

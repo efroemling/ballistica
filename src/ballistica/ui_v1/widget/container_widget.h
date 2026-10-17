@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -202,6 +203,28 @@ class ContainerWidget : public Widget {
     return 1.0f;
   }
 
+  /// Where and how our window backing draws, for children that redraw
+  /// pieces of it over themselves (ScrollWidget's fade edge style).
+  struct BackingDrawInfo {
+    base::TextureAsset* texture{};
+    /// The full backing quad, which the texture spans uniformly
+    /// (u left-to-right, v top-down). In the space our children's
+    /// positions are in, and before any transition scaling (which
+    /// applies to children and backing alike).
+    Rect rect;
+    /// Ready to pass to SetColor() (already premultiplied as needed).
+    float red{}, green{}, blue{}, alpha{};
+  };
+
+  /// Fill in our current backing draw info; returns false if we draw
+  /// no backing.
+  auto GetBackingDrawInfo(BackingDrawInfo* info) const -> bool;
+
+  /// Fill in the rect (in the space our children's positions are in)
+  /// known to lie within our backing's fully-opaque pixels; returns
+  /// false if we draw no backing or ours isn't calibrated for this.
+  auto GetBackingOpaqueRect(Rect* rect) const -> bool;
+
   auto CoversScreenOpaquely() const -> bool override;
 
  protected:
@@ -227,6 +250,17 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
+  /// Which standard window backing we draw at a given size, and how far
+  /// past our bounds it extends on each side.
+  struct BackingLayout {
+    bool tall{};  // window_hsmall_vmed; otherwise window_hsmall_vsmall.
+    float l_border{}, r_border{}, b_border{}, t_border{};
+    // These need to be fudged until scaling in/out hits exact target
+    // point. Should look into why this math is off.
+    float center_fudge_x{}, center_fudge_y{};
+  };
+  static auto CalcBackingLayout_(float width, float height) -> BackingLayout;
+
   // Calc the widget-local bounds of the hand-calibrated known-opaque
   // sub-rect of our window backing (see CoversScreenOpaquely());
   // returns false for backing setups with no such calibration.

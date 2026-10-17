@@ -1947,6 +1947,35 @@ static PyMethodDef PyTakeWantedAssetPackagesDef = {
     "acquirer in :class:`babase.AssetSubsystem`.",
 };
 
+// ---------------- note_asset_package_unavailable ----------------------------
+
+static auto PyNoteAssetPackageUnavailable(PyObject* self, PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int64_t apvernum;
+  static const char* kwlist[] = {"apvernum", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "L",
+                                   const_cast<char**>(kwlist), &apvernum)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->assets->package_registry()->NoteUnavailable(std::to_string(apvernum));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyNoteAssetPackageUnavailableDef = {
+    "note_asset_package_unavailable",            // name
+    (PyCFunction)PyNoteAssetPackageUnavailable,  // method
+    METH_VARARGS | METH_KEYWORDS,                // flags
+
+    "note_asset_package_unavailable(apvernum: int) -> None\n"
+    "\n"
+    "(internal) Tell the native layer an asset-package version can't be\n"
+    "had (the background acquirer was told it doesn't exist), so media\n"
+    "waiting on it can give up and show as broken.",
+};
+
 // ---------------- asset_package_registry_generation -------------------------
 
 static auto PyAssetPackageRegistryGeneration(PyObject* self) -> PyObject* {
@@ -2199,6 +2228,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyBundledAssetManifestTextDef,
       PyGetAssetPackageBucketPathsDef,
       PyTakeWantedAssetPackagesDef,
+      PyNoteAssetPackageUnavailableDef,
       PyAssetPackageRegistryGenerationDef,
       PyGetAssetPackageStringCountDef,
       PySetAssetNameCompatVersionsDef,

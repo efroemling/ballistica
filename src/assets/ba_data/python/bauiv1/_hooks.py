@@ -187,6 +187,11 @@ def get_live_depiction(
     hands back the viewer app modes registered a maker for (see
     ``UIV1AppSubsystem.live_depictions``), carrying on with the one
     kept under ``key`` if there is one.
+
+    Each kind gets its own slot under ``key``: a window on its way out
+    and the one taking over from it share a key, and if they show
+    different kinds, a single slot would have each retiring the
+    other's viewer.
     """
     import babase
 
@@ -198,4 +203,4 @@ def get_live_depiction(
             type_id,
         )
         return None
-    return maker(key, depiction_json)
+    return maker(f'{key}|{type_id}', depiction_json)

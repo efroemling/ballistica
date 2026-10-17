@@ -131,6 +131,20 @@ void AssetPackageRegistry::NoteWanted(const std::string& apverid) {
   });
 }
 
+void AssetPackageRegistry::NoteUnavailable(const std::string& apverid) {
+  assert(g_base->InLogicThread());
+  if (unavailable_.size() >= kMaxWanted_) {
+    return;
+  }
+  unavailable_.insert(apverid);
+}
+
+auto AssetPackageRegistry::IsUnavailable(const std::string& apverid) const
+    -> bool {
+  assert(g_base->InLogicThread());
+  return unavailable_.count(apverid) != 0 && !Snapshot_()->count(apverid);
+}
+
 auto AssetPackageRegistry::TakeWanted(millisecs_t max_age)
     -> std::vector<std::pair<std::string, millisecs_t>> {
   assert(g_base->InLogicThread());

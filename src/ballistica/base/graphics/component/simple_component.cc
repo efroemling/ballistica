@@ -18,7 +18,21 @@ void SimpleComponent::WriteConfig() {
     // reduces to premultiplied_).
     bool premult_blend =
         premultiplied_ || (texture_.exists() && texture_->premultiplied());
-    if (texture_.exists()) {
+    if (uv2_fade_) {
+      assert(texture_.exists());            // unimplemented combo
+      assert(!colorize_texture_.exists());  // unimplemented combo
+      assert(!mask_texture_.exists());      // unimplemented combo
+      assert(!mask_uv2_texture_.exists());  // unimplemented combo
+      assert(flatness_ == 0.0f);            // unimplemented combo
+      assert(glow_amount_ == 0.0f);         // unimplemented combo
+      assert(shadow_opacity_ == 0.0f);      // unimplemented combo
+      assert(shadow_text_glow_ == 0.0f);    // unimplemented combo
+      assert(!double_sided_);               // unimplemented combo
+      ConfigForShading(ShadingType::kSimpleTextureModulatedTransparentUV2Fade);
+      cmd_buffer_->PutInt(premult_blend);
+      cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
+      cmd_buffer_->PutTexture(texture_);
+    } else if (texture_.exists()) {
       if (colorize_texture_.exists()) {
         assert(flatness_ == 0.0f);            // unimplemented combo
         assert(glow_amount_ == 0.0f);         // unimplemented combo
@@ -180,6 +194,7 @@ void SimpleComponent::WriteConfig() {
     assert(shadow_opacity_ == 0.0f);      // unimplemented combo
     assert(!double_sided_);               // unimplemented combo
     assert(!mask_uv2_texture_.exists());  // unimplemented combo
+    assert(!uv2_fade_);                   // unimplemented combo
     if (texture_.exists()) {
       if (colorize_texture_.exists()) {
         assert(!mask_texture_.exists());  // unimplemented combo

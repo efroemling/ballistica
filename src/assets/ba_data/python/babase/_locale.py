@@ -362,6 +362,12 @@ class LocaleSubsystem(AppSubsystem):
             cfg.pop('Lang', None)
         cfg.commit()
         applog.info('Switched language to %s.', locale.long_value)
+
+        # Our locale is part of the app-instance-info the cloud keeps for
+        # us; let it know so server-rendered text follows the switch.
+        plus = _babase.app.plus
+        if plus is not None:
+            plus.cloud.on_app_instance_info_changed()
         return True
 
     @staticmethod

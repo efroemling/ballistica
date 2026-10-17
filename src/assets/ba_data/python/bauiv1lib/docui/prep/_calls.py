@@ -910,7 +910,9 @@ def prep_page(
     # Every attachment is known now; finalize each selectable row's
     # show-buffers: nudge what's kept on screen toward the scroll
     # area's full visible height, and hand button rows' to their
-    # h-scrolls (control rows' go straight onto their controls).
+    # h-scrolls (control rows' go straight onto their controls). (That
+    # height includes any margins, as the buffers do, so how far
+    # selections scroll doesn't depend on them.)
     for rowprep in rows:
         if rowprep.is_section:
             continue
@@ -919,7 +921,7 @@ def prep_page(
                 rowprep.height,
                 rowprep.show_buffer_top,
                 rowprep.show_buffer_bottom,
-                scroll_height,
+                scroll_height + margin_bottom + margin_top,
             )
         )
         if not rowprep.is_control_row():

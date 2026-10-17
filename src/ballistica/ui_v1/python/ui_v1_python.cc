@@ -13,6 +13,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
+#include "ballistica/ui_v1/python/class/python_class_mesh_viewer.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
@@ -47,6 +48,7 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassUITexture>(module);
   PythonModuleBuilder::AddClass<PythonClassUIMesh>(module);
   PythonModuleBuilder::AddClass<PythonClassViewerSource>(module);
+  PythonModuleBuilder::AddClass<PythonClassMeshViewer>(module);
   PythonModuleBuilder::AddClass<PythonClassWidget>(module);
 }
 

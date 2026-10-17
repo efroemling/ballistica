@@ -350,6 +350,8 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'tuple[float, float, float] | None':
                 returnstr = 'return (0.0, 0.0, 0.0)'
+            elif returns == 'tuple[float, float, float, float] | None':
+                returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':
                 returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
             elif returns in {

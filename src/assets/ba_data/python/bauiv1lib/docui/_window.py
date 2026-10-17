@@ -14,28 +14,25 @@ from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
 from bauiv1lib.docui._animtargets import DocUIAnimTargets
 from bauiv1lib.docui._layout import (
     backing_offset_x,
-    SMALL_UI_SCROLL_EXTRA,
     SMALL_UI_VIEWER_INSET_V,
-    SMALL_UI_VIEWER_NUDGE_X,
-    TITLE_BAND_HEIGHT,
+    SMALL_UI_VIEWER_LEFT_FADE,
     back_button_geometry,
-    column_inset,
-    layout_geometry,
+    default_scroll_edge_style,
+    fade_scroll_lengths,
+    fit_fade_margins,
     resizes_with_screen,
     title_lift,
-    show_scroll_border,
-    viewer_pane_width,
-    window_content_drop,
-    window_insets,
-    window_scroll_overhang,
+    window_frame,
 )
 from bauiv1lib.docui._windowparts import (
     ViewerPane,
-    add_toolbar_scroll_fades,
     make_busy_spinner,
+    show_scroll_bounds,
     show_vis_area_bounds,
 )
+from bauiv1lib.docui._debugdraw import DebugDrawKind, debug_draw_enabled
 from bauiv1lib.docui._pagestate import DocUIPageState
+from bauiv1lib.docui._windowoptions import WindowOptions
 from bauiv1lib.docui._windowstate import DocUIMainWindowState
 from bauiv1lib.docui._scrollrestore import (
     page_scrollers,
@@ -43,7 +40,7 @@ from bauiv1lib.docui._scrollrestore import (
     apply_scroll,
     containing_scrollers,
 )
-from bauiv1lib.utils import get_screen_margins
+from bauiv1lib.utils import TOOLBAR_SCROLL_FADE, apply_toolbar_scroll_fades
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -79,13 +76,11 @@ class DocUIWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
-        restored: bool = False,
         uiopenstateid: str | None = None,
         suppress_win_extra_type_warning: bool = False,
         has_had_response: bool = False,
-        layout: bacommon.docui.v2.WindowLayout | None = None,
+        options: WindowOptions | None = None,
     ):
-        # pylint: disable=too-many-statements
         import bacommon.docui.v2 as dui2
 
         ui = bui.app.ui_v1
@@ -98,8 +93,6 @@ class DocUIWindow(bui.MainWindow):
 
         # Held while we're locked (a request in flight); see lock_ui().
         self._ui_pause: bui.RootUIUpdatePause | None = None
-
-        self._restored = restored
 
         # Note: our windows and states both hold strong references to
         # the controller, so we need to make sure the opposite is not
@@ -117,6 +110,12 @@ class DocUIWindow(bui.MainWindow):
 
         #: Our page's client-effect-animatable widgets.
         self.anim_targets = DocUIAnimTargets()
+
+        #: Our page's navigable rows, each as its selectable widgets
+        #: with its vertical extent (top, bottom) in the page, as doc-ui
+        #: lays it out. Selection should keep that extent inside our
+        #: scroll bounds (see DebugDrawKind.SCROLL_BOUNDS); for checks.
+        self.row_bounds: list[tuple[list[bui.Widget], float, float]] = []
 
         #: Where this window was scrolled to when last navigated away
         #: from, if it is coming back; applied on our first build.
@@ -164,95 +163,37 @@ class DocUIWindow(bui.MainWindow):
         # enough that we never see the window edges; only the window
         # texture covering the whole screen.
         uiscale = ui.uiscale
-        self._layout = dui2.WindowLayout.WIDE if layout is None else layout
-        screensize = bui.get_virtual_screen_size()
-        self._width, self._height, self._root_scale = layout_geometry(
-            self._layout, uiscale, screensize
-        )
 
-        # Do some fancy math to calculate our visible area; this will be
-        # limited by the screen size in small mode and our backing size
-        # otherwise.
-        side_insets, vertical_insets = window_insets(self._layout)
-        self._vis_width = min(
-            self._width - side_insets, screensize[0] / self._root_scale
+        # What we were asked for (kept as is, so a rebuilt window asks
+        # for the same) and what that comes to.
+        self._options = WindowOptions() if options is None else options
+        self._layout = (
+            dui2.WindowLayout.WIDE
+            if self._options.layout is None
+            else self._options.layout
         )
-        self._vis_height = min(
-            self._height - vertical_insets, screensize[1] / self._root_scale
+        self._scroll_edge_style = (
+            default_scroll_edge_style(self._layout)
+            if self._options.scroll_edge_style is None
+            else self._options.scroll_edge_style
         )
-
-        # At medium/large scale, then grow the backing (only) around that,
-        # uniformly so its shape -- and thus which backing art it gets --
-        # is unchanged; without this our scroll area and buttons (the
-        # back button especially) creep out toward its visible edges.
-        # Everything else is laid out relative to the visible area, which
-        # stays centered. (Small ui-scale windows fill the screen, so
-        # there is no edge to keep clear of.)
-        backing_pad = 1.0 if uiscale is bui.UIScale.SMALL else 1.02
-        self._width *= backing_pad
-        self._height *= backing_pad
-
-        self._vis_top = 0.5 * self._height + 0.5 * self._vis_height
-        if uiscale is not bui.UIScale.SMALL:
-            self._vis_top -= window_content_drop(self._layout)
-        self._vis_left = 0.5 * self._width - 0.5 * self._vis_width
-
-        self._scroll_width = self._vis_width + (
-            0.0
-            if uiscale is bui.UIScale.SMALL
-            else window_scroll_overhang(self._layout)
+        self._viewer_style = (
+            dui2.ViewerStyle.FRAMED
+            if self._options.viewer_style is None
+            else self._options.viewer_style
         )
-        self._scroll_left = self._vis_left + 0.5 * (
-            self._vis_width - self._scroll_width
-        )
-        # Go with full-screen scrollable aread in small ui.
-        self._scroll_height = self._vis_height + (
-            SMALL_UI_SCROLL_EXTRA
-            if uiscale is bui.UIScale.SMALL
-            else -TITLE_BAND_HEIGHT
-        )
-        self._scroll_bottom = (
-            self._vis_top
-            - (-1 if uiscale is bui.UIScale.SMALL else 27)
-            - self._scroll_height
-        )
-
-        # Nudge our vis area up a bit when we can see the full backing
-        # (visual fudge factor).
-        if uiscale is not bui.UIScale.SMALL:
-            self._vis_top += 12.0
-
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds (page prep gets these margins so it can lay
-        # things out accordingly).
-        (
-            self._margin_left,
-            self._margin_right,
-            self._margin_bottom,
-            self._margin_top,
-        ) = (
-            get_screen_margins(self._root_scale)
-            if uiscale is bui.UIScale.SMALL
-            else (0.0, 0.0, 0.0, 0.0)
-        )
-
-        # Narrow where content is laid out, if our layout calls for it.
-        col_inset = column_inset(self._layout, uiscale, self._scroll_width)
-        self._column_insets = (col_inset, col_inset)
-
-        # A viewer pane takes the left of our scroll area (the page
-        # scrolls in what remains), so our scroll-widget stops at the
-        # pane instead of extending into the screen margin. Unlike
-        # scrolling content, the viewer's content doesn't move, so it
-        # stays within the virtual bounds (none of it may be cut off by
-        # the screen edge) and, in small ui, clear of the toolbars.
-        self._viewer_width = viewer_pane_width(self._layout, self._scroll_width)
-        if self._viewer_width > 0.0:
-            self._scroll_left += self._viewer_width
-            self._scroll_width -= self._viewer_width
-            self._margin_left = 0.0
+        frame = window_frame(self._layout, uiscale, self._scroll_edge_style)
+        self._width, self._height = frame.width, frame.height
+        self._root_scale = frame.root_scale
+        self._vis_left, self._vis_top = frame.vis_left, frame.vis_top
+        self._vis_width, self._vis_height = frame.vis_width, frame.vis_height
+        self._scroll_left = frame.scroll_left
+        self._scroll_bottom = frame.scroll_bottom
+        self._scroll_width = frame.scroll_width
+        self._scroll_height = frame.scroll_height
+        self._margins = frame.margins
+        self._column_insets = frame.column_insets
+        self._viewer_width = frame.viewer_width
 
         toolbar_visibility = controller.get_window_toolbar_visibility()
         super().__init__(
@@ -280,6 +221,15 @@ class DocUIWindow(bui.MainWindow):
         # Avoid complaints if nothing is selected under us.
         bui.widget(edit=self._root_widget, allow_preserve_selection=False)
 
+        # A fading scroll area mustn't reach past our backing.
+        if (
+            uiscale is not bui.UIScale.SMALL
+            and self._scroll_edge_style is dui2.ScrollEdgeStyle.FADE
+        ):
+            self._margins = fit_fade_margins(
+                frame, self._root_widget.get_backing_opaque_rect()
+            )
+
         self._subcontainer: bui.Widget | None = None
 
         # Created before our scroll widget, as the two can overlap (see
@@ -287,18 +237,19 @@ class DocUIWindow(bui.MainWindow):
         # that wants them, and the page should win there.
         self._viewer_pane = self._create_viewer_pane(controller, uiscale)
 
+        margins = self._margins  # (left, right, bottom, top)
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=True,  # Will turn off once we have UI.
             size=(
-                self._scroll_width + self._margin_left + self._margin_right,
-                self._scroll_height + self._margin_bottom + self._margin_top,
+                self._scroll_width + margins[0] + margins[1],
+                self._scroll_height + margins[2] + margins[3],
             ),
             position=(
-                self._scroll_left - self._margin_left,
-                self._scroll_bottom - self._margin_bottom,
+                self._scroll_left - margins[0],
+                self._scroll_bottom - margins[2],
             ),
-            border_opacity=0.4 if show_scroll_border(self._layout) else 0.0,
+            border_opacity=0.4,
             # A border around content that doesn't scroll is just
             # clutter (the audio settings page, say).
             hide_border_when_fits=True,
@@ -315,18 +266,12 @@ class DocUIWindow(bui.MainWindow):
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
-        if uiscale is bui.UIScale.SMALL:
-            add_toolbar_scroll_fades(
-                self._root_widget,
-                (self._scroll_left, self._scroll_bottom),
-                (self._scroll_width, self._scroll_height),
-                bottom=toolbar_visibility != 'menu_minimal',
-            )
+        self._style_scroll_edges(uiscale, toolbar_visibility)
 
         # Our back button's geometry (medium/large ui-scale); the title
         # is centered vertically on it.
         back_scale, back_size, back_offset = back_button_geometry(
-            self._layout, close_style=auxiliary_style
+            self._layout, self._scroll_edge_style, close_style=auxiliary_style
         )
         back_bottom = (
             self._vis_top + back_offset[1] + title_lift(self._layout, uiscale)
@@ -379,11 +324,55 @@ class DocUIWindow(bui.MainWindow):
                     else bui.SpecialChar.BACK
                 ).value,
             )
+            # In front of anything scrolled up behind it (a fading
+            # scroll area reaches up there).
+            bui.widget(edit=self._back_button, depth_range=(0.9, 1.0))
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
-        # Show our vis-area bounds (for debugging).
+        self._show_debug_bounds()
+
+        self._spinner: bui.Widget | None = None
+
+        if not suppress_win_extra_type_warning:
+            bui.pushcall(bui.WeakCallStrict(self._sanity_check_win_extra_type))
+
+    def _style_scroll_edges(
+        self, uiscale: bui.UIScale, toolbar_visibility: str
+    ) -> None:
+        import bacommon.docui.v2 as dui2
+
+        if uiscale is bui.UIScale.SMALL:
+            # (A minimal toolbar has nothing at the bottom to fade
+            # toward. Beside a viewer pane our left edge is on screen,
+            # where sideways-scrolling rows would otherwise cut off hard
+            # -- over the pane's edge, even, which overlaps ours here.)
+            apply_toolbar_scroll_fades(
+                self._scrollwidget,
+                bottom_fade=(
+                    0.0
+                    if toolbar_visibility == 'menu_minimal'
+                    else TOOLBAR_SCROLL_FADE
+                ),
+                left_fade=(
+                    SMALL_UI_VIEWER_LEFT_FADE
+                    if self._viewer_width > 0.0
+                    else 0.0
+                ),
+            )
+        elif self._scroll_edge_style is dui2.ScrollEdgeStyle.FADE:
+            # Fades over the stretch it reaches out past an outline one
+            # (see fade_scroll_extents()), and a bit more at the top.
+            fleft, fright, fbottom, ftop = fade_scroll_lengths(self._layout)
+            bui.scrollwidget(
+                edit=self._scrollwidget,
+                edge_style='fade',
+                edge_fade=(fleft, fbottom, fright, ftop),
+            )
+
+    def _show_debug_bounds(self) -> None:
+        # Our vis-area corners (flip on by hand when needed).
         if bool(False):
             show_vis_area_bounds(
                 self._root_widget,
@@ -392,11 +381,14 @@ class DocUIWindow(bui.MainWindow):
                 self._vis_width,
                 self._vis_height,
             )
-
-        self._spinner: bui.Widget | None = None
-
-        if not suppress_win_extra_type_warning:
-            bui.pushcall(bui.WeakCallStrict(self._sanity_check_win_extra_type))
+        if debug_draw_enabled(DebugDrawKind.SCROLL_BOUNDS):
+            show_scroll_bounds(
+                self._root_widget,
+                self._scroll_left,
+                self._scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+            )
 
     def _create_viewer_pane(
         self, controller: DocUIController, uiscale: bui.UIScale
@@ -405,23 +397,23 @@ class DocUIWindow(bui.MainWindow):
 
         It sits alongside our scroll area and is as tall as it, less
         toolbar clearance in small ui (where the scroll area runs under
-        the toolbars). In small ui it is also nudged right a bit so it
-        sits evenly between the virtual bounds and the page content,
-        overlapping the scroll area's (empty) left edge.
+        the toolbars).
         """
+        import bacommon.docui.v2 as dui2
+
         if self._viewer_width <= 0.0:
             return None
         small = uiscale is bui.UIScale.SMALL
         inset_v = SMALL_UI_VIEWER_INSET_V if small else 0.0
-        nudge_x = SMALL_UI_VIEWER_NUDGE_X if small else 0.0
         return ViewerPane(
             controller,
             self._root_widget,
             position=(
-                self._scroll_left - self._viewer_width + nudge_x,
+                self._scroll_left - self._viewer_width,
                 self._scroll_bottom + inset_v,
             ),
             size=(self._viewer_width, self._scroll_height - 2.0 * inset_v),
+            overlay=self._viewer_style is dui2.ViewerStyle.OVERLAY,
         )
 
     @override
@@ -506,7 +498,6 @@ class DocUIWindow(bui.MainWindow):
                 self._vis_left + self._vis_width * 0.5,
                 self._vis_top - self._vis_height * 0.5,
             ),
-            restored=self._restored,
         )
 
         # Hold root-ui (toolbar) updates while the request is out. A
@@ -567,15 +558,11 @@ class DocUIWindow(bui.MainWindow):
 
     @property
     def screen_margins(self) -> tuple[float, float, float, float]:
-        """Screen margins (left, right, bottom, top) our scroll extends
-        into beyond its standard scroll-width/height area.
+        """How far (left, right, bottom, top) our scroll area reaches
+        past its standard scroll-width/height area, with content inset to
+        match: screen margins at small ui-scale, fade extents otherwise.
         """
-        return (
-            self._margin_left,
-            self._margin_right,
-            self._margin_bottom,
-            self._margin_top,
-        )
+        return self._margins
 
     def set_last_response(
         self,
@@ -773,6 +760,7 @@ class DocUIWindow(bui.MainWindow):
 
         # Clear any existing children.
         self.anim_targets.clear()
+        self.row_bounds.clear()
         for child in self._scrollwidget.get_children():
             child.delete()
 
@@ -926,7 +914,7 @@ class DocUIWindow(bui.MainWindow):
         controller = self.controller
         last_response = self._last_response
         has_had_response = self._has_had_response
-        layout = self._layout
+        options = self._options
         uiopenstateid = (
             None if self._uiopenstate is None else self._uiopenstate.stateid
         )
@@ -945,9 +933,8 @@ class DocUIWindow(bui.MainWindow):
                         suppress_win_extra_type_warning=(
                             suppress_win_extra_type_warning
                         ),
-                        restored=True,
                         has_had_response=has_had_response,
-                        layout=layout,
+                        options=options,
                     ),
                     last_response=last_response,
                     has_had_response=has_had_response,

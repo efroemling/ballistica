@@ -104,6 +104,10 @@ def _walk_depiction(depiction: bdep.Depiction | None) -> None:
         pass
     elif typeid is t.CHARACTER_VIEWER:
         pass
+    elif typeid is t.MESH_VIEWER:
+        # As images: full specs or indices into its own domain, fetched
+        # on demand; deliberately not visited.
+        pass
     else:
         assert_never(typeid)
 

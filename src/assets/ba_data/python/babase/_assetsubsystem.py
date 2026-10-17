@@ -246,6 +246,14 @@ _WANTED_HARD_FAIL_CODES = {
     AssetPackageResolveError.CONTENT,
     AssetPackageResolveError.CLIENT_TOO_OLD,
 }
+# Hard failures that will never come right for this client (see
+# _note_wanted_failure).
+_WANTED_UNAVAILABLE_CODES = {
+    AssetPackageResolveError.NOT_FOUND,
+    AssetPackageResolveError.INVALID,
+    AssetPackageResolveError.CONTENT,
+    AssetPackageResolveError.CLIENT_TOO_OLD,
+}
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
@@ -2313,6 +2321,11 @@ class AssetSubsystem(AppSubsystem):
                 apvernum,
                 exc.code.value,
             )
+            # Ones that will never come right (not just not yet: signing
+            # in can fix the auth ones) let what's waiting on them give
+            # up and show as broken.
+            if exc.code in _WANTED_UNAVAILABLE_CODES:
+                _babase.note_asset_package_unavailable(apvernum)
         else:
             delay = self._wanted_backoff.get(
                 apvernum, _WANTED_TRANSIENT_MIN_SECONDS * 0.5

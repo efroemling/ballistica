@@ -170,6 +170,17 @@ class SimpleComponent : public RenderComponent {
     flatness_ = flatness;
   }
 
+  /// Fade out what we draw using the mesh's second uv set (so this
+  /// needs a dual-texture mesh). Each uv2 axis runs from 0, where we
+  /// draw fully, to 1, where we've faded away entirely, easing along
+  /// the way; the two axes multiply, so a corner where two fades meet
+  /// falls off along both. Transparent textured draws only, and not
+  /// combined with other effects.
+  void SetUV2Fade(bool enable) {
+    EnsureConfiguring();
+    uv2_fade_ = enable;
+  }
+
  protected:
   void WriteConfig() override;
 
@@ -178,6 +189,7 @@ class SimpleComponent : public RenderComponent {
   bool premultiplied_{};
   bool have_color_{};
   bool double_sided_{};
+  bool uv2_fade_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};

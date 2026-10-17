@@ -98,6 +98,7 @@ class MeshIndexedObjectSplit;
 class MeshData;
 class MeshDataClientHandle;
 class MeshIndexBuffer16;
+class MeshIndexedDualTextureFull;
 class MeshIndexedSimpleFull;
 class MeshIndexedSmokeFull;
 class MeshRendererData;
@@ -481,6 +482,7 @@ enum class ShadingType : uint8_t {
   kSimpleTexModulatedTransShadowFlatness,
   kSimpleTextureModulatedTransparentGlow,
   kSimpleTextureModulatedTransparentGlowMaskUV2,
+  kSimpleTextureModulatedTransparentUV2Fade,
   kObject,
   kObjectTransparent,
   kObjectLightShadowTransparent,

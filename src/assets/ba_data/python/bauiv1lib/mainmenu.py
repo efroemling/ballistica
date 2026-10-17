@@ -183,11 +183,13 @@ class MainMenuWindow(bui.MainWindow):
                 v_align='top',
             )
 
+        # On iOS, soft-quit support means iPad, where quitting closes our
+        # window (a standard action there); iPhone apps must never quit.
         self._have_quit_button = app.classic.platform in (
             'windows',
             'mac',
             'linux',
-        )
+        ) or (app.classic.platform == 'ios' and app.env.supports_soft_quit)
 
         if not classic.did_menu_intro:
             self._tdelay = 1.6
@@ -479,7 +481,11 @@ class MainMenuWindow(bui.MainWindow):
                 label=(
                     _classicassets.strings.main_menu.quit
                     if 'Mac' in app.classic.legacy_user_agent_string
-                    else _classicassets.strings.main_menu.exit_game
+                    else (
+                        _classicassets.strings.main_menu.close_game
+                        if app.classic.platform == 'ios'
+                        else _classicassets.strings.main_menu.exit_game
+                    )
                 ),
                 on_activate_call=self._quit,
                 transition_delay=thistdelay,

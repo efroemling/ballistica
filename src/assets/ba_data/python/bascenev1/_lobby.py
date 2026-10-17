@@ -4,7 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-import json
 import logging
 import weakref
 from dataclasses import dataclass
@@ -15,7 +14,7 @@ import bacommon.depiction as bdep
 import babase
 import _bascenev1
 from bascenev1 import _assetref
-from bascenev1._character import name_text, split_character
+from bascenev1._character import name_text, plain_name_json, split_character
 from bascenev1._profile import get_player_profile_colors
 from bascenev1._gameutils import animate, animate_array
 
@@ -1315,12 +1314,7 @@ class Chooser:
                 )
         if depiction_json is None:
             depiction_json = dataclass_to_json(
-                bdep.NameDepiction(
-                    json.dumps(
-                        {'b': {'t': self._getname(full=True)}},
-                        separators=(',', ':'),
-                    )
-                )
+                bdep.NameDepiction(plain_name_json(self._getname(full=True)))
             )
         return depiction_json
 

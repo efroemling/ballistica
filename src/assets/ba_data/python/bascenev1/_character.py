@@ -56,6 +56,16 @@ def split_character(character_json: str) -> CharacterParts:
     )
 
 
+def plain_name_json(text: str) -> str:
+    """A name definition that is just some text, in the default look.
+
+    For names that come from nowhere richer (a profile's typed name, a
+    plain label); the inverse of :func:`name_text`. Hand it to a
+    :class:`bacommon.depiction.NameDepiction` to draw it.
+    """
+    return json.dumps({'b': {'t': text}}, separators=(',', ':'))
+
+
 def name_text(name_json: str | None) -> str | None:
     """A name definition's canonical plain text (None if unusable).
 

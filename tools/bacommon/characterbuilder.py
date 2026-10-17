@@ -260,7 +260,7 @@ class BuilderAttachment:
     #: How much it trails behind a moving character.
     drag: Annotated[float, IOAttrs('drag', store_default=False)] = 0.5
     #: Resting bend at every joint of a chain, -1 to 1. Positive bends
-    #: toward the attachment's own up; 1 is a right angle per joint.
+    #: toward the attachment's own up; 1 is a half turn per joint.
     curl: Annotated[float, IOAttrs('curl', store_default=False)] = 0.0
     #: Segment length. The default 0.5 is the kind's own length; 0 is
     #: half of it and 1 is one and a half times it. Art is unaffected.

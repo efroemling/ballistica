@@ -72,6 +72,13 @@ class HelpWindow(bui.MainWindow):
             scroll_height = target_height - 16
             scroll_bottom = yoffs - 44 - scroll_height
 
+        # At medium/large, extend our scroll area's top up behind our
+        # title, with a longer top fade keeping the title legible over
+        # content scrolled up there; our content gets padded by the
+        # same amount so it stays put.
+        scroll_top_extend = 0.0 if uiscale is bui.UIScale.SMALL else 40.0
+        scroll_height += scroll_top_extend
+
         # In small ui (where we cover the screen), extend our scroll
         # area out to cover any margins between the virtual rect and
         # the visible screen edges (cutout insets and whatnot),
@@ -99,6 +106,39 @@ class HelpWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            size=(
+                scroll_width + margin_left + margin_right,
+                scroll_height + margin_bottom + margin_top,
+            ),
+            position=(
+                width * 0.5 - scroll_width * 0.5 - margin_left,
+                scroll_bottom - margin_bottom,
+            ),
+            simple_culling_v=100.0,
+            capture_arrows=True,
+            border_opacity=0.4,
+            center_small_content_horizontally=True,
+            # Arrows scroll us; past either end they move on to our
+            # neighbors (toolbars included, via autoselect). No
+            # selection glow (it clashes with our title overlap).
+            move_out_at_ends=True,
+            highlight=False,
+        )
+        bui.widget(edit=self._scrollwidget, autoselect=True)
+        if uiscale is not bui.UIScale.SMALL:
+            # Content fades into our backing at our top and bottom
+            # (nothing scrolls sideways, so no fades there).
+            bui.scrollwidget(
+                edit=self._scrollwidget,
+                fading_scrollbar=True,
+                edge_style='fade',
+                edge_fade=(0.0, 40.0, 0.0, 40.0 + scroll_top_extend),
+            )
+
+        # (Made after our scroll area, which can reach up behind it:
+        # presses go to the last-made widget wanting them.)
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
@@ -121,29 +161,23 @@ class HelpWindow(bui.MainWindow):
                 autoselect=True,
                 on_activate_call=self.main_window_back,
             )
+            # Draw in front of our scroll area's fade.
+            bui.widget(
+                edit=btn,
+                depth_range=(0.9, 1.0),
+                down_widget=self._scrollwidget,
+            )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            size=(
-                scroll_width + margin_left + margin_right,
-                scroll_height + margin_bottom + margin_top,
-            ),
-            position=(
-                width * 0.5 - scroll_width * 0.5 - margin_left,
-                scroll_bottom - margin_bottom,
-            ),
-            simple_culling_v=100.0,
-            capture_arrows=True,
-            border_opacity=0.4,
-            center_small_content_horizontally=True,
-        )
-
+        # Moving up out of our scroll area lands on our back button
+        # (the toolbar's in small ui); down finds the toolbars below
+        # (autoselect).
         if uiscale is bui.UIScale.SMALL:
-            bui.widget(
-                edit=self._scrollwidget,
-                left_widget=bui.get_special_widget('back_button'),
-            )
+            back_button = bui.get_special_widget('back_button')
+            bui.widget(edit=self._scrollwidget, left_widget=back_button)
+        else:
+            back_button = btn
+        bui.widget(edit=self._scrollwidget, up_widget=back_button)
         bui.widget(
             edit=self._scrollwidget,
             right_widget=bui.get_special_widget('squad_button'),
@@ -171,7 +205,7 @@ class HelpWindow(bui.MainWindow):
         # so our center sits at the visible center and the extra
         # margin_left baked into sub_center_x lands content back at the
         # virtual-rect center.
-        self._sub_height += margin_bottom + margin_top
+        self._sub_height += margin_bottom + margin_top + scroll_top_extend
         sub_center_x = margin_left + 0.5 * self._sub_width
 
         self._subcontainer = bui.containerwidget(
@@ -187,7 +221,7 @@ class HelpWindow(bui.MainWindow):
 
         # Stick our title on the scrollable content in small ui mode so
         # we can use the full screen area for said content.
-        bui.textwidget(
+        title = bui.textwidget(
             parent=(
                 self._subcontainer
                 if uiscale is bui.UIScale.SMALL
@@ -214,11 +248,14 @@ class HelpWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
         )
+        if uiscale is not bui.UIScale.SMALL:
+            # Draw in front of our scroll area's fade.
+            bui.widget(edit=title, depth_range=(0.9, 1.0))
 
         spacing = 1.0
         baseh = sub_center_x
         h = baseh + 30
-        v = self._sub_height - margin_top - 55
+        v = self._sub_height - margin_top - scroll_top_extend - 55
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 

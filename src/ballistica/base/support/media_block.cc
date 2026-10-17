@@ -140,23 +140,32 @@ auto PackageRegistered(const std::string& apverid) -> bool {
          || !registry->LookupAudioBucketId(apverid).empty();
 }
 
+// How an attempt to resolve a block's refs went.
+enum class Resolved : uint8_t {
+  kOk,
+  // Not yet; something we're waiting on (a download) may fix it.
+  kWaiting,
+  // Never will; the definition itself is broken (see *failure).
+  kFailed,
+};
+
 // Fill in (apverid, name) for a block's flat-indexed refs from its
-// package manifest's listings. False (leaving media not-ready, so the
+// package manifest's listings. Waiting (leaving media not-ready, so the
 // standin is drawn) when a manifest package isn't registered yet;
-// decode errors -- an index outside the domain, or one landing on the
-// wrong asset kind -- also fail but log, since they mean a malformed
-// definition rather than a pending download.
+// decode errors -- an index outside the domain, one landing on the
+// wrong asset kind, a domain that doesn't match the producer's -- are
+// failures, since they mean a malformed definition rather than a
+// pending download (described in *failure).
 auto ResolveIndexedRefs(const std::vector<std::string>& packages,
                         const std::string& expected_digest,
-                        const std::vector<MediaBlock::IndexedRef>& refs)
-    -> bool {
+                        const std::vector<MediaBlock::IndexedRef>& refs,
+                        std::string* failure) -> Resolved {
   if (refs.empty()) {
-    return true;
+    return Resolved::kOk;
   }
   if (packages.empty()) {
-    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-                "Definition has indexed asset refs but no package manifest.");
-    return false;
+    *failure = "It has indexed asset refs but no package manifest.";
+    return Resolved::kFailed;
   }
   // Per-package flat listings come cached from the registry (built
   // once per apverid), so this is a few map lookups per resolve rather
@@ -173,10 +182,14 @@ auto ResolveIndexedRefs(const std::vector<std::string>& packages,
       // fetch them (character-skins.md, lazy media).
       for (const auto& missing : packages) {
         if (!registry->FlatListing(missing)) {
+          if (registry->IsUnavailable(missing)) {
+            *failure = "Its package " + missing + " is unavailable.";
+            return Resolved::kFailed;
+          }
           registry->NoteWanted(missing);
         }
       }
-      return false;
+      return Resolved::kWaiting;
     }
     offsets.push_back(total);
     total += static_cast<int64_t>(listing->size());
@@ -200,22 +213,18 @@ auto ResolveIndexedRefs(const std::vector<std::string>& packages,
         widths += (i ? ", " : "") + packages[i] + "="
                   + std::to_string(listings[i]->size());
       }
-      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-                  "Asset-index domain mismatch: producer digest "
-                      + expected_digest + ", ours " + ours
-                      + "; refusing to decode this block (standin). Our"
-                        " slice widths: "
-                      + widths + ".");
-      return false;
+      *failure = "Asset-index domain mismatch: producer digest "
+                 + expected_digest + ", ours " + ours
+                 + "; refusing to decode it. Our slice widths: " + widths + ".";
+      return Resolved::kFailed;
     }
   }
   for (const auto& [ref, prefix] : refs) {
     if (ref->index >= total) {
-      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-                  "Asset index " + std::to_string(ref->index)
-                      + " is outside its manifest domain (total "
-                      + std::to_string(total) + ").");
-      return false;
+      *failure = "Asset index " + std::to_string(ref->index)
+                 + " is outside its manifest domain (total "
+                 + std::to_string(total) + ").";
+      return Resolved::kFailed;
     }
     auto it = std::upper_bound(offsets.begin(), offsets.end(), ref->index);
     auto pkg = static_cast<size_t>(std::distance(offsets.begin(), it) - 1);
@@ -224,30 +233,56 @@ auto ResolveIndexedRefs(const std::vector<std::string>& packages,
     if (name.rfind(prefix, 0) != 0) {
       // The slot's kind is a check, not a domain selector; a mismatch
       // means a wrong asset, never a silently different one.
-      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-                  "Asset index " + std::to_string(ref->index) + " decodes to '"
-                      + name + "'; expected a '" + prefix + "' asset.");
-      return false;
+      *failure = "Asset index " + std::to_string(ref->index) + " decodes to '"
+                 + name + "'; expected a '" + prefix + "' asset.";
+      return Resolved::kFailed;
     }
     ref->apverid = packages[pkg];
     ref->name = name;
   }
-  return true;
+  return Resolved::kOk;
 }
 
 // Every referenced package must be registered locally for a block's
 // media to be usable; otherwise the standin is drawn. Missing packages
-// are noted as wanted, so the background acquirer fetches them.
-auto AllPackagesRegistered(const std::vector<const PackageAssetRef*>& refs)
-    -> bool {
-  bool all{true};
+// are noted as wanted, so the background acquirer fetches them; ones
+// it has found don't exist are a failure.
+auto AllPackagesRegistered(const std::vector<const PackageAssetRef*>& refs,
+                           std::string* failure) -> Resolved {
+  auto* registry = g_base->assets->package_registry();
+  Resolved out{Resolved::kOk};
   for (const auto* ref : refs) {
     if (!PackageRegistered(ref->apverid)) {
-      g_base->assets->package_registry()->NoteWanted(ref->apverid);
-      all = false;
+      if (registry->IsUnavailable(ref->apverid)) {
+        *failure = "Its package " + ref->apverid + " is unavailable.";
+        return Resolved::kFailed;
+      }
+      registry->NoteWanted(ref->apverid);
+      out = Resolved::kWaiting;
     }
   }
-  return all;
+  return out;
+}
+
+// Whether a registered package holds an asset of a kind (its logical
+// path prefix, 'meshes/' say); describes what's wrong in *failure if
+// not. (Only meaningful once the package is registered.)
+auto HasAsset(const PackageAssetRef& ref, const char* prefix,
+              std::string* failure) -> bool {
+  auto listing = g_base->assets->package_registry()->FlatListing(ref.apverid);
+  if (!listing) {
+    return true;  // Not ours to judge; loading will say.
+  }
+  if (ref.name.rfind(prefix, 0) != 0) {
+    *failure = "'" + ref.name + "' is not a '" + prefix + "' asset.";
+    return false;
+  }
+  // (Once per block load, so a plain scan is fine.)
+  if (std::find(listing->begin(), listing->end(), ref.name) == listing->end()) {
+    *failure = "Package " + ref.apverid + " has no asset '" + ref.name + "'.";
+    return false;
+  }
+  return true;
 }
 
 auto AllLoaded(const std::vector<Object::Ref<Asset>>& assets) -> bool {
@@ -261,17 +296,35 @@ auto AllLoaded(const std::vector<Object::Ref<Asset>>& assets) -> bool {
 
 }  // namespace
 
-MediaGetter::MediaGetter(std::vector<Object::Ref<Asset>>* pending)
-    : pending_{pending} {}
+MediaGetter::MediaGetter(std::vector<Object::Ref<Asset>>* pending,
+                         std::string* failure)
+    : pending_{pending}, failure_{failure} {}
 
 auto MediaGetter::Texture(const PackageAssetRef& ref)
     -> Object::Ref<TextureAsset> {
+  if (!HasAsset(ref, "textures/", failure_)) {
+    return {};
+  }
   auto out = g_base->assets->GetPackageTexture(ref.apverid, ref.name);
   pending_->emplace_back(out.get());
   return out;
 }
 
+auto MediaGetter::CubeMapTexture(const PackageAssetRef& ref)
+    -> Object::Ref<TextureAsset> {
+  // (Cube maps live among a package's textures.)
+  if (!HasAsset(ref, "textures/", failure_)) {
+    return {};
+  }
+  auto out = g_base->assets->GetPackageCubeMapTexture(ref.apverid, ref.name);
+  pending_->emplace_back(out.get());
+  return out;
+}
+
 auto MediaGetter::Mesh(const PackageAssetRef& ref) -> Object::Ref<MeshAsset> {
+  if (!HasAsset(ref, "meshes/", failure_)) {
+    return {};
+  }
   auto out = g_base->assets->GetPackageMesh(ref.apverid, ref.name);
   pending_->emplace_back(out.get());
   return out;
@@ -294,22 +347,39 @@ void MediaBlock::Load(const std::vector<std::string>& packages,
                       const std::vector<const PackageAssetRef*>& required,
                       const std::function<void(MediaGetter* get)>& get) {
   assert(g_base->InLogicThread());
-  if (ready_ || pending_) {
+  if (ready_ || pending_ || failed_) {
     return;
   }
-  if (!ResolveIndexedRefs(packages, domain_digest, indexed)) {
+  std::string failure;
+  Resolved resolved =
+      ResolveIndexedRefs(packages, domain_digest, indexed, &failure);
+  if (resolved == Resolved::kOk) {
+    resolved = AllPackagesRegistered(required, &failure);
+  }
+  if (resolved == Resolved::kWaiting) {
     return;
   }
-  if (!AllPackagesRegistered(required)) {
+  if (resolved == Resolved::kFailed) {
+    Fail_(failure);
     return;
   }
   Assets::AssetListLock lock;
   pending_assets_.clear();
-  MediaGetter getter(&pending_assets_);
+  MediaGetter getter(&pending_assets_, &failure);
   get(&getter);
+  if (!failure.empty()) {
+    pending_assets_.clear();
+    Fail_(failure);
+    return;
+  }
   // Ready only once loaded; the pipeline is already on it, and
   // CheckPending flips us the moment it finishes.
   pending_ = true;
+}
+
+void MediaBlock::Fail_(const std::string& reason) {
+  failed_ = true;
+  failure_ = reason;
 }
 
 auto MediaBlock::CheckPending() -> bool {

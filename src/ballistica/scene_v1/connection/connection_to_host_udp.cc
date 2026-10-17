@@ -48,12 +48,9 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
            + std::to_string(addr.Port()) + " with request_id "
            + std::to_string(request_id_) + ".";
   });
-  if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-    if (appmode->connections()->GetPrintUDPConnectProgress()) {
-      g_base->ScreenMessage(
-          base::BuiltinStrings::Net::Connecting()->Evaluate());
-    }
-  }
+  // Note: no "Connecting..." message here; bascenev1.connect_to_party
+  // shows it as soon as the join is requested, before the pre-join
+  // exchange that precedes us.
 }
 
 ConnectionToHostUDP::~ConnectionToHostUDP() {

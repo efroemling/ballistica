@@ -10,7 +10,7 @@ long rows, which in a narrow column scroll within it.
 """
 
 from dataclasses import replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
@@ -18,6 +18,87 @@ import bacommon.docui.v2 as dui2
 if TYPE_CHECKING:
     import bacommon.docui.routes.docuitest
     from bacommon.langstr import LangStrSpec
+
+
+def _layout_description(layout: dui2.WindowLayout) -> str:
+    """What a layout is for (shown on the page after its name)."""
+    # pylint: disable=too-many-return-statements
+    # (Other layouts are named by their enum names, so renames follow.)
+    wl = dui2.WindowLayout
+    match layout:
+        case dui2.WindowLayout.SMALL:
+            return (
+                'Use this layout for small dialogs or bits of content you'
+                ' want to frame tightly. If you are showing enough to need'
+                ' to scroll here, you should choose a bigger layout. This'
+                ' layout provides the same narrow horizontal space at all'
+                ' ui scales, so content can be tailored to fit it.'
+            )
+        case dui2.WindowLayout.SMALL_TALL:
+            return (
+                f'Has the same fixed width as {wl.SMALL.name} at all ui'
+                ' scales, but has a larger fixed height on medium/large ui'
+                ' scales. A good step up once content no longer fits on'
+                f' {wl.SMALL.name} without scrolling.'
+            )
+        case dui2.WindowLayout.SMALL_TALLER:
+            return (
+                f'Has the same fixed width as {wl.SMALL.name} at all ui'
+                ' scales, but has a variable height that grows to fit your'
+                ' screen on'
+                ' medium/large ui scales. Use this if you are showing lots'
+                ' of content where scrolling will always be necessary.'
+            )
+        case dui2.WindowLayout.WIDE:
+            return (
+                'Use this layout to show content designed to fill a'
+                ' standard phone shaped screen area. This provides a fixed'
+                ' width and mostly fixed height (possibly more on phone'
+                ' screens) so content can be tailored to fit it.'
+            )
+        case dui2.WindowLayout.WIDE_TALL:
+            return (
+                f'Provides the same fixed width as {wl.WIDE.name}, but a'
+                ' larger fixed amount of space on medium and large ui'
+                ' scales.'
+            )
+        case dui2.WindowLayout.WIDE_TALLER:
+            return (
+                f'Provides the same fixed width as {wl.WIDE.name}, but with'
+                ' a height that expands to take advantage of all screen'
+                ' sizes. Use this when you expect to have a lot of'
+                ' scrollable wide content.'
+            )
+        case dui2.WindowLayout.WIDER:
+            return (
+                'This layout provides the same mostly-fixed height as'
+                f' {wl.WIDE.name}, but expands to take advantage of your'
+                ' full screen width at all ui scales. Use this when showing'
+                ' large amounts of horizontally scrollable content.'
+            )
+        case dui2.WindowLayout.LARGE:
+            return (
+                'This layout expands to use most of your screen area in all'
+                ' ui scales, so use it only when you can actually fill that'
+                ' space on a large screen. Good for things like stores and'
+                ' inventories where there might be lots of vertical and'
+                ' horizontal scrolling happening.'
+            )
+        case dui2.WindowLayout.VIEWER_NARROW:
+            return (
+                f'Like {wl.VIEWER.name}, but with a controls column two'
+                ' thirds as wide, giving the viewer more of the room (and a'
+                ' somewhat narrower window at medium and large ui scales).'
+                ' Use this when a page has just a few simple controls'
+                ' beside a big view.'
+            )
+        case dui2.WindowLayout.VIEWER:
+            return (
+                f'Provides the same fixed width as {wl.SMALL.name}, but with'
+                ' a viewer alongside for showing content.'
+            )
+        case _:
+            assert_never(layout)
 
 
 def _lit(text: str) -> LangStrSpecValue:
@@ -131,6 +212,24 @@ def test_page_window_layouts(
             title=_lit('Window Layouts'),
             state=state.encode(),
             rows=[
+                # Info about the layout: a row-less section with just a
+                # subtitle, which joins the heading below it in latching
+                # onto the first selectable row (no note: there's no
+                # selectable row above for one to latch onto).
+                *(
+                    []
+                    if route.layout is None
+                    else [
+                        dui2.Section(
+                            subtitle=_lit(
+                                route.layout.name.replace('_', ' ').title()
+                                + ' - '
+                                + _layout_description(route.layout)
+                            ),
+                            rows=[],
+                        )
+                    ]
+                ),
                 # A section of input rows, with a heading and a closing
                 # note (selecting its first row brings the heading into
                 # view; its last, the note).

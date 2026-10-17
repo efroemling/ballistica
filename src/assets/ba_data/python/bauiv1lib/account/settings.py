@@ -14,11 +14,7 @@ import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets
 
-from bauiv1lib.utils import (
-    get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
-)
+from bauiv1lib.utils import apply_toolbar_scroll_fades, get_screen_margins
 from bauiv1lib.connectivity import wait_for_connectivity
 
 #: Our root scale at medium ui-scale (large derives from it).
@@ -217,28 +213,17 @@ class AccountSettingsWindow(bui.MainWindow):
             claims_left_right=True,
             selection_loops_to_parent=True,
             border_opacity=0.4,
+            fading_scrollbar=True,
+            # Content fades into our backing at our edges, and sits in
+            # our middle when it all fits.
+            edge_style='fade',
+            center_small_content=True,
         )
 
         # With full-screen scrolling, fade content as it approaches
-        # toolbars. Note that we intentionally use the original
-        # un-margin-extended scroll geometry here; the fades were
-        # placed to coincide with toolbar elements, which don't move
-        # when we extend out into screen margins.
+        # toolbars instead.
         if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
+            apply_toolbar_scroll_fades(self._scrollwidget)
 
         # Outside small ui, centered on the back button and sized like
         # doc-ui windows' titles on screen (1.0 under their root scale).
@@ -337,7 +322,9 @@ class AccountSettingsWindow(bui.MainWindow):
         )
 
         show_signed_in_as = self._v1_signed_in
-        signed_in_as_space = 95.0
+        # (Its heading, then the name, then the gap below it.)
+        signed_in_as_steps = (19.0, 57.5, 48.0)
+        signed_in_as_space = sum(signed_in_as_steps)
 
         # To reduce confusion about the whole V2 account situation for
         # people used to seeing their Google Play Games or Game Center
@@ -416,16 +403,21 @@ class AccountSettingsWindow(bui.MainWindow):
             and 'V2Proxy' in self._show_sign_in_buttons
         )
         sign_in_button_space = 70.0
-
-        # Game Center currently has a single UI for everything.
-        show_game_center_button = game_center_active
-        game_center_button_space = 60.0
-
-        # Phasing this out (for V2 accounts at least).
-        show_linked_accounts_text = (
-            self._v1_signed_in and v1_account_type != 'V2'
+        # (Sign-in buttons sit this far below their spaces, so their
+        # group takes this much more after its last one.)
+        sign_in_buttons_tail = 20.0
+        show_any_sign_in_button = (
+            show_google_play_sign_in_button
+            or show_game_center_sign_in_button
+            or show_discord_sign_in_button
+            or show_v2_proxy_sign_in_button
         )
-        linked_accounts_text_space = 60.0
+
+        # Game Center currently has a single UI for everything (its
+        # button sits this far up from the bottom of its space).
+        show_game_center_button = game_center_active
+        game_center_button_space = 84.0
+        game_center_button_lift = 24.0
 
         # Update: No longer showing this since its visible on main
         # toolbar.
@@ -449,7 +441,7 @@ class AccountSettingsWindow(bui.MainWindow):
         manage_account_button_space = 70.0
 
         show_create_account_button = show_v2_proxy_sign_in_button
-        create_account_button_space = 70.0
+        create_account_button_space = 80.0
 
         # Apple asks us to make a delete-account button directly
         # available in the UI. Currently disabling this elsewhere
@@ -470,7 +462,8 @@ class AccountSettingsWindow(bui.MainWindow):
         show_v1_obsolete_note = self._v1_signed_in and (
             primary_v2_account is None
         )
-        v1_obsolete_note_space = 80.0
+        # (Room for its four lines, plus some breathing room.)
+        v1_obsolete_note_space = 160.0
 
         show_sign_out_button = primary_v2_account is not None or (
             self._v1_signed_in and v1_account_type == 'Local'
@@ -488,12 +481,18 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if self._subcontainer is not None:
             self._subcontainer.delete()
-        self._sub_height = 90.0
 
-        # For fullscreen scrollable, account for toolbar.
+        # Each section shown takes exactly its space (above and below)
+        # in our layout, between padding at our top and bottom. Our
+        # scroll area centers us when we fit, so the bottom pad is a bit
+        # more than the top's to balance the gap at the top of each
+        # section's space. At small scale (full-screen), we also leave
+        # room at each end for the toolbars.
         uiscale = bui.app.ui_v1.uiscale
-        if uiscale is bui.UIScale.SMALL:
-            self._sub_height += 35
+        toolbar_pad = 35.0 if uiscale is bui.UIScale.SMALL else 0.0
+        top_pad = 10.0 + toolbar_pad
+        bottom_pad = 20.0 + toolbar_pad
+        self._sub_height = top_pad + bottom_pad
 
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
@@ -508,10 +507,10 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
+        if show_any_sign_in_button:
+            self._sub_height += sign_in_buttons_tail
         if show_game_center_button:
             self._sub_height += game_center_button_space
-        if show_linked_accounts_text:
-            self._sub_height += linked_accounts_text_space
         if show_achievements_text:
             self._sub_height += achievements_text_space
         if show_leaderboards_button:
@@ -550,17 +549,13 @@ class AccountSettingsWindow(bui.MainWindow):
         )
 
         first_selectable = None
-        v = self._sub_height - 10.0
-
-        # For fullscreen scrollable, account for toolbar.
-        if uiscale is bui.UIScale.SMALL:
-            v -= 35
+        v = self._sub_height - top_pad
 
         assert bui.app.classic is not None
         self._account_name_text: bui.Widget | None
         self._account_name_depiction: bui.Widget | None
         if show_signed_in_as:
-            v -= signed_in_as_space * 0.2
+            v -= signed_in_as_steps[0]
             txt = _classicassets.strings.account.you_are_signed_in_as
             bui.textwidget(
                 parent=self._subcontainer,
@@ -573,7 +568,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
             )
-            v -= signed_in_as_space * 0.5
+            v -= signed_in_as_steps[1]
             self._account_name_text = bui.textwidget(
                 parent=self._subcontainer,
                 position=(self._sub_center_x, v),
@@ -601,7 +596,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
             self._refresh_account_name_text()
 
-            v -= signed_in_as_space * 0.4 + via_top_space
+            v -= signed_in_as_steps[2] + via_top_space
 
             for via in via_lines:
                 v -= via_space * 0.1
@@ -865,6 +860,9 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
             self._sign_in_text = None
 
+        if show_any_sign_in_button:
+            v -= sign_in_buttons_tail
+
         if show_v1_obsolete_note:
             v -= v1_obsolete_note_space
             bui.textwidget(
@@ -872,7 +870,10 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_center_x, v + 35.0),
+                position=(
+                    self._sub_center_x,
+                    v + v1_obsolete_note_space * 0.5,
+                ),
                 text=(
                     'YOU ARE SIGNED IN WITH A V1 ACCOUNT.\n'
                     'THESE ARE NO LONGER SUPPORTED AND MANY\n'
@@ -915,7 +916,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._create_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|create',
-                position=(self._sub_center_x - button_width * 0.5, v - 30),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
                 label=_classicassets.strings.account.create_an_account,
@@ -935,7 +936,7 @@ class AccountSettingsWindow(bui.MainWindow):
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
         if show_game_center_button:
             button_width = 300
-            v -= game_center_button_space * 1.0
+            v -= game_center_button_space
             if game_center_active:
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
@@ -953,7 +954,10 @@ class AccountSettingsWindow(bui.MainWindow):
             self._game_center_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|gamecenter',
-                position=(self._sub_center_x - button_width * 0.5, v),
+                position=(
+                    self._sub_center_x - button_width * 0.5,
+                    v + game_center_button_lift,
+                ),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -967,7 +971,6 @@ class AccountSettingsWindow(bui.MainWindow):
                 edit=btn, right_widget=bui.get_special_widget('squad_button')
             )
             bui.widget(edit=btn, left_widget=bbtn)
-            v -= game_center_button_space * 0.4
         else:
             self.game_center_button = None
 

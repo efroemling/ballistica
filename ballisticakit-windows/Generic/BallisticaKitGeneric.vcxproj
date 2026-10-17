@@ -401,6 +401,8 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_settings.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_settings.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\mesh_viewer.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\mesh_viewer.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\net_graph.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\net_graph.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h" />
@@ -838,6 +840,8 @@
     <ClInclude Include="..\..\src\ballistica\template_fs\python\template_fs_python.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\template_fs.cc" />
     <ClInclude Include="..\..\src\ballistica\template_fs\template_fs.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_mesh_viewer.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_mesh_viewer.h" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h" />

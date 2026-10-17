@@ -1196,6 +1196,8 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depiction_suffix_obj{Py_None};
   PyObject* depiction_color_override_obj{Py_None};
   PyObject* depiction_use_color_override_obj{Py_None};
+  PyObject* depiction_overlay_obj{Py_None};
+  PyObject* depiction_small_placeholder_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1235,9 +1237,11 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depiction_suffix",
                                  "depiction_color_override",
                                  "depiction_use_color_override",
+                                 "depiction_overlay",
+                                 "depiction_small_placeholder",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &color_obj, &texture_obj, &opacity_obj, &rotate_obj,
           &mesh_transparent_obj, &mesh_opaque_obj, &has_alpha_channel_obj,
@@ -1250,7 +1254,8 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &depiction_frame_color_obj, &depiction_backing_color_obj,
           &depiction_debug_obj, &tint3_color_obj, &nine_patch_insets_obj,
           &nine_patch_borders_obj, &nine_patch_tile_obj, &depiction_suffix_obj,
-          &depiction_color_override_obj, &depiction_use_color_override_obj))
+          &depiction_color_override_obj, &depiction_use_color_override_obj,
+          &depiction_overlay_obj, &depiction_small_placeholder_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1430,11 +1435,18 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
               depiction_v_align_obj, depiction_take_input_obj,
               depiction_frame_color_obj, depiction_backing_color_obj,
               depiction_debug_obj, depiction_suffix_obj,
-              depiction_color_override_obj,
-              depiction_use_color_override_obj})) {
+              depiction_color_override_obj, depiction_use_color_override_obj,
+              depiction_overlay_obj, depiction_small_placeholder_obj})) {
     DepictionSlot& slot{b->GetDepictionSlot()};
     if (depiction_take_input_obj != Py_None) {
       slot.set_take_input(Python::GetBool(depiction_take_input_obj));
+    }
+    if (depiction_overlay_obj != Py_None) {
+      slot.set_overlay(Python::GetBool(depiction_overlay_obj));
+    }
+    if (depiction_small_placeholder_obj != Py_None) {
+      slot.set_small_placeholder(
+          Python::GetBool(depiction_small_placeholder_obj));
     }
     if (depiction_frame_color_obj != Py_None) {
       std::vector<float> c = Python::GetFloats(depiction_frame_color_obj);
@@ -1513,6 +1525,8 @@ static PyMethodDef PyImageWidgetDef = {
     "  depiction_suffix: str | None = None,\n"
     "  depiction_color_override: Sequence[float] | None = None,\n"
     "  depiction_use_color_override: bool | None = None,\n"
+    "  depiction_overlay: bool | None = None,\n"
+    "  depiction_small_placeholder: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -1565,6 +1579,16 @@ static PyMethodDef PyImageWidgetDef = {
     "depiction reports covering (what a hit-tested button takes presses\n"
     "over), to check it against what is drawn. See also\n"
     "``get_depiction_control()``.\n"
+    "\n"
+    "``depiction_overlay`` tells the depiction it is shown straight over\n"
+    "whatever is behind (no backing or frame around it); kinds able to\n"
+    "then draw with transparency where there's nothing (a live mesh\n"
+    "viewer composites over the window), and others draw as usual.\n"
+    "\n"
+    "``depiction_small_placeholder`` draws the placeholder for a\n"
+    "depiction that can't be shown (an unknown kind, or one whose\n"
+    "load failed) small in the middle of the box rather than filling\n"
+    "it, for boxes that are panes (doc-ui viewers).\n"
     "\n"
     "``depiction_suffix`` is text drawn right after the depiction (a\n"
     "player's '(ready)' after their name, say; empty for none), sized to\n"
@@ -2689,6 +2713,10 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* scrollbar_visible_obj{Py_None};
   PyObject* fading_scrollbar_obj{Py_None};
   PyObject* clean_layout_obj{Py_None};
+  PyObject* edge_style_obj{Py_None};
+  PyObject* edge_fade_obj{Py_None};
+  PyObject* edge_fade_inset_obj{Py_None};
+  PyObject* move_out_at_ends_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2713,18 +2741,24 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "scrollbar_visible",
                                  "fading_scrollbar",
                                  "clean_layout",
+                                 "edge_style",
+                                 "edge_fade",
+                                 "edge_fade_inset",
+                                 "move_out_at_ends",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
-          &edit_obj, &parent_obj, &id_obj, &size_obj, &pos_obj, &background_obj,
-          &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
-          &center_small_content_obj, &center_small_content_horizontally_obj,
-          &color_obj, &highlight_obj, &border_opacity_obj,
-          &simple_culling_v_obj, &selection_loops_to_parent_obj,
-          &claims_left_right_obj, &claims_up_down_obj, &autoselect_obj,
-          &hide_border_when_fits_obj, &scrollbar_visible_obj,
-          &fading_scrollbar_obj, &clean_layout_obj))
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
+          &size_obj, &pos_obj, &background_obj, &selected_child_obj,
+          &capture_arrows_obj, &on_select_call_obj, &center_small_content_obj,
+          &center_small_content_horizontally_obj, &color_obj, &highlight_obj,
+          &border_opacity_obj, &simple_culling_v_obj,
+          &selection_loops_to_parent_obj, &claims_left_right_obj,
+          &claims_up_down_obj, &autoselect_obj, &hide_border_when_fits_obj,
+          &scrollbar_visible_obj, &fading_scrollbar_obj, &clean_layout_obj,
+          &edge_style_obj, &edge_fade_obj, &edge_fade_inset_obj,
+          &move_out_at_ends_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2783,6 +2817,35 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (clean_layout_obj != Py_None) {
     widget->set_clean_layout(Python::GetBool(clean_layout_obj));
+  }
+  if (edge_style_obj != Py_None) {
+    auto edge_style = Python::GetString(edge_style_obj);
+    if (edge_style == "outline") {
+      widget->set_edge_style(ScrollWidget::EdgeStyle::kOutline);
+    } else if (edge_style == "fade") {
+      widget->set_edge_style(ScrollWidget::EdgeStyle::kFade);
+    } else {
+      throw Exception("Invalid edge_style: '" + edge_style + "'.",
+                      PyExcType::kValue);
+    }
+  }
+  if (edge_fade_obj != Py_None) {
+    std::vector<float> fade = Python::GetFloats(edge_fade_obj);
+    if (fade.size() != 4) {
+      throw Exception("Expected 4 floats for edge_fade.", PyExcType::kValue);
+    }
+    widget->set_edge_fade(fade[0], fade[1], fade[2], fade[3]);
+  }
+  if (edge_fade_inset_obj != Py_None) {
+    std::vector<float> inset = Python::GetFloats(edge_fade_inset_obj);
+    if (inset.size() != 4) {
+      throw Exception("Expected 4 floats for edge_fade_inset.",
+                      PyExcType::kValue);
+    }
+    widget->set_edge_fade_inset(inset[0], inset[1], inset[2], inset[3]);
+  }
+  if (move_out_at_ends_obj != Py_None) {
+    widget->set_move_out_at_ends(Python::GetBool(move_out_at_ends_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
@@ -2872,6 +2935,10 @@ static PyMethodDef PyScrollWidgetDef = {
     "  scrollbar_visible: bool | None = None,\n"
     "  fading_scrollbar: bool | None = None,\n"
     "  clean_layout: bool | None = None,\n"
+    "  edge_style: Literal['outline', 'fade'] | None = None,\n"
+    "  edge_fade: Sequence[float] | None = None,\n"
+    "  edge_fade_inset: Sequence[float] | None = None,\n"
+    "  move_out_at_ends: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a scroll widget.\n"
@@ -2896,7 +2963,26 @@ static PyMethodDef PyScrollWidgetDef = {
     "With 'clean_layout', content is laid out with none of the widget's\n"
     "historical fudge offsets: it starts at the left edge (or is exactly\n"
     "centered), spans the full height, and is clipped exactly to the\n"
-    "widget's bounds.",
+    "widget's bounds.\n"
+    "\n"
+    "With 'edge_style' 'fade', no outline is drawn; instead the parent\n"
+    "container's window backing is redrawn in a band along the widget's\n"
+    "inside edges so content fades out as it scrolls under them. This\n"
+    "requires the parent to be a container drawing a backing.\n"
+    "'edge_fade' gives how far the band reaches in from each edge as\n"
+    "(left, bottom, right, top); zero means no fade on that side. It\n"
+    "defaults to 40 all around.\n"
+    "'edge_fade_inset' (same order) keeps the band fully drawn that far\n"
+    "in from each edge before its fade begins, for strips content never\n"
+    "shows in (under toolbars, say). The style pairs naturally with\n"
+    "'clean_layout' and 'fading_scrollbar', which let content (and the\n"
+    "fade) run right out to the edges.\n"
+    "\n"
+    "With 'move_out_at_ends', an up press while scrolled all the way up\n"
+    "(or a down press while scrolled all the way down) goes unclaimed, so\n"
+    "selection moves on to a neighboring widget the usual way (an\n"
+    "explicit up/down widget, or autoselect's search, toolbars included)\n"
+    "instead of stopping at the scroll widget.",
 };
 
 // ---------------------------- hscrollwidget ----------------------------------

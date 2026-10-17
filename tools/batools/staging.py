@@ -66,6 +66,8 @@ class BuildStager:
         self.builddir: str | None = None
         self.dist_mode: bool = False
         self.wsl_chmod_workaround = False
+        # Xcode macOS: hand the bare ANGLE dylibs' dSYMs to archives.
+        self.include_angle_dsyms = False
 
     def run(self, args: list[str]) -> None:
         """Do the thing."""
@@ -105,6 +107,9 @@ class BuildStager:
         else:
             if self.dst is not None and os.path.isdir(f'{self.dst}/pylib'):
                 subprocess.run(['rm', '-rf', f'{self.dst}/pylib'], check=True)
+
+        if self.include_angle_dsyms:
+            self._copy_angle_dsyms()
 
         # Sync our server files if we're doing that.
         if self.serverdst is not None:
@@ -299,6 +304,7 @@ class BuildStager:
             )
             self.include_pylib = True
             self.pylib_src_path = 'pylib-apple'
+            self.include_angle_dsyms = True
         elif platform_arg in ('-xcode-ios', '-xcode-tvos'):
             # iOS and tvOS stage identically (same Apple pylib + asset
             # layout into the .app bundle's flat Resources dir).
@@ -600,6 +606,42 @@ class BuildStager:
             f' across {len(roots)} root(s).{Clr.RST}',
             flush=True,
         )
+
+    def _copy_angle_dsyms(self) -> None:
+        """Give an Xcode macOS archive the bare ANGLE dylibs' dSYMs.
+
+        Archives collect dSYMs from ``DWARF_DSYM_FOLDER_PATH`` but only
+        make them for what they build (or take them from xcframeworks), so
+        prebuilt dylibs' dSYMs must be copied in; without them App Store
+        uploads warn 'Upload Symbols Failed' for libEGL/libGLESv2.
+        """
+        import shutil
+
+        if os.environ.get('ACTION') != 'install':
+            return
+        dsym_dir = os.environ.get('DWARF_DSYM_FOLDER_PATH')
+        if not dsym_dir:
+            return
+        src_dir = os.path.join(
+            self.projroot, 'src', 'external', 'angle-apple', 'macos'
+        )
+        dsyms = sorted(
+            name for name in os.listdir(src_dir) if name.endswith('.dSYM')
+        )
+        if not dsyms:
+            print(
+                f'{Clr.YLW}No ANGLE dSYMs in {src_dir};'
+                f' the archive will lack ANGLE symbols.{Clr.RST}',
+                flush=True,
+            )
+            return
+        os.makedirs(dsym_dir, exist_ok=True)
+        for name in dsyms:
+            dst = os.path.join(dsym_dir, name)
+            if os.path.exists(dst):
+                shutil.rmtree(dst)
+            shutil.copytree(os.path.join(src_dir, name), dst, symlinks=True)
+        print(f'{Clr.BLU}Copied {len(dsyms)} ANGLE dSYMs.{Clr.RST}', flush=True)
 
     def _sync_pylib(self) -> None:
         assert self.pylib_src_path is not None

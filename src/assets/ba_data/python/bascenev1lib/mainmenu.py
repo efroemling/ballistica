@@ -662,7 +662,6 @@ def _preload1() -> None:
         meshes.player_lineup4_transparent,
         meshes.angry_computer_transparent,
         meshes.scroll_widget_short,
-        meshes.window_bgblotch,
     ]:
         _ = mesh.get()
     _ = _classiccatalogassets.textures.character_icon_mask.get()

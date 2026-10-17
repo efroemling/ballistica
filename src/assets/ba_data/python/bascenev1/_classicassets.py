@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261015`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261016a`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 704
+# ba_meta require asset-package 724
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261015
-_ASSET_PACKAGE = ApverNum(704)
+# a-0.baclassicassets.261016a
+_ASSET_PACKAGE = ApverNum(724)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -235,7 +235,6 @@ if TYPE_CHECKING:
         toolbar_backing_transparent: MeshHandle
         tower_dplayer_wall: CollisionMeshHandle
         trees: MeshHandle
-        window_bgblotch: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -5814,6 +5813,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Label for the main-menu button on iPad that closes the game's
+        #:     window, the same action as the close button in the iPad's window
+        #:     controls (other platforms use the 'Quit' or 'Exit Game' strings).
+        #:
+        #:     English: "Close Game"
+        close_game: LangStr
+
+        #: ::
+        #:
         #:     Label for the main-menu button showing the game's credits.
         #:
         #:     English: "Credits"
@@ -9223,6 +9231,17 @@ if TYPE_CHECKING:
         #:     English: "Boost"
         boost: LangStr
 
+        def close_app_confirm(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation question for closing the app's window (iPad
+                wording; Mac uses the 'Quit' variant and everything else the
+                'Exit' variant).
+
+                English: "Close {app_name}?"
+            """
+
         #: ::
         #:
         #:     Generic "Demo" label.
@@ -9767,14 +9786,14 @@ if TYPE_CHECKING:
     #: list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 56 assets (``achievement_outline``,
+    #: The ``meshes`` group - 55 assets (``achievement_outline``,
     #: ``action_button_bottom``, ``action_button_left``,
-    #: ``action_button_right``, ``action_button_top``, and 51 more). Full list
+    #: ``action_button_right``, ``action_button_top``, and 50 more). Full list
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1012 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1007 more). Full list in
+    #: The ``strings`` group - 1014 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1009 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -9968,7 +9987,6 @@ _TREE = {
         'toolbar_backing_transparent': 'm',
         'tower_dplayer_wall': 'c',
         'trees': 'm',
-        'window_bgblotch': 'm',
     },
     'strings': {
         'account': {
@@ -10683,6 +10701,7 @@ _TREE = {
             'ready': (),
         },
         'main_menu': {
+            'close_game': (),
             'credits': (),
             'exit_game': (),
             'host_navigating_menus': ('host',),
@@ -11118,6 +11137,7 @@ _TREE = {
             'activity': (),
             'app_name': (),
             'boost': (),
+            'close_app_confirm': ('app_name',),
             'demo': (),
             'easy': (),
             'epic_mode': (),

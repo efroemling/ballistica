@@ -135,6 +135,10 @@ class TestDocUIV2Controller(
                 )
 
                 return test_page_depictions(route)
+            case rt.Viewers():
+                from bauiv1lib.docuitestviewers import test_page_viewers
+
+                return test_page_viewers(route)
             case rt.Names():
                 from bauiv1lib.docuitestnames import test_page_names
 
@@ -212,6 +216,49 @@ class TestDocUIV2Controller(
                 bui.screenmessage(f'Would do {action!r}.')
             case _:
                 assert_never(action)
+
+
+def _window_layouts_row(
+    style: bacommon.docui.v2.ScrollEdgeStyle,
+) -> bacommon.docui.v2.ButtonRow:
+    """A row opening each window layout (and fit test) in a style."""
+    import bacommon.docui.v2 as dui2
+
+    return dui2.ButtonRow(
+        # Dev-only, so baked literals.
+        title=LangStrSpecValue.literal(
+            f'Window Layouts ({style.name.lower()} scroll)'
+        ),
+        buttons=[
+            *(
+                dui2.Button(
+                    label=LangStrSpecValue.literal(
+                        layout.name.replace('_', ' ').title()
+                    ),
+                    size=(120, 80),
+                    action=rt.WindowLayouts(layout=layout).browse(
+                        layout=layout, scroll_edge_style=style
+                    ),
+                )
+                for layout in dui2.WindowLayout
+            ),
+            *(
+                dui2.Button(
+                    label=LangStrSpecValue.literal(
+                        f'{layout.name.title()} Fit'
+                    ),
+                    size=(120, 80),
+                    action=rt.WideFit(
+                        wider=layout is dui2.WindowLayout.WIDER
+                    ).browse(layout=layout, scroll_edge_style=style),
+                )
+                for layout in (
+                    dui2.WindowLayout.WIDE,
+                    dui2.WindowLayout.WIDER,
+                )
+            ),
+        ],
+    )
 
 
 def _test_v2_page_root(
@@ -453,6 +500,12 @@ def _test_v2_page_root(
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Viewers'),
+                            size=(120, 80),
+                            action=rt.Viewers().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
                             label=LangStrSpecValue.literal('Names'),
                             size=(120, 80),
                             action=rt.Names().browse(),
@@ -544,6 +597,16 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
+                # One row per scroll edge style, so the two can be
+                # compared directly (content should sit in exactly the
+                # same place in both).
+                *(
+                    _window_layouts_row(style)
+                    for style in (
+                        dui2.ScrollEdgeStyle.FADE,
+                        dui2.ScrollEdgeStyle.OUTLINE,
+                    )
+                ),
                 dui2.ButtonRow(
                     # Dev-only, so baked literals. (Every layout, to see
                     # how sections and cards behave at each width.)
@@ -557,37 +620,6 @@ def _test_v2_page_root(
                             action=rt.Sections().browse(layout=layout),
                         )
                         for layout in dui2.WindowLayout
-                    ],
-                ),
-                dui2.ButtonRow(
-                    # Dev-only, so baked literals.
-                    title=LangStrSpecValue.literal('Window Layouts'),
-                    buttons=[
-                        *(
-                            dui2.Button(
-                                label=LangStrSpecValue.literal(
-                                    layout.name.replace('_', ' ').title()
-                                ),
-                                size=(120, 80),
-                                action=rt.WindowLayouts().browse(layout=layout),
-                            )
-                            for layout in dui2.WindowLayout
-                        ),
-                        *(
-                            dui2.Button(
-                                label=LangStrSpecValue.literal(
-                                    f'{layout.name.title()} Fit'
-                                ),
-                                size=(120, 80),
-                                action=rt.WideFit(
-                                    wider=layout is dui2.WindowLayout.WIDER
-                                ).browse(layout=layout),
-                            )
-                            for layout in (
-                                dui2.WindowLayout.WIDE,
-                                dui2.WindowLayout.WIDER,
-                            )
-                        ),
                     ],
                 ),
                 dui2.ButtonRow(title=strs.layout.empty_row.spec, buttons=[]),

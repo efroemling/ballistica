@@ -462,6 +462,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_typed.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowoptions.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowparts.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_windowstate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
@@ -493,6 +494,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextimages.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextwrap.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestviewers.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestwidgets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
@@ -516,6 +518,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/presidency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/rankwindow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/meshviewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/partyqueue.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/passwordprompt.py \

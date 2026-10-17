@@ -6488,7 +6488,7 @@ static void AppendBgRigTestAntenna(
   adef.stiffness = 0.8f;
   adef.damping = 0.7f;
   adef.drag = 0.5f;
-  adef.curl = 0.2f;
+  adef.curl = 0.1f;
   adef.length = 0.5f;
   adef.segments.resize(3);
   defs->push_back(std::move(adef));

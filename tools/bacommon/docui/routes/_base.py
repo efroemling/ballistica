@@ -138,6 +138,18 @@ class DocUIRoute:
         """
         return dui2.WindowLayout.WIDE
 
+    @classmethod
+    def get_viewer_style(cls) -> bacommon.docui.v2.ViewerStyle | None:
+        """The viewer pane style windows browsing to this route open with.
+
+        As :meth:`get_window_layout`: a route whose page is best shown
+        with some style (an overlay pane, for a page built around a
+        frameless viewer) declares it once rather than at every link.
+        Defaults to None (the client's default; framed). Only matters
+        for layouts with a viewer pane.
+        """
+        return None
+
     def browse(
         self,
         *,
@@ -145,6 +157,8 @@ class DocUIRoute:
         sets: Sequence[DocUIStateAssign] | None = None,
         state: DocUIState | None = None,
         layout: bacommon.docui.v2.WindowLayout | None = None,
+        scroll_edge_style: bacommon.docui.v2.ScrollEdgeStyle | None = None,
+        viewer_style: bacommon.docui.v2.ViewerStyle | None = None,
     ) -> bacommon.docui.v2.Browse:
         """Return an action browsing to this route in a new window.
 
@@ -152,7 +166,9 @@ class DocUIRoute:
         ``sets`` applied to it. Pass ``state`` to send some other state
         entirely; generally what a different page expects. The window
         opens at ``layout``, or at :meth:`get_window_layout` if not
-        given.
+        given, with ``scroll_edge_style`` (or its layout's default if
+        not given) and ``viewer_style`` (or :meth:`get_viewer_style` if
+        not given).
         """
         from bacommon.docui.routes._state import merge_assigns
 
@@ -162,6 +178,12 @@ class DocUIRoute:
             sets=merge_assigns(sets),
             state=None if state is None else state.encode(),
             layout=self.get_window_layout() if layout is None else layout,
+            scroll_edge_style=scroll_edge_style,
+            viewer_style=(
+                self.get_viewer_style()
+                if viewer_style is None
+                else viewer_style
+            ),
         )
 
     def replace(

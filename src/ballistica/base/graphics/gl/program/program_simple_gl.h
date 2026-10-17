@@ -85,6 +85,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_MASK_UV2) {
       SetTextureUnit("maskUV2Tex", kMaskUV2TexUnit);
     }
+    if (flags & SHD_UV2_FADE) {
+      premult_blend_location_ = glGetUniformLocation(program(), "premultBlend");
+      assert(premult_blend_location_ != -1);
+    }
   }
 
   void SetColorTexture(const TextureAsset* t) {
@@ -212,6 +216,17 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
   }
 
+  // 1.0 if this draw blends premultiplied, else 0.0. A UV2 fade then
+  // scales the whole color rather than just its alpha.
+  void SetPremultBlend(float premult_blend) {
+    assert(flags_ & SHD_UV2_FADE);
+    assert(IsBound());
+    if (premult_blend != premult_blend_) {
+      premult_blend_ = premult_blend;
+      glUniform1f(premult_blend_location_, premult_blend_);
+    }
+  }
+
   void SetColorize2Color(float r, float g, float b, float a = 1.0f) {
     assert(flags_ & SHD_COLORIZE);
     assert(IsBound());
@@ -268,7 +283,12 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
            + std::to_string((flags & SHD_MASK_UV2) != 0) + " depthBugTest:"
            + std::to_string((flags & SHD_DEPTH_BUG_TEST) != 0)
            + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0)
-           + " textGlow:" + std::to_string((flags & SHD_TEXT_GLOW) != 0);
+           + " textGlow:" + std::to_string((flags & SHD_TEXT_GLOW) != 0)
+           + " uv2Fade:" + std::to_string((flags & SHD_UV2_FADE) != 0);
+  }
+
+  static auto UsesUV2(int flags) -> bool {
+    return (flags & SHD_MASK_UV2) || (flags & SHD_UV2_FADE);
   }
 
   auto GetPFlags(int flags) -> int {
@@ -276,7 +296,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_TEXTURE) {
       pflags |= PFLAG_USES_UV_ATTR;
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       pflags |= PFLAG_USES_UV2_ATTR;
     }
     return pflags;
@@ -291,7 +311,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       s += BA_GLSL_VERTEX_IN " vec2 uv;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUV;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += BA_GLSL_VERTEX_IN " vec2 uv2;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUV2;\n";
     }
@@ -305,7 +325,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_TEXTURE) {
       s += "   vUV = uv;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += "   vUV2 = uv2;\n";
     }
     if (flags & SHD_SHADOW) {
@@ -346,8 +366,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV2;\n";
+    }
+    if (flags & SHD_UV2_FADE) {
+      s += "uniform " BA_GLSL_MEDIUMP "float premultBlend;\n";
     }
     if (flags & SHD_FLATNESS) {
       s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
@@ -472,6 +495,20 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           }
         }
         s += ";\n";
+
+        if (flags & SHD_UV2_FADE) {
+          // Each uv2 axis runs from 0 at an outer edge (fully drawn) to
+          // 1 at the inner end of the fade (gone); we ease along each
+          // and multiply them, so corners where two fades meet fall off
+          // along both. Premult blending scales the whole color;
+          // straight blending just its alpha.
+          s += "   " BA_GLSL_MEDIUMP
+               "vec2 fadeAmt = smoothstep(0.0, 1.0, vUV2);\n"
+               "   " BA_GLSL_MEDIUMP
+               "float fade = 1.0 - fadeAmt.x * fadeAmt.y;\n"
+               "   " BA_GLSL_FRAGCOLOR " *= mix(vec4(1.0, 1.0, 1.0, fade),"
+               " vec4(fade), premultBlend);\n";
+        }
 
         if (flags & SHD_TEXT_GLOW) {
           // Text glow (a neon look) of strength textGlow (0 = none, 1 =
@@ -606,6 +643,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   float flatness_{};
   float tex_premultiplied_{};
   float mask_straight_{};
+  float premult_blend_{};
   GLint color_location_{};
   GLint colorize_color_location_{};
   GLint colorize2_color_location_{};
@@ -617,6 +655,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   GLint flatness_location{};
   GLint tex_premultiplied_location_{};
   GLint mask_straight_location_{};
+  GLint premult_blend_location_{};
   int flags_{};
 };
 

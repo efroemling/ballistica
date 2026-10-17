@@ -186,6 +186,8 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   context.mask_texture = args.mask_texture;
   std::copy(std::begin(frame_color_), std::end(frame_color_),
             context.frame_color);
+  context.overlay = overlay_;
+  context.small_placeholder = small_placeholder_;
   context.color_override = color_override;
   // (No host switch for this here yet; a depiction's baked one counts.)
   context.team_coloring = depiction_->EffectiveTeamColoring(false);

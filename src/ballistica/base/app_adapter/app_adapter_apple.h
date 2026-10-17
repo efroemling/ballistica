@@ -74,6 +74,8 @@ class AppAdapterApple : public AppAdapter {
   auto GetKeyRepeatInterval() -> float override;
   auto GetKeyName(int keycode) -> std::string override;
   auto NativeReviewRequestSupported() -> bool override;
+  auto CanSoftQuit() -> bool override;
+  void DoSoftQuit() override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;

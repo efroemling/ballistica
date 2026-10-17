@@ -14,9 +14,9 @@ a correct fit is a plain grey rect and any offset shows as a white or
 dark fringe. The button-body rows do the same with the white shape as
 the button's own body (its depiction).
 
-Characters are composed by the cloud only, so this page carries a few
-compositions captured from it (their packages are pinned prod versions,
-so they stay resolvable).
+Characters come from the classic character package's wrapper (built
+from its .bchar files), the way game code gets them; names are plain
+text.
 """
 
 from typing import TYPE_CHECKING, assert_never
@@ -31,62 +31,28 @@ if TYPE_CHECKING:
     import bacommon.assetspec
     import bacommon.docui.v2
     import bacommon.docui.routes.docuitest
-
-# Captured from bamaster's charactercompose (page components: name +
-# icon).
-_SPAZ_JSON = (
-    '{"n":{"b":{"t":"Spaz"}},"i":{"b":{"tx":49,"cm":50,"pk":[312],"dg":'
-    '"703baf89587ff5f0"}}}'
-)
-_ZOE_JSON = (
-    '{"n":{"b":{"t":"Zoe"}},"i":{"b":{"tx":85,"cm":86,"pk":[312],"dg":"'
-    '703baf89587ff5f0","cl":[0.2,0.4,1.0],"hl":[1.0,0.8,0.1]}}}'
-)
-_KRONK_JSON = (
-    '{"n":{"b":{"t":"A Rather Long Name"}},"i":{"b":{"tx":42,"cm":43,"p'
-    'k":[312],"dg":"703baf89587ff5f0","cl":[0.4,0.5,0.4],"hl":[1.0,0.5,'
-    '0.3]}}}'
-)
-
-# Captured from bamaster's charactercompose (viewer components: the
-# spaz form alone).
-_ZOE_VIEWER_JSON = (
-    '{"s":{"b":{"ct":605,"cm":606,"mh":540,"mt":544,"mua":545,"mul":546'
-    ',"mll":541,"mto":543,"pk":[316,62],"dg":"6753d437f6245a89","mfa":5'
-    '38,"mhn":539,"mp":542,"sj":[276,277,278],"sa":[266,267,268,269],"s'
-    'i":[272,273,274,275],"sd":[270],"sp":[279],"sf":[271],"cl":[0.2,0.'
-    '4,1.0],"hl":[1.0,0.8,0.1],"tr":0.11,"so":[0.03,0.0,-0.02],"lt":0.0'
-    '6,"la":0.045,"ss":0.03,"ia":0.2,"aw":0.3,"iw":0.02,"es":0.95,"eo":'
-    '[0.08,-0.036,0.205],"ec":[0.55,0.3,0.7],"eb":[0.54,0.51,0.55],"lc"'
-    ':[0.6,0.35,0.31],"ln":15.0,"at":{"h":[{"t":"an","p":[-0.173,0.124,'
-    '0.153],"q":[0.89,-0.2665,-0.37,0.0],"s":[{"m":617,"o":[1.0,1.0,1.0'
-    ',0.02,0.16,0.05]}],"k":0.2,"d":0.7,"r":0.375},{"t":"an","p":[0.196'
-    ',0.098,0.118],"q":[0.8582,-0.2296,0.4592,0.0],"s":[{"m":619,"o":[1'
-    '.0,1.0,1.0,-0.01,0.03,0.06,0.9763,0.2164,0.0,0.0]}],"k":0.3,"d":0.'
-    '7},{"t":"a2","p":[0.0,0.28,-0.224],"q":[0.0,0.0,0.852525,0.522687]'
-    ',"s":[{"m":620,"o":[1.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0]},{"m"'
-    ':621,"o":[1.0,1.0,1.0,0.0,0.0,0.04,0.0,0.0,1.0,0.0]}],"k":0.67,"d"'
-    ':0.8,"l":0.8,"r":0.625,"kc":-0.26}]}}}}'
-)
+    from bauiv1 import _classiccharacterassets
 
 
-def _part(character_json: str, key: str) -> str:
-    """One component of a captured character, as its depiction carries it.
+def _characters() -> _classiccharacterassets.CharactersGroup:
+    """The classic characters, as the ui wrapper gives them."""
+    from bauiv1 import _classiccharacterassets
 
-    Depictions carry a single component ('n' name, 'i' icon, 's' spaz),
-    never a whole character.
-    """
-    import json
-
-    return json.dumps(json.loads(character_json)[key], separators=(',', ':'))
+    return _classiccharacterassets.characters
 
 
-def _icon(character_json: str) -> bdep.CharacterIconDepiction:
-    return bdep.CharacterIconDepiction(_part(character_json, 'i'))
+def _zoe_viewer() -> bdep.CharacterViewerDepiction:
+    """A live viewer of Zoe (only the scene wrapper carries spazzes)."""
+    from bascenev1 import _classiccharacterassets
+
+    return _classiccharacterassets.characters.zoe.get_viewer_depiction()
 
 
-def _name(character_json: str) -> bdep.NameDepiction:
-    return bdep.NameDepiction(_part(character_json, 'n'))
+def _name(text: str) -> bdep.NameDepiction:
+    """A name depiction showing some plain text."""
+    from bascenev1 import plain_name_json
+
+    return bdep.NameDepiction(plain_name_json(text))
 
 
 #: Each test button's size, and where its depiction box centers.
@@ -324,9 +290,9 @@ def test_page_depictions(
         tint2_color=(1.0, 0.8, 0.2),
     )
     kinds: list[tuple[str, bdep.Depiction, tuple[float, float]]] = [
-        ('icon', _icon(_SPAZ_JSON), _BOX),
-        ('icon (tinted)', _icon(_ZOE_JSON), _BOX),
-        ('name', _name(_ZOE_JSON), (140.0, 50.0)),
+        ('icon', _characters().spaz.get_icon_depiction(), _BOX),
+        ('icon (zoe)', _characters().zoe.get_icon_depiction(), _BOX),
+        ('name', _name('Zoe'), (140.0, 50.0)),
         ('image (chest)', chest, _BOX),
         ('image (coin)', bdep.ImageDepiction(texture=tex.coin), _BOX),
         (
@@ -342,7 +308,7 @@ def test_page_depictions(
         ('image (indexed)', _indexed_image(tex.coin), _BOX),
         (
             'viewer',
-            bdep.CharacterViewerDepiction(_part(_ZOE_VIEWER_JSON, 's')),
+            _zoe_viewer(),
             _BOX,
         ),
         ('unknown kind', bdep.UnknownDepiction(), _BOX),
@@ -394,7 +360,7 @@ def test_page_depictions(
 
     wide = (150.0, 70.0)
     tall = (70.0, 140.0)
-    zoe = _icon(_ZOE_JSON)
+    zoe = _characters().zoe.get_icon_depiction()
     fit_buttons = [
         _button(
             'wide, left',
@@ -415,18 +381,18 @@ def test_page_depictions(
         ),
         _button(
             'long name',
-            [_depiction(_name(_KRONK_JSON), (140.0, 50.0))],
+            [_depiction(_name('A Rather Long Name'), (140.0, 50.0))],
         ),
         _button(
             'icon over name',
             [
                 _depiction(
-                    _icon(_KRONK_JSON),
+                    _characters().kronk.get_icon_depiction(),
                     (140.0, 90.0),
                     position=(0.0, 5.0),
                 ),
                 _depiction(
-                    _name(_KRONK_JSON),
+                    _name('A Rather Long Name'),
                     (140.0, 32.0),
                     position=(0.0, -65.0),
                 ),
@@ -543,7 +509,7 @@ def test_page_depictions(
             size=size,
             style=dui2.ButtonStyle.MEDIUM,
             padding_top=_PRECISE_BODY_CAPTION,
-            depiction=_icon(_ZOE_JSON),
+            depiction=_characters().zoe.get_icon_depiction(),
             depiction_h_align=h_align,
             depiction_hit_area=hit_area,
             debug=debug,

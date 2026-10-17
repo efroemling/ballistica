@@ -1464,6 +1464,20 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetGlow(glow_amount, std::max(0.0f, glow_blur));
             break;
           }
+          case ShadingType::kSimpleTextureModulatedTransparentUV2Fade: {
+            SetDoubleSided_(false);
+            bool premult = static_cast<bool>(buffer->GetInt());
+            SetBlend(true);
+            SetBlendPremult(premult);
+            float r, g, b, a;
+            buffer->GetFloats(&r, &g, &b, &a);
+            ProgramSimpleGL* p = simple_tex_mod_uv2_fade_prog_;
+            p->Bind();
+            p->SetColor(r, g, b, a);
+            p->SetColorTexture(buffer->GetTexture());
+            p->SetPremultBlend(premult ? 1.0f : 0.0f);
+            break;
+          }
           case ShadingType::kSimpleTextureModulatedTransparentDoubleSided: {
             SetDoubleSided_(true);
             bool premult = static_cast<bool>(buffer->GetInt());
@@ -2884,6 +2898,9 @@ void RendererGL::Load() {
   RetainShader_(p);
   p = simple_tex_mod_glow_maskuv2_prog_ = new ProgramSimpleGL(
       this, SHD_TEXTURE | SHD_MODULATE | SHD_GLOW | SHD_MASK_UV2);
+  RetainShader_(p);
+  p = simple_tex_mod_uv2_fade_prog_ =
+      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_UV2_FADE);
   RetainShader_(p);
   p = simple_tex_mod_colorized_prog_ =
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE);

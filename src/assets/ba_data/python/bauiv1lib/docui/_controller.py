@@ -35,6 +35,7 @@ from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._menu import DocUIMenuWindow
 from bauiv1lib.docui._popuptext import DocUIPopupTextWindow
 from bauiv1lib.docui._window import DocUIWindow
+from bauiv1lib.docui._windowoptions import WindowOptions
 from bauiv1lib.docui._windowstate import DocUIMainWindowState
 
 if TYPE_CHECKING:
@@ -45,6 +46,7 @@ if TYPE_CHECKING:
     from bacommon.docui.routes import DocUIRoute
     from bacommon.langstr import LangStrSpec
     import bacommon.clienteffect as clfx
+    from bacommon.locale import Locale
 
     from bauiv1lib.docui import prep
 
@@ -70,6 +72,12 @@ class _WinData:
     #: own pause through their end, so this one just has to cover the
     #: round trip; it goes when the window's state moves on.
     root_ui_pause: bui.RootUIUpdatePause | None = None
+
+    #: Our locale when a fetch went out. Responses are cached under the
+    #: current locale, so one answering a request from before a language
+    #: switch must not be cached (it would sit under the new locale's
+    #: key in the old language).
+    fetch_locale: Locale | None = None
 
 
 #: How long content can take to arrive after its window appears before
@@ -562,25 +570,21 @@ class DocUIController:
         auxiliary_style: bool = True,
         uiopenstateid: str | None = None,
         suppress_win_extra_type_warning: bool = False,
-        layout: bacommon.docui.v2.WindowLayout | None = None,
+        options: WindowOptions | None = None,
     ) -> DocUIWindow:
         """Create a new window to handle a request.
 
-        The window opens at ``layout``; if not given, a route's own
-        :meth:`~bacommon.docui.routes.DocUIRoute.get_window_layout`, or
-        else the wide layout (the same default routes use).
+        The window opens as ``options`` say; anything they leave unset
+        comes from a route's own defaults (its
+        :meth:`~bacommon.docui.routes.DocUIRoute.get_window_layout` and
+        such), or else the general defaults (see
+        :class:`~bauiv1lib.docui.WindowOptions`).
         """
-        import bacommon.docui.v2 as dui2
-        from bacommon.docui.routes import DocUIRoute as RouteBase
-
         assert bui.in_logic_thread()
 
-        if layout is None:
-            layout = (
-                request.get_window_layout()
-                if isinstance(request, RouteBase)
-                else dui2.WindowLayout.WIDE
-            )
+        options = (
+            WindowOptions() if options is None else options
+        ).with_route_defaults(request)
         request = _as_request(request)
 
         # If we've already got this exact page for this account and
@@ -599,18 +603,19 @@ class DocUIController:
             auxiliary_style=auxiliary_style,
             uiopenstateid=uiopenstateid,
             suppress_win_extra_type_warning=suppress_win_extra_type_warning,
-            layout=layout,
-            # A cache hit means content appears under the spinner, which
-            # is what both of these describe.
-            restored=cached is not None,
+            options=options,
+            # A cache hit means we show its content while refreshing.
             has_had_response=cached is not None,
         )
         self._set_win_data(
             win,
             _WinData(
-                _WinState.FETCHING_FRESH_REQUEST
-                if cached is None
-                else _WinState.REDISPLAYING_OLD_STATE
+                (
+                    _WinState.FETCHING_FRESH_REQUEST
+                    if cached is None
+                    else _WinState.REDISPLAYING_OLD_STATE
+                ),
+                fetch_locale=bui.app.locale.current_locale,
             ),
         )
 
@@ -862,6 +867,7 @@ class DocUIController:
                     if state is _WinState.FETCHING_FRESH_REQUEST
                     else None
                 ),
+                fetch_locale=bui.app.locale.current_locale,
             ),
         )
         win.lock_ui(origin_widget)
@@ -955,7 +961,7 @@ class DocUIController:
                         origin_widget=widget,
                         auxiliary_style=False,
                         suppress_win_extra_type_warning=True,
-                        layout=action.layout,
+                        options=WindowOptions.from_browse(action),
                     )
                 )
 
@@ -1507,17 +1513,24 @@ class DocUIController:
             timing.instantiate = time.monotonic() - t_start
             timing.report_if_slow()
 
-        state = self._get_win_data(win).state
+        windata = self._get_win_data(win)
+        state = windata.state
 
         # Remember fresh successful fetches so the next open of this
         # page is instant. Deliberately the un-de-indexed response --
         # prep rendered from its own copy, and keeping this one
         # un-de-indexed is what lets it be re-prepped later at whatever
-        # ui-scale or window size it next appears at.
+        # ui-scale or window size it next appears at. Skipped if our
+        # language changed while the request was out (see
+        # _WinData.fetch_locale).
         if (
-            state is _WinState.FETCHING_FRESH_REQUEST
-            or state is _WinState.REFRESHING
-        ) and response.status is dui2.ResponseStatus.SUCCESS:
+            (
+                state is _WinState.FETCHING_FRESH_REQUEST
+                or state is _WinState.REFRESHING
+            )
+            and response.status is dui2.ResponseStatus.SUCCESS
+            and windata.fetch_locale is bui.app.locale.current_locale
+        ):
             _cache.put(self, answered_request, response)
 
         # Run client-effects and local-actions ONLY after fresh requests

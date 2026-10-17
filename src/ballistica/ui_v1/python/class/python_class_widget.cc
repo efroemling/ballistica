@@ -520,6 +520,23 @@ auto PythonClassWidget::GetScrollState(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassWidget::GetBackingOpaqueRect(PythonClassWidget* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  auto* cw = dynamic_cast<ContainerWidget*>(w);
+  Rect rect;
+  if (!cw || !cw->GetBackingOpaqueRect(&rect)) {
+    Py_RETURN_NONE;
+  }
+  return Py_BuildValue("(ffff)", rect.l, rect.b, rect.r, rect.t);
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassWidget::SetScrollOffset(PythonClassWidget* self, PyObject* args,
                                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -648,6 +665,15 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      ":meth:`set_scroll_offset` on the same kind of widget. The extents\n"
      "tell whether it still means the same thing: an offset saved from\n"
      "one widget applies to another only if both extents match."},
+    {"get_backing_opaque_rect", (PyCFunction)GetBackingOpaqueRect, METH_NOARGS,
+     "get_backing_opaque_rect() -> tuple[float, float, float, float] | None\n"
+     "\n"
+     "For a container drawing a standard window backing, return\n"
+     "(left, bottom, right, top) of a rect known to lie within the\n"
+     "backing's fully-opaque pixels, in the space its children are\n"
+     "positioned in; None otherwise.\n"
+     "\n"
+     ":meta private:"},
     {"set_scroll_offset", (PyCFunction)SetScrollOffset,
      METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
      "set_scroll_offset(offset: float) -> None\n"

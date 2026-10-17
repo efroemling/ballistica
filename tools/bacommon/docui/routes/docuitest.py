@@ -121,6 +121,30 @@ class Depictions(TestRoute, path='/depictions'):
 
 @ioprepped
 @dataclass
+class Viewers(TestRoute, path='/viewers'):
+    """Live viewer tests: good cases and bad data, one shown at a time.
+
+    The page's own buttons switch between cases in place.
+    """
+
+    #: Which case the viewer pane shows (a test-page case name; unknown
+    #: names show the first).
+    case: Annotated[str, IOAttrs('case', store_default=False)] = ''
+
+    #: Whether the page is in a window with an overlay viewer pane
+    #: rather than a framed one. The page's buttons switch cases in
+    #: place when this window's style is theirs, and open a window of
+    #: their style otherwise.
+    overlay: Annotated[bool, IOAttrs('overlay', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        return dui2.WindowLayout.VIEWER
+
+
+@ioprepped
+@dataclass
 class Names(TestRoute, path='/names'):
     """Name depiction tests (basic and capsule forms)."""
 
@@ -204,6 +228,11 @@ class WindowLayouts(TestRoute, path='/windowlayouts'):
     """
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+    #: The layout we're being browsed to at, for the page to name (the
+    #: browse sets the actual layout; this is just for show).
+    layout: Annotated[
+        dui2.WindowLayout | None, IOAttrs('layout', store_default=False)
+    ] = None
 
 
 @ioprepped
@@ -373,6 +402,7 @@ AnyTestRoute = (
     | TextWrapping
     | Animation
     | Depictions
+    | Viewers
     | Names
     | NinePatch
     | EmptyPage

@@ -316,6 +316,15 @@ inline constexpr const char* kBundledCasBlobSuffix = ".bablob";
 // tools/bacommontools/meshcompile.py; keep the cob values in sync
 // with it.
 const int kBobFileID = 45623;
+// Optional bob trailer (derived data after the indices): this magic,
+// then (u32 tag, u32 byte length, data) sections to the end of the
+// file. Unknown tags are skipped. Python source of truth:
+// tools/bacommontools/meshcompile.py (BOB_TRAILER_*).
+const uint32_t kBobTrailerMagic = 0x58424F42;
+// f32 box min xyz, box max xyz, radius about the box's center.
+const uint32_t kBobTrailerTagBounds = 1;
+// f32 u min, v min, u max, v max.
+const uint32_t kBobTrailerTagUVRange = 2;
 // Legacy cob format (positions + indices + face normals).
 const int kCobFileID = 13466;
 // Current cob format: drops the face-normals block (it was consumed

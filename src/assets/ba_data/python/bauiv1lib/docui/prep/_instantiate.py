@@ -111,9 +111,16 @@ def _instantiate_row(
         # themselves, so this never comes up for them.)
         bui.widget(edit=controls[-1], right_widget=controls[-1])
         out.append((controls[0], controls))
+        window.row_bounds.append(
+            (controls, rowprep.bounds_top, rowprep.bounds_bottom)
+        )
         return
-    out.append(
-        _instantiate_button_row(rowprep, parent=subcontainer, window=window)
+    hscroll, buttons = _instantiate_button_row(
+        rowprep, parent=subcontainer, window=window
+    )
+    out.append((hscroll, buttons))
+    window.row_bounds.append(
+        ([hscroll, *buttons], rowprep.bounds_top, rowprep.bounds_bottom)
     )
 
 

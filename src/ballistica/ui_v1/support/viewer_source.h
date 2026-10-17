@@ -44,6 +44,26 @@ class ViewerSource : public Object {
   /// A short name for us, for descriptions and the like.
   virtual auto GetName() const -> std::string;
 
+  /// Why we can never show what we were given, if so (its data is
+  /// broken: unusable json, assets that don't exist, ...); empty while
+  /// all is well or still loading. Whatever shows us draws the
+  /// standard broken-depiction placeholder instead once this is set.
+  virtual auto GetViewerFailure() const -> std::string { return {}; }
+
+  /// Whether what we were given is still on its way (media being
+  /// fetched or loaded), so our picture isn't showing it yet; whatever
+  /// shows us draws the standard loading spinner over it meanwhile.
+  /// Sources that show a standin of their own while loading (a
+  /// character's standin form) say no.
+  virtual auto IsViewerLoading() const -> bool { return false; }
+
+  /// Called by whatever shows us with whether it shows us as an
+  /// overlay: straight over the window, with no backing or frame of its
+  /// own around us. Sources able to should then draw with transparency
+  /// where there's nothing, so they composite over what's behind;
+  /// others just keep drawing solid.
+  virtual void SetViewerOverlay(bool overlay) {}
+
   /// Called by a viewer widget each frame it shows us.
   void MarkShown();
 
@@ -55,9 +75,16 @@ class ViewerSource : public Object {
   /// when a window is rebuilt and a new widget takes over showing us).
   auto WasJustShown() const -> bool;
 
+  /// Called by whoever owns us once they retire us (we'll never show
+  /// anything again); anything still showing us then asks its owner
+  /// for a viewer again rather than showing a dead one.
+  void MarkRetired() { retired_ = true; }
+  auto retired() const -> bool { return retired_; }
+
  private:
   seconds_t last_shown_time_;
   bool ever_shown_{};
+  bool retired_{};
 };
 
 }  // namespace ballistica::ui_v1

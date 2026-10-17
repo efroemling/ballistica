@@ -537,6 +537,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_client_context.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/graphics_settings.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/mesh_viewer.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/support/mesh_viewer.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/net_graph.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_command_buffer.h
@@ -974,6 +976,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/template_fs/python/template_fs_python.h
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_mesh_viewer.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_mesh_viewer.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_mesh.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.h

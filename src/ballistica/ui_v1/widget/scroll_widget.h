@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_SCROLL_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_SCROLL_WIDGET_H_
 
+#include <array>
 #include <string>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
@@ -81,6 +82,47 @@ class ScrollWidget : public ContainerWidget {
     MarkForUpdate();
   }
 
+  /// Let an up press while we're scrolled all the way up (or a down
+  /// press all the way down) go unclaimed, so selection moves on to a
+  /// neighbor the usual way (our up/down widget, or autoselect's search,
+  /// toolbars included) rather than stopping at us.
+  void set_move_out_at_ends(bool val) { move_out_at_ends_ = val; }
+
+  enum class EdgeStyle {
+    /// Our classic soft shadowed outline.
+    kOutline,
+    /// No outline; instead, our parent container's window backing is
+    /// redrawn in a band along our inside edges so content fades into
+    /// it as it scrolls out of view. Requires our parent to be a
+    /// container drawing a backing (we draw no edges otherwise).
+    kFade,
+  };
+  void set_edge_style(EdgeStyle val) { edge_style_ = val; }
+
+  /// How far EdgeStyle::kFade's band reaches in from each of our edges
+  /// by default.
+  static constexpr float kDefaultEdgeFade{40.0f};
+
+  /// How far (in our local units) the fade band of EdgeStyle::kFade
+  /// reaches in from each of our edges; zero for no fade on that side.
+  /// Defaults to kDefaultEdgeFade all around.
+  void set_edge_fade(float left, float bottom, float right, float top) {
+    edge_fade_left_ = left;
+    edge_fade_bottom_ = bottom;
+    edge_fade_right_ = right;
+    edge_fade_top_ = top;
+  }
+
+  /// How far in from each of our edges the EdgeStyle::kFade band stays
+  /// fully drawn before its fade begins (for strips where content never
+  /// shows, so the fade lands where it does).
+  void set_edge_fade_inset(float left, float bottom, float right, float top) {
+    edge_fade_inset_left_ = left;
+    edge_fade_inset_bottom_ = bottom;
+    edge_fade_inset_right_ = right;
+    edge_fade_inset_top_ = top;
+  }
+
  protected:
   void UpdateLayout() override;
 
@@ -101,7 +143,22 @@ class ScrollWidget : public ContainerWidget {
   /// offset; also its track's height via ``track_height``.
   auto FadingThumbRect_(float offset, float* track_height) const -> Rect;
 
+  /// Draw our EdgeStyle::kFade band (transparent pass).
+  void DrawFadeEdges_(base::RenderPass* pass);
+
   Object::Ref<base::AppTimer> touch_delay_timer_;
+  Object::Ref<base::MeshIndexedDualTextureFull> fade_edge_mesh_;
+  /// Everything fade_edge_mesh_ was built from; rebuilt when it changes.
+  std::array<float, 17> fade_edge_mesh_inputs_{};
+  EdgeStyle edge_style_{EdgeStyle::kOutline};
+  float edge_fade_left_{kDefaultEdgeFade};
+  float edge_fade_bottom_{kDefaultEdgeFade};
+  float edge_fade_right_{kDefaultEdgeFade};
+  float edge_fade_top_{kDefaultEdgeFade};
+  float edge_fade_inset_left_{};
+  float edge_fade_inset_bottom_{};
+  float edge_fade_inset_right_{};
+  float edge_fade_inset_top_{};
   FadingScrollThumb thumb_;
   seconds_t last_mouse_move_time_{};
   seconds_t create_time_{};
@@ -148,6 +205,7 @@ class ScrollWidget : public ContainerWidget {
   bool scrollbar_visible_{true};
   bool fading_scrollbar_{};
   bool clean_layout_{};
+  bool move_out_at_ends_{};
   bool mouse_over_{};
   float thumb_click_start_v_{};
   float thumb_click_start_child_offset_v_{};

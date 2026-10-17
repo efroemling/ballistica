@@ -6,6 +6,12 @@
 
 namespace ballistica::base {
 
+auto ObjectComponent::ReflectionCubeMap_() const -> TextureAsset* {
+  return reflection_cube_map_.exists()
+             ? reflection_cube_map_.get()
+             : Graphics::CubeMapFromReflectionType(reflection_);
+}
+
 void ObjectComponent::WriteConfig() {
   // If they didn't give us a texture, just use a blank white texture.
   // This is not a common case and easier than forking all our shaders to
@@ -31,7 +37,7 @@ void ObjectComponent::WriteConfig() {
                    ? color_a_
                    : 1.0f;
   if (facing_ratio_) {
-    assert(reflection_ == ReflectionType::kNone);     // Unsupported combo.
+    assert(!Reflects_());                             // Unsupported combo.
     assert(light_shadow_ != LightShadowType::kNone);  // Required.
     assert(!world_space_);                            // Unsupported combo.
     assert(!colorize_texture_.exists());              // Unsupported combo.
@@ -52,7 +58,7 @@ void ObjectComponent::WriteConfig() {
     cmd_buffer_->PutTexture(texture_);
     return;
   }
-  if (reflection_ == ReflectionType::kNone) {
+  if (!Reflects_()) {
     assert(!double_sided_);               // Unsupported combo.
     assert(!colorize_texture_.exists());  // Unsupported combo.
     assert(!have_color_add_);             // Unsupported combo.
@@ -99,8 +105,7 @@ void ObjectComponent::WriteConfig() {
               color_add_r_, color_add_g_, color_add_b_, reflection_scale_r_,
               reflection_scale_g_, reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          cmd_buffer_->PutCubeMapTexture(
-              Graphics::CubeMapFromReflectionType(reflection_));
+          cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
         } else {
           ConfigForShading(ShadingType::kObjectReflectTransparent);
           cmd_buffer_->PutInt(premult_blend);
@@ -108,8 +113,7 @@ void ObjectComponent::WriteConfig() {
                                  color_b_ * cmul, color_a_, reflection_scale_r_,
                                  reflection_scale_g_, reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          cmd_buffer_->PutCubeMapTexture(
-              Graphics::CubeMapFromReflectionType(reflection_));
+          cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
         }
       } else {
         ConfigForShading(ShadingType::kObjectReflect);
@@ -118,8 +122,7 @@ void ObjectComponent::WriteConfig() {
                                reflection_scale_r_, reflection_scale_g_,
                                reflection_scale_b_);
         cmd_buffer_->PutTexture(texture_);
-        cmd_buffer_->PutCubeMapTexture(
-            Graphics::CubeMapFromReflectionType(reflection_));
+        cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
       }
     } else {
       // With add.
@@ -138,8 +141,7 @@ void ObjectComponent::WriteConfig() {
               colorize_color3_g_, colorize_color3_b_);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(colorize_texture_);
-          cmd_buffer_->PutCubeMapTexture(
-              Graphics::CubeMapFromReflectionType(reflection_));
+          cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
         } else {
           if (double_sided_) {
             ConfigForShading(ShadingType::kObjectReflectLightShadowDoubleSided);
@@ -149,8 +151,7 @@ void ObjectComponent::WriteConfig() {
                                    reflection_scale_r_, reflection_scale_g_,
                                    reflection_scale_b_);
             cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
+            cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
           } else {
             ConfigForShading(ShadingType::kObjectReflectLightShadow);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
@@ -159,8 +160,7 @@ void ObjectComponent::WriteConfig() {
                                    reflection_scale_r_, reflection_scale_g_,
                                    reflection_scale_b_);
             cmd_buffer_->PutTexture(texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
+            cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
           }
         }
       } else {
@@ -180,8 +180,7 @@ void ObjectComponent::WriteConfig() {
                 colorize_color3_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
+            cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
           } else {
             ConfigForShading(
                 ShadingType::kObjectReflectLightShadowAddColorized);
@@ -193,8 +192,7 @@ void ObjectComponent::WriteConfig() {
                                    colorize_color_g_, colorize_color_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            cmd_buffer_->PutCubeMapTexture(
-                Graphics::CubeMapFromReflectionType(reflection_));
+            cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
           }
         } else {
           ConfigForShading(ShadingType::kObjectReflectLightShadowAdd);
@@ -204,8 +202,7 @@ void ObjectComponent::WriteConfig() {
                                  reflection_scale_r_, reflection_scale_g_,
                                  reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          cmd_buffer_->PutCubeMapTexture(
-              Graphics::CubeMapFromReflectionType(reflection_));
+          cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
         }
       }
     }

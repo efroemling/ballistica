@@ -298,7 +298,7 @@ struct BasicSpazDef {
     float drag{0.5f};
     // Rest bend at each chain joint, -1 to 1: every segment (the root
     // included, on top of the attachment rotation) rests rotated
-    // curl * 90 degrees toward the attachment's local up (+y).
+    // curl * 180 degrees toward the attachment's local up (+y).
     // 0 = straight.
     float curl{};
     // Segment length dial, 0-1 -> 0.5x-1.5x the kind's capsule length

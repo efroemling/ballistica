@@ -1338,7 +1338,6 @@ static const Row_ kRows[] = {
     {"whenJohnnyComesMarchingHomeMusic", "classicassets",
      "audio/when_johnny_comes_marching_home_music"},
     {"white", "commonassets", "textures/white"},
-    {"windowBGBlotch", "classicassets", "meshes/window_bgblotch"},
     {"windowBottomCap", "classicassets", "textures/window_bottom_cap"},
     {"windowHSmallVMed", "bauiv1assets", "textures/window_hsmall_vmed"},
     {"windowHSmallVMedOpaque", "bauiv1assets",

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, override
 from efro.error import CleanError
 from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
-from bauiv1lib.utils import get_screen_margins, scroll_fade_top
+from bauiv1lib.utils import apply_toolbar_scroll_fades, get_screen_margins
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
@@ -66,31 +66,30 @@ class NetTestingWindow(bui.MainWindow):
         scroll_height = target_height - 52
         scroll_bottom = yoffs - 82 - scroll_height
 
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
+        # In small ui we extend our scrollable area out into the side
+        # screen margins (space between the virtual bounds and the
+        # actual screen edges) while keeping content laid out within the
         # virtual bounds.
-        margin_left, margin_right, margin_bottom, margin_top = (
+        margin_left, margin_right, _, _ = (
             get_screen_margins(scale)
             if uiscale is bui.UIScale.SMALL
             else (0.0, 0.0, 0.0, 0.0)
         )
 
         # In small ui we also extend the scroll's top edge all the way
-        # up to the top of the screen; soft blobs then keep our title
-        # and titlebar buttons legible over any content scrolled up
-        # there. Content gets padded to stay clear of the faded areas.
+        # up to the top of the virtual bounds; a fade then keeps our
+        # title and titlebar buttons legible over any content scrolled
+        # up there. Content gets padded to stay clear of the fade.
         top_extend = (
             (0.5 * self._height + 0.5 * (screensize[1] / scale))
             - (scroll_bottom + scroll_height)
-            + margin_top
             if uiscale is bui.UIScale.SMALL
             else 0.0
         )
 
-        # A bit of extra padding above our content so the soft blobs
-        # fading things out under the title don't eat into our top
-        # rows when scrolled to the top.
+        # A bit of extra padding above our content so the fade under
+        # the title doesn't eat into our top rows when scrolled to the
+        # top.
         top_pad = 15.0 if uiscale is bui.UIScale.SMALL else 0.0
 
         super().__init__(
@@ -134,35 +133,23 @@ class NetTestingWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(
                 scroll_width + margin_left + margin_right,
-                scroll_height + margin_bottom + top_extend,
+                scroll_height + top_extend,
             ),
             position=(
                 self._width * 0.5 - scroll_width * 0.5 - margin_left,
-                scroll_bottom - margin_bottom,
+                scroll_bottom,
             ),
             capture_arrows=True,
             autoselect=True,
             border_opacity=0.4,
+            fading_scrollbar=True,
         )
 
-        # Our scroll area extends up past our title; these soft blobs
-        # (plus the title and titlebar buttons being drawn after the
-        # scroll area) keep those legible over content scrolled up
-        # there. Note that we intentionally use the original
-        # un-margin-extended scroll geometry here so the blobs
-        # coincide with that chrome, which doesn't move when we extend
-        # out into screen margins.
+        # Our scroll area extends up past our title; fade content out
+        # toward the top so the title and titlebar buttons, drawn after
+        # the scroll area, stay legible over anything scrolled up there.
         if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - scroll_width * 0.5,
-                scroll_bottom,
-                scroll_width,
-                scroll_height,
-                # Nudge the blobs up so their most-opaque core covers
-                # our title and titlebar-button area.
-                yoffs_extra=30.0,
-            )
+            apply_toolbar_scroll_fades(self._scroll, bottom_fade=0.0)
 
         # Avoid squads button on small mode.
         # xinset = -50 if uiscale is bui.UIScale.SMALL else 0
@@ -181,10 +168,10 @@ class NetTestingWindow(bui.MainWindow):
             label=_commonassets.strings.actions.copy,
             on_activate_call=self._copy,
         )
-        # Explicitly slot titlebar buttons in front of the soft blobs
-        # (all children of a container share a single depth slice, so
-        # creation order alone doesn't put our opaque parts in front
-        # of the blobs' transparent faces).
+        # Explicitly slot titlebar buttons in front of our scroll
+        # area's fade (all children of a container share a single depth
+        # slice, so creation order alone doesn't put our opaque parts
+        # in front of its transparent band).
         bui.widget(edit=self._copy_button, depth_range=(0.95, 1.0))
 
         self._settings_button = bui.buttonwidget(
@@ -220,7 +207,7 @@ class NetTestingWindow(bui.MainWindow):
             left_border=margin_left,
         )
         # One-time padding above our content so it starts clear of the
-        # soft blobs under the title (note that the column's border
+        # fade under the title (note that the column's border
         # args apply per-child, so they can't be used for this).
         if top_extend + top_pad > 0.0:
             bui.textwidget(

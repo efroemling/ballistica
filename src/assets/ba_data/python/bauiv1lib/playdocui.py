@@ -25,7 +25,7 @@ from bacommon.docui.routes import (
 )
 import bauiv1 as bui
 from bauiv1 import _classicassets
-from bauiv1lib.docui import TypedDocUIController
+from bauiv1lib.docui import TypedDocUIController, WindowOptions
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -516,7 +516,7 @@ def _open(target: Target, select: bool, context: DocUILocalAction) -> None:
                     Playlists(kind=kind, select=select),
                     origin_widget=context.widget,
                     auxiliary_style=False,
-                    layout=layout,
+                    options=WindowOptions(layout=layout),
                 ),
                 extra_type_id=ctrl.get_window_extra_type_id(),
             )

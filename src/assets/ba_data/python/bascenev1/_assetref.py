@@ -36,6 +36,7 @@ from babase import (
     wrapper_langstr,
 )
 from bacommon.assetpackage import ApverNum
+from bacommon.depiction import CharacterViewerDepiction
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
@@ -365,6 +366,15 @@ class CharacterHandle:
         if depiction is None:
             depiction = made[key] = _bascenev1.Depiction(self._data[1])
         return depiction
+
+    def get_viewer_depiction(self) -> CharacterViewerDepiction:
+        """Return a live viewer of this character, as depiction data.
+
+        For ui that shows the character standing in a little scene of
+        its own (a doc-ui viewer pane, say) rather than in a game.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        return CharacterViewerDepiction(self._data[0])
 
     def get_name(self) -> 'babase.LangStr':
         """Return this character's name."""

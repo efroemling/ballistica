@@ -10,6 +10,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -110,6 +111,16 @@ class AssetPackageRegistry {
   /// re-noted in that long is no longer being displayed. Logic thread.
   auto TakeWanted(millisecs_t max_age)
       -> std::vector<std::pair<std::string, millisecs_t>>;
+
+  /// Record that ``apverid`` can't be had: the background acquirer was
+  /// told it doesn't exist (or is otherwise refused for good), so media
+  /// needing it can stop waiting and show as broken. Cleared should it
+  /// ever get registered after all. Logic thread.
+  void NoteUnavailable(const std::string& apverid);
+
+  /// Whether NoteUnavailable() has been called for an apverid that
+  /// still isn't registered. Logic thread.
+  auto IsUnavailable(const std::string& apverid) const -> bool;
 
   /// Resolve ``(apverid, bucket_id, logical_path, part)`` to a CAS hash.
   /// Returns the hash string, or an empty string if any segment of the
@@ -309,6 +320,8 @@ class AssetPackageRegistry {
   // NoteWanted/TakeWanted). Logic thread only, so no lock. Bounded by
   // kMaxWanted_ against junk streamed by a modded host.
   std::unordered_map<std::string, millisecs_t> wanted_;
+  // See NoteUnavailable. Logic thread only; bounded like wanted_.
+  std::unordered_set<std::string> unavailable_;
   static constexpr size_t kMaxWanted_ = 64;
 
   // Construct-mode gate (see :meth:`CheckPreConstructAccess`). Atomic

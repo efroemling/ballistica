@@ -1000,43 +1000,23 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // so always calc them).
   if (bg_dirty_) {
     const UIAssetSet& uiassets = g_ui_v1->assets();
-    Object::Ref<base::TextureAsset> tex;
-    float l_border, r_border, b_border, t_border;
-    [[maybe_unused]] float center_x_amt;
-    [[maybe_unused]] float center_y_amt;
-    float width = r - l;
-    float height = t - b;
-    if (height > width * 0.6f) {
-      tex = uiassets.window_hsmall_vmed;
+    auto layout = CalcBackingLayout_(w, h);
+    if (layout.tall) {
       bg_mesh_transparent_ = uiassets.window_hsmall_vmed_transparent;
       bg_mesh_opaque_ = uiassets.window_hsmall_vmed_opaque;
-      l_border = width * 0.07f;
-      r_border = width * 0.19f;
-      b_border = height * 0.1f;
-      t_border = height * 0.07f;
-      // These need to be fudged until scaling in/out hits exact target
-      // point. Should look into why this math is off.
-      bg_center_fudge_x_ = -0.05f;
-      bg_center_fudge_y_ = 0.0f;
     } else {
-      tex = uiassets.window_hsmall_vsmall;
       bg_mesh_transparent_ = uiassets.window_hsmall_vsmall_transparent;
       bg_mesh_opaque_ = uiassets.window_hsmall_vsmall_opaque;
-      l_border = width * 0.12f;
-      r_border = width * 0.19f;
-      b_border = height * 0.45f;
-      t_border = height * 0.23f;
-      // These need to be fudged until scaling in/out hits exact target
-      // point. Should look into why this math is off.
-      bg_center_fudge_x_ = -0.03f;
-      bg_center_fudge_y_ = 0.1f;
     }
-    bg_width_ = r - l + l_border + r_border;
-    bg_height_ = t - b + b_border + t_border;
-    bg_center_x_ = l - l_border + bg_width_ * 0.5f;
-    bg_center_y_ = b - b_border + bg_height_ * 0.5f;
+    bg_center_fudge_x_ = layout.center_fudge_x;
+    bg_center_fudge_y_ = layout.center_fudge_y;
+    bg_width_ = w + layout.l_border + layout.r_border;
+    bg_height_ = h + layout.b_border + layout.t_border;
+    bg_center_x_ = l - layout.l_border + bg_width_ * 0.5f;
+    bg_center_y_ = b - layout.b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = tex;
+      tex_ = layout.tall ? uiassets.window_hsmall_vmed
+                         : uiassets.window_hsmall_vsmall;
     }
     bg_dirty_ = false;
   }
@@ -2234,8 +2214,8 @@ auto ContainerWidget::GetCalibratedOpaqueRegion_(float* l, float* b, float* r,
     return false;
   }
 
-  // Mirror the backing-selection and border math from our bg drawing in
-  // Draw(), then apply a per-backing calibrated rect known to be
+  // Take the same backing layout our bg drawing in Draw() uses, then
+  // apply a per-backing calibrated rect known to be
   // comfortably interior to that backing's opaque pixels. Rects are in
   // unit coords over the full backing quad (+-0.5 is the quad edge).
   // They were measured by rasterizing each backing's opaque+transparent
@@ -2247,37 +2227,94 @@ auto ContainerWidget::GetCalibratedOpaqueRegion_(float* l, float* b, float* r,
   // [-0.215, 0.335]. Eyeball-check with the BA_DEBUG_UI_OPAQUE_RECT
   // env var, which draws these rects over each backing. Backing setups
   // not calibrated here simply never qualify.
-  float l_border, r_border, b_border, t_border;
+  auto layout = CalcBackingLayout_(w, h);
   float unit_l, unit_r, unit_b, unit_t;
-  if (h > w * 0.6f) {
+  if (layout.tall) {
     // window_hsmall_vmed.
-    l_border = w * 0.07f;
-    r_border = w * 0.19f;
-    b_border = h * 0.1f;
-    t_border = h * 0.07f;
     unit_l = -0.395f;
     unit_r = 0.315f;
     unit_b = -0.36f;
     unit_t = 0.40f;
   } else {
     // window_hsmall_vsmall.
-    l_border = w * 0.12f;
-    r_border = w * 0.19f;
-    b_border = h * 0.45f;
-    t_border = h * 0.23f;
     unit_l = -0.345f;
     unit_r = 0.29f;
     unit_b = -0.205f;
     unit_t = 0.325f;
   }
-  float bg_width = w + l_border + r_border;
-  float bg_height = h + b_border + t_border;
-  float bg_center_x = -l_border + bg_width * 0.5f;
-  float bg_center_y = -b_border + bg_height * 0.5f;
+  float bg_width = w + layout.l_border + layout.r_border;
+  float bg_height = h + layout.b_border + layout.t_border;
+  float bg_center_x = -layout.l_border + bg_width * 0.5f;
+  float bg_center_y = -layout.b_border + bg_height * 0.5f;
   *l = bg_center_x + unit_l * bg_width;
   *r = bg_center_x + unit_r * bg_width;
   *b = bg_center_y + unit_b * bg_height;
   *t = bg_center_y + unit_t * bg_height;
+  return true;
+}
+
+auto ContainerWidget::GetBackingOpaqueRect(Rect* rect) const -> bool {
+  assert(rect);
+  if (!GetCalibratedOpaqueRegion_(&rect->l, &rect->b, &rect->r, &rect->t)) {
+    return false;
+  }
+  // Our backing draws shifted by its offset (see Draw()).
+  rect->l += background_offset_x_;
+  rect->r += background_offset_x_;
+  rect->b += background_offset_y_;
+  rect->t += background_offset_y_;
+  return true;
+}
+
+auto ContainerWidget::CalcBackingLayout_(float width, float height)
+    -> BackingLayout {
+  BackingLayout layout;
+  if (height > width * 0.6f) {
+    layout.tall = true;
+    layout.l_border = width * 0.07f;
+    layout.r_border = width * 0.19f;
+    layout.b_border = height * 0.1f;
+    layout.t_border = height * 0.07f;
+    layout.center_fudge_x = -0.05f;
+    layout.center_fudge_y = 0.0f;
+  } else {
+    layout.tall = false;
+    layout.l_border = width * 0.12f;
+    layout.r_border = width * 0.19f;
+    layout.b_border = height * 0.45f;
+    layout.t_border = height * 0.23f;
+    layout.center_fudge_x = -0.03f;
+    layout.center_fudge_y = 0.1f;
+  }
+  return layout;
+}
+
+auto ContainerWidget::GetBackingDrawInfo(BackingDrawInfo* info) const -> bool {
+  assert(info);
+  if (!background_ || width_ <= 0.0f || height_ <= 0.0f) {
+    return false;
+  }
+  const UIAssetSet& uiassets = g_ui_v1->assets();
+  auto layout = CalcBackingLayout_(width_, height_);
+  info->texture = layout.tall ? uiassets.window_hsmall_vmed.get()
+                              : uiassets.window_hsmall_vsmall.get();
+
+  // Draw() places the backing relative to the same offset it hands
+  // DrawChildren(), so in child space it sits at a fixed spot. Its
+  // background-offset shift scales with transitions just like children
+  // do, so it belongs here unscaled.
+  info->rect = Rect(-layout.l_border + background_offset_x_,
+                    -layout.b_border + background_offset_y_,
+                    width_ + layout.r_border + background_offset_x_,
+                    height_ + layout.t_border + background_offset_y_);
+
+  // Match the color Draw() uses for the backing.
+  float s = GetBackingGlowMult();
+  float cmul = info->texture->premultiplied() ? alpha_ : 1.0f;
+  info->red = red_ * s * cmul;
+  info->green = green_ * s * cmul;
+  info->blue = blue_ * s * cmul;
+  info->alpha = alpha_;
   return true;
 }
 

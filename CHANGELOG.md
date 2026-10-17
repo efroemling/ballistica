@@ -1,3 +1,32 @@
+### 1.8.3 (build 23065, api 9, 2026-10-17)
+- New mesh-viewer depiction (`bacommon.depiction.MeshViewerDepiction`):
+  a few meshes drawn live in a doc-ui viewer pane, auto-framed and
+  turning (or posed, or through a hand-placed camera), with per-mesh
+  color, blending, cube-map reflections and tinting. `.bob` meshes now
+  carry their bounds.
+- Doc-ui viewer panes can be shown as overlays (`ViewerStyle.OVERLAY`):
+  no frame or backing, a mesh viewer compositing straight over the
+  window.
+- Doc-ui scroll areas fade content out at their edges instead of
+  cutting it off (and the classic windows using fade images now use
+  the same native fades).
+- New doc-ui window layouts: `WIDE_TALL`, `WIDE_TALLER` and
+  `VIEWER_NARROW`. `WindowLayout.minimum_build_number` says which
+  client build first knows each one.
+- Fixed live viewer panes sometimes going blank when switching between
+  character and mesh viewers, and a broken viewer now shows a small '?'
+  instead of freezing drawing.
+- iPad: window controls now auto-hide, and Quit closes the window
+  ('Close Game').
+- Repeat join requests for a host already being joined are ignored, and
+  'Connecting...' shows immediately.
+- Changing the app language now tells the cloud, so server-provided text
+  follows it.
+- Android: the game's music no longer yields to other apps' music.
+- Characters: the minimum spaz-def eye scale is now 0.1 (was 0.5), and
+  attachment curl of 1.0 is now a half turn per joint (was 90 degrees).
+- Upgraded ANGLE on Apple platforms.
+
 ### 1.8.2 (build 23063, api 9, 2026-10-15)
 - Fixed joining a server that uses a texture name the game no longer
   has (common on modded servers) dropping the player back to the main

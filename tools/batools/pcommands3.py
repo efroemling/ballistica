@@ -186,7 +186,15 @@ def generate_flathub_manifest() -> None:
     asset_name = 'bombsquad_prebuilt_inputs.tar.xz'
     try:
         api_url = f'https://api.github.com/repos/{github_repo}/releases/{which}'
-        with urllib.request.urlopen(api_url) as response:
+        # Authenticate when we can: anonymous API calls share a 60/hour
+        # limit per IP, which busy CI runners exhaust (v1.8.2's release
+        # failed here on exactly that).
+        headers = {'Accept': 'application/vnd.github+json'}
+        token = os.environ.get('GITHUB_TOKEN')
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
+        request = urllib.request.Request(api_url, headers=headers)
+        with urllib.request.urlopen(request) as response:
             release_data = json.loads(response.read().decode())
         tag = release_data['tag_name']
         asset = next(

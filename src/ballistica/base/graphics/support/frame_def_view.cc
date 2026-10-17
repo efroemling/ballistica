@@ -40,6 +40,7 @@ void FrameDefView::Reset(RenderView* view, GraphicsQuality app_quality) {
   quality_ = view->GetQuality(app_quality);
   depth_of_field_ = DepthOfField();
   clear_color_ = view->clear_color();
+  transparent_ = view->transparent();
 
   orbiting_ = (view->camera()->mode() == CameraMode::kOrbit);
 
