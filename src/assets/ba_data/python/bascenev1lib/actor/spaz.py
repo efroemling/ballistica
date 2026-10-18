@@ -1209,8 +1209,9 @@ class Spaz(bs.Actor):
             if node.getdelegate(PowerupBox):
                 return None
 
-            # Prevent punches only if we are actively holding something or 
-            # executing a true grab-punch exploit frame, rather than a blank press.
+            # Prevent punches only if we are actively holding something
+            # or executing a true grab-punch exploit frame
+            # rather than a blank press.
             if not self._allow_punch_grab:
                 is_holding_object = bool(self.node.hold_node)
 
