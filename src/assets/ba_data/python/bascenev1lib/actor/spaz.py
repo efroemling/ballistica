@@ -1209,16 +1209,19 @@ class Spaz(bs.Actor):
             if node.getdelegate(PowerupBox):
                 return None
 
-            # Prevent punches against other Spaz characters shortly
-            # before or after grabbing.
+            # Prevent punches only if we are actively holding something or 
+            # executing a true grab-punch exploit frame, rather than a blank press.
             if not self._allow_punch_grab:
+                is_holding_object = bool(self.node.hold_node)
+
                 punch_time_diff = (
                     self.last_punch_time_ms - self.last_pickup_time_ms
                 )
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                if node.getdelegate(Spaz) and (
+ 
+                if is_holding_object and node.getdelegate(Spaz) and (
                     0 <= punch_time_diff <= 70 or release_time_diff <= 360
                 ):
                     return None
