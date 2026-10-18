@@ -1221,7 +1221,7 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
- 
+
                 if is_holding_object and node.getdelegate(Spaz) and (
                     0 <= punch_time_diff <= 70 or release_time_diff <= 360
                 ):
