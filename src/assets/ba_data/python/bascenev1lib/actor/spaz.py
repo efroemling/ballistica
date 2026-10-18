@@ -1220,14 +1220,13 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-
                 if node.getdelegate(Spaz):
                     if 0 <= punch_time_diff <= 70:
                         if is_holding_object:
                             return None
 
                     if release_time_diff <= 360:
-                            return None
+                        return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
