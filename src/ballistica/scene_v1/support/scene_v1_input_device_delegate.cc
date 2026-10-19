@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/input/device/input_device.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -18,6 +19,7 @@
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
@@ -83,7 +85,7 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
   // If we have a local host-session, ask it for a player.. otherwise if we
   // have a client-session, ask it for a player.
   assert(g_base->logic);
-  if (auto* hs = dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
+  if (auto* hs = appmode->GetLiveHostSession()) {
     {
       Python::ScopedCallLabel label("requestPlayer");
       hs->RequestPlayer(this);
@@ -180,6 +182,24 @@ std::string SceneV1InputDeviceDelegate::DescribeAttachedTo() const {
 }
 
 void SceneV1InputDeviceDelegate::InputCommand(InputType type, float value) {
+  // While an instant replay is on screen the live session is frozen, so
+  // input must not reach its players; they'd act inside a scene that
+  // isn't being stepped. Any press dismisses the clip instead -- the
+  // same "press anything to skip" the tutorial offers.
+  if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+    if (appmode->InInstantReplay()) {
+      if (type == InputType::kJumpPress || type == InputType::kPunchPress
+          || type == InputType::kBombPress || type == InputType::kPickUpPress) {
+        // A press is a vote, not a skip; the clip goes when everyone has
+        // asked. Remote clients reach us here too: their input rides the
+        // wire as ordinary player input and lands on the client delegate,
+        // which is one of these.
+        appmode->AddInstantReplaySkipVote(GetPlayer());
+      }
+      return;
+    }
+  }
+
   if (Player* p = player_.get()) {
     p->InputCommand(type, value);
   } else if (remote_player_.exists()) {

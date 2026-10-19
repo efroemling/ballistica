@@ -100,6 +100,7 @@ class AdvancedState(DocUIState, state_id='settings.advanced'):
     show_ping: Annotated[bool, IOAttrs('sp')] = False
     show_demos_when_idle: Annotated[bool, IOAttrs('sd')] = False
     disable_camera_shake: Annotated[bool, IOAttrs('dcs')] = False
+    instant_replay: Annotated[bool, IOAttrs('ir')] = True
     disable_camera_gyro: Annotated[bool, IOAttrs('dcg')] = False
     insecure_connections: Annotated[InsecureConnections, IOAttrs('ic')] = (
         InsecureConnections.AUTO
@@ -117,6 +118,7 @@ _CONFIG_KEYS: dict[str, str] = {
     AdvancedState.key(lambda s: s.show_ping): 'Show Ping',
     AdvancedState.key(lambda s: s.show_demos_when_idle): 'Show Demos When Idle',
     AdvancedState.key(lambda s: s.disable_camera_shake): 'Disable Camera Shake',
+    AdvancedState.key(lambda s: s.instant_replay): 'Instant Replay',
     AdvancedState.key(lambda s: s.disable_camera_gyro): 'Disable Camera Gyro',
     AdvancedState.key(lambda s: s.insecure_connections): 'Insecure Connections',
     AdvancedState.key(
@@ -340,6 +342,7 @@ def _page() -> dui2.Response:
         show_ping=_bool('Show Ping'),
         show_demos_when_idle=_bool('Show Demos When Idle'),
         disable_camera_shake=_bool('Disable Camera Shake'),
+        instant_replay=_bool('Instant Replay'),
         disable_camera_gyro=_bool('Disable Camera Gyro'),
         insecure_connections=insecure_mode,
         always_use_internal_keyboard=_bool('Always Use Internal Keyboard'),
@@ -391,6 +394,11 @@ def _page() -> dui2.Response:
         astate.checkbox_row(
             lambda s: s.disable_camera_shake,
             label=_advstrs.disable_camera_shake.spec,
+            on_change=apply,
+        ),
+        astate.checkbox_row(
+            lambda s: s.instant_replay,
+            label=LangStrSpecValue('Instant Replay'),
             on_change=apply,
         ),
     ]

@@ -24,6 +24,26 @@ def launch_main_menu_session() -> None:
     _bascenev1.new_host_session(babase.app.classic.get_main_menu_session())
 
 
+def on_instant_replay_begin() -> None:
+    # Presentation lives in bascenev1lib (it needs bauiv1, which this
+    # package deliberately doesn't depend on).
+    from bascenev1lib.instantreplay import show_banner
+
+    show_banner()
+
+
+def on_instant_replay_end() -> None:
+    from bascenev1lib.instantreplay import hide_banner
+
+    hide_banner()
+
+
+def on_instant_replay_skip_votes(count: int, total: int) -> None:
+    from bascenev1lib.instantreplay import set_skip_votes
+
+    set_skip_votes(count, total)
+
+
 def _icon_texture(ref: str) -> bascenev1.Texture:
     # Our own icons are qualified refs; a mod's set_icon_info() may
     # still pass a legacy texture name, which loads through the same

@@ -67,6 +67,15 @@ void ClientSessionNet::SetConnectionToHost(ConnectionToHost* c) {
 }
 
 void ClientSessionNet::OnCommandBufferUnderrun() {
+  // An instant replay arrives paced by the host's own playback, so
+  // running dry means the network hiccuped. Pause rather than race to
+  // catch up afterwards, which in a slow-motion clip would show as a
+  // burst of fast-forward.
+  if (instant_replay_mode_) {
+    ResetTargetBaseTime();
+    return;
+  }
+
   // We currently don't do anything here; we want to just power
   // through hitches and keep aiming for our target time.
   // (though perhaps we could take note here for analytics purposes).
@@ -83,7 +92,19 @@ void ClientSessionNet::Update(int time_advance_millisecs, double time_advance) {
   ClientSession::Update(time_advance_millisecs, time_advance);
 
   // And update our timing to try and ensure we don't run out of buffer.
-  UpdateBuffering();
+  // (except during an instant replay, where our rate is dictated rather
+  // than derived; see SetInstantReplayMode)
+  if (!instant_replay_mode_) {
+    UpdateBuffering();
+  }
+}
+
+void ClientSessionNet::SetInstantReplayMode(bool enabled, float speed) {
+  instant_replay_mode_ = enabled;
+
+  // On the way out this is just a placeholder: UpdateBuffering takes the
+  // wheel again on the next step and re-derives it immediately.
+  set_consume_rate(enabled ? speed : 1.0f);
 }
 
 auto ClientSessionNet::GetBucketNum() -> int {

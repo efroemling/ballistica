@@ -21,6 +21,18 @@ class ClientSessionNet : public ClientSession {
   void HandleSessionMessage(const std::vector<uint8_t>& buffer) override;
   void OnCommandBufferUnderrun() override;
   void Update(int time_advance_millisecs, double time_advance) override;
+
+  /// Enter/leave instant-replay mode. While in it we play at a fixed
+  /// rate rather than letting UpdateBuffering chase the host's clock --
+  /// the host has deliberately stopped sending live stream and handed us
+  /// a finite clip, so "catching up" is exactly the wrong instinct (and
+  /// its 0.5 floor would forbid slow motion anyway).
+  void SetInstantReplayMode(bool enabled, float speed = 1.0f);
+
+  /// Whether the host is currently feeding us a clip rather than live
+  /// play. Used to decide whether a skip press is ours to act on or
+  /// belongs to the host's vote.
+  auto instant_replay_mode() const -> bool { return instant_replay_mode_; }
   void OnReset(bool rewind) override;
   void OnBaseTimeStepAdded(int step) override;
 
@@ -37,6 +49,8 @@ class ClientSessionNet : public ClientSession {
            + (now - leading_base_time_receive_time_);
   }
   void UpdateBuffering();
+
+  bool instant_replay_mode_{};
   auto GetBucketNum() -> int;
 
   bool writing_replay_{};

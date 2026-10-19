@@ -232,6 +232,13 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
     # Whether to show points for kills.
     show_kill_points = True
 
+    # Whether big kills (and, in co-op/solo play, deaths) cut away to an
+    # instant replay. Off by default: games with moments of their own to
+    # replay (goals, captures) ask for those via
+    # bascenev1lib.instantreplay.play_highlight instead, and kill-cams
+    # would compete with them.
+    instant_replay_kill_cams = False
+
     # If not None, the music type that should play in on_transition_in()
     # (unless overridden by the map).
     default_music: bascenev1.MusicType | None = None
@@ -729,6 +736,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         if isinstance(msg, PlayerDiedMessage):
             # pylint: disable=cyclic-import
             from bascenev1lib.actor.spaz import Spaz
+            from bascenev1lib import instantreplay
 
             player = msg.getplayer(self.playertype)
             killer = msg.getkillerplayer(self.playertype)
@@ -753,6 +761,14 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                         importance=importance,
                         showpoints=self.show_kill_points,
                     )
+
+                # Offer up a kill-cam. Declines quietly for ordinary
+                # kills, during the cooldown, when switched off, or for
+                # games that haven't opted in (instant_replay_kill_cams).
+                # (the co-op/solo death-cam counterpart hooks into
+                # PlayerSpaz instead, since games may not chain here)
+                instantreplay.maybe_play_kill_cam(self, importance)
+
         else:
             return super().handlemessage(msg)
         return None

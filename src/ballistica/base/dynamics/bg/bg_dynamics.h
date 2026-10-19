@@ -81,6 +81,17 @@ class BGDynamics {
   /// thread only.
   auto main_world() -> BGDynamicsWorld*;
 
+  /// Set the main world aside and start a fresh one in its place,
+  /// returning the one set aside. Everything in it stays as it was
+  /// (unstepped and undrawn) for as long as the return value is held,
+  /// ready for RestoreMainWorld(). For when what's on screen is
+  /// replaced wholesale for a while (an instant replay), so the two
+  /// scenes' debris, smoke and fuses never mix. Logic thread only.
+  auto ParkMainWorld() -> Object::Ref<BGDynamicsWorld>;
+
+  /// Put a world set aside by ParkMainWorld() back as the main one.
+  void RestoreMainWorld(Object::Ref<BGDynamicsWorld> world);
+
  private:
   Object::Ref<BGDynamicsWorld> main_world_;
 };

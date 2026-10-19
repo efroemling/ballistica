@@ -83,6 +83,7 @@ class AppConfig {
     kChatMuted,
     kEnableRemoteApp,
     kDisableCameraShake,
+    kInstantReplay,
     kDisableCameraGyro,
     kShowDemosWhenIdle,
     kHighlightPotentialTokenPurchases,

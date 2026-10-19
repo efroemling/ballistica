@@ -1337,6 +1337,22 @@ void SceneV1Python::HandleLocalChatMessage(const std::string& message) {
   objs().Get(ObjID::kHandleLocalChatMessageCall).Call(args);
 }
 
+void SceneV1Python::OnInstantReplayBegin() {
+  base::ScopedSetContext ssc(nullptr);
+  objs().Get(ObjID::kInstantReplayBeginCall).Call();
+}
+
+void SceneV1Python::OnInstantReplayEnd() {
+  base::ScopedSetContext ssc(nullptr);
+  objs().Get(ObjID::kInstantReplayEndCall).Call();
+}
+
+void SceneV1Python::SetInstantReplaySkipVotes(int count, int total) {
+  base::ScopedSetContext ssc(nullptr);
+  PythonRef args(Py_BuildValue("(ii)", count, total), PythonRef::kSteal);
+  objs().Get(ObjID::kInstantReplaySkipVotesCall).Call(args);
+}
+
 // Put together a node message with all args on the provided tuple (starting
 // with arg_offset) returns false on failure, true on success.
 void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,

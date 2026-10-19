@@ -10,6 +10,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -147,6 +148,44 @@ class ClassicAppMode : public base::AppMode {
   // replay's package universe), so connection attempts are refused
   // while one is up.
   auto InReplay() const -> bool;
+
+  /// Freeze the live session and cut to a playback of the last
+  /// `duration_millisecs` of it at `speed` (0.4 for slow motion). The
+  /// live session is suspended rather than destroyed, so gameplay
+  /// resumes exactly where it stopped once the clip ends or is skipped.
+  /// Returns false if there's nothing to replay (no live host session,
+  /// recording disabled, or not enough recorded yet).
+  ///
+  /// Refuses (returning false) if called from within a session update,
+  /// since standing up a session there would disturb the loop we'd be
+  /// standing in; the Python entry point defers for exactly this reason.
+  auto StartInstantReplay(millisecs_t duration_millisecs, float speed) -> bool;
+
+  /// Hand the screen back to the suspended live session. Called when the
+  /// clip runs out or the viewer skips it; harmless if no clip is up.
+  void EndInstantReplay();
+
+  /// EndInstantReplay() on the next event-loop pass, for callers that
+  /// may be inside input handling or a session update.
+  static void PushEndInstantReplay();
+
+  /// Whether an instant replay is currently on screen.
+  auto InInstantReplay() const -> bool {
+    return instant_replay_session_.exists();
+  }
+
+  /// The host-session we are running, even while an instant replay has
+  /// the screen. Anything asking "what game am I hosting" wants this;
+  /// GetForegroundSession answers "what is on screen", which during a
+  /// clip is the clip itself. Null when we aren't hosting.
+  auto GetLiveHostSession() -> scene_v1::HostSession*;
+
+  /// Register one viewer's wish to skip the clip on screen. Like the
+  /// tutorial's skip, it takes everyone: the clip ends once every player
+  /// in the live session has asked. `player` may be null for a viewer
+  /// with no player of their own (a spectating host); there is no roster
+  /// slot to count them against, so they skip on their own.
+  void AddInstantReplaySkipVote(scene_v1::Player* player);
 
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
@@ -370,6 +409,27 @@ class ClassicAppMode : public base::AppMode {
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
   void Reset_();
   void PruneSessions_();
+
+  /// Push the current tally to our own ui and to every client watching,
+  /// returning it as (votes, players) so callers don't re-walk the
+  /// roster to learn the same thing.
+  auto ReportInstantReplaySkipVotes_() -> std::pair<size_t, size_t>;
+
+  /// Send one side of an instant-replay cut to `clients`: the marker,
+  /// then a session reset.
+  void SendInstantReplayCut_(
+      const std::vector<scene_v1::ConnectionToClient*>& clients,
+      const std::vector<uint8_t>& marker);
+
+  /// Hand the main bg-dynamics world we set aside for a clip back, if
+  /// we did.
+  void RestoreParkedBGWorld_();
+
+  /// Pass one clip message on to every viewer the clip began for.
+  void ForwardInstantReplayMessage_(const std::vector<uint8_t>& message);
+
+  /// Clients new enough for instant-replay markers, or empty.
+  auto InstantReplayClients_() -> std::vector<scene_v1::ConnectionToClient*>;
   void HandleQuitOnIdle_();
 
   struct ScanResultsEntryPriv_;
@@ -417,6 +477,32 @@ class ClassicAppMode : public base::AppMode {
   std::vector<Object::Ref<scene_v1::Session> > sessions_;
   Object::WeakRef<scene_v1::Scene> foreground_scene_;
   Object::WeakRef<scene_v1::Session> foreground_session_;
+
+  // The instant-replay clip currently on screen, and the live session
+  // sitting frozen behind it. Both are entries in sessions_; weak refs
+  // are safe because the clip is foreground (so never reaped) and the
+  // update loops and the prune all skip the suspended one, which is
+  // what freezes it and keeps it alive.
+  Object::WeakRef<scene_v1::ClientSessionInstantReplay> instant_replay_session_;
+  std::set<int> instant_replay_skip_votes_;
+  Object::WeakRef<scene_v1::HostSession> instant_replay_suspended_session_;
+
+  // The main bg-dynamics world the live scene was using, set aside
+  // while the clip has a fresh one (see BGDynamics::ParkMainWorld).
+  Object::Ref<base::BGDynamicsWorld> instant_replay_parked_bg_world_;
+
+  // The clients the clip on screen began for, and so the only ones its
+  // messages may go to: anyone joining mid-clip was sent the live
+  // (frozen) state instead, which the clip's deltas don't apply to.
+  std::vector<Object::WeakRef<scene_v1::ConnectionToClient> >
+      instant_replay_viewers_;
+
+  // The live scene the clip displaced. Only activity transitions
+  // normally set the foreground scene, so without putting this back
+  // ourselves the live scene never reclaims it -- and since Scene::Step
+  // only drives bg-dynamics for the foreground scene, its sparks,
+  // debris and smoke would stay dead for the rest of the round.
+  Object::WeakRef<scene_v1::Scene> instant_replay_suspended_scene_;
 
   bool chat_muted_{};
   bool in_update_{};

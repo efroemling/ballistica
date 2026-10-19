@@ -629,7 +629,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         case SessionCommand::kEndOfFile: {
           // EOF can happen anytime if they run out of disk space/etc.
           // We should expect any state.
-          Reset(true);
+          OnEndOfStream();
           break;
         }
         case SessionCommand::kAddSceneGraph: {

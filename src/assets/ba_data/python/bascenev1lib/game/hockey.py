@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 import bascenev1 as bs
 from bascenev1 import _classicassets
 
+from bascenev1lib import instantreplay
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.powerupbox import PowerupBoxFactory
@@ -327,6 +328,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
             if region == score_region.node:
                 break
 
+        won = False
         for team in self.teams:
             if team.id == index:
                 scoring_team = team
@@ -349,9 +351,11 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
                         big_message=True,
                     )
 
-                # End game if we won.
+                # End game if we won (once the goal's replay is done).
                 if team.score >= self._score_to_win:
-                    self.end_game()
+                    won = True
+
+        instantreplay.play_highlight(self, then=self.end_game if won else None)
 
         self._foghorn_sound.play()
         self._cheer_sound.play()

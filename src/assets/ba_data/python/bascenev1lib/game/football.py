@@ -16,6 +16,7 @@ import babase
 import bascenev1 as bs
 from bascenev1 import _classicassets
 
+from bascenev1lib import instantreplay
 from bascenev1lib.actor.bomb import TNTSpawner
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -260,6 +261,7 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         for i, score_region in enumerate(self._score_regions):
             if region == score_region.node:
                 break
+        won = False
         for team in self.teams:
             if team.id == i:
                 team.score += 7
@@ -279,9 +281,11 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
                     self.stats.player_scored(
                         self._flag.last_holding_player, 50, big_message=True
                     )
-                # End the game if we won.
+                # End the game if we won (once the touchdown's replay is
+                # done).
                 if team.score >= self._score_to_win:
-                    self.end_game()
+                    won = True
+        instantreplay.play_highlight(self, then=self.end_game if won else None)
         self._score_sound.play()
         self._cheer_sound.play()
         assert self._flag

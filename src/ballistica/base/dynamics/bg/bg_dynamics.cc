@@ -2,6 +2,8 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 
+#include <utility>
+
 #include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/render_view.h"
@@ -19,6 +21,20 @@ auto BGDynamics::main_world() -> BGDynamicsWorld* {
     main_world_ = Object::New<BGDynamicsWorld>(g_base->graphics->main_view());
   }
   return main_world_.get();
+}
+
+auto BGDynamics::ParkMainWorld() -> Object::Ref<BGDynamicsWorld> {
+  assert(g_base->InLogicThread());
+  main_world();  // Make sure there is one to park.
+  auto parked = std::move(main_world_);
+  main_world_ = Object::New<BGDynamicsWorld>(g_base->graphics->main_view());
+  return parked;
+}
+
+void BGDynamics::RestoreMainWorld(Object::Ref<BGDynamicsWorld> world) {
+  assert(g_base->InLogicThread());
+  assert(world.exists());
+  main_world_ = std::move(world);
 }
 
 }  // namespace ballistica::base

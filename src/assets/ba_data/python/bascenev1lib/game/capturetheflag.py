@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 import bascenev1 as bs
 from bascenev1 import _classicassets
 
+from bascenev1lib import instantreplay
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.flag import (
@@ -424,8 +425,12 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 assert reset_team.flag is not None
                 reset_team.flag.handlemessage(bs.DieMessage())
             reset_team.enemy_flag_at_base = False
-        if team.score >= self._score_to_win:
-            self.end_game()
+
+        # Replay the capture, ending the game after it if this one won.
+        instantreplay.play_highlight(
+            self,
+            then=self.end_game if team.score >= self._score_to_win else None,
+        )
 
     @override
     def end_game(self) -> None:

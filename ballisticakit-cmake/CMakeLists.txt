@@ -861,6 +861,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_input_device_delegate.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session_instant_replay.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session_instant_replay.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session_net.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session_net.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/client_session_replay.cc
@@ -871,6 +873,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/instant_replay_recorder.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/instant_replay_recorder.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_display_context.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_display_context.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/local_scene_context.cc
