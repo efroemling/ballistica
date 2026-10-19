@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classicuiassets
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 
@@ -341,8 +341,8 @@ class ManualGatherTab(GatherTab):
         )
         bui.widget(edit=btn, right_widget=savebutton)
         bui.widget(edit=savebutton, left_widget=btn, up_widget=txt2)
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
-        bui.textwidget(edit=txt2, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
+        bui.textwidget(edit=txt2, on_submit_call=btn.activate)
         v -= 45
 
         self._check_button = bui.textwidget(
@@ -508,7 +508,7 @@ class ManualGatherTab(GatherTab):
 
     def _no_favorite_selected_error(self) -> None:
         bui.screenmessage(
-            _classicassets.strings.profile.nothing_selected, color=(1, 0, 0)
+            _classicuiassets.strings.profile.nothing_selected, color=(1, 0, 0)
         )
         _builtinassets.audio.error.get().play()
 
@@ -686,7 +686,7 @@ class ManualGatherTab(GatherTab):
             # Notify about incorrect port? I'm lazy; simply leave old value.
             pass
         bui.app.config.commit()
-        _builtinassets.audio.gun_cocking.get().play()
+        _commonassets.audio.gun_cocking.get().play()
         self._refresh_favorites()
 
         bui.containerwidget(
@@ -755,6 +755,7 @@ class ManualGatherTab(GatherTab):
                 always_highlight=True,
                 on_select_call=bui.CallStrict(self._on_favorite_select, server),
                 on_activate_call=self._favorites_connect_button.activate,
+                literal=True,
                 text=(
                     config['Saved Servers'][server]['name']
                     if config['Saved Servers'][server]['name'] != ''
@@ -868,7 +869,7 @@ class ManualGatherTab(GatherTab):
                 'name': addr,
             }
             config.commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 _classicassets.strings.gather.added_to_favorites(name=addr),
                 color=(0, 1, 0),
@@ -953,7 +954,7 @@ class ManualGatherTab(GatherTab):
         tscl = 0.85
         tspc = 25
 
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         bui.textwidget(
             parent=container,
             position=(c_width * 0.5 - 10, v2),

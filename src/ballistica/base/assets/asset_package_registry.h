@@ -6,9 +6,12 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -37,9 +40,19 @@ namespace ballistica::base {
 /// any number of threads can read while the asset-subsystem commits a
 /// newly-resolved package, satisfying the "once told an asset is
 /// available it stays available" contract.
+///
+/// Package keys: packages are keyed by their asset-package-version's
+/// numeric id, as decimal text (``"349"``), everywhere in the engine --
+/// here, in qualified asset refs (``"349:textures/foo"``), and on the
+/// scene stream. (Parameters still named ``apverid`` carry that key.)
+/// Python-facing bindings take and return the id as an int.
 class AssetPackageRegistry {
  public:
   AssetPackageRegistry();
+
+  /// The numeric id a package key holds, or nullopt if the key isn't
+  /// one (bad data).
+  static auto ApverNumFromKey(const std::string& key) -> std::optional<int64_t>;
 
   // part -> CAS hash. One logical asset can comprise multiple component
   // files keyed by ``<role>.<format>`` part names (a texture's ``t.ktx2``,
@@ -51,7 +64,14 @@ class AssetPackageRegistry {
   // bucket_id -> entries.
   using BucketMap = std::unordered_map<std::string, EntryMap>;
   // apverid -> buckets.
-  using PackagesMap = std::unordered_map<std::string, BucketMap>;
+  // Per-package bucket maps are shared, immutable once published, so a
+  // registration commit copies only the outer table (a pointer per
+  // package) rather than every entry of every registered package --
+  // commits happen on the logic thread, mid-game for background
+  // character-media acquisition, where a deep copy of the whole
+  // universe would be a frame hitch on a weak phone.
+  using PackagesMap =
+      std::unordered_map<std::string, std::shared_ptr<const BucketMap>>;
   // One bucket's worth of registration input.
   using BucketSpec = std::tuple<std::string, std::string, EntryMap>;
 
@@ -69,6 +89,38 @@ class AssetPackageRegistry {
   /// without any window where native sees a half-registered package.
   /// Safe to call concurrently with lookups.
   void RegisterBucketsAtomic(std::vector<BucketSpec> buckets);
+
+  /// Monotonic count of registrations. Anything drawing a definition
+  /// whose media isn't local yet compares this each draw/step (an int
+  /// compare) and re-attempts its media loads only when it moved, so a
+  /// background-acquired package shows the next frame after it lands
+  /// with no polling in between (character-skins.md, lazy media).
+  auto generation() const -> int64_t {
+    return generation_.load(std::memory_order_acquire);
+  }
+
+  /// Record that something on screen wants ``apverid`` registered
+  /// (its media isn't local). Refreshes the entry's last-touch time;
+  /// when the apverid is new to the set, schedules one call to the
+  /// Python drainer (``_hooks.wanted_asset_packages_changed``), which
+  /// resolves wanted packages in the background. Logic thread.
+  void NoteWanted(const std::string& apverid);
+
+  /// Return every wanted apverid touched within ``max_age`` (with its
+  /// age in milliseconds), dropping the rest: an entry nobody has
+  /// re-noted in that long is no longer being displayed. Logic thread.
+  auto TakeWanted(millisecs_t max_age)
+      -> std::vector<std::pair<std::string, millisecs_t>>;
+
+  /// Record that ``apverid`` can't be had: the background acquirer was
+  /// told it doesn't exist (or is otherwise refused for good), so media
+  /// needing it can stop waiting and show as broken. Cleared should it
+  /// ever get registered after all. Logic thread.
+  void NoteUnavailable(const std::string& apverid);
+
+  /// Whether NoteUnavailable() has been called for an apverid that
+  /// still isn't registered. Logic thread.
+  auto IsUnavailable(const std::string& apverid) const -> bool;
 
   /// Resolve ``(apverid, bucket_id, logical_path, part)`` to a CAS hash.
   /// Returns the hash string, or an empty string if any segment of the
@@ -150,6 +202,22 @@ class AssetPackageRegistry {
                                 const std::string& bucket_id) const
       -> std::vector<std::string>;
 
+  /// A package's whole flat listing: the union of every bucket's
+  /// logical paths, sorted and de-duplicated. This is the integer
+  /// domain self-contained wire content (character definitions) indexes
+  /// against -- the union rather than one bucket because the two ends
+  /// bucket the same paths differently (mirrors the Python
+  /// ``package_asset_listing``). Cached per registration of an apverid
+  /// (built once per registered bucket set and shared thereafter;
+  /// re-registering a package rebuilds it), which keeps per-instance
+  /// resolves (every character spawn, every icon widget) to a map
+  /// lookup instead of an
+  /// O(package) copy-and-sort on the logic thread. Null if the package
+  /// isn't registered *right now* (a cached entry is never handed out
+  /// for a package that has since been unregistered).
+  auto FlatListing(const std::string& apverid) const
+      -> std::shared_ptr<const std::vector<std::string>>;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle
@@ -162,6 +230,19 @@ class AssetPackageRegistry {
   /// bundled blobs are never copied into the writable root.
   auto CasBlobPath(const std::string& hash) const -> std::string;
 
+  /// The bundle-root half of :meth:`CasBlobPath` (no writable-cache
+  /// probe) — where a shipped blob lives. With a bundled-archive
+  /// override configured (Android apk serving) this is a path into
+  /// the archive, resolvable via ``AssetBlob::FromFile``, not a
+  /// plain filesystem path.
+  auto BundledCasBlobPath(const std::string& hash) const -> std::string;
+
+  /// Configure bundled blobs to resolve into a mounted archive:
+  /// paths become ``<root>/<aa>/<rest><suffix>``. Set once during
+  /// bootstrap, before any loads.
+  void SetBundledCasOverride(const std::string& root,
+                             const std::string& suffix);
+
   /// Note that construct-mode has finished resolving every asset-package
   /// the meta-scan requires. Called (via
   /// ``_babase.mark_construct_assets_complete()``) from the same
@@ -169,6 +250,11 @@ class AssetPackageRegistry {
   /// construction. Opens the gate enforced by
   /// :meth:`CheckPreConstructAccess`.
   void SetConstructComplete();
+
+  /// Whether construct-mode has finished (see :meth:`SetConstructComplete`).
+  auto construct_complete() const -> bool {
+    return construct_complete_.load(std::memory_order_acquire);
+  }
 
   /// Complain if ``apverid`` is accessed before construct-mode finished.
   ///
@@ -214,10 +300,39 @@ class AssetPackageRegistry {
   // map is never mutated after publish.
   std::shared_ptr<const PackagesMap> packages_;
 
+  // Per-apverid flat listings (see FlatListing), each with the bucket
+  // map it was built from. Guarded by mutex_; entries are immutable
+  // once built. An apverid's contents are fixed but its registered
+  // bucket set is not (boot registers the construct package's language
+  // bucket alone, then its full set), so a lookup uses an entry only
+  // while that same bucket map is the live one. Registration status is
+  // checked against the live snapshot on every lookup.
+  mutable std::unordered_map<
+      std::string, std::pair<std::shared_ptr<const BucketMap>,
+                             std::shared_ptr<const std::vector<std::string>>>>
+      flat_listings_;
+
+  // Bumped under mutex_ on every registration; read lock-free by
+  // holders polling for their media (see generation()).
+  std::atomic<int64_t> generation_{0};
+
+  // Wanted-but-unregistered apverids -> last-touch app time (see
+  // NoteWanted/TakeWanted). Logic thread only, so no lock. Bounded by
+  // kMaxWanted_ against junk streamed by a modded host.
+  std::unordered_map<std::string, millisecs_t> wanted_;
+  // See NoteUnavailable. Logic thread only; bounded like wanted_.
+  std::unordered_set<std::string> unavailable_;
+  static constexpr size_t kMaxWanted_ = 64;
+
   // Construct-mode gate (see :meth:`CheckPreConstructAccess`). Atomic
   // rather than mutex-guarded because it is read on the hot load path
   // from both the logic and asset-server threads; the write happens once.
   std::atomic<bool> construct_complete_{false};
+
+  // Bundled-archive override (see SetBundledCasOverride); written
+  // once at bootstrap before any loads, read-only after.
+  std::string bundled_cas_root_override_;
+  std::string bundled_cas_suffix_;
 
   // Log-once latch for the non-developer-build path of
   // :meth:`CheckPreConstructAccess`.

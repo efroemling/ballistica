@@ -19,12 +19,29 @@ class ScreenMessages {
   void ClearScreenMessageTranslations();
 
   /// Add a screen-message. Must be called from the logic thread.
+  /// ``fail_log_level`` applies if a non-literal message fails to
+  /// compile as a resource string; pass a lower one for text we didn't
+  /// make and so can't fix (from a host running an older build, say).
+  /// ``remote_content`` marks a message (and its icon textures)
+  /// authored by a remote host or a replay; texture-role mismatches in
+  /// its icon are then theirs to hear about, so drawing it withholds
+  /// those warnings (as ClientSession::Draw does for the scene itself).
   void AddScreenMessage(const std::string& msg, bool literal = false,
                         const Vector3f& color = {1, 1, 1}, bool top = false,
                         TextureAsset* texture = nullptr,
                         TextureAsset* tint_texture = nullptr,
                         const Vector3f& tint = {1, 1, 1},
-                        const Vector3f& tint2 = {1, 1, 1});
+                        const Vector3f& tint2 = {1, 1, 1},
+                        const Vector3f& tint3 = {1, 1, 1},
+                        LogLevel fail_log_level = LogLevel::kError,
+                        bool remote_content = false);
+
+  /// Add a top screen-message whose icon is a depiction (a
+  /// bacommon.depiction json; a player's cloud icon, say). Must be
+  /// called from the logic thread.
+  void AddTopScreenMessageWithDepiction(const std::string& msg, bool literal,
+                                        const Vector3f& color,
+                                        const std::string& depiction_json);
 
   void Draw(FrameDef* frame_def);
   void Reset();

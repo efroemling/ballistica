@@ -122,6 +122,12 @@ auto AppAdapter::ApplyJoystickFeedback(JoystickInput* device,
 
 void AppAdapter::StopJoystickFeedback(JoystickInput* device) {}
 
+auto AppAdapter::DeviceFeedbackSupported() -> bool { return false; }
+
+auto AppAdapter::ApplyDeviceFeedback(const FeedbackEvent& event) -> int {
+  return 0;
+}
+
 auto AppAdapter::CanSoftQuit() -> bool { return false; }
 auto AppAdapter::CanBackQuit() -> bool { return false; }
 void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }

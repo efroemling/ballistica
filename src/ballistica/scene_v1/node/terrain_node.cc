@@ -5,8 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/assets/collision_mesh_asset.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/base/graphics/component/object_component.h"
+#include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -158,6 +161,63 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
 
 void TerrainNode::SetColorTexture(SceneTexture* val) { color_texture_ = val; }
 
+void TerrainNode::DrawDebug_(base::FrameDef* frame_def) {
+  // In debug-draw mode we draw our collision geometry instead of our
+  // visual mesh: flat facing-ratio grey, still receiving lights/shadows.
+  if (!collision_mesh_.exists()) {
+    return;
+  }
+  auto* asset = collision_mesh_->collision_mesh_data();
+  // Preloaded is enough; the debug mesh is built from the preload
+  // payload (vertex/index arrays), not the loaded one.
+  if (!asset->preloaded()) {
+    return;
+  }
+  auto* mesh = asset->GetDebugMesh();
+  if (mesh == nullptr) {
+    return;
+  }
+  base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()
+                          : background_ ? frame_def->beauty_pass_bg()
+                                        : frame_def->beauty_pass());
+  c.SetFacingRatio(true);
+  c.SetLightShadow(base::LightShadowType::kTerrain);
+  c.SetColor(1.0f, 1.0f, 1.0f);
+  uint32_t draw_flags = 0;
+  if (!visible_in_reflections_) {
+    draw_flags |= base::kMeshDrawFlagNoReflection;
+  }
+  if (transformed_) {
+    c.PushTransform();
+    c.MultMatrix(transform_.m);
+  }
+  c.DrawMesh(mesh, static_cast<int>(draw_flags));
+  if (transformed_) {
+    c.PopTransform();
+  }
+  c.Submit();
+
+  // Plus a faint wireframe of every edge. Drawn transparent (depth-tested
+  // but not depth-writing) so edges of faces culled as back-facing show
+  // through subtly wherever nothing in front covers them.
+  if (auto* wire = asset->GetDebugWireMesh()) {
+    base::SimpleComponent wc(overlay_      ? frame_def->overlay_3d_pass()
+                             : background_ ? frame_def->beauty_pass_bg()
+                                           : frame_def->beauty_pass());
+    wc.SetTransparent(true);
+    wc.SetColor(0.0f, 0.0f, 0.0f, 0.5f);
+    if (transformed_) {
+      wc.PushTransform();
+      wc.MultMatrix(transform_.m);
+    }
+    wc.DrawMesh(wire, static_cast<int>(draw_flags | base::kMeshDrawFlagLines));
+    if (transformed_) {
+      wc.PopTransform();
+    }
+    wc.Submit();
+  }
+}
+
 void TerrainNode::SetReflectionScale(const std::vector<float>& vals) {
   if (vals.size() != 1 && vals.size() != 3) {
     throw Exception("Expected float array of size 1 or 3 for reflection_scale",
@@ -257,7 +317,9 @@ void TerrainNode::AddToBGDynamics() {
          && !bumper_ && affect_bg_dynamics_);
   bg_dynamics_collision_mesh_ = collision_mesh_.get();
 #if !BA_HEADLESS_BUILD
-  g_base->bg_dynamics->AddTerrain(
+  assert(!bg_dynamics_world_.exists());
+  bg_dynamics_world_ = scene()->bg_dynamics_world();
+  bg_dynamics_world_->AddTerrain(
       bg_dynamics_collision_mesh_->collision_mesh_data(), transform_);
 #endif  // !BA_HEADLESS_BUILD
 }
@@ -265,18 +327,23 @@ void TerrainNode::AddToBGDynamics() {
 void TerrainNode::RemoveFromBGDynamics() {
   if (bg_dynamics_collision_mesh_ != nullptr) {
 #if !BA_HEADLESS_BUILD
-    g_base->bg_dynamics->RemoveTerrain(
+    bg_dynamics_world_->RemoveTerrain(
         bg_dynamics_collision_mesh_->collision_mesh_data());
+    bg_dynamics_world_.Clear();
 #endif  // !BA_HEADLESS_BUILD
     bg_dynamics_collision_mesh_ = nullptr;
   }
 }
 
 void TerrainNode::Draw(base::FrameDef* frame_def) {
-  if (!mesh_.exists()) {
+  if (vr_only_ && !g_core->vr_mode()) {
     return;
   }
-  if (vr_only_ && !g_core->vr_mode()) {
+  if (g_base->graphics->debug_draw()) {
+    DrawDebug_(frame_def);
+    return;
+  }
+  if (!mesh_.exists()) {
     return;
   }
   base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()

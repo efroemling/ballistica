@@ -17,6 +17,49 @@ $Triplets = @(
     @{ Name = 'arm64-windows'; LibArch = 'arm64';  DllArch = 'arm64'  }
 )
 
+# Our own patches to the ANGLE source, applied through vcpkg's angle port
+# (each is dropped into ports/angle and added to its PATCHES list). Kept
+# inline so this script stays the one file synced to the build host. Each
+# must apply cleanly to the ANGLE commit the port pins; a port update that
+# breaks one fails the build loudly, which is the prompt to rebase or drop
+# it. See docs/design/angle-windows.md ("Local patches").
+$AnglePatches = @(
+    @{
+        # D3D11: the input-layout cache key (PackedAttributeLayout) is
+        # hashed as raw bytes but had 4 uninitialized padding bytes, so
+        # equal keys could hash differently; the cache's index and list
+        # drifted apart and a lookup could return a destroyed entry. In the
+        # field: access violation in libGLESv2.dll,
+        # StateManager11::syncVertexBuffersAndInputLayout, any GPU vendor.
+        # Not fixed upstream as of 2026-10.
+        Name = 'ba-001-input-layout-key-padding.patch'
+        Body = @'
+--- a/src/libANGLE/renderer/d3d/d3d11/InputLayoutCache.h
++++ b/src/libANGLE/renderer/d3d/d3d11/InputLayoutCache.h
+@@ -39,9 +39,18 @@
+
+     bool operator==(const PackedAttributeLayout &other) const;
+
+-    uint32_t numAttributes;
++    // 64-bit so the struct has no padding bytes. std::hash below hashes
++    // the struct's raw bytes, and with a 32-bit count the 4 padding bytes
++    // before attributeData were left uninitialized: equal layouts hashed
++    // differently, the layout cache's index and list drifted apart, and a
++    // lookup could return an already-destroyed entry (null deref in
++    // StateManager11::syncVertexBuffersAndInputLayout).
++    uint64_t numAttributes;
+     gl::AttribArray<uint64_t> attributeData;
+ };
++static_assert(sizeof(PackedAttributeLayout) ==
++                  sizeof(uint64_t) + sizeof(gl::AttribArray<uint64_t>),
++              "PackedAttributeLayout is hashed as raw bytes; it must have no padding.");
+ }  // namespace rx
+
+ namespace std
+'@
+    }
+)
+
 # Find git.exe - checks standard install locations and VS's bundled copy.
 function Find-Git {
     $candidates = @(
@@ -90,6 +133,33 @@ try {
     & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
     if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed." }
 
+    # Add our own ANGLE patches to the port (see $AnglePatches above).
+    $PortDir = "$VcpkgDir\ports\angle"
+    $PortFile = "$PortDir\portfile.cmake"
+    $PortLines = [System.Collections.Generic.List[string]](Get-Content $PortFile)
+    # The first PATCHES list in the portfile belongs to the vcpkg_from_github
+    # call that fetches ANGLE itself.
+    $PatchesIdx = -1
+    for ($i = 0; $i -lt $PortLines.Count; $i++) {
+        if ($PortLines[$i] -match '^\s*PATCHES\s*$') { $PatchesIdx = $i; break }
+    }
+    if ($PatchesIdx -lt 0) {
+        throw "No PATCHES list found in $PortFile; update the patch injection."
+    }
+    $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    foreach ($patch in $AnglePatches) {
+        Write-Host "Adding ANGLE patch: $($patch.Name)"
+        # LF endings and no BOM, whatever this script was checked out with.
+        $Body = ($patch.Body -replace "`r`n", "`n") + "`n"
+        [System.IO.File]::WriteAllText("$PortDir\$($patch.Name)", $Body, $Utf8NoBom)
+        # Appended after the port's own patches so ours apply last.
+        $InsertAt = $PatchesIdx + 1
+        while ($InsertAt -lt $PortLines.Count -and
+               $PortLines[$InsertAt] -match '^\s+\S+\.patch\s*$') { $InsertAt++ }
+        $PortLines.Insert($InsertAt, "        $($patch.Name)")
+    }
+    [System.IO.File]::WriteAllLines($PortFile, $PortLines, $Utf8NoBom)
+
     # Set up overlay triplets: identical to the stock ones except zlib is
     # linked statically. Our staged ANGLE DLLs must not carry an external
     # zlib runtime dependency — we ship only libEGL.dll/libGLESv2.dll, and
@@ -155,7 +225,18 @@ endif()
 
     }
 
-    # Copy build logs (useful for diagnosing failures).
+    Write-Host ""
+    Write-Host "ANGLE artifacts staged to: $StagingDir"
+    Write-Host ""
+
+} finally {
+    # Stage build logs BEFORE the cleanup below nukes them. This has to
+    # live in the finally: a *failed* build is exactly when the logs are
+    # wanted, and vcpkg writes the compiler output to
+    # buildtrees\angle\install-<triplet>-out.log rather than to stdout, so
+    # without this a failure leaves nothing to diagnose from (hit on
+    # 2026-09-23 -- a build error was unrecoverable because cleanup had
+    # already run).
     $LogSrc = "$VcpkgDir\buildtrees\angle"
     $LogDst = "$StagingDir\logs"
     if (Test-Path $LogSrc) {
@@ -166,11 +247,6 @@ endif()
         }
     }
 
-    Write-Host ""
-    Write-Host "ANGLE artifacts staged to: $StagingDir"
-    Write-Host ""
-
-} finally {
     # Always clean up vcpkg temp dir.
     # Use cmd.exe rd instead of Remove-Item because vcpkg's bundled cmake
     # includes HTML docs with filenames that exceed MAX_PATH (260 chars),

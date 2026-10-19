@@ -15,6 +15,7 @@
 
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/graphics/text/font_glyph_pages_data.h"
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -210,6 +211,31 @@ const BigGlyphInkBounds kBigGlyphPackedUVs[64] = {
 const float kBigGlyphInkMarginFrac = 0.04f;
 const float kBigGlyphInkMarginMin = 0.002f;
 
+// Per-slot trims shaved off a packed rect's edges, in packed-atlas uv
+// (4096 texels per uv unit), applied to the quad in lockstep so the
+// remaining art stays exactly where it was. This patches over spots
+// where the packer left a rect wider than its glyph's real ink and a
+// neighbor's blob then landed inside that slack (the packed rects
+// are placed by the tightened *sampled* windows, which for glyphs the
+// legacy metrics measured generously extend past the actual ink).
+// Measured on the shipping atlas; retune (or drop) if it's repacked.
+struct BigGlyphPackedTrim {
+  int slot;
+  float left;    // added to u_min
+  float right;   // subtracted from u_max
+  float top;     // added to v_min (v is down in the atlas)
+  float bottom;  // subtracted from v_max
+};
+const BigGlyphPackedTrim kBigGlyphPackedTrims[] = {
+    // 'R': its rect runs 21 texels past its ink on the right, and the
+    // '7' was packed a texel inside that edge with its top-bar tip
+    // spilling 2 texels further still, so R's upper right showed a
+    // sliver of the 7. R's ink ends 21 texels in, the 7's begins 3
+    // texels past the edge; splitting that gap evenly leaves 9 texels
+    // of clean margin on each side.
+    {17, 0.0f, 12.0f / 4096.0f, 0.0f, 0.0f},
+};
+
 // Boot-time OS-text warm-up is currently DISABLED: we can never
 // exhaustively pre-load every script that may appear in online content
 // (player names, chat, etc.), so lazy per-script font loads need to be
@@ -299,7 +325,7 @@ TextGraphics::TextGraphics() {
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
               || index == 79 || index == 100 || index == 101 || index == 102
-              || index == 103) {
+              || index == 103 || index == 104 || index == 105 || index == 106) {
             g.pen_offset_y += 0.31f;
             if (index == 70) {
               g.pen_offset_y -= 0.02f;
@@ -334,6 +360,23 @@ TextGraphics::TextGraphics() {
             extra_advance += 0.08f;
             g.x_size *= 0.55f;
             g.y_size *= 0.55f;
+
+            // Anniversary icons draw a bit bigger than the rest (and
+            // cake & spaz art runs smaller than the bomb's, so they get
+            // more). Grows about the center: the advance (derived from
+            // x_size below) keeps it centered horizontally, so only y
+            // needs shifting.
+            if (index >= 104 && index <= 106) {
+              float s = 1.1f;
+              if (index == 104) {
+                s *= 1.3f;
+              } else if (index == 105) {
+                s *= 1.15f;
+              }
+              g.pen_offset_y -= g.y_size * (s - 1.0f) * 0.5f;
+              g.x_size *= s;
+              g.y_size *= s;
+            }
           }
         }
         // Special handling of tokens icon.
@@ -657,6 +700,27 @@ TextGraphics::TextGraphics() {
             // v is flipped in glyph space: tex_min_y is the bottom.
             gt.tex_min_y = puv.v_max;
             gt.tex_max_y = puv.v_min;
+
+            // Apply any per-slot trim of the packed rect (see
+            // kBigGlyphPackedTrims), shrinking the quad by the same
+            // fraction of each axis so no remaining texel moves.
+            for (const BigGlyphPackedTrim& trim : kBigGlyphPackedTrims) {
+              if (trim.slot != c) {
+                continue;
+              }
+              float pw = gt.tex_max_x - gt.tex_min_x;
+              float ph = gt.tex_min_y - gt.tex_max_y;
+              assert(pw > 0.0f && ph > 0.0f);
+              gt.pen_offset_x += gt.x_size * (trim.left / pw);
+              gt.x_size *= (pw - trim.left - trim.right) / pw;
+              gt.tex_min_x += trim.left;
+              gt.tex_max_x -= trim.right;
+              // pen_offset_y is the quad's bottom edge.
+              gt.pen_offset_y += gt.y_size * (trim.bottom / ph);
+              gt.y_size *= (ph - trim.top - trim.bottom) / ph;
+              gt.tex_min_y -= trim.bottom;
+              gt.tex_max_y += trim.top;
+            }
           }
           g = gt;
         }
@@ -1146,26 +1210,6 @@ auto TextGraphics::GetBigCharIndex(int c) -> int {
   return index;
 }
 
-void TextGraphics::LoadGlyphPage(uint32_t index) {
-  std::scoped_lock lock(glyph_load_mutex_);
-
-  // Its possible someone else coulda loaded it since we last checked.
-  if (g_glyph_pages[index] == nullptr) {
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), "%s%sba_data%sfonts%sfontSmall%d.fdata",
-             g_core->GetDataDirectory().c_str(), BA_DIRSLASH, BA_DIRSLASH,
-             BA_DIRSLASH, index);
-    FILE* f = g_core->platform->FOpen(buffer, "rb");
-    BA_PRECONDITION(f);
-    BA_PRECONDITION(sizeof(TextGraphics::Glyph[2]) == sizeof(float[18]));
-    uint32_t total_size = sizeof(Glyph) * g_glyph_page_glyph_counts[index];
-    g_glyph_pages[index] = static_cast<Glyph*>(malloc(total_size));
-    BA_PRECONDITION(g_glyph_pages[index]);
-    BA_PRECONDITION(fread(g_glyph_pages[index], total_size, 1, f) == 1);
-    fclose(f);
-  }
-}
-
 void TextGraphics::GetFontPageCharRange(int page, uint32_t* first_char,
                                         uint32_t* last_char) {
   // Our special pages:
@@ -1316,6 +1360,20 @@ auto TextGraphics::HaveChars(const std::string& text) -> bool {
 }
 
 auto TextGraphics::HasOSChars(const std::string& text) -> bool {
+  // Fast path: pure-ascii strings (the vast majority -- scores, timers,
+  // plain labels, often re-checked every frame via the warm-up path)
+  // can never contain OS chars (ascii tops out at 0x7F, far inside the
+  // bundled glyph range), so skip the decode allocation entirely.
+  bool ascii_only{true};
+  for (char c : text) {
+    if (static_cast<unsigned char>(c) >= 0x80) {
+      ascii_only = false;
+      break;
+    }
+  }
+  if (ascii_only) {
+    return false;
+  }
   std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "cf0d9j");
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto&& val : unicode) {
@@ -1328,7 +1386,8 @@ auto TextGraphics::HasOSChars(const std::string& text) -> bool {
   return false;
 }
 
-auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
+auto TextGraphics::GetGlyph(uint32_t val, bool big)
+    -> const TextGraphics::Glyph* {
   if (big) {
     int index = GetBigGlyphIndex(val);
     if (index == -1) index = 37;  // default to '?'
@@ -1343,9 +1402,6 @@ auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
     uint32_t page = g_glyph_map[val];
     uint32_t start_index = g_glyph_page_start_index_map[page];
     uint32_t local_index = val - start_index;
-    if (g_glyph_pages[page] == nullptr) {
-      LoadGlyphPage(page);
-    }
     return &g_glyph_pages[page][local_index];
   }
 }
@@ -1465,6 +1521,13 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
   if (!g_buildconfig.enable_os_font_rendering()) {
     return;
   }
+  // The common case by far (scores, timers, plain-ascii labels -- often
+  // re-set every frame) needs no OS spans at all; a quick scan here
+  // beats paying a heap closure, a cross-thread push, and a measure
+  // walk on the assets loop for a guaranteed no-op.
+  if (!HasOSChars(text)) {
+    return;
+  }
   // Warm-up is purely an optimization, and very early screen-messages
   // can land before the assets-server loop exists; skip quietly there
   // (the string then simply gets measured on demand later).
@@ -1479,8 +1542,51 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
   });
 }
 
+void TextGraphics::WarmUpCaratMeasuresAsync(const std::string& text, bool big) {
+  if (!g_buildconfig.enable_os_font_rendering() || !HasOSChars(text)) {
+    return;
+  }
+  // One string holding each line's prefixes, one per row; a single
+  // measure walk of it then warms every prefix span.
+  std::vector<uint32_t> chars = Utils::UnicodeFromUTF8(text, "wcm3kf9a");
+  std::vector<uint32_t> prefixes;
+  size_t line_start{};
+  for (size_t i = 0; i <= chars.size(); ++i) {
+    if (i == chars.size() || chars[i] == '\n') {
+      for (size_t end = line_start + 1; end <= i; ++end) {
+        prefixes.insert(prefixes.end(), chars.begin() + line_start,
+                        chars.begin() + end);
+        prefixes.push_back('\n');
+      }
+      line_start = i + 1;
+    }
+  }
+  WarmUpStringAsync(Utils::UTF8FromUnicode(prefixes), big);
+}
+
 auto TextGraphics::TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                                   float* width) -> bool {
+  // Debug builds exercise callers' defer branches: every 16th unique
+  // span's first logic-thread Try reports cold even when the warm-up
+  // already landed it (the text-measure analog of baenv's
+  // cache-ninja). A caller missing its defer branch then fails its
+  // assert within a handful of drawn OS-span strings on any run --
+  // instead of only when it loses the warm-up race (which is how the
+  // TextNode defer gap escaped notice; see followups 2026-08-31). The
+  // caller's natural next-frame retry takes the normal path. 1-in-16
+  // rather than every span keeps the visual effect (one deferred
+  // frame for the affected string) below noticeability in non-english
+  // locales while still tripping broken callers quickly.
+  if (g_buildconfig.debug_build() && g_base->InLogicThread()) {
+    std::scoped_lock lock(text_span_bounds_cache_mutex_);
+    // (capped so pathological span churn can't grow this forever)
+    if (debug_chaos_seen_spans_.size() < 10000
+        && debug_chaos_seen_spans_.insert(s).second) {
+      if (debug_chaos_span_count_++ % 16 == 15) {
+        return false;
+      }
+    }
+  }
   {
     std::scoped_lock lock(text_span_bounds_cache_mutex_);
     auto i = text_span_bounds_cache_map_.find(s);
@@ -1546,8 +1652,19 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
 
   *complete = true;
 
-  // even if they ask for the big font, their string might not support it...
-  big = (big && TextGraphics::HaveBigChars(text));
+  // Even if they ask for the big font, their string might not support
+  // it. (Same test as HaveBigChars(), but scanning in place: the text
+  // is known valid, so no sanitizing copy or decoded vector needed.)
+  if (big) {
+    for (const char* b = text; *b != 0;) {
+      uint32_t val = Utils::GetUTF8Value(b);
+      Utils::AdvanceUTF8(&b);
+      if (GetBigGlyphIndex(val) == -1 && val != '\n' && val != '\r') {
+        big = false;
+        break;
+      }
+    }
+  }
 
   float char_width = 32.0f;
   const char* t = text;
@@ -1555,15 +1672,19 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
   float max_line_length = 0;
 
   // We have the OS render some chars, broken into single-line spans.
-  std::vector<uint32_t> os_span;
+  // A span is always a contiguous run of the input, so we track it as
+  // a byte range rather than collecting and re-encoding code points.
+  // (null when no span is in progress)
+  const char* os_span_begin{};
 
-  // Tally an os-span's width into line_length. In allow-defer mode a
-  // cold span contributes nothing but flips 'complete' off (a
-  // background measure gets kicked; note we keep walking so ALL of the
-  // string's cold spans get their measures in flight in one pass).
-  auto tally_span = [&] {
-    std::string s = Utils::UTF8FromUnicode(os_span);
-    os_span.clear();
+  // Tally the os-span ending at span_end into line_length. In
+  // allow-defer mode a cold span contributes nothing but flips
+  // 'complete' off (a background measure gets kicked; note we keep
+  // walking so ALL of the string's cold spans get their measures in
+  // flight in one pass).
+  auto tally_span = [&](const char* span_end) {
+    std::string s(os_span_begin, span_end);
+    os_span_begin = nullptr;
     if (allow_defer) {
       Rect r;
       float width{};
@@ -1580,8 +1701,8 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
   while (*t != 0) {
     if (*t == '\n') {
       // Add/reset os-span.
-      if (!os_span.empty()) {
-        tally_span();
+      if (os_span_begin) {
+        tally_span(t);
       }
       if (line_length > max_line_length) {
         max_line_length = line_length;
@@ -1589,30 +1710,31 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
       line_length = 0;
       t++;
     } else {
+      const char* char_begin = t;
       uint32_t val = Utils::GetUTF8Value(t);
       Utils::AdvanceUTF8(&t);
       // Special case: if we're already doing an OS-span, tack certain
       // chars onto it instead of switching back to glyph mode.
       // (to reduce the number of times we switch back and forth)
-      if (TextGraphics::IsOSDrawableAscii(val) && !os_span.empty()) {
-        os_span.push_back(val);
-      } else if (Glyph* g = GetGlyph(val, big)) {
+      if (TextGraphics::IsOSDrawableAscii(val) && os_span_begin) {
+        // (already part of the span's byte range)
+      } else if (const Glyph* g = GetGlyph(val, big)) {
         // If we *had* been building a span, add its length.
-        if (!os_span.empty()) {
-          tally_span();
+        if (os_span_begin) {
+          tally_span(char_begin);
         }
         line_length += char_width * g->advance;
       } else {
-        // Add to os-span.
-        if (g_buildconfig.enable_os_font_rendering()) {
-          os_span.push_back(val);
+        // Add to os-span (starting one if needed).
+        if (g_buildconfig.enable_os_font_rendering() && !os_span_begin) {
+          os_span_begin = char_begin;
         }
       }
     }
   }
   // Tally final span if there is one.
-  if (!os_span.empty()) {
-    tally_span();
+  if (os_span_begin) {
+    tally_span(t);
   }
   // Check last line.
   if (line_length > max_line_length) {
@@ -1671,7 +1793,7 @@ void TextGraphics::BreakUpString(const char* text, float width,
       if (TextGraphics::IsOSDrawableAscii(val) && explicit_bool(false)) {
         // I think I disabled this for consistency?...
         // FIXME FIXME FIXME - handle this along with stuff below..
-      } else if (Glyph* g = GetGlyph(val, false)) {
+      } else if (const Glyph* g = GetGlyph(val, false)) {
         line_length += char_width * g->advance;
       } else {
         // FIXME FIXME FIXME - need to clump non-glyph characters into
@@ -1689,6 +1811,201 @@ void TextGraphics::BreakUpString(const char* text, float width,
       }
     }
   }
+}
+
+// Wrapped lines stay this fraction under the requested width, so float
+// noise in a text widget's own fit check never trips its shrink-to-fit.
+constexpr float kWrapWidthMargin{0.995f};
+
+// How many times WrapString re-fits after measured lines come out wider
+// than their summed segment widths predicted.
+constexpr int kWrapMaxRefits{4};
+
+static auto IsWrapSpace(char c) -> bool { return c == ' ' || c == '\t'; }
+
+namespace {
+
+// One run of a paragraph between line-break opportunities: a line may
+// begin at `begin`. Trailing whitespace (content_end..end) vanishes
+// when a line ends here.
+struct WrapSegment {
+  size_t begin{};
+  size_t content_end{};
+  size_t end{};
+  float content_width{};
+  float full_width{};
+};
+
+}  // namespace
+
+// Split [begin, end) of text (no trailing whitespace) into runs at
+// code-point boundaries, each fitting max_width where possible (at
+// least one code point per run). Only for unbreakable runs too wide
+// for any line; can split a grapheme cluster, which is acceptable for
+// something this rare.
+static void SplitWideWrapSegment(TextGraphics* tg, const std::string& text,
+                                 size_t begin, size_t end, float max_width,
+                                 bool big, std::vector<WrapSegment>* out) {
+  size_t chunk_begin{begin};
+  float chunk_width{};
+  const char* base = text.c_str();
+  const char* p = base + begin;
+  while (static_cast<size_t>(p - base) < end) {
+    const char* next = p;
+    Utils::AdvanceUTF8(&next);
+    auto next_off = static_cast<size_t>(next - base);
+    float width = tg->GetStringWidth(
+        text.substr(chunk_begin, next_off - chunk_begin), big);
+    auto p_off = static_cast<size_t>(p - base);
+    if (width > max_width && p_off > chunk_begin) {
+      out->push_back({chunk_begin, p_off, p_off, chunk_width, chunk_width});
+      chunk_begin = p_off;
+      width = tg->GetStringWidth(text.substr(p_off, next_off - p_off), big);
+    }
+    chunk_width = width;
+    p = next;
+  }
+  if (end > chunk_begin) {
+    out->push_back({chunk_begin, end, end, chunk_width, chunk_width});
+  }
+}
+
+// Fit segments into lines of at most max_width by greedy fill: each
+// line takes as many segments as fit (always at least one, so a lone
+// too-wide segment still gets a line). Returns the index of the first
+// segment of each line.
+static auto FitWrapLines(const std::vector<WrapSegment>& segs, float max_width)
+    -> std::vector<size_t> {
+  std::vector<size_t> starts;
+  size_t n = segs.size();
+  size_t i{};
+  while (i < n) {
+    starts.push_back(i);
+    // The line's width so far, plus the trailing whitespace that
+    // only counts once another segment follows it.
+    double width = segs[i].content_width;
+    double trailing = segs[i].full_width - segs[i].content_width;
+    size_t j = i + 1;
+    while (j < n && width + trailing + segs[j].content_width <= max_width) {
+      width += trailing + segs[j].content_width;
+      trailing = segs[j].full_width - segs[j].content_width;
+      ++j;
+    }
+    i = j;
+  }
+  return starts;
+}
+
+static auto WrapParagraph(TextGraphics* tg, const std::string& para,
+                          float max_width, bool big) -> std::string {
+  // Strip the paragraph's edges.
+  size_t first{};
+  while (first < para.size() && IsWrapSpace(para[first])) {
+    ++first;
+  }
+  size_t last{para.size()};
+  while (last > first && IsWrapSpace(para[last - 1])) {
+    --last;
+  }
+  if (first == last) {
+    return "";
+  }
+  std::string text = para.substr(first, last - first);
+
+  // Fast out for the common case: text that already fits takes one
+  // measure (the same one a text widget makes) instead of a line-break
+  // analysis plus a measure per segment.
+  if (tg->GetStringWidth(text, big) <= max_width) {
+    return text;
+  }
+
+  std::vector<size_t> bounds{0};
+  for (int off : g_core->platform->GetTextLineBreakOffsets(text)) {
+    if (off > static_cast<int>(bounds.back())
+        && off < static_cast<int>(text.size())) {
+      bounds.push_back(static_cast<size_t>(off));
+    }
+  }
+  bounds.push_back(text.size());
+
+  std::vector<WrapSegment> segs;
+  for (size_t b = 0; b + 1 < bounds.size(); ++b) {
+    size_t begin = bounds[b];
+    size_t end = bounds[b + 1];
+    size_t content_end = end;
+    while (content_end > begin && IsWrapSpace(text[content_end - 1])) {
+      --content_end;
+    }
+    float content_width =
+        tg->GetStringWidth(text.substr(begin, content_end - begin), big);
+    if (content_width > max_width) {
+      SplitWideWrapSegment(tg, text, begin, content_end, max_width, big, &segs);
+      segs.back().end = end;
+    } else {
+      segs.push_back({begin, content_end, end, content_width, content_width});
+    }
+    if (end > content_end) {
+      segs.back().full_width +=
+          tg->GetStringWidth(text.substr(content_end, end - content_end), big);
+    }
+  }
+
+  // Summed segment widths can be a hair off the joined line's real
+  // width (OS-text shaping across a segment edge, etc.), so measure the
+  // chosen lines and re-fit tighter if any overflow.
+  float fit_width{max_width};
+  std::vector<std::string> lines;
+  for (int attempt = 0; attempt < kWrapMaxRefits; ++attempt) {
+    std::vector<size_t> starts = FitWrapLines(segs, fit_width);
+    lines.clear();
+    float widest{};
+    for (size_t l = 0; l < starts.size(); ++l) {
+      size_t seg_end = l + 1 < starts.size() ? starts[l + 1] : segs.size();
+      size_t begin = segs[starts[l]].begin;
+      size_t end = segs[seg_end - 1].content_end;
+      lines.push_back(text.substr(begin, end - begin));
+      // (lone segments can't be narrowed by re-fitting; skip them)
+      if (seg_end - starts[l] > 1) {
+        widest = std::max(widest, tg->GetStringWidth(lines.back(), big));
+      }
+    }
+    if (widest <= max_width) {
+      break;
+    }
+    fit_width *= max_width / widest;
+  }
+
+  std::string result;
+  for (size_t l = 0; l < lines.size(); ++l) {
+    if (l > 0) {
+      result += '\n';
+    }
+    result += lines[l];
+  }
+  return result;
+}
+
+auto TextGraphics::WrapString(const std::string& text, float max_width,
+                              bool big) -> std::string {
+  assert(Utils::IsValidUTF8(text));
+  float width = max_width * kWrapWidthMargin;
+  std::string result;
+  size_t para_begin{};
+  while (true) {
+    size_t para_end = text.find('\n', para_begin);
+    bool is_last = para_end == std::string::npos;
+    if (is_last) {
+      para_end = text.size();
+    }
+    result += WrapParagraph(
+        this, text.substr(para_begin, para_end - para_begin), width, big);
+    if (is_last) {
+      break;
+    }
+    result += '\n';
+    para_begin = para_end + 1;
+  }
+  return result;
 }
 
 }  // namespace ballistica::base

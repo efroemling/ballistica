@@ -3,10 +3,13 @@
 #include "ballistica/ui_v1/widget/scroll_widget.h"
 
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_dual_texture_full.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
@@ -17,7 +20,25 @@ namespace ballistica::ui_v1 {
 
 static const float kMarginV{5.0f};
 
-ScrollWidget::ScrollWidget() {
+/// The fading thumb's visible thickness, how far it sits in from our
+/// right edge, and how far its track stays clear of our top and bottom
+/// (mirroring HScrollWidget's thumb). The grab zone is wider than the
+/// thumb, so it stays easy to catch.
+static const float kFadingThumbThickness{8.0f};
+static const float kFadingThumbInset{5.0f};
+static const float kFadingThumbTrackInset{5.0f};
+static const float kFadingThumbGrabWidth{20.0f};
+
+/// With EdgeStyle::kFade, our content is squeezed into depth 0 to this
+/// and our fade band drawn just in front, so both thumb styles (the
+/// fading one at 0.75, the classic at 0.8 - 0.9) still land on top.
+static const float kFadeEdgeDepth{0.7f};
+static const float kFadeEdgeBandDepth{0.72f};
+
+/// How far past our edges our fade band reaches (see DrawFadeEdges_()).
+static const float kFadeEdgeOverlap{2.0f};
+
+ScrollWidget::ScrollWidget() : create_time_{g_base->logic->display_time()} {
   set_background(false);  // Influences default event handling.
   set_draggable(false);
   set_claims_left_right(false);
@@ -76,8 +97,7 @@ void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
       float diff =
           child_offset_v_
           - (child_height
-             - std::min(child_height,
-                        (height() - 2.0f * (border_height_ + kMarginV))));
+             - std::min(child_height, (height() - 2.0f * ContentMarginV_())));
       if (diff > 0.0f) {
         // We've scrolled past the bottom.
         inertia_scroll_rate_ += diff * stiffness;
@@ -105,17 +125,16 @@ void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
   // Hard clipping if we're dragging the scrollbar.
   if (position_clamp) {
     if (child_offset_v_smoothed_
-        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
+        > child_height - (height() - 2.0f * ContentMarginV_())) {
       child_offset_v_smoothed_ =
-          child_height - (height() - 2.0f * (border_height_ + kMarginV));
+          child_height - (height() - 2.0f * ContentMarginV_());
     }
     if (child_offset_v_smoothed_ < 0.0f) {
       child_offset_v_smoothed_ = 0.0f;
     }
     if (child_offset_v_
-        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
-      child_offset_v_ =
-          child_height - (height() - 2.0f * (border_height_ + kMarginV));
+        > child_height - (height() - 2.0f * ContentMarginV_())) {
+      child_offset_v_ = child_height - (height() - 2.0f * ContentMarginV_());
     }
     if (child_offset_v_ < 0) {
       child_offset_v_ = 0;
@@ -132,6 +151,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMoveUp:
+      // Already all the way up? Let selection move on past us.
+      if (move_out_at_ends_ && child_offset_v_ <= 0.0f) {
+        return false;
+      }
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ -= 60.0f;
@@ -141,6 +164,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
 
     case base::WidgetMessage::Type::kMoveDown:
+      // Already all the way down? Let selection move on past us.
+      if (move_out_at_ends_ && child_offset_v_ >= child_max_offset_) {
+        return false;
+      }
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ += 60.0f;
@@ -161,7 +188,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float target_y{m.fval2};
       float target_height{m.fval4};
 
-      float vis_height{(height() - 2.0f * (border_height_ + kMarginV))};
+      float vis_height{(height() - 2.0f * ContentMarginV_())};
       bool changing{};
 
       // See where we'd have to scroll to get target at top and bottom.
@@ -194,8 +221,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (changing) {
         // If we're moving down, stop at the bottom.
         {
-          float max_val = scroll_child_height
-                          - (height() - 2.0f * (border_height_ + kMarginV));
+          float max_val =
+              scroll_child_height - (height() - 2.0f * ContentMarginV_());
           if (child_offset_v_ > max_val) {
             child_offset_v_ = max_val;
           }
@@ -350,8 +377,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (x >= 0.0f && x < (width() + right_overlap) && y >= 0.0f
             && y < height()) {
           // On touch devices, touches begin scrolling, (and eventually can
-          // count as clicks if they don't move).
-          if (g_base->ui->touch_mode()) {
+          // count as clicks if they don't move). Only if we're showing less
+          // than everything though (as HScrollWidget does); otherwise the
+          // touch is just a click for our children, and dragging can't move
+          // content that has nowhere to go.
+          if (g_base->ui->touch_mode() && amount_visible_ < 1.0f) {
             touch_held_ = true;
             last_touch_held_time_ = g_core->AppTimeMillisecs();
 
@@ -396,8 +426,27 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             }
           }
 
-          // For mouse type devices, allow clicking on the scrollbar.
-          if (!g_base->ui->touch_mode()) {
+          // A fading bar's thumb can be grabbed (wherever it is, faded in
+          // or not; nothing else lives under the thumb itself), but its
+          // track can't be clicked for paging.
+          if (!g_base->ui->touch_mode() && scrollbar_visible_
+              && fading_scrollbar_ && amount_visible_ < 1.0f) {
+            float track_height;
+            auto thumb = FadingThumbRect_(child_offset_v_, &track_height);
+            if (x >= width() - kFadingThumbGrabWidth && y >= thumb.b
+                && y < thumb.t) {
+              claimed = true;
+              pass = false;
+              mouse_held_thumb_ = true;
+              thumb_click_start_v_ = y;
+              thumb_click_start_child_offset_v_ = child_offset_v_;
+            }
+          }
+
+          // For mouse type devices, allow clicking on the scrollbar (which
+          // is only drawn when there is something to scroll).
+          if (!g_base->ui->touch_mode() && scrollbar_visible_
+              && !fading_scrollbar_ && amount_visible_ < 1.0f) {
             if (x >= width() - scroll_bar_width_ - left_overlap) {
               claimed = true;
               pass = false;
@@ -413,8 +462,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               if (y >= sb_thumb_top) {
                 // So we can see the transition.
                 smoothing_amount_ = 1.0f;
-                child_offset_v_ -=
-                    (height() - 2.0f * (border_height_ + kMarginV));
+                child_offset_v_ -= (height() - 2.0f * ContentMarginV_());
                 MarkForUpdate();
                 ClampScrolling_(false, true, -1);
               } else if (y >= sb_thumb_top - sb_thumb_height) {
@@ -425,8 +473,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               } else if (y >= s_bottom) {
                 // Below thumb (page down). So we can see the transition.
                 smoothing_amount_ = 1.0f;
-                child_offset_v_ +=
-                    (height() - 2.0f * (border_height_ + kMarginV));
+                child_offset_v_ += (height() - 2.0f * ContentMarginV_());
                 MarkForUpdate();
                 ClampScrolling_(false, true, -1);
               }
@@ -441,6 +488,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
 
     case base::WidgetMessage::Type::kMouseMove: {
+      last_mouse_move_time_ = g_base->logic->display_time();
       float x = m.fval1;
       float y = m.fval2;
       bool was_claimed = (m.fval3 > 0.0f);
@@ -462,6 +510,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       auto repeat_out_of_bounds = !last_mouse_move_in_bounds_ && !in_bounds;
       auto just_exited_bounds = last_mouse_move_in_bounds_ && !in_bounds;
       last_mouse_move_in_bounds_ = in_bounds;
+      mouse_over_ = !g_base->ui->touch_mode() && !was_claimed && in_bounds;
 
       // If we weren't in bounds before and still aren't, don't bother
       // passing to our children (a single already-claimed move should be
@@ -552,8 +601,17 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        if (g_base->ui->touch_mode()) {
+        if (g_base->ui->touch_mode() || !scrollbar_visible_) {
           hovering_thumb_ = false;
+        } else if (fading_scrollbar_) {
+          float track_height;
+          auto thumb = FadingThumbRect_(child_offset_v_, &track_height);
+          hovering_thumb_ = amount_visible_ < 1.0f
+                            && x >= width() - kFadingThumbGrabWidth
+                            && x < width() && y >= thumb.b && y < thumb.t;
+          if (hovering_thumb_) {
+            claimed = true;
+          }
         } else {
           float s_top = height() - border_height_;
           float s_bottom = border_height_;
@@ -588,6 +646,13 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           float rate = (child_h - (s_top - s_bottom))
                        / std::max(1.0f, ((1.0f - ((s_top - s_bottom) / child_h))
                                          * (s_top - s_bottom)));
+          if (fading_scrollbar_) {
+            // Content travel per unit of thumb travel along its track.
+            float track_height;
+            auto thumb = FadingThumbRect_(child_offset_v_, &track_height);
+            rate = child_max_offset_
+                   / std::max(1.0f, track_height - thumb.height());
+          }
           child_offset_v_ = thumb_click_start_child_offset_v_
                             - rate * (y - thumb_click_start_v_);
           ClampScrolling_(false, true, -1);
@@ -654,15 +719,18 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       // If coords are outside of our bounds, pass a mouse-cancel along for
       // anyone tracking a drag, but mark it as claimed so it doesn't
-      // actually get acted on.
+      // actually get acted on. (Flagged as a release-outside when it was
+      // one, so a drag in progress can commit rather than revert.)
       float x = m.fval1;
       float y = m.fval2;
       if (!((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
             && (y < height()))) {
         pass = false;
-        ContainerWidget::HandleMessage(
-            base::WidgetMessage(base::WidgetMessage::Type::kMouseCancel,
-                                nullptr, m.fval1, m.fval2, true));
+        base::WidgetMessage cm(base::WidgetMessage::Type::kMouseCancel, nullptr,
+                               m.fval1, m.fval2, true);
+        cm.released_outside =
+            m.type == base::WidgetMessage::Type::kMouseUp || m.released_outside;
+        ContainerWidget::HandleMessage(cm);
       }
 
       break;
@@ -687,6 +755,53 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return claimed;
 }
 
+auto ScrollWidget::DrawnBorderOpacity_() const -> float {
+  // (amount_visible_ is 0 with no content at all, which fits too.)
+  bool fits = amount_visible_ <= 0.0f || amount_visible_ >= 1.0f;
+  return (hide_border_when_fits_ && fits) ? 0.0f : border_opacity_;
+}
+
+auto ScrollWidget::ContentMarginV_() const -> float {
+  return clean_layout_ ? 0.0f : border_height_ + kMarginV;
+}
+
+auto ScrollWidget::FadingThumbRect_(float offset, float* track_height) const
+    -> Rect {
+  // The thumb spans a fraction of the track equal to the fraction of the
+  // content that is visible, positioned along it by how far we have
+  // scrolled.
+  float track_bottom{kFadingThumbTrackInset};
+  *track_height = std::max(1.0f, height() - 2.0f * kFadingThumbTrackInset);
+  float thumb_height{
+      std::max(kFadingThumbThickness, amount_visible_ * (*track_height))};
+  // (Not clamped: overscrolling past either end carries the thumb past
+  // its track's end with the content, as HScrollWidget's does; our clip
+  // trims it.)
+  float scrolled{child_max_offset_ > 0.0f ? offset / child_max_offset_ : 0.0f};
+  float top{track_bottom + *track_height
+            - scrolled * (*track_height - thumb_height)};
+  float right{width() - kFadingThumbInset};
+  return {right - kFadingThumbThickness, top - thumb_height, right, top};
+}
+
+auto ScrollWidget::GetScrollState() -> std::optional<ScrollState> {
+  auto i = widgets().begin();
+  float content = i == widgets().end() ? 0.0f : (**i).GetHeight();
+  return ScrollState{child_offset_v_, content,
+                     height() - 2.0f * ContentMarginV_()};
+}
+
+auto ScrollWidget::SetScrollOffset(float offset) -> bool {
+  auto state = *GetScrollState();
+  float max_offset =
+      std::max(0.0f, state.content_extent - state.visible_extent);
+  child_offset_v_ = std::clamp(offset, 0.0f, max_offset);
+  child_offset_v_smoothed_ = child_offset_v_;
+  inertia_scroll_rate_ = 0.0f;
+  MarkForUpdate();
+  return true;
+}
+
 void ScrollWidget::UpdateLayout() {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
@@ -697,21 +812,22 @@ void ScrollWidget::UpdateLayout() {
     return;
   }
 
-  float extra_border_x{4.0f};  // Whee arbitrary hard coded values.
+  // (Historically our content sat in from our left edge by these, and
+  // off-center by them when centered; clean layout drops them.)
+  float extra_border_x{clean_layout_ ? 0.0f : 4.0f};
+  float border_x{clean_layout_ ? 0.0f : border_width_};
   float xoffs;
   if (center_small_content_horizontally_) {
     float our_width{width()};
     float child_width = (**i).GetWidth();
-    xoffs = (our_width - child_width) * 0.5 - border_width_ - extra_border_x;
+    xoffs = (our_width - child_width) * 0.5 - border_x - extra_border_x;
   } else {
-    xoffs = extra_border_x + border_width_;
+    xoffs = extra_border_x + border_x;
   }
 
   float child_height = (**i).GetHeight();
-  child_max_offset_ =
-      child_height - (height() - 2.0f * (border_height_ + kMarginV));
-  amount_visible_ =
-      (height() - 2.0f * (border_height_ + kMarginV)) / child_height;
+  child_max_offset_ = child_height - (height() - 2.0f * ContentMarginV_());
+  amount_visible_ = (height() - 2.0f * ContentMarginV_()) / child_height;
   if (amount_visible_ > 1.0f) {
     amount_visible_ = 1.0f;
     if (center_small_content_) {
@@ -725,9 +841,8 @@ void ScrollWidget::UpdateLayout() {
 
   if (mouse_held_thumb_) {
     if (child_offset_v_
-        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
-      child_offset_v_ =
-          child_height - (height() - 2.0f * (border_height_ + kMarginV));
+        > child_height - (height() - 2.0f * ContentMarginV_())) {
+      child_offset_v_ = child_height - (height() - 2.0f * ContentMarginV_());
       inertia_scroll_rate_ = 0;
     }
     if (child_offset_v_ < 0.0f) {
@@ -735,7 +850,7 @@ void ScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0.0f;
     }
   }
-  (**i).set_translate(xoffs, height() - (border_height_ + kMarginV)
+  (**i).set_translate(xoffs, height() - ContentMarginV_()
                                  + child_offset_v_smoothed_ - child_height
                                  + center_offset_y_);
   thumb_dirty_ = true;
@@ -818,8 +933,7 @@ void ScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
         float diff =
             child_offset_v_
             - (child_height
-               - std::min(child_height,
-                          (height() - 2.0f * (border_height_ + kMarginV))));
+               - std::min(child_height, (height() - 2.0f * ContentMarginV_())));
         if (diff > 0.0f) {
           inertia_scroll_mult = inv_lerp_clamped(fade_region, 0.0f, diff);
         }
@@ -911,17 +1025,19 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    auto scissor =
-        c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
-                         l + (width() - border_width_),
-                         b + (height() - border_height_) - 1.0f});
+    auto scissor = c.ScopedScissor(
+        clean_layout_ ? Rect(l, b, l + width(), b + height())
+                      : Rect(l + border_width_, b + border_height_ + 1.0f,
+                             l + (width() - border_width_),
+                             b + (height() - border_height_) - 1.0f));
     c.Submit();  // Get out of the way for children drawing.
 
-    set_simple_culling_bottom(b + border_height_ + 1.0f);
-    set_simple_culling_top(b + (height() - border_height_) - 1.0f);
+    set_simple_culling_bottom(clean_layout_ ? b : b + border_height_ + 1.0f);
+    set_simple_culling_top(
+        clean_layout_ ? b + height() : b + (height() - border_height_) - 1.0f);
 
     // Scroll trough (depth 0.05 to 0.15).
-    if (explicit_bool(true)) {
+    if (scrollbar_visible_ && !fading_scrollbar_) {
       if (draw_transparent) {
         if (trough_dirty_) {
           float r2 = l + width();
@@ -943,8 +1059,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        auto* tex = g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesUiAtlas);
+        auto* tex = g_ui_v1->assets().ui_atlas.get();
         // Premultiplied texture + straight faded color; premultiply rgb
         // ourselves (see docs/design/premultiplied-alpha.md).
         float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
@@ -954,20 +1069,81 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           auto xf = c.ScopedTransform();
           c.Translate(trough_center_x_, trough_center_y_, 0.05f);
           c.Scale(trough_width_, trough_height_, 0.1f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesScrollBarTroughTransparent));
+          c.DrawMeshAsset(
+              g_ui_v1->assets().scroll_bar_trough_transparent.get());
         }
         c.Submit();
       }
     }
 
-    // Draw all our widgets at our z level.
-    DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
-                 1.0f);
+    // Draw all our widgets at our z level. Our fade edges have to land
+    // in front of all content but behind our thumb (0.8 - 0.9), so in
+    // that style we squeeze content into the depth below them.
+    {
+      auto xf = c.ScopedTransform();
+      if (edge_style_ == EdgeStyle::kFade) {
+        c.Scale(1.0f, 1.0f, kFadeEdgeDepth);
+      }
+      c.Submit();
+      DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
+                   1.0f);
+    }
+    c.Submit();
+  }
+
+  // Fade edges go over our content but under either style of thumb, so
+  // draw them first.
+  if (draw_transparent && edge_style_ == EdgeStyle::kFade) {
+    DrawFadeEdges_(pass);
+  }
+
+  // Fading scroll bar.
+  if (scrollbar_visible_ && fading_scrollbar_ && amount_visible_ > 0
+      && amount_visible_ < 1) {
+    auto* frame_def = pass->frame_def();
+    seconds_t now{frame_def->display_time()};
+    // Any movement of our content counts as scrolling, however it's
+    // driven (wheel steps, inertia, gliding to a selection); except in
+    // our first half second, while initial layout settles.
+    bool moved{std::abs(child_offset_v_smoothed_ - thumb_last_offset_) > 0.01f
+               && now - create_time_ >= 0.5};
+    thumb_last_offset_ = child_offset_v_smoothed_;
+    bool smooth_diff =
+        moved || (std::abs(child_offset_v_smoothed_ - child_offset_v_) > 0.01f);
+    if (g_base->ui->touch_mode()) {
+      if (smooth_diff || (touch_held_ && touch_is_scrolling_)
+          || std::abs(inertia_scroll_rate_) > 1.0f) {
+        thumb_.Show(now);
+      }
+    } else {
+      // As in HScrollWidget: hovering the thumb holds the bar up on its
+      // own, and pointer motion is ignored for our first half second so
+      // motion while a window transitions in doesn't flash it up.
+      bool pointer_counts{now - create_time_ >= 0.5};
+      if (smooth_diff || mouse_held_thumb_
+          || (pointer_counts && hovering_thumb_)
+          || std::abs(inertia_scroll_rate_) > 1.0f
+          || (pointer_counts && mouse_over_
+              && now - last_mouse_move_time_ < 0.1f)) {
+        thumb_.Show(now);
+      }
+    }
+    thumb_.Update(now, frame_def->display_time_elapsed());
+    float emphasis{1.0f};
+    if (mouse_held_thumb_) {
+      emphasis = 1.8f;
+    } else if (hovering_thumb_) {
+      emphasis = 1.25f;
+    }
+    float track_height;
+    auto thumb = FadingThumbRect_(child_offset_v_smoothed_, &track_height);
+    thumb_.Draw(pass, draw_transparent, thumb.l, thumb.b, thumb.width(),
+                thumb.height(), emphasis, Rect(l, b, l + width(), t));
   }
 
   // Scroll bars.
-  if (amount_visible_ > 0 && amount_visible_ < 1) {
+  if (scrollbar_visible_ && !fading_scrollbar_ && amount_visible_ > 0
+      && amount_visible_ < 1) {
     // Scroll thumb at depth 0.8 - 0.9.
     {
       float sb_thumb_height = amount_visible_ * (height() - 2 * border_height_);
@@ -1010,8 +1186,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetColor(color_red_ * c_scale, color_green_ * c_scale,
                    color_blue_ * c_scale, 1.0f);
 
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesUiAtlas));
+        c.SetTexture(g_ui_v1->assets().ui_atlas.get());
         {
           auto scissor =
               c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
@@ -1020,16 +1195,17 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
           c.Scale(thumb_width_, thumb_height_, 0.1f);
           if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                sb_thumb_height > 100
-                    ? base::BuiltinMeshID::kMeshesScrollBarThumbTransparent
-                    : base::BuiltinMeshID::
-                          kMeshesScrollBarThumbShortTransparent));
+            c.DrawMeshAsset(
+                (sb_thumb_height > 100
+                     ? g_ui_v1->assets().scroll_bar_thumb_transparent
+                     : g_ui_v1->assets().scroll_bar_thumb_short_transparent)
+                    .get());
           } else {
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                sb_thumb_height > 100
-                    ? base::BuiltinMeshID::kMeshesScrollBarThumbOpaque
-                    : base::BuiltinMeshID::kMeshesScrollBarThumbShortOpaque));
+            c.DrawMeshAsset(
+                (sb_thumb_height > 100
+                     ? g_ui_v1->assets().scroll_bar_thumb_opaque
+                     : g_ui_v1->assets().scroll_bar_thumb_short_opaque)
+                    .get());
           }
         }
       }
@@ -1037,7 +1213,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   // Outline shadow (depth 0.9 to 1.0).
-  if (draw_transparent) {
+  if (draw_transparent && edge_style_ == EdgeStyle::kOutline) {
     if (shadow_dirty_) {
       float r2 = l + width();
       float l2 = l;
@@ -1054,20 +1230,18 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       outline_center_y_ = b2 - b_border + 0.5f * outline_height_;
       shadow_dirty_ = false;
     }
-    {
+    if (float border_opacity = DrawnBorderOpacity_(); border_opacity > 0.0f) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
-      auto* tex = g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesScrollWidget);
-      float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
-      c.SetColor(cmul, cmul, cmul, border_opacity_);
+      auto* tex = g_ui_v1->assets().scroll_widget.get();
+      float cmul = tex->premultiplied() ? border_opacity : 1.0f;
+      c.SetColor(cmul, cmul, cmul, border_opacity);
       c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.9f);
         c.Scale(outline_width_, outline_height_, 0.1f);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-            base::BuiltinMeshID::kMeshesSoftEdgeOutside));
+        c.DrawMeshAsset(g_ui_v1->assets().soft_edge_outside.get());
       }
     }
   }
@@ -1079,7 +1253,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                + std::abs(sinf(static_cast<float>(current_time_millisecs)
                                * 0.006467f))
                      * 0.2f)
-              * border_opacity_;
+              * DrawnBorderOpacity_();
     if (glow_dirty_) {
       float r2 = l + width();
       float l2 = l;
@@ -1101,17 +1275,186 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesScrollWidgetGlow));
+    c.SetTexture(g_ui_v1->assets().scroll_widget_glow.get());
     {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
+      c.DrawMeshAsset(g_ui_v1->assets().soft_edge_outside.get());
     }
     c.Submit();
   }
+}
+
+void ScrollWidget::DrawFadeEdges_(base::RenderPass* pass) {
+  ContainerWidget::BackingDrawInfo backing;
+  ContainerWidget* parent = parent_widget();
+  if (parent == nullptr || !parent->GetBackingDrawInfo(&backing)) {
+    BA_LOG_ONCE(LogName::kBaUI, LogLevel::kWarning,
+                "ScrollWidget fade edge style needs a parent container"
+                " drawing a backing; drawing no edges.");
+    return;
+  }
+  float bg_width = backing.rect.width();
+  float bg_height = backing.rect.height();
+  if (bg_width <= 0.0f || bg_height <= 0.0f) {
+    return;
+  }
+
+  float w = width();
+  float h = height();
+  float s = scale();
+  std::array<float, 17> inputs{w,
+                               h,
+                               tx(),
+                               ty(),
+                               s,
+                               backing.rect.l,
+                               backing.rect.b,
+                               backing.rect.r,
+                               backing.rect.t,
+                               edge_fade_left_,
+                               edge_fade_bottom_,
+                               edge_fade_right_,
+                               edge_fade_top_,
+                               edge_fade_inset_left_,
+                               edge_fade_inset_bottom_,
+                               edge_fade_inset_right_,
+                               edge_fade_inset_top_};
+  if (!fade_edge_mesh_.exists() || inputs != fade_edge_mesh_inputs_) {
+    fade_edge_mesh_inputs_ = inputs;
+
+    // Along each axis our band is: a solid inset, a fade, the open
+    // middle, a fade, and a solid inset. That gives a 5x5 grid of cells
+    // (any may be empty), of which we skip the middle one.
+    // Any side with a band also reaches a bit past our edge: our content
+    // clip snaps to whole pixels and can let a sliver more through than
+    // our exact bounds. (Out there we just draw backing over itself.)
+    auto grid_lines = [](float size, float inset_lo, float fade_lo,
+                         float inset_hi, float fade_hi) {
+      float pad_lo = (inset_lo + fade_lo > 0.0f) ? kFadeEdgeOverlap : 0.0f;
+      float pad_hi = (inset_hi + fade_hi > 0.0f) ? kFadeEdgeOverlap : 0.0f;
+      std::array<float, 6> lines{-pad_lo,
+                                 inset_lo,
+                                 inset_lo + fade_lo,
+                                 size - inset_hi - fade_hi,
+                                 size - inset_hi,
+                                 size + pad_hi};
+      for (int i = 1; i < 5; ++i) {
+        lines[i] = std::clamp(lines[i], std::max(lines[i - 1], 0.0f), size);
+      }
+      lines[5] = std::max(lines[5], lines[4]);
+      return lines;
+    };
+    auto xs = grid_lines(w, edge_fade_inset_left_, edge_fade_left_,
+                         edge_fade_inset_right_, edge_fade_right_);
+    auto ys = grid_lines(h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                         edge_fade_inset_top_, edge_fade_top_);
+
+    // We draw in our own local space, which maps into our parent's
+    // child space (where its backing rect lives) as our translate plus
+    // our scale times the point. Texture v runs top-down.
+    auto u_at = [&](float x) {
+      return static_cast<uint16_t>(std::lround(
+          std::clamp((tx() + s * x - backing.rect.l) / bg_width, 0.0f, 1.0f)
+          * 65535.0f));
+    };
+    auto v_at = [&](float y) {
+      return static_cast<uint16_t>(std::lround(
+          std::clamp(1.0f - (ty() + s * y - backing.rect.b) / bg_height, 0.0f,
+                     1.0f)
+          * 65535.0f));
+    };
+
+    // Our fade coords (uv2; see SimpleComponent::SetUV2Fade()): along
+    // each axis, 0 where we draw fully (out to an edge) up to 1 once a
+    // fade has run its course; the nearer side's fade wins. A side with
+    // an inset but no fade cuts off sharply at the inset, so cells
+    // decide that by their middle (``mid``).
+    auto fade_coord = [](float p, float mid, float size, float inset_lo,
+                         float fade_lo, float inset_hi, float fade_hi) {
+      auto side_amt = [](float d, float dmid, float inset, float fade) {
+        if (fade > 0.0f) {
+          return std::clamp((d - inset) / fade, 0.0f, 1.0f);
+        }
+        return dmid < inset ? 0.0f : 1.0f;
+      };
+      float amt = std::min(side_amt(p, mid, inset_lo, fade_lo),
+                           side_amt(size - p, size - mid, inset_hi, fade_hi));
+      return static_cast<uint16_t>(std::lround(amt * 65535.0f));
+    };
+
+    std::vector<base::VertexDualTextureFull> verts;
+    std::vector<uint16_t> indices;
+    for (int row = 0; row < 5; ++row) {
+      if (ys[row + 1] <= ys[row]) {
+        continue;
+      }
+      for (int col = 0; col < 5; ++col) {
+        if ((row == 2 && col == 2) || xs[col + 1] <= xs[col]) {
+          continue;
+        }
+        float x0 = xs[col];
+        float x1 = xs[col + 1];
+        float y0 = ys[row];
+        float y1 = ys[row + 1];
+        float xmid = (x0 + x1) * 0.5f;
+        float ymid = (y0 + y1) * 0.5f;
+        uint16_t fx0 =
+            fade_coord(x0, xmid, w, edge_fade_inset_left_, edge_fade_left_,
+                       edge_fade_inset_right_, edge_fade_right_);
+        uint16_t fx1 =
+            fade_coord(x1, xmid, w, edge_fade_inset_left_, edge_fade_left_,
+                       edge_fade_inset_right_, edge_fade_right_);
+        uint16_t fy0 =
+            fade_coord(y0, ymid, h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                       edge_fade_inset_top_, edge_fade_top_);
+        uint16_t fy1 =
+            fade_coord(y1, ymid, h, edge_fade_inset_bottom_, edge_fade_bottom_,
+                       edge_fade_inset_top_, edge_fade_top_);
+
+        // Nothing to draw where we've fully faded along both axes.
+        if (fx0 == 65535 && fx1 == 65535 && fy0 == 65535 && fy1 == 65535) {
+          continue;
+        }
+        auto base = static_cast<uint16_t>(verts.size());
+        verts.push_back({{x0, y0, 0.0f}, {u_at(x0), v_at(y0)}, {fx0, fy0}});
+        verts.push_back({{x1, y0, 0.0f}, {u_at(x1), v_at(y0)}, {fx1, fy0}});
+        verts.push_back({{x1, y1, 0.0f}, {u_at(x1), v_at(y1)}, {fx1, fy1}});
+        verts.push_back({{x0, y1, 0.0f}, {u_at(x0), v_at(y1)}, {fx0, fy1}});
+        for (uint16_t i : {0, 1, 2, 0, 2, 3}) {
+          indices.push_back(static_cast<uint16_t>(base + i));
+        }
+      }
+    }
+
+    // All fades zero; nothing to draw.
+    if (indices.empty()) {
+      fade_edge_mesh_.Clear();
+      return;
+    }
+    fade_edge_mesh_ = Object::New<base::MeshIndexedDualTextureFull>();
+    fade_edge_mesh_->SetIndexData(Object::New<base::MeshIndexBuffer16>(
+        static_cast<int>(indices.size()), indices.data()));
+    fade_edge_mesh_->SetData(
+        Object::New<base::MeshBuffer<base::VertexDualTextureFull>>(
+            static_cast<int>(verts.size()), verts.data()));
+  }
+  if (!fade_edge_mesh_.exists()) {
+    return;
+  }
+
+  base::SimpleComponent c(pass);
+  c.SetTransparent(true);
+  c.SetColor(backing.red, backing.green, backing.blue, backing.alpha);
+  c.SetTexture(backing.texture);
+  c.SetUV2Fade(true);
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(0.0f, 0.0f, kFadeEdgeBandDepth);
+    c.DrawMesh(fade_edge_mesh_.get());
+  }
+  c.Submit();
 }
 
 }  // namespace ballistica::ui_v1

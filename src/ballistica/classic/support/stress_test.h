@@ -13,7 +13,11 @@ namespace ballistica::classic {
 
 class StressTest {
  public:
-  void Set(bool enable, int player_count, bool attract_mode);
+  /// With churn, fake players trickle in and occasionally leave (the
+  /// in-game stress test, which is about surviving lobby traffic);
+  /// without it, all player_count inputs appear at once and stay, so
+  /// a benchmark run fills immediately and holds a steady population.
+  void Set(bool enable, int player_count, bool attract_mode, bool churn);
   void Update();
 
  private:
@@ -26,6 +30,7 @@ class StressTest {
   int last_total_frames_rendered_{};
   bool stress_testing_{};
   bool attract_mode_{};
+  bool churn_{true};
   Object::Ref<base::AppTimer> update_timer_{};
 };
 

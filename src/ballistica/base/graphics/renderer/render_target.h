@@ -37,7 +37,7 @@ class RenderTarget : public Object {
 
   /// The region of this target that game content occupies (pixels,
   /// bottom-left origin). For the screen target this can be an inset
-  /// sub-rect (tv-border mode / aspect-ratio limiting); everything
+  /// sub-rect (aspect-ratio limiting); everything
   /// outside it is kept cleared to black. For offscreen targets it is
   /// always the full target.
   auto content_rect() const -> Rect;

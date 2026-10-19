@@ -73,7 +73,7 @@ class PartyWindow(bui.Window):
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button
@@ -207,7 +207,7 @@ class PartyWindow(bui.Window):
             on_activate_call=self._send_chat_message,
         )
 
-        bui.textwidget(edit=txt, on_return_press_call=btn.activate)
+        bui.textwidget(edit=txt, on_submit_call=btn.activate)
         bui.widget(edit=txt, down_widget=btn)
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
@@ -229,6 +229,8 @@ class PartyWindow(bui.Window):
             scale=0.55,
             size=(900, 13),
             text=msg,
+            # Peer-supplied text; never compile it as a resource string.
+            literal=True,
             autoselect=True,
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,
@@ -573,7 +575,7 @@ class PartyWindow(bui.Window):
                 'name': name,
             }
             config.commit()
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 _classicassets.strings.gather.added_to_favorites(name=name),
                 color=(0, 1, 0),
@@ -643,5 +645,5 @@ class PartyWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self.close()

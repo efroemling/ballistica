@@ -1,6 +1,6 @@
 # Mobile String Editing
 
-**Description:** How the platform text-edit dialogs on iOS/tvOS/Android are wired to the engine's StringEditAdapter — the apply-vs-submit split, the kind system that gates it, and the constraints that keep the editor from wedging the game.
+**Description:** How the iOS/tvOS/Android text-edit dialogs are wired to the engine's StringEditAdapter, and the apply-vs-submit split that keeps an editor from wedging the game.
 
 When an editable text widget is activated on a platform with a native
 editor (`AppPlatform::HaveStringEditor()`), the engine hands the edit to

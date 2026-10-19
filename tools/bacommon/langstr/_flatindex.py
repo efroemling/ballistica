@@ -25,11 +25,12 @@ from bisect import bisect_right
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from typing import Callable
 
     #: Supplies a package's language-string count, or None if this end
     #: has no language table for it.
-    type CountSource = Callable[[str], 'int | None']
+    type CountSource = Callable[[ApverNum], 'int | None']
 
 
 #: First engine build that understands folded (single-integer)
@@ -56,7 +57,7 @@ class LangStrFlatIndexContext:
     first use.
     """
 
-    def __init__(self, packages: list[str], counts: 'CountSource') -> None:
+    def __init__(self, packages: list[ApverNum], counts: 'CountSource') -> None:
         self._packages = list(packages)
         self._counts = counts
         self._offsets: list[int] | None = None
@@ -67,8 +68,8 @@ class LangStrFlatIndexContext:
             return
         offsets: list[int] = []
         total = 0
-        for apverid in self._packages:
-            count = self._counts(apverid)
+        for apvernum in self._packages:
+            count = self._counts(apvernum)
             if count is None:
                 # A package this end has no table for. Zero-width rather
                 # than an error, so the failure lands on a reference
@@ -137,14 +138,14 @@ class LangStrFlatIndexContext:
         """
         self._prepare()
         hasher = hashlib.sha256()
-        for apverid, size in zip(self._packages, self._sizes, strict=True):
-            hasher.update(f'{apverid}:{size}\n'.encode())
+        for apvernum, size in zip(self._packages, self._sizes, strict=True):
+            hasher.update(f'{apvernum}:{size}\n'.encode())
         return hasher.hexdigest()[:16]
 
     def describe_domain(self) -> str:
         """Per-package string counts, for diagnosing a digest mismatch."""
         self._prepare()
         return ', '.join(
-            f'{apverid}={size}'
-            for apverid, size in zip(self._packages, self._sizes, strict=True)
+            f'{apvernum}={size}'
+            for apvernum, size in zip(self._packages, self._sizes, strict=True)
         )

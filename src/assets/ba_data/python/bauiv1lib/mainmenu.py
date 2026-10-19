@@ -7,7 +7,7 @@ import logging
 
 import bauiv1 as bui
 from bauiv1 import _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -91,10 +91,10 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.account.settings as _unused5
         import bauiv1lib.credits as _unused6
         import bauiv1lib.help as _unused7
-        import bauiv1lib.settings.allsettings as _unused8
+        import bauiv1lib.settings.allsettingsdocui as _unused8
         import bauiv1lib.gather as _unused9
         import bauiv1lib.watch as _unused10
-        import bauiv1lib.play as _unused11
+        import bauiv1lib.playdocui as _unused11
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app
@@ -117,7 +117,7 @@ class MainMenuWindow(bui.MainWindow):
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            _builtinassets.audio.swish.get().play()
+                            bui.play_swish()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(
@@ -183,11 +183,13 @@ class MainMenuWindow(bui.MainWindow):
                 v_align='top',
             )
 
+        # On iOS, soft-quit support means iPad, where quitting closes our
+        # window (a standard action there); iPhone apps must never quit.
         self._have_quit_button = app.classic.platform in (
             'windows',
             'mac',
             'linux',
-        )
+        ) or (app.classic.platform == 'ios' and app.env.supports_soft_quit)
 
         if not classic.did_menu_intro:
             self._tdelay = 1.6
@@ -318,7 +320,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             draw_controller=self._gather_button,
             color=(0.75, 1.0, 0.7),
@@ -339,7 +341,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=_builtinassets.textures.users_button.get(),
+            texture=_uiv1assets.textures.users_button.get(),
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
 
@@ -415,7 +417,7 @@ class MainMenuWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
-            scale=0.75,
+            scale=0.675,
             transition_delay=thistdelay,
             color=(0.75, 1.0, 0.7),
             draw_controller=self._watch_button,
@@ -436,7 +438,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=_classicassets.textures.tv.get(),
+            texture=_uiv1assets.textures.tv.get(),
         )
 
         # Credits button.
@@ -479,7 +481,11 @@ class MainMenuWindow(bui.MainWindow):
                 label=(
                     _classicassets.strings.main_menu.quit
                     if 'Mac' in app.classic.legacy_user_agent_string
-                    else _classicassets.strings.main_menu.exit_game
+                    else (
+                        _classicassets.strings.main_menu.close_game
+                        if app.classic.platform == 'ios'
+                        else _classicassets.strings.main_menu.exit_game
+                    )
                 ),
                 on_activate_call=self._quit,
                 transition_delay=thistdelay,
@@ -556,8 +562,13 @@ class MainMenuWindow(bui.MainWindow):
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.play import PlayWindow
+        from bauiv1lib.playdocui import PlayController, Root
 
         self.main_window_replace(
-            lambda: PlayWindow(origin_widget=self._play_button)
+            lambda: PlayController().create_window(
+                Root(),
+                origin_widget=self._play_button,
+                auxiliary_style=False,
+            ),
+            extra_type_id=PlayController.get_window_extra_type_id(),
         )

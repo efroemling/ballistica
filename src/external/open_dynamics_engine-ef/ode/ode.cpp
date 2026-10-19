@@ -398,6 +398,7 @@ dxBody *dBodyCreate (dxWorld *w)
   dBodySetAutoDisableDefaults (b);	// must do this after adding to world
   b->adis_stepsleft = b->adis.idle_steps;
   b->adis_timeleft = b->adis.idle_time;
+  b->solver_iterations = 0;
 
   return b;
 }
@@ -1059,6 +1060,20 @@ void dBodySetAutoDisableFlag (dBodyID b, int do_auto_disable)
 }
 
 
+void dBodySetSolverIterations (dBodyID b, int iterations)
+{
+	dAASSERT(b);
+	b->solver_iterations = iterations > 0 ? iterations : 0;
+}
+
+
+int dBodyGetSolverIterations (dBodyID b)
+{
+	dAASSERT(b);
+	return b->solver_iterations;
+}
+
+
 void dBodySetAutoDisableDefaults (dBodyID b)
 {
 	dAASSERT(b);
@@ -1223,7 +1238,10 @@ void dJointGroupEmpty (dJointGroupID group)
 
   dAASSERT (group);
   int i;
-  dxJoint **jlist = (dxJoint**) ALLOCA (group->num * sizeof(dxJoint*));
+  // ericf change: heap for big groups instead of always alloca (see
+  // TRIXY_ALLOCA).
+  dxJoint **jlist;
+  TRIXY_ALLOCA(jlist, dxJoint*, group->num * sizeof(dxJoint*));
   dxJoint *j = (dxJoint*) group->stack.rewind();
   for (i=0; i < group->num; i++) {
     jlist[i] = j;

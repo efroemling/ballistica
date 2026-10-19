@@ -146,7 +146,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             if order_change:
                 bs.timer(tdelay + delay2 + 0.1, self._cymbal_sound.play)
             img = Image(
-                player.get_icon(),
+                player.get_icon_depiction() or player.get_icon(),
                 position=(
                     ts_h_offs - 72.0 * scale,
                     y_base + (v_offs + 15.0) * scale,
@@ -180,7 +180,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ),
             )
             txt = Text(
-                player.getname(full=True),
+                player.get_name_depiction() or player.getname(full=True),
                 maxwidth=130.0,
                 scale=0.75 * scale,
                 position=(

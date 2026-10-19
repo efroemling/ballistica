@@ -1,479 +1,280 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""UIs for debugging purposes."""
+"""Benchmarks and stress tests, as a doc-ui page.
+
+A client-local doc-ui domain like the other settings pages: the page
+is authored here, the stress-test options live in typed page state,
+and each button is a typed local action.
+"""
 
 import logging
-from typing import cast, override
+from enum import Enum
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, override, assert_never
 
+from efro.dataclassio import ioprepped, IOAttrs
+import bacommon.docui.v2 as dui2
+from bacommon.docui.presets import section_button, button_stack
+from bacommon.docui.routes import (
+    DocUIRoute,
+    DocUILocalActionBase,
+    DocUIState,
+    family_members,
+)
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
-from bauiv1lib.utils import get_screen_margins, scroll_fade_top
+from bauiv1lib.docui import TypedDocUIController
 
-import bascenev1 as bs
+if TYPE_CHECKING:
+    from typing import Literal
+
+    from bacommon.docui import DocUIResponse
+    from bacommon.langstr import LangStrSpec
+
+    from bauiv1lib.docui import DocUILocalAction
 
 _bmstrs = _classicassets.strings.settings.benchmarks
 
 
-class BenchmarksAndStressTestsWindow(bui.MainWindow):
-    """Window for launching benchmarks or stress tests."""
+class StressPlaylistType(Enum):
+    """Kinds of playlist a stress test can run (run_stress_test's values)."""
 
-    def __init__(
+    RANDOM = 'Random'
+    TEAMS = 'Teams'
+    FREE_FOR_ALL = 'Free-For-All'
+
+
+class BenchmarksRoute(DocUIRoute):
+    """Family class for the benchmarks routes."""
+
+    @override
+    @classmethod
+    def get_route_types(cls) -> tuple[type[DocUIRoute], ...]:
+        return family_members(AnyBenchmarksRoute)
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # Two benchmark buttons plus the stress-test options; too many
+        # rows for the shorter small layouts.
+        return dui2.WindowLayout.SMALL_TALLER
+
+
+@ioprepped
+@dataclass
+class Root(BenchmarksRoute, path='/'):
+    """The benchmarks page."""
+
+
+AnyBenchmarksRoute = Root
+
+
+@ioprepped
+@dataclass
+class BenchmarksState(DocUIState, state_id='settings.benchmarks'):
+    """The stress-test options."""
+
+    playlist_type: Annotated[StressPlaylistType, IOAttrs('pt')] = (
+        StressPlaylistType.RANDOM
+    )
+    playlist_name: Annotated[str, IOAttrs('pn')] = '__default__'
+    player_count: Annotated[float, IOAttrs('pc')] = 8.0
+
+    #: Seconds.
+    round_duration: Annotated[float, IOAttrs('rd')] = 30.0
+
+
+class BenchmarksLocalAction(DocUILocalActionBase):
+    """Family class for the benchmarks local-actions."""
+
+    @override
+    @classmethod
+    def get_action_types(cls) -> tuple[type[DocUILocalActionBase], ...]:
+        return family_members(AnyBenchmarksLocalAction)
+
+
+@ioprepped
+@dataclass
+class RunCpuBenchmark(BenchmarksLocalAction, name='cpu'):
+    """Run the cpu benchmark."""
+
+
+@ioprepped
+@dataclass
+class RunMediaReloadBenchmark(BenchmarksLocalAction, name='media_reload'):
+    """Run the media-reload benchmark."""
+
+
+@ioprepped
+@dataclass
+class RunStressTest(BenchmarksLocalAction, name='stress_test'):
+    """Run a stress test with the options in page state."""
+
+
+AnyBenchmarksLocalAction = (
+    RunCpuBenchmark | RunMediaReloadBenchmark | RunStressTest
+)
+
+
+class BenchmarksController(
+    TypedDocUIController[AnyBenchmarksRoute, AnyBenchmarksLocalAction]
+):
+    """Doc-ui controller for the benchmarks page."""
+
+    @override
+    @classmethod
+    def get_route_type(cls) -> type[BenchmarksRoute]:
+        return BenchmarksRoute
+
+    @override
+    @classmethod
+    def get_local_action_type(cls) -> type[BenchmarksLocalAction]:
+        return BenchmarksLocalAction
+
+    @override
+    def get_window_toolbar_visibility(
         self,
-        transition: str | None = 'in_right',
-        origin_widget: bui.Widget | None = None,
-    ):
-        # pylint: disable=cyclic-import
-        from bauiv1lib import popup
-
-        uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 1200 if uiscale is bui.UIScale.SMALL else 580
-        self._height = height = (
-            900
-            if uiscale is bui.UIScale.SMALL
-            else 420 if uiscale is bui.UIScale.MEDIUM else 520
-        )
-
-        self._stress_test_game_type = 'Random'
-        self._stress_test_playlist = '__default__'
-        self._stress_test_player_count = 8
-        self._stress_test_round_duration = 30
-
-        # Do some fancy math to fill all available screen area up to the
-        # size of our backing container. This lets us fit to the exact
-        # screen shape at small ui scale.
-        screensize = bui.get_virtual_screen_size()
-        scale = (
-            2.32
-            if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-        )
-        # Calc screen size in our local container space and clamp to a
-        # bit smaller than our container size.
-        target_width = min(self._width - 70, screensize[0] / scale)
-        target_height = min(self._height - 70, screensize[1] / scale)
-
-        # To get top/left coords, go to the center of our window and
-        # offset by half the width/height of our target area.
-        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
-
-        self._scroll_width = target_width
-        self._scroll_height = target_height - 31
-        self._scroll_bottom = yoffs - 60 - self._scroll_height
-
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds.
-        margin_left, margin_right, margin_bottom, margin_top = (
-            get_screen_margins(scale)
-            if uiscale is bui.UIScale.SMALL
-            else (0.0, 0.0, 0.0, 0.0)
-        )
-
-        # In small ui we also extend the scroll's top edge all the way
-        # up to the top of the screen; soft blobs then keep our title
-        # legible over any content scrolled up there. Content gets
-        # padded to stay exactly where it would be with the top edge
-        # in its standard spot below the title.
-        top_extend = (
-            (0.5 * self._height + 0.5 * (screensize[1] / scale))
-            - (self._scroll_bottom + self._scroll_height)
-            + margin_top
-            if uiscale is bui.UIScale.SMALL
-            else 0.0
-        )
-
-        # A bit of extra padding above our content so the soft blobs
-        # fading things out under the title don't eat into our top
-        # button when scrolled to the top.
-        top_pad = 15.0
-
-        self._sub_width = min(510.0, self._scroll_width)
-        self._sub_height = 520 + margin_bottom + top_extend + top_pad
-
-        self._r = 'debugWindow'
-        uiscale = bui.app.ui_v1.uiscale
-        super().__init__(
-            root_widget=bui.containerwidget(
-                size=(width, height),
-                scale=scale,
-                toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
-                ),
-            ),
-            transition=transition,
-            origin_widget=origin_widget,
-            # We're affected by screen size only at small ui-scale.
-            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
-        )
-
-        if bui.app.ui_v1.uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-            self._back_button = bui.get_special_widget('back_button')
-        else:
-            self._back_button = btn = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                position=(40, yoffs - 53),
-                size=(60, 60),
-                scale=0.8,
-                autoselect=True,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
-                on_activate_call=self.main_window_back,
-            )
-            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            highlight=False,
-            size=(
-                self._scroll_width + margin_left + margin_right,
-                self._scroll_height + margin_bottom + top_extend,
-            ),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
-                self._scroll_bottom - margin_bottom,
-            ),
-            border_opacity=0.4,
-            center_small_content_horizontally=True,
-        )
-        bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
-
-        # Our scroll area extends up past our title; these soft blobs
-        # (plus the title being drawn after the scroll area) keep the
-        # title legible over content scrolled up there. Note that we
-        # intentionally use the original un-margin-extended scroll
-        # geometry here so the blobs coincide with the title, which
-        # doesn't move when we extend out into screen margins.
-        if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                # Nudge the blobs up so their most-opaque core sits
-                # just above our title instead of below it.
-                yoffs_extra=30.0,
-            )
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (45 if uiscale is bui.UIScale.SMALL else 30),
-            ),
-            size=(0, 0),
-            maxwidth=360,
-            scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=_bmstrs.title,
-            h_align='center',
-            v_align='center',
-            color=bui.app.ui_v1.title_color,
-        )
-
-        self._subcontainer = bui.containerwidget(
-            parent=self._scrollwidget,
-            size=(self._sub_width, self._sub_height),
-            background=False,
-        )
-
-        # (start below the top-edge extension plus padding so content
-        # sits just below where the soft blobs fade things out).
-        v = self._sub_height - top_extend - top_pad - 70
-        button_width = 300
-        btn = bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|cpu',
-            position=((self._sub_width - button_width) * 0.5, v),
-            size=(button_width, 60),
-            autoselect=True,
-            label=_bmstrs.run_cpu_benchmark,
-            on_activate_call=self._run_cpu_benchmark_pressed,
-        )
-        bui.widget(
-            edit=btn, up_widget=self._back_button, left_widget=self._back_button
-        )
-        v -= 60
-
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|mediareload',
-            position=((self._sub_width - button_width) * 0.5, v),
-            size=(button_width, 60),
-            autoselect=True,
-            label=_bmstrs.run_media_reload_benchmark,
-            on_activate_call=self._run_media_reload_benchmark_pressed,
-        )
-        v -= 60
-
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(self._sub_width * 0.5, v + 22),
-            size=(0, 0),
-            text=_bmstrs.stress_test,
-            maxwidth=200,
-            color=bui.app.ui_v1.heading_color,
-            scale=0.85,
-            h_align='center',
-            v_align='center',
-        )
-        v -= 45
-
-        x_offs = 165
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(x_offs - 10, v + 22),
-            size=(0, 0),
-            text=_bmstrs.playlist_type,
-            maxwidth=130,
-            color=bui.app.ui_v1.heading_color,
-            scale=0.65,
-            h_align='right',
-            v_align='center',
-        )
-
-        popup.PopupMenu(
-            parent=self._subcontainer,
-            button_id=f'{self.main_window_id_prefix}|playlisttype',
-            position=(x_offs, v),
-            width=150,
-            choices=['Random', 'Teams', 'Free-For-All'],
-            choices_display=[
-                _commonassets.strings.values.random,
-                _classicassets.strings.play_modes.teams,
-                _classicassets.strings.play_modes.free_for_all,
-            ],
-            current_choice='Auto',
-            on_value_change_call=self._stress_test_game_type_selected,
-        )
-
-        v -= 46
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(x_offs - 10, v + 22),
-            size=(0, 0),
-            text=_bmstrs.playlist_name,
-            maxwidth=130,
-            color=bui.app.ui_v1.heading_color,
-            scale=0.65,
-            h_align='right',
-            v_align='center',
-        )
-
-        self._stress_test_playlist_name_field = bui.textwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|playlistname',
-            position=(x_offs + 5, v - 5),
-            size=(250, 46),
-            text=self._stress_test_playlist,
-            h_align='left',
-            v_align='center',
-            autoselect=True,
-            color=(0.9, 0.9, 0.9, 1.0),
-            description=_bmstrs.playlist_description,
-            editable=True,
-            padding=4,
-        )
-        v -= 29
-        x_sub = 60
-
-        # Player count.
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(x_offs - 10, v),
-            size=(0, 0),
-            text=_bmstrs.player_count,
-            color=(0.8, 0.8, 0.8, 1.0),
-            h_align='right',
-            v_align='center',
-            scale=0.65,
-            maxwidth=130,
-        )
-        self._stress_test_player_count_text = bui.textwidget(
-            parent=self._subcontainer,
-            position=(246 - x_sub, v - 14),
-            size=(60, 28),
-            editable=False,
-            color=(0.3, 1.0, 0.3, 1.0),
-            h_align='right',
-            v_align='center',
-            text=str(self._stress_test_player_count),
-            padding=2,
-        )
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|pdec',
-            position=(330 - x_sub, v - 11),
-            size=(28, 28),
-            label='-',
-            autoselect=True,
-            on_activate_call=bui.CallStrict(
-                self._stress_test_player_count_decrement
-            ),
-            repeat=True,
-            enable_sound=True,
-        )
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|pinc',
-            position=(380 - x_sub, v - 11),
-            size=(28, 28),
-            label='+',
-            autoselect=True,
-            on_activate_call=bui.CallStrict(
-                self._stress_test_player_count_increment
-            ),
-            repeat=True,
-            enable_sound=True,
-        )
-        v -= 42
-
-        # Round duration.
-        bui.textwidget(
-            parent=self._subcontainer,
-            position=(x_offs - 10, v),
-            size=(0, 0),
-            text=_bmstrs.round_duration,
-            color=(0.8, 0.8, 0.8, 1.0),
-            h_align='right',
-            v_align='center',
-            scale=0.65,
-            maxwidth=130,
-        )
-        self._stress_test_round_duration_text = bui.textwidget(
-            parent=self._subcontainer,
-            position=(246 - x_sub, v - 14),
-            size=(60, 28),
-            editable=False,
-            color=(0.3, 1.0, 0.3, 1.0),
-            h_align='right',
-            v_align='center',
-            text=str(self._stress_test_round_duration),
-            padding=2,
-        )
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|rdurdec',
-            position=(330 - x_sub, v - 11),
-            size=(28, 28),
-            label='-',
-            autoselect=True,
-            on_activate_call=bui.CallStrict(
-                self._stress_test_round_duration_decrement
-            ),
-            repeat=True,
-            enable_sound=True,
-        )
-        bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|rdurinc',
-            position=(380 - x_sub, v - 11),
-            size=(28, 28),
-            label='+',
-            autoselect=True,
-            on_activate_call=bui.CallStrict(
-                self._stress_test_round_duration_increment
-            ),
-            repeat=True,
-            enable_sound=True,
-        )
-        v -= 82
-        btn = bui.buttonwidget(
-            parent=self._subcontainer,
-            id=f'{self.main_window_id_prefix}|runstress',
-            position=((self._sub_width - button_width) * 0.5, v),
-            size=(button_width, 60),
-            autoselect=True,
-            label=_bmstrs.run_stress_test,
-            on_activate_call=self._stress_test_pressed,
-        )
-        bui.widget(edit=btn, show_buffer_bottom=50)
+    ) -> Literal['menu_full', 'menu_minimal']:
+        # As the other settings windows: minimal mid-game.
+        return 'menu_full' if bui.in_main_menu() else 'menu_minimal'
 
     @override
-    def get_main_window_state(self) -> bui.MainWindowState:
-        # Support recreating our window for back/refresh purposes.
-        cls = type(self)
-        return bui.BasicMainWindowState(
-            create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
-            )
-        )
+    def fulfill_route(self, route: AnyBenchmarksRoute) -> DocUIResponse:
+        match route:
+            case Root():
+                _preload_modules()
+                return _page()
+            case _:
+                assert_never(route)
 
     @override
-    def main_window_should_preserve_selection(self) -> bool:
-        return True
-
-    def _stress_test_player_count_decrement(self) -> None:
-        self._stress_test_player_count = max(
-            1, self._stress_test_player_count - 1
-        )
-        bui.textwidget(
-            edit=self._stress_test_player_count_text,
-            text=str(self._stress_test_player_count),
-        )
-
-    def _stress_test_player_count_increment(self) -> None:
-        self._stress_test_player_count = self._stress_test_player_count + 1
-        bui.textwidget(
-            edit=self._stress_test_player_count_text,
-            text=str(self._stress_test_player_count),
-        )
-
-    def _stress_test_round_duration_decrement(self) -> None:
-        self._stress_test_round_duration = max(
-            10, self._stress_test_round_duration - 10
-        )
-        bui.textwidget(
-            edit=self._stress_test_round_duration_text,
-            text=str(self._stress_test_round_duration),
-        )
-
-    def _stress_test_round_duration_increment(self) -> None:
-        self._stress_test_round_duration = self._stress_test_round_duration + 10
-        bui.textwidget(
-            edit=self._stress_test_round_duration_text,
-            text=str(self._stress_test_round_duration),
-        )
-
-    def _stress_test_game_type_selected(self, game_type: str) -> None:
-        self._stress_test_game_type = game_type
-
-    def _run_cpu_benchmark_pressed(self) -> None:
-        if bui.app.classic is None:
-            logging.warning('run-cpu-benchmark requires classic')
+    def run_local_action(
+        self, action: AnyBenchmarksLocalAction, context: DocUILocalAction
+    ) -> None:
+        classic = bui.app.classic
+        if classic is None:
+            logging.warning('%s requires classic.', type(action).__name__)
             return
-        bui.app.classic.run_cpu_benchmark()
+        match action:
+            case RunCpuBenchmark():
+                classic.run_cpu_benchmark()
+            case RunMediaReloadBenchmark():
+                classic.run_media_reload_benchmark()
+            case RunStressTest():
+                _run_stress_test(context)
+            case _:
+                assert_never(action)
 
-    def _run_media_reload_benchmark_pressed(self) -> None:
-        if bui.app.classic is None:
-            logging.warning('run-media-reload-benchmark requires classic')
-            return
-        bui.app.classic.run_media_reload_benchmark()
 
-    def _stress_test_pressed(self) -> None:
-        from bascenev1lib.mainmenu import MainMenuActivity
+def _preload_modules() -> None:
+    """Import what our actions use here, off the logic thread."""
+    # pylint: disable=cyclic-import
+    import bascenev1 as _unused1
+    from bascenev1lib import mainmenu as _unused2
 
-        if bui.app.classic is None:
-            logging.warning('stress-test requires classic')
-            return
 
-        activity = bs.get_foreground_host_activity()
-        if isinstance(activity, MainMenuActivity):
-            bui.app.classic.run_stress_test(
-                playlist_type=self._stress_test_game_type,
-                playlist_name=cast(
-                    str,
-                    bui.textwidget(query=self._stress_test_playlist_name_field),
+def _playlist_type_label(ptype: StressPlaylistType) -> LangStrSpec:
+    match ptype:
+        case StressPlaylistType.RANDOM:
+            return _commonassets.strings.values.random.spec
+        case StressPlaylistType.TEAMS:
+            return _classicassets.strings.play_modes.teams.spec
+        case StressPlaylistType.FREE_FOR_ALL:
+            return _classicassets.strings.play_modes.free_for_all.spec
+        case _:
+            assert_never(ptype)
+
+
+def _page() -> dui2.Response:
+    """Build the page (called in a background thread)."""
+    bstate = BenchmarksState
+    rows: list[dui2.Row] = button_stack(
+        [
+            [
+                section_button(
+                    _bmstrs.run_cpu_benchmark.spec, RunCpuBenchmark().local()
                 ),
-                player_count=self._stress_test_player_count,
-                round_duration=self._stress_test_round_duration,
-            )
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
-        else:
-            bui.screenmessage(_bmstrs.already_running_in_activity)
+                section_button(
+                    _bmstrs.run_media_reload_benchmark.spec,
+                    RunMediaReloadBenchmark().local(),
+                ),
+            ]
+        ],
+        first_group_spacing=0.0,
+    )
+    stress_rows: list[dui2.Row] = [
+        bstate.choice_row(
+            lambda s: s.playlist_type,
+            choice_label=_playlist_type_label,
+            label=_bmstrs.playlist_type.spec,
+        ),
+        bstate.text_input_row(
+            lambda s: s.playlist_name,
+            label=_bmstrs.playlist_name.spec,
+            description=_bmstrs.playlist_description.spec,
+        ),
+        bstate.number_row(
+            lambda s: s.player_count,
+            min_value=1.0,
+            max_value=64.0,
+            increment=1.0,
+            label=_bmstrs.player_count.spec,
+        ),
+        bstate.number_row(
+            lambda s: s.round_duration,
+            min_value=10.0,
+            max_value=600.0,
+            increment=10.0,
+            label=_bmstrs.round_duration.spec,
+        ),
+    ]
+    stress_rows += button_stack(
+        [
+            [
+                section_button(
+                    _bmstrs.run_stress_test.spec, RunStressTest().local()
+                )
+            ]
+        ]
+    )
+    rows.append(
+        dui2.Section(
+            title=_bmstrs.stress_test.spec,
+            title_align=dui2.HAlign.CENTER,
+            rows=stress_rows,
+        )
+    )
+    return dui2.Response(
+        page=dui2.Page(
+            title=_bmstrs.title.spec,
+            rows=rows,
+            # Its content is shorter than the window at larger
+            # ui-scales, where top-aligned it looks top-heavy.
+            center_vertically=True,
+            state=BenchmarksState().encode(),
+        )
+    )
+
+
+def _run_stress_test(context: DocUILocalAction) -> None:
+    import bascenev1 as bs
+    from bascenev1lib.mainmenu import MainMenuActivity
+
+    classic = bui.app.classic
+    assert classic is not None
+    state = context.state(BenchmarksState)
+    if state is None:
+        return
+
+    # Only from the main menu; not on top of some other activity.
+    if not isinstance(bs.get_foreground_host_activity(), MainMenuActivity):
+        bui.screenmessage(_bmstrs.already_running_in_activity)
+        return
+
+    classic.run_stress_test(
+        playlist_type=state.playlist_type.value,
+        playlist_name=state.playlist_name,
+        player_count=round(state.player_count),
+        round_duration=round(state.round_duration),
+    )
+    context.window.main_window_close(transition='out_right')

@@ -4,8 +4,10 @@
 
 import json
 import os
+import datetime
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
@@ -13,6 +15,114 @@ if TYPE_CHECKING:
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
+
+_PY_GENERATED_ROOT_PARENT = f'{ASSETS_SRC}/ba_data/python'
+
+# Generated files whose generators have been retired. Existing trees
+# (CI workspaces, spinoff dsts, people's checkouts) can still hold
+# these since they are gitignored; the coverage check below removes
+# them instead of failing on them.
+#
+# Each entry maps to the date it should be dropped by, once old trees
+# have had time to cycle. Past that date, update fails in the internal
+# repo (only there, so nobody else's checkout breaks on a calendar
+# date) until the entry is removed.
+_RETIRED_GENERATED_FILES: dict[str, datetime.date] = {
+    # Enums are defined in bacommon.nativeenums now (2026-10).
+    f'{_PY_GENERATED_ROOT_PARENT}/babase/_generated/enums.py': datetime.date(
+        2027, 1, 15
+    ),
+}
+
+
+def _check_retired_generated_files_expiry(projroot: str) -> None:
+    """Complain about retired-generated-file entries past their date."""
+    # Only where we can act on it (this dir is private to the internal
+    # repo).
+    if not os.path.isdir(os.path.join(projroot, 'tools', 'batoolsinternal')):
+        return
+    today = datetime.date.today()
+    for path, expiry in sorted(_RETIRED_GENERATED_FILES.items()):
+        if today >= expiry:
+            raise CleanError(
+                f"The retired-generated-file entry for '{path}' in"
+                f' tools/batools/assetsmakefile.py was due to be removed'
+                f' by {expiry}; old trees have had time to cycle, so'
+                ' delete the entry.'
+            )
+
+
+def _is_generated_python_dir(rel_root: str) -> bool:
+    """Is a project-relative dir a per-package ``_generated`` dir?"""
+    if not rel_root.startswith(_PY_GENERATED_ROOT_PARENT + '/'):
+        return False
+    tail = rel_root.removeprefix(_PY_GENERATED_ROOT_PARENT + '/')
+    parts = tail.split('/')
+    return len(parts) >= 2 and parts[1] == '_generated'
+
+
+def _check_codegen_coverage(
+    projroot: str, codegen_manifests: dict[str, str]
+) -> None:
+    """Cross-check codegen manifests against convention and disk.
+
+    Two failure modes bit us on 2026-08-31, both silent until a
+    downstream flavor broke:
+
+    - A codegen dst under ba_data/python but outside a ``_generated``
+      dir gets dropped by our manifest filter, so it never stages.
+    - A file sitting in a ``_generated`` dir that no manifest declares
+      stages on trees where it happens to exist and silently vanishes
+      on fresh ones (spinoff dsts, CI checkouts).
+
+    Fail loudly on both here, where update/update-check always runs.
+    """
+    _check_retired_generated_files_expiry(projroot)
+
+    declared: set[str] = set()
+    for manifest in codegen_manifests.values():
+        declared.update(json.loads(manifest))
+
+    # Manifest entries under ba_data/python must follow the
+    # per-package _generated dir convention (docs/design/codegen.md).
+    for target in sorted(declared):
+        if target.startswith(
+            _PY_GENERATED_ROOT_PARENT + '/'
+        ) and not _is_generated_python_dir(os.path.dirname(target)):
+            raise CleanError(
+                f"Codegen target '{target}' is under ba_data/python but"
+                " not in a per-package '_generated' dir; it would be"
+                ' silently dropped from asset staging. See'
+                ' docs/design/codegen.md.'
+            )
+
+    # And everything actually on disk in those dirs must be declared
+    # by some manifest.
+    walkroot = os.path.join(projroot, _PY_GENERATED_ROOT_PARENT)
+    for root, dnames, fnames in os.walk(walkroot):
+        dnames[:] = [d for d in dnames if d != '__pycache__']
+        rel_root = root.removeprefix(projroot + '/')
+        if not _is_generated_python_dir(rel_root):
+            continue
+        for fname in fnames:
+            if fname == '.DS_Store':
+                continue
+            relpath = f'{rel_root}/{fname}'
+            if relpath in _RETIRED_GENERATED_FILES and relpath not in declared:
+                # A leftover from before its generator went away; these
+                # are gitignored, so only long-lived trees have them.
+                # Clear it out so those trees heal on their own.
+                print(f"Removing retired generated file '{relpath}'.")
+                os.remove(os.path.join(projroot, relpath))
+                continue
+            if relpath not in declared:
+                raise CleanError(
+                    f"File '{relpath}' lives in a codegen '_generated'"
+                    ' dir but no codegen manifest declares it; it would'
+                    ' silently vanish from asset staging on fresh trees.'
+                    ' Register it with the codegen system or move it'
+                    ' out. See docs/design/codegen.md.'
+                )
 
 
 def _get_targets(
@@ -67,8 +177,15 @@ def _get_py_targets(
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
 
-    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_generated'
-
+    # Codegen-produced python lives in per-featureset ``_generated``
+    # dirs (the docs/design/codegen.md convention). These are skipped
+    # in the physical walk and added from the codegen manifests
+    # instead, so the generated makefile is identical whether or not a
+    # codegen build has run yet -- critical for fresh trees (spinoff
+    # dsts, CI checkouts) where the files are not on disk. This used
+    # to name only babase's dir; scene/ui set modules then vanished
+    # from any list generated on a fresh tree (2026-08-31).
+    # (_check_codegen_coverage() enforces the convention both ways.)
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
     ) -> None:
@@ -185,11 +302,7 @@ def _get_py_targets(
     ):
         # Skip any generated files; we'll add those from the codegen manifest.
         # (dont want our results to require a codegen build beforehand)
-        if physical_root == os.path.join(
-            projroot, py_generated_root
-        ) or physical_root.startswith(
-            os.path.join(projroot, py_generated_root) + '/'
-        ):
+        if _is_generated_python_dir(physical_root.removeprefix(projroot + '/')):
             continue
 
         _do_get_targets(
@@ -211,7 +324,8 @@ def _get_py_targets(
     codegen_targets = [
         t
         for t in codegen_targets
-        if t.startswith(src + '/') and t.startswith(py_generated_root + '/')
+        if t.startswith(src + '/')
+        and _is_generated_python_dir(os.path.dirname(t))
     ]
 
     for target in codegen_targets:
@@ -506,6 +620,8 @@ def generate_assets_makefile(
     public = getprojectconfig(Path(projroot))['public']
     assert isinstance(public, bool)
 
+    _check_codegen_coverage(projroot, codegen_manifests)
+
     original = existing_data
     lines = original.splitlines()
 
@@ -589,13 +705,6 @@ def generate_assets_makefile(
                 all_targets_private,
                 subset='private-windows-ARM64',
                 suffix='_PRIVATE_WIN_ARM64',
-            ),
-            _get_targets(
-                projroot,
-                'FONT_TARGETS',
-                '.fdata',
-                '.fdata',
-                all_targets_private,
             ),
             _get_targets(
                 projroot,

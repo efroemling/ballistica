@@ -451,6 +451,14 @@ def generate_sphinx_docs() -> None:
     _printstatus('Injecting no-undoc-members for asset-package wrappers...')
     _inject_wrapper_options(cache_dir, environ)
 
+    # Internal-api modules (see batools.apidocs) keep their page but
+    # show only their docstring -- the warning saying they're internal.
+    # With their members undocumented, any public signature or
+    # docstring referring to one fails the build as an unresolved
+    # cross-reference, which is what keeps them from leaking.
+    _printstatus('Stripping members from internal-api modules...')
+    _inject_internal_api_options(cache_dir)
+
     _printstatus('Running sphinx-build...')
     subprocess.run(
         [
@@ -604,6 +612,41 @@ def _inject_wrapper_options(rst_dir: Path, environ: dict[str, str]) -> None:
                 outfile.write(new_text)
 
 
+def _inject_internal_api_options(rst_dir: Path) -> None:
+    """Make apidoc rst for internal-api modules show only docstrings.
+
+    Replaces each such ``automodule`` directive's member options with
+    ``:no-members:`` and ``:no-undoc-members:`` (negating the global
+    ``autodoc_default_options`` too; merely dropping the options would
+    let those defaults back in).
+    """
+    from batools.apidocs import internal_api_modules
+
+    internal = internal_api_modules(Path('.'))
+    block_re = re.compile(
+        r'^\.\. automodule:: ([A-Za-z0-9_.]+)[^\n]*\n(?:[ \t]+:[^\n]*\n)*',
+        re.M,
+    )
+    member_opts = {':members:', ':undoc-members:', ':imported-members:'}
+
+    def _fix_block(match: re.Match[str]) -> str:
+        if match.group(1) not in internal:
+            return match.group(0)
+        head, *opts = match.group(0).splitlines()
+        kept = [o for o in opts if o.strip() not in member_opts]
+        return '\n'.join(
+            [head, '   :no-members:', '   :no-undoc-members:', *kept, '']
+        )
+
+    for rst in sorted(rst_dir.glob('*.rst')):
+        with open(rst, encoding='utf-8') as infile:
+            text = infile.read()
+        new_text = block_re.sub(_fix_block, text)
+        if new_text != text:
+            with open(rst, 'w', encoding='utf-8') as outfile:
+                outfile.write(new_text)
+
+
 def _wrapper_modules(modnames: list[str], environ: dict[str, str]) -> set[str]:
     """Return the subset of ``modnames`` that are asset-package wrappers.
 
@@ -730,7 +773,7 @@ def _sphinx_pre_filter_file(path: str) -> None:
     # I/O at construction), so the assignment simply fills in the value
     # the annotation describes.
     if re.search(
-        r'Asset-package wrapper for ``[^`]+`` \((?:bascenev1|bauiv1)\)',
+        r'Asset-package wrapper for ``[^`]+``\s+\((?:bascenev1|bauiv1)\)',
         source_code,
     ):
         final_code = final_code.replace(
@@ -750,7 +793,7 @@ def _sphinx_pre_filter_file(path: str) -> None:
             ' likely only forward-declared\n'
             '# in our actual source code so that docs tools can find it.\n'
             'from typing import (Coroutine, Any, Literal, Callable,\n'
-            '  Generator, Awaitable, Sequence, Self)\n'
+            '  Generator, Awaitable, Sequence, Self, TypeIs)\n'
             'import asyncio\n'
             'from concurrent.futures import Future\n'
             'from pathlib import Path\n'

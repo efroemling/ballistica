@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal
 
 
 class ConfigCheckBox:
@@ -33,6 +33,7 @@ class ConfigCheckBox:
         autoselect: bool = True,
         value_change_call: Callable[[Any], Any] | None = None,
         check_box_id: str | None = None,
+        style: Literal['default', 'right'] | None = None,
     ):
         if displayname is None:
             displayname = configkey
@@ -50,6 +51,7 @@ class ConfigCheckBox:
             on_value_change_call=self._value_changed,
             scale=scale,
             maxwidth=maxwidth,
+            style=style,
         )
         # Complain if we outlive our checkbox.
         bui.app.ui_v1.add_ui_cleanup_check(self, self.widget)
@@ -311,6 +313,7 @@ class ConfigSlider(_NumericConfigControl):
         f: int = 1,
         idprefix: str | None = None,
         drag_apply_interval: float = DRAG_APPLY_INTERVAL,
+        drag_apply_delay: float = 0.0,
     ):
         super().__init__(
             parent,
@@ -328,9 +331,22 @@ class ConfigSlider(_NumericConfigControl):
             f=f,
         )
         self._drag_apply_interval = drag_apply_interval
+
+        #: How long a drag must run before its first apply. Zero -- the
+        #: default -- applies the step that starts a drag immediately,
+        #: which is what a row wants when an apply is the thing the user
+        #: is looking at. A row whose apply is *heard* rather than seen
+        #: wants a wait here instead: a drag ending inside it is then
+        #: applied once, for the value it ended on.
+        self._drag_apply_delay = drag_apply_delay
+
         self._apply_timer: bui.AppTimer | None = None
         self._next_apply_time = 0.0
         self._pending: str | None = None
+
+        #: Value most recently applied to the running app; what lets a
+        #: repeat of it be dropped instead of applied again.
+        self._last_applied = self._value
 
         self.slider = bui.sliderwidget(
             parent=parent,
@@ -351,14 +367,14 @@ class ConfigSlider(_NumericConfigControl):
         self._update_display()
 
     def _slider_dragged(self, value: float) -> None:
-        self._value = value
+        self._value = self._snap(value)
 
         # Updating the text is cheap, so keep it exact at every step.
         self._update_display()
         self._schedule('drag')
 
     def _slider_changed(self, value: float) -> None:
-        self._value = value
+        self._value = self._snap(value)
         self._update_display()
 
         # A settled value is saved right now, never behind a timer --
@@ -367,6 +383,15 @@ class ConfigSlider(_NumericConfigControl):
         # scheduling below is for.
         self._store_value(commit=True, run_callback=False)
         self._schedule('settled')
+
+    def _snap(self, value: float) -> float:
+        """The widget's value in the form we store (see snap_slider_value)."""
+        return bui.snap_slider_value(
+            value,
+            min_value=self._minval,
+            max_value=self._maxval,
+            increment=self._increment,
+        )
 
     def _schedule(self, action: str) -> None:
         """Run an action now, or when the interval next comes round.
@@ -384,16 +409,24 @@ class ConfigSlider(_NumericConfigControl):
         # already stored, so a pending 'drag' store would be redundant.
         self._pending = action
         now = bui.apptime()
-        if now >= self._next_apply_time:
+        due = self._next_apply_time
+        if action == 'drag':
+            # Hold a drag apply off for the configured delay, so a drag
+            # that ends within it never applies anything but the value it
+            # ended on. Note that a settled action is exempt: the user is
+            # done, so there is nothing further to wait for -- which is
+            # what makes a quick drag land at once on release rather than
+            # trailing the delay it just superseded.
+            due = max(due, now + self._drag_apply_delay)
+        if now >= due:
             self._run_pending()
         elif self._apply_timer is None:
             self._apply_timer = bui.AppTimer(
-                self._next_apply_time - now, bui.WeakCall(self._run_pending)
+                due - now, bui.WeakCallStrict(self._run_pending)
             )
 
     def _run_pending(self) -> None:
         self._apply_timer = None
-        self._next_apply_time = bui.apptime() + self._drag_apply_interval
         action, self._pending = self._pending, None
 
         # Deliberately acts on our *current* value rather than one
@@ -402,6 +435,20 @@ class ConfigSlider(_NumericConfigControl):
         # cancelled drag, which reaches us as an ordinary drag call
         # carrying the restored value, is handled like any other. That is
         # why nothing here needs to know a cancel happened.
+        #
+        # A value the app is already holding is dropped rather than
+        # applied a second time -- re-applying it is a no-op, but
+        # whatever accompanies an apply would repeat. That is what keeps
+        # a drag that pauses on a value before release from sounding
+        # twice for it. A value that really did move never matches, so
+        # this costs those nothing.
+        if self._value == self._last_applied:
+            return
+
+        # Only an apply that happened spends the interval.
+        self._next_apply_time = bui.apptime() + self._drag_apply_interval
+        self._last_applied = self._value
+
         if action == 'drag':
             self._store_value(commit=False)
         elif action == 'settled':

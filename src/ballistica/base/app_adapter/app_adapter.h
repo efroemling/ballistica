@@ -96,6 +96,20 @@ class AppAdapter {
   /// nothing.
   virtual void StopJoystickFeedback(JoystickInput* device);
 
+  /// Return whether the device we are running on (a phone or tablet
+  /// itself, as opposed to a controller attached to it) can play haptic
+  /// feedback. Callable from any thread. Default is false.
+  virtual auto DeviceFeedbackSupported() -> bool;
+
+  /// Play haptic feedback on the device itself; the counterpart of
+  /// ApplyJoystickFeedback for touchscreen players, and everything said
+  /// there about rendering applies here too. Returns the render length
+  /// in milliseconds (0 if nothing was rendered or the platform gives no
+  /// control over the length).
+  ///
+  /// Called in the logic thread. Default does nothing.
+  virtual auto ApplyDeviceFeedback(const FeedbackEvent& event) -> int;
+
   /// Should return whether the current thread and/or context setup is the
   /// one where graphics calls should be made. For the default
   /// implementation, this simply returns true in the main thread. Note

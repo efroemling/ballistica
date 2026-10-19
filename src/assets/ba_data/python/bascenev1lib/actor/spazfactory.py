@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import bascenev1 as bs
 
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 
 from bascenev1lib.actor import spazappearance
 from bascenev1lib.gameutils import SharedObjects
@@ -115,7 +114,7 @@ class SpazFactory:
         )
         self.single_player_death_sound = _classicassets.audio.player_death.get()
         self.punch_sound_weak = _classicassets.audio.punch_weak01.get()
-        self.punch_sound = _builtinassets.audio.punch01.get()
+        self.punch_sound = _classicassets.audio.punch01.get()
         self.punch_sound_strong = (
             _classicassets.audio.punch_strong01.get(),
             _classicassets.audio.punch_strong02.get(),
@@ -258,6 +257,24 @@ class SpazFactory:
         self.max_shield_spillover_damage = plus.get_v1_account_misc_read_val(
             'rsms', 500
         )
+
+    def get_look_attrs(self, character: str) -> dict[str, Any]:
+        """Return the spaz node attrs giving this character's look.
+
+        A node wears one of two forms. An appearance that is a
+        character (see
+        :class:`~bascenev1lib.actor.spazappearance.Appearance`) gives
+        the definition form: a single spaz def the node draws, voices
+        and proportions itself from. Any other gives the legacy form:
+        each mesh, texture and sound named on its own, plus a style
+        preset (which a node in the definition form ignores, so it is
+        only sent here).
+        """
+        assert bs.app.classic is not None
+        appearance = bs.app.classic.spaz_appearances[character]
+        if appearance.character is not None:
+            return {'spaz_def': appearance.character.get_spaz_def()}
+        return {**self.get_media(character), 'style': appearance.style}
 
     def get_style(self, character: str) -> str:
         """Return the named style for this character.

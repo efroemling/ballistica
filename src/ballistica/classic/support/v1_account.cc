@@ -72,22 +72,22 @@ auto V1Account::AccountTypeToString(V1AccountType type) -> std::string {
 auto V1Account::AccountTypeToIconString(V1AccountType type) -> std::string {
   switch (type) {
     case V1AccountType::kTest:
-      return g_base->assets->CharStr(SpecialChar::kTestAccount);
+      return g_base->assets->CharStr(base::SpecialChar::kTestAccount);
     case V1AccountType::kNvidiaChina:
-      return g_base->assets->CharStr(SpecialChar::kNvidiaLogo);
+      return g_base->assets->CharStr(base::SpecialChar::kNvidiaLogo);
     case V1AccountType::kGooglePlay:
-      return g_base->assets->CharStr(SpecialChar::kGooglePlayGamesLogo);
+      return g_base->assets->CharStr(base::SpecialChar::kGooglePlayGamesLogo);
     case V1AccountType::kSteam:
-      return g_base->assets->CharStr(SpecialChar::kSteamLogo);
+      return g_base->assets->CharStr(base::SpecialChar::kSteamLogo);
     case V1AccountType::kOculus:
-      return g_base->assets->CharStr(SpecialChar::kOculusLogo);
+      return g_base->assets->CharStr(base::SpecialChar::kOculusLogo);
     case V1AccountType::kGameCenter:
-      return g_base->assets->CharStr(SpecialChar::kGameCenterLogo);
+      return g_base->assets->CharStr(base::SpecialChar::kGameCenterLogo);
     case V1AccountType::kDevice:
     case V1AccountType::kServer:
-      return g_base->assets->CharStr(SpecialChar::kLocalAccount);
+      return g_base->assets->CharStr(base::SpecialChar::kLocalAccount);
     case V1AccountType::kV2:
-      return g_base->assets->CharStr(SpecialChar::kV2Logo);
+      return g_base->assets->CharStr(base::SpecialChar::kV2Logo);
     default:
       return "";
   }

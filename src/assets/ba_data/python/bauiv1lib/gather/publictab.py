@@ -116,6 +116,7 @@ class UIRow:
         vpos = sub_scroll_height - lineheight * index - 50
         self._name_widget = bui.textwidget(
             text=party.name,
+            literal=True,
             parent=columnwidget,
             size=(sub_scroll_width * 0.46, 20),
             position=(0 + hpos, 4 + vpos),
@@ -997,7 +998,10 @@ class PublicGatherTab(GatherTab):
         # If any new party infos have come in, apply some of them.
         self._process_pending_party_infos()
 
-        # Anytime we sign in/out, make sure we refresh our list.
+        # Anytime we sign in/out, make sure we refresh our list. (v1
+        # sign-in state on purpose, throughout this tab: the public
+        # party list and our own listing go through the v1 master
+        # server.)
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if self._signed_in != signed_in:
             self._signed_in = signed_in
@@ -1230,7 +1234,8 @@ class PublicGatherTab(GatherTab):
             )
         )
 
-        # If signed out or errored, show no parties.
+        # If signed out or errored, show no parties. (v1 sign-in state
+        # on purpose; see _update().)
         if (
             plus.get_v1_account_state() != 'signed_in'
             or not self._have_valid_server_list
@@ -1284,6 +1289,8 @@ class PublicGatherTab(GatherTab):
             self._last_server_list_query_time = now
             if DEBUG_SERVER_COMMUNICATION:
                 print('REQUESTING SERVER LIST')
+            # (v1 sign-in state on purpose: this query is a v1
+            # transaction.)
             if plus.get_v1_account_state() == 'signed_in':
                 plus.add_v1_account_transaction(
                     {
@@ -1436,6 +1443,8 @@ class PublicGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
+        # (v1 sign-in state on purpose: advertising a party registers it
+        # with the v1 master server.)
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
@@ -1458,8 +1467,8 @@ class PublicGatherTab(GatherTab):
         _classicassets.audio.shield_up.get().play()
         bs.set_public_party_enabled(True)
 
-        # In GUI builds we want to authenticate clients only when
-        # hosting public parties.
+        # Public parties require auth; private ones (the GUI default)
+        # only offer it.
         bs.set_authenticate_clients(True)
 
         self._do_status_check()
@@ -1480,9 +1489,10 @@ class PublicGatherTab(GatherTab):
         # Ditto for the password requirement.
         bs.set_host_password('')
 
-        # In GUI builds we want to authenticate clients only when
-        # hosting public parties.
-        bs.set_authenticate_clients(False)
+        # Back to the GUI default: offer auth (so joiners' cloud
+        # profiles come along) but never require it (offline/LAN
+        # parties keep working).
+        bs.set_authenticate_clients(True, optional=True)
         _classicassets.audio.shield_down.get().play()
         text = self._host_status_text
         if text:
@@ -1510,7 +1520,7 @@ class PublicGatherTab(GatherTab):
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 
-            _builtinassets.audio.swish.get().play()
+            bui.play_swish()
             PartyQueueWindow(party.queue, party.address, party.port)
         else:
             address = party.address

@@ -67,7 +67,9 @@ class CloudSubsystem(babase.AppSubsystem):
         #: rather than reading ``vals_transient`` from over there.
         #:
         #: (Plain literals rather than :attr: refs -- ``vals_transient``
-        #: is :meta private:, so it has no target to link to.)
+        #: is private, so it has no target to link to.)
+        #:
+        #: :meta private:
         self.on_vals_transient_changed_callbacks: CallbackSet[
             Callable[[bacommon.cloud.CloudValsTransient], None]
         ] = CallbackSet()
@@ -154,6 +156,8 @@ class CloudSubsystem(babase.AppSubsystem):
         :data:`bacommon.securedata.STATIC_DATA_PUBLIC_KEYS`)
         instead, which is what the InsecureDirective verification
         uses today.
+
+        :meta private:
         """
         if self._secure_data_reader is None:
             raise RuntimeError(
@@ -183,6 +187,24 @@ class CloudSubsystem(babase.AppSubsystem):
         """
         raise NotImplementedError()
 
+    def debug_drop_transport_session(
+        self, on_done: Callable[[], None], *, block_reconnect: bool = False
+    ) -> None:
+        """Close the current transport session as if the connection died.
+
+        Test hook. The transport reconnects on its own after its usual
+        backoff, unless ``block_reconnect`` is set, in which case every
+        further connect attempt fails (for the rest of the process) so
+        parked messages can be watched expiring. ``on_done`` runs in
+        the logic thread once the session is gone and before any
+        replacement can have connected (that takes a network round
+        trip), so a message sent from it is guaranteed to take the
+        no-session path and get parked.
+
+        :meta private:
+        """
+        raise NotImplementedError()
+
     def get_connected_node_base_url(self) -> str | None:
         """Return a base url for fetches from our connected basn node.
 
@@ -199,6 +221,16 @@ class CloudSubsystem(babase.AppSubsystem):
         :meta private:
         """
         return None
+
+    def on_app_instance_info_changed(self) -> None:
+        """Called when something reported in our app-instance-info changes.
+
+        Notably the current locale. Lets the cloud keep its view of us
+        current (it renders some text server-side in our language)
+        without waiting for a reconnect.
+
+        :meta private:
+        """
 
     def on_connectivity_changed(self, connected: bool) -> None:
         """Called when cloud connectivity state changes.
@@ -324,7 +356,7 @@ class CloudSubsystem(babase.AppSubsystem):
 
         self._update_available_notice_pending = False
 
-        from babase import _builtinassets
+        from babase import _builtinassets, _commonassets
 
         notice = _builtinassets.strings.ui.update_available
 
@@ -341,7 +373,7 @@ class CloudSubsystem(babase.AppSubsystem):
             )
             return
 
-        _builtinassets.audio.ding.get().play()
+        _commonassets.audio.ding.get().play()
 
         babase.screenmessage(notice, color=(0.4, 1.0, 0.4))
 
@@ -442,6 +474,13 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
+        msg: bacommon.cloud.AutomationDeviceOnlineMessage,
+        on_response: Callable[[None | Exception], None],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
         msg: bacommon.cloud.SecureDataCheckerRequest,
         on_response: Callable[
             [bacommon.cloud.SecureDataCheckerResponse | Exception], None
@@ -472,6 +511,15 @@ class CloudSubsystem(babase.AppSubsystem):
         msg: bacommon.classic.GetClassicPurchasesMessage,
         on_response: Callable[
             [bacommon.classic.GetClassicPurchasesResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.classic.GetClassicProfilesMessage,
+        on_response: Callable[
+            [bacommon.classic.GetClassicProfilesResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -552,6 +600,8 @@ class CloudSubsystem(babase.AppSubsystem):
 
         The provided ``on_response`` call will be run in the logic thread
         and passed either the response or the error that occurred.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -595,6 +645,8 @@ class CloudSubsystem(babase.AppSubsystem):
         """Synchronously send a message to the cloud.
 
         Must be called from a background thread.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -633,6 +685,8 @@ class CloudSubsystem(babase.AppSubsystem):
         arbitrary internal thread, so use them only to hand results
         somewhere safe (such as :meth:`babase.pushcall` with
         ``from_other_thread=True``).
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
@@ -686,6 +740,8 @@ class CloudSubsystem(babase.AppSubsystem):
         """Asynchronously send a message to the cloud.
 
         Must be called from the logic thread.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'

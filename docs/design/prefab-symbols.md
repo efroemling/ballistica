@@ -1,6 +1,6 @@
 # Prefab symbols pipeline
 
-**Description:** How Windows prefab PDBs are archived at publish time and fetched on demand by exe hash, so crash traces from prefab builds symbolicate.
+**Description:** How Windows PDBs are archived and fetched on demand — our own by exe hash, third-party (ANGLE) by CodeView key — so crash traces and crash dumps symbolicate.
 
 Prefab builds ship stripped-ish binaries via efrocache, but crash reports
 from them are only useful if the matching debug symbols can be found later.
@@ -85,6 +85,54 @@ Two fixes in `platform_windows.cc` matter if you touch the trace formatter
 Windows platform code at all. Verify via the prefab exe make target
 (`make build/prefab/full/windows_x86_64_gui/debug/BallisticaKit.exe`), which
 runs the real MSVC build (fast when incremental on the Windows build host).
+
+## Two key kinds: exe hash vs CodeView
+
+The lookup endpoint accepts two kinds of key, because the two cases ask
+different questions.
+
+**Exe sha256** — for our own prefab binaries. You fetch symbols *for a
+binary you already have*, so hashing it locally is both possible and a
+guarantee that what comes back matches. This is what
+`fetch_prefab_symbols` does.
+
+**CodeView guid+age** — for third-party modules we ship, currently
+ANGLE's `libGLESv2.dll` / `libEGL.dll`. The linker stamps this key into
+the binary and into the pdb built with it, and — the property that
+matters — **a minidump records it for every loaded module**. So a crash
+dump states exactly which pdb each module needs, even for a build the
+recipient has never had and cannot hash. Extraction lives in
+`batools/winsymbols.py` (both from a PE file and from a minidump).
+
+ANGLE pdbs live in their own `angle-windows-symbols` archive, published
+by `install_angle_windows_artifacts` (`make angle-windows-gather`) and
+named `<CodeView-stem>.<guid><age>.pdb`. **Deliberately not in
+`push-public-artifacts`:** that archive gains a version per push-public
+and lookups only scan recent versions, so ANGLE pdbs parked there would
+age out within days. ANGLE turns over once or twice a year and its
+symbols must outlive the builds that shipped them, so its archive keeps
+10 years / 100 versions.
+
+## Symbolicating a crash dump
+
+`tools/pcommand dump_symbols_fetch <path.dmp>` is the dump-driven entry
+point (`batools/dumpsymbols.py`). It reads the dump's module list, pulls
+each module's CodeView key, fetches the ones the server knows, and
+stages them as `build/windows-symbols/<pdb>/<key>/<pdb>` — one dir per
+key so dumps from different builds don't collide over the same pdb
+name, which is also the layout a debugger symbol path can point at
+directly.
+
+It skips modules under Windows' own directories: a dump lists ~125
+modules and ~104 are Microsoft's, so querying each turns seconds into
+minutes to learn what we already know. Per-module lookup failures are
+reported and stepped over rather than aborting the run — the module you
+care about is often not the last one queried.
+
+No debugger is needed to then resolve an address; neither Windows box
+has `cdb` or `llvm-symbolizer`. Driving `dbghelp` from PowerShell via
+`-EncodedCommand` works and sidesteps every quoting layer; see the
+ANGLE crash entry in `docs/followups.md` for a worked example.
 
 ## Future directions
 

@@ -145,6 +145,12 @@ class Asset : public Object {
   virtual auto GetName() const -> std::string { return "invalid"; }
   virtual auto GetNameFull() const -> std::string { return GetName(); }
 
+  /// If we are the texture a RenderView draws to, that view; nullptr
+  /// otherwise (or once that view is gone). Frame-defs use this to
+  /// learn which views had their textures drawn and so need their
+  /// worlds drawn. Logic thread only.
+  virtual auto GetRenderView() const -> RenderView* { return nullptr; }
+
   // Re-resolve this asset's underlying source from its name -- e.g. after
   // the asset-package registry is re-resolved to a different flavor
   // (fallback -> desktop, a language swap, etc.) so the same logical asset

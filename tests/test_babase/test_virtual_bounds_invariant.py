@@ -399,7 +399,7 @@ def test_max_margins_are_exact_virtual_units() -> None:
         'wide': [0.0, 0.0, 2560.0, 1080.0],
         # Narrower than the base aspect: pins width.
         'narrow': [0.0, 0.0, 1000.0, 900.0],
-        # Offset origin (as tv-border produces), near the base aspect
+        # Offset origin (as aspect clamping produces), near the base aspect
         # so the pin-branch choice is not a foregone conclusion.
         'offset': [100.0, 50.0, 2148.0, 1202.0],
     }
@@ -471,6 +471,36 @@ def test_max_margins_zero_is_a_no_op() -> None:
         probe='virtual_bounds_max_margins_probe',
     )['zero']
     assert got == pytest.approx(rect, abs=0.01)
+
+
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
+def test_screen_insets_blend() -> None:
+    """The screen-insets blend spans OS-derived to max margins.
+
+    Amount 0 is the OS-derived rect and 1 the max-margins one, with
+    edges interpolated in between -- except that no edge ever gives back
+    any of what the OS asked for, so a cutout deeper than the max
+    margins (the left edge here) stays covered at every amount.
+    """
+    os_bounds = [300.0, 0.0, 1950.0, 1000.0]
+    max_bounds = [200.0, 50.0, 1800.0, 950.0]
+    cases = {
+        str(amount): {
+            'os_bounds': os_bounds,
+            'max_bounds': max_bounds,
+            'amount': amount,
+        }
+        for amount in (0.0, 0.5, 1.0, -1.0, 2.0)
+    }
+    got = _calc(list(cases.items()), probe='screen_insets_blend_probe')
+    assert got['0.0'] == pytest.approx(os_bounds, abs=0.01)
+    assert got['0.5'] == pytest.approx([300.0, 25.0, 1875.0, 975.0], abs=0.01)
+    assert got['1.0'] == pytest.approx([300.0, 50.0, 1800.0, 950.0], abs=0.01)
+    # Out-of-range amounts clamp.
+    assert got['-1.0'] == pytest.approx(got['0.0'], abs=0.01)
+    assert got['2.0'] == pytest.approx(got['1.0'], abs=0.01)
 
 
 @pytest.mark.skipif(

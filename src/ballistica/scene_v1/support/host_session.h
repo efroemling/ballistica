@@ -77,6 +77,14 @@ class HostSession : public Session {
     assert(scene_.exists());
     return scene_.get();
   }
+  /// Create a session-scene SpazDef or depiction (the lobby's choosers
+  /// show players' cloud looks with these). Like everything in a scene,
+  /// only for that scene's own nodes. Same lifecycle as HostActivity's:
+  /// refcounted, marked dead at session teardown, dumped for late
+  /// joiners.
+  auto NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> override;
+  auto NewDepiction(const std::string& json)
+      -> Object::Ref<SceneDepiction> override;
   void RegisterContextCall(base::PythonContextCall* call) override;
   auto GetSceneStream() const -> SessionStream* { return output_stream_.get(); }
   auto is_main_menu() const -> bool {
@@ -132,6 +140,8 @@ class HostSession : public Session {
   // clear them as we are shutting down and ensure nothing runs after that
   // point.
   std::list<Object::WeakRef<base::PythonContextCall> > python_calls_;
+  std::list<Object::WeakRef<SpazDef> > spaz_defs_;
+  std::list<Object::WeakRef<SceneDepiction> > depictions_;
   std::vector<Object::Ref<Player> > players_;
   int next_player_id_{};
 

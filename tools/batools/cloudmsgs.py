@@ -70,6 +70,7 @@ def _registry() -> dict[type['Message'], set[SendForm]]:
         # message count drop to one.)
         bacommon.cloud.TestMessage: {cb, syn, asy, fut},
         bacommon.cloud.AnalyticsEventMessage: {cb},
+        bacommon.cloud.AutomationDeviceOnlineMessage: {cb},
         # Shipped from the log-reporter's own bg thread. The future
         # form so the reporter can bound its wait during its final
         # at-shutdown flush; normal sends just block on the future.
@@ -85,6 +86,7 @@ def _registry() -> dict[type['Message'], set[SendForm]]:
         bacommon.classic.SendInfoMessage: {asy},
         bacommon.classic.LegacyRequest: {syn, fut},
         bacommon.classic.GetClassicPurchasesMessage: {cb},
+        bacommon.classic.GetClassicProfilesMessage: {cb},
         bacommon.classic.PrivatePartyMessage: {cb},
         bacommon.classic.InboxRequestMessage: {cb, asy},
         bacommon.classic.ChestInfoMessage: {cb, asy},

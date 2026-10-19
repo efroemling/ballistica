@@ -187,6 +187,8 @@ auto Widget::GetDrawBrightness(millisecs_t current_time) const -> float {
   return 1.0f;
 }
 
+auto Widget::IsDrawDisabled() const -> bool { return false; }
+
 void Widget::ScreenPointToWidget(float* x, float* y) const {
 #if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_old = *x;

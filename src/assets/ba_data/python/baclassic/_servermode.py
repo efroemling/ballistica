@@ -277,7 +277,9 @@ class ServerController:
                 self._next_connectivity_warn_time = curtime + 5.0
             return
 
-        # Being signed in via v1 is a prerequisite.
+        # Being signed in via v1 is a prerequisite. (v1 sign-in state on
+        # purpose: headless servers have no v2 account; they sign in to
+        # v1 as 'Local', which the v1 master server's game list needs.)
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if not signed_in:
             # Signing in to the local server account should not take long;
@@ -361,6 +363,7 @@ class ServerController:
         appcfg = app.config
         sessiontype = self._get_session_type()
 
+        # (v1 sign-in state on purpose; see _prepare_to_serve().)
         if plus.get_v1_account_state() != 'signed_in':
             print(
                 'WARNING: launch_server_session() expects to run '
@@ -432,6 +435,7 @@ class ServerController:
         classic.ffa_series_length = self._config.ffa_series_length
 
         classic.allow_punch_grab = self._config.allow_punch_grab
+        classic.legacy_spaz_physics = self._config.legacy_spaz_physics
 
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting

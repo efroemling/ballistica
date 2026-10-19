@@ -35,8 +35,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       colorize_color_location_ =
           glGetUniformLocation(program(), "colorizeColor");
       assert(colorize_color_location_ != -1);
+      colorize3_color_location_ =
+          glGetUniformLocation(program(), "colorize3Color");
+      assert(colorize3_color_location_ != -1);
     }
-    if (flags & SHD_COLORIZE2) {
+    if (flags & SHD_COLORIZE) {
       colorize2_color_location_ =
           glGetUniformLocation(program(), "colorize2Color");
       assert(colorize2_color_location_ != -1);
@@ -48,6 +51,12 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_SHADOW) {
       shadow_params_location_ = glGetUniformLocation(program(), "shadowParams");
       assert(shadow_params_location_ != -1);
+      shadow_color_location_ = glGetUniformLocation(program(), "shadowColor");
+      assert(shadow_color_location_ != -1);
+      if (flags & SHD_TEXT_GLOW) {
+        text_glow_location_ = glGetUniformLocation(program(), "textGlow");
+        assert(text_glow_location_ != -1);
+      }
     }
     if (flags & SHD_GLOW) {
       glow_params_location_ = glGetUniformLocation(program(), "glowParams");
@@ -66,11 +75,19 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           glGetUniformLocation(program(), "texPremultiplied");
       assert(tex_premultiplied_location_ != -1);
     }
+    if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
+      mask_straight_location_ = glGetUniformLocation(program(), "maskStraight");
+      assert(mask_straight_location_ != -1);
+    }
     if (flags & SHD_MASKED) {
       SetTextureUnit("maskTex", kMaskTexUnit);
     }
     if (flags & SHD_MASK_UV2) {
       SetTextureUnit("maskUV2Tex", kMaskUV2TexUnit);
+    }
+    if (flags & SHD_UV2_FADE) {
+      premult_blend_location_ = glGetUniformLocation(program(), "premultBlend");
+      assert(premult_blend_location_ != -1);
     }
   }
 
@@ -126,6 +143,33 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
   }
 
+  /// The shadow's color, and its spread: extra blur (as mip bias) on
+  /// top of the shadow's own.
+  void SetShadowColor(float r, float g, float b, float spread) {
+    assert(flags_ & SHD_SHADOW);
+    assert(IsBound());
+    if (r != shadow_r_ || g != shadow_g_ || b != shadow_b_
+        || spread != shadow_spread_) {
+      shadow_r_ = r;
+      shadow_g_ = g;
+      shadow_b_ = b;
+      shadow_spread_ = spread;
+      glUniform4f(shadow_color_location_, shadow_r_, shadow_g_, shadow_b_,
+                  shadow_spread_);
+    }
+  }
+
+  /// How strong a text-glow program's neon look is (0 = none, 1 =
+  /// standard).
+  void SetTextGlow(float amount) {
+    assert(flags_ & SHD_TEXT_GLOW);
+    assert(IsBound());
+    if (amount != text_glow_) {
+      text_glow_ = amount;
+      glUniform1f(text_glow_location_, text_glow_);
+    }
+  }
+
   void SetGlow(float glow_amount, float glow_blur) {
     assert(flags_ & SHD_GLOW);
     assert(IsBound());
@@ -158,8 +202,33 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
   }
 
+  // 1.0 if this is a premult-blended draw whose mask texture is NOT
+  // premultiplied (a data-role mask, or a straight-alpha one from a mod),
+  // else 0.0. The shader then scales the mask's color contribution by the
+  // mask's alpha itself -- the factor straight blending applies for free
+  // and a premultiplied mask already has baked in.
+  void SetMaskStraight(float mask_straight) {
+    assert((flags_ & SHD_MASKED) && (flags_ & SHD_MODULATE));
+    assert(IsBound());
+    if (mask_straight != mask_straight_) {
+      mask_straight_ = mask_straight;
+      glUniform1f(mask_straight_location_, mask_straight_);
+    }
+  }
+
+  // 1.0 if this draw blends premultiplied, else 0.0. A UV2 fade then
+  // scales the whole color rather than just its alpha.
+  void SetPremultBlend(float premult_blend) {
+    assert(flags_ & SHD_UV2_FADE);
+    assert(IsBound());
+    if (premult_blend != premult_blend_) {
+      premult_blend_ = premult_blend;
+      glUniform1f(premult_blend_location_, premult_blend_);
+    }
+  }
+
   void SetColorize2Color(float r, float g, float b, float a = 1.0f) {
-    assert(flags_ & SHD_COLORIZE2);
+    assert(flags_ & SHD_COLORIZE);
     assert(IsBound());
     if (r != colorize2_r_ || g != colorize2_g_ || b != colorize2_b_
         || a != colorize2_a_) {
@@ -169,6 +238,20 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       colorize2_a_ = a;
       glUniform4f(colorize2_color_location_, colorize2_r_, colorize2_g_,
                   colorize2_b_, colorize2_a_);
+    }
+  }
+
+  void SetColorize3Color(float r, float g, float b, float a = 1.0f) {
+    assert(flags_ & SHD_COLORIZE);
+    assert(IsBound());
+    if (r != colorize3_r_ || g != colorize3_g_ || b != colorize3_b_
+        || a != colorize3_a_) {
+      colorize3_r_ = r;
+      colorize3_g_ = g;
+      colorize3_b_ = b;
+      colorize3_a_ = a;
+      glUniform4f(colorize3_color_location_, colorize3_r_, colorize3_g_,
+                  colorize3_b_, colorize3_a_);
     }
   }
 
@@ -193,14 +276,19 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
            + std::to_string((flags & SHD_TEXTURE) != 0)
            + " modulate:" + std::to_string((flags & SHD_MODULATE) != 0)
            + " colorize:" + std::to_string((flags & SHD_COLORIZE) != 0)
-           + " colorize2:" + std::to_string((flags & SHD_COLORIZE2) != 0)
            + " premultiply:" + std::to_string((flags & SHD_PREMULTIPLY) != 0)
            + " shadow:" + std::to_string((flags & SHD_SHADOW) != 0)
            + " glow:" + std::to_string((flags & SHD_GLOW) != 0) + " masked:"
            + std::to_string((flags & SHD_MASKED) != 0) + " maskedUV2:"
            + std::to_string((flags & SHD_MASK_UV2) != 0) + " depthBugTest:"
            + std::to_string((flags & SHD_DEPTH_BUG_TEST) != 0)
-           + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0);
+           + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0)
+           + " textGlow:" + std::to_string((flags & SHD_TEXT_GLOW) != 0)
+           + " uv2Fade:" + std::to_string((flags & SHD_UV2_FADE) != 0);
+  }
+
+  static auto UsesUV2(int flags) -> bool {
+    return (flags & SHD_MASK_UV2) || (flags & SHD_UV2_FADE);
   }
 
   auto GetPFlags(int flags) -> int {
@@ -208,7 +296,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_TEXTURE) {
       pflags |= PFLAG_USES_UV_ATTR;
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       pflags |= PFLAG_USES_UV2_ATTR;
     }
     return pflags;
@@ -219,12 +307,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     std::string s;
     s = "uniform mat4 modelViewProjectionMatrix;\n"
     BA_GLSL_VERTEX_IN " vec4 position;\n";
-    if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)
-        || (flags & SHD_COLORIZE2)) {
+    if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)) {
       s += BA_GLSL_VERTEX_IN " vec2 uv;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUV;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += BA_GLSL_VERTEX_IN " vec2 uv2;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUV2;\n";
     }
@@ -238,7 +325,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_TEXTURE) {
       s += "   vUV = uv;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += "   vUV2 = uv2;\n";
     }
     if (flags & SHD_SHADOW) {
@@ -272,17 +359,18 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
     if ((flags & SHD_COLORIZE)) {
       s += "uniform " BA_GLSL_MEDIUMP "sampler2D colorizeTex;\n"
-           "uniform " BA_GLSL_MEDIUMP "vec4 colorizeColor;\n";
+           "uniform " BA_GLSL_MEDIUMP "vec4 colorizeColor;\n"
+           "uniform " BA_GLSL_MEDIUMP "vec4 colorize2Color;\n"
+           "uniform " BA_GLSL_MEDIUMP "vec4 colorize3Color;\n";
     }
-    if ((flags & SHD_COLORIZE2)) {
-      s += "uniform " BA_GLSL_MEDIUMP "vec4 colorize2Color;\n";
-    }
-    if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)
-        || (flags & SHD_COLORIZE2)) {
+    if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV;\n";
     }
-    if (flags & SHD_MASK_UV2) {
+    if (UsesUV2(flags)) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV2;\n";
+    }
+    if (flags & SHD_UV2_FADE) {
+      s += "uniform " BA_GLSL_MEDIUMP "float premultBlend;\n";
     }
     if (flags & SHD_FLATNESS) {
       s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
@@ -291,11 +379,18 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         || ((flags & SHD_MASKED) && (flags & SHD_MODULATE))) {
       s += "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
     }
+    if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
+      s += "uniform " BA_GLSL_MEDIUMP "float maskStraight;\n";
+    }
     if (flags & SHD_SHADOW) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
            BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow2;\n"
            BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow3;\n"
-           "uniform " BA_GLSL_MEDIUMP "vec4 shadowParams;\n";
+           "uniform " BA_GLSL_MEDIUMP "vec4 shadowParams;\n"
+           "uniform " BA_GLSL_MEDIUMP "vec4 shadowColor;\n";
+    if (flags & SHD_TEXT_GLOW) {
+      s += "uniform " BA_GLSL_MEDIUMP "float textGlow;\n";
+    }
     }
     if (flags & SHD_GLOW) {
       s += "uniform " BA_GLSL_MEDIUMP "vec2 glowParams;\n";
@@ -325,20 +420,28 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         }
         s += ";\n";
       } else {
-        if ((flags & SHD_COLORIZE) || (flags & SHD_COLORIZE2)) {
+        if (flags & SHD_COLORIZE) {
           // TEMP TEST
           s += "   " BA_GLSL_MEDIUMP
                "vec4 colorizeVal = " BA_GLSL_TEXTURE2D "(colorizeTex, vUV);\n";
         }
         if (flags & SHD_COLORIZE) {
           s += "   " BA_GLSL_MEDIUMP "float colorizeA = colorizeVal.r;\n";
-        }
-        if (flags & SHD_COLORIZE2) {
           s += "   " BA_GLSL_MEDIUMP "float colorizeB = colorizeVal.g;\n";
+          s += "   " BA_GLSL_MEDIUMP "float colorizeC = colorizeVal.b;\n";
         }
         if (flags & SHD_MASKED) {
           s += "   " BA_GLSL_MEDIUMP "vec4 mask = "
                      BA_GLSL_TEXTURE2D "(maskTex, vUV);";
+          if (flags & SHD_MODULATE) {
+            // A mask that is not premultiplied (a data-role mask, or a
+            // straight one from a mod) in a premult-blended draw needs its
+            // color contribution scaled by its own alpha here: straight
+            // blending used to apply that factor at blend time and a
+            // premultiplied mask has it baked in. maskStraight is 0/1.
+            s += "   " BA_GLSL_MEDIUMP
+                 "float maskMult = mix(1.0, mask.a, maskStraight);";
+          }
         }
 
         if (flags & SHD_MODULATE) {
@@ -371,9 +474,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
 
         if (flags & SHD_COLORIZE) {
           s += " * (vec4(1.0 - colorizeA) + colorizeColor * colorizeA)";
-        }
-        if (flags & SHD_COLORIZE2) {
           s += " * (vec4(1.0 - colorizeB) + colorize2Color * colorizeB)";
+          s += " * (vec4(1.0 - colorizeC) + colorize3Color * colorizeC)";
         }
         if (flags & SHD_MASKED) {
           // The mask's g/b channels *add* frame-tint and white-highlight
@@ -384,9 +486,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           // color's alpha ourselves (decision #23). texPremultiplied (0/1)
           // preserves the exact legacy path for straight-alpha textures.
           if (flags & SHD_MODULATE) {
-            s += " * vec4(vec3(mask.r), mask.a) + "
+            s += " * vec4(vec3(mask.r) * maskMult, mask.a) + "
                  "vec4((vec3(mask.g) * colorizeColor.rgb + vec3(mask.b))"
-                 " * mix(1.0, color.a, texPremultiplied), 0.0)";
+                 " * maskMult * mix(1.0, color.a, texPremultiplied), 0.0)";
           } else {
             s += " * vec4(vec3(mask.r), mask.a) + "
                  "vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)";
@@ -394,40 +496,112 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         }
         s += ";\n";
 
+        if (flags & SHD_UV2_FADE) {
+          // Each uv2 axis runs from 0 at an outer edge (fully drawn) to
+          // 1 at the inner end of the fade (gone); we ease along each
+          // and multiply them, so corners where two fades meet fall off
+          // along both. Premult blending scales the whole color;
+          // straight blending just its alpha.
+          s += "   " BA_GLSL_MEDIUMP
+               "vec2 fadeAmt = smoothstep(0.0, 1.0, vUV2);\n"
+               "   " BA_GLSL_MEDIUMP
+               "float fade = 1.0 - fadeAmt.x * fadeAmt.y;\n"
+               "   " BA_GLSL_FRAGCOLOR " *= mix(vec4(1.0, 1.0, 1.0, fade),"
+               " vec4(fade), premultBlend);\n";
+        }
+
+        if (flags & SHD_TEXT_GLOW) {
+          // Text glow (a neon look) of strength textGlow (0 = none, 1 =
+          // standard), drawn as a single layer in place of the glyph:
+          // a blurred copy of the glyph's alpha, the average of four
+          // samples, one out along each diagonal by a quarter of the
+          // shadow offset (shadowParams.xy) x textGlow. That offset is
+          // in the text's own space, so the glow is the same width
+          // relative to the text at any size (mip-bias blur is not: it
+          // is roughly fixed in screen pixels).
+          //  * Its alpha is the blurred alpha x (1 + textGlow)
+          //    (capped at 1), so it spills past the glyph's edges.
+          //  * Its color runs from the text's own to white as the
+          //    blurred alpha goes from 0.7 to 0.9, so interiors go
+          //    white-hot while edges keep the text color. The white
+          //    scales with textGlow (full white at strength 1).
+          // All three fall away with textGlow, so strength 0 would be
+          // the plain glyph: no offset, alpha as is, no white.
+          s += "   " BA_GLSL_MEDIUMP "vec2 glowOffs = 0.25 * textGlow *"
+               " shadowParams.xy;\n"
+               "   " BA_GLSL_MEDIUMP "vec2 glowOffs2 = vec2("
+               "glowOffs.x, -glowOffs.y);\n"
+               // Each sample is blurred (mip bias) to cover the gap to
+               // its neighbors: they sit twice the offset apart, a
+               // sample at bias b covers about 2^b screen pixels, so b
+               // is log2 of that gap in pixels (never sharper than
+               // normal). Without this the four show as separate
+               // copies once the offset spans several pixels.
+               "   " BA_GLSL_MEDIUMP "vec2 glowOffsPx = abs(glowOffs)"
+               " / max(fwidth(vUV), vec2(0.000001));\n"
+               "   " BA_GLSL_MEDIUMP "float glowBias = max(0.0, log2(2.0"
+               " * max(glowOffsPx.x, glowOffsPx.y)));\n"
+               "   " BA_GLSL_MEDIUMP "float glowBlur = 0.25 * ("
+               BA_GLSL_TEXTURE2D "(colorTex, vUV + glowOffs, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV - glowOffs, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV + glowOffs2, glowBias).a + "
+               BA_GLSL_TEXTURE2D "(colorTex, vUV - glowOffs2, glowBias).a);\n"
+               "   " BA_GLSL_MEDIUMP "float glowA = min(glowBlur * (1.0 +"
+               " textGlow), 1.0)"
+               // Faded out toward the glyph quad's edges like shadows are,
+               // so the glow never shows the quad's outline.
+               " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a;\n"
+               "   " BA_GLSL_MEDIUMP "float glowWhite = min(clamp((glowBlur"
+               " - 0.7) / 0.2, 0.0, 1.0) * textGlow, 1.0);\n"
+               // (A premultiplied text's color arrives scaled by its
+               // alpha, so its white is that alpha.)
+               "   " BA_GLSL_MEDIUMP "vec3 glowRGB = mix(color.rgb,"
+               " mix(vec3(1.0), vec3(color.a), texPremultiplied),"
+               " glowWhite);\n"
+               "   " BA_GLSL_FRAGCOLOR " = vec4(glowRGB * mix(1.0, glowA,"
+               " texPremultiplied), glowA * color.a);\n";
+        }
+
         if (flags & SHD_SHADOW) {
           s += "   " BA_GLSL_MEDIUMP
                      "float shadowA = ("
-                     BA_GLSL_TEXTURE2D "(colorTex, vUVShadow).a + "
-                     "" BA_GLSL_TEXTURE2D "(colorTex, vUVShadow2, 1.0).a + "
+                     BA_GLSL_TEXTURE2D "(colorTex, vUVShadow, shadowColor.a).a"
+                     " + " BA_GLSL_TEXTURE2D
+                     "(colorTex, vUVShadow2, 1.0 + shadowColor.a).a + "
                      "" BA_GLSL_TEXTURE2D
-                     "(colorTex, vUVShadow3, 2.0).a) * shadowParams.a";
+                     "(colorTex, vUVShadow3, 2.0 + shadowColor.a).a)"
+                     " * shadowParams.a";
 
           if (flags & SHD_MASK_UV2) {
             s += " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a";
           }
           s += ";\n";
-          // Composite the glyph over a soft black drop-shadow. Two cases,
-          // selected by texPremultiplied (decision #23):
+          // Composite the glyph over a soft drop-shadow in shadowColor
+          // (black for classic shadows; a bright color with no offset
+          // reads as a glow). Two cases, selected by texPremultiplied
+          // (decision #23):
           //   * Straight-alpha (legacy): the running fragColor is straight
-          //     color. Premultiply it, lay it over the premultiplied black
+          //     color. Premultiply it, lay it over the premultiplied
           //     shadow, then un-premultiply back to straight -- straight-alpha
           //     textures use straight-alpha blending.
           //   * Premultiplied: fragColor is already premultiplied (the caller
           //     premultiplies the modulate color by its alpha for premult
-          //     textures), so just composite the shadow into alpha and leave
-          //     the result premultiplied to match the active premult blend (no
-          //     premultiply, no divide).
+          //     textures), so composite the premultiplied shadow under it and
+          //     leave the result premultiplied to match the active premult
+          //     blend (no premultiply, no divide).
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremultTerm = "
+               "vec4(shadowColor.rgb * shadowA, shadowA);\n";
           s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremultComposite = vec4("
                BA_GLSL_FRAGCOLOR ".rgb * " BA_GLSL_FRAGCOLOR ".a, "
                BA_GLSL_FRAGCOLOR ".a) + (1.0 - " BA_GLSL_FRAGCOLOR
-               ".a) * vec4(0.0, 0.0, 0.0, shadowA);\n";
+               ".a) * shadowPremultTerm;\n";
           s += "   " BA_GLSL_MEDIUMP
                "vec4 shadowStraight = vec4(shadowPremultComposite.rgb"
                " / max(0.001, shadowPremultComposite.a),"
                " shadowPremultComposite.a);\n";
-          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremult = vec4("
-               BA_GLSL_FRAGCOLOR ".rgb, " BA_GLSL_FRAGCOLOR
-               ".a + (1.0 - " BA_GLSL_FRAGCOLOR ".a) * shadowA);\n";
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremult = "
+               BA_GLSL_FRAGCOLOR " + (1.0 - " BA_GLSL_FRAGCOLOR
+               ".a) * shadowPremultTerm;\n";
           s += "   " BA_GLSL_FRAGCOLOR
                " = mix(shadowStraight, shadowPremult, texPremultiplied);\n";
         }
@@ -458,18 +632,30 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   float r_{}, g_{}, b_{}, a_{};
   float colorize_r_{}, colorize_g_{}, colorize_b_{}, colorize_a_{};
   float colorize2_r_{}, colorize2_g_{}, colorize2_b_{}, colorize2_a_{};
+  float colorize3_r_{}, colorize3_g_{}, colorize3_b_{}, colorize3_a_{};
   float shadow_offset_x_{}, shadow_offset_y_{}, shadow_blur_{},
       shadow_density_{};
+  // GL zero-initializes uniforms, so black with no spread (the default)
+  // needs no initial upload.
+  float shadow_r_{}, shadow_g_{}, shadow_b_{}, shadow_spread_{};
+  float text_glow_{};
   float glow_amount_{}, glow_blur_{};
   float flatness_{};
   float tex_premultiplied_{};
+  float mask_straight_{};
+  float premult_blend_{};
   GLint color_location_{};
   GLint colorize_color_location_{};
   GLint colorize2_color_location_{};
+  GLint colorize3_color_location_{};
   GLint shadow_params_location_{};
+  GLint shadow_color_location_{};
+  GLint text_glow_location_{};
   GLint glow_params_location_{};
   GLint flatness_location{};
   GLint tex_premultiplied_location_{};
+  GLint mask_straight_location_{};
+  GLint premult_blend_location_{};
   int flags_{};
 };
 

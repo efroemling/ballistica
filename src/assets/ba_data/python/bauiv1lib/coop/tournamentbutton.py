@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -33,8 +34,12 @@ class TournamentButton:
         sclx = 300
         scly = 195.0
         self.on_pressed = on_pressed
-        self.lsbt = _classicassets.meshes.level_select_button_transparent.get()
-        self.lsbo = _classicassets.meshes.level_select_button_opaque.get()
+        self.lsbt = (
+            _classiccatalogassets.meshes.level_select_button_transparent.get()
+        )
+        self.lsbo = (
+            _classiccatalogassets.meshes.level_select_button_opaque.get()
+        )
         self.allow_ads = False
         self.tournament_id: str | None = None
         self.game: str | None = None
@@ -74,9 +79,9 @@ class TournamentButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=self.lsbt,
             mesh_opaque=self.lsbo,
-            texture=_builtinassets.textures.black.get(),
+            texture=_commonassets.textures.black.get(),
             opacity=0.2,
-            mask_texture=_classicassets.textures.map_preview_mask.get(),
+            mask_texture=_classiccatalogassets.textures.map_preview_mask.get(),
         )
 
         self.lock_image = bui.imagewidget(
@@ -84,7 +89,7 @@ class TournamentButton:
             draw_controller=btn,
             position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
             size=(image_width * 0.3, image_width * 0.3),
-            texture=_classicassets.textures.lock.get(),
+            texture=_uiv1assets.textures.lock.get(),
             opacity=0.0,
         )
 
@@ -168,7 +173,7 @@ class TournamentButton:
                 draw_controller=btn,
                 position=(x + 360 - 20, y + scly - 140),
                 opacity=0.0,
-                texture=_classicassets.textures.tv.get(),
+                texture=_uiv1assets.textures.tv.get(),
             )
 
         x_offs += 50
@@ -223,7 +228,7 @@ class TournamentButton:
         self.prize_chest_1_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -257,7 +262,7 @@ class TournamentButton:
         self.prize_chest_2_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -291,7 +296,7 @@ class TournamentButton:
         self.prize_chest_3_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=_builtinassets.textures.white.get(),
+            texture=_commonassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -430,7 +435,7 @@ class TournamentButton:
         ):
             _builtinassets.audio.error.get().play()
             return
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),
@@ -657,7 +662,7 @@ class TournamentButton:
         #     bui.textwidget(edit=self.button_text, text='-')
         #     bui.imagewidget(
         #         edit=self.image,
-        #         texture=_builtinassets.textures.black,
+        #         texture=_commonassets.textures.black,
         #         opacity=0.2,
         #     )
         # else:
@@ -667,7 +672,7 @@ class TournamentButton:
 
         txt = _commonassets.strings.compose.spaced_pair(
             first=campaign.getlevel(levelname).displayname_langstr,
-            second=_classicassets.strings.coop.player_count_abbreviated(
+            second=_classiccatalogassets.strings.coop.player_count_abbreviated(
                 count=str(max_players)
             ),
         )
@@ -711,9 +716,9 @@ class TournamentButton:
             if final_fee == 0:
                 final_fee_str = _classicassets.strings.ui.free
             else:
-                final_fee_str = bui.charstr(
-                    bui.SpecialChar.TICKET_BACKING
-                ) + str(final_fee)
+                final_fee_str = bui.SpecialChar.TICKET_BACKING.value + str(
+                    final_fee
+                )
 
         assert bui.app.classic is not None
         ad_tries_remaining = bui.app.classic.accounts.tournament_info[

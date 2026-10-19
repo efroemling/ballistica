@@ -3,10 +3,12 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_CONTAINER_WIDGET_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -44,6 +46,14 @@ class ContainerWidget : public Widget {
   /// snap rather than glide -- see WidgetMessage::animate.
   void ShowWidget(Widget* w, bool animate = true);
   void set_background(bool enable) { background_ = enable; }
+
+  /// Shift where our background art draws, without moving anything else
+  /// (children, input, transitions). For working around art whose
+  /// placement doesn't suit a particular window shape.
+  void set_background_offset(float x, float y) {
+    background_offset_x_ = x;
+    background_offset_y_ = y;
+  }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
   void set_darken_behind(bool val) { darken_behind_ = val; }
@@ -182,6 +192,41 @@ class ContainerWidget : public Widget {
 
   auto IsTransitioningOut() const -> bool override;
 
+  /// Color multiplier currently applied to our window backing; > 1 for
+  /// the brief glow during a scale-in, otherwise 1. Children that
+  /// masquerade as part of the backing can apply it to stay matched.
+  auto GetBackingGlowMult() const -> float {
+    if (transition_scale_ <= 0.9f && !transitioning_out_) {
+      float amt = transition_scale_ / 0.9f;
+      return std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
+    }
+    return 1.0f;
+  }
+
+  /// Where and how our window backing draws, for children that redraw
+  /// pieces of it over themselves (ScrollWidget's fade edge style).
+  struct BackingDrawInfo {
+    base::TextureAsset* texture{};
+    /// The full backing quad, which the texture spans uniformly
+    /// (u left-to-right, v top-down). In the space our children's
+    /// positions are in, and before any transition scaling (which
+    /// applies to children and backing alike).
+    Rect rect;
+    /// Ready to pass to SetColor() (already premultiplied as needed).
+    float red{}, green{}, blue{}, alpha{};
+  };
+
+  /// Fill in our current backing draw info; returns false if we draw
+  /// no backing.
+  auto GetBackingDrawInfo(BackingDrawInfo* info) const -> bool;
+
+  /// Fill in the rect (in the space our children's positions are in)
+  /// known to lie within our backing's fully-opaque pixels; returns
+  /// false if we draw no backing or ours isn't calibrated for this.
+  auto GetBackingOpaqueRect(Rect* rect) const -> bool;
+
+  auto CoversScreenOpaquely() const -> bool override;
+
  protected:
   void set_single_depth_root(bool s) { single_depth_root_ = s; }
 
@@ -205,6 +250,23 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
+  /// Which standard window backing we draw at a given size, and how far
+  /// past our bounds it extends on each side.
+  struct BackingLayout {
+    bool tall{};  // window_hsmall_vmed; otherwise window_hsmall_vsmall.
+    float l_border{}, r_border{}, b_border{}, t_border{};
+    // These need to be fudged until scaling in/out hits exact target
+    // point. Should look into why this math is off.
+    float center_fudge_x{}, center_fudge_y{};
+  };
+  static auto CalcBackingLayout_(float width, float height) -> BackingLayout;
+
+  // Calc the widget-local bounds of the hand-calibrated known-opaque
+  // sub-rect of our window backing (see CoversScreenOpaquely());
+  // returns false for backing setups with no such calibration.
+  auto GetCalibratedOpaqueRegion_(float* l, float* b, float* r, float* t) const
+      -> bool;
+
   // Given a container and a point, returns a selectable widget in the
   // downward direction or nullptr.
   auto GetClosestDownWidget(float x, float y, Widget* ignoreWidget) -> Widget*;
@@ -220,8 +282,8 @@ class ContainerWidget : public Widget {
   Object::WeakRef<ButtonWidget> start_button_;
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
-  base::BuiltinMeshID bg_mesh_transparent_id_{};
-  base::BuiltinMeshID bg_mesh_opaque_id_{};
+  Object::Ref<base::MeshAsset> bg_mesh_transparent_;
+  Object::Ref<base::MeshAsset> bg_mesh_opaque_;
   TransitionType transition_type_{};
   float width_{};
   float height_{};
@@ -247,6 +309,8 @@ class ContainerWidget : public Widget {
   float transition_scale_{1.0f};
   float d_transition_scale_{};
   float bg_center_fudge_x_{};
+  float background_offset_x_{};
+  float background_offset_y_{};
   float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};

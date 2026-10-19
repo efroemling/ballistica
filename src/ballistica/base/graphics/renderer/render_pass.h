@@ -71,10 +71,29 @@ class RenderPass {
     kOverlayFixedPass
   };
 
-  RenderPass(Type type_in, FrameDef* frame_def);
+  /// Passes a world gets drawn into belong to a view's share of the
+  /// frame and are handed that; passes belonging to the screen itself
+  /// (overlays and such) have none.
+  RenderPass(Type type_in, FrameDef* frame_def, FrameDefView* view = nullptr);
   virtual ~RenderPass();
 
   auto type() const -> Type { return type_; }
+
+  /// The view's share of the frame we belong to, if any.
+  auto view() const -> FrameDefView* { return view_; }
+
+  /// The graphics quality we get drawn at (our view's, which can be
+  /// lower than the app's).
+  auto quality() const -> GraphicsQuality { return quality_; }
+
+  /// Whether we draw upside down. Passes of views drawing to textures
+  /// do: what gets drawn to a framebuffer comes out bottom row first,
+  /// where textures as we draw them everywhere (images and the like)
+  /// are top row first. Drawing such views flipped means their
+  /// textures are like any other to whatever draws them. (Whoever
+  /// renders us needs to flip which faces get culled to match; see
+  /// Renderer::DrawWorldToTexture.)
+  auto draws_flipped() const -> bool;
 
   // The physical size of the drawing surface (pixels).
   auto physical_width() const -> float { return physical_width_; }
@@ -157,6 +176,7 @@ class RenderPass {
   bool cam_use_fov_tangents_{};
   bool floor_reflection_{};
   Type type_{};
+  GraphicsQuality quality_{};
 
   float cam_near_clip_{};
   float cam_far_clip_{};
@@ -191,6 +211,7 @@ class RenderPass {
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
   FrameDef* frame_def_{};
+  FrameDefView* view_{};
 
   std::vector<Vector3f> cam_area_of_interest_points_;
 

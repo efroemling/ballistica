@@ -12,6 +12,8 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/generated/base_asset_set.h"
+#include "ballistica/base/generated/special_chars.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -51,6 +53,12 @@ class Assets {
   };
   auto FindAssetFile(FileType fileType, const std::string& file_in)
       -> std::string;
+
+  /// What FindAssetFile() returns for a bare texture name that exists
+  /// nowhere (legacy names from mods or old hosts). TextureAsset turns
+  /// it into an engine-generated white fill; no package ships a plain
+  /// white texture anymore.
+  static constexpr const char* kMissingTextureFile = "<missing-texture>";
 
   /// Unload renderer-specific bits only (gl display lists, etc) - used when
   /// recreating/adjusting the renderer.
@@ -105,10 +113,25 @@ class Assets {
   auto BuiltinSound(BuiltinSoundID id) -> SoundAsset*;
   auto BuiltinMesh(BuiltinMeshID id) -> MeshAsset*;
 
+  /// A small opaque texture of one plain color, generated in the engine
+  /// rather than loaded from any asset-package. For engine-internal
+  /// plain fills only (a draw given no texture, an empty colorize
+  /// mask); available from the moment builtin assets are.
+  auto SolidTexture(SolidTextureColor color) -> TextureAsset*;
+
+  /// The cube-map form of SolidTexture(). (A black one makes a
+  /// reflection a no-op, since reflections are additive.)
+  auto SolidCubeMapTexture(SolidTextureColor color) -> TextureAsset*;
+
   /// Load/cache custom assets. Make sure you hold a AssetListLock.
   auto GetTexture(const std::string& file_name) -> Object::Ref<TextureAsset>;
   auto GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset>;
   auto GetQRCodeTexture(const std::string& url) -> Object::Ref<TextureAsset>;
+
+  /// The texture a view drawing to a texture draws to. Views fetch
+  /// this for themselves (see RenderView::texture()); get it from the
+  /// view.
+  auto GetRenderViewTexture(RenderView* view) -> Object::Ref<TextureAsset>;
   auto GetCubeMapTexture(const std::string& file_name)
       -> Object::Ref<TextureAsset>;
   auto GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset>;
@@ -117,12 +140,58 @@ class Assets {
   auto GetCollisionMesh(const std::string& file_name)
       -> Object::Ref<CollisionMeshAsset>;
 
+  /// Asset-package forms of the getters above, taking the package id and
+  /// logical path separately.
+  ///
+  /// This is the form generated wrapper modules use, and they always
+  /// hold the two parts apart -- so joining them in Python only for us
+  /// to validate and re-split was pure round-tripping. A qualified ref
+  /// is also never a legacy bare name, so these skip the compat lookup
+  /// the string forms have to do.
+  auto GetPackageTexture(const std::string& apverid, const std::string& name)
+      -> Object::Ref<TextureAsset>;
+  auto GetPackageMesh(const std::string& apverid, const std::string& name)
+      -> Object::Ref<MeshAsset>;
+  auto GetPackageSound(const std::string& apverid, const std::string& name)
+      -> Object::Ref<SoundAsset>;
+  auto GetPackageCollisionMesh(const std::string& apverid,
+                               const std::string& name)
+      -> Object::Ref<CollisionMeshAsset>;
+  auto GetPackageCubeMapTexture(const std::string& apverid,
+                                const std::string& name)
+      -> Object::Ref<TextureAsset>;
+
+  /// Classic-flavored art base draws itself with (debris, smoke, VR
+  /// hands, reflections), supplied by the active app-mode (see
+  /// babase.set_base_asset_set). Boot-filled with neutral engine
+  /// placeholders and *restored* to them (never cleared) at app-mode
+  /// switches, so it is always complete -- base draws before and
+  /// between app-modes. Read slots via their accessors, which warn
+  /// when handing out a placeholder.
+  auto base_assets() -> const BaseAssetSet& {
+    assert(base_assets_.complete());
+    return base_assets_;
+  }
+
+  /// Apply an app-mode's set; any slot it leaves empty gets its
+  /// placeholder.
+  void SetBaseAssets(const BaseAssetSet& assets);
+  void RestoreBaseAssetPlaceholders();
+
+ private:
+  // Body of the above; caller must hold the asset-list lock (the boot
+  // path calls this from inside the builtin load, which already does).
+  void RestoreBaseAssetPlaceholdersLocked_();
+  void FillBaseAssetPlaceholders_(BaseAssetSet* out);
+
+ public:
   auto total_mesh_count() const -> uint32_t {
     return static_cast<uint32_t>(meshes_.size());
   }
   auto total_texture_count() const -> uint32_t {
     return static_cast<uint32_t>(textures_.size() + text_textures_.size()
-                                 + qr_textures_.size());
+                                 + qr_textures_.size()
+                                 + render_view_textures_.size());
   }
   auto total_sound_count() const -> uint32_t {
     return static_cast<uint32_t>(sounds_.size());
@@ -156,9 +225,13 @@ class Assets {
   /// is the bundled fallback flavor, so this currently always loads
   /// English (Step A of the strings migration). ``plural_locale`` is
   /// the client's *resolved* locale wire value (e.g. ``eng``), stamped
-  /// onto the language-string tables to drive CLDR plural selection.
+  /// onto the language-string tables to drive CLDR plural selection;
+  /// ``decimal_mark`` and ``duration_separator`` are its number data,
+  /// for rendering display-formatted params (durations, sizes).
   void ReloadLanguage(const std::vector<std::string>& apverids,
-                      const std::string& plural_locale);
+                      const std::string& plural_locale,
+                      const std::string& decimal_mark,
+                      const std::string& duration_separator);
 
   /// The current native language-string tables (per-apverid values for
   /// the client's locale; see LangStrTables). Immutable snapshot; any
@@ -196,7 +269,10 @@ class Assets {
       -> std::string;
 
   auto CharStr(SpecialChar id) -> std::string;
-  auto CompileResourceString(const std::string& s, bool* valid = nullptr)
+  /// Pass a lower ``fail_log_level`` for strings we didn't make and so
+  /// can't fix (from a host running an older build, say).
+  auto CompileResourceString(const std::string& s, bool* valid = nullptr,
+                             LogLevel fail_log_level = LogLevel::kError)
       -> std::string;
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }
@@ -211,6 +287,13 @@ class Assets {
   /// ``<apverid>:<asset_name>`` ref.
   auto package_registry() -> AssetPackageRegistry* {
     return &package_registry_;
+  }
+
+  /// Where the bundle's asset-package manifest.json lives. May be a
+  /// path into an archive (the apk on Android); read it via
+  /// AssetBlob, never plain file IO.
+  auto bundled_asset_manifest_path() const -> const std::string& {
+    return bundled_manifest_path_;
   }
 
   /// The texture *profile* name this build should request for
@@ -262,6 +345,15 @@ class Assets {
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
 
+  /// Resolve a sound qualified-ref to the json file saying how its
+  /// plays contend for audio sources (part ``j.json`` in the package's
+  /// resolved ``audio/...`` bucket). Only the audio-less (NULL) flavor
+  /// that headless builds resolve carries these, and only for sounds
+  /// with something set; builds with audio get the same from tags in
+  /// the sound itself (see SoundAsset::ApplyPlaySettings). Returns
+  /// ``""`` if the name isn't a CAS ref or the sound has none.
+  auto FindCasSoundMetaPath(const std::string& name) -> std::string;
+
   /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
   /// resolve a mesh qualified-ref to its single bob CAS blob (part
   /// ``m.bob`` in the package's resolved ``meshes/...`` bucket).
@@ -310,15 +402,11 @@ class Assets {
   /// asset-load bindings (gettexture() and friends), which accept only
   /// legacy bare names: asset-package assets must load through their
   /// generated wrapper modules (which route through the private
-  /// ap*get bindings; see FailOnNonAssetPackagePath). `call_name` is
-  /// the Python-visible callable name, used in the error message.
+  /// ap*get bindings; those take the package id and logical path as
+  /// separate args, so they cannot be handed a path at all).
+  /// `call_name` is the Python-visible callable name, used in the
+  /// error message.
   static void FailOnAssetPackagePath(const char* name, const char* call_name);
-
-  /// Inverse of FailOnAssetPackagePath, for the private ap*get Python
-  /// bindings: raise a Python ValueError if `name` is *not* a
-  /// qualified asset-package path.
-  static void FailOnNonAssetPackagePath(const char* name,
-                                        const char* call_name);
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
@@ -353,7 +441,6 @@ class Assets {
   void LoadBuiltinCubeMapTexture(BuiltinCubeMapTextureID id, const char* name);
   void LoadBuiltinSound(BuiltinSoundID id, const char* name);
   void LoadBuiltinMesh(BuiltinMeshID id, const char* name);
-  void InitSpecialChars();
 
   template <typename T>
   auto GetAssetPendingLoadCount(
@@ -377,21 +464,30 @@ class Assets {
   std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;
   AssetPackageRegistry package_registry_;
+  std::string bundled_manifest_path_;
 
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
   std::vector<Object::Ref<DataAsset> > system_datas_;
 
+  BaseAssetSet base_assets_;
   std::vector<Object::Ref<TextureAsset> > builtin_textures_;
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_;
   std::vector<Object::Ref<MeshAsset> > builtin_meshes_;
+  std::vector<Object::Ref<TextureAsset> > solid_textures_;
+  std::vector<Object::Ref<TextureAsset> > solid_cube_map_textures_;
 
   // All existing assets by filename (including internal).
   std::unordered_map<std::string, Object::Ref<TextureAsset> > textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > text_textures_;
   std::unordered_map<std::string, Object::Ref<TextureAsset> > qr_textures_;
+
+  // Textures that views draw to, by view id (as a string, to match
+  // the rest).
+  std::unordered_map<std::string, Object::Ref<TextureAsset> >
+      render_view_textures_;
   std::unordered_map<std::string, Object::Ref<MeshAsset> > meshes_;
   std::unordered_map<std::string, Object::Ref<SoundAsset> > sounds_;
   std::unordered_map<std::string, Object::Ref<DataAsset> > datas_;
@@ -413,8 +509,6 @@ class Assets {
   std::shared_ptr<const LangStrTables> lang_str_tables_;
   std::mutex language_mutex_;
   std::shared_ptr<const LanguageData> language_data_;
-  std::mutex special_char_mutex_;
-  std::unordered_map<SpecialChar, std::string> special_char_strings_;
 };
 
 }  // namespace ballistica::base

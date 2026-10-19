@@ -220,7 +220,7 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def auth_request(
-        self, global_app_instance_id: str
+        self, global_app_instance_id: str, *, optional: bool = False
     ) -> None | tuple[bool, str, int | None]:
         """Start/process an auth request.
 
@@ -231,6 +231,12 @@ class AccountV2Subsystem:
         accompanying a failure (the native layer renders a recognized
         reason as its own localized builtin string, falling back to
         the error text otherwise).
+
+        ``optional`` (the host lets us join without auth) fails fast
+        when we couldn't get a token anyway (signed out, or not
+        connected to the cloud) rather than waiting for a connection.
+
+        :meta private:
         """
         import bacommon.cloud
 
@@ -258,6 +264,8 @@ class AccountV2Subsystem:
                     'You must sign in to do this.',
                     bacommon.cloud.JoinRejectReason.MUST_SIGN_IN.value,
                 )
+            if optional and not plus.cloud.connected:
+                return (False, 'Not connected.', None)
         if (
             auth_request is None
             and plus.cloud.connected
@@ -510,11 +518,9 @@ class AccountV2Subsystem:
         # not be what they want (A user signing out and then restarting
         # may be auto-signed back in).
         connected = plus.cloud.is_connected()
-        signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
         if (
             connected
-            and not signed_in_v1
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
@@ -593,9 +599,8 @@ class AccountV2Subsystem:
         # in case the user has since explicitly signed in since we
         # kicked off.
         connected = plus.cloud.is_connected()
-        signed_in_v1 = plus.get_v1_account_state() == 'signed_in'
         signed_in_v2 = plus.accounts.have_primary_credentials()
-        if connected and not signed_in_v1 and not signed_in_v2:
+        if connected and not signed_in_v2:
             plus.accounts.set_primary_credentials(result.credentials)
 
     def _on_set_active_workspace_completed(self) -> None:

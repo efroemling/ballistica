@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260819`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261014b`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,19 +9,22 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260819
+# ba_meta require asset-package 689
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260819'
-
 from typing import TYPE_CHECKING
+
+from bacommon.assetpackage import ApverNum
 
 from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
+
+# a-0.babuiltinassets.261014b
+_ASSET_PACKAGE = ApverNum(689)
 
 if TYPE_CHECKING:
     import datetime
@@ -32,114 +35,29 @@ if TYPE_CHECKING:
         """
         ::
 
-            Sounds needed during engine bootstrap and early UI (clicks, errors,
-            and other always-available effects).
+            Sounds the engine plays before construct-mode hands off (dev console
+            and dialog feedback), plus the silent stand-in for missing sounds.
 
             See source for the full asset list.
         """
 
         blank: SoundHandle
         blip: SoundHandle
-        cash_register: SoundHandle
         click01: SoundHandle
-        cork_pop: SoundHandle
-        deek: SoundHandle
-        ding: SoundHandle
         error: SoundHandle
-        gun_cocking: SoundHandle
-        powerdown01: SoundHandle
-        punch01: SoundHandle
-        score_increase: SoundHandle
-        sparkle01: SoundHandle
-        sparkle02: SoundHandle
-        sparkle03: SoundHandle
-        swish: SoundHandle
-        swish2: SoundHandle
-        swish3: SoundHandle
-        tap: SoundHandle
-        ticking_crazy: SoundHandle
 
     class MeshesGroup:
         """
         ::
 
-            Meshes needed during engine bootstrap and early UI.
+            Meshes the engine draws before construct-mode hands off.
 
             See source for the full asset list.
         """
 
-        action_button_bottom: MeshHandle
-        action_button_left: MeshHandle
-        action_button_right: MeshHandle
-        action_button_top: MeshHandle
-        arrow_back: MeshHandle
-        arrow_front: MeshHandle
-        box: MeshHandle
-        boxing_glove: MeshHandle
-        button_back_opaque: MeshHandle
-        button_back_small_opaque: MeshHandle
-        button_back_small_transparent: MeshHandle
-        button_back_transparent: MeshHandle
-        button_large_opaque: MeshHandle
-        button_large_transparent: MeshHandle
-        button_larger_opaque: MeshHandle
-        button_larger_transparent: MeshHandle
-        button_medium_opaque: MeshHandle
-        button_medium_transparent: MeshHandle
-        button_small_opaque: MeshHandle
-        button_small_transparent: MeshHandle
-        button_square_opaque: MeshHandle
-        button_square_transparent: MeshHandle
-        button_tab_opaque: MeshHandle
-        button_tab_transparent: MeshHandle
-        check_transparent: MeshHandle
-        cross_out: MeshHandle
-        cylinder: MeshHandle
-        eye_ball: MeshHandle
-        eye_ball_iris: MeshHandle
-        eye_lid: MeshHandle
-        flag_pole: MeshHandle
-        flag_stand: MeshHandle
-        flash: MeshHandle
-        hair_tuft1: MeshHandle
-        hair_tuft1b: MeshHandle
-        hair_tuft2: MeshHandle
-        hair_tuft3: MeshHandle
-        hair_tuft4: MeshHandle
-        image16x1: MeshHandle
         image1x1: MeshHandle
-        image1x1_full_screen: MeshHandle
-        image1x1_vrfull_screen: MeshHandle
-        image2x1: MeshHandle
-        image4x1: MeshHandle
-        locator: MeshHandle
-        locator_box: MeshHandle
-        locator_circle: MeshHandle
-        locator_circle_outline: MeshHandle
-        overlay_guide: MeshHandle
-        scorch: MeshHandle
-        scroll_bar_thumb_opaque: MeshHandle
-        scroll_bar_thumb_short_opaque: MeshHandle
-        scroll_bar_thumb_short_simple: MeshHandle
-        scroll_bar_thumb_short_transparent: MeshHandle
-        scroll_bar_thumb_simple: MeshHandle
-        scroll_bar_thumb_transparent: MeshHandle
-        scroll_bar_trough_transparent: MeshHandle
-        shield: MeshHandle
-        shock_wave: MeshHandle
-        shrapnel1: MeshHandle
-        shrapnel_board: MeshHandle
-        shrapnel_slime: MeshHandle
-        soft_edge_inside: MeshHandle
-        soft_edge_outside: MeshHandle
-        text_box_transparent: MeshHandle
         vr_fade: MeshHandle
         vr_overlay: MeshHandle
-        window_hsmall_vmed_opaque: MeshHandle
-        window_hsmall_vmed_transparent: MeshHandle
-        window_hsmall_vsmall_opaque: MeshHandle
-        window_hsmall_vsmall_transparent: MeshHandle
-        wing: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -277,6 +195,18 @@ if TYPE_CHECKING:
                 again."
             """
 
+        def corrupt_file(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error screen-message shown when a corrupt game data file (e.g.
+                an unreadable audio file) is detected; the placeholder is the
+                support email address.
+
+                English: "Corrupt file(s) detected. Please try re-installing, or
+                email {email}"
+            """
+
         def downloading_assets(self, *, count: int) -> LangStr:
             """
             ::
@@ -378,6 +308,28 @@ if TYPE_CHECKING:
                 English: "Error playing music: {music}"
             """
 
+    class StringsDeviceGroup:
+        """
+        ::
+
+            Device-state notices: messages about the hardware the game is
+            running on, such as thermal throttling.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Screen-message shown once per run on Android when the game
+        #:     deliberately lowers its frame rate because the OS reports severe
+        #:     thermal throttling; only shown on devices whose display would
+        #:     otherwise run faster than 60hz. The behavior can be turned off
+        #:     with the Thermal Throttling checkbox in graphics settings.
+        #:
+        #:     English: "Device is running hot; reducing frame rate until it
+        #:     cools. Configure this in graphics settings."
+        thermal_frame_rate_cap: LangStr
+
     class StringsInputGroup:
         """
         ::
@@ -429,7 +381,7 @@ if TYPE_CHECKING:
         #:     game controller is detected (multiple controllers at startup use
         #:     a separate counted message).
         #:
-        #:     English: "1 controller detected."
+        #:     English: "1 game controller detected."
         controller_detected: LangStr
 
         def controller_disconnected(
@@ -449,7 +401,7 @@ if TYPE_CHECKING:
         #:
         #:     Notice that a controller works only in menus.
         #:
-        #:     English: "This controller can not be used to play; only to
+        #:     English: "This game controller can not be used to play; only to
         #:     navigate menus."
         controller_menus_only: LangStr
 
@@ -474,7 +426,7 @@ if TYPE_CHECKING:
                 connect at the same time (a single controller connecting shows a
                 different message naming that controller).
 
-                English: (one) "# controller connected." / (other) "#
+                English: (one) "# game controller connected." / (other) "# game
                 controllers connected."
             """
 
@@ -486,8 +438,8 @@ if TYPE_CHECKING:
                 game controller is detected at once (a single controller at
                 startup uses a separate message).
 
-                English: (one) "# controller detected." / (other) "# controllers
-                detected."
+                English: (one) "# game controller detected." / (other) "# game
+                controllers detected."
             """
 
         def controllers_disconnected(self, *, count: int) -> LangStr:
@@ -498,8 +450,8 @@ if TYPE_CHECKING:
                 disconnect at the same time (a single controller disconnecting
                 shows a different message naming that controller).
 
-                English: (one) "# controller disconnected." / (other) "#
-                controllers disconnected."
+                English: (one) "# game controller disconnected." / (other) "#
+                game controllers disconnected."
             """
 
         #: ::
@@ -536,7 +488,7 @@ if TYPE_CHECKING:
 
                 Notice that a controller is not supported.
 
-                English: "Sorry, the {name} controller is not supported."
+                English: "Sorry, the game controller {name} is not supported."
             """
 
         #: ::
@@ -551,8 +503,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of the VR orientation reset on Cardboard.
         #:
-        #:     English: "Use this to reset the VR orientation. To play, you'll
-        #:     need an external controller."
+        #:     English: "Use this to reset the VR orientation. To play the game
+        #:     you'll need an external game controller."
         vr_orientation_reset_cardboard: LangStr
 
     class StringsNetGroup:
@@ -572,6 +524,36 @@ if TYPE_CHECKING:
         #:
         #:     English: "Your account was rejected. Are you signed in?"
         account_rejected: LangStr
+
+        def asset_package_access_denied(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package the player's account may not use; the placeholders
+                are the package's name and its owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which your account does not have access to."
+            """
+
+        def asset_package_auth_required(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package that requires signing in with an account allowed
+                to use it; the placeholders are the package's name and its
+                owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which needs you to be signed in with an account that has access
+                to it."
+            """
 
         #: ::
         #:
@@ -662,6 +644,18 @@ if TYPE_CHECKING:
                 is likely to cause problems. Please check your time and
                 time-zone settings."
             """
+
+        #: ::
+        #:
+        #:     Yellow warning screen-message shown right after successfully
+        #:     joining a multiplayer game whose host runs an older game version
+        #:     or has v2-auth turned off; tells the player only their legacy
+        #:     profiles can be used there. Replaces the old "some new characters
+        #:     may show up as older ones" warning.
+        #:
+        #:     English: "This server is old or has v2-auth turned off; only
+        #:     legacy profiles are available."
+        host_legacy_profiles_only: LangStr
 
         #: ::
         #:
@@ -921,6 +915,14 @@ if TYPE_CHECKING:
                 "{name} is chat-blocked for # seconds."
             """
 
+        #: ::
+        #:
+        #:     Error screen-message when a player sends a chat message longer
+        #:     than the host allows.
+        #:
+        #:     English: "Message is too long."
+        chat_message_too_long: LangStr
+
         def join_cooldown(self, *, seconds: int) -> LangStr:
             """
             ::
@@ -1118,6 +1120,26 @@ if TYPE_CHECKING:
         #:     English: "Google Play Services is not available. Some app
         #:     functionality may be disabled."
         google_play_services_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Body of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet), under the payment-pending
+        #:     title.
+        #:
+        #:     English: "Your purchase will be delivered once payment is
+        #:     confirmed."
+        payment_pending_message: LangStr
+
+        #: ::
+        #:
+        #:     Title of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet).
+        #:
+        #:     English: "Payment Pending"
+        payment_pending_title: LangStr
 
         #: ::
         #:
@@ -1489,6 +1511,7 @@ if TYPE_CHECKING:
         account: StringsAccountGroup
         assets: StringsAssetsGroup
         audio: StringsAudioGroup
+        device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
         plugins: StringsPluginsGroup
@@ -1504,32 +1527,15 @@ if TYPE_CHECKING:
         """
         ::
 
-            Textures needed during engine bootstrap and early UI, including the
-            reflection cube-maps.
+            Textures the engine draws before construct-mode hands off: fonts,
+            text backings, the cursor, and dev-console/dialog chrome.
 
             See source for the full asset list.
         """
 
-        action_buttons: TextureHandle
-        arrow: TextureHandle
-        back_icon: TextureHandle
-        black: TextureHandle
-        bomb_button: TextureHandle
-        boxing_gloves_color: TextureHandle
-        button_square: TextureHandle
-        button_square_wide: TextureHandle
-        character_icon_mask: TextureHandle
         circle: TextureHandle
-        circle_no_alpha: TextureHandle
-        circle_outline: TextureHandle
-        circle_outline_no_alpha: TextureHandle
         circle_shadow: TextureHandle
-        circle_soft: TextureHandle
         cursor: TextureHandle
-        explosion: TextureHandle
-        eye_color: TextureHandle
-        eye_color_tint_mask: TextureHandle
-        flag_pole_color: TextureHandle
         font_big: TextureHandle
         font_extras: TextureHandle
         font_extras2: TextureHandle
@@ -1544,170 +1550,45 @@ if TYPE_CHECKING:
         font_small5: TextureHandle
         font_small6: TextureHandle
         font_small7: TextureHandle
-        fuse: TextureHandle
-        glow: TextureHandle
-        light: TextureHandle
-        light_sharp: TextureHandle
-        light_soft: TextureHandle
-        menu_button: TextureHandle
-        nub: TextureHandle
-        ouya_abutton: TextureHandle
-        page_left_right: TextureHandle
-        rgb_stripes: TextureHandle
-        scorch: TextureHandle
-        scorch_big: TextureHandle
-        scroll_widget: TextureHandle
-        scroll_widget_glow: TextureHandle
+        howdy: TextureHandle
         shadow: TextureHandle
         shadow_sharp: TextureHandle
-        shadow_soft: TextureHandle
-        shield: TextureHandle
-        shrapnel1_color: TextureHandle
-        smoke: TextureHandle
-        soft_rect: TextureHandle
-        soft_rect2: TextureHandle
-        soft_rect_vertical: TextureHandle
-        sparks: TextureHandle
-        spinner: TextureHandle
-        spinner0: TextureHandle
-        spinner1: TextureHandle
-        spinner10: TextureHandle
-        spinner11: TextureHandle
-        spinner2: TextureHandle
-        spinner3: TextureHandle
-        spinner4: TextureHandle
-        spinner5: TextureHandle
-        spinner6: TextureHandle
-        spinner7: TextureHandle
-        spinner8: TextureHandle
-        spinner9: TextureHandle
-        start_button: TextureHandle
-        text_clear_button: TextureHandle
-        touch_arrows: TextureHandle
-        touch_arrows_actions: TextureHandle
-        ui_atlas: TextureHandle
-        ui_atlas2: TextureHandle
-        users_button: TextureHandle
-        white: TextureHandle
-        window_hsmall_vmed: TextureHandle
-        window_hsmall_vsmall: TextureHandle
-        wings: TextureHandle
 
-    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
-    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+        #: ::
+        #:
+        #:     Data-role twin of soft_rect2.png for shader slots that read
+        #:     channels as values (tint and mask slots); the original stays a
+        #:     picture.
+        soft_rect2_mask: TextureHandle
+
+        #: ::
+        #:
+        #:     Data-role twin of soft_rect.png for shader slots that read
+        #:     channels as values (tint and mask slots); the original stays a
+        #:     picture.
+        soft_rect_mask: TextureHandle
+        soft_rect_vertical: TextureHandle
+
+    #: The ``audio`` group - 4 assets (``blank``, ``blip``, ``click01``,
+    #: ``error``). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 72 assets (``action_button_bottom``,
-    #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
-    #: ``arrow_back``, and 67 more). Full list in source.
+    #: The ``meshes`` group - 3 assets (``image1x1``, ``vr_fade``,
+    #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 122 more). Full list in source.
+    #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 130 more). Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
-    #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
+    #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
+    #: ``cursor``, ``font_big``, ``font_extras``, and 18 more). Full list in
     #: source.
     textures: TexturesGroup
 
 _TREE = {
-    'audio': {
-        'blank': 's',
-        'blip': 's',
-        'cash_register': 's',
-        'click01': 's',
-        'cork_pop': 's',
-        'deek': 's',
-        'ding': 's',
-        'error': 's',
-        'gun_cocking': 's',
-        'powerdown01': 's',
-        'punch01': 's',
-        'score_increase': 's',
-        'sparkle01': 's',
-        'sparkle02': 's',
-        'sparkle03': 's',
-        'swish': 's',
-        'swish2': 's',
-        'swish3': 's',
-        'tap': 's',
-        'ticking_crazy': 's',
-    },
-    'meshes': {
-        'action_button_bottom': 'm',
-        'action_button_left': 'm',
-        'action_button_right': 'm',
-        'action_button_top': 'm',
-        'arrow_back': 'm',
-        'arrow_front': 'm',
-        'box': 'm',
-        'boxing_glove': 'm',
-        'button_back_opaque': 'm',
-        'button_back_small_opaque': 'm',
-        'button_back_small_transparent': 'm',
-        'button_back_transparent': 'm',
-        'button_large_opaque': 'm',
-        'button_large_transparent': 'm',
-        'button_larger_opaque': 'm',
-        'button_larger_transparent': 'm',
-        'button_medium_opaque': 'm',
-        'button_medium_transparent': 'm',
-        'button_small_opaque': 'm',
-        'button_small_transparent': 'm',
-        'button_square_opaque': 'm',
-        'button_square_transparent': 'm',
-        'button_tab_opaque': 'm',
-        'button_tab_transparent': 'm',
-        'check_transparent': 'm',
-        'cross_out': 'm',
-        'cylinder': 'm',
-        'eye_ball': 'm',
-        'eye_ball_iris': 'm',
-        'eye_lid': 'm',
-        'flag_pole': 'm',
-        'flag_stand': 'm',
-        'flash': 'm',
-        'hair_tuft1': 'm',
-        'hair_tuft1b': 'm',
-        'hair_tuft2': 'm',
-        'hair_tuft3': 'm',
-        'hair_tuft4': 'm',
-        'image16x1': 'm',
-        'image1x1': 'm',
-        'image1x1_full_screen': 'm',
-        'image1x1_vrfull_screen': 'm',
-        'image2x1': 'm',
-        'image4x1': 'm',
-        'locator': 'm',
-        'locator_box': 'm',
-        'locator_circle': 'm',
-        'locator_circle_outline': 'm',
-        'overlay_guide': 'm',
-        'scorch': 'm',
-        'scroll_bar_thumb_opaque': 'm',
-        'scroll_bar_thumb_short_opaque': 'm',
-        'scroll_bar_thumb_short_simple': 'm',
-        'scroll_bar_thumb_short_transparent': 'm',
-        'scroll_bar_thumb_simple': 'm',
-        'scroll_bar_thumb_transparent': 'm',
-        'scroll_bar_trough_transparent': 'm',
-        'shield': 'm',
-        'shock_wave': 'm',
-        'shrapnel1': 'm',
-        'shrapnel_board': 'm',
-        'shrapnel_slime': 'm',
-        'soft_edge_inside': 'm',
-        'soft_edge_outside': 'm',
-        'text_box_transparent': 'm',
-        'vr_fade': 'm',
-        'vr_overlay': 'm',
-        'window_hsmall_vmed_opaque': 'm',
-        'window_hsmall_vmed_transparent': 'm',
-        'window_hsmall_vsmall_opaque': 'm',
-        'window_hsmall_vsmall_transparent': 'm',
-        'wing': 'm',
-    },
+    'audio': {'blank': 's', 'blip': 's', 'click01': 's', 'error': 's'},
+    'meshes': {'image1x1': 'm', 'vr_fade': 'm', 'vr_overlay': 'm'},
     'strings': {
         'account': {
             'must_sign_in': (),
@@ -1724,6 +1605,7 @@ _TREE = {
             'building_assets_no_count': (),
             'client_too_old': (),
             'content_error_guidance': ('detail',),
+            'corrupt_file': ('email',),
             'downloading_assets': ('count',),
             'load_error': (),
             'preparing_build': (),
@@ -1734,6 +1616,7 @@ _TREE = {
             'signing_in': (),
         },
         'audio': {'music_play_error': ('music',)},
+        'device': {'thermal_frame_rate_cap': ()},
         'input': {
             'axis': ('number',),
             'button': ('number',),
@@ -1754,6 +1637,8 @@ _TREE = {
         },
         'net': {
             'account_rejected': (),
+            'asset_package_access_denied': ('package', 'owner'),
+            'asset_package_auth_required': ('package', 'owner'),
             'auth_error': (),
             'connected_to_game': ('name',),
             'connected_to_party': ('name',),
@@ -1764,6 +1649,7 @@ _TREE = {
             'connection_failed_version_mismatch': (),
             'connection_rejected': (),
             'device_time_incorrect': ('hours',),
+            'host_legacy_profiles_only': (),
             'incompatible_newer_version_host': (),
             'incompatible_version_host': (),
             'incompatible_version_player': ('name',),
@@ -1791,6 +1677,7 @@ _TREE = {
         },
         'session': {
             'chat_blocked': ('seconds', 'name'),
+            'chat_message_too_long': (),
             'join_cooldown': ('seconds',),
             'kick_idle_kicked': ('name',),
             'kick_idle_warning': ('seconds', 'name'),
@@ -1813,6 +1700,8 @@ _TREE = {
         'store': {
             'google_play_purchases_unavailable': (),
             'google_play_services_unavailable': (),
+            'payment_pending_message': (),
+            'payment_pending_title': (),
             'purchase_already_in_progress': (),
             'purchase_not_valid': ('email',),
             'purchases_restored': (),
@@ -1859,26 +1748,9 @@ _TREE = {
         },
     },
     'textures': {
-        'action_buttons': 't',
-        'arrow': 't',
-        'back_icon': 't',
-        'black': 't',
-        'bomb_button': 't',
-        'boxing_gloves_color': 't',
-        'button_square': 't',
-        'button_square_wide': 't',
-        'character_icon_mask': 't',
         'circle': 't',
-        'circle_no_alpha': 't',
-        'circle_outline': 't',
-        'circle_outline_no_alpha': 't',
         'circle_shadow': 't',
-        'circle_soft': 't',
         'cursor': 't',
-        'explosion': 't',
-        'eye_color': 't',
-        'eye_color_tint_mask': 't',
-        'flag_pole_color': 't',
         'font_big': 't',
         'font_extras': 't',
         'font_extras2': 't',
@@ -1893,66 +1765,24 @@ _TREE = {
         'font_small5': 't',
         'font_small6': 't',
         'font_small7': 't',
-        'fuse': 't',
-        'glow': 't',
-        'light': 't',
-        'light_sharp': 't',
-        'light_soft': 't',
-        'menu_button': 't',
-        'nub': 't',
-        'ouya_abutton': 't',
-        'page_left_right': 't',
-        'rgb_stripes': 't',
-        'scorch': 't',
-        'scorch_big': 't',
-        'scroll_widget': 't',
-        'scroll_widget_glow': 't',
+        'howdy': 't',
         'shadow': 't',
         'shadow_sharp': 't',
-        'shadow_soft': 't',
-        'shield': 't',
-        'shrapnel1_color': 't',
-        'smoke': 't',
-        'soft_rect': 't',
-        'soft_rect2': 't',
+        'soft_rect2_mask': 't',
+        'soft_rect_mask': 't',
         'soft_rect_vertical': 't',
-        'sparks': 't',
-        'spinner': 't',
-        'spinner0': 't',
-        'spinner1': 't',
-        'spinner10': 't',
-        'spinner11': 't',
-        'spinner2': 't',
-        'spinner3': 't',
-        'spinner4': 't',
-        'spinner5': 't',
-        'spinner6': 't',
-        'spinner7': 't',
-        'spinner8': 't',
-        'spinner9': 't',
-        'start_button': 't',
-        'text_clear_button': 't',
-        'touch_arrows': 't',
-        'touch_arrows_actions': 't',
-        'ui_atlas': 't',
-        'ui_atlas2': 't',
-        'users_button': 't',
-        'white': 't',
-        'window_hsmall_vmed': 't',
-        'window_hsmall_vsmall': 't',
-        'wings': 't',
     },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
-    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
-    meshes = AssetGroup(__asset_package__, _TREE['meshes'], 'meshes')
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,
     )
-    textures = AssetGroup(__asset_package__, _TREE['textures'], 'textures')
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

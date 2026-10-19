@@ -14,6 +14,7 @@
 
 #include "ballistica/base/graphics/component/special_component.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_asset_data_gl.h"
+#include "ballistica/base/graphics/gl/mesh/mesh_data_debug_gl.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_data_dual_texture_full_gl.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_data_gl.h"
 #include "ballistica/base/graphics/gl/mesh/mesh_data_object_split_gl.h"
@@ -30,8 +31,11 @@
 #include "ballistica/base/graphics/gl/program/program_smoke_gl.h"
 #include "ballistica/base/graphics/gl/program/program_sprite_gl.h"
 #include "ballistica/base/graphics/gl/render_target_gl.h"
+#include "ballistica/base/graphics/gl/render_view_data_gl.h"
 #include "ballistica/base/graphics/gl/texture_data_gl.h"
+#include "ballistica/base/graphics/support/frame_def_view.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/crash_info.h"
 #include "ballistica/shared/math/rect.h"
 
 // On SDL builds, SDL.h provides SDL_GL_GetProcAddress for loading GL extension
@@ -47,10 +51,6 @@
 
 // Turn this off to see how much blend overdraw is occurring.
 #define BA_GL_ENABLE_BLEND 1
-
-// Support legacy drawing purely for debugging (should migrate this to
-// post-fixed pipeline).
-#define BA_GL_ENABLE_DEBUG_DRAW_COMMANDS 0
 
 #ifndef GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG
 #define GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG 0x8C02
@@ -77,6 +77,8 @@ bool RendererGL::funky_depth_issue_{};
 
 RendererGL::RendererGL() {
   assert(g_base->app_adapter->InGraphicsContext());
+
+  CreateMainViewData();
 
   if (explicit_bool(BA_FORCE_CHECK_GL_ERRORS)) {
     g_base->ScreenMessage("GL ERROR CHECKS ENABLED");
@@ -308,6 +310,12 @@ void RendererGL::CheckGLCapabilities_() {
           + ", renderer: " + renderer + ", version: " + version_str
           + ", low-end-device: " + (low_end_device_ ? "yes" : "no") + ").");
 
+  // Mirror our graphics identity into the crash record. A crash report
+  // from the field has no access to these logs, and a fault inside a
+  // graphics driver or ANGLE is unreadable without knowing the backend,
+  // gpu and driver it happened on.
+  CrashInfoSetRenderer(std::string(renderer) + " | " + version_str);
+
   // Build a vector of extensions. Newer GLs give us extensions as lists
   // already, but on older ones we may need to break a single string apart
   // ourself.
@@ -474,6 +482,7 @@ void RendererGL::CheckGLCapabilities_() {
   // If we're running ES3, ask about our max multisample counts and whether
   // we can enable MSAA.
   msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = 0;  // start pessimistic
+  msaa_sample_counts_rgb8_.clear();
 
   bool have_gl_get_internal_format_iv{};
   if (gl_is_es()) {
@@ -511,6 +520,11 @@ void RendererGL::CheckGLCapabilities_() {
       glGetInternalformativ(GL_RENDERBUFFER, GL_RGB8, GL_SAMPLES, count,
                             &samples[0]);
       msaa_max_samples_rgb8_ = samples[0];
+      for (GLint s : samples) {
+        if (s > 1) {
+          msaa_sample_counts_rgb8_.push_back(s);
+        }
+      }
     } else {
       BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                   "Got 0 samplecounts for RGB8");
@@ -524,15 +538,31 @@ void RendererGL::CheckGLCapabilities_() {
     auto max_samples = GLGetIntOptional(GL_MAX_SAMPLES);
     if (max_samples.has_value()) {
       msaa_max_samples_rgb565_ = msaa_max_samples_rgb8_ = *max_samples;
+      // We only get a max here; counts between are a safe assumption
+      // for powers of two.
+      for (int s = 2; s <= *max_samples; s *= 2) {
+        msaa_sample_counts_rgb8_.push_back(s);
+      }
     }
   }
+  std::sort(msaa_sample_counts_rgb8_.begin(), msaa_sample_counts_rgb8_.end());
+  msaa_sample_counts_rgb8_.erase(std::unique(msaa_sample_counts_rgb8_.begin(),
+                                             msaa_sample_counts_rgb8_.end()),
+                                 msaa_sample_counts_rgb8_.end());
 
   BA_DEBUG_CHECK_GL_ERROR;
 
   first_extension_check_ = false;
 }
 
+auto RendererGL::GetMSAASampleCounts() -> std::vector<int> {
+  return msaa_sample_counts_rgb8_;
+}
+
 auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
+  if (msaa_samples_explicit_ > 0) {
+    return msaa_samples_explicit_;
+  }
   if (g_buildconfig.platform_android()) {
     // We currently aim for 4 up to 800 height and 2 beyond that.
     if (height > 800) {
@@ -546,6 +576,29 @@ auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
 }
 
 void RendererGL::UpdateMSAAEnabled_() {
+  msaa_samples_explicit_ = 0;
+
+  // An explicit request (off or a sample count) overrides our own
+  // judgement below.
+  int requested = msaa_samples_requested();
+  if (requested != Graphics::kMSAASamplesAuto) {
+    // Go with the most samples we can do without exceeding the request
+    // (a config can come from a machine with different hardware).
+    int samples{};
+    for (int s : msaa_sample_counts_rgb8_) {
+      if (s <= requested) {
+        samples = s;
+      }
+    }
+    msaa_samples_explicit_ = samples;
+    enable_msaa_ = samples > 0;
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                         "MSAA: " + std::to_string(requested)
+                             + " sample(s) requested; using "
+                             + std::to_string(samples) + ".");
+    return;
+  }
+
   if (g_buildconfig.platform_macos()) {
     // Let's go ahead and flip this on for Apple Silicon Macs.
 #if __aarch64__
@@ -569,6 +622,9 @@ void RendererGL::UpdateMSAAEnabled_() {
   } else {
     enable_msaa_ = false;
   }
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kDebug,
+      std::string("MSAA: auto; ") + (enable_msaa_ ? "enabled." : "disabled."));
 }
 
 auto RendererGL::IsMSAAEnabled() const -> bool { return enable_msaa_; }
@@ -602,17 +658,41 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
     case TextureFormat::kASTC_4x4:
       return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
       break;
-    case TextureFormat::kASTC_6x6:
-      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
-      break;
-    case TextureFormat::kASTC_8x8:
-      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+    case TextureFormat::kASTC_5x4:
+      return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
       break;
     case TextureFormat::kASTC_5x5:
       return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
       break;
+    case TextureFormat::kASTC_6x5:
+      return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+      break;
+    case TextureFormat::kASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x5:
+      return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+      break;
+    case TextureFormat::kASTC_8x6:
+      return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+      break;
+    case TextureFormat::kASTC_10x5:
+      return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+      break;
+    case TextureFormat::kASTC_10x6:
+      return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+      break;
+    case TextureFormat::kASTC_10x8:
+      return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+      break;
     case TextureFormat::kASTC_10x10:
       return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      break;
+    case TextureFormat::kASTC_12x10:
+      return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
       break;
     case TextureFormat::kASTC_12x12:
       return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
@@ -881,6 +961,10 @@ RendererGL::~RendererGL() {
   assert(g_base->app_adapter->InGraphicsContext());
   printf("FIXME: need to unload renderer on destroy.\n");
   // Unload();
+
+  // What we hold for views cleans up after itself through us, so it
+  // needs to go while we're still whole.
+  ReleaseViewData();
   BA_DEBUG_CHECK_GL_ERROR;
 }
 
@@ -1134,26 +1218,47 @@ void RendererGL::StandardPostProcessSetup_(ProgramPostProcessGL* p,
   p->Bind();
   p->SetColorTexture(cam_target->framebuffer()->texture());
   if (p->UsesSlightBlurredTex()) {
-    p->SetColorSlightBlurredTexture(blur_buffers_[0]->texture());
+    p->SetColorSlightBlurredTexture(view_data_gl()->blur_buffers[0]->texture());
   }
-  if (blur_buffers_.size() > 1) {
+  if (view_data_gl()->blur_buffers.size() > 1) {
     if (p->UsesBlurredTexture()) {
-      p->SetColorBlurredTexture(blur_buffers_[1]->texture());
+      p->SetColorBlurredTexture(view_data_gl()->blur_buffers[1]->texture());
     }
     p->SetColorBlurredMoreTexture(
-        blur_buffers_[blur_buffers_.size() - 1]->texture());
+        view_data_gl()
+            ->blur_buffers[view_data_gl()->blur_buffers.size() - 1]
+            ->texture());
   } else {
     if (p->UsesBlurredTexture()) {
-      p->SetColorBlurredTexture(blur_buffers_[0]->texture());
+      p->SetColorBlurredTexture(view_data_gl()->blur_buffers[0]->texture());
     }
-    p->SetColorBlurredMoreTexture(blur_buffers_[0]->texture());
+    p->SetColorBlurredMoreTexture(view_data_gl()->blur_buffers[0]->texture());
   }
   p->SetDepthTexture(cam_target->framebuffer()->depth_texture());
   float dof_near_smoothed = this->dof_near_smoothed();
   float dof_far_smoothed = this->dof_far_smoothed();
 
+  // Debug kill-switch: BA_DISABLE_DOF=1 renders the whole frame in
+  // focus (the shader draws depths inside the middle two range values
+  // sharp, so ranges bracketing the entire depth buffer blur nothing).
+  // Deliberately re-read each frame (it's once per frame) so
+  // automation can toggle it mid-run via os.environ -- close-up
+  // character screenshots want no depth blur (see test_game_run
+  // --disable-dof).
+  auto dof_disable = g_core->platform->GetEnv("BA_DISABLE_DOF");
+  const DepthOfField& dof = pass.frame_def()->current_view()->depth_of_field();
   // FIXME: These sort of fudge-factors don't belong here in the renderer.
-  if (pass.frame_def()->orbiting()) {
+  if ((dof_disable.has_value() && *dof_disable == "1")
+      || dof.mode == DepthOfField::Mode::kOff) {
+    p->SetDepthOfFieldRanges(-2.0f, -1.0f, 2.0f, 3.0f);
+  } else if (dof.mode == DepthOfField::Mode::kRange) {
+    // We've been told outright what is in focus.
+    p->SetDepthOfFieldRanges(
+        GetZBufferValueForDistance(beauty_pass, dof.blur_near),
+        GetZBufferValueForDistance(beauty_pass, dof.focus_near),
+        GetZBufferValueForDistance(beauty_pass, dof.focus_far),
+        GetZBufferValueForDistance(beauty_pass, dof.blur_far));
+  } else if (pass.frame_def()->orbiting()) {
     p->SetDepthOfFieldRanges(
         GetZBufferValue(beauty_pass, 0.80f * dof_near_smoothed),
         GetZBufferValue(beauty_pass, 0.91f * dof_near_smoothed),
@@ -1259,7 +1364,14 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                 shadow_opacity;
             buffer->GetFloats(&r, &g, &b, &a, &shadow_offset_x,
                               &shadow_offset_y, &shadow_blur, &shadow_opacity);
-            ProgramSimpleGL* p = simple_tex_mod_shadow_prog_;
+            float shadow_r, shadow_g, shadow_b, shadow_spread, text_glow;
+            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread,
+                              &text_glow);
+            // Text glow is its own program so plain shadowed text never
+            // runs its extra work.
+            ProgramSimpleGL* p = text_glow > 0.0f
+                                     ? simple_tex_mod_text_glow_prog_
+                                     : simple_tex_mod_shadow_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             const TextureAsset* t = buffer->GetTexture();
@@ -1269,6 +1381,10 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             // do.
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
+            p->SetShadowColor(shadow_r, shadow_g, shadow_b, shadow_spread);
+            if (text_glow > 0.0f) {
+              p->SetTextGlow(text_glow);
+            }
             p->SetMaskUV2Texture(t_mask);
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
@@ -1283,7 +1399,16 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             buffer->GetFloats(&r, &g, &b, &a, &shadow_offset_x,
                               &shadow_offset_y, &shadow_blur, &shadow_opacity,
                               &flatness);
-            ProgramSimpleGL* p = simple_tex_mod_shadow_flatness_prog_;
+            float shadow_r, shadow_g, shadow_b, shadow_spread, text_glow;
+            buffer->GetFloats(&shadow_r, &shadow_g, &shadow_b, &shadow_spread,
+                              &text_glow);
+            // Text glow replaces the glyph's color outright, so flatness
+            // has nothing to act on there; glowing text uses the plain
+            // glow program. (A glow+flatness variant had its flatness
+            // uniform compiled out by stricter drivers such as Mesa.)
+            ProgramSimpleGL* p = text_glow > 0.0f
+                                     ? simple_tex_mod_text_glow_prog_
+                                     : simple_tex_mod_shadow_flatness_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             const TextureAsset* t = buffer->GetTexture();
@@ -1293,8 +1418,14 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             // do.
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
+            p->SetShadowColor(shadow_r, shadow_g, shadow_b, shadow_spread);
+            if (text_glow > 0.0f) {
+              p->SetTextGlow(text_glow);
+            }
             p->SetMaskUV2Texture(t_mask);
-            p->SetFlatness(flatness);
+            if (text_glow <= 0.0f) {
+              p->SetFlatness(flatness);
+            }
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
@@ -1333,6 +1464,20 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetGlow(glow_amount, std::max(0.0f, glow_blur));
             break;
           }
+          case ShadingType::kSimpleTextureModulatedTransparentUV2Fade: {
+            SetDoubleSided_(false);
+            bool premult = static_cast<bool>(buffer->GetInt());
+            SetBlend(true);
+            SetBlendPremult(premult);
+            float r, g, b, a;
+            buffer->GetFloats(&r, &g, &b, &a);
+            ProgramSimpleGL* p = simple_tex_mod_uv2_fade_prog_;
+            p->Bind();
+            p->SetColor(r, g, b, a);
+            p->SetColorTexture(buffer->GetTexture());
+            p->SetPremultBlend(premult ? 1.0f : 0.0f);
+            break;
+          }
           case ShadingType::kSimpleTextureModulatedTransparentDoubleSided: {
             SetDoubleSided_(true);
             bool premult = static_cast<bool>(buffer->GetInt());
@@ -1360,53 +1505,45 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
           case ShadingType::kSimpleTextureModulatedColorized: {
             SetDoubleSided_(false);
             SetBlend(false);
-            float r, g, b, colorize_r, colorize_g, colorize_b;
-            buffer->GetFloats(&r, &g, &b, &colorize_r, &colorize_g,
-                              &colorize_b);
+            float r, g, b, colorize_r, colorize_g, colorize_b, colorize2_r,
+                colorize2_g, colorize2_b, colorize3_r, colorize3_g, colorize3_b;
+            buffer->GetFloats(&r, &g, &b, &colorize_r, &colorize_g, &colorize_b,
+                              &colorize2_r, &colorize2_g, &colorize2_b,
+                              &colorize3_r, &colorize3_g, &colorize3_b);
             ProgramSimpleGL* p = simple_tex_mod_colorized_prog_;
             p->Bind();
             p->SetColor(r, g, b);
             p->SetColorTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
-            p->SetColorizeTexture(buffer->GetTexture());
-            break;
-          }
-          case ShadingType::kSimpleTextureModulatedColorized2: {
-            SetDoubleSided_(false);
-            SetBlend(false);
-            float r, g, b, colorize_r, colorize_g, colorize_b, colorize2_r,
-                colorize2_g, colorize2_b;
-            buffer->GetFloats(&r, &g, &b, &colorize_r, &colorize_g, &colorize_b,
-                              &colorize2_r, &colorize2_g, &colorize2_b);
-            ProgramSimpleGL* p = simple_tex_mod_colorized2_prog_;
-            p->Bind();
-            p->SetColor(r, g, b);
-            p->SetColorTexture(buffer->GetTexture());
-            p->SetColorizeTexture(buffer->GetTexture());
-            p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
+            p->SetColorizeTexture(buffer->GetTexture());
             break;
           }
-          case ShadingType::kSimpleTextureModulatedColorized2Masked: {
+          case ShadingType::kSimpleTextureModulatedColorizedMasked: {
             SetDoubleSided_(false);
             SetBlend(false);
             float r, g, b, a, colorize_r, colorize_g, colorize_b, colorize2_r,
-                colorize2_g, colorize2_b;
+                colorize2_g, colorize2_b, colorize3_r, colorize3_g, colorize3_b;
             buffer->GetFloats(&r, &g, &b, &a, &colorize_r, &colorize_g,
                               &colorize_b, &colorize2_r, &colorize2_g,
-                              &colorize2_b);
-            ProgramSimpleGL* p = simple_tex_mod_colorized2_masked_prog_;
+                              &colorize2_b, &colorize3_r, &colorize3_g,
+                              &colorize3_b);
+            ProgramSimpleGL* p = simple_tex_mod_colorized_masked_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetMaskTexture(buffer->GetTexture());
             // Blending is off here, so the premult additive-frame fade
-            // never applies; set 0 explicitly since the program object is
-            // shared with the transparent masked path.
+            // and the straight-mask alpha scale never apply; set 0
+            // explicitly since the program object is shared with the
+            // transparent masked path.
             p->SetTexPremultiplied(0.0f);
+            p->SetMaskStraight(0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentColorized: {
@@ -1414,58 +1551,51 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             bool premult = static_cast<bool>(buffer->GetInt());
             SetBlend(true);
             SetBlendPremult(premult);
-            float r, g, b, a, colorize_r, colorize_g, colorize_b;
+            float r, g, b, a, colorize_r, colorize_g, colorize_b, colorize2_r,
+                colorize2_g, colorize2_b, colorize3_r, colorize3_g, colorize3_b;
             buffer->GetFloats(&r, &g, &b, &a, &colorize_r, &colorize_g,
-                              &colorize_b);
+                              &colorize_b, &colorize2_r, &colorize2_g,
+                              &colorize2_b, &colorize3_r, &colorize3_g,
+                              &colorize3_b);
             ProgramSimpleGL* p = simple_tex_mod_colorized_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
+            p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetColorizeTexture(buffer->GetTexture());
             break;
           }
-          case ShadingType::kSimpleTextureModulatedTransparentColorized2: {
+          case ShadingType::kSimpleTextureModulatedTransparentColorizedMasked: {
             SetDoubleSided_(false);
             bool premult = static_cast<bool>(buffer->GetInt());
             SetBlend(true);
             SetBlendPremult(premult);
             float r, g, b, a, colorize_r, colorize_g, colorize_b, colorize2_r,
-                colorize2_g, colorize2_b;
+                colorize2_g, colorize2_b, colorize3_r, colorize3_g, colorize3_b;
             buffer->GetFloats(&r, &g, &b, &a, &colorize_r, &colorize_g,
                               &colorize_b, &colorize2_r, &colorize2_g,
-                              &colorize2_b);
-            ProgramSimpleGL* p = simple_tex_mod_colorized2_prog_;
+                              &colorize2_b, &colorize3_r, &colorize3_g,
+                              &colorize3_b);
+            ProgramSimpleGL* p = simple_tex_mod_colorized_masked_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetColorizeTexture(buffer->GetTexture());
-            break;
-          }
-          case ShadingType::
-              kSimpleTextureModulatedTransparentColorized2Masked: {
-            SetDoubleSided_(false);
-            bool premult = static_cast<bool>(buffer->GetInt());
-            SetBlend(true);
-            SetBlendPremult(premult);
-            float r, g, b, a, colorize_r, colorize_g, colorize_b, colorize2_r,
-                colorize2_g, colorize2_b;
-            buffer->GetFloats(&r, &g, &b, &a, &colorize_r, &colorize_g,
-                              &colorize_b, &colorize2_r, &colorize2_g,
-                              &colorize2_b);
-            ProgramSimpleGL* p = simple_tex_mod_colorized2_masked_prog_;
-            p->Bind();
-            p->SetColor(r, g, b, a);
-            p->SetColorTexture(buffer->GetTexture());
-            p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
-            p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
-            p->SetColorizeTexture(buffer->GetTexture());
-            p->SetMaskTexture(buffer->GetTexture());
+            const TextureAsset* t_mask = buffer->GetTexture();
+            p->SetMaskTexture(t_mask);
             // Lets the shader fade the mask's additive frame term for
             // premult textures (straight-alpha gets it free at blend time).
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
+            // Under premult blend, a mask that is not itself premultiplied
+            // (a data-role mask, or a straight one from a mod) needs the
+            // shader to apply its alpha to its color contribution.
+            p->SetMaskStraight(premult && !t_mask->premultiplied() ? 1.0f
+                                                                   : 0.0f);
             break;
           }
           case ShadingType::kObject: {
@@ -1477,7 +1607,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->Bind();
             p->SetColor(r, g, b);
             p->SetColorTexture(buffer->GetTexture());
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             break;
           }
           case ShadingType::kSmoke: {
@@ -1507,7 +1637,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                     ->framebuffer()
                     ->depth_texture());
             p->SetBlurTexture(
-                blur_buffers_[blur_buffers_.size() - 1]->texture());
+                view_data_gl()
+                    ->blur_buffers[view_data_gl()->blur_buffers.size() - 1]
+                    ->texture());
             break;
           }
           case ShadingType::kPostProcessNormalDistort: {
@@ -1573,7 +1705,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->Bind();
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             break;
           }
           case ShadingType::kObjectLightShadow: {
@@ -1588,7 +1720,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->Bind();
             p->SetColor(r, g, b);
             p->SetColorTexture(buffer->GetTexture());
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1610,6 +1742,42 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetLightShadowTexture(light_shadow_tex);
             break;
           }
+          case ShadingType::kObjectLightShadowFacingRatio: {
+            // Debug shading. Single-sided so flipped faces in collision
+            // geometry show up as holes; free-form debug triangles get
+            // both windings emitted at flush time instead.
+            SetDoubleSided_(false);
+            SetBlend(false);
+            auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
+            float r, g, b;
+            buffer->GetFloats(&r, &g, &b);
+            ProgramObjectGL* p = obj_lightshad_facing_prog_;
+            p->Bind();
+            p->SetColor(r, g, b);
+            p->SetColorTexture(buffer->GetTexture());
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
+            GLuint light_shadow_tex;
+            switch (light_shadow) {
+              case LightShadowType::kTerrain:
+                light_shadow_tex =
+                    static_cast<RenderTargetGL*>(light_shadow_render_target())
+                        ->framebuffer()
+                        ->texture();
+                break;
+              case LightShadowType::kObject:
+                light_shadow_tex =
+                    static_cast<RenderTargetGL*>(light_render_target())
+                        ->framebuffer()
+                        ->texture();
+                break;
+              default:
+                light_shadow_tex = 0;
+                FatalError("Unhandled LightShadowType.");
+            }
+            p->SetLightShadowTexture(light_shadow_tex);
+            break;
+          }
+          case ShadingType::kObjectLightShadowFacingRatioTransparent:
           case ShadingType::kObjectLightShadowTransparent: {
             SetDoubleSided_(false);
             bool premult = static_cast<bool>(buffer->GetInt());
@@ -1618,11 +1786,15 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
             float r, g, b, a;
             buffer->GetFloats(&r, &g, &b, &a);
-            ProgramObjectGL* p = obj_lightshad_transparent_prog_;
+            ProgramObjectGL* p =
+                (shader
+                 == ShadingType::kObjectLightShadowFacingRatioTransparent)
+                    ? obj_lightshad_facing_transparent_prog_
+                    : obj_lightshad_transparent_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1660,7 +1832,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorTexture(buffer->GetTexture());
             p->SetReflectionTexture(buffer->GetTexture());
             p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1712,7 +1884,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
               p->SetReflectionTexture(buffer->GetTexture());
               p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
             }
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1739,62 +1911,23 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             SetBlend(false);
             auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
             float r, g, b, reflect_r, reflect_g, reflect_b, colorize_r,
-                colorize_g, colorize_b;
+                colorize_g, colorize_b, colorize2_r, colorize2_g, colorize2_b,
+                colorize3_r, colorize3_g, colorize3_b;
             buffer->GetFloats(&r, &g, &b, &reflect_r, &reflect_g, &reflect_b,
-                              &colorize_r, &colorize_g, &colorize_b);
+                              &colorize_r, &colorize_g, &colorize_b,
+                              &colorize2_r, &colorize2_g, &colorize2_b,
+                              &colorize3_r, &colorize3_g, &colorize3_b);
             ProgramObjectGL* p = obj_refl_lightshad_colorize_prog_;
             p->Bind();
             p->SetColor(r, g, b);
             p->SetColorTexture(buffer->GetTexture());
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
-            p->SetReflectionTexture(buffer->GetTexture());
-            p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
-            p->SetVignetteTexture(vignette_tex_);
-            GLuint light_shadow_tex;
-            switch (light_shadow) {
-              case LightShadowType::kTerrain:
-                light_shadow_tex =
-                    static_cast<RenderTargetGL*>(light_shadow_render_target())
-                        ->framebuffer()
-                        ->texture();
-                break;
-              case LightShadowType::kObject:
-                light_shadow_tex =
-                    static_cast<RenderTargetGL*>(light_render_target())
-                        ->framebuffer()
-                        ->texture();
-                break;
-              default:
-                light_shadow_tex = 0;
-                FatalError("Unhandled LightShadowType.");
-            }
-            p->SetLightShadowTexture(light_shadow_tex);
-            break;
-          }
-          case ShadingType::kObjectReflectLightShadowColorized2: {
-            SetDoubleSided_(false);
-            SetBlend(false);
-            auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
-
-            float r, g, b, reflect_r, reflect_g, reflect_b, colorize_r,
-                colorize_g, colorize_b, colorize2_r, colorize2_g, colorize2_b;
-            buffer->GetFloats(&r, &g, &b, &reflect_r, &reflect_g, &reflect_b,
-                              &colorize_r, &colorize_g, &colorize_b,
-                              &colorize2_r, &colorize2_g, &colorize2_b);
-            ProgramObjectGL* p = obj_refl_lightshad_colorize2_prog_;
-            p->Bind();
-            p->SetColor(r, g, b);
-            p->SetColorTexture(buffer->GetTexture());
-
-            p->SetColorizeTexture(buffer->GetTexture());
-            p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
-
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetReflectionTexture(buffer->GetTexture());
             p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
-
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1831,7 +1964,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetReflectionTexture(buffer->GetTexture());
             p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
 
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -1859,10 +1992,13 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
 
             float r, g, b, add_r, add_g, add_b, reflect_r, reflect_g, reflect_b,
-                colorize_r, colorize_g, colorize_b;
+                colorize_r, colorize_g, colorize_b, colorize2_r, colorize2_g,
+                colorize2_b, colorize3_r, colorize3_g, colorize3_b;
             buffer->GetFloats(&r, &g, &b, &add_r, &add_g, &add_b, &reflect_r,
                               &reflect_g, &reflect_b, &colorize_r, &colorize_g,
-                              &colorize_b);
+                              &colorize_b, &colorize2_r, &colorize2_g,
+                              &colorize2_b, &colorize3_r, &colorize3_g,
+                              &colorize3_b);
             ProgramObjectGL* p = obj_refl_lightshad_add_colorize_prog_;
             p->Bind();
             p->SetColor(r, g, b);
@@ -1871,58 +2007,13 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
 
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
-
-            p->SetReflectionTexture(buffer->GetTexture());
-            p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
-
-            p->SetVignetteTexture(vignette_tex_);
-            GLuint light_shadow_tex;
-            switch (light_shadow) {
-              case LightShadowType::kTerrain:
-                light_shadow_tex =
-                    static_cast<RenderTargetGL*>(light_shadow_render_target())
-                        ->framebuffer()
-                        ->texture();
-                break;
-              case LightShadowType::kObject:
-                light_shadow_tex =
-                    static_cast<RenderTargetGL*>(light_render_target())
-                        ->framebuffer()
-                        ->texture();
-                break;
-              default:
-                light_shadow_tex = 0;
-                FatalError("Unhandled LightShadowType.");
-            }
-            p->SetLightShadowTexture(light_shadow_tex);
-            break;
-          }
-          case ShadingType::kObjectReflectLightShadowAddColorized2: {
-            SetDoubleSided_(false);
-            SetBlend(false);
-            auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
-
-            float r, g, b, add_r, add_g, add_b, reflect_r, reflect_g, reflect_b,
-                colorize_r, colorize_g, colorize_b, colorize2_r, colorize2_g,
-                colorize2_b;
-            buffer->GetFloats(&r, &g, &b, &add_r, &add_g, &add_b, &reflect_r,
-                              &reflect_g, &reflect_b, &colorize_r, &colorize_g,
-                              &colorize_b, &colorize2_r, &colorize2_g,
-                              &colorize2_b);
-            ProgramObjectGL* p = obj_refl_lightshad_add_colorize2_prog_;
-            p->Bind();
-            p->SetColor(r, g, b);
-            p->SetColorTexture(buffer->GetTexture());
-            p->SetAddColor(add_r, add_g, add_b);
-
-            p->SetColorizeTexture(buffer->GetTexture());
-            p->SetColorizeColor(colorize_r, colorize_g, colorize_b);
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
+            p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
 
             p->SetReflectionTexture(buffer->GetTexture());
             p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
 
-            p->SetVignetteTexture(vignette_tex_);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
             GLuint light_shadow_tex;
             switch (light_shadow) {
               case LightShadowType::kTerrain:
@@ -2117,33 +2208,26 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
         }
         break;
       }
-        // NOLINTNEXTLINE(bugprone-branch-clone)
       case RenderCommandBuffer::Command::kBeginDebugDrawTriangles: {
-        GetActiveProgram_()->PrepareToDraw();
-#if BA_GL_ENABLE_DEBUG_DRAW_COMMANDS
-        glBegin(GL_TRIANGLES);
-#endif
+        debug_draw_lines_ = false;
+        debug_draw_verts_.clear();
         break;
       }
       case RenderCommandBuffer::Command::kBeginDebugDrawLines: {
-        GetActiveProgram_()->PrepareToDraw();
-#if BA_GL_ENABLE_DEBUG_DRAW_COMMANDS
-        glBegin(GL_LINES);
-#endif
-        break;
-      }
-      case RenderCommandBuffer::Command::kEndDebugDraw: {
-#if BA_GL_ENABLE_DEBUG_DRAW_COMMANDS
-        glEnd();
-#endif
+        debug_draw_lines_ = true;
+        debug_draw_verts_.clear();
         break;
       }
       case RenderCommandBuffer::Command::kDebugDrawVertex3: {
         float x, y, z;
         buffer->GetFloats(&x, &y, &z);
-#if BA_GL_ENABLE_DEBUG_DRAW_COMMANDS
-        glVertex3f(x, y, z);
-#endif
+        debug_draw_verts_.push_back(x);
+        debug_draw_verts_.push_back(y);
+        debug_draw_verts_.push_back(z);
+        break;
+      }
+      case RenderCommandBuffer::Command::kEndDebugDraw: {
+        FlushDebugDraw_();
         break;
       }
       case RenderCommandBuffer::Command::kDrawMesh: {
@@ -2155,7 +2239,11 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
         }
         GetActiveProgram_()->PrepareToDraw();
         mesh->Bind();
-        mesh->Draw(DrawType::kTriangles);
+        mesh->Draw((flags & kMeshDrawFlagLines) ? DrawType::kLines
+                                                : DrawType::kTriangles);
+        if (flags & kMeshDrawFlagDebugFill) {
+          DrawMeshDebugFill_(mesh);
+        }
         break;
       }
       case RenderCommandBuffer::Command::kDrawScreenQuad: {
@@ -2167,9 +2255,19 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             g_base->graphics_server->projection_matrix();
         g_base->graphics_server->SetModelViewMatrix(kMatrix44fIdentity);
         g_base->graphics_server->SetOrthoProjection(-1, 1, -1, 1, -1, 0.01f);
+
+        // Passes that draw upside down are drawn with face culling
+        // flipped to match. Our quad isn't drawn through the pass's
+        // projection, so it is not upside down and wants the usual.
+        if (pass.draws_flipped()) {
+          FlipCullFace();
+        }
         GetActiveProgram_()->PrepareToDraw();
         screen_mesh_->Bind();
         screen_mesh_->Draw(DrawType::kTriangles);
+        if (pass.draws_flipped()) {
+          FlipCullFace();
+        }
         g_base->graphics_server->SetModelViewMatrix(old_model_view_matrix);
         g_base->graphics_server->SetProjectionMatrix(old_projection_matrix);
         break;
@@ -2287,6 +2385,7 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
                             bool depth, bool linear_interpolation,
                             bool force_shader_mode, bool invalidate_source) {
   BA_DEBUG_CHECK_GL_ERROR;
+  stats()->blits++;
   auto* src = static_cast<RenderTargetGL*>(src_in);
   assert(src && src == dynamic_cast<RenderTargetGL*>(src_in));
   auto* dst = static_cast<RenderTargetGL*>(dst_in);
@@ -2523,20 +2622,22 @@ void RendererGL::SetDoubleSided_(bool d) {
 }
 
 void RendererGL::UpdateVignetteTex_(bool force) {
-  if (force || vignette_quality_ != g_base->graphics_server->quality()
-      || vignette_tex_outer_r_ != vignette_outer().x
-      || vignette_tex_outer_g_ != vignette_outer().y
-      || vignette_tex_outer_b_ != vignette_outer().z
-      || vignette_tex_inner_r_ != vignette_inner().x
-      || vignette_tex_inner_g_ != vignette_inner().y
-      || vignette_tex_inner_b_ != vignette_inner().z) {
-    vignette_tex_outer_r_ = vignette_outer().x;
-    vignette_tex_outer_g_ = vignette_outer().y;
-    vignette_tex_outer_b_ = vignette_outer().z;
-    vignette_tex_inner_r_ = vignette_inner().x;
-    vignette_tex_inner_g_ = vignette_inner().y;
-    vignette_tex_inner_b_ = vignette_inner().z;
-    vignette_quality_ = g_base->graphics_server->quality();
+  if (force
+      || view_data_gl()->vignette_tex_quality
+             != g_base->graphics_server->quality()
+      || view_data_gl()->vignette_tex_outer_r != vignette_outer().x
+      || view_data_gl()->vignette_tex_outer_g != vignette_outer().y
+      || view_data_gl()->vignette_tex_outer_b != vignette_outer().z
+      || view_data_gl()->vignette_tex_inner_r != vignette_inner().x
+      || view_data_gl()->vignette_tex_inner_g != vignette_inner().y
+      || view_data_gl()->vignette_tex_inner_b != vignette_inner().z) {
+    view_data_gl()->vignette_tex_outer_r = vignette_outer().x;
+    view_data_gl()->vignette_tex_outer_g = vignette_outer().y;
+    view_data_gl()->vignette_tex_outer_b = vignette_outer().z;
+    view_data_gl()->vignette_tex_inner_r = vignette_inner().x;
+    view_data_gl()->vignette_tex_inner_g = vignette_inner().y;
+    view_data_gl()->vignette_tex_inner_b = vignette_inner().z;
+    view_data_gl()->vignette_tex_quality = g_base->graphics_server->quality();
 
     const int width = 64;
     const int height = 64;
@@ -2547,17 +2648,23 @@ void RendererGL::UpdateVignetteTex_(bool force) {
     uint8_t* b = data;
 
     float out_r = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_outer_r_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_outer_r)));
     float out_g = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_outer_g_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_outer_g)));
     float out_b = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_outer_b_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_outer_b)));
     float in_r = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_inner_r_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_inner_r)));
     float in_g = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_inner_g_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_inner_g)));
     float in_b = std::min(
-        255.0f, std::max(0.0f, 255.0f * (1.0f - vignette_tex_inner_b_)));
+        255.0f,
+        std::max(0.0f, 255.0f * (1.0f - view_data_gl()->vignette_tex_inner_b)));
 
     for (int y = 0; y < height; y++) {
       float d3 = static_cast<float>(y) / (height - 1);
@@ -2578,7 +2685,7 @@ void RendererGL::UpdateVignetteTex_(bool force) {
     }
 
     glGetError();  // Clear any error.
-    BindTexture_(GL_TEXTURE_2D, vignette_tex_);
+    BindTexture_(GL_TEXTURE_2D, view_data_gl()->vignette_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, data);
 
@@ -2600,17 +2707,29 @@ void RendererGL::UpdateVignetteTex_(bool force) {
       uint16_t* b2 = data2;
 
       float out_r2 = std::min(
-          32.0f, std::max(0.0f, 32.0f * (1.0f - vignette_tex_outer_r_)));
+          32.0f,
+          std::max(0.0f,
+                   32.0f * (1.0f - view_data_gl()->vignette_tex_outer_r)));
       float out_g2 = std::min(
-          64.0f, std::max(0.0f, 64.0f * (1.0f - vignette_tex_outer_g_)));
+          64.0f,
+          std::max(0.0f,
+                   64.0f * (1.0f - view_data_gl()->vignette_tex_outer_g)));
       float out_b2 = std::min(
-          32.0f, std::max(0.0f, 32.0f * (1.0f - vignette_tex_outer_b_)));
+          32.0f,
+          std::max(0.0f,
+                   32.0f * (1.0f - view_data_gl()->vignette_tex_outer_b)));
       float in_r2 = std::min(
-          32.0f, std::max(0.0f, 32.0f * (1.0f - vignette_tex_inner_r_)));
+          32.0f,
+          std::max(0.0f,
+                   32.0f * (1.0f - view_data_gl()->vignette_tex_inner_r)));
       float in_g2 = std::min(
-          64.0f, std::max(0.0f, 64.0f * (1.0f - vignette_tex_inner_g_)));
+          64.0f,
+          std::max(0.0f,
+                   64.0f * (1.0f - view_data_gl()->vignette_tex_inner_g)));
       float in_b2 = std::min(
-          32.0f, std::max(0.0f, 32.0f * (1.0f - vignette_tex_inner_b_)));
+          32.0f,
+          std::max(0.0f,
+                   32.0f * (1.0f - view_data_gl()->vignette_tex_inner_b)));
 
       // IMPORTANT - if we tweak anything here we need to tweak vertex
       // shaders that calc this on the fly as well..
@@ -2633,13 +2752,14 @@ void RendererGL::UpdateVignetteTex_(bool force) {
           b2 += 1;
         }
       }
-      BindTexture_(GL_TEXTURE_2D, vignette_tex_);
+      BindTexture_(GL_TEXTURE_2D, view_data_gl()->vignette_tex);
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
                    GL_UNSIGNED_SHORT_5_6_5, data2);
       BA_DEBUG_CHECK_GL_ERROR;
     }
     if (force) {
-      BA_GL_LABEL_OBJECT(GL_TEXTURE, vignette_tex_, "vignetteTex");
+      BA_GL_LABEL_OBJECT(GL_TEXTURE, view_data_gl()->vignette_tex,
+                         "vignetteTex");
     }
   }
 }
@@ -2769,21 +2889,24 @@ void RendererGL::Load() {
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW
                                     | SHD_MASK_UV2 | SHD_FLATNESS);
   RetainShader_(p);
+  p = simple_tex_mod_text_glow_prog_ =
+      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_SHADOW
+                                    | SHD_TEXT_GLOW | SHD_MASK_UV2);
+  RetainShader_(p);
   p = simple_tex_mod_glow_prog_ =
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_GLOW);
   RetainShader_(p);
   p = simple_tex_mod_glow_maskuv2_prog_ = new ProgramSimpleGL(
       this, SHD_TEXTURE | SHD_MODULATE | SHD_GLOW | SHD_MASK_UV2);
   RetainShader_(p);
+  p = simple_tex_mod_uv2_fade_prog_ =
+      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_UV2_FADE);
+  RetainShader_(p);
   p = simple_tex_mod_colorized_prog_ =
       new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE);
   RetainShader_(p);
-  p = simple_tex_mod_colorized2_prog_ = new ProgramSimpleGL(
-      this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE | SHD_COLORIZE2);
-  RetainShader_(p);
-  p = simple_tex_mod_colorized2_masked_prog_ =
-      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE
-                                    | SHD_COLORIZE2 | SHD_MASKED);
+  p = simple_tex_mod_colorized_masked_prog_ = new ProgramSimpleGL(
+      this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE | SHD_MASKED);
   RetainShader_(p);
   p = obj_prog_ = new ProgramObjectGL(this, 0);
   RetainShader_(p);
@@ -2808,6 +2931,12 @@ void RendererGL::Load() {
   p = obj_lightshad_worldspace_prog_ =
       new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_WORLD_SPACE_PTS);
   RetainShader_(p);
+  p = obj_lightshad_facing_prog_ =
+      new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_FACING_RATIO);
+  RetainShader_(p);
+  p = obj_lightshad_facing_transparent_prog_ = new ProgramObjectGL(
+      this, SHD_LIGHT_SHADOW | SHD_FACING_RATIO | SHD_OBJ_TRANSPARENT);
+  RetainShader_(p);
   p = obj_refl_lightshad_prog_ =
       new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_REFLECTION);
   RetainShader_(p);
@@ -2817,18 +2946,11 @@ void RendererGL::Load() {
   p = obj_refl_lightshad_colorize_prog_ = new ProgramObjectGL(
       this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_COLORIZE);
   RetainShader_(p);
-  p = obj_refl_lightshad_colorize2_prog_ = new ProgramObjectGL(
-      this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_COLORIZE | SHD_COLORIZE2);
-  RetainShader_(p);
   p = obj_refl_lightshad_add_prog_ =
       new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_ADD);
   RetainShader_(p);
   p = obj_refl_lightshad_add_colorize_prog_ = new ProgramObjectGL(
       this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_ADD | SHD_COLORIZE);
-  RetainShader_(p);
-  p = obj_refl_lightshad_add_colorize2_prog_ =
-      new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_ADD
-                                    | SHD_COLORIZE | SHD_COLORIZE2);
   RetainShader_(p);
   p = smoke_prog_ =
       new ProgramSmokeGL(this, SHD_OBJ_TRANSPARENT | SHD_WORLD_SPACE_PTS);
@@ -2883,17 +3005,8 @@ void RendererGL::Load() {
     BA_GL_LABEL_OBJECT(GL_TEXTURE, random_tex_, "randomTex");
   }
 
-  // Generate our vignette tex.
-  // TODO(ericf): move this to assets.
-  {
-    glGenTextures(1, &vignette_tex_);
-    BindTexture_(GL_TEXTURE_2D, vignette_tex_);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    UpdateVignetteTex_(true);
-  }
+  // Set up what we hold for the main view (its vignette tex).
+  LoadCurrentViewData();
 
   // Let's pre-fill our recyclable mesh-datas list to reduce the need to
   // make more which could cause hitches.
@@ -2972,11 +3085,12 @@ void RendererGL::Unload() {
   }
   recycle_mesh_datas_sprite_.clear();
   screen_mesh_.reset();
+  debug_tri_mesh_.reset();
+  debug_line_mesh_.reset();
   if (!g_base->graphics_server->renderer_context_lost()) {
     glDeleteTextures(1, &random_tex_);
-    glDeleteTextures(1, &vignette_tex_);
   }
-  blur_buffers_.clear();
+  view_data_gl()->Unload();
   shaders_.clear();
   simple_color_prog_ = nullptr;
   simple_tex_prog_ = nullptr;
@@ -2985,11 +3099,11 @@ void RendererGL::Unload() {
   simple_tex_mod_flatness_prog_ = nullptr;
   simple_tex_mod_shadow_prog_ = nullptr;
   simple_tex_mod_shadow_flatness_prog_ = nullptr;
+  simple_tex_mod_text_glow_prog_ = nullptr;
   simple_tex_mod_glow_prog_ = nullptr;
   simple_tex_mod_glow_maskuv2_prog_ = nullptr;
   simple_tex_mod_colorized_prog_ = nullptr;
-  simple_tex_mod_colorized2_prog_ = nullptr;
-  simple_tex_mod_colorized2_masked_prog_ = nullptr;
+  simple_tex_mod_colorized_masked_prog_ = nullptr;
   obj_prog_ = nullptr;
   obj_transparent_prog_ = nullptr;
   obj_refl_prog_ = nullptr;
@@ -2998,13 +3112,13 @@ void RendererGL::Unload() {
   obj_refl_add_transparent_prog_ = nullptr;
   obj_lightshad_prog_ = nullptr;
   obj_lightshad_worldspace_prog_ = nullptr;
+  obj_lightshad_facing_prog_ = nullptr;
+  obj_lightshad_facing_transparent_prog_ = nullptr;
   obj_refl_lightshad_prog_ = nullptr;
   obj_refl_lightshad_worldspace_prog_ = nullptr;
   obj_refl_lightshad_colorize_prog_ = nullptr;
-  obj_refl_lightshad_colorize2_prog_ = nullptr;
   obj_refl_lightshad_add_prog_ = nullptr;
   obj_refl_lightshad_add_colorize_prog_ = nullptr;
-  obj_refl_lightshad_add_colorize2_prog_ = nullptr;
   smoke_prog_ = nullptr;
   smoke_overlay_prog_ = nullptr;
   sprite_prog_ = nullptr;
@@ -3023,6 +3137,40 @@ void RendererGL::Unload() {
 auto RendererGL::NewMeshAssetData(const MeshAsset& model)
     -> Object::Ref<MeshAssetRendererData> {
   return Object::New<MeshAssetRendererData, MeshAssetDataGL>(model, this);
+}
+
+auto RendererGL::NewRenderViewData() -> Object::Ref<RenderViewRendererData> {
+  return Object::New<RenderViewRendererData, RenderViewDataGL>(this);
+}
+
+void RendererGL::LoadCurrentViewData() {
+  assert(g_base->app_adapter->InGraphicsContext());
+
+  // Generate the view's vignette tex.
+  // TODO(ericf): move this to assets.
+  glGenTextures(1, &view_data_gl()->vignette_tex);
+  BindTexture_(GL_TEXTURE_2D, view_data_gl()->vignette_tex);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  UpdateVignetteTex_(true);
+}
+
+auto RendererGL::GetTextureViewOutputTexture(int view_id) -> GLuint {
+  auto* data = static_cast<RenderViewDataGL*>(GetTextureViewData(view_id));
+  if (data == nullptr || !data->output_render_target.exists()) {
+    return 0;
+  }
+  return static_cast<RenderTargetGL*>(data->output_render_target.get())
+      ->framebuffer()
+      ->texture();
+}
+
+auto RendererGL::view_data_gl() const -> RenderViewDataGL* {
+  auto* data = static_cast<RenderViewDataGL*>(view_data());
+  assert(data == dynamic_cast<RenderViewDataGL*>(view_data()));
+  return data;
 }
 
 auto RendererGL::NewTextureData(const TextureAsset& texture)
@@ -3237,6 +3385,98 @@ void RendererGL::CheckForErrors() {
   }
 }
 
+void RendererGL::DrawMeshDebugFill_(MeshDataGL* mesh) {
+  // Redraw the (already bound) mesh as flat translucent red, then put
+  // back the program and blend state its component set up, since more
+  // draws in that component may follow.
+  ProgramGL* prev_program = current_program_;
+  bool prev_blend = blend_;
+  bool prev_blend_premult = blend_premult_;
+  SetBlend(true);
+  SetBlendPremult(true);
+  ProgramSimpleGL* p = simple_color_prog_;
+  p->Bind();
+  p->SetColor(0.3f, 0.0f, 0.0f, 0.3f);
+  p->PrepareToDraw();
+  mesh->Draw(DrawType::kTriangles);
+  SetBlendPremult(prev_blend_premult);
+  SetBlend(prev_blend);
+  UseProgram_(prev_program);
+}
+
+void RendererGL::FlushDebugDraw_() {
+  assert(g_base->app_adapter->InGraphicsContext());
+  if (debug_draw_verts_.empty()) {
+    return;
+  }
+  size_t vert_count = debug_draw_verts_.size() / 3;
+  if (debug_draw_lines_) {
+    if (vert_count < 2 || vert_count % 2 != 0) {
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Debug-draw lines got a non-even vertex count.");
+      debug_draw_verts_.clear();
+      return;
+    }
+    if (!debug_line_mesh_) {
+      debug_line_mesh_ = std::make_unique<MeshDataDebugLinesGL>(this);
+    }
+    debug_line_mesh_->SetData(debug_draw_verts_);
+    GetActiveProgram_()->PrepareToDraw();
+    debug_line_mesh_->Bind();
+    debug_line_mesh_->Draw(DrawType::kLines);
+  } else {
+    if (vert_count < 3 || vert_count % 3 != 0) {
+      BA_LOG_ONCE(
+          LogName::kBaGraphics, LogLevel::kError,
+          "Debug-draw triangles got a vertex count not divisible by 3.");
+      debug_draw_verts_.clear();
+      return;
+    }
+    // Build unshared verts with a face normal per triangle so the result
+    // shades flat under the facing-ratio program. Debug triangles have
+    // arbitrary winding and the program draws single-sided, so each one
+    // is emitted twice (second copy reversed) to read from both sides.
+    std::vector<VertexObjectSplitDynamic> verts(vert_count * 2);
+    const float* f = debug_draw_verts_.data();
+    for (size_t i = 0; i < vert_count; i += 3) {
+      Vector3f p0(f[i * 3], f[i * 3 + 1], f[i * 3 + 2]);
+      Vector3f p1(f[i * 3 + 3], f[i * 3 + 4], f[i * 3 + 5]);
+      Vector3f p2(f[i * 3 + 6], f[i * 3 + 7], f[i * 3 + 8]);
+      Vector3f n = Vector3f::Cross(p1 - p0, p2 - p0);
+      if (n.LengthSquared() > 0.0f) {
+        n = n.Normalized();
+      } else {
+        n = Vector3f(0.0f, 1.0f, 0.0f);
+      }
+      // Front copy at [i..i+2], reversed copy at [vert_count+i..].
+      const size_t src[2][3] = {{0, 1, 2}, {0, 2, 1}};
+      for (size_t side = 0; side < 2; ++side) {
+        Vector3f sn = side == 0 ? n : -n;
+        for (size_t j = 0; j < 3; ++j) {
+          auto& v = verts[side * vert_count + i + j];
+          size_t k = (i + src[side][j]) * 3;
+          v.position[0] = f[k];
+          v.position[1] = f[k + 1];
+          v.position[2] = f[k + 2];
+          v.normal[0] = static_cast<int16_t>(sn.x * 32767.0f);
+          v.normal[1] = static_cast<int16_t>(sn.y * 32767.0f);
+          v.normal[2] = static_cast<int16_t>(sn.z * 32767.0f);
+          v.padding[0] = v.padding[1] = 0;
+        }
+      }
+    }
+    if (!debug_tri_mesh_) {
+      debug_tri_mesh_ = std::make_unique<MeshDataDebugTrianglesGL>(this);
+    }
+    debug_tri_mesh_->SetData(verts);
+    GetActiveProgram_()->PrepareToDraw();
+    debug_tri_mesh_->Bind();
+    debug_tri_mesh_->Draw(DrawType::kTriangles);
+  }
+  debug_draw_verts_.clear();
+  BA_DEBUG_CHECK_GL_ERROR;
+}
+
 void RendererGL::DrawDebug() {
   if (explicit_bool(false)) {
     // Draw our cam buffer if we have it.
@@ -3274,7 +3514,7 @@ void RendererGL::DrawDebug() {
 
       // Draw blur buffers.
       if (explicit_bool(false)) {
-        for (auto&& i : blur_buffers_) {
+        for (auto&& i : view_data_gl()->blur_buffers) {
           g_base->graphics_server->PushTransform();
           g_base->graphics_server->Translate(Vector3f(tx, ty, 0));
           tx += 0.2f;
@@ -3300,15 +3540,16 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
          && dynamic_cast<RenderTargetGL*>(camera_render_target())
                 == cam_buffer);
 
-  if (cam_buffer->physical_width() != last_cam_buffer_width_
-      || cam_buffer->physical_height() != last_cam_buffer_height_
-      || blur_res_count() != last_blur_res_count_ || blur_buffers_.empty()) {
-    blur_buffers_.clear();
-    last_cam_buffer_width_ = cam_buffer->physical_width();
-    last_cam_buffer_height_ = cam_buffer->physical_height();
-    last_blur_res_count_ = blur_res_count();
-    int w = static_cast<int>(last_cam_buffer_width_);
-    int h = static_cast<int>(last_cam_buffer_height_);
+  if (cam_buffer->physical_width() != view_data_gl()->last_cam_buffer_width
+      || cam_buffer->physical_height() != view_data_gl()->last_cam_buffer_height
+      || blur_res_count() != view_data_gl()->last_blur_res_count
+      || view_data_gl()->blur_buffers.empty()) {
+    view_data_gl()->blur_buffers.clear();
+    view_data_gl()->last_cam_buffer_width = cam_buffer->physical_width();
+    view_data_gl()->last_cam_buffer_height = cam_buffer->physical_height();
+    view_data_gl()->last_blur_res_count = blur_res_count();
+    int w = static_cast<int>(view_data_gl()->last_cam_buffer_width);
+    int h = static_cast<int>(view_data_gl()->last_cam_buffer_height);
 
     // In higher-quality we do multiple levels and 16-bit dithering is kinda
     // noticeable and ugly then.
@@ -3319,7 +3560,7 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
       assert(h % 2 == 0);
       w /= 2;
       h /= 2;
-      blur_buffers_.push_back(Object::New<FramebufferObjectGL>(
+      view_data_gl()->blur_buffers.push_back(Object::New<FramebufferObjectGL>(
           this, w, h,
           true,               // linear_interp
           false,              // depth
@@ -3333,7 +3574,7 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
 
     // Final redundant one (we run an extra blur without down-rezing).
     if (g_base->graphics_server->quality() >= GraphicsQuality::kHigher)
-      blur_buffers_.push_back(Object::New<FramebufferObjectGL>(
+      view_data_gl()->blur_buffers.push_back(Object::New<FramebufferObjectGL>(
           this, w, h,
           true,   // linear_interp
           false,  // depth
@@ -3358,7 +3599,7 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
 
   FramebufferObjectGL* src_fb =
       static_cast<RenderTargetGL*>(camera_render_target())->framebuffer();
-  for (auto&& i : blur_buffers_) {
+  for (auto&& i : view_data_gl()->blur_buffers) {
     FramebufferObjectGL* fb = i.get();
     assert(fb);
     fb->Bind();

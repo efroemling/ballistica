@@ -19,6 +19,7 @@
 #include "ballistica/base/automation/automation.h"
 #endif
 #include "ballistica/base/discord/discord.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -716,6 +717,23 @@ void BaseFeatureSet::ScreenMessage(const std::string& s, const Vector3f& color,
 void BaseFeatureSet::PushDevConsolePrintCall(
     std::vector<core::DevConsolePrintEntry> entries) {
   ui->PushDevConsolePrintCall(std::move(entries));
+}
+
+void BaseFeatureSet::OnOSMusicPlayingChanged(bool playing) {
+  // Nothing to tell before the app is up; the Python music subsystem
+  // reads Platform::os_music_playing() directly whenever it plays
+  // anything, so an early change is picked up then.
+  if (!IsAppStarted()) {
+    return;
+  }
+  logic->event_loop()->PushCall([playing] {
+    auto& objs = g_base->python->objs();
+    auto id = BasePython::ObjID::kOSMusicPlayingChangedCall;
+    if (objs.Exists(id)) {
+      objs.Get(id).Call(PythonRef::Stolen(
+          Py_BuildValue("(O)", playing ? Py_True : Py_False)));
+    }
+  });
 }
 
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {

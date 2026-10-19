@@ -126,14 +126,16 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
       name = Python::PythonFileLocation();
     }
 
-    if (HostActivity* host_activity =
-            ContextRefSceneV1::FromCurrent().GetHostActivity()) {
-      m = host_activity->NewMaterial(name);
-      m->set_py_object(reinterpret_cast<PyObject*>(self));
-    } else {
+    // Materials live in the scene of whichever context we're made in;
+    // it is up to the context whether it has a place for them.
+    auto* context =
+        ContextRefSceneV1::FromCurrent().GetContextTyped<SceneV1Context>();
+    if (context == nullptr) {
       throw Exception("Can't create materials in this context_ref.",
                       PyExcType::kContext);
     }
+    m = context->NewMaterial(name);
+    m->set_py_object(reinterpret_cast<PyObject*>(self));
   }
   self->material_ = new Object::Ref<Material>(m);
 #pragma clang diagnostic pop

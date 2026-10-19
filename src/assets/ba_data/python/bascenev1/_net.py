@@ -12,6 +12,9 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass, field
 
+from efro.util import strip_exception_tracebacks
+from bacommon.assetpackage import ApverNum, AssetPackageResolveError
+
 import babase
 
 import _bascenev1
@@ -52,6 +55,12 @@ _REQS_MAX_PAGES = 64
 # latest-wins behavior).
 _g_prejoin_task: asyncio.Task[None] | None = None
 
+# The address/port of the in-flight pre-join, plus an id unique to that
+# request. Set synchronously by connect_to_party (the task itself only
+# starts on a later loop pass) so repeat requests are caught at once.
+_g_prejoin_target: tuple[str, int, int] | None = None
+_g_next_prejoin_id = 0
+
 
 @dataclass
 class HostInfo:
@@ -75,7 +84,7 @@ class HostRequirements:
     (see :func:`connect_to_party`).
     """
 
-    asset_packages: list[str] = field(default_factory=list)
+    asset_packages: list[ApverNum] = field(default_factory=list)
     password_required: bool = False
 
 
@@ -153,7 +162,12 @@ def fetch_host_requirements(
     if not isinstance(asset_packages, list):
         asset_packages = []
     return HostRequirements(
-        asset_packages=[pkg for pkg in asset_packages if isinstance(pkg, str)],
+        # Hosts advertise numeric ids as text (engine package keys).
+        asset_packages=[
+            ApverNum(int(pkg))
+            for pkg in asset_packages
+            if isinstance(pkg, str) and pkg.isdigit()
+        ],
         password_required=bool(merged.get('pw')),
     )
 
@@ -319,7 +333,7 @@ def _fetch_requirements_page(
 
 def connect_to_party(
     address: str, port: int = 43210, print_progress: bool = True
-) -> None:
+) -> bool:
     """Attempt to connect to a party at a given address.
 
     Runs the pre-join requirements exchange first: the prospective host
@@ -331,33 +345,79 @@ def connect_to_party(
     connect; hosts new enough to require the exchange never get an
     unprepped connect (a failed exchange fails the join).
 
+    A request for the host a join is already in progress to is ignored
+    (players tend to tap a join button repeatedly, and restarting the
+    join each time would keep it from ever completing). Returns whether
+    a new join attempt was started.
+
     (internal)
     """
+    # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target, _g_next_prejoin_id
     assert babase.in_logic_thread()
+
+    if _is_join_pending(address, port):
+        netlog.debug(
+            'Ignoring connect request for %s:%d; already joining it.',
+            address,
+            port,
+        )
+        return False
 
     # Latest-wins: a new connect request cancels any pre-join exchange
     # still in flight (the user clicked a different party).
-    global _g_prejoin_task  # pylint: disable=global-statement
     if _g_prejoin_task is not None and not _g_prejoin_task.done():
         _g_prejoin_task.cancel()
     _g_prejoin_task = None
 
+    prejoin_id = _g_next_prejoin_id
+    _g_next_prejoin_id += 1
+    _g_prejoin_target = (address, port, prejoin_id)
+
+    # Give immediate feedback; the requirements exchange can take a few
+    # seconds before the actual connect starts.
+    if print_progress:
+        # The wrapper import stays deferred: bascenev1 is fully imported
+        # by the time this runs; the cycle pylint sees is structural
+        # only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _builtinassets
+
+        babase.screenmessage(_builtinassets.strings.net.connecting)
+
     babase.app.create_async_task(
-        _prejoin_and_connect(address, port, print_progress),
+        _prejoin_and_connect(address, port, print_progress, prejoin_id),
         name=f'connect_to_party {address}:{port}',
     )
+    return True
+
+
+def _is_join_pending(address: str, port: int) -> bool:
+    """Is a join to this host already underway?
+
+    Covers both the pre-join exchange and the native connection attempt
+    that follows it (which gets cleared if it fails or times out).
+    """
+    if _g_prejoin_target is not None and _g_prejoin_target[:2] == (
+        address,
+        port,
+    ):
+        return True
+    info = _bascenev1.get_connection_to_host_info_2()
+    return info is not None and (info.address, info.port) == (address, port)
 
 
 async def resolve_asset_packages_with_dialog(
-    asset_packages: list[str],
+    asset_packages: list[ApverNum],
     *,
     task: asyncio.Task[None] | None,
     context: str,
 ) -> bool:
     """Resolve asset-packages, downloading with a cancelable dialog.
 
-    Shared by the pre-join (``connect_to_party``) and pre-playback
-    (``new_replay_session``) content-prep paths. Returns True when the
+    Shared by the pre-join (``connect_to_party``), pre-playback
+    (``new_replay_session``) and character-preview (classic's
+    ``_characterpreview``) content-prep paths. Returns True when the
     packages are locally available (having downloaded any that were
     missing), False if the user cancelled or a download failed (an
     error dialog / screen-message is shown in the failure case). The
@@ -365,6 +425,8 @@ async def resolve_asset_packages_with_dialog(
     the all-local common case stays instant with no dialog flash.
     ``task`` is the enclosing async task, cancelled if the user hits the
     dialog's cancel button; ``context`` is a short label for logs.
+
+    :meta private:
     """
     # The wrapper import stays deferred: bascenev1 is fully imported by
     # the time this runs; the cycle pylint sees is structural only.
@@ -385,6 +447,8 @@ async def resolve_asset_packages_with_dialog(
                 progress=0.0,
                 button_label=_builtinassets.strings.ui.cancel,
                 on_button=on_cancel,
+                # (Also covers the OK the error path swaps in.)
+                cancel_activates_button=True,
             )
 
     def on_update(
@@ -402,35 +466,86 @@ async def resolve_asset_packages_with_dialog(
             allow_downloads=True,
             on_download_starting=ensure_dialog,
             on_progress=babase.make_progress_reporter(on_update),
+            label='join content',
         )
     except asyncio.CancelledError:
         if dialog is not None:
             dialog.dismiss()
         netlog.info('Content download cancelled (%s).', context)
         return False
-    except Exception:
+    except Exception as exc:
         # Per the no-mid-game-downloads design, proceeding without the
         # required content would just strand us (net: at the session
         # entry check; replay: at the first missing asset) -- so fail
         # cleanly here.
-        netlog.exception('Content resolve failed (%s).', context)
+        specific = _resolve_failure_message(exc)
+        message: str | babase.LangStr
+        if specific is None:
+            netlog.exception('Content resolve failed (%s).', context)
+            message = _builtinassets.strings.net.unavailable_no_connection
+        else:
+            # An expected refusal (no access, sign-in needed, ...): say
+            # why rather than logging it as an error.
+            netlog.warning('Content resolve refused (%s): %s', context, exc)
+            message = specific
         if dialog is not None:
             dialog.update(
                 title=_builtinassets.strings.ui.error,
-                message=_builtinassets.strings.net.unavailable_no_connection,
+                message=message,
                 progress=None,
                 button_label=_builtinassets.strings.ui.ok,
                 on_button=dialog.dismiss,
             )
         else:
-            babase.screenmessage(
-                _builtinassets.strings.net.unavailable_no_connection,
-                color=(1, 0, 0),
-            )
+            babase.screenmessage(message, color=(1, 0, 0))
+        strip_exception_tracebacks(exc)
         return False
     if dialog is not None:
         dialog.dismiss()
     return True
+
+
+def _resolve_failure_message(
+    exc: Exception,
+) -> str | babase.LangStr | None:
+    """A specific message for an expected content-resolve refusal.
+
+    None for anything unexpected (a network failure, a server bug),
+    which gets the generic no-connection error instead.
+    """
+    # Deferred like _resolve_with_dialog's (the cycle is structural
+    # only; bascenev1 is fully imported by the time this runs).
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import _builtinassets
+
+    if not isinstance(exc, babase.AssetResolveError) or exc.code is None:
+        return None
+
+    code = exc.code
+    pkg = exc.package
+    if pkg is not None and code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+    ):
+        netstrs = _builtinassets.strings.net
+        if code is AssetPackageResolveError.ACCESS_DENIED:
+            return netstrs.asset_package_access_denied(
+                package=pkg.name, owner=pkg.owner
+            )
+        return netstrs.asset_package_auth_required(
+            package=pkg.name, owner=pkg.owner
+        )
+    if code in (
+        AssetPackageResolveError.ACCESS_DENIED,
+        AssetPackageResolveError.AUTH_REQUIRED,
+        AssetPackageResolveError.CLIENT_TOO_OLD,
+        AssetPackageResolveError.CONTENT,
+    ):
+        # The server's own wording (older servers name no package; it
+        # also says what to do for an outdated build or broken source
+        # content).
+        return exc.server_message
+    return None
 
 
 class _Cancelled:
@@ -520,10 +635,10 @@ def _interpret_probe_result(
 
 
 async def _prejoin_and_connect(
-    address: str, port: int, print_progress: bool
+    address: str, port: int, print_progress: bool, prejoin_id: int
 ) -> None:
     """Requirements exchange + content downloads + the actual connect."""
-    global _g_prejoin_task  # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target  # pylint: disable=global-statement
     task = asyncio.current_task()
     _g_prejoin_task = task
     password = ''
@@ -578,3 +693,5 @@ async def _prejoin_and_connect(
     finally:
         if _g_prejoin_task is task:
             _g_prejoin_task = None
+        if _g_prejoin_target == (address, port, prejoin_id):
+            _g_prejoin_target = None

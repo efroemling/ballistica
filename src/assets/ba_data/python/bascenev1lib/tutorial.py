@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 
 from bascenev1lib.actor.spaz import Spaz
 
@@ -599,6 +598,11 @@ class Celebrate:
 
 
 class TutorialActivity(bs.Activity[Player, Team]):
+    # Our recorded input script is calibrated against the old spaz
+    # physics (limbs in the main sim, punches at the end of the arm);
+    # keep them for this activity.
+    legacy_spaz_limbs = True
+
     def __init__(self, settings: dict | None = None):
         from bascenev1lib.maps import Rampage
 
@@ -793,7 +797,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_base_image = bs.newnode(
             'image',
             attrs={
-                'texture': _builtinassets.textures.nub.get(),
+                'texture': _classicassets.textures.nub.get(),
                 'absolute_scale': True,
                 'vr_depth': -40,
                 'position': p,
@@ -806,7 +810,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_nub_image = bs.newnode(
             'image',
             attrs={
-                'texture': _builtinassets.textures.nub.get(),
+                'texture': _classicassets.textures.nub.get(),
                 'absolute_scale': True,
                 'position': p,
                 'scale': (nub_size, nub_size),
@@ -2435,7 +2439,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.increment_analytics_count('Tutorial skip')
             bs.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
-            _builtinassets.audio.swish.get().play()
+            _classicassets.audio.swish.get().play()
             # self._skip_count_text.text = (
             #     _classicassets.strings.tutorial.skipping
             # )

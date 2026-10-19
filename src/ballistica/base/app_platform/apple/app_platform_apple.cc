@@ -19,13 +19,6 @@
 
 namespace ballistica::base {
 
-AppPlatformApple::AppPlatformApple() {
-  // On iOS, keep the device from falling asleep in our app
-#if BA_PLATFORM_IOS_TVOS
-  // AppleUtils::DisableIdleTimer();
-#endif
-}
-
 void AppPlatformApple::DoPurchase(const std::string& item) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchase(item);
@@ -65,6 +58,16 @@ void AppPlatformApple::DoOpenURL(const std::string& url) {
   // For non-xcode builds, go with the default (Python webbrowser module).
   AppPlatform::DoOpenURL(url);
 #endif  // BA_XCODE_BUILD
+}
+
+auto AppPlatformApple::DoHasGyro() -> bool {
+#if BA_XCODE_BUILD && !BA_PLATFORM_MACOS
+  return BallisticaKit::UIKitFromCpp::haveGyro();
+#else
+  // Macs have no gyro, and non-xcode apple builds have no Swift bridge to
+  // ask through.
+  return AppPlatform::DoHasGyro();
+#endif
 }
 
 auto AppPlatformApple::OverlayWebBrowserIsSupported() -> bool {

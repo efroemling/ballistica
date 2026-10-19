@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
+#include "ballistica/base/graphics/support/frame_def_view.h"
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
@@ -18,10 +19,83 @@ namespace ballistica::base {
 /// sent to the graphics server to render.
 class FrameDef {
  public:
-  auto light_pass() -> RenderPass* { return light_pass_.get(); }
-  auto light_shadow_pass() -> RenderPass* { return light_shadow_pass_.get(); }
-  auto beauty_pass() -> RenderPass* { return beauty_pass_.get(); }
-  auto beauty_pass_bg() -> RenderPass* { return beauty_pass_bg_.get(); }
+  /// The main game world's share of the frame.
+  auto main_view() const -> FrameDefView* { return main_view_.get(); }
+
+  /// The view whose world is being drawn right now. Anything drawing a
+  /// world reaches that world's passes and look through us (see the
+  /// accessors below), so it lands in the right view without needing
+  /// to know which one that is.
+  auto current_view() const -> FrameDefView* { return current_view_; }
+
+  /// Switch which view is current. Whoever is building or rendering
+  /// the frame does this as it moves from one view's world to the
+  /// next; the main view is current whenever nothing else is being
+  /// drawn.
+  void set_current_view(FrameDefView* view) {
+    assert(view != nullptr);
+    current_view_ = view;
+  }
+
+  /// Add a share of the frame for a view drawing to a texture and
+  /// return it (not made current). Logic thread, while building.
+  auto AddTextureView(RenderView* view) -> FrameDefView*;
+
+  /// Shares of the frame belonging to views drawing to textures, in
+  /// the order added.
+  auto texture_view_count() const -> int { return texture_view_count_; }
+  auto texture_view(int index) const -> FrameDefView* {
+    assert(index >= 0 && index < texture_view_count_);
+    return texture_views_[index].get();
+  }
+
+  /// Texture views whose textures something in this frame has drawn.
+  /// Collected as drawing is submitted; their worlds get drawn into
+  /// the frame once everything else has been.
+  auto wanted_views() const -> const std::vector<Object::Ref<RenderView>>& {
+    return wanted_views_;
+  }
+
+  /// Ids of views that no longer exist, whose buffers the renderer
+  /// can let go of.
+  void set_view_destroys(const std::vector<int>& ids) { view_destroys_ = ids; }
+  auto view_destroys() const -> const std::vector<int>& {
+    return view_destroys_;
+  }
+
+  // World passes and look; these are the current view's.
+  auto light_pass() -> RenderPass* { return current_view_->light_pass(); }
+  auto light_shadow_pass() -> RenderPass* {
+    return current_view_->light_shadow_pass();
+  }
+  auto beauty_pass() -> RenderPass* { return current_view_->beauty_pass(); }
+  auto beauty_pass_bg() -> RenderPass* {
+    return current_view_->beauty_pass_bg();
+  }
+  auto overlay_3d_pass() -> RenderPass* {
+    return current_view_->overlay_3d_pass();
+  }
+  auto blit_pass() -> RenderPass* { return current_view_->blit_pass(); }
+  auto orbiting() const -> bool { return current_view_->orbiting(); }
+  auto shadow_offset() const -> const Vector3f& {
+    return current_view_->shadow_offset();
+  }
+  auto shadow_scale() const -> const Vector2f& {
+    return current_view_->shadow_scale();
+  }
+  auto shadow_ortho() const -> bool { return current_view_->shadow_ortho(); }
+  auto tint() const -> const Vector3f& { return current_view_->tint(); }
+  auto ambient_color() const -> const Vector3f& {
+    return current_view_->ambient_color();
+  }
+  auto vignette_outer() const -> const Vector3f& {
+    return current_view_->vignette_outer();
+  }
+  auto vignette_inner() const -> const Vector3f& {
+    return current_view_->vignette_inner();
+  }
+
+  // Passes belonging to the screen rather than to any one world.
   auto overlay_pass() -> RenderPass* { return overlay_pass_.get(); }
   auto overlay_front_pass() -> RenderPass* { return overlay_front_pass_.get(); }
   auto vr_near_clip() const -> float { return vr_near_clip_; }
@@ -35,8 +109,6 @@ class FrameDef {
   // Return either the overlay-flat pass (in vr) or regular overlay pass (for
   // non-vr).
   auto GetOverlayFlatPass() -> RenderPass*;
-  auto overlay_3d_pass() -> RenderPass* { return overlay_3d_pass_.get(); }
-  auto blit_pass() -> RenderPass* { return blit_pass_.get(); }
   auto vr_cover_pass() -> RenderPass* { return vr_cover_pass_.get(); }
 
   // The app-time this frame_def originated at. For a more
@@ -89,17 +161,14 @@ class FrameDef {
     return display_time_elapsed_microsecs_;
   }
 
-  auto quality() const { return quality_; }
-  auto texture_quality() const { return texture_quality_; }
+  /// The graphics quality the current view is being drawn at. This
+  /// is what drawing code choosing what to draw by quality wants; a
+  /// view can be drawn at lower quality than the app is set to.
+  auto quality() const -> GraphicsQuality { return current_view_->quality(); }
 
-  auto orbiting() const -> bool { return orbiting_; }
-  auto shadow_offset() const -> const Vector3f& { return shadow_offset_; }
-  auto shadow_scale() const -> const Vector2f& { return shadow_scale_; }
-  auto shadow_ortho() const -> bool { return shadow_ortho_; }
-  auto tint() const -> const Vector3f& { return tint_; }
-  auto ambient_color() const -> const Vector3f& { return ambient_color_; }
-  auto vignette_outer() const -> const Vector3f& { return vignette_outer_; }
-  auto vignette_inner() const -> const Vector3f& { return vignette_inner_; }
+  /// The graphics quality the app is set to.
+  auto app_quality() const -> GraphicsQuality { return quality_; }
+  auto texture_quality() const { return texture_quality_; }
 
   // FIXME: what was this for?..(I think some vr thing?)
   auto cam_original() const -> const Vector3f& { return cam_original_; }
@@ -127,7 +196,7 @@ class FrameDef {
   // Effects requiring availability of a depth texture should check this to
   // determine whether they should draw.
   auto HasDepthTexture() const -> bool {
-    return (quality_ >= GraphicsQuality::kHigh);
+    return (quality() >= GraphicsQuality::kHigh);
   }
 
   void AddComponent(const Object::Ref<Asset>& component) {
@@ -135,6 +204,12 @@ class FrameDef {
     if (component->last_frame_def_num() != frame_number_) {
       component->set_last_frame_def_num(frame_number_);
       media_components_.push_back(component);
+
+      // If this is the texture some view draws to, that view's world
+      // needs drawing this frame.
+      if (RenderView* view = component->GetRenderView()) {
+        wanted_views_.emplace_back(view);
+      }
     }
   }
   void AddMesh(Mesh* mesh);
@@ -200,7 +275,6 @@ class FrameDef {
   auto media_components() const -> const std::vector<Object::Ref<Asset>>& {
     return media_components_;
   }
-  // auto tv_border() const { return tv_border_; }
 
   void set_camera_mode(CameraMode val) { camera_mode_ = val; }
   void set_rendering(bool val) { rendering_ = val; }
@@ -228,9 +302,6 @@ class FrameDef {
   Object::Ref<Snapshot<GraphicsSettings>> settings_snapshot_;
   bool needs_clear_{};
   bool rendering_{};
-  bool orbiting_{};
-  // bool tv_border_{};
-  bool shadow_ortho_{};
   BenchmarkType benchmark_type_{BenchmarkType::kNone};
   CameraMode camera_mode_{CameraMode::kFollow};
   Vector3f cam_original_{0.0f, 0.0f, 0.0f};
@@ -260,17 +331,20 @@ class FrameDef {
   RenderComponent* active_render_component_{};
 #endif
 
-  std::unique_ptr<RenderPass> light_pass_;
-  std::unique_ptr<RenderPass> light_shadow_pass_;
-  std::unique_ptr<RenderPass> beauty_pass_;
-  std::unique_ptr<RenderPass> beauty_pass_bg_;
+  std::unique_ptr<FrameDefView> main_view_;
+  FrameDefView* current_view_{};
+
+  // We hang onto these from frame to frame so their buffers get
+  // reused; only the first texture_view_count_ are in use.
+  std::vector<std::unique_ptr<FrameDefView>> texture_views_;
+  int texture_view_count_{};
+  std::vector<Object::Ref<RenderView>> wanted_views_;
+  std::vector<int> view_destroys_;
   std::unique_ptr<RenderPass> overlay_pass_;
   std::unique_ptr<RenderPass> overlay_front_pass_;
   std::unique_ptr<RenderPass> overlay_fixed_pass_;
   std::unique_ptr<RenderPass> overlay_flat_pass_;
   std::unique_ptr<RenderPass> vr_cover_pass_;
-  std::unique_ptr<RenderPass> overlay_3d_pass_;
-  std::unique_ptr<RenderPass> blit_pass_;
   GraphicsQuality quality_{};
   TextureQuality texture_quality_{};
   microsecs_t app_time_microsecs_{};
@@ -279,12 +353,6 @@ class FrameDef {
   microsecs_t display_time_elapsed_millisecs_{};
   int64_t frame_number_{};
   int64_t frame_number_filtered_{};
-  Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
-  Vector2f shadow_scale_{1.0f, 1.0f};
-  Vector3f tint_{1.0f, 1.0f, 1.0f};
-  Vector3f ambient_color_{1.0f, 1.0f, 1.0f};
-  Vector3f vignette_outer_{1.0f, 1.0f, 1.0f};
-  Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
 };
 
 }  // namespace ballistica::base

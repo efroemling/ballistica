@@ -3,20 +3,31 @@
 #include "ballistica/scene_v1/node/spaz_node.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <memory>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/asset_package_registry.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
 #include "ballistica/base/graphics/component/object_component.h"
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/mesh/mesh_indexed_object_split.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
@@ -25,8 +36,11 @@
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
+#include "ballistica/scene_v1/generated/spaz_rig.h"
+#include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/node/spaz_physics_tuning.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -34,66 +48,202 @@
 
 namespace ballistica::scene_v1 {
 
-// Pull a random pointer from a ref-vector.
-template <class T>
-auto GetRandomMedia(const std::vector<Object::Ref<T> >& list) -> T* {
-  if (list.empty()) return nullptr;
-  return list[rand() % list.size()].get();  // NOLINT yes I know; rand bad.
+// Base load-shedding skip for definition attachment rigs (fraction of
+// sim steps skipped; see BGDynamicsCharacterKind::Input::skip). The
+// engine's emergency lever (BGDynamics::load_skip) adds to this.
+const float kBGAttachmentSkip = 0.0f;
+
+// Prototype bg limbs switch (defined with the rig config builder below).
+// Limb body indices, as laid out by BuildLimbRigConfig_.
+enum LimbIndex {
+  kLimbUpperRightArm,
+  kLimbLowerRightArm,
+  kLimbUpperLeftArm,
+  kLimbLowerLeftArm,
+  kLimbUpperRightLeg,
+  kLimbLowerRightLeg,
+  kLimbUpperLeftLeg,
+  kLimbLowerLeftLeg,
+  kLimbRightToes,
+  kLimbLeftToes,
+  kLimbCount
+};
+
+// How one limb segment's art stretches to keep meeting its neighbour
+// at their elbow or knee: the transform to draw it with, in the
+// segment's own space (so it goes on after the segment's matrix).
+//
+// Two points of the art are pinned. 'fixed', its far end, stays where
+// it is. 'own', its end at the joint, goes to the point midway between
+// itself and 'other', the joint's place on the neighbouring segment
+// (given in that segment's space). The art is stretched along the line
+// between the two and that line turned to its new heading, so nothing
+// across the segment changes size; the neighbour does the same from
+// its side and the two meet in the middle. With the joint together
+// the two ends are one point and this comes out as no change at all.
+//
+// The same math as the web character viewer's (bamaster's
+// bamaster_mesh_preview.ts), which is where it gets tuned. Like every
+// kSpazRig* constant, the points come from generated/spaz_rig.h,
+// generated from the one home of the rig's numbers
+// (tools/bacommon/characterrig.py), which tools showing characters
+// outside the game read too. Change them there.
+void CalcLimbStretch(const Matrix44f& seg, const Matrix44f& other_seg,
+                     const float* fixed, const float* own, const float* other,
+                     Matrix44f* out) {
+  // The neighbour's end of the joint, in our space (both matrices are
+  // rigid, so ours inverts as its transpose).
+  const float* s = seg.m;
+  const float* o = other_seg.m;
+  float w[3];
+  for (int i = 0; i < 3; ++i) {
+    w[i] = other[0] * o[i] + other[1] * o[4 + i] + other[2] * o[8 + i]
+           + o[12 + i] - s[12 + i];
+  }
+  float d[3];
+  float e[3];
+  for (int i = 0; i < 3; ++i) {
+    float theirs = w[0] * s[i * 4] + w[1] * s[i * 4 + 1] + w[2] * s[i * 4 + 2];
+    d[i] = own[i] - fixed[i];
+    e[i] = (own[i] + theirs) * 0.5f - fixed[i];
+  }
+  float ld = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  float le = sqrtf(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
+  float* m = out->m;
+  if (ld < 0.0001f || le < 0.0001f) {
+    *out = kMatrix44fIdentity;
+    return;
+  }
+  float dh[3] = {d[0] / ld, d[1] / ld, d[2] / ld};
+  float eh[3] = {e[0] / le, e[1] / le, e[2] / le};
+  float grow = le / ld - 1.0f;
+
+  // The shortest turn from the old heading to the new (as a
+  // column-vector matrix), unless they are opposite: then no turn.
+  float c = dh[0] * eh[0] + dh[1] * eh[1] + dh[2] * eh[2];
+  float a[3][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+  if (c > -0.9999f) {
+    float v[3] = {dh[1] * eh[2] - dh[2] * eh[1], dh[2] * eh[0] - dh[0] * eh[2],
+                  dh[0] * eh[1] - dh[1] * eh[0]};
+    float k = 1.0f / (1.0f + c);
+    float vv = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    for (int row = 0; row < 3; ++row) {
+      for (int col = 0; col < 3; ++col) {
+        a[row][col] += k * (v[row] * v[col] - (row == col ? vv : 0.0f));
+      }
+    }
+    a[0][1] -= v[2];
+    a[0][2] += v[1];
+    a[1][0] += v[2];
+    a[1][2] -= v[0];
+    a[2][0] -= v[1];
+    a[2][1] += v[0];
+  } else {
+    eh[0] = dh[0];
+    eh[1] = dh[1];
+    eh[2] = dh[2];
+  }
+  // Then the stretch along the old heading, which the turn carries to
+  // the new one.
+  for (int row = 0; row < 3; ++row) {
+    for (int col = 0; col < 3; ++col) {
+      a[row][col] += grow * eh[row] * dh[col];
+    }
+  }
+  // All of it about the fixed point.
+  for (int row = 0; row < 3; ++row) {
+    for (int col = 0; col < 3; ++col) {
+      m[col * 4 + row] = a[row][col];
+    }
+    m[12 + row] =
+        fixed[row]
+        - (a[row][0] * fixed[0] + a[row][1] * fixed[1] + a[row][2] * fixed[2]);
+  }
+  m[3] = m[7] = m[11] = 0.0f;
+  m[15] = 1.0f;
 }
 
-const float kSantaEyeScale = 0.9f;
-const float kSantaEyeTranslate = 0.03f;
+// The pinned far ends of the lower segments (see CalcLimbStretch): a
+// forearm's wrist, where its hand is drawn, and the middle of a lower
+// leg level with its ankle.
+const float kWristOnLowerArm[3]{0.0f, 0.0f, kSpazRigHandOffset};
+const float kHeelOnLowerLeg[3]{kSpazRigKneeOnLowerLeg[0],
+                               kSpazRigKneeOnLowerLeg[1],
+                               kSpazRigAnkleOnLowerLeg[2]};
+const float kShoulderOnUpperLeftArm[3]{-kSpazRigShoulderOnUpperArm[0],
+                                       kSpazRigShoulderOnUpperArm[1],
+                                       kSpazRigShoulderOnUpperArm[2]};
 
-const float kRunJointLinearStiffness = 80.0f;
-const float kRunJointLinearDamping = 2.0f;
-const float kRunJointAngularStiffness = 0.2f;
-const float kRunJointAngularDamping = 0.002f;
-
-const float kRollerBallLinearStiffness = 1000.0f;
-const float kRollerBallLinearDamping = 0.2f;
-
-const float kPelvisDensity = 5.0f;
-const float kPelvisLinearStiffness = 300.0f;
-const float kPelvisLinearDamping = 20.0f;
-const float kPelvisAngularStiffness = 1.5f;
-const float kPelvisAngularDamping = 0.06f;
-
-const float kUpperLegDensity = 2.0f;
-const float kUpperLegLinearStiffness = 300.0f;
-const float kUpperLegLinearDamping = 5.0f;
-const float kUpperLegAngularStiffness = 0.12f;
-const float kUpperLegAngularDamping = 0.004f;
-const float kUpperLegCollideStiffness = 100.0f;
-const float kUpperLegCollideDamping = 100.0f;
-
-const float kLowerLegDensity = 2.0f;
-const float kLowerLegLinearStiffness = 200.0f;
-const float kLowerLegLinearDamping = 5.0f;
-const float kLowerLegAngularStiffness = 0.12f;
-const float kLowerLegAngularDamping = 0.004f;
-const float kLowerLegCollideStiffness = 100.0f;
-const float kLowerLegCollideDamping = 100.0f;
-
-const float kToesDensity = 0.5f;
-const float kToesLinearStiffness = 50.0f;
-const float kToesLinearDamping = 1.0f;
-const float kToesAngularStiffness = 0.015f;
-const float kToesAngularDamping = 0.0005f;
-const float kToesCollideStiffness = 10.0f;
-const float kToesCollideDamping = 10.0f;
-
-const float kUpperArmDensity = 2.0f;
-
-const float kUpperArmLinearStiffness = 30.0f;
-const float kUpperArmLinearDamping = 1.2f;
-const float kUpperArmAngularStiffness = 0.08f;
-const float kUpperArmAngularDamping = 0.008f;
-
-const float kLowerArmDensity = 2.0f;
-const float kLowerArmLinearStiffness = 80.0f;
-const float kLowerArmLinearDamping = 1.0f;
-const float kLowerArmAngularStiffness = 0.08f;
-const float kLowerArmAngularDamping = 0.008f;
+// Initial limb joint targets when there are no main-sim limb joints to
+// read them from (bg limbs): what the constructor's joint creation
+// produces from the Stand() placement (anchor1 = the child's origin in
+// the parent's frame, plus the explicit tweaks made there), in
+// SpazJoint order from kSpazJointUpperRightArm. Debug builds check
+// this table against the real joints whenever they do exist.
+struct LimbJointSeed {
+  float anchor1[3];
+  float qrel_x_angle;  // Rest rotation about x (0 = identity).
+  float linear_stiffness;
+  float linear_damping;
+};
+const int kLimbJointSeedCount = kSpazJointCount - kSpazJointUpperRightArm;
+const LimbJointSeed kLimbJointSeeds[kLimbJointSeedCount] = {
+    // Upper arms: where the arms start out; the pose sets the real
+    // shoulder anchors (kSpazRigShoulderOnTorso) every step.
+    {{-0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},  // upper right arm
+    {{kSpazRigElbowOnUpperArm[0], kSpazRigElbowOnUpperArm[1],
+      kSpazRigElbowOnUpperArm[2]},
+     0.0f,
+     0.0f,
+     0.0f},                                   // lower right arm
+    {{0.17f, 0.1f, 0.0f}, 0.0f, 0.0f, 0.0f},  // upper left arm
+    {{kSpazRigElbowOnUpperArm[0], kSpazRigElbowOnUpperArm[1],
+      kSpazRigElbowOnUpperArm[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower left arm
+    {{kSpazRigHipOnPelvis[0], kSpazRigHipOnPelvis[1], kSpazRigHipOnPelvis[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // upper right leg
+    {{kSpazRigKneeOnUpperLeg[0], kSpazRigKneeOnUpperLeg[1],
+      kSpazRigKneeOnUpperLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower right leg
+    {{-kSpazRigHipOnPelvis[0], kSpazRigHipOnPelvis[1], kSpazRigHipOnPelvis[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // upper left leg
+    {{kSpazRigKneeOnUpperLeg[0], kSpazRigKneeOnUpperLeg[1],
+      kSpazRigKneeOnUpperLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // lower left leg
+    {{kSpazRigAnkleOnLowerLeg[0], kSpazRigAnkleOnLowerLeg[1],
+      kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // right toes
+    // (The second toe joints sit off to one side, making a hinge.)
+    {{-0.1f, kSpazRigAnkleOnLowerLeg[1], kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // right toes 2
+    {{kSpazRigAnkleOnLowerLeg[0], kSpazRigAnkleOnLowerLeg[1],
+      kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},  // left toes
+    {{0.1f, kSpazRigAnkleOnLowerLeg[1], kSpazRigAnkleOnLowerLeg[2]},
+     0.0f,
+     0.0f,
+     0.0f},                                      // left toes 2
+    {{-0.1f, -0.4f, 0.0f}, 1.0f, 0.3f, 0.001f},  // right leg ik
+    {{0.1f, -0.4f, 0.0f}, 1.0f, 0.3f, 0.001f},   // left leg ik
+    {{-0.2f, -0.2f, 0.1f}, 0.0f, 0.0f, 0.0f},    // right arm ik
+    {{0.2f, -0.2f, 0.1f}, 0.0f, 0.0f, 0.0f},     // left arm ik
+};
 
 const float kHairFrontLeftLinearStiffness = 0.2f;
 const float kHairFrontLeftLinearDamping = 0.01f;
@@ -114,6 +264,107 @@ const float kHairPonytailBottomLinearStiffness = 0.4f;
 const float kHairPonytailBottomLinearDamping = 0.02f;
 const float kHairPonytailBottomAngularStiffness = 0.00025f;
 const float kHairPonytailBottomAngularDamping = 0.000001f;
+
+// Pull a random pointer from a ref-vector.
+template <class T>
+auto GetRandomMedia(const std::vector<Object::Ref<T> >& list) -> T* {
+  if (list.empty()) return nullptr;
+  return list[rand() % list.size()].get();  // NOLINT yes I know; rand bad.
+}
+
+const float kSantaEyeScale = 0.9f;
+const float kSantaEyeTranslate = 0.03f;
+
+// (Core-body masses, springs, motors and contact values live in
+// spaz_physics_tuning.h; what follows is the main-sim limbs, which only
+// the legacy physics has.)
+const float kUpperLegDensity = 2.0f;
+const float kUpperLegCollideStiffness = 100.0f;
+const float kUpperLegCollideDamping = 100.0f;
+
+const float kLowerLegDensity = 2.0f;
+const float kLowerLegCollideStiffness = 100.0f;
+const float kLowerLegCollideDamping = 100.0f;
+
+const float kToesDensity = 0.5f;
+const float kToesCollideStiffness = 10.0f;
+const float kToesCollideDamping = 10.0f;
+
+const float kUpperArmDensity = 2.0f;
+
+const float kLowerArmDensity = 2.0f;
+
+// bg-limbs mode (protocol 44+): the arm and leg bodies live on the
+// bg-dynamics rig, so the main-sim core carries their mass instead
+// (torso_density and pelvis_mass_height in kSpazPhysicsTuningBgLimbs).
+// Mass also scales area-blast damage (RigidBody::ApplyImpulse), so
+// that keeps the limbs' share of blast damage too.
+//
+// Wider pelvis collision box than the old rig's 0.25 so a ragdoll lying
+// on it rolls less. Collision only: mass and inertia come from the
+// tuning's mass values.
+const float kBgLimbsPelvisWidth = kSpazRigPelvisSize[0];
+const float kLegacyLimbsPelvisWidth = 0.25f;
+
+// bg-limbs mode: the roller ball doubles as the leg surrogate when the
+// character is knocked out or frozen (the down_ball_* tuning values).
+// The old rig let the ball vanish (size 0, retracted 0.3 up, contacts
+// rejected) and the main-sim legs took over as what the body landed
+// on: a frozen character sank onto locked legs and toppled, a ragdoll
+// landed legs-first. The rig's legs are display-only, so instead the
+// ball only shrinks, is placed so its bottom sits a set height above
+// the standing ball's bottom instead of retracting, and its floor
+// contacts go soft so it cushions the drop and then sinks under body
+// weight instead of propping a lying ragdoll's hips up. Not meant to
+// keep anyone upright: freezing zeroes balance_, so the statue topples
+// naturally like it used to. Main-sim-limbs mode keeps the old behavior
+// byte-for-byte.
+//
+// Roller-joint anchor offset that puts the down ball's bottom
+// down_ball_bottom_lift above the standing ball's (0.3 is the full ball
+// radius; a smaller ball hangs lower). Worked out at compile time from
+// the bg-limbs tuning, the only one that uses it.
+constexpr auto DownBallOffset(const SpazPhysicsTuning& t) -> float {
+  float r_down = 0.3f * (0.1f + 0.9f * t.down_ball_size);
+  return t.down_ball_bottom_lift - (0.3f - r_down);
+}
+constexpr float kBgLimbsDownBallOffset =
+    DownBallOffset(kSpazPhysicsTuningBgLimbs);
+
+// Per-attachment-type physique: capsule dims, mass, joint anchors,
+// spring stiffness/damping, and collision behavior. These are sim
+// state -- every peer derives identical bodies from a definition --
+// and the values are exactly the classic Zoe hair rig's, so
+// definition-form hair matches the legacy bool-driven rig body for
+// body.
+struct AttachmentSegmentSpec {
+  float geom_radius;
+  float geom_length;
+  float mass_radius;  // 0 = geom value.
+  float mass_length;  // 0 = geom value.
+  float density;
+  // In the previous segment's frame (segment 0 anchors at the
+  // attachment's head-local position instead).
+  float parent_anchor[3];
+  float child_anchor[3];
+  float linear_stiffness;
+  float linear_damping;
+  float angular_stiffness;
+  float angular_damping;
+  uint32_t collide;
+};
+struct AttachmentTypeSpec {
+  int segment_count;
+  AttachmentSegmentSpec segments[4];
+};
+// The table itself, one entry per CharacterAttachmentType in order
+// (kStatic, the last, has no rig and no entry), is generated from
+// tools/bacommon/characterrig.py: the one home of these numbers, which
+// tools showing characters outside the game read too. Change them
+// there, never here.
+const AttachmentTypeSpec kAttachmentTypeSpecs[] = {
+#include "ballistica/scene_v1/generated/spaz_attachment_rigs.inc"
+};
 
 const int kPunchDuration = 35;
 const int kPickupCooldown = 40;
@@ -204,187 +455,21 @@ static void RotationFrom2Axes(dMatrix3 r, dReal x_forward, dReal y_forward,
   r[10] = side.z;
 }
 
-static void CalcERPCFM(float stiffness, float damping, float* erp, float* cfm) {
-  if (stiffness <= 0.0f && damping <= 0.0f) {
-    (*erp) = 0.0f;
-    // (*cfm) = dInfinity;  // doesn't seem to be happy...
-    (*cfm) = 9999999999.0f;
-  } else {
-    (*erp) = (kGameStepSeconds * stiffness)
-             / ((kGameStepSeconds * stiffness) + damping);
-    (*cfm) = 1.0f / ((kGameStepSeconds * stiffness) + damping);
-  }
-}
-
-struct JointFixedEF : public dxJoint {
-  dQuaternion qrel;  // relative rotation body1 -> body2
-  dVector3 anchor1;  // anchor w.r.t first body
-  dVector3 anchor2;  // anchor w.r.t second body
-  float linearStiffness;
-  float linearDamping;
-  float angularStiffness;
-  float angularDamping;
-  bool linearEnabled;
-  bool angularEnabled;
-};
-
-static void FixedInit_(JointFixedEF* j) {
-  dSetZero(j->qrel, 4);
-  dSetZero(j->anchor1, 3);
-  dSetZero(j->anchor2, 3);
-  j->linearStiffness = 0.0f;
-  j->linearDamping = 0.0f;
-  j->angularStiffness = 0.0f;
-  j->angularDamping = 0.0f;
-
-  // testing
-  j->linearEnabled = true;
-  j->angularEnabled = true;
-}
-
-static void _SetBall(JointFixedEF* joint, dxJoint::Info2* info,
-                     dVector3 anchor1, dVector3 anchor2) {
-  assert(joint->node[1].body);
-
-  // anchor points in global coordinates with respect to body PORs.
-  dVector3 a1, a2;
-
-  int s = info->rowskip;
-
-  // set jacobian
-  info->J1l[0] = 1;
-  info->J1l[s + 1] = 1;
-  info->J1l[2 * s + 2] = 1;
-  dMULTIPLY0_331(a1, joint->node[0].body->R, anchor1);
-  dCROSSMAT(info->J1a, a1, s, -, +);
-  info->J2l[0] = -1;
-  info->J2l[s + 1] = -1;
-  info->J2l[2 * s + 2] = -1;
-  dMULTIPLY0_331(a2, joint->node[1].body->R, anchor2);
-  dCROSSMAT(info->J2a, a2, s, +, -);
-
-  // set right hand side
-  dReal k = info->fps * info->erp;
-  for (int j = 0; j < 3; j++) {
-    info->c[j] = k
-                 * (a2[j] + joint->node[1].body->pos[j] - a1[j]
-                    - joint->node[0].body->pos[j]);
-  }
-}
-
-// FIXME this is duplicated a few times...
-static void _SetFixedOrientation(JointFixedEF* joint, dxJoint::Info2* info,
-                                 dQuaternion qrel, int start_row) {
-  assert(joint->node[1].body);  // we assume we're connected to 2 bodies..
-
-  int s = info->rowskip;
-  int start_index = start_row * s;
-
-  // 3 rows to make body rotations equal
-  info->J1a[start_index] = 1;
-  info->J1a[start_index + s + 1] = 1;
-  info->J1a[start_index + s * 2 + 2] = 1;
-  info->J2a[start_index] = -1;
-  info->J2a[start_index + s + 1] = -1;
-  info->J2a[start_index + s * 2 + 2] = -1;
-
-  // compute the right hand side. the first three elements will result in
-  // relative angular velocity of the two bodies - this is set to bring them
-  // back into alignment. the correcting angular velocity is
-  //   |angular_velocity| = angle/time = erp*theta / stepsize
-  //                      = (erp*fps) * theta
-  //    angular_velocity  = |angular_velocity| * u
-  //                      = (erp*fps) * theta * u
-  // where rotation along unit length axis u by theta brings body 2's frame
-  // to qrel with respect to body 1's frame. using a small angle approximation
-  // for sin(), this gives
-  //    angular_velocity  = (erp*fps) * 2 * v
-  // where the quaternion of the relative rotation between the two bodies is
-  //    q = [cos(theta/2) sin(theta/2)*u] = [s v]
-
-  // get qerr = relative rotation (rotation error) between two bodies
-  dQuaternion qerr, e;
-  dQuaternion qq;
-  dQMultiply1(qq, joint->node[0].body->q, joint->node[1].body->q);
-  dQMultiply2(qerr, qq, qrel);
-  if (qerr[0] < 0) {
-    qerr[1] = -qerr[1];  // adjust sign of qerr to make theta small
-    qerr[2] = -qerr[2];
-    qerr[3] = -qerr[3];
-  }
-  dMULTIPLY0_331(e, joint->node[0].body->R, qerr + 1);  // @@@ bad SIMD padding!
-  dReal k;
-
-  k = info->fps * info->erp;
-  info->c[start_row] = 2 * k * e[0];
-  info->c[start_row + 1] = 2 * k * e[1];
-  info->c[start_row + 2] = 2 * k * e[2];
-}
-
-static void _fixedGetInfo1(JointFixedEF* j, dxJoint::Info1* info) {
-  info->m = 0;
-  info->nub = 0;
-  if (j->linearEnabled
-      && (j->linearStiffness > 0.0f || j->linearDamping > 0.0f)) {
-    info->m += 3;
-    info->nub += 3;
-  }
-  if (j->angularEnabled
-      && (j->angularStiffness > 0.0f || j->angularDamping > 0.0f)) {
-    info->m += 3;
-    info->nub += 3;
-  }
-}
-
-static void _fixedGetInfo2(JointFixedEF* joint, dxJoint::Info2* info) {
-  assert(joint
-         && (joint->linearStiffness > 0.0f || joint->linearDamping > 0.0f
-             || joint->angularStiffness > 0.0f
-             || joint->angularDamping > 0.0f));
-  dReal orig_erp = info->erp;
-  bool do_linear =
-      (joint->linearEnabled
-       && (joint->linearStiffness > 0.0f || joint->linearDamping > 0.0f));
-  bool do_angular =
-      (joint->angularEnabled
-       && (joint->angularStiffness > 0.0f || joint->angularDamping > 0.0f));
-  int offs = 0;
-  // linear component...
-  if (do_linear) {
-    float linear_erp = 0;
-    float linear_cfm = 0;
-    CalcERPCFM(joint->linearStiffness, joint->linearDamping, &linear_erp,
-               &linear_cfm);
-    info->erp = linear_erp;
-    _SetBall(joint, info, joint->anchor1, joint->anchor2);
-    info->cfm[0] = linear_cfm;
-    info->cfm[1] = linear_cfm;
-    info->cfm[2] = linear_cfm;
-    offs += 3;
-  }
-  // angular component...
-  if (do_angular) {
-    float angular_erp;
-    float angular_cfm;
-    CalcERPCFM(joint->angularStiffness, joint->angularDamping, &angular_erp,
-               &angular_cfm);
-    info->erp = angular_erp;
-    _SetFixedOrientation(joint, info, joint->qrel, offs);
-    info->cfm[offs] = angular_cfm;
-    info->cfm[offs + 1] = angular_cfm;
-    info->cfm[offs + 2] = angular_cfm;
-  }
-  info->erp = orig_erp;
-}
-
-dxJoint::Vtable fixed_vtable_ = {
-    sizeof(JointFixedEF), (dxJoint::init_fn*)FixedInit_,
-    (dxJoint::getInfo1_fn*)_fixedGetInfo1,
-    (dxJoint::getInfo2_fn*)_fixedGetInfo2, dJointTypeNone};
-
 #if !BA_HEADLESS_BUILD
 class SpazNode::FullShadowSet : public Object {
  public:
+  explicit FullShadowSet(base::BGDynamicsWorld* world)
+      : torso_shadow_(world),
+        head_shadow_(world),
+        pelvis_shadow_(world),
+        lower_left_leg_shadow_(world),
+        lower_right_leg_shadow_(world),
+        upper_left_leg_shadow_(world),
+        upper_right_leg_shadow_(world),
+        lower_left_arm_shadow_(world),
+        lower_right_arm_shadow_(world),
+        upper_left_arm_shadow_(world),
+        upper_right_arm_shadow_(world) {}
   ~FullShadowSet() override = default;
   base::BGDynamicsShadow torso_shadow_;
   base::BGDynamicsShadow head_shadow_;
@@ -401,6 +486,7 @@ class SpazNode::FullShadowSet : public Object {
 
 class SpazNode::SimpleShadowSet : public Object {
  public:
+  explicit SimpleShadowSet(base::BGDynamicsWorld* world) : shadow_(world) {}
   base::BGDynamicsShadow shadow_;
 };
 #endif  // !BA_HEADLESS_BUILD
@@ -508,6 +594,25 @@ class SpazNodeType : public NodeType {
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
   BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
   BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
+  // (protocol 44) Appended last per the standing wire-index rule.
+  BA_SPAZ_DEF_ATTR(spaz_def, spaz_def, SetSpazDef);
+  // (protocol 49) Draw the spaz def's own color/highlight instead of
+  // the color/highlight attrs (definition form only).
+  BA_BOOL_ATTR(use_spaz_def_color, use_spaz_def_color, SetUseSpazDefColor);
+  BA_BOOL_ATTR(use_spaz_def_highlight, use_spaz_def_highlight,
+               SetUseSpazDefHighlight);
+  // (protocol 50) Boxing-glove look overrides. Visual only: scale does
+  // not change punch reach.
+  BA_MESH_ATTR(boxing_gloves_mesh, boxing_gloves_mesh, set_boxing_gloves_mesh);
+  BA_TEXTURE_ATTR(boxing_gloves_color_texture, boxing_gloves_color_texture,
+                  set_boxing_gloves_color_texture);
+  BA_FLOAT_ARRAY_ATTR(boxing_gloves_color, boxing_gloves_color,
+                      SetBoxingGlovesColor);
+  BA_FLOAT_ATTR(boxing_gloves_scale, boxing_gloves_scale,
+                set_boxing_gloves_scale);
+  // (protocol 53) Our color is a team's: tone our other tints down so
+  // it stays dominant.
+  BA_BOOL_ATTR(team_coloring, team_coloring, set_team_coloring);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -593,7 +698,15 @@ class SpazNodeType : public NodeType {
         demo_mode(this),
         behavior_version(this),
         pickup_before_hitbox(this),
-        pickup_release_time_ms(this) {}
+        pickup_release_time_ms(this),
+        spaz_def(this),
+        use_spaz_def_color(this),
+        use_spaz_def_highlight(this),
+        boxing_gloves_mesh(this),
+        boxing_gloves_color_texture(this),
+        boxing_gloves_color(this),
+        boxing_gloves_scale(this),
+        team_coloring(this) {}
 };
 
 static NodeType* node_type{};
@@ -614,12 +727,29 @@ SpazNode::SpazNode(Scene* scene)
       roller_part_(this, true),
       limbs_part_upper_(this, true),
       limbs_part_lower_(this, true) {
+  // Limb backend, fixed for our lifetime: main-sim limb bodies, or
+  // none at all with the bg rig carrying them.
+  main_sim_limbs_ = !UseBgLimbs_();
+  // And with it which physics tuning we run under.
+  tuning_ = main_sim_limbs_ ? &kSpazPhysicsTuningLegacyLimbs
+                            : &kSpazPhysicsTuningBgLimbs;
+  // Likewise the punch: an activity asking for legacy limbs gets the
+  // old arm-attached punch region with them (the old spaz physics in
+  // full). It needs the arm bodies, so never without main-sim limbs.
+  // (A BA_SPAZ_LIMBS=main dev override alone leaves the punch as is.)
+  if (main_sim_limbs_) {
+    if (GlobalsNode* globals = this->scene()->globals_node()) {
+      legacy_punch_ = globals->legacy_spaz_limbs();
+    }
+  }
+
   // Head
   body_head_ =
       Object::New<RigidBody>(kHeadBodyID, &spaz_part_, RigidBody::Type::kBody,
                              RigidBody::Shape::kSphere,
                              RigidBody::kCollideActive, RigidBody::kCollideAll);
-  body_head_->SetDimensions(0.23f, 0, 0, 0.28f, 0, 0, 1.0f);
+  body_head_->SetDimensions(kSpazRigHeadRadius, 0, 0, 0.28f, 0, 0,
+                            tuning_->head_density);
   body_head_->AddCallback(StaticCollideCallback, this);
 
   // Torso
@@ -627,7 +757,7 @@ SpazNode::SpazNode(Scene* scene)
       Object::New<RigidBody>(kTorsoBodyID, &spaz_part_, RigidBody::Type::kBody,
                              RigidBody::Shape::kSphere,
                              RigidBody::kCollideActive, RigidBody::kCollideAll);
-  body_torso_->SetDimensions(0.11f, 0, 0, 0.2f, 0, 0, 3.0f);
+  body_torso_->SetDimensions(0.11f, 0, 0, 0.2f, 0, 0, tuning_->torso_density);
   body_torso_->AddCallback(StaticCollideCallback, this);
 
   // Pelvis
@@ -643,7 +773,8 @@ SpazNode::SpazNode(Scene* scene)
       RigidBody::Shape::kSphere, RigidBody::kCollideActive,
       RigidBody::kCollideAll, nullptr, RigidBody::kIsRoller);
 
-  body_roller_->SetDimensions(0.3f, 0, 0, 0, 0, 0, 0.1f);
+  body_roller_->SetDimensions(kSpazRigRollerRadius, 0, 0, 0, 0, 0,
+                              tuning_->roller_density);
   body_roller_->AddCallback(StaticCollideCallback, this);
 
   // Stand Body
@@ -654,84 +785,92 @@ SpazNode::SpazNode(Scene* scene)
   dBodySetGravityMode(stand_body_->body(), 0);
   stand_body_->SetDimensions(0.3f, 0, 0, 0, 0, 0, 1000.0f);
 
-  // Upper Right Arm
-  upper_right_arm_body_ =
-      Object::New<RigidBody>(kUpperRightArmBodyID, &limbs_part_upper_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  upper_right_arm_body_->AddCallback(StaticCollideCallback, this);
-  upper_right_arm_body_->SetDimensions(0.06f, 0.16f, 0, 0, 0, 0,
-                                       kUpperArmDensity);
+  if (main_sim_limbs_) {
+    // Upper Right Arm
+    upper_right_arm_body_ = Object::New<RigidBody>(
+        kUpperRightArmBodyID, &limbs_part_upper_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    upper_right_arm_body_->AddCallback(StaticCollideCallback, this);
+    upper_right_arm_body_->SetDimensions(kSpazRigUpperArmRadius,
+                                         kSpazRigUpperArmLength, 0, 0, 0, 0,
+                                         kUpperArmDensity);
 
-  // Lower Right Arm
-  lower_right_arm_body_ =
-      Object::New<RigidBody>(kLowerRightArmBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  lower_right_arm_body_->AddCallback(StaticCollideCallback, this);
-  lower_right_arm_body_->SetDimensions(0.06f, 0.13f, 0, 0.06f, 0.16f, 0,
-                                       kLowerArmDensity);
+    // Lower Right Arm
+    lower_right_arm_body_ = Object::New<RigidBody>(
+        kLowerRightArmBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    lower_right_arm_body_->AddCallback(StaticCollideCallback, this);
+    lower_right_arm_body_->SetDimensions(kSpazRigLowerArmRadius,
+                                         kSpazRigLowerArmLength, 0, 0.06f,
+                                         0.16f, 0, kLowerArmDensity);
 
-  // Upper Left Arm
-  upper_left_arm_body_ =
-      Object::New<RigidBody>(kUpperLeftArmBodyID, &limbs_part_upper_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  upper_left_arm_body_->AddCallback(StaticCollideCallback, this);
-  upper_left_arm_body_->SetDimensions(0.06f, 0.16f, 0, 0, 0, 0,
-                                      kUpperArmDensity);
+    // Upper Left Arm
+    upper_left_arm_body_ = Object::New<RigidBody>(
+        kUpperLeftArmBodyID, &limbs_part_upper_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    upper_left_arm_body_->AddCallback(StaticCollideCallback, this);
+    upper_left_arm_body_->SetDimensions(kSpazRigUpperArmRadius,
+                                        kSpazRigUpperArmLength, 0, 0, 0, 0,
+                                        kUpperArmDensity);
 
-  // Lower Left Arm
-  lower_left_arm_body_ =
-      Object::New<RigidBody>(kLowerLeftArmBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  lower_left_arm_body_->AddCallback(StaticCollideCallback, this);
-  lower_left_arm_body_->SetDimensions(0.06f, 0.13f, 0, 0.06f, 0.16f, 0,
-                                      kLowerArmDensity);
+    // Lower Left Arm
+    lower_left_arm_body_ = Object::New<RigidBody>(
+        kLowerLeftArmBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    lower_left_arm_body_->AddCallback(StaticCollideCallback, this);
+    lower_left_arm_body_->SetDimensions(kSpazRigLowerArmRadius,
+                                        kSpazRigLowerArmLength, 0, 0.06f, 0.16f,
+                                        0, kLowerArmDensity);
 
-  // Upper Right Leg
-  upper_right_leg_body_ =
-      Object::New<RigidBody>(kUpperRightLegBodyID, &limbs_part_upper_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  upper_right_leg_body_->AddCallback(StaticCollideCallback, this);
+    // Upper Right Leg
+    upper_right_leg_body_ = Object::New<RigidBody>(
+        kUpperRightLegBodyID, &limbs_part_upper_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    upper_right_leg_body_->AddCallback(StaticCollideCallback, this);
 
-  // Lower Right leg
-  lower_right_leg_body_ =
-      Object::New<RigidBody>(kLowerRightLegBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  lower_right_leg_body_->AddCallback(StaticCollideCallback, this);
+    // Lower Right leg
+    lower_right_leg_body_ = Object::New<RigidBody>(
+        kLowerRightLegBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    lower_right_leg_body_->AddCallback(StaticCollideCallback, this);
 
-  right_toes_body_ =
-      Object::New<RigidBody>(kRightToesBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kSphere,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  right_toes_body_->AddCallback(StaticCollideCallback, this);
-  right_toes_body_->SetDimensions(0.075f, 0, 0, 0, 0, 0, kToesDensity);
+    right_toes_body_ = Object::New<RigidBody>(
+        kRightToesBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kSphere, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    right_toes_body_->AddCallback(StaticCollideCallback, this);
+    right_toes_body_->SetDimensions(kSpazRigToesRadius, 0, 0, 0, 0, 0,
+                                    kToesDensity);
 
-  // Upper Left Leg
-  upper_left_leg_body_ =
-      Object::New<RigidBody>(kUpperLeftLegBodyID, &limbs_part_upper_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  upper_left_leg_body_->AddCallback(StaticCollideCallback, this);
+    // Upper Left Leg
+    upper_left_leg_body_ = Object::New<RigidBody>(
+        kUpperLeftLegBodyID, &limbs_part_upper_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    upper_left_leg_body_->AddCallback(StaticCollideCallback, this);
 
-  // Lower Left leg
-  lower_left_leg_body_ =
-      Object::New<RigidBody>(kLowerLeftLegBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kCapsule,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  lower_left_leg_body_->AddCallback(StaticCollideCallback, this);
+    // Lower Left leg
+    lower_left_leg_body_ = Object::New<RigidBody>(
+        kLowerLeftLegBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kCapsule, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    lower_left_leg_body_->AddCallback(StaticCollideCallback, this);
 
-  // Left Toes
-  left_toes_body_ =
-      Object::New<RigidBody>(kLeftToesBodyID, &limbs_part_lower_,
-                             RigidBody::Type::kBody, RigidBody::Shape::kSphere,
-                             RigidBody::kCollideActive, RigidBody::kCollideAll);
-  left_toes_body_->AddCallback(StaticCollideCallback, this);
-  left_toes_body_->SetDimensions(0.075f, 0, 0, 0, 0, 0, kToesDensity);
+    // Left Toes
+    left_toes_body_ = Object::New<RigidBody>(
+        kLeftToesBodyID, &limbs_part_lower_, RigidBody::Type::kBody,
+        RigidBody::Shape::kSphere, RigidBody::kCollideActive,
+        RigidBody::kCollideAll);
+    left_toes_body_->AddCallback(StaticCollideCallback, this);
+    left_toes_body_->SetDimensions(kSpazRigToesRadius, 0, 0, 0, 0, 0,
+                                   kToesDensity);
+  }
 
   UpdateBodiesForStyle();
 
@@ -752,141 +891,146 @@ SpazNode::SpazNode(Scene* scene)
                                    0, 0);  // ang stiff/damp
 
   // Move anchor down a bit from torso towards pelvis.
-  pelvis_joint_->anchor1[1] -= 0.05f;
-  pelvis_joint_->anchor2[1] -= 0.05f;
+  pelvis_joint_->anchor1[1] -= kSpazRigPelvisJointDrop;
+  pelvis_joint_->anchor2[1] -= kSpazRigPelvisJointDrop;
 
   // Move anchor point forward a tiny bit (like the curvature of a spine).
-  pelvis_joint_->anchor2[2] += 0.05f;
+  pelvis_joint_->anchor2[2] += kSpazRigPelvisJointForward;
 
-  // Attach upper right arm to torso.
-  upper_right_arm_joint_ = CreateFixedJoint(
-      body_torso_.get(), upper_right_arm_body_.get(), 0, 0, 0, 0);
+  if (main_sim_limbs_) {
+    // Attach upper right arm to torso.
+    upper_right_arm_joint_ = CreateFixedJoint(
+        body_torso_.get(), upper_right_arm_body_.get(), 0, 0, 0, 0);
 
-  // Move anchor to top of arm.
-  upper_right_arm_joint_->anchor2[2] = -0.1f;
+    // Move anchor to top of arm.
+    upper_right_arm_joint_->anchor2[2] = kSpazRigShoulderOnUpperArm[2];
 
-  // Move anchor slightly in towards torso.
-  upper_right_arm_joint_->anchor2[0] += 0.02f;
+    // Move anchor slightly in towards torso.
+    upper_right_arm_joint_->anchor2[0] += kSpazRigShoulderOnUpperArm[0];
 
-  // Attach lower right arm to upper right arm.
-  lower_right_arm_joint_ = CreateFixedJoint(
-      upper_right_arm_body_.get(), lower_right_arm_body_.get(), 0, 0, 0, 0);
+    // Attach lower right arm to upper right arm.
+    lower_right_arm_joint_ = CreateFixedJoint(
+        upper_right_arm_body_.get(), lower_right_arm_body_.get(), 0, 0, 0, 0);
 
-  lower_right_arm_joint_->anchor2[2] = -0.08f;
+    lower_right_arm_joint_->anchor2[2] = kSpazRigElbowOnLowerArm[2];
 
-  // Attach upper left arm to torso.
-  upper_left_arm_joint_ = CreateFixedJoint(
-      body_torso_.get(), upper_left_arm_body_.get(), 0, 0, 0, 0);
+    // Attach upper left arm to torso.
+    upper_left_arm_joint_ = CreateFixedJoint(
+        body_torso_.get(), upper_left_arm_body_.get(), 0, 0, 0, 0);
 
-  // Move anchor to top of arm.
-  upper_left_arm_joint_->anchor2[2] = -0.1f;
+    // Move anchor to top of arm.
+    upper_left_arm_joint_->anchor2[2] = kSpazRigShoulderOnUpperArm[2];
 
-  // Move anchor slightly in towards torso.
-  upper_left_arm_joint_->anchor2[0] += -0.02f;
+    // Move anchor slightly in towards torso.
+    upper_left_arm_joint_->anchor2[0] += -kSpazRigShoulderOnUpperArm[0];
 
-  // Attach lower arm to upper arm.
-  lower_left_arm_joint_ = CreateFixedJoint(
-      upper_left_arm_body_.get(), lower_left_arm_body_.get(), 0, 0, 0, 0);
+    // Attach lower arm to upper arm.
+    lower_left_arm_joint_ = CreateFixedJoint(
+        upper_left_arm_body_.get(), lower_left_arm_body_.get(), 0, 0, 0, 0);
 
-  lower_left_arm_joint_->anchor2[2] = -0.08f;
+    lower_left_arm_joint_->anchor2[2] = kSpazRigElbowOnLowerArm[2];
 
-  // Attach upper right leg to leg-mass.
-  upper_right_leg_joint_ = CreateFixedJoint(
-      body_pelvis_.get(), upper_right_leg_body_.get(), 0, 0, 0, 0);
+    // Attach upper right leg to leg-mass.
+    upper_right_leg_joint_ = CreateFixedJoint(
+        body_pelvis_.get(), upper_right_leg_body_.get(), 0, 0, 0, 0);
 
-  upper_right_leg_joint_->anchor2[2] = -0.05f;
+    upper_right_leg_joint_->anchor2[2] = kSpazRigHipOnUpperLeg[2];
 
-  // Attach lower right leg to upper right leg.
-  lower_right_leg_joint_ = CreateFixedJoint(
-      upper_right_leg_body_.get(), lower_right_leg_body_.get(), 0, 0, 0, 0);
+    // Attach lower right leg to upper right leg.
+    lower_right_leg_joint_ = CreateFixedJoint(
+        upper_right_leg_body_.get(), lower_right_leg_body_.get(), 0, 0, 0, 0);
 
-  lower_right_leg_joint_->anchor2[2] = -0.05f;
+    lower_right_leg_joint_->anchor2[2] = kSpazRigKneeOnLowerLeg[2];
 
-  // Attach bottom of lower leg to pelvis.
-  right_leg_ik_joint_ = CreateFixedJoint(
-      body_pelvis_.get(), lower_right_leg_body_.get(), 0.3f, 0.001f, 0, 0);
-  dQFromAxisAndAngle(right_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
+    // Attach bottom of lower leg to pelvis.
+    right_leg_ik_joint_ = CreateFixedJoint(
+        body_pelvis_.get(), lower_right_leg_body_.get(), 0.3f, 0.001f, 0, 0);
+    dQFromAxisAndAngle(right_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
 
-  // Move the anchor to the tip of our leg.
-  right_leg_ik_joint_->anchor2[2] = 0.05f;
+    // Move the anchor to the tip of our leg.
+    right_leg_ik_joint_->anchor2[2] = 0.05f;
 
-  right_leg_ik_joint_->anchor1[0] = -0.1f;
-  right_leg_ik_joint_->anchor1[1] = -0.4f;
-  right_leg_ik_joint_->anchor1[2] = 0.0f;
+    right_leg_ik_joint_->anchor1[0] = -0.1f;
+    right_leg_ik_joint_->anchor1[1] = -0.4f;
+    right_leg_ik_joint_->anchor1[2] = 0.0f;
 
-  // Attach toes to lower right foot.
-  right_toes_joint_ = CreateFixedJoint(lower_right_leg_body_.get(),
-                                       right_toes_body_.get(), 0, 0, 0, 0);
-
-  right_toes_joint_->anchor1[1] += -0.0f;
-  right_toes_joint_->anchor2[1] += -0.04f;
-
-  // And an anchor off to the side to make it hinge-like.
-  right_toes_joint_2_ = nullptr;
-  right_toes_joint_2_ = CreateFixedJoint(lower_right_leg_body_.get(),
+    // Attach toes to lower right foot.
+    right_toes_joint_ = CreateFixedJoint(lower_right_leg_body_.get(),
                                          right_toes_body_.get(), 0, 0, 0, 0);
 
-  right_toes_joint_2_->anchor1[1] += -0.0f;
-  right_toes_joint_2_->anchor2[1] += -0.04f;
+    right_toes_joint_->anchor1[1] += -0.0f;
+    right_toes_joint_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
-  right_toes_joint_2_->anchor1[0] += -0.1f;
-  right_toes_joint_2_->anchor2[0] += -0.1f;
+    // And an anchor off to the side to make it hinge-like.
+    right_toes_joint_2_ = nullptr;
+    right_toes_joint_2_ = CreateFixedJoint(lower_right_leg_body_.get(),
+                                           right_toes_body_.get(), 0, 0, 0, 0);
 
-  // Attach upper left leg to leg-mass.
-  upper_left_leg_joint_ = CreateFixedJoint(
-      body_pelvis_.get(), upper_left_leg_body_.get(), 0, 0, 0, 0);
+    right_toes_joint_2_->anchor1[1] += -0.0f;
+    right_toes_joint_2_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
-  upper_left_leg_joint_->anchor2[2] = -0.05f;
+    right_toes_joint_2_->anchor1[0] += -0.1f;
+    right_toes_joint_2_->anchor2[0] += -0.1f;
 
-  // Attach lower left leg to upper left leg.
-  lower_left_leg_joint_ = CreateFixedJoint(
-      upper_left_leg_body_.get(), lower_left_leg_body_.get(), 0, 0, 0, 0);
+    // Attach upper left leg to leg-mass.
+    upper_left_leg_joint_ = CreateFixedJoint(
+        body_pelvis_.get(), upper_left_leg_body_.get(), 0, 0, 0, 0);
 
-  lower_left_leg_joint_->anchor2[2] = -0.05f;
+    upper_left_leg_joint_->anchor2[2] = kSpazRigHipOnUpperLeg[2];
 
-  // Attach bottom of lower leg to pelvis.
-  left_leg_ik_joint_ = CreateFixedJoint(
-      body_pelvis_.get(), lower_left_leg_body_.get(), 0.3f, 0.001f, 0, 0);
+    // Attach lower left leg to upper left leg.
+    lower_left_leg_joint_ = CreateFixedJoint(
+        upper_left_leg_body_.get(), lower_left_leg_body_.get(), 0, 0, 0, 0);
 
-  dQFromAxisAndAngle(left_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
+    lower_left_leg_joint_->anchor2[2] = kSpazRigKneeOnLowerLeg[2];
 
-  // Move the anchor to the tip of our leg.
-  left_leg_ik_joint_->anchor2[2] = 0.05f;
+    // Attach bottom of lower leg to pelvis.
+    left_leg_ik_joint_ = CreateFixedJoint(
+        body_pelvis_.get(), lower_left_leg_body_.get(), 0.3f, 0.001f, 0, 0);
 
-  left_leg_ik_joint_->anchor1[0] = 0.1f;
-  left_leg_ik_joint_->anchor1[1] = -0.4f;
-  left_leg_ik_joint_->anchor1[2] = 0.0f;
+    dQFromAxisAndAngle(left_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
 
-  // Attach toes to lower left foot.
-  left_toes_joint_ = CreateFixedJoint(lower_left_leg_body_.get(),
-                                      left_toes_body_.get(), 0, 0, 0, 0);
+    // Move the anchor to the tip of our leg.
+    left_leg_ik_joint_->anchor2[2] = 0.05f;
 
-  right_toes_joint_->anchor1[1] += -0.0f;
-  left_toes_joint_->anchor2[1] += -0.04f;
+    left_leg_ik_joint_->anchor1[0] = 0.1f;
+    left_leg_ik_joint_->anchor1[1] = -0.4f;
+    left_leg_ik_joint_->anchor1[2] = 0.0f;
 
-  // And an anchor off to the side to make it hinge-like.
-  left_toes_joint_2_ = nullptr;
-  left_toes_joint_2_ = CreateFixedJoint(lower_left_leg_body_.get(),
+    // Attach toes to lower left foot.
+    left_toes_joint_ = CreateFixedJoint(lower_left_leg_body_.get(),
                                         left_toes_body_.get(), 0, 0, 0, 0);
 
-  left_toes_joint_2_->anchor1[1] += -0.0f;
-  left_toes_joint_2_->anchor2[1] += -0.04f;
-  left_toes_joint_2_->anchor1[0] += 0.1f;
-  left_toes_joint_2_->anchor2[0] += 0.1f;
+    right_toes_joint_->anchor1[1] += -0.0f;
+    left_toes_joint_->anchor2[1] += kSpazRigAnkleOnToes[1];
 
-  // Attach end of right arm to torso.
-  right_arm_ik_joint_ =
-      CreateFixedJoint(body_torso_.get(), lower_right_arm_body_.get(), 0.0f,
-                       0.0f, 0, 0, -0.2f, -0.2f, 0.1f, 0, 0, 0.07f, false);
+    // And an anchor off to the side to make it hinge-like.
+    left_toes_joint_2_ = nullptr;
+    left_toes_joint_2_ = CreateFixedJoint(lower_left_leg_body_.get(),
+                                          left_toes_body_.get(), 0, 0, 0, 0);
 
-  left_arm_ik_joint_ =
-      CreateFixedJoint(body_torso_.get(), lower_left_arm_body_.get(), 0.0f,
-                       0.0f, 0, 0, 0.2f, -0.2f, 0.1f, 0.0f, 0.0f, 0.07f, false);
+    left_toes_joint_2_->anchor1[1] += -0.0f;
+    left_toes_joint_2_->anchor2[1] += kSpazRigAnkleOnToes[1];
+    left_toes_joint_2_->anchor1[0] += 0.1f;
+    left_toes_joint_2_->anchor2[0] += 0.1f;
+
+    // Attach end of right arm to torso.
+    right_arm_ik_joint_ =
+        CreateFixedJoint(body_torso_.get(), lower_right_arm_body_.get(), 0.0f,
+                         0.0f, 0, 0, -0.2f, -0.2f, 0.1f, 0, 0, 0.07f, false);
+
+    left_arm_ik_joint_ = CreateFixedJoint(
+        body_torso_.get(), lower_left_arm_body_.get(), 0.0f, 0.0f, 0, 0, 0.2f,
+        -0.2f, 0.1f, 0.0f, 0.0f, 0.07f, false);
+  }
+
+  // Every driven joint now exists; seed the targets from them.
+  InitJointTargets_();
 
   // Roller ball joint.
   roller_ball_joint_ = CreateFixedJoint(body_torso_.get(), body_roller_.get(),
-                                        kRollerBallLinearStiffness,
-                                        kRollerBallLinearDamping, 0, 0);
+                                        tuning_->roller_joint_stiffness,
+                                        tuning_->roller_joint_damping, 0, 0);
   base_pelvis_roller_anchor_offset_ = roller_ball_joint_->anchor1[1];
 
   // Stand joint on our torso.
@@ -1039,12 +1183,12 @@ void SpazNode::SetPunchPressed(bool val) {
           punch_right_ = a_vel_y_smoothed_ > 0.0f;
         }
         last_punch_time_ = scene()->time();
-        if (SceneSound* sound = GetRandomMedia(attack_sounds_)) {
-          if (auto* source = g_base->audio->SourceBeginNew()) {
+        if (base::SoundAsset* sound = RandomAttackSound_()) {
+          if (auto* source = scene()->NewAudioSource(sound)) {
             const dReal* p_head = dGeomGetPosition(body_head_->geom());
             g_base->audio->PushSourceStopSoundCall(voice_play_id_);
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
-            voice_play_id_ = source->Play(sound->GetSoundData());
+            voice_play_id_ = source->Play(sound);
             source->End();
           }
         }
@@ -1065,19 +1209,19 @@ void SpazNode::SetJumpPressed(bool val) {
       return;
     }
     if (!can_fly_) {
-      if (SceneSound* sound = GetRandomMedia(jump_sounds_)) {
-        if (auto* source = g_base->audio->SourceBeginNew()) {
+      if (base::SoundAsset* sound = RandomJumpSound_()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           source->SetPosition(p_top[0], p_top[1], p_top[2]);
-          voice_play_id_ = source->Play(sound->GetSoundData());
+          voice_play_id_ = source->Play(sound);
           source->End();
         }
       }
       if (demo_mode_) {
         jump_ = 5;
       } else {
-        jump_ = 7;
+        jump_ = static_cast_check_fit<uint8_t>(tuning_->jump_steps);
       }
       last_jump_time_ = scene()->time();
     }
@@ -1086,38 +1230,182 @@ void SpazNode::SetJumpPressed(bool val) {
   }
 }
 
-static void FreezeJointAngle(JointFixedEF* j) {
-  dQMultiply1(j->qrel, j->node[0].body->q, j->node[1].body->q);
+static void FreezeJointAngle(base::JointFixedEF* j) {
+  base::JointFixedEFFreezeAngle(j);
+}
+
+auto SpazNode::PoseJoints_() -> SpazPose::Joints {
+  SpazPose::Joints j;
+  SpazJointTarget* tg = joint_targets_;
+  j.neck = &tg[kSpazJointNeck];
+  j.pelvis = &tg[kSpazJointPelvis];
+  j.upper_right_arm = &tg[kSpazJointUpperRightArm];
+  j.lower_right_arm = &tg[kSpazJointLowerRightArm];
+  j.upper_left_arm = &tg[kSpazJointUpperLeftArm];
+  j.lower_left_arm = &tg[kSpazJointLowerLeftArm];
+  j.upper_right_leg = &tg[kSpazJointUpperRightLeg];
+  j.lower_right_leg = &tg[kSpazJointLowerRightLeg];
+  j.upper_left_leg = &tg[kSpazJointUpperLeftLeg];
+  j.lower_left_leg = &tg[kSpazJointLowerLeftLeg];
+  j.right_toes = &tg[kSpazJointRightToes];
+  j.right_toes_2 = &tg[kSpazJointRightToes2];
+  j.left_toes = &tg[kSpazJointLeftToes];
+  j.left_toes_2 = &tg[kSpazJointLeftToes2];
+  j.right_leg_ik = &tg[kSpazJointRightLegIK];
+  j.left_leg_ik = &tg[kSpazJointLeftLegIK];
+  j.right_arm_ik = &tg[kSpazJointRightArmIK];
+  j.left_arm_ik = &tg[kSpazJointLeftArmIK];
+  return j;
+}
+
+auto SpazNode::SimJoint_(int joint) -> base::JointFixedEF* {
+  switch (joint) {
+    case kSpazJointNeck:
+      return neck_joint_;
+    case kSpazJointPelvis:
+      return pelvis_joint_;
+    case kSpazJointUpperRightArm:
+      return upper_right_arm_joint_;
+    case kSpazJointLowerRightArm:
+      return lower_right_arm_joint_;
+    case kSpazJointUpperLeftArm:
+      return upper_left_arm_joint_;
+    case kSpazJointLowerLeftArm:
+      return lower_left_arm_joint_;
+    case kSpazJointUpperRightLeg:
+      return upper_right_leg_joint_;
+    case kSpazJointLowerRightLeg:
+      return lower_right_leg_joint_;
+    case kSpazJointUpperLeftLeg:
+      return upper_left_leg_joint_;
+    case kSpazJointLowerLeftLeg:
+      return lower_left_leg_joint_;
+    case kSpazJointRightToes:
+      return right_toes_joint_;
+    case kSpazJointRightToes2:
+      return right_toes_joint_2_;
+    case kSpazJointLeftToes:
+      return left_toes_joint_;
+    case kSpazJointLeftToes2:
+      return left_toes_joint_2_;
+    case kSpazJointRightLegIK:
+      return right_leg_ik_joint_;
+    case kSpazJointLeftLegIK:
+      return left_leg_ik_joint_;
+    case kSpazJointRightArmIK:
+      return right_arm_ik_joint_;
+    case kSpazJointLeftArmIK:
+      return left_arm_ik_joint_;
+    default:
+      return nullptr;
+  }
+}
+
+void SpazNode::InitJointTargets_() {
+  for (int i = 0; i < kSpazJointCount; ++i) {
+    base::JointFixedEF* j = SimJoint_(i);
+    SpazJointTarget& tg = joint_targets_[i];
+    if (!j) {
+      // No main-sim joint (bg limbs): seed what its creation would
+      // have produced.
+      assert(i >= kSpazJointUpperRightArm);
+      const LimbJointSeed& seed = kLimbJointSeeds[i - kSpazJointUpperRightArm];
+      for (int k = 0; k < 3; ++k) {
+        tg.anchor1[k] = seed.anchor1[k];
+      }
+      dQFromAxisAndAngle(tg.qrel, 1, 0, 0, seed.qrel_x_angle);
+      tg.linearStiffness = seed.linear_stiffness;
+      tg.linearDamping = seed.linear_damping;
+      tg.angularStiffness = 0.0f;
+      tg.angularDamping = 0.0f;
+      continue;
+    }
+    for (int k = 0; k < 3; ++k) {
+      tg.anchor1[k] = j->anchor1[k];
+    }
+    for (int k = 0; k < 4; ++k) {
+      tg.qrel[k] = j->qrel[k];
+    }
+    tg.linearStiffness = j->linearStiffness;
+    tg.linearDamping = j->linearDamping;
+    tg.angularStiffness = j->angularStiffness;
+    tg.angularDamping = j->angularDamping;
+#if BA_DEBUG_BUILD
+    // Keep the bg-limbs seed table honest against the real thing.
+    if (i >= kSpazJointUpperRightArm) {
+      const LimbJointSeed& seed = kLimbJointSeeds[i - kSpazJointUpperRightArm];
+      dQuaternion q;
+      dQFromAxisAndAngle(q, 1, 0, 0, seed.qrel_x_angle);
+      for (int k = 0; k < 3; ++k) {
+        assert(std::abs(tg.anchor1[k] - seed.anchor1[k]) < 1e-4f);
+      }
+      for (int k = 0; k < 4; ++k) {
+        assert(std::abs(tg.qrel[k] - q[k]) < 1e-4f);
+      }
+      assert(std::abs(tg.linearStiffness - seed.linear_stiffness) < 1e-6f);
+      assert(std::abs(tg.linearDamping - seed.linear_damping) < 1e-6f);
+      assert(tg.angularStiffness == 0.0f && tg.angularDamping == 0.0f);
+    }
+#endif
+  }
+}
+
+void SpazNode::ApplyJointTargets_() {
+  for (int i = 0; i < kSpazJointCount; ++i) {
+    base::JointFixedEF* j = SimJoint_(i);
+    if (!j) {
+      continue;  // bg limbs: the rig applies these.
+    }
+    const SpazJointTarget& tg = joint_targets_[i];
+    for (int k = 0; k < 3; ++k) {
+      j->anchor1[k] = tg.anchor1[k];
+    }
+    for (int k = 0; k < 4; ++k) {
+      j->qrel[k] = tg.qrel[k];
+    }
+    j->linearStiffness = tg.linearStiffness;
+    j->linearDamping = tg.linearDamping;
+    j->angularStiffness = tg.angularStiffness;
+    j->angularDamping = tg.angularDamping;
+  }
 }
 
 void SpazNode::UpdateJoints() {
-  // (neck joint gets set every step so no update here)
+  // Limb rest pose and springs (or the frozen lock-down).
+  pose_.ApplyRestPose(PoseJoints_(), frozen_, *tuning_);
+  if (frozen_) {
+    // Lock each limb joint's rest rotation to its current angle, and
+    // keep the targets in step so the per-step apply doesn't undo it.
+    const int frozen_joints[] = {
+        kSpazJointPelvis,        kSpazJointUpperRightArm,
+        kSpazJointLowerRightArm, kSpazJointUpperLeftArm,
+        kSpazJointLowerLeftArm,  kSpazJointUpperRightLeg,
+        kSpazJointLowerRightLeg, kSpazJointUpperLeftLeg,
+        kSpazJointLowerLeftLeg,  kSpazJointRightToes,
+        kSpazJointLeftToes};
+    for (int i : frozen_joints) {
+      base::JointFixedEF* j = SimJoint_(i);
+      if (!j) {
+        continue;  // bg limbs: the rig latches its own joints.
+      }
+      FreezeJointAngle(j);
+      for (int k = 0; k < 4; ++k) {
+        joint_targets_[i].qrel[k] = j->qrel[k];
+      }
+    }
+  }
+  ApplyJointTargets_();
 
+  // Legacy hair rig: same frozen treatment.
   float l_still_scale = 1.0f;
   float l_damp_scale = 1.0f;
   float a_stiff_scale = 1.0f;
   float a_damp_scale = 1.0f;
-  float leg_a_damp_scale = 1.0f;
-
-  // When frozen, lock to our orientations and get more stiff.
   if (frozen_) {
     l_still_scale *= 5.0f;
     l_damp_scale *= 0.2f;
     a_stiff_scale *= 1000.0f;
     a_damp_scale *= 0.2f;
-    leg_a_damp_scale *= 1.0f;
-
-    FreezeJointAngle(pelvis_joint_);
-    FreezeJointAngle(upper_right_arm_joint_);
-    FreezeJointAngle(lower_right_arm_joint_);
-    FreezeJointAngle(upper_left_arm_joint_);
-    FreezeJointAngle(lower_left_arm_joint_);
-    FreezeJointAngle(upper_right_leg_joint_);
-    FreezeJointAngle(lower_right_leg_joint_);
-    FreezeJointAngle(upper_left_leg_joint_);
-    FreezeJointAngle(lower_left_leg_joint_);
-    FreezeJointAngle(right_toes_joint_);
-    FreezeJointAngle(left_toes_joint_);
     if (hair_front_right_joint_) {
       FreezeJointAngle(hair_front_right_joint_);
     }
@@ -1130,86 +1418,7 @@ void SpazNode::UpdateJoints() {
     if (hair_ponytail_bottom_joint_) {
       FreezeJointAngle(hair_ponytail_bottom_joint_);
     }
-  } else {
-    // Not frozen; just normal setup.
-
-    // Set normal joint angles.
-
-    dQFromAxisAndAngle(pelvis_joint_->qrel, 1, 0.0f, 0.0f, -0.4f);
-
-    dQFromAxisAndAngle(upper_right_arm_joint_->qrel, 1, 0.0f, -0.0f, 2.0f);
-    dQFromAxisAndAngle(lower_right_arm_joint_->qrel, 1, 0, 0, -1.7f);
-
-    dQFromAxisAndAngle(upper_left_arm_joint_->qrel, 1, -0.0f, 0.0f, 2.0f);
-    dQFromAxisAndAngle(lower_left_arm_joint_->qrel, 1, 0, 0, -1.7f);
-
-    dQFromAxisAndAngle(upper_right_leg_joint_->qrel, 1, 0.2f, 0.2f, 0.5f);
-    dQFromAxisAndAngle(lower_right_leg_joint_->qrel, 1, 0, 0, 1.0f);
-    dQSetIdentity(right_toes_joint_->qrel);
-
-    dQFromAxisAndAngle(upper_left_leg_joint_->qrel, 1, -0.2f, -0.2f, 0.5f);
-    dQFromAxisAndAngle(lower_left_leg_joint_->qrel, 1, 0, 0, 3.1415f / 2.0f);
-    dQSetIdentity(left_toes_joint_->qrel);
   }
-
-  pelvis_joint_->linearStiffness = kPelvisLinearStiffness * l_still_scale;
-  pelvis_joint_->linearDamping = kPelvisLinearDamping * l_damp_scale;
-  pelvis_joint_->angularStiffness = kPelvisAngularStiffness * a_stiff_scale;
-  pelvis_joint_->angularDamping = kPelvisAngularDamping * a_damp_scale;
-
-  upper_right_leg_joint_->linearStiffness =
-      kUpperLegLinearStiffness * l_still_scale;
-  upper_right_leg_joint_->linearDamping = kUpperLegLinearDamping * l_damp_scale;
-  upper_right_leg_joint_->angularStiffness =
-      kUpperLegAngularStiffness * a_stiff_scale;
-  upper_right_leg_joint_->angularDamping =
-      kUpperLegAngularDamping * a_damp_scale * leg_a_damp_scale;
-
-  lower_right_leg_joint_->linearStiffness =
-      kLowerLegLinearStiffness * l_still_scale;
-  lower_right_leg_joint_->linearDamping = kLowerLegLinearDamping * l_damp_scale;
-  lower_right_leg_joint_->angularStiffness =
-      kLowerLegAngularStiffness * a_stiff_scale;
-  lower_right_leg_joint_->angularDamping =
-      kLowerLegAngularDamping * a_damp_scale * leg_a_damp_scale;
-
-  right_toes_joint_->linearStiffness = kToesLinearStiffness * l_still_scale;
-  right_toes_joint_->linearDamping = kToesLinearDamping * l_damp_scale;
-  right_toes_joint_->angularStiffness = kToesAngularStiffness * a_stiff_scale;
-  right_toes_joint_->angularDamping = kToesAngularDamping * a_damp_scale;
-
-  right_toes_joint_2_->linearStiffness = kToesLinearStiffness * l_still_scale;
-  right_toes_joint_2_->linearDamping = kToesLinearDamping * l_damp_scale;
-  right_toes_joint_2_->angularStiffness = 0;
-  right_toes_joint_2_->angularDamping = 0;
-
-  upper_left_leg_joint_->linearStiffness =
-      kUpperLegLinearStiffness * l_still_scale;
-  upper_left_leg_joint_->linearDamping = kUpperLegLinearDamping * l_damp_scale;
-  upper_left_leg_joint_->angularStiffness =
-      kUpperLegAngularStiffness * a_stiff_scale;
-  upper_left_leg_joint_->angularDamping =
-      kUpperLegAngularDamping * a_damp_scale * leg_a_damp_scale;
-
-  lower_left_leg_joint_->linearStiffness =
-      kLowerLegLinearStiffness * l_still_scale;
-  lower_left_leg_joint_->linearDamping = kLowerLegLinearDamping * l_damp_scale;
-  lower_left_leg_joint_->angularStiffness =
-      kLowerLegAngularStiffness * a_stiff_scale;
-  lower_left_leg_joint_->angularDamping =
-      kLowerLegAngularDamping * a_damp_scale * leg_a_damp_scale;
-
-  left_toes_joint_->linearStiffness = kToesLinearStiffness * l_still_scale;
-  left_toes_joint_->linearDamping = kToesLinearDamping * l_damp_scale;
-  left_toes_joint_->angularStiffness = kToesAngularStiffness * a_stiff_scale;
-  left_toes_joint_->angularDamping = kToesAngularDamping * a_damp_scale;
-
-  left_toes_joint_2_->linearStiffness = kToesLinearStiffness * l_still_scale;
-  left_toes_joint_2_->linearDamping = kToesLinearDamping * l_damp_scale;
-  left_toes_joint_2_->angularStiffness = 0;
-  left_toes_joint_2_->angularDamping = 0;
-
-  // Hair
   if (hair_front_right_joint_) {
     hair_front_right_joint_->linearStiffness =
         kHairFrontRightLinearStiffness * l_still_scale;
@@ -1261,168 +1470,60 @@ void SpazNode::UpdateBodiesForStyle() {
   }
 
   // Adjust torso size.
-  body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0, 3.0f);
+  body_torso_->SetDimensions(torso_radius_, 0, 0, 0.2f, 0, 0,
+                             tuning_->torso_density);
 
-  // Adjust hip and leg size.
-  body_pelvis_->SetDimensions(0.25f, 0.16f, 0.10f, 0.25f, 0.16f, 0.16f,
-                              kPelvisDensity);
+  // Adjust hip size. (The old limbs' pelvis was narrower; its other
+  // sides are the rig's. Mass comes from the tuning; with bg limbs the
+  // core carries the limbs' mass.)
+  body_pelvis_->SetDimensions(
+      main_sim_limbs_ ? kLegacyLimbsPelvisWidth : kBgLimbsPelvisWidth,
+      kSpazRigPelvisSize[1], kSpazRigPelvisSize[2], 0.25f,
+      tuning_->pelvis_mass_height, 0.16f, tuning_->pelvis_density);
 
-  float thigh_rad = female_ ? 0.06f : 0.04f;
-  upper_left_leg_body_->SetDimensions(thigh_rad, 0.12f, 0, 0.05f, 0.12f, 0,
-                                      kUpperLegDensity);
-  upper_right_leg_body_->SetDimensions(thigh_rad, 0.12f, 0, 0.05f, 0.12f, 0,
-                                       kUpperLegDensity);
+  // (Re)build definition attachment rigs if their config changed. After
+  // the core bodies are sized: the rig's twins copy their shapes and
+  // masses.
+  UpdateAttachments_();
 
-  float ankle_rad = female_ ? 0.045f : 0.07f;
-  lower_left_leg_body_->SetDimensions(ankle_rad, 0.26f - ankle_rad * 2.0f, 0,
-                                      0.07f, 0.12f, 0, kLowerLegDensity);
-  lower_right_leg_body_->SetDimensions(ankle_rad, 0.26f - ankle_rad * 2.0f, 0,
-                                       0.07f, 0.12f, 0, kLowerLegDensity);
-}
-
-static void InitObject(dObject* obj, dxWorld* w) {
-  obj->world = w;
-  obj->next = nullptr;
-  obj->tome = nullptr;
-  obj->userdata = nullptr;
-  obj->tag = 0;
-}
-
-static void AddObjectToList(dObject* obj, dObject** first) {
-  obj->next = *first;
-  obj->tome = first;
-  if (*first) (*first)->tome = &obj->next;
-  (*first) = obj;
-}
-
-static void JointInit(dxWorld* w, dxJoint* j) {
-  dIASSERT(w && j);
-  InitObject(j, w);
-  j->vtable = nullptr;
-  j->flags = 0;
-  j->node[0].joint = j;
-  j->node[0].body = nullptr;
-  j->node[0].next = nullptr;
-  j->node[1].joint = j;
-  j->node[1].body = nullptr;
-  j->node[1].next = nullptr;
-  dSetZero(j->lambda, 6);
-  AddObjectToList(j, reinterpret_cast<dObject**>(&w->firstjoint));
-  w->nj++;
-}
-
-static void _dJointSetFixed(JointFixedEF* joint) {
-  dUASSERT(joint, "bad joint argument");
-  dUASSERT(joint->vtable == &fixed_vtable_, "joint is not fixed");
-
-  // This code is taken from sJointSetSliderAxis(), we should really put the
-  // common code in its own function.
-  // compute the offset between the bodies
-  if (joint->node[0].body) {
-    if (joint->node[1].body) {
-      dQMultiply1(joint->qrel, joint->node[0].body->q, joint->node[1].body->q);
-    } else {
-    }
+  // (bg limbs take the physique through the rig config instead.)
+  if (!main_sim_limbs_) {
+    return;
   }
-}
+  float thigh_rad = thigh_radius_;
+  upper_left_leg_body_->SetDimensions(thigh_rad, kSpazRigUpperLegLength, 0,
+                                      0.05f, 0.12f, 0, kUpperLegDensity);
+  upper_right_leg_body_->SetDimensions(thigh_rad, kSpazRigUpperLegLength, 0,
+                                       0.05f, 0.12f, 0, kUpperLegDensity);
 
-static void _setAnchors(dxJoint* j, dReal x, dReal y, dReal z, dVector3 anchor1,
-                        dVector3 anchor2) {
-  if (j->node[0].body) {
-    dReal q[4];
-    q[0] = x - j->node[0].body->pos[0];
-    q[1] = y - j->node[0].body->pos[1];
-    q[2] = z - j->node[0].body->pos[2];
-    q[3] = 0;
-    dMULTIPLY1_331(anchor1, j->node[0].body->R, q);
-    if (j->node[1].body) {
-      q[0] = x - j->node[1].body->pos[0];
-      q[1] = y - j->node[1].body->pos[1];
-      q[2] = z - j->node[1].body->pos[2];
-      q[3] = 0;
-      dMULTIPLY1_331(anchor2, j->node[1].body->R, q);
-    } else {
-      anchor2[0] = x;
-      anchor2[1] = y;
-      anchor2[2] = z;
-    }
-  }
-  anchor1[3] = 0;
-  anchor2[3] = 0;
-}
-
-// Position b relative to b2 based on.
-void PositionBodyForJoint(JointFixedEF* j) {
-  dBodyID b1 = dJointGetBody(j, 0);
-  dBodyID b2 = dJointGetBody(j, 1);
-  assert(b1 && b2);
-  dBodySetQuaternion(b2, dBodyGetQuaternion(b1));
-  dVector3 p;
-  dBodyGetRelPointPos(b1, j->anchor1[0] - j->anchor2[0],
-                      j->anchor1[1] - j->anchor2[1],
-                      j->anchor1[2] - j->anchor2[2], p);
-  dBodySetPosition(b2, p[0], p[1], p[2]);
+  float ankle_rad = ankle_radius_;
+  lower_left_leg_body_->SetDimensions(ankle_rad,
+                                      kSpazRigLowerLegSpan - ankle_rad * 2.0f,
+                                      0, 0.07f, 0.12f, 0, kLowerLegDensity);
+  lower_right_leg_body_->SetDimensions(ankle_rad,
+                                       kSpazRigLowerLegSpan - ankle_rad * 2.0f,
+                                       0, 0.07f, 0.12f, 0, kLowerLegDensity);
 }
 
 auto SpazNode::CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls,
-                                float ld, float as, float ad) -> JointFixedEF* {
-  JointFixedEF* j;
-  j = static_cast<JointFixedEF*>(
-      dAlloc(static_cast<size_t>(fixed_vtable_.size)));
-  JointInit(scene()->dynamics()->ode_world(), j);
-  j->vtable = &fixed_vtable_;
-  if (j->vtable->init) j->vtable->init(j);
-  j->feedback = nullptr;
-
-  if (b1 && b2) {
-    dJointAttach(j, b1->body(), b2->body());
-    _dJointSetFixed(j);
-    const dReal* p = dBodyGetPosition(b2->body());
-    _setAnchors(j, p[0], p[1], p[2], j->anchor1, j->anchor2);
-  }
-
-  j->linearStiffness = ls;
-  j->linearDamping = ld;
-  j->angularStiffness = as;
-  j->angularDamping = ad;
-
-  return j;
+                                float ld, float as, float ad)
+    -> base::JointFixedEF* {
+  return base::JointFixedEFCreate(
+      scene()->dynamics()->ode_world(), b1 ? b1->body() : nullptr,
+      b2 ? b2->body() : nullptr, kGameStepSeconds, ls, ld, as, ad);
 }
 
 auto SpazNode::CreateFixedJoint(RigidBody* b1, RigidBody* b2, float ls,
                                 float ld, float as, float ad, float a1x,
                                 float a1y, float a1z, float a2x, float a2y,
-                                float a2z, bool reposition) -> JointFixedEF* {
+                                float a2z, bool reposition)
+    -> base::JointFixedEF* {
   assert(b1 && b2);
-
-  JointFixedEF* j;
-  j = static_cast<JointFixedEF*>(
-      dAlloc(static_cast<size_t>(fixed_vtable_.size)));
-  JointInit(scene()->dynamics()->ode_world(), j);
-  j->vtable = &fixed_vtable_;
-  if (j->vtable->init) j->vtable->init(j);
-  j->feedback = nullptr;
-
-  dJointAttach(j, b1->body(), b2->body());
-  dQSetIdentity(j->qrel);
-  j->anchor1[0] = a1x;
-  j->anchor1[1] = a1y;
-  j->anchor1[2] = a1z;
-  j->anchor2[0] = a2x;
-  j->anchor2[1] = a2y;
-  j->anchor2[2] = a2z;
-
-  // Ok lets move the second body to line up with the joint.
-  if (reposition) {
-    PositionBodyForJoint(j);
-  }
-
-  j->linearStiffness = ls;
-  j->linearDamping = ld;
-  j->angularStiffness = as;
-  j->angularDamping = ad;
-
-  return j;
+  const float anchor1[3] = {a1x, a1y, a1z};
+  const float anchor2[3] = {a2x, a2y, a2z};
+  return base::JointFixedEFCreateAnchored(
+      scene()->dynamics()->ode_world(), b1->body(), b2->body(),
+      kGameStepSeconds, ls, ld, as, ad, anchor1, anchor2, reposition);
 }
 
 void SpazNode::UpdateAreaOfInterest() {
@@ -1440,7 +1541,7 @@ SpazNode::~SpazNode() {
   DropHeldObject();
 
   if (area_of_interest_) {
-    g_base->graphics->camera()->DeleteAreaOfInterest(area_of_interest_);
+    scene()->render_view()->camera()->DeleteAreaOfInterest(area_of_interest_);
     area_of_interest_ = nullptr;
   }
 
@@ -1448,26 +1549,11 @@ SpazNode::~SpazNode() {
 
   dJointDestroy(neck_joint_);
 
-  dJointDestroy(upper_right_arm_joint_);
-  dJointDestroy(lower_right_arm_joint_);
-  dJointDestroy(upper_left_arm_joint_);
-  dJointDestroy(lower_left_arm_joint_);
-
-  dJointDestroy(upper_right_leg_joint_);
-  dJointDestroy(lower_right_leg_joint_);
-  dJointDestroy(right_leg_ik_joint_);
-  dJointDestroy(upper_left_leg_joint_);
-  dJointDestroy(lower_left_leg_joint_);
-  dJointDestroy(left_leg_ik_joint_);
-  dJointDestroy(right_arm_ik_joint_);
-  dJointDestroy(left_arm_ik_joint_);
-  dJointDestroy(left_toes_joint_);
-  if (left_toes_joint_2_) {
-    dJointDestroy(left_toes_joint_2_);
-  }
-  dJointDestroy(right_toes_joint_);
-  if (right_toes_joint_2_) {
-    dJointDestroy(right_toes_joint_2_);
+  // Limb joints (none with bg limbs).
+  for (int i = kSpazJointUpperRightArm; i < kSpazJointCount; ++i) {
+    if (base::JointFixedEF* j = SimJoint_(i)) {
+      dJointDestroy(j);
+    }
   }
 
   dJointDestroy(pelvis_joint_);
@@ -1528,12 +1614,12 @@ void SpazNode::Throw(bool with_bomb_button) {
     throw_start_ = scene()->time();
     have_thrown_ = true;
 
-    if (SceneSound* sound = GetRandomMedia(attack_sounds_)) {
-      if (auto* s = g_base->audio->SourceBeginNew()) {
+    if (base::SoundAsset* sound = RandomAttackSound_()) {
+      if (auto* s = scene()->NewAudioSource(sound)) {
         const dReal* p = dGeomGetPosition(body_head_->geom());
         g_base->audio->PushSourceStopSoundCall(voice_play_id_);
         s->SetPosition(p[0], p[1], p[2]);
-        voice_play_id_ = s->Play(sound->GetSoundData());
+        voice_play_id_ = s->Play(sound);
         s->End();
       }
     }
@@ -1595,12 +1681,12 @@ void SpazNode::HandleMessage(const char* data_in) {
       if (knockout_ || frozen_) {
         break;
       }
-      if (SceneSound* sound = GetRandomMedia(attack_sounds_)) {
-        if (auto* source = g_base->audio->SourceBeginNew()) {
+      if (base::SoundAsset* sound = RandomAttackSound_()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           source->SetPosition(p_top[0], p_top[1], p_top[2]);
-          voice_play_id_ = source->Play(sound->GetSoundData());
+          voice_play_id_ = source->Play(sound);
           source->End();
         }
       }
@@ -1610,12 +1696,12 @@ void SpazNode::HandleMessage(const char* data_in) {
       if (knockout_ || frozen_) {
         break;
       }
-      if (SceneSound* sound = GetRandomMedia(jump_sounds_)) {
-        if (auto* s = g_base->audio->SourceBeginNew()) {
+      if (base::SoundAsset* sound = RandomJumpSound_()) {
+        if (auto* s = scene()->NewAudioSource(sound)) {
           const dReal* p_top = dGeomGetPosition(body_head_->geom());
           g_base->audio->PushSourceStopSoundCall(voice_play_id_);
           s->SetPosition(p_top[0], p_top[1], p_top[2]);
-          voice_play_id_ = s->Play(sound->GetSoundData());
+          voice_play_id_ = s->Play(sound);
           s->End();
         }
       }
@@ -1683,30 +1769,34 @@ void SpazNode::HandleMessage(const char* data_in) {
             px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
             velocity_mag, radius, calc_force_only);
         dmg += pelvis_mag;
-        dmg += upper_right_arm_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += lower_right_arm_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += upper_left_arm_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += lower_left_arm_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += upper_right_leg_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += lower_right_leg_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += upper_left_leg_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
-        dmg += lower_left_leg_body_->ApplyImpulse(
-            px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z, mag,
-            velocity_mag, radius, calc_force_only);
+        // (bg limbs: no limb bodies to hit; see the damage scalar note
+        // in the bg-dynamics-channels journal.)
+        if (main_sim_limbs_) {
+          dmg += upper_right_arm_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += lower_right_arm_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += upper_left_arm_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += lower_left_arm_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += upper_right_leg_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += lower_right_leg_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += upper_left_leg_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+          dmg += lower_left_leg_body_->ApplyImpulse(
+              px, py, pz, vx, vy, vz, force_dir_x, force_dir_y, force_dir_z,
+              mag, velocity_mag, radius, calc_force_only);
+        }
       } else {
         // single impulse..
         last_hit_was_punch_ = true;
@@ -1819,28 +1909,77 @@ void SpazNode::DoFlyPress() {
     millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_sparkle_time > 200) {
       last_sparkle_time = t;
-      auto* s = g_base->audio->SourceBeginNew();
+      base::SoundAsset* sparkle;
+      int r = rand() % 100;  // NOLINT
+      if (r < 33) {
+        sparkle = g_scene_v1->assets().sparkle01.get();
+      } else if (r < 66) {
+        sparkle = g_scene_v1->assets().sparkle02.get();
+      } else {
+        sparkle = g_scene_v1->assets().sparkle03.get();
+      }
+      auto* s = scene()->NewAudioSource(sparkle);
       if (s) {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::BuiltinSoundID s_id;
-        int r = rand() % 100;  // NOLINT
-        if (r < 33) {
-          s_id = base::BuiltinSoundID::kAudioSparkle01;
-        } else if (r < 66) {
-          s_id = base::BuiltinSoundID::kAudioSparkle02;
-        } else {
-          s_id = base::BuiltinSoundID::kAudioSparkle03;
-        }
-        s->Play(g_base->assets->BuiltinSound(s_id));
+        s->Play(sparkle);
         s->End();
       }
     }
   }
 }
 
+void SpazNode::PostDynamicsStep() {
+  // Feed the character rig every anchor body's transform as this step
+  // left it. Its results draw relative to these same bodies, so giving
+  // it the poses we will draw at keeps limbs and attachments in step
+  // with the torso (fed before dynamics ran, they were always drawn a
+  // step's worth of body motion off, which showed as a one-frame jump
+  // whenever a turn started or stopped).
+  if (attachment_rig_) {
+    for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
+      RigidBody* body =
+          AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
+      if (body) {
+        attachment_rig_->SetAnchor(ti, body->GetTransform());
+      }
+    }
+  }
+}
+
 void SpazNode::Step() {
+  // Standin -> real look upgrade (character form): re-attempt the
+  // definition's media the moment the registry moved (a background
+  // acquisition landed), plus on a slow cadence to keep the missing
+  // packages noted as wanted; physique never changes here, only the
+  // look fields ApplyCharacterDef_ derives (character-skins.md).
+  if (spaz_def_.exists() && spaz_def_->def().has_spaz()) {
+    if (!spaz_def_->def().spaz_media_ready()) {
+      auto now = static_cast<millisecs_t>(scene()->time());
+      if (media_retry_pacer_.Due(spaz_def_->def().media_pending(), now)
+          && spaz_def_->RetryMedia()) {
+        ApplyCharacterDef_();
+      }
+    } else if (!character_look_applied_) {
+      // Another node sharing our definition landed its media.
+      ApplyCharacterDef_();
+    }
+  }
+
+  // The character rig's per-step settings. (Its anchor transforms go
+  // over in PostDynamicsStep, once our bodies have moved.)
+  if (attachment_rig_) {
+    if (rig_snap_) {
+      attachment_rig_->Snap();
+      rig_snap_ = false;
+    }
+    // Our base skip plus the engine's emergency load-shedding.
+    attachment_rig_->SetSkip(kBGAttachmentSkip
+                             + scene()->bg_dynamics_world()->load_skip());
+    attachment_rig_->SetFrozen(frozen_);
+    attachment_rig_->SetShattered(shattered_ != 0);
+  }
   BA_DEBUG_CHECK_BODIES();
 
   // Update our body blending values.
@@ -1859,14 +1998,18 @@ void SpazNode::Step() {
                                         &upper_left_leg_body_,
                                         &lower_left_leg_body_,
                                         &left_toes_body_,
-                                        &right_toes_body_,
-                                        &hair_front_right_body_,
-                                        &hair_front_left_body_,
-                                        &hair_ponytail_top_body_,
-                                        &hair_ponytail_bottom_body_};
+                                        &right_toes_body_};
 
     // for (Object::Ref<RigidBody>** body = bodies; *body != nullptr; body++) {
     for (auto* body : bodies) {
+      if (RigidBody* bodyptr = body->get()) {
+        bodyptr->UpdateBlending();
+      }
+    }
+    Object::Ref<RigidBody>* hair_bodies[] = {
+        &hair_front_right_body_, &hair_front_left_body_,
+        &hair_ponytail_top_body_, &hair_ponytail_bottom_body_};
+    for (auto* body : hair_bodies) {
       if (RigidBody* bodyptr = body->get()) {
         bodyptr->UpdateBlending();
       }
@@ -2147,7 +2290,9 @@ void SpazNode::Step() {
   // Always on for punches or frozen.
   bool always_on = (frozen_ || (scene()->time() - last_punch_time_ < 500));
 
-  if (always_on) {
+  if (!main_sim_limbs_) {
+    // (No limb joints here; the bg rig runs its own at full rate.)
+  } else if (always_on) {
     upper_left_arm_joint_->angularEnabled = true;
     upper_right_arm_joint_->angularEnabled = true;
     lower_right_arm_joint_->angularEnabled = true;
@@ -2232,17 +2377,20 @@ void SpazNode::Step() {
     }
 
     dBodyID bodies[11];
-    bodies[0] = body_head_->body();
-    bodies[1] = body_torso_->body();
-    bodies[2] = upper_right_arm_body_->body();
-    bodies[3] = lower_right_arm_body_->body();
-    bodies[4] = upper_left_arm_body_->body();
-    bodies[5] = lower_left_arm_body_->body();
-    bodies[6] = upper_right_leg_body_->body();
-    bodies[7] = upper_left_leg_body_->body();
-    bodies[8] = lower_right_leg_body_->body();
-    bodies[9] = lower_left_leg_body_->body();
-    bodies[10] = nullptr;
+    int body_count = 0;
+    bodies[body_count++] = body_head_->body();
+    bodies[body_count++] = body_torso_->body();
+    if (main_sim_limbs_) {
+      bodies[body_count++] = upper_right_arm_body_->body();
+      bodies[body_count++] = lower_right_arm_body_->body();
+      bodies[body_count++] = upper_left_arm_body_->body();
+      bodies[body_count++] = lower_left_arm_body_->body();
+      bodies[body_count++] = upper_right_leg_body_->body();
+      bodies[body_count++] = upper_left_leg_body_->body();
+      bodies[body_count++] = lower_right_leg_body_->body();
+      bodies[body_count++] = lower_left_leg_body_->body();
+    }
+    bodies[body_count] = nullptr;
 
     for (dBodyID* body = bodies; *body != nullptr; body++) {
       const dReal* aVel = dBodyGetAngularVel(*body);
@@ -2340,743 +2488,179 @@ void SpazNode::Step() {
     breath = sinf(static_cast<float>(scenetime) * 0.005f);
   }
 
-  // If we're shattered we just make sure our joints are ineffective.
-  if (shattered_) {
-    JointFixedEF* joints[20];
-
-    // Fill in our broken joints.
-    {
-      JointFixedEF** j = joints;
-
-      *j = right_leg_ik_joint_;
-      j++;
-      *j = left_leg_ik_joint_;
-      j++;
-      *j = right_arm_ik_joint_;
-      j++;
-      *j = left_arm_ik_joint_;
-      j++;
-      if (shatter_damage_ & kUpperRightArmJointBroken) {
-        *j = upper_right_arm_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kLowerRightArmJointBroken) {
-        *j = lower_right_arm_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kUpperLeftArmJointBroken) {
-        *j = upper_left_arm_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kLowerLeftArmJointBroken) {
-        *j = lower_left_arm_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kUpperLeftLegJointBroken) {
-        *j = upper_left_leg_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kLowerLeftLegJointBroken) {
-        *j = lower_left_leg_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kUpperRightLegJointBroken) {
-        *j = upper_right_leg_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kLowerRightLegJointBroken) {
-        *j = lower_right_leg_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kNeckJointBroken) {
-        *j = neck_joint_;
-        j++;
-      }
-      if (shatter_damage_ & kPelvisJointBroken) {
-        *j = pelvis_joint_;
-        j++;
-      }
-      *j = nullptr;
+  // Limb and neck joint targets for this step.
+  {
+    SpazPose::StepInputs in;
+    in.tuning = tuning_;
+    in.scenetime = scenetime;
+    in.stepnum = scene()->stepnum();
+    in.stream_id = stream_id();
+    in.last_punch_time = last_punch_time_;
+    in.celebrate_until_time_left = celebrate_until_time_left_;
+    in.celebrate_until_time_right = celebrate_until_time_right_;
+    in.throw_start = throw_start_;
+    in.curse_death_time = curse_death_time_;
+    in.have_thrown = have_thrown_;
+    in.breath = breath;
+    in.dead = dead_;
+    in.shattered = shattered_;
+    in.shatter_damage = shatter_damage_;
+    in.hold_position_pressed = hold_position_pressed_;
+    in.ud = ud_;
+    in.lr = lr_;
+    in.ud_norm = ud_norm_;
+    in.lr_norm = lr_norm_;
+    in.knockout = knockout_;
+    in.balance = balance_;
+    in.jump = jump_;
+    in.pickup = pickup_;
+    in.punch = punch_;
+    in.punch_right = punch_right_;
+    in.punch_dir_x = punch_dir_x_;
+    in.punch_dir_z = punch_dir_z_;
+    in.frozen = frozen_;
+    in.footing = footing_;
+    in.hockey = hockey_;
+    in.run_gas = run_gas_;
+    in.step_separation = step_separation_;
+    in.idle_arm_stiffness = idle_arm_stiffness_;
+    in.arm_swing = arm_swing_;
+    in.shoulder_offset_x = shoulder_offset_x_;
+    in.shoulder_offset_y = shoulder_offset_y_;
+    in.shoulder_offset_z = shoulder_offset_z_;
+    in.a_vel_y_smoothed_more = a_vel_y_smoothed_more_;
+    in.holding_something = holding_something_;
+    for (int i = 0; i < 3; ++i) {
+      in.hold_hand_offset_left[i] = hold_hand_offset_left_[i];
+      in.hold_hand_offset_right[i] = hold_hand_offset_right_[i];
     }
-
-    for (JointFixedEF** j = joints; *j != nullptr; j++)
-      (**j).linearStiffness = (**j).linearDamping = (**j).angularStiffness =
-          (**j).angularDamping = 0.0f;
-
-  } else {
-    // Not shattered; do normal stuff.
-
-    // Adjust neck strength.
-    {
-      JointFixedEF* j = neck_joint_;
-      if (j) {
-        if (knockout_) {
-          j->linearStiffness = 400.0f;
-          j->linearDamping = 1.0f;
-          j->angularStiffness = 5.0f;
-          j->angularDamping = 0.3f;
-        } else {
-          j->linearStiffness = 500.0f;
-          j->linearDamping = 1.0f;
-          j->angularStiffness = 13.0f;
-          j->angularDamping = 0.8f;
-        }
+    in.torso = body_torso_->body();
+    in.pelvis = body_pelvis_->body();
+    in.stand = stand_body_->body();
+    in.roller = body_roller_->body();
+    if (holding_something_ && hold_node_.exists()) {
+      Node* a = hold_node_.get();
+      if (RigidBody* b = a->GetRigidBody(hold_body_)) {
+        in.held = b->body();
       }
     }
-
-    // Update legs.
-    {
-      // Whether our feet are following the run ball or just hanging free.
-      if (knockout_ || balance_ == 0 || frozen_) {
-        // flail our legs when airborn and alive
-        if (!footing_ && balance_ == 0 && !dead_) {
-          left_leg_ik_joint_->linearStiffness = kRunJointLinearStiffness * 0.4f;
-          left_leg_ik_joint_->linearDamping = kRunJointLinearDamping * 0.2f;
-          left_leg_ik_joint_->angularStiffness =
-              kRunJointAngularStiffness * 0.2f;
-          left_leg_ik_joint_->angularDamping = kRunJointAngularDamping * 0.2f;
-          right_leg_ik_joint_->linearStiffness =
-              kRunJointLinearStiffness * 0.4f;
-          right_leg_ik_joint_->linearDamping = kRunJointLinearDamping * 0.2f;
-          right_leg_ik_joint_->angularStiffness =
-              kRunJointAngularStiffness * 0.2f;
-          right_leg_ik_joint_->angularDamping = kRunJointAngularDamping * 0.2f;
-          roll_amt_ -= 0.2f;
-          if (roll_amt_ < (-2.0f * 3.141592f)) {
-            roll_amt_ += 2.0f * 3.141592f;
-          }
-          float x = 0.1f;
-          float y = -0.3f;
-          float z = 0.22f * cosf(roll_amt_);
-          left_leg_ik_joint_->anchor1[0] = x;
-          left_leg_ik_joint_->anchor1[1] = y;
-          left_leg_ik_joint_->anchor1[2] = z;
-          right_leg_ik_joint_->anchor1[0] = -x;
-          right_leg_ik_joint_->anchor1[1] = y;
-          right_leg_ik_joint_->anchor1[2] = -z;
-        } else {
-          // we're frozen or knocked out; turn off run-joint connections...
-          left_leg_ik_joint_->linearStiffness = 0.0f;
-          left_leg_ik_joint_->linearDamping = 0.0f;
-          left_leg_ik_joint_->angularStiffness = 0.0f;
-          left_leg_ik_joint_->angularDamping = 0.0f;
-          right_leg_ik_joint_->linearStiffness = 0.0f;
-          right_leg_ik_joint_->linearDamping = 0.0f;
-          right_leg_ik_joint_->angularStiffness = 0.0f;
-          right_leg_ik_joint_->angularDamping = 0.0f;
-        }
-      } else {
-        // Do normal running updates.
-
-        // In hockey mode lets transfer a bit of our momentum to the direction
-        // we're facing if our skates are on the ground.
-        if (hockey_ && footing_) {
-          const dReal* rollVel = dBodyGetLinearVel(body_roller_->body());
-
-          dVector3 rollVelNorm = {rollVel[0], rollVel[1], rollVel[2]};
-          dNormalize3(rollVelNorm);
-
-          dVector3 forward;
-          dBodyVectorToWorld(stand_body_->body(), 0, 0, 1, forward);
-
-          float dot = dDOT(rollVelNorm, forward);
-
-          float mag = -6.0f * std::abs(dot);
-
-          dVector3 f = {mag * rollVel[0], mag * rollVel[1], mag * rollVel[2]};
-          float fMag = dVector3Length(f);
-
-          if (dot < 0.0f) fMag *= -1.0f;  // if we're going backwards..
-
-          dBodyAddForce(body_roller_->body(), f[0], f[1], f[2]);
-          dBodyAddForce(body_roller_->body(), forward[0] * fMag,
-                        forward[1] * fMag, forward[2] * fMag);
-        }
-
-        left_leg_ik_joint_->linearStiffness = kRunJointLinearStiffness;
-        left_leg_ik_joint_->linearDamping = kRunJointLinearDamping;
-        left_leg_ik_joint_->angularStiffness = kRunJointAngularStiffness;
-        left_leg_ik_joint_->angularDamping = kRunJointAngularDamping;
-        right_leg_ik_joint_->linearStiffness = kRunJointLinearStiffness;
-        right_leg_ik_joint_->linearDamping = kRunJointLinearDamping;
-        right_leg_ik_joint_->angularStiffness = kRunJointAngularStiffness;
-        right_leg_ik_joint_->angularDamping = kRunJointAngularDamping;
-
-        // Tighten things up for running.
-        left_leg_ik_joint_->linearStiffness *=
-            2.0f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-        left_leg_ik_joint_->linearDamping *=
-            2.0f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-        right_leg_ik_joint_->linearStiffness *=
-            2.0f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-        right_leg_ik_joint_->linearDamping *=
-            2.0f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-
-        if (hockey_) {
-          if (hold_position_pressed_ || (!ud_ && !lr_)) {
-            left_leg_ik_joint_->linearStiffness *= 0.05f;
-            left_leg_ik_joint_->linearDamping *= 0.1f;
-            left_leg_ik_joint_->angularStiffness *= 0.05f;
-            left_leg_ik_joint_->angularDamping *= 0.1f;
-            right_leg_ik_joint_->linearStiffness *= 0.05f;
-            right_leg_ik_joint_->linearDamping *= 0.1f;
-            right_leg_ik_joint_->angularStiffness *= 0.05f;
-            right_leg_ik_joint_->angularDamping *= 0.1f;
-          }
-        }
-
-        const dReal* ballAVel = dBodyGetAngularVel(body_roller_->body());
-        const dReal aVelMag =
-            sqrtf(ballAVel[0] * ballAVel[0] + ballAVel[1] * ballAVel[1]
-                  + ballAVel[2] * ballAVel[2]);
-
-        // When we're stopped, press our feet downward.
-        float speed_stretch = std::min(
-            sqrtf(lr_norm_ * lr_norm_ + ud_norm_ * ud_norm_) * 2.0f, 1.0f);
-
-        float rollScale = hockey_ ? 0.6f : 1.0f;
-
-        // Push towards 0.8f when running.
-        rollScale = run_gas_ * 0.8f + (1.0f - run_gas_) * rollScale;
-
-        // Clamp extremely low values so noise doesnt keep our feet moving
-        roll_amt_ -= rollScale * 0.021f * std::max(aVelMag - 0.1f, 0.0f);
-
-        if (roll_amt_ < (-2.0f * 3.141592f)) {
-          roll_amt_ += 2.0f * 3.141592f;
-        }
-
-        // We move our feet in a circle that is calculated
-        // relative to our stand-body; *not* our pelvis.
-        // this way our pelvis is free to sway and rotate and stuff
-        // in response to our feet without affecting their target arcs
-
-        // LEFT LEG
-        float step_separation = female_ ? 0.03f : 0.08f;
-        if (ninja_) {
-          step_separation *= 0.7f;
-        }
-        {
-          // Take a point relative to stand-body and then find it in the space
-          // of our pelvis. *that* is our attach point for the constraint.
-          dVector3 p_world;
-          dVector3 p_pelvis;
-          float y = -0.4f + speed_stretch * 0.14f * sinf(roll_amt_)
-                    + (1.0f - speed_stretch) * -0.2f;
-          if (jump_ > 0) y -= 0.3f;
-          float z = 0.22f * cosf(roll_amt_);
-          y += 0.06f * run_gas_;
-          z *= 1.4f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-          dBodyGetRelPointPos(stand_body_->body(), step_separation, y, z,
-                              p_world);
-          assert(body_pelvis_.exists());
-          dBodyGetPosRelPoint(body_pelvis_->body(), p_world[0], p_world[1],
-                              p_world[2], p_pelvis);
-          left_leg_ik_joint_->anchor1[0] = p_pelvis[0];
-          left_leg_ik_joint_->anchor1[1] = p_pelvis[1];
-          left_leg_ik_joint_->anchor1[2] = p_pelvis[2];
-        }
-        // RIGHT LEG
-        {
-          // Take a point relative to stand-body and then find it in the space
-          // of our pelvis. *that* is our attach point for the constraint.
-          dVector3 p_world;
-          dVector3 p_pelvis;
-          float y = -0.4f + speed_stretch * 0.14f * -sinf(roll_amt_)
-                    + (1.0f - speed_stretch) * -0.2f;
-          if (jump_ > 0) y -= 0.3f;
-          float z = 0.22f * -cosf(roll_amt_);
-          y += 0.05f * run_gas_;
-          z *= 1.3f * run_gas_ + (1.0f - run_gas_) * 1.0f;
-          dBodyGetRelPointPos(stand_body_->body(), -step_separation, y, z,
-                              p_world);
-          assert(body_pelvis_.exists());
-          dBodyGetPosRelPoint(body_pelvis_->body(), p_world[0], p_world[1],
-                              p_world[2], p_pelvis);
-          right_leg_ik_joint_->anchor1[0] = p_pelvis[0];
-          right_leg_ik_joint_->anchor1[1] = p_pelvis[1];
-          right_leg_ik_joint_->anchor1[2] = p_pelvis[2];
-        }
+    pose_.Step(in, PoseJoints_(), &head_turning);
+    ApplyJointTargets_();
+  }
+  if (attachment_rig_ && rig_has_limbs_) {
+    // The bg limb backend: the same targets, over the channel.
+    base::BGDynamicsCharacterKind::LimbJointTarget targets[16];
+    for (int i = 0; i < 16; ++i) {
+      const SpazJointTarget& src = joint_targets_[kSpazJointUpperRightArm + i];
+      base::BGDynamicsCharacterKind::LimbJointTarget& dst = targets[i];
+      for (int k = 0; k < 3; ++k) {
+        dst.anchor1[k] = src.anchor1[k];
       }
+      for (int k = 0; k < 4; ++k) {
+        dst.qrel[k] = src.qrel[k];
+      }
+      dst.linear_stiffness = src.linearStiffness;
+      dst.linear_damping = src.linearDamping;
+      dst.angular_stiffness = src.angularStiffness;
+      dst.angular_damping = src.angularDamping;
+    }
+    attachment_rig_->SetLimbJointTargets(targets, 16);
 
-      // Arms.
-      {
-        // Adjust our joint strengths.
-        {
-          float l_still_scale = 1.0f;
-          float l_damp_scale = 1.0f;
-          float a_stiff_scale = 1.0f;
-          float a_damp_scale = 1.0f;
-          float lower_arm_a_scale = 1.0f;
-
-          if (frozen_) {
-            l_still_scale *= 5.0f;
-            l_damp_scale *= 0.2f;
-            a_stiff_scale *= 1000.0f;
-            a_damp_scale *= 0.2f;
-          } else {
-            // Allow female arms to relax a bit more unless we're running.
-            if (female_) {
-              lower_arm_a_scale =
-                  lower_arm_a_scale * run_gas_ + 0.2f * (1.0f - run_gas_);
-            }
-
-            // Stiffen up during punches and celebrations.
-            if (since_last_punch < 500 || scenetime < celebrate_until_time_left_
-                || scenetime < celebrate_until_time_right_) {
-              l_still_scale *= 2.0f;
-              a_stiff_scale *= 2.0f;
-            }
+    // Dev aid (BA_BG_LIMBS_TRACE): each bg limb's pose relative to
+    // its anchor twin next to the main-sim limb's relative to the
+    // same body, a few times a second; the gap is the fidelity.
+    static const bool s_limb_trace = getenv("BA_BG_LIMBS_TRACE") != nullptr;
+    static int s_limb_tick = 0;
+    if (s_limb_trace) {
+      if (s_limb_trace && main_sim_limbs_) {
+        RigidBody* sim_bodies[10] = {
+            upper_right_arm_body_.get(), lower_right_arm_body_.get(),
+            upper_left_arm_body_.get(),  lower_left_arm_body_.get(),
+            upper_right_leg_body_.get(), lower_right_leg_body_.get(),
+            upper_left_leg_body_.get(),  lower_left_leg_body_.get(),
+            right_toes_body_.get(),      left_toes_body_.get()};
+        const int anchors[10] = {1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
+        // Record this step's main-sim limb poses.
+        limb_rel_hist_head_ = (limb_rel_hist_head_ + 1) % 4;
+        for (int i = 0; i < 10; ++i) {
+          RigidBody* anchor_body = AttachTargetBody_(
+              static_cast<base::CharacterAttachTarget>(anchors[i]));
+          const dReal* sp = dBodyGetPosition(sim_bodies[i]->body());
+          dVector3 rel;
+          dBodyGetPosRelPoint(anchor_body->body(), sp[0], sp[1], sp[2], rel);
+          for (int k = 0; k < 3; ++k) {
+            limb_rel_hist_[limb_rel_hist_head_][i][k] =
+                static_cast<float>(rel[k]);
           }
-
-          upper_right_arm_joint_->linearStiffness =
-              kUpperArmLinearStiffness * l_still_scale;
-          upper_right_arm_joint_->linearDamping =
-              kUpperArmLinearDamping * l_damp_scale;
-          upper_right_arm_joint_->angularStiffness =
-              kUpperArmAngularStiffness * a_stiff_scale;
-          upper_right_arm_joint_->angularDamping =
-              kUpperArmAngularDamping * a_damp_scale;
-
-          lower_right_arm_joint_->linearStiffness =
-              kLowerArmLinearStiffness * l_still_scale;
-          lower_right_arm_joint_->linearDamping =
-              kLowerArmLinearDamping * l_damp_scale;
-          lower_right_arm_joint_->angularStiffness =
-              kLowerArmAngularStiffness * a_stiff_scale * lower_arm_a_scale;
-          lower_right_arm_joint_->angularDamping =
-              kLowerArmAngularDamping * a_damp_scale * lower_arm_a_scale;
-
-          upper_left_arm_joint_->linearStiffness =
-              kUpperArmLinearStiffness * l_still_scale;
-          upper_left_arm_joint_->linearDamping =
-              kUpperArmLinearDamping * l_damp_scale;
-          upper_left_arm_joint_->angularStiffness =
-              kUpperArmAngularStiffness * a_stiff_scale;
-          upper_left_arm_joint_->angularDamping =
-              kUpperArmAngularDamping * a_damp_scale;
-
-          lower_left_arm_joint_->linearStiffness =
-              kLowerArmLinearStiffness * l_still_scale;
-          lower_left_arm_joint_->linearDamping =
-              kLowerArmLinearDamping * l_damp_scale;
-          lower_left_arm_joint_->angularStiffness =
-              kLowerArmAngularStiffness * a_stiff_scale * lower_arm_a_scale;
-          lower_left_arm_joint_->angularDamping =
-              kLowerArmAngularDamping * a_damp_scale * lower_arm_a_scale;
         }
-
-        // Adjust our shoulder position.
-        {
-          float x = -0.15f;
-          float y = 0.14f;
-          float z = 0.0f;
-          float leftZOffset = 0.0f;
-          float rightZOffset = 0.0f;
-          x += shoulder_offset_x_;
-          y += shoulder_offset_y_;
-          z += shoulder_offset_z_;
-
-          if (punch_) {
-            if (punch_right_) {
-              leftZOffset = -0.05f;
-              rightZOffset = 0.05f;
-            } else {
-              leftZOffset = 0.05f;
-              rightZOffset = -0.05f;
-            }
-          }
-
-          // Breathing if we're not moving.
-          if (!frozen_) y += breath * 0.012f;
-
-          upper_right_arm_joint_->anchor1[0] = x;
-          upper_right_arm_joint_->anchor1[1] = y;
-          upper_right_arm_joint_->anchor1[2] = z + rightZOffset;
-
-          upper_left_arm_joint_->anchor1[0] = -x;
-          upper_left_arm_joint_->anchor1[1] = y;
-          upper_left_arm_joint_->anchor1[2] = z + leftZOffset;
-        }
-
-        // Now update ik stuff.
-        // If we're frozen, turn it all off.
-
-        if (frozen_) {
-          right_arm_ik_joint_->linearStiffness = 0;
-          right_arm_ik_joint_->linearDamping = 0;
-          right_arm_ik_joint_->angularStiffness = 0;
-          right_arm_ik_joint_->angularDamping = 0;
-          left_arm_ik_joint_->linearStiffness = 0;
-          left_arm_ik_joint_->linearDamping = 0;
-          left_arm_ik_joint_->angularStiffness = 0;
-          left_arm_ik_joint_->angularDamping = 0;
-        } else {
-          bool haveHeldThing = false;
-          if (holding_something_ && hold_node_.exists()) {
-            Node* a = hold_node_.get();
-            RigidBody* b = a->GetRigidBody(hold_body_);
-            if (b) {
-              haveHeldThing = true;
-
-              right_arm_ik_joint_->linearStiffness = 40.0f;
-              right_arm_ik_joint_->linearDamping = 1.0f;
-              left_arm_ik_joint_->linearStiffness = 40.0f;
-              left_arm_ik_joint_->linearDamping = 1.0f;
-              JointFixedEF* jf;
-
-              dBodyID heldBody = b->body();
-
-              // Find our target point relative to the held body and aim for
-              // that.
-              dVector3 p_world;
-              dVector3 p_torso2;
-
-              jf = right_arm_ik_joint_;
-              dBodyGetRelPointPos(heldBody, hold_hand_offset_right_[0],
-                                  hold_hand_offset_right_[1],
-                                  hold_hand_offset_right_[2], p_world);
-              assert(body_torso_.exists());
-              dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
-                                  p_world[2], p_torso2);
-              jf->anchor1[0] = p_torso2[0];
-              jf->anchor1[1] = p_torso2[1];
-              jf->anchor1[2] = p_torso2[2];
-              jf = left_arm_ik_joint_;
-              dBodyGetRelPointPos(heldBody, hold_hand_offset_left_[0],
-                                  hold_hand_offset_left_[1],
-                                  hold_hand_offset_left_[2], p_world);
-              assert(body_torso_.exists());
-              dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
-                                  p_world[2], p_torso2);
-              jf->anchor1[0] = p_torso2[0];
-              jf->anchor1[1] = p_torso2[1];
-              jf->anchor1[2] = p_torso2[2];
-            }
-          }
-
-          // Not holding something.
-          if (!haveHeldThing) {
-            // Punching.
-            if (since_last_punch < 300) {
-              JointFixedEF* punch_hand;
-              JointFixedEF* opposite_hand;
-
-              JointFixedEF* shoulder_joint;
-
-              float mirror_scale;
-
-              if (punch_right_) {
-                punch_hand = right_arm_ik_joint_;
-                opposite_hand = left_arm_ik_joint_;
-                shoulder_joint = upper_right_arm_joint_;
-                mirror_scale = -1.0f;
-              } else {
-                punch_hand = left_arm_ik_joint_;
-                opposite_hand = right_arm_ik_joint_;
-                shoulder_joint = upper_left_arm_joint_;
-                mirror_scale = 1.0f;
-              }
-
-              punch_hand->linearStiffness = 100.0f;
-              punch_hand->linearDamping = 1.0f;
-              opposite_hand->linearStiffness = 30.0f;
-              opposite_hand->linearDamping = 0.1f;
-
-              // pull non-punch hand back..
-              opposite_hand->anchor1[0] = -0.2f * mirror_scale;
-              opposite_hand->anchor1[1] = 0.1f;
-              opposite_hand->anchor1[2] = -0.0f;
-
-              // anticipation
-              if (since_last_punch < 80) {
-                punch_hand->anchor1[0] = 0.4f * mirror_scale;
-                punch_hand->anchor1[1] = 0.0f;
-                punch_hand->anchor1[2] = -0.1f;
-              } else if (since_last_punch < 200) {
-                // Offset our punch-direction from our punch shoulder; that's
-                // our target point for our fist.
-                dVector3 p_world;
-                dVector3 p_torso2;
-                dBodyGetRelPointPos(body_torso_->body(),
-                                    shoulder_joint->anchor1[0],
-                                    shoulder_joint->anchor1[1],
-                                    shoulder_joint->anchor1[2], p_world);
-
-                // Offset now that we're in world-space.
-                p_world[0] += punch_dir_x_ * 0.7f;
-                p_world[2] += punch_dir_z_ * 0.7f;
-                p_world[1] += 0.13f;
-
-                // Now translate back to torso space for setting our anchor.
-                assert(body_torso_.exists());
-                dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
-                                    p_world[2], p_torso2);
-
-                punch_hand->anchor1[0] = p_torso2[0];
-                punch_hand->anchor1[1] = p_torso2[1];
-                punch_hand->anchor1[2] = p_torso2[2];
-              }
-            } else if (have_thrown_ && scenetime - throw_start_ < 100
-                       && scenetime >= throw_start_) {
-              // Pick-up gesture.
-              JointFixedEF* jf;
-              jf = left_arm_ik_joint_;
-              jf->anchor1[0] = 0.0f;
-              jf->anchor1[1] = 0.2f;
-              jf->anchor1[2] = 0.8f;
-              left_arm_ik_joint_->linearStiffness = 10.0f;
-              left_arm_ik_joint_->linearDamping = 0.1f;
-
-              jf = right_arm_ik_joint_;
-              jf->anchor1[0] = -0.0f;
-              jf->anchor1[1] = 0.2f;
-              jf->anchor1[2] = 0.8f;
-              right_arm_ik_joint_->linearStiffness = 10.0f;
-              right_arm_ik_joint_->linearDamping = 0.1f;
-            } else if (!footing_ && balance_ == 0 && !dead_) {
-              // Wave arms when airborn.
-              float wave_amt = static_cast<float>(scenetime) * -0.018f;
-
-              left_arm_ik_joint_->linearStiffness = 6.0f;
-              left_arm_ik_joint_->linearDamping = 0.01f;
-              right_arm_ik_joint_->linearStiffness = 6.0f;
-              right_arm_ik_joint_->linearDamping = 0.01f;
-
-              float v1 = sinf(wave_amt) * 0.34f;
-              float v2 = cosf(wave_amt) * 0.34f;
-
-              JointFixedEF* jf;
-              jf = left_arm_ik_joint_;
-              jf->anchor1[0] = 0.4f;
-              jf->anchor1[1] = v1 + 0.6f;
-              jf->anchor1[2] = v2 + 0.2f;
-
-              jf = right_arm_ik_joint_;
-              jf->anchor1[0] = -0.4f;
-              jf->anchor1[1] = -v1 + 0.6f;
-              jf->anchor1[2] = -v2 + 0.2f;
-            } else {
-              // Not airborn.
-
-              // If we're looking to pick something up, wave our arms in front
-              // of us.
-              if (!knockout_ && pickup_ > 20) {
-                JointFixedEF* jf;
-                jf = left_arm_ik_joint_;
-                jf->anchor1[0] = 0.4f;
-                jf->anchor1[1] = 0.5f;
-                jf->anchor1[2] = 0.7f;
-
-                jf = right_arm_ik_joint_;
-                jf->anchor1[0] = -0.4f;
-                jf->anchor1[1] = 0.2f;
-                jf->anchor1[2] = 0.7f;
-
-                // Swipe across.
-                if (pickup_ < 30) {
-                  left_arm_ik_joint_->anchor1[0] = -0.1f;
-                  right_arm_ik_joint_->anchor1[0] = 0.1f;
+        if ((++s_limb_tick % 15) == 0) {
+          if (const auto* out = attachment_rig_->output()) {
+            for (int i = 0; i < static_cast<int>(out->limbs.size()) && i < 10;
+                 ++i) {
+              Vector3f rig_rel = out->limbs[i].relative.GetTranslate();
+              const float* now = limb_rel_hist_[limb_rel_hist_head_][i];
+              // Gap against the current pose, and the best gap against
+              // the last few steps (the rig's output is a step or two
+              // behind; this separates lag from real disagreement).
+              float gap_now = 0.0f;
+              float gap_best = 1e9f;
+              for (int lag = 0; lag < 4; ++lag) {
+                const float* p =
+                    limb_rel_hist_[(limb_rel_hist_head_ + 4 - lag) % 4][i];
+                float dx = rig_rel.x - p[0];
+                float dy = rig_rel.y - p[1];
+                float dz = rig_rel.z - p[2];
+                float g = std::sqrt(dx * dx + dy * dy + dz * dz);
+                if (lag == 0) {
+                  gap_now = g;
                 }
-
-                left_arm_ik_joint_->linearStiffness = 6.0f;
-                left_arm_ik_joint_->linearDamping = 0.1f;
-                right_arm_ik_joint_->linearStiffness = 6.0f;
-                right_arm_ik_joint_->linearDamping = 0.1f;
-              } else {
-                // Cursed - wave arms.
-                if (!knockout_ && curse_death_time_ != 0) {
-                  left_arm_ik_joint_->linearStiffness = 30.0f;
-                  left_arm_ik_joint_->linearDamping = 0.08f;
-
-                  right_arm_ik_joint_->linearStiffness = 30.0f;
-                  right_arm_ik_joint_->linearDamping = 0.08f;
-
-                  float v1 =
-                      sinf(static_cast<float>(scenetime) * 0.05f) * 0.12f;
-                  float v2 =
-                      cosf(static_cast<float>(scenetime) * 0.04f) * 0.12f;
-
-                  JointFixedEF* jf;
-                  jf = left_arm_ik_joint_;
-                  jf->anchor1[0] = 0.4f + v2;
-                  jf->anchor1[1] = 0.4f;
-                  jf->anchor1[2] = 0.3f + v1;
-
-                  jf = right_arm_ik_joint_;
-                  jf->anchor1[0] = -0.4f - v2;
-                  jf->anchor1[1] = 0.4f;
-                  jf->anchor1[2] = 0.3f + v1;
-                } else if (!knockout_
-                           && (scenetime < celebrate_until_time_left_
-                               || scenetime < celebrate_until_time_right_)) {
-                  // Celebrating - hold arms in air.
-                  float v1 = sinf(static_cast<float>(scenetime) * 0.04f) * 0.1f;
-                  float v2 = cosf(static_cast<float>(scenetime) * 0.03f) * 0.1f;
-                  JointFixedEF* jf;
-                  if (scenetime < celebrate_until_time_left_) {
-                    left_arm_ik_joint_->linearStiffness = 30.0f;
-                    left_arm_ik_joint_->linearDamping = 0.08f;
-
-                    jf = left_arm_ik_joint_;
-                    jf->anchor1[0] = 0.4f + v2;
-                    jf->anchor1[1] = 0.5f;
-                    jf->anchor1[2] = 0.2f + v1;
-                  }
-                  if (scenetime < celebrate_until_time_right_) {
-                    right_arm_ik_joint_->linearStiffness = 30.0f;
-                    right_arm_ik_joint_->linearDamping = 0.08f;
-
-                    jf = right_arm_ik_joint_;
-                    jf->anchor1[0] = -0.4f - v2;
-                    jf->anchor1[1] = 0.5f;
-                    jf->anchor1[2] = 0.2f + v1;
-                  }
-                } else if (!knockout_ && !hold_position_pressed_
-                           && (ud_ || lr_)) {
-                  // Sway arms gently when walking, and vigorously
-                  // when running.
-                  float blend = run_gas_ * run_gas_;
-                  float inv_blend = 1.0f - run_gas_;
-                  float wave_amt = roll_amt_;
-
-                  left_arm_ik_joint_->linearStiffness =
-                      14.0f * blend + 0.5f * inv_blend;
-                  left_arm_ik_joint_->linearDamping =
-                      0.08f * blend + 0.001f * inv_blend;
-
-                  right_arm_ik_joint_->linearStiffness =
-                      14.0f * blend + 0.5f * inv_blend;
-                  right_arm_ik_joint_->linearDamping =
-                      0.08f * blend + 0.001f * inv_blend;
-
-                  float v1run = sinf(wave_amt + 3.1415f * 0.5f) * 0.2f;
-                  float v2run = cosf(wave_amt) * 0.3f;
-                  float v1 = sinf(wave_amt) * 0.05f;
-                  float v2 = cosf(wave_amt) * (female_ ? 0.3f : 0.6f);
-
-                  JointFixedEF* jf;
-                  jf = left_arm_ik_joint_;
-                  jf->anchor1[0] = 0.2f;
-                  jf->anchor1[1] =
-                      (-v1run - 0.15f) * blend + (-v1 - 0.1f) * inv_blend;
-                  jf->anchor1[2] =
-                      (-v2run + 0.15f) * blend + (-v2 + 0.1f) * inv_blend;
-
-                  jf = right_arm_ik_joint_;
-                  jf->anchor1[0] = -0.2f;
-                  jf->anchor1[1] =
-                      (v1run - 0.15f) * blend + (v1 - 0.1f) * inv_blend;
-                  jf->anchor1[2] =
-                      (v2run + 0.15f) * blend + (v2 + 0.1f) * inv_blend;
-                } else {
-                  // Hang freely.
-                  left_arm_ik_joint_->linearStiffness = 0.0f;
-                  left_arm_ik_joint_->linearDamping = 0.0f;
-                  right_arm_ik_joint_->linearStiffness = 0.0f;
-                  right_arm_ik_joint_->linearDamping = 0.0f;
-                }
+                gap_best = std::min(gap_best, g);
               }
+              printf(
+                  "LIMBTRACE %d %d sim %.3f %.3f %.3f rig %.3f %.3f %.3f"
+                  " gap %.3f lagged %.3f\n",
+                  static_cast<int>(scene()->time()), i, now[0], now[1], now[2],
+                  rig_rel.x, rig_rel.y, rig_rel.z, gap_now, gap_best);
+              // World space too (loose debris has no meaningful
+              // anchor-relative pose).
+              const dReal* wp = dBodyGetPosition(sim_bodies[i]->body());
+              Vector3f rig_world = out->limbs[i].world.GetTranslate();
+              printf("LIMBWORLD %d %d sim %.3f %.3f %.3f rig %.3f %.3f %.3f\n",
+                     static_cast<int>(scene()->time()), i,
+                     static_cast<float>(wp[0]), static_cast<float>(wp[1]),
+                     static_cast<float>(wp[2]), rig_world.x, rig_world.y,
+                     rig_world.z);
             }
           }
         }
       }
-
-      if (holding_something_) {
-        // look up to keep out of the way of our arms
-        dQFromAxisAndAngle(neck_joint_->qrel, 1, 0, 0, 0.5f);
-        head_back_ = true;
-      } else {
-        // if our head was back from holding something, whip it forward again..
-        if (head_back_) {
-          dQSetIdentity(neck_joint_->qrel);
-          head_back_ = false;
-        }
-
-        // if we're cursed, whip it about
-        if (curse_death_time_ != 0) {
-          if (scene()->stepnum() % 5 == 0 && RandomFloat() > 0.2f) {
-            head_turning = true;
-            dQFromAxisAndAngle(neck_joint_->qrel, RandomFloat() * 0.05f,
-                               RandomFloat(), RandomFloat() * 0.08f,
-                               2.3f * (RandomFloat() - 0.5f));
-          }
-        } else {
-          int64_t gti = scene()->stepnum();
-
-          // if we're moving or hurt, keep our head straight
-          if ((!hold_position_pressed_ && (ud_ || lr_)) || knockout_
-              || frozen_) {
-            dQSetIdentity(neck_joint_->qrel);
-
-            // rotate it slightly in the direction we're turning
-            dQFromAxisAndAngle(
-                neck_joint_->qrel, 0, 1, 0,
-                std::max(-1.0f,
-                         std::min(1.0f, a_vel_y_smoothed_more_ * -0.14f)));
-            // dQFromAxisAndAngle(neck_joint_->qrel,
-            //                    0,1,0,
-            //                    std::max(-0.5f,std::min(0.5f,a_vel_y_smoothed_more_*-0.07f)));
-          } else if (gti % 30 == 0
-                     && Utils::precalc_rand_1((gti + stream_id() * 3 + 143)
-                                              % kPrecalcRandsCount)
-                            > 0.9f) {
-            // otherwise, look around occasionally..
-            // else if (getScene()->stepnum()%30 == 0 and
-            // RandomFloat() > 0.8f) { else if (gti%30 == 0 and
-            // g_utils->precalc_rands_1[(gti+stream_id_*3+143)%kPrecalcRandsCount]
-            // > 0.8f) {
-
-            head_turning = true;
-            dQFromAxisAndAngle(
-                neck_joint_->qrel,
-                Utils::precalc_rand_1((stream_id() + gti)
-                                      % (kPrecalcRandsCount - 3))
-                    * 0.05f,
-                Utils::precalc_rand_2((stream_id() + 42 * gti)
-                                      % kPrecalcRandsCount),
-                Utils::precalc_rand_3((stream_id() + 3 * gti)
-                                      % (kPrecalcRandsCount - 1))
-                    * 0.05f,
-                1.5f
-                    * (Utils::precalc_rand_2((stream_id() + gti)
-                                             % kPrecalcRandsCount)
-                       - 0.5f));
-            // dQFromAxisAndAngle(neck_joint_->qrel,
-            //                    RandomFloat()*0.05f,
-            //                    RandomFloat(),
-            //                    RandomFloat()*0.05f,
-            //                    1.5f*(RandomFloat()-0.5f));
-          }
-        }
-      }
     }
+  }
 
-    // if we're flying, keep us on a 2d plane
-    if (can_fly_ && !dead_) {
-      // lets just force our few main bodies on to the plane we want
+  // if we're flying, keep us on a 2d plane
+  if (!shattered_ && can_fly_ && !dead_) {
+    // lets just force our few main bodies on to the plane we want
 
-      dBodyID b;
-      const dReal *p, *v;
+    dBodyID b;
+    const dReal *p, *v;
 
-      b = body_torso_->body();
-      p = dBodyGetPosition(b);
-      dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
-      v = dBodyGetLinearVel(b);
-      dBodySetLinearVel(b, v[0], v[1], 0.0f);
+    b = body_torso_->body();
+    p = dBodyGetPosition(b);
+    dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
+    v = dBodyGetLinearVel(b);
+    dBodySetLinearVel(b, v[0], v[1], 0.0f);
 
-      b = body_pelvis_->body();
-      p = dBodyGetPosition(b);
-      dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
-      v = dBodyGetLinearVel(b);
-      dBodySetLinearVel(b, v[0], v[1], 0.0f);
+    b = body_pelvis_->body();
+    p = dBodyGetPosition(b);
+    dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
+    v = dBodyGetLinearVel(b);
+    dBodySetLinearVel(b, v[0], v[1], 0.0f);
 
-      b = body_head_->body();
-      p = dBodyGetPosition(b);
-      dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
-      v = dBodyGetLinearVel(b);
-      dBodySetLinearVel(b, v[0], v[1], 0.0f);
-    }
+    b = body_head_->body();
+    p = dBodyGetPosition(b);
+    dBodySetPosition(b, p[0], p[1], base::kHappyThoughtsZPlane);
+    v = dBodyGetLinearVel(b);
+    dBodySetLinearVel(b, v[0], v[1], 0.0f);
   }
 
   // flap wings every now and then
@@ -3210,7 +2794,12 @@ void SpazNode::Step() {
     knockout_--;
     if (knockout_ == 0) {
       dBodyEnable(body_head_->body());
+      wake_slide_ = tuning_->wake_slide_steps;
     }
+  } else if (wake_slide_ > 0) {
+    // Frictionless ball for a moment after getting up (see
+    // wake_slide_steps).
+    wake_slide_--;
   }
 
   // if we're wanting to throw something...
@@ -3324,7 +2913,7 @@ void SpazNode::Step() {
     float tilt_lr, tilt_ud;
     dBodySetPosition(b, p_torso2[0], p_bot[1] + 0.2f, p_torso2[2]);
 
-    float rotate_tilt = 0.4f;
+    float rotate_tilt = tuning_->lean_amount;
 
     if (hockey_) {
       const dReal* b_vel_3 = dBodyGetLinearVel(body_roller_->body());
@@ -3448,9 +3037,8 @@ void SpazNode::Step() {
 
     // Rotate our attach-point to give some sway while running.
     {
-      float angle =
-          sinf(roll_amt_ - 3.141592f)
-          * (run_gas_ * 0.09f + (1.0f - run_gas_) * (female_ ? 0.02f : 0.05f));
+      float angle = sinf(pose_.roll_amt() - 3.141592f)
+                    * (run_gas_ * 0.09f + (1.0f - run_gas_) * idle_sway_);
       dQFromAxisAndAngle(stand_joint_->qrel, 0, 1, 1, angle);
     }
 
@@ -3465,16 +3053,17 @@ void SpazNode::Step() {
       // Crank up our balance when we're holding something otherwise we get a
       // bit soupy.
       if (holding_something_) {
-        mult *= 0.9f;
+        mult *= tuning_->stand_balance_scale_holding;
       } else {
-        mult *= 0.6f;
+        mult *= tuning_->stand_balance_scale;
       }
 
       {
         stand_joint_->linearStiffness = 0.0f;
         stand_joint_->linearDamping = 0.0f;
-        stand_joint_->angularStiffness = 180.0f * mult;
-        stand_joint_->angularDamping = 3.0f * mult;
+        stand_joint_->angularStiffness =
+            tuning_->stand_angular_stiffness * mult;
+        stand_joint_->angularDamping = tuning_->stand_angular_damping * mult;
       }
 
       // Crank down angular forces at low speeds to keep from looking too stiff.
@@ -3494,16 +3083,23 @@ void SpazNode::Step() {
   // (so when we're laying on the ground its not propping our legs up in the
   // air)
   {
-    if (knockout_ || frozen_)
-      ball_size_ = 0.0f;
-    else
+    if (knockout_ || frozen_) {
+      if (main_sim_limbs_) {
+        ball_size_ = 0.0f;
+      } else {
+        // Leg surrogate (see down_ball_size): shrink to the down size,
+        // or keep growing toward it if we were caught mid-recovery.
+        ball_size_ = std::min(tuning_->down_ball_size, ball_size_ + 0.05f);
+      }
+    } else {
       ball_size_ = std::min(1.0f, ball_size_ + 0.05f);
+    }
 
     float sz = 0.1f + 0.9f * ball_size_;
     body_roller_->SetDimensions(
         0.3f * sz, 0, 0, 0.3f, 0,
         0,  // keep its mass the same as its full-size self though
-        0.1f);
+        tuning_->roller_density);
   }
 
   // Push our roller-ball down for jumps and retract it when we're hurt.
@@ -3511,15 +3107,27 @@ void SpazNode::Step() {
     // Retract it up as well so when it pops back up it doesnt start
     // underground.
     float offs = (1.0f - ball_size_) * 0.3f;
+    if (!main_sim_limbs_) {
+      // Leg surrogate: put the down-state ball's bottom
+      // down_ball_bottom_lift above the standing ball's bottom whatever
+      // its size (a smaller ball hangs lower), blending back to no
+      // offset as it regrows.
+      float offs_down = kBgLimbsDownBallOffset;
+      float t = std::clamp(
+          (1.0f - ball_size_) / (1.0f - tuning_->down_ball_size), 0.0f, 1.0f);
+      offs = t * offs_down;
+    }
     float ls_scale = 1.0f;
     float ld_scale = 1.0f;
     if (jump_ > 0 && !frozen_ && !knockout_) {
-      offs -= 0.3f;
-      ls_scale = 0.6f;
-      ld_scale = 0.2f;
+      offs -= tuning_->jump_push_distance;
+      ls_scale = tuning_->jump_roller_stiffness_scale;
+      ld_scale = tuning_->jump_roller_damping_scale;
     }
-    roller_ball_joint_->linearStiffness = kRollerBallLinearStiffness * ls_scale;
-    roller_ball_joint_->linearDamping = kRollerBallLinearDamping * ld_scale;
+    roller_ball_joint_->linearStiffness =
+        tuning_->roller_joint_stiffness * ls_scale;
+    roller_ball_joint_->linearDamping =
+        tuning_->roller_joint_damping * ld_scale;
     offs -= breath * 0.02f;
     roller_ball_joint_->anchor1[1] = base_pelvis_roller_anchor_offset_ + offs;
   }
@@ -3609,11 +3217,11 @@ void SpazNode::Step() {
             if (v[1] < 0.0f) {
               v[1] *= 2.0f;  // just scale our downward component up to bias the
                              // speed calc
-              walk_scale = 1.0f - v[1] * 0.1f;
+              walk_scale = 1.0f - v[1] * tuning_->downhill_boost;
             } else {
               // heading uphill - slow down
-              speed_scale = std::max(0.0f, 1.0f - v[1] * 0.2f);
-              walk_scale = std::max(0.0f, 1.0f - v[1] * 0.2f);
+              speed_scale = std::max(0.0f, 1.0f - v[1] * tuning_->uphill_slow);
+              walk_scale = std::max(0.0f, 1.0f - v[1] * tuning_->uphill_slow);
               v[1] = 0.0f;  // also don't count upward velocity towards our
                             // speed calc..
             }
@@ -3621,22 +3229,29 @@ void SpazNode::Step() {
 
           // our smoothed spead increases slowly and decreases fast
           float speed = dVector3Length(v) * speed_scale;
-          float speed_smoothing = (speed > speed_smoothed_) ? 0.985f : 0.94f;
+          float speed_smoothing = (speed > speed_smoothed_)
+                                      ? tuning_->speed_smoothing_up
+                                      : tuning_->speed_smoothing_down;
           speed_smoothed_ = speed_smoothing * speed_smoothed_
                             + (1.0f - speed_smoothing) * speed;
 
-          float gear_high = std::min(1.0f, speed_smoothed_ / 7.0f);
+          float gear_high =
+              std::min(1.0f, speed_smoothed_ / tuning_->gear_up_speed);
           float gear_low = 1.0f - gear_high;
 
           // as we 'shift up' in gears our max-force goes up and target velocity
           // goes down
-          float max_force = gear_low * 15.0f + gear_high * 15.0f;
-          float max_vel = walk_scale * 7.68f + gear_high * run_gas_ * 15.0f;
+          float max_force =
+              gear_low * tuning_->roller_motor_max_force_low_gear
+              + gear_high * tuning_->roller_motor_max_force_high_gear;
+          float max_vel = walk_scale * tuning_->walk_speed
+                          + gear_high * run_gas_ * tuning_->run_speed_add;
           dBodyEnable(body_roller_->body());
           dJointSetAMotorParam(a_motor_roller_, dParamFMax,
                                max_force * mult);  // change for 120hz
-          dJointSetAMotorParam(a_motor_roller_, dParamFMax2,
-                               500.0f * mult);  // 120hz change
+          dJointSetAMotorParam(
+              a_motor_roller_, dParamFMax2,
+              tuning_->roller_motor_max_force_vertical * mult);  // 120hz change
           dJointSetAMotorParam(a_motor_roller_, dParamFMax3,
                                max_force * mult);  // change for 120hz
           dJointSetAMotorParam(a_motor_roller_, dParamVel, -max_vel * ud_norm_);
@@ -3649,22 +3264,28 @@ void SpazNode::Step() {
   }
 
   // Set brake motor strength.
-  if (footing_ || frozen_ || dead_) {
+  // bg limbs: the ball is the leg surrogate while knocked out, so lock
+  // it to the torso like when frozen instead of letting the ragdoll
+  // roll around on it (down_ball_brakes).
+  bool down_brakes =
+      tuning_->down_ball_brakes && !main_sim_limbs_ && knockout_ > 0;
+  if (footing_ || frozen_ || dead_ || down_brakes) {
     float amt;
     // Full brakes if frozen. Otherwise crank up as our joystick magnitude goes
     // down.
-    if (frozen_ || dead_) {
+    if (frozen_ || dead_ || down_brakes) {
       amt = 1.0f;
     } else {
       dVector3 f = {lr_norm_, 0, ud_norm_};
       amt = std::min(1.0f, dVector3Length(f) * 5.0f);
       amt = 1.0f - (amt * amt * amt);
       amt *= (1.0f - run_gas_);
-      amt *= 0.4f;
+      amt *= tuning_->brake_idle_scale;
     }
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax, 10.0f * amt);
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax2, 10.0f * amt);
-    dJointSetAMotorParam(a_motor_brakes_, dParamFMax3, 10.0f * amt);
+    float brake_force = tuning_->brake_max_force * amt;
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax, brake_force);
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax2, brake_force);
+    dJointSetAMotorParam(a_motor_brakes_, dParamFMax3, brake_force);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel, 0.0f);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel2, 0.0f);
     dJointSetAMotorParam(a_motor_brakes_, dParamVel3, 0.0f);
@@ -3693,17 +3314,54 @@ void SpazNode::Step() {
     }
 
     if (body_punch_.exists()) {
-      // Move the punch body to the end of our punching arm.
-      dBodyID fist_body = punch_right_ ? lower_right_arm_body_->body()
-                                       : lower_left_arm_body_->body();
       dVector3 p;
-      dBodyGetRelPointPos(fist_body, 0, 0, 0.01f, p);
+      if (UseSyntheticPunch_() || !main_sim_limbs_) {
+        // The synthetic fist (no arm body involved).
+        const float* s = pose_.synthetic_fist();
+        p[0] = s[0];
+        p[1] = s[1];
+        p[2] = s[2];
+      } else {
+        // Classic: the end of our punching arm.
+        dBodyID fist_body = punch_right_ ? lower_right_arm_body_->body()
+                                         : lower_left_arm_body_->body();
+        dBodyGetRelPointPos(fist_body, 0, 0, 0.01f, p);
+      }
 
       // Move it down a tiny bit since we're often trying to punch dudes laying
       // on the ground.
       p[1] -= 0.1f;
 
       dGeomSetPosition(body_punch_->geom(), p[0], p[1], p[2]);
+
+      // Dev aid (BA_PUNCH_TRACE): dump the real fist and the synthetic
+      // one per step, torso space, for fitting the synthetic model.
+      static const bool s_trace = getenv("BA_PUNCH_TRACE") != nullptr;
+      if (s_trace && main_sim_limbs_) {
+        // "real" is always the classic arm-attached fist (the arm body
+        // still exists in the main sim), whichever form the punch
+        // region itself is using.
+        const float* s = pose_.synthetic_fist();
+        dVector3 arm_p, real_t, synth_t;
+        dBodyGetRelPointPos(punch_right_ ? lower_right_arm_body_->body()
+                                         : lower_left_arm_body_->body(),
+                            0, 0, 0.01f, arm_p);
+        dBodyGetPosRelPoint(body_torso_->body(), arm_p[0], arm_p[1], arm_p[2],
+                            real_t);
+        dBodyGetPosRelPoint(body_torso_->body(), s[0], s[1], s[2], synth_t);
+        std::vector<float> rv = GetPunchVelocity();
+        const float* sv = pose_.synthetic_fist_velocity();
+        const dReal* tav = dBodyGetAngularVel(body_torso_->body());
+        const float* st = pose_.synthetic_fist_target();
+        printf(
+            "PUNCHTRACE %d %d real %.4f %.4f %.4f synth %.4f %.4f %.4f"
+            " vel %.3f %.3f %.3f svel %.3f %.3f %.3f tav %.2f dir %.2f %.2f"
+            " stgt %.3f %.3f %.3f\n",
+            static_cast<int>(since_last_punch), punch_right_ ? 1 : 0, real_t[0],
+            real_t[1], real_t[2], synth_t[0], synth_t[1], synth_t[2], rv[0],
+            rv[1], rv[2], sv[0], sv[1], sv[2], tav[1], punch_dir_x_,
+            punch_dir_z_, st[0], st[1], st[2]);
+      }
     }
 
   } else {
@@ -3728,11 +3386,11 @@ void SpazNode::Step() {
       // If we're not still screaming, start one up.
       if (!(voice_play_id_ == fall_play_id_
             && g_base->audio->IsSoundPlaying(fall_play_id_))) {
-        if (SceneSound* sound = GetRandomMedia(fall_sounds_)) {
-          if (auto* source = g_base->audio->SourceBeginNew()) {
+        if (base::SoundAsset* sound = RandomFallSound_()) {
+          if (auto* source = scene()->NewAudioSource(sound)) {
             g_base->audio->PushSourceStopSoundCall(voice_play_id_);
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
-            voice_play_id_ = source->Play(sound->GetSoundData());
+            voice_play_id_ = source->Play(sound);
             fall_play_id_ = voice_play_id_;
             source->End();
           }
@@ -3913,7 +3571,7 @@ void SpazNode::Step() {
       e.count = 1;
       e.scale = 1.0f;
       e.spread = 1.0f;
-      g_base->bg_dynamics->Emit(e);
+      scene()->bg_dynamics_world()->Emit(e);
     }
   }
 #endif  // !BA_HEADLESS_BUILD
@@ -3944,25 +3602,26 @@ void SpazNode::Step() {
 }  // NOLINT (yeah i know, this is too long)
 
 #if !BA_HEADLESS_BUILD
-static void DrawShadow(const base::BGDynamicsShadow& shadow, float radius,
+static void DrawShadow(base::RenderView* view,
+                       const base::BGDynamicsShadow& shadow, float radius,
                        float density, const float* shadow_color) {
   float s_scale, s_density;
   shadow.GetValues(&s_scale, &s_density);
   float d = s_density * density;
-  g_base->graphics->DrawBlotch(shadow.GetPosition(), radius * s_scale * 4.0f,
-                               (0.08f + 0.04f * shadow_color[0]) * d,
-                               (0.07f + 0.04f * shadow_color[1]) * d,
-                               (0.065f + 0.04f * shadow_color[2]) * d,
-                               0.32f * d);
+  view->DrawBlotch(shadow.GetPosition(), radius * s_scale * 4.0f,
+                   (0.08f + 0.04f * shadow_color[0]) * d,
+                   (0.07f + 0.04f * shadow_color[1]) * d,
+                   (0.065f + 0.04f * shadow_color[2]) * d, 0.32f * d);
 }
-static void DrawBrightSpot(const base::BGDynamicsShadow& shadow, float radius,
+static void DrawBrightSpot(base::RenderView* view,
+                           const base::BGDynamicsShadow& shadow, float radius,
                            float density, const float* shadow_color) {
   float s_scale, s_density;
   shadow.GetValues(&s_scale, &s_density);
   float d = s_density * density * 0.3f;
-  g_base->graphics->DrawBlotch(shadow.GetPosition(), radius * s_scale * 4.0f,
-                               shadow_color[0] * d, shadow_color[1] * d,
-                               shadow_color[2] * d, 0.0f);
+  view->DrawBlotch(shadow.GetPosition(), radius * s_scale * 4.0f,
+                   shadow_color[0] * d, shadow_color[1] * d,
+                   shadow_color[2] * d, 0.0f);
 }
 #endif  // !BA_HEADLESS_BUILD
 
@@ -3973,11 +3632,9 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(base::LightShadowType::kObject);
-      oc->SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesEyeColor));
+      oc->SetTexture(g_scene_v1->assets().eye_color.get());
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesEyeColorTintMask));
+      oc->SetColorizeTexture(g_scene_v1->assets().eye_color_tint_mask.get());
       oc->SetReflection(base::ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -3994,48 +3651,48 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
       {
         auto xf = c->ScopedTransform();
         c->Translate(eye_offset_x_, eye_offset_y_, eye_offset_z_);
-        c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+        c->Rotate(kSpazRigEyeballPitch + eyes_ud_smooth_, 1, 0, 0);
         c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-        c->Scale(0.09f, 0.09f, 0.09f);
+        c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale,
+                 kSpazRigEyeMeshScale);
         if (death_scale != 1.0f) {
           c->Scale(death_scale, death_scale, death_scale);
         }
-        if (!frosty_ && !eyeless_) {
-          c->DrawMeshAsset(
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
+        // (+x is the character's right eye; his left is on the
+        // viewer's right when he faces the camera.)
+        if (eye_style_right_ != base::CharacterEyeStyle::kNone) {
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball.get());
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
           if (death_scale != 1.0f)
             c->Scale(death_scale, death_scale, death_scale);
-          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesEyeBallIris));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball_iris.get());
         }
       }
 
-      if (!pirate_ && !frosty_ && !eyeless_) {
+      if (eye_style_left_ != base::CharacterEyeStyle::kNone) {
         if (shading) {
           oc->SetReflectionScale(3, 3, 3);
         }
         {
           auto xf = c->ScopedTransform();
           c->Translate(-eye_offset_x_, eye_offset_y_, eye_offset_z_);
-          c->Rotate(-10 + eyes_ud_smooth_, 1, 0, 0);
+          c->Rotate(kSpazRigEyeballPitch + eyes_ud_smooth_, 1, 0, 0);
           c->Rotate(eyes_lr_smooth_, 0, 1, 0);
-          c->Scale(0.09f, 0.09f, 0.09f);
+          c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale,
+                   kSpazRigEyeMeshScale);
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
-          c->DrawMeshAsset(
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball.get());
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
-          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesEyeBallIris));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball_iris.get());
         }
       }
     }
@@ -4044,8 +3701,7 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(g_base->assets->BuiltinTexture(
-      base::BuiltinTextureID::kTexturesEyeColor));
+  c->SetTexture(g_scene_v1->assets().eye_color.get());
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -4066,7 +3722,16 @@ void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
 
 void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
                            float death_scale) {
-  if (!has_eyelids_ && blink_smooth_ < 0.1f) {
+  // A regular eye's lid always draws (resting angle + blinks); a
+  // lidless eye's appears only mid-blink; an absent eye's never.
+  bool blinking = blink_smooth_ >= 0.1f;
+  auto lid_draws = [blinking](base::CharacterEyeStyle style) {
+    return style == base::CharacterEyeStyle::kRegular
+           || (style == base::CharacterEyeStyle::kLidless && blinking);
+  };
+  bool draw_right = lid_draws(eye_style_right_);
+  bool draw_left = lid_draws(eye_style_left_);
+  if (!draw_right && !draw_left) {
     return;
   }
 
@@ -4085,19 +3750,18 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
     c->Rotate(eye_lid_angle_, 0, 0, 1);
     c->Rotate(a, 1, 0, 0);
-    c->Scale(0.09f, 0.09f, 0.09f);
+    c->Scale(kSpazRigEyeMeshScale, kSpazRigEyeMeshScale, kSpazRigEyeMeshScale);
 
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
 
-    if (!frosty_ && !eyeless_) {
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
+    if (draw_right) {
+      c->DrawMeshAsset(g_scene_v1->assets().eye_lid.get());
     }
   }
 
-  // Left eyelid.
+  // Left eyelid (the -x one; see the eyeball-draw side note).
   c->FlipCullFace();
   {
     auto xf = c->ScopedTransform();
@@ -4113,13 +3777,12 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
     c->Rotate(-eye_lid_angle_, 0, 0, 1);
     c->Rotate(a, 1, 0, 0);
-    c->Scale(-0.09f, 0.09f, 0.09f);
+    c->Scale(-kSpazRigEyeMeshScale, kSpazRigEyeMeshScale, kSpazRigEyeMeshScale);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (!pirate_ && !frosty_ && !eyeless_) {
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
+    if (draw_left) {
+      c->DrawMeshAsset(g_scene_v1->assets().eye_lid.get());
     }
   }
   c->FlipCullFace();  // back to normal
@@ -4130,14 +3793,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
                              float* add_color) {
   // Set up shading.
   if (shading) {
-    c->SetTexture(color_texture_.exists() ? color_texture_->texture_data()
-                                          : nullptr);
-    c->SetColorizeTexture(color_mask_texture_.exists()
-                              ? color_mask_texture_->texture_data()
-                              : nullptr);
-    c->SetColorizeColor(color_[0], color_[1], color_[2]);
-    assert(highlight_.size() == 3);
-    c->SetColorizeColor2(highlight_[0], highlight_[1], highlight_[2]);
+    c->SetTexture(ColorTextureData_());
+    c->SetColorizeTexture(ColorMaskTextureData_());
+    SetPieceTint_(c, BaseTint_());
     c->SetLightShadow(base::LightShadowType::kObject);
     c->SetAddColor(add_color[0], add_color[1], add_color[2]);
 
@@ -4168,6 +3826,131 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     }
   }
 
+  // Parts may bring their own textures (definition form; see
+  // PartDrawData_). Each part's mesh comes from here, switching the
+  // component's textures only when they actually change.
+  using Part = base::CharacterBodyPart;
+  base::TextureAsset* base_texture = ColorTextureData_();
+  base::TextureAsset* base_tint_texture = ColorMaskTextureData_();
+  base::TextureAsset* cur_texture = base_texture;
+  base::TextureAsset* cur_tint_texture = base_tint_texture;
+  const PieceTint_ base_tint = BaseTint_();
+  PieceTint_ cur_tint = base_tint;
+  auto use_look = [&](base::TextureAsset* texture,
+                      base::TextureAsset* tint_texture,
+                      const PieceTint_& tint) {
+    if (!shading) {
+      return;
+    }
+    if (texture != cur_texture || tint_texture != cur_tint_texture) {
+      c->SetTexture(texture);
+      c->SetColorizeTexture(tint_texture);
+      cur_texture = texture;
+      cur_tint_texture = tint_texture;
+    }
+    if (tint != cur_tint) {
+      SetPieceTint_(c, tint);
+      cur_tint = tint;
+    }
+  };
+  const PartDraw_ base_draw{nullptr, base_texture, base_tint_texture,
+                            base_tint};
+  auto use_base_look = [&] {
+    use_look(base_texture, base_tint_texture, base_tint);
+  };
+  bool left_side = false;
+  auto part_mesh = [&](Part part) -> base::MeshAsset* {
+    PartDraw_ draw = PartDrawData_(part, left_side, base_draw);
+    if (draw.mesh) {
+      use_look(draw.texture, draw.tint_texture, draw.tint);
+    }
+    return draw.mesh;
+  };
+
+  // Static attachments on a limb (definition form): extra meshes drawn
+  // in the limb's own frame -- so on the left they mirror with it --
+  // each with its own offset. No bodies, no sim.
+  const base::BasicSpazDef* limb_def = nullptr;
+  const base::BasicSpazMedia* limb_media = nullptr;
+  if (CharacterForm_() && spaz_def_->def().spaz_media_ready()) {
+    limb_def = &spaz_def_->def().spaz();
+    limb_media = &spaz_def_->def().spaz_media();
+  }
+  static_assert(
+      static_cast<int>(Part::kUpperArm)
+              == static_cast<int>(base::CharacterAttachTarget::kUpperArm)
+          && static_cast<int>(Part::kToes)
+                 == static_cast<int>(base::CharacterAttachTarget::kToes),
+      "Limb parts and their attach targets share indices.");
+  // Draws one target's static attachments in the current transform.
+  auto target_attachments = [&](int ti) {
+    const auto& defs = limb_def->attachments[ti];
+    const auto& medias = limb_media->attachments[ti];
+    for (size_t ai = 0; ai < defs.size() && ai < medias.size(); ++ai) {
+      const auto& segs = defs[ai].segments;
+      const auto& seg_medias = medias[ai].segments;
+      for (size_t si = 0; si < segs.size() && si < seg_medias.size(); ++si) {
+        base::MeshAsset* mesh = seg_medias[si].mesh.get();
+        if (!mesh) {
+          continue;
+        }
+        PieceTint_ tint = base_tint;
+        ApplyPieceTint_(segs[si].tint, &tint);
+        use_look(seg_medias[si].texture.exists() ? seg_medias[si].texture.get()
+                                                 : base_texture,
+                 seg_medias[si].tint_texture.exists()
+                     ? seg_medias[si].tint_texture.get()
+                     : base_tint_texture,
+                 tint);
+        auto xf = c->ScopedTransform();
+        if (segs[si].has_offset) {
+          c->MultMatrix(segs[si].offset.m);
+        }
+        c->DrawMeshAsset(mesh);
+      }
+    }
+  };
+  auto part_attachments = [&](Part part) {
+    if (!limb_def) {
+      return;
+    }
+    int ti = static_cast<int>(part);
+    if (left_side) {
+      // A left-side list, when given, replaces the both-sides one.
+      int left_ti = ti + base::kCharacterLimbAttachTargetCount;
+      if (limb_def->attachment_target_present[left_ti]) {
+        ti = left_ti;
+      }
+    }
+    target_attachments(ti);
+  };
+  // A wing (definition form): whatever is attached to the wing target,
+  // drawn in that wing's swinging frame. Sided exactly as limbs are:
+  // authored as the right wing and mirrored for the left, unless the
+  // left has a list of its own.
+  auto wing_attachments = [&](bool left) {
+    if (!limb_def || !wings_) {
+      return;
+    }
+    int ti = static_cast<int>(base::CharacterAttachTarget::kWing);
+    int left_ti = static_cast<int>(base::CharacterAttachTarget::kLeftWing);
+    if (left && limb_def->attachment_target_present[left_ti]) {
+      ti = left_ti;
+    }
+    if (limb_def->attachments[ti].empty()) {
+      return;
+    }
+    auto xf = c->ScopedTransform();
+    ApplyWingTransform_(c, left ? wing_pos_left_ : wing_pos_right_, false);
+    if (left) {
+      c->Scale(-1.0f, 1.0f, 1.0f);
+    }
+    if (death_scale != 1.0f) {
+      c->Scale(death_scale, death_scale, death_scale);
+    }
+    target_attachments(ti);
+  };
+
   // Head.
   {
     auto xf = c->ScopedTransform();
@@ -4175,21 +3958,22 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (head_mesh_.exists()) {
-      c->DrawMeshAsset(head_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kHead)) {
+      c->DrawMeshAsset(mesh);
     }
   }
+  // Hair and attachments below expect the character's own look.
+  use_base_look();
 
   // Hair tuft 1.
-  if (hair_front_right_body_.exists()) {
+  if (draw_hair_ && hair_front_right_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_front_right_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft1.get());
     }
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4204,8 +3988,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1b));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft1b.get());
     }
   }
 
@@ -4215,21 +3998,19 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       auto xf = c->ScopedTransform();
       hair_front_left_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft2));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft2.get());
     }
   }
 
   // Hair tuft 3.
-  if (hair_ponytail_top_body_.exists()) {
+  if (draw_hair_ && hair_ponytail_top_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_ponytail_top_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft3));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft3.get());
     }
   }
 
@@ -4241,10 +4022,13 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft4));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft4.get());
     }
   }
+
+  // Definition attachments (bg-simulated, drawn relative to their
+  // target bodies).
+  DrawAttachments_(c, shading, death_scale);
 
   // Torso.
   {
@@ -4253,8 +4037,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (torso_mesh_.exists()) {
-      c->DrawMeshAsset(torso_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kTorso)) {
+      c->DrawMeshAsset(mesh);
     }
   }
 
@@ -4265,269 +4049,285 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (pelvis_mesh_.exists()) {
-      c->DrawMeshAsset(pelvis_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kPelvis)) {
+      c->DrawMeshAsset(mesh);
     }
   }
 
-  // Get the distance between the shoulder joint socket and the fore-arm
-  // socket.. we'll use this to stretch our upper-arm to fill the gap.
-  float right_stretch = 1.0f;
+  // Limb transforms, whichever backend simulates them.
+  Matrix44f limb_m[kLimbCount];
+  bool limb_ok[kLimbCount];
+  for (int i = 0; i < kLimbCount; ++i) {
+    limb_ok[i] = LimbRenderMatrix_(i, &limb_m[i]);
+  }
+  // The two segments of each arm and leg stretch to keep meeting at
+  // their elbow or knee (see CalcLimbStretch), unless a shatter broke
+  // that joint: then neither side reaches for the other.
+  Matrix44f stretch_m[kLimbRightToes];
+  bool stretch_on[kLimbRightToes] = {};
+  auto stretch_pair = [&](int upper, const float* far_on_upper,
+                          const float* joint_on_upper,
+                          const float* joint_on_lower,
+                          const float* far_on_lower, uint32_t broken) {
+    int lower = upper + 1;
+    if (!limb_ok[upper] || !limb_ok[lower]
+        || (shattered_ && (shatter_damage_ & broken))) {
+      return;
+    }
+    CalcLimbStretch(limb_m[upper], limb_m[lower], far_on_upper, joint_on_upper,
+                    joint_on_lower, &stretch_m[upper]);
+    CalcLimbStretch(limb_m[lower], limb_m[upper], far_on_lower, joint_on_lower,
+                    joint_on_upper, &stretch_m[lower]);
+    stretch_on[upper] = stretch_on[lower] = true;
+  };
+  stretch_pair(kLimbUpperRightArm, kSpazRigShoulderOnUpperArm,
+               kSpazRigElbowOnUpperArm, kSpazRigElbowOnLowerArm,
+               kWristOnLowerArm, kLowerRightArmJointBroken);
+  stretch_pair(kLimbUpperLeftArm, kShoulderOnUpperLeftArm,
+               kSpazRigElbowOnUpperArm, kSpazRigElbowOnLowerArm,
+               kWristOnLowerArm, kLowerLeftArmJointBroken);
+  stretch_pair(kLimbUpperRightLeg, kSpazRigHipOnUpperLeg,
+               kSpazRigKneeOnUpperLeg, kSpazRigKneeOnLowerLeg, kHeelOnLowerLeg,
+               kLowerRightLegJointBroken);
+  stretch_pair(kLimbUpperLeftLeg, kSpazRigHipOnUpperLeg, kSpazRigKneeOnUpperLeg,
+               kSpazRigKneeOnLowerLeg, kHeelOnLowerLeg,
+               kLowerLeftLegJointBroken);
+
+  // If we've got flippers instead of arms, shorten them if we've got gloves
+  // on so they don't intersect as badly.
+  const float arm_squash = (flippers_ && have_boxing_gloves_) ? 0.5f : 1.0f;
 
   // Right upper arm.
-
-  {
+  if (limb_ok[kLimbUpperRightArm]) {
     auto xf = c->ScopedTransform();
-
-    upper_right_arm_body_->ApplyToRenderComponent(c);
-
-    if (!shattered_) {
-      dVector3 p_shoulder;
-      dBodyGetRelPointPos(body_torso_->body(),
-                          upper_right_arm_joint_->anchor1[0],
-                          upper_right_arm_joint_->anchor1[1],
-                          upper_right_arm_joint_->anchor1[2], p_shoulder);
-      dVector3 p_forearm;
-      dBodyGetRelPointPos(lower_right_arm_body_->body(),
-                          lower_right_arm_joint_->anchor2[0],
-                          upper_right_arm_joint_->anchor2[1],
-                          upper_right_arm_joint_->anchor2[2], p_forearm);
-      right_stretch = std::min(
-          1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
+    c->MultMatrix(limb_m[kLimbUpperRightArm].m);
+    if (stretch_on[kLimbUpperRightArm]) {
+      c->MultMatrix(stretch_m[kLimbUpperRightArm].m);
     }
-
-    // If we've got flippers instead of arms, shorten them if we've got gloves
-    // on so they don't intersect as badly.
-    if (flippers_ && have_boxing_gloves_) {
-      right_stretch *= 0.5f;
+    if (arm_squash != 1.0f) {
+      c->Scale(1.0f, 1.0f, arm_squash);
     }
-
-    c->Scale(1.0f, 1.0f, right_stretch);
-
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_arm_mesh_.exists()) {
-      c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kUpperArm)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperArm);
   }
 
   // Right lower arm.
-  {
+  if (limb_ok[kLimbLowerRightArm]) {
     auto xf = c->ScopedTransform();
 
-    lower_right_arm_body_->ApplyToRenderComponent(c);
+    c->MultMatrix(limb_m[kLimbLowerRightArm].m);
     {
       auto xf = c->ScopedTransform();
-      c->Translate(0, 0, 0.1f);
-      c->Scale(1.0f, 1.0f, right_stretch);
-      c->Translate(0.0f, 0.0f, -0.1f);
+      if (stretch_on[kLimbLowerRightArm]) {
+        c->MultMatrix(stretch_m[kLimbLowerRightArm].m);
+      }
+      if (arm_squash != 1.0f) {
+        c->Translate(0, 0, kSpazRigForearmStretchPivot);
+        c->Scale(1.0f, 1.0f, arm_squash);
+        c->Translate(0.0f, 0.0f, -kSpazRigForearmStretchPivot);
+      }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (forearm_mesh_.exists() && !flippers_) {
-        c->DrawMeshAsset(forearm_mesh_->mesh_data());
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kForearm)) {
+        c->DrawMeshAsset(mesh);
+      }
+      if (!hide_lower_arms_) {
+        part_attachments(Part::kForearm);
       }
     }
     if (!have_boxing_gloves_) {
-      c->Translate(0, 0, 0.04f);
+      c->Translate(0, 0, kSpazRigHandOffset);
       if (holding_something_) {
         c->Rotate(-50, 0, 1, 0);
       } else {
-        c->Rotate(10, 0, 1, 0);
+        c->Rotate(kSpazRigHandTurn, 0, 1, 0);
       }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (hand_mesh_.exists() && !flippers_) {
-        c->DrawMeshAsset(hand_mesh_->mesh_data());
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kHand)) {
+        c->DrawMeshAsset(mesh);
+      }
+      if (!hide_lower_arms_) {
+        part_attachments(Part::kHand);
       }
     }
   }
 
   // Right upper leg.
-  {
+  if (limb_ok[kLimbUpperRightLeg]) {
     auto xf = c->ScopedTransform();
-    upper_right_leg_body_->ApplyToRenderComponent(c);
-
-    // Apply stretching if still intact.
-    if (!shattered_) {
-      dVector3 p_pelvis;
-      dBodyGetRelPointPos(body_pelvis_->body(),
-                          upper_right_leg_joint_->anchor1[0],
-                          upper_right_leg_joint_->anchor1[1],
-                          upper_right_leg_joint_->anchor1[2], p_pelvis);
-      dVector3 p_lower_leg;
-      dBodyGetRelPointPos(lower_right_leg_body_->body(),
-                          lower_right_leg_joint_->anchor2[0],
-                          upper_right_leg_joint_->anchor2[1],
-                          upper_right_leg_joint_->anchor2[2], p_lower_leg);
-      float stretch = std::min(
-          1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
-      c->Scale(1.0f, 1.0f, stretch);
+    c->MultMatrix(limb_m[kLimbUpperRightLeg].m);
+    if (stretch_on[kLimbUpperRightLeg]) {
+      c->MultMatrix(stretch_m[kLimbUpperRightLeg].m);
     }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_leg_mesh_.exists()) {
-      c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kUpperLeg)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperLeg);
   }
 
   // Right lower leg.
-  {
+  if (limb_ok[kLimbLowerRightLeg]) {
     auto xf = c->ScopedTransform();
-    lower_right_leg_body_->ApplyToRenderComponent(c);
+    c->MultMatrix(limb_m[kLimbLowerRightLeg].m);
+    if (stretch_on[kLimbLowerRightLeg]) {
+      c->MultMatrix(stretch_m[kLimbLowerRightLeg].m);
+    }
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (lower_leg_mesh_.exists()) {
-      c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kLowerLeg)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kLowerLeg);
   }
 
-  {
+  if (limb_ok[kLimbRightToes]) {
     auto xf = c->ScopedTransform();
-    right_toes_body_->ApplyToRenderComponent(c);
+    c->MultMatrix(limb_m[kLimbRightToes].m);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (toes_mesh_.exists()) {
-      c->DrawMeshAsset(toes_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kToes)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kToes);
   }
 
+  // Right wing.
+  wing_attachments(false);
+
   // OK NOW LEFT SIDE LIMBS:
+  left_side = true;
   c->FlipCullFace();
 
-  float left_stretch = 1.0f;
+  // Left wing (mirrored, so with the left limbs).
+  wing_attachments(true);
 
-  // Left upper arm.
-  {
+  // Left upper arm. (The left side's stretch is worked out on its
+  // bodies as they are, so it goes on before the mirroring.)
+  if (limb_ok[kLimbUpperLeftArm]) {
     auto xf = c->ScopedTransform();
-
-    upper_left_arm_body_->ApplyToRenderComponent(c);
-
-    // Stretch if not shattered.
-    if (!shattered_) {
-      dVector3 p_shoulder;
-      dBodyGetRelPointPos(body_torso_->body(),
-                          upper_left_arm_joint_->anchor1[0],
-                          upper_left_arm_joint_->anchor1[1],
-                          upper_left_arm_joint_->anchor1[2], p_shoulder);
-      dVector3 p_forearm;
-      dBodyGetRelPointPos(lower_left_arm_body_->body(),
-                          lower_left_arm_joint_->anchor2[0],
-                          upper_left_arm_joint_->anchor2[1],
-                          upper_left_arm_joint_->anchor2[2], p_forearm);
-      left_stretch = std::min(
-          1.6f, (Vector3f(p_shoulder) - Vector3f(p_forearm)).Length() / 0.192f);
+    c->MultMatrix(limb_m[kLimbUpperLeftArm].m);
+    if (stretch_on[kLimbUpperLeftArm]) {
+      c->MultMatrix(stretch_m[kLimbUpperLeftArm].m);
     }
-
-    // If we've got flippers instead of arms, shorten them if we've got gloves
-    // on so they don't intersect as badly.
-    if (flippers_ && have_boxing_gloves_) {
-      left_stretch *= 0.5f;
-    }
-    c->Scale(-1, 1, left_stretch);
+    c->Scale(-1, 1, arm_squash);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_arm_mesh_.exists()) {
-      c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kUpperArm)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperArm);
   }
 
   // Left lower arm.
-  {
+  if (limb_ok[kLimbLowerLeftArm]) {
     auto xf = c->ScopedTransform();
 
-    lower_left_arm_body_->ApplyToRenderComponent(c);
-    c->Scale(-1, 1, 1);
+    c->MultMatrix(limb_m[kLimbLowerLeftArm].m);
     {
       auto x = c->ScopedTransform();
-      c->Translate(0, 0, 0.1f);
-      c->Scale(1, 1, left_stretch);
-      c->Translate(0, 0, -0.1f);
+      if (stretch_on[kLimbLowerLeftArm]) {
+        c->MultMatrix(stretch_m[kLimbLowerLeftArm].m);
+      }
+      c->Scale(-1, 1, 1);
+      if (arm_squash != 1.0f) {
+        c->Translate(0, 0, kSpazRigForearmStretchPivot);
+        c->Scale(1, 1, arm_squash);
+        c->Translate(0, 0, -kSpazRigForearmStretchPivot);
+      }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (forearm_mesh_.exists() && !flippers_) {
-        c->DrawMeshAsset(forearm_mesh_->mesh_data());
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kForearm)) {
+        c->DrawMeshAsset(mesh);
+      }
+      if (!hide_lower_arms_) {
+        part_attachments(Part::kForearm);
       }
     }
     if (!have_boxing_gloves_) {
-      c->Translate(0, 0, 0.04f);
+      c->Scale(-1, 1, 1);
+      c->Translate(0, 0, kSpazRigHandOffset);
       if (holding_something_) {
         c->Rotate(-50, 0, 1, 0);
       } else {
-        c->Rotate(10, 0, 1, 0);
+        c->Rotate(kSpazRigHandTurn, 0, 1, 0);
       }
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      if (hand_mesh_.exists() && !flippers_) {
-        c->DrawMeshAsset(hand_mesh_->mesh_data());
+      if (auto* mesh = hide_lower_arms_ ? nullptr : part_mesh(Part::kHand)) {
+        c->DrawMeshAsset(mesh);
+      }
+      if (!hide_lower_arms_) {
+        part_attachments(Part::kHand);
       }
     }
   }
 
   // Left upper leg.
-  {
+  if (limb_ok[kLimbUpperLeftLeg]) {
     auto xf = c->ScopedTransform();
-
-    upper_left_leg_body_->ApplyToRenderComponent(c);
-
-    // Stretch if not shattered.
-    if (!shattered_) {
-      dVector3 p_pelvis;
-      dBodyGetRelPointPos(body_pelvis_->body(),
-                          upper_left_leg_joint_->anchor1[0],
-                          upper_left_leg_joint_->anchor1[1],
-                          upper_left_leg_joint_->anchor1[2], p_pelvis);
-      dVector3 p_lower_leg;
-      dBodyGetRelPointPos(lower_left_leg_body_->body(),
-                          lower_left_leg_joint_->anchor2[0],
-                          upper_left_leg_joint_->anchor2[1],
-                          upper_left_leg_joint_->anchor2[2], p_lower_leg);
-      float stretch = std::min(
-          1.6f, (Vector3f(p_pelvis) - Vector3f(p_lower_leg)).Length() / 0.20f);
-      c->Scale(-1.0f, 1.0f, stretch);
+    c->MultMatrix(limb_m[kLimbUpperLeftLeg].m);
+    if (stretch_on[kLimbUpperLeftLeg]) {
+      c->MultMatrix(stretch_m[kLimbUpperLeftLeg].m);
     }
-    if (death_scale != 1.0f)
-      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (upper_leg_mesh_.exists())
-      c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
-  }
-
-  // Lower leg.
-  {
-    auto xf = c->ScopedTransform();
-    lower_left_leg_body_->ApplyToRenderComponent(c);
     c->Scale(-1.0f, 1.0f, 1.0f);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (lower_leg_mesh_.exists()) {
-      c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kUpperLeg)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kUpperLeg);
+  }
+
+  // Lower leg.
+  if (limb_ok[kLimbLowerLeftLeg]) {
+    auto xf = c->ScopedTransform();
+    c->MultMatrix(limb_m[kLimbLowerLeftLeg].m);
+    if (stretch_on[kLimbLowerLeftLeg]) {
+      c->MultMatrix(stretch_m[kLimbLowerLeftLeg].m);
+    }
+    c->Scale(-1.0f, 1.0f, 1.0f);
+    if (death_scale != 1.0f)
+      c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
+    if (auto* mesh = part_mesh(Part::kLowerLeg)) {
+      c->DrawMeshAsset(mesh);
+    }
+    part_attachments(Part::kLowerLeg);
   }
 
   // Toes.
-  {
+  if (limb_ok[kLimbLeftToes]) {
     auto xf = c->ScopedTransform();
 
-    left_toes_body_->ApplyToRenderComponent(c);
+    c->MultMatrix(limb_m[kLimbLeftToes].m);
     c->Scale(-1, 1, 1);
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (toes_mesh_.exists()) {
-      c->DrawMeshAsset(toes_mesh_->mesh_data());
+    if (auto* mesh = part_mesh(Part::kToes)) {
+      c->DrawMeshAsset(mesh);
     }
+    part_attachments(Part::kToes);
   }
 
   // RESTORE CULL
   c->FlipCullFace();
+  use_base_look();
 }
 
 static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
@@ -4547,56 +4347,312 @@ static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
   c->DrawMesh(m);
 }
 
-void SpazNode::Draw(base::FrameDef* frame_def) {
-#if !BA_HEADLESS_BUILD
+// Whether debug-draw mode includes the stand body (the large sphere a
+// standing spaz balances on). Off by default since it hides most of the
+// legs; flip on when debugging stand/balance behavior.
+const bool kDebugDrawStandBody = false;
+// The bg-dynamics twin anchor body (cyan) sits on top of the real head
+// and mostly just z-fights with it; its offset is the bg staleness, so
+// flip this on when that's what you want to see.
+const bool kDebugDrawBGAttachmentAnchor = false;
+// Roller-ball debug alpha; below 1 it draws lit-translucent so the limb
+// bodies inside stay visible.
+const float kDebugDrawRollerAlpha = 0.5f;
 
-  if (graphics_quality_ != frame_def->quality()) {
-    graphics_quality_ = frame_def->quality();
-    UpdateForGraphicsQuality(graphics_quality_);
+void SpazNode::DrawAttachments_(base::ObjectComponent* c, bool shading,
+                                float death_scale) {
+  const base::BasicSpazMedia* media = nullptr;
+  if (spaz_def_.exists() && spaz_def_->def().spaz_media_ready()) {
+    media = &spaz_def_->def().spaz_media();
+  }
+  bool textures_overridden = false;
+  const PieceTint_ base_tint = BaseTint_();
+  PieceTint_ cur_tint = base_tint;
+  const base::BGDynamicsCharacterRig::Output* out =
+      attachment_rig_ ? attachment_rig_->output() : nullptr;
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
+    auto& target = attachment_targets_[ti];
+    if (target.defs.empty()) {
+      continue;
+    }
+    RigidBody* body =
+        AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
+    if (!body) {
+      continue;
+    }
+    // Dynamic segments index the rig output flat, in definition order,
+    // starting where this target's run begins.
+    int flat = target.body_start;
+    for (size_t ai = 0; ai < target.defs.size(); ++ai) {
+      const auto& adef = target.defs[ai];
+      bool is_static = adef.type == base::CharacterAttachmentType::kStatic;
+      for (size_t si = 0; si < adef.segments.size(); ++si) {
+        int body_index = flat;
+        if (!is_static) {
+          flat++;
+        }
+        const auto& sdef = adef.segments[si];
+        // Definition art, drawn only once the media is local.
+        if (!media || ai >= media->attachments[ti].size()
+            || si >= media->attachments[ti][ai].segments.size()) {
+          continue;
+        }
+        const auto& smedia = media->attachments[ti][ai].segments[si];
+        base::MeshAsset* mesh = smedia.mesh.get();
+        base::TextureAsset* tex = smedia.texture.get();
+        base::TextureAsset* tint = smedia.tint_texture.get();
+        if (!mesh) {
+          continue;
+        }
+        if (!is_static
+            && (!out || body_index >= static_cast<int>(out->bodies.size()))) {
+          continue;
+        }
+        if (shading) {
+          // Per-segment tint colors; absent = the character's own.
+          PieceTint_ seg_tint = base_tint;
+          ApplyPieceTint_(sdef.tint, &seg_tint);
+          if (seg_tint != cur_tint) {
+            SetPieceTint_(c, seg_tint);
+            cur_tint = seg_tint;
+          }
+          // Per-segment texture overrides; absent = the character's
+          // own color/colorize maps, which are already bound.
+          if (tex || tint) {
+            c->SetTexture(tex ? tex : ColorTextureData_());
+            c->SetColorizeTexture(tint ? tint : ColorMaskTextureData_());
+            textures_overridden = true;
+          } else if (textures_overridden) {
+            c->SetTexture(ColorTextureData_());
+            c->SetColorizeTexture(ColorMaskTextureData_());
+            textures_overridden = false;
+          }
+        }
+        auto xf = c->ScopedTransform();
+        body->ApplyToRenderComponent(c);
+        if (!is_static) {
+          c->MultMatrix(out->bodies[body_index].relative.m);
+        }
+        if (sdef.has_offset) {
+          c->MultMatrix(sdef.offset.m);
+        }
+        if (death_scale != 1.0f) {
+          c->Scale(death_scale, death_scale, death_scale);
+        }
+        c->DrawMeshAsset(mesh);
+      }
+    }
+  }
+  if (shading && textures_overridden) {
+    // Body parts draw after us and expect the defaults.
+    c->SetTexture(ColorTextureData_());
+    c->SetColorizeTexture(ColorMaskTextureData_());
+  }
+  if (shading && cur_tint != base_tint) {
+    SetPieceTint_(c, base_tint);
+  }
+}
+
+void SpazNode::DrawDebugBodies_(base::FrameDef* frame_def) {
+  // Debug-draw mode: our rigid bodies as flat facing-ratio shapes (object
+  // lighting, no shadows) in place of the display meshes. Colors group the
+  // bodies by role so the skeleton reads at a glance.
+  auto* pass = frame_def->beauty_pass();
+  struct Entry {
+    RigidBody* body;
+    float r, g, b;
+    float a{1.0f};
+  };
+  const float ar = 0.8f, ag = 0.8f, ab = 1.0f;
+  const float lr = 0.8f, lg = 1.0f, lb = 0.8f;
+  // Main-sim limbs draw as bodies below; bg limbs draw from the rig
+  // output further down, in the same role colors pulled toward blue
+  // (BGDynamicsDebugTint) like everything else bg-simulated.
+  const bool bg_limbs = UseBgLimbs_();
+  const Entry entries[] = {
+      // Core.
+      {body_head_.get(), 1.0f, 1.0f, 1.0f},
+      {body_torso_.get(), 1.0f, 1.0f, 1.0f},
+      {body_pelvis_.get(), 1.0f, 1.0f, 1.0f},
+      // Limbs.
+      {bg_limbs ? nullptr : upper_right_arm_body_.get(), ar, ag, ab},
+      {bg_limbs ? nullptr : lower_right_arm_body_.get(), ar, ag, ab},
+      {bg_limbs ? nullptr : upper_left_arm_body_.get(), ar, ag, ab},
+      {bg_limbs ? nullptr : lower_left_arm_body_.get(), ar, ag, ab},
+      {bg_limbs ? nullptr : upper_right_leg_body_.get(), lr, lg, lb},
+      {bg_limbs ? nullptr : lower_right_leg_body_.get(), lr, lg, lb},
+      {bg_limbs ? nullptr : upper_left_leg_body_.get(), lr, lg, lb},
+      {bg_limbs ? nullptr : lower_left_leg_body_.get(), lr, lg, lb},
+      {bg_limbs ? nullptr : left_toes_body_.get(), lr, lg, lb},
+      {bg_limbs ? nullptr : right_toes_body_.get(), lr, lg, lb},
+      // Locomotion / interaction volumes.
+      // Translucent so the limb bodies it encloses stay visible (grey,
+      // not blue: blue is the bg-simulated tint).
+      {body_roller_.get(), 0.85f, 0.85f, 0.85f, kDebugDrawRollerAlpha},
+      {kDebugDrawStandBody ? stand_body_.get() : nullptr, 0.5f, 1.0f, 0.5f},
+      {body_punch_.get(), 1.0f, 1.0f, 0.3f},
+      {body_pickup_.get(), 0.3f, 1.0f, 1.0f},
+      // Legacy hair.
+      {hair_front_right_body_.get(), 1.0f, 0.6f, 0.9f},
+      {hair_front_left_body_.get(), 1.0f, 0.6f, 0.9f},
+      {hair_ponytail_top_body_.get(), 1.0f, 0.6f, 0.9f},
+      {hair_ponytail_bottom_body_.get(), 1.0f, 0.6f, 0.9f},
+  };
+  for (const Entry& e : entries) {
+    if (e.body != nullptr) {
+      e.body->DrawDebug(pass, e.r, e.g, e.b, e.a);
+    }
   }
 
-#if BA_PLATFORM_MACOS
-  if (g_base->graphics_server->renderer()->debug_draw_mode()) {
-    base::SimpleComponent c(frame_def->overlay_3d_pass());
-    c.SetTransparent(true);
-    c.SetDoubleSided(true);
-    c.SetColor(1, 0, 0, 0.5f);
+  // Under older protocols, the synthetic fist (magenta) beside the
+  // arm-attached punch body (yellow): the two should coincide. Under
+  // the current protocol the punch body *is* the synthetic fist.
+  if (pose_.punch_active() && body_punch_.exists() && !UseSyntheticPunch_()) {
+    base::ObjectComponent c(pass);
+    c.SetFacingRatio(true);
+    c.SetLightShadow(base::LightShadowType::kObject);
+    c.SetColor(1.0f, 0.2f, 1.0f);
+    const float* s = pose_.synthetic_fist();
+    auto xf = c.ScopedTransform();
+    c.Translate(s[0], s[1] - 0.1f, s[2]);
+    c.Scale(0.25f, 0.25f, 0.25f);
+    c.DrawMesh(g_base->graphics->debug_sphere_mesh());
+    c.Submit();
+  }
 
-    {
+  // BG-simulated definition attachments, at their true simmed poses:
+  // the twin anchors (cyan; their offset from the target bodies is the
+  // bg staleness) and the segment capsules (orange).
+  if (attachment_rig_) {
+    if (const auto* out = attachment_rig_->output()) {
+      if (kDebugDrawBGAttachmentAnchor) {
+        base::ObjectComponent c(pass);
+        c.SetFacingRatio(true);
+        c.SetLightShadow(base::LightShadowType::kObject);
+        c.SetColor(0.3f, 0.9f, 1.0f);
+        for (int i = 0; i < out->anchor_count; ++i) {
+          auto xf = c.ScopedTransform();
+          c.MultMatrix(out->anchors[i].m);
+          c.Scale(0.23f, 0.23f, 0.23f);
+          c.DrawMesh(g_base->graphics->debug_sphere_mesh());
+        }
+        c.Submit();
+      }
+      // bg limbs, at their true simmed poses like the attachments
+      // below. (Their display meshes instead draw re-anchored onto the
+      // live torso/pelvis -- see LimbRenderMatrix_ -- which hides the
+      // bg sim trailing the main one by a step; here we want to see
+      // exactly what the bg sim holds.)
+      if (bg_limbs && static_cast<int>(out->limbs.size()) > 0) {
+        base::ObjectComponent c(pass);
+        c.SetFacingRatio(true);
+        c.SetLightShadow(base::LightShadowType::kObject);
+        for (int i = 0;
+             i < static_cast<int>(out->limbs.size()) && i < kLimbCount; ++i) {
+          const Matrix44f& m = out->limbs[i].world;
+          // bg-simulated: blue-tinted like every other bg body.
+          float r = i < kLimbUpperRightLeg ? ar : lr;
+          float g = i < kLimbUpperRightLeg ? ag : lg;
+          float b = i < kLimbUpperRightLeg ? ab : lb;
+          base::BGDynamicsDebugTint(&r, &g, &b);
+          c.SetColor(r, g, b);
+          auto xf = c.ScopedTransform();
+          c.MultMatrix(m.m);
+          float radius = out->limbs[i].radius;
+          float length = out->limbs[i].length;
+          if (length <= 0.0f) {
+            c.Scale(radius, radius, radius);
+            c.DrawMesh(g_base->graphics->debug_sphere_mesh());
+            continue;
+          }
+          {
+            auto xf2 = c.ScopedTransform();
+            c.Scale(radius, radius, length);
+            c.DrawMesh(g_base->graphics->debug_cylinder_mesh());
+          }
+          {
+            auto xf2 = c.ScopedTransform();
+            c.Translate(0.0f, 0.0f, 0.5f * length);
+            c.Scale(radius, radius, radius);
+            c.DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+          }
+          {
+            auto xf2 = c.ScopedTransform();
+            c.Translate(0.0f, 0.0f, -0.5f * length);
+            c.Rotate(180.0f, 1.0f, 0.0f, 0.0f);
+            c.Scale(radius, radius, radius);
+            c.DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+          }
+        }
+        c.Submit();
+      }
+      base::ObjectComponent c(pass);
+      c.SetFacingRatio(true);
+      c.SetLightShadow(base::LightShadowType::kObject);
+      {
+        // Attachment segments: orange role color, bg-tinted.
+        float r = 1.0f, g = 0.6f, b = 0.2f;
+        base::BGDynamicsDebugTint(&r, &g, &b);
+        c.SetColor(r, g, b);
+      }
+      for (int i = 0; i < static_cast<int>(out->bodies.size()); ++i) {
+        auto xf = c.ScopedTransform();
+        c.MultMatrix(out->bodies[i].world.m);
+        float radius = out->bodies[i].radius;
+        float length = out->bodies[i].length;
+        {
+          auto xf2 = c.ScopedTransform();
+          c.Scale(radius, radius, length);
+          c.DrawMesh(g_base->graphics->debug_cylinder_mesh());
+        }
+        {
+          auto xf2 = c.ScopedTransform();
+          c.Translate(0.0f, 0.0f, 0.5f * length);
+          c.Scale(radius, radius, radius);
+          c.DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+        }
+        {
+          auto xf2 = c.ScopedTransform();
+          c.Translate(0.0f, 0.0f, -0.5f * length);
+          c.Rotate(180.0f, 1.0f, 0.0f, 0.0f);
+          c.Scale(radius, radius, radius);
+          c.DrawMesh(g_base->graphics->debug_hemisphere_mesh());
+        }
+      }
+      c.Submit();
+    }
+  }
+
+  // Fins. Debug triangles get both windings at flush time, so one
+  // triangle each is enough.
+  {
+    base::ObjectComponent c(pass);
+    c.SetFacingRatio(true);
+    c.SetLightShadow(base::LightShadowType::kObject);
+
+    // Orientation fins on the head, torso, and pelvis: a triangle in each
+    // body's local up/forward (+y/+z) plane, since a sphere or capsule
+    // doesn't show which way it's facing.
+    c.SetColor(1, 0, 0);
+    const std::pair<RigidBody*, float> fins[] = {
+        {body_head_.get(), 0.5f},
+        {body_torso_.get(), 0.2f},
+        {body_pelvis_.get(), 0.2f},
+    };
+    for (const auto& [body, size] : fins) {
       auto xf = c.ScopedTransform();
-      body_head_->ApplyToRenderComponent(&c);
-
+      body->ApplyToRenderComponent(&c);
       c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0.5f, 0);
-      c.Vertex(0, 0, 0.5f);
+      c.Vertex(0, size, 0);
+      c.Vertex(0, 0, size);
       c.Vertex(0, 0, 0);
       c.End();
     }
 
+    // Stand body: tall thin fins along its local +z and +x.
+    c.SetColor(0.4f, 1.0f, 0.4f);
     {
       auto xf = c.ScopedTransform();
-      body_torso_->ApplyToRenderComponent(&c);
-      c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0.2f, 0);
-      c.Vertex(0, 0, 0.2f);
-      c.Vertex(0, 0, 0);
-      c.End();
-    }
-
-    {
-      auto xf = c.ScopedTransform();
-      body_pelvis_->ApplyToRenderComponent(&c);
-      c.BeginDebugDrawTriangles();
-      c.Vertex(0, 0.2f, 0);
-      c.Vertex(0, 0, 0.2f);
-      c.Vertex(0, 0, 0);
-      c.End();
-    }
-
-    c.SetColor(0.4f, 1.0f, 0.4f, 0.2f);
-    {
-      auto xf = c.ScopedTransform();
-
       stand_body_->ApplyToRenderComponent(&c);
       c.BeginDebugDrawTriangles();
       c.Vertex(0, 0.2f, 0);
@@ -4614,73 +4670,63 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.Vertex(0, 2.0f, 0);
       c.Vertex(0.1f, 0, 0.0f);
       c.Vertex(0, 0, 0);
-
       c.End();
     }
 
-    // Punch direction.
-    if (explicit_bool(true)) {
-      c.SetColor(1, 1, 0, 0.5f);
-      const dReal* p = dBodyGetPosition(body_torso_->body());
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(p[0], p[1], p[2]);
-        c.BeginDebugDrawTriangles();
-        c.Vertex(0, 0, 0);
-        c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
-        c.Vertex(0, 0.05f, 0);
-        c.Vertex(0, 0, 0);
-        c.Vertex(0, 0.05f, 0);
-        c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
-        c.End();
-      }
+    // Punch direction as a thin yellow fin from the torso.
+    c.SetColor(1, 1, 0);
+    const dReal* p = dBodyGetPosition(body_torso_->body());
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(p[0], p[1], p[2]);
+      c.BeginDebugDrawTriangles();
+      c.Vertex(0, 0, 0);
+      c.Vertex(2.0f * punch_dir_x_, 0, 2.0f * punch_dir_z_);
+      c.Vertex(0, 0.05f, 0);
+      c.End();
     }
 
-    // Run joint foot attach.
-    if (explicit_bool(true)) {
-      c.SetColor(1, 0, 0);
-      {
+    // Left-leg IK joint anchors: foot attach (red) on the lower leg and
+    // pelvis attach (blue) on the pelvis (main-sim limbs only).
+    if (base::JointFixedEF* j = left_leg_ik_joint_) {
+      const struct {
+        RigidBody* body;
+        const dReal* anchor;
+        float r, g, b;
+      } anchors[] = {
+          {lower_left_leg_body_.get(), j->anchor2, 1, 0, 0},
+          {body_pelvis_.get(), j->anchor1, 0, 0, 1},
+      };
+      for (const auto& a : anchors) {
+        c.SetColor(a.r, a.g, a.b);
         auto xf = c.ScopedTransform();
-        lower_left_leg_body_->ApplyToRenderComponent(&c);
-        JointFixedEF* j = left_leg_ik_joint_;
-        c.Translate(j->anchor2[0], j->anchor2[1], j->anchor2[2]);
+        a.body->ApplyToRenderComponent(&c);
+        c.Translate(a.anchor[0], a.anchor[1], a.anchor[2]);
         c.Rotate(90, 1, 0, 0);
         c.Scale(0.5f, 0.5f, 0.5f);
         c.BeginDebugDrawTriangles();
         c.Vertex(0, 0.1f, 0.5f);
         c.Vertex(0, 0, 0.5f);
         c.Vertex(0, 0, 0);
-        c.Vertex(0, 0, 0);
-        c.Vertex(0, 0, 0.5f);
-        c.Vertex(0, 0.1f, 0.5f);
         c.End();
       }
     }
-
-    // Run joint pelvis attach.
-    if (explicit_bool(true)) {
-      c.SetColor(0, 0, 1);
-      {
-        auto xf = c.ScopedTransform();
-        body_pelvis_->ApplyToRenderComponent(&c);
-        JointFixedEF* j = left_leg_ik_joint_;
-        c.Translate(j->anchor1[0], j->anchor1[1], j->anchor1[2]);
-        c.Rotate(90, 1, 0, 0);
-        c.Scale(0.5f, 0.5f, 0.5f);
-        c.BeginDebugDrawTriangles();
-        c.Vertex(0, 0.1f, 0.5f);
-        c.Vertex(0, 0, 0.5f);
-        c.Vertex(0, 0, 0);
-        c.Vertex(0, 0, 0);
-        c.Vertex(0, 0, 0.5f);
-        c.Vertex(0, 0.1f, 0.5f);
-        c.End();
-      }
-    }
-
     c.Submit();
   }
-#endif  // BA_PLATFORM_MACOS
+}
+
+void SpazNode::Draw(base::FrameDef* frame_def) {
+#if !BA_HEADLESS_BUILD
+
+  if (graphics_quality_ != frame_def->quality()) {
+    graphics_quality_ = frame_def->quality();
+    UpdateForGraphicsQuality(graphics_quality_);
+  }
+
+  bool debug_draw = g_base->graphics->debug_draw();
+  if (debug_draw) {
+    DrawDebugBodies_(frame_def);
+  }
 
   millisecs_t scenetime = scene()->time();
   int64_t render_frame_count = frame_def->frame_number_filtered();
@@ -5101,8 +5147,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
         c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesCrossOut));
+        c2.DrawMeshAsset(g_scene_v1->assets().cross_out.get());
       }
       c2.Submit();
     }
@@ -5198,8 +5243,44 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     }
   }
 
-  // Draw all body parts with normal shading.
+  // FOOTTRACE (dev aid, BA_BG_LIMBS_TRACE): per rendered frame, each
+  // toe's drawn position and the pelvis, for jitter analysis of what
+  // actually reaches the screen.
   {
+    static const bool s_foot_trace = getenv("BA_BG_LIMBS_TRACE") != nullptr;
+    static int64_t s_foot_frame = 0;
+    if (s_foot_trace) {
+      ++s_foot_frame;
+      const dReal* pp = dBodyGetPosition(body_pelvis_->body());
+      for (int i = kLimbRightToes; i <= kLimbLeftToes; ++i) {
+        Matrix44f m;
+        if (!LimbRenderMatrix_(i, &m)) {
+          continue;
+        }
+        Vector3f d = m.GetTranslate();
+        // The rig's own world pose for the toe (bg limbs); the drawn
+        // point differs from it by the anchor's motion over the
+        // output's lag, so this measures that lag directly.
+        Vector3f w = d;
+        if (const auto* out =
+                attachment_rig_ ? attachment_rig_->output() : nullptr) {
+          if (!main_sim_limbs_ && i < static_cast<int>(out->limbs.size())) {
+            w = out->limbs[i].world.GetTranslate();
+          }
+        }
+        printf(
+            "FOOTTRACE %d %d drawn %.4f %.4f %.4f pelvis %.4f %.4f %.4f"
+            " world %.4f %.4f %.4f\n",
+            static_cast<int>(s_foot_frame), i, d.x, d.y, d.z,
+            static_cast<float>(pp[0]), static_cast<float>(pp[1]),
+            static_cast<float>(pp[2]), w.x, w.y, w.z);
+      }
+    }
+  }
+
+  // Draw all body parts with normal shading (debug mode draws our rigid
+  // bodies instead; see DrawDebugBodies_).
+  if (!debug_draw) {
     {
       base::ObjectComponent c(beauty_pass);
       DrawBodyParts(&c, true, death_fade, death_scale, add_color);
@@ -5224,15 +5305,21 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     }
   }
 
-  // Wings.
-  if (wings_) {
+  // Legacy wings (the 'pixie' style): the stock wing art in a pass of
+  // its own, neither wing mirrored. A definition's wings are
+  // attachments on its wing targets and draw with the body (see
+  // DrawBodyParts).
+  if (wings_ && !CharacterForm_() && !debug_draw) {
     base::ObjectComponent c(beauty_pass);
     c.SetTransparent(false);
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(
-        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesWings));
+    base::MeshAsset* wing_mesh = g_scene_v1->assets().wing.get();
+    c.SetTexture(g_scene_v1->assets().wings.get());
+    // (A solid black mask: color and highlight leave the art alone.)
+    c.SetColorizeTexture(g_scene_v1->assets().black.get());
+    SetPieceTint_(&c, BaseTint_());
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5253,8 +5340,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5262,8 +5348,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw target.
@@ -5273,8 +5358,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
 
       // Draw wing point.
@@ -5282,65 +5366,36 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
+        c.DrawMesh(g_base->graphics->debug_box_mesh());
       }
     }
 
-    // To draw wings, we need a matrix positioned at our torso pointing at our
-    // wing points.
-    Vector3f torso_pos2(dBodyGetPosition(body_torso_->body()));
-    Vector3f torsoUp = {0.0f, 0.0f, 0.0f};
-    dBodyGetRelPointPos(body_torso_->body(), 0.0f, 1.0f, 0.0f, torsoUp.v);
-    torsoUp -= torso_pos2;  // needs to be relative to body
-    torsoUp.Normalize();
-
-    Vector3f to_left_wing = wing_pos_left_ - torso_pos2;
-    to_left_wing.Normalize();
-    Vector3f left_wing_side = Vector3f::Cross(to_left_wing, torsoUp);
-    left_wing_side.Normalize();
-    Vector3f left_wing_up = Vector3f::Cross(left_wing_side, to_left_wing);
-    left_wing_up.Normalize();
-
-    // Draw target.
-    {
+    for (const Vector3f* wing_pos : {&wing_pos_left_, &wing_pos_right_}) {
       auto xf = c.ScopedTransform();
-      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-      c.MultMatrix(
-          Matrix44fOrient(left_wing_side, left_wing_up, to_left_wing).m);
+      ApplyWingTransform_(&c, *wing_pos, true);
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
-    }
-
-    Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
-    to_right_wing.Normalize();
-    Vector3f right_wing_side = Vector3f::Cross(to_right_wing, torsoUp);
-    right_wing_side.Normalize();
-    Vector3f right_wing_up = Vector3f::Cross(right_wing_side, to_right_wing);
-    right_wing_up.Normalize();
-
-    // Draw target.
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(torso_pos2.x, torso_pos2.y, torso_pos2.z);
-      c.MultMatrix(
-          Matrix44fOrient(right_wing_side, right_wing_up, to_right_wing).m);
-      if (death_scale != 1.0f) {
-        c.Scale(death_scale, death_scale, death_scale);
-      }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
+      c.DrawMeshAsset(wing_mesh);
     }
     c.Submit();
   }
 
   // Boxing gloves.
-  if (have_boxing_gloves_) {
+  if (have_boxing_gloves_ && !debug_draw) {
     base::ObjectComponent c(beauty_pass);
+    // The custom tint multiplies whatever color the gloves would
+    // otherwise draw with.
+    float gr = boxing_gloves_color_[0];
+    float gg = boxing_gloves_color_[1];
+    float gb = boxing_gloves_color_[2];
+    float gscale = boxing_gloves_scale_;
+    base::MeshAsset* glove_mesh =
+        boxing_gloves_mesh_.exists()
+            ? boxing_gloves_mesh_->mesh_data()
+            : g_base->assets->base_assets().boxing_glove();
     if (frozen_) {
+      c.SetColor(gr, gg, gb);
       c.SetAddColor(0.1f, 0.1f, 0.4f);
       c.SetReflection(base::ReflectionType::kSharper);
       c.SetReflectionScale(1.4f, 1.4f, 1.4f);
@@ -5357,43 +5412,50 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         amt = 1.0f - (amt * amt);
         c.SetAddColor(add_color[0] + amt * 0.4f, add_color[1] + amt * 0.4f,
                       add_color[2] + amt * 0.1f);
-        c.SetColor(1.0f + amt * 6.0f, 1.0f + amt * 6.0f, 1.0f + amt * 3.0f);
+        c.SetColor((1.0f + amt * 6.0f) * gr, (1.0f + amt * 6.0f) * gg,
+                   (1.0f + amt * 3.0f) * gb);
       } else {
         c.SetAddColor(add_color[0], add_color[1], add_color[2]);
 
         if (boxing_gloves_flashing_ && render_frame_count % 6 < 2) {
-          c.SetColor(2.0f, 2.0f, 2.0f);
+          c.SetColor(2.0f * gr, 2.0f * gg, 2.0f * gb);
         } else {
-          c.SetColor(death_fade, death_fade, death_fade);
+          c.SetColor(death_fade * gr, death_fade * gg, death_fade * gb);
         }
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesBoxingGlovesColor));
+    c.SetTexture(boxing_gloves_color_texture_.exists()
+                     ? boxing_gloves_color_texture_->texture_data()
+                     : g_base->assets->base_assets().boxing_gloves_color());
 
-    {
+    Matrix44f m;
+    if (LimbRenderMatrix_(kLimbLowerRightArm, &m)) {
       auto xf = c.ScopedTransform();
-      lower_right_arm_body_->ApplyToRenderComponent(&c);
+      c.MultMatrix(m.m);
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
+      if (gscale != 1.0f) {
+        c.Scale(gscale, gscale, gscale);
+      }
+      c.DrawMeshAsset(glove_mesh);
     }
 
     c.FlipCullFace();
-    {
+    if (LimbRenderMatrix_(kLimbLowerLeftArm, &m)) {
       auto xf = c.ScopedTransform();
-      lower_left_arm_body_->ApplyToRenderComponent(&c);
+      c.MultMatrix(m.m);
       c.Scale(-1.0f, 1.0f, 1.0f);
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
-      c.FlipCullFace();
+      if (gscale != 1.0f) {
+        c.Scale(gscale, gscale, gscale);
+      }
+      c.DrawMeshAsset(glove_mesh);
     }
+    c.FlipCullFace();
     c.Submit();
   }
 
@@ -5411,6 +5473,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
     // Update and draw shadows.
     if (!g_core->HeadlessMode()) {
+      base::RenderView* view = scene()->render_view();
       if (FullShadowSet* full_shadows = full_shadow_set_.get()) {
         full_shadows->torso_shadow_.SetPosition(
             Vector3f(dBodyGetPosition(body_torso_->body())));
@@ -5418,53 +5481,58 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
             Vector3f(dBodyGetPosition(body_head_->body())));
         full_shadows->pelvis_shadow_.SetPosition(
             Vector3f(dBodyGetPosition(body_pelvis_->body())));
-        full_shadows->lower_left_leg_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(lower_left_leg_body_->body())));
-        full_shadows->lower_right_leg_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(lower_right_leg_body_->body())));
-        full_shadows->upper_left_leg_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(upper_left_leg_body_->body())));
-        full_shadows->upper_right_leg_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(upper_right_leg_body_->body())));
-        full_shadows->lower_right_arm_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(lower_right_arm_body_->body())));
-        full_shadows->upper_right_arm_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(upper_right_arm_body_->body())));
-        full_shadows->lower_left_arm_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(lower_left_arm_body_->body())));
-        full_shadows->upper_left_arm_shadow_.SetPosition(
-            Vector3f(dBodyGetPosition(upper_left_arm_body_->body())));
+        // Limb shadows follow the drawn limbs (whichever backend).
+        const std::pair<int, base::BGDynamicsShadow*> limb_shadows[] = {
+            {kLimbLowerLeftLeg, &full_shadows->lower_left_leg_shadow_},
+            {kLimbLowerRightLeg, &full_shadows->lower_right_leg_shadow_},
+            {kLimbUpperLeftLeg, &full_shadows->upper_left_leg_shadow_},
+            {kLimbUpperRightLeg, &full_shadows->upper_right_leg_shadow_},
+            {kLimbLowerRightArm, &full_shadows->lower_right_arm_shadow_},
+            {kLimbUpperRightArm, &full_shadows->upper_right_arm_shadow_},
+            {kLimbLowerLeftArm, &full_shadows->lower_left_arm_shadow_},
+            {kLimbUpperLeftArm, &full_shadows->upper_left_arm_shadow_},
+        };
+        for (const auto& [limb, shadow] : limb_shadows) {
+          Matrix44f m;
+          if (LimbRenderMatrix_(limb, &m)) {
+            shadow->SetPosition(m.GetTranslate());
+          }
+        }
 
-        DrawBrightSpot(full_shadows->lower_left_leg_shadow_, 0.3f * death_scale,
-                       death_fade * (frozen_ ? 0.3f : 0.2f), sc);
-        DrawBrightSpot(full_shadows->lower_right_leg_shadow_,
+        DrawBrightSpot(view, full_shadows->lower_left_leg_shadow_,
                        0.3f * death_scale, death_fade * (frozen_ ? 0.3f : 0.2f),
                        sc);
-        DrawBrightSpot(full_shadows->head_shadow_, 0.45f * death_scale,
+        DrawBrightSpot(view, full_shadows->lower_right_leg_shadow_,
+                       0.3f * death_scale, death_fade * (frozen_ ? 0.3f : 0.2f),
+                       sc);
+        DrawBrightSpot(view, full_shadows->head_shadow_, 0.45f * death_scale,
                        death_fade * (frozen_ ? 0.8f : 0.14f), sc);
-        DrawShadow(full_shadows->torso_shadow_, 0.19f * death_scale, 0.9f, sc);
-        DrawShadow(full_shadows->head_shadow_, 0.15f * death_scale, 0.7f, sc);
-        DrawShadow(full_shadows->pelvis_shadow_, 0.15f * death_scale, 0.7f, sc);
-        DrawShadow(full_shadows->lower_left_leg_shadow_, 0.08f * death_scale,
-                   1.0f, sc);
-        DrawShadow(full_shadows->lower_right_leg_shadow_, 0.08f * death_scale,
-                   1.0f, sc);
-        DrawShadow(full_shadows->upper_left_leg_shadow_, 0.08f * death_scale,
-                   1.0f, sc);
-        DrawShadow(full_shadows->upper_right_leg_shadow_, 0.08f * death_scale,
-                   1.0f, sc);
-        DrawShadow(full_shadows->upper_left_arm_shadow_, 0.08f * death_scale,
-                   0.5f, sc);
-        DrawShadow(full_shadows->lower_left_arm_shadow_, 0.08f * death_scale,
-                   0.3f, sc);
-        DrawShadow(full_shadows->lower_right_arm_shadow_, 0.08f * death_scale,
-                   0.3f, sc);
-        DrawShadow(full_shadows->upper_right_arm_shadow_, 0.08f * death_scale,
-                   0.5f, sc);
+        DrawShadow(view, full_shadows->torso_shadow_, 0.19f * death_scale, 0.9f,
+                   sc);
+        DrawShadow(view, full_shadows->head_shadow_, 0.15f * death_scale, 0.7f,
+                   sc);
+        DrawShadow(view, full_shadows->pelvis_shadow_, 0.15f * death_scale,
+                   0.7f, sc);
+        DrawShadow(view, full_shadows->lower_left_leg_shadow_,
+                   0.08f * death_scale, 1.0f, sc);
+        DrawShadow(view, full_shadows->lower_right_leg_shadow_,
+                   0.08f * death_scale, 1.0f, sc);
+        DrawShadow(view, full_shadows->upper_left_leg_shadow_,
+                   0.08f * death_scale, 1.0f, sc);
+        DrawShadow(view, full_shadows->upper_right_leg_shadow_,
+                   0.08f * death_scale, 1.0f, sc);
+        DrawShadow(view, full_shadows->upper_left_arm_shadow_,
+                   0.08f * death_scale, 0.5f, sc);
+        DrawShadow(view, full_shadows->lower_left_arm_shadow_,
+                   0.08f * death_scale, 0.3f, sc);
+        DrawShadow(view, full_shadows->lower_right_arm_shadow_,
+                   0.08f * death_scale, 0.3f, sc);
+        DrawShadow(view, full_shadows->upper_right_arm_shadow_,
+                   0.08f * death_scale, 0.5f, sc);
       } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.get()) {
         simple_shadows->shadow_.SetPosition(
             Vector3f(dBodyGetPosition(body_pelvis_->body())));
-        DrawShadow(simple_shadows->shadow_, 0.2f * death_scale, 2.0f, sc);
+        DrawShadow(view, simple_shadows->shadow_, 0.2f * death_scale, 2.0f, sc);
       }
     }
   }
@@ -5474,10 +5542,11 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 void SpazNode::UpdateForGraphicsQuality(base::GraphicsQuality quality) {
 #if !BA_HEADLESS_BUILD
   if (quality >= base::GraphicsQuality::kMedium) {
-    full_shadow_set_ = Object::New<FullShadowSet>();
+    full_shadow_set_ = Object::New<FullShadowSet>(scene()->bg_dynamics_world());
     simple_shadow_set_.Clear();
   } else {
-    simple_shadow_set_ = Object::New<SimpleShadowSet>();
+    simple_shadow_set_ =
+        Object::New<SimpleShadowSet>(scene()->bg_dynamics_world());
     full_shadow_set_.Clear();
   }
 #endif  // !BA_HEADLESS_BUILD
@@ -5652,7 +5721,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     float damping = 10.0f;
 
     float erp, cfm;
-    CalcERPCFM(stiffness, damping, &erp, &cfm);
+    base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
     for (int i = 0; i < count; i++) {
       c[i].surface.soft_erp = erp;
       c[i].surface.soft_cfm = cfm;
@@ -5714,7 +5783,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     }
 
     float erp, cfm;
-    CalcERPCFM(stiffness, damping, &erp, &cfm);
+    base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
     for (int i = 0; i < count; i++) {
       c[i].surface.soft_erp = erp;
       c[i].surface.soft_cfm = cfm;
@@ -5735,7 +5804,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
       stiffness *= 100.0f;
       damping *= 10.0f;
     }
-    CalcERPCFM(stiffness, damping, &erp, &cfm);
+    base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
     for (int i = 0; i < count; i++) {
       c[i].surface.soft_erp = erp;
       c[i].surface.soft_cfm = cfm;
@@ -5743,10 +5812,10 @@ auto SpazNode::CollideCallback(dContact* c, int count,
   }
 
   if (colliding_body->part() == &spaz_part_) {
-    float stiffness = 5000;
-    float damping = 0.001f;
+    float stiffness = tuning_->core_contact_stiffness;
+    float damping = tuning_->core_contact_damping;
     float erp, cfm;
-    CalcERPCFM(stiffness, damping, &erp, &cfm);
+    base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
     for (int i = 0; i < count; i++) {
       c[i].surface.soft_erp = erp;
       c[i].surface.soft_cfm = cfm;
@@ -5766,6 +5835,9 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     // (we want more friction on the bottom of our roller ball than on the
     // sides).
     uint32_t f = opposing_body->flags();
+    // bg limbs: the ball is the leg surrogate while down (see
+    // down_ball_size): soft floor contacts, no wall kick.
+    bool down_ball = !main_sim_limbs_ && (knockout_ || frozen_);
     if (!(f & RigidBody::kIsBumper)) {
       for (int i = 0; i < count; i++) {
         // Let's use world-down instead.
@@ -5779,18 +5851,19 @@ auto SpazNode::CollideCallback(dContact* c, int count,
 
         if (dot < 0.6f) {
           // give our roller a kick away from vertical terrain surfaces
-          if ((f & RigidBody::kIsTerrain)) {
+          if ((f & RigidBody::kIsTerrain) && !down_ball) {
             dBodyID b = body_roller_->body();
-            dBodyAddForce(b, c[i].geom.normal[0] * 100.0f,
-                          c[i].geom.normal[1] * 100.0f,
-                          c[i].geom.normal[2] * 100.0f);
+            float kick = tuning_->roller_wall_kick_force;
+            dBodyAddForce(b, c[i].geom.normal[0] * kick,
+                          c[i].geom.normal[1] * kick,
+                          c[i].geom.normal[2] * kick);
           }
 
           // Override stiffness and damping on our little parts
-          float stiffness = 800.0f;
-          float damping = 0.001f;
+          float stiffness = tuning_->roller_side_contact_stiffness;
+          float damping = tuning_->roller_side_contact_damping;
           float erp, cfm;
-          CalcERPCFM(stiffness, damping, &erp, &cfm);
+          base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
           c[i].surface.soft_erp = erp;
           c[i].surface.soft_cfm = cfm;
           c[i].surface.mu = 0.0f;
@@ -5798,10 +5871,13 @@ auto SpazNode::CollideCallback(dContact* c, int count,
         } else {
           // trying to get a well-behaved floor-response...
           if (!hockey_) {
-            float stiffness = 7000.0f;
-            float damping = 7.0f;
+            float stiffness = down_ball
+                                  ? tuning_->down_ball_contact_stiffness
+                                  : tuning_->roller_floor_contact_stiffness;
+            float damping = down_ball ? tuning_->down_ball_contact_damping
+                                      : tuning_->roller_floor_contact_damping;
             float erp, cfm;
-            CalcERPCFM(stiffness, damping, &erp, &cfm);
+            base::CalcERPCFM(stiffness, damping, kGameStepSeconds, &erp, &cfm);
             c[i].surface.soft_erp = erp;
             c[i].surface.soft_cfm = cfm;
             c[i].surface.mu *= 1.0f;
@@ -5809,10 +5885,17 @@ auto SpazNode::CollideCallback(dContact* c, int count,
         }
       }
     }
+    // Just got up from a knockout: slide instead of pivoting over the
+    // ball (see wake_slide_steps).
+    if (wake_slide_ > 0) {
+      for (int i = 0; i < count; i++) {
+        c[i].surface.mu = 0.0f;
+      }
+    }
   } else if (colliding_body->id() != kRollerBodyID) {
     // Drop friction on all our non-roller-ball parts.
     for (int i = 0; i < count; i++) {
-      c[i].surface.mu *= 0.3f;
+      c[i].surface.mu *= tuning_->body_friction_scale;
     }
   }
 
@@ -5852,7 +5935,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Head
   b = body_head_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 2.25f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandHeadHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5861,7 +5944,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Torso
   b = body_torso_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.8f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandTorsoHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5870,7 +5953,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // pelvis
   b = body_pelvis_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.66f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandPelvisHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5879,7 +5962,7 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Roller
   b = body_roller_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.6f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandRollerHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
@@ -5888,108 +5971,123 @@ void SpazNode::Stand(float x, float y, float z, float angle) {
   // Stand
   b = stand_body_->body();
   dBodyEnable(b);
-  dBodySetPosition(b, x, y + 1.8f, z);
+  dBodySetPosition(b, x, y + kSpazRigStandTorsoHeight, z);
   dBodySetLinearVel(b, 0, 0, 0);
   dBodySetAngularVel(b, 0, 0, 0);
   dBodySetQuaternion(b, iq);
   dBodySetForce(b, 0, 0, 0);
 
-  // Upper Right Arm
-  b = upper_right_arm_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x - 0.17f, y + 1.9f, z);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+  if (main_sim_limbs_) {
+    // Upper Right Arm
+    b = upper_right_arm_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x - 0.17f, y + 1.9f, z);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Lower Right Arm
-  b = lower_right_arm_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x - 0.17f, y + 1.9f, z + 0.07f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Lower Right Arm
+    b = lower_right_arm_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x - 0.17f, y + 1.9f, z + 0.07f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Upper Left Arm
-  b = upper_left_arm_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x + 0.17f, y + 1.9f, z);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Upper Left Arm
+    b = upper_left_arm_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x + 0.17f, y + 1.9f, z);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Lower Left Arm
-  b = lower_left_arm_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x + 0.17f, y + 1.9f, z + 0.07f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Lower Left Arm
+    b = lower_left_arm_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x + 0.17f, y + 1.9f, z + 0.07f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Upper Right Leg
-  b = upper_right_leg_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x - 0.1f, y + 1.65f, z);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Upper Right Leg
+    b = upper_right_leg_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x - 0.1f, y + 1.65f, z);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Lower Right Leg
-  b = lower_right_leg_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x - 0.1f, y + 1.65f, z + 0.05f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Lower Right Leg
+    b = lower_right_leg_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x - 0.1f, y + 1.65f, z + 0.05f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Right Toes
-  b = right_toes_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x - 0.1f, y + 1.7f, z + 0.1f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Right Toes
+    b = right_toes_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x - 0.1f, y + 1.7f, z + 0.1f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Upper Left Leg
-  b = upper_left_leg_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x + 0.1f, y + 1.65f, z + 0.00f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Upper Left Leg
+    b = upper_left_leg_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x + 0.1f, y + 1.65f, z + 0.00f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Lower Left Leg
-  b = lower_left_leg_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x + 0.1f, y + 1.65f, z + 0.05f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Lower Left Leg
+    b = lower_left_leg_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x + 0.1f, y + 1.65f, z + 0.05f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
 
-  // Left Toes
-  b = left_toes_body_->body();
-  dBodyEnable(b);
-  dBodySetPosition(b, x + 0.1f, y + 1.7f, z + 0.1f);
-  dBodySetLinearVel(b, 0, 0, 0);
-  dBodySetAngularVel(b, 0, 0, 0);
-  dBodySetQuaternion(b, iq);
-  dBodySetForce(b, 0, 0, 0);
+    // Left Toes
+    b = left_toes_body_->body();
+    dBodyEnable(b);
+    dBodySetPosition(b, x + 0.1f, y + 1.7f, z + 0.1f);
+    dBodySetLinearVel(b, 0, 0, 0);
+    dBodySetAngularVel(b, 0, 0, 0);
+    dBodySetQuaternion(b, iq);
+    dBodySetForce(b, 0, 0, 0);
+  }
 
-  // If we have hair.
-  if (hair_front_right_joint_) PositionBodyForJoint(hair_front_right_joint_);
-  if (hair_front_left_joint_) PositionBodyForJoint(hair_front_left_joint_);
-  if (hair_ponytail_top_joint_) PositionBodyForJoint(hair_ponytail_top_joint_);
-  if (hair_ponytail_bottom_joint_)
-    PositionBodyForJoint(hair_ponytail_bottom_joint_);
+  // Legacy-form hair rides main-sim joints; seat it on the moved head
+  // (top before bottom, so the ponytail chain resolves root-first) or
+  // it springs across the map from wherever it was.
+  if (hair_front_right_joint_) {
+    base::JointFixedEFPositionBody(hair_front_right_joint_);
+  }
+  if (hair_front_left_joint_) {
+    base::JointFixedEFPositionBody(hair_front_left_joint_);
+  }
+  if (hair_ponytail_top_joint_) {
+    base::JointFixedEFPositionBody(hair_ponytail_top_joint_);
+  }
+  if (hair_ponytail_bottom_joint_) {
+    base::JointFixedEFPositionBody(hair_ponytail_bottom_joint_);
+  }
+
+  // Definition attachment rigs (and bg limbs) re-place themselves on
+  // their bodies.
+  SnapAttachments_();
 }
 
 auto SpazNode::GetRigidBody(int id) -> RigidBody* {
@@ -6168,6 +6266,7 @@ void SpazNode::CreateHair() {
   // Set joint values.
   UpdateJoints();
 }
+
 void SpazNode::DestroyHair() {
   if (hair_front_right_joint_) dJointDestroy(hair_front_right_joint_);
   hair_front_right_joint_ = nullptr;
@@ -6180,6 +6279,450 @@ void SpazNode::DestroyHair() {
 
   if (hair_ponytail_bottom_joint_) dJointDestroy(hair_ponytail_bottom_joint_);
   hair_ponytail_bottom_joint_ = nullptr;
+
+  hair_front_right_body_.Clear();
+  hair_front_left_body_.Clear();
+  hair_ponytail_top_body_.Clear();
+  hair_ponytail_bottom_body_.Clear();
+}
+
+static auto AttachmentRefsEqual(const base::CharacterAssetRef& a,
+                                const base::CharacterAssetRef& b) -> bool {
+  return a.apverid == b.apverid && a.name == b.name && a.index == b.index;
+}
+
+static auto AttachmentDefsEqual(
+    const std::vector<base::BasicSpazDef::AttachmentDef>& a,
+    const std::vector<base::BasicSpazDef::AttachmentDef>& b) -> bool {
+  if (a.size() != b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < a.size(); ++i) {
+    const auto& x = a[i];
+    const auto& y = b[i];
+    if (x.type != y.type || x.segments.size() != y.segments.size()
+        || x.stiffness != y.stiffness || x.damping != y.damping
+        || x.drag != y.drag || x.curl != y.curl || x.length != y.length
+        || x.radius != y.radius || x.curl_change != y.curl_change
+        || x.length_change != y.length_change
+        || x.radius_change != y.radius_change
+        || x.stiffness_change != y.stiffness_change
+        || x.damping_change != y.damping_change) {
+      return false;
+    }
+    for (int j = 0; j < 3; ++j) {
+      if (x.position[j] != y.position[j]) {
+        return false;
+      }
+    }
+    for (int j = 0; j < 4; ++j) {
+      if (x.rotation[j] != y.rotation[j]) {
+        return false;
+      }
+    }
+    for (size_t j = 0; j < x.segments.size(); ++j) {
+      const auto& sx = x.segments[j];
+      const auto& sy = y.segments[j];
+      if (!AttachmentRefsEqual(sx.mesh, sy.mesh)
+          || !AttachmentRefsEqual(sx.texture, sy.texture)
+          || !AttachmentRefsEqual(sx.tint_texture, sy.tint_texture)
+          || sx.has_offset != sy.has_offset
+          || (sx.has_offset && sx.offset != sy.offset)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+auto SpazNode::AttachTargetBody_(base::CharacterAttachTarget target)
+    -> RigidBody* {
+  switch (target) {
+    case base::CharacterAttachTarget::kHead:
+      return body_head_.get();
+    case base::CharacterAttachTarget::kTorso:
+      return body_torso_.get();
+    case base::CharacterAttachTarget::kPelvis:
+      return body_pelvis_.get();
+    default:
+      // Limb targets have no anchor body; their (static) attachments
+      // draw in the limb's frame (see DrawBodyParts).
+      break;
+  }
+  return nullptr;
+}
+
+void SpazNode::SnapAttachments_() { rig_snap_ = true; }
+
+// Append one target's dynamic attachment defs to a character rig
+// config, hung off anchor index `anchor`: the per-kind physique from
+// the spec table, the definition's placement/rotation/drag, and the
+// calibration dials mapped onto the springs (kAntenna kinds: geometric,
+// see the table comments). Returns the number of bodies appended.
+static auto AppendAttachmentsToRigConfig(
+    const std::vector<base::BasicSpazDef::AttachmentDef>& defs, int anchor,
+    base::BGDynamicsCharacterKind::Config* config) -> int {
+  using Kind = base::BGDynamicsCharacterKind;
+  int bodies = 0;
+  for (const auto& adef : defs) {
+    if (adef.type == base::CharacterAttachmentType::kStatic
+        || config->attachment_count >= Kind::kMaxAttachments) {
+      continue;
+    }
+    const auto& spec = kAttachmentTypeSpecs[static_cast<int>(adef.type)];
+    Kind::AttachmentSpec& aspec =
+        config->attachments[config->attachment_count++];
+    aspec.anchor = anchor;
+    for (int i = 0; i < 3; ++i) {
+      aspec.position[i] = adef.position[i];
+    }
+    for (int i = 0; i < 4; ++i) {
+      aspec.rotation[i] = adef.rotation[i];
+    }
+    aspec.drag = adef.drag;
+    aspec.segment_count = std::min(spec.segment_count, Kind::kMaxSegments);
+    bodies += aspec.segment_count;
+    bool antenna = adef.type == base::CharacterAttachmentType::kAntenna
+                   || adef.type == base::CharacterAttachmentType::kAntenna2
+                   || adef.type == base::CharacterAttachmentType::kAntenna3
+                   || adef.type == base::CharacterAttachmentType::kAntenna4;
+    // Per-segment dials: segment i uses value + i * change, clamped to
+    // the dial's range. Length: 0 -> half the tabulated capsule length,
+    // 1 -> 1.5x, along the chain axis (local z) for the capsule, the
+    // mass capsule and the joint anchors so segments still meet end to
+    // end. Radius: 0 -> tabulated, 1 -> 3x. Curl: bend at the segment's
+    // joint.
+    auto dial = [](float base, float change, int i, float lo, float hi) {
+      return std::clamp(base + change * static_cast<float>(i), lo, hi);
+    };
+    auto length_scale_at = [&](int i) {
+      return 0.5f + dial(adef.length, adef.length_change, i, 0.0f, 1.0f);
+    };
+    for (int si = 0; si < aspec.segment_count; ++si) {
+      const auto& sspec = spec.segments[si];
+      Kind::SegmentSpec& bspec = aspec.segments[si];
+      float length_scale = length_scale_at(si);
+      float radius_scale =
+          1.0f + 2.0f * dial(adef.radius, adef.radius_change, si, 0.0f, 1.0f);
+      // Curl bends every joint, the root's on top of the attachment
+      // rotation: joints of an ANTENNA_4 with curl 0 / change -0.4 bend
+      // 0, -0.4, -0.8, -1.0.
+      bspec.curl = dial(adef.curl, adef.curl_change, si, -1.0f, 1.0f);
+      float base_mass_radius =
+          sspec.mass_radius > 0.0f ? sspec.mass_radius : sspec.geom_radius;
+      float base_mass_length =
+          sspec.mass_length > 0.0f ? sspec.mass_length : sspec.geom_length;
+      bspec.geom_radius = sspec.geom_radius * radius_scale;
+      bspec.geom_length = sspec.geom_length * length_scale;
+      bspec.mass_radius = base_mass_radius * radius_scale;
+      bspec.mass_length = base_mass_length * length_scale;
+      // Total mass is the kind's, from the tabulated (unscaled) mass
+      // capsule; the dials reshape the inertia but never the weight.
+      // (x5: the bg rig has always run these densities at 5x.)
+      {
+        dMass m;
+        dMassSetCappedCylinder(&m, sspec.density * 5.0f, 3, base_mass_radius,
+                               base_mass_length);
+        bspec.mass = static_cast<float>(m.mass);
+      }
+      for (int i = 0; i < 3; ++i) {
+        bspec.parent_anchor[i] = sspec.parent_anchor[i];
+        bspec.child_anchor[i] = sspec.child_anchor[i];
+      }
+      // The parent anchor lives in the previous segment's frame, so it
+      // follows that segment's length; the child anchor is our own.
+      bspec.parent_anchor[2] *= (si > 0) ? length_scale_at(si - 1) : 1.0f;
+      bspec.child_anchor[2] *= length_scale;
+      bspec.linear_stiffness = sspec.linear_stiffness;
+      bspec.linear_damping = sspec.linear_damping;
+      bspec.angular_stiffness = sspec.angular_stiffness;
+      bspec.angular_damping = sspec.angular_damping;
+      if (antenna) {
+        // Stiffness/damping drift counts from the root joint, so a
+        // chain can be rigid at the base and floppy at the tip.
+        float stiffness =
+            dial(adef.stiffness, adef.stiffness_change, si, 0.0f, 1.0f);
+        float damping = dial(adef.damping, adef.damping_change, si, 0.0f, 1.0f);
+        bspec.linear_stiffness *= std::pow(10.0f, stiffness);
+        bspec.linear_damping *= std::pow(10.0f, damping);
+        bspec.angular_stiffness *= std::pow(800.0f, stiffness);
+        bspec.angular_damping *= std::pow(8000.0f, damping);
+      }
+    }
+  }
+  return bodies;
+}
+
+// Dev aid (BA_BG_RIG_TEST_ANTENNAS; test_game_run --bg-rig-test-antennas):
+// every definition-form character grows one ANTENNA_3 on each attach
+// target, sticking straight out of the body, so the bg rig's anchor feed
+// can be eyeballed in debug-draw mode from a known rest pose. No art; the
+// debug view draws the sim capsules exactly.
+static auto BgRigTestAntennasEnabled() -> bool {
+  static const bool enabled = getenv("BA_BG_RIG_TEST_ANTENNAS") != nullptr;
+  return enabled;
+}
+
+static void AppendBgRigTestAntenna(
+    base::CharacterAttachTarget target,
+    std::vector<base::BasicSpazDef::AttachmentDef>* defs) {
+  base::BasicSpazDef::AttachmentDef adef;
+  adef.type = base::CharacterAttachmentType::kAntenna3;
+  // Head: straight up. Torso/pelvis: straight back (180 about y turns
+  // the +z chain around).
+  if (target == base::CharacterAttachTarget::kHead) {
+    const float pos[3] = {0.0f, 0.23f, 0.0f};
+    const float rot[4] = {0.707107f, -0.707107f, 0.0f, 0.0f};
+    std::copy(pos, pos + 3, adef.position);
+    std::copy(rot, rot + 4, adef.rotation);
+  } else {
+    const float pos[3] = {
+        0.0f, 0.0f,
+        target == base::CharacterAttachTarget::kTorso ? -0.15f : -0.12f};
+    const float rot[4] = {0.0f, 0.0f, 1.0f, 0.0f};
+    std::copy(pos, pos + 3, adef.position);
+    std::copy(rot, rot + 4, adef.rotation);
+  }
+  // Stiff enough to hold pose with a little sag and a slight curl, so
+  // both the anchor transform and the joint chain are visible.
+  adef.stiffness = 0.8f;
+  adef.damping = 0.7f;
+  adef.drag = 0.5f;
+  adef.curl = 0.1f;
+  adef.length = 0.5f;
+  adef.segments.resize(3);
+  defs->push_back(std::move(adef));
+}
+
+// Prototype (BA_BG_LIMBS; test_game_run --bg-limbs): every spaz's
+// character rig also simulates its arms and legs on the bg thread,
+// driven by the same joint targets as the main-sim limbs, which stay
+// on. Debug draw shows the bg set in green offset in x beside the
+// main-sim ragdoll for a side-by-side comparison.
+void SpazNode::BuildLimbRigConfig_(
+    base::BGDynamicsCharacterKind::Config* config) {
+  using Kind = base::BGDynamicsCharacterKind;
+  const int torso = static_cast<int>(base::CharacterAttachTarget::kTorso);
+  const int pelvis = static_cast<int>(base::CharacterAttachTarget::kPelvis);
+  // Bodies, in the fixed limb order (see the joint list below).
+  auto add_body = [&](int anchor, float radius, float length, float mass_radius,
+                      float mass_length, float density_mult,
+                      float collide_stiffness, float collide_damping,
+                      float friction) {
+    assert(config->limb_body_count < Kind::kMaxLimbBodies);
+    Kind::LimbBodySpec& b = config->limb_bodies[config->limb_body_count++];
+    b.anchor = anchor;
+    b.radius = radius;
+    b.length = length;
+    b.mass_radius = mass_radius > 0.0f ? mass_radius : radius;
+    b.mass_length = mass_length > 0.0f ? mass_length : length;
+    // RigidBody::SetDimensions runs densities at 5x too.
+    dMass m;
+    if (length > 0.0f) {
+      dMassSetCappedCylinder(&m, 5.0f * density_mult, 3, b.mass_radius,
+                             b.mass_length);
+    } else {
+      dMassSetSphere(&m, 5.0f * density_mult, b.mass_radius);
+    }
+    b.mass = static_cast<float>(m.mass);
+    b.collide_stiffness = collide_stiffness;
+    b.collide_damping = collide_damping;
+    b.friction = friction;
+  };
+  // Contact softness mirrors CollideCallback: upper limbs 10x10 (arms)
+  // with the upper-leg scaling on top; lower arms 10/1; lower legs and
+  // toes with their own scalings; toes also get a tenth the friction.
+  float ankle_len = kSpazRigLowerLegSpan - ankle_radius_ * 2.0f;
+  add_body(torso, kSpazRigUpperArmRadius, kSpazRigUpperArmLength, 0.0f, 0.0f,
+           kUpperArmDensity, 100.0f, 1.0f,
+           0.5f);  // 0 upper right arm
+  add_body(torso, kSpazRigLowerArmRadius, kSpazRigLowerArmLength, 0.06f, 0.16f,
+           kLowerArmDensity, 10.0f, 1.0f,
+           0.5f);  // 1 lower right arm
+  add_body(torso, kSpazRigUpperArmRadius, kSpazRigUpperArmLength, 0.0f, 0.0f,
+           kUpperArmDensity, 100.0f, 1.0f,
+           0.5f);  // 2 upper left arm
+  add_body(torso, kSpazRigLowerArmRadius, kSpazRigLowerArmLength, 0.06f, 0.16f,
+           kLowerArmDensity, 10.0f, 1.0f,
+           0.5f);  // 3 lower left arm
+  add_body(pelvis, thigh_radius_, kSpazRigUpperLegLength, 0.05f, 0.12f,
+           kUpperLegDensity, 10.0f * kUpperLegCollideStiffness * 10.0f,
+           1.0f * kUpperLegCollideDamping, 0.5f);  // 4 upper right leg
+  add_body(pelvis, ankle_radius_, ankle_len, 0.07f, 0.12f, kLowerLegDensity,
+           10.0f * kLowerLegCollideStiffness, 1.0f * kLowerLegCollideDamping,
+           0.5f);  // 5 lower right leg
+  add_body(pelvis, thigh_radius_, kSpazRigUpperLegLength, 0.05f, 0.12f,
+           kUpperLegDensity, 10.0f * kUpperLegCollideStiffness * 10.0f,
+           1.0f * kUpperLegCollideDamping, 0.5f);  // 6 upper left leg
+  add_body(pelvis, ankle_radius_, ankle_len, 0.07f, 0.12f, kLowerLegDensity,
+           10.0f * kLowerLegCollideStiffness, 1.0f * kLowerLegCollideDamping,
+           0.5f);  // 7 lower left leg
+  add_body(pelvis, kSpazRigToesRadius, 0.0f, 0.0f, 0.0f, kToesDensity,
+           10.0f * kToesCollideStiffness, 1.0f * kToesCollideDamping,
+           0.05f);  // 8 right toes
+  add_body(pelvis, kSpazRigToesRadius, 0.0f, 0.0f, 0.0f, kToesDensity,
+           10.0f * kToesCollideStiffness, 1.0f * kToesCollideDamping,
+           0.05f);  // 9 left toes
+
+  // Joints, in SpazJoint order from kSpazJointUpperRightArm on (the
+  // neck and pelvis joints stay main-sim). Parents: -1 - anchor index
+  // for a twin. anchor2 values are the construction-time tweaks from
+  // the main-sim rig; anchor1 and everything else come from the
+  // targets.
+  const int t_parent = -1 - torso;
+  const int p_parent = -1 - pelvis;
+  auto add_joint = [&](int parent, int child, float a2x, float a2y, float a2z,
+                       bool positions_child) {
+    assert(config->limb_joint_count < Kind::kMaxLimbJoints);
+    Kind::LimbJointSpec& j = config->limb_joints[config->limb_joint_count++];
+    j.parent = parent;
+    j.child = child;
+    j.anchor2[0] = a2x;
+    j.anchor2[1] = a2y;
+    j.anchor2[2] = a2z;
+    j.positions_child = positions_child;
+  };
+  const float* shoulder = kSpazRigShoulderOnUpperArm;
+  const float* elbow = kSpazRigElbowOnLowerArm;
+  const float* hip = kSpazRigHipOnUpperLeg;
+  const float* knee = kSpazRigKneeOnLowerLeg;
+  const float* ankle = kSpazRigAnkleOnToes;
+  // upper right arm
+  add_joint(t_parent, 0, shoulder[0], shoulder[1], shoulder[2], true);
+  // lower right arm
+  add_joint(0, 1, elbow[0], elbow[1], elbow[2], true);
+  // upper left arm
+  add_joint(t_parent, 2, -shoulder[0], shoulder[1], shoulder[2], true);
+  // lower left arm
+  add_joint(2, 3, elbow[0], elbow[1], elbow[2], true);
+  // upper right leg
+  add_joint(p_parent, 4, hip[0], hip[1], hip[2], true);
+  // lower right leg
+  add_joint(4, 5, knee[0], knee[1], knee[2], true);
+  // upper left leg
+  add_joint(p_parent, 6, hip[0], hip[1], hip[2], true);
+  // lower left leg
+  add_joint(6, 7, knee[0], knee[1], knee[2], true);
+  // right toes
+  add_joint(5, 8, ankle[0], ankle[1], ankle[2], true);
+  // right toes 2
+  add_joint(5, 8, -0.1f, ankle[1], ankle[2], false);
+  // left toes
+  add_joint(7, 9, ankle[0], ankle[1], ankle[2], true);
+  // left toes 2
+  add_joint(7, 9, 0.1f, ankle[1], ankle[2], false);
+  add_joint(p_parent, 5, 0.0f, 0.0f, 0.05f, false);  // right leg ik
+  add_joint(p_parent, 7, 0.0f, 0.0f, 0.05f, false);  // left leg ik
+  add_joint(t_parent, 1, 0.0f, 0.0f, 0.07f, false);  // right arm ik
+  add_joint(t_parent, 3, 0.0f, 0.0f, 0.07f, false);  // left arm ik
+  static_assert(kSpazJointLeftArmIK - kSpazJointUpperRightArm + 1 == 16,
+                "limb joint list must cover every SpazJoint after pelvis");
+
+  // Targeted self-collision, mirroring PreFilterCollision: lower arms
+  // against the head, torso and their own side's upper leg; lower
+  // legs against each other.
+  const int head = -1 - static_cast<int>(base::CharacterAttachTarget::kHead);
+  auto add_pair = [&](int a, int b) {
+    assert(config->collision_pair_count < Kind::kMaxCollisionPairs);
+    Kind::CollisionPair& pair =
+        config->collision_pairs[config->collision_pair_count++];
+    pair.a = a;
+    pair.b = b;
+  };
+  add_pair(1, head);      // lower right arm vs head
+  add_pair(1, t_parent);  // lower right arm vs torso
+  add_pair(1, 4);         // lower right arm vs upper right leg
+  add_pair(3, head);      // lower left arm vs head
+  add_pair(3, t_parent);  // lower left arm vs torso
+  add_pair(3, 6);         // lower left arm vs upper left leg
+  add_pair(5, 7);         // lower legs vs each other
+}
+
+void SpazNode::UpdateAttachments_() {
+  bool changed = false;
+  bool want_limbs = UseBgLimbs_();
+  // (The twins copy the torso's shape and mass, so a torso resize
+  // rebuilds too.)
+  if (want_limbs != rig_has_limbs_ || rig_torso_radius_ != torso_radius_
+      || (want_limbs
+          && (rig_limb_thigh_radius_ != thigh_radius_
+              || rig_limb_ankle_radius_ != ankle_radius_))) {
+    changed = true;
+  }
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
+    auto& target = attachment_targets_[ti];
+    std::vector<base::BasicSpazDef::AttachmentDef> desired;
+    if (CharacterForm_() && spaz_def_->def().has_spaz()) {
+      desired = spaz_def_->def().spaz().attachments[ti];
+      if (BgRigTestAntennasEnabled()) {
+        AppendBgRigTestAntenna(static_cast<base::CharacterAttachTarget>(ti),
+                               &desired);
+      }
+    }
+    if (AttachmentDefsEqual(desired, target.defs)) {
+      continue;
+    }
+    target.defs = std::move(desired);
+    changed = true;
+  }
+  if (!changed) {
+    return;
+  }
+  // Any change rebuilds the whole rig: it is one island, and its flat
+  // body order follows target order.
+  attachment_rig_.reset();
+  if (scene()->bg_dynamics_world() == nullptr) {
+    return;
+  }
+  base::BGDynamicsCharacterKind::Config config;
+  int bodies = 0;
+  for (int ti = 0; ti < base::kCharacterRigAnchorCount; ++ti) {
+    auto& target = attachment_targets_[ti];
+    target.body_start = bodies;
+    RigidBody* body =
+        AttachTargetBody_(static_cast<base::CharacterAttachTarget>(ti));
+    if (!body) {
+      continue;
+    }
+    dMass mass;
+    dBodyGetMass(body->body(), &mass);
+    config.anchors[ti].mass = static_cast<float>(mass.mass);
+    // The twin's collision shape: the body's own geom, for the rig's
+    // targeted self-collision pairs.
+    {
+      auto& aspec = config.anchors[ti];
+      const float* dims = body->dimensions();
+      if (body->shape() == RigidBody::Shape::kBox) {
+        aspec.shape = 2;
+        aspec.dims[0] = dims[0];
+        aspec.dims[1] = dims[1];
+        aspec.dims[2] = dims[2];
+      } else {
+        aspec.shape = 1;
+        aspec.dims[0] = dims[0];
+      }
+      // PreFilterCollision: head and torso collide with any broken-off
+      // part of us; the pelvis does not.
+      aspec.collides_loose_limbs =
+          (ti == static_cast<int>(base::CharacterAttachTarget::kHead)
+           || ti == static_cast<int>(base::CharacterAttachTarget::kTorso));
+    }
+    bodies += AppendAttachmentsToRigConfig(target.defs, ti, &config);
+  }
+  config.anchor_count = base::kCharacterRigAnchorCount;
+  rig_has_limbs_ = false;
+  if (want_limbs) {
+    BuildLimbRigConfig_(&config);
+    rig_has_limbs_ = true;
+    rig_limb_thigh_radius_ = thigh_radius_;
+    rig_limb_ankle_radius_ = ankle_radius_;
+  }
+  rig_torso_radius_ = torso_radius_;
+  if (bodies > 0 || want_limbs) {
+    attachment_rig_ = std::make_unique<base::BGDynamicsCharacterRig>(
+        scene()->bg_dynamics_world(), config);
+    rig_snap_ = true;
+  }
 }
 
 auto SpazNode::GetRollerMaterials() const -> std::vector<Material*> {
@@ -6234,6 +6777,14 @@ void SpazNode::set_name(const std::string& val) {
   g_base->text_graphics->WarmUpStringAsync(name_);
 }
 
+void SpazNode::SetBoxingGlovesColor(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for boxing_gloves_color",
+                    PyExcType::kValue);
+  }
+  boxing_gloves_color_ = vals;
+}
+
 void SpazNode::SetNameColor(const std::vector<float>& vals) {
   if (vals.size() != 3) {
     throw Exception("Expected float array of length 3 for name_color",
@@ -6247,7 +6798,8 @@ void SpazNode::set_highlight(const std::vector<float>& vals) {
     throw Exception("Expected float array of length 3 for highlight",
                     PyExcType::kValue);
   }
-  highlight_ = vals;
+  highlight_attr_ = vals;
+  UpdateDrawColors_();
 }
 
 void SpazNode::SetColor(const std::vector<float>& vals) {
@@ -6255,6 +6807,40 @@ void SpazNode::SetColor(const std::vector<float>& vals) {
     throw Exception("Expected float array of length 3 for color",
                     PyExcType::kValue);
   }
+  color_attr_ = vals;
+  UpdateDrawColors_();
+}
+
+void SpazNode::SetUseSpazDefColor(bool val) {
+  use_spaz_def_color_ = val;
+  UpdateDrawColors_();
+}
+
+void SpazNode::SetUseSpazDefHighlight(bool val) {
+  use_spaz_def_highlight_ = val;
+  UpdateDrawColors_();
+}
+
+void SpazNode::UpdateDrawColors_() {
+  // The definition's own colors count only once its real look is
+  // applied; until then (and in legacy form) the attrs are drawn.
+  const base::BasicSpazDef* look = (CharacterForm_() && character_look_applied_)
+                                       ? &spaz_def_->def().spaz()
+                                       : nullptr;
+  if (look && use_spaz_def_color_ && look->has_color) {
+    SetDrawColor_({look->color[0], look->color[1], look->color[2]});
+  } else {
+    SetDrawColor_(color_attr_);
+  }
+  if (look && use_spaz_def_highlight_) {
+    highlight_ = {look->highlight[0], look->highlight[1], look->highlight[2]};
+  } else {
+    highlight_ = highlight_attr_;
+  }
+}
+
+void SpazNode::SetDrawColor_(const std::vector<float>& vals) {
+  assert(vals.size() == 3);
   color_ = vals;
 
   // If this gets changed, make sure to change shadow-color in the
@@ -6299,13 +6885,13 @@ void SpazNode::SetHaveBoxingGloves(bool val) {
 void SpazNode::SetIsAreaOfInterest(bool val) {
   // Create if need be.
   if (val && area_of_interest_ == nullptr) {
-    area_of_interest_ = g_base->graphics->camera()->NewAreaOfInterest();
+    area_of_interest_ = scene()->render_view()->camera()->NewAreaOfInterest();
     UpdateAreaOfInterest();
   }
 
   // Destroy if need be.
   if (!val && area_of_interest_) {
-    g_base->graphics->camera()->DeleteAreaOfInterest(area_of_interest_);
+    scene()->render_view()->camera()->DeleteAreaOfInterest(area_of_interest_);
     area_of_interest_ = nullptr;
   }
 }
@@ -6316,13 +6902,13 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
   // Start ticking sound.
   if (curse_death_time_ != 0) {
     if (tick_play_id_ == 0xFFFFFFFF) {
-      base::AudioSource* s = g_base->audio->SourceBeginNew();
+      base::AudioSource* s = scene()->NewAudioSource(
+          g_scene_v1->assets().ticking_crazy.get(), true);
       if (s) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
-        tick_play_id_ = s->Play(g_base->assets->BuiltinSound(
-            base::BuiltinSoundID::kAudioTickingCrazy));
+        tick_play_id_ = s->Play(g_scene_v1->assets().ticking_crazy.get());
         s->End();
       }
     }
@@ -6430,7 +7016,7 @@ void SpazNode::SetDead(bool val) {
 
     // Lose our area-of-interest.
     if (area_of_interest_) {
-      g_base->graphics->camera()->DeleteAreaOfInterest(area_of_interest_);
+      scene()->render_view()->camera()->DeleteAreaOfInterest(area_of_interest_);
       area_of_interest_ = nullptr;
     }
 
@@ -6445,11 +7031,11 @@ void SpazNode::SetDead(bool val) {
 
       // Only make sound if we're not shattered.
       if (!shattered_) {
-        if (SceneSound* sound = GetRandomMedia(death_sounds_)) {
-          if (base::AudioSource* source = g_base->audio->SourceBeginNew()) {
+        if (base::SoundAsset* sound = RandomDeathSound_()) {
+          if (base::AudioSource* source = scene()->NewAudioSource(sound)) {
             const dReal* p_head = dGeomGetPosition(body_head_->geom());
             source->SetPosition(p_head[0], p_head[1], p_head[2]);
-            voice_play_id_ = source->Play(sound->GetSoundData());
+            voice_play_id_ = source->Play(sound);
             source->End();
           }
         }
@@ -6464,16 +7050,27 @@ void SpazNode::SetDead(bool val) {
 
 void SpazNode::SetStyle(const std::string& val) {
   style_ = val;
-  dull_reflection_ = (style_ == "ninja" || style_ == "kronk");
+  ApplyStyle_();
+}
+
+void SpazNode::ApplyStyle_() {
+  // Character form: the definition supplies physique and look; style
+  // is ignored entirely.
+  if (CharacterForm_()) {
+    ApplyCharacterDef_();
+    UpdateBodiesForStyle();
+    return;
+  }
+
+  // Legacy form: the style preset supplies both.
   ninja_ = (style_ == "ninja");
-  fat_ = (style_ == "mel" || style_ == "pirate" || style_ == "frosty"
-          || style_ == "santa");
   pirate_ = (style_ == "pirate");
   frosty_ = (style_ == "frosty");
 
   // Start with defaults.
   female_ = false;
   female_hair_ = false;
+  eyeless_ = false;
   eye_ball_color_red_ = 0.46f;
   eye_ball_color_green_ = 0.38f;
   eye_ball_color_blue_ = 0.36f;
@@ -6495,6 +7092,7 @@ void SpazNode::SetStyle(const std::string& val) {
   eye_color_green_ = 0.5f;
   eye_color_blue_ = 1.2f;
   flippers_ = false;
+  hide_lower_arms_ = false;
   wings_ = false;
 
   if (style_ == "bear") {
@@ -6517,6 +7115,9 @@ void SpazNode::SetStyle(const std::string& val) {
     reflection_scale_ = 0.05f;
   } else if (style_ == "penguin") {
     flippers_ = true;
+    // (Legacy content names forearm and hand meshes regardless; this
+    // style is what leaves them out.)
+    hide_lower_arms_ = true;
     eye_ball_color_red_ = 0.5f;
     eye_ball_color_green_ = 0.5f;
     eye_ball_color_blue_ = 0.5f;
@@ -6664,7 +7265,405 @@ void SpazNode::SetStyle(const std::string& val) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Unrecognized spaz style: '" + style_ + "'");
   }
+
+  // The legacy presets fold their gait tweaks into two flags; express
+  // them as the same numeric slots a character definition carries so
+  // the sim code has a single vocabulary.
+  thigh_radius_ = female_ ? 0.06f : 0.04f;
+  ankle_radius_ = female_ ? 0.045f : 0.07f;
+  step_separation_ = (female_ ? 0.03f : 0.08f) * (ninja_ ? 0.7f : 1.0f);
+  idle_arm_stiffness_ = female_ ? 0.2f : 1.0f;
+  arm_swing_ = female_ ? 0.3f : 0.6f;
+  idle_sway_ = female_ ? 0.02f : 0.05f;
+  draw_hair_ = female_hair_;
+  UpdateDrawColors_();
+  // Only definitions carry a third color; legacy masks have stray blue
+  // data, so style form keeps it at white (the no-op).
+  highlight2_ = {1.0f, 1.0f, 1.0f};
+
+  // Fold the legacy eye flags into the per-eye styles the draw code
+  // consumes (character definitions set these directly).
+  base::CharacterEyeStyle both =
+      (eyeless_ || frosty_)
+          ? base::CharacterEyeStyle::kNone
+          : (has_eyelids_ ? base::CharacterEyeStyle::kRegular
+                          : base::CharacterEyeStyle::kLidless);
+  eye_style_right_ = both;
+  eye_style_left_ = pirate_ ? base::CharacterEyeStyle::kNone : both;
+
   UpdateBodiesForStyle();
+}
+
+void SpazNode::ApplyCharacterDef_() {
+  assert(spaz_def_.exists());
+  // A definition this build can't use (no representation we
+  // understand) is the standard spaz in every respect; a usable one
+  // supplies physique unconditionally and its look only once its media
+  // is local (the standin look until then -- physics must never wait
+  // on media).
+  static const base::BasicSpazDef kStandardSpaz;
+  const base::BasicSpazDef& d =
+      spaz_def_->def().has_spaz() ? spaz_def_->def().spaz() : kStandardSpaz;
+  const bool look_ready =
+      spaz_def_->def().has_spaz() && spaz_def_->def().spaz_media_ready();
+  const base::BasicSpazDef& look = look_ready ? d : kStandardSpaz;
+  character_look_applied_ = look_ready;
+
+  // Physique.
+  torso_radius_ = d.torso_radius;
+  shoulder_offset_x_ = d.shoulder_offset[0];
+  shoulder_offset_y_ = d.shoulder_offset[1];
+  shoulder_offset_z_ = d.shoulder_offset[2];
+  thigh_radius_ = d.thigh_radius;
+  ankle_radius_ = d.ankle_radius;
+  // Hair comes only from the attachments list in definition form (the
+  // legacy female-hair rig belongs to the style path alone).
+  female_hair_ = false;
+  step_separation_ = d.step_separation;
+  idle_arm_stiffness_ = d.idle_arm_stiffness;
+  arm_swing_ = d.arm_swing;
+  idle_sway_ = d.idle_sway;
+
+  // Look. Color and highlight come from our attrs unless the
+  // use_spaz_def_* flags ask for the definition's own.
+  UpdateDrawColors_();
+  highlight2_ = {look.highlight2[0], look.highlight2[1], look.highlight2[2]};
+  eye_style_left_ = look.eye_style_left;
+  eye_style_right_ = look.eye_style_right;
+  eye_scale_ = look.eye_scale;
+  eye_offset_x_ = look.eye_offset[0];
+  eye_offset_y_ = look.eye_offset[1];
+  eye_offset_z_ = look.eye_offset[2];
+  eye_color_red_ = look.eye_color[0];
+  eye_color_green_ = look.eye_color[1];
+  eye_color_blue_ = look.eye_color[2];
+  eye_ball_color_red_ = look.eyeball_color[0];
+  eye_ball_color_green_ = look.eyeball_color[1];
+  eye_ball_color_blue_ = look.eyeball_color[2];
+  eye_lid_color_red_ = look.eyelid_color[0];
+  eye_lid_color_green_ = look.eyelid_color[1];
+  eye_lid_color_blue_ = look.eyelid_color[2];
+  default_eye_lid_angle_ = look.eyelid_angle;
+  reflection_scale_ = look.reflection_scale;
+  // Flippers only shorten the arms under boxing gloves here; whether
+  // forearms and hands draw is up to the definition naming meshes for
+  // them or not.
+  flippers_ = look.flippers;
+  hide_lower_arms_ = false;
+  // Winged exactly when something is attached to a wing target (the
+  // standin look has nothing there). This is also what runs the wing
+  // springs and flapping, so a wingless character pays for neither.
+  wings_ =
+      !look.attachments[static_cast<int>(base::CharacterAttachTarget::kWing)]
+           .empty()
+      || !look.attachments[static_cast<int>(
+                               base::CharacterAttachTarget::kLeftWing)]
+              .empty();
+  draw_hair_ = false;
+}
+
+void SpazNode::SetSpazDef(SpazDef* val) {
+  spaz_def_ = val;
+  if (val) {
+    // Media loads lazily; we display, so load now (before the look
+    // is derived below).
+    val->RetryMedia();
+  }
+  // Physique and look both come from the definition now (or the
+  // legacy style path again if it was cleared).
+  ApplyStyle_();
+}
+
+// Effective-media resolution. The two forms never mix: with a character
+// set, the explicit media attrs are ignored outright (future characters
+// may use entirely different mesh topologies); what we draw/play is the
+// definition's media once local, and the standin until then.
+
+auto SpazNode::MeshData_(
+    const Object::Ref<SceneMesh>& explicit_mesh,
+    const Object::Ref<base::MeshAsset>& standin,
+    Object::Ref<base::MeshAsset> base::BasicSpazMedia::* def_field) const
+    -> base::MeshAsset* {
+  if (CharacterForm_()) {
+    if (spaz_def_->def().spaz_media_ready()) {
+      return (spaz_def_->def().spaz_media().*def_field).get();
+    }
+    return standin.get();
+  }
+  return explicit_mesh.exists() ? explicit_mesh->mesh_data() : nullptr;
+}
+
+auto SpazNode::TextureData_(
+    const Object::Ref<SceneTexture>& explicit_texture,
+    const Object::Ref<base::TextureAsset>& standin,
+    Object::Ref<base::TextureAsset> base::BasicSpazMedia::* def_field) const
+    -> base::TextureAsset* {
+  if (CharacterForm_()) {
+    if (spaz_def_->def().spaz_media_ready()) {
+      return (spaz_def_->def().spaz_media().*def_field).get();
+    }
+    return standin.get();
+  }
+  return explicit_texture.exists() ? explicit_texture->texture_data() : nullptr;
+}
+
+auto SpazNode::RandomSoundData_(
+    const std::vector<Object::Ref<SceneSound> >& explicit_sounds,
+    std::initializer_list<const Object::Ref<base::SoundAsset>*> standin,
+    std::vector<Object::Ref<base::SoundAsset> > base::BasicSpazMedia::*
+        def_field) const -> base::SoundAsset* {
+  if (CharacterForm_()) {
+    if (spaz_def_->def().spaz_media_ready()) {
+      const auto& list = spaz_def_->def().spaz_media().*def_field;
+      if (list.empty()) {
+        return nullptr;
+      }
+      // NOLINTNEXTLINE yes I know; rand bad.
+      return list[rand() % list.size()].get();
+    }
+    if (standin.size() == 0) {
+      return nullptr;
+    }
+    // NOLINTNEXTLINE yes I know; rand bad.
+    return (*(standin.begin() + (rand() % standin.size())))->get();
+  }
+  SceneSound* sound = GetRandomMedia(explicit_sounds);
+  return sound ? sound->GetSoundData() : nullptr;
+}
+
+auto SpazNode::HeadMeshData_() const -> base::MeshAsset* {
+  return MeshData_(head_mesh_, g_scene_v1->assets().standin_head,
+                   &base::BasicSpazMedia::head_mesh);
+}
+auto SpazNode::TorsoMeshData_() const -> base::MeshAsset* {
+  return MeshData_(torso_mesh_, g_scene_v1->assets().standin_torso,
+                   &base::BasicSpazMedia::torso_mesh);
+}
+auto SpazNode::PelvisMeshData_() const -> base::MeshAsset* {
+  return MeshData_(pelvis_mesh_, g_scene_v1->assets().standin_pelvis,
+                   &base::BasicSpazMedia::pelvis_mesh);
+}
+auto SpazNode::UpperArmMeshData_() const -> base::MeshAsset* {
+  return MeshData_(upper_arm_mesh_, g_scene_v1->assets().standin_upper_arm,
+                   &base::BasicSpazMedia::upper_arm_mesh);
+}
+auto SpazNode::ForearmMeshData_() const -> base::MeshAsset* {
+  return MeshData_(forearm_mesh_, g_scene_v1->assets().standin_forearm,
+                   &base::BasicSpazMedia::forearm_mesh);
+}
+auto SpazNode::HandMeshData_() const -> base::MeshAsset* {
+  return MeshData_(hand_mesh_, g_scene_v1->assets().standin_hand,
+                   &base::BasicSpazMedia::hand_mesh);
+}
+auto SpazNode::UpperLegMeshData_() const -> base::MeshAsset* {
+  return MeshData_(upper_leg_mesh_, g_scene_v1->assets().standin_upper_leg,
+                   &base::BasicSpazMedia::upper_leg_mesh);
+}
+auto SpazNode::LowerLegMeshData_() const -> base::MeshAsset* {
+  return MeshData_(lower_leg_mesh_, g_scene_v1->assets().standin_lower_leg,
+                   &base::BasicSpazMedia::lower_leg_mesh);
+}
+auto SpazNode::ToesMeshData_() const -> base::MeshAsset* {
+  return MeshData_(toes_mesh_, g_scene_v1->assets().standin_toes,
+                   &base::BasicSpazMedia::toes_mesh);
+}
+auto SpazNode::ColorTextureData_() const -> base::TextureAsset* {
+  return TextureData_(color_texture_, g_scene_v1->assets().standin_color,
+                      &base::BasicSpazMedia::color_texture);
+}
+auto SpazNode::ColorMaskTextureData_() const -> base::TextureAsset* {
+  return TextureData_(color_mask_texture_,
+                      g_scene_v1->assets().standin_color_mask,
+                      &base::BasicSpazMedia::color_mask_texture);
+}
+auto SpazNode::RandomJumpSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(jump_sounds_,
+                          {&a.standin_jump01, &a.standin_jump02,
+                           &a.standin_jump03, &a.standin_jump04},
+                          &base::BasicSpazMedia::jump_sounds);
+}
+auto SpazNode::RandomAttackSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(attack_sounds_,
+                          {&a.standin_attack01, &a.standin_attack02,
+                           &a.standin_attack03, &a.standin_attack04},
+                          &base::BasicSpazMedia::attack_sounds);
+}
+auto SpazNode::RandomImpactSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(impact_sounds_,
+                          {&a.standin_impact01, &a.standin_impact02,
+                           &a.standin_impact03, &a.standin_impact04},
+                          &base::BasicSpazMedia::impact_sounds);
+}
+auto SpazNode::RandomDeathSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(death_sounds_, {&a.standin_death01},
+                          &base::BasicSpazMedia::death_sounds);
+}
+auto SpazNode::RandomPickupSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(pickup_sounds_, {&a.standin_pickup01},
+                          &base::BasicSpazMedia::pickup_sounds);
+}
+auto SpazNode::BaseTint_() const -> PieceTint_ {
+  assert(color_.size() == 3 && highlight_.size() == 3
+         && highlight2_.size() == 3);
+  PieceTint_ out{color_.data(), highlight_.data(), highlight2_.data()};
+  // A definition can say how strongly team coloring tones its
+  // highlights (pieces can again; see ApplyPieceTint_).
+  if (CharacterForm_() && character_look_applied_) {
+    const base::BasicSpazDef& look = spaz_def_->def().spaz();
+    out.highlight_strength = look.highlight_team_coloring_strength;
+    out.highlight2_strength = look.highlight2_team_coloring_strength;
+  }
+  return out;
+}
+
+void SpazNode::SetPieceTint_(base::ObjectComponent* c,
+                             const PieceTint_& tint) const {
+  c->SetColorizeColor(tint.color[0], tint.color[1], tint.color[2]);
+  float highlight[3]{tint.highlight[0], tint.highlight[1], tint.highlight[2]};
+  float highlight2[3]{tint.highlight2[0], tint.highlight2[1],
+                      tint.highlight2[2]};
+  // Team coloring: the piece's main color stays dominant over its
+  // highlights (the same rule character icons follow, so the two
+  // agree). Done here, at the one place every tint is applied, so it
+  // covers the body and every piece with tints of its own.
+  if (team_coloring_) {
+    float standard = base::Graphics::TeamColoringStrength();
+    base::Graphics::ToneForTeamColor(
+        tint.color, highlight,
+        tint.highlight_strength >= 0.0f ? tint.highlight_strength : standard);
+    base::Graphics::ToneForTeamColor(
+        tint.color, highlight2,
+        tint.highlight2_strength >= 0.0f ? tint.highlight2_strength : standard);
+  }
+  c->SetColorizeColor2(highlight[0], highlight[1], highlight[2]);
+  c->SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
+}
+
+void SpazNode::ApplyPieceTint_(const base::CharacterTintDef& def,
+                               PieceTint_* tint) const {
+  if (def.has_color && use_spaz_def_color_) {
+    tint->color = def.color;
+  }
+  if (def.has_highlight && use_spaz_def_highlight_) {
+    tint->highlight = def.highlight;
+  }
+  if (def.has_highlight2) {
+    tint->highlight2 = def.highlight2;
+  }
+  // A piece's own team-coloring strengths stand in the same way (so a
+  // piece from another character reacts as it does there).
+  if (def.highlight_team_coloring_strength >= 0.0f) {
+    tint->highlight_strength = def.highlight_team_coloring_strength;
+  }
+  if (def.highlight2_team_coloring_strength >= 0.0f) {
+    tint->highlight2_strength = def.highlight2_team_coloring_strength;
+  }
+}
+
+auto SpazNode::PartDrawData_(base::CharacterBodyPart part, bool left,
+                             const PartDraw_& base) const -> PartDraw_ {
+  PartDraw_ out{base};
+  out.mesh = nullptr;
+  switch (part) {
+    case base::CharacterBodyPart::kHead:
+      out.mesh = HeadMeshData_();
+      break;
+    case base::CharacterBodyPart::kTorso:
+      out.mesh = TorsoMeshData_();
+      break;
+    case base::CharacterBodyPart::kPelvis:
+      out.mesh = PelvisMeshData_();
+      break;
+    case base::CharacterBodyPart::kUpperArm:
+      out.mesh = UpperArmMeshData_();
+      break;
+    case base::CharacterBodyPart::kForearm:
+      out.mesh = ForearmMeshData_();
+      break;
+    case base::CharacterBodyPart::kHand:
+      out.mesh = HandMeshData_();
+      break;
+    case base::CharacterBodyPart::kUpperLeg:
+      out.mesh = UpperLegMeshData_();
+      break;
+    case base::CharacterBodyPart::kLowerLeg:
+      out.mesh = LowerLegMeshData_();
+      break;
+    case base::CharacterBodyPart::kToes:
+      out.mesh = ToesMeshData_();
+      break;
+  }
+  // Overrides exist only in definition form, once its media is in.
+  if (!CharacterForm_() || !spaz_def_->def().spaz_media_ready()) {
+    return out;
+  }
+  const auto& look =
+      spaz_def_->def().spaz_media().part_looks[static_cast<int>(part)];
+  if (look.texture.exists()) {
+    out.texture = look.texture.get();
+  }
+  if (look.tint_texture.exists()) {
+    out.tint_texture = look.tint_texture.get();
+  }
+  const auto& look_def =
+      spaz_def_->def().spaz().part_looks[static_cast<int>(part)];
+  ApplyPieceTint_(look_def.tint, &out.tint);
+  if (left) {
+    ApplyPieceTint_(look_def.left_tint, &out.tint);
+    if (look.left_mesh.exists()) {
+      out.mesh = look.left_mesh.get();
+    }
+    if (look.left_texture.exists()) {
+      out.texture = look.left_texture.get();
+    }
+    if (look.left_tint_texture.exists()) {
+      out.tint_texture = look.left_tint_texture.get();
+    }
+  }
+  return out;
+}
+
+// A wing's frame: at the torso, its forward (+z) aimed at the wing's
+// sprung point and its up kept near the torso's. Anything drawn in it
+// swings and flaps as that wing does.
+//
+// The frame is a proper (right-handed) one, so art shows as authored;
+// a left wing is that with x flipped by the caller, as a left limb is.
+// The legacy frame has x the other way: a reflection, which the
+// legacy wings have always been drawn through (both of them, inside
+// out; it doesn't show on the thin, symmetric stock wing).
+void SpazNode::ApplyWingTransform_(base::RenderComponent* c,
+                                   const Vector3f& wing_pos,
+                                   bool legacy_frame) const {
+  Vector3f torso_pos(dBodyGetPosition(body_torso_->body()));
+  Vector3f torso_up = {0.0f, 0.0f, 0.0f};
+  dBodyGetRelPointPos(body_torso_->body(), 0.0f, 1.0f, 0.0f, torso_up.v);
+  torso_up -= torso_pos;  // Needs to be relative to the body.
+  torso_up.Normalize();
+
+  Vector3f to_wing = wing_pos - torso_pos;
+  to_wing.Normalize();
+  Vector3f side = Vector3f::Cross(to_wing, torso_up);
+  side.Normalize();
+  Vector3f up = Vector3f::Cross(side, to_wing);
+  up.Normalize();
+  if (!legacy_frame) {
+    side = side * -1.0f;
+  }
+
+  c->Translate(torso_pos.x, torso_pos.y, torso_pos.z);
+  c->MultMatrix(Matrix44fOrient(side, up, to_wing).m);
+}
+
+auto SpazNode::RandomFallSound_() const -> base::SoundAsset* {
+  const auto& a = g_scene_v1->assets();
+  return RandomSoundData_(fall_sounds_, {&a.standin_fall01},
+                          &base::BasicSpazMedia::fall_sounds);
 }
 
 auto SpazNode::GetVelocity() const -> std::vector<float> {
@@ -6726,6 +7725,13 @@ auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
     return {0.0f, 0.0f, 0.0f};
   }
   std::vector<float> vals(3);
+  if (UseSyntheticPunch_() || !main_sim_limbs_) {
+    const float* v = pose_.synthetic_fist_velocity();
+    vals[0] = v[0];
+    vals[1] = v[1];
+    vals[2] = v[2];
+    return vals;
+  }
   const dReal* p = dGeomGetPosition(body_punch_->geom());
   dVector3 v;
   dBodyGetPointVel(
@@ -6735,6 +7741,79 @@ auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
   vals[1] = v[1];
   vals[2] = v[2];
   return vals;
+}
+
+auto SpazNode::UseSyntheticPunch_() const -> bool {
+  // An activity can ask for the old arm-attached punch along with
+  // legacy limbs (see GlobalsNode::legacy_spaz_limbs).
+  if (legacy_punch_) {
+    return false;
+  }
+  return scene()->protocol_version() >= kProtocolVersionSyntheticPunch;
+}
+
+auto SpazNode::UseBgLimbs_() const -> bool {
+  static const int s_override = [] {
+    const char* v = getenv("BA_SPAZ_LIMBS");
+    if (v == nullptr) {
+      return -1;
+    }
+    std::string_view sv{v};
+    if (sv == "bg") {
+      return 1;
+    }
+    if (sv == "main") {
+      return 0;
+    }
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "BA_SPAZ_LIMBS should be 'main' or 'bg'; ignoring.");
+    return -1;
+  }();
+  if (s_override >= 0) {
+    return s_override == 1;
+  }
+  // An activity can keep the old dynamics for its spazzes (the
+  // tutorial's recorded input script is calibrated against them).
+  if (GlobalsNode* globals = scene()->globals_node()) {
+    if (globals->legacy_spaz_limbs()) {
+      return false;
+    }
+  }
+  return scene()->protocol_version() >= kProtocolVersionBgLimbs;
+}
+
+auto SpazNode::LimbRenderMatrix_(int limb, Matrix44f* m) -> bool {
+  assert(limb >= 0 && limb < kLimbCount);
+  if (UseBgLimbs_()) {
+    const base::BGDynamicsCharacterRig::Output* out =
+        attachment_rig_ ? attachment_rig_->output() : nullptr;
+    if (!out || limb >= static_cast<int>(out->limbs.size())) {
+      return false;
+    }
+    if (shattered_) {
+      *m = out->limbs[limb].world;
+      return true;
+    }
+    RigidBody* anchor = AttachTargetBody_(
+        static_cast<base::CharacterAttachTarget>(out->limbs[limb].anchor));
+    if (!anchor) {
+      return false;
+    }
+    // (Row-vector convention: relative first, then the anchor.)
+    *m = out->limbs[limb].relative * anchor->GetTransform();
+    return true;
+  }
+  RigidBody* bodies[kLimbCount] = {
+      upper_right_arm_body_.get(), lower_right_arm_body_.get(),
+      upper_left_arm_body_.get(),  lower_left_arm_body_.get(),
+      upper_right_leg_body_.get(), lower_right_leg_body_.get(),
+      upper_left_leg_body_.get(),  lower_left_leg_body_.get(),
+      right_toes_body_.get(),      left_toes_body_.get()};
+  if (!bodies[limb]) {
+    return false;
+  }
+  *m = bodies[limb]->GetTransform();
+  return true;
 }
 
 auto SpazNode::GetPunchMomentumLinear() const -> std::vector<float> {
@@ -6830,11 +7909,11 @@ void SpazNode::SetHoldNode(Node* val) {
     assert(a && b);
     {
       g_base->audio->PushSourceStopSoundCall(voice_play_id_);
-      if (SceneSound* sound = GetRandomMedia(pickup_sounds_)) {
-        if (auto* source = g_base->audio->SourceBeginNew()) {
+      if (base::SoundAsset* sound = RandomPickupSound_()) {
+        if (auto* source = scene()->NewAudioSource(sound)) {
           const dReal* p_head = dGeomGetPosition(body_head_->geom());
           source->SetPosition(p_head[0], p_head[1], p_head[2]);
-          voice_play_id_ = source->Play(sound->GetSoundData());
+          voice_play_id_ = source->Play(sound);
           source->End();
         }
       }
@@ -6963,32 +8042,32 @@ void SpazNode::SetFallSounds(const std::vector<SceneSound*>& vals) {
 }
 
 auto SpazNode::GetResyncDataSize() -> int {
-  // 1 float for roll_amt_
+  // 1 float for the run-cycle phase (pose roll_amt)
   return 4;
 }
 
 auto SpazNode::GetResyncData() -> std::vector<uint8_t> {
   std::vector<uint8_t> data(4, 0);
   char* ptr = reinterpret_cast<char*>(&(data[0]));
-  Utils::EmbedFloat32(&ptr, roll_amt_);
+  Utils::EmbedFloat32(&ptr, pose_.roll_amt());
   return data;
 }
 
 void SpazNode::ApplyResyncData(const std::vector<uint8_t>& data) {
   const char* ptr = reinterpret_cast<const char*>(&(data[0]));
-  roll_amt_ = Utils::ExtractFloat32(&ptr);
+  pose_.set_roll_amt(Utils::ExtractFloat32(&ptr));
 }
 
 void SpazNode::PlayHurtSound() {
   if (dead_ || invincible_) {
     return;
   }
-  if (SceneSound* sound = GetRandomMedia(impact_sounds_)) {
-    if (auto* source = g_base->audio->SourceBeginNew()) {
+  if (base::SoundAsset* sound = RandomImpactSound_()) {
+    if (auto* source = scene()->NewAudioSource(sound)) {
       const dReal* p_top = dGeomGetPosition(body_head_->geom());
       g_base->audio->PushSourceStopSoundCall(voice_play_id_);
       source->SetPosition(p_top[0], p_top[1], p_top[2]);
-      voice_play_id_ = source->Play(sound->GetSoundData());
+      voice_play_id_ = source->Play(sound);
       source->End();
     }
   }

@@ -3,14 +3,49 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_SCENE_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_SCENE_H_
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/base/audio/audio.h"
+#include "ballistica/base/audio/audio_source.h"
 #include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::scene_v1 {
+
+/// What a sound play in a scene can say about how it should contend for
+/// audio sources, in place of what its sound's asset says (see
+/// base::Audio::SourceBeginNew). This is the form that travels in scene
+/// streams (kPlaySoundEx and friends, sound node attrs).
+struct SoundPlayOptions {
+  /// Play group to count the play toward; empty for the sound's own.
+  std::string group;
+  /// Most plays of that group to allow at once; 0 for the default.
+  int group_cap{};
+  /// A SoundPriority value, or -1 for the sound's own.
+  int priority{-1};
+
+  /// Whether anything is set.
+  auto any() const -> bool {
+    return !group.empty() || group_cap > 0 || priority >= 0;
+  }
+
+  /// Hold our values to what content may ask for. Do this to anything
+  /// that came from elsewhere (a host, a replay) before using it.
+  void Sanitize();
+
+  /// Us as overrides for the audio system (sanitize first).
+  auto ToOverrides() const -> base::AudioPlayOverrides;
+
+  /// The name for a SoundPriority value as node attrs spell it
+  /// ('lower' ... 'higher'); empty for -1.
+  static auto PriorityName(int priority) -> std::string;
+  /// The reverse; -1 for an empty name. Throws on an unknown one.
+  static auto PriorityFromName(const std::string& name) -> int;
+};
 
 /// A place where nodes/actors/etc. live.
 class Scene : public Object {
@@ -22,14 +57,23 @@ class Scene : public Object {
   auto NewNode(const std::string& type, const std::string& name,
                PyObject* delegate) -> Node*;
   void PlaySoundAtPosition(SceneSound* sound, float volume, float x, float y,
-                           float z, bool host_only = false);
-  void PlaySound(SceneSound* sound, float volume, bool host_only = false);
+                           float z, bool host_only = false,
+                           const SoundPlayOptions& options = {});
+  void PlaySound(SceneSound* sound, float volume, bool host_only = false,
+                 const SoundPlayOptions& options = {});
   static auto GetNodeMessageType(const std::string& type_name)
       -> NodeMessageType;
   static auto GetNodeMessageTypeName(NodeMessageType t) -> std::string;
   static auto GetNodeMessageFormat(NodeMessageType type) -> const char*;
   auto time() const -> millisecs_t { return time_; }
   auto stepnum() const -> int64_t { return stepnum_; }
+  /// The scene-stream protocol this scene runs under: the hosted
+  /// protocol for host scenes, the host's for a client's, the file's
+  /// for a replay's. Sim behavior that changed at some protocol keys
+  /// off this, so a client on an older host (or an old replay) keeps
+  /// simulating exactly as that host does.
+  auto protocol_version() const -> int { return protocol_version_; }
+  void set_protocol_version(int val) { protocol_version_ = val; }
   auto nodes() const -> const NodeList& { return nodes_; }
   void AddNode(Node*, int64_t* node_id, NodeList::iterator* i);
   void AddOutOfBoundsNode(Node* n) { out_of_bounds_nodes_.emplace_back(n); }
@@ -77,7 +121,74 @@ class Scene : public Object {
   auto globals_node() const -> GlobalsNode* { return globals_node_; }
   void set_globals_node(GlobalsNode* node) { globals_node_ = node; }
 
+  /// The view this scene draws into, which is where its look (tint,
+  /// shadows, etc.) gets set: the main game world's, unless the scene
+  /// has been given one of its own.
+  auto render_view() const -> base::RenderView*;
+
+  /// Give us a view of our own to draw into. This must happen before
+  /// we have any nodes.
+  void set_render_view(base::RenderView* view);
+
+  /// Whether we've been given a view of our own. A scene with its own
+  /// view is always the one in charge of that view, where scenes
+  /// sharing the main one take turns (see GlobalsNode).
+  auto has_own_render_view() const -> bool { return render_view_.exists(); }
+
+  /// The bg-dynamics world that goes with the view we draw into: the
+  /// main one, or our own if we have a view of our own. Things in the
+  /// scene wanting bg-dynamics (shadows, debris, character rigs,
+  /// terrain to land them on) go here for it. None in headless builds.
+  auto bg_dynamics_world() const -> base::BGDynamicsWorld*;
+
+  /// Silent scenes make no sound: nothing in them starts any.
+  auto silent() const -> bool { return silent_; }
+  void set_silent(bool val) { silent_ = val; }
+
+  /// Streamed-in scenes are built from a session stream someone else
+  /// wrote (a host we've joined, or a replay), possibly by an older
+  /// build. Their content is beyond our control, so checks meant to
+  /// catch our own code misbehaving should stay quiet for them.
+  auto streamed_in() const -> bool { return streamed_in_; }
+  void set_streamed_in(bool val) { streamed_in_ = val; }
+
+  /// Start a new sound for something in this scene. Returns nullptr if
+  /// there's none to be had (we're silent, or audio has none to
+  /// spare). Finish with End() on what comes back, as with
+  /// Audio::SourceBeginNew() (which see for what the spec is for).
+  auto NewAudioSource(const base::AudioPlaySpec& spec) -> base::AudioSource*;
+  /// Shorthand for the above with nothing overridden. Say what the
+  /// sound is and whether it will loop; both bear on whether there is a
+  /// source to be had.
+  auto NewAudioSource(base::SoundAsset* for_sound = nullptr,
+                      bool looping = false) -> base::AudioSource*;
+
+  /// Give our sounds a listener of our own, in place of the audio
+  /// system's (which follows the game camera); for scenes seen through
+  /// a view of their own. Pass nullptr to go back to the usual one.
+  void SetAudioListenerSpace(const base::AudioListenerSpace* space);
+
  private:
+  /// Whether a play is worth sending out our stream. Peers allow only
+  /// so many plays of a play group at once, with new ones replacing the
+  /// oldest, so past a cap's worth of starts within kPlayBurstMillisecs
+  /// any more would just cut sounds that have barely begun. (Peers
+  /// previously got every play there was, however many they then threw
+  /// away.) We can't go further than that: what is still playing on a
+  /// peer is not ours to know.
+  auto ShouldSendPlay_(SceneSound* sound, const SoundPlayOptions& options)
+      -> bool;
+  struct PlayBurst_ {
+    millisecs_t start_time{};
+    int count{};
+  };
+  /// Keyed by play group.
+  std::unordered_map<int, PlayBurst_> play_bursts_;
+  bool silent_{};
+  bool streamed_in_{};
+  std::optional<base::AudioListenerSpace> audio_listener_space_;
+  Object::Ref<base::RenderView> render_view_;
+  Object::Ref<base::BGDynamicsWorld> bg_dynamics_world_;
   GlobalsNode* globals_node_{};  // Current globals node (if any).
   std::unordered_map<int, Object::WeakRef<PlayerNode> > player_nodes_;
   int64_t stream_id_{-1};
@@ -86,6 +197,8 @@ class Scene : public Object {
   base::ContextRef context_;  // Context we were made in.
   millisecs_t time_{};
   int64_t stepnum_{};
+  int protocol_version_{kProtocolVersionMax};
+  auto GetCorrectionMessageCompact_(bool blended) -> std::vector<uint8_t>;
   bool in_step_{};
   int64_t next_node_id_{};
 

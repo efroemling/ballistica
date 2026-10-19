@@ -212,6 +212,7 @@ class ConsoleSessionManager:
             send_type=ConsoleEvent,
             recv_type=ConsoleCommand,
             on_message=lambda command: self._on_command(session, command),
+            label='console-device',
         )
         session.announced_permission = None
         session.instance_uuid = app_instance_uuid

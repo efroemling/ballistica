@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/fading_scroll_thumb.h"
 
 namespace ballistica::ui_v1 {
 
@@ -17,6 +18,8 @@ class HScrollWidget : public ContainerWidget {
   void Draw(base::RenderPass* pass, bool transparent) override;
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto GetWidgetTypeName() -> std::string override { return "hscroll"; }
+  auto GetScrollState() -> std::optional<ScrollState> override;
+  auto SetScrollOffset(float offset) -> bool override;
   void set_capture_arrows(bool val) { capture_arrows_ = val; }
   void SetWidth(float w) override {
     trough_dirty_ = shadow_dirty_ = glow_dirty_ = thumb_dirty_ = true;
@@ -43,6 +46,22 @@ class HScrollWidget : public ContainerWidget {
   void setBorderOpacity(float val) { border_opacity_ = val; }
   auto getBorderOpacity() const -> float { return border_opacity_; }
 
+  /// Whether to draw our scroll bar and let the mouse grab it. Scrolling
+  /// itself (wheel, touch, keys, page buttons) is unaffected, and layout
+  /// is too: the space the bar would occupy stays as it was.
+  void set_scrollbar_visible(bool val) { scrollbar_visible_ = val; }
+
+  /// Lay our content out with none of our historical fudge offsets: it
+  /// spans our full width (no border/margin inset at the ends) and sits
+  /// right on our bottom edge (not lifted to clear the scroll bar, which
+  /// fades in over it anyway), clipped exactly to our bounds. Off by
+  /// default so existing ui keeps its layout; callers laying out against
+  /// our exact bounds (doc-ui) turn it on.
+  void set_clean_layout(bool val) {
+    clean_layout_ = val;
+    MarkForUpdate();
+  }
+
   /// Extra inset for the page-left/page-right buttons from our left
   /// and right edges. For scrolls extended across screen margins,
   /// this keeps the buttons anchored to the virtual rect instead of
@@ -64,36 +83,39 @@ class HScrollWidget : public ContainerWidget {
   void ClampScrolling_(bool velocity_clamp, bool position_clamp,
                        millisecs_t current_time_millisecs);
   void UpdateScrolling_(millisecs_t current_time);
+  void InitOffsetIfNeeded_();
   auto ShouldShowPageLeftButton_() -> bool;
   auto ShouldShowPageRightButton_() -> bool;
   void UpdatePageLeftRightButtons_(seconds_t display_time_elapsed);
   void SnapPageLeftRightButtons_();
-  /// Rebuild thumb_round_mesh_ if the thumb's size has changed. Ninepatch
-  /// corners must not be scaled (it would distort them), so the mesh is
-  /// built at exact size and only translated when drawn.
-  void EnsureThumbRoundMesh_(float w, float h);
+  /// Space our content keeps from each end of our width (the historical
+  /// border-plus-margin inset; none with clean layout).
+  auto ContentInset_() const -> float;
   /// Left edge x of the page-left/page-right buttons (insets applied).
   auto PageLeftButtonX_() const -> float;
   auto PageRightButtonX_() const -> float;
+  /// Whether a point (our coords) is over the page-left/right button.
+  auto InPageLeftButton_(float x, float y) const -> bool;
+  auto InPageRightButton_(float x, float y) const -> bool;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
-  /// Rounded-rect thumb mesh, built at exact pixel size (see
-  /// EnsureThumbRoundMesh_).
-  Object::Ref<base::NinePatchMesh> thumb_round_mesh_;
-  float thumb_round_mesh_width_{-1.0f};
-  float thumb_round_mesh_height_{-1.0f};
+  FadingScrollThumb thumb_;
   /// The thumb's rect, in our local space.
   float thumb_rect_left_{};
   float thumb_rect_bottom_{};
   float thumb_rect_width_{};
   float thumb_rect_height_{};
-  seconds_t last_scroll_bar_show_time_{};
   seconds_t last_mouse_move_time_{};
+  // When each page button last fired, for its activation punch (a
+  // quick extra glow + grow that eases out; the one feedback an instant
+  // tap gets, since it holds no press long enough to show).
+  seconds_t page_left_activate_time_{-999.0};
+  seconds_t page_right_activate_time_{-999.0};
+  seconds_t create_time_{};
   millisecs_t last_h_scroll_event_time_millisecs_{};
   float color_red_{0.55f};
   float color_green_{0.47f};
   float color_blue_{0.67f};
-  float touch_fade_{};
   float center_offset_x_{};
   float touch_down_x_{};
   float touch_x_{};
@@ -114,11 +136,15 @@ class HScrollWidget : public ContainerWidget {
   float outline_center_x_{};
   float outline_center_y_{};
   float border_opacity_{1.0f};
+  bool scrollbar_visible_{true};
+  bool clean_layout_{};
   float thumb_click_start_h_{};
   float thumb_click_start_child_offset_h_{};
   float scroll_bar_height_{12.0f};
   float border_width_{2.0f};
   float border_height_{2.0f};
+  // (Initial value shapes how a first show request lands; see
+  // kShow handling.)
   float child_offset_h_{-9999.0f};
   float child_offset_h_smoothed_{};
   float child_max_offset_{};
@@ -153,10 +179,19 @@ class HScrollWidget : public ContainerWidget {
   bool hovering_thumb_{};
   bool mouse_over_{};
   bool have_drawn_{};
+  // Whether anything has positioned our contents yet (a show request,
+  // an explicit offset, or InitOffsetIfNeeded_()).
+  bool offset_inited_{};
   bool hovering_page_left_{};
   bool page_left_pressed_{};
   bool hovering_page_right_{};
   bool page_right_pressed_{};
+  // While a page button is pressed, whether the pointer is still over
+  // it (a press that drifts off its button lets go visually). Tracked
+  // for touch and mouse alike, unlike the hover flags above, which are
+  // mouse-only.
+  bool press_in_page_left_{};
+  bool press_in_page_right_{};
   bool last_mouse_move_in_bounds_{};
   bool last_scroll_was_touch_{};
   bool transition_in_{};

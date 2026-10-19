@@ -64,6 +64,8 @@ class AppAdapterApple : public AppAdapter {
   auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
       -> int override;
   void StopJoystickFeedback(JoystickInput* device) override;
+  auto DeviceFeedbackSupported() -> bool override;
+  auto ApplyDeviceFeedback(const FeedbackEvent& event) -> int override;
 
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
@@ -72,6 +74,8 @@ class AppAdapterApple : public AppAdapter {
   auto GetKeyRepeatInterval() -> float override;
   auto GetKeyName(int keycode) -> std::string override;
   auto NativeReviewRequestSupported() -> bool override;
+  auto CanSoftQuit() -> bool override;
+  void DoSoftQuit() override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;

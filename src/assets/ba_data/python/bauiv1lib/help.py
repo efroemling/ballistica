@@ -7,7 +7,7 @@ from typing import override
 import random
 
 import bauiv1 as bui
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _classiccharacterassets
 from bauiv1 import _builtinassets
 
 from bauiv1lib.utils import get_screen_margins
@@ -64,9 +64,20 @@ class HelpWindow(bui.MainWindow):
             scroll_height = target_height
             scroll_bottom = yoffs - scroll_height
         else:
+            # Title and back button (sized like doc-ui windows' on
+            # screen, as of 2026-09-30) share a band at the top; the
+            # scroll area runs from under it down to the target area's
+            # bottom.
             yoffs += 30
-            scroll_height = target_height - 36
-            scroll_bottom = yoffs - 64 - scroll_height
+            scroll_height = target_height - 16
+            scroll_bottom = yoffs - 44 - scroll_height
+
+        # At medium/large, extend our scroll area's top up behind our
+        # title, with a longer top fade keeping the title legible over
+        # content scrolled up there; our content gets padded by the
+        # same amount so it stays put.
+        scroll_top_extend = 0.0 if uiscale is bui.UIScale.SMALL else 40.0
+        scroll_height += scroll_top_extend
 
         # In small ui (where we cover the screen), extend our scroll
         # area out to cover any margins between the virtual rect and
@@ -95,25 +106,6 @@ class HelpWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-        else:
-            btn = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                position=(50, yoffs - 45),
-                size=(60, 55),
-                scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
-                extra_touch_border_scale=2.0,
-                autoselect=True,
-                on_activate_call=self.main_window_back,
-            )
-            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(
@@ -128,13 +120,64 @@ class HelpWindow(bui.MainWindow):
             capture_arrows=True,
             border_opacity=0.4,
             center_small_content_horizontally=True,
+            # Arrows scroll us; past either end they move on to our
+            # neighbors (toolbars included, via autoselect). No
+            # selection glow (it clashes with our title overlap).
+            move_out_at_ends=True,
+            highlight=False,
         )
-
-        if uiscale is bui.UIScale.SMALL:
-            bui.widget(
+        bui.widget(edit=self._scrollwidget, autoselect=True)
+        if uiscale is not bui.UIScale.SMALL:
+            # Content fades into our backing at our top and bottom
+            # (nothing scrolls sideways, so no fades there).
+            bui.scrollwidget(
                 edit=self._scrollwidget,
-                left_widget=bui.get_special_widget('back_button'),
+                fading_scrollbar=True,
+                edge_style='fade',
+                edge_fade=(0.0, 40.0, 0.0, 40.0 + scroll_top_extend),
             )
+
+        # (Made after our scroll area, which can reach up behind it:
+        # presses go to the last-made widget wanting them.)
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+        else:
+            # (Centered at (74, yoffs - 22), on the title.)
+            back_scale = 0.69 if uiscale is bui.UIScale.MEDIUM else 0.57
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
+                position=(
+                    74.0 - 30.0 * back_scale,
+                    yoffs - 22.0 - 27.5 * back_scale,
+                ),
+                size=(60, 55),
+                scale=back_scale,
+                label=bui.SpecialChar.BACK.value,
+                button_type='backSmall',
+                extra_touch_border_scale=2.0,
+                autoselect=True,
+                on_activate_call=self.main_window_back,
+            )
+            # Draw in front of our scroll area's fade.
+            bui.widget(
+                edit=btn,
+                depth_range=(0.9, 1.0),
+                down_widget=self._scrollwidget,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
+        # Moving up out of our scroll area lands on our back button
+        # (the toolbar's in small ui); down finds the toolbars below
+        # (autoselect).
+        if uiscale is bui.UIScale.SMALL:
+            back_button = bui.get_special_widget('back_button')
+            bui.widget(edit=self._scrollwidget, left_widget=back_button)
+        else:
+            back_button = btn
+        bui.widget(edit=self._scrollwidget, up_widget=back_button)
         bui.widget(
             edit=self._scrollwidget,
             right_widget=bui.get_special_widget('squad_button'),
@@ -162,7 +205,7 @@ class HelpWindow(bui.MainWindow):
         # so our center sits at the visible center and the extra
         # margin_left baked into sub_center_x lands content back at the
         # virtual-rect center.
-        self._sub_height += margin_bottom + margin_top
+        self._sub_height += margin_bottom + margin_top + scroll_top_extend
         sub_center_x = margin_left + 0.5 * self._sub_width
 
         self._subcontainer = bui.containerwidget(
@@ -178,7 +221,7 @@ class HelpWindow(bui.MainWindow):
 
         # Stick our title on the scrollable content in small ui mode so
         # we can use the full screen area for said content.
-        bui.textwidget(
+        title = bui.textwidget(
             parent=(
                 self._subcontainer
                 if uiscale is bui.UIScale.SMALL
@@ -187,23 +230,32 @@ class HelpWindow(bui.MainWindow):
             position=(
                 (sub_center_x, self._sub_height - margin_top - 20)
                 if uiscale is bui.UIScale.SMALL
-                else (width * 0.5, yoffs - 25)
+                else (width * 0.5, yoffs - 22)
             ),
             size=(0, 0),
             text=_classicassets.strings.help.title(
                 app_name=_classicassets.strings.ui.app_name
             ),
-            scale=0.9,
+            # (Medium/large: doc-ui windows' title size on screen, as
+            # of 2026-09-30.)
+            scale=(
+                0.9
+                if uiscale is bui.UIScale.SMALL
+                else 0.78 if uiscale is bui.UIScale.MEDIUM else 0.65
+            ),
             maxwidth=scroll_width * 0.7,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
+        if uiscale is not bui.UIScale.SMALL:
+            # Draw in front of our scroll area's fade.
+            bui.widget(edit=title, depth_range=(0.9, 1.0))
 
         spacing = 1.0
         baseh = sub_center_x
         h = baseh + 30
-        v = self._sub_height - margin_top - 55
+        v = self._sub_height - margin_top - scroll_top_extend - 55
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 
@@ -472,7 +524,13 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazAttack0', 4
+                self._play_sound,
+                [
+                    _classiccharacterassets.audio.spaz_attack01,
+                    _classiccharacterassets.audio.spaz_attack02,
+                    _classiccharacterassets.audio.spaz_attack03,
+                    _classiccharacterassets.audio.spaz_attack04,
+                ],
             ),
         )
 
@@ -502,7 +560,14 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'explosion0', 5
+                self._play_sound,
+                [
+                    _classicassets.audio.explosion01,
+                    _classicassets.audio.explosion02,
+                    _classicassets.audio.explosion03,
+                    _classicassets.audio.explosion04,
+                    _classicassets.audio.explosion05,
+                ],
             ),
         )
 
@@ -533,7 +598,8 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazPickup0', 1
+                self._play_sound,
+                [_classiccharacterassets.audio.spaz_pickup01],
             ),
         )
 
@@ -563,7 +629,13 @@ class HelpWindow(bui.MainWindow):
             selectable=False,
             enable_sound=False,
             on_activate_call=bui.WeakCallStrict(
-                self._play_sound, 'spazJump0', 4
+                self._play_sound,
+                [
+                    _classiccharacterassets.audio.spaz_jump01,
+                    _classiccharacterassets.audio.spaz_jump02,
+                    _classiccharacterassets.audio.spaz_jump03,
+                    _classiccharacterassets.audio.spaz_jump04,
+                ],
             ),
         )
 
@@ -766,8 +838,8 @@ class HelpWindow(bui.MainWindow):
                 res_scale=0.5,
             )
 
-    def _play_sound(self, text: str, num: int) -> None:
-        bui.getsound(text + str(random.randint(1, num))).play()
+    def _play_sound(self, sounds: list[bui.SoundHandle]) -> None:
+        random.choice(sounds).get().play()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

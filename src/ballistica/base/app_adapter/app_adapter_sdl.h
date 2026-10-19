@@ -100,12 +100,24 @@ class AppAdapterSDL : public AppAdapter {
   // texture (hardware-cursor mode). Returns nullptr on failure (the
   // pixel loader logs the reason).
   auto CreateHardwareCursor_() -> SDL_Cursor*;
+  /// Recompute app-active from hidden_/minimized_ and push any change
+  /// down to the engine.
+  void UpdateAppActive_();
+  /// Whether our window is currently invisible to the user -- ordered out
+  /// or sitting in the dock/taskbar. Nothing we draw can be seen, so we
+  /// skip rendering entirely and idle slowly.
+  auto WindowIsInvisible_() const -> bool { return hidden_ || minimized_; }
 
   int max_fps_{60};
   bool done_{};
   bool fullscreen_{};
   bool vsync_actually_enabled_{};
   bool hidden_{};
+  bool minimized_{};
+  /// What we've last told the engine. Seeded true to match its boot state
+  /// (app_active_ in base.h), so a clean launch pushes nothing; it warns
+  /// if fed the same state twice in a row.
+  bool app_active_{true};
 
   /// With this off, graphics call pushes simply get pushed to the main
   /// thread and graphics code is allowed to run any time in the main

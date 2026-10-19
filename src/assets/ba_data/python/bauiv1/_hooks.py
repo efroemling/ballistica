@@ -175,3 +175,32 @@ def double_transition_out_warning() -> None:
         caller_filename,
         caller_line_number,
     )
+
+
+def get_live_depiction(
+    type_id: str, key: str, depiction_json: str
+) -> bauiv1.Viewer | None:
+    """The live object behind a depiction kind that needs one.
+
+    Called by the native viewer depiction kind the first time it is
+    shown (and again if its viewer gets retired while still shown):
+    hands back the viewer app modes registered a maker for (see
+    ``UIV1AppSubsystem.live_depictions``), carrying on with the one
+    kept under ``key`` if there is one.
+
+    Each kind gets its own slot under ``key``: a window on its way out
+    and the one taking over from it share a key, and if they show
+    different kinds, a single slot would have each retiring the
+    other's viewer.
+    """
+    import babase
+
+    maker = babase.app.ui_v1.live_depictions.get(type_id)
+    if maker is None:
+        logging.warning(
+            "No live-depiction maker registered for kind '%s';"
+            ' it will show nothing.',
+            type_id,
+        )
+        return None
+    return maker(f'{key}|{type_id}', depiction_json)

@@ -339,9 +339,20 @@ class CreditsWindow(bui.MainWindow):
             scroll_height = target_height
             scroll_y = yoffs - scroll_height
         else:
+            # Title and back button (sized like doc-ui windows' on
+            # screen, as of 2026-09-30) share a band at the top; the
+            # scroll area runs from under it to a bit past the target
+            # area's bottom.
             yoffs += 30
-            scroll_height = target_height - 29
-            scroll_y = yoffs - 58 - scroll_height
+            scroll_height = target_height - 15
+            scroll_y = yoffs - 44 - scroll_height
+
+        # At medium/large, extend our scroll area's top up behind our
+        # title, with a longer top fade keeping the title legible over
+        # content scrolled up there; our content gets padded by the
+        # same amount so it stays put.
+        self._scroll_top_extend = 0.0 if uiscale is bui.UIScale.SMALL else 40.0
+        scroll_height += self._scroll_top_extend
 
         # In small ui (where we cover the screen), extend our scroll
         # area out to cover any margins between the virtual rect and
@@ -376,24 +387,6 @@ class CreditsWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-        else:
-            btn = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                position=(40, yoffs - 46),
-                size=(60, 55),
-                scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
-                on_activate_call=self.main_window_back,
-                autoselect=True,
-            )
-            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
         scroll = self._scroll = bui.scrollwidget(
             parent=self._root_widget,
             size=(
@@ -407,13 +400,59 @@ class CreditsWindow(bui.MainWindow):
             capture_arrows=True,
             border_opacity=0.4,
             center_small_content_horizontally=True,
+            # Arrows scroll us; past either end they move on to our
+            # neighbors (toolbars included, via autoselect). No
+            # selection glow (it clashes with our title overlap).
+            move_out_at_ends=True,
+            highlight=False,
         )
-
-        if uiscale is bui.UIScale.SMALL:
-            bui.widget(
+        bui.widget(edit=scroll, autoselect=True)
+        if uiscale is not bui.UIScale.SMALL:
+            # Content fades into our backing at our top and bottom
+            # (nothing scrolls sideways, so no fades there).
+            bui.scrollwidget(
                 edit=scroll,
-                left_widget=bui.get_special_widget('back_button'),
+                fading_scrollbar=True,
+                edge_style='fade',
+                edge_fade=(0.0, 40.0, 0.0, 40.0 + self._scroll_top_extend),
             )
+
+        # (Made after our scroll area, which can reach up behind it:
+        # presses go to the last-made widget wanting them.)
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+        else:
+            # (Centered at (64, yoffs - 22), on the title.)
+            back_scale = 0.66 if uiscale is bui.UIScale.MEDIUM else 0.57
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
+                position=(
+                    64.0 - 30.0 * back_scale,
+                    yoffs - 22.0 - 27.5 * back_scale,
+                ),
+                size=(60, 55),
+                scale=back_scale,
+                label=bui.SpecialChar.BACK.value,
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+                autoselect=True,
+            )
+            # Draw in front of our scroll area's fade.
+            bui.widget(edit=btn, depth_range=(0.9, 1.0), down_widget=scroll)
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
+        # Moving up out of our scroll area lands on our back button
+        # (the toolbar's in small ui); down finds the toolbars below
+        # (autoselect).
+        if uiscale is bui.UIScale.SMALL:
+            back_button = bui.get_special_widget('back_button')
+            bui.widget(edit=scroll, left_widget=back_button)
+        else:
+            back_button = btn
+        bui.widget(edit=scroll, up_widget=back_button)
         bui.widget(
             edit=scroll,
             right_widget=bui.get_special_widget('squad_button'),
@@ -491,7 +530,9 @@ class CreditsWindow(bui.MainWindow):
 
         # Grow to cover any screen margins, insetting content to match
         # (via the margin_left/margin_top shifts below) so it stays put.
-        sub_height += self._margin_bottom + self._margin_top
+        sub_height += (
+            self._margin_bottom + self._margin_top + self._scroll_top_extend
+        )
         self._sub_height = sub_height
 
         self._subcontainer = bui.containerwidget(
@@ -507,7 +548,7 @@ class CreditsWindow(bui.MainWindow):
 
         # Stick our title on the scrollable content in small ui mode so
         # we can use the full screen area for said content.
-        bui.textwidget(
+        title = bui.textwidget(
             parent=(
                 self._subcontainer
                 if self._uiscale is bui.UIScale.SMALL
@@ -519,10 +560,16 @@ class CreditsWindow(bui.MainWindow):
                     sub_height - self._margin_top - 20,
                 )
                 if self._uiscale is bui.UIScale.SMALL
-                else (self._width * 0.5, self._yoffs - 28)
+                else (self._width * 0.5, self._yoffs - 22)
             ),
             size=(0, 0),
-            scale=0.8 if self._uiscale is bui.UIScale.SMALL else 1.0,
+            # (Medium/large: doc-ui windows' title size on screen, as
+            # of 2026-09-30.)
+            scale=(
+                0.8
+                if self._uiscale is bui.UIScale.SMALL
+                else 0.75 if self._uiscale is bui.UIScale.MEDIUM else 0.65
+            ),
             text=_classicassets.strings.credits.title(
                 app_name=_classicassets.strings.ui.app_name
             ),
@@ -531,6 +578,9 @@ class CreditsWindow(bui.MainWindow):
             color=bui.app.ui_v1.title_color,
             maxwidth=self._scroll_width * 0.7,
         )
+        if self._uiscale is not bui.UIScale.SMALL:
+            # Draw in front of our scroll area's fade.
+            bui.widget(edit=title, depth_range=(0.9, 1.0))
 
         voffs = (
             -inline_title_height if self._uiscale is bui.UIScale.SMALL else 0
@@ -542,7 +592,9 @@ class CreditsWindow(bui.MainWindow):
         # frame budget. Specs are ordered top-down so visible content
         # lands first; the rest fills in below over the next fraction
         # of a second.
-        self._content_top = sub_height - self._margin_top - 20 + voffs
+        self._content_top = (
+            sub_height - self._margin_top - self._scroll_top_extend - 20 + voffs
+        )
         self._specs = specs
         self._spec_index = 0
         self._build_timer = bui.DisplayTimer(

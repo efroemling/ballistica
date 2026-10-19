@@ -74,6 +74,11 @@ def set_config_fullscreen_off() -> None:
     _babase.app.config.apply_and_commit()
 
 
+def commit_config() -> None:
+    """The native layer has written config values and wants them saved."""
+    _babase.app.config.commit()
+
+
 def not_signed_in_screen_message() -> None:
     from babase import _builtinassets
 
@@ -125,10 +130,14 @@ def error_message() -> None:
 
 
 def success_message() -> None:
-    from babase import _builtinassets
+    from babase import _builtinassets, _commonassets
+    from babase._asset_packages import construct_assets_complete
 
     if _babase.app.env.gui:
-        _builtinassets.audio.ding.get().play()
+        # (Common assets aren't available until construct-mode is done;
+        # the message alone will do before then.)
+        if construct_assets_complete():
+            _commonassets.audio.ding.get().play()
         _babase.screenmessage(
             _builtinassets.strings.ui.success, color=(0, 1, 0)
         )
@@ -156,6 +165,30 @@ def purchase_already_in_progress_error() -> None:
             _builtinassets.strings.store.purchase_already_in_progress,
             color=(1, 0, 0),
         )
+
+
+def purchase_pending_notice() -> None:
+    """Tell the user a purchase they just made is awaiting payment.
+
+    Some payment methods (UPI, cash, certain bank transfers) complete
+    asynchronously; the store hands back a *pending* purchase and grants
+    nothing until the payment clears, which can take minutes. Without
+    this the purchase flow just closes with no visible result. A modal
+    :class:`~babase.SimpleDialog` rather than a screen message so it
+    can't be missed and shows in any app-mode.
+    """
+    from babase import _builtinassets
+    from babase._simpledialog import SimpleDialog
+
+    if not _babase.app.env.gui:
+        return
+    dialog = SimpleDialog(
+        title=_builtinassets.strings.store.payment_pending_title,
+        message=_builtinassets.strings.store.payment_pending_message,
+        button_label=_builtinassets.strings.ui.ok,
+        cancel_activates_button=True,
+    )
+    dialog.update(on_button=dialog.dismiss)
 
 
 def orientation_reset_cb_message() -> None:
@@ -390,6 +423,15 @@ def discord_sign_in_token_response(
     on_discord_sign_in_token_response(attempt_id=attempt_id, result=result)
 
 
+def wanted_asset_packages_changed() -> None:
+    """A new asset-package became wanted by something on screen.
+
+    Kicks the asset subsystem's background acquirer (character-skins
+    lazy media); see :meth:`babase.AssetSubsystem.on_wanted_packages_changed`.
+    """
+    _babase.app.assets.on_wanted_packages_changed()
+
+
 def show_client_too_old_error() -> None:
     """Called at launch if the server tells us we're too old to talk to it."""
     # If you are using an old build of the app and would like to stop
@@ -445,7 +487,8 @@ def unsupported_controller_message(name: str) -> None:
 def copy_dev_console_history() -> None:
     """Copy log history from the dev console."""
     import baenv
-    from babase import _builtinassets
+    from babase import _builtinassets, _commonassets
+    from babase._asset_packages import construct_assets_complete
 
     if not _babase.clipboard_is_supported():
         _builtinassets.audio.error.get().play()
@@ -478,7 +521,10 @@ def copy_dev_console_history() -> None:
     _babase.screenmessage(
         _builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
     )
-    _builtinassets.audio.gun_cocking.get().play()
+    # The dev console works before construct-mode is done; common
+    # assets don't, so stay silent until then.
+    if construct_assets_complete():
+        _commonassets.audio.gun_cocking.get().play()
 
 
 def start_native_repl() -> bool:
@@ -529,22 +575,25 @@ def _do_start_native_repl() -> None:
 
 
 def v2_auth_request(
-    global_app_instance_id: str,
+    global_app_instance_id: str, optional: bool = False
 ) -> None | tuple[bool, str, int | None]:
     """Kick off or process v2 auth requests.
 
     Return None if no results or (success, error/token, reject-reason).
+    ``optional`` means the host lets us join without auth.
     """
     assert _babase.app.plus is not None
     out: None | tuple[bool, str, int | None] = (
-        _babase.app.plus.accounts.auth_request(global_app_instance_id)
+        _babase.app.plus.accounts.auth_request(
+            global_app_instance_id, optional=optional
+        )
     )
     return out
 
 
 def v2_auth_data(
     token: str,
-) -> None | tuple[str, str, dict, list[str] | None]:
+) -> None | tuple[str, str, dict, list[str] | None, list[str] | None]:
     """Look up autheneticated v2 account data via a token."""
     assert _babase.in_logic_thread()
 
@@ -563,4 +612,17 @@ def v2_auth_data(
         authdata.account_tag,
         authdata.player_profiles,
         authdata.classic_purchases,
+        authdata.cloud_characters,
     )
+
+
+def os_music_playing_changed(playing: bool) -> None:
+    """Another app started or stopped playing music.
+
+    Game music yields to it live; see the classic music subsystem's
+    ``on_os_music_playing_changed()``.
+    """
+    classic = _babase.app.classic
+    if classic is None:
+        return
+    classic.music.on_os_music_playing_changed(playing)

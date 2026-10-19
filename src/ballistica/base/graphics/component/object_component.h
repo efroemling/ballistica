@@ -11,13 +11,21 @@ class ObjectComponent : public RenderComponent {
  public:
   explicit ObjectComponent(RenderPass* pass) : RenderComponent(pass) {}
 
+  // (These also note the kind of slot each texture goes into; see
+  // TextureAsset::ExpectPictureSlot.)
   void SetTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectPictureSlot();
+    }
     texture_ = t;
   }
 
   void SetColorizeTexture(TextureAsset* t) {
     EnsureConfiguring();
+    if (t != nullptr) {
+      t->ExpectDataSlot("colorize");
+    }
     colorize_texture_ = t;
   }
 
@@ -29,6 +37,14 @@ class ObjectComponent : public RenderComponent {
   void SetReflection(ReflectionType r) {
     EnsureConfiguring();
     reflection_ = r;
+  }
+
+  /// Reflect this cube map rather than the built-in one a
+  /// ReflectionType picks (enough on its own to turn reflection on).
+  /// Null goes back to the type's.
+  void SetReflectionCubeMap(TextureAsset* t) {
+    EnsureConfiguring();
+    reflection_cube_map_ = t;
   }
 
   void SetReflectionScale(float r, float g, float b) {
@@ -78,7 +94,17 @@ class ObjectComponent : public RenderComponent {
     colorize_color2_g_ = g;
     colorize_color2_b_ = b;
     colorize_color2_a_ = a;
-    do_colorize_2_ = true;
+  }
+
+  /// Tint applied through the colorize texture's blue channel. White
+  /// (the default) is an exact no-op, so masks with stray blue data
+  /// cost nothing until a caller actually sets this.
+  void SetColorizeColor3(float r, float g, float b, float a = 1.0f) {
+    EnsureConfiguring();
+    colorize_color3_r_ = r;
+    colorize_color3_g_ = g;
+    colorize_color3_b_ = b;
+    colorize_color3_a_ = a;
   }
 
   void SetAddColor(float r, float g, float b) {
@@ -109,8 +135,23 @@ class ObjectComponent : public RenderComponent {
     world_space_ = w;
   }
 
+  /// Debug shading: flat grey facing-ratio (darker edge-on, lighter
+  /// face-on) with the usual light/shadow projection applied. Requires
+  /// a light-shadow type; reflection/transparency/world-space are
+  /// unsupported with it.
+  void SetFacingRatio(bool enable) {
+    EnsureConfiguring();
+    facing_ratio_ = enable;
+  }
+
  protected:
   void WriteConfig() override;
+
+  auto Reflects_() const -> bool {
+    return reflection_ != ReflectionType::kNone
+           || reflection_cube_map_.exists();
+  }
+  auto ReflectionCubeMap_() const -> TextureAsset*;
 
  protected:
   ReflectionType reflection_{ReflectionType::kNone};
@@ -120,7 +161,7 @@ class ObjectComponent : public RenderComponent {
   bool premultiplied_{};
   bool have_color_add_{};
   bool double_sided_{};
-  bool do_colorize_2_{};
+  bool facing_ratio_{};
   float color_r_{1.0f};
   float color_g_{1.0f};
   float color_b_{1.0f};
@@ -129,10 +170,14 @@ class ObjectComponent : public RenderComponent {
   float colorize_color_g_{1.0f};
   float colorize_color_b_{1.0f};
   float colorize_color_a_{1.0f};
-  float colorize_color2_r_{};
-  float colorize_color2_g_{};
-  float colorize_color2_b_{};
-  float colorize_color2_a_{};
+  float colorize_color2_r_{1.0f};
+  float colorize_color2_g_{1.0f};
+  float colorize_color2_b_{1.0f};
+  float colorize_color2_a_{1.0f};
+  float colorize_color3_r_{1.0f};
+  float colorize_color3_g_{1.0f};
+  float colorize_color3_b_{1.0f};
+  float colorize_color3_a_{1.0f};
   float color_add_r_{};
   float color_add_g_{};
   float color_add_b_{};
@@ -141,6 +186,7 @@ class ObjectComponent : public RenderComponent {
   float reflection_scale_b_{1.0f};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<TextureAsset> colorize_texture_;
+  Object::Ref<TextureAsset> reflection_cube_map_;
 };
 
 }  // namespace ballistica::base

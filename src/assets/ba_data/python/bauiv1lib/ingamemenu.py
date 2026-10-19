@@ -231,11 +231,11 @@ class InGameMenuWindow(bui.MainWindow):
                 position=(h - b_size * 0.5, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
-                label=bui.charstr(
+                label=(
                     bui.SpecialChar.PLAY_BUTTON
                     if bs.is_replay_paused()
                     else bui.SpecialChar.PAUSE_BUTTON
-                ),
+                ).value,
                 autoselect=True,
                 on_activate_call=bui.CallStrict(self._pause_or_resume_replay),
             )
@@ -256,7 +256,7 @@ class InGameMenuWindow(bui.MainWindow):
                 parent=self._root_widget,
                 draw_controller=btn,
                 # text='<<',
-                text=bui.charstr(bui.SpecialChar.REWIND_BUTTON),
+                text=bui.SpecialChar.REWIND_BUTTON.value,
                 position=(
                     h - b_size - b_buffer_1 * 2,
                     v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
@@ -283,7 +283,7 @@ class InGameMenuWindow(bui.MainWindow):
                 parent=self._root_widget,
                 draw_controller=btn,
                 # text='>>',
-                text=bui.charstr(bui.SpecialChar.FAST_FORWARD_BUTTON),
+                text=bui.SpecialChar.FAST_FORWARD_BUTTON.value,
                 position=(
                     h + b_size + b_buffer_1 * 2,
                     v - b_size * 0.5 - b_buffer_2 + 5 * t_scale + v_offs,
@@ -499,13 +499,13 @@ class InGameMenuWindow(bui.MainWindow):
             bs.resume_replay()
             bui.buttonwidget(
                 edit=self._pause_resume_button,
-                label=bui.charstr(bui.SpecialChar.PAUSE_BUTTON),
+                label=bui.SpecialChar.PAUSE_BUTTON.value,
             )
         else:
             bs.pause_replay()
             bui.buttonwidget(
                 edit=self._pause_resume_button,
-                label=bui.charstr(bui.SpecialChar.PLAY_BUTTON),
+                label=bui.SpecialChar.PLAY_BUTTON.value,
             )
 
     def _is_benchmark(self) -> bool:

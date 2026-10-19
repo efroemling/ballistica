@@ -52,7 +52,7 @@ def get_player_profile_icon(profilename: str) -> str:
         try:
             icon = appconfig['Player Profiles'][profilename]['icon']
         except KeyError:
-            icon = babase.charstr(babase.SpecialChar.LOGO)
+            icon = babase.SpecialChar.LOGO.value
     else:
         icon = ''
     return icon

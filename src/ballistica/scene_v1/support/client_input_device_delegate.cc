@@ -109,6 +109,13 @@ auto ClientInputDeviceDelegate::GetClassicPurchases() const -> PyObject* {
   return nullptr;
 }
 
+auto ClientInputDeviceDelegate::GetCloudCharacters() const -> PyObject* {
+  if (connection_to_client_.exists()) {
+    return connection_to_client_->GetCloudCharacters();
+  }
+  return nullptr;
+}
+
 auto ClientInputDeviceDelegate::IsRemoteClient() const -> bool { return true; }
 
 }  // namespace ballistica::scene_v1

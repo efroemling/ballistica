@@ -34,10 +34,18 @@ inline auto GLWrapForWrapping(TextureWrapping wrapping) -> GLint {
 class RendererGL::TextureDataGL : public TextureAssetRendererData {
  public:
   TextureDataGL(const TextureAsset& texture_in, RendererGL* renderer_in)
-      : tex_media_(&texture_in), texture_(0), renderer_(renderer_in) {
+      : tex_media_(&texture_in),
+        texture_(0),
+        render_view_id_(texture_in.render_view_id()),
+        renderer_(renderer_in) {
     assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
-    glGenTextures(1, &texture_);
+
+    // Textures that views draw to belong to what the renderer holds
+    // for the view; we have none of our own in that case.
+    if (render_view_id_ == 0) {
+      glGenTextures(1, &texture_);
+    }
     BA_DEBUG_CHECK_GL_ERROR;
   }
 
@@ -45,6 +53,8 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
     if (!g_base->app_adapter->InGraphicsContext()) {
       g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
                            "TextureDataGL dying outside of graphics thread.");
+    } else if (render_view_id_ != 0) {
+      // Nothing of ours to clean up.
     } else {
       // If we're currently bound as anything, clear that out (otherwise a
       // new texture with that same ID won't be bindable).
@@ -63,11 +73,23 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
     }
   }
 
-  auto GetTexture() const -> GLuint { return texture_; }
+  auto GetTexture() const -> GLuint {
+    // If we're what a view draws to, we are whatever the renderer last
+    // drew that view's world into (looked up each time, as that gets
+    // remade when the view changes size).
+    if (render_view_id_ != 0) {
+      return renderer_->GetTextureViewOutputTexture(render_view_id_);
+    }
+    return texture_;
+  }
 
   void Load() override {
     assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
+
+    if (render_view_id_ != 0) {
+      return;
+    }
 
     if (tex_media_->texture_type() == TextureType::k2D) {
       renderer_->BindTexture_(GL_TEXTURE_2D, texture_);
@@ -77,87 +99,19 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
       assert(preload_data->buffers[base_src_level]);
       GraphicsQuality q = g_base->graphics_server->quality();
 
-      // Determine whether to use anisotropic sampling on this texture:
-      // basically all the UI stuff that is only ever seen from straight on
-      // doesn't need it.
-      bool allow_ani = true;
-
-      // FIXME: filtering based on filename. Once we get this stuff on a
-      // server we should include this as metadata instead.
-      const char* n = tex_media_->file_name().c_str();
-
-      // The following exceptions should *never* need aniso-sampling.
-      {
-        if (!strcmp(n, "fontBig")) {
-          allow_ani = false;
-
-          // Lets splurge on this for higher but not high (names over
-          // characters might benefit, though most text doesnt).
-        } else if (strstr(n, "Icon")) {
-          allow_ani = false;
-        } else if (strstr(n, "characterIconMask")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "bg")) {
-          allow_ani = false;
-        } else if (strstr(n, "light")) {
-          allow_ani = false;
-        } else if (strstr(n, "shadow")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "sparks")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "smoke")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "scorch")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "scorchBig")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "white")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonBomb")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonJump")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonPickUp")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "buttonPunch")) {
-          allow_ani = false;
-        } else if (strstr(n, "touchArrows")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "actionButtons")) {
-          allow_ani = false;
-        }
-      }
-
-      // The following are considered 'nice to have' - we turn aniso. off for
-      // them in anything less than 'higher' mode.
-      if (allow_ani && (q < GraphicsQuality::kHigher)) {
-        if (strstr(n, "ColorMask")) {
-          allow_ani = false;  // character color-masks
-        } else if (strstr(n, "softRect")) {
-          allow_ani = false;
-        } else if (strstr(n, "BG")) {
-          allow_ani = false;  // level backgrounds
-        } else if (!strcmp(n, "explosion")) {
-          allow_ani = false;
-        } else if (!strcmp(n, "bar")) {
-          allow_ani = false;
-        }
-      }
-
-      // In higher quality we do anisotropic trilinear mipmap.
-      if (q >= GraphicsQuality::kHigher) {
+      // In high quality and up we do anisotropic trilinear mipmap, on
+      // every texture. Straight-on draws (ui, text, icons) cost nothing
+      // extra, since hardware only takes extra samples for oblique
+      // footprints. (We used to exclude textures by legacy file name;
+      // that list went dead with qualified asset refs, and the savings
+      // weren't worth per-texture build metadata.)
+      if (q >= GraphicsQuality::kHigh) {
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                         GL_LINEAR_MIPMAP_LINEAR);
-        if (renderer_->anisotropic_support() && allow_ani) {
+        if (renderer_->anisotropic_support()) {
           glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                           std::min(16.0f, renderer_->max_anisotropy()));
         }
-      } else if (q >= GraphicsQuality::kHigh) {
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                        GL_LINEAR_MIPMAP_LINEAR);
-        if (renderer_->anisotropic_support() && allow_ani)
-          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                          std::min(16.0f, renderer_->max_anisotropy()));
       } else if (q >= GraphicsQuality::kMedium) {
         // In medium quality we don't do anisotropy but do trilinear.
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -363,6 +317,7 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
   const TextureAsset* tex_media_;
   RendererGL* renderer_;
   GLuint texture_;
+  int render_view_id_;
 };
 
 }  // namespace ballistica::base

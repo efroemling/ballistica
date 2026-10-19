@@ -27,6 +27,9 @@ by ``OBOE_TAG``.
 **Local source tweaks** applied after extraction: reroute OpenAL's Android
 logging through our ``alcSetCustomAndroidLogger`` hook; add a
 ``BA_OBOE_USE_OPENSLES`` env-var escape hatch to force Oboe's OpenSL backend;
+record the audio api (AAudio or OpenSL ES) each opened Oboe stream actually
+got, readable via ``alcGetCustomAndroidOboeAudioApi`` (Oboe drops to OpenSL
+on its own when AAudio is missing or fails, and callers need to know);
 disable Oboe's open-a-test-stream probe; and demote OpenAL Soft 1.25.2's
 ``-Werror=function-effects`` to a warning (it trips its own code under newer
 clang -- same patch the Apple build applies).
@@ -42,9 +45,9 @@ from efro.error import CleanError
 
 # Source versions. Fetched as github release tarballs (see module docstring re:
 # why, not clones). Prior OpenAL pins: 1.23.1 / 1.24.2 / 1.24.3 / 1.25.1 (+
-# assorted commit SHAs); prior Oboe: 1.9.3 / 1.9.4-ish.
+# assorted commit SHAs); prior Oboe: 1.9.3 / 1.9.4-ish / 1.10.0.
 OPENAL_SOFT_TAG = '1.25.2'
-OBOE_TAG = '1.10.0'
+OBOE_TAG = '1.11.0'
 OPENAL_SOFT_TARBALL = (
     'https://github.com/kcat/openal-soft/archive/refs/tags/'
     f'{OPENAL_SOFT_TAG}.tar.gz'
@@ -69,6 +72,51 @@ def _build_dir(arch: str, mode: str) -> str:
     return f'build/openal-android/{arch}_{mode}'
 
 
+def _download_cached(url: str) -> str:
+    """Download ``url`` once into a shared cache dir; return its path.
+
+    All eight ABI/mode builds use the same two tarballs, so each is
+    fetched once and reused. Downloads that come up short (seen through
+    proxies, e.g. the Claude sandbox's, which truncate transfers
+    intermittently) are retried rather than failing the build.
+    """
+    import hashlib
+    import http.client
+
+    cachedir = 'build/openal-android/_downloads'
+    os.makedirs(cachedir, exist_ok=True)
+    path = os.path.join(
+        cachedir,
+        hashlib.sha256(url.encode()).hexdigest()[:16]
+        + '_'
+        + os.path.basename(url),
+    )
+    if os.path.exists(path):
+        return path
+    attempts = 5
+    for attempt in range(1, attempts + 1):
+        print(f'Downloading {url} ...', flush=True)
+        try:
+            with urllib.request.urlopen(url) as resp:
+                data = resp.read()
+        except http.client.IncompleteRead as exc:
+            if attempt == attempts:
+                raise
+            print(
+                f'Download came up short ({len(exc.partial)} bytes);'
+                f' retrying ({attempt}/{attempts}).',
+                flush=True,
+            )
+            continue
+        # Write-then-rename so concurrent builds never see a partial file.
+        tmppath = f'{path}.{os.getpid()}.tmp'
+        with open(tmppath, 'wb') as outfile:
+            outfile.write(data)
+        os.replace(tmppath, path)
+        break
+    return path
+
+
 def _fetch_tarball(url: str, dest: str) -> None:
     """Download + extract a github release tarball so ``dest`` is its root.
 
@@ -81,11 +129,7 @@ def _fetch_tarball(url: str, dest: str) -> None:
     tmp = f'{dest}.extract'
     subprocess.run(['rm', '-rf', tmp], check=True)
     os.makedirs(tmp)
-    tarball = f'{tmp}/src.tar.gz'
-    print(f'Downloading {url} ...', flush=True)
-    with urllib.request.urlopen(url) as resp:
-        with open(tarball, 'wb') as outfile:
-            outfile.write(resp.read())
+    tarball = _download_cached(url)
     print(f'Extracting {os.path.basename(url)} ...', flush=True)
     with tarfile.open(tarball, 'r:gz') as tar:
         tar.extractall(tmp, filter='data')
@@ -211,6 +255,37 @@ def build_openal(arch: str, mode: str) -> None:
                     '    }\n'
                 ),
             )
+        # Record which audio api the stream actually got. Oboe quietly
+        # falls back to OpenSL ES when AAudio is unavailable, and output
+        # on OpenSL can't be tagged as game audio, so the app needs to
+        # know (see alcGetCustomAndroidOboeAudioApi below).
+        txt = replace_exact(
+            txt,
+            '#include "oboe/Oboe.h"\n',
+            (
+                '#include "oboe/Oboe.h"\n'
+                '\n'
+                '#include <atomic>\n'
+                'extern std::atomic<int> alcCustomAndroidOboeAudioApi;\n'
+            ),
+        )
+        # (Anchored on the playback stream's open; capture has its own.)
+        txt = replace_exact(
+            txt,
+            (
+                '        mStream->getBufferCapacityInFrames()));\n'
+                '    TRACE("Got stream with properties:\\n{}",'
+                ' oboe::convertToText(mStream.get()));\n'
+            ),
+            (
+                '        mStream->getBufferCapacityInFrames()));\n'
+                '    TRACE("Got stream with properties:\\n{}",'
+                ' oboe::convertToText(mStream.get()));\n'
+                '    alcCustomAndroidOboeAudioApi.store('
+                'static_cast<int>(mStream->getAudioApi()));\n'
+            ),
+        )
+
         # Set game mode.
         # if set_game_usage:
         #     txt = replace_exact(
@@ -317,6 +392,14 @@ def build_openal(arch: str, mode: str) -> None:
             '    alcCustomAndroidLogger = fn;\n'
             '}\n'
             '\n'
+            '// Set by the Oboe backend each time it opens a stream.\n'
+            'std::atomic<int> alcCustomAndroidOboeAudioApi{0};\n'
+            '\n'
+            'ALC_API int ALC_APIENTRY'
+            ' alcGetCustomAndroidOboeAudioApi() {\n'
+            '    return alcCustomAndroidOboeAudioApi.load();\n'
+            '}\n'
+            '\n'
             'ALC_API ALCenum ALC_APIENTRY'
             ' alcGetError(ALCdevice *device) noexcept\n'
         ),
@@ -338,6 +421,11 @@ def build_openal(arch: str, mode: str) -> None:
             ' alcGetError(ALCdevice *device) ALC_API_NOEXCEPT;\n'
             'ALC_API void ALC_APIENTRY alcSetCustomAndroidLogger('
             'void (*fn)(int, const char*));\n'
+            '/* Audio api of the most recently opened Oboe stream, as'
+            ' an oboe::AudioApi\n'
+            ' * value: 0 = none opened yet, 1 = OpenSL ES, 2 = AAudio. */\n'
+            'ALC_API int ALC_APIENTRY'
+            ' alcGetCustomAndroidOboeAudioApi(void);\n'
         ),
     )
     with open(fpath, 'w', encoding='utf-8') as outfile:

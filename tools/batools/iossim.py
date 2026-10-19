@@ -223,22 +223,6 @@ def _runtime_version(runtime_id: str) -> tuple[int, ...]:
     return tuple(int(p) for p in parts if p.isdigit())
 
 
-def _simulator_current_udid() -> str | None:
-    """The device the Simulator app currently targets (its last-used one).
-
-    The Simulator app auto-boots this on launch, so preferring it keeps us
-    from spawning a second window next to the one it opens.
-    """
-    out = subprocess.run(
-        ['defaults', 'read', 'com.apple.iphonesimulator', 'CurrentDeviceUDID'],
-        capture_output=True,
-        check=False,
-    )
-    if out.returncode != 0:
-        return None
-    return out.stdout.decode().strip() or None
-
-
 def _ensure_booted_device(platform: str, info: dict[str, str]) -> str:
     """Return a booted sim udid, picking + booting one if needed.
 
@@ -284,15 +268,6 @@ def _ensure_booted_device(platform: str, info: dict[str, str]) -> str:
     if booted:
         return _boot(booted[0])
 
-    # Nothing booted: prefer the device the Simulator app will auto-open on
-    # launch (its CurrentDeviceUDID / last session), so our pick matches its
-    # restored window instead of spawning a second one alongside it.
-    current = _simulator_current_udid()
-    if current:
-        for _ver, dev in candidates:
-            if dev.get('udid') == current:
-                return _boot(dev)
-
     if not candidates:
         raise CleanError(
             f'No available {platform} simulators found. Install a'
@@ -309,7 +284,7 @@ def _ensure_booted_device(platform: str, info: dict[str, str]) -> str:
 
 
 def _boot(dev: dict[str, Any]) -> str:
-    """Boot a device (if needed), show the Simulator UI, wait until ready."""
+    """Boot a device (if needed), wait until ready, show it in DeviceHub."""
     udid = str(dev['udid'])
     if dev.get('state') != 'Booted':
         name = dev.get('name', udid)
@@ -317,18 +292,24 @@ def _boot(dev: dict[str, Any]) -> str:
             f'{Clr.BLU}Booting simulator {name}...{Clr.RST}',
             flush=True,
         )
-    # Boot (if needed) and wait until fully ready BEFORE bringing up the
-    # Simulator app. Opening the app first makes it race to auto-boot its
-    # current device at the same moment we boot that same device, and the
-    # losing boot pops an 'Unable to boot device in current state: Booted'
-    # dialog. Booting to completion up front means the app just attaches to a
-    # settled device with no competing boot. We use 'bootstatus -b' (boot if
-    # needed, then wait) rather than 'simctl boot': it's a clean no-op on an
-    # already-booted device, whereas 'simctl boot' prints that same scary
-    # 'Unable to boot...: Booted' error to stderr on a re-run.
+    # Boot (if needed) and wait until fully ready before bringing up the
+    # viewer, so it attaches to a settled device. We use 'bootstatus -b'
+    # (boot if needed, then wait) rather than 'simctl boot': it's a clean
+    # no-op on an already-booted device, whereas 'simctl boot' prints a
+    # scary 'Unable to boot device in current state: Booted' error to
+    # stderr on a re-run.
     subprocess.run(['xcrun', 'simctl', 'bootstatus', udid, '-b'], check=False)
-    # Device is settled now, so the Simulator window just attaches to it.
-    subprocess.run(['open', '-a', 'Simulator'], check=False)
+    # Show the sim. Xcode 27 replaced Simulator.app with DeviceHub, which
+    # displays running sims. Always do this, even for an already-booted
+    # device: a booted sim with no window keeps running (and playing
+    # audio) with nothing on screen, and that goes unnoticed for hours.
+    if subprocess.run(['open', '-a', 'DeviceHub'], check=False).returncode:
+        print(
+            f'{Clr.YLW}Warning: could not show the Simulator window;'
+            f' the sim is running without one. Run'
+            f" 'open -a DeviceHub' (unsandboxed) to show it.{Clr.RST}",
+            flush=True,
+        )
     return udid
 
 

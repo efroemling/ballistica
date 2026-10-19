@@ -21,7 +21,6 @@ from bacommon.net import (
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
-from bauiv1lib.play import PlaylistSelectContext
 
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
@@ -54,7 +53,8 @@ class State:
     """Our core state that persists while the app is running."""
 
     sub_tab: SubTabType = SubTabType.JOIN
-    playlist_select_context: PlaylistSelectContext | None = None
+    #: Off selecting a playlist (so we re-select its button on return).
+    playlist_selecting: bool = False
 
 
 class PrivateGatherTab(GatherTab):
@@ -288,12 +288,12 @@ class PrivateGatherTab(GatherTab):
         if self._get_tokens_button:
             bui.buttonwidget(
                 edit=self._get_tokens_button,
-                label=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
+                label=bui.SpecialChar.TOKEN.value + t_str,
             )
         if self._token_count_text:
             bui.textwidget(
                 edit=self._token_count_text,
-                text=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
+                text=bui.SpecialChar.TOKEN.value + t_str,
             )
 
     def _update(self) -> None:
@@ -319,6 +319,8 @@ class PrivateGatherTab(GatherTab):
                     or now - self._last_hosting_state_query_time > 15.0
                 ):
                     self._debug_server_comm('querying private party state')
+                    # (v1 sign-in state on purpose: this query is a v1
+                    # transaction.)
                     if plus.get_v1_account_state() == 'signed_in':
                         plus.add_v1_account_transaction(
                             {
@@ -555,7 +557,7 @@ class PrivateGatherTab(GatherTab):
             autoselect=True,
         )
         bui.textwidget(
-            edit=self._join_party_code_text, on_return_press_call=btn.activate
+            edit=self._join_party_code_text, on_submit_call=btn.activate
         )
 
     def _build_host_tab(self) -> None:
@@ -687,8 +689,8 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if self._state.playlist_select_context is not None:
-                self._state.playlist_select_context = None
+            if self._state.playlist_selecting:
+                self._state.playlist_selecting = False
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
@@ -867,7 +869,7 @@ class PrivateGatherTab(GatherTab):
             if hostingstate.unavailable_error is not None:
                 btnlabel = _classicassets.strings.gather.hosting_unavailable
             elif hostingstate.party_code is None:
-                ticon = bui.charstr(bui.SpecialChar.TOKEN)
+                ticon = bui.SpecialChar.TOKEN.value
                 nowtokens = hostingstate.tokens_to_host_now
                 if nowtokens > 0 and not havegoldpass:
                     btnlabel = _classicassets.strings.gather.start_hosting_paid(
@@ -903,12 +905,8 @@ class PrivateGatherTab(GatherTab):
     def _playlist_press(self) -> None:
         assert self._host_playlist_button is not None
 
-        self._state.playlist_select_context = PlaylistSelectContext()
-
-        self.window.playlist_select(
-            origin_widget=self._host_playlist_button,
-            context=self._state.playlist_select_context,
-        )
+        self._state.playlist_selecting = True
+        self.window.playlist_select(origin_widget=self._host_playlist_button)
 
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
@@ -970,6 +968,8 @@ class PrivateGatherTab(GatherTab):
         ):
             return
 
+        # (v1 sign-in state on purpose: starting and stopping a private
+        # party goes through the v1 master server.)
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(_classicassets.strings.account.not_signed_in)
             _builtinassets.audio.error.get().play()

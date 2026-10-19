@@ -22,9 +22,10 @@ Session::~Session() { g_scene_v1->session_count--; }
 void Session::Update(int time_advance_millisecs, double time_advance) {}
 
 auto Session::TimeToNextEvent() -> std::optional<microsecs_t> {
-  BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-              "Session::TimeToNextEvent() being called; should not happen.");
-  return 5000000;
+  // Sessions without their own timers (client sessions, replays) are
+  // driven by incoming data rather than scheduled events, so they
+  // place no constraint on headless display-time stepping.
+  return {};
 }
 
 auto Session::GetForegroundContext() -> base::ContextRef { return {}; }

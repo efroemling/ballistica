@@ -7,8 +7,10 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
 
@@ -42,7 +44,14 @@ auto LightNode::InitType() -> NodeType* {
   return node_type;
 }
 
-LightNode::LightNode(Scene* scene) : Node(scene, node_type) {}
+LightNode::LightNode(Scene* scene)
+    : Node(scene, node_type)
+#if !BA_HEADLESS_BUILD
+      ,
+      shadow_(scene->bg_dynamics_world(), 0.2f)
+#endif  // !BA_HEADLESS_BUILD
+{
+}
 
 auto LightNode::GetVolumeLightIntensity() -> float {
   return intensity_ * volume_intensity_scale_ * 0.02f;
@@ -53,7 +62,8 @@ void LightNode::Step() {
   // create or destroy our light-volume as needed
   // (minimize redundant create/destroy/sets this way)
   if (lights_volumes_ && !volume_light_.exists()) {
-    volume_light_ = Object::New<base::BGDynamicsVolumeLight>();
+    volume_light_ =
+        Object::New<base::BGDynamicsVolumeLight>(scene()->bg_dynamics_world());
     float i = GetVolumeLightIntensity();
     volume_light_->SetColor(color_[0] * i, color_[1] * i, color_[2] * i);
     volume_light_->SetPosition(
@@ -140,12 +150,12 @@ void LightNode::Draw(base::FrameDef* frame_def) {
   float brightness = s_density * 0.65f * intensity_;
 
   // draw our light on both terrain and objects
-  g_base->graphics->DrawBlotchSoft(
+  scene()->render_view()->DrawBlotchSoft(
       Vector3f(&position_[0]), 20.0f * radius_ * s_scale,
       color_[0] * brightness, color_[1] * brightness, color_[2] * brightness,
       0.0f);
 
-  g_base->graphics->DrawBlotchSoftObj(
+  scene()->render_view()->DrawBlotchSoftObj(
       Vector3f(&position_[0]), 20.0f * radius_ * s_scale,
       color_[0] * brightness, color_[1] * brightness, color_[2] * brightness,
       0.0f);

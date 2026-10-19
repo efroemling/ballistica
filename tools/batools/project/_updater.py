@@ -153,7 +153,7 @@ class ProjectUpdater:
 
         # Run some lovely checks.
         if self.run_file_checks:
-            from batools.project import _checks, _checks_cpp
+            from batools.project import _checks, _checks_cpp, _checks_apidocs
 
             _checks.check_makefiles(self)
             _checks.check_python_files(self)
@@ -163,6 +163,7 @@ class ProjectUpdater:
             _checks_cpp.check_headers(self)
             _checks.check_builtin_asset_ids(self)
             _checks.check_asset_name_compat(self)
+            _checks_apidocs.check_internal_api_modules(self)
 
         # Make sure nobody is changing this while processing.
         self._can_generate_files = False

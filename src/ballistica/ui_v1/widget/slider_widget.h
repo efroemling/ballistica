@@ -44,12 +44,24 @@ class SliderWidget : public Widget {
   void SetValue(float val);
   auto value() const -> float { return value_; }
 
-  /// Called with our value repeatedly while the nub is being dragged.
+  /// Called with our value repeatedly while the nub is being dragged, and
+  /// for each key/controller step.
   void SetOnDragCall(PyObject* call_tuple);
 
   /// Called with our value when a drag is released having changed it, or
-  /// when a key/controller press steps it.
+  /// when a run of key/controller steps that changed it settles (see
+  /// kStepSettleSeconds).
   void SetOnChangeCall(PyObject* call_tuple);
+
+  /// A disabled slider draws dimmed and can't be adjusted, but stays
+  /// selectable (as a disabled ButtonWidget does) so navigation around
+  /// it never changes. A tap still selects it (without dragging), and it
+  /// still swallows left/right presses while selected, answering them
+  /// with an error sound rather than a step.
+  void SetEnabled(bool val);
+  auto enabled() const -> bool { return enabled_; }
+
+  void SetSelected(bool s, SelectionCause cause) override;
 
   auto GetWidth() -> float override { return width_; }
   auto GetHeight() -> float override { return height_; }
@@ -57,9 +69,18 @@ class SliderWidget : public Widget {
   auto IsSelectable() -> bool override { return true; }
   auto GetWidgetTypeName() -> std::string override { return "slider"; }
 
+  /// Scale-in transition, as on ButtonWidget: after `transition_delay`
+  /// ms past creation we scale up about our center.
+  enum class TransitionType : uint8_t { kInLeft, kScale };
+  void set_transition_delay(millisecs_t val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
+
  private:
   /// Selected/hover brightness multiplier, matching ButtonWidget's rules.
   auto GetMult_(millisecs_t current_time, bool textured) const -> float;
+
+  /// Current scale-in factor (1.0 once the transition is over).
+  auto TransitionScale_(millisecs_t current_time) const -> float;
 
   /// Diameter of the nub; it is round and spans our short dimension.
   auto NubSize_() const -> float;
@@ -97,6 +118,15 @@ class SliderWidget : public Widget {
 
   void RunCall_(const Object::Ref<base::PythonContextCall>& call) const;
 
+  /// A key/controller step changed our value from `prev_value`: report it
+  /// as a drag, and (re)start the quiet period after which the run of
+  /// steps settles.
+  void OnStep_(float prev_value);
+
+  /// End a pending run of key/controller steps now, firing the change
+  /// call if the run moved us. A no-op when no run is pending.
+  void SettleSteps_();
+
   /// Rebuild our meshes if our size changed. Ninepatch corners must not be
   /// scaled (it would distort them), so rather than scaling one mesh we
   /// rebuild at the exact size whenever that size moves.
@@ -127,9 +157,22 @@ class SliderWidget : public Widget {
   /// have changed anything -- and so a cancelled one can be undone.
   float drag_start_value_{};
 
+  /// Our value when the current run of key/controller steps began. A run
+  /// is treated like a drag: each step goes out on the drag call, and the
+  /// change call fires once, when the run settles.
+  float step_start_value_{};
+
+  /// Pending while a run of steps is in progress; fires to settle it.
+  Object::Ref<base::AppTimer> step_settle_timer_;
+
+  bool enabled_{true};
   bool hover_{};
   bool pressed_{};
   bool dragging_{};
+
+  TransitionType transition_type_{TransitionType::kInLeft};
+  millisecs_t transition_delay_{};
+  millisecs_t birth_time_millisecs_{};
 
   // Keep these at the bottom, so they'll be torn down first.
   Object::Ref<base::PythonContextCall> on_drag_call_;

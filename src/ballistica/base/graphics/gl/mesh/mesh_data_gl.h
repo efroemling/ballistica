@@ -79,6 +79,9 @@ class RendererGL::MeshDataGL : public MeshRendererData {
       case DrawType::kPoints:
         gl_draw_type = GL_POINTS;
         break;
+      case DrawType::kLines:
+        gl_draw_type = GL_LINES;
+        break;
       default:
         throw Exception();
     }
@@ -87,6 +90,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
     } else {
       glDrawArrays(gl_draw_type, 0, elem_count_);
     }
+    renderer_->stats()->draw_calls++;
     BA_DEBUG_CHECK_GL_ERROR;
   }
 

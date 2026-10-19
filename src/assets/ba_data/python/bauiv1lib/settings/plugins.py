@@ -10,7 +10,7 @@ from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib import popup
-from bauiv1lib.utils import get_screen_margins, scroll_fade_top
+from bauiv1lib.utils import apply_toolbar_scroll_fades, get_screen_margins
 
 if TYPE_CHECKING:
     pass
@@ -56,7 +56,7 @@ class PluginWindow(bui.MainWindow):
         self._height = (
             900.0
             if uiscale is bui.UIScale.SMALL
-            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
+            else 520.0 if uiscale is bui.UIScale.MEDIUM else 700.0
         )
 
         # Do some fancy math to fill all available screen area up to the
@@ -66,7 +66,7 @@ class PluginWindow(bui.MainWindow):
         scale = (
             1.7
             if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 0.94 if uiscale is bui.UIScale.MEDIUM else 0.63
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -81,35 +81,29 @@ class PluginWindow(bui.MainWindow):
         self._scroll_height = target_height - 40
         self._scroll_bottom = yoffs - 64 - self._scroll_height
 
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
+        # In small ui we extend our scrollable area out into the side
+        # screen margins (space between the virtual bounds and the
+        # actual screen edges) while keeping content laid out within the
         # virtual bounds.
-        (
-            self._margin_left,
-            self._margin_right,
-            self._margin_bottom,
-            margin_top,
-        ) = (
+        self._margin_left, self._margin_right, _, _ = (
             get_screen_margins(scale)
             if uiscale is bui.UIScale.SMALL
             else (0.0, 0.0, 0.0, 0.0)
         )
 
         # In small ui we also extend the scroll's top edge all the way
-        # up to the top of the screen; soft blobs then keep our title
-        # and toolbar buttons legible over any content scrolled up
-        # there.
+        # up to the top of the virtual bounds; a fade then keeps our
+        # title and toolbar buttons legible over any content scrolled
+        # up there.
         top_extend = (
             (0.5 * self._height + 0.5 * (screensize[1] / scale))
             - (self._scroll_bottom + self._scroll_height)
-            + margin_top
             if uiscale is bui.UIScale.SMALL
             else 0.0
         )
 
         # Generous padding above our content so the first plugin row
-        # stays clear of the soft blobs and the large back button when
+        # stays clear of the fade and the large back button when
         # scrolled to the top.
         top_pad = 35.0 if uiscale is bui.UIScale.SMALL else 0.0
 
@@ -155,7 +149,7 @@ class PluginWindow(bui.MainWindow):
                 size=(60, 60),
                 scale=0.8,
                 autoselect=True,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
@@ -167,40 +161,28 @@ class PluginWindow(bui.MainWindow):
             parent=self._root_widget,
             size=(
                 self._scroll_width + self._margin_left + self._margin_right,
-                self._scroll_height + self._margin_bottom + top_extend,
+                self._scroll_height + top_extend,
             ),
             position=(
                 self._width * 0.5
                 - self._scroll_width * 0.5
                 - self._margin_left,
-                self._scroll_bottom - self._margin_bottom,
+                self._scroll_bottom,
             ),
             simple_culling_v=20.0,
             highlight=False,
             selection_loops_to_parent=True,
             claims_left_right=True,
             border_opacity=0.4,
+            fading_scrollbar=True,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
 
-        # Our scroll area extends up past our title; these soft blobs
-        # (plus the title and toolbar buttons being drawn after the
-        # scroll area) keep those legible over content scrolled up
-        # there. Note that we intentionally use the original
-        # un-margin-extended scroll geometry here so the blobs
-        # coincide with that chrome, which doesn't move when we extend
-        # out into screen margins.
+        # Our scroll area extends up past our title; fade content out
+        # toward the top so the title and toolbar buttons, drawn after
+        # the scroll area, stay legible over anything scrolled up there.
         if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                # Nudge the blobs up so their most-opaque core covers
-                # our title and toolbar-button area.
-                yoffs_extra=30.0,
-            )
+            apply_toolbar_scroll_fades(self._scrollwidget, bottom_fade=0.0)
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -249,8 +231,8 @@ class PluginWindow(bui.MainWindow):
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
-        # Explicitly slot our opaque parts in front of the soft blobs
-        # (all children of a container share a single depth slice, so
+        # Explicitly slot our opaque parts in front of our scroll area's
+        # fade (all children of a container share a single depth slice, so
         # creation order alone doesn't do it).
         bui.widget(edit=self._category_button, depth_range=(0.95, 1.0))
 
@@ -301,11 +283,7 @@ class PluginWindow(bui.MainWindow):
 
         plug_line_height = 50.0
         sub_width = self._scroll_width + self._margin_left + self._margin_right
-        sub_height = (
-            len(plugspecs) * plug_line_height
-            + self._margin_bottom
-            + self._content_top_offs
-        )
+        sub_height = len(plugspecs) * plug_line_height + self._content_top_offs
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             id=f'{self.main_window_id_prefix}|subc',
@@ -425,10 +403,9 @@ class PluginWindow(bui.MainWindow):
             # Make sure we handle all cases.
             assert_never(self._category)
 
-        # Cover any screen margins our scroll area extends into plus
-        # the padding above our content (content stays in virtual
-        # bounds, clear of top blobs/buttons).
-        sub_height += self._margin_bottom + self._content_top_offs
+        # Add the padding above our content (keeping it clear of our
+        # top fade and buttons).
+        sub_height += self._content_top_offs
         bui.containerwidget(
             edit=self._subcontainer,
             size=(

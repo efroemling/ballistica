@@ -70,6 +70,34 @@ def get_version_changelog(version: str, projroot: str) -> list[str]:
     return changelog_list
 
 
+def get_changelog_releases(projroot: str) -> list[tuple[str, str, str]]:
+    """Get the versions CHANGELOG.md has sections for, newest first.
+
+    Returns (version, date, heading) tuples, where date is the
+    section's ISO date and heading is the section's heading text (what
+    GitHub derives its anchor from). Old sections whose headings lack a
+    date are skipped.
+    """
+    import re
+    from efro.error import CleanError
+
+    changelog_path = os.path.join(projroot, 'CHANGELOG.md')
+    if not os.path.exists(changelog_path):
+        raise CleanError(f'CHANGELOG.md not found at {changelog_path}')
+
+    with open(changelog_path, 'r', encoding='utf-8') as infile:
+        changelog_content = infile.read()
+
+    return [
+        (match.group(2), match.group(3), match.group(1))
+        for match in re.finditer(
+            r'^###\s+((\d+\.\d+\.\d+)\s+\(.*?(\d{4}-\d{2}-\d{2})\))\s*$',
+            changelog_content,
+            re.MULTILINE,
+        )
+    ]
+
+
 def generate(projroot: str) -> None:
     """Main script entry point."""
 

@@ -438,7 +438,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         # run at import.
         self.tips = [
             _classicassets.strings.tips.pickup_flag(
-                pickup=babase.charstr(babase.SpecialChar.TOP_BUTTON)
+                pickup=babase.SpecialChar.TOP_BUTTON.value
             )
         ]
 

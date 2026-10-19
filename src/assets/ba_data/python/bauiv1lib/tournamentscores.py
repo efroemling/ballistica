@@ -61,7 +61,7 @@ class TournamentScoresWindow(PopupWindow):
             position=(50, self._height - 30),
             size=(50, 50),
             scale=0.5,
-            label=bui.charstr(bui.SpecialChar.CLOSE),
+            label=bui.SpecialChar.CLOSE.value,
             textcolor=(1, 1, 1),
             color=bg_color,
             on_activate_call=self._on_cancel_press,
@@ -217,7 +217,7 @@ class TournamentScoresWindow(PopupWindow):
         if len(entry[2]) != 1:
             _builtinassets.audio.error.get().play()
             return
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         AccountViewerWindow(
             account_id=entry[2][0].get('a', None),
             profile_id=entry[2][0].get('p', None),
@@ -235,5 +235,5 @@ class TournamentScoresWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self._transition_out()

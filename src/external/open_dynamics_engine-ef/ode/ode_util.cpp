@@ -185,6 +185,12 @@ void dxStepBody (dxBody *b, dReal h)
 // bodies will not be included in the simulation. disabled bodies are
 // re-enabled if they are found to be part of an active island.
 
+// ericf addition: byte size above which dxProcessIslands puts its lists
+// on the heap instead of the stack. An 8-player stress test peaked at
+// ~4900 bytes (213 bodies, 201 joints; 2026-10-14), so normal games stay
+// on the stack.
+static const size_t kProcessIslandsHeapThreshold = 12000;
+
 void dxProcessIslands (dxWorld *world, dReal stepsize, dstepper_fn_t stepper)
 {
   dxBody *b,*bb,**body;
@@ -196,22 +202,35 @@ void dxProcessIslands (dxWorld *world, dReal stepsize, dstepper_fn_t stepper)
   // handle auto-disabling of bodies
   dInternalHandleAutoDisabling (world,stepsize);
   
+  // the maximum size of the stack of unvisited bodies (allocated below)
+  // can be the lesser of the number of bodies or joints, because new
+  // bodies are only ever added to the stack by going through untagged
+  // joints. all the bodies in the stack must be tagged!
+  int stackalloc = (world->nj < world->nb) ? world->nj : world->nb;
+
+  // ericf change: the body list, joint list, and unvisited-body stack
+  // are sized by the whole world's counts and live for this entire call,
+  // with the stepper's own allocas going on top. Plain alloca of all
+  // three crashed in the field (modded games with huge object counts
+  // overflowing the thread stack), so carve them out of one block that
+  // goes to the heap when big.
+  size_t bodybytes = (size_t)world->nb * sizeof(dxBody*);
+  size_t jointbytes = (size_t)world->nj * sizeof(dxJoint*);
+  size_t stackbytes = (size_t)stackalloc * sizeof(dxBody*);
+  char *lists;
+  TRIXY_ALLOCA_THRESHOLD(lists, char, bodybytes + jointbytes + stackbytes,
+                         kProcessIslandsHeapThreshold);
+
   // make arrays for body and joint lists (for a single island) to go into
-  body = (dxBody**) ALLOCA (world->nb * sizeof(dxBody*));
-  joint = (dxJoint**) ALLOCA (world->nj * sizeof(dxJoint*));
+  body = (dxBody**) lists;
+  joint = (dxJoint**) (lists + bodybytes);
+  dxBody **stack = (dxBody**) (lists + bodybytes + jointbytes);
   int bcount = 0;	// number of bodies in `body'
   int jcount = 0;	// number of joints in `joint'
 
   // set all body/joint tags to 0
   for (b=world->firstbody; b; b=(dxBody*)b->next) b->tag = 0;
   for (j=world->firstjoint; j; j=(dxJoint*)j->next) j->tag = 0;
-
-  // allocate a stack of unvisited bodies in the island. the maximum size of
-  // the stack can be the lesser of the number of bodies or joints, because
-  // new bodies are only ever added to the stack by going through untagged
-  // joints. all the bodies in the stack must be tagged!
-  int stackalloc = (world->nj < world->nb) ? world->nj : world->nb;
-  dxBody **stack = (dxBody**) ALLOCA (stackalloc * sizeof(dxBody*));
 
   for (bb=world->firstbody; bb; bb=(dxBody*)bb->next) {
     // get bb = the next enabled, untagged body, and tag it

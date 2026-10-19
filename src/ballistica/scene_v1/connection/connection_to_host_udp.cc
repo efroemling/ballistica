@@ -20,7 +20,11 @@ namespace ballistica::scene_v1 {
 
 auto ConnectionToHostUDP::SwitchProtocol() -> bool {
   if (protocol_version() > kProtocolVersionClientMin) {
-    set_protocol_version(protocol_version() - 1);
+    int next = protocol_version() - 1;
+    while (next > kProtocolVersionClientMin && !IsJoinableHostProtocol(next)) {
+      --next;
+    }
+    set_protocol_version(next);
 
     // Need a new request id so we ignore further responses to our previous
     // requests.
@@ -44,12 +48,9 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
            + std::to_string(addr.Port()) + " with request_id "
            + std::to_string(request_id_) + ".";
   });
-  if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-    if (appmode->connections()->GetPrintUDPConnectProgress()) {
-      g_base->ScreenMessage(
-          base::BuiltinStrings::Net::Connecting()->Evaluate());
-    }
-  }
+  // Note: no "Connecting..." message here; bascenev1.connect_to_party
+  // shows it as soon as the join is requested, before the pre-join
+  // exchange that precedes us.
 }
 
 ConnectionToHostUDP::~ConnectionToHostUDP() {

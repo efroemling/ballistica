@@ -19,6 +19,11 @@ class ControlsGuide(bs.Actor):
     Shows button mappings based on what controllers are connected.
     Handy to show at the start of a series or whenever there might
     be newbies watching.
+
+    This creates a single ``localdisplay`` node; every machine in the
+    game (the host and each client) then draws its own copy showing
+    the button names for *its* controllers (see
+    :class:`LocalControlsGuide` for that side).
     """
 
     def __init__(
@@ -41,6 +46,67 @@ class ControlsGuide(bs.Actor):
                 over gameplay but may be too bright for join-screens, etc.
         """
         super().__init__()
+        self._dead = False
+        self.node: bs.Node | None = bs.newnode(
+            'localdisplay',
+            attrs={
+                'config': bs.LocalDisplayConfigSet.single(
+                    bs.ClassicControlsLocalDisplayConfig(
+                        position=position,
+                        scale=scale,
+                        delay=delay,
+                        lifespan=lifespan,
+                        bright=bright,
+                    )
+                ).to_json(),
+            },
+        )
+
+    def _die(self) -> None:
+        if self.node:
+            self.node.delete()
+        self.node = None
+        self._dead = True
+
+    @override
+    def exists(self) -> bool:
+        return not self._dead
+
+    @override
+    def handlemessage(self, msg: Any) -> Any:
+        assert not self.expired
+        if isinstance(msg, bs.DieMessage):
+            if msg.immediate:
+                self._die()
+            else:
+                # Flip invisible so each machine fades its copy out, and
+                # take the node down once that has had time to finish.
+                if self.node:
+                    self.node.visible = False
+                bs.timer(3.1, bs.WeakCallStrict(self._die))
+            return None
+        return super().handlemessage(msg)
+
+
+class LocalControlsGuide(bs.Actor):
+    """The per-machine drawing of the controls guide.
+
+    Created on each machine (host and clients) within a
+    :class:`bascenev1.LocalDisplay` context from a
+    :class:`bascenev1.ClassicControlsLocalDisplayConfig`, so every
+    player sees the button names for *their* controllers. Game code
+    should use :class:`ControlsGuide`, which creates the shared node
+    that results in one of these everywhere.
+    """
+
+    def __init__(self, config: bs.ClassicControlsLocalDisplayConfig):
+        super().__init__()
+        position = config.position
+        scale = config.scale
+        delay = config.delay
+        lifespan = config.lifespan
+        bright = config.bright
+
         show_title = True
         scale *= 0.75
         image_size = 90.0 * scale
@@ -80,7 +146,6 @@ class ControlsGuide(bs.Actor):
                 'text',
                 attrs={
                     'text': tval,
-                    'host_only': True,
                     'scale': 1.1 * scale,
                     'shadow': 0.5,
                     'flatness': 1.0,
@@ -99,7 +164,6 @@ class ControlsGuide(bs.Actor):
             attrs={
                 'texture': _classicassets.textures.button_jump.get(),
                 'absolute_scale': True,
-                'host_only': True,
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
@@ -113,7 +177,6 @@ class ControlsGuide(bs.Actor):
                 'h_align': 'center',
                 'scale': 1.5 * scale,
                 'flatness': 1.0,
-                'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
                 'position': (pos[0] + xtweak, pos[1] - offs5),
@@ -127,7 +190,6 @@ class ControlsGuide(bs.Actor):
             attrs={
                 'texture': _classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
-                'host_only': True,
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
@@ -141,7 +203,6 @@ class ControlsGuide(bs.Actor):
                 'h_align': 'center',
                 'scale': 1.5 * scale,
                 'flatness': 1.0,
-                'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
                 'position': (pos[0] + xtweak, pos[1] - offs5),
@@ -155,7 +216,6 @@ class ControlsGuide(bs.Actor):
             attrs={
                 'texture': _classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
-                'host_only': True,
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
@@ -169,7 +229,6 @@ class ControlsGuide(bs.Actor):
                 'v_align': 'top',
                 'scale': 1.5 * scale,
                 'flatness': 1.0,
-                'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
                 'position': (pos[0] + xtweak, pos[1] - offs5),
@@ -183,7 +242,6 @@ class ControlsGuide(bs.Actor):
             attrs={
                 'texture': _classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
-                'host_only': True,
                 'vr_depth': 10,
                 'position': pos,
                 'scale': (image_size, image_size),
@@ -197,7 +255,6 @@ class ControlsGuide(bs.Actor):
                 'h_align': 'center',
                 'scale': 1.5 * scale,
                 'flatness': 1.0,
-                'host_only': True,
                 'shadow': 1.0,
                 'maxwidth': maxw,
                 'position': (pos[0] + xtweak, pos[1] - offs5),
@@ -212,7 +269,6 @@ class ControlsGuide(bs.Actor):
             'text',
             attrs={
                 'scale': sval,
-                'host_only': True,
                 'shadow': 1.0 if bs.app.env.vr else 0.5,
                 'flatness': 1.0,
                 'maxwidth': 380,
@@ -226,7 +282,6 @@ class ControlsGuide(bs.Actor):
             'text',
             attrs={
                 'scale': 0.8 * scale,
-                'host_only': True,
                 'shadow': 0.5,
                 'flatness': 1.0,
                 'maxwidth': 380,
@@ -261,6 +316,16 @@ class ControlsGuide(bs.Actor):
 
         # Don't do anything until our delay has passed.
         bs.timer(delay, bs.WeakCallStrict(self._start_updating))
+
+    @staticmethod
+    def _player_input_devices() -> list[bs.InputDevice]:
+        """Return local input devices currently attached to players.
+
+        This is the local-machine analog of walking the session's
+        players' input devices, and it works on clients too (where
+        devices are attached to remote players).
+        """
+        return [d for d in bs.get_input_devices() if d.is_attached_to_player()]
 
     @staticmethod
     def _meaningful_button_name(
@@ -310,14 +375,10 @@ class ControlsGuide(bs.Actor):
         )
 
         if touchscreen is not None:
-            # We look at the session's players; not the activity's.
-            # We want to get ones who are still in the process of
-            # selecting a character, etc.
             input_devices = [
-                p.inputdevice for p in bs.getsession().sessionplayers
-            ]
-            input_devices = [
-                i for i in input_devices if i and i is not touchscreen
+                i
+                for i in self._player_input_devices()
+                if i and i is not touchscreen
             ]
             fade_in = False
             if input_devices:
@@ -373,10 +434,10 @@ class ControlsGuide(bs.Actor):
         pickup_button_names = set()
         bomb_button_names = set()
 
-        # We look at the session's players; not the activity's - we want to
-        # get ones who are still in the process of selecting a character, etc.
-        input_devices = [p.inputdevice for p in bs.getsession().sessionplayers]
-        input_devices = [i for i in input_devices if i]
+        # Look at our local input devices attached to players (this
+        # includes ones still in the process of selecting a character,
+        # etc.).
+        input_devices = [i for i in self._player_input_devices() if i]
 
         # If there's no players with input devices yet, try to default to
         # showing keyboard controls.
@@ -555,3 +616,40 @@ class ControlsGuide(bs.Actor):
                 bs.timer(3.1, bs.WeakCallStrict(self._die))
             return None
         return super().handlemessage(msg)
+
+
+class ClassicControlsLocalDisplayHandler(bs.LocalDisplayHandler):
+    """Runs a :class:`LocalControlsGuide` for a local display."""
+
+    def __init__(
+        self,
+        display: bs.LocalDisplay,
+        config: bs.ClassicControlsLocalDisplayConfig,
+    ) -> None:
+        super().__init__(display)
+        self._config = config
+        self._guide: LocalControlsGuide | None = None
+        if display.visible:
+            self._spawn()
+
+    def _spawn(self) -> None:
+        # The host-drawn guide never made it into replays (its nodes were
+        # host-only); keep that behavior.
+        if bs.is_in_replay():
+            return
+        self._guide = LocalControlsGuide(self._config).autoretain()
+
+    @override
+    def on_config_changed(self, config: bs.LocalDisplayConfig) -> None:
+        assert isinstance(config, bs.ClassicControlsLocalDisplayConfig)
+        self._config = config
+
+    @override
+    def on_visible_changed(self, visible: bool) -> None:
+        if visible:
+            if self._guide is None:
+                self._spawn()
+        else:
+            if self._guide is not None:
+                self._guide.handlemessage(bs.DieMessage())
+                self._guide = None

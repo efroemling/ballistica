@@ -12,23 +12,40 @@ from typing import TYPE_CHECKING, assert_never
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _builtinassets
+from bauiv1 import _commonassets
 
-from bacommon.docui.framefit import fit_bounds, aligned_box
-
-from bauiv1lib.docui.prep._types import DecorationPrep
+from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
+from bauiv1lib.docui.prep._types import (
+    AnimTargetKind,
+    AnimTargetPrep,
+    DecorationPrep,
+    MenuPrep,
+    NO_WRAP,
+    PopupTextPrep,
+)
+from bauiv1lib.docui.prep._depiction import prep_depiction
+from bauiv1lib.docui.prep._rowtext import wrapped_text
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
+
     from typing import Any, Callable
 
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
-    from bacommon.docui.framefit import Bounds
     from bauiv1lib.docui import DocUIWindow
+    from bauiv1lib.docui.prep._types import WrapOverride
 
 
-def _native(lstr: 'LangStrSpec | int', packages: list[str]) -> bui.LangStr:
+def _native(
+    lstr: 'LangStrSpec | int',
+    packages: list[ApverNum],
+    *,
+    wrap: WrapOverride | None = None,
+) -> bui.LangStr:
     """Native handle bound against a payload's package list.
+
+    ``wrap``, if given, overrides the string's own wrap hints.
 
     Accepts the folded index form only to reject it: indices are
     unfolded during resolve (``_resolve.deindex_langstrs``), so one
@@ -40,12 +57,12 @@ def _native(lstr: 'LangStrSpec | int', packages: list[str]) -> bui.LangStr:
             f'Unfolded language-string index {lstr} reached render; the'
             f' page was not resolved, or unfolding failed.'
         )
-    return bui.LangStr(dataclass_to_json(lstr), packages=packages)
+    return bui.LangStr(dataclass_to_json(lstr), packages=packages, wrap=wrap)
 
 
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    return f'{_builtinassets.__asset_package__}:textures/{name}'
+def _white() -> str:
+    """Qualified engine name for the plain white texture."""
+    return _refstr(_commonassets.textures.white)
 
 
 def _refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
@@ -57,6 +74,9 @@ def _refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
     renderer without mypy noticing -- the sibling in ``_calls`` caught
     it, this one did not.
     """
+    # Safe up-call: _calls only imports us from inside functions, so by
+    # the time this runs it is fully imported.
+    # pylint: disable-next=cyclic-import
     from bauiv1lib.docui.prep._calls import refstr
 
     return refstr(ref)
@@ -69,7 +89,7 @@ def prep_decorations(
     scale: float,
     tdelay: float | None,
     *,
-    packages: list[str],
+    packages: list[ApverNum],
     highlight: bool,
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
@@ -104,242 +124,23 @@ def prep_decorations(
                 out_decoration_preps,
                 highlight=highlight,
             )
-        elif dectypeid is dui2.DecorationTypeID.DISPLAY_ITEM:
-            # This build depicts nothing itself; producers send frames
-            # to anything at or past FRAME_DEPICTION_MIN_BUILD, and
-            # this build is one. Reaching here means a producer got the
-            # audience wrong, so say so rather than drawing nothing
-            # silently.
-            if bui.do_once():
-                bui.uilog.error(
-                    'DocUI received a display-item decoration, which'
-                    ' this build no longer draws; the producer should'
-                    ' have sent a frame.'
-                )
-        elif dectypeid is dui2.DecorationTypeID.FRAME:
-            assert isinstance(decoration, dui2.Frame)
-            prep_frame(
+        elif dectypeid is dui2.DecorationTypeID.DEPICTION:
+            assert isinstance(decoration, dui2.Depiction)
+            prep_depiction(
                 decoration,
                 (center_x, center_y),
                 scale,
                 tdelay,
                 out_decoration_preps,
-                packages=packages,
                 highlight=highlight,
+                suffix=(
+                    None
+                    if decoration.suffix is None
+                    else _native(decoration.suffix, packages).evaluate()
+                ),
             )
         else:
             assert_never(dectypeid)
-
-
-def prep_frame(
-    frame: dui2.Frame,
-    bcenter: tuple[float, float],
-    bscale: float,
-    tdelay: float | None,
-    out_decoration_preps: list[DecorationPrep],
-    *,
-    packages: list[str],
-    highlight: bool,
-) -> None:
-    """Prep a frame and everything inside it.
-
-    The frame's children are prepped into their own list and wrapped in
-    a single self-contained call, so the frame survives prep as one
-    thing rather than dissolving into its siblings. That is what lets
-    frame-level properties (a group transition, clipping, an eventual
-    rotation) have somewhere to live; flattening would silently drop
-    them.
-
-    The result is an ordinary :class:`DecorationPrep`, so the doc-ui
-    instantiate path runs frames with no special case. Its texture and
-    mesh maps are empty because the wrapped call resolves its own
-    children's assets.
-    """
-    # pylint: disable=cyclic-import
-    # Safe up-call: _calls only imports us from inside a function, so
-    # by the time this runs it is fully imported.
-    from bauiv1lib.docui.prep._calls import instantiate_decorations
-
-    # Children are positioned relative to the frame's own origin, so
-    # compose the frame's placement onto the incoming transform and let
-    # the normal per-decoration prep do the rest.
-    # The frame's own space, before any fitting. The size box lives
-    # here; only the content moves and shrinks.
-    base_scale = bscale * frame.scale
-    base_cx = bcenter[0] + frame.position[0] * bscale
-    base_cy = bcenter[1] + frame.position[1] * bscale
-
-    cscale = base_scale
-    cx = base_cx
-    cy = base_cy
-
-    # A sized frame fits its children into its box instead: measure
-    # their combined extent, center that, and shrink if needed. Both
-    # adjustments fold into the transform above, so the children prep
-    # exactly as they otherwise would.
-    content = _measure_children(frame, packages, quiet=frame.size is None)
-    if frame.size is not None:
-        if content is None:
-            bui.uilog.error(
-                'Sized doc-ui frame has unmeasurable children; drawing'
-                ' them unfitted. Sized frames take text and images only.'
-            )
-        else:
-            fit = fit_bounds(content, frame.size, frame.h_align, frame.v_align)
-            cscale *= fit.scale
-            cx += fit.offset[0] * cscale
-            cy += fit.offset[1] * cscale
-
-    if frame.debug:
-        _prep_frame_debug(
-            frame,
-            content,
-            base=((base_cx, base_cy), base_scale),
-            fitted=((cx, cy), cscale),
-            tdelay=tdelay,
-            out_decoration_preps=out_decoration_preps,
-        )
-
-    child_preps: list[DecorationPrep] = []
-    prep_decorations(
-        frame.decorations,
-        cx,
-        cy,
-        cscale,
-        tdelay,
-        packages=packages,
-        highlight=highlight and frame.highlight,
-        out_decoration_preps=child_preps,
-    )
-
-    def _instantiate(
-        parent: bui.Widget, draw_controller: bui.Widget | None = None
-    ) -> None:
-        instantiate_decorations(
-            child_preps, parent=parent, draw_controller=draw_controller
-        )
-
-    out_decoration_preps.append(
-        DecorationPrep(
-            call=_instantiate,
-            textures={},
-            meshes={},
-            highlight=frame.highlight,
-        )
-    )
-
-
-def _measure_children(
-    frame: dui2.Frame, packages: list[str], quiet: bool
-) -> Bounds | None:
-    """Return the combined extent of a frame's children, or None.
-
-    None means some child's size cannot be known before drawing, which
-    is a contract violation for a sized frame but merely uninteresting
-    for an unsized one -- hence ``quiet``.
-    """
-    out: Bounds | None = None
-    for child in frame.decorations:
-        bounds = _child_bounds(child, packages)
-        if bounds is None:
-            if not quiet:
-                bui.uilog.error(
-                    'Sized doc-ui frame contains a %s, which cannot be'
-                    ' measured.',
-                    type(child).__name__,
-                )
-            return None
-        out = bounds if out is None else out.union(bounds)
-    return out
-
-
-def _child_bounds(child: dui2.Decoration, packages: list[str]) -> Bounds | None:
-    """Return a child's extent in frame-local units.
-
-    None means "not measurable" -- a nested frame or display-item,
-    whose own contents would have to be resolved first.
-    """
-    dectypeid = child.get_type_id()
-
-    if dectypeid is dui2.DecorationTypeID.IMAGE:
-        assert isinstance(child, dui2.Image)
-        return aligned_box(
-            child.position,
-            child.size[0],
-            child.size[1],
-            child.h_align,
-            child.v_align,
-        )
-
-    if dectypeid is dui2.DecorationTypeID.TEXT:
-        assert isinstance(child, dui2.Text)
-        # Rendered extent is the string's measured size times the
-        # text's own scale; the frame transform supplies the rest.
-        text = _native(child.text, packages).evaluate()
-        return aligned_box(
-            child.position,
-            bui.get_string_width(text, suppress_warning=True) * child.scale,
-            bui.get_string_height(text, suppress_warning=True) * child.scale,
-            child.h_align,
-            child.v_align,
-        )
-
-    return None
-
-
-def _prep_frame_debug(
-    frame: dui2.Frame,
-    content: Bounds | None,
-    *,
-    base: tuple[tuple[float, float], float],
-    fitted: tuple[tuple[float, float], float],
-    tdelay: float | None,
-    out_decoration_preps: list[DecorationPrep],
-) -> None:
-    """Draw a frame's size box and the extent its children occupy.
-
-    Two rects rather than one, and in two different spaces: the box is
-    where content was asked to go, drawn in the frame's own space, and
-    the extent is where it ended up, drawn in the fitted space. Content
-    that overflows its box or sits off-center in it therefore looks
-    wrong here rather than having to be inferred.
-    """
-    base_center, base_scale = base
-    fit_center, fit_scale = fitted
-
-    if frame.size is not None:
-        out_decoration_preps.append(
-            _debug_rect(
-                (
-                    base_center[0] - frame.size[0] * 0.5 * base_scale,
-                    base_center[1] - frame.size[1] * 0.5 * base_scale,
-                ),
-                (
-                    frame.size[0] * base_scale,
-                    frame.size[1] * base_scale,
-                ),
-                (0, 1, 1),
-                0.25,
-                tdelay,
-            )
-        )
-
-    if content is not None:
-        out_decoration_preps.append(
-            _debug_rect(
-                (
-                    fit_center[0] + content.minx * fit_scale,
-                    fit_center[1] + content.miny * fit_scale,
-                ),
-                (
-                    content.width * fit_scale,
-                    content.height * fit_scale,
-                ),
-                (1, 0, 1),
-                0.25,
-                tdelay,
-            )
-        )
 
 
 def _debug_rect(
@@ -360,7 +161,7 @@ def _debug_rect(
             transition_delay=tdelay,
             transition_type='scale',
         ),
-        textures={'texture': _btex('white')},
+        textures={'texture': _white()},
         meshes={},
         highlight=True,
     )
@@ -373,7 +174,7 @@ def prep_text(
     tdelay: float | None,
     out_decoration_preps: list[DecorationPrep],
     *,
-    packages: list[str],
+    packages: list[ApverNum],
     highlight: bool,
 ) -> None:
     """Prep decorations for text."""
@@ -399,33 +200,56 @@ def prep_text(
     else:
         assert_never(text.v_align)
 
-    out_decoration_preps.append(
-        DecorationPrep(
-            call=partial(
-                bui.textwidget,
-                position=(xoffs, yoffs),
-                scale=text.scale * bscale,
-                maxwidth=text.size[0] * bscale,
-                max_height=text.size[1] * bscale,
-                flatness=text.flatness,
-                shadow=text.shadow,
-                h_align=h_align,
-                v_align=v_align,
-                size=(0, 0),
-                color=text.color,
-                text=_native(text.text, packages),
-                literal=True,
-                transition_delay=tdelay,
-                transition_type='scale',
-                depth_range=text.depth_range,
-            ),
-            textures={},
-            meshes={},
-            highlight=highlight and text.highlight,
+    if text.image_left is not None or text.image_right is not None:
+        _prep_text_with_images(
+            text,
+            (xoffs, yoffs),
+            bscale,
+            tdelay,
+            out_decoration_preps,
+            packages=packages,
+            highlight=highlight,
         )
-    )
+    else:
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.textwidget,
+                    position=(xoffs, yoffs),
+                    scale=text.scale * bscale,
+                    maxwidth=text.size[0] * bscale,
+                    max_height=text.size[1] * bscale,
+                    flatness=text.flatness,
+                    shadow=text.shadow,
+                    h_align=h_align,
+                    v_align=v_align,
+                    size=(0, 0),
+                    color=text.color,
+                    text=_native(text.text, packages),
+                    literal=True,
+                    transition_delay=tdelay,
+                    transition_type='scale',
+                    depth_range=text.depth_range,
+                ),
+                textures={},
+                meshes={},
+                highlight=highlight and text.highlight,
+                anim=(
+                    None
+                    if text.anim_id is None
+                    else AnimTargetPrep(
+                        anim_id=text.anim_id,
+                        kind=AnimTargetKind.TEXT,
+                        position=(xoffs, yoffs),
+                        scale=text.scale * bscale,
+                        opacity=1.0 if text.color is None else text.color[3],
+                        color=None if text.color is None else text.color[:3],
+                    )
+                ),
+            )
+        )
     # Draw square around max width/height in debug mode.
-    if text.debug:
+    if wants_debug_draw(text.debug, DebugDrawKind.DECORATIONS):
         mwfull = bscale * text.size[0]
         mhfull = bscale * text.size[1]
 
@@ -458,9 +282,201 @@ def prep_text(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': _btex('white')},
+                textures={'texture': _white()},
                 meshes={},
                 highlight=True,
+            )
+        )
+
+
+def _text_image_box(img: dui2.TextImage) -> tuple[float, float]:
+    """An end image's layout box (size less insets), in text units.
+
+    This is the box layout uses; the full image still draws around it.
+    """
+    left, bottom, right, top = img.insets
+    return (
+        img.size[0] * (1.0 - left - right),
+        img.size[1] * (1.0 - bottom - top),
+    )
+
+
+def _text_image_footprint(img: dui2.TextImage | None) -> float:
+    """Width an end image adds to its text's unit, in text units."""
+    return 0.0 if img is None else _text_image_box(img)[0]
+
+
+def _place_text_unit(
+    text: dui2.Text,
+    anchor: tuple[float, float],
+    bscale: float,
+    textw: float,
+    texth: float,
+) -> tuple[float, float, float]:
+    """Fit and align a text-with-images unit.
+
+    Returns the unit's left edge, its vertical center, and the final
+    text-units-to-screen scale.
+    """
+    left = text.image_left
+    right = text.image_right
+    unitw = _text_image_footprint(left) + textw + _text_image_footprint(right)
+    unith = max(
+        texth,
+        0.0 if left is None else _text_image_box(left)[1],
+        0.0 if right is None else _text_image_box(right)[1],
+    )
+
+    # Text units to screen units; then shrink to fit. A zero box
+    # dimension means unconstrained, as for plain text.
+    scale = text.scale * bscale
+    maxw = text.size[0] * bscale
+    maxh = text.size[1] * bscale
+    if 0.0 < maxw < unitw * scale:
+        scale = maxw / unitw
+    if 0.0 < maxh < unith * scale:
+        scale = min(scale, maxh / unith)
+
+    width = unitw * scale
+    if text.h_align is dui2.HAlign.LEFT:
+        minx = anchor[0]
+    elif text.h_align is dui2.HAlign.CENTER:
+        minx = anchor[0] - width * 0.5
+    elif text.h_align is dui2.HAlign.RIGHT:
+        minx = anchor[0] - width
+    else:
+        assert_never(text.h_align)
+
+    height = unith * scale
+    if text.v_align is dui2.VAlign.TOP:
+        centery = anchor[1] - height * 0.5
+    elif text.v_align is dui2.VAlign.CENTER:
+        centery = anchor[1]
+    elif text.v_align is dui2.VAlign.BOTTOM:
+        centery = anchor[1] + height * 0.5
+    else:
+        assert_never(text.v_align)
+
+    return minx, centery, scale
+
+
+def _prep_text_with_images(
+    text: dui2.Text,
+    anchor: tuple[float, float],
+    bscale: float,
+    tdelay: float | None,
+    out_decoration_preps: list[DecorationPrep],
+    *,
+    packages: list[ApverNum],
+    highlight: bool,
+) -> None:
+    """Prep a text and its end images as one measured, fitted unit.
+
+    The unit -- left image, text, right image -- is measured in text
+    units, shrunk (never grown) to fit the text's size box on each
+    constrained axis, then placed at the anchor by the text's own
+    alignment. Everything is done here so the text widget itself needs
+    no maxwidth handling (it would shrink the text alone and strand the
+    images).
+    """
+    lstr = _native(text.text, packages)
+    evaluated = lstr.evaluate()
+    textw = bui.get_string_width(evaluated, suppress_warning=True)
+
+    left = text.image_left
+    right = text.image_right
+    leftw = _text_image_footprint(left)
+    minx, centery, scale = _place_text_unit(
+        text,
+        anchor,
+        bscale,
+        textw,
+        bui.get_string_height(evaluated, suppress_warning=True),
+    )
+
+    highlight = highlight and text.highlight
+
+    out_decoration_preps.append(
+        DecorationPrep(
+            call=partial(
+                bui.textwidget,
+                position=(minx + leftw * scale, centery),
+                scale=scale,
+                flatness=text.flatness,
+                shadow=text.shadow,
+                h_align='left',
+                v_align='center',
+                size=(0, 0),
+                color=text.color,
+                text=lstr,
+                literal=True,
+                transition_delay=tdelay,
+                transition_type='scale',
+                depth_range=text.depth_range,
+            ),
+            textures={},
+            meshes={},
+            highlight=highlight,
+            # The text and its images all animate as the text's id
+            # (each piece about its own center).
+            anim=(
+                None
+                if text.anim_id is None
+                else AnimTargetPrep(
+                    anim_id=text.anim_id,
+                    kind=AnimTargetKind.TEXT,
+                    position=(minx + leftw * scale, centery),
+                    scale=scale,
+                    opacity=1.0 if text.color is None else text.color[3],
+                    color=None if text.color is None else text.color[:3],
+                )
+            ),
+        )
+    )
+
+    # Place each image's layout box: the left one at the unit's outer
+    # left edge, the right one just past the text, both centered on the
+    # line. The full image then draws around that box, shifted by its
+    # purely visual offset.
+    for img, boxx in (
+        (left, minx),
+        (right, minx + (leftw + textw) * scale),
+    ):
+        if img is None:
+            continue
+        boxy = centery - _text_image_box(img)[1] * scale * 0.5
+        imgpos = (
+            boxx + (img.offset[0] - img.insets[0] * img.size[0]) * scale,
+            boxy + (img.offset[1] - img.insets[1] * img.size[1]) * scale,
+        )
+        imgsize = (img.size[0] * scale, img.size[1] * scale)
+        imgopacity = 1.0 if img.color is None else img.color[3]
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.imagewidget,
+                    position=imgpos,
+                    size=imgsize,
+                    color=None if img.color is None else img.color[:3],
+                    opacity=imgopacity,
+                    transition_delay=tdelay,
+                    transition_type='scale',
+                    depth_range=text.depth_range,
+                ),
+                textures={'texture': _refstr(img.texture)},
+                meshes={},
+                highlight=highlight,
+                anim=(
+                    None
+                    if text.anim_id is None
+                    else AnimTargetPrep(
+                        anim_id=text.anim_id,
+                        kind=AnimTargetKind.IMAGE,
+                        position=imgpos,
+                        size=imgsize,
+                        opacity=imgopacity,
+                    )
+                ),
             )
         )
 
@@ -511,6 +527,9 @@ def prep_image(
     if image.mesh_transparent is not None:
         meshes['mesh_transparent'] = _refstr(image.mesh_transparent)
 
+    # 9-patch borders are in the image's own units, so they scale with
+    # its size.
+    npatch = image.nine_patch
     out_decoration_preps.append(
         DecorationPrep(
             call=partial(
@@ -521,6 +540,16 @@ def prep_image(
                 opacity=1.0 if image.color is None else image.color[3],
                 tint_color=image.tint_color,
                 tint2_color=image.tint2_color,
+                tint3_color=image.tint3_color,
+                nine_patch_insets=None if npatch is None else npatch.insets,
+                nine_patch_borders=(
+                    None
+                    if npatch is None
+                    else tuple(b * bscale for b in npatch.borders)
+                ),
+                nine_patch_tile=(
+                    None if npatch is None else (npatch.tile_h, npatch.tile_v)
+                ),
                 transition_delay=tdelay,
                 transition_type='scale',
                 depth_range=image.depth_range,
@@ -528,12 +557,23 @@ def prep_image(
             textures=textures,
             meshes=meshes,
             highlight=highlight and image.highlight,
+            anim=(
+                None
+                if image.anim_id is None
+                else AnimTargetPrep(
+                    anim_id=image.anim_id,
+                    kind=AnimTargetKind.IMAGE,
+                    position=(xoffsfin, yoffsfin),
+                    size=(widthfull, heightfull),
+                    opacity=1.0 if image.color is None else image.color[3],
+                )
+            ),
         )
     )
 
     # Show the box in debug mode. Worth having separately from the art:
     # a texture with a transparent margin draws smaller than its bounds.
-    if image.debug:
+    if wants_debug_draw(image.debug, DebugDrawKind.DECORATIONS):
         out_decoration_preps.append(
             _debug_rect(
                 (xoffsfin, yoffsfin),
@@ -553,7 +593,7 @@ def prep_row_debug(
 ) -> None:
     """Prep debug decorations for a row."""
 
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     # Shrink the square we draw a tiny bit so rows butted up to
     # eachother can be seen.
@@ -577,6 +617,64 @@ def prep_row_debug(
     )
 
 
+def _backing_imagewidget(
+    *,
+    parent: bui.Widget,
+    texture: bui.Texture,
+    position: tuple[float, float],
+    size: tuple[float, float],
+    color: tuple[float, float, float],
+    opacity: float,
+    transition_delay: float | None,
+) -> bui.Widget:
+    """An image widget drawn behind everything else on its page.
+
+    The page's container gives its children a single shared depth
+    slice, where a card's opaque contents would depth-fight it.
+    """
+    img = bui.imagewidget(
+        parent=parent,
+        texture=texture,
+        position=position,
+        size=size,
+        color=color,
+        opacity=opacity,
+        transition_delay=transition_delay,
+        transition_type='scale',
+    )
+    bui.widget(edit=img, draw_behind=True)
+    return img
+
+
+def prep_section_backing(
+    size: tuple[float, float],
+    pos: tuple[float, float],
+    *,
+    color: tuple[float, float, float, float],
+    texture: TextureSpec | int | None,
+    tdelay: float | None,
+    out_decoration_preps: list[DecorationPrep],
+) -> None:
+    """Prep a section's backing: a tinted rect (or texture) behind it."""
+    out_decoration_preps.append(
+        DecorationPrep(
+            call=partial(
+                _backing_imagewidget,
+                position=pos,
+                size=size,
+                color=color[:3],
+                opacity=color[3],
+                transition_delay=tdelay,
+            ),
+            textures={
+                'texture': (_white() if texture is None else _refstr(texture))
+            },
+            meshes={},
+            highlight=False,
+        )
+    )
+
+
 def prep_row_debug_button(
     bsize: tuple[float, float],
     bcorner: tuple[float, float],
@@ -587,7 +685,7 @@ def prep_row_debug_button(
     xoffs = bcorner[0]
     yoffs = bcorner[1]
 
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -614,7 +712,7 @@ def prep_button_debug(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a button."""
-    textures: dict[str, str] = {'texture': _btex('white')}
+    textures: dict[str, str] = {'texture': _white()}
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -635,3 +733,81 @@ def prep_button_debug(
             highlight=True,
         )
     )
+
+
+def prep_menu(menu: dui2.Menu, packages: list[ApverNum]) -> MenuPrep:
+    """Prep the menu a button with a menu action pops up."""
+    labels = [_native(item.label, packages) for item in menu.items]
+
+    # The menu sizes itself by measuring these on the logic thread when
+    # it opens. Measuring here (we are in a background thread) gets any
+    # lazy OS font loads they incur out of the way first.
+    for label in labels:
+        bui.get_string_width(label.evaluate(), suppress_warning=True)
+
+    return MenuPrep(
+        labels=labels,
+        disabled=[item.disabled for item in menu.items],
+        actions=[item.action for item in menu.items],
+        popup_texts=[
+            (
+                prep_popup_text(item.action, packages)
+                if isinstance(item.action, dui2.PopupText)
+                else None
+            )
+            for item in menu.items
+        ],
+    )
+
+
+#: Popup-text text scale, and the width it wraps to at that scale (in
+#: the popup's own units; the popup itself scales per ui-scale).
+POPUP_TEXT_SCALE = 0.8
+_POPUP_TEXT_WRAP_WIDTH = 480.0
+
+#: The tallest popup text gets (about 14 lines); anything taller is
+#: squished to fit rather than growing the popup without bound.
+_POPUP_TEXT_MAX_HEIGHT = 400.0
+
+
+def prep_popup_text(
+    action: dui2.PopupText, packages: list[ApverNum]
+) -> PopupTextPrep:
+    """Prep the text popup a button with a popup-text action shows."""
+
+    def _nat(
+        text: LangStrSpec | int, *, wrap: WrapOverride | None = None
+    ) -> bui.LangStr:
+        return _native(text, packages, wrap=wrap)
+
+    # Index-form text reaching here is rejected by _native(), so it's
+    # safe to hand wrapped_text() only the spec form.
+    text = action.text
+    if not isinstance(text, int):
+        text = wrapped_text(
+            text,
+            maxwidth=_POPUP_TEXT_WRAP_WIDTH,
+            scale=POPUP_TEXT_SCALE,
+            native=_nat,
+            where='popup-text',
+        )
+
+    # We do our own wrapping, so the string's own wrap hints must never
+    # apply on top of it. Wrapped text comes back from wrapped_text()
+    # as a hint-free literal, but time-varying text comes back as-is,
+    # hints and all; this usage-site override turns them off for that
+    # case, both for display and for our measuring below.
+    native = _nat(text, wrap=NO_WRAP)
+    flat = native.evaluate()
+    width = bui.get_string_width(flat, suppress_warning=True) * POPUP_TEXT_SCALE
+    height = (
+        bui.get_string_height(flat, suppress_warning=True) * POPUP_TEXT_SCALE
+    )
+
+    # Text taller than our cap gets squished to fit it, which shrinks
+    # it uniformly, so it needs proportionally less width too.
+    if height > _POPUP_TEXT_MAX_HEIGHT:
+        width *= _POPUP_TEXT_MAX_HEIGHT / height
+        height = _POPUP_TEXT_MAX_HEIGHT
+
+    return PopupTextPrep(text=native, width=width, height=height)

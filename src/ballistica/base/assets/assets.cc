@@ -9,7 +9,9 @@
 #include <cstring>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -18,6 +20,8 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/asset_archive.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
@@ -29,6 +33,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/ktx2.h"
 #include "ballistica/base/logic/logic.h"
@@ -67,7 +72,25 @@ Assets::Assets() {
     have_pending_load = false;
   }
 
-  InitSpecialChars();
+  // On platforms serving bundled asset blobs directly out of an
+  // archive (the apk on Android), map + index it now and route the
+  // registry's bundle paths into it. Bundled blobs are a hard
+  // prerequisite for running, so failure to map is fatal.
+  bundled_manifest_path_ = g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data"
+                           + BA_DIRSLASH + "manifest.json";
+  if (auto archive_info = g_core->platform->GetBundledAssetsArchiveInfo()) {
+    auto archive = AssetArchive::Open(archive_info->archive_path);
+    if (!archive) {
+      FatalError("Unable to map bundled asset archive at '"
+                 + archive_info->archive_path + "'.");
+    }
+    AssetBlob::MountArchive(std::move(archive));
+    package_registry_.SetBundledCasOverride(
+        archive_info->archive_path + "/" + archive_info->blobs_entry_dir,
+        archive_info->blob_suffix);
+    bundled_manifest_path_ =
+        archive_info->archive_path + "/" + archive_info->manifest_entry;
+  }
 }
 
 void Assets::LoadSystemData(SystemDataID id, const char* name) {
@@ -150,20 +173,28 @@ void Assets::StartLoading() {
 
   // Populate the asset-package CAS registry before the LoadBuiltin*
   // calls below land — those use qualified-ref names that require the
-  // registry to be live. Resolving the bundled builtin packages is a hard
-  // prerequisite for running: every builtin texture/mesh/sound is a ref
-  // into them, so if this fails there is no recovery -- continuing would
+  // registry to be live. Resolving the builtin (construct) package is a
+  // hard prerequisite for running: every builtin texture/mesh/sound is a
+  // ref into it, so if this fails there is no recovery -- continuing would
   // leave the whole builtin set null and blow up inscrutably at first
-  // draw. Fail loudly here instead. (Call() returns an empty ref and logs
-  // the underlying exception when the Python call raises.)
+  // draw. Fail loudly here instead. The call catches its own exceptions
+  // and returns a one-line cause (None on success), which goes in the
+  // fatal text: that text is all a field report carries, while the
+  // logged exception stays on the device. (An empty ref means the call
+  // itself raised, which Call() logs.)
   auto bundled_result =
       g_base->python->objs()
           .Get(BasePython::ObjID::kLoadBundledAssetPackagesCall)
           .Call();
-  if (!bundled_result.exists()) {
+  if (!bundled_result.exists() || !bundled_result.ValueIsNone()) {
+    std::string cause{"unknown (see the logged exception above)"};
+    if (bundled_result.exists() && bundled_result.ValueIsString()) {
+      cause = bundled_result.ValueAsString();
+    }
     FatalError(
         "Failed to load bundled builtin asset-packages; cannot continue."
-        " See the logged exception above for the underlying cause.");
+        " Cause: "
+        + cause);
   }
 
   // Just grab the lock once for all this stuff for efficiency.
@@ -178,400 +209,130 @@ void Assets::StartLoading() {
 #if BA_VR_BUILD
 #endif  // BA_VR_BUILD
 
+  // Plain fills we generate ourselves (see SolidTexture()). They live
+  // in the main texture list so context-loss reloads cover them; our
+  // own refs keep them from ever being pruned.
+  for (auto type : {TextureType::k2D, TextureType::kCubeMap}) {
+    auto* list = (type == TextureType::kCubeMap) ? &solid_cube_map_textures_
+                                                 : &solid_textures_;
+    for (auto color : {SolidTextureColor::kWhite, SolidTextureColor::kBlack}) {
+      auto tex = Object::New<TextureAsset>(color, type);
+      textures_[tex->file_name()] = tex;
+      have_pending_loads_[static_cast<int>(tex->GetAssetType())] = true;
+      MarkAssetForLoad(tex.get());
+      list->push_back(tex);
+      assert(list->size() == static_cast<size_t>(color) + 1);
+    }
+  }
+
   // CAS-backed builtin loads. The block below is auto-generated;
   // each line corresponds to one entry in ``BuiltinTextureID`` /
   // ``BuiltinSoundID`` / ``BuiltinMeshID`` / ``BuiltinCubeMapTextureID``
   // in base.h. Rerun ``make update`` to regenerate.
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_BEGIN__
   // textures
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesActionButtons,
-                     "a-0.babuiltinassets.260819:textures/action_buttons");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesArrow,
-                     "a-0.babuiltinassets.260819:textures/arrow");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesBackIcon,
-                     "a-0.babuiltinassets.260819:textures/back_icon");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesBlack,
-                     "a-0.babuiltinassets.260819:textures/black");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesBombButton,
-                     "a-0.babuiltinassets.260819:textures/bomb_button");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesBoxingGlovesColor,
-                     "a-0.babuiltinassets.260819:textures/boxing_gloves_color");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquare,
-                     "a-0.babuiltinassets.260819:textures/button_square");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquareWide,
-                     "a-0.babuiltinassets.260819:textures/button_square_wide");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCharacterIconMask,
-                     "a-0.babuiltinassets.260819:textures/character_icon_mask");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircle,
-                     "a-0.babuiltinassets.260819:textures/circle");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleNoAlpha,
-                     "a-0.babuiltinassets.260819:textures/circle_no_alpha");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleOutline,
-                     "a-0.babuiltinassets.260819:textures/circle_outline");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesCircleOutlineNoAlpha,
-      "a-0.babuiltinassets.260819:textures/circle_outline_no_alpha");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircle, "689:textures/circle");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleShadow,
-                     "a-0.babuiltinassets.260819:textures/circle_shadow");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleSoft,
-                     "a-0.babuiltinassets.260819:textures/circle_soft");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesCursor,
-                     "a-0.babuiltinassets.260819:textures/cursor");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesExplosion,
-                     "a-0.babuiltinassets.260819:textures/explosion");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColor,
-                     "a-0.babuiltinassets.260819:textures/eye_color");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColorTintMask,
-                     "a-0.babuiltinassets.260819:textures/eye_color_tint_mask");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesFlagPoleColor,
-                     "a-0.babuiltinassets.260819:textures/flag_pole_color");
+                     "689:textures/circle_shadow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCursor, "689:textures/cursor");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontBig,
-                     "a-0.babuiltinassets.260819:textures/font_big");
+                     "689:textures/font_big");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras,
-                     "a-0.babuiltinassets.260819:textures/font_extras");
+                     "689:textures/font_extras");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras2,
-                     "a-0.babuiltinassets.260819:textures/font_extras2");
+                     "689:textures/font_extras2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras3,
-                     "a-0.babuiltinassets.260819:textures/font_extras3");
+                     "689:textures/font_extras3");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras4,
-                     "a-0.babuiltinassets.260819:textures/font_extras4");
+                     "689:textures/font_extras4");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras5,
-                     "a-0.babuiltinassets.260819:textures/font_extras5");
+                     "689:textures/font_extras5");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall0,
-                     "a-0.babuiltinassets.260819:textures/font_small0");
+                     "689:textures/font_small0");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall1,
-                     "a-0.babuiltinassets.260819:textures/font_small1");
+                     "689:textures/font_small1");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall2,
-                     "a-0.babuiltinassets.260819:textures/font_small2");
+                     "689:textures/font_small2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall3,
-                     "a-0.babuiltinassets.260819:textures/font_small3");
+                     "689:textures/font_small3");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall4,
-                     "a-0.babuiltinassets.260819:textures/font_small4");
+                     "689:textures/font_small4");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall5,
-                     "a-0.babuiltinassets.260819:textures/font_small5");
+                     "689:textures/font_small5");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall6,
-                     "a-0.babuiltinassets.260819:textures/font_small6");
+                     "689:textures/font_small6");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall7,
-                     "a-0.babuiltinassets.260819:textures/font_small7");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesFuse,
-                     "a-0.babuiltinassets.260819:textures/fuse");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesGlow,
-                     "a-0.babuiltinassets.260819:textures/glow");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesLight,
-                     "a-0.babuiltinassets.260819:textures/light");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSharp,
-                     "a-0.babuiltinassets.260819:textures/light_sharp");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSoft,
-                     "a-0.babuiltinassets.260819:textures/light_soft");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesMenuButton,
-                     "a-0.babuiltinassets.260819:textures/menu_button");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesNub,
-                     "a-0.babuiltinassets.260819:textures/nub");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesOuyaAbutton,
-                     "a-0.babuiltinassets.260819:textures/ouya_abutton");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesPageLeftRight,
-                     "a-0.babuiltinassets.260819:textures/page_left_right");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesRgbStripes,
-                     "a-0.babuiltinassets.260819:textures/rgb_stripes");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesScorch,
-                     "a-0.babuiltinassets.260819:textures/scorch");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesScorchBig,
-                     "a-0.babuiltinassets.260819:textures/scorch_big");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidget,
-                     "a-0.babuiltinassets.260819:textures/scroll_widget");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidgetGlow,
-                     "a-0.babuiltinassets.260819:textures/scroll_widget_glow");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadow,
-                     "a-0.babuiltinassets.260819:textures/shadow");
+                     "689:textures/font_small7");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesHowdy, "689:textures/howdy");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadow, "689:textures/shadow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSharp,
-                     "a-0.babuiltinassets.260819:textures/shadow_sharp");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSoft,
-                     "a-0.babuiltinassets.260819:textures/shadow_soft");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesShield,
-                     "a-0.babuiltinassets.260819:textures/shield");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesShrapnel1Color,
-                     "a-0.babuiltinassets.260819:textures/shrapnel1_color");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSmoke,
-                     "a-0.babuiltinassets.260819:textures/smoke");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect,
-                     "a-0.babuiltinassets.260819:textures/soft_rect");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect2,
-                     "a-0.babuiltinassets.260819:textures/soft_rect2");
+                     "689:textures/shadow_sharp");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect2Mask,
+                     "689:textures/soft_rect2_mask");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRectMask,
+                     "689:textures/soft_rect_mask");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical,
-                     "a-0.babuiltinassets.260819:textures/soft_rect_vertical");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSparks,
-                     "a-0.babuiltinassets.260819:textures/sparks");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner,
-                     "a-0.babuiltinassets.260819:textures/spinner");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner0,
-                     "a-0.babuiltinassets.260819:textures/spinner0");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner1,
-                     "a-0.babuiltinassets.260819:textures/spinner1");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner10,
-                     "a-0.babuiltinassets.260819:textures/spinner10");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner11,
-                     "a-0.babuiltinassets.260819:textures/spinner11");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner2,
-                     "a-0.babuiltinassets.260819:textures/spinner2");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner3,
-                     "a-0.babuiltinassets.260819:textures/spinner3");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner4,
-                     "a-0.babuiltinassets.260819:textures/spinner4");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner5,
-                     "a-0.babuiltinassets.260819:textures/spinner5");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner6,
-                     "a-0.babuiltinassets.260819:textures/spinner6");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner7,
-                     "a-0.babuiltinassets.260819:textures/spinner7");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner8,
-                     "a-0.babuiltinassets.260819:textures/spinner8");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner9,
-                     "a-0.babuiltinassets.260819:textures/spinner9");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesStartButton,
-                     "a-0.babuiltinassets.260819:textures/start_button");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesTextClearButton,
-                     "a-0.babuiltinassets.260819:textures/text_clear_button");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesTouchArrows,
-                     "a-0.babuiltinassets.260819:textures/touch_arrows");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesTouchArrowsActions,
-      "a-0.babuiltinassets.260819:textures/touch_arrows_actions");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas,
-                     "a-0.babuiltinassets.260819:textures/ui_atlas");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas2,
-                     "a-0.babuiltinassets.260819:textures/ui_atlas2");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesUsersButton,
-                     "a-0.babuiltinassets.260819:textures/users_button");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesWhite,
-                     "a-0.babuiltinassets.260819:textures/white");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesWindowHsmallVmed,
-                     "a-0.babuiltinassets.260819:textures/window_hsmall_vmed");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesWindowHsmallVsmall,
-      "a-0.babuiltinassets.260819:textures/window_hsmall_vsmall");
-  LoadBuiltinTexture(BuiltinTextureID::kTexturesWings,
-                     "a-0.babuiltinassets.260819:textures/wings");
-  // cube_map_textures
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionChar,
-      "a-0.babuiltinassets.260819:textures/reflection_char");
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionPowerup,
-      "a-0.babuiltinassets.260819:textures/reflection_powerup");
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionSharp,
-      "a-0.babuiltinassets.260819:textures/reflection_sharp");
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionSharper,
-      "a-0.babuiltinassets.260819:textures/reflection_sharper");
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionSharpest,
-      "a-0.babuiltinassets.260819:textures/reflection_sharpest");
-  LoadBuiltinCubeMapTexture(
-      BuiltinCubeMapTextureID::kTexturesReflectionSoft,
-      "a-0.babuiltinassets.260819:textures/reflection_soft");
+                     "689:textures/soft_rect_vertical");
   // sounds
-  LoadBuiltinSound(BuiltinSoundID::kAudioBlank,
-                   "a-0.babuiltinassets.260819:audio/blank");
-  LoadBuiltinSound(BuiltinSoundID::kAudioBlip,
-                   "a-0.babuiltinassets.260819:audio/blip");
-  LoadBuiltinSound(BuiltinSoundID::kAudioCashRegister,
-                   "a-0.babuiltinassets.260819:audio/cash_register");
-  LoadBuiltinSound(BuiltinSoundID::kAudioClick01,
-                   "a-0.babuiltinassets.260819:audio/click01");
-  LoadBuiltinSound(BuiltinSoundID::kAudioCorkPop,
-                   "a-0.babuiltinassets.260819:audio/cork_pop");
-  LoadBuiltinSound(BuiltinSoundID::kAudioDeek,
-                   "a-0.babuiltinassets.260819:audio/deek");
-  LoadBuiltinSound(BuiltinSoundID::kAudioDing,
-                   "a-0.babuiltinassets.260819:audio/ding");
-  LoadBuiltinSound(BuiltinSoundID::kAudioError,
-                   "a-0.babuiltinassets.260819:audio/error");
-  LoadBuiltinSound(BuiltinSoundID::kAudioGunCocking,
-                   "a-0.babuiltinassets.260819:audio/gun_cocking");
-  LoadBuiltinSound(BuiltinSoundID::kAudioPowerdown01,
-                   "a-0.babuiltinassets.260819:audio/powerdown01");
-  LoadBuiltinSound(BuiltinSoundID::kAudioPunch01,
-                   "a-0.babuiltinassets.260819:audio/punch01");
-  LoadBuiltinSound(BuiltinSoundID::kAudioScoreIncrease,
-                   "a-0.babuiltinassets.260819:audio/score_increase");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSparkle01,
-                   "a-0.babuiltinassets.260819:audio/sparkle01");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSparkle02,
-                   "a-0.babuiltinassets.260819:audio/sparkle02");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSparkle03,
-                   "a-0.babuiltinassets.260819:audio/sparkle03");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSwish,
-                   "a-0.babuiltinassets.260819:audio/swish");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSwish2,
-                   "a-0.babuiltinassets.260819:audio/swish2");
-  LoadBuiltinSound(BuiltinSoundID::kAudioSwish3,
-                   "a-0.babuiltinassets.260819:audio/swish3");
-  LoadBuiltinSound(BuiltinSoundID::kAudioTap,
-                   "a-0.babuiltinassets.260819:audio/tap");
-  LoadBuiltinSound(BuiltinSoundID::kAudioTickingCrazy,
-                   "a-0.babuiltinassets.260819:audio/ticking_crazy");
+  LoadBuiltinSound(BuiltinSoundID::kAudioBlank, "689:audio/blank");
+  LoadBuiltinSound(BuiltinSoundID::kAudioBlip, "689:audio/blip");
+  LoadBuiltinSound(BuiltinSoundID::kAudioClick01, "689:audio/click01");
+  LoadBuiltinSound(BuiltinSoundID::kAudioError, "689:audio/error");
   // meshs
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonBottom,
-                  "a-0.babuiltinassets.260819:meshes/action_button_bottom");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonLeft,
-                  "a-0.babuiltinassets.260819:meshes/action_button_left");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonRight,
-                  "a-0.babuiltinassets.260819:meshes/action_button_right");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonTop,
-                  "a-0.babuiltinassets.260819:meshes/action_button_top");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesArrowBack,
-                  "a-0.babuiltinassets.260819:meshes/arrow_back");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesArrowFront,
-                  "a-0.babuiltinassets.260819:meshes/arrow_front");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesBox,
-                  "a-0.babuiltinassets.260819:meshes/box");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove,
-                  "a-0.babuiltinassets.260819:meshes/boxing_glove");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_back_opaque");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackSmallOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_back_small_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesButtonBackSmallTransparent,
-      "a-0.babuiltinassets.260819:meshes/button_back_small_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackTransparent,
-                  "a-0.babuiltinassets.260819:meshes/button_back_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargeOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_large_opaque");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargeTransparent,
-                  "a-0.babuiltinassets.260819:meshes/button_large_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargerOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_larger_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesButtonLargerTransparent,
-      "a-0.babuiltinassets.260819:meshes/button_larger_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonMediumOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_medium_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesButtonMediumTransparent,
-      "a-0.babuiltinassets.260819:meshes/button_medium_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSmallOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_small_opaque");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSmallTransparent,
-                  "a-0.babuiltinassets.260819:meshes/button_small_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSquareOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_square_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesButtonSquareTransparent,
-      "a-0.babuiltinassets.260819:meshes/button_square_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonTabOpaque,
-                  "a-0.babuiltinassets.260819:meshes/button_tab_opaque");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonTabTransparent,
-                  "a-0.babuiltinassets.260819:meshes/button_tab_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesCheckTransparent,
-                  "a-0.babuiltinassets.260819:meshes/check_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesCrossOut,
-                  "a-0.babuiltinassets.260819:meshes/cross_out");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesCylinder,
-                  "a-0.babuiltinassets.260819:meshes/cylinder");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeBall,
-                  "a-0.babuiltinassets.260819:meshes/eye_ball");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeBallIris,
-                  "a-0.babuiltinassets.260819:meshes/eye_ball_iris");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeLid,
-                  "a-0.babuiltinassets.260819:meshes/eye_lid");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlagPole,
-                  "a-0.babuiltinassets.260819:meshes/flag_pole");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlagStand,
-                  "a-0.babuiltinassets.260819:meshes/flag_stand");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlash,
-                  "a-0.babuiltinassets.260819:meshes/flash");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft1,
-                  "a-0.babuiltinassets.260819:meshes/hair_tuft1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft1b,
-                  "a-0.babuiltinassets.260819:meshes/hair_tuft1b");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft2,
-                  "a-0.babuiltinassets.260819:meshes/hair_tuft2");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft3,
-                  "a-0.babuiltinassets.260819:meshes/hair_tuft3");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft4,
-                  "a-0.babuiltinassets.260819:meshes/hair_tuft4");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage16x1,
-                  "a-0.babuiltinassets.260819:meshes/image16x1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1,
-                  "a-0.babuiltinassets.260819:meshes/image1x1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1FullScreen,
-                  "a-0.babuiltinassets.260819:meshes/image1x1_full_screen");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1VrfullScreen,
-                  "a-0.babuiltinassets.260819:meshes/image1x1_vrfull_screen");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage2x1,
-                  "a-0.babuiltinassets.260819:meshes/image2x1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage4x1,
-                  "a-0.babuiltinassets.260819:meshes/image4x1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocator,
-                  "a-0.babuiltinassets.260819:meshes/locator");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorBox,
-                  "a-0.babuiltinassets.260819:meshes/locator_box");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorCircle,
-                  "a-0.babuiltinassets.260819:meshes/locator_circle");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorCircleOutline,
-                  "a-0.babuiltinassets.260819:meshes/locator_circle_outline");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide,
-                  "a-0.babuiltinassets.260819:meshes/overlay_guide");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesScorch,
-                  "a-0.babuiltinassets.260819:meshes/scorch");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbOpaque,
-                  "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarThumbShortOpaque,
-      "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_short_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarThumbShortSimple,
-      "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_short_simple");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarThumbShortTransparent,
-      "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_short_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbSimple,
-                  "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_simple");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarThumbTransparent,
-      "a-0.babuiltinassets.260819:meshes/scroll_bar_thumb_transparent");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarTroughTransparent,
-      "a-0.babuiltinassets.260819:meshes/scroll_bar_trough_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesShield,
-                  "a-0.babuiltinassets.260819:meshes/shield");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesShockWave,
-                  "a-0.babuiltinassets.260819:meshes/shock_wave");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnel1,
-                  "a-0.babuiltinassets.260819:meshes/shrapnel1");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnelBoard,
-                  "a-0.babuiltinassets.260819:meshes/shrapnel_board");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnelSlime,
-                  "a-0.babuiltinassets.260819:meshes/shrapnel_slime");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesSoftEdgeInside,
-                  "a-0.babuiltinassets.260819:meshes/soft_edge_inside");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesSoftEdgeOutside,
-                  "a-0.babuiltinassets.260819:meshes/soft_edge_outside");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesTextBoxTransparent,
-                  "a-0.babuiltinassets.260819:meshes/text_box_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrFade,
-                  "a-0.babuiltinassets.260819:meshes/vr_fade");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrOverlay,
-                  "a-0.babuiltinassets.260819:meshes/vr_overlay");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesWindowHsmallVmedOpaque,
-      "a-0.babuiltinassets.260819:meshes/window_hsmall_vmed_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesWindowHsmallVmedTransparent,
-      "a-0.babuiltinassets.260819:meshes/window_hsmall_vmed_transparent");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesWindowHsmallVsmallOpaque,
-      "a-0.babuiltinassets.260819:meshes/window_hsmall_vsmall_opaque");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesWindowHsmallVsmallTransparent,
-      "a-0.babuiltinassets.260819:meshes/window_hsmall_vsmall_transparent");
-  LoadBuiltinMesh(BuiltinMeshID::kMeshesWing,
-                  "a-0.babuiltinassets.260819:meshes/wing");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1, "689:meshes/image1x1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrFade, "689:meshes/vr_fade");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrOverlay, "689:meshes/vr_overlay");
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_END__
 
   sys_assets_loaded_ = true;
+
+  // Fill the base asset set with its neutral placeholders so it is
+  // complete from the moment anything can draw; an app-mode overlays
+  // real art at activation (babase.set_base_asset_set). (After the flag
+  // above, since placeholders come from the builtin/solid getters.) The
+  // locked variant: our caller already holds the asset-list lock.
+  RestoreBaseAssetPlaceholdersLocked_();
+}
+
+void Assets::RestoreBaseAssetPlaceholders() {
+  assert(g_base->InLogicThread());
+  AssetListLock lock;
+  RestoreBaseAssetPlaceholdersLocked_();
+}
+
+void Assets::RestoreBaseAssetPlaceholdersLocked_() {
+  assert(g_base->InLogicThread());
+  assert(asset_lists_locked_);
+  base_assets_ = BaseAssetSet{};
+  FillBaseAssetPlaceholders_(&base_assets_);
+}
+
+void Assets::SetBaseAssets(const BaseAssetSet& assets) {
+  assert(g_base->InLogicThread());
+  base_assets_ = assets;
+  FillBaseAssetPlaceholders_(&base_assets_);
+  assert(base_assets_.complete());
+}
+
+void Assets::FillBaseAssetPlaceholders_(BaseAssetSet* out) {
+  // Placeholders come from things the engine generates or keeps
+  // builtin for its own use, so this is boot-safe and package-free.
+#include "ballistica/base/generated/base_asset_set_placeholders.inc"
+}
+
+void NoteBaseAssetPlaceholderUse(const char* slot) {
+  // Placeholders are expected to *exist* before and between app-modes;
+  // what's worth hearing about is one actually being drawn or played,
+  // which means some art never got supplied. Once per slot per run.
+  static std::mutex mutex;
+  static std::set<std::string> warned;
+  std::scoped_lock lock(mutex);
+  if (warned.insert(slot).second) {
+    g_core->logging->Log(
+        LogName::kBaAssets, LogLevel::kWarning,
+        std::string("Base asset slot '") + slot
+            + "' used its engine placeholder (no app-mode supplied it).");
+  }
 }
 
 void Assets::PrintLoadInfo() {
@@ -686,6 +447,12 @@ void Assets::MarkAllAssetsForLoad() {
       MarkAssetForLoad(i.second.get());
     }
   }
+  for (auto&& i : render_view_textures_) {
+    if (!i.second->preloaded()) {
+      have_pending_loads_[static_cast<int>(AssetType::kTexture)] = true;
+      MarkAssetForLoad(i.second.get());
+    }
+  }
   for (auto&& i : meshes_) {
     if (!i.second->preloaded()) {
       have_pending_loads_[static_cast<int>(AssetType::kMesh)] = true;
@@ -709,6 +476,9 @@ void Assets::UnloadRendererBits(bool do_textures, bool do_meshes) {
       i.second->Unload();
     }
     for (auto&& i : qr_textures_) {
+      i.second->Unload();
+    }
+    for (auto&& i : render_view_textures_) {
       i.second->Unload();
     }
   }
@@ -860,6 +630,25 @@ auto Assets::GetQRCodeTexture(const std::string& url)
   }
 }
 
+auto Assets::GetRenderViewTexture(RenderView* view)
+    -> Object::Ref<TextureAsset> {
+  assert(g_base->InLogicThread());
+  assert(asset_lists_locked_);
+  assert(view);
+  auto key = std::to_string(view->id());
+  auto i = render_view_textures_.find(key);
+  if (i != render_view_textures_.end()) {
+    return Object::Ref<TextureAsset>(i->second.get());
+  } else {
+    auto d(Object::New<TextureAsset>(view));
+    render_view_textures_[key] = d;
+    have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
+    MarkAssetForLoad(d.get());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
+    return Object::Ref<TextureAsset>(d);
+  }
+}
+
 // Eww can't recycle GetComponent here since we need extra stuff (tex-type arg)
 // ..should fix.
 auto Assets::GetCubeMapTexture(const std::string& file_name)
@@ -909,6 +698,69 @@ auto Assets::GetTexture(const std::string& file_name_in)
   }
 }
 
+auto Assets::GetPackageTexture(const std::string& apverid,
+                               const std::string& name)
+    -> Object::Ref<TextureAsset> {
+  assert(g_base->InLogicThread());
+  assert(asset_lists_locked_);
+  package_registry()->CheckPreConstructAccess(apverid, name);
+  auto key = apverid + ":" + name;
+  auto i = textures_.find(key);
+  if (i != textures_.end()) {
+    return Object::Ref<TextureAsset>(i->second.get());
+  }
+  auto d(Object::New<TextureAsset>(key, TextureType::k2D,
+                                   TextureMinQuality::kLow));
+  textures_[key] = d;
+  have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
+  MarkAssetForLoad(d.get());
+  d->set_last_used_time(g_core->AppTimeMillisecs());
+  return Object::Ref<TextureAsset>(d);
+}
+
+auto Assets::GetPackageCubeMapTexture(const std::string& apverid,
+                                      const std::string& name)
+    -> Object::Ref<TextureAsset> {
+  assert(g_base->InLogicThread());
+  assert(asset_lists_locked_);
+  package_registry()->CheckPreConstructAccess(apverid, name);
+  auto key = apverid + ":" + name;
+  auto i = textures_.find(key);
+  if (i != textures_.end()) {
+    // The registry does not type-check cache hits, so catch a name
+    // loaded 2D being re-requested as a cube map (or vice versa) here.
+    BA_PRECONDITION(i->second->texture_type() == TextureType::kCubeMap);
+    return Object::Ref<TextureAsset>(i->second.get());
+  }
+  auto d(Object::New<TextureAsset>(key, TextureType::kCubeMap,
+                                   TextureMinQuality::kLow));
+  textures_[key] = d;
+  have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
+  MarkAssetForLoad(d.get());
+  d->set_last_used_time(g_core->AppTimeMillisecs());
+  return Object::Ref<TextureAsset>(d);
+}
+
+auto Assets::GetPackageMesh(const std::string& apverid, const std::string& name)
+    -> Object::Ref<MeshAsset> {
+  package_registry()->CheckPreConstructAccess(apverid, name);
+  return GetAsset(apverid + ":" + name, &meshes_);
+}
+
+auto Assets::GetPackageSound(const std::string& apverid,
+                             const std::string& name)
+    -> Object::Ref<SoundAsset> {
+  package_registry()->CheckPreConstructAccess(apverid, name);
+  return GetAsset(apverid + ":" + name, &sounds_);
+}
+
+auto Assets::GetPackageCollisionMesh(const std::string& apverid,
+                                     const std::string& name)
+    -> Object::Ref<CollisionMeshAsset> {
+  package_registry()->CheckPreConstructAccess(apverid, name);
+  return GetAsset(apverid + ":" + name, &collision_meshes_);
+}
+
 void Assets::CheckAssetPackageAccess_(const std::string& name) {
   auto colon_pos = name.find(':');
   if (colon_pos == std::string::npos) {
@@ -929,18 +781,6 @@ void Assets::FailOnAssetPackagePath(const char* name, const char* call_name) {
             " Python wrapper module instead. If this call came from a"
             " generated wrapper module, regenerate the wrapper module against"
             " a current engine version to fix it.",
-      PyExcType::kValue);
-}
-
-void Assets::FailOnNonAssetPackagePath(const char* name,
-                                       const char* call_name) {
-  if (strchr(name, ':') != nullptr) {
-    return;  // A qualified asset-package path; fine here.
-  }
-  throw Exception(std::string(call_name)
-                      + "() requires a qualified '<apverid>:<path>'"
-                        " asset-package path; got '"
-                      + name + "'.",
       PyExcType::kValue);
 }
 
@@ -979,9 +819,11 @@ auto Assets::GetTexturePendingLoadCount() -> int {
     return 0;
   }
   AssetListLock lock;
-  int total = (GetAssetPendingLoadCount(&textures_, AssetType::kTexture)
-               + GetAssetPendingLoadCount(&text_textures_, AssetType::kTexture)
-               + GetAssetPendingLoadCount(&qr_textures_, AssetType::kTexture));
+  int total =
+      (GetAssetPendingLoadCount(&textures_, AssetType::kTexture)
+       + GetAssetPendingLoadCount(&text_textures_, AssetType::kTexture)
+       + GetAssetPendingLoadCount(&qr_textures_, AssetType::kTexture)
+       + GetAssetPendingLoadCount(&render_view_textures_, AssetType::kTexture));
   if (total == 0) {
     // When fully loaded, stop counting.
     have_pending_loads_[static_cast<int>(AssetType::kTexture)] = false;
@@ -1289,6 +1131,33 @@ void Assets::Prune(int level) {
     }
   }
 
+  // Prune render-view textures. Views hold onto their own, so these
+  // go once their view has.
+  assert(asset_lists_locked_);
+  for (auto i = render_view_textures_.begin();
+       i != render_view_textures_.end();) {
+    TextureAsset* texture = i->second.get();
+    if (current_time - texture->last_used_time() > qr_texture_prune_time
+        && (texture->object_strong_ref_count() <= 1)) {
+      Asset::State s = texture->state();
+      if (Asset::IsTransientState(s)) {
+        // See note in the standard-textures loop above.
+        assert(false);
+        i++;
+      } else if (texture->preloaded()) {
+        // Allocate a reference to keep this texture_data alive while the
+        // graphics-thread unload is happening.
+        graphics_thread_unloads.push_back(new Object::Ref<Asset>(texture));
+        i = render_view_textures_.erase(i);
+      } else {
+        // No payloads; evict directly (see standard-textures loop).
+        i = render_view_textures_.erase(i);
+      }
+    } else {
+      i++;
+    }
+  }
+
   // Prune meshes.
   assert(asset_lists_locked_);
   for (auto i = meshes_.begin(); i != meshes_.end();) {
@@ -1544,22 +1413,20 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   if (type == FileType::kSound) {
     // The legacy bare-name blank sound is gone; fall back to the
     // builtin asset-package's copy.
-    std::string fallback = std::string(kBuiltinAssetsApverid) + ":audio/blank";
+    std::string fallback = BuiltinAssetRef(BuiltinSoundID::kAudioBlank);
     if (name != fallback) {
       g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
                            "Unable to load audio: '" + name + "'.");
       return FindAssetFile(type, fallback);
     }
   } else if (type == FileType::kTexture) {
-    // The legacy bare-name white texture is gone; fall back to the
-    // builtin asset-package's copy.
-    std::string fallback =
-        std::string(kBuiltinAssetsApverid) + ":textures/white";
-    if (name != fallback) {
-      g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
-                           "Unable to load texture: '" + name + "'.");
-      return FindAssetFile(type, fallback);
-    }
+    // TextureAsset draws this as an engine-generated white fill. (It
+    // used to fall back to the builtin package's textures/white, which
+    // no longer exists; that turned an unknown legacy name sent by a
+    // host into a fatal client-session error.)
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load texture: '" + name + "'.");
+    return kMissingTextureFile;
   }
 
   throw Exception("Can't find asset: \"" + name + "\"");
@@ -1770,6 +1637,27 @@ auto Assets::FindCasSoundPath(const std::string& name) -> std::string {
   return package_registry_.CasBlobPath(hash);
 }
 
+auto Assets::FindCasSoundMetaPath(const std::string& name) -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto colon_pos = name.find(':');
+  if (colon_pos == std::string::npos) {
+    return "";
+  }
+  std::string apverid = name.substr(0, colon_pos);
+  std::string logical_path = name.substr(colon_pos + 1);
+  std::string bucket_id = package_registry_.LookupAudioBucketId(apverid);
+  if (bucket_id.empty()) {
+    return "";
+  }
+  auto hash = package_registry_.LookupAssetHashByRole(
+      apverid, bucket_id, logical_path, "j", {"json"});
+  if (hash.empty()) {
+    return "";
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
 auto Assets::FindCasMeshPath(const std::string& name) -> std::string {
   assert(g_base->InLogicThread());
 
@@ -1854,21 +1742,25 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
   std::string apverid = name.substr(0, colon_pos);
   std::string logical_path = name.substr(colon_pos + 1);
 
-  // Bundled CAS layout — mirrors AssetPackageRegistry::CasBlobPath minus
-  // the writable-root probe (bundled manifests reference bundled blobs).
+  // Bundle-root blob paths (no writable probe; bundled manifests
+  // reference bundled blobs). With apk-archive serving these are
+  // archive paths, so all reads below go through AssetBlob.
   std::string ba_data_root =
       g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data";
-  auto blob_path = [&ba_data_root](std::string_view hash) {
-    return ba_data_root + BA_DIRSLASH + "assets" + BA_DIRSLASH
-           + std::string(hash.substr(0, 2)) + BA_DIRSLASH
-           + std::string(hash.substr(2));
+  const auto& registry = *g_base->assets->package_registry();
+  auto blob_to_string = [&registry](std::string_view hash) -> std::string {
+    auto blob =
+        AssetBlob::FromFile(registry.BundledCasBlobPath(std::string(hash)));
+    return blob.exists() ? blob.ToString() : std::string();
   };
 
   try {
     // Top-level bundle manifest -> this package's fallback-flavor
     // textures bucket-manifest hash.
-    auto bundle_doc = JsonDoc::Parse(
-        Utils::FileToString(ba_data_root + BA_DIRSLASH + "manifest.json"));
+    auto manifest_blob =
+        AssetBlob::FromFile(g_base->assets->bundled_asset_manifest_path());
+    auto bundle_doc =
+        JsonDoc::Parse(manifest_blob.exists() ? manifest_blob.ToString() : "");
     if (!bundle_doc) {
       warn("bundle manifest parse failed");
       return {};
@@ -1890,8 +1782,7 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
 
     // Bucket manifest -> the asset's texture-data blob (part role 't';
     // fallback_v1 always ships ``t.ktx2``).
-    auto bucket_doc =
-        JsonDoc::Parse(Utils::FileToString(blob_path(bucket_hash)));
+    auto bucket_doc = JsonDoc::Parse(blob_to_string(bucket_hash));
     if (!bucket_doc) {
       warn("bucket manifest parse failed");
       return {};
@@ -1919,11 +1810,18 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
     int base_level{};
     bool premultiplied{};
     // Bundled RGBA extraction doesn't upload through the GL path, so
-    // wrapping is read and discarded here.
+    // wrapping (and the authored role) is read and discarded here.
     TextureWrapping wrap_h{};
     TextureWrapping wrap_v{};
-    LoadKTX2(blob_path(*data_hash), buffers, widths, heights, formats, sizes,
-             &base_level, &premultiplied, &wrap_h, &wrap_v);
+    TextureRole role{};
+    auto blob_path = registry.BundledCasBlobPath(std::string(*data_hash));
+    auto ktx2_blob = AssetBlob::FromFile(blob_path);
+    if (!ktx2_blob.exists()) {
+      warn("can't open bundled fallback texture blob");
+      return {};
+    }
+    LoadKTX2(ktx2_blob, blob_path, buffers, widths, heights, formats, sizes,
+             &base_level, &premultiplied, &wrap_h, &wrap_v, &role);
 
     BundledTextureRGBAData out;
     out.premultiplied = premultiplied;
@@ -2085,122 +1983,6 @@ void Assets::AddPackage(const std::string& name, const std::string& path) {
   packages_[name] = path;
 }
 
-void Assets::InitSpecialChars() {
-  std::scoped_lock lock(special_char_mutex_);
-
-  special_char_strings_[SpecialChar::kDownArrow] = "\xee\x80\x84";
-  special_char_strings_[SpecialChar::kUpArrow] = "\xee\x80\x83";
-  special_char_strings_[SpecialChar::kLeftArrow] = "\xee\x80\x81";
-  special_char_strings_[SpecialChar::kRightArrow] = "\xee\x80\x82";
-  special_char_strings_[SpecialChar::kTopButton] = "\xee\x80\x86";
-  special_char_strings_[SpecialChar::kLeftButton] = "\xee\x80\x85";
-  special_char_strings_[SpecialChar::kRightButton] = "\xee\x80\x87";
-  special_char_strings_[SpecialChar::kBottomButton] = "\xee\x80\x88";
-  special_char_strings_[SpecialChar::kDelete] = "\xee\x80\x89";
-  special_char_strings_[SpecialChar::kShift] = "\xee\x80\x8A";
-  special_char_strings_[SpecialChar::kBack] = "\xee\x80\x8B";
-  special_char_strings_[SpecialChar::kLogoFlat] = "\xee\x80\x8C";
-  special_char_strings_[SpecialChar::kRewindButton] = "\xee\x80\x8D";
-  special_char_strings_[SpecialChar::kPlayPauseButton] = "\xee\x80\x8E";
-  special_char_strings_[SpecialChar::kFastForwardButton] = "\xee\x80\x8F";
-  special_char_strings_[SpecialChar::kDpadCenterButton] = "\xee\x80\x90";
-  special_char_strings_[SpecialChar::kPlayStationCrossButton] = "\xee\x80\x91";
-  special_char_strings_[SpecialChar::kPlayStationCircleButton] = "\xee\x80\x92";
-  special_char_strings_[SpecialChar::kPlayStationTriangleButton] =
-      "\xee\x80\x93";
-  special_char_strings_[SpecialChar::kPlayStationSquareButton] = "\xee\x80\x94";
-  special_char_strings_[SpecialChar::kPlayButton] = "\xee\x80\x95";
-  special_char_strings_[SpecialChar::kPauseButton] = "\xee\x80\x96";
-  special_char_strings_[SpecialChar::kClose] = "\xee\x80\x97";
-
-  special_char_strings_[SpecialChar::kOuyaButtonO] = "\xee\x80\x99";
-  special_char_strings_[SpecialChar::kOuyaButtonU] = "\xee\x80\x9A";
-  special_char_strings_[SpecialChar::kOuyaButtonY] = "\xee\x80\x9B";
-  special_char_strings_[SpecialChar::kOuyaButtonA] = "\xee\x80\x9C";
-  special_char_strings_[SpecialChar::kToken] = "\xee\x80\x9D";
-  special_char_strings_[SpecialChar::kLogo] = "\xee\x80\x9E";
-  special_char_strings_[SpecialChar::kTicket] = "\xee\x80\x9F";
-  special_char_strings_[SpecialChar::kGooglePlayGamesLogo] = "\xee\x80\xA0";
-  special_char_strings_[SpecialChar::kGameCenterLogo] = "\xee\x80\xA1";
-  special_char_strings_[SpecialChar::kDiceButton1] = "\xee\x80\xA2";
-  special_char_strings_[SpecialChar::kDiceButton2] = "\xee\x80\xA3";
-  special_char_strings_[SpecialChar::kDiceButton3] = "\xee\x80\xA4";
-  special_char_strings_[SpecialChar::kDiceButton4] = "\xee\x80\xA5";
-  special_char_strings_[SpecialChar::kDiscordLogo] = "\xee\x80\xA6";
-  special_char_strings_[SpecialChar::kPartyIcon] = "\xee\x80\xA7";
-  special_char_strings_[SpecialChar::kTestAccount] = "\xee\x80\xA8";
-  special_char_strings_[SpecialChar::kTicketBacking] = "\xee\x80\xA9";
-  special_char_strings_[SpecialChar::kTrophy1] = "\xee\x80\xAA";
-  special_char_strings_[SpecialChar::kTrophy2] = "\xee\x80\xAB";
-  special_char_strings_[SpecialChar::kTrophy3] = "\xee\x80\xAC";
-  special_char_strings_[SpecialChar::kTrophy0a] = "\xee\x80\xAD";
-  special_char_strings_[SpecialChar::kTrophy0b] = "\xee\x80\xAE";
-  special_char_strings_[SpecialChar::kTrophy4] = "\xee\x80\xAF";
-  special_char_strings_[SpecialChar::kLocalAccount] = "\xee\x80\xB0";
-  special_char_strings_[SpecialChar::kExplodinaryLogo] = "\xee\x80\xB1";
-
-  special_char_strings_[SpecialChar::kFlagUnitedStates] = "\xee\x80\xB2";
-  special_char_strings_[SpecialChar::kFlagMexico] = "\xee\x80\xB3";
-  special_char_strings_[SpecialChar::kFlagGermany] = "\xee\x80\xB4";
-  special_char_strings_[SpecialChar::kFlagBrazil] = "\xee\x80\xB5";
-  special_char_strings_[SpecialChar::kFlagRussia] = "\xee\x80\xB6";
-  special_char_strings_[SpecialChar::kFlagChina] = "\xee\x80\xB7";
-  special_char_strings_[SpecialChar::kFlagUnitedKingdom] = "\xee\x80\xB8";
-  special_char_strings_[SpecialChar::kFlagCanada] = "\xee\x80\xB9";
-  special_char_strings_[SpecialChar::kFlagIndia] = "\xee\x80\xBA";
-  special_char_strings_[SpecialChar::kFlagJapan] = "\xee\x80\xBB";
-  special_char_strings_[SpecialChar::kFlagFrance] = "\xee\x80\xBC";
-  special_char_strings_[SpecialChar::kFlagIndonesia] = "\xee\x80\xBD";
-  special_char_strings_[SpecialChar::kFlagItaly] = "\xee\x80\xBE";
-  special_char_strings_[SpecialChar::kFlagSouthKorea] = "\xee\x80\xBF";
-  special_char_strings_[SpecialChar::kFlagNetherlands] = "\xee\x81\x80";
-
-  special_char_strings_[SpecialChar::kFedora] = "\xee\x81\x81";
-  special_char_strings_[SpecialChar::kHal] = "\xee\x81\x82";
-  special_char_strings_[SpecialChar::kCrown] = "\xee\x81\x83";
-  special_char_strings_[SpecialChar::kYinYang] = "\xee\x81\x84";
-  special_char_strings_[SpecialChar::kEyeBall] = "\xee\x81\x85";
-  special_char_strings_[SpecialChar::kSkull] = "\xee\x81\x86";
-  special_char_strings_[SpecialChar::kHeart] = "\xee\x81\x87";
-  special_char_strings_[SpecialChar::kDragon] = "\xee\x81\x88";
-  special_char_strings_[SpecialChar::kHelmet] = "\xee\x81\x89";
-  special_char_strings_[SpecialChar::kMushroom] = "\xee\x81\x8A";
-
-  special_char_strings_[SpecialChar::kNinjaStar] = "\xee\x81\x8B";
-  special_char_strings_[SpecialChar::kVikingHelmet] = "\xee\x81\x8C";
-  special_char_strings_[SpecialChar::kMoon] = "\xee\x81\x8D";
-  special_char_strings_[SpecialChar::kSpider] = "\xee\x81\x8E";
-  special_char_strings_[SpecialChar::kFireball] = "\xee\x81\x8F";
-
-  special_char_strings_[SpecialChar::kFlagUnitedArabEmirates] = "\xee\x81\x90";
-  special_char_strings_[SpecialChar::kFlagQatar] = "\xee\x81\x91";
-  special_char_strings_[SpecialChar::kFlagEgypt] = "\xee\x81\x92";
-  special_char_strings_[SpecialChar::kFlagKuwait] = "\xee\x81\x93";
-  special_char_strings_[SpecialChar::kFlagAlgeria] = "\xee\x81\x94";
-  special_char_strings_[SpecialChar::kFlagSaudiArabia] = "\xee\x81\x95";
-  special_char_strings_[SpecialChar::kFlagMalaysia] = "\xee\x81\x96";
-  special_char_strings_[SpecialChar::kFlagCzechRepublic] = "\xee\x81\x97";
-  special_char_strings_[SpecialChar::kFlagAustralia] = "\xee\x81\x98";
-  special_char_strings_[SpecialChar::kFlagSingapore] = "\xee\x81\x99";
-
-  special_char_strings_[SpecialChar::kOculusLogo] = "\xee\x81\x9A";
-  special_char_strings_[SpecialChar::kSteamLogo] = "\xee\x81\x9B";
-  special_char_strings_[SpecialChar::kNvidiaLogo] = "\xee\x81\x9C";
-
-  special_char_strings_[SpecialChar::kFlagIran] = "\xee\x81\x9D";
-  special_char_strings_[SpecialChar::kFlagPoland] = "\xee\x81\x9E";
-  special_char_strings_[SpecialChar::kFlagArgentina] = "\xee\x81\x9F";
-  special_char_strings_[SpecialChar::kFlagPhilippines] = "\xee\x81\xA0";
-  special_char_strings_[SpecialChar::kFlagChile] = "\xee\x81\xA1";
-
-  special_char_strings_[SpecialChar::kMikirog] = "\xee\x81\xA2";
-  special_char_strings_[SpecialChar::kV2Logo] = "\xee\x81\xA3";
-  special_char_strings_[SpecialChar::kSantaHat] = "\xee\x81\xA4";
-  special_char_strings_[SpecialChar::kPotato] = "\xee\x81\xA5";
-  special_char_strings_[SpecialChar::kPalmTree] = "\xee\x81\xA6";
-  special_char_strings_[SpecialChar::kBoxingGlove] = "\xee\x81\xA7";
-}
-
 // Recursively flatten string leaves of a json object into `out` keyed by
 // dot-path (prefix + key). Non-string/non-object leaves (numbers, null,
 // arrays) are skipped -- the runtime resource table is string-only (see
@@ -2309,7 +2091,7 @@ static auto ParseLangStrTableEntry_(const JsonRef& val)
     if (!inner.has_value()) {
       return {};
     }
-    LangStrTableEntry entry{std::move(*inner), {}};
+    LangStrTableEntry entry{std::move(*inner), {}, {}};
     if (JsonRef wrap = val["w"]; wrap.is_object()) {
       LangStrWrap wrapval;
       wrapval.min_lines = static_cast<int>(wrap["mn"].int_or(1));
@@ -2317,17 +2099,28 @@ static auto ParseLangStrTableEntry_(const JsonRef& val)
       wrapval.max_chars_per_line = static_cast<int>(wrap["mc"].int_or(0));
       entry.wrap = wrapval;
     }
+    // Display-formatted params ({size|data_size}, {t|duration}): the
+    // kind expression per param, so evaluation can render the value.
+    if (JsonRef kinds = val["k"]; kinds.is_object()) {
+      for (auto&& [param, kind] : kinds.items()) {
+        if (auto kindstr = kind.as_string()) {
+          entry.kinds.emplace_back(std::string(param), std::string(*kindstr));
+        }
+      }
+    }
     return entry;
   }
   auto inner = ParseLangStrTableValue_(val);
   if (!inner.has_value()) {
     return {};
   }
-  return LangStrTableEntry{std::move(*inner), {}};
+  return LangStrTableEntry{std::move(*inner), {}, {}};
 }
 
 void Assets::ReloadLanguage(const std::vector<std::string>& apverids,
-                            const std::string& plural_locale) {
+                            const std::string& plural_locale,
+                            const std::string& decimal_mark,
+                            const std::string& duration_separator) {
   assert(g_base->InLogicThread());
 
   g_core->logging->Log(
@@ -2338,6 +2131,8 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids,
   auto data = std::make_shared<LanguageData>();
   auto tables = std::make_shared<LangStrTables>();
   tables->plural_locale = plural_locale;
+  tables->decimal_mark = decimal_mark;
+  tables->duration_separator = duration_separator;
 
   // Merge each package's registered `language/<locale>` blob (later
   // packages overlay earlier ones). English is the bundled fallback
@@ -2356,7 +2151,8 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids,
       continue;
     }
     auto path = package_registry_.CasBlobPath(hash);
-    auto doc = JsonDoc::Parse(Utils::FileToString(path));
+    auto blob = AssetBlob::FromFile(path);
+    auto doc = JsonDoc::Parse(blob.exists() ? blob.ToString() : "");
     if (!doc.has_value() || !doc->root().is_object()) {
       g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
                            "ReloadLanguage: invalid language blob at " + path);
@@ -2652,8 +2448,8 @@ auto DoCompileResourceString(JsonRef obj, int depth) -> std::string {
   return result;
 }
 
-auto Assets::CompileResourceString(const std::string& s, bool* valid)
-    -> std::string {
+auto Assets::CompileResourceString(const std::string& s, bool* valid,
+                                   LogLevel fail_log_level) -> std::string {
   bool dummyvalid;
   if (valid == nullptr) {
     valid = &dummyvalid;
@@ -2669,7 +2465,7 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
   auto doc = JsonDoc::Parse(s);
   if (!doc.has_value() || !doc->root().is_object()) {
     g_core->logging->Log(
-        LogName::kBaAssets, LogLevel::kError,
+        LogName::kBaAssets, fail_log_level,
         "CompileResourceString failed; invalid json: '" + s + "'");
     *valid = false;
     return "";
@@ -2679,7 +2475,7 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
     result = DoCompileResourceString(doc->root(), 0);
     *valid = true;
   } catch (const std::exception& e) {
-    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+    g_core->logging->Log(LogName::kBaAssets, fail_log_level,
                          "CompileResourceString failed: "
                              + std::string(e.what()) + "; str='" + s + "'");
     result = "<error>";
@@ -2689,17 +2485,17 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
 }
 
 auto Assets::CharStr(SpecialChar id) -> std::string {
-  std::scoped_lock lock(special_char_mutex_);
-  std::string val;
-  auto i = special_char_strings_.find(id);
-  if (i != special_char_strings_.end()) {
-    val = i->second;
-  } else {
+  // (The table is generated alongside the enum from
+  // bacommon.text.SpecialChar; see generated/special_chars.h.)
+  static_assert(std::size(kSpecialCharStrings)
+                == static_cast<size_t>(SpecialChar::kLast));
+  auto index = static_cast<size_t>(id);
+  if (index >= std::size(kSpecialCharStrings)) {
     BA_LOG_PYTHON_TRACE_ONCE("invalid key in CharStr(): '"
                              + std::to_string(static_cast<int>(id)) + "'");
-    val = "?";
+    return "?";
   }
-  return val;
+  return kSpecialCharStrings[index];
 }
 
 Assets::AssetListLock::AssetListLock() {
@@ -2740,6 +2536,18 @@ auto Assets::BuiltinSound(BuiltinSoundID id) -> SoundAsset* {
   assert(g_base->InLogicThread());
   assert(IsValidBuiltinSound(id));
   return builtin_sounds_[static_cast<int>(id)].get();
+}
+
+auto Assets::SolidTexture(SolidTextureColor color) -> TextureAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(static_cast<size_t>(color) < solid_textures_.size());
+  return solid_textures_[static_cast<int>(color)].get();
+}
+
+auto Assets::SolidCubeMapTexture(SolidTextureColor color) -> TextureAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(static_cast<size_t>(color) < solid_cube_map_textures_.size());
+  return solid_cube_map_textures_[static_cast<int>(color)].get();
 }
 
 auto Assets::BuiltinMesh(BuiltinMeshID id) -> MeshAsset* {

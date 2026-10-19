@@ -14,7 +14,10 @@
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/scene_depiction.h"
+#include "ballistica/scene_v1/support/scene_v1_context.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
+#include "ballistica/scene_v1/support/spaz_def.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -147,6 +150,85 @@ auto Player::GetPyCharacter() -> PyObject* {
   return py_character_.exists() ? py_character_.get() : Py_None;
 }
 
+void Player::SetCloudLook(const std::string& spaz_json,
+                          const std::string& icon_json) {
+  if (spaz_json != cloud_spaz_json_) {
+    cloud_spaz_json_ = spaz_json;
+    cloud_spaz_def_.Clear();
+  }
+  if (icon_json != cloud_icon_json_) {
+    cloud_icon_json_ = icon_json;
+    cloud_icon_.Clear();
+  }
+}
+
+/// The current context's scene-v1 context, for making scene objects.
+static auto CurrentSceneContext_() -> SceneV1Context* {
+  auto* context =
+      ContextRefSceneV1::FromCurrent().GetContextTyped<SceneV1Context>();
+  if (context == nullptr || context->GetMutableScene() == nullptr) {
+    throw Exception("A player's cloud look needs a scene context.",
+                    PyExcType::kContext);
+  }
+  return context;
+}
+
+auto Player::GetPyCloudSpazDef() -> PyObject* {
+  if (cloud_spaz_json_.empty()) {
+    Py_RETURN_NONE;
+  }
+  SceneV1Context* context = CurrentSceneContext_();
+  // (A strong ref while we hand it out; the Python object keeps it.)
+  Object::Ref<SpazDef> def;
+  if (cloud_spaz_def_.exists()
+      && cloud_spaz_def_->scene() == context->GetMutableScene()) {
+    def = cloud_spaz_def_.get();
+  } else {
+    def = context->NewSpazDef(cloud_spaz_json_);
+    cloud_spaz_def_ = def;
+  }
+  return def->NewPyRef();
+}
+
+auto Player::GetPyCloudIcon() -> PyObject* {
+  if (cloud_icon_json_.empty()) {
+    Py_RETURN_NONE;
+  }
+  SceneV1Context* context = CurrentSceneContext_();
+  Object::Ref<SceneDepiction> icon;
+  if (cloud_icon_.exists()
+      && cloud_icon_->scene() == context->GetMutableScene()) {
+    icon = cloud_icon_.get();
+  } else {
+    icon = context->NewDepiction(cloud_icon_json_);
+    cloud_icon_ = icon;
+  }
+  return icon->NewPyRef();
+}
+
+void Player::SetNameDepictionJson(const std::string& json) {
+  if (json != name_depiction_json_) {
+    name_depiction_json_ = json;
+    name_depiction_.Clear();
+  }
+}
+
+auto Player::GetPyNameDepiction() -> PyObject* {
+  if (name_depiction_json_.empty()) {
+    Py_RETURN_NONE;
+  }
+  SceneV1Context* context = CurrentSceneContext_();
+  Object::Ref<SceneDepiction> depiction;
+  if (name_depiction_.exists()
+      && name_depiction_->scene() == context->GetMutableScene()) {
+    depiction = name_depiction_.get();
+  } else {
+    depiction = context->NewDepiction(name_depiction_json_);
+    name_depiction_ = depiction;
+  }
+  return depiction->NewPyRef();
+}
+
 void Player::SetPyColor(PyObject* c) { py_color_.Acquire(c); }
 auto Player::GetPyColor() -> PyObject* {
   return py_color_.exists() ? py_color_.get() : Py_None;
@@ -156,7 +238,6 @@ void Player::SetPyHighlight(PyObject* c) { py_highlight_.Acquire(c); }
 auto Player::GetPyHighlight() -> PyObject* {
   return py_highlight_.exists() ? py_highlight_.get() : Py_None;
 }
-
 void Player::SetPyActivityPlayer(PyObject* c) { py_activityplayer_.Acquire(c); }
 auto Player::GetPyActivityPlayer() -> PyObject* {
   return py_activityplayer_.exists() ? py_activityplayer_.get() : Py_None;
@@ -433,13 +514,16 @@ auto Player::GetAccountID() const -> std::string {
 void Player::SetIcon(const std::string& tex_name,
                      const std::string& tint_tex_name,
                      const std::vector<float>& tint_color,
-                     const std::vector<float>& tint2_color) {
+                     const std::vector<float>& tint2_color,
+                     const std::vector<float>& tint3_color) {
   assert(tint_color.size() == 3);
   assert(tint2_color.size() == 3);
+  assert(tint3_color.size() == 3);
   icon_tex_name_ = tex_name;
   icon_tint_tex_name_ = tint_tex_name;
   icon_tint_color_ = tint_color;
   icon_tint2_color_ = tint2_color;
+  icon_tint3_color_ = tint3_color;
   icon_set_ = true;
 }
 

@@ -89,6 +89,65 @@ sets 0 explicitly since the program object is shared). Callers need no
 changes for this term — but their base `SetColor` premultiply (the convention
 above) is still required for the texture part of the draw.
 
+### Frame masks are premultiplied data
+
+The reasoning above assumes the mask texture itself is premultiplied
+(`mask.rgb` already scaled by `mask.a`). Frame masks get that from the
+**premultiplied_data** texture role: built as data (channels filtered on
+their stored values and weighted equally by the encoders) but with r/g/b
+multiplied by alpha in the pipeline, before any filtering.
+
+That "before" is the whole point. A frame mask's channels are not
+independent: across the cutout's edge, coverage (`r`) falls and the
+highlight (`b`) rises exactly where alpha drops. The product the shader
+wants is `b * a` per source texel. Left to the shader it becomes
+`filtered(b) * filtered(a)`, which at an edge texel reads about
+`0.5 * 0.5` where the authored product is a few percent — a pale line
+around the cutout, strongest where a highlight sits against the edge.
+Block compression does the same blending inside each block and makes it
+far worse: on the desktop (BC7) build the fringe was barely measurable,
+on the mobile (ASTC) build it was plainly visible. This shipped briefly
+(2026-10-06 to 10-12) when the frame masks carried the plain **data**
+role; the character viewer's bevel showed it. To check a mask change on
+a Mac, run with `test_game_run --force-texture-form-factor mobile`.
+
+### Masks that are not premultiplied
+
+A mask with the plain data role is not premultiplied, and neither is a
+straight-alpha mask from a mod. Under straight blending the hardware
+applied `mask.a` to the color at blend time; under premult blend nothing
+does, so such a mask would draw full-brightness color where its alpha
+fades.
+
+The masked program therefore has a `maskStraight` uniform (0/1). The
+renderer sets it to 1 for a premult-blended draw whose mask texture reports
+`premultiplied() == false`, and the shader scales both the `mask.r` term and
+the additive frame term by `mix(1.0, mask.a, maskStraight)`. A premultiplied
+mask leaves it at 0. This keeps such masks fading correctly, but they still
+get the edge fringe described above (as straight-alpha masks always have);
+it is a fallback, not a second way to author a frame mask.
+
+### Texture roles are checked at the slot
+
+Asset-package textures carry their authored role in the file
+(`baTextureRole` in the KTX2 key/value data; absent means the default
+picture role), surfaced as `TextureAsset::role()`. The render components'
+texture setters note what each slot expects, and a mismatch logs one
+warning per texture, in release builds too:
+
+| Setter | Shader reads | Role wanted |
+|---|---|---|
+| `SetTexture` | a picture | any color role |
+| `SetColorizeTexture` | r/g/b as independent tint weights | `data` |
+| `SetMaskTexture` | r/g/b scaled by the mask's alpha | `premultiplied_data` |
+| `SetMaskUV2Texture` | alpha only | either data role |
+
+Textures of unknown role (legacy formats, OS-decoded images, text, render
+targets, a role newer than the build) are never flagged. A texture needed
+in both a picture and a data slot gets a data twin rather than a role
+change (`black_data`, `white_data`, `soft_rect_mask`, `soft_rect2_mask`
+in the builtin package).
+
 ## `SetPremultiplied(true)` means "I manage premult myself"
 
 Additive / glow effects (shields, explosions, the text-widget gradient

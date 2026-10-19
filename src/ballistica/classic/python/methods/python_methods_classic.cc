@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/graphics/graphics.h"
-#include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/base/graphics/support/game_camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/classic/python/classic_python.h"
@@ -98,7 +98,7 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     }
     return_val = g_base->graphics->show_net_info();
   } else if (!strcmp(arg, "allowCameraMovement")) {
-    base::Camera* camera = g_base->graphics->camera();
+    base::GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       if (have_change && change > 0.5f) {
         camera->set_lock_panning(false);
@@ -112,7 +112,7 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
       return_val = !camera->lock_panning();
     }
   } else if (!strcmp(arg, "cameraPanSpeedScale")) {
-    base::Camera* camera = g_base->graphics->camera();
+    base::GameCamera* camera = g_base->graphics->camera();
     if (camera) {
       double val = camera->pan_speed_scale();
       if (have_change) {
@@ -158,11 +158,14 @@ static auto PySetStressTesting(PyObject* self, PyObject* args) -> PyObject* {
   int enable;
   int player_count;
   int attract_mode;
-  if (!PyArg_ParseTuple(args, "pip", &enable, &player_count, &attract_mode)) {
+  int churn;
+  if (!PyArg_ParseTuple(args, "pipp", &enable, &player_count, &attract_mode,
+                        &churn)) {
     return nullptr;
   }
-  g_base->logic->event_loop()->PushCall([enable, player_count, attract_mode] {
-    g_classic->stress_test()->Set(enable, player_count, attract_mode);
+  g_base->logic->event_loop()->PushCall([enable, player_count, attract_mode,
+                                         churn] {
+    g_classic->stress_test()->Set(enable, player_count, attract_mode, churn);
     g_base->input->set_attract_mode(enable && attract_mode);
   });
   Py_RETURN_NONE;
@@ -176,9 +179,13 @@ static PyMethodDef PySetStressTestingDef = {
 
     "set_stress_testing(testing: bool,\n"
     "                        player_count: int,\n"
-    "                        attract_mode: bool) -> None\n"
+    "                        attract_mode: bool,\n"
+    "                        churn: bool) -> None\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    "With churn, fake players trickle in and occasionally leave; without\n"
+    "it all of them appear at once and stay (benchmark runs).",
 };
 
 // --------------- classic_app_mode_handle_app_intent_exec ---------------------
@@ -316,6 +323,62 @@ static PyMethodDef PySetHaveLiveAccountValuesDef = {
     "\n"
     "Inform the native layer whether we are being fed with live account\n"
     "values from the server.",
+};
+
+// --------------------- set_root_ui_chest_depictions --------------------------
+
+static auto PySetRootUIChestDepictions(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* depictions_obj;
+  static const char* kwlist[] = {"depictions", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O", const_cast<char**>(kwlist), &depictions_obj)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto depictions = Python::GetStrings(depictions_obj);
+  ClassicAppMode::GetActiveOrThrow()->SetRootUIChestDepictions(depictions);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIChestDepictionsDef = {
+    "set_root_ui_chest_depictions",           // name
+    (PyCFunction)PySetRootUIChestDepictions,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "set_root_ui_chest_depictions(depictions: Sequence[str]) -> None\n"
+    "\n"
+    "Set each chest slot's depiction json (empty to draw by appearance).",
+};
+
+// --------------------- set_root_ui_account_depiction -------------------------
+
+static auto PySetRootUIAccountDepiction(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* depiction;
+  static const char* kwlist[] = {"depiction", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &depiction)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  ClassicAppMode::GetActiveOrThrow()->SetRootUIAccountDepiction(depiction);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIAccountDepictionDef = {
+    "set_root_ui_account_depiction",           // name
+    (PyCFunction)PySetRootUIAccountDepiction,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "set_root_ui_account_depiction(depiction: str) -> None\n"
+    "\n"
+    "Set the account button's depiction json (empty for the usual"
+    " button).",
 };
 
 // ---------------------- set_root_ui_account_values ---------------------------
@@ -746,6 +809,8 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
       PySetRootUIAccountValuesDef,
+      PySetRootUIChestDepictionsDef,
+      PySetRootUIAccountDepictionDef,
       PyAnimateRootUIChestUnlockTimeDef,
       PyAnimateRootUITicketsDef,
       PyAnimateRootUITokensDef,

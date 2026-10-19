@@ -42,6 +42,10 @@ _EXE_PATHS = [
     '/BallisticaKitHeadless.exe',
 ]
 
+# Third-party dlls shipped beside our binaries whose symbols are
+# archived by CodeView key rather than by exe hash.
+_THIRD_PARTY_DLL_NAMES = ['libGLESv2.dll', 'libEGL.dll']
+
 
 def _sha256_file(path: str) -> str:
     sha = hashlib.sha256()
@@ -94,8 +98,50 @@ def _fetch_symbols_for_exe(exe_path: str, host: str) -> bool:
     return True
 
 
+def _fetch_symbols_for_codeview(dll_path: str, host: str) -> bool:
+    """Fetch symbols for a module keyed by CodeView guid+age.
+
+    Used for third-party dlls we ship (ANGLE), whose symbols are
+    archived under the key baked into the binary rather than under a
+    content hash. Returns True if a pdb was written.
+    """
+    from batools.winsymbols import codeview_key_from_pe, fetch_symbols_for_key
+
+    found = codeview_key_from_pe(dll_path)
+    if found is None:
+        return False
+    pdb_name, key = found
+
+    result = fetch_symbols_for_key(key, host)
+    if result is None:
+        print(
+            f'{Clr.YLW}No symbols available for'
+            f' {Clr.BLD}{dll_path}{Clr.RST}{Clr.YLW}.{Clr.RST}'
+        )
+        return False
+    _file_name, payload = result
+
+    # Write under the CodeView name so debuggers find it, regardless of
+    # what the archived file happened to be called.
+    pdb_path = os.path.join(os.path.dirname(dll_path), pdb_name)
+    pdb_path_tmp = f'{pdb_path}.download'
+    with open(pdb_path_tmp, 'wb') as outfile:
+        outfile.write(payload)
+    os.replace(pdb_path_tmp, pdb_path)
+    print(f'{Clr.GRN}Wrote {Clr.BLD}{pdb_path}{Clr.RST}{Clr.GRN}.{Clr.RST}')
+    return True
+
+
 def fetch_prefab_symbols() -> None:
-    """Fetch symbol files for all present Windows prefab binaries."""
+    """Fetch symbol files for all present Windows prefab binaries.
+
+    Covers both our own binaries (looked up by exe content hash) and
+    the third-party dlls we ship alongside them -- currently ANGLE,
+    looked up by the CodeView key baked into each dll. A crash inside
+    ANGLE is otherwise unresolvable past ``module+offset``, and prefab
+    builds ship ANGLE, so fetching only our own symbols would leave a
+    common crash class unsymbolicated.
+    """
     fleet = os.environ.get('BA_FLEET', 'prod').lower()
     host = _FLEET_HOSTS.get(fleet)
     if host is None:
@@ -111,7 +157,22 @@ def fetch_prefab_symbols() -> None:
     fetched = sum(
         1 for exe_path in exe_paths if _fetch_symbols_for_exe(exe_path, host)
     )
+
+    # Third-party dlls sit beside the exes they ship with.
+    dll_paths = []
+    for exe_path in exe_paths:
+        for dll_name in _THIRD_PARTY_DLL_NAMES:
+            dll_path = os.path.join(os.path.dirname(exe_path), dll_name)
+            if os.path.isfile(dll_path):
+                dll_paths.append(dll_path)
+    dll_fetched = sum(
+        1
+        for dll_path in dll_paths
+        if _fetch_symbols_for_codeview(dll_path, host)
+    )
+
     print(
         f'Fetched symbols for {fetched} of {len(exe_paths)}'
-        f' prefab binaries.'
+        f' prefab binaries and {dll_fetched} of {len(dll_paths)}'
+        f' bundled dlls.'
     )

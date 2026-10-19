@@ -77,7 +77,7 @@ class PasswordPromptWindow:
                 if isinstance(description, (str, bui.Lstr))
                 else description.evaluate()
             ),
-            on_return_press_call=self._submit,
+            on_submit_call=self._submit,
         )
         cbtn = bui.buttonwidget(
             parent=self._root_widget,

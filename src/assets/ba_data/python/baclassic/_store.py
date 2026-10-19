@@ -14,15 +14,6 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-def _tex(name: str) -> str:
-    """Qualified _classicassets ref for a store preview texture."""
-    # Deferred; only runs post-import.
-    # pylint: disable-next=cyclic-import
-    from bascenev1 import _classicassets
-
-    return f'{_classicassets.__asset_package__}:textures/{name}'
-
-
 class StoreSubsystem:
     """Wrangles classic store."""
 
@@ -36,7 +27,8 @@ class StoreSubsystem:
         """Return a display name for a store item."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
-        from bascenev1 import _classicassets
+        from bascenev1 import _classicassets, _classiccatalogassets
+        from bauiv1 import _classicuiassets
 
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
@@ -58,11 +50,11 @@ class StoreSubsystem:
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
             return gametype.get_display_string(langstr=True)
         if item_name.startswith('icons.'):
-            return _classicassets.strings.profile.icon
+            return _classicuiassets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
-            return _classicassets.strings.coop_levels.infinite_runaround
+            return _classiccatalogassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':
-            return _classicassets.strings.coop_levels.infinite_onslaught
+            return _classiccatalogassets.strings.coop_levels.infinite_onslaught
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -131,186 +123,128 @@ class StoreSubsystem:
                 'merch': {},
                 'pro': {},
                 'maps.lake_frigid': {'map_type': maps.LakeFrigid},
-                'games.race': {
-                    'gametype': RaceGame,
-                    'previewTex': _tex('big_gpreview'),
-                },
-                'games.ninja_fight': {
-                    'gametype': NinjaFightGame,
-                    'previewTex': _tex('courtyard_preview'),
-                },
-                'games.meteor_shower': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': _tex('rampage_preview'),
-                },
-                'games.infinite_onslaught': {
-                    'gametype': MeteorShowerGame,
-                    'previewTex': _tex('rampage_preview'),
-                },
-                'games.target_practice': {
-                    'gametype': TargetPracticeGame,
-                    'previewTex': _tex('doom_shroom_preview'),
-                },
-                'games.easter_egg_hunt': {
-                    'gametype': EasterEggHuntGame,
-                    'previewTex': _tex('tower_dpreview'),
-                },
+                'games.race': {'gametype': RaceGame},
+                'games.ninja_fight': {'gametype': NinjaFightGame},
+                'games.meteor_shower': {'gametype': MeteorShowerGame},
+                'games.infinite_onslaught': {'gametype': MeteorShowerGame},
+                'games.target_practice': {'gametype': TargetPracticeGame},
+                'games.easter_egg_hunt': {'gametype': EasterEggHuntGame},
                 'icons.flag_us': {
-                    'icon': babase.charstr(
-                        babase.SpecialChar.FLAG_UNITED_STATES
-                    )
+                    'icon': babase.SpecialChar.FLAG_UNITED_STATES.value
                 },
                 'icons.flag_mexico': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_MEXICO)
+                    'icon': babase.SpecialChar.FLAG_MEXICO.value
                 },
                 'icons.flag_germany': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_GERMANY)
+                    'icon': babase.SpecialChar.FLAG_GERMANY.value
                 },
                 'icons.flag_brazil': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_BRAZIL)
+                    'icon': babase.SpecialChar.FLAG_BRAZIL.value
                 },
                 'icons.flag_russia': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_RUSSIA)
+                    'icon': babase.SpecialChar.FLAG_RUSSIA.value
                 },
                 'icons.flag_china': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_CHINA)
+                    'icon': babase.SpecialChar.FLAG_CHINA.value
                 },
                 'icons.flag_uk': {
-                    'icon': babase.charstr(
-                        babase.SpecialChar.FLAG_UNITED_KINGDOM
-                    )
+                    'icon': babase.SpecialChar.FLAG_UNITED_KINGDOM.value
                 },
                 'icons.flag_canada': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_CANADA)
+                    'icon': babase.SpecialChar.FLAG_CANADA.value
                 },
                 'icons.flag_india': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_INDIA)
+                    'icon': babase.SpecialChar.FLAG_INDIA.value
                 },
                 'icons.flag_japan': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_JAPAN)
+                    'icon': babase.SpecialChar.FLAG_JAPAN.value
                 },
                 'icons.flag_france': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_FRANCE)
+                    'icon': babase.SpecialChar.FLAG_FRANCE.value
                 },
                 'icons.flag_indonesia': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_INDONESIA)
+                    'icon': babase.SpecialChar.FLAG_INDONESIA.value
                 },
                 'icons.flag_italy': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_ITALY)
+                    'icon': babase.SpecialChar.FLAG_ITALY.value
                 },
                 'icons.flag_south_korea': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_SOUTH_KOREA)
+                    'icon': babase.SpecialChar.FLAG_SOUTH_KOREA.value
                 },
                 'icons.flag_netherlands': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_NETHERLANDS)
+                    'icon': babase.SpecialChar.FLAG_NETHERLANDS.value
                 },
                 'icons.flag_uae': {
-                    'icon': babase.charstr(
-                        babase.SpecialChar.FLAG_UNITED_ARAB_EMIRATES
-                    )
+                    'icon': (babase.SpecialChar.FLAG_UNITED_ARAB_EMIRATES.value)
                 },
                 'icons.flag_qatar': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_QATAR)
+                    'icon': babase.SpecialChar.FLAG_QATAR.value
                 },
                 'icons.flag_egypt': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_EGYPT)
+                    'icon': babase.SpecialChar.FLAG_EGYPT.value
                 },
                 'icons.flag_kuwait': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_KUWAIT)
+                    'icon': babase.SpecialChar.FLAG_KUWAIT.value
                 },
                 'icons.flag_algeria': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_ALGERIA)
+                    'icon': babase.SpecialChar.FLAG_ALGERIA.value
                 },
                 'icons.flag_saudi_arabia': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_SAUDI_ARABIA)
+                    'icon': babase.SpecialChar.FLAG_SAUDI_ARABIA.value
                 },
                 'icons.flag_malaysia': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_MALAYSIA)
+                    'icon': babase.SpecialChar.FLAG_MALAYSIA.value
                 },
                 'icons.flag_czech_republic': {
-                    'icon': babase.charstr(
-                        babase.SpecialChar.FLAG_CZECH_REPUBLIC
-                    )
+                    'icon': babase.SpecialChar.FLAG_CZECH_REPUBLIC.value
                 },
                 'icons.flag_australia': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_AUSTRALIA)
+                    'icon': babase.SpecialChar.FLAG_AUSTRALIA.value
                 },
                 'icons.flag_singapore': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_SINGAPORE)
+                    'icon': babase.SpecialChar.FLAG_SINGAPORE.value
                 },
-                'icons.flag_iran': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_IRAN)
-                },
+                'icons.flag_iran': {'icon': babase.SpecialChar.FLAG_IRAN.value},
                 'icons.flag_poland': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_POLAND)
+                    'icon': babase.SpecialChar.FLAG_POLAND.value
                 },
                 'icons.flag_argentina': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_ARGENTINA)
+                    'icon': babase.SpecialChar.FLAG_ARGENTINA.value
                 },
                 'icons.flag_philippines': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_PHILIPPINES)
+                    'icon': babase.SpecialChar.FLAG_PHILIPPINES.value
                 },
                 'icons.flag_chile': {
-                    'icon': babase.charstr(babase.SpecialChar.FLAG_CHILE)
+                    'icon': babase.SpecialChar.FLAG_CHILE.value
                 },
-                'icons.fedora': {
-                    'icon': babase.charstr(babase.SpecialChar.FEDORA)
-                },
-                'icons.hal': {'icon': babase.charstr(babase.SpecialChar.HAL)},
-                'icons.crown': {
-                    'icon': babase.charstr(babase.SpecialChar.CROWN)
-                },
-                'icons.yinyang': {
-                    'icon': babase.charstr(babase.SpecialChar.YIN_YANG)
-                },
-                'icons.eyeball': {
-                    'icon': babase.charstr(babase.SpecialChar.EYE_BALL)
-                },
-                'icons.skull': {
-                    'icon': babase.charstr(babase.SpecialChar.SKULL)
-                },
-                'icons.heart': {
-                    'icon': babase.charstr(babase.SpecialChar.HEART)
-                },
-                'icons.dragon': {
-                    'icon': babase.charstr(babase.SpecialChar.DRAGON)
-                },
-                'icons.helmet': {
-                    'icon': babase.charstr(babase.SpecialChar.HELMET)
-                },
-                'icons.mushroom': {
-                    'icon': babase.charstr(babase.SpecialChar.MUSHROOM)
-                },
+                'icons.fedora': {'icon': babase.SpecialChar.FEDORA.value},
+                'icons.hal': {'icon': babase.SpecialChar.HAL.value},
+                'icons.crown': {'icon': babase.SpecialChar.CROWN.value},
+                'icons.yinyang': {'icon': babase.SpecialChar.YIN_YANG.value},
+                'icons.eyeball': {'icon': babase.SpecialChar.EYE_BALL.value},
+                'icons.skull': {'icon': babase.SpecialChar.SKULL.value},
+                'icons.heart': {'icon': babase.SpecialChar.HEART.value},
+                'icons.dragon': {'icon': babase.SpecialChar.DRAGON.value},
+                'icons.helmet': {'icon': babase.SpecialChar.HELMET.value},
+                'icons.mushroom': {'icon': babase.SpecialChar.MUSHROOM.value},
                 'icons.ninja_star': {
-                    'icon': babase.charstr(babase.SpecialChar.NINJA_STAR)
+                    'icon': babase.SpecialChar.NINJA_STAR.value
                 },
                 'icons.viking_helmet': {
-                    'icon': babase.charstr(babase.SpecialChar.VIKING_HELMET)
+                    'icon': babase.SpecialChar.VIKING_HELMET.value
                 },
-                'icons.moon': {'icon': babase.charstr(babase.SpecialChar.MOON)},
-                'icons.spider': {
-                    'icon': babase.charstr(babase.SpecialChar.SPIDER)
-                },
-                'icons.fireball': {
-                    'icon': babase.charstr(babase.SpecialChar.FIREBALL)
-                },
-                'icons.mikirog': {
-                    'icon': babase.charstr(babase.SpecialChar.MIKIROG)
-                },
+                'icons.moon': {'icon': babase.SpecialChar.MOON.value},
+                'icons.spider': {'icon': babase.SpecialChar.SPIDER.value},
+                'icons.fireball': {'icon': babase.SpecialChar.FIREBALL.value},
+                'icons.mikirog': {'icon': babase.SpecialChar.MIKIROG.value},
                 'icons.explodinary': {
-                    'icon': babase.charstr(babase.SpecialChar.EXPLODINARY_LOGO)
+                    'icon': babase.SpecialChar.EXPLODINARY_LOGO.value
                 },
-                'icons.santa_hat': {
-                    'icon': babase.charstr(babase.SpecialChar.SANTA_HAT)
-                },
-                'icons.potato': {
-                    'icon': babase.charstr(babase.SpecialChar.POTATO)
-                },
-                'icons.palm_tree': {
-                    'icon': babase.charstr(babase.SpecialChar.PALM_TREE)
-                },
+                'icons.santa_hat': {'icon': babase.SpecialChar.SANTA_HAT.value},
+                'icons.potato': {'icon': babase.SpecialChar.POTATO.value},
+                'icons.palm_tree': {'icon': babase.SpecialChar.PALM_TREE.value},
                 'icons.boxing_glove': {
-                    'icon': babase.charstr(babase.SpecialChar.BOXING_GLOVE)
+                    'icon': babase.SpecialChar.BOXING_GLOVE.value
                 },
             }
         return babase.app.classic.store_items

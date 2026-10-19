@@ -24,11 +24,25 @@ and never assume logic-thread context without checking.
 """
 
 from bauiv1lib.docui._controller import DocUIController
+from bauiv1lib.docui._debugdraw import (
+    DebugDrawKind,
+    debug_draw_enabled,
+    set_debug_draw_enabled,
+    get_debug_draw_toggles,
+)
+from bauiv1lib.docui._typed import TypedDocUIController
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._window import DocUIWindow
+from bauiv1lib.docui._windowoptions import WindowOptions
 
 __all__ = [
     'DocUIController',
+    'TypedDocUIController',
     'DocUIWindow',
+    'WindowOptions',
     'DocUILocalAction',
+    'DebugDrawKind',
+    'debug_draw_enabled',
+    'set_debug_draw_enabled',
+    'get_debug_draw_toggles',
 ]

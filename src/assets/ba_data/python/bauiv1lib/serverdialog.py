@@ -58,7 +58,7 @@ class ServerDialogWindow(bui.Window):
         )
         self._starttime = bui.apptime()
 
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, 70 + (self._height - 70) * 0.5),

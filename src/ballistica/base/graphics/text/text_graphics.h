@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ballistica/shared/foundation/object.h"
@@ -20,6 +21,13 @@ namespace ballistica::base {
 // Largest unicode value we ask the OS to draw for us.
 const int kTextMaxUnicodeVal = 999999;
 const float kTextRowHeight = 32.0f;
+
+/// Nominal capital-letter height at text scale 1 (the baked Latin
+/// glyphs'; OS-drawn text shares their em size, so lands within a few
+/// percent). Fixed, never measured per string, so things sized by it
+/// don't change from string to string. Much less than kTextRowHeight,
+/// which includes room for descenders, accents and line spacing.
+const float kTextCapHeight = 21.0f;
 
 constexpr int kFontExtrasRows{5};
 constexpr int kFontExtrasColumns{5};
@@ -93,7 +101,7 @@ class TextGraphics {
   static auto GetBigCharIndex(int c) -> int;
 
   // Returns a glyph or nullptr if it is unavailable.
-  auto GetGlyph(uint32_t value, bool big) -> Glyph*;
+  auto GetGlyph(uint32_t value, bool big) -> const Glyph*;
   static auto HaveBigChars(const std::string& string) -> bool;
   static auto HaveChars(const std::string& string) -> bool;
 
@@ -133,6 +141,13 @@ class TextGraphics {
   auto TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                       float* width) -> bool;
 
+  /// Debug builds only: spans already considered by the defer-chaos
+  /// block in TryGetOSTextSpanBoundsAndWidth (every 16th new span gets
+  /// its first Try reported cold). Guarded by
+  /// text_span_bounds_cache_mutex_.
+  std::unordered_set<std::string> debug_chaos_seen_spans_;
+  int debug_chaos_span_count_{};
+
   /// Bumped each time a background span measure kicked off by
   /// TryGetOSTextSpanBoundsAndWidth() completes.
   auto os_span_measure_epoch() const -> int64_t {
@@ -154,6 +169,15 @@ class TextGraphics {
   /// a midrange phone — real frame-budget money when many widgets are
   /// created at once).
   void WarmUpStringAsync(const std::string& text, bool big = false);
+
+  /// Warm, in the background, the measures carat placement needs for
+  /// an editable string: every line prefix (TextGroup::GetCaratPts()
+  /// measures the line up to the carat, and with OS-rendered chars each
+  /// such prefix is its own OS-span measure). A drawn carat merely skips
+  /// a frame on a cold one, but mapping a click to a carat position
+  /// (TextGroup::GetCaratPosAtPoint()) needs them all at once. A no-op
+  /// for text without OS-rendered chars.
+  void WarmUpCaratMeasuresAsync(const std::string& text, bool big = false);
 
   /// String-level counterpart to TryGetOSTextSpanBoundsAndWidth():
   /// returns the string's width without ever stalling the calling
@@ -179,6 +203,21 @@ class TextGraphics {
   void BreakUpString(const char* text, float width,
                      std::vector<std::string>* v);
 
+  /// Word-wrap (valid utf-8) text so every line measures at most
+  /// max_width by GetStringWidth() -- the same measure a text widget
+  /// uses, so a widget drawing the result at scale s fits a column of
+  /// max_width * s without shrinking. Breaks only at the OS's UAX #14
+  /// line-break opportunities (existing newlines are kept as hard
+  /// breaks) and fills each line as full as it will go before starting
+  /// the next (greedy fill, so only the last line runs short). A
+  /// single unbreakable run wider than max_width is split between
+  /// characters. Returns the lines joined with newlines, with
+  /// whitespace stripped at line edges. Measures OS-rendered text with
+  /// the blocking measure, so a cold one can take tens of ms; meant for
+  /// background threads.
+  auto WrapString(const std::string& text, float max_width, bool big = false)
+      -> std::string;
+
   // Some chars we allow the OS to draw in some cases but draw ourselves in
   // others (to minimize the amount of switching back and forth).
   static auto IsOSDrawableAscii(int val) -> bool {
@@ -200,8 +239,6 @@ class TextGraphics {
     // Position in text_span_bounds_cache_lru_.
     std::list<std::string>::iterator lru_iterator;
   };
-  void LoadGlyphPage(uint32_t index);
-
   // Guards the two span-bounds cache containers below (plus the
   // in-flight background-measure set). Measurement is callable from
   // any thread (logic-thread UI measuring, background warm-ups,
@@ -232,7 +269,6 @@ class TextGraphics {
 
   // Keys ordered by last use; front = least-recently-used.
   std::list<std::string> text_span_bounds_cache_lru_;
-  std::mutex glyph_load_mutex_;
   Glyph
       glyphs_extras_[kFontExtrasRows * kFontExtrasColumns * kFontExtrasPages]{};
   Glyph glyphs_big_[64]{};

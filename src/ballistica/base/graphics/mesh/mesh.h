@@ -23,7 +23,12 @@ class Mesh : public Object {
   auto last_frame_def_num() const -> int64_t { return last_frame_def_num_; }
   void set_last_frame_def_num(int64_t f) { last_frame_def_num_ = f; }
 
+  /// Whether this is a TextMesh (for text debug drawing).
+  auto is_text() const -> bool { return is_text_; }
+
  protected:
+  void set_is_text(bool val) { is_text_ = val; }
+
   explicit Mesh(MeshDataType type,
                 MeshDrawType draw_type = MeshDrawType::kStatic)
       : valid_(false), type_(type), last_frame_def_num_(0) {
@@ -34,6 +39,7 @@ class Mesh : public Object {
  private:
   MeshDataType type_{};
   bool valid_{};
+  bool is_text_{};
   int64_t last_frame_def_num_{};
 
   /// Renderer data for this mesh. We keep this as a shared pointer so that

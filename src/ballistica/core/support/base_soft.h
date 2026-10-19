@@ -68,6 +68,8 @@ class BaseSoftInterface {
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id) = 0;
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id,
                              const std::string& arg) = 0;
+  /// Forwarded from Platform::SetOSMusicPlaying() on change; any thread.
+  virtual void OnOSMusicPlayingChanged(bool playing) = 0;
   virtual auto IsAppStarted() const -> bool = 0;
   virtual auto IsAppBootstrapped() const -> bool = 0;
   virtual void PushMainThreadRunnable(Runnable* runnable) = 0;

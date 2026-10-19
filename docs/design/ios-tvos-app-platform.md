@@ -70,6 +70,18 @@ all platforms** (`app_suspended_` false, `app_active_` true in `base.h`).
 its native running-state false and emits a benign no-op `UnsuspendApp` at
 boot; the iOS shell avoids that.)
 
+The **running** axis carries a third job: it disables the OS idle timer
+(`UIKitSupport.updateIdleTimer` → `UIApplication.isIdleTimerDisabled`) so the
+device doesn't lock during idle gameplay — someone on a gamepad, or just
+watching a match, touches nothing to reset it. This deliberately follows
+*running* rather than *active*: a notification banner or control center pull
+flips active for a moment, and the screen shouldn't start dimming for that.
+iOS only honors the flag for the frontmost app anyway, but we clear it on
+backgrounding so it never outlives its reason. (Android's equivalent is
+`FLAG_KEEP_SCREEN_ON`, set unconditionally in `BallisticaActivity.onCreate`;
+macOS needs a different mechanism *and* a different axis — see
+`mac-app-platform.md`.)
+
 Files: `app_platform/apple/{from_swift.h,from_swift.cc,UIKitSupport.swift,UIKitSceneDelegate.swift,UIKitGLViewController.swift}`.
 
 ## Audio around suspend
@@ -119,6 +131,59 @@ Two related facts worth knowing before touching this:
   sampling stopped when backgrounded). Android's equivalent is
   `PlatformAndroid::OnGyroEvent` → `input->PushGyroEvent`.
 
+## Pointer / keyboard input (iPad)
+
+An iPad with a trackpad, mouse, or hardware keyboard flips live between
+touch and pointer behavior, mirroring Android. All of it is `#if os(iOS)`
+in `UIKitGLViewController.swift`; tvOS is untouched.
+
+"Touch vs mouse" is three independent axes — don't conflate them:
+`HasTouchScreen()` (static hardware fact; gates whether the on-screen
+`TouchInput` device exists), `UIScale` (chosen once from platform +
+screen class), and **`touch_mode`** (`base/ui/ui.{h,cc}`), the only
+dynamic one. `UI::SetTouchMode` just sets a flag; its consumers read it
+lazily each frame — `button_widget` (hover brightening) and
+`scroll_widget`/`h_scroll_widget` (drag-scroll vs scrollbar/wheel).
+
+- **Mode switch.** `from_swift::PushUsingPointingDevice(bool)` →
+  `AppAdapterApple::SetUsingPointingDevice`, a direct port of Android's
+  `PushUsingPointingDevice_`: a main-thread bool that, on change, pushes
+  `SetTouchMode(!pointing)` to the logic thread. A finger DOWN asserts
+  `false`; pointer clicks and hover assert `true`.
+- **Clicks.** Trackpad/mouse clicks arrive through `touchesBegan/...` as
+  `UITouch`es of type `.indirectPointer`. They are routed to the **mouse**
+  bridge (`from_swift::MouseDown/Moved/Up`, button 1 as on macOS), *not*
+  `PushTouchEvent` — a pointer should drive the UI cursor, never the
+  on-screen joystick. Y is flipped here (UIKit is top-left; `CocoaGLView`
+  doesn't need to). `PushUsingPointingDevice(true)` is enqueued before
+  `MouseDown`, so touch-mode is already off when the click is processed.
+- **Hover and scroll** never come through `touchesX`; `setupPointerInput()`
+  adds a `UIHoverGestureRecognizer` (→ `MouseMoved`; the analogue of
+  Android's `ACTION_HOVER_MOVE`) and a `UIPanGestureRecognizer` with
+  `allowedScrollTypesMask = .all` and `maximumNumberOfTouches = 0`
+  (indirect scrolls only — finger drags still flow through the touch
+  path). Scroll deltas mirror `CocoaGLView.scrollWheel`: `0.1` multiplier,
+  negated Y, read incrementally by zeroing the pan translation each
+  `.changed`.
+- **Scroll momentum.** The engine's scroll widget builds and decays its
+  own inertia; a brake in `scroll_widget.cc` kills the glide ~33ms after
+  the last non-momentum event unless momentum-flagged events keep
+  arriving (their *values* are discarded). macOS streams those after lift;
+  iPadOS sends nothing after the pan's `.ended`, so a `CADisplayLink`
+  heartbeat sends `SmoothScroll(0, 0, momentum=true)` for 1.5s. A new pan
+  `.began`, `.cancelled`/`.failed`, or a pointer click halts the glide by
+  sending one non-momentum event.
+- **Keyboard + controllers.** `GameControllers.shared.start()` (`GCKeyboard`
+  and `GCController` handling, shared with macOS) is called from
+  `UIKitSupport.startEngine()` after `MonolithicMain`.
+
+Two iPadOS facts to know before extending this: the trackpad is an
+*indirect pointer*, so two physical fingers are **not** delivered as two
+`UITouch`es — the system pre-classifies them into scroll / pinch /
+secondary-click, and `UITouch`-based recognizers (e.g. a two-finger tap)
+won't see trackpad taps. And the Simulator's indirect-pointer fidelity is
+not trustworthy; verify pointer work on a real device.
+
 ## The GIL-leaf-lock invariant
 
 The Python GIL must be a **leaf lock**: never block on a cross-thread wait
@@ -159,6 +224,85 @@ Verification requires **both** `make ios-build` **and** `make tvos-build`.
 `BA_XCODE_BUILD`-gated C++ (e.g. `from_swift.cc`) only build under Xcode —
 so a cmake-green change can still break either Apple target.
 
+## Overlay web browser (iOS only)
+
+`babase.overlay_web_browser_open_url()` brings up an in-app browser --
+what the v2 account sign-in flow uses so a player never leaves the app.
+On iOS this is `UIKitOverlayWebBrowser` (an `SFSafariViewController`),
+not a bare `WKWebView`: Safari's view controller brings its own chrome,
+is what identity providers expect to see, and shares Safari's cookie
+jar, so a player already signed in there is not asked again. The cost is
+that it cannot be styled.
+
+**tvOS has no overlay browser at all** -- SafariServices does not exist
+there -- so `isSupported()` returns false and the sign-in flow falls
+back to the qr-code/link UI. Per the `#if os(iOS)` rule above, the file
+compiles into both targets and guards the SafariServices bits.
+
+Two contracts worth knowing before touching this:
+
+- **`OverlayWebBrowserIsSupported()` carries no main-thread contract**,
+  unlike `DoOverlayWebBrowserOpenURL`/`Close`. It is called from the
+  *logic* thread, so its Swift entry point must be `nonisolated`; a
+  `MainActor.assumeIsolated` there traps in
+  `dispatch_assert_queue_fail`. This is easy to get wrong because the
+  neighboring open/close entry points genuinely do need the hop.
+- **The engine expects exactly one close per open** and logs an error
+  otherwise. Both ways out (the user's Done button and a programmatic
+  close) can fire, so reporting is a one-shot; a failed open must still
+  report a close, or the engine's already-set open flag wedges every
+  later attempt.
+
+## Windowed iPad: window controls and closing
+
+- **The window controls ('traffic lights') auto-hide only under
+  `prefersHomeIndicatorAutoHidden = true`** on the root view controller.
+  Hiding the status bar does not do it, and no
+  `preferredWindowingControlStyle` hides them (`.minimal` just shrinks
+  them). Without the flag they sit permanently over our top-left UI.
+  Learned from Blink shell's source (verified on-device 2026-10-16).
+- **Quit on iPad closes the window.** `AppAdapterApple::CanSoftQuit()`
+  is true on iPad only; `DoSoftQuit()` calls
+  `UIKitFromCpp.closeScene()`, which does
+  `requestSceneSessionDestruction` -- the same thing the red window
+  control does, so the process stays alive and a relaunch connects a
+  fresh scene. The main menu shows a "Close Game" button there.
+  Soft quit skips the shutdown fade (that lives in the full-shutdown
+  path), matching the system's own instant close. iPhone and tvOS
+  never quit themselves.
+
+## Platform identity on iOS vs tvOS
+
+Two separate platform signals reach Python, and they disagreed until
+2026-08-31:
+
+| | `app.env.platform` | `app.classic.platform` | `app.env.tv` |
+|---|---|---|---|
+| iOS | `AppPlatform.IOS` | `'ios'` | `False` |
+| tvOS | `AppPlatform.TVOS` | `'tvos'` | `True` |
+
+`app.env.platform` (a `bacommon.app.AppPlatform`) comes from
+`BA_PLATFORM` in the buildconfig headers and has always distinguished
+the two. `app.classic.platform` is the *legacy* string from
+`Platform::GetLegacyPlatformName()` -- note its older vocabulary
+(`'mac'`, not `'macos'`) -- and originally returned `'ios'` for the
+whole shared `BA_PLATFORM_IOS_TVOS` branch, so tvOS inherited every
+iOS-keyed behavior. Splitting the branch fixed that. Prefer
+`app.env.platform` in new code; the legacy string is never transmitted
+anywhere -- its only consumer is the env dict -- so it is safe to
+correct.
+
+Better still, prefer a *capability* query over either platform signal
+when one exists. Advanced Settings used to gate its gyro toggle on
+`platform in {'ios', 'android'}`, which offered the option on Apple TV
+(no gyro, and no CoreMotion to read one with) while withholding it from
+nothing -- plenty of Android phones and tablets ship without the sensor
+too. It now asks `babase.hasgyro()`, which reports actual hardware:
+`CMMotionManager.isGyroAvailable` on iOS, and
+`PackageManager.hasSystemFeature(FEATURE_SENSOR_GYROSCOPE)` on Android.
+See `AppPlatform::HasGyro()`; the base `DoHasGyro()` returns false, so
+platforms with no gyro plumbing need no code at all.
+
 ## Verify Release, not just Debug
 
 Xcode Debug and Release configurations can genuinely diverge, and Swift
@@ -173,6 +317,20 @@ dead `#else` code paths hide in the configs you don't run.) **Always verify
 the shipping configuration (Release), not just Debug**, and prefer making
 mismatches fail at compile time (`#error` in unreachable branches) over
 letting them ship.
+
+A second Release-only failure class is plain C++, not config drift:
+**templates defined only in a `.cc`.** A header-inline function that calls
+a template whose definition lives only in a `.cc` (the 2026-09-04 case was
+`SessionStream::GetPointerCount<T>`) links fine in Debug — the `.cc`'s own
+implicit instantiation is emitted as a weak symbol other translation units
+can resolve against — but Release optimization inlines and drops that weak
+instantiation, so the link fails with `Undefined symbols for architecture
+arm64`. It surfaced as an iOS Release build failure while every Debug leg
+was green; `make cmake-build` and the Xcode Debug scheme never catch this
+class. Fix: keep such callers out of line in the same `.cc` as the
+template, or move the template definition to the header. Before calling a
+C++ change device-ready, run one Release build (`make ios-build
+IOS_CONFIGURATION=Release`, or `test_game_run --release`).
 
 Related `.pbxproj` notes: simulator builds exclude x86_64
 (`EXCLUDED_ARCHS[sdk=iphonesimulator*]` / `appletvsimulator`) since the
@@ -227,13 +385,10 @@ platform-specific pieces worth knowing:
   `tools/batools/iossim.py`; pcommands `ios_sim_run` / `ios_sim_log` in
   `tools/batools/pcommands4.py`). Order, no config needed:
   `IOS_SIM_DEVICE` override (name or udid) → reuse an already-booted
-  device → the Simulator app's `CurrentDeviceUDID` (`defaults read
-  com.apple.iphonesimulator`) → newest available, booted on demand. The
-  `CurrentDeviceUDID` step matters: `open -a Simulator` auto-boots the
-  app's last-used device, so a disagreeing pick yields TWO sim windows.
-  Booting is async — always `simctl bootstatus -b` before install, and
-  boot BEFORE opening Simulator.app (opening first races the auto-boot
-  → "Unable to boot device in current state: Booted").
+  device → newest available, booted on demand. Booting is async —
+  always `simctl bootstatus -b` before install, then open the viewer.
+  (A step that preferred Simulator.app's `CurrentDeviceUDID` was removed
+  2026-10-15: that app is gone in Xcode 27, so the pref is frozen.)
 
 ### Testing the software keyboard in the Simulator
 
@@ -245,7 +400,9 @@ Verifying anything keyboard-related needs setup the sim fights you on
   `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard
   -bool false` is **blocked by the unsandboxed-Bash hook**, and `simctl
   ui` has no equivalent — so ask Eric to hit ⌘⇧K (I/O ▸ Keyboard ▸
-  Connect Hardware Keyboard) once the sim is up.
+  Connect Hardware Keyboard) once the sim is up. (Those are the old
+  Simulator.app menus; where DeviceHub puts this on Xcode 27 is
+  unverified.)
 - iOS then shows a one-time **swipe-typing intro** covering the keyboard;
   `xcrun simctl spawn booted defaults write
   com.apple.keyboard.ContinuousPath DidShowContinuousPathIntroduction
@@ -261,6 +418,26 @@ Verifying anything keyboard-related needs setup the sim fights you on
   tested; Gboard's **stylus-handwriting onboarding** blocks the keyboard
   until `adb shell settings put secure stylus_handwriting_enabled 0`.
 
+### Keep the Simulator window visible
+
+A booted sim must always have its window on screen. Leaving it booted
+when you're done is fine, but an app running in a windowless sim keeps
+using CPU and playing audio with nothing to show for it, and nobody
+notices for hours. `test_game_run --platform ios|tvos` and `make
+ios`/`make tvos` handle this (`iossim._boot` opens the viewer on every
+run, warning if it can't), so run the app through them, including
+repeated cold launches (`test_game_run --launches N`). Anything that
+still drives `simctl boot`/`launch` directly must run `open -a
+DeviceHub` (unsandboxed) first.
+
+**The viewer is DeviceHub, not Simulator.app.** Xcode 27 removed
+Simulator.app; `DeviceHub.app` (`com.apple.dt.Devices`, under
+`Xcode.app/Contents/Applications/`) shows running sims instead. Until
+2026-10-15 our tooling still ran `open -a Simulator` and ignored the
+failure, so every sim run since the mid-September Xcode 27 install was
+windowless. One cold-launch loop left the game playing music in a
+hidden sim for about four hours. Older Xcodes aren't supported here.
+
 ### Simulator build/launch recipe (verified 2026-06-18)
 
 For a no-signing sim smoke-test, build for a simulator destination
@@ -273,7 +450,7 @@ tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
     -destination 'platform=iOS Simulator,name=iPhone 17' \
     -derivedDataPath build/ios_sim_dd build
 xcrun simctl boot "iPhone 17"
-open -a Simulator                             # unsandboxed (GUI)
+open -a DeviceHub                             # unsandboxed (GUI)
 APP=build/ios_sim_dd/Build/Products/Debug-iphonesimulator/BallisticaKit.app
 xcrun simctl install booted "$APP"
 xcrun simctl launch booted com.ericfroemling.ballisticakit
@@ -284,18 +461,15 @@ Bundle id: `com.ericfroemling.ballisticakit`. tvOS mirrors this with
 `make tvos-staging`, scheme `"BallisticaKit tvOS"`, destination
 `platform=tvOS Simulator,name=Apple TV 4K (3rd generation)`.
 `simctl boot/install/list` work *sandboxed*; only the GUI
-`open -a Simulator` and console/pty attaches need unsandboxed.
+`open -a DeviceHub` and console/pty attaches need unsandboxed.
 
-For intermittent launch crashes, a Release cold-launch loop (alive after
-~7s == booted past GL init):
+For intermittent launch crashes, use a Release cold-launch series
+through `test_game_run` (unsandboxed). Don't hand-roll a `simctl launch`
+loop. That skips the window and cleanup handling above, and is exactly
+how the 2026-10-15 hidden sim happened.
 
 ```bash
-tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
-    -scheme "BallisticaKit iOS" -configuration Release \
-    -destination 'platform=iOS Simulator,id=<udid>' \
-    -derivedDataPath build/ios_sim_rel_dd build
-D=<udid>; B=com.ericfroemling.ballisticakit
-xcrun simctl install $D build/ios_sim_rel_dd/Build/Products/Release-iphonesimulator/BallisticaKit.app
-for i in $(seq 1 15); do xcrun simctl terminate $D $B; xcrun simctl launch $D $B; sleep 7; \
-  xcrun simctl spawn $D launchctl list | grep -qi ballisticakit && echo "$i alive" || echo "$i CRASH"; done
+# 20 cold launches of one install, each held 12s (past the point where
+# downloaded per-GPU textures swap in); fails if any exits early.
+tools/pcommand test_game_run --platform ios --release --launches 20 --timeout 12
 ```

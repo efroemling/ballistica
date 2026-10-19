@@ -26,7 +26,9 @@ from babase._assetsubsystem import (
 )
 
 if TYPE_CHECKING:
-    from babase import AppIntent, LangStr
+    from babase import AppIntent, AppModeConfig, LangStr
+    from bacommon.assetpackage import ApverNum
+
     from babase._assetsubsystem import AssetSubsystem
 
 
@@ -122,7 +124,7 @@ class ConstructAppMode(AppMode):
 
         # Stashed resolve inputs so the dialog's Retry button can re-run.
         self._assets: AssetSubsystem | None = None
-        self._required: list[str] = []
+        self._required: list[ApverNum] = []
 
     @override
     @classmethod
@@ -138,7 +140,9 @@ class ConstructAppMode(AppMode):
         raise RuntimeError('ConstructAppMode does not handle intents.')
 
     @override
-    def on_activate(self) -> None:
+    def on_activate(self, config: AppModeConfig) -> None:
+        del config  # Unused.
+
         # Bring-up runs as an async task on the logic thread's event loop;
         # the hand-off to the real app-mode happens once it completes.
         # (Server-mode start and other stdin commands wait safely until the
@@ -194,7 +198,7 @@ class ConstructAppMode(AppMode):
         logger.info(
             'Construct-mode resolving %d asset-package(s): %s',
             len(required),
-            ', '.join(required),
+            ', '.join(str(a) for a in required),
         )
 
         # Stash inputs so the Retry button can re-run, then go.
@@ -263,7 +267,7 @@ class ConstructAppMode(AppMode):
             strip_exception_tracebacks(exc)
 
     async def _resolve_signed_in(
-        self, assets: AssetSubsystem, required: list[str]
+        self, assets: AssetSubsystem, required: list[ApverNum]
     ) -> _ResolveOutcome:
         """Resolve now that we're signed in, tolerating account-channel lag.
 
@@ -303,7 +307,7 @@ class ConstructAppMode(AppMode):
     async def _attempt(
         self,
         assets: AssetSubsystem,
-        required: list[str],
+        required: list[ApverNum],
         *,
         auth_recoverable: bool,
     ) -> _ResolveOutcome:
@@ -324,6 +328,7 @@ class ConstructAppMode(AppMode):
                 allow_downloads=True,
                 on_download_starting=self._on_download_starting,
                 on_progress=make_progress_reporter(self._on_resolve_progress),
+                label='construct-mode',
             )
             return _ResolveOutcome.SUCCESS
         except AssetAuthRequiredError as exc:

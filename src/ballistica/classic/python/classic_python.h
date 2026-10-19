@@ -43,7 +43,8 @@ class ClassicPython {
 
   void GetClassicChestDisplayInfo(const std::string& id, std::string* texclosed,
                                   std::string* texclosedtint, Vector3f* color,
-                                  Vector3f* tint, Vector3f* tint2);
+                                  Vector3f* tint, Vector3f* tint2,
+                                  Vector3f* tint3);
   void ReloadHooks();
 
  private:
@@ -53,8 +54,10 @@ class ClassicPython {
     std::string texclosedtint;
     Vector3f tint;
     Vector3f tint2;
+    Vector3f tint3{1.0f, 1.0f, 1.0f};
   };
 
+  auto QualifiedRefFromHandle_(const PythonRef& handle) -> std::string;
   auto ChestDisplayFromPython(const PythonRef& ref) -> ChestDisplay_;
   ChestDisplay_ chest_display_default_;
   std::unordered_map<std::string, ChestDisplay_> chest_displays_;

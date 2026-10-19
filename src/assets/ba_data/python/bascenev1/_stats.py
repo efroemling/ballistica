@@ -26,6 +26,13 @@ class PlayerScoredMessage:
     """The score value."""
 
 
+def _message_icon(
+    player: bascenev1.Player,
+) -> bascenev1.Depiction | dict[str, Any]:
+    """The icon to show beside a screen message about a player."""
+    return player.get_icon_depiction() or player.get_icon()
+
+
 class PlayerRecord:
     """Stats for an individual player in a bascenev1.Stats object.
 
@@ -55,6 +62,10 @@ class PlayerRecord:
         self._multi_kill_count = 0
         self._stats = weakref.ref(stats)
         self._last_sessionplayer: bascenev1.SessionPlayer | None = None
+        # The json of the player's icon depiction, if any (scene
+        # objects never cross scenes, and we outlive activities).
+        self._icon_depiction_json: str | None = None
+        self._name_depiction_json: str | None = None
         self._sessionplayer: bascenev1.SessionPlayer | None = None
         self._sessionteam: weakref.ref[bascenev1.SessionTeam] | None = None
         self.streak = 0
@@ -95,6 +106,28 @@ class PlayerRecord:
         assert player is not None
         return player.get_icon()
 
+    def get_icon_depiction(self) -> bascenev1.Depiction | None:
+        """Get the icon depiction for this instance's player, if any.
+
+        See :meth:`bascenev1.SessionPlayer.get_icon_depiction`. Kept
+        from the last associated player, so it survives them leaving.
+        Made in the current context's scene, so call it in the context
+        that will show it.
+        """
+        if self._icon_depiction_json is None:
+            return None
+        return _bascenev1.Depiction(self._icon_depiction_json)
+
+    def get_name_depiction(self) -> bascenev1.Depiction | None:
+        """Get the name depiction for this instance's player, if any.
+
+        See :meth:`bascenev1.SessionPlayer.get_name_depiction`. Kept
+        and made as :meth:`get_icon_depiction` is.
+        """
+        if self._name_depiction_json is None:
+            return None
+        return _bascenev1.Depiction(self._name_depiction_json)
+
     def cancel_multi_kill_timer(self) -> None:
         """Cancel any multi-kill timer for this player entry."""
         self._multi_kill_timer = None
@@ -114,6 +147,8 @@ class PlayerRecord:
         """Associate this entry with a bascenev1.SessionPlayer."""
         self._sessionteam = weakref.ref(sessionplayer.sessionteam)
         self.character = sessionplayer.character
+        self._icon_depiction_json = sessionplayer.get_icon_depiction_json()
+        self._name_depiction_json = sessionplayer.get_name_depiction_json()
         self._last_sessionplayer = sessionplayer
         self._sessionplayer = sessionplayer
         self.streak = 0
@@ -450,7 +485,7 @@ class Stats:
                     _classicassets.strings.game.name_scores(name=name),
                     top=True,
                     color=player.color,
-                    image=player.get_icon(),
+                    image=_message_icon(player),
                 )
         except Exception:
             logging.exception('Error announcing score.')
@@ -491,7 +526,7 @@ class Stats:
                         _classicassets.strings.game.name_suicide(name=name),
                         top=True,
                         color=player.color,
-                        image=player.get_icon(),
+                        image=_message_icon(player),
                     )
                 elif killer is not None:
                     if killer.team is player.team:
@@ -501,7 +536,7 @@ class Stats:
                             ),
                             top=True,
                             color=killer.color,
-                            image=killer.get_icon(),
+                            image=_message_icon(killer),
                         )
                     else:
                         _bascenev1.broadcastmessage(
@@ -510,14 +545,14 @@ class Stats:
                             ),
                             top=True,
                             color=killer.color,
-                            image=killer.get_icon(),
+                            image=_message_icon(killer),
                         )
                 else:
                     _bascenev1.broadcastmessage(
                         _classicassets.strings.game.name_died(name=name),
                         top=True,
                         color=player.color,
-                        image=player.get_icon(),
+                        image=_message_icon(player),
                     )
         except Exception:
             logging.exception('Error announcing kill.')

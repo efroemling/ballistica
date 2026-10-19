@@ -4,8 +4,10 @@
 
 from typing import TYPE_CHECKING
 
+from bacommon.app import AppPlatform
+
 import bauiv1 as bui
-from bauiv1 import _commonassets, _builtinassets, _classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -29,8 +31,12 @@ class ConfirmWindow:
         cancel_text: str | bui.Lstr | bui.LangStr | None = None,
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
+        scale: float | None = None,
     ):
+        """Show the window.
 
+        ``scale`` overrides the window's default per-ui-scale scale.
+        """
         ui = bui.app.ui_v1
 
         # Make sure our widgets have globally unique ids.
@@ -68,9 +74,13 @@ class ConfirmWindow:
             toolbar_visibility='menu_minimal_no_back',
             parent=bui.get_special_widget('overlay_stack'),
             scale=(
-                1.9
-                if uiscale is bui.UIScale.SMALL
-                else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                scale
+                if scale is not None
+                else (
+                    1.9
+                    if uiscale is bui.UIScale.SMALL
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                )
             ),
             scale_origin_stack_offset=scale_origin,
             darken_behind=True,
@@ -178,15 +188,17 @@ class QuitWindow:
             ui.quit_window.delete()
             ui.quit_window = None
         if swish:
-            _builtinassets.audio.swish.get().play()
+            bui.play_swish()
 
-        # Generally Macs say Quit and other stuff says Exit
+        # Generally Macs say Quit, iPads say Close (quitting there closes
+        # our window), and other stuff says Exit.
         strs = _classicassets.strings.ui
-        confirmstr = (
-            strs.quit_app_confirm
-            if platform is type(platform).MACOS
-            else strs.exit_app_confirm
-        )
+        if platform is AppPlatform.MACOS:
+            confirmstr = strs.quit_app_confirm
+        elif platform is AppPlatform.IOS:
+            confirmstr = strs.close_app_confirm
+        else:
+            confirmstr = strs.exit_app_confirm
         quit_text = confirmstr(app_name=strs.app_name)
 
         self._root_widget = ui.quit_window = ConfirmWindow(

@@ -84,18 +84,21 @@ static PyMethodDef PyGetSimpleSoundDef = {
 static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  int64_t apvernum;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apvernum", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Ls", const_cast<char**>(kwlist), &apvernum, &name)) {
     return nullptr;
   }
+  // The engine keys packages by numeric id as text.
+  std::string apverid = std::to_string(apvernum);
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
-  Assets::FailOnNonAssetPackagePath(name, "apsimplesoundget");
   {
     Assets::AssetListLock lock;
-    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    Object::Ref<SoundAsset> sound =
+        g_base->assets->GetPackageSound(apverid, name);
     return PythonClassSimpleSound::Create(sound.get());
   }
   Py_RETURN_NONE;
@@ -107,13 +110,13 @@ static PyMethodDef PyApSimpleSoundGetDef = {
     (PyCFunction)PyApSimpleSoundGet,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "apsimplesoundget(name: str) -> SimpleSound\n"
+    "apsimplesoundget(apvernum: int, name: str) -> SimpleSound\n"
     "\n"
     "Load a simple sound from an asset-package (internal).\n"
     "\n"
     "Do not call this directly; asset-package assets should be accessed\n"
     "through their package's generated Python wrapper module, which routes\n"
-    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "through this call. Requires a fully-qualified '<apvernum>:<path>'\n"
     "asset name.\n"
     "\n"
     ":meta private:",
@@ -269,6 +272,37 @@ static PyMethodDef PyHasTouchScreenDef = {
     "Return whether a touchscreen is present on the current device.\n"
     "\n"
     ":meta private:",
+};
+
+// -------------------------------- hasgyro ------------------------------------
+
+static auto PyHasGyro(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->platform->HasGyro()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHasGyroDef = {
+    "hasgyro",                     // name
+    (PyCFunction)PyHasGyro,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "hasgyro() -> bool\n"
+    "\n"
+    "Return whether gyroscope hardware is present on the current device.\n"
+    "\n"
+    "Prefer this over testing platform names when gating gyro-related\n"
+    "functionality; plenty of phones and tablets ship without the sensor,\n"
+    "and TV devices never have one.",
 };
 
 // ------------------------- clipboard_is_supported ----------------------------
@@ -1290,35 +1324,40 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 
 // ---------------------- reload_language --------------------------------------
 
-static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyReloadLanguage(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* apverids_obj;
+  PyObject* apvernums_obj;
   const char* plural_locale;
-  if (!PyArg_ParseTuple(args, "Os", &apverids_obj, &plural_locale)) {
+  const char* decimal_mark{"."};
+  const char* duration_separator{" "};
+  static const char* kwlist[] = {"apvernums", "plural_locale", "decimal_mark",
+                                 "duration_separator", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Os|$ss", const_cast<char**>(kwlist), &apvernums_obj,
+          &plural_locale, &decimal_mark, &duration_separator)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(apverids_obj));
+  // The engine keys packages by numeric id as text.
   std::vector<std::string> apverids;
-  int size = static_cast<int>(PyList_GET_SIZE(apverids_obj));
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(apverids_obj, i);
-    if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in apverids list.", PyExcType::kType);
-    }
-    apverids.emplace_back(PyUnicode_AsUTF8(entry));
+  for (int64_t apvernum : Python::GetInts64(apvernums_obj)) {
+    apverids.emplace_back(std::to_string(apvernum));
   }
   assert(g_base->logic);
-  g_base->assets->ReloadLanguage(apverids, plural_locale);
+  g_base->assets->ReloadLanguage(apverids, plural_locale, decimal_mark,
+                                 duration_separator);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
 static PyMethodDef PyReloadLanguageDef = {
-    "reload_language",  // name
-    PyReloadLanguage,   // method
-    METH_VARARGS,       // flags
+    "reload_language",              // name
+    (PyCFunction)PyReloadLanguage,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "reload_language(apverids: list[str], plural_locale: str) -> None\n"
+    "reload_language(apvernums: Sequence[int], plural_locale: str,"
+    " *, decimal_mark: str = '.', duration_separator: str = ' ')"
+    " -> None\n"
     "\n"
     ":meta private:\n"
     "\n"
@@ -1326,7 +1365,9 @@ static PyMethodDef PyReloadLanguageDef = {
     "language-string tables) from the registered ``language`` buckets\n"
     "of the given asset-packages and notify subsystems of the language\n"
     "change. ``plural_locale`` is the resolved locale wire value\n"
-    "driving CLDR plural selection.",
+    "driving CLDR plural selection; ``decimal_mark`` and\n"
+    "``duration_separator`` are its number data for display-formatted\n"
+    "params (durations, sizes).",
 };
 
 // ---------------------- get_resource -----------------------------------------
@@ -1679,13 +1720,14 @@ static auto PyDevConsoleAddButton(PyObject* self, PyObject* args) -> PyObject* {
   float corner_radius;
   const char* style;
   int disabled;
-  if (!PyArg_ParseTuple(args, "sffffOsffsp", &label, &x, &y, &width, &height,
+  int sound;
+  if (!PyArg_ParseTuple(args, "sffffOsffspp", &label, &x, &y, &width, &height,
                         &call, &h_anchor, &label_scale, &corner_radius, &style,
-                        &disabled)) {
+                        &disabled, &sound)) {
     return nullptr;
   }
   dev_console->AddButton(label, x, y, width, height, call, h_anchor,
-                         label_scale, corner_radius, style, disabled);
+                         label_scale, corner_radius, style, disabled, sound);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1707,6 +1749,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  corner_radius: float,\n"
     "  style: str,\n"
     "  disabled: bool,\n"
+    "  sound: bool,\n"
     ") -> None\n"
     "\n"
     ":meta private:",
@@ -1957,6 +2000,32 @@ static PyMethodDef PyNativeReviewRequestSupportedDef = {
     ":meta private:",
 };
 
+// ------------------------ device_haptics_supported ---------------------------
+
+static auto PyDeviceHapticsSupported(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->app_adapter->DeviceFeedbackSupported()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDeviceHapticsSupportedDef = {
+    "device_haptics_supported",             // name
+    (PyCFunction)PyDeviceHapticsSupported,  // method
+    METH_NOARGS,                            // flags
+
+    "device_haptics_supported() -> bool\n"
+    "\n"
+    "Return whether the device we are running on can play haptics.\n"
+    "\n"
+    "This is about the device itself (a phone's vibrator); controllers\n"
+    "are a separate matter.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------------- native_review_request ----------------------------
 
 static auto PyNativeReviewRequest(PyObject* self) -> PyObject* {
@@ -2169,6 +2238,48 @@ static PyMethodDef PyVirtualBoundsMaxMarginsProbeDef = {
     ":meta private:",
 };
 
+// ---------------------- screen_insets_blend_probe ----------------------------
+
+static auto PyScreenInsetsBlendProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* os_obj;
+  PyObject* max_obj;
+  double amount;
+  static const char* kwlist[] = {"os_bounds", "max_bounds", "amount", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOd",
+                                   const_cast<char**>(kwlist), &os_obj,
+                                   &max_obj, &amount)) {
+    return nullptr;
+  }
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect out = Graphics::BlendScreenInsetsRect(
+      rect_from(os_obj), rect_from(max_obj), static_cast<float>(amount));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyScreenInsetsBlendProbeDef = {
+    "screen_insets_blend_probe",            // name
+    (PyCFunction)PyScreenInsetsBlendProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "screen_insets_blend_probe(os_bounds: Sequence[float],\n"
+    "  max_bounds: Sequence[float], amount: float)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------- virtual_bounds_project_probe ---------------------------
 
 static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
@@ -2326,6 +2437,148 @@ static PyMethodDef PySetDrawVirtualBoundsDef = {
     METH_VARARGS | METH_KEYWORDS,         // flags
 
     "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- get_debug_bounds ---------------------------------
+
+static auto DebugBoundsTypeArg_(const char* kind) -> DebugBoundsType {
+  auto type = Graphics::DebugBoundsTypeFromName(kind);
+  if (!type) {
+    throw Exception(std::string("Unknown debug-bounds kind '") + kind + "'.",
+                    PyExcType::kValue);
+  }
+  return *type;
+}
+
+static auto PyGetDebugBounds(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  const char* kind;
+  static const char* kwlist[] = {"kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &kind)) {
+    return nullptr;
+  }
+  if (g_base->graphics->debug_bounds(DebugBoundsTypeArg_(kind))) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugBoundsDef = {
+    "get_debug_bounds",             // name
+    (PyCFunction)PyGetDebugBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "get_debug_bounds(kind: str) -> bool\n"
+    "\n"
+    "Return whether bounds of a kind of thing are being outlined.\n"
+    "\n"
+    "See :func:`set_debug_bounds`.\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- set_debug_bounds ---------------------------------
+
+static auto PySetDebugBounds(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  const char* kind;
+  int value;
+  static const char* kwlist[] = {"kind", "value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sp",
+                                   const_cast<char**>(kwlist), &kind, &value)) {
+    return nullptr;
+  }
+  g_base->graphics->set_debug_bounds(DebugBoundsTypeArg_(kind), value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugBoundsDef = {
+    "set_debug_bounds",             // name
+    (PyCFunction)PySetDebugBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_debug_bounds(kind: str, value: bool) -> None\n"
+    "\n"
+    "Outline the bounds of a kind of thing on screen, for checking layout.\n"
+    "\n"
+    "The dev console's UI tab has a button for each kind. Kinds:\n"
+    "``'name_depictions'``, ``'image_depictions'`` and\n"
+    "``'character_icon_depictions'`` (each such depiction's whole box in\n"
+    "red and the part of it the depiction takes up in green), and\n"
+    "``'text'`` (every glyph quad of all text filled translucent red).\n"
+    "Not saved; off at launch.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- get_debug_draw ---------------------------------
+
+static auto PyGetDebugDraw(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->debug_draw()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDebugDrawDef = {
+    "get_debug_draw",             // name
+    (PyCFunction)PyGetDebugDraw,  // method
+    METH_NOARGS,                  // flags
+
+    "get_debug_draw() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_debug_draw ---------------------------------
+
+static auto PySetDebugDraw(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_debug_draw(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDebugDrawDef = {
+    "set_debug_draw",              // name
+    (PyCFunction)PySetDebugDraw,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_debug_draw(value: bool) -> None\n"
+    "\n"
+    "Enable/disable engine debug drawing (the same thing F10 toggles).\n"
     "\n"
     ":meta private:",
 };
@@ -2653,15 +2906,19 @@ static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
   const char* message;
   float progress;
   const char* button_label;
-  static const char* kwlist[] = {"dialog_id", "title",        "message",
-                                 "progress",  "button_label", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "issfs", const_cast<char**>(kwlist), &dialog_id, &title,
-          &message, &progress, &button_label)) {
+  int cancel_activates_button;
+  static const char* kwlist[] = {"dialog_id",    "title",
+                                 "message",      "progress",
+                                 "button_label", "cancel_activates_button",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "issfsp",
+                                   const_cast<char**>(kwlist), &dialog_id,
+                                   &title, &message, &progress, &button_label,
+                                   &cancel_activates_button)) {
     return nullptr;
   }
   g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
-                                   button_label);
+                                   button_label, cancel_activates_button != 0);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2672,10 +2929,12 @@ static PyMethodDef PySimpleDialogUpdateDef = {
     METH_VARARGS | METH_KEYWORDS,       // flags
 
     "simpledialog_update(dialog_id: int, title: str, message: str,\n"
-    "  progress: float, button_label: str) -> None\n"
+    "  progress: float, button_label: str,\n"
+    "  cancel_activates_button: bool) -> None\n"
     "\n"
     "Set a SimpleDialog's full visible state. A negative ``progress``\n"
-    "hides the bar; an empty ``button_label`` hides the button.\n"
+    "hides the bar; an empty ``button_label`` hides the button;\n"
+    "``cancel_activates_button`` lets cancel-type input fire the button.\n"
     "\n"
     ":meta private:",
 };
@@ -2761,6 +3020,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSimpleSoundDef,
       PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
+      PyHasGyroDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,
@@ -2776,6 +3036,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyUsingGooglePlayGameServicesDef,
       PyUsingGameCenterDef,
       PyNativeReviewRequestSupportedDef,
+      PyDeviceHapticsSupportedDef,
       PyNativeReviewRequestDef,
       PyTempTestingDef,
       PyOpenFileExternallyDef,
@@ -2786,11 +3047,16 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetDrawVirtualSafeAreaBoundsDef,
       PyGetDrawVirtualBoundsDef,
       PySetDrawVirtualBoundsDef,
+      PyGetDebugBoundsDef,
+      PySetDebugBoundsDef,
+      PyGetDebugDrawDef,
+      PySetDebugDrawDef,
       PyGetForceMaxVirtualBoundsMarginsDef,
       PySetForceMaxVirtualBoundsMarginsDef,
       PyVirtualBoundsProjectProbeDef,
       PyVirtualBoundsCalcProbeDef,
       PyVirtualBoundsMaxMarginsProbeDef,
+      PyScreenInsetsBlendProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

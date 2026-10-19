@@ -14,43 +14,18 @@ namespace ballistica::base {
 
 #if BA_ENABLE_AUDIO
 
-static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
-                         void* data_source) -> size_t {
-  return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
-}
-
-static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
-    -> int {
-  return fseek(static_cast<FILE*>(data_source),
-               static_cast_check_fit<long>(offset), whence);  // NOLINT
-}
-static auto CallbackClose(void* data_source) -> int {
-  return fclose(static_cast<FILE*>(data_source));
-}
-static long CallbackTell(void* data_source) {  // NOLINT (ogg wants long)
-  return ftell(static_cast<FILE*>(data_source));
-}
-
 OggStream::OggStream(const char* file_name, ALuint source, bool loop)
     : AudioStreamer(file_name, source, loop), have_ogg_file_(false) {
   int result;
-  FILE* f;
-  if (!(f = g_core->platform->FOpen(file_name, "rb"))) {
+  blob_ = AssetBlob::FromFile(file_name);
+  if (!blob_.exists()) {
     throw Exception("can't open ogg file: '" + std::string(file_name) + "'");
   }
-  ov_callbacks callbacks;
-  callbacks.read_func = CallbackRead;
-  callbacks.seek_func = CallbackSeek;
-  callbacks.close_func = CallbackClose;
-  callbacks.tell_func = CallbackTell;
+  blob_source_ = OggBlobSource{&blob_};
 
-  // Have to use callbacks here as codewarrior's FILE struct doesn't
-  // seem to agree with what vorbis expects... oh well.
-  // Ericf note Aug 2019: Wow I have comments here old enough to be referencing
-  // codewarrior; that's awesome!
-  result = ov_open_callbacks(f, &ogg_file_, nullptr, 0, callbacks);
+  result = ov_open_callbacks(&blob_source_, &ogg_file_, nullptr, 0,
+                             OggBlobCallbacks());
   if (result < 0) {
-    fclose(f);
     throw Exception(GetErrorString(result));
   }
   have_ogg_file_ = true;

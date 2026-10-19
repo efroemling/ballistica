@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Analytics support."""
+"""Analytics support.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 from typing import assert_never, override, Annotated
 

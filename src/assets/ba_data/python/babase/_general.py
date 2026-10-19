@@ -8,6 +8,7 @@ import weakref
 import random
 import logging
 import inspect
+from concurrent.futures import Future
 from typing import TYPE_CHECKING, Protocol, NewType, override
 
 # ``deprecated`` is available from the stdlib in Python 3.13+, but
@@ -118,8 +119,32 @@ if TYPE_CHECKING:
     # crash with no suppression needed.
     WeakCallPartial: TypeAlias = functools.partial
     CallPartial: TypeAlias = functools.partial
-    WeakCall: TypeAlias = functools.partial
-    Call: TypeAlias = functools.partial
+
+    # The transitional names are declared as trivial *subclasses*
+    # rather than aliases so the ``@deprecated`` marker survives into
+    # the type-checking view; a plain alias would hide it from mypy's
+    # ``deprecated`` error code. Keep these messages in sync with the
+    # runtime classes below.
+    @deprecated(
+        'WeakCall should be replaced with either WeakCallPartial'
+        ' (if passing extra args at call time) or WeakCallStrict'
+        ' (if not). Once API 9 support ends, WeakCall can again be'
+        ' used, but it will behave like WeakCallStrict instead of'
+        ' WeakCallPartial.'
+    )
+    class WeakCall[T](functools.partial[T]):
+        """Transitional alias of :class:`WeakCallPartial`."""
+
+    @deprecated(
+        'Call should be replaced with either CallPartial'
+        ' (if passing extra args at call time) or CallStrict'
+        ' (if not). Once API 9 support ends, Call can again be'
+        ' used, but it will behave like CallStrict instead'
+        ' of CallPartial.'
+    )
+    class Call[T](functools.partial[T]):
+        """Transitional alias of :class:`CallPartial`."""
+
 else:
 
     class WeakCallPartial:
@@ -148,14 +173,14 @@ else:
         when it fires::
 
             foo = FooClass()
-            babase.apptimer(5.0, ba.WeakCall(foo.bar))
+            babase.apptimer(5.0, babase.WeakCallPartial(foo.bar))
             foo = None
 
         **EXAMPLE C:** Wrap a method call with some positional and keyword
         args::
 
-            myweakcall = babase.WeakCall(self.dostuff, argval1,
-                                         namedarg=argval2)
+            myweakcall = babase.WeakCallPartial(self.dostuff, argval1,
+                                                namedarg=argval2)
 
             # Now we have a single callable to run that whole mess.
             # The same as calling myobj.dostuff(argval1, namedarg=argval2)
@@ -489,6 +514,75 @@ class WeakCallStrict[**P, T]:
             f'<babase.WeakCall object; call={self.call!r},'
             f' args={self.args!r}, kwargs={self.kwargs!r}>'
         )
+
+
+def logic_thread_submit[**P, T](
+    call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+) -> Future[T]:
+    """Run a call on the logic thread from another thread; get a future.
+
+    The logic-thread counterpart of
+    :meth:`concurrent.futures.Executor.submit()`, with the same
+    type-checked argument passing. Use it from background threads for
+    the bits of work that must happen on the logic thread (reading app
+    state, querying input devices, etc.) while the rest stays off it.
+
+    The call runs with no context set (as with
+    ``pushcall(from_other_thread=True)``), so UI calls are fine to make
+    from it. Its return value or exception lands on the returned
+    future; nothing is logged, so an exception is lost if nobody
+    checks. Cancelling the future before the call starts skips the
+    call.
+
+    Blocking on the result is the usual pattern, so pass a timeout to
+    :meth:`~concurrent.futures.Future.result()` unless you know the
+    logic thread will get to it; late in app shutdown it may never run.
+
+    Must not be called from the logic thread itself: blocking there on
+    the result would deadlock it. Just make the call directly (or use
+    :func:`~babase.pushcall()` to defer it).
+    """
+    if _babase.in_logic_thread():
+        raise RuntimeError(
+            'logic_thread_submit() must not be called from the logic thread.'
+        )
+    future: Future[T] = Future()
+    _babase.pushcall(
+        _LogicThreadSubmission(future, CallStrict(call, *args, **kwargs)),
+        from_other_thread=True,
+    )
+    return future
+
+
+class _LogicThreadSubmission[T]:
+    """Runs a submitted call on the logic thread and fills its future."""
+
+    # pylint: disable=too-few-public-methods
+
+    __slots__ = ('_future', '_call')
+
+    def __init__(self, future: Future[T], call: Callable[[], T]) -> None:
+        self._future: Future[T] | None = future
+        self._call: Callable[[], T] | None = call
+
+    def __call__(self) -> None:
+        # An exception's traceback holds this frame (and, via it, us),
+        # so nothing reachable from here may keep the future that ends
+        # up holding that exception, or the two form a cycle only
+        # cyclic gc can break. So take our refs local and drop the
+        # future's before storing the exception in it.
+        future, call = self._future, self._call
+        self._future = self._call = None
+        assert future is not None and call is not None
+        if not future.set_running_or_notify_cancel():
+            return
+        try:
+            result = call()
+        except BaseException as exc:
+            future.set_exception(exc)
+            del future
+        else:
+            future.set_result(result)
 
 
 class WeakMethod:

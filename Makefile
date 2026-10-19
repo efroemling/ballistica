@@ -411,6 +411,25 @@ WINPREVSP = x64
 # Associated name for our PrefabPlatform enum.
 WINPREPLT = windows_x86_64
 
+# Visual C++ runtime dlls that a Release build leaves next to its exe,
+# per Visual Studio platform (the BACopyVCRuntime target in
+# ballisticakit-windows/Directory.Build.props copies them from the
+# compiling toolset; keep these lists matching it). Release prefab
+# builds and packages ship these beside the exe so nothing needs to be
+# installed. Debug builds get none (the debug runtime is not
+# redistributable) and vcruntime140_1.dll does not exist for 32 bit.
+WIN_CRT_DLLS_Win32 = msvcp140.dll vcruntime140.dll
+WIN_CRT_DLLS_x64 = msvcp140.dll vcruntime140.dll vcruntime140_1.dll
+WIN_CRT_DLLS_ARM64 = msvcp140.dll vcruntime140.dll vcruntime140_1.dll
+
+# The above for the prefab platform, as paths in the release prefab
+# build dirs.
+WIN_PREFAB_GUI_CRT = $(addprefix \
+ build/prefab/full/windows_x86_64_gui/release/,$(WIN_CRT_DLLS_$(WINPREVSP)))
+WIN_PREFAB_SERVER_CRT = $(addprefix \
+ build/prefab/full/windows_x86_64_server/release/dist/,\
+$(WIN_CRT_DLLS_$(WINPREVSP)))
+
 # Mac gui debug:
 
 RUN_PREFAB_MAC_X86_64_GUI_DEBUG = cd build/prefab/full/mac_x86_64_gui/debug \
@@ -691,9 +710,16 @@ prefab-windows-x86-64-gui-release: prefab-windows-x86-64-gui-release-build
 
 prefab-windows-x86-64-gui-release-build: env \
    assets-windows-$(WINPREVSP) \
-   build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe
+   build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe \
+   $(WIN_PREFAB_GUI_CRT)
 	@$(STAGE_BUILD) -win-$(WINPREVSP) -release \
       build/prefab/full/windows_x86_64_gui/release
+
+# The Visual C++ runtime dlls matching the exe above: each rule re-runs
+# the same remote MSBuild as the exe rule (an incremental no-op when the
+# exe is already built), which leaves them beside the built exe.
+$(WIN_PREFAB_GUI_CRT): .efrocachemap
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
@@ -741,9 +767,15 @@ prefab-windows-x86-64-server-release: prefab-windows-x86-64-server-release-build
 
 prefab-windows-x86-64-server-release-build: env \
    assets-windows-server-$(WINPREVSP) \
- build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe
+ build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe \
+   $(WIN_PREFAB_SERVER_CRT)
 	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -release \
       build/prefab/full/windows_x86_64_server/release
+
+# The Visual C++ runtime dlls matching the exe below (see the gui
+# release equivalents above).
+$(WIN_PREFAB_SERVER_CRT): .efrocachemap
+	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
@@ -1525,7 +1557,62 @@ docker-clean:
 #                                                                              #
 ################################################################################
 
-flatpak-linux: env
+# Everything a flatpak build would otherwise download or generate
+# mid-build: built assets, resources, the prefab plus lib for each
+# flatpak arch, the app icon, and releases.xml. The build sandbox has no
+# network (Flathub forbids it), so these have to be in the tree it is
+# handed: the local tree for flatpak-linux, or the release's
+# prebuilt-inputs archive (below) for Flathub.
+FLATPAK_ICON = pconfig/flatpak/net.froemling.bombsquad.png
+FLATPAK_RELEASES = pconfig/flatpak/net.froemling.bombsquad.releases.xml
+
+flatpak-prefetch: assets-cmake resources $(FLATPAK_ICON) $(FLATPAK_RELEASES) \
+ build/prefab/lib/linux_x86_64_gui/release/libballisticaplus.a \
+ build/prefab/lib/linux_arm64_gui/release/libballisticaplus.a
+
+# AppStream release history, generated from CHANGELOG.md (not in git).
+# This lists the newest changelog versions; the release workflow runs
+# flatpak_add_release with its tag first, so a release's archive stops
+# at that release.
+$(FLATPAK_RELEASES): CHANGELOG.md
+	$(PCOMMAND) flatpak_add_release
+
+# The app icon isn't in git; fetch it, checksum-verified.
+$(FLATPAK_ICON):
+	curl -fsSL -o $@.tmp \
+ https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
+	echo "c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a" \
+ " $@.tmp" | sha256sum -c -
+	mv $@.tmp $@
+
+# Pack what flatpak-prefetch produced into
+# build/flatpak/bombsquad_prebuilt_inputs.tar.xz: the parts of
+# a Flathub build's tree that are not in git. Flathub builds take the
+# source from git at the release tag and lay this archive over it; see
+# flatpak_prebuilt_inputs and generate_flathub_manifest in
+# tools/batools/pcommands3.py.
+flatpak-prebuilt-inputs: flatpak-prefetch
+	$(PCOMMAND) flatpak_prebuilt_inputs
+
+# One-time setup for flatpak-linux, run by hand (or as its own CI step)
+# since it changes your user flatpak installation: installs the SDK,
+# runtime and extensions the manifest names, from the flathub remote,
+# so their versions live only in the manifest. Adding that remote is
+# left to you.
+flatpak-deps:
+	@flatpak remote-list --user --columns=name | grep -qx flathub || { \
+ echo "Error: no 'flathub' flatpak remote for your user. Add it with:"; \
+ echo "  flatpak remote-add --user --if-not-exists flathub" \
+ "https://flathub.org/repo/flathub.flatpakrepo"; \
+ echo "then re-run 'make flatpak-deps'."; \
+ exit 1; }
+	flatpak-builder --user --install-deps-from=flathub --install-deps-only \
+	--state-dir=./.cache/flatpak/flatpak-builder \
+	./.cache/flatpak/build_dir \
+	pconfig/flatpak/net.froemling.bombsquad.yml
+
+# Needs the SDK etc. installed first; see flatpak-deps.
+flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
 	flatpak-builder --repo=./.cache/flatpak/repo \
 	--force-clean --keep-build-dirs \
@@ -1537,6 +1624,20 @@ flatpak-linux: env
 
 flatpak-generate-flathub-manifest:
 	$(PCOMMAND) generate_flathub_manifest
+
+# Regenerate the offline Python build environment the flatpak builds
+# use: pconfig/requirements_build_lock.txt (the requirements_build.txt
+# roots, pinned to the versions in requirements_lock.txt) and the
+# flatpak-builder module that supplies uv plus a wheel for each of its
+# packages. Both outputs are committed; run this (and commit the
+# result) after changing either requirements file. Deliberately not a
+# file rule: the offline flatpak build must never try to re-resolve.
+flatpak-build-env: env
+	@uv pip compile --universal --generate-hashes --quiet \
+ --python $(VENV_PYTHON) \
+ -c pconfig/requirements_lock.txt \
+ pconfig/requirements_build.txt -o pconfig/requirements_build_lock.txt
+	$(PCOMMAND) generate_flatpak_build_env
 
 flatpak-clean:
 	rm build/flatpak -rf
@@ -1643,6 +1744,15 @@ SKIP_ENV_CHECKS ?= 0
 
 VENV_PYTHON ?= python3.14
 
+# Lockfile the project venv is installed from. Override this to build a
+# reduced venv; the flatpak/flathub packaging builds set it to
+# pconfig/requirements_build_lock.txt, which carries only what compiling
+# the app actually reaches and so can be vendored for an offline build.
+# A venv built that way is deliberately missing the linters, type
+# checkers and test tooling, so `make check`/`make test` will not run
+# against it.
+VENV_LOCK ?= pconfig/requirements_lock.txt
+
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading venvs in place will never uninstall
 # stuff, after switching the venv's installer (e.g. pip → uv), or after
@@ -1705,7 +1815,7 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
 # install packages should go through ``uv pip install`` rather
 # than ``.venv/bin/pip``.
 .venv/.efro_venv_complete: \
-      pconfig/requirements_lock.txt \
+      $(VENV_LOCK) \
       tools/efrotools/pyver.py \
       .venv/bin/$(VENV_PYTHON) \
       .venv/.efro_venv_state_$(VENV_STATE)
@@ -1724,7 +1834,7 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
  && rm -rf .venv && uv venv --python $(VENV_PYTHON) .venv \
  && touch .venv/.efro_venv_state_$(VENV_STATE))
 	uv pip install --python .venv/bin/$(VENV_PYTHON) --require-hashes \
- -r pconfig/requirements_lock.txt
+ -r $(VENV_LOCK)
 	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
 	@echo Project virtual environment for $(VENV_PYTHON) at .venv is ready to use.
 
@@ -1776,6 +1886,20 @@ WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
+
+# Visual C++ runtime dlls sitting next to the exe for the current
+# windows configuration and platform (see WIN_CRT_DLLS_x64 and friends;
+# none for Debug).
+ifeq ($(WINDOWS_CONFIGURATION),Release)
+  WIN_CRT_DLLS = $(WIN_CRT_DLLS_$(WINDOWS_PLATFORM))
+else
+  WIN_CRT_DLLS =
+endif
+
+# The above as cloudshell --out args, for pulling them back from a
+# cloud build alongside the exe.
+WIN_CRT_OUT_ARGS = $(foreach f,$(WIN_CRT_DLLS),--out \
+ build/windows/$(WINCFG)_$(WINPLT)/$(f))
 
 # Our cmake dir acts as a secondary project root for some IDEs/tools.
 # Expose .clang-format there too so clangd picks it up for files whose

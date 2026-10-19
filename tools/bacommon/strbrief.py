@@ -356,6 +356,18 @@ def parse_brief(text: str) -> BriefSignature:
     return BriefSignature(tags)
 
 
+def parse_tag(body: str) -> BriefTag:
+    """Parse and validate one tag body (the text between its braces).
+
+    The single-tag unit of :func:`parse_brief`, for templates that use
+    the same tag grammar outside a brief -- the spec'd tokens
+    (``{t|duration}``) a literal language-string template may carry.
+    Raises :class:`~efro.error.CleanError` exactly as
+    :func:`parse_brief` would for that tag.
+    """
+    return _parse_tag_body(body.strip())
+
+
 def _parse_tag_body(body: str) -> BriefTag:
     """Parse one tag body (the text between the braces)."""
     target, sep, specsrc = body.partition('|')

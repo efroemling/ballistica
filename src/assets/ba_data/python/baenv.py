@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 23006
-TARGET_BALLISTICA_VERSION = '1.8.0a109'
+TARGET_BALLISTICA_BUILD = 23065
+TARGET_BALLISTICA_VERSION = '1.8.3'
 
 
 @dataclass
@@ -236,7 +236,7 @@ def configure(
     # pyc files made in our custom cache dir.
     prev_pycache_prefix = sys.pycache_prefix
     if setup_pycache_prefix:
-        sys.pycache_prefix = os.path.join(cache_dir, 'pyc')
+        sys.pycache_prefix = _pycache_prefix(cache_dir, standard_app_python_dir)
 
     # Set up our log-handler and pipe Python's stdout/stderr into it.
     # Later, once the engine comes up, the handler will feed its logs
@@ -594,6 +594,36 @@ def _setup_certs(contains_python_dist: bool) -> None:
         os.environ['SSL_CERT_FILE'] = os.environ['REQUESTS_CA_BUNDLE'] = (
             certifi.where()
         )
+
+
+def frozen_source_mtimes(standard_app_python_dir: str) -> bool:
+    """Whether this install gives files a frozen mtime across versions.
+
+    Flatpak (ostree) installs give every file mtime 0, nix mtime 1, in
+    every version. Python's pyc check (source mtime + size) then can't
+    tell a changed same-size ``.py`` from the old one, so stale
+    bytecode would survive updates; such installs get a pyc dir per
+    build instead (see :func:`_pycache_prefix`).
+
+    :meta private:
+    """
+    try:
+        probe = os.path.join(standard_app_python_dir, 'baenv.py')
+        return os.path.getmtime(probe) <= 1
+    except OSError:
+        return False
+
+
+def _pycache_prefix(cache_dir: str, standard_app_python_dir: str) -> str:
+    """Our pycache dir.
+
+    MUST match the native calc in ``CorePython`` (core_python.cc),
+    which sets this before Python starts.
+    """
+    prefix = os.path.join(cache_dir, 'pyc')
+    if frozen_source_mtimes(standard_app_python_dir):
+        prefix = os.path.join(prefix, f'b{TARGET_BALLISTICA_BUILD}')
+    return prefix
 
 
 def _setup_paths(

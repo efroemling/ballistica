@@ -332,10 +332,46 @@ static PyMethodDef PyGetLocalActiveInputDevicesCountDef = {
     ":meta private:",
 };
 
+// --------------------------- get_input_devices -------------------------------
+
+static auto PyGetInputDevices(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  std::vector<base::InputDevice*> devices = g_base->input->GetInputDevices();
+  PyObject* list = PyList_New(0);
+  for (auto&& i : devices) {
+    // We require scene-v1 input-devices; skip anything else.
+    base::InputDeviceDelegate* delegate = &i->delegate();
+    if (auto* c_delegate =
+            dynamic_cast<SceneV1InputDeviceDelegate*>(delegate)) {
+      PyObject* obj = c_delegate->NewPyRef();
+      PyList_Append(list, obj);
+      Py_DECREF(obj);
+    }
+  }
+  return list;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetInputDevicesDef = {
+    "get_input_devices",             // name
+    (PyCFunction)PyGetInputDevices,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "get_input_devices() -> list[bascenev1.InputDevice]\n"
+    "\n"
+    "Return all current input devices.\n"
+    "\n"
+    "This includes devices not attached to any player; use\n"
+    "bascenev1.InputDevice.is_attached_to_player() to filter.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyGetInputDevicesDef,
       PyGetLocalActiveInputDevicesCountDef,
       PyGetInputDeviceDef,
       PyGetMainUIInputDeviceDef,

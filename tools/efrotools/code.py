@@ -28,6 +28,34 @@ if TYPE_CHECKING:
 _PYLINT_CACHE_SCHEMA = 'v2-extdeps'
 
 
+def _pylint_cache_key(pylintrc: Path | str) -> str:
+    """Return the key folded into every pylint cache entry's hash.
+
+    Covers everything besides a file's own contents (and its tracked
+    deps) that can change pylint's verdict on it: the rc file, our
+    plugin, and the exact pylint, astroid and Python in use. Without
+    the versions, a dependency upgrade that adds or tightens checks
+    leaves every unchanged file cached as passing under the old
+    rules, so new findings surface only when a file happens to be
+    edited, or on a full run (2026-10: the astroid 4.0 -> 4.3 bump
+    hid three files' findings for days).
+    """
+    from importlib.metadata import version
+
+    from efrotools.util import get_files_hash
+
+    plugin = Path(__file__).parent / 'pylintplugins.py'
+    return ':'.join(
+        [
+            _PYLINT_CACHE_SCHEMA,
+            'pylint-' + version('pylint'),
+            'astroid-' + version('astroid'),
+            sys.version,
+            get_files_hash([pylintrc, plugin]),
+        ]
+    )
+
+
 def format_cpp_str(
     projroot: Path, text: str, filename: str = 'untitled.cc'
 ) -> str:
@@ -144,6 +172,11 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     filenames = [f for f in filenames if f not in code_blacklist]
     filenames = [f for f in filenames if not f.endswith('.mm')]
 
+    # Nothing to lint; and projects without C++ code needn't have
+    # cpplint installed at all, so don't go asking for its version.
+    if not filenames:
+        return
+
     cachepath = Path(projroot, '.cache/check_cpplint')
     if full and cachepath.exists():
         cachepath.unlink()
@@ -151,7 +184,11 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     cache = FileCache(cachepath)
 
     # Clear out entries and hashes for files that have changed/etc.
-    cache.update(filenames, '')
+    # Keyed on the cpplint version so an upgrade re-checks everything
+    # (see _pylint_cache_key() for why that matters).
+    from importlib.metadata import version
+
+    cache.update(filenames, 'cpplint-' + version('cpplint'))
     dirtyfiles = cache.get_dirty_files()
 
     if dirtyfiles:
@@ -275,8 +312,13 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
     cache = FileCache(cachepath)
     filenames = get_script_filenames(projroot)
 
-    # Calc a config hash so we redo formatting after it changes.
-    confighash = get_string_hash(' '.join(black_base_args(projroot)))
+    # Calc a config hash so we redo formatting after it changes (or
+    # after a black upgrade, which can change its output).
+    from importlib.metadata import version
+
+    confighash = get_string_hash(
+        ' '.join(['black-' + version('black'), *black_base_args(projroot)])
+    )
     cache.update(filenames, confighash)
 
     dirtyfiles = cache.get_dirty_files()
@@ -575,7 +617,6 @@ def pylint_files(
     Returns the inner-call result dict when ``capture=True`` (with
     ``stdout``, ``msg_status``, etc.), or ``None`` in text mode.
     """
-    from efrotools.util import get_files_hash
     from efro.terminal import Clr
 
     # No-cache path: lint everything via the same ``_run_pylint``
@@ -610,12 +651,10 @@ def pylint_files(
     cache = FileCache(cache_path)
 
     # Clear out entries and hashes for files that have changed/etc.
-    # The schema tag is folded into the per-file hash so any future
-    # cache-entry shape change auto-invalidates pre-existing on-disk
-    # caches without needing a manual wipe.
-    cache.update(
-        filenames, f'{_PYLINT_CACHE_SCHEMA}:' + get_files_hash([pylintrc])
-    )
+    # Our cache key (schema tag, rc + plugin, linter versions) is folded
+    # into the per-file hash, so changing any of those invalidates every
+    # entry without needing a manual wipe.
+    cache.update(filenames, _pylint_cache_key(pylintrc))
 
     # Do a recursive dependency check and mark all files who are
     # either dirty or have a dependency that is dirty.

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, override
 import bauiv1 as bui
 from bauiv1 import _commonassets, _builtinassets
 from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -73,7 +74,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 position=(50, yoffs - 60),
                 size=(60, 60),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
+                label=bui.SpecialChar.BACK.value,
                 button_type='backSmall',
                 autoselect=True,
             )
@@ -98,7 +99,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         h = 43 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        lock_tex = _classicassets.textures.lock.get()
+        lock_tex = _uiv1assets.textures.lock.get()
         self._lock_images: list[bui.Widget] = []
 
         scl = 1.2
@@ -372,7 +373,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         # If it varies from current, commit and play.
         if current_soundtrack != name and self._allow_changing_soundtracks:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             cfg['Soundtrack'] = self._selected_soundtrack
             cfg.commit()
 
@@ -383,7 +384,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
 
     def _edit_soundtrack_with_sound(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        bui.play_swish()
         self._edit_soundtrack()
 
     def _edit_soundtrack(self) -> None:
@@ -508,7 +509,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:
-            _builtinassets.audio.gun_cocking.get().play()
+            _commonassets.audio.gun_cocking.get().play()
             self._refresh(select_soundtrack=new_soundtrack)
 
     def _save_state(self) -> None:

@@ -55,6 +55,10 @@ class PythonClassSessionPlayer : public PythonClass {
   static auto SetNode(PythonClassSessionPlayer* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto GetIcon(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetIconDepiction(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetIconDepictionJson(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetNameDepiction(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto GetNameDepictionJson(PythonClassSessionPlayer* self) -> PyObject*;
   static auto Dir(PythonClassSessionPlayer* self) -> PyObject*;
   Object::WeakRef<Player>* player_;
   static auto nb_bool(PythonClassSessionPlayer* self) -> int;

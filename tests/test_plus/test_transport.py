@@ -86,10 +86,10 @@ def _run_until(
     env_final.setdefault(
         'BA_LOG_LEVELS', 'ba.v2transport=DEBUG,ba.connectivity=DEBUG'
     )
-    # Transport tests only exercise outbound connections; skip the
-    # UDP listener entirely. Avoids port-conflict fatals on shared CI
-    # hosts, OS firewall prompts, and wasted file descriptors.
-    env_final.setdefault('BA_NO_UDP_LISTENER', '1')
+    # Transport tests only exercise the cloud (TCP/HTTP); skip engine
+    # UDP entirely. Avoids port-conflict fatals on shared CI hosts, OS
+    # firewall prompts, and wasted file descriptors.
+    env_final.setdefault('BA_NO_UDP', '1')
 
     cmd = [binpath, '--config-dir', config_dir]
     captured: list[str] = []

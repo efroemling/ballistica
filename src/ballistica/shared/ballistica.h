@@ -11,6 +11,11 @@
 #include <string>
 #include <type_traits>
 
+// Enums that Python also needs (InputType, QuitType, SoundPriority,
+// UIScale, Permission). These are defined in Python, in
+// tools/bacommon/nativeenums.py; add or change them there.
+#include "ballistica/shared/generated/enums.h"
+
 // Try to ensure they're providing proper config stuff.
 #ifndef BA_HAVE_CONFIG
 #error ballistica platform config has not been defined!
@@ -75,198 +80,7 @@ typedef double seconds_t;
 typedef int64_t millisecs_t;
 typedef int64_t microsecs_t;
 
-// BA_EXPORT_PYTHON_ENUM
-/// Types of input a controller can send to the game.
-enum class InputType : uint8_t {
-  kUpDown = 2,
-  kLeftRight,
-  kJumpPress,
-  kJumpRelease,
-  kPunchPress,
-  kPunchRelease,
-  kBombPress,
-  kBombRelease,
-  kPickUpPress,
-  kPickUpRelease,
-  kRun,
-  kFlyPress,
-  kFlyRelease,
-  kStartPress,
-  kStartRelease,
-  kHoldPositionPress,
-  kHoldPositionRelease,
-  kLeftPress,
-  kLeftRelease,
-  kRightPress,
-  kRightRelease,
-  kUpPress,
-  kUpRelease,
-  kDownPress,
-  kDownRelease,
-  kLast  // Sentinel
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Types of quit behavior that can be requested from the app.
-///
-/// 'soft' may hide/reset the app but keep the process running, depending
-///    on the platform (generally a thing on mobile).
-///
-/// 'back' is a variant of 'soft' which may give 'back-button-pressed'
-///    behavior depending on the platform. (returning to some previous
-///    activity instead of dumping to the home screen, etc.)
-///
-/// 'hard' leads to the process exiting. This generally should be avoided
-///    on platforms such as mobile where apps are expected to keep running
-///    until killed by the OS.
-enum class QuitType : uint8_t {
-  kSoft,
-  kBack,
-  kHard,
-  kLast  // Sentinel.
-};
-
 typedef int64_t TimerMedium;
-
-// BA_EXPORT_PYTHON_ENUM
-/// The overall scale the UI is being rendered for. Note that this is
-/// independent of pixel resolution. For example, a phone and a desktop PC
-/// might render the game at similar pixel resolutions but the size they
-/// display content at will vary significantly.
-///
-/// 'large' is used for devices such as desktop PCs where fine details can
-///    be clearly seen. UI elements are generally smaller on the screen
-///    and more content can be seen at once.
-///
-/// 'medium' is used for devices such as tablets, TVs, or VR headsets.
-///    This mode strikes a balance between clean readability and amount of
-///    content visible.
-///
-/// 'small' is used primarily for phones or other small devices where
-///    content needs to be presented as large and clear in order to remain
-///    readable from an average distance.
-enum class UIScale : uint8_t {
-  kSmall,
-  kMedium,
-  kLarge,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Permissions that can be requested from the OS.
-enum class Permission : uint8_t {
-  kStorage,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Special characters the engine can diplay. Note that this currently
-/// needs to be manually kept in sync with bacommon.text.SpecialChar.
-enum class SpecialChar : uint8_t {
-  kDownArrow,
-  kUpArrow,
-  kLeftArrow,
-  kRightArrow,
-  kTopButton,
-  kLeftButton,
-  kRightButton,
-  kBottomButton,
-  kDelete,
-  kShift,
-  kBack,
-  kLogoFlat,
-  kRewindButton,
-  kPlayPauseButton,
-  kFastForwardButton,
-  kDpadCenterButton,
-  kPlayStationCrossButton,
-  kPlayStationCircleButton,
-  kPlayStationTriangleButton,
-  kPlayStationSquareButton,
-  kPlayButton,
-  kPauseButton,
-  kOuyaButtonO,
-  kOuyaButtonU,
-  kOuyaButtonY,
-  kOuyaButtonA,
-  kToken,
-  kLogo,
-  kTicket,
-  kGooglePlayGamesLogo,
-  kGameCenterLogo,
-  kDiceButton1,
-  kDiceButton2,
-  kDiceButton3,
-  kDiceButton4,
-  kDiscordLogo,
-  kPartyIcon,
-  kTestAccount,
-  kTicketBacking,
-  kTrophy1,
-  kTrophy2,
-  kTrophy3,
-  kTrophy0a,
-  kTrophy0b,
-  kTrophy4,
-  kLocalAccount,
-  kExplodinaryLogo,
-  kFlagUnitedStates,
-  kFlagMexico,
-  kFlagGermany,
-  kFlagBrazil,
-  kFlagRussia,
-  kFlagChina,
-  kFlagUnitedKingdom,
-  kFlagCanada,
-  kFlagIndia,
-  kFlagJapan,
-  kFlagFrance,
-  kFlagIndonesia,
-  kFlagItaly,
-  kFlagSouthKorea,
-  kFlagNetherlands,
-  kFedora,
-  kHal,
-  kCrown,
-  kYinYang,
-  kEyeBall,
-  kSkull,
-  kHeart,
-  kDragon,
-  kHelmet,
-  kMushroom,
-  kNinjaStar,
-  kVikingHelmet,
-  kMoon,
-  kSpider,
-  kFireball,
-  kFlagUnitedArabEmirates,
-  kFlagQatar,
-  kFlagEgypt,
-  kFlagKuwait,
-  kFlagAlgeria,
-  kFlagSaudiArabia,
-  kFlagMalaysia,
-  kFlagCzechRepublic,
-  kFlagAustralia,
-  kFlagSingapore,
-  kOculusLogo,
-  kSteamLogo,
-  kNvidiaLogo,
-  kFlagIran,
-  kFlagPoland,
-  kFlagArgentina,
-  kFlagPhilippines,
-  kFlagChile,
-  kMikirog,
-  kV2Logo,
-  kClose,
-  kSantaHat,
-  kPotato,
-  kPalmTree,
-  kBoxingGlove,
-  kLast  // Sentinel
-};
 
 // NOTE: When adding exception types here, add a corresponding
 // handler in Python::SetPythonException.
@@ -491,11 +305,26 @@ extern const int kEngineApiVersion;
 
 const int kDefaultPort = 43210;
 
+// Suffix given to bundled CAS asset blobs packed inside an archive
+// (the Android apk) so suffix-matched packaging rules can store them
+// uncompressed for zero-copy span serving. Kept in sync with the
+// build side (bundled_blob_suffix in batools staging).
+inline constexpr const char* kBundledCasBlobSuffix = ".bablob";
+
 // Magic numbers at the start of our file types.
 // Python source of truth for cob compilation is
 // tools/bacommontools/meshcompile.py; keep the cob values in sync
 // with it.
 const int kBobFileID = 45623;
+// Optional bob trailer (derived data after the indices): this magic,
+// then (u32 tag, u32 byte length, data) sections to the end of the
+// file. Unknown tags are skipped. Python source of truth:
+// tools/bacommontools/meshcompile.py (BOB_TRAILER_*).
+const uint32_t kBobTrailerMagic = 0x58424F42;
+// f32 box min xyz, box max xyz, radius about the box's center.
+const uint32_t kBobTrailerTagBounds = 1;
+// f32 u min, v min, u max, v max.
+const uint32_t kBobTrailerTagUVRange = 2;
 // Legacy cob format (positions + indices + face normals).
 const int kCobFileID = 13466;
 // Current cob format: drops the face-normals block (it was consumed

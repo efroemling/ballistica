@@ -1,28 +1,65 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260825`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bacommonassets.261014a`` (bauiv1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
-it, and by the master server's own web pages. Content here must be free of any
-single game's concepts, which is what distinguishes it from BaClassicAssets.
+it, and by the master server's own web pages: shared vocabulary, plus a little
+small engine-level art that server-sent content draws with. Content here must be
+free of any single game's concepts, which is what distinguishes it from
+BaClassicAssets. Keep it light: no ui chrome, nothing large.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260825
+# ba_meta require asset-package 688
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260825'
-
 from typing import TYPE_CHECKING
+
+from bacommon.assetpackage import ApverNum
+
+from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
+# a-0.bacommonassets.261014a
+_ASSET_PACKAGE = ApverNum(688)
+
 if TYPE_CHECKING:
+    from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
     from babase import LangStr
+
+    class AudioGroup:
+        """
+        ::
+
+            Plain interface sounds anything may play once the app is up: taps,
+            dings, purchase and error-adjacent feedback. Server-sent effects
+            reference these freely.
+
+            See source for the full asset list.
+        """
+
+        cash_register: SoundHandle
+        ding: SoundHandle
+        gun_cocking: SoundHandle
+        powerdown01: SoundHandle
+        tap: SoundHandle
+
+    class MeshesGroup:
+        """
+        ::
+
+            Simple general-purpose meshes.
+
+            See source for the full asset list.
+        """
+
+        box: MeshHandle
+        overlay_guide: MeshHandle
 
     class StringsActionsGroup:
         """
@@ -1005,6 +1042,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Message shown in place of a page that can only be viewed while
+        #:     signed in to an account.
+        #:
+        #:     English: "You must be signed in to see this."
+        must_sign_in_to_view: LangStr
+
+        #: ::
+        #:
         #:     Error-page message.
         #:
         #:     English: "You must update the app to view this."
@@ -1155,6 +1200,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Choice value meaning the user picks the setting themselves rather
+        #:     than using an automatic or preset one.
+        #:
+        #:     English: "Custom"
+        custom: LangStr
+
+        #: ::
+        #:
         #:     Generic "Deprecated" marker for outdated options.
         #:
         #:     English: "Deprecated"
@@ -1293,11 +1346,57 @@ if TYPE_CHECKING:
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 147 strings (``actions``, ``compose``,
-    #: ``control``, ``locales``, ``status``, and 142 more). Full list in source.
+    class TexturesGroup:
+        """
+        ::
+
+            Small engine-level art that server-sent content (depictions, pages)
+            draws with -- the account name capsule and its V2 badge. Kept small:
+            anything the engine needs at boot stays in BaBuiltinAssets, and ui
+            chrome belongs in BaUiV1Assets.
+
+            See source for the full asset list.
+        """
+
+        account_v2_icon: TextureHandle
+        black: TextureHandle
+
+        #: ::
+        #:
+        #:     Data-role twin of black.png for shader slots that read channels
+        #:     as values (tint and mask slots); the original stays a picture.
+        black_data: TextureHandle
+        glow_circle: TextureHandle
+        soft_rect: TextureHandle
+        soft_rect2: TextureHandle
+        white: TextureHandle
+
+    #: The ``audio`` group - 5 assets (``cash_register``, ``ding``,
+    #: ``gun_cocking``, ``powerdown01``, ``tap``). Full list in source.
+    audio: AudioGroup
+
+    #: The ``meshes`` group - 2 assets (``box``, ``overlay_guide``). Full list
+    #: in source.
+    meshes: MeshesGroup
+
+    #: The ``strings`` group - 149 strings (``actions``, ``compose``,
+    #: ``control``, ``locales``, ``status``, and 144 more). Full list in source.
     strings: StringsGroup
 
+    #: The ``textures`` group - 7 assets (``account_v2_icon``, ``black``,
+    #: ``black_data``, ``glow_circle``, ``soft_rect``, and 2 more). Full list in
+    #: source.
+    textures: TexturesGroup
+
 _TREE = {
+    'audio': {
+        'cash_register': 's',
+        'ding': 's',
+        'gun_cocking': 's',
+        'powerdown01': 's',
+        'tap': 's',
+    },
+    'meshes': {'box': 'm', 'overlay_guide': 'm'},
     'strings': {
         'actions': {
             'accept': (),
@@ -1419,6 +1518,7 @@ _TREE = {
             'invalid': (),
             'loading': (),
             'must_restart': (),
+            'must_sign_in_to_view': (),
             'need_update': (),
             'not_available': (),
             'nothing_here': (),
@@ -1440,6 +1540,7 @@ _TREE = {
             'always': (),
             'auto': (),
             'code': (),
+            'custom': (),
             'deprecated': (),
             'description': (),
             'disabled': (),
@@ -1458,15 +1559,27 @@ _TREE = {
             'total': (),
             'via': (),
         },
-    }
+    },
+    'textures': {
+        'account_v2_icon': 't',
+        'black': 't',
+        'black_data': 't',
+        'glow_circle': 't',
+        'soft_rect': 't',
+        'soft_rect2': 't',
+        'white': 't',
+    },
 }
 _DISPLAY_KINDS = {'strings/compose/data_size': {'size': 'bytes'}}
 
 
 if not TYPE_CHECKING:
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,
     )
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

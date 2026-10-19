@@ -25,10 +25,10 @@ with specific naming conventions:
 - **Native Code**: If feature set `foo_bar` provides a native component (C++
   code or otherwise) it should live in a directory named `foo_bar` (unmodified
   feature set name) under [src/ballistica](../../src/ballistica).
-- **Meta Package**: If feature set `foo_bar` provides a meta package (that is,
-  code or data used to generate other source code), it should be a directory
-  named `bafoobarmeta` ('ba' prefix, name with spaces removed, 'meta' suffix)
-  that lives under [src/meta](../../src/meta).
+- **Codegen Package**: If feature set `foo_bar` provides a codegen package
+  (that is, code or data used to generate other source code), it should be a
+  directory named `bafoobarcodegen` ('ba' prefix, name with spaces removed,
+  'codegen' suffix) that lives under [src/codegen](../../src/codegen).
 - **Test Package**: If feature set `foo_bar` provides a set of tests, it should
   be a directory named `test_foo_bar` ('test_' prefix, unmodified feature set
   name) under [tests](../../tests).

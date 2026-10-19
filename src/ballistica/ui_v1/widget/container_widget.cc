@@ -10,11 +10,13 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -52,6 +54,32 @@ void ContainerWidget::SetOnActivateCall(PyObject* c) {
 
 void ContainerWidget::SetOnOutsideClickCall(PyObject* c) {
   on_outside_click_call_ = Object::New<base::PythonContextCall>(c);
+}
+
+// The fraction of a shared single-depth slice that draw-behind children
+// get to themselves.
+const float kDrawBehindSliceFraction{0.1f};
+
+// Where in its allotted depth slice a child draws: the widget's own
+// depth range within it, and its draw-behind sliver (or everything in
+// front of that) when siblings draw behind.
+static void ChildDepthSlice(const Widget& w, float z_offs,
+                            float layer_thickness, bool any_draw_behind,
+                            float* out_z_offs, float* out_thickness) {
+  if (any_draw_behind) {
+    if (w.draw_behind()) {
+      layer_thickness *= kDrawBehindSliceFraction;
+    } else {
+      z_offs += layer_thickness * kDrawBehindSliceFraction;
+      layer_thickness *= 1.0f - kDrawBehindSliceFraction;
+    }
+  }
+
+  // Widgets can opt to use a subset of their allotted depth slice.
+  float d_min = w.depth_range_min();
+  float d_max = w.depth_range_max();
+  *out_z_offs = z_offs + layer_thickness * d_min;
+  *out_thickness = layer_thickness * (d_max - d_min);
 }
 
 void ContainerWidget::DrawChildren(base::RenderPass* pass,
@@ -113,6 +141,18 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
       layer_thickness = 1.0f / static_cast<float>(widgets_.size());
       layer_spacing = layer_thickness;
       base_offset = 0;
+    }
+  }
+
+  // Single-depth siblings all share one slice; any that draw behind get
+  // a sliver at its back to themselves (see Widget::set_draw_behind()).
+  bool any_draw_behind{};
+  if (single_depth_ && !single_depth_root_) {
+    for (auto&& w : widgets_) {
+      if (w->draw_behind()) {
+        any_draw_behind = true;
+        break;
+      }
     }
   }
 
@@ -200,18 +240,10 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
           c.Translate(-bg_center_x_, -bg_center_y_, 0);
         }
 
-        // Widgets can opt to use a subset of their allotted depth slice.
-        float d_min = w.depth_range_min();
-        float d_max = w.depth_range_max();
         float this_z_offs;
         float this_layer_thickness;
-        if (d_min != 0.0f || d_max != 1.0f) {
-          this_z_offs = z_offs + layer_thickness * d_min;
-          this_layer_thickness = layer_thickness * (d_max - d_min);
-        } else {
-          this_z_offs = z_offs;
-          this_layer_thickness = layer_thickness;
-        }
+        ChildDepthSlice(w, z_offs, layer_thickness, any_draw_behind,
+                        &this_z_offs, &this_layer_thickness);
         c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
         c.Scale(s, s, this_layer_thickness);
         c.Submit();
@@ -278,18 +310,10 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
           c.Translate(-bg_center_x_, -bg_center_y_, 0);
         }
 
-        // Widgets can opt to use a subset of their allotted depth slice.
-        float d_min = w.depth_range_min();
-        float d_max = w.depth_range_max();
         float this_z_offs;
         float this_layer_thickness;
-        if (d_min != 0.0f || d_max != 1.0f) {
-          this_z_offs = z_offs + layer_thickness * d_min;
-          this_layer_thickness = layer_thickness * (d_max - d_min);
-        } else {
-          this_z_offs = z_offs;
-          this_layer_thickness = layer_thickness;
-        }
+        ChildDepthSlice(w, z_offs, layer_thickness, any_draw_behind,
+                        &this_z_offs, &this_layer_thickness);
         c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
         c.Scale(s, s, this_layer_thickness);
         c.Submit();
@@ -625,8 +649,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_base->audio->SafePlayBuiltinSound(
-                    base::BuiltinSoundID::kAudioTap);
+                g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -678,8 +701,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           float cx = x;
           float cy = y;
           TransformPointToChild(&cx, &cy, ((**i)));
-          if ((**i).HandleMessage(
-                  base::WidgetMessage(m.type, nullptr, cx, cy, claimed))) {
+          base::WidgetMessage cm(m.type, nullptr, cx, cy, claimed);
+          cm.released_outside = m.released_outside;
+          if ((**i).HandleMessage(cm)) {
             claimed = true;
           }
           if (modal_children_) {
@@ -975,45 +999,24 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Update bg vals if need be (we may need these even if bg is turned off
   // so always calc them).
   if (bg_dirty_) {
-    base::BuiltinTextureID tex_id;
-    float l_border, r_border, b_border, t_border;
-    [[maybe_unused]] float center_x_amt;
-    [[maybe_unused]] float center_y_amt;
-    float width = r - l;
-    float height = t - b;
-    if (height > width * 0.6f) {
-      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVmed;
-      bg_mesh_transparent_id_ =
-          base::BuiltinMeshID::kMeshesWindowHsmallVmedTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVmedOpaque;
-      l_border = width * 0.07f;
-      r_border = width * 0.19f;
-      b_border = height * 0.1f;
-      t_border = height * 0.07f;
-      // These need to be fudged until scaling in/out hits exact target
-      // point. Should look into why this math is off.
-      bg_center_fudge_x_ = -0.05f;
-      bg_center_fudge_y_ = 0.0f;
+    const UIAssetSet& uiassets = g_ui_v1->assets();
+    auto layout = CalcBackingLayout_(w, h);
+    if (layout.tall) {
+      bg_mesh_transparent_ = uiassets.window_hsmall_vmed_transparent;
+      bg_mesh_opaque_ = uiassets.window_hsmall_vmed_opaque;
     } else {
-      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVsmall;
-      bg_mesh_transparent_id_ =
-          base::BuiltinMeshID::kMeshesWindowHsmallVsmallTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVsmallOpaque;
-      l_border = width * 0.12f;
-      r_border = width * 0.19f;
-      b_border = height * 0.45f;
-      t_border = height * 0.23f;
-      // These need to be fudged until scaling in/out hits exact target
-      // point. Should look into why this math is off.
-      bg_center_fudge_x_ = -0.03f;
-      bg_center_fudge_y_ = 0.1f;
+      bg_mesh_transparent_ = uiassets.window_hsmall_vsmall_transparent;
+      bg_mesh_opaque_ = uiassets.window_hsmall_vsmall_opaque;
     }
-    bg_width_ = r - l + l_border + r_border;
-    bg_height_ = t - b + b_border + t_border;
-    bg_center_x_ = l - l_border + bg_width_ * 0.5f;
-    bg_center_y_ = b - b_border + bg_height_ * 0.5f;
+    bg_center_fudge_x_ = layout.center_fudge_x;
+    bg_center_fudge_y_ = layout.center_fudge_y;
+    bg_width_ = w + layout.l_border + layout.r_border;
+    bg_height_ = h + layout.b_border + layout.t_border;
+    bg_center_x_ = l - layout.l_border + bg_width_ * 0.5f;
+    bg_center_y_ = b - layout.b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_base->assets->BuiltinTexture(tex_id);
+      tex_ = layout.tall ? uiassets.window_hsmall_vmed
+                         : uiassets.window_hsmall_vsmall;
     }
     bg_dirty_ = false;
   }
@@ -1074,15 +1077,13 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             amt = 1.0f;
           }
           c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesCircleSoft));
+          c.SetTexture(g_ui_v1->assets().circle_soft.get());
           auto s{8.0f * std::max(bg_width_, bg_height_)};
           {
             auto xf = c.ScopedTransform();
             c.Translate(bg_center_x_, bg_center_y_);
             c.Scale(s, s);
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                base::BuiltinMeshID::kMeshesImage1x1));
+            c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
           }
           c.Submit();
         }
@@ -1090,11 +1091,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
-      float s = 1.0f;
-      if (transition_scale_ <= 0.9f && !transitioning_out_) {
-        float amt = transition_scale_ / 0.9f;
-        s = std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
-      }
+      float s = GetBackingGlowMult();
       // Premultiplied texture + straight faded color; premultiply rgb
       // ourselves so a faded (alpha_ < 1) background composites 'over'
       // correctly (see docs/design/premultiplied-alpha.md).
@@ -1103,10 +1100,12 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();
-        c.Translate(bg_center_x_, bg_center_y_, zoffs);
+        c.Translate(bg_center_x_ + background_offset_x_ * transition_scale_,
+                    bg_center_y_ + background_offset_y_ * transition_scale_,
+                    zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-            draw_transparent ? bg_mesh_transparent_id_ : bg_mesh_opaque_id_));
+        c.DrawMeshAsset(
+            (draw_transparent ? bg_mesh_transparent_ : bg_mesh_opaque_).get());
       }
       c.Submit();
     }
@@ -1136,17 +1135,49 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesGlow));
+      c.SetTexture(g_ui_v1->assets().glow.get());
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       {
         auto xf = c.ScopedTransform();
         c.Translate(glow_center_x_, glow_center_y_);
         c.Scale(glow_width_, glow_height_);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+        c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
       }
       c.Submit();
+    }
+  }
+
+  // Debug overlay for calibrating CoversScreenOpaquely(): draw our
+  // hand-calibrated known-opaque backing rect; it must always sit
+  // comfortably inside the backing's visually-solid area. Green means
+  // we currently qualify as covering the screen; red means we don't.
+  if (draw_transparent) {
+    static const bool debug_opaque_rect = [] {
+      auto val = g_core->platform->GetEnv("BA_DEBUG_UI_OPAQUE_RECT");
+      return val.has_value() && *val == "1";
+    }();
+    if (debug_opaque_rect) {
+      float dl, db, dr, dt;
+      if (GetCalibratedOpaqueRegion_(&dl, &db, &dr, &dt)) {
+        bool covers = CoversScreenOpaquely();
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        if (covers) {
+          c.SetColor(0.0f, 0.5f, 0.0f, 0.5f);
+        } else {
+          c.SetColor(0.5f, 0.0f, 0.0f, 0.5f);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          // Track any in-progress transition offset so the rect stays
+          // glued to the backing while settling.
+          c.Translate(l + (dl + dr) * 0.5f, b + (db + dt) * 0.5f, 0.9f);
+          c.Scale((dr - dl) * transition_scale_, (dt - db) * transition_scale_,
+                  1.0f);
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
+        }
+        c.Submit();
+      }
     }
   }
 }
@@ -1442,7 +1473,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
   if (is_overlay_window_stack_) {
     if (widgets_.empty()) {
       // Eww this logic should be in some sort of controller.
-      g_ui_v1->root_widget()->ReselectLastSelectedWidget();
+      g_ui_v1->root_widget()->OnOverlayStackEmptied();
       return;
     }
   }
@@ -1777,7 +1808,7 @@ void ContainerWidget::SelectDownWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -1845,7 +1876,7 @@ void ContainerWidget::SelectUpWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -1901,7 +1932,7 @@ void ContainerWidget::SelectLeftWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -1957,7 +1988,7 @@ void ContainerWidget::SelectRightWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
         }
       }
     } else {
@@ -2040,7 +2071,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kNextSelected);
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+      g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
       return;
     }
     i++;
@@ -2058,8 +2089,8 @@ void ContainerWidget::PrintExitListInstructions(
       g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
       g_base->ScreenMessage(
           base::BuiltinStrings::Ui::ArrowsToExitList(
-              g_base->assets->CharStr(SpecialChar::kLeftArrow),
-              g_base->assets->CharStr(SpecialChar::kRightArrow))
+              g_base->assets->CharStr(base::SpecialChar::kLeftArrow),
+              g_base->assets->CharStr(base::SpecialChar::kRightArrow))
               ->Evaluate());
     }
   }
@@ -2121,7 +2152,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kPrevSelected);
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
+      g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
       return;
     }
     i++;
@@ -2168,6 +2199,173 @@ void ContainerWidget::OnLanguageChange() {
 
 auto ContainerWidget::IsTransitioningOut() const -> bool {
   return transitioning_out_;
+}
+
+auto ContainerWidget::GetCalibratedOpaqueRegion_(float* l, float* b, float* r,
+                                                 float* t) const -> bool {
+  // Only our standard window backings are calibrated, and only when
+  // drawn fully opaque.
+  if (!background_ || alpha_ != 1.0f) {
+    return false;
+  }
+  float w = width_;
+  float h = height_;
+  if (w <= 0.0f || h <= 0.0f) {
+    return false;
+  }
+
+  // Take the same backing layout our bg drawing in Draw() uses, then
+  // apply a per-backing calibrated rect known to be
+  // comfortably interior to that backing's opaque pixels. Rects are in
+  // unit coords over the full backing quad (+-0.5 is the quad edge).
+  // They were measured by rasterizing each backing's opaque+transparent
+  // meshes with the master texture's alpha channel and finding the
+  // largest fully-opaque (alpha=255) axis rect, then shrinking each
+  // edge by ~0.01 for safety (residual transition offsets, resampling
+  // and texture-compression fringe). Measured maxima: vmed x
+  // [-0.404, 0.325] y [-0.371, 0.411]; vsmall x [-0.356, 0.301] y
+  // [-0.215, 0.335]. Eyeball-check with the BA_DEBUG_UI_OPAQUE_RECT
+  // env var, which draws these rects over each backing. Backing setups
+  // not calibrated here simply never qualify.
+  auto layout = CalcBackingLayout_(w, h);
+  float unit_l, unit_r, unit_b, unit_t;
+  if (layout.tall) {
+    // window_hsmall_vmed.
+    unit_l = -0.395f;
+    unit_r = 0.315f;
+    unit_b = -0.36f;
+    unit_t = 0.40f;
+  } else {
+    // window_hsmall_vsmall.
+    unit_l = -0.345f;
+    unit_r = 0.29f;
+    unit_b = -0.205f;
+    unit_t = 0.325f;
+  }
+  float bg_width = w + layout.l_border + layout.r_border;
+  float bg_height = h + layout.b_border + layout.t_border;
+  float bg_center_x = -layout.l_border + bg_width * 0.5f;
+  float bg_center_y = -layout.b_border + bg_height * 0.5f;
+  *l = bg_center_x + unit_l * bg_width;
+  *r = bg_center_x + unit_r * bg_width;
+  *b = bg_center_y + unit_b * bg_height;
+  *t = bg_center_y + unit_t * bg_height;
+  return true;
+}
+
+auto ContainerWidget::GetBackingOpaqueRect(Rect* rect) const -> bool {
+  assert(rect);
+  if (!GetCalibratedOpaqueRegion_(&rect->l, &rect->b, &rect->r, &rect->t)) {
+    return false;
+  }
+  // Our backing draws shifted by its offset (see Draw()).
+  rect->l += background_offset_x_;
+  rect->r += background_offset_x_;
+  rect->b += background_offset_y_;
+  rect->t += background_offset_y_;
+  return true;
+}
+
+auto ContainerWidget::CalcBackingLayout_(float width, float height)
+    -> BackingLayout {
+  BackingLayout layout;
+  if (height > width * 0.6f) {
+    layout.tall = true;
+    layout.l_border = width * 0.07f;
+    layout.r_border = width * 0.19f;
+    layout.b_border = height * 0.1f;
+    layout.t_border = height * 0.07f;
+    layout.center_fudge_x = -0.05f;
+    layout.center_fudge_y = 0.0f;
+  } else {
+    layout.tall = false;
+    layout.l_border = width * 0.12f;
+    layout.r_border = width * 0.19f;
+    layout.b_border = height * 0.45f;
+    layout.t_border = height * 0.23f;
+    layout.center_fudge_x = -0.03f;
+    layout.center_fudge_y = 0.1f;
+  }
+  return layout;
+}
+
+auto ContainerWidget::GetBackingDrawInfo(BackingDrawInfo* info) const -> bool {
+  assert(info);
+  if (!background_ || width_ <= 0.0f || height_ <= 0.0f) {
+    return false;
+  }
+  const UIAssetSet& uiassets = g_ui_v1->assets();
+  auto layout = CalcBackingLayout_(width_, height_);
+  info->texture = layout.tall ? uiassets.window_hsmall_vmed.get()
+                              : uiassets.window_hsmall_vsmall.get();
+
+  // Draw() places the backing relative to the same offset it hands
+  // DrawChildren(), so in child space it sits at a fixed spot. Its
+  // background-offset shift scales with transitions just like children
+  // do, so it belongs here unscaled.
+  info->rect = Rect(-layout.l_border + background_offset_x_,
+                    -layout.b_border + background_offset_y_,
+                    width_ + layout.r_border + background_offset_x_,
+                    height_ + layout.t_border + background_offset_y_);
+
+  // Match the color Draw() uses for the backing.
+  float s = GetBackingGlowMult();
+  float cmul = info->texture->premultiplied() ? alpha_ : 1.0f;
+  info->red = red_ * s * cmul;
+  info->green = green_ * s * cmul;
+  info->blue = blue_ * s * cmul;
+  info->alpha = alpha_;
+  return true;
+}
+
+auto ContainerWidget::CoversScreenOpaquely() const -> bool {
+  assert(g_base->InLogicThread());
+
+  if (!visible_in_container()) {
+    return false;
+  }
+
+  // Require transitions fully settled; a moving/scaling window exposes
+  // what's behind it. Note that completed transitions legitimately
+  // leave tiny (sub-0.05-unit) residual offsets - the final springy
+  // dynamics update runs after the done-zeroing and then freezes - so
+  // we can't demand exact zeroes here; we allow a small epsilon and
+  // fold the residuals into the coverage transform below exactly.
+  constexpr float kSettleEpsilon{0.5f};
+  if (transitioning_ || transitioning_out_ || transition_scale_ != 1.0f
+      || std::abs(transition_offset_x_smoothed_) >= kSettleEpsilon
+      || std::abs(transition_offset_y_smoothed_) >= kSettleEpsilon
+      || std::abs(transition_scale_offset_x_) >= kSettleEpsilon
+      || std::abs(transition_scale_offset_y_) >= kSettleEpsilon) {
+    return false;
+  }
+
+  float l, b, r, t;
+  if (!GetCalibratedOpaqueRegion_(&l, &b, &r, &t)) {
+    return false;
+  }
+
+  // Fold in any (tiny; see above) residual transition offsets so our
+  // math matches where the backing actually draws.
+  float residual_x = transition_offset_x_smoothed_ + transition_scale_offset_x_;
+  float residual_y = transition_offset_y_smoothed_ + transition_scale_offset_y_;
+  l += residual_x;
+  r += residual_x;
+  b += residual_y;
+  t += residual_y;
+
+  // Transform our opaque region to screen space (widget transforms are
+  // scale+translate only, so two corners suffice) and require it to
+  // span the full virtual outer rect - the entire visible screen
+  // expressed in virtual coords, which exceeds 0..virtual-res when the
+  // virtual bounds are inset (and is what full-screen-cover geometry
+  // must span; see its comment in graphics.h). Using the real rect
+  // rather than reported_virtual_outer_rect() - this is rendering
+  // machinery, not UI layout.
+  WidgetPointToScreen(&l, &b);
+  WidgetPointToScreen(&r, &t);
+  const Rect& outer = g_base->graphics->virtual_outer_rect();
+  return (l <= outer.l && r >= outer.r && b <= outer.b && t >= outer.t);
 }
 
 }  // namespace ballistica::ui_v1

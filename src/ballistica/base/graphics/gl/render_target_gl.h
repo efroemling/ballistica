@@ -27,6 +27,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
     BA_DEBUG_CHECK_GL_ERROR;
 
     Bind();
+    renderer_->stats()->target_begins++;
 
 #if BA_VARIANT_CARDBOARD
     int x, y;
@@ -90,6 +91,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
           BA_DEBUG_CHECK_GL_ERROR;
         }
         glClear(clear_mask);
+        renderer_->stats()->clears++;
         BA_DEBUG_CHECK_GL_ERROR;
       }
     }

@@ -80,46 +80,44 @@ struct dxTriMesh : public dxGeom{
 	dxTriMeshData* Data;
 
 
-	// Colliders
-	static PlanesCollider* _PlanesCollider;
-	static SphereCollider* _SphereCollider;
+	// Colliders and their default (non-temporal-coherence) caches.
+	//
+	// ericf change: upstream ODE keeps all of these as statics shared by
+	// every trimesh, and the Opcode colliders write into themselves and
+	// into the cache during every query -- so two threads colliding
+	// against *any* two trimeshes at once would race. We collide on both
+	// the logic thread (main sim) and the bg-dynamics thread (attachment
+	// segments against the terrain mirrors), so every mesh now owns its
+	// own set. Invariant: dxTriMesh has NO mutable static state; a query
+	// touches only the geoms it was handed. See docs/design/ode-fork.md.
+	PlanesCollider _PlanesCollider;
+	SphereCollider _SphereCollider;
+	OBBCollider _OBBCollider;
+	RayCollider _RayCollider;
+	AABBTreeCollider _AABBTreeCollider;
+	LSSCollider _LSSCollider;
 
-
-    // ericf change.. keep one of these per mesh now for multithreading
-    
-	//static OBBCollider _OBBCollider;
-    OBBCollider _OBBCollider;
-
-
-	static RayCollider* _RayCollider;
-	static AABBTreeCollider* _AABBTreeCollider;
-	static LSSCollider* _LSSCollider;
-
-	// Some constants
-	static CollisionFaces* Faces;
+	// Ray-query output (the ray collider writes hits here).
+	CollisionFaces Faces;
 
 	// Temporal coherence
 	struct SphereTC : public SphereCache{
 		dxGeom* Geom;
 	};
 	dArray<SphereTC> SphereTCCache;
-	static SphereCache* defaultSphereCache;
+	SphereCache defaultSphereCache;
 
 	struct BoxTC : public OBBCache{
 		dxGeom* Geom;
 	};
 	dArray<BoxTC> BoxTCCache;
-
-    // ericf change - we keep one of these per trimesh
-    // so we can multithread..
-	//static OBBCache defaultBoxCache;
 	OBBCache boxCache;
-	
+
 	struct CCylinderTC : public LSSCache{
 		dxGeom* Geom;
 	};
 	dArray<CCylinderTC> CCylinderTCCache;
-	static LSSCache* defaultCCylinderCache;
+	LSSCache defaultCCylinderCache;
 
 	bool doSphereTC;
 	bool doBoxTC;

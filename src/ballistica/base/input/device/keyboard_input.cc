@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
@@ -460,7 +461,11 @@ void KeyboardInput::ApplyAppConfig() {
   right_key_ = (val == -1) ? right_key_default : (BAKeycode)val;
   UpdateArrowKeys_(right_key_);
 
-  enable_child_ = true;
+  // The P2 keyboard always exists, but only gets keys routed to it when
+  // enabled (off by default; a key-grabbing second player surprises
+  // people who never asked for one).
+  enable_child_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kKeyboardP2Enabled);
 
   up_held_ = down_held_ = left_held_ = right_held_ = false;
 }

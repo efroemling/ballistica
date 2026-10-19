@@ -6,8 +6,11 @@ import logging
 import importlib.util
 from typing import TYPE_CHECKING, override
 
+from efro.util import strict_partial
+
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._asset_packages import call_after_construct
 from babase._logging import balog
 
 if TYPE_CHECKING:
@@ -42,13 +45,30 @@ class PluginSubsystem(AppSubsystem):
         #: The set of live active plugin instances.
         self.active_plugins: list[babase.Plugin] = []
 
+    def user_code_summary(self) -> str:
+        """Whether this run carries user code, for slow-load reports.
+
+        Edited system scripts and plugins can keep the logic thread or
+        the app threadpool busy, so a report of local slowness should
+        say up front whether either is in play.
+
+        :meta private:
+        """
+        # (baenv is long since imported by the time anything can call
+        # this; the cycle is structural only.)
+        import baenv  # pylint: disable=cyclic-import
+
+        userscripts = baenv.get_env_config().is_user_app_python_dir
+        return (
+            f'user system scripts {'in use' if userscripts else 'not in use'},'
+            f' {len(self.active_plugins)} active plugin(s)'
+        )
+
     def on_meta_scan_complete(self) -> None:
         """Called when meta-scanning is complete.
 
         :meta private:
         """
-        from babase import _builtinassets
-
         config_changed = False
         found_new = False
         plugstates: dict[str, dict] = _babase.app.config.setdefault(
@@ -79,19 +99,15 @@ class PluginSubsystem(AppSubsystem):
             )
 
             # Auto-enable new ones if desired.
-            if auto_enable_new_plugins:
-                if class_path not in plugstates:
+            if class_path not in plugstates:
+                found_new = True
+                if auto_enable_new_plugins:
                     plugspec.enabled = True
                     config_changed = True
-                    found_new = True
 
         # If we're *not* auto-enabling, simply let the user know if we
         # found new ones.
-        if found_new and not auto_enable_new_plugins:
-            _babase.screenmessage(
-                _builtinassets.strings.plugins.detected, color=(0, 1, 0)
-            )
-            _builtinassets.audio.ding.get().play()
+        notify_new = found_new and not auto_enable_new_plugins
 
         # Ok, now go through all plugins registered in the app-config
         # that weren't covered by the meta stuff above, either creating
@@ -135,19 +151,11 @@ class PluginSubsystem(AppSubsystem):
                 disappeared_plugs.add(class_path)
                 continue
 
-        # If plugins disappeared, let the user know gently and remove
-        # them from the config so we'll again let the user know if they
-        # later reappear. This makes it much smoother to switch between
-        # users or workspaces.
+        # If plugins disappeared, remove them from the config so we'll
+        # again let the user know if they later reappear, and let the
+        # user know gently. This makes it much smoother to switch
+        # between users or workspaces.
         if disappeared_plugs:
-            _builtinassets.audio.powerdown01.get().play()
-            _babase.screenmessage(
-                _builtinassets.strings.plugins.removed(
-                    count=len(disappeared_plugs)
-                ),
-                color=(1, 1, 0),
-            )
-
             plugnames = ', '.join(disappeared_plugs)
             logging.info(
                 '%d plugin(s) no longer found: %s.',
@@ -160,6 +168,16 @@ class PluginSubsystem(AppSubsystem):
 
         if config_changed:
             _babase.app.config.commit()
+
+        # Tell the user about it all once construct-mode has succeeded;
+        # we run during app loading, before the assets the notices play
+        # are up.
+        if notify_new or disappeared_plugs:
+            call_after_construct(
+                strict_partial(
+                    _show_scan_notices, notify_new, len(disappeared_plugs)
+                )
+            )
 
     def load_and_notify(self) -> None:
         """Load enabled plugins and give them their on_app_running call.
@@ -183,6 +201,20 @@ class PluginSubsystem(AppSubsystem):
                 plugin.on_app_running()
             except Exception:
                 balog.exception('Error in plugin on_app_running().')
+
+    def offer_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Give each active plugin its on_app_mode_config() call.
+
+        Errors are caught per-plugin so one broken plugin can't spoil
+        the config phase for the mode or for other plugins.
+
+        :meta private:
+        """
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_mode_config(config)
+            except Exception:
+                balog.exception('Error in plugin on_app_mode_config().')
 
     @override
     def on_app_suspend(self) -> None:
@@ -219,6 +251,23 @@ class PluginSubsystem(AppSubsystem):
                 plugin.on_app_shutdown_complete()
             except Exception:
                 balog.exception('Error in plugin on_app_shutdown_complete().')
+
+
+def _show_scan_notices(notify_new: bool, removed_count: int) -> None:
+    """Tell the user what the meta-scan found about their plugins."""
+    from babase import _builtinassets, _commonassets
+
+    if notify_new:
+        _babase.screenmessage(
+            _builtinassets.strings.plugins.detected, color=(0, 1, 0)
+        )
+        _commonassets.audio.ding.get().play()
+    if removed_count:
+        _babase.screenmessage(
+            _builtinassets.strings.plugins.removed(count=removed_count),
+            color=(1, 1, 0),
+        )
+        _commonassets.audio.powerdown01.get().play()
 
 
 class PluginSpec:
@@ -336,6 +385,34 @@ class Plugin:
 
         Note that a plugin's module is not even imported until this
         point, so plugin code never runs before assets are ready.
+        """
+
+    def on_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Called when an app-mode is about to become active.
+
+        ``config`` is the :class:`~babase.AppModeConfig` the incoming
+        mode built to describe how it should run; its concrete type
+        identifies the mode, so a plugin targeting a particular mode
+        checks for that mode's config type and amends what it finds::
+
+            @override
+            def on_app_mode_config(
+                self, config: babase.AppModeConfig
+            ) -> None:
+                if isinstance(config, baclassic.ClassicAppModeConfig):
+                    config.ui_assets.trophy = my_trophy_texture
+
+        By convention, only *describe* here -- mutate the config and
+        touch nothing live. The mode reads the final result as it
+        activates, so if several plugins amend the same value the last
+        writer wins.
+
+        Only the config is passed, not the mode itself; that is
+        deliberate, to keep plugins amending the description rather
+        than reaching into a mode that is not active yet.
+
+        This never fires before construct-mode completes (plugins do
+        not run at all until then), so assets are safe to load here.
         """
 
     def on_app_suspend(self) -> None:

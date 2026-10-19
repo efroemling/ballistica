@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/exception.h"
@@ -18,13 +19,22 @@ namespace ballistica::base {
 // Vulkan format constants we recognize. Just the ones the asset-package
 // recipes emit today; expand as new TextureProfile variants come online.
 static constexpr uint32_t kVkFormatR8G8B8A8SRGB = 43;
-static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;        // DESKTOP_V1
-static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC5x5SRGBBlock = 162;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;    // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC10x10SRGBBlock = 180;  // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC12x12SRGBBlock = 184;  // MOBILE_V1
+static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;  // DESKTOP_V1
+// MOBILE_V1: every 2D ASTC block size.
+static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;
+static constexpr uint32_t kVkFormatASTC5x4SRGBBlock = 160;
+static constexpr uint32_t kVkFormatASTC5x5SRGBBlock = 162;
+static constexpr uint32_t kVkFormatASTC6x5SRGBBlock = 164;
+static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;
+static constexpr uint32_t kVkFormatASTC8x5SRGBBlock = 168;
+static constexpr uint32_t kVkFormatASTC8x6SRGBBlock = 170;
+static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;
+static constexpr uint32_t kVkFormatASTC10x5SRGBBlock = 174;
+static constexpr uint32_t kVkFormatASTC10x6SRGBBlock = 176;
+static constexpr uint32_t kVkFormatASTC10x8SRGBBlock = 178;
+static constexpr uint32_t kVkFormatASTC10x10SRGBBlock = 180;
+static constexpr uint32_t kVkFormatASTC12x10SRGBBlock = 182;
+static constexpr uint32_t kVkFormatASTC12x12SRGBBlock = 184;
 
 // Translate a ``vkFormat`` to our engine's ``TextureFormat`` enum.
 // Throws on anything unsupported so the caller surfaces a clear error.
@@ -37,14 +47,30 @@ static auto VkFormatToInternal(uint32_t vk_format, const std::string& file_name)
       return TextureFormat::kBC7;
     case kVkFormatASTC4x4SRGBBlock:
       return TextureFormat::kASTC_4x4;
-    case kVkFormatASTC6x6SRGBBlock:
-      return TextureFormat::kASTC_6x6;
-    case kVkFormatASTC8x8SRGBBlock:
-      return TextureFormat::kASTC_8x8;
+    case kVkFormatASTC5x4SRGBBlock:
+      return TextureFormat::kASTC_5x4;
     case kVkFormatASTC5x5SRGBBlock:
       return TextureFormat::kASTC_5x5;
+    case kVkFormatASTC6x5SRGBBlock:
+      return TextureFormat::kASTC_6x5;
+    case kVkFormatASTC6x6SRGBBlock:
+      return TextureFormat::kASTC_6x6;
+    case kVkFormatASTC8x5SRGBBlock:
+      return TextureFormat::kASTC_8x5;
+    case kVkFormatASTC8x6SRGBBlock:
+      return TextureFormat::kASTC_8x6;
+    case kVkFormatASTC8x8SRGBBlock:
+      return TextureFormat::kASTC_8x8;
+    case kVkFormatASTC10x5SRGBBlock:
+      return TextureFormat::kASTC_10x5;
+    case kVkFormatASTC10x6SRGBBlock:
+      return TextureFormat::kASTC_10x6;
+    case kVkFormatASTC10x8SRGBBlock:
+      return TextureFormat::kASTC_10x8;
     case kVkFormatASTC10x10SRGBBlock:
       return TextureFormat::kASTC_10x10;
+    case kVkFormatASTC12x10SRGBBlock:
+      return TextureFormat::kASTC_12x10;
     case kVkFormatASTC12x12SRGBBlock:
       return TextureFormat::kASTC_12x12;
     default:
@@ -72,6 +98,34 @@ static auto BytesPerPixelForFormat(TextureFormat fmt) -> size_t {
 static const char* kKvdKeyWrapH = "baTextureWrappingH";
 static const char* kKvdKeyWrapV = "baTextureWrappingV";
 
+// Key/value key carrying the texture's authored role, written for every
+// role but the default one (so a file with no such key IS the default
+// role). Wire value -- never rename.
+static const char* kKvdKeyRole = "baTextureRole";
+
+// Map a role wire string to its enum. Unknown values (a newer pipeline
+// emitting a role this build predates) become kUnknown, which nothing
+// checks -- better to stay quiet than to warn about a role we cannot
+// judge.
+static auto RoleFromString(const char* val) -> TextureRole {
+  if (!strcmp(val, "data")) {
+    return TextureRole::kData;
+  }
+  if (!strcmp(val, "premultiplied_data")) {
+    return TextureRole::kPremultipliedData;
+  }
+  if (!strcmp(val, "source_premultiplied")) {
+    return TextureRole::kSourcePremultiplied;
+  }
+  if (!strcmp(val, "straight_alpha")) {
+    return TextureRole::kStraightAlpha;
+  }
+  if (!strcmp(val, "default")) {
+    return TextureRole::kDefault;
+  }
+  return TextureRole::kUnknown;
+}
+
 // Map a wrapping wire string to its enum. Unknown values (a newer
 // pipeline emitting a mode this build predates) fall back to clamp,
 // which is the safe default: it can only ever look wrong on a texture
@@ -86,17 +140,18 @@ static auto WrappingFromString(const char* val) -> TextureWrapping {
   return TextureWrapping::kClamp;
 }
 
-// Read our wrapping keys out of a KTX2 key/value data section.
+// Read our wrapping and role keys out of a KTX2 key/value data section.
 //
 // Layout per entry (spec 3.11): uint32 keyAndValueByteLength, then a
 // NUL-terminated UTF-8 key followed by the value, then zero padding to
-// the next 4-byte boundary. We only emit KVD for non-clamp wrapping, so
-// the overwhelmingly common case is kvd_byte_length == 0 and this is a
-// no-op. Anything malformed leaves the defaults rather than throwing --
-// wrapping is a rendering nicety, not worth failing a texture load over.
-static void ReadWrappingFromKVD(FILE* f, const KTX2Header& hdr,
-                                TextureWrapping* wrap_h,
-                                TextureWrapping* wrap_v) {
+// the next 4-byte boundary. We only emit KVD for non-clamp wrapping or
+// a non-default role, so the overwhelmingly common case is
+// kvd_byte_length == 0 and this is a no-op. Anything malformed leaves
+// the defaults rather than throwing -- neither is worth failing a
+// texture load over.
+static void ReadKVD(const AssetBlob& blob, const KTX2Header& hdr,
+                    TextureWrapping* wrap_h, TextureWrapping* wrap_v,
+                    TextureRole* role) {
   // Sanity-bound the section so a corrupt header can't make us allocate
   // wildly. Our own sections are a few dozen bytes.
   const uint32_t kMaxKVDBytes = 64 * 1024;
@@ -104,13 +159,8 @@ static void ReadWrappingFromKVD(FILE* f, const KTX2Header& hdr,
       || hdr.kvd_byte_length > kMaxKVDBytes) {
     return;
   }
-  // fseek takes a long by definition; same cast the DFD read above uses.
-  auto kvd_offset = static_cast<long>(hdr.kvd_byte_offset);  // NOLINT
-  if (fseek(f, kvd_offset, SEEK_SET) != 0) {
-    return;
-  }
   std::vector<uint8_t> kvd(hdr.kvd_byte_length);
-  if (fread(kvd.data(), 1, kvd.size(), f) != kvd.size()) {
+  if (!blob.ReadAt(hdr.kvd_byte_offset, kvd.data(), kvd.size())) {
     return;
   }
 
@@ -134,6 +184,8 @@ static void ReadWrappingFromKVD(FILE* f, const KTX2Header& hdr,
           *wrap_h = WrappingFromString(val);
         } else if (!strcmp(key, kKvdKeyWrapV)) {
           *wrap_v = WrappingFromString(val);
+        } else if (!strcmp(key, kKvdKeyRole)) {
+          *role = RoleFromString(val);
         }
       }
     }
@@ -146,7 +198,7 @@ static void ReadWrappingFromKVD(FILE* f, const KTX2Header& hdr,
 // ``targets`` must hold ``expected_face_count`` entries; each face gets
 // the full mip chain. Within a level, faces are tightly packed
 // equal-size slices in spec face order (+X,-X,+Y,-Y,+Z,-Z).
-static void LoadKTX2Impl(const std::string& file_name,
+static void LoadKTX2Impl(const AssetBlob& blob, const std::string& file_name,
                          uint32_t expected_face_count,
                          KTX2FaceTarget* targets) {
   // Asset-package textures always load every mip in the chosen flavor;
@@ -160,28 +212,26 @@ static void LoadKTX2Impl(const std::string& file_name,
     *targets[fi].premultiplied = false;
     *targets[fi].wrap_h = TextureWrapping::kClamp;
     *targets[fi].wrap_v = TextureWrapping::kClamp;
+    *targets[fi].role = TextureRole::kUnknown;
   }
 
-  FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
-  if (!f) {
+  if (!blob.exists()) {
     throw Exception("Can't open KTX2 file: \"" + file_name + "\".");
   }
+  AssetBlobReader reader(blob);
 
   unsigned char magic[12];
-  if (fread(magic, sizeof(magic), 1, f) != 1
+  if (!reader.ReadInto(magic, sizeof(magic))
       || memcmp(magic, kKTX2Magic, sizeof(kKTX2Magic)) != 0) {
-    fclose(f);
     throw Exception("Not a KTX2 file (bad magic): \"" + file_name + "\".");
   }
 
   KTX2Header hdr{};
-  if (fread(&hdr, sizeof(hdr), 1, f) != 1) {
-    fclose(f);
+  if (!reader.ReadInto(&hdr, sizeof(hdr))) {
     throw Exception("Short read on KTX2 header: \"" + file_name + "\".");
   }
 
   if (hdr.supercompression_scheme != 0) {
-    fclose(f);
     throw Exception(
         "KTX2 supercompression scheme "
         + std::to_string(hdr.supercompression_scheme)
@@ -196,7 +246,6 @@ static void LoadKTX2Impl(const std::string& file_name,
   // through the cube path or vice versa) is a recipe/loader bug.
   if (hdr.face_count != expected_face_count || hdr.layer_count != 0
       || hdr.pixel_depth != 0) {
-    fclose(f);
     throw Exception("KTX2 layout unsupported (faceCount="
                     + std::to_string(hdr.face_count) + " expected "
                     + std::to_string(expected_face_count)
@@ -204,7 +253,6 @@ static void LoadKTX2Impl(const std::string& file_name,
   }
 
   if (hdr.level_count == 0) {
-    fclose(f);
     throw Exception("KTX2 file has zero mip levels: \"" + file_name + "\".");
   }
 
@@ -212,9 +260,8 @@ static void LoadKTX2Impl(const std::string& file_name,
   size_t bpp = BytesPerPixelForFormat(fmt);
 
   std::vector<KTX2LevelIndex> level_index(hdr.level_count);
-  if (fread(level_index.data(), sizeof(KTX2LevelIndex), hdr.level_count, f)
-      != hdr.level_count) {
-    fclose(f);
+  if (!reader.ReadInto(level_index.data(),
+                       sizeof(KTX2LevelIndex) * hdr.level_count)) {
     throw Exception("Short read on KTX2 level index: \"" + file_name + "\".");
   }
 
@@ -230,23 +277,24 @@ static void LoadKTX2Impl(const std::string& file_name,
   // assumption as the raw header struct read above). A malformed/missing
   // DFD just leaves premultiplied false (straight).
   if (hdr.dfd_byte_offset != 0 && hdr.dfd_byte_length >= 16) {
-    if (fseek(f, static_cast<long>(hdr.dfd_byte_offset) + 12,  // NOLINT
-              SEEK_SET)
-        == 0) {
-      uint32_t dfd_word2{};
-      if (fread(&dfd_word2, sizeof(dfd_word2), 1, f) == 1) {
-        premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
-      }
+    uint32_t dfd_word2{};
+    if (blob.ReadAt(hdr.dfd_byte_offset + 12, &dfd_word2, sizeof(dfd_word2))) {
+      premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
     }
   }
-  // Per-axis wrapping from the key/value data. Absent (the common case
-  // -- we only emit KVD for non-clamp wrapping) leaves both clamped.
-  ReadWrappingFromKVD(f, hdr, &wrap_h, &wrap_v);
+  // Per-axis wrapping and the authored role from the key/value data.
+  // Absent (the common case -- we only emit KVD for non-clamp wrapping
+  // or a non-default role) leaves both axes clamped and the role
+  // default: every file this loader reads came from the asset pipeline,
+  // which writes the role key for every role but that one.
+  TextureRole role{TextureRole::kDefault};
+  ReadKVD(blob, hdr, &wrap_h, &wrap_v, &role);
 
   for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
     *targets[fi].premultiplied = premultiplied;
     *targets[fi].wrap_h = wrap_h;
     *targets[fi].wrap_v = wrap_v;
+    *targets[fi].role = role;
   }
 
   // No quality-driven base_level bump: asset-package textures load all
@@ -263,7 +311,6 @@ static void LoadKTX2Impl(const std::string& file_name,
     auto byte_length = static_cast<size_t>(level_index[ix].byte_length);
 
     if (byte_length % expected_face_count != 0) {
-      fclose(f);
       throw Exception("KTX2 mip " + std::to_string(ix) + " byte length "
                       + std::to_string(byte_length) + " not divisible by "
                       + std::to_string(expected_face_count) + " faces: \""
@@ -277,7 +324,6 @@ static void LoadKTX2Impl(const std::string& file_name,
     if (bpp != 0) {
       size_t expected = static_cast<size_t>(x) * static_cast<size_t>(y) * bpp;
       if (expected != face_bytes) {
-        fclose(f);
         throw Exception("KTX2 mip " + std::to_string(ix)
                         + " per-face byte length " + std::to_string(face_bytes)
                         + " != expected " + std::to_string(expected) + " for "
@@ -293,29 +339,20 @@ static void LoadKTX2Impl(const std::string& file_name,
       target.formats[ix] = fmt;
       target.sizes[ix] = face_bytes;
 
-      // fseek + fread for each face slice — level offsets aren't
+      // Random-access copy of each face slice — level offsets aren't
       // guaranteed to be in file order (spec recommends
-      // smallest-mip-first layout), so we can't stream sequentially.
+      // smallest-mip-first layout).
       target.buffers[ix] = static_cast<unsigned char*>(malloc(face_bytes));
       if (target.buffers[ix] == nullptr) {
-        fclose(f);
         throw Exception("malloc failed for KTX2 mip " + std::to_string(ix)
                         + " (" + std::to_string(face_bytes) + " bytes): \""
                         + file_name + "\".");
       }
-      auto offset = static_cast<long>(level_index[ix].byte_offset  // NOLINT
-                                      + static_cast<uint64_t>(fi) * face_bytes);
-      if (fseek(f, offset, SEEK_SET) != 0) {
+      auto offset = static_cast<size_t>(
+          level_index[ix].byte_offset + static_cast<uint64_t>(fi) * face_bytes);
+      if (!blob.ReadAt(offset, target.buffers[ix], face_bytes)) {
         free(target.buffers[ix]);
         target.buffers[ix] = nullptr;
-        fclose(f);
-        throw Exception("fseek failed on KTX2 mip " + std::to_string(ix)
-                        + ": \"" + file_name + "\".");
-      }
-      if (fread(target.buffers[ix], face_bytes, 1, f) != 1) {
-        free(target.buffers[ix]);
-        target.buffers[ix] = nullptr;
-        fclose(f);
         throw Exception("Short read on KTX2 mip " + std::to_string(ix) + ": \""
                         + file_name + "\".");
       }
@@ -324,21 +361,21 @@ static void LoadKTX2Impl(const std::string& file_name,
     x = std::max(1u, x >> 1u);
     y = std::max(1u, y >> 1u);
   }
-
-  fclose(f);
 }
 
-void LoadKTX2(const std::string& file_name, unsigned char** buffers,
-              int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level, bool* premultiplied, TextureWrapping* wrap_h,
-              TextureWrapping* wrap_v) {
+void LoadKTX2(const AssetBlob& blob, const std::string& file_name,
+              unsigned char** buffers, int* widths, int* heights,
+              TextureFormat* formats, size_t* sizes, int* base_level,
+              bool* premultiplied, TextureWrapping* wrap_h,
+              TextureWrapping* wrap_v, TextureRole* role) {
   KTX2FaceTarget target{buffers,    widths,        heights, formats, sizes,
-                        base_level, premultiplied, wrap_h,  wrap_v};
-  LoadKTX2Impl(file_name, 1, &target);
+                        base_level, premultiplied, wrap_h,  wrap_v,  role};
+  LoadKTX2Impl(blob, file_name, 1, &target);
 }
 
-void LoadKTX2CubeMap(const std::string& file_name, KTX2FaceTarget* faces) {
-  LoadKTX2Impl(file_name, 6, faces);
+void LoadKTX2CubeMap(const AssetBlob& blob, const std::string& file_name,
+                     KTX2FaceTarget* faces) {
+  LoadKTX2Impl(blob, file_name, 6, faces);
 }
 
 }  // namespace ballistica::base

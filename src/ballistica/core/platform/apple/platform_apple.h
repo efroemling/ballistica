@@ -31,7 +31,7 @@ class PlatformApple : public Platform {
                        std::string_view msg) override;
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
-  auto GetTextLineBreakOffsets(const std::string& text)
+  auto DoGetTextLineBreakOffsets(const std::string& text)
       -> std::vector<int> override;
   void FreeTextTexture(void* tex) override;
   auto CreateTextTexture(int width, int height,
@@ -48,7 +48,6 @@ class PlatformApple : public Platform {
   void ShowGameServiceUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;
-  auto IsOSPlayingMusic() -> bool override;
   void MacMusicAppInit() override;
   auto MacMusicAppGetVolume() -> int override;
   void MacMusicAppSetVolume(int volume) override;

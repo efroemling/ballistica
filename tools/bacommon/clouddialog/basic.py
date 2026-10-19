@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Basic cloud-dialog."""
+"""Basic cloud-dialog.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 import datetime
 from enum import Enum

@@ -20,8 +20,8 @@ Raspberry Pi:
 - The server binary was compiled on a Raspberry Pi 4 running Raspbian Buster.
 
 Windows:
-- You may need to run dist/Vc_redist.x64.exe to install support libraries if
-  the app quits with complaints of missing DLLs
+- The Visual C++ runtime libraries the server needs are included in dist/, so
+  there is nothing extra to install.
 
 Please give me a holler at support@froemling.net or check out
 ballistica.net/wiki if you run into any problems.

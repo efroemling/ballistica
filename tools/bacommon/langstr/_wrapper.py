@@ -15,9 +15,14 @@ nested :class:`LangStrDir`.
 import datetime
 from typing import TYPE_CHECKING
 
-from bacommon.langstr._core import LangStrSpecResource, PackageStructure
+from bacommon.langstr._core import (
+    LangStrSpecResource,
+    LangStrSpecTimeTarget,
+    PackageStructure,
+)
 
 if TYPE_CHECKING:
+    from bacommon.assetpackage import ApverNum
     from bacommon.langstr._core import LangStrSpec
 
 #: A wrapper's compact runtime tree: a leaf is its ordered param-keyword
@@ -25,7 +30,9 @@ if TYPE_CHECKING:
 type WrapperTree = dict[str, 'tuple[str, ...] | WrapperTree']
 
 
-def package_structure(apverid: str, tree: WrapperTree) -> PackageStructure:
+def package_structure(
+    apvernum: ApverNum, tree: WrapperTree
+) -> PackageStructure:
     """Build a :class:`PackageStructure` from a wrapper's runtime ``_TREE``.
 
     Flattens the nested tree into the ``{logical-path: param-keywords}`` map
@@ -34,7 +41,7 @@ def package_structure(apverid: str, tree: WrapperTree) -> PackageStructure:
     """
     flat: dict[str, tuple[str, ...]] = {}
     _flatten_tree(tree, '', flat)
-    return PackageStructure(apverid, flat)
+    return PackageStructure(apvernum, flat)
 
 
 # (Module-level rather than a closure inside package_structure; a
@@ -84,20 +91,25 @@ def convert_time_subs(
 ) -> dict[str, 'str | int | LangStrSpec']:
     """Convert any time-typed sub values to their wire form.
 
-    The integer-milliseconds wire value is an implementation detail of
-    the duration machinery; conversion is driven purely by each
-    value's *type* (see :func:`time_sub_millis`), so no per-param kind
-    knowledge is needed -- the typed stubs are what hold authors to
-    passing time types only for duration params. ``now`` is resolved
-    at most once per call.
-    """
-    from efro.util import utc_now
+    Conversion is driven purely by each value's *type*, so no per-param
+    kind knowledge is needed -- the typed stubs are what hold authors to
+    passing time types only for duration params:
 
+    * A :class:`datetime.timedelta` is a fixed signed length (integer
+      milliseconds; see :func:`time_sub_millis`).
+    * A :class:`datetime.datetime` is a moment. With no ``now`` it
+      stays one -- a :class:`~bacommon.langstr.LangStrSpecTimeTarget`,
+      measured against the current time at each display, so the text
+      stays correct for as long as it is shown. Passing ``now``
+      instead freezes it into the fixed length ``moment - now`` (one
+      shared ``now`` keeps a batch of static renders, such as a table
+      column, from drifting against each other).
+    """
     out: dict[str, str | int | LangStrSpec] = {}
     for key, val in subs.items():
-        if isinstance(val, (datetime.datetime, datetime.timedelta)):
-            if now is None and isinstance(val, datetime.datetime):
-                now = utc_now()
+        if isinstance(val, datetime.datetime) and now is None:
+            out[key] = LangStrSpecTimeTarget.at(val)
+        elif isinstance(val, (datetime.datetime, datetime.timedelta)):
             out[key] = time_sub_millis(val, now)
         else:
             out[key] = val
@@ -109,8 +121,8 @@ class _LstrMaker:
 
     __slots__ = ('_apverid', '_name')
 
-    def __init__(self, apverid: str, name: str) -> None:
-        self._apverid = apverid
+    def __init__(self, apvernum: ApverNum, name: str) -> None:
+        self._apverid = apvernum
         self._name = name
 
     def __call__(
@@ -134,9 +146,9 @@ class LangStrDir:
     __slots__ = ('_apverid', '_tree', '_prefix')
 
     def __init__(
-        self, apverid: str, tree: WrapperTree, prefix: str = ''
+        self, apvernum: ApverNum, tree: WrapperTree, prefix: str = ''
     ) -> None:
-        self._apverid = apverid
+        self._apverid = apvernum
         self._tree = tree
         self._prefix = prefix
 

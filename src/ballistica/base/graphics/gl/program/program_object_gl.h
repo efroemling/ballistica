@@ -40,6 +40,10 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
         colorize2_g_(0),
         colorize2_b_(0),
         colorize2_a_(0),
+        colorize3_r_(0),
+        colorize3_g_(0),
+        colorize3_b_(0),
+        colorize3_a_(0),
         add_r_(0),
         add_g_(0),
         add_b_(0),
@@ -68,8 +72,11 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       colorize_color_location_ =
           glGetUniformLocation(program(), "colorizeColor");
       assert(colorize_color_location_ != -1);
+      colorize3_color_location_ =
+          glGetUniformLocation(program(), "colorize3Color");
+      assert(colorize3_color_location_ != -1);
     }
-    if (flags & SHD_COLORIZE2) {
+    if (flags & SHD_COLORIZE) {
       colorize2_color_location_ =
           glGetUniformLocation(program(), "colorize2Color");
       assert(colorize2_color_location_ != -1);
@@ -150,7 +157,7 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
   }
 
   void SetColorize2Color(float r, float g, float b, float a = 1.0f) {
-    assert(flags_ & SHD_COLORIZE2);
+    assert(flags_ & SHD_COLORIZE);
     assert(IsBound());
     if (r != colorize2_r_ || g != colorize2_g_ || b != colorize2_b_
         || a != colorize2_a_) {
@@ -160,6 +167,20 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       colorize2_a_ = a;
       glUniform4f(colorize2_color_location_, colorize2_r_, colorize2_g_,
                   colorize2_b_, colorize2_a_);
+    }
+  }
+
+  void SetColorize3Color(float r, float g, float b, float a = 1.0f) {
+    assert(flags_ & SHD_COLORIZE);
+    assert(IsBound());
+    if (r != colorize3_r_ || g != colorize3_g_ || b != colorize3_b_
+        || a != colorize3_a_) {
+      colorize3_r_ = r;
+      colorize3_g_ = g;
+      colorize3_b_ = b;
+      colorize3_a_ = a;
+      glUniform4f(colorize3_color_location_, colorize3_r_, colorize3_g_,
+                  colorize3_b_, colorize3_a_);
     }
   }
 
@@ -174,17 +195,18 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
            + " reflect:" + std::to_string((flags & SHD_REFLECTION) != 0)
            + " lightShadow:" + std::to_string((flags & SHD_LIGHT_SHADOW) != 0)
            + " add:" + std::to_string((flags & SHD_ADD) != 0) + " colorize:"
-           + std::to_string((flags & SHD_COLORIZE) != 0) + " colorize2:"
-           + std::to_string((flags & SHD_COLORIZE2) != 0) + " transparent:"
-           + std::to_string((flags & SHD_OBJ_TRANSPARENT) != 0) + " worldSpace:"
-           + std::to_string((flags & SHD_WORLD_SPACE_PTS) != 0);
+           + std::to_string((flags & SHD_COLORIZE) != 0) + " transparent:"
+           + std::to_string((flags & SHD_OBJ_TRANSPARENT) != 0)
+           + " worldSpace:" + std::to_string((flags & SHD_WORLD_SPACE_PTS) != 0)
+           + " facing:" + std::to_string((flags & SHD_FACING_RATIO) != 0);
   }
 
   auto GetPFlags(int flags) -> int {
     int pflags = PFLAG_USES_POSITION_ATTR | PFLAG_USES_UV_ATTR;
-    if (flags & SHD_REFLECTION)
+    if ((flags & SHD_REFLECTION) || (flags & SHD_FACING_RATIO))
       pflags |= (PFLAG_USES_NORMAL_ATTR | PFLAG_USES_CAM_POS);
-    if (((flags & SHD_REFLECTION) || (flags & SHD_LIGHT_SHADOW))
+    if (((flags & SHD_REFLECTION) || (flags & SHD_LIGHT_SHADOW)
+         || (flags & SHD_FACING_RATIO))
         && !(flags & SHD_WORLD_SPACE_PTS))
       pflags |= PFLAG_USES_MODEL_WORLD_MATRIX;
     if (flags & SHD_LIGHT_SHADOW) pflags |= PFLAG_USES_SHADOW_PROJECTION_MATRIX;
@@ -200,7 +222,8 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
         "vec2 uv;\n" BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP
         "vec2 vUV;\n" BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP
         "vec4 vScreenCoord;\n";
-    if ((flags & SHD_REFLECTION) || (flags & SHD_LIGHT_SHADOW))
+    if ((flags & SHD_REFLECTION) || (flags & SHD_LIGHT_SHADOW)
+        || (flags & SHD_FACING_RATIO))
       s += "uniform mat4 modelWorldMatrix;\n";
     if (flags & SHD_REFLECTION)
       s += BA_GLSL_VERTEX_IN " " BA_GLSL_MEDIUMP
@@ -209,6 +232,16 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
     if (flags & SHD_LIGHT_SHADOW)
       s += "uniform mat4 lightShadowProjectionMatrix;\n" BA_GLSL_VERTEX_OUT
            " " BA_GLSL_MEDIUMP "vec4 vLightShadowUV;\n";
+    if (flags & SHD_FACING_RATIO) {
+      // Debug facing-ratio shading: how squarely the face points at the
+      // camera, flat across each face (provoking vertex).
+      assert(!(flags & SHD_REFLECTION));
+      assert(!(flags & SHD_WORLD_SPACE_PTS));
+      s += BA_GLSL_VERTEX_IN " " BA_GLSL_MEDIUMP
+                             "vec3 normal;\n"
+                             "flat " BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP
+                             "float vFacing;\n";
+    }
     s +=
         "void main() {\n"
         "   vUV = uv;\n"
@@ -216,9 +249,14 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
         "   vScreenCoord = vec4(gl_Position.xy/gl_Position.w,gl_Position.zw);\n"
         "   vScreenCoord.xy += vec2(1.0);\n"
         "   vScreenCoord.xy *= vec2(0.5*vScreenCoord.w);\n";
-    if (((flags & SHD_LIGHT_SHADOW) || (flags & SHD_REFLECTION))
+    if (((flags & SHD_LIGHT_SHADOW) || (flags & SHD_REFLECTION)
+         || (flags & SHD_FACING_RATIO))
         && !(flags & SHD_WORLD_SPACE_PTS)) {
       s += "   vec4 worldPos = modelWorldMatrix*position;\n";
+    }
+    if (flags & SHD_FACING_RATIO) {
+      s += "   vFacing = abs(dot(normalize(vec3(modelWorldMatrix *"
+           " vec4(normal, 0.0))), normalize(vec3(camPos - worldPos))));\n";
     }
     if (flags & SHD_LIGHT_SHADOW) {
       if (flags & SHD_WORLD_SPACE_PTS)
@@ -262,38 +300,43 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
     if (flags & SHD_COLORIZE) {
       s += "uniform " BA_GLSL_LOWP
            "sampler2D colorizeTex;\n"
-           "uniform " BA_GLSL_LOWP "vec4 colorizeColor;\n";
-    }
-    if (flags & SHD_COLORIZE2) {
-      s += "uniform " BA_GLSL_LOWP "vec4 colorize2Color;\n";
+           "uniform " BA_GLSL_LOWP
+           "vec4 colorizeColor;\n"
+           "uniform " BA_GLSL_LOWP
+           "vec4 colorize2Color;\n"
+           "uniform " BA_GLSL_LOWP "vec4 colorize3Color;\n";
     }
     if (flags & SHD_LIGHT_SHADOW) {
       s += "uniform " BA_GLSL_MEDIUMP
            "sampler2D lightShadowTex;\n" BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP
            "vec4 vLightShadowUV;\n";
     }
+    if (flags & SHD_FACING_RATIO) {
+      s += "flat " BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "float vFacing;\n";
+    }
     s += "void main() {\n";
     if (flags & SHD_LIGHT_SHADOW) {
       s += "   " BA_GLSL_MEDIUMP "vec4 lightShadVal = " BA_GLSL_TEXTURE2DPROJ
            "(lightShadowTex, vLightShadowUV);\n";
     }
-    if ((flags & SHD_COLORIZE) || (flags & SHD_COLORIZE2)) {
+    if (flags & SHD_COLORIZE) {
       s += "   " BA_GLSL_MEDIUMP "vec4 colorizeVal = " BA_GLSL_TEXTURE2D
            "(colorizeTex, vUV);\n";
-    }
-    if (flags & SHD_COLORIZE) {
       s += "   " BA_GLSL_LOWP "float colorizeA = colorizeVal.r;\n";
-    }
-    if (flags & SHD_COLORIZE2) {
       s += "   " BA_GLSL_LOWP "float colorizeB = colorizeVal.g;\n";
+      s += "   " BA_GLSL_LOWP "float colorizeC = colorizeVal.b;\n";
     }
     s += "   " BA_GLSL_FRAGCOLOR " = (color * " BA_GLSL_TEXTURE2D
          "(colorTex, vUV)";
+    if (flags & SHD_FACING_RATIO) {
+      // Darker edge-on, lighter face-on. Texture is normally the default
+      // white one here so this is the whole base color.
+      s += " * vec4(vec3(mix(0.1, 0.425, vFacing)), 1.0)";
+    }
     if (flags & SHD_COLORIZE) {
       s += " * (vec4(1.0-colorizeA)+colorizeColor*colorizeA)";
-    }
-    if (flags & SHD_COLORIZE2) {
       s += " * (vec4(1.0-colorizeB)+colorize2Color*colorizeB)";
+      s += " * (vec4(1.0-colorizeC)+colorize3Color*colorizeC)";
     }
     s += ")";
 
@@ -332,11 +375,13 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
   float r_, g_, b_, a_;
   float colorize_r_, colorize_g_, colorize_b_, colorize_a_;
   float colorize2_r_, colorize2_g_, colorize2_b_, colorize2_a_;
+  float colorize3_r_, colorize3_g_, colorize3_b_, colorize3_a_;
   float add_r_, add_g_, add_b_;
   float r_mult_r_, r_mult_g_, r_mult_b_, r_mult_a_;
   GLint color_location_;
   GLint colorize_color_location_;
   GLint colorize2_color_location_;
+  GLint colorize3_color_location_;
   GLint color_add_location_;
   GLint reflect_mult_location_;
   int flags_;

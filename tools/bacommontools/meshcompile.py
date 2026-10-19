@@ -33,6 +33,23 @@ MESH_FORMAT_UV16_N8_INDEX32 = 2
 # stride; the GL renderer feeds this directly to glVertexAttribPointer).
 _BOB_VERTEX_PACK = '<3f2H3h2x'
 
+# Optional .bob trailer: derived data about the mesh, after its indices.
+# A u32 magic, then sections until the end of the file, each a u32 tag,
+# a u32 byte length and that many bytes. Readers skip tags they don't
+# know (so new sections need no format change) and ignore a trailer
+# they can't make sense of. Old engine readers stop after the indices
+# and never see it. C++ source of truth for the values:
+# src/ballistica/shared/ballistica.h (kBobTrailer*).
+BOB_TRAILER_MAGIC = 0x58424F42  # 'BOBX' as little-endian bytes.
+
+#: Bounds, as f32 box min xyz, box max xyz, then the radius of the
+#: sphere about the box's center that holds every vertex.
+BOB_TRAILER_TAG_BOUNDS = 1
+
+#: UV range, as f32 u min, v min, u max, v max, as the engine reads them
+#: (decoded from the u16 encoding, after the obj V flip).
+BOB_TRAILER_TAG_UV_RANGE = 2
+
 # Format notes:
 #
 # Legacy .cob (COB_FILE_ID_LEGACY, written by the old make_bob binary),
@@ -358,6 +375,9 @@ def compile_mesh(src: str | Path, dst: str | Path) -> BobCompileResult:
     - Index width is chosen per mesh: u16 when vertices fit, u32
       otherwise (the engine supports both; this removes the old
       make_bob 21845-face limit).
+
+    A trailer after the indices carries derived data (bounds, UV
+    range); see ``BOB_TRAILER_MAGIC``.
     """
     positions, tex_coords, normals, faces = _parse_obj_mesh(Path(src))
 
@@ -404,6 +424,7 @@ def compile_mesh(src: str | Path, dst: str | Path) -> BobCompileResult:
     )
     out += b''.join(out_vertices)
     out += struct.pack(f'<{len(indices)}{index_char}', *indices)
+    out += _bob_trailer(out_vertices)
     Path(dst).write_bytes(out)
 
     return BobCompileResult(
@@ -412,6 +433,64 @@ def compile_mesh(src: str | Path, dst: str | Path) -> BobCompileResult:
         tri_count=tri_count,
         index_size=index_size,
     )
+
+
+def _bob_trailer(vertices: list[bytes]) -> bytes:
+    """Build a .bob trailer (see BOB_TRAILER_MAGIC) for packed vertices.
+
+    Computed from the vertices exactly as written (float32 positions,
+    quantized uvs), so it describes what the engine actually draws.
+    """
+    unpacked = [struct.unpack(_BOB_VERTEX_PACK, v) for v in vertices]
+    mins = [min(v[axis] for v in unpacked) for axis in range(3)]
+    maxs = [max(v[axis] for v in unpacked) for axis in range(3)]
+    center = [(mins[axis] + maxs[axis]) * 0.5 for axis in range(3)]
+    radius = max(
+        math.sqrt(
+            (v[0] - center[0]) ** 2
+            + (v[1] - center[1]) ** 2
+            + (v[2] - center[2]) ** 2
+        )
+        for v in unpacked
+    )
+    # The sphere's stored as float32; round up a hair so it never comes
+    # out just short of a vertex it should hold.
+    radius = _f32_up(radius)
+    us = [v[3] / 65535.0 for v in unpacked]
+    vs = [v[4] / 65535.0 for v in unpacked]
+
+    def _section(tag: int, payload: bytes) -> bytes:
+        return struct.pack('<II', tag, len(payload)) + payload
+
+    return (
+        struct.pack('<I', BOB_TRAILER_MAGIC)
+        + _section(
+            BOB_TRAILER_TAG_BOUNDS, struct.pack('<7f', *mins, *maxs, radius)
+        )
+        + _section(
+            BOB_TRAILER_TAG_UV_RANGE,
+            struct.pack('<4f', min(us), min(vs), max(us), max(vs)),
+        )
+    )
+
+
+def _f32_up(val: float) -> float:
+    """The smallest float32 value at or above a value."""
+    f32 = float(struct.unpack('<f', struct.pack('<f', val))[0])
+    if f32 >= val:
+        return f32
+    bits = struct.unpack('<I', struct.pack('<f', f32))[0]
+    return float(struct.unpack('<f', struct.pack('<I', bits + 1))[0])
+
+
+@dataclass
+class BobBounds:
+    """A ``.bob`` mesh's bounds (from its trailer)."""
+
+    box_min: tuple[float, float, float]
+    box_max: tuple[float, float, float]
+    #: Radius of the sphere about the box's center holding every vertex.
+    radius: float
 
 
 @dataclass
@@ -424,6 +503,42 @@ class BobData:
     vertices: list[tuple[float, float, float, int, int, int, int, int]]
     # Flat [a, b, c, a, b, c, ...] vertex indices.
     indices: list[int]
+    # From the trailer, if the file has one (older ones don't).
+    bounds: BobBounds | None = None
+    # (u min, v min, u max, v max), likewise.
+    uv_range: tuple[float, float, float, float] | None = None
+
+
+def _read_bob_trailer(data: bytes, offset: int, out: BobData) -> None:
+    """Read a .bob trailer starting at ``offset`` (if there is one).
+
+    Unknown sections are skipped; a malformed trailer raises.
+    """
+    if offset == len(data):
+        return
+    if len(data) - offset < 4 or (
+        struct.unpack_from('<I', data, offset)[0] != BOB_TRAILER_MAGIC
+    ):
+        raise ValueError('Unexpected trailing data (no trailer magic).')
+    offset += 4
+    while offset < len(data):
+        if len(data) - offset < 8:
+            raise ValueError('Truncated trailer section header.')
+        tag, length = struct.unpack_from('<II', data, offset)
+        offset += 8
+        if len(data) - offset < length:
+            raise ValueError(f'Truncated trailer section {tag}.')
+        if tag == BOB_TRAILER_TAG_BOUNDS and length >= 28:
+            vals = struct.unpack_from('<7f', data, offset)
+            out.bounds = BobBounds(
+                box_min=(vals[0], vals[1], vals[2]),
+                box_max=(vals[3], vals[4], vals[5]),
+                radius=vals[6],
+            )
+        elif tag == BOB_TRAILER_TAG_UV_RANGE and length >= 16:
+            umin, vmin, umax, vmax = struct.unpack_from('<4f', data, offset)
+            out.uv_range = (umin, vmin, umax, vmax)
+        offset += length
 
 
 def read_mesh(path: str | Path) -> BobData:
@@ -451,9 +566,12 @@ def read_mesh(path: str | Path) -> BobData:
         struct.unpack_from(f'<{tri_count * 3}{index_char}', data, offset)
     )
     offset += tri_count * 3 * index_size
-    if offset != len(data):
-        raise ValueError(f"Unexpected trailing data in '{path}'.")
-    return BobData(mesh_format=mesh_format, vertices=vertices, indices=indices)
+    out = BobData(mesh_format=mesh_format, vertices=vertices, indices=indices)
+    try:
+        _read_bob_trailer(data, offset, out)
+    except ValueError as exc:
+        raise ValueError(f"'{path}': {exc}") from exc
+    return out
 
 
 def _weld_corners(

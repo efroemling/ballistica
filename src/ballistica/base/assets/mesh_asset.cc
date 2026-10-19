@@ -2,14 +2,20 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 
 namespace ballistica::base {
@@ -32,10 +38,11 @@ void MeshAsset::DoPreload() {
 #if !BA_HEADLESS_BUILD
 
   assert(!file_name_.empty());
-  FILE* f = g_core->platform->FOpen(file_name_full_.c_str(), "rb");
-  if (!f) {
+  auto blob = AssetBlob::FromFile(file_name_full_);
+  if (!blob.exists()) {
     throw Exception("Can't open mesh file: '" + file_name_full_ + "'");
   }
+  AssetBlobReader reader(blob);
 
   // We currently read/write in little-endian since that's all we run on at the
   // moment.
@@ -44,7 +51,7 @@ void MeshAsset::DoPreload() {
 #endif
 
   uint32_t version;
-  if (fread(&version, sizeof(version), 1, f) != 1) {
+  if (!reader.ReadInto(&version, sizeof(version))) {
     throw Exception("Error reading file header for '" + file_name_full_ + "'");
   }
   if (version != kBobFileID) {
@@ -55,7 +62,7 @@ void MeshAsset::DoPreload() {
   }
 
   uint32_t mesh_format;
-  if (fread(&mesh_format, sizeof(mesh_format), 1, f) != 1) {
+  if (!reader.ReadInto(&mesh_format, sizeof(mesh_format))) {
     throw Exception("Error reading mesh_format for '" + file_name_full_ + "'");
   }
   format_ = static_cast<MeshFormat>(mesh_format);
@@ -64,41 +71,41 @@ void MeshAsset::DoPreload() {
                   || (format_ == MeshFormat::kUV16N8Index32));
 
   uint32_t vertex_count;
-  if (fread(&vertex_count, sizeof(vertex_count), 1, f) != 1) {
+  if (!reader.ReadInto(&vertex_count, sizeof(vertex_count))) {
     throw Exception("Error reading vertex_count for '" + file_name_full_ + "'");
   }
 
   uint32_t face_count;
-  if (fread(&face_count, sizeof(face_count), 1, f) != 1) {
+  if (!reader.ReadInto(&face_count, sizeof(face_count))) {
     throw Exception("Error reading face_count for '" + file_name_full_ + "'");
   }
 
   vertices_.resize(vertex_count);
-  if (fread(&(vertices_[0]), vertices_.size() * sizeof(VertexObjectFull), 1, f)
-      != 1) {
+  if (!reader.ReadInto(vertices_.data(),
+                       vertices_.size() * sizeof(VertexObjectFull))) {
     throw Exception("Read failed for " + file_name_full_);
   }
   switch (GetIndexSize()) {
     case 1: {
       indices8_.resize(face_count * 3);
-      if (fread(indices8_.data(), indices8_.size() * sizeof(uint8_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices8_.data(),
+                           indices8_.size() * sizeof(uint8_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
     }
     case 2: {
       indices16_.resize(face_count * 3);
-      if (fread(indices16_.data(), indices16_.size() * sizeof(uint16_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices16_.data(),
+                           indices16_.size() * sizeof(uint16_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
     }
     case 4: {
       indices32_.resize(face_count * 3);
-      if (fread(indices32_.data(), indices32_.size() * sizeof(uint32_t), 1, f)
-          != 1) {
+      if (!reader.ReadInto(indices32_.data(),
+                           indices32_.size() * sizeof(uint32_t))) {
         throw Exception("Read failed for " + file_name_full_);
       }
       break;
@@ -107,9 +114,102 @@ void MeshAsset::DoPreload() {
       throw Exception();
   }
 
-  fclose(f);
+  // Derived data (bounds and such) follows in newer files; work out
+  // whatever a file doesn't carry while we still have its vertices.
+  ReadTrailer_(&reader);
+  DeriveMissingTrailerData_();
 
 #endif  // BA_HEADLESS_BUILD
+}
+
+void MeshAsset::ReadTrailer_(AssetBlobReader* reader) {
+  uint32_t magic{};
+  if (reader->remaining() == 0) {
+    return;  // A file from before the trailer.
+  }
+  if (!reader->ReadInto(&magic, sizeof(magic)) || magic != kBobTrailerMagic) {
+    // Anything else after the indices is something we don't
+    // understand; the mesh itself is fine without it.
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         "Unrecognized trailing data in mesh '"
+                             + file_name_full_ + "'; ignoring it.");
+    return;
+  }
+  while (reader->remaining() > 0) {
+    uint32_t tag{};
+    uint32_t length{};
+    if (!reader->ReadInto(&tag, sizeof(tag))
+        || !reader->ReadInto(&length, sizeof(length))
+        || length > reader->remaining()) {
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                           "Truncated trailer in mesh '" + file_name_full_
+                               + "'; ignoring the rest of it.");
+      return;
+    }
+    // Read this section whole; then interpret it if we know it (and it
+    // holds at least what we expect -- later versions may append).
+    std::vector<uint8_t> data(length);
+    if (length > 0) {
+      reader->ReadInto(data.data(), length);
+    }
+    if (tag == kBobTrailerTagBounds && length >= 7 * sizeof(float)) {
+      float vals[7];
+      memcpy(vals, data.data(), sizeof(vals));
+      Bounds bounds;
+      bounds.box_min = {vals[0], vals[1], vals[2]};
+      bounds.box_max = {vals[3], vals[4], vals[5]};
+      bounds.radius = vals[6];
+      bounds_ = bounds;
+    } else if (tag == kBobTrailerTagUVRange && length >= 4 * sizeof(float)) {
+      std::array<float, 4> range{};
+      memcpy(range.data(), data.data(), sizeof(float) * 4);
+      uv_range_ = range;
+    }
+  }
+}
+
+void MeshAsset::DeriveMissingTrailerData_() {
+  if (vertices_.empty()) {
+    return;
+  }
+  if (!bounds_) {
+    // As the mesh compiler computes it: a box, then the farthest any
+    // vertex sits from its center.
+    Bounds bounds;
+    bounds.box_min = {vertices_[0].position[0], vertices_[0].position[1],
+                      vertices_[0].position[2]};
+    bounds.box_max = bounds.box_min;
+    for (const auto& v : vertices_) {
+      bounds.box_min.x = std::min(bounds.box_min.x, v.position[0]);
+      bounds.box_min.y = std::min(bounds.box_min.y, v.position[1]);
+      bounds.box_min.z = std::min(bounds.box_min.z, v.position[2]);
+      bounds.box_max.x = std::max(bounds.box_max.x, v.position[0]);
+      bounds.box_max.y = std::max(bounds.box_max.y, v.position[1]);
+      bounds.box_max.z = std::max(bounds.box_max.z, v.position[2]);
+    }
+    Vector3f center = bounds.center();
+    float radius_sq{};
+    for (const auto& v : vertices_) {
+      float dx = v.position[0] - center.x;
+      float dy = v.position[1] - center.y;
+      float dz = v.position[2] - center.z;
+      radius_sq = std::max(radius_sq, dx * dx + dy * dy + dz * dz);
+    }
+    bounds.radius = sqrtf(radius_sq);
+    bounds_ = bounds;
+  }
+  if (!uv_range_) {
+    uint16_t umin{0xFFFF}, vmin{0xFFFF}, umax{}, vmax{};
+    for (const auto& v : vertices_) {
+      umin = std::min(umin, v.uv[0]);
+      vmin = std::min(vmin, v.uv[1]);
+      umax = std::max(umax, v.uv[0]);
+      vmax = std::max(vmax, v.uv[1]);
+    }
+    const float scale = 1.0f / 65535.0f;
+    uv_range_ = std::array<float, 4>{umin * scale, vmin * scale, umax * scale,
+                                     vmax * scale};
+  }
 }
 
 void MeshAsset::DoLoad() {

@@ -4,6 +4,8 @@
 #define BALLISTICA_BASE_DYNAMICS_BG_BG_DYNAMICS_SHADOW_H_
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_channel.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics_world.h"
 #include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {
@@ -14,20 +16,26 @@ namespace ballistica::base {
 // Clients should give their current position information to the shadow
 // at update time and then at render time it'll be all set to go.
 // (shadows update in the bg dynamics stepping process)
+//
+// A shadow lives in the bg-dynamics world it is made in (the terrain
+// it falls on is that world's) and keeps that world around for as long
+// as it exists.
 class BGDynamicsShadow {
  public:
-  explicit BGDynamicsShadow(float height_scaling = 1.0f);
+  explicit BGDynamicsShadow(BGDynamicsWorld* world,
+                            float height_scaling = 1.0f);
   ~BGDynamicsShadow();
   void SetPosition(const Vector3f& pos);
   auto GetPosition() const -> const Vector3f&;
 
   // Return scale and density for the shadow.
   // this also takes into account the height based shadow density
-  // (g_graphics->GetShadowDensity()) so you don't have to.
+  // (RenderView::GetShadowDensity()) so you don't have to.
   void GetValues(float* scale, float* density) const;
 
  private:
-  BGDynamicsShadowData* data_{};
+  Object::Ref<BGDynamicsWorld> world_;
+  BGDynamicsSlot slot_;
   BA_DISALLOW_CLASS_COPIES(BGDynamicsShadow);
 };
 

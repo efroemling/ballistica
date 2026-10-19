@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260819`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261014b`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,55 +9,55 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260819
+# ba_meta require asset-package 689
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260819'
-
 from typing import TYPE_CHECKING
+
+from bacommon.assetpackage import ApverNum
 
 from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
+# a-0.babuiltinassets.261014b
+_ASSET_PACKAGE = ApverNum(689)
+
 if TYPE_CHECKING:
     import datetime
-    from babase._assetref import SimpleSoundHandle
+    from babase._assetref import MeshHandle, SimpleSoundHandle, TextureHandle
     from babase import LangStr
 
     class AudioGroup:
         """
         ::
 
-            Sounds needed during engine bootstrap and early UI (clicks, errors,
-            and other always-available effects).
+            Sounds the engine plays before construct-mode hands off (dev console
+            and dialog feedback), plus the silent stand-in for missing sounds.
 
             See source for the full asset list.
         """
 
         blank: SimpleSoundHandle
         blip: SimpleSoundHandle
-        cash_register: SimpleSoundHandle
         click01: SimpleSoundHandle
-        cork_pop: SimpleSoundHandle
-        deek: SimpleSoundHandle
-        ding: SimpleSoundHandle
         error: SimpleSoundHandle
-        gun_cocking: SimpleSoundHandle
-        powerdown01: SimpleSoundHandle
-        punch01: SimpleSoundHandle
-        score_increase: SimpleSoundHandle
-        sparkle01: SimpleSoundHandle
-        sparkle02: SimpleSoundHandle
-        sparkle03: SimpleSoundHandle
-        swish: SimpleSoundHandle
-        swish2: SimpleSoundHandle
-        swish3: SimpleSoundHandle
-        tap: SimpleSoundHandle
-        ticking_crazy: SimpleSoundHandle
+
+    class MeshesGroup:
+        """
+        ::
+
+            Meshes the engine draws before construct-mode hands off.
+
+            See source for the full asset list.
+        """
+
+        image1x1: MeshHandle
+        vr_fade: MeshHandle
+        vr_overlay: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -195,6 +195,18 @@ if TYPE_CHECKING:
                 again."
             """
 
+        def corrupt_file(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error screen-message shown when a corrupt game data file (e.g.
+                an unreadable audio file) is detected; the placeholder is the
+                support email address.
+
+                English: "Corrupt file(s) detected. Please try re-installing, or
+                email {email}"
+            """
+
         def downloading_assets(self, *, count: int) -> LangStr:
             """
             ::
@@ -296,6 +308,28 @@ if TYPE_CHECKING:
                 English: "Error playing music: {music}"
             """
 
+    class StringsDeviceGroup:
+        """
+        ::
+
+            Device-state notices: messages about the hardware the game is
+            running on, such as thermal throttling.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Screen-message shown once per run on Android when the game
+        #:     deliberately lowers its frame rate because the OS reports severe
+        #:     thermal throttling; only shown on devices whose display would
+        #:     otherwise run faster than 60hz. The behavior can be turned off
+        #:     with the Thermal Throttling checkbox in graphics settings.
+        #:
+        #:     English: "Device is running hot; reducing frame rate until it
+        #:     cools. Configure this in graphics settings."
+        thermal_frame_rate_cap: LangStr
+
     class StringsInputGroup:
         """
         ::
@@ -347,7 +381,7 @@ if TYPE_CHECKING:
         #:     game controller is detected (multiple controllers at startup use
         #:     a separate counted message).
         #:
-        #:     English: "1 controller detected."
+        #:     English: "1 game controller detected."
         controller_detected: LangStr
 
         def controller_disconnected(
@@ -367,7 +401,7 @@ if TYPE_CHECKING:
         #:
         #:     Notice that a controller works only in menus.
         #:
-        #:     English: "This controller can not be used to play; only to
+        #:     English: "This game controller can not be used to play; only to
         #:     navigate menus."
         controller_menus_only: LangStr
 
@@ -392,7 +426,7 @@ if TYPE_CHECKING:
                 connect at the same time (a single controller connecting shows a
                 different message naming that controller).
 
-                English: (one) "# controller connected." / (other) "#
+                English: (one) "# game controller connected." / (other) "# game
                 controllers connected."
             """
 
@@ -404,8 +438,8 @@ if TYPE_CHECKING:
                 game controller is detected at once (a single controller at
                 startup uses a separate message).
 
-                English: (one) "# controller detected." / (other) "# controllers
-                detected."
+                English: (one) "# game controller detected." / (other) "# game
+                controllers detected."
             """
 
         def controllers_disconnected(self, *, count: int) -> LangStr:
@@ -416,8 +450,8 @@ if TYPE_CHECKING:
                 disconnect at the same time (a single controller disconnecting
                 shows a different message naming that controller).
 
-                English: (one) "# controller disconnected." / (other) "#
-                controllers disconnected."
+                English: (one) "# game controller disconnected." / (other) "#
+                game controllers disconnected."
             """
 
         #: ::
@@ -454,7 +488,7 @@ if TYPE_CHECKING:
 
                 Notice that a controller is not supported.
 
-                English: "Sorry, the {name} controller is not supported."
+                English: "Sorry, the game controller {name} is not supported."
             """
 
         #: ::
@@ -469,8 +503,8 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of the VR orientation reset on Cardboard.
         #:
-        #:     English: "Use this to reset the VR orientation. To play, you'll
-        #:     need an external controller."
+        #:     English: "Use this to reset the VR orientation. To play the game
+        #:     you'll need an external game controller."
         vr_orientation_reset_cardboard: LangStr
 
     class StringsNetGroup:
@@ -490,6 +524,36 @@ if TYPE_CHECKING:
         #:
         #:     English: "Your account was rejected. Are you signed in?"
         account_rejected: LangStr
+
+        def asset_package_access_denied(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package the player's account may not use; the placeholders
+                are the package's name and its owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which your account does not have access to."
+            """
+
+        def asset_package_auth_required(
+            self, *, package: str | LangStr, owner: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error shown when joining a game fails because the game uses an
+                asset package that requires signing in with an account allowed
+                to use it; the placeholders are the package's name and its
+                owner's account tag.
+
+                English: "This game uses asset package '{package}' by {owner},
+                which needs you to be signed in with an account that has access
+                to it."
+            """
 
         #: ::
         #:
@@ -580,6 +644,18 @@ if TYPE_CHECKING:
                 is likely to cause problems. Please check your time and
                 time-zone settings."
             """
+
+        #: ::
+        #:
+        #:     Yellow warning screen-message shown right after successfully
+        #:     joining a multiplayer game whose host runs an older game version
+        #:     or has v2-auth turned off; tells the player only their legacy
+        #:     profiles can be used there. Replaces the old "some new characters
+        #:     may show up as older ones" warning.
+        #:
+        #:     English: "This server is old or has v2-auth turned off; only
+        #:     legacy profiles are available."
+        host_legacy_profiles_only: LangStr
 
         #: ::
         #:
@@ -839,6 +915,14 @@ if TYPE_CHECKING:
                 "{name} is chat-blocked for # seconds."
             """
 
+        #: ::
+        #:
+        #:     Error screen-message when a player sends a chat message longer
+        #:     than the host allows.
+        #:
+        #:     English: "Message is too long."
+        chat_message_too_long: LangStr
+
         def join_cooldown(self, *, seconds: int) -> LangStr:
             """
             ::
@@ -1036,6 +1120,26 @@ if TYPE_CHECKING:
         #:     English: "Google Play Services is not available. Some app
         #:     functionality may be disabled."
         google_play_services_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Body of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet), under the payment-pending
+        #:     title.
+        #:
+        #:     English: "Your purchase will be delivered once payment is
+        #:     confirmed."
+        payment_pending_message: LangStr
+
+        #: ::
+        #:
+        #:     Title of the dialog shown right after an in-app purchase comes
+        #:     back pending (the payment method -- e.g. UPI, cash, some bank
+        #:     transfers -- has not cleared yet).
+        #:
+        #:     English: "Payment Pending"
+        payment_pending_title: LangStr
 
         #: ::
         #:
@@ -1407,6 +1511,7 @@ if TYPE_CHECKING:
         account: StringsAccountGroup
         assets: StringsAssetsGroup
         audio: StringsAudioGroup
+        device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
         plugins: StringsPluginsGroup
@@ -1418,37 +1523,72 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
-    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    class TexturesGroup:
+        """
+        ::
+
+            Textures the engine draws before construct-mode hands off: fonts,
+            text backings, the cursor, and dev-console/dialog chrome.
+
+            See source for the full asset list.
+        """
+
+        circle: TextureHandle
+        circle_shadow: TextureHandle
+        cursor: TextureHandle
+        font_big: TextureHandle
+        font_extras: TextureHandle
+        font_extras2: TextureHandle
+        font_extras3: TextureHandle
+        font_extras4: TextureHandle
+        font_extras5: TextureHandle
+        font_small0: TextureHandle
+        font_small1: TextureHandle
+        font_small2: TextureHandle
+        font_small3: TextureHandle
+        font_small4: TextureHandle
+        font_small5: TextureHandle
+        font_small6: TextureHandle
+        font_small7: TextureHandle
+        howdy: TextureHandle
+        shadow: TextureHandle
+        shadow_sharp: TextureHandle
+
+        #: ::
+        #:
+        #:     Data-role twin of soft_rect2.png for shader slots that read
+        #:     channels as values (tint and mask slots); the original stays a
+        #:     picture.
+        soft_rect2_mask: TextureHandle
+
+        #: ::
+        #:
+        #:     Data-role twin of soft_rect.png for shader slots that read
+        #:     channels as values (tint and mask slots); the original stays a
+        #:     picture.
+        soft_rect_mask: TextureHandle
+        soft_rect_vertical: TextureHandle
+
+    #: The ``audio`` group - 4 assets (``blank``, ``blip``, ``click01``,
+    #: ``error``). Full list in source.
     audio: AudioGroup
 
-    #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 122 more). Full list in source.
+    #: The ``meshes`` group - 3 assets (``image1x1``, ``vr_fade``,
+    #: ``vr_overlay``). Full list in source.
+    meshes: MeshesGroup
+
+    #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 130 more). Full list in source.
     strings: StringsGroup
 
+    #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
+    #: ``cursor``, ``font_big``, ``font_extras``, and 18 more). Full list in
+    #: source.
+    textures: TexturesGroup
+
 _TREE = {
-    'audio': {
-        'blank': 's',
-        'blip': 's',
-        'cash_register': 's',
-        'click01': 's',
-        'cork_pop': 's',
-        'deek': 's',
-        'ding': 's',
-        'error': 's',
-        'gun_cocking': 's',
-        'powerdown01': 's',
-        'punch01': 's',
-        'score_increase': 's',
-        'sparkle01': 's',
-        'sparkle02': 's',
-        'sparkle03': 's',
-        'swish': 's',
-        'swish2': 's',
-        'swish3': 's',
-        'tap': 's',
-        'ticking_crazy': 's',
-    },
+    'audio': {'blank': 's', 'blip': 's', 'click01': 's', 'error': 's'},
+    'meshes': {'image1x1': 'm', 'vr_fade': 'm', 'vr_overlay': 'm'},
     'strings': {
         'account': {
             'must_sign_in': (),
@@ -1465,6 +1605,7 @@ _TREE = {
             'building_assets_no_count': (),
             'client_too_old': (),
             'content_error_guidance': ('detail',),
+            'corrupt_file': ('email',),
             'downloading_assets': ('count',),
             'load_error': (),
             'preparing_build': (),
@@ -1475,6 +1616,7 @@ _TREE = {
             'signing_in': (),
         },
         'audio': {'music_play_error': ('music',)},
+        'device': {'thermal_frame_rate_cap': ()},
         'input': {
             'axis': ('number',),
             'button': ('number',),
@@ -1495,6 +1637,8 @@ _TREE = {
         },
         'net': {
             'account_rejected': (),
+            'asset_package_access_denied': ('package', 'owner'),
+            'asset_package_auth_required': ('package', 'owner'),
             'auth_error': (),
             'connected_to_game': ('name',),
             'connected_to_party': ('name',),
@@ -1505,6 +1649,7 @@ _TREE = {
             'connection_failed_version_mismatch': (),
             'connection_rejected': (),
             'device_time_incorrect': ('hours',),
+            'host_legacy_profiles_only': (),
             'incompatible_newer_version_host': (),
             'incompatible_version_host': (),
             'incompatible_version_player': ('name',),
@@ -1532,6 +1677,7 @@ _TREE = {
         },
         'session': {
             'chat_blocked': ('seconds', 'name'),
+            'chat_message_too_long': (),
             'join_cooldown': ('seconds',),
             'kick_idle_kicked': ('name',),
             'kick_idle_warning': ('seconds', 'name'),
@@ -1554,6 +1700,8 @@ _TREE = {
         'store': {
             'google_play_purchases_unavailable': (),
             'google_play_services_unavailable': (),
+            'payment_pending_message': (),
+            'payment_pending_title': (),
             'purchase_already_in_progress': (),
             'purchase_not_valid': ('email',),
             'purchases_restored': (),
@@ -1599,15 +1747,42 @@ _TREE = {
             'sync_reuse': ('workspace',),
         },
     },
+    'textures': {
+        'circle': 't',
+        'circle_shadow': 't',
+        'cursor': 't',
+        'font_big': 't',
+        'font_extras': 't',
+        'font_extras2': 't',
+        'font_extras3': 't',
+        'font_extras4': 't',
+        'font_extras5': 't',
+        'font_small0': 't',
+        'font_small1': 't',
+        'font_small2': 't',
+        'font_small3': 't',
+        'font_small4': 't',
+        'font_small5': 't',
+        'font_small6': 't',
+        'font_small7': 't',
+        'howdy': 't',
+        'shadow': 't',
+        'shadow_sharp': 't',
+        'soft_rect2_mask': 't',
+        'soft_rect_mask': 't',
+        'soft_rect_vertical': 't',
+    },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
-    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,
     )
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

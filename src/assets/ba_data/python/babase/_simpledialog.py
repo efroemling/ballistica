@@ -61,6 +61,12 @@ class SimpleDialog:
     ``on_button`` to be notified; the meaning of the button (Retry, OK, …) and
     what it does are entirely up to the caller.
 
+    Cancel-type input (escape, the android/TV back button, controller
+    B/back) is swallowed by default. Pass ``cancel_activates_button=True``
+    to have it fire the button too -- right for OK and Cancel buttons
+    (users expect back to dismiss a dialog), wrong for ones like Retry or
+    Sign In where cancel shouldn't trigger the action.
+
     Must be created and driven on the logic thread. Call :meth:`dismiss` to
     remove it.
     """
@@ -73,6 +79,7 @@ class SimpleDialog:
         progress: float | None = None,
         button_label: str | Lstr | babase.LangStr | None = None,
         on_button: Callable[[], None] | None = None,
+        cancel_activates_button: bool = False,
     ) -> None:
         assert _babase.in_logic_thread()
         self._title = title
@@ -80,6 +87,7 @@ class SimpleDialog:
         self._progress = progress
         self._button_label = button_label
         self._on_button = on_button
+        self._cancel_activates_button = cancel_activates_button
         self._dismissed = False
         self._id = _babase.simpledialog_create()
         _dialogs[self._id] = self
@@ -93,6 +101,7 @@ class SimpleDialog:
         progress: float | None | _Unset = _UNSET,
         button_label: str | Lstr | babase.LangStr | None | _Unset = _UNSET,
         on_button: Callable[[], None] | None | _Unset = _UNSET,
+        cancel_activates_button: bool | _Unset = _UNSET,
     ) -> None:
         """Update one or more fields; unspecified fields are left as-is.
 
@@ -112,6 +121,8 @@ class SimpleDialog:
             self._button_label = button_label
         if not isinstance(on_button, _Unset):
             self._on_button = on_button
+        if not isinstance(cancel_activates_button, _Unset):
+            self._cancel_activates_button = cancel_activates_button
         self._push()
 
     def dismiss(self) -> None:
@@ -138,6 +149,7 @@ class SimpleDialog:
             _eval(self._message),
             -1.0 if self._progress is None else self._progress,
             _eval(self._button_label),
+            self._cancel_activates_button,
         )
 
 

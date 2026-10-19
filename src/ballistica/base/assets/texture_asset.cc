@@ -4,17 +4,21 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/graphics/support/render_view.h"
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
@@ -23,6 +27,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
@@ -35,25 +40,44 @@ static constexpr bool kForceUncompressedDDS = false;
 
 TextureAsset::TextureAsset() = default;
 
-/// Derive the loader container hint from a resolved asset path. CAS
-/// blobs resolve to bare content-hash file names with no extension
-/// (all texture flavors are KTX2 containers), while every legacy
-/// on-disk path — including the headless ``.nop`` dummy — carries an
-/// extension for the loader's path-suffix sniff. Keying on the
-/// *resolved* path shape (rather than whether the *requested* name
-/// was a qualified ``<apverid>:<name>`` ref) matters because bare
-/// legacy names can still resolve to CAS blobs: a missing texture
-/// falls back to the builtin package's ``textures/white``, and that
-/// fallback must load rather than fail the asset (which is fatal if
-/// the render path later touches it).
-static auto DeriveContainerHint(const std::string& path) -> std::string {
+/// Whether a resolved asset path names an asset-package CAS blob. CAS
+/// blobs resolve to content-hash file names — bare (the writable
+/// cache) or carrying the bundled transport suffix (archive-served
+/// builds; see kBundledCasBlobSuffix) — never a content extension,
+/// while every legacy on-disk path — including the headless ``.nop``
+/// dummy — carries an extension for the loader's path-suffix sniff.
+/// Keying on the *resolved* path shape (rather than whether the
+/// *requested* name was a qualified ``<apverid>:<name>`` ref) matters
+/// because bare legacy names can still resolve to CAS blobs (via
+/// asset-name compat), and those must load rather than fail the asset
+/// (which is fatal if the render path later touches it).
+/// The blob's actual container format is decided at preload from its
+/// content magic bytes, never from its name.
+static auto IsCasBlobPath(const std::string& path) -> bool {
+  if (path.ends_with(kBundledCasBlobSuffix)) {
+    return true;
+  }
   auto slash_pos = path.find_last_of("/\\");
   auto dot_pos =
       path.find('.', slash_pos == std::string::npos ? 0 : slash_pos + 1);
-  if (dot_pos == std::string::npos) {
-    return ".ktx2";
+  return dot_pos == std::string::npos;
+}
+
+/// Open a CAS texture blob and verify a container we can parse.
+/// Dispatching on content magic (not file name) means future
+/// container formats slot in here as new cases with no naming/path
+/// coupling anywhere.
+static auto OpenCasTextureBlob(const std::string& path) -> AssetBlob {
+  auto blob = AssetBlob::FromFile(path);
+  if (!blob.exists()) {
+    throw Exception("Can't open texture blob: '" + path + "'.");
   }
-  return {};
+  unsigned char magic[sizeof(kKTX2Magic)];
+  if (!blob.ReadAt(0, magic, sizeof(magic))
+      || memcmp(magic, kKTX2Magic, sizeof(magic)) != 0) {
+    throw Exception("Unrecognized CAS texture container in '" + path + "'.");
+  }
+  return blob;
 }
 
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
@@ -63,7 +87,13 @@ TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
       type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
                                      : Assets::FileType::kTexture,
       file_in);
-  container_ = DeriveContainerHint(file_name_full_);
+  if (file_name_full_ == Assets::kMissingTextureFile) {
+    // Already logged by FindAssetFile; draw a plain white fill.
+    solid_color_ = SolidTextureColor::kWhite;
+    valid_ = true;
+    return;
+  }
+  is_cas_blob_ = IsCasBlobPath(file_name_full_);
   valid_ = true;
 }
 
@@ -98,6 +128,39 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
   valid_ = true;
 }
 
+TextureAsset::TextureAsset(SolidTextureColor color, TextureType type)
+    : solid_color_(color), type_(type) {
+  switch (color) {
+    case SolidTextureColor::kWhite:
+      file_name_ = "<solid-white";
+      break;
+    case SolidTextureColor::kBlack:
+      file_name_ = "<solid-black";
+      break;
+  }
+  file_name_ += (type == TextureType::kCubeMap) ? "-cube>" : ">";
+  file_name_full_ = file_name_;
+  valid_ = true;
+}
+
+TextureAsset::TextureAsset(RenderView* view)
+    : render_view_id_(view->id()), render_view_(view) {
+  assert(g_base->InLogicThread());
+  assert(view->output() == RenderView::Output::kTexture);
+  file_name_ = "render-view-" + std::to_string(view->id());
+  valid_ = true;
+}
+
+auto TextureAsset::GetRenderView() const -> RenderView* {
+  assert(g_base->InLogicThread());
+  return render_view_;
+}
+
+void TextureAsset::ClearRenderView() {
+  assert(g_base->InLogicThread());
+  render_view_ = nullptr;
+}
+
 TextureAsset::~TextureAsset() {}
 
 auto TextureAsset::GetName() const -> std::string {
@@ -111,9 +174,10 @@ auto TextureAsset::GetNameFull() const -> std::string {
 auto TextureAsset::ReResolveSource() -> bool {
   // Only file-backed CAS textures (qualified ``<apverid>:<name>`` refs) can
   // change their underlying blob when the asset-package registry is
-  // re-resolved. Text-textures and QR codes are generated in-engine, and
-  // legacy bare-filename textures resolve to a fixed on-disk path.
-  if (packer_.exists() || is_qr_code_
+  // re-resolved. Text-textures, QR codes and solid fills are generated
+  // in-engine, and legacy bare-filename textures resolve to a fixed
+  // on-disk path.
+  if (packer_.exists() || is_qr_code_ || solid_color_ || render_view_id_ != 0
       || file_name_.find(':') == std::string::npos) {
     return false;
   }
@@ -125,8 +189,8 @@ auto TextureAsset::ReResolveSource() -> bool {
     return false;
   }
   file_name_full_ = new_full;
-  // Re-derive the container hint exactly as the constructor does.
-  container_ = DeriveContainerHint(file_name_full_);
+  // Re-derive exactly as the constructor does.
+  is_cas_blob_ = IsCasBlobPath(file_name_full_);
   return true;
 }
 
@@ -138,6 +202,18 @@ void TextureAsset::DoPreload() {
   // assert(g_base->graphics->has_client_context());
   // assert(g_base->graphics_server
   //        && g_base->graphics_server->texture_compression_types_are_set());
+
+  // If we're what a view draws to, we've no pixels to get ready; the
+  // renderer has them.
+  if (render_view_id_ != 0) {
+    preload_datas_.resize(1);
+
+    // Views draw over an opaque backdrop for now; should they come to
+    // leave their backdrops clear, what they hold will be
+    // premultiplied.
+    preload_datas_[0].premultiplied = true;
+    return;
+  }
 
   // Figure out which LOD should be our base level based on texture quality.
   auto texture_quality = g_base->graphics->placeholder_texture_quality();
@@ -213,6 +289,33 @@ void TextureAsset::DoPreload() {
     TextureAssetPreloadData::rgba8888_to_rgba4444_in_place(buffer, buffer_size);
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_4444;
 
+  } else if (solid_color_) {
+    // A few texels of one opaque color, on one face or all six of a cube
+    // map. (Same well-trodden format as QR codes; no alpha needed.)
+    int width = 4;
+    int height = 4;
+    uint16_t value{};
+    switch (*solid_color_) {
+      case SolidTextureColor::kWhite:
+        value = 0xffff;
+        break;
+      case SolidTextureColor::kBlack:
+        value = 0;
+        break;
+    }
+    size_t faces = (type_ == TextureType::kCubeMap) ? 6 : 1;
+    preload_datas_.resize(faces);
+    size_t pixel_count =
+        static_cast<size_t>(width) * static_cast<size_t>(height);
+    for (auto& data : preload_datas_) {
+      auto* buffer = static_cast<uint16_t*>(malloc(pixel_count * 2u));
+      std::fill(buffer, buffer + pixel_count, value);
+      data.buffers[0] = reinterpret_cast<uint8_t*>(buffer);
+      data.widths[0] = width;
+      data.heights[0] = height;
+      data.formats[0] = TextureFormat::kRGB_565;
+      data.base_level = 0;
+    }
   } else if (is_qr_code_) {
     const qrcodegen::QrCode qr2{qrcodegen::QrCode::encodeText(
         file_name_.c_str(), qrcodegen::QrCode::Ecc::HIGH)};
@@ -254,29 +357,27 @@ void TextureAsset::DoPreload() {
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
 
-      // Dispatch on explicit ``container_`` when set (CAS-resolved
-      // assets), else fall back to the legacy path-suffix sniff.
+      // CAS blobs dispatch on content magic; legacy on-disk assets
+      // fall back to the path-suffix sniff below.
       auto matches = [this, file_name_size](const char* suffix) -> bool {
-        if (!container_.empty()) {
-          return container_ == suffix;
-        }
         auto slen = static_cast<int>(strlen(suffix));
         return file_name_size > slen
                && !strcmp(file_name_full_.c_str() + file_name_size - slen,
                           suffix);
       };
 
-      // Uncompressed RGBA8 + mipmaps (KTX 2.0, ``.ktx2`` files).
-      // Used by the asset-package CAS pipeline for FALLBACK_V1.
-      if (matches(".ktx2")) {
-        // Asset-package textures load full mips from the flavor; they do
-        // not consult the legacy texture-quality knob (see LoadKTX2).
-        LoadKTX2(file_name_full_, preload_datas_[0].buffers,
+      if (is_cas_blob_) {
+        // All current texture flavors are KTX2 containers
+        // (OpenCasTextureBlob verified the magic); asset-package
+        // textures load full mips from the flavor and do not consult
+        // the legacy texture-quality knob (see LoadKTX2).
+        auto blob = OpenCasTextureBlob(file_name_full_);
+        LoadKTX2(blob, file_name_full_, preload_datas_[0].buffers,
                  preload_datas_[0].widths, preload_datas_[0].heights,
                  preload_datas_[0].formats, preload_datas_[0].sizes,
                  &preload_datas_[0].base_level,
                  &preload_datas_[0].premultiplied, &preload_datas_[0].wrap_h,
-                 &preload_datas_[0].wrap_v);
+                 &preload_datas_[0].wrap_v, &preload_datas_[0].role);
       } else if (matches(".android_dds")) {
         // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
@@ -372,7 +473,7 @@ void TextureAsset::DoPreload() {
       std::string name;
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
-      if (!container_.empty() && container_ == ".ktx2") {
+      if (is_cas_blob_) {
         // Asset-package CAS cube map: one faceCount=6 KTX2 holds all
         // six faces (decision #24); fill the same six per-face preload
         // slots the legacy path does.
@@ -383,9 +484,10 @@ void TextureAsset::DoPreload() {
               preload_datas_[d].heights,        preload_datas_[d].formats,
               preload_datas_[d].sizes,          &preload_datas_[d].base_level,
               &preload_datas_[d].premultiplied, &preload_datas_[d].wrap_h,
-              &preload_datas_[d].wrap_v};
+              &preload_datas_[d].wrap_v,        &preload_datas_[d].role};
         }
-        LoadKTX2CubeMap(file_name_full_, faces);
+        auto blob = OpenCasTextureBlob(file_name_full_);
+        LoadKTX2CubeMap(blob, file_name_full_, faces);
       } else if (file_name_full_.find('#') == std::string::npos
                  && !strcmp(file_name_full_.c_str() + file_name_size - 4,
                             ".nop")) {
@@ -539,6 +641,9 @@ void TextureAsset::DoLoad() {
   // about to be cleared. Re-read on every (re)load, like base_level_.
   premultiplied_ = preload_datas_[0].premultiplied;
 
+  // Likewise the authored role, for the draw-time slot checks.
+  role_ = preload_datas_[0].role;
+
   // If we're done, kill our preload data.
   preload_datas_.clear();
 }
@@ -550,6 +655,51 @@ void TextureAsset::DoUnload() {
   renderer_data_.Clear();
   base_level_ = 0;
   premultiplied_ = false;
+  role_ = TextureRole::kUnknown;
+}
+
+bool TextureAsset::slot_warnings_suppressed_{};
+
+// A role's name as authored in a workspace, for messages.
+static auto RoleName(TextureRole role) -> const char* {
+  switch (role) {
+    case TextureRole::kUnknown:
+      return "unknown";
+    case TextureRole::kDefault:
+      return "default";
+    case TextureRole::kSourcePremultiplied:
+      return "source_premultiplied";
+    case TextureRole::kStraightAlpha:
+      return "straight_alpha";
+    case TextureRole::kData:
+      return "data";
+    case TextureRole::kPremultipliedData:
+      return "premultiplied_data";
+  }
+  return "unknown";
+}
+
+void TextureAsset::WarnSlotMismatch_(const char* slot, const char* wanted) {
+  if (slot_warnings_suppressed_) {
+    return;
+  }
+  // Once per texture: a mismatch repeats on every frame it is drawn.
+  role_slot_warned_ = true;
+  char buffer[512];
+  if (slot == nullptr) {
+    snprintf(buffer, sizeof(buffer),
+             "Texture '%s' has the '%s' role (channel values for a shader,"
+             " as for a mask or tint) but is being drawn as a picture."
+             " Give it a color role, or use a separate picture texture.",
+             file_name_.c_str(), RoleName(role_));
+  } else {
+    snprintf(buffer, sizeof(buffer),
+             "Texture '%s' is being used as a %s texture but has the '%s'"
+             " role, which is built differently from what that slot reads,"
+             " so it may shade slightly wrong. Set its texture role to %s.",
+             file_name_.c_str(), slot, RoleName(role_), wanted);
+  }
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
 }
 
 }  // namespace ballistica::base

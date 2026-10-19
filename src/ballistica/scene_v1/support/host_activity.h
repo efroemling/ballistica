@@ -34,7 +34,10 @@ class HostActivity : public SceneV1Context {
 
   // All these commands are propagated into the output stream
   // in addition to being applied locally.
-  auto NewMaterial(const std::string& name) -> Object::Ref<Material>;
+  auto NewMaterial(const std::string& name) -> Object::Ref<Material> override;
+  auto NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> override;
+  auto NewDepiction(const std::string& json)
+      -> Object::Ref<SceneDepiction> override;
   auto GetTexture(const std::string& name)
       -> Object::Ref<SceneTexture> override;
   auto GetSound(const std::string& name) -> Object::Ref<SceneSound> override;
@@ -97,6 +100,8 @@ class HostActivity : public SceneV1Context {
       collision_meshes_;
   std::unordered_map<std::string, Object::WeakRef<SceneMesh> > meshes_;
   std::list<Object::WeakRef<Material> > materials_;
+  std::list<Object::WeakRef<SpazDef> > spaz_defs_;
+  std::list<Object::WeakRef<SceneDepiction> > depictions_;
   bool shutting_down_{};
 
   // Our list of Python calls created in the context of this activity;
