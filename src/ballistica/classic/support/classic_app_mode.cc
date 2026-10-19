@@ -733,7 +733,7 @@ auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
     if (!i.exists()) {
       continue;
     }
-    if (i->suspended()) {
+    if (i.get() == instant_replay_suspended_session_.get()) {
       continue;
     }
     auto this_time_to_next = i->TimeToNextEvent();
@@ -814,7 +814,7 @@ void ClassicAppMode::StepDisplayTime() {
     }
     // A suspended session is frozen in place; not stepping it is exactly
     // what freezes it (scene time, timers, dynamics and all).
-    if (i->suspended()) {
+    if (i.get() == instant_replay_suspended_session_.get()) {
       continue;
     }
     // Pass our old int milliseconds time vals for legacy purposes
@@ -1414,14 +1414,20 @@ auto ClassicAppMode::InstantReplayClients_()
   return out;
 }
 
-void ClassicAppMode::BroadcastInstantReplayCut_(
-    const std::vector<uint8_t>& marker,
-    const std::vector<std::vector<uint8_t>>& messages) {
+void ClassicAppMode::SendInstantReplayCut_(
+    const std::vector<scene_v1::ConnectionToClient*>& clients,
+    const std::vector<uint8_t>& marker) {
   std::vector<uint8_t> reset_msg(1, BA_MESSAGE_SESSION_RESET);
-  for (auto&& connection : InstantReplayClients_()) {
+  for (auto&& connection : clients) {
     connection->SendReliableMessage(marker);
     connection->SendReliableMessage(reset_msg);
-    for (auto&& message : messages) {
+  }
+}
+
+void ClassicAppMode::ForwardInstantReplayMessage_(
+    const std::vector<uint8_t>& message) {
+  for (auto&& viewer : instant_replay_viewers_) {
+    if (auto* connection = viewer.get()) {
       connection->SendReliableMessage(message);
     }
   }
@@ -1445,21 +1451,10 @@ void ClassicAppMode::AddInstantReplaySkipVote(scene_v1::Player* player) {
     return;
   }
 
-  auto end_clip = [] {
-    // Deferred: a vote can arrive from inside input handling or a
-    // session update, and tearing the clip down there would pull the rug
-    // out from under the caller.
-    g_base->logic->event_loop()->PushCall([] {
-      if (auto* appmode = ClassicAppMode::GetActive()) {
-        appmode->EndInstantReplay();
-      }
-    });
-  };
-
   auto* live = GetLiveHostSession();
   if (live == nullptr || player == nullptr) {
     // Nobody to tally against; treat the press as a plain skip.
-    end_clip();
+    PushEndInstantReplay();
     return;
   }
 
@@ -1467,8 +1462,19 @@ void ClassicAppMode::AddInstantReplaySkipVote(scene_v1::Player* player) {
 
   auto tally = ReportInstantReplaySkipVotes_();
   if (tally.second > 0 && tally.first >= tally.second) {
-    end_clip();
+    PushEndInstantReplay();
   }
+}
+
+void ClassicAppMode::PushEndInstantReplay() {
+  // Deferred: requests can arrive from inside input handling or a
+  // session update, and tearing the clip down there would pull the rug
+  // out from under the caller.
+  g_base->logic->event_loop()->PushCall([] {
+    if (auto* appmode = ClassicAppMode::GetActive()) {
+      appmode->EndInstantReplay();
+    }
+  });
 }
 
 auto ClassicAppMode::ReportInstantReplaySkipVotes_()
@@ -1546,21 +1552,19 @@ auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
     return false;
   }
 
-  auto covered = recorder->available_millisecs();
   instant_replay_skip_votes_.clear();
 
-  // Main-game scenes all share one bg-dynamics world, so the live
-  // scene's sparks and debris would otherwise hang over the clip (and
-  // its bomb fuses would sit frozen mid-air, since a suspended scene
-  // stops repositioning them). Wipe the slate for the clip.
-  // (Headless builds have none.)
+  // Main-game scenes all share the main bg-dynamics world, so give the
+  // clip a fresh one and set the live one aside until we hand back.
+  // Otherwise the live scene's sparks and debris would hang over the
+  // clip (and its fuses sit frozen mid-air), and the clip's would rain
+  // down on the match afterwards. (Headless builds have none.)
   if (g_base->bg_dynamics != nullptr) {
-    g_base->bg_dynamics->main_world()->Clear();
+    instant_replay_parked_bg_world_ = g_base->bg_dynamics->ParkMainWorld();
   }
 
   // Freeze the live session before anything else, so it can't take a
   // step while we're standing up the clip.
-  host_session->set_suspended(true);
   instant_replay_suspended_session_ = host_session;
   instant_replay_suspended_scene_ = foreground_scene_;
 
@@ -1576,36 +1580,39 @@ auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
   } catch (const std::exception& e) {
     // Put things back exactly as they were; a failed clip must never
     // cost the player their match.
-    host_session->set_suspended(false);
     instant_replay_suspended_session_.Clear();
+    RestoreParkedBGWorld_();
     SetForegroundSession(host_session);
     g_core->logging->Log(LogName::kBa, LogLevel::kError,
                          std::string("InstantReplay failed: ") + e.what());
     return false;
   }
 
-  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [covered] {
-    return "ClassicAppMode: instant replay started (" + std::to_string(covered)
-           + "ms of window available).";
-  });
-
   // Send the same clip to anyone watching over the wire. A client is
   // just a session applying whatever arrives, so a reset plus the clip's
   // own keyframe and commands makes it show exactly what we're showing.
-  // We broadcast the session's copy rather than our own, so the window
-  // is never duplicated just to survive being moved into it.
+  // Only the marker and reset go now; the clip itself follows as our
+  // own playback takes it in (see ClientSessionInstantReplay), so it
+  // arrives at the pace it plays rather than as one big burst.
   std::vector<uint8_t> begin_msg(1 + sizeof(float));
   begin_msg[0] = BA_MESSAGE_INSTANT_REPLAY_BEGIN;
   {
     auto* ptr = reinterpret_cast<char*>(&(begin_msg[1]));
     Utils::EmbedFloat32(&ptr, speed);
   }
-  BroadcastInstantReplayCut_(begin_msg, instant_replay_session_->messages());
+  auto viewers = InstantReplayClients_();
+  SendInstantReplayCut_(viewers, begin_msg);
+  instant_replay_viewers_.clear();
+  for (auto* viewer : viewers) {
+    instant_replay_viewers_.emplace_back(viewer);
+  }
+  instant_replay_session_->set_forwarder(
+      [this](const std::vector<uint8_t>& message) {
+        ForwardInstantReplayMessage_(message);
+      });
 
   // Let the ui put the banner up over the clip.
-  g_scene_v1->python->objs()
-      .Get(scene_v1::SceneV1Python::ObjID::kInstantReplayBeginCall)
-      .Call();
+  g_scene_v1->python->OnInstantReplayBegin();
 
   return true;
 }
@@ -1618,17 +1625,11 @@ void ClassicAppMode::EndInstantReplay() {
     return;
   }
 
-  // Same on the way out, so the clip's explosion debris doesn't rain
-  // down on the live match it hands back to.
-  // (Headless builds have none.)
-  if (g_base->bg_dynamics != nullptr) {
-    g_base->bg_dynamics->main_world()->Clear();
-  }
+  RestoreParkedBGWorld_();
 
   // Wake the live session and give it the screen back. Do this before
   // dropping the clip, so we're never left with no foreground session.
   if (auto* live = instant_replay_suspended_session_.get()) {
-    live->set_suspended(false);
     SetForegroundSession(live);
   }
   instant_replay_suspended_session_.Clear();
@@ -1646,6 +1647,7 @@ void ClassicAppMode::EndInstantReplay() {
   // reaps it.
   instant_replay_session_.Clear();
   instant_replay_skip_votes_.clear();
+  instant_replay_viewers_.clear();
 
   // Put remote viewers back into the live match. They've been showing a
   // clip built from a different point in the stream, so a reset plus a
@@ -1653,26 +1655,39 @@ void ClassicAppMode::EndInstantReplay() {
   // sequence a joining client gets. Building that keyframe is a full
   // state dump, so don't when there's nobody to send it to (the usual
   // case for a local game).
+  //
+  // Everyone new enough gets this, not just the clip's viewers. For
+  // someone who joined mid-clip it is harmless: leaving replay mode and
+  // dropping a banner they never had are no-ops, and the reset and
+  // keyframe put back the same live state they already show.
   auto* host_session = GetLiveHostSession();
   auto* stream =
       host_session != nullptr ? host_session->GetSceneStream() : nullptr;
-  if (stream != nullptr && !InstantReplayClients_().empty()) {
-    std::vector<std::vector<uint8_t>> messages;
+  auto clients = InstantReplayClients_();
+  if (stream != nullptr && !clients.empty()) {
     std::vector<std::vector<uint8_t>> corrections;
     std::vector<uint8_t> baseline = stream->BuildKeyframe(&corrections);
-    if (!baseline.empty()) {
-      messages.push_back(std::move(baseline));
+    SendInstantReplayCut_(
+        clients, std::vector<uint8_t>(1, BA_MESSAGE_INSTANT_REPLAY_END));
+    for (auto* connection : clients) {
+      if (!baseline.empty()) {
+        connection->SendReliableMessage(baseline);
+      }
+      for (auto&& correction : corrections) {
+        connection->SendReliableMessage(correction);
+      }
     }
-    for (auto&& correction : corrections) {
-      messages.push_back(std::move(correction));
-    }
-    std::vector<uint8_t> end_msg(1, BA_MESSAGE_INSTANT_REPLAY_END);
-    BroadcastInstantReplayCut_(end_msg, messages);
   }
 
-  g_scene_v1->python->objs()
-      .Get(scene_v1::SceneV1Python::ObjID::kInstantReplayEndCall)
-      .Call();
+  g_scene_v1->python->OnInstantReplayEnd();
+}
+
+void ClassicAppMode::RestoreParkedBGWorld_() {
+  if (instant_replay_parked_bg_world_.exists()) {
+    g_base->bg_dynamics->RestoreMainWorld(
+        std::move(instant_replay_parked_bg_world_));
+    instant_replay_parked_bg_world_.Clear();
+  }
 }
 
 void ClassicAppMode::LaunchClientSession() {
@@ -1826,7 +1841,7 @@ void ClassicAppMode::PruneSessions_() {
       // the screen to something else (an instant replay) and is waiting
       // to get it back.
       if (i.exists() && i.get() != foreground_session_.get()
-          && !i->suspended()) {
+          && i.get() != instant_replay_suspended_session_.get()) {
         try {
           i.Clear();
         } catch (const std::exception& e) {

@@ -90,14 +90,14 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
     appmode->connections()->RegisterClientController(this);
 
     // Keep a rolling window of recent stream for instant replays. Only
-    // for real gameplay streams: `save_replay` is exactly that test
-    // (false for the main menu and for headless), and a menu has
-    // nothing worth replaying -- without this we'd be building
-    // keyframes behind the main menu forever.
-    if (save_replay
+    // for real gameplay streams: a menu has nothing worth replaying,
+    // and without this we'd be building keyframes behind the main menu
+    // forever. Not keyed off `save_replay`, which is also off for
+    // headless servers -- the very hosts replays are mostly for.
+    if (!host_session->is_main_menu()
         && g_base->app_config->Resolve(
             base::AppConfig::BoolID::kInstantReplay)) {
-      instant_replay_recorder_ = new InstantReplayRecorder(
+      instant_replay_recorder_ = std::make_unique<InstantReplayRecorder>(
           kInstantReplayWindowMillisecs, kInstantReplayMaxBytes);
     }
   }
@@ -106,9 +106,6 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
 SessionStream::~SessionStream() {
   // Ship our last commands (if it matters..)
   Flush();
-
-  delete instant_replay_recorder_;
-  instant_replay_recorder_ = nullptr;
 
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
@@ -866,7 +863,9 @@ void SessionStream::ShipSessionCommandsMessage() {
     AddMessageToReplay(out_message_);
   }
   if (instant_replay_recorder_ != nullptr) {
-    instant_replay_recorder_->AddMessage(std::move(out_message_));
+    // A copy rather than a move, so out_message_ keeps its capacity for
+    // building the next message instead of regrowing from empty.
+    instant_replay_recorder_->AddMessage(out_message_);
   }
   out_message_.clear();
   stats_prev_cmd_ = -1;
@@ -900,7 +899,7 @@ void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
 }
 
 auto SessionStream::BuildKeyframe(
-    std::vector<std::vector<uint8_t> >* corrections) -> std::vector<uint8_t> {
+    std::vector<std::vector<uint8_t>>* corrections) -> std::vector<uint8_t> {
   assert(host_session_);
 
   // First thing, we need to flush all pending session-commands. The
@@ -940,7 +939,7 @@ void SessionStream::MaybeEmitKeyframe_() {
   // build that yields nothing must still not re-run on every SetTime.
   last_instant_replay_keyframe_time_ = time_;
 
-  std::vector<std::vector<uint8_t> > corrections;
+  std::vector<std::vector<uint8_t>> corrections;
   std::vector<uint8_t> baseline = BuildKeyframe(&corrections);
   if (baseline.empty()) {
     return;

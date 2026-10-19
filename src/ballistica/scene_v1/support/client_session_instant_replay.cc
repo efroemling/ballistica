@@ -10,6 +10,12 @@
 
 namespace ballistica::scene_v1 {
 
+// How much clip (in stream time) we keep taken in ahead of playback.
+// What we take in goes out to remote viewers right then, so this is the
+// cushion their playback has against network jitter; it costs nothing
+// locally, where the messages are already in memory.
+const int kForwardLeadMillisecs = 500;
+
 ClientSessionInstantReplay::ClientSessionInstantReplay(
     std::vector<std::vector<uint8_t> > messages, float speed,
     int stream_protocol)
@@ -28,15 +34,23 @@ void ClientSessionInstantReplay::FetchMessages() {
   if (complete_) {
     return;
   }
-  while (commands().empty()) {
-    if (next_index_ >= messages_.size()) {
-      // Marks the end of the clip; lands in OnEndOfStream above once the
-      // interpreter reaches it.
-      add_end_of_file_command();
-      return;
+  // Take in messages until we're a lead ahead (or have nothing queued
+  // at all; a message with no time step in it, like the baseline, adds
+  // commands without adding buffered time).
+  while (
+      next_index_ < messages_.size()
+      && (commands().empty() || base_time_buffered() < kForwardLeadMillisecs)) {
+    const auto& message = messages_[next_index_];
+    HandleSessionMessage(message);
+    if (forwarder_) {
+      forwarder_(message);
     }
-    HandleSessionMessage(messages_[next_index_]);
     next_index_++;
+  }
+  if (commands().empty() && next_index_ >= messages_.size()) {
+    // Marks the end of the clip; lands in OnEndOfStream above once the
+    // interpreter reaches it.
+    add_end_of_file_command();
   }
 }
 

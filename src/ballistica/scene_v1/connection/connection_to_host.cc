@@ -864,9 +864,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
               dynamic_cast<ClientSessionNet*>(client_session_.get())) {
         net_session->SetInstantReplayMode(true, speed);
       }
-      g_scene_v1->python->objs()
-          .Get(SceneV1Python::ObjID::kInstantReplayBeginCall)
-          .Call();
+      g_scene_v1->python->OnInstantReplayBegin();
       break;
     }
 
@@ -883,9 +881,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
               dynamic_cast<ClientSessionNet*>(client_session_.get())) {
         net_session->SetInstantReplayMode(false);
       }
-      g_scene_v1->python->objs()
-          .Get(SceneV1Python::ObjID::kInstantReplayEndCall)
-          .Call();
+      g_scene_v1->python->OnInstantReplayEnd();
       break;
     }
 

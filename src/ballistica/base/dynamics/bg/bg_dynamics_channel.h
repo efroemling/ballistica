@@ -132,15 +132,6 @@ class BGDynamicsChannel {
     return inputs_[slot.index];
   }
 
-  /// Visit every slot's input (free slots included; theirs get reset
-  /// on reuse anyway).
-  template <typename F>
-  void ForEachInput(F&& f) {
-    for (auto& input : inputs_) {
-      f(input);
-    }
-  }
-
   /// The latest adopted output for the slot, or nullptr if none has
   /// arrived for this generation yet.
   auto output(BGDynamicsSlot slot) const -> const Output* {

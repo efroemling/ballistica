@@ -1337,6 +1337,16 @@ void SceneV1Python::HandleLocalChatMessage(const std::string& message) {
   objs().Get(ObjID::kHandleLocalChatMessageCall).Call(args);
 }
 
+void SceneV1Python::OnInstantReplayBegin() {
+  base::ScopedSetContext ssc(nullptr);
+  objs().Get(ObjID::kInstantReplayBeginCall).Call();
+}
+
+void SceneV1Python::OnInstantReplayEnd() {
+  base::ScopedSetContext ssc(nullptr);
+  objs().Get(ObjID::kInstantReplayEndCall).Call();
+}
+
 void SceneV1Python::SetInstantReplaySkipVotes(int count, int total) {
   base::ScopedSetContext ssc(nullptr);
   PythonRef args(Py_BuildValue("(ii)", count, total), PythonRef::kSteal);

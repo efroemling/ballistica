@@ -38,11 +38,8 @@ void BGDynamicsFuse::SetLength(float length) {
 // ---- Worker-thread sim. ----
 
 void BGDynamicsFuseKind::Sim::Step(BGDynamicsWorldServer* server) {
-  // Do nothing if we haven't received an initial transform. One we
-  // had can also be taken back (BGDynamicsWorld::Clear()); stop drawing
-  // and snap into place afresh once a new one arrives.
+  // Do nothing if we haven't received an initial transform.
   if (!input_.have_transform) {
-    initial_position_set_ = false;
     return;
   }
   const Matrix44f& transform = input_.transform;

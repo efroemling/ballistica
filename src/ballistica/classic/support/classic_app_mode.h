@@ -165,6 +165,10 @@ class ClassicAppMode : public base::AppMode {
   /// clip runs out or the viewer skips it; harmless if no clip is up.
   void EndInstantReplay();
 
+  /// EndInstantReplay() on the next event-loop pass, for callers that
+  /// may be inside input handling or a session update.
+  static void PushEndInstantReplay();
+
   /// Whether an instant replay is currently on screen.
   auto InInstantReplay() const -> bool {
     return instant_replay_session_.exists();
@@ -406,17 +410,23 @@ class ClassicAppMode : public base::AppMode {
   void Reset_();
   void PruneSessions_();
 
-  /// Send one side of an instant-replay cut to every client new enough
-  /// to understand it: the marker, a session reset, then `messages`.
-  /// Older peers get nothing and simply see the stream pause.
   /// Push the current tally to our own ui and to every client watching,
   /// returning it as (votes, players) so callers don't re-walk the
   /// roster to learn the same thing.
   auto ReportInstantReplaySkipVotes_() -> std::pair<size_t, size_t>;
 
-  void BroadcastInstantReplayCut_(
-      const std::vector<uint8_t>& marker,
-      const std::vector<std::vector<uint8_t> >& messages);
+  /// Send one side of an instant-replay cut to `clients`: the marker,
+  /// then a session reset.
+  void SendInstantReplayCut_(
+      const std::vector<scene_v1::ConnectionToClient*>& clients,
+      const std::vector<uint8_t>& marker);
+
+  /// Hand the main bg-dynamics world we set aside for a clip back, if
+  /// we did.
+  void RestoreParkedBGWorld_();
+
+  /// Pass one clip message on to every viewer the clip began for.
+  void ForwardInstantReplayMessage_(const std::vector<uint8_t>& message);
 
   /// Clients new enough for instant-replay markers, or empty.
   auto InstantReplayClients_() -> std::vector<scene_v1::ConnectionToClient*>;
@@ -471,10 +481,21 @@ class ClassicAppMode : public base::AppMode {
   // The instant-replay clip currently on screen, and the live session
   // sitting frozen behind it. Both are entries in sessions_; weak refs
   // are safe because the clip is foreground (so never reaped) and the
-  // live one is suspended (which also exempts it from reaping).
+  // update loops and the prune all skip the suspended one, which is
+  // what freezes it and keeps it alive.
   Object::WeakRef<scene_v1::ClientSessionInstantReplay> instant_replay_session_;
   std::set<int> instant_replay_skip_votes_;
   Object::WeakRef<scene_v1::HostSession> instant_replay_suspended_session_;
+
+  // The main bg-dynamics world the live scene was using, set aside
+  // while the clip has a fresh one (see BGDynamics::ParkMainWorld).
+  Object::Ref<base::BGDynamicsWorld> instant_replay_parked_bg_world_;
+
+  // The clients the clip on screen began for, and so the only ones its
+  // messages may go to: anyone joining mid-clip was sent the live
+  // (frozen) state instead, which the clip's deltas don't apply to.
+  std::vector<Object::WeakRef<scene_v1::ConnectionToClient> >
+      instant_replay_viewers_;
 
   // The live scene the clip displaced. Only activity transitions
   // normally set the foreground scene, so without putting this back

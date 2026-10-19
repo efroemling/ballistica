@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_SESSION_STREAM_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_SESSION_STREAM_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -168,7 +169,7 @@ class SessionStream : public Object, public ClientControllerInterface {
   /// Our rolling instant-replay window, or nullptr if we're not keeping
   /// one (disabled by config, or we're not a live host stream).
   auto instant_replay_recorder() const -> InstantReplayRecorder* {
-    return instant_replay_recorder_;
+    return instant_replay_recorder_.get();
   }
 
  private:
@@ -312,7 +313,7 @@ class SessionStream : public Object, public ClientControllerInterface {
   classic::ClassicAppMode* app_mode_;
   bool writing_replay_{};
   millisecs_t last_instant_replay_keyframe_time_{};
-  InstantReplayRecorder* instant_replay_recorder_{};
+  std::unique_ptr<InstantReplayRecorder> instant_replay_recorder_;
   millisecs_t last_physics_correction_time_{};
   millisecs_t last_send_time_{};
   // Ship gating (see EndCommand): the foreground scene has stepped

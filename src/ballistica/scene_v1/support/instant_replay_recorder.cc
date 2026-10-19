@@ -8,10 +8,8 @@
 namespace ballistica::scene_v1 {
 
 InstantReplayRecorder::InstantReplayRecorder(millisecs_t window_millisecs,
-                                             size_t max_bytes) {
-  window_millisecs_ = window_millisecs;
-  max_bytes_ = max_bytes;
-}
+                                             size_t max_bytes)
+    : window_millisecs_{window_millisecs}, max_bytes_{max_bytes} {}
 
 void InstantReplayRecorder::AddKeyframe(
     millisecs_t base_time, std::vector<uint8_t> baseline,
@@ -58,13 +56,6 @@ void InstantReplayRecorder::Prune_() {
     total_bytes_ -= segments_.front().bytes;
     segments_.pop_front();
   }
-}
-
-auto InstantReplayRecorder::available_millisecs() const -> millisecs_t {
-  if (segments_.empty()) {
-    return 0;
-  }
-  return newest_base_time_() - segments_.front().base_time;
 }
 
 auto InstantReplayRecorder::BuildWindow(millisecs_t duration_millisecs) const

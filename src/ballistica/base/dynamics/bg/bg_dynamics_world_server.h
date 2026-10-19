@@ -111,8 +111,6 @@ class BGDynamicsWorldServer {
                           const Matrix44f& transform);
   void PushRemoveTerrainCall(CollisionMeshAsset* collision_mesh);
   void PushEmitCall(const BGDynamicsEmission& def);
-  /// Drop transient effects; see BGDynamicsWorld::Clear().
-  void PushClearCall();
   auto spark_particles() const -> ParticleSet* {
     return spark_particles_.get();
   }

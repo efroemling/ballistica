@@ -510,11 +510,7 @@ static PyMethodDef PyPlayInstantReplayDef = {
 static auto PyStopInstantReplay(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  g_base->logic->event_loop()->PushCall([] {
-    if (auto* appmode = classic::ClassicAppMode::GetActive()) {
-      appmode->EndInstantReplay();
-    }
-  });
+  classic::ClassicAppMode::PushEndInstantReplay();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

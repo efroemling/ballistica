@@ -1,11 +1,16 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Kill-cam triggering and on-screen presentation for instant replays.
+"""Triggering and on-screen presentation for instant replays.
 
 The engine does the actual work (see
 ``ballistica/scene_v1/support/instant_replay_recorder.h``); this module
 decides *when* a replay is worth showing and puts the banner over it
 while it plays.
+
+Game modes ask for replays of their own big moments (a goal, a capture)
+through :func:`play_highlight`. The generic kill-cam and death-cam are
+opt-in per game (:attr:`bascenev1.GameActivity.instant_replay_kill_cams`)
+since in score-driven modes they would compete with those highlights.
 """
 
 from typing import TYPE_CHECKING
@@ -14,7 +19,7 @@ import babase
 import bascenev1 as bs
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
 # How far back a kill-cam looks, and how slowly it plays. The engine
 # keeps a somewhat longer window than this, so asking for a bit less
@@ -37,7 +42,65 @@ COOLDOWN_SECONDS = 25.0
 # as the cooldown.
 MIN_ROUND_AGE_SECONDS = 8.0
 
+# How far back a highlight looks and how slowly it plays. The post-roll
+# is how long after the moment we wait before cutting away: a clip ends
+# at the instant it starts, so without it the replay would stop right
+# as the ball crosses the line.
+HIGHLIGHT_DURATION = 4.0
+HIGHLIGHT_SPEED = 0.5
+HIGHLIGHT_POST_ROLL = 1.0
+
+# Scene seconds between asking for a highlight and running its `then`
+# callback. Starting a replay is deferred to the next event-loop pass,
+# and scene time stands still while the clip plays, so this only has to
+# cover that hop; `then` lands just after the clip hands back.
+_THEN_DELAY = 0.1
+
 _g_last_kill_cam_time: float | None = None
+
+
+def play_highlight(
+    activity: bs.GameActivity,
+    *,
+    then: Callable[[], Any] | None = None,
+    post_roll: float = HIGHLIGHT_POST_ROLL,
+) -> None:
+    """Replay a moment that just happened, once its post-roll has played.
+
+    For game modes to call on their own big moments: a goal, a flag
+    capture. Must be called in the activity's context.
+
+    `then` runs after the replay (or right away, if there won't be
+    one). Pass the game's ending here for a game-winning moment: ending
+    straight away would put the score screen up before the clip could
+    be shown.
+    """
+    if not _replays_enabled():
+        if then is not None:
+            then()
+        return
+
+    def _play() -> None:
+        _maybe_play(
+            activity,
+            rate_limit=False,
+            duration=HIGHLIGHT_DURATION,
+            speed=HIGHLIGHT_SPEED,
+        )
+
+    def _then() -> None:
+        # The round may have been ended some other way in the meantime
+        # (time ran out during the post-roll, say).
+        if then is not None and not activity.has_ended():
+            then()
+
+    bs.timer(post_roll, _play)
+    if then is not None:
+        bs.timer(post_roll + _THEN_DELAY, _then)
+
+
+def _replays_enabled() -> bool:
+    return bool(babase.app.config.resolve('Instant Replay'))
 
 
 def maybe_play_kill_cam(activity: bs.Activity, importance: int) -> None:
@@ -48,6 +111,8 @@ def maybe_play_kill_cam(activity: bs.Activity, importance: int) -> None:
     computed for it, so we don't form a second opinion about what counts
     as a good kill. Cheap and silent when it decides not to fire.
     """
+    if not _kill_cams_wanted(activity):
+        return
     if importance < MIN_IMPORTANCE:
         return
     _maybe_play(activity)
@@ -68,6 +133,8 @@ def maybe_play_death_cam(activity: bs.Activity, killed: bool) -> None:
     if not killed:
         # Left the game, or the round ended out from under them.
         return
+    if not _kill_cams_wanted(activity):
+        return
 
     # Deliberately not for multi-human versus games: there the kill-cam
     # already covers the interesting deaths, and firing on both would
@@ -83,7 +150,19 @@ def maybe_play_death_cam(activity: bs.Activity, killed: bool) -> None:
     _maybe_play(activity, rate_limit=False)
 
 
-def _maybe_play(activity: bs.Activity, *, rate_limit: bool = True) -> None:
+def _kill_cams_wanted(activity: bs.Activity) -> bool:
+    return isinstance(activity, bs.GameActivity) and bool(
+        activity.instant_replay_kill_cams
+    )
+
+
+def _maybe_play(
+    activity: bs.Activity,
+    *,
+    rate_limit: bool = True,
+    duration: float = KILL_CAM_DURATION,
+    speed: float = KILL_CAM_SPEED,
+) -> None:
     """Shared gating for both cams: config, cooldown, round age.
 
     `rate_limit` covers the two throttles that exist to keep kill-cams
@@ -93,7 +172,7 @@ def _maybe_play(activity: bs.Activity, *, rate_limit: bool = True) -> None:
     """
     global _g_last_kill_cam_time  # pylint: disable=global-statement
 
-    if not babase.app.config.resolve('Instant Replay'):
+    if not _replays_enabled():
         return
 
     # A replay while the round is wrapping up would fight the score
@@ -120,19 +199,13 @@ def _maybe_play(activity: bs.Activity, *, rate_limit: bool = True) -> None:
         return
 
     _g_last_kill_cam_time = now
-    bs.play_instant_replay(duration=KILL_CAM_DURATION, speed=KILL_CAM_SPEED)
+    bs.play_instant_replay(duration=duration, speed=speed)
 
 
 # ------------------------------ presentation --------------------------------
 
 _g_banner: Any = None
 _g_vote_text: Any = None
-
-
-def _skip() -> None:
-    # A vote, not an immediate skip: the engine ends the clip once every
-    # player has asked, the same way the tutorial's skip works.
-    bs.vote_skip_instant_replay()
 
 
 def show_banner() -> None:
@@ -146,7 +219,7 @@ def show_banner() -> None:
     import bauiv1 as bui
     from bauiv1 import _classicassets
 
-    if _g_banner is not None:
+    if _g_banner is not None or babase.app.env.headless:
         return
 
     parent = bui.get_special_widget('overlay_stack')
@@ -168,8 +241,10 @@ def show_banner() -> None:
         position=(0, 0),
         selectable=True,
         root_selectable=True,
-        on_activate_call=_skip,
-        on_cancel_call=_skip,
+        # A press is a vote, not an immediate skip: the engine ends the
+        # clip once every player has asked, like the tutorial's skip.
+        on_activate_call=bs.vote_skip_instant_replay,
+        on_cancel_call=bs.vote_skip_instant_replay,
     )
     bui.textwidget(
         parent=_g_banner,

@@ -47,9 +47,6 @@ class InstantReplayRecorder {
   auto BuildWindow(millisecs_t duration_millisecs) const
       -> std::vector<std::vector<uint8_t> >;
 
-  /// Stream time covered by what we currently hold.
-  auto available_millisecs() const -> millisecs_t;
-
  private:
   struct Segment_ {
     millisecs_t base_time;
@@ -70,8 +67,8 @@ class InstantReplayRecorder {
   }
 
   std::deque<Segment_> segments_;
-  millisecs_t window_millisecs_;
-  size_t max_bytes_;
+  const millisecs_t window_millisecs_;
+  const size_t max_bytes_;
   size_t total_bytes_{};
 };
 

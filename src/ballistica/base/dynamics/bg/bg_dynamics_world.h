@@ -43,14 +43,6 @@ class BGDynamicsWorld : public Object {
   }
 
   void Emit(const BGDynamicsEmission& def);
-
-  /// Wipe transient effects (debris chunks, smoke tendrils) and make
-  /// fuses hold off drawing until their owner repositions them. Needed
-  /// when what's on screen is replaced wholesale within one world (an
-  /// instant replay, for one, which shares the main world with the
-  /// scene it suspends): without it, one scene's sparks and explosion
-  /// debris hang over the other's.
-  void Clear();
   void Step(const Vector3f& cam_pos, int step_millisecs);
 
   // can be called to inform the bg dynamics thread to kill off some

@@ -2154,10 +2154,6 @@ auto BGDynamicsWorldServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   return ss;
 }  // NOLINT (yes this should be shorter)
 
-void BGDynamicsWorldServer::PushClearCall() {
-  event_loop()->PushCall([this] { Clear(); });
-}
-
 void BGDynamicsWorldServer::PushTooSlowCall() {
   event_loop()->PushCall([this] {
     if (chunk_count_ > 0 || tendril_count_thick_ > 0

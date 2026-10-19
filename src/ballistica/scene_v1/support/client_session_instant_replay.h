@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SCENE_V1_SUPPORT_CLIENT_SESSION_INSTANT_REPLAY_H_
 #define BALLISTICA_SCENE_V1_SUPPORT_CLIENT_SESSION_INSTANT_REPLAY_H_
 
+#include <functional>
+#include <utility>
 #include <vector>
 
 #include "ballistica/scene_v1/support/client_session.h"
@@ -39,14 +41,17 @@ class ClientSessionInstantReplay : public ClientSession {
   /// because we'd be destroying our own caller mid-update.
   auto complete() const -> bool { return complete_; }
 
-  /// The clip's messages, so the host can send the same ones to remote
-  /// viewers without a second copy of them.
-  auto messages() const -> const std::vector<std::vector<uint8_t> >& {
-    return messages_;
+  /// Have each message passed to `forwarder` as we take it in, which is
+  /// how remote viewers get the clip: paced by our own playback (plus a
+  /// short lead) rather than all at once. Set before the first update.
+  void set_forwarder(
+      std::function<void(const std::vector<uint8_t>&)> forwarder) {
+    forwarder_ = std::move(forwarder);
   }
 
  private:
   std::vector<std::vector<uint8_t> > messages_;
+  std::function<void(const std::vector<uint8_t>&)> forwarder_;
   size_t next_index_{};
   float speed_;
   bool complete_{};

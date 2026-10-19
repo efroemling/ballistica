@@ -73,24 +73,6 @@ void BGDynamicsWorld::Emit(const BGDynamicsEmission& e) {
   server_->PushEmitCall(e);
 }
 
-void BGDynamicsWorld::Clear() {
-  assert(g_base->InLogicThread());
-
-  // Transient stuff (debris chunks, smoke tendrils) is the server's to
-  // drop.
-  server_->PushClearCall();
-
-  // Fuses are not: their owners are still alive and will remove them
-  // in their own time. Instead we forget that they were ever
-  // positioned, which stops them drawing (their sims reset once this
-  // rides the next step) until whoever owns one pushes a fresh
-  // transform. A frozen scene's bomb fuse therefore stops hanging over
-  // whatever replaced it, and reappears by itself once that scene
-  // starts stepping again.
-  channel<BGDynamicsFuseKind>().ForEachInput(
-      [](auto& input) { input.have_transform = false; });
-}
-
 void BGDynamicsWorld::AdoptResults(bool wait_for_pending) {
   assert(g_base->InLogicThread());
   BGDynamicsWorldServer* server = server_;

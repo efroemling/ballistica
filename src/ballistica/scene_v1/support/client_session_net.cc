@@ -67,6 +67,15 @@ void ClientSessionNet::SetConnectionToHost(ConnectionToHost* c) {
 }
 
 void ClientSessionNet::OnCommandBufferUnderrun() {
+  // An instant replay arrives paced by the host's own playback, so
+  // running dry means the network hiccuped. Pause rather than race to
+  // catch up afterwards, which in a slow-motion clip would show as a
+  // burst of fast-forward.
+  if (instant_replay_mode_) {
+    ResetTargetBaseTime();
+    return;
+  }
+
   // We currently don't do anything here; we want to just power
   // through hitches and keep aiming for our target time.
   // (though perhaps we could take note here for analytics purposes).

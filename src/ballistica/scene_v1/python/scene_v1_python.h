@@ -91,6 +91,10 @@ class SceneV1Python {
   /// Pass a chat message along to the python UI layer for handling..
   void HandleLocalChatMessage(const std::string& message);
 
+  /// Tell the ui layer an instant replay went up / came down.
+  void OnInstantReplayBegin();
+  void OnInstantReplayEnd();
+
   /// Push the current instant-replay skip tally to the ui layer.
   void SetInstantReplaySkipVotes(int count, int total);
 
