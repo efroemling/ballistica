@@ -9,6 +9,12 @@ on:
     # Note: '*' is a special character in YAML so we have to quote the str.
     - cron: "0 12 * * *"
 
+# Cancel superseded runs, except on main, which gets a unique group so
+# its runs are never cancelled or dropped from the queue.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
@@ -28,6 +34,7 @@ jobs:
         uses: ./.github/actions/bombsquad_build_env
         with:
           using-cmake: true
+          save-asset-cache: true
       - name: Run checks
         run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
       - name: Verify asset-package pins are prod

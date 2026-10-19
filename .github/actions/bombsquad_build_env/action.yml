@@ -9,6 +9,13 @@ inputs:
     required: false
     type: boolean
     default: false
+  save-asset-cache:
+    description: |
+      "Set to true to save build/assets to the actions cache when the"
+      "exact key missed. Exactly one job per push should do this."
+    required: false
+    type: boolean
+    default: false
 
 runs:
   using: "composite"
@@ -48,8 +55,11 @@ runs:
         echo "hash=$(grep '"build/assets/' .efrocachemap \
           | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-    - name: Cache Bombsquad assets
-      uses: actions/cache@v6
+    # Restore and save are split so only the job passing save-asset-cache
+    # uploads; every job saving the same key tripped the cache rate limit.
+    - name: Restore Bombsquad assets
+      id: assets-restore
+      uses: actions/cache/restore@v6
       env:
         cache-name: cache-bombsquad-assets
       with:
@@ -83,6 +93,13 @@ runs:
         done
         echo "::error::Asset assembly failed after 3 attempts." >&2
         exit 1
+
+    - name: Save Bombsquad assets
+      if: ${{ inputs.save-asset-cache == 'true' && steps.assets-restore.outputs.cache-hit != 'true' }}
+      uses: actions/cache/save@v6
+      with:
+        path: build/assets
+        key: ${{ steps.assets-restore.outputs.cache-primary-key }}
 
     # Following steps only run for inputs.using-cmake == 'true'
 
