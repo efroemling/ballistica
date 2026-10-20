@@ -1203,7 +1203,10 @@ class Spaz(bs.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
+
             node = bs.getcollision().opposingnode
+            if not node:
+                return None
 
             # Don't want to physically affect powerups.
             if node.getdelegate(PowerupBox):
@@ -1213,7 +1216,6 @@ class Spaz(bs.Actor):
             # before or after grabbing.
             if not self._allow_punch_grab:
                 is_holding_object = bool(self.node.hold_node)
-
                 punch_time_diff = (
                     self.last_punch_time_ms - self.last_pickup_time_ms
                 )
@@ -1229,7 +1231,7 @@ class Spaz(bs.Actor):
                         return None
 
             # Only allow one hit per node per punch.
-            if node and (node not in self._punched_nodes):
+            if node not in self._punched_nodes:
                 punch_momentum_angular = (
                     self.node.punch_momentum_angular * self._punch_power_scale
                 )
