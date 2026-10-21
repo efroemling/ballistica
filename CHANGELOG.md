@@ -1,3 +1,13 @@
+### 1.8.5 (build 23070, api 9, 2026-10-21)
+- Doc-ui button rows have a new `GRID` layout: equal-size cells that
+  wrap onto as many lines as it takes, with up/down navigation
+  following columns. `grid_max_spread` lets a grid widen the gaps
+  between its columns (by up to that much each) to span the row's full
+  width.
+- The teams/free-for-all playlist browser now shows its playlists as a
+  grid instead of one long sideways-scrolling row, opening in a taller
+  or full-size window as the number of playlists grows.
+
 ### 1.8.4 (build 23068, api 9, 2026-10-20)
 - If audio can't be started at all, the game now runs without sound
   (with a red notice saying so) instead of exiting with a fatal error.

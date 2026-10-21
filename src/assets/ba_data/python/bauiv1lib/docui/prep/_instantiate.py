@@ -64,14 +64,59 @@ def _instantiate_button_row(
     return hscroll, buttons
 
 
+def _add_grid_lines(
+    rowprep: RowPrep,
+    buttons: list[bui.Widget],
+    *,
+    out: list[tuple[bui.Widget, list[bui.Widget]]],
+    grids: list[list[list[bui.Widget]]],
+) -> None:
+    """Add a grid row's buttons to navigation, a line at a time."""
+    columns = rowprep.grid_columns
+    lines = [buttons[i : i + columns] for i in range(0, len(buttons), columns)]
+    assert len(lines) == len(rowprep.grid_show_buffers)
+    for line, (top, bottom) in zip(
+        lines, rowprep.grid_show_buffers, strict=True
+    ):
+        for button in line:
+            bui.widget(
+                edit=button, show_buffer_top=top, show_buffer_bottom=bottom
+            )
+        # Right from a line's end goes nowhere (as for control rows;
+        # see below), rather than hunting for some other row's widget.
+        bui.widget(edit=line[-1], right_widget=line[-1])
+        out.append((line[0], line))
+    grids.append(lines)
+
+
+def _wire_grid_columns(lines: list[list[bui.Widget]]) -> None:
+    """Make up/down within a grid move within its columns.
+
+    Down from above a short last line goes to its last button. (Up/down
+    out of the grid's top and bottom lines stay as row navigation set
+    them up.)
+    """
+    for upper, lower in zip(lines, lines[1:]):
+        for col, button in enumerate(upper):
+            bui.widget(edit=button, down_widget=lower[min(col, len(lower) - 1)])
+        for col, button in enumerate(lower):
+            # (Every line but the last is full.)
+            bui.widget(edit=button, up_widget=upper[col])
+
+
 def _instantiate_row(
     rowprep: RowPrep,
     *,
     subcontainer: bui.Widget,
     window: DocUIWindow,
     out: list[tuple[bui.Widget, list[bui.Widget]]],
+    grids: list[list[list[bui.Widget]]],
 ) -> None:
-    """Create a prepped row's widgets, adding any navigable ones to out."""
+    """Create a prepped row's widgets, adding any navigable ones to out.
+
+    A grid row adds each of its lines to ``out`` as a row of its own,
+    and its lines (as a list of them) to ``grids``.
+    """
     if rowprep.is_section:
         # Text and decorations only; nothing to navigate to (the
         # neighboring row it attached to keeps it in view). The
@@ -96,6 +141,12 @@ def _instantiate_row(
         controls = instantiate_control_row(
             rowprep, parent=subcontainer, window=window
         )
+        if rowprep.grid_columns:
+            _add_grid_lines(rowprep, controls, out=out, grids=grids)
+            window.row_bounds.append(
+                (controls, rowprep.bounds_top, rowprep.bounds_bottom)
+            )
+            return
         for control in controls:
             bui.widget(
                 edit=control,
@@ -135,6 +186,7 @@ def instantiate_page_prep(
 ) -> bui.Widget:
     """Create a UI using prepped data."""
     outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
+    grids: list[list[list[bui.Widget]]] = []
 
     # Now go through and run our prepped ui calls to build our
     # widgets, plugging in appropriate parent widgets args and
@@ -148,7 +200,11 @@ def instantiate_page_prep(
     bui.widget(edit=subcontainer, allow_preserve_selection=False)
     for rowprep in pageprep.rows:
         _instantiate_row(
-            rowprep, subcontainer=subcontainer, window=window, out=outrows
+            rowprep,
+            subcontainer=subcontainer,
+            window=window,
+            out=outrows,
+            grids=grids,
         )
 
     for root_post_call in pageprep.root_post_calls:
@@ -184,5 +240,10 @@ def instantiate_page_prep(
             bui.widget(edit=topbutton, down_widget=botscroll)
         for botbutton in botbuttons:
             bui.widget(edit=botbutton, up_widget=topscroll)
+
+    # Within a grid, up/down follow its columns (which the line-to-line
+    # wiring just above, aimed at each line's first button, doesn't).
+    for lines in grids:
+        _wire_grid_columns(lines)
 
     return subcontainer

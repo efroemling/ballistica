@@ -493,6 +493,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestanimation.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestdepictions.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestgrids.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestitems.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlayouts.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlivetimes.py \

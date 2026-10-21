@@ -6,6 +6,7 @@ We do all layout math and bake out partial ui calls in a background
 thread so there's as little work to do in the ui thread as possible.
 """
 
+import math
 from dataclasses import replace
 from functools import partial
 from typing import TYPE_CHECKING
@@ -22,6 +23,7 @@ from bauiv1lib.docui._layout import (
 )
 from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep
+from bauiv1lib.docui.prep._staticbuttonrow import column_row_edges
 from bauiv1lib.docui.prep._button import (
     button_size,
     button_padded_size,
@@ -363,8 +365,18 @@ def prep_page(
                     row, left=control_left, right=control_right, native=_n
                 )
             )
+            row_left, row_right = column_row_edges(
+                row,
+                control=(control_left, control_right),
+                column=(
+                    cmargin_left + left_buffer,
+                    width - cmargin_right - right_buffer,
+                ),
+            )
             cbheight = (
-                _controlrows.control_row_height(row)
+                _controlrows.control_row_height(
+                    row, left=row_left, right=row_right
+                )
                 + row_footnote_height(row, _n)
                 - footnote_tuck
             )
@@ -603,28 +615,20 @@ def prep_page(
                     rowbuttonid = _button_widget_id(rowbutton)
                     _note_button_flags(rowbutton, rowbuttonid)
                     buttonids.append(rowbuttonid)
-            # A fixed row's padding is from where a scrolling row's starts
-            # (so switching between the two leaves its buttons where they
-            # were); everything else spans control rows' contents.
-            inset = (
-                BUTTON_ROW_EDGE_INSET
-                if isinstance(row, dui2.ButtonRow)
-                and row.layout is dui2.ButtonRowLayout.FIXED
-                else None
+            # (The same edges its height was figured from, above.)
+            row_left, row_right = column_row_edges(
+                row,
+                control=(control_left, control_right),
+                column=(
+                    cmargin_left + left_buffer,
+                    width - cmargin_right - right_buffer,
+                ),
             )
             _controlrows.prep_control_row(
                 row,
                 rowprep,
-                left=(
-                    control_left
-                    if inset is None
-                    else cmargin_left + left_buffer + inset
-                ),
-                right=(
-                    control_right
-                    if inset is None
-                    else width - cmargin_right - right_buffer - inset
-                ),
+                left=row_left,
+                right=row_right,
                 bottom=y + footnote_height - footnote_tuck,
                 center_x=geom.center[0],
                 idprefix=idprefix,
@@ -916,6 +920,22 @@ def prep_page(
     for rowprep in rows:
         if rowprep.is_section:
             continue
+        if rowprep.grid_columns:
+            # A grid's lines navigate like rows of their own: the top
+            # line keeps what's above the row in view and the bottom
+            # line what's below; lines between keep their gaps.
+            assert rowprep.staticbuttons is not None
+            lines = math.ceil(len(rowprep.staticbuttons) / rowprep.grid_columns)
+            gap = rowprep.grid_line_gap
+            rowprep.grid_show_buffers = [
+                _vertical_show_buffers(
+                    rowprep.grid_cell_height,
+                    rowprep.show_buffer_top if line == 0 else gap,
+                    rowprep.show_buffer_bottom if line == lines - 1 else gap,
+                    scroll_height + margin_bottom + margin_top,
+                )
+                for line in range(lines)
+            ]
         rowprep.show_buffer_top, rowprep.show_buffer_bottom = (
             _vertical_show_buffers(
                 rowprep.height,

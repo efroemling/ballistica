@@ -173,7 +173,7 @@ def test_page_text_wrapping(
                     footnote=_lit(_LONG_EN),
                     backing=dui2.SectionBacking(
                         color=(0.35, 0.55, 1.0, 0.3),
-                        content_inset=28.0,
+                        content_inset=33.0,
                         max_width=700.0,
                     ),
                     debug=debug,

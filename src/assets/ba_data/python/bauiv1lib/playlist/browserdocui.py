@@ -2,7 +2,7 @@
 #
 """The teams/free-for-all playlist browser, as a doc-ui page.
 
-A client-local doc-ui domain: one long row of playlist buttons (map
+A client-local doc-ui domain: a grid of playlist buttons (map
 previews and all) plus a small customize button, leading to the
 play-options popup and the playlist customize browser (both still
 legacy).
@@ -44,31 +44,32 @@ if TYPE_CHECKING:
     from bauiv1lib.playlist import PlaylistTypeVars
 
 #: The playlist buttons' unscaled size; decoration coords are relative
-#: to its center. Wider than tall: three just fill a WIDE page's width
-#: at our scale and spacing (measured: that row is then 867.7 wide of
-#: the page's 868.8; any wider and it scrolls sideways).
+#: to its center. Wider than tall: three just fit across a WIDE page's
+#: grid at our scale and spacing (measured: the grid gets 816.76 there,
+#: three take 816.16; any wider and it drops to two columns). The
+#: grid spreads its columns apart to take up the rest (see
+#: _GRID_MAX_SPREAD).
 _BW = 264.0
 _BH = 230.0
 
-#: Button width when there are too many playlists for WIDE (so the page
-#: opens WIDER and its row scrolls): narrower, to show more at once.
-#: Square, at the legacy browser's size.
-_BW_MANY = _BH
-
-#: Overall playlist-button scale and spacing. The scale just fills the
-#: wider layout's page height (which is the same at every ui-scale)
-#: along with the page's title and customize rows, so nothing scrolls
-#: vertically. (Measured: at 0.982 the page's content is 342.6 of its
-#: 343.6 visible height; recheck if the rows around the buttons change.)
-_BUTTON_SCALE = 0.982
+#: Overall playlist-button scale and spacing. The scale is what fits
+#: three across (see _BW); one line of them then also about fills a
+#: WIDE page's height (the same at every ui-scale) along with the
+#: page's title and customize rows, so three or fewer playlists don't
+#: scroll vertically. (Before grids it was 0.982, measured to fill the
+#: height exactly; recheck if the rows around the buttons change.)
+_BUTTON_SCALE = 0.98
 _BUTTON_SPACING = 20.0
 
+#: Most extra spacing the grid adds between columns to span the page's
+#: width: plenty to fill a WIDE page exactly (it needs well under 1),
+#: while wider layouts' gaps grow just this much (the grid then sits
+#: centered).
+_GRID_MAX_SPREAD = 5.0
 
-#: How far the customize row is pulled up toward the playlist buttons
-#: and pushed down into the page's bottom buffer (negative row
-#: spacings).
-_CUSTOMIZE_PULL_UP = -13.0
 
+#: How far the customize row is pushed down into the page's bottom
+#: buffer (a negative row spacing).
 #: (Only ever frees height for the buttons to grow into -- a bottom
 #: spacing doesn't move its own row. Past the page's 20-unit bottom
 #: buffer that height is borrowed from the scroll area's edge, and the
@@ -110,7 +111,7 @@ class PlaylistRoute(DocUIRoute):
     def get_window_layout(cls) -> dui2.WindowLayout:
         # (The fallback; openers pick per playlist count via
         # window_layout_for().)
-        return dui2.WindowLayout.WIDER
+        return dui2.WindowLayout.WIDE_TALL
 
 
 @ioprepped
@@ -298,17 +299,27 @@ class _Contents:
         )
 
 
-#: Most playlists (the default one included) shown in the WIDE layout;
-#: more get WIDER, which shows more of them before scrolling.
+#: Most playlists (the default one included) shown in the WIDE layout
+#: (one line of the grid); more get WIDE_TALL, whose extra height shows
+#: more of the grid's lines before scrolling.
 _WIDE_MAX_PLAYLISTS = 3
+
+#: Most playlists shown in the WIDE_TALL layout; more get WIDE_TALLER,
+#: whose height follows the screen's.
+_WIDE_TALL_MAX_PLAYLISTS = 6
+
+#: Most playlists shown in the WIDE_TALLER layout; more get LARGE, the
+#: full-size window, whose extra width fits more columns.
+_WIDE_TALLER_MAX_PLAYLISTS = 12
 
 
 def window_layout_for(kind: SessionKind) -> dui2.WindowLayout:
     """The layout to open a browser for ``kind`` playlists at.
 
-    WIDE when its playlists fit it, else WIDER. Call it right before
-    opening (logic thread only). The window keeps its layout on back
-    navigation, so playlists added in the meantime just scroll.
+    WIDE when its playlists fit one line, then WIDE_TALL, WIDE_TALLER
+    and LARGE as their count grows. Call it right before opening (logic thread
+    only). The window keeps its layout on back navigation, so playlists
+    added in the meantime just scroll.
 
     Deliberately doesn't create the standard playlists first (the page
     does, as it's built): that queues v1 account transactions which
@@ -324,11 +335,13 @@ def window_layout_for(kind: SessionKind) -> dui2.WindowLayout:
 
     pvars = PlaylistTypeVars(kind.sessiontype())
     count = 1 + len(_stored_playlist_names(pvars))  # (+1: default)
-    return (
-        dui2.WindowLayout.WIDE
-        if count <= _WIDE_MAX_PLAYLISTS
-        else dui2.WindowLayout.WIDER
-    )
+    if count <= _WIDE_MAX_PLAYLISTS:
+        return dui2.WindowLayout.WIDE
+    if count <= _WIDE_TALL_MAX_PLAYLISTS:
+        return dui2.WindowLayout.WIDE_TALL
+    if count <= _WIDE_TALLER_MAX_PLAYLISTS:
+        return dui2.WindowLayout.WIDE_TALLER
+    return dui2.WindowLayout.LARGE
 
 
 def _stored_playlist_names(pvars: PlaylistTypeVars) -> list[str]:
@@ -559,6 +572,12 @@ def _page(
     rows: list[dui2.Row] = [
         dui2.ButtonRow(
             title=_classicassets.strings.playlist.playlists.spec,
+            layout=dui2.ButtonRowLayout.GRID,
+            # (Spreads to fill a WIDE page's sliver of leftover width
+            # (see _BW); wider layouts get a little extra breathing room
+            # between columns and sit centered in the rest.)
+            grid_max_spread=_GRID_MAX_SPREAD,
+            content_align=dui2.HAlign.CENTER,
             button_spacing=_BUTTON_SPACING,
             buttons=[
                 _playlist_button(
@@ -566,20 +585,12 @@ def _page(
                     info,
                     info.name == contents.selected,
                     select=select,
-                    width=(
-                        _BW
-                        if len(contents.playlists) <= _WIDE_MAX_PLAYLISTS
-                        else _BW_MANY
-                    ),
                 )
                 for info in contents.playlists
             ],
         ),
         dui2.ButtonRow(
-            # Pulled up to sit about as close under the playlist buttons
-            # as their title does above them...
-            spacing_top=_CUSTOMIZE_PULL_UP,
-            # ...and down into the page's bottom buffer, leaving just
+            # Pushed down into the page's bottom buffer, leaving just
             # enough for its shadow; the playlist buttons get all the
             # height this frees (see _BUTTON_SCALE).
             padding_bottom=6.0,
@@ -616,8 +627,8 @@ def _playlist_button(
     selected: bool,
     *,
     select: bool,
-    width: float,
 ) -> dui2.Button:
+    width = _BW
     decorations: list[dui2.Decoration] = [
         dui2.Text(
             text=info.label,

@@ -504,7 +504,8 @@ def _open(target: Target, select: bool, context: DocUILocalAction) -> None:
                 if target is Target.TEAMS
                 else SessionKind.FREE_FOR_ALL
             )
-            # WIDE or WIDER, depending on how many playlists it'll show.
+            # WIDE through LARGE, depending on how many playlists it'll
+            # show.
             layout = window_layout_for(kind)
             ctrl = (
                 PlaylistSelectController

@@ -279,7 +279,6 @@ class InventoryUIController(
             dui2.ButtonRow(
                 spacing_top=-15,
                 spacing_bottom=15,
-                padding_left=13,
                 buttons=buttons,
             ),
         ]

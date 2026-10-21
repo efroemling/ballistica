@@ -175,6 +175,10 @@ class TestDocUIV2Controller(
                 from bauiv1lib.docuitestsections import test_page_sections
 
                 return test_page_sections(route)
+            case rt.ButtonGrids():
+                from bauiv1lib.docuitestgrids import test_page_button_grids
+
+                return test_page_button_grids(route)
             case rt.WideFit():
                 from bauiv1lib.docuitestlayouts import test_page_wide_fit
 
@@ -216,6 +220,11 @@ class TestDocUIV2Controller(
                 bui.screenmessage(f'Would do {action!r}.')
             case _:
                 assert_never(action)
+
+
+def _layout_title(layout: bacommon.docui.v2.WindowLayout) -> str:
+    """A window layout's name, title-cased (``WIDE_TALL`` -> ``Wide Tall``)."""
+    return layout.name.replace('_', ' ').title()
 
 
 def _side_name(side: bacommon.docui.v2.ViewerSide | None) -> str:
@@ -269,15 +278,17 @@ def _window_layouts_row(
             *(
                 dui2.Button(
                     label=LangStrSpecValue.literal(
-                        f'{layout.name.title()} Fit'
+                        _layout_title(layout) + ' Fit'
                     ),
                     size=(120, 80),
-                    action=rt.WideFit(
-                        wider=layout is dui2.WindowLayout.WIDER
-                    ).browse(layout=layout, scroll_edge_style=style),
+                    action=rt.WideFit(layout=layout).browse(
+                        layout=layout, scroll_edge_style=style
+                    ),
                 )
                 for layout in (
                     dui2.WindowLayout.WIDE,
+                    dui2.WindowLayout.WIDE_TALL,
+                    dui2.WindowLayout.WIDE_TALLER,
                     dui2.WindowLayout.WIDER,
                 )
             ),
@@ -650,6 +661,21 @@ def _test_v2_page_root(
                             ),
                             size=(120, 80),
                             action=rt.Sections().browse(layout=layout),
+                        )
+                        for layout in dui2.WindowLayout
+                    ],
+                ),
+                dui2.ButtonRow(
+                    # Dev-only, so baked literals. (Every layout, since
+                    # grids reflow to each width.)
+                    title=LangStrSpecValue.literal('Button Grids'),
+                    buttons=[
+                        dui2.Button(
+                            label=LangStrSpecValue.literal(
+                                layout.name.replace('_', ' ').title()
+                            ),
+                            size=(120, 80),
+                            action=rt.ButtonGrids().browse(layout=layout),
                         )
                         for layout in dui2.WindowLayout
                     ],

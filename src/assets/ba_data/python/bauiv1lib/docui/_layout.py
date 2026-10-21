@@ -108,19 +108,24 @@ VIEWER_SCREEN_BUFFER = 25.0
 #: full height -- so this is all the room there is.)
 PAGE_BASE_BUFFER = 27.0
 
-#: Where a button row's outermost buttons (at its default side padding)
-#: sit in from the column's edges, both sides.
-BUTTON_INSET = 28.0
-
-#: Where text (titles, labels, footnotes) sits in from the column's
-#: edges, both sides; buttons draw a few units inside their own bounds,
-#: so this lines text up with their visible edges. Control rows' (and
-#: fill rows') contents span from here to here too: labels start where
-#: text does, controls end at its mirror.
+#: Where everything in a column starts, in from its edges (both sides):
+#: text (titles, labels, footnotes), control rows' contents (labels
+#: start here, controls end at its mirror), fill and grid rows, and the
+#: outermost buttons of scrolling and fixed button rows at their default
+#: side padding. One value for all, so every row's bounds line up.
+#: (Until 2026-10-21 button rows' buttons sat 5 further out, on the
+#: theory that button art draws that far inside its bounds; how far it
+#: does depends on the style, so they lined up with nothing.)
 TEXT_INSET = 33.0
+
+#: Where a button row's outermost buttons (at its default side padding)
+#: sit in from the column's edges, both sides: the same as text.
+BUTTON_INSET = TEXT_INSET
 
 #: Where a button row's side padding starts in from the column's edges;
 #: its default padding takes its buttons on to :data:`BUTTON_INSET`.
+#: (The room between is inside its h-scroll, so button art reaching
+#: past its bounds isn't clipped.)
 BUTTON_ROW_EDGE_INSET = 18.0
 
 #: Wide and wider layouts' visible height at medium/large ui-scale:

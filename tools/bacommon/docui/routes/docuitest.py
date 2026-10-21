@@ -215,6 +215,17 @@ class Sections(TestRoute, path='/sections'):
 
 @ioprepped
 @dataclass
+class ButtonGrids(TestRoute, path='/buttongrids'):
+    """Grid button rows: columns, cells, alignment and navigation.
+
+    Browse to it at several layouts; grids reflow to fit each width.
+    """
+
+    debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+
+@ioprepped
+@dataclass
 class WindowLayouts(TestRoute, path='/windowlayouts'):
     """Assorted rows for judging window layouts (browse to it at each).
 
@@ -242,16 +253,25 @@ class WindowLayouts(TestRoute, path='/windowlayouts'):
 class WideFit(TestRoute, path='/widefit'):
     """A row exactly as big as wide pages get (browse at each layout).
 
-    It should fill the page's height (wide and wider) and width (wide)
-    with no scrolling, at every ui-scale; with ``over`` / ``wide_over``
-    set it's a hair taller / wider, which should scroll. ``wider`` says
-    it's being shown in the wider layout, whose width follows the screen
-    (so there's no width to overflow).
+    It should fill the page's height and width with no scrolling, at
+    every ui-scale; with ``over`` / ``wide_over`` set it's a hair
+    taller / wider, which should scroll (at small ui-scale, only on the
+    smallest screens: windows there fill the screen, so the page sizes
+    are minimums). ``layout`` says which wide
+    layout it's being shown in (browse at that one): wide and wider
+    pages are the same height everywhere, wide-tall ones depend on the
+    ui-scale and wide-taller ones on the screen too; wider's width
+    follows the screen, so there's no width to overflow there.
     """
 
     over: Annotated[bool, IOAttrs('over', store_default=False)] = False
     wide_over: Annotated[bool, IOAttrs('wo', store_default=False)] = False
-    wider: Annotated[bool, IOAttrs('wdr', store_default=False)] = False
+    layout: Annotated[
+        dui2.WindowLayout,
+        IOAttrs(
+            'lo', store_default=False, enum_fallback=dui2.WindowLayout.WIDE
+        ),
+    ] = dui2.WindowLayout.WIDE
 
 
 class Flavor(Enum):
@@ -412,6 +432,7 @@ AnyTestRoute = (
     | Widgets
     | NavTest
     | Sections
+    | ButtonGrids
     | WindowLayouts
     | WideFit
     | WebTestGet

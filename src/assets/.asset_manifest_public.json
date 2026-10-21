@@ -391,6 +391,7 @@
  "ba_data/python/bauiv1lib/docuitest.py",
  "ba_data/python/bauiv1lib/docuitestanimation.py",
  "ba_data/python/bauiv1lib/docuitestdepictions.py",
+ "ba_data/python/bauiv1lib/docuitestgrids.py",
  "ba_data/python/bauiv1lib/docuitestitems.py",
  "ba_data/python/bauiv1lib/docuitestlayouts.py",
  "ba_data/python/bauiv1lib/docuitestlivetimes.py",

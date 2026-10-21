@@ -1110,6 +1110,18 @@ class ButtonRowLayout(Enum):
     #: its own. Like ``FIXED``, placed straight on the page.
     FILL = 'f'
 
+    #: Buttons in a grid of equal cells, as many columns as fit across
+    #: the width a ``FILL`` row spans (or :attr:`ButtonRow.grid_columns`
+    #: of them), wrapping onto as many lines as it takes. Cells are as
+    #: big as the row's biggest button (or as
+    #: :attr:`ButtonRow.grid_cell_width` /
+    #: :attr:`ButtonRow.grid_cell_height` say); smaller buttons center
+    #: in theirs and bigger ones shrink to fit. Up/down moves within a
+    #: column. Meant for buttons of about the same size: for very mixed
+    #: ones, use another layout. Builds older than this value show the
+    #: row as ``SCROLL``. Like ``FIXED``, placed straight on the page.
+    GRID = 'g'
+
 
 @ioprepped
 @dataclass
@@ -1213,13 +1225,55 @@ class ButtonRow(Row):
         float | None, IOAttrs('fns', store_default=False)
     ] = None
 
-    #: Spacing between all buttons in the row.
+    #: Spacing between all buttons in the row (between a ``GRID`` row's
+    #: columns, and its lines unless :attr:`grid_line_spacing` is set).
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 15.0
+
+    #: How many columns a ``GRID`` row has; None for as many as fit. If
+    #: that many don't fit, the whole grid shrinks until it does.
+    #: Ignored by other layouts.
+    grid_columns: Annotated[int | None, IOAttrs('gco', store_default=False)] = (
+        None
+    )
+
+    #: Width of a ``GRID`` row's cells (at the scale buttons' sizes
+    #: are given in, padding included); None for its widest button's.
+    #: Ignored by other layouts.
+    grid_cell_width: Annotated[
+        float | None, IOAttrs('gcw', store_default=False)
+    ] = None
+
+    #: Height of a ``GRID`` row's cells; None for its tallest button's.
+    #: See :attr:`grid_cell_width`.
+    grid_cell_height: Annotated[
+        float | None, IOAttrs('gch', store_default=False)
+    ] = None
+
+    #: Most extra spacing a ``GRID`` row may add to each gap between
+    #: its columns to span its full width (so its outer columns line up
+    #: with a ``FILL`` row's edges); 0 for none. Cells and buttons keep
+    #: their sizes. If spreading by up to this much per gap reaches the
+    #: width, the grid fills it exactly; otherwise each gap grows by
+    #: this much and the grid falls short, aligned by
+    #: :attr:`content_align`. Either way, gaps never exceed
+    #: :attr:`button_spacing` plus this, whatever the column count, so
+    #: set it to the most extra spacing that still looks right for the
+    #: buttons. A grid shrunk to fit, or a single column, never
+    #: spreads. Ignored by other layouts; builds older than this field
+    #: ignore it.
+    grid_max_spread: Annotated[float, IOAttrs('gms', store_default=False)] = 0.0
+
+    #: Vertical spacing between a ``GRID`` row's lines; None for the
+    #: same as :attr:`button_spacing`, which is the horizontal spacing
+    #: between its columns. Ignored by other layouts.
+    grid_line_spacing: Annotated[
+        float | None, IOAttrs('gls', store_default=False)
+    ] = None
 
     #: Space around the buttons; None for the layout's default (see
     #: :meth:`get_padding`). Left/right are from the column's edges
     #: (``SCROLL`` and ``FIXED``) or from where control rows' contents
-    #: start/end (``FILL``).
+    #: start/end (``FILL`` and ``GRID``).
     padding_left: Annotated[
         float | None, IOAttrs('pl', store_default=False)
     ] = None
@@ -1282,7 +1336,9 @@ class ButtonRow(Row):
 
     #: Horizontal alignment of buttons when they don't fill the row's
     #: width (a ``SCROLL`` row with more than that simply scrolls; a
-    #: ``FIXED`` one shrinks to fit; ``FILL`` rows always fill it).
+    #: ``FIXED`` one shrinks to fit; ``FILL`` rows always fill it). A
+    #: ``GRID`` row aligns its grid as a whole; a short last line
+    #: starts at the grid's left so columns stay lined up.
     #: Overrides ``center_content`` when set. Builds older than this
     #: field ignore it (and thus left-align unless ``center_content`` is
     #: also set).
@@ -1299,8 +1355,9 @@ class ButtonRow(Row):
     #: plus this offset: the same point header and footer decorations
     #: at that x are placed from, which is the way to line a button up
     #: with band art regardless of the layout's width or insets.
-    #: Ignored by ``SCROLL`` and ``FILL`` rows. Builds older than this
-    #: field ignore it.
+    #: ``GRID`` rows shift their grid the same way. Ignored by
+    #: ``SCROLL`` and ``FILL`` rows. Builds older than this field
+    #: ignore it.
     content_offset: Annotated[float, IOAttrs('cxo', store_default=False)] = 0.0
 
     #: Horizontal alignment of the title and subtitle. Overrides
@@ -1346,12 +1403,15 @@ class ButtonRow(Row):
         layout: ButtonRowLayout,
     ) -> tuple[float, float, float, float]:
         match layout:
+            # (Side defaults put the outermost buttons where text and
+            # every other row's contents start. Builds before 2026-10-21
+            # used 10, putting them 5 further out.)
             case ButtonRowLayout.SCROLL:
                 # (The room below is the strip the bar fades in over.)
-                return 10.0, 10.0, 4.0, 16.0
+                return 15.0, 15.0, 4.0, 16.0
             case ButtonRowLayout.FIXED:
-                return 10.0, 10.0, 4.0, 4.0
-            case ButtonRowLayout.FILL:
+                return 15.0, 15.0, 4.0, 4.0
+            case ButtonRowLayout.FILL | ButtonRowLayout.GRID:
                 return 0.0, 0.0, 4.0, 4.0
             case _:
                 assert_never(layout)
@@ -2509,9 +2569,10 @@ class SectionBacking:
     Its button rows clip at the rect's left and right edges, and its
     content lays out inside it as a page's does in its column: button
     rows' buttons ``content_inset`` in from those edges, text (heading
-    and note text, row titles, labels) and control and fill rows a few
-    units further in to line up with buttons' visible edges, and
-    centered things centered on the card. All of that holds whatever
+    and note text, row titles, labels) and control, fill and grid rows
+    there too (lining up with the buttons' bounds), and centered things
+    centered on the card. (Builds before 2026-10-21 put the text and
+    those rows 5 units further in.) All of that holds whatever
     width the section gets.
 
     The rect is drawn as ``texture`` (tinted by ``color``) or, with no
@@ -2546,7 +2607,7 @@ class SectionBacking:
     )
 
     #: How far in from the card's edges its button rows' buttons sit
-    #: (both sides; a page's sit 28 in from its column's).
+    #: (both sides; a page's sit 33 in from its column's).
     content_inset: Annotated[float, IOAttrs('ci', store_default=False)] = 0.0
 
     #: Room inside the card above its first content and below its last.

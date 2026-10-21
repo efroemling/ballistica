@@ -327,6 +327,18 @@ class RowPrep:
     #: A static (non-scrolling) button row's buttons, left to right
     #: (laid out like a control row; see :func:`is_control_row`).
     staticbuttons: list[ButtonPrep] | None = None
+    #: A grid row's column count (0 for not a grid). Its
+    #: ``staticbuttons`` then run line by line, each line navigated
+    #: like a row of its own.
+    grid_columns: int = 0
+    #: A grid row's cell height and the gap between its lines, as laid
+    #: out (for its lines' show-buffers).
+    grid_cell_height: float = 0.0
+    grid_line_gap: float = 0.0
+    #: A grid row's per-line (top, bottom) show-buffers, top line
+    #: first, once finalized (they replace the row's own for its
+    #: buttons).
+    grid_show_buffers: list[tuple[float, float]] = field(default_factory=list)
 
     def is_control_row(self) -> bool:
         """Are we laid out like a control row (vs a row of buttons)?
