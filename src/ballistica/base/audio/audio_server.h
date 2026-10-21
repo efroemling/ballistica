@@ -11,6 +11,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -56,7 +57,12 @@ class AudioServer {
   // Client sources use these to pass settings to the server.
   void PushSourceSetIsMusicCall(uint32_t play_id, bool val);
   void PushSourceSetPositionalCall(uint32_t play_id, bool val);
-  void PushSourceSetPositionCall(uint32_t play_id, const Vector3f& p);
+  /// Positions are coalesced: while one update for a source's play is
+  /// still queued, newer ones just replace its value. They are sent
+  /// often (every step for moving sounds), so this keeps a stuck audio
+  /// thread's message list from growing with them.
+  void PushSourceSetPositionCall(int source_id, uint32_t play_id,
+                                 const Vector3f& p);
   void PushSourceSetGainCall(uint32_t play_id, float val);
   void PushSourceSetFadeCall(uint32_t play_id, float val);
   void PushSourceSetLoopingCall(uint32_t play_id, bool val);
@@ -160,6 +166,18 @@ class AudioServer {
 
   std::mutex openalsoft_android_log_mutex_;
   std::string openalsoft_android_log_;
+
+  // Coalesced position updates (see PushSourceSetPositionCall and
+  // PushSetListenerPositionCall); guarded by pending_positions_mutex_.
+  struct PendingSourcePosition_ {
+    uint32_t play_id{};
+    Vector3f position{};
+    bool pending{};
+  };
+  std::mutex pending_positions_mutex_;
+  std::vector<PendingSourcePosition_> pending_source_positions_;
+  Vector3f pending_listener_position_{};
+  bool listener_position_pending_{};
 
   /// Indexed list of sources.
   std::vector<ThreadSource_*> sources_;

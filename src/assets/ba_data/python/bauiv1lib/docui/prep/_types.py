@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     import bauiv1
 
     from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._panes import PaneMode
 
 
 #: A usage-site line-wrap override for a native language-string
@@ -376,3 +377,11 @@ class PagePrep:
     client_effects: list[bacommon.clienteffect.Effect] = field(
         default_factory=list
     )
+
+    #: The viewer pane the page was laid out beside (None for none, its
+    #: rows then spanning the window); the window lays itself out to
+    #: match when showing it. Attached by the caller, which picks the
+    #: scroll area the page is prepped against.
+    #:
+    #: :meta private:
+    pane: PaneMode | None = None

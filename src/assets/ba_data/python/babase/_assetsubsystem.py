@@ -596,9 +596,7 @@ def make_progress_reporter(
         # under the throttle, so a quick download doesn't appear stuck at its
         # starting 0/X count.
         caught_up = (
-            downloading
-            and progress.blobs_total > 0
-            and progress.blobs_done >= progress.blobs_total
+            downloading and 0 < progress.blobs_total <= progress.blobs_done
         )
         now = _babase.apptime()
         # Update immediately on a phase change OR a package change (so a

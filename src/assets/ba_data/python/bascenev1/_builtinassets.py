@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261014b`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261021`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 689
+# ba_meta require asset-package 821
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261014b
-_ASSET_PACKAGE = ApverNum(689)
+# a-0.babuiltinassets.261021
+_ASSET_PACKAGE = ApverNum(821)
 
 if TYPE_CHECKING:
     import datetime
@@ -307,6 +307,15 @@ if TYPE_CHECKING:
 
                 English: "Error playing music: {music}"
             """
+
+        #: ::
+        #:
+        #:     Error screen-message shown shortly after launch when the device's
+        #:     audio couldn't be started at all; the game keeps running,
+        #:     silently.
+        #:
+        #:     English: "Unable to start audio; the game will have no sound."
+        unavailable: LangStr
 
     class StringsDeviceGroup:
         """
@@ -1577,8 +1586,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 130 more). Full list in source.
+    #: The ``strings`` group - 136 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 131 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1615,7 +1624,7 @@ _TREE = {
             'sign_in_needed_other_device': ('address',),
             'signing_in': (),
         },
-        'audio': {'music_play_error': ('music',)},
+        'audio': {'music_play_error': ('music',), 'unavailable': ()},
         'device': {'thermal_frame_rate_cap': ()},
         'input': {
             'axis': ('number',),

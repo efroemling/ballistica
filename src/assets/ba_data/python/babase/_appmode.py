@@ -164,6 +164,14 @@ class AppMode:
         (when active is False).
         """
 
+    def on_main_ui_dismissed(self) -> None:
+        """Called when the main-window goes away, leaving none.
+
+        However that happens: backing out of a top-level window, a
+        menu press, a resume button and so on. (Navigating between main
+        windows doesn't count.) The default does nothing.
+        """
+
     def on_app_active_changed(self) -> None:
         """Called when the app's active state changes while in this app-mode.
 

@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     import babase
     import bascenev1
     import bauiv1
+    import bacommon.assetspec
 
 
 # These leaves add only a ``get()`` method (no new fields), so they need no
@@ -260,9 +261,7 @@ class AssetGroup:
         self._node = node
         self._prefix = prefix
 
-    def __getattr__(
-        self, name: str
-    ) -> (
+    def __getattr__(self, name: str) -> (
         'AssetGroup | TextureHandle | MeshHandle'
         ' | SoundHandle | CollisionMeshHandle | CubeMapTextureHandle'
     ):
@@ -276,9 +275,7 @@ class AssetGroup:
         return _make(self._apvernum, path, child)
 
 
-def _make(
-    apvernum: ApverNum, path: str, kind: str
-) -> (
+def _make(apvernum: ApverNum, path: str, kind: str) -> (
     'TextureHandle | MeshHandle | SoundHandle'
     ' | CollisionMeshHandle | CubeMapTextureHandle'
 ):
@@ -443,6 +440,22 @@ def texture_from_ref(ref: str) -> 'bascenev1.Texture':
     """
     apvernum, assetname = _split_ref(ref)
     return _bascenev1.aptextureget(apvernum, assetname)
+
+
+def texture_spec_from_ref(ref: str) -> bacommon.assetspec.TextureSpec:
+    """Make a texture spec from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only: for refs that arrive as
+    data (stored player profiles' icons, say) and must be passed on as
+    a spec (to a doc-ui page). Raises ValueError for anything that is
+    not a qualified ref.
+
+    :meta private:
+    """
+    from efro.dataclassio import dataclass_from_dict
+
+    apvernum, assetname = _split_ref(ref)
+    return dataclass_from_dict(_TextureSpec, {'a': apvernum, 'n': assetname})
 
 
 def qualified_ref(spec: '_TextureSpec') -> str:

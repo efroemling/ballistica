@@ -100,6 +100,8 @@ from _bascenev1 import (
     get_input_devices,
     get_game_port,
     get_game_roster,
+    host_ui_send_to_client,
+    host_ui_send_to_host,
     get_local_active_input_devices_count,
     get_public_party_enabled,
     get_public_party_max_size,
@@ -149,12 +151,10 @@ from _bascenev1 import (
     broadcastmessage,
     SessionData,
     SessionPlayer,
-    set_admins,
     set_authenticate_clients,
     set_debug_speed_exponent,
     set_host_password,
     set_hosting_asset_packages,
-    set_enable_default_kick_voting,
     set_internal_music,
     set_map_bounds,
     set_master_server_source,
@@ -183,6 +183,7 @@ from bascenev1._generated.scene_asset_set import (
 )
 from bascenev1._assetref import (
     texture_from_ref,
+    texture_spec_from_ref,
     TextureHandle,
     MeshHandle,
     SoundHandle,
@@ -264,10 +265,13 @@ from bascenev1._music import MusicType, setmusic
 from bascenev1._net import (
     connect_to_party,
     fetch_host_requirements,
+    get_joined_host_asset_packages,
     HostInfo,
     HostProbeOutcome,
     HostRequirements,
     resolve_asset_packages_with_dialog,
+    set_admins,
+    set_enable_default_kick_voting,
 )
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
@@ -325,6 +329,7 @@ __all__ = [
     'get_input_devices',
     'getlocaldisplay',
     'texture_from_ref',
+    'texture_spec_from_ref',
     'Activity',
     'ActivityData',
     'ActivityNotFoundError',
@@ -422,6 +427,9 @@ __all__ = [
     'get_game_port',
     'get_game_roster',
     'get_game_roster',
+    'get_joined_host_asset_packages',
+    'host_ui_send_to_client',
+    'host_ui_send_to_host',
     'get_local_active_input_devices_count',
     'get_map_class',
     'get_map_display_string',

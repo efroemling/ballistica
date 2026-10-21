@@ -12,17 +12,19 @@ from bauiv1 import _commonassets
 
 from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
 from bauiv1lib.docui._animtargets import DocUIAnimTargets
+from bauiv1lib.docui._backbutton import back_button_geometry
+from bauiv1lib.docui._frame import window_frames
 from bauiv1lib.docui._layout import (
-    backing_offset_x,
-    SMALL_UI_VIEWER_INSET_V,
-    SMALL_UI_VIEWER_LEFT_FADE,
-    back_button_geometry,
     default_scroll_edge_style,
-    fade_scroll_lengths,
-    fit_fade_margins,
     resizes_with_screen,
     title_lift,
-    window_frame,
+    window_backing_art,
+)
+from bauiv1lib.docui._panes import (
+    page_geometries,
+    scroll_widget_rect,
+    style_scroll_edges,
+    viewer_insets_v,
 )
 from bauiv1lib.docui._windowparts import (
     ViewerPane,
@@ -40,7 +42,6 @@ from bauiv1lib.docui._scrollrestore import (
     apply_scroll,
     containing_scrollers,
 )
-from bauiv1lib.utils import TOOLBAR_SCROLL_FADE, apply_toolbar_scroll_fades
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
     import bacommon.docui.v2
     from bacommon.docui import DocUIRequest, DocUIResponse
     from bauiv1lib.docui._controller import DocUIController
+    from bauiv1lib.docui._panes import PageGeometries, PaneMode
     from bauiv1lib.docui._scrollrestore import (
         ScrollSnapshot,
         ScrollRestoreMode,
@@ -66,8 +68,6 @@ def _drop(pause: bui.RootUIUpdatePause) -> None:
 class DocUIWindow(bui.MainWindow):
     """Window showing doc-ui content."""
 
-    # pylint: disable=too-many-public-methods
-
     def __init__(
         self,
         controller: DocUIController,
@@ -80,7 +80,12 @@ class DocUIWindow(bui.MainWindow):
         suppress_win_extra_type_warning: bool = False,
         has_had_response: bool = False,
         options: WindowOptions | None = None,
+        pane: PaneMode | None = None,
     ):
+        """``pane`` is the viewer pane to start out with, for a window
+        coming back (back-navigation, a reflow) to the page it showed;
+        a fresh window has none until a page asks for one.
+        """
         import bacommon.docui.v2 as dui2
 
         ui = bui.app.ui_v1
@@ -177,37 +182,37 @@ class DocUIWindow(bui.MainWindow):
             if self._options.scroll_edge_style is None
             else self._options.scroll_edge_style
         )
-        self._viewer_style = (
-            dui2.ViewerStyle.FRAMED
-            if self._options.viewer_style is None
-            else self._options.viewer_style
+        # Our frame for each viewer pane our pages may ask for (none,
+        # or one on either side); the window and visible area are the
+        # same in all, only the scroll area and pane differ. Each page
+        # picks one (see instantiate_ui()); until one arrives we have
+        # no pane, unless we're coming back with one.
+        self._frames = window_frames(
+            self._layout,
+            uiscale,
+            self._scroll_edge_style,
+            close_style=auxiliary_style,
         )
-        frame = window_frame(self._layout, uiscale, self._scroll_edge_style)
-        self._width, self._height = frame.width, frame.height
-        self._root_scale = frame.root_scale
+        self._pane_mode = pane
+        frame = self._frames[None if pane is None else pane.side]
         self._vis_left, self._vis_top = frame.vis_left, frame.vis_top
         self._vis_width, self._vis_height = frame.vis_width, frame.vis_height
-        self._scroll_left = frame.scroll_left
-        self._scroll_bottom = frame.scroll_bottom
-        self._scroll_width = frame.scroll_width
-        self._scroll_height = frame.scroll_height
-        self._margins = frame.margins
-        self._column_insets = frame.column_insets
-        self._viewer_width = frame.viewer_width
+        self._frame = frame
 
         toolbar_visibility = controller.get_window_toolbar_visibility()
         super().__init__(
+            # Laid out cleanly: our bounds are our backing art's solid
+            # part, sized to what must sit on it (see window_frames()).
             root_widget=bui.containerwidget(
-                size=(self._width, self._height),
+                size=(frame.width, frame.height),
                 toolbar_visibility=toolbar_visibility,
                 toolbar_cancel_button_style=(
                     'close' if auxiliary_style else 'back'
                 ),
-                scale=self._root_scale,
-                background_offset=(
-                    backing_offset_x(self._layout, uiscale, self._width),
-                    0.0,
-                ),
+                scale=frame.root_scale,
+                stack_offset=frame.stack_offset,
+                clean_layout=True,
+                background_art=window_backing_art(self._layout, uiscale),
             ),
             transition=transition,
             origin_widget=origin_widget,
@@ -221,34 +226,25 @@ class DocUIWindow(bui.MainWindow):
         # Avoid complaints if nothing is selected under us.
         bui.widget(edit=self._root_widget, allow_preserve_selection=False)
 
-        # A fading scroll area mustn't reach past our backing.
-        if (
-            uiscale is not bui.UIScale.SMALL
-            and self._scroll_edge_style is dui2.ScrollEdgeStyle.FADE
-        ):
-            self._margins = fit_fade_margins(
-                frame, self._root_widget.get_backing_opaque_rect()
-            )
-
         self._subcontainer: bui.Widget | None = None
+
+        self._uiscale = uiscale
+        self._toolbar_visibility = toolbar_visibility
+        self._viewer_pane: ViewerPane | None = None
+        self._scroll_bounds: list[bui.Widget] = []
 
         # Created before our scroll widget, as the two can overlap (see
         # _create_viewer_pane()): presses go to the last-created widget
         # that wants them, and the page should win there.
-        self._viewer_pane = self._create_viewer_pane(controller, uiscale)
+        if pane is not None:
+            self._viewer_pane = self._create_viewer_pane(pane, None)
 
-        margins = self._margins  # (left, right, bottom, top)
+        rect = scroll_widget_rect(self._frame)
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=True,  # Will turn off once we have UI.
-            size=(
-                self._scroll_width + margins[0] + margins[1],
-                self._scroll_height + margins[2] + margins[3],
-            ),
-            position=(
-                self._scroll_left - margins[0],
-                self._scroll_bottom - margins[2],
-            ),
+            size=rect[2:],
+            position=rect[:2],
             border_opacity=0.4,
             # A border around content that doesn't scroll is just
             # clutter (the audio settings page, say).
@@ -266,7 +262,7 @@ class DocUIWindow(bui.MainWindow):
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
-        self._style_scroll_edges(uiscale, toolbar_visibility)
+        self._style_scroll_edges()
 
         # Our back button's geometry (medium/large ui-scale); the title
         # is centered vertically on it.
@@ -287,7 +283,7 @@ class DocUIWindow(bui.MainWindow):
             parent=self._root_widget,
             # Centered on the window, panes or not; the title belongs to
             # the window as a whole.
-            position=(self._width * 0.5, title_y),
+            position=(frame.vis_center[0], title_y),
             size=(0, 0),
             text='',
             color=ui.title_color,
@@ -338,38 +334,14 @@ class DocUIWindow(bui.MainWindow):
         if not suppress_win_extra_type_warning:
             bui.pushcall(bui.WeakCallStrict(self._sanity_check_win_extra_type))
 
-    def _style_scroll_edges(
-        self, uiscale: bui.UIScale, toolbar_visibility: str
-    ) -> None:
-        import bacommon.docui.v2 as dui2
-
-        if uiscale is bui.UIScale.SMALL:
-            # (A minimal toolbar has nothing at the bottom to fade
-            # toward. Beside a viewer pane our left edge is on screen,
-            # where sideways-scrolling rows would otherwise cut off hard
-            # -- over the pane's edge, even, which overlaps ours here.)
-            apply_toolbar_scroll_fades(
-                self._scrollwidget,
-                bottom_fade=(
-                    0.0
-                    if toolbar_visibility == 'menu_minimal'
-                    else TOOLBAR_SCROLL_FADE
-                ),
-                left_fade=(
-                    SMALL_UI_VIEWER_LEFT_FADE
-                    if self._viewer_width > 0.0
-                    else 0.0
-                ),
-            )
-        elif self._scroll_edge_style is dui2.ScrollEdgeStyle.FADE:
-            # Fades over the stretch it reaches out past an outline one
-            # (see fade_scroll_extents()), and a bit more at the top.
-            fleft, fright, fbottom, ftop = fade_scroll_lengths(self._layout)
-            bui.scrollwidget(
-                edit=self._scrollwidget,
-                edge_style='fade',
-                edge_fade=(fleft, fbottom, fright, ftop),
-            )
+    def _style_scroll_edges(self) -> None:
+        style_scroll_edges(
+            self._scrollwidget,
+            self._frame,
+            uiscale=self._uiscale,
+            scroll_edge_style=self._scroll_edge_style,
+            toolbar_visibility=self._toolbar_visibility,
+        )
 
     def _show_debug_bounds(self) -> None:
         # Our vis-area corners (flip on by hand when needed).
@@ -381,40 +353,74 @@ class DocUIWindow(bui.MainWindow):
                 self._vis_width,
                 self._vis_height,
             )
+        self._show_scroll_bounds()
+
+    def _show_scroll_bounds(self) -> None:
+        for widget in self._scroll_bounds:
+            widget.delete()
+        self._scroll_bounds = []
         if debug_draw_enabled(DebugDrawKind.SCROLL_BOUNDS):
-            show_scroll_bounds(
+            self._scroll_bounds = show_scroll_bounds(
                 self._root_widget,
-                self._scroll_left,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
+                self._frame,
+                self._uiscale,
+                has_pane=self._viewer_pane is not None,
             )
 
     def _create_viewer_pane(
-        self, controller: DocUIController, uiscale: bui.UIScale
-    ) -> ViewerPane | None:
-        """Create our viewer pane, if our layout has one.
+        self, pane: PaneMode, transition_delay: float | None
+    ) -> ViewerPane:
+        """Create a viewer pane for our current frame.
 
-        It sits alongside our scroll area and is as tall as it, less
-        toolbar clearance in small ui (where the scroll area runs under
-        the toolbars).
+        It sits alongside our scroll area and spans its height, its
+        edges nudged per ui-scale (see ``viewer_insets_v()``; in small
+        ui that clears the toolbars the scroll area runs under). With a
+        ``transition_delay`` it fades in rather than just appearing.
         """
         import bacommon.docui.v2 as dui2
 
-        if self._viewer_width <= 0.0:
-            return None
-        small = uiscale is bui.UIScale.SMALL
-        inset_v = SMALL_UI_VIEWER_INSET_V if small else 0.0
+        f = self._frame
+        inset_bottom, inset_top = viewer_insets_v(self._uiscale)
         return ViewerPane(
-            controller,
+            self.controller,
             self._root_widget,
-            position=(
-                self._scroll_left - self._viewer_width,
-                self._scroll_bottom + inset_v,
-            ),
-            size=(self._viewer_width, self._scroll_height - 2.0 * inset_v),
-            overlay=self._viewer_style is dui2.ViewerStyle.OVERLAY,
+            position=(f.viewer_left, f.scroll_bottom + inset_bottom),
+            size=(f.viewer_width, f.scroll_height - inset_bottom - inset_top),
+            framed=pane.frame_style is dui2.ViewerFrameStyle.DEFAULT,
+            transition_delay=transition_delay,
         )
+
+    def _set_pane_mode(
+        self, pane: PaneMode | None, transition_delay: float | None
+    ) -> None:
+        """Lay ourself out for a page's viewer pane (or none).
+
+        Our scroll area moves and resizes to suit, and any pane we had
+        goes; a new one is made where the page wants it. (A live viewer
+        behind the pane survives that, being kept by key.)
+        """
+        if pane == self._pane_mode:
+            return
+        self._pane_mode = pane
+        self._frame = self._frames[None if pane is None else pane.side]
+        if self._viewer_pane is not None:
+            self._viewer_pane.widget.delete()
+            self._viewer_pane = None
+        if pane is not None:
+            self._viewer_pane = self._create_viewer_pane(pane, transition_delay)
+        rect = scroll_widget_rect(self._frame)
+        bui.scrollwidget(
+            edit=self._scrollwidget, position=rect[:2], size=rect[2:]
+        )
+        self._style_scroll_edges()
+        self._show_scroll_bounds()
+
+    def page_geometries(self) -> PageGeometries:
+        """What our pages lay out against, for each pane they may get.
+
+        :meta private:
+        """
+        return page_geometries(self._layout, self._frames)
 
     @override
     def window_describe(self) -> str:
@@ -538,31 +544,6 @@ class DocUIWindow(bui.MainWindow):
         """Are we locked?"""
         assert bui.in_logic_thread()
         return self._locked
-
-    @property
-    def scroll_width(self) -> float:
-        """Width of our scroll area."""
-        return self._scroll_width
-
-    @property
-    def scroll_height(self) -> float:
-        """Height of our scroll area."""
-        return self._scroll_height
-
-    @property
-    def column_insets(self) -> tuple[float, float]:
-        """Extra left/right insets narrowing where content is laid out
-        (within :attr:`screen_margins`) to a column.
-        """
-        return self._column_insets
-
-    @property
-    def screen_margins(self) -> tuple[float, float, float, float]:
-        """How far (left, right, bottom, top) our scroll area reaches
-        past its standard scroll-width/height area, with content inset to
-        match: screen margins at small ui-scale, fade extents otherwise.
-        """
-        return self._margins
 
     def set_last_response(
         self,
@@ -743,6 +724,9 @@ class DocUIWindow(bui.MainWindow):
             literal=True,
             text=pageprep.title,
         )
+        # Lay ourself out for the viewer pane (or none) this page was
+        # prepped beside; a new pane comes in along with the rows.
+        self._set_pane_mode(pageprep.pane, None if pageprep.immediate else 0.1)
         if self._viewer_pane is not None:
             self._viewer_pane.apply_response(self._last_response)
 
@@ -915,6 +899,7 @@ class DocUIWindow(bui.MainWindow):
         last_response = self._last_response
         has_had_response = self._has_had_response
         options = self._options
+        pane = self._pane_mode
         uiopenstateid = (
             None if self._uiopenstate is None else self._uiopenstate.stateid
         )
@@ -935,6 +920,7 @@ class DocUIWindow(bui.MainWindow):
                         ),
                         has_had_response=has_had_response,
                         options=options,
+                        pane=pane,
                     ),
                     last_response=last_response,
                     has_had_response=has_had_response,

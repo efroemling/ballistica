@@ -91,6 +91,16 @@ struct DepictionDrawContext {
   TextureAsset* mask_texture{};
   float frame_color[3]{1.0f, 1.0f, 1.0f};
 
+  /// Whether mask_texture is a layered mask (see
+  /// SimpleComponent::SetLayeredMask) rather than the classic kind
+  /// (frame_color then unused). Kinds honoring it draw through it with
+  /// these colors, the host's backing as its underlay, in place of the
+  /// host's own backing draw (see Depiction::DrawsHostBacking).
+  bool layered_mask{};
+  float underlay_color[4]{};
+  float layer1_color[4]{0.0f, 0.0f, 0.0f, 1.0f};
+  float layer2_color[4]{1.0f, 1.0f, 1.0f, 1.0f};
+
   /// Whether the host shows the depiction as an overlay: straight over
   /// whatever is behind, with no backing or frame of its own around it
   /// (a doc-ui overlay viewer pane). Kinds able to then draw with
@@ -137,6 +147,10 @@ struct DepictionDrawContext {
   /// Grey an rgb color in place if disabled (to a grey scaled from its
   /// luminance, as disabled buttons and text do); else leave it be.
   void StandardColor(float* rgb) const;
+
+  /// The layered-mask colors (rgba) with host state applied, ready for
+  /// SimpleComponent::SetLayeredMask: the underlay, and the two layers.
+  void StandardLayerColors(float* underlay, float* layer1, float* layer2) const;
 };
 
 /// Input a host routes to a depiction (hosts opt in; see
@@ -212,6 +226,13 @@ class Depiction : public Object {
   virtual void Update(millisecs_t now);
 
   virtual void Draw(const DepictionDrawContext& context) = 0;
+
+  /// Whether our next Draw with a layered mask (see
+  /// DepictionDrawContext::layered_mask) draws the host's backing
+  /// itself, as the underlay beneath what we show; the host then
+  /// skips its own backing draw. Kinds drawing through the mask in one
+  /// go (a live picture, once it has one) say yes; the default no.
+  virtual auto DrawsHostBacking() const -> bool;
 
   /// Our input handling, or nullptr if we take no input. Hosts only
   /// route input to us if they opt in (a depiction on a button must

@@ -169,17 +169,13 @@ class CharacterViewer(bui.Viewer):
         )
 
         # A touch of hand-held wobble to its aim.
-        self._viewer.set_camera_shake(
-            strength=1.3,
-            stiffness=100.0,
-            damping=2.0,
-            poke_interval_min=0.15,
-            poke_interval_max=1.0,
-        )
+        self._camera_shake: float | None = None
+        self.set_camera_shake(1.0)
 
         # Turning the device turns our view of the character with it
         # (a fraction as far; a full turn's worth is too much).
-        self._viewer.set_camera_tilt_orbit(0.2)
+        self._camera_gyro: float | None = None
+        self.set_camera_gyro(1.0)
 
         # Our character stands about 4.65 out from the camera. It and
         # whatever it holds or wears stay sharp; the ground running up
@@ -209,6 +205,8 @@ class CharacterViewer(bui.Viewer):
         assert isinstance(depiction, bdep.CharacterViewerDepiction)
         viewer = cls.get(key)
         viewer.set_spaz_def(depiction.spaz)
+        viewer.set_camera_shake(depiction.camera_shake)
+        viewer.set_camera_gyro(depiction.camera_gyro)
         return viewer
 
     @classmethod
@@ -244,6 +242,35 @@ class CharacterViewer(bui.Viewer):
     @override
     def handle_release(self) -> None:
         self._play.release()
+
+    def set_camera_shake(self, amount: float) -> None:
+        """Scale the camera's hand-held wobble (1 is the usual).
+
+        0 or less holds it still (and skips stepping it entirely); 10 is
+        the most there is.
+        """
+        amount = min(max(0.0, amount), 10.0)
+        if amount == self._camera_shake:
+            return
+        self._camera_shake = amount
+        self._viewer.set_camera_shake(
+            strength=1.3 * amount,
+            stiffness=100.0,
+            damping=2.0,
+            poke_interval_min=0.15,
+            poke_interval_max=1.0,
+        )
+
+    def set_camera_gyro(self, amount: float) -> None:
+        """Scale how far turning the device swings our view (1 is usual).
+
+        0 or less doesn't swing it at all; 10 is the most there is.
+        """
+        amount = min(max(0.0, amount), 10.0)
+        if amount == self._camera_gyro:
+            return
+        self._camera_gyro = amount
+        self._viewer.set_camera_tilt_orbit(0.2 * amount)
 
     def set_spaz_def(self, spaz_json: str | None) -> None:
         """Show a spaz, given its definition json (a character's spaz part).

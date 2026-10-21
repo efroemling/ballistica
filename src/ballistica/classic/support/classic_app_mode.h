@@ -108,10 +108,6 @@ class ClassicAppMode : public base::AppMode {
   // elements are skipped.
   void SetGameRoster(const JsonRef& roster);
   auto GetPartySize() const -> int override;
-  auto kick_vote_in_progress() const -> bool { return kick_vote_in_progress_; }
-  void StartKickVote(scene_v1::ConnectionToClient* starter,
-                     scene_v1::ConnectionToClient* target);
-  void set_kick_voting_enabled(bool enable) { kick_voting_enabled_ = enable; }
   void SetForegroundScene(scene_v1::Scene* sg);
 
   void LaunchHostSession(
@@ -167,12 +163,6 @@ class ClassicAppMode : public base::AppMode {
   void SetReplaySpeedExponent(int val);
   void PauseReplay();
   void ResumeReplay();
-  void set_admin_public_ids(const std::set<std::string>& ids) {
-    admin_public_ids_ = ids;
-  }
-  const std::set<std::string>& admin_public_ids() const {
-    return admin_public_ids_;
-  }
   auto last_connection_to_client_join_time() const -> millisecs_t {
     return last_connection_to_client_join_time_;
   }
@@ -366,7 +356,6 @@ class ClassicAppMode : public base::AppMode {
   void CancelInternalMusicRetry_();
   void OnGameRosterChanged_();
   void PruneScanResults_();
-  void UpdateKickVote_();
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
   void Reset_();
   void PruneSessions_();
@@ -426,8 +415,6 @@ class ClassicAppMode : public base::AppMode {
   ClientAuthMode client_auth_mode_{ClientAuthMode::kOff};
   bool idle_exiting_{};
   bool game_roster_dirty_{};
-  bool kick_vote_in_progress_{};
-  bool kick_voting_enabled_{true};
   bool replay_paused_{};
   bool root_ui_gold_pass_{};
   bool root_ui_have_live_values_{};
@@ -437,10 +424,6 @@ class ClassicAppMode : public base::AppMode {
   std::vector<GameRosterEntry> game_roster_;
   millisecs_t last_game_roster_send_time_{};
   std::unique_ptr<scene_v1::ConnectionSet> connections_;
-  Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_starter_;
-  Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_target_;
-  millisecs_t kick_vote_end_time_{};
-  int last_kick_votes_needed_{-1};
   millisecs_t legacy_display_time_millisecs_{};
   millisecs_t legacy_display_time_millisecs_prev_{-1};
 
@@ -471,7 +454,6 @@ class ClassicAppMode : public base::AppMode {
   int root_ui_chest_3_unlock_tokens_;
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
-  std::set<std::string> admin_public_ids_;
   millisecs_t last_connection_to_client_join_time_{};
   std::string public_party_name_;
   std::string public_party_min_league_;

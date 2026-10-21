@@ -6,12 +6,17 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "ballistica/base/base.h"
 #include "ballistica/base/support/media_block.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector3f.h"
+
+namespace ballistica {
+class JsonRef;
+}
 
 namespace ballistica::base {
 
@@ -57,8 +62,9 @@ class MeshViewer : public Object {
 
   /// Draw with no background at all: our picture keeps an alpha
   /// channel (premultiplied) and is composited over whatever is behind
-  /// it, the background color ignored. For hosts showing us over the
-  /// window directly (a doc-ui overlay viewer pane).
+  /// it (a doc-ui viewer pane's own background, or the window). The
+  /// default background is then unused; one our depiction asks for
+  /// ('bg') still draws, solid.
   void SetTransparent(bool transparent);
 
   /// Swing the view around: horizontal and vertical motion as
@@ -99,34 +105,72 @@ class MeshViewer : public Object {
     Object::Ref<TextureAsset> tint_texture_asset;
   };
 
-  /// How what we show is fit into the picture: a center to look at and
-  /// a scale bringing everything within the unit sphere.
-  struct Fit {
-    Vector3f center{0.0f, 0.0f, 0.0f};
-    float scale{1.0f};
-    // The radius of everything about center, as it is (unscaled, and
-    // before any bounds scale).
-    float radius{1.0f};
+  /// A ball holding something, in the depiction's own space.
+  struct Sphere {
+    Vector3f center;
+    float radius{};
   };
 
-  /// A camera placed by hand (see MeshViewerDepiction.camera), in the
-  /// depiction's own space.
-  struct ManualCamera {
+  /// What we show, as bounds. We never scale or move what we show to
+  /// fit it (sizes stay in its own units, for anything that goes by
+  /// them); our camera frames it instead.
+  struct Fit {
+    // The middle of everything, which a framing camera looks at and the
+    // turntable turns about.
+    Vector3f center{0.0f, 0.0f, 0.0f};
+    // The radius of everything about center (before any bounds scale).
+    float radius{1.0f};
+    // Each entry's mesh as placed (those with bounds), for clipping.
+    std::vector<Sphere> spheres;
+  };
+
+  /// Where a hand-placed camera is at some moment, in the depiction's
+  /// own space (see MeshViewerCameraPose).
+  struct CameraPose {
     Vector3f position{0.0f, 0.0f, 1.0f};
     Vector3f target{0.0f, 0.0f, 0.0f};
     float fov_y{36.0f};
+    auto operator==(const CameraPose&) const -> bool = default;
   };
+
+  /// A camera placed by hand (see MeshViewerDepiction.camera): held at
+  /// one pose, or ping-ponging between it and a second.
+  struct ManualCamera {
+    CameraPose a;
+    // Set for a ping-pong camera (MeshViewerPingPongCamera).
+    std::optional<CameraPose> b;
+    // Seconds each way, and whether it keeps going back and forth
+    // rather than stopping at b (ping-pong only).
+    float travel_time{1.0f};
+    bool loop{true};
+    auto operator==(const ManualCamera&) const -> bool = default;
+  };
+
+  /// Where our hand-placed camera is right now.
+  auto ManualPose_() const -> CameraPose;
+
+  /// Read a depiction's camera ('cam'): what's wrong with it, or the
+  /// camera (none for a kind we don't know).
+  static auto ParseCamera_(const JsonRef& cam)
+      -> std::variant<std::optional<ManualCamera>, std::string>;
 
   /// Read a depiction into us; returns what's wrong with it, if
   /// anything.
   auto Parse_(const std::string& json) -> std::string;
+  void PrepareFrame_(FrameDef* frame_def);
   void Draw_(FrameDef* frame_def);
-  void DrawEntry_(const Entry& entry, FrameDef* frame_def, const Fit& fit,
-                  float turn_degrees);
+  void DrawEntry_(const Entry& entry, FrameDef* frame_def, float turn_degrees);
+  /// What the turntable turns about: our fit's center when we frame
+  /// things, the origin under a camera placed by hand.
+  auto Pivot_() const -> Vector3f;
+  /// Hand our camera what we show, as turned right now, to fit its clip
+  /// range to.
+  void UpdateClip_();
   void UpdateMedia_();
   static void ApplyEntryTransform_(const Entry& entry, RenderComponent* c);
   auto CalcFit_() const -> Fit;
   void UpdateCamera_();
+  void UpdateTransparent_();
   static auto FitSize_(int width, int height) -> std::pair<int, int>;
 
   Object::Ref<FixedCamera> camera_;
@@ -147,8 +191,14 @@ class MeshViewer : public Object {
   bool have_pose_{};
   // Set when the depiction places the camera itself.
   std::optional<ManualCamera> manual_camera_;
+  // How far a moving hand-placed camera is through its motion
+  // (seconds; only while drawn).
+  double camera_time_{};
+  std::optional<float> camera_shake_;
+  float camera_gyro_{1.0f};
   Vector3f default_background_{0.0f, 0.0f, 0.0f};
   std::optional<Vector3f> background_;
+  bool transparent_{};
   MediaBlock block_;
   MediaRetryPacer pacer_;
   // Whether we've said that an entry can't both blend and tint.

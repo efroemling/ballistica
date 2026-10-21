@@ -32,9 +32,6 @@
 
 namespace ballistica::scene_v1 {
 
-// How long new clients have to wait before starting a kick vote.
-const int kNewClientKickVoteDelay = 60000;
-
 ConnectionToClient::ConnectionToClient(int id)
     : id_(id),
       protocol_version_{
@@ -385,10 +382,6 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       if (!can_communicate()) {
         set_can_communicate(true);
 
-        // Don't allow fresh clients to start kick votes for a while.
-        next_kick_vote_allow_time_ =
-            g_core->AppTimeMillisecs() + kNewClientKickVoteDelay;
-
         // At this point we have their name, so lets announce their arrival.
         if (appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
           g_base->ScreenMessage(base::BuiltinStrings::Net::PlayerJoinedParty(
@@ -527,33 +520,35 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        // Validate the payload (nothing currently uses the parsed
-        // contents); it is the bytes between the type byte and the
+        // The payload is the bytes between the type byte and the
         // trailing null. Log-once only; this arrives from remote
         // clients, so per-packet logging would be a spam vector.
-        auto doc = JsonDoc::Parse(
-            std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
-                             buffer.size() - 2));
+        std::string_view payload(
+            reinterpret_cast<const char*>(buffer.data() + 1),
+            buffer.size() - 2);
+        auto doc = JsonDoc::Parse(payload);
         if (!doc.has_value()) {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got malformed jmessage packet (" + doc.error().message
                           + " at byte offset "
                           + std::to_string(doc.error().byte_offset) + ").");
+          break;
+        }
+        auto type = doc->root()["t"].as_double();
+        if (type.has_value()
+            && static_cast<int>(*type) == BA_JMESSAGE_HOST_UI) {
+          // Host-defined ui; Python decodes and handles it.
+          g_scene_v1->python->HandleHostUIMessageFromClient(
+              std::string(payload), id());
         }
       }
       break;
     }
 
     case BA_MESSAGE_KICK_VOTE: {
-      if (buffer.size() == 2) {
-        for (auto&& i : appmode->connections()->connections_to_clients()) {
-          ConnectionToClient* client = i.second.get();
-          if (client->id() == static_cast<int>(buffer[1])) {
-            appmode->StartKickVote(this, client);
-            break;
-          }
-        }
-      }
+      // Kick-vote requests from clients predating host-ui (build
+      // 23067). Kick voting now lives in Python and runs through
+      // host-ui pages, which those clients can't use; ignore them.
       break;
     }
 
@@ -762,9 +757,6 @@ void ConnectionToClient::HandleMessagePacket(
               }
               b2[msg_len] = 0;
 
-              bool kick_vote_in_progress{};
-              kick_vote_in_progress = appmode->kick_vote_in_progress();
-
               // Clamp messages at a reasonable size
               // (yes, people used this to try and crash machines).
               if (b2.size() > 100) {
@@ -775,23 +767,6 @@ void ConnectionToClient::HandleMessagePacket(
                     1, 0, 0,
                     ConnectionSet::LangStrWireTagged(
                         base::BuiltinStrings::Session::ChatMessageTooLong()));
-              } else if (kick_vote_in_progress
-                         && (!strcmp(b2.data(), "1")
-                             || !strcmp(b2.data(), "2"))) {
-                // Special case - if there's a kick vote going on, take
-                // '1' or '2' to be votes.
-                // TODO(ericf): Disable this based on build-numbers once
-                // we've
-                //  got GUI voting working.
-                if (!kick_voted_) {
-                  kick_voted_ = true;
-                  kick_vote_choice_ = !strcmp(b2.data(), "1");
-                } else {
-                  SendScreenMessage(
-                      R"({"r":"votedAlreadyText"})", 1, 0, 0,
-                      ConnectionSet::LangStrWireTagged(
-                          base::BuiltinStrings::Session::VotedAlready()));
-                }
               } else {
                 // Pass the message through any custom filtering we've
                 // got. If the filter tells us to ignore it, we're done.
@@ -1122,15 +1097,6 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
     peer_public_account_id_ = "";
   }
   got_v1_auth_from_master_server_ = true;
-}
-
-auto ConnectionToClient::IsAdmin() const -> bool {
-  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
-  if (peer_public_account_id_.empty()) {
-    return false;
-  }
-  return (appmode->admin_public_ids().find(peer_public_account_id_)
-          != appmode->admin_public_ids().end());
 }
 
 }  // namespace ballistica::scene_v1

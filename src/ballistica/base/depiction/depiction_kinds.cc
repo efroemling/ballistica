@@ -30,6 +30,7 @@ namespace {
 const char* const kTypeImage = "i";
 const char* const kTypeCharacterIcon = "ci";
 const char* const kTypeName = "n";
+const char* const kTypeBlank = "bl";
 
 /// A character's icon: its art tinted by its colors through the round
 /// icon mask, or the standard-spaz standin (in those same colors) while
@@ -768,6 +769,15 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   Object::Ref<TextureAsset> tint_texture_asset_;
 };
 
+/// Nothing at all: an empty doc-ui viewer pane, say, where its host's
+/// backing (and frame) are what show.
+class BlankDepiction : public Depiction {
+ public:
+  BlankDepiction() : Depiction(kTypeBlank) {}
+
+  void Draw(const DepictionDrawContext& context) override {}
+};
+
 // The component json a character icon (an icon block) or name (a name
 // block) carries, from its 'j' field.
 auto ComponentJson(const JsonRef& root) -> std::optional<std::string> {
@@ -807,6 +817,11 @@ void RegisterBaseDepictionKinds() {
           return {};
         }
         return Object::Ref<Depiction>(out.get());
+      });
+  DepictionRegistry::RegisterKind(
+      kTypeBlank,
+      [](const DepictionRegistry::Source& src) -> Object::Ref<Depiction> {
+        return Object::New<Depiction, BlankDepiction>();
       });
 }
 

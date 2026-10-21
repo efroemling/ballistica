@@ -18,6 +18,8 @@ values = [
     _hooks.get_player_icon,  # kGetPlayerIconCall
     _hooks.filter_chat_message,  # kFilterChatMessageCall
     _hooks.local_chat_message,  # kHandleLocalChatMessageCall
+    _hooks.host_ui_message_from_host,  # kHostUIMessageFromHostCall
+    _hooks.host_ui_message_from_client,  # kHostUIMessageFromClientCall
     _bascenev1.client_info_query_response,  # kClientInfoQueryResponseCall
     _messages.ShouldShatterMessage,  # kShouldShatterMessageClass
     _messages.ImpactDamageMessage,  # kImpactDamageMessageClass

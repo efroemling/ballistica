@@ -20,7 +20,7 @@ class DepictionSlot;
 /// shown in place of the texture while one is set (see DepictionSlot).
 class ImageWidget : public Widget {
  public:
-  enum class TransitionType : uint8_t { kInLeft, kScale };
+  enum class TransitionType : uint8_t { kInLeft, kScale, kFade };
   ImageWidget();
   ~ImageWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
@@ -107,7 +107,7 @@ class ImageWidget : public Widget {
 
  private:
   void DrawDepiction_(base::RenderPass* pass, bool transparent, float offs_x,
-                      float offs_y, float transition_scale,
+                      float offs_y, float transition_scale, float opacity,
                       millisecs_t current_time);
   auto DrawBrightness_(millisecs_t current_time) const -> float;
 

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.261014a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.261021`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages: shared vocabulary, plus a little
@@ -11,7 +11,7 @@ BaClassicAssets. Keep it light: no ui chrome, nothing large.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 688
+# ba_meta require asset-package 820
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -25,8 +25,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.bacommonassets.261014a
-_ASSET_PACKAGE = ApverNum(688)
+# a-0.bacommonassets.261021
+_ASSET_PACKAGE = ApverNum(820)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -252,6 +252,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Generic "No" button answering a yes/no question (the counterpart
+        #:     to "Yes").
+        #:
+        #:     English: "No"
+        no: LangStr
+
+        #: ::
+        #:
         #:     Generic "Not Now" dismiss button.
         #:
         #:     English: "Not Now"
@@ -356,6 +364,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Upgrade"
         upgrade: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Yes" button answering a yes/no question (the counterpart
+        #:     to "No"); not an acknowledgement (use "Ok" for those).
+        #:
+        #:     English: "Yes"
+        yes: LangStr
 
     class StringsComposeGroup:
         """
@@ -1379,8 +1395,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 149 strings (``actions``, ``compose``,
-    #: ``control``, ``locales``, ``status``, and 144 more). Full list in source.
+    #: The ``strings`` group - 151 strings (``actions``, ``compose``,
+    #: ``control``, ``locales``, ``status``, and 146 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 7 assets (``account_v2_icon``, ``black``,
@@ -1423,6 +1439,7 @@ _TREE = {
             'import_': (),
             'learn_more': (),
             'more': (),
+            'no': (),
             'not_now': (),
             'ok': (),
             'other': (),
@@ -1438,6 +1455,7 @@ _TREE = {
             'show': (),
             'submit': (),
             'upgrade': (),
+            'yes': (),
         },
         'compose': {
             'angle_button_suffix': ('main', 'button'),

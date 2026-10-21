@@ -436,6 +436,8 @@ static constexpr LoggerEntry kLoggerEntries[] = {
      CorePython::ObjID::kLoggerBaNetworkingLogCall},
     {LogName::kBaDiscord, CorePython::ObjID::kLoggerBaDiscord,
      CorePython::ObjID::kLoggerBaDiscordLogCall},
+    {LogName::kBaUser, CorePython::ObjID::kLoggerBaUser,
+     CorePython::ObjID::kLoggerBaUserLogCall},
 };
 static_assert(std::size(kLoggerEntries) == static_cast<size_t>(LogName::kLast),
               "kLoggerEntries must have one entry per LogName value "

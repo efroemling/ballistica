@@ -21,6 +21,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/al_sys.h"
 #include "ballistica/base/audio/audio.h"
@@ -101,6 +102,9 @@ const int kAudioProcessIntervalPendingLoad{1 * 1000};
 // tearing down our audio session, and the result sounds less like a click
 // and more like a moment of corrupted audio.
 const millisecs_t kSuspendFadeMillisecs{120};
+
+// Event-loop activity step for our periodic processing (see Process_()).
+const char* const kProcessStep{"Process_"};
 
 // How many steps we break that ramp into. OpenAL smooths gain changes
 // across each mix period, so this doesn't need to be fine grained.
@@ -321,6 +325,31 @@ void AudioServer::StartSync_() {
       NewLambdaRunnableUnmanaged([this] { OnThreadUnsuspend_(); }));
 }
 
+#if BA_ENABLE_AUDIO
+// Tell the user they'll have no sound. Audio init can fail before there is
+// a screen to show anything on, so wait until native bootstrapping is done
+// and give the screen a couple seconds to settle before showing it.
+static void ShowNoAudioScreenMessage_() {
+  g_base->logic->event_loop()->PushCall([] {
+    static int timer_id{};
+    static int ticks_since_bootstrap{};
+    timer_id = g_base->logic->NewAppTimer(
+        1000000, true, NewLambdaRunnable([] {
+                         if (!g_base->logic->app_bootstrapping_complete()) {
+                           return;
+                         }
+                         if (++ticks_since_bootstrap < 2) {
+                           return;
+                         }
+                         g_base->logic->DeleteAppTimer(timer_id);
+                         g_base->ScreenMessage(
+                             BuiltinStrings::Audio::Unavailable()->Evaluate(),
+                             {1.0f, 0.0f, 0.0f}, true);
+                       }).get());
+  });
+}
+#endif  // BA_ENABLE_AUDIO
+
 void AudioServer::Start_() {
   assert(g_base->InAudioThread());
 
@@ -403,8 +432,13 @@ void AudioServer::Start_() {
     alcSetCustomAndroidLogger(ALCustomAndroidLogCallback_);
 #endif
 
-    auto* device = alcOpenDevice(al_device_name);
-    if (!device) {
+    // Steps here are where field reports show the audio thread wedging
+    // (sometimes for minutes), so name each potentially-blocking call for
+    // the stuck-thread diagnostics (see EventLoop::DescribeActivity).
+    auto* loop = event_loop();
+
+    // If everything below fails, run with no sound rather than dying.
+    auto fall_back_to_null_device = [this](ALCdevice* device) {
       if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
@@ -415,19 +449,59 @@ void AudioServer::Start_() {
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
+      if (device) {
+        alcCloseDevice(device);
+      }
       g_core->logging->Log(
-          LogName::kBaAudio, LogLevel::kWarning,
-          "No audio devices found. Falling back to null audio device.");
+          LogName::kBaAudio, LogLevel::kError,
+          "Unable to init audio; falling back to null audio device (no "
+          "sound).");
       using_null_device_ = true;
-      if (!g_buildconfig.platform_android()) {
+      // No sources will ever exist; mark us ready so callers don't keep
+      // waiting on a bring-up that is never coming.
+      g_base->audio->set_server_ready();
+      ShowNoAudioScreenMessage_();
+    };
+
+    // Debug: BA_DEBUG_AUDIO_INIT_FAIL (test_game_run
+    // --debug-audio-init-fail) acts as if every open attempt failed.
+    if (getenv("BA_DEBUG_AUDIO_INIT_FAIL") != nullptr) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "BA_DEBUG_AUDIO_INIT_FAIL set; failing audio init.");
+      fall_back_to_null_device(nullptr);
+      loop->SetActivityStep(nullptr);
+      return;
+    }
+
+    loop->SetActivityStep("alcOpenDevice");
+    auto* device = alcOpenDevice(al_device_name);
+    if (!device) {
+      if (g_buildconfig.platform_android()) {
+        // Android has a single system device, so this is a failure, not a
+        // machine without speakers; the retries below may still get it.
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+      } else {
+        g_core->logging->Log(
+            LogName::kBaAudio, LogLevel::kWarning,
+            "No audio devices found. Falling back to null audio device.");
+        using_null_device_ = true;
         // No sources will ever exist; mark us ready so callers don't keep
         // waiting on a bring-up that is never coming.
         g_base->audio->set_server_ready();
+        loop->SetActivityStep(nullptr);
         return;
       }
     }
 
-    impl_->alc_context = alcCreateContext(device, nullptr);
+    loop->SetActivityStep("alcCreateContext");
+    impl_->alc_context = device ? alcCreateContext(device, nullptr) : nullptr;
 
     // Android special case: if we fail, try again after a few seconds.
     if (!impl_->alc_context && g_buildconfig.platform_android()) {
@@ -444,27 +518,26 @@ void AudioServer::Start_() {
               " OPENALSOFT-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      alcCloseDevice(device);
+      if (device) {
+        alcCloseDevice(device);
+      }
+      loop->SetActivityStep("audio init retry delay");
       g_core->platform->SleepSeconds(2.0);
+      loop->SetActivityStep("alcOpenDevice (retry)");
       device = alcOpenDevice(al_device_name);
       alGetError();  // Clear any errors.
 
       if (!device) {
-        std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
-            "------------------------"
-            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
-                + openalsoft_android_log_
-            + "\n-------------------------"
-              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
-        openalsoft_android_log_.clear();
-        FatalError("Fallback attempt device create failed.");
-      }
-      impl_->alc_context = alcCreateContext(device, nullptr);
-      if (impl_->alc_context) {
-        // For now want to explicitly know if this works.
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
-                             "Backup AL context creation successful!");
+                             "Fallback attempt device create failed.");
+      } else {
+        loop->SetActivityStep("alcCreateContext (retry)");
+        impl_->alc_context = alcCreateContext(device, nullptr);
+        if (impl_->alc_context) {
+          // For now want to explicitly know if this works.
+          g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                               "Backup AL context creation successful!");
+        }
       }
     }
 
@@ -483,47 +556,44 @@ void AudioServer::Start_() {
               " OPENALSOFT-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      alcCloseDevice(device);
+      if (device) {
+        alcCloseDevice(device);
+      }
       g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
+      loop->SetActivityStep("alcOpenDevice (OpenSL retry)");
       device = alcOpenDevice(al_device_name);
       alGetError();  // Clear any errors.
       if (!device) {
-        std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
-            "------------------------"
-            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
-                + openalsoft_android_log_
-            + "\n-------------------------"
-              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
-        openalsoft_android_log_.clear();
-        FatalError("Fallback attempt 2 device create failed.");
-      }
-      impl_->alc_context = alcCreateContext(device, nullptr);
-      if (impl_->alc_context) {
-        // For now want to explicitly know if this works.
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
-                             "Backup AL context creation 2 successful!");
+                             "Fallback attempt 2 device create failed.");
+      } else {
+        loop->SetActivityStep("alcCreateContext (OpenSL retry)");
+        impl_->alc_context = alcCreateContext(device, nullptr);
+        if (impl_->alc_context) {
+          // For now want to explicitly know if this works.
+          g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                               "Backup AL context creation 2 successful!");
+        }
       }
     }
 
-    // Fail at this point if we've got nothing.
+    // Give up on real audio at this point if we've got nothing.
     if (!impl_->alc_context) {
-      if (g_buildconfig.platform_android()) {
-        std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
-            "------------------------"
-            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
-                + openalsoft_android_log_
-            + "\n-------------------------"
-              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
-        openalsoft_android_log_.clear();
-      }
-      FatalError(
-          "Unable to init audio. Do you have speakers/headphones/etc. "
-          "connected?");
+      fall_back_to_null_device(device);
+      loop->SetActivityStep(nullptr);
+      return;
     }
-    BA_PRECONDITION_FATAL(impl_->alc_context);
-    BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
+    loop->SetActivityStep("alcMakeContextCurrent");
+    if (!alcMakeContextCurrent(impl_->alc_context)) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                           "alcMakeContextCurrent failed.");
+      alcDestroyContext(impl_->alc_context);
+      impl_->alc_context = nullptr;
+      fall_back_to_null_device(device);
+      loop->SetActivityStep(nullptr);
+      return;
+    }
+    loop->SetActivityStep(nullptr);
     CHECK_AL_ERROR;
 
 #if BA_PLATFORM_ANDROID
@@ -732,6 +802,11 @@ void AudioServer::CompleteShutdown_() {
   assert(!shutdown_completed_);
 
 #if BA_ENABLE_AUDIO
+  // Nothing was ever opened in null-device mode.
+  if (using_null_device_) {
+    shutdown_completed_ = true;
+    return;
+  }
   ALCboolean check = alcMakeContextCurrent(nullptr);
   if (!check) {
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
@@ -797,7 +872,9 @@ void AudioServer::SetSuspended_(bool suspend) {
           g_core->platform->LowLevelDebugLog(
               "Calling alcDevicePauseSOFT at "
               + std::to_string(g_core->AppTimeSeconds()));
+          event_loop()->SetActivityStep("alcDevicePauseSOFT");
           alcDevicePauseSOFT(device);
+          event_loop()->SetActivityStep(nullptr);
         } catch (const std::exception& e) {
           g_core->logging->Log(
               LogName::kBaAudio, LogLevel::kError,
@@ -833,7 +910,9 @@ void AudioServer::SetSuspended_(bool suspend) {
           g_core->platform->LowLevelDebugLog(
               "Calling alcDeviceResumeSOFT at "
               + std::to_string(g_core->AppTimeSeconds()));
+          event_loop()->SetActivityStep("alcDeviceResumeSOFT");
           alcDeviceResumeSOFT(device);
+          event_loop()->SetActivityStep(nullptr);
         } catch (const std::exception& e) {
           g_core->logging->Log(
               LogName::kBaAudio, LogLevel::kError,
@@ -850,7 +929,9 @@ void AudioServer::SetSuspended_(bool suspend) {
       last_started_playing_time_ = g_core->AppTimeSeconds();
       suspended_ = false;
 #if BA_ENABLE_AUDIO
-      CHECK_AL_ERROR;
+      if (!using_null_device_) {
+        CHECK_AL_ERROR;
+      }
 #endif
 
       // Go through all of our sources and stop any we've wanted to stop
@@ -939,12 +1020,42 @@ void AudioServer::PushSourceSetPositionalCall(uint32_t play_id, bool val) {
   });
 }
 
-void AudioServer::PushSourceSetPositionCall(uint32_t play_id,
+void AudioServer::PushSourceSetPositionCall(int source_id, uint32_t play_id,
                                             const Vector3f& p) {
-  event_loop()->PushCall([this, play_id, p] {
+  assert(source_id >= 0);
+  {
+    std::scoped_lock lock(pending_positions_mutex_);
+    auto index = static_cast<size_t>(source_id);
+    if (index >= pending_source_positions_.size()) {
+      pending_source_positions_.resize(index + 1);
+    }
+    auto& slot = pending_source_positions_[index];
+    // An update for this same play is still queued; just freshen it.
+    // (A new play on the source always gets its own message so it stays
+    // ordered after the source's retarget.)
+    if (slot.pending && slot.play_id == play_id) {
+      slot.position = p;
+      return;
+    }
+    slot.play_id = play_id;
+    slot.position = p;
+    slot.pending = true;
+  }
+  event_loop()->PushCall([this, source_id, play_id] {
+    Vector3f pos;
+    {
+      std::scoped_lock lock(pending_positions_mutex_);
+      auto& slot = pending_source_positions_[static_cast<size_t>(source_id)];
+      // A newer play took the slot over; its own message handles it.
+      if (!slot.pending || slot.play_id != play_id) {
+        return;
+      }
+      pos = slot.position;
+      slot.pending = false;
+    }
     ThreadSource_* s = GetPlayingSound_(play_id);
     if (s) {
-      s->SetPosition(p.x, p.y, p.z);
+      s->SetPosition(pos.x, pos.y, pos.z);
     }
   });
 }
@@ -1041,7 +1152,24 @@ void AudioServer::PushResetCall() {
 }
 
 void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
-  event_loop()->PushCall([this, p] {
+  // Only the newest listener position matters, so while one update is
+  // still queued just replace its value (these come in every 100ms, and
+  // were most of a stuck audio thread's message backlog).
+  {
+    std::scoped_lock lock(pending_positions_mutex_);
+    pending_listener_position_ = p;
+    if (listener_position_pending_) {
+      return;
+    }
+    listener_position_pending_ = true;
+  }
+  event_loop()->PushCall([this] {
+    Vector3f p;
+    {
+      std::scoped_lock lock(pending_positions_mutex_);
+      p = pending_listener_position_;
+      listener_position_pending_ = false;
+    }
 #if BA_ENABLE_AUDIO
     if (!using_null_device_ && !suspended_ && !shutting_down_) {
       ALfloat lpos[3] = {p.x, p.y, p.z};
@@ -1349,7 +1477,10 @@ void AudioServer::ProcessDefaultDeviceChange_() {
     should_reopen_ = false;
     auto* device = alcGetContextsDevice(impl_->alc_context);
     assert(device);
-    if (alcReopenDeviceSOFT(device, nullptr, nullptr)) {
+    event_loop()->SetActivityStep("Process_: alcReopenDeviceSOFT");
+    auto reopened = alcReopenDeviceSOFT(device, nullptr, nullptr);
+    event_loop()->SetActivityStep(kProcessStep);
+    if (reopened) {
       g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
                            "Device re-opened for default-device-change.");
 #if BA_PLATFORM_ANDROID
@@ -1380,7 +1511,9 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
   auto* device = alcGetContextsDevice(impl_->alc_context);
   BA_PRECONDITION_FATAL(device != nullptr);
   ALCint connected{-1};
+  event_loop()->SetActivityStep("Process_: alcGetIntegerv(ALC_CONNECTED)");
   alcGetIntegerv(device, ALC_CONNECTED_, sizeof(connected), &connected);
+  event_loop()->SetActivityStep(kProcessStep);
   CHECK_AL_ERROR;
   if (connected != 0) {
     last_connected_time_ = real_time_seconds;
@@ -1401,7 +1534,9 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     }
     last_reset_attempt_time_ = real_time_seconds;
     BA_PRECONDITION_FATAL(alcResetDeviceSOFT != nullptr);
+    event_loop()->SetActivityStep("Process_: alcResetDeviceSOFT");
     auto result = alcResetDeviceSOFT(device, nullptr);
+    event_loop()->SetActivityStep(kProcessStep);
     CHECK_AL_ERROR;
 
     // If we were successful, clear out the wait for the next reset.
@@ -1463,6 +1598,35 @@ void AudioServer::Process_() {
   seconds_t real_time_seconds = g_core->AppTimeSeconds();
   millisecs_t real_time_millisecs = real_time_seconds * 1000;
 
+  // Our timer's runnable is a lambda defined in Start_(), which reads as
+  // startup in stuck-thread reports; say plainly that we're processing.
+  // (Steps below and in the calls we make restore this when done.)
+  event_loop()->SetActivityStep(kProcessStep);
+
+  // Debug: BA_DEBUG_AUDIO_STALL=SECONDS (test_game_run --debug-audio-stall)
+  // blocks this thread once, ~5s in, the way field audio threads get stuck
+  // in an OS audio call.
+  {
+    static const double stall_seconds = [] {
+      const char* val = getenv("BA_DEBUG_AUDIO_STALL");
+      return val ? atof(val) : 0.0;
+    }();
+    static const seconds_t first_process_time = real_time_seconds;
+    static bool stalled{};
+    if (stall_seconds > 0.0 && !stalled
+        && real_time_seconds - first_process_time > 5.0) {
+      stalled = true;
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "BA_DEBUG_AUDIO_STALL set; stalling audio thread for "
+              + std::to_string(stall_seconds) + "s.");
+      event_loop()->SetActivityStep("Process_: debug stall");
+      core::Platform::SleepMillisecs(
+          static_cast<millisecs_t>(stall_seconds * 1000.0));
+      event_loop()->SetActivityStep(kProcessStep);
+    }
+  }
+
   // Only do real work if we're in normal running mode.
   if (!suspended_ && !shutting_down_) {
     // Handle audio output switching on Android (involves single system
@@ -1476,7 +1640,9 @@ void AudioServer::Process_() {
     }
 
     // Do some loading.
+    event_loop()->SetActivityStep("Process_: audio loads");
     have_pending_loads_ = g_base->assets->RunPendingAudioLoads();
+    event_loop()->SetActivityStep(kProcessStep);
 
     // Keep that available-sources list filled.
     UpdateAvailableSources_();
@@ -1490,9 +1656,11 @@ void AudioServer::Process_() {
     // Update streaming sources.
     if (real_time_millisecs - last_stream_process_time_ > 100) {
       last_stream_process_time_ = real_time_millisecs;
+      event_loop()->SetActivityStep("Process_: streaming source updates");
       for (auto&& i : streaming_sources_) {
         i->Update();
       }
+      event_loop()->SetActivityStep(kProcessStep);
     }
 
     // If the app has switched active/inactive state, update our volumes (we

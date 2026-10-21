@@ -27,6 +27,7 @@ from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
 from baclassic._characterpreview import CharacterPreview
 from baclassic._cloudprofiles import CloudProfiles
+from baclassic._hostui import HostUISubsystem
 from baclassic import _input
 
 if TYPE_CHECKING:
@@ -234,6 +235,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.main_menu_window_refresh_check_count = 0  # FIXME: Mv to mainmenu.
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.party_window: weakref.ref[PartyWindow] | None = None
+
+        #: The buttons, pages and party notices a host gives its
+        #: clients (and shows itself).
+        self.host_ui = HostUISubsystem()
         self.main_menu_resume_callbacks: list = []
         self.saved_ui_state: bauiv1.MainWindowState | None = None
 
@@ -258,9 +263,11 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     async def run_v2_auth_handler(
         self,
         request: V2AuthRequest,
+        *,
         player_profiles: Any,
         classic_purchases: list[str] | None,
         cloud_characters: list[str] | None,
+        account_name_depiction: str | None,
         token: str,
     ) -> V2AuthResponse:
         """:meta private:"""
@@ -271,6 +278,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # for them to connect.
         if result.allow:
             now = time.monotonic()
+            if account_name_depiction is not None:
+                self.host_ui.note_account_name_depiction(
+                    request.account_id, account_name_depiction
+                )
             self.v2_auth_datas[token] = self.V2AuthData(
                 account_id=request.account_id,
                 account_tag=request.account_tag,
@@ -380,6 +391,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         plus = babase.app.plus
         assert plus is not None
+
+        self.host_ui.start()
 
         # The classic controls guide is drawn on each machine via a
         # local-display; wire up its handler.

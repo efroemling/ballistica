@@ -1464,6 +1464,32 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetGlow(glow_amount, std::max(0.0f, glow_blur));
             break;
           }
+          case ShadingType::kSimpleTextureModulatedTransparentLayeredMask: {
+            SetDoubleSided_(false);
+            SetBlend(true);
+            // Its output is always premultiplied.
+            SetBlendPremult(true);
+            float r, g, b, a, opacity;
+            float underlay[4];
+            float layer1[4];
+            float layer2[4];
+            buffer->GetFloats(&r, &g, &b, &a, &opacity);
+            buffer->GetFloats(&underlay[0], &underlay[1], &underlay[2],
+                              &underlay[3]);
+            buffer->GetFloats(&layer1[0], &layer1[1], &layer1[2], &layer1[3]);
+            buffer->GetFloats(&layer2[0], &layer2[1], &layer2[2], &layer2[3]);
+            ProgramSimpleGL* p = simple_tex_mod_layered_mask_prog_;
+            p->Bind();
+            p->SetColor(r, g, b, a);
+            const TextureAsset* t = buffer->GetTexture();
+            p->SetColorTexture(t);
+            const TextureAsset* t_mask = buffer->GetTexture();
+            p->SetMaskTexture(t_mask);
+            p->SetLayerColors(underlay, layer1, layer2);
+            p->SetLayerParams(opacity, t->premultiplied() ? 1.0f : 0.0f,
+                              t_mask->premultiplied() ? 1.0f : 0.0f);
+            break;
+          }
           case ShadingType::kSimpleTextureModulatedTransparentUV2Fade: {
             SetDoubleSided_(false);
             bool premult = static_cast<bool>(buffer->GetInt());
@@ -2907,6 +2933,9 @@ void RendererGL::Load() {
   RetainShader_(p);
   p = simple_tex_mod_colorized_masked_prog_ = new ProgramSimpleGL(
       this, SHD_TEXTURE | SHD_MODULATE | SHD_COLORIZE | SHD_MASKED);
+  RetainShader_(p);
+  p = simple_tex_mod_layered_mask_prog_ =
+      new ProgramSimpleGL(this, SHD_TEXTURE | SHD_MODULATE | SHD_LAYERED_MASK);
   RetainShader_(p);
   p = obj_prog_ = new ProgramObjectGL(this, 0);
   RetainShader_(p);

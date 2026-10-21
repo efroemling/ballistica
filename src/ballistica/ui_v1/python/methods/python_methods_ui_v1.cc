@@ -1198,6 +1198,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depiction_use_color_override_obj{Py_None};
   PyObject* depiction_overlay_obj{Py_None};
   PyObject* depiction_small_placeholder_obj{Py_None};
+  PyObject* depiction_layered_mask_obj{Py_None};
+  PyObject* depiction_layer1_color_obj{Py_None};
+  PyObject* depiction_layer2_color_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1239,9 +1242,12 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depiction_use_color_override",
                                  "depiction_overlay",
                                  "depiction_small_placeholder",
+                                 "depiction_layered_mask",
+                                 "depiction_layer1_color",
+                                 "depiction_layer2_color",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &color_obj, &texture_obj, &opacity_obj, &rotate_obj,
           &mesh_transparent_obj, &mesh_opaque_obj, &has_alpha_channel_obj,
@@ -1255,7 +1261,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &depiction_debug_obj, &tint3_color_obj, &nine_patch_insets_obj,
           &nine_patch_borders_obj, &nine_patch_tile_obj, &depiction_suffix_obj,
           &depiction_color_override_obj, &depiction_use_color_override_obj,
-          &depiction_overlay_obj, &depiction_small_placeholder_obj))
+          &depiction_overlay_obj, &depiction_small_placeholder_obj,
+          &depiction_layered_mask_obj, &depiction_layer1_color_obj,
+          &depiction_layer2_color_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1344,6 +1352,8 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
       b->set_transition_type(ImageWidget::TransitionType::kInLeft);
     } else if (transition_type == "scale") {
       b->set_transition_type(ImageWidget::TransitionType::kScale);
+    } else if (transition_type == "fade") {
+      b->set_transition_type(ImageWidget::TransitionType::kFade);
     } else {
       throw Exception("Invalid transition_type: '" + transition_type + "'.",
                       PyExcType::kValue);
@@ -1436,7 +1446,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
               depiction_frame_color_obj, depiction_backing_color_obj,
               depiction_debug_obj, depiction_suffix_obj,
               depiction_color_override_obj, depiction_use_color_override_obj,
-              depiction_overlay_obj, depiction_small_placeholder_obj})) {
+              depiction_overlay_obj, depiction_small_placeholder_obj,
+              depiction_layered_mask_obj, depiction_layer1_color_obj,
+              depiction_layer2_color_obj})) {
     DepictionSlot& slot{b->GetDepictionSlot()};
     if (depiction_take_input_obj != Py_None) {
       slot.set_take_input(Python::GetBool(depiction_take_input_obj));
@@ -1458,11 +1470,34 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     if (depiction_backing_color_obj != Py_None) {
       std::vector<float> c = Python::GetFloats(depiction_backing_color_obj);
-      if (c.size() != 3) {
-        throw Exception("Expected 3 floats for depiction_backing_color.",
+      if (c.size() != 3 && c.size() != 4) {
+        throw Exception("Expected 3 or 4 floats for depiction_backing_color.",
                         PyExcType::kValue);
       }
-      slot.set_backing_color(c[0], c[1], c[2]);
+      slot.set_backing_color(c[0], c[1], c[2], c.size() == 4 ? c[3] : 1.0f);
+    }
+    if (depiction_layered_mask_obj != Py_None) {
+      slot.set_layered_mask(Python::GetBool(depiction_layered_mask_obj));
+    }
+    for (int i = 0; i < 2; ++i) {
+      PyObject* obj =
+          i == 0 ? depiction_layer1_color_obj : depiction_layer2_color_obj;
+      if (obj == Py_None) {
+        continue;
+      }
+      std::vector<float> c = Python::GetFloats(obj);
+      if (c.size() != 3 && c.size() != 4) {
+        throw Exception(std::string("Expected 3 or 4 floats for ")
+                            + (i == 0 ? "depiction_layer1_color."
+                                      : "depiction_layer2_color."),
+                        PyExcType::kValue);
+      }
+      float a = c.size() == 4 ? c[3] : 1.0f;
+      if (i == 0) {
+        slot.set_layer1_color(c[0], c[1], c[2], a);
+      } else {
+        slot.set_layer2_color(c[0], c[1], c[2], a);
+      }
     }
     ApplyDepictionArgs(
         &slot, depiction_obj, depiction_key_obj, depiction_h_align_obj,
@@ -1508,7 +1543,7 @@ static PyMethodDef PyImageWidgetDef = {
     "  radial_amount: float | None = None,\n"
     "  draw_controller_mult: float | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
-    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale', 'fade'] | None = None,\n"
     "  match_backing_glow: bool | None = None,\n"
     "  depiction: str | None = None,\n"
     "  depiction_key: str | None = None,\n"
@@ -1527,6 +1562,9 @@ static PyMethodDef PyImageWidgetDef = {
     "  depiction_use_color_override: bool | None = None,\n"
     "  depiction_overlay: bool | None = None,\n"
     "  depiction_small_placeholder: bool | None = None,\n"
+    "  depiction_layered_mask: bool | None = None,\n"
+    "  depiction_layer1_color: Sequence[float] | None = None,\n"
+    "  depiction_layer2_color: Sequence[float] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -1572,10 +1610,20 @@ static PyMethodDef PyImageWidgetDef = {
     "\n"
     "Images take no input; with ``depiction_take_input`` set, presses\n"
     "and drags go to depictions that take some (a live viewer's).\n"
-    "``depiction_backing_color`` draws beneath the depiction (all that\n"
-    "shows while there is none), cut by ``mask_texture``, whose green\n"
-    "channel adds a frame in ``depiction_frame_color``; a live viewer's\n"
-    "picture honors the mask too. ``depiction_debug`` tints the box the\n"
+    "``depiction_backing_color`` (rgb or rgba) draws beneath the\n"
+    "depiction (all that shows while there is none), cut by\n"
+    "``mask_texture``, whose green channel adds a frame in\n"
+    "``depiction_frame_color``; a live viewer's picture honors the mask\n"
+    "too. With ``depiction_layered_mask`` set the mask is a layered one\n"
+    "instead: its red channel is how much of the depiction (over the\n"
+    "backing) shows, green and blue how much of\n"
+    "``depiction_layer1_color`` and ``depiction_layer2_color`` (rgb or\n"
+    "rgba; black and white by default: shadows, then highlights) are\n"
+    "painted over that in turn, and alpha how much of the whole is\n"
+    "drawn. Painted layers add coverage where there's nothing, so a\n"
+    "shadow cast over a clear backing darkens what's behind it; a\n"
+    "layered mask should be built as a data texture (its channels are\n"
+    "independent values). ``depiction_debug`` tints the box the\n"
     "depiction reports covering (what a hit-tested button takes presses\n"
     "over), to check it against what is drawn. See also\n"
     "``get_depiction_control()``.\n"
@@ -2188,6 +2236,9 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* darken_behind_obj{Py_None};
   PyObject* darken_behind_is_permanent_obj{Py_None};
   PyObject* background_offset_obj{Py_None};
+  PyObject* background_scale_obj{Py_None};
+  PyObject* clean_layout_obj{Py_None};
+  PyObject* background_art_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2224,10 +2275,13 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "darken_behind",
                                  "darken_behind_is_permanent",
                                  "background_offset",
+                                 "background_scale",
+                                 "clean_layout",
+                                 "background_art",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &background_obj, &selected_child_obj,
           &transition_obj, &cancel_button_obj, &start_button_obj,
@@ -2240,7 +2294,8 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
           &toolbar_cancel_button_style_obj, &on_select_call_obj,
           &claim_outside_clicks_obj, &claims_up_down_obj, &darken_behind_obj,
-          &darken_behind_is_permanent_obj, &background_offset_obj)) {
+          &darken_behind_is_permanent_obj, &background_offset_obj,
+          &background_scale_obj, &clean_layout_obj, &background_art_obj)) {
     return nullptr;
   }
 
@@ -2484,6 +2539,30 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     widget->set_background_offset(offset[0], offset[1]);
   }
+  if (background_scale_obj != Py_None) {
+    auto bscale = Python::GetFloats(background_scale_obj);
+    if (bscale.size() != 2) {
+      throw Exception("Expected 2 floats for background_scale.",
+                      PyExcType::kValue);
+    }
+    widget->set_background_scale(bscale[0], bscale[1]);
+  }
+  if (clean_layout_obj != Py_None) {
+    widget->set_clean_layout(Python::GetBool(clean_layout_obj));
+  }
+  if (background_art_obj != Py_None) {
+    auto art = Python::GetString(background_art_obj);
+    if (art == "auto") {
+      widget->set_backing_art(ContainerWidget::BackingArt::kAuto);
+    } else if (art == "tall") {
+      widget->set_backing_art(ContainerWidget::BackingArt::kTall);
+    } else if (art == "squat") {
+      widget->set_backing_art(ContainerWidget::BackingArt::kSquat);
+    } else {
+      throw Exception("Invalid background_art: '" + art + "'.",
+                      PyExcType::kValue);
+    }
+  }
 
   // Run any calls built up by UI callbacks.
   ui_op_context.Finish();
@@ -2545,7 +2624,11 @@ static PyMethodDef PyContainerWidgetDef = {
     "  claims_up_down: bool | None = None,\n"
     "  darken_behind: bool | None = None,\n"
     "  darken_behind_is_permanent: bool | None = None,\n"
-    "  background_offset: Sequence[float] | None = None) -> bauiv1.Widget\n"
+    "  background_offset: Sequence[float] | None = None,\n"
+    "  background_scale: Sequence[float] | None = None,\n"
+    "  clean_layout: bool | None = None,\n"
+    "  background_art: Literal['auto', 'tall', 'squat'] | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a container widget.\n"
     "\n"
@@ -2553,9 +2636,21 @@ static PyMethodDef PyContainerWidgetDef = {
     "a new one is created and returned. Arguments that are not set to None\n"
     "are applied to the Widget.\n"
     "\n"
+    "With 'clean_layout', the widget's bounds are exactly an area known to\n"
+    "lie within its background art's fully-opaque pixels, the art hanging\n"
+    "out around them by an amount set by the art alone, rather than being\n"
+    "placed around the bounds by historical fudge factors; size and place\n"
+    "such a container around whatever must sit on solid art. It also\n"
+    "scales in and out about its true center.\n"
+    "\n"
+    "'background_art' picks which window backing art to draw: 'tall'\n"
+    "(boxier, for taller windows), 'squat' (rounder, for squatter ones),\n"
+    "or 'auto' (the default), which picks by the widget's shape.\n"
+    "\n"
     "'background_offset' shifts where the background art draws (x, y)\n"
     "without moving anything else, for art whose placement doesn't suit\n"
-    "a particular window shape.",
+    "a particular window shape. 'background_scale' likewise scales it\n"
+    "(x, y) about its own center.",
 };
 
 // ------------------------------ rowwidget ------------------------------------
@@ -4262,6 +4357,75 @@ static PyMethodDef PyRootUIResumeUpdatesDef = {
     "Resume paused updates to the root ui for animation purposes.",
 };
 
+// --------------------------- set_party_notice --------------------------------
+
+static auto PySetPartyNotice(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* text_obj;
+  static const char* kwlist[] = {"text", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &text_obj)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  if (text_obj == Py_None) {
+    root_widget->SetPartyNotice(nullptr);
+  } else if (base::PythonClassLangStr::Check(text_obj)) {
+    root_widget->SetPartyNotice(
+        base::PythonClassLangStr::FromPyObj(text_obj).value());
+  } else {
+    throw Exception("Expected a babase.LangStr or None.", PyExcType::kType);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetPartyNoticeDef = {
+    "set_party_notice",             // name
+    (PyCFunction)PySetPartyNotice,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_party_notice(text: babase.LangStr | None) -> None\n"
+    "\n"
+    "Set the text shown below the party icon (None for none).\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- flash_party_icon --------------------------------
+
+static auto PyFlashPartyIcon(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  double duration;
+  static const char* kwlist[] = {"duration", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char**>(kwlist), &duration)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  root_widget->FlashPartyIcon(duration);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyFlashPartyIconDef = {
+    "flash_party_icon",             // name
+    (PyCFunction)PyFlashPartyIcon,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "flash_party_icon(duration: float) -> None\n"
+    "\n"
+    "Flash the party icon for a while (0 to stop).\n"
+    "\n"
+    ":meta private:",
+};
+
 // ----------------------------- reload_hooks ---------------------------------
 
 static auto PyReloadHooks(PyObject* self) -> PyObject* {
@@ -4382,6 +4546,8 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyOnUIScaleChangeDef,
       PyRootUIPauseUpdatesDef,
       PyRootUIResumeUpdatesDef,
+      PySetPartyNoticeDef,
+      PyFlashPartyIconDef,
       PyReloadHooksDef,
       PySetUIAssetSetDef,
       PyClearUIAssetSetDef,

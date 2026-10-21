@@ -30,6 +30,7 @@ from bauiv1lib.docui._debugdraw import (
     set_debug_draw_enabled,
     get_debug_draw_toggles,
 )
+from bauiv1lib.docui._panes import PaneMode
 from bauiv1lib.docui._typed import TypedDocUIController
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._window import DocUIWindow
@@ -39,6 +40,7 @@ __all__ = [
     'DocUIController',
     'TypedDocUIController',
     'DocUIWindow',
+    'PaneMode',
     'WindowOptions',
     'DocUILocalAction',
     'DebugDrawKind',

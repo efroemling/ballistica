@@ -40,6 +40,7 @@ class DepictionTypeID(Enum):
     NAME = 'n'
     CHARACTER_VIEWER = 'cv'
     MESH_VIEWER = 'mv'
+    BLANK = 'bl'
 
 
 class Depiction(IOMultiType[DepictionTypeID]):
@@ -76,6 +77,7 @@ class Depiction(IOMultiType[DepictionTypeID]):
     @override
     @classmethod
     def get_type(cls, type_id: DepictionTypeID) -> type[Depiction]:
+        # pylint: disable=too-many-return-statements
         t = DepictionTypeID
         if type_id is t.UNKNOWN:
             return UnknownDepiction
@@ -89,6 +91,8 @@ class Depiction(IOMultiType[DepictionTypeID]):
             return CharacterViewerDepiction
         if type_id is t.MESH_VIEWER:
             return MeshViewerDepiction
+        if type_id is t.BLANK:
+            return BlankDepiction
         assert_never(type_id)
 
     @override
@@ -115,6 +119,33 @@ class UnknownDepiction(Depiction):
     @classmethod
     def get_type_id(cls) -> DepictionTypeID:
         return DepictionTypeID.UNKNOWN
+
+
+@ioprepped
+@dataclass
+class BlankDepiction(Depiction):
+    """Nothing at all: an empty doc-ui viewer pane, say.
+
+    Whatever its host draws around it (a viewer pane's background and
+    frame) is what shows. A doc-ui page wanting an empty pane beside
+    its rows shows one of these, since a page with no viewer at all
+    gets no pane (see :attr:`bacommon.docui.v2.Page.viewer`). Clients
+    before :data:`bacommon.docui.v2.PAGE_DRIVEN_VIEWER_BUILD` don't
+    know it (see :func:`bacommon.docui.v2.blank_viewer`).
+    """
+
+    #: See :class:`Depiction`. (Ignored; there's nothing to color.)
+    color_override: Annotated[
+        tuple[float, float, float] | None, IOAttrs('co', store_default=False)
+    ] = None
+
+    #: See :class:`Depiction`. (Ignored, as above.)
+    team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DepictionTypeID:
+        return DepictionTypeID.BLANK
 
 
 @ioprepped
@@ -276,6 +307,19 @@ class CharacterViewerDepiction(Depiction):
 
     spaz: Annotated[str, IOAttrs('j')]
 
+    #: How much the camera's hand-held wobble moves, relative to the
+    #: usual: 2.0 wobbles twice as much, 0 (or less) holds it still, and
+    #: 10 is the most there is (more counts as 10). (Still regardless
+    #: while the viewer has camera shake disabled.)
+    camera_shake: Annotated[float, IOAttrs('cs', store_default=False)] = 1.0
+
+    #: How far turning the device (on devices with a gyro) swings the
+    #: camera around the character, relative to the usual: 2.0 swings
+    #: twice as far, 0 (or less) not at all, and 10 is the most there is
+    #: (more counts as 10). (Not at all regardless while the viewer has
+    #: camera gyro disabled.)
+    camera_gyro: Annotated[float, IOAttrs('cg', store_default=False)] = 1.0
+
     #: See :class:`Depiction`. (Viewers ignore it; the definition alone
     #: decides the character's colors.)
     color_override: Annotated[
@@ -368,8 +412,8 @@ class MeshViewerEntry:
 
 @ioprepped
 @dataclass
-class MeshViewerCamera:
-    """A :class:`MeshViewerDepiction`'s camera, placed by hand.
+class MeshViewerCameraPose:
+    """Where a :class:`MeshViewerCamera` is at some moment.
 
     In the depiction's own space: the same one its entries'
     :attr:`~MeshViewerEntry.position` values place them in.
@@ -385,6 +429,124 @@ class MeshViewerCamera:
     fov_y: Annotated[float, IOAttrs('f')]
 
 
+class MeshViewerCameraTypeID(Enum):
+    """Type ID for each kind of :class:`MeshViewerCamera`."""
+
+    UNKNOWN = 'u'
+    STILL = 's'
+    PING_PONG = 'pp'
+
+
+class MeshViewerCamera(IOMultiType[MeshViewerCameraTypeID]):
+    """A :class:`MeshViewerDepiction`'s camera, placed by hand.
+
+    Either held in one place (:class:`MeshViewerStillCamera`) or moving
+    (:class:`MeshViewerPingPongCamera`). A client that doesn't know a
+    kind frames things automatically, as with no camera at all.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MeshViewerCameraTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: MeshViewerCameraTypeID
+    ) -> type[MeshViewerCamera]:
+        t = MeshViewerCameraTypeID
+        if type_id is t.UNKNOWN:
+            return MeshViewerUnknownCamera
+        if type_id is t.STILL:
+            return MeshViewerStillCamera
+        if type_id is t.PING_PONG:
+            return MeshViewerPingPongCamera
+        assert_never(type_id)
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> MeshViewerCameraTypeID:
+        # Still cameras predate kinds (they were the only camera in
+        # 1.8.3), so they go without a type id; this must never change.
+        return MeshViewerCameraTypeID.STILL
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> MeshViewerCamera:
+        return MeshViewerUnknownCamera()
+
+
+@ioprepped
+@dataclass
+class MeshViewerUnknownCamera(MeshViewerCamera):
+    """A camera of a kind this client doesn't know.
+
+    Treated as no camera at all: things are framed automatically.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MeshViewerCameraTypeID:
+        return MeshViewerCameraTypeID.UNKNOWN
+
+
+@ioprepped
+@dataclass
+class MeshViewerStillCamera(MeshViewerCamera):
+    """A camera held in one place.
+
+    In the depiction's own space (see :class:`MeshViewerCameraPose`,
+    whose fields these are).
+    """
+
+    #: Where it looks from.
+    position: Annotated[tuple[float, float, float], IOAttrs('p')]
+
+    #: What it looks at.
+    target: Annotated[tuple[float, float, float], IOAttrs('t')]
+
+    #: Its vertical field of view, in degrees (between 0 and 180).
+    fov_y: Annotated[float, IOAttrs('f')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MeshViewerCameraTypeID:
+        return MeshViewerCameraTypeID.STILL
+
+
+@ioprepped
+@dataclass
+class MeshViewerPingPongCamera(MeshViewerCamera):
+    """A camera moving back and forth between two poses.
+
+    It starts at :attr:`a`, sways over to :attr:`b`, and sways back,
+    over and over: one smooth sine wave, fastest midway and easing
+    into each turnaround (position, target and field of view all move
+    together, in straight lines). Time only passes while the viewer is
+    shown, and an update leaving the camera as it was carries on
+    without starting over.
+    """
+
+    #: Where it starts.
+    a: Annotated[MeshViewerCameraPose, IOAttrs('a')]
+
+    #: Where it goes.
+    b: Annotated[MeshViewerCameraPose, IOAttrs('b')]
+
+    #: Seconds each way.
+    travel_time: Annotated[float, IOAttrs('d')]
+
+    #: Whether it keeps going back and forth. Off, it eases over to
+    #: :attr:`b` just once (with the same timing) and stays there.
+    loop: Annotated[bool, IOAttrs('l', store_default=False)] = True
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MeshViewerCameraTypeID:
+        return MeshViewerCameraTypeID.PING_PONG
+
+
 @ioprepped
 @dataclass
 class MeshViewerDepiction(Depiction):
@@ -393,8 +555,10 @@ class MeshViewerDepiction(Depiction):
     Its :attr:`entries` are placed relative to one another; the client
     frames them all to fill the picture (by the bounds meshes carry),
     turns them slowly, and lets them be swung around by dragging, much
-    as the asset browser's mesh preview does. A host keeps the viewer
-    running across updates, so changed entries reframe in place.
+    as the asset browser's mesh preview does. On devices with a gyro,
+    turning the device swings the view around what the camera looks at
+    (see :attr:`camera_gyro`). A host keeps the viewer running across
+    updates, so changed entries reframe in place.
     """
 
     entries: Annotated[list[MeshViewerEntry], IOAttrs('e')]
@@ -410,7 +574,7 @@ class MeshViewerDepiction(Depiction):
     #: How big an area it frames, relative to the bounds of everything
     #: in it (about the same center): 2.0 frames twice as much, so its
     #: meshes look half as big. Meant for shrinking (1 and up); below 1
-    #: crops in, and the nearest parts may get clipped away.
+    #: crops in (and well below, the camera ends up in among them).
     bounds_scale: Annotated[float, IOAttrs('bs', store_default=False)] = 1.0
 
     #: Degrees the turntable starts turned (about the vertical axis);
@@ -424,7 +588,8 @@ class MeshViewerDepiction(Depiction):
         None
     )
 
-    #: A camera placed by hand, for a set shot. When given, nothing is
+    #: A camera placed by hand, for a set shot (held still or moving;
+    #: see :class:`MeshViewerCamera`). When given, nothing is
     #: framed automatically (:attr:`bounds_scale` and :attr:`view_pitch`
     #: don't apply) and dragging up and down does nothing. The turntable
     #: still turns everything about the origin (with :attr:`spin`,
@@ -432,6 +597,24 @@ class MeshViewerDepiction(Depiction):
     camera: Annotated[
         MeshViewerCamera | None, IOAttrs('cam', store_default=False)
     ] = None
+
+    #: How much the camera's hand-held wobble moves, as
+    #: :attr:`CharacterViewerDepiction.camera_shake` does: 1.0 is the
+    #: character viewer's usual, 0 (or less) holds it still, and 10 is
+    #: the most there is. None for the default: 1.0 with a
+    #: :attr:`camera` placed by hand (a set shot), else 0.
+    camera_shake: Annotated[
+        float | None, IOAttrs('cs', store_default=False)
+    ] = None
+
+    #: How far turning the device (on devices with a gyro) swings the
+    #: camera around what it looks at, relative to the usual: 2.0 swings
+    #: twice as far, 0 (or less) not at all, and 10 is the most there is
+    #: (more counts as 10). The usual is a generous
+    #: swing for framed views and a subtler one (a third as far) under a
+    #: :attr:`camera` placed by hand. (Not at all regardless while the
+    #: viewer has camera gyro disabled.)
+    camera_gyro: Annotated[float, IOAttrs('cg', store_default=False)] = 1.0
 
     #: What shows behind the meshes; None for the host's usual viewer
     #: background (a doc-ui viewer pane's own blank color, say).

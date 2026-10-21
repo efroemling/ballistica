@@ -262,23 +262,48 @@ class ScrollEdgeStyle(Enum):
 
 
 class ViewerStyle(Enum):
-    """How a doc-ui window's viewer pane (if its layout has one) looks.
+    """Legacy: how a window's viewer pane looks, for builds 23064 and
+    23065 (see :attr:`Browse.viewer_style`).
 
-    Chosen when the window opens (see :attr:`Browse.viewer_style`),
-    since the pane is drawn before any page arrives: an overlay pane
-    showing a frame for a moment while its page loads would look
-    broken. So pick it knowing what the window will show, as with its
-    layout.
+    Later builds take it from each page instead (see
+    :attr:`Page.viewer_frame_style`).
     """
 
     #: A framed pane with a backing of its own; its viewer draws within
-    #: the frame. What an empty or loading pane shows too.
+    #: the frame.
     FRAMED = 'f'
 
     #: No frame or backing; the viewer draws straight over the window.
-    #: Viewers able to keep transparency (a mesh viewer) composite over
-    #: it; others (a character's scene) draw as a plain rectangle.
     OVERLAY = 'o'
+
+
+class ViewerFrameStyle(Enum):
+    """Whether a doc-ui window's viewer pane (if its page has one) is
+    framed.
+
+    Chosen by each page (see :attr:`Page.viewer_frame_style`); its
+    background (:attr:`Page.viewer_background_color`) works the same
+    in either.
+    """
+
+    #: Rounded, framed and shaded; the viewer and background draw
+    #: within the frame.
+    DEFAULT = 'd'
+
+    #: No frame or rounding; the viewer and background fill the pane's
+    #: rectangle.
+    NO_FRAME = 'n'
+
+
+class ViewerSide(Enum):
+    """Which side of a doc-ui window its viewer pane (if any) sits on.
+
+    Chosen by each page (see :attr:`Page.viewer_side`); the page's rows
+    get the rest of the window.
+    """
+
+    LEFT = 'l'
+    RIGHT = 'r'
 
 
 @ioprepped
@@ -319,9 +344,10 @@ class Browse(Action):
         ),
     ] = None
 
-    #: The new window's viewer pane style, or None for the default
-    #: (framed). Clients predating this ignore it (their panes are
-    #: framed).
+    #: (Legacy) The new window's viewer pane style, read only by builds
+    #: 23064 and 23065 (older ones ignore it and frame their panes).
+    #: From :data:`PAGE_DRIVEN_VIEWER_BUILD` on, each page picks its own
+    #: (:attr:`Page.viewer_frame_style`) and this is ignored.
     viewer_style: Annotated[
         ViewerStyle | None,
         IOAttrs('vs', store_default=False, enum_fallback=ViewerStyle.FRAMED),
@@ -1222,6 +1248,27 @@ class ButtonRow(Row):
     #: ignore it. Every row type has one.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
 
+    #: Extra space between the title and the subtitle (no effect
+    #: without both). Builds older than this field ignore it. Every row
+    #: type has one.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+
+    #: Whether the title word-wraps to fit the column. When False it
+    #: stays a single line, shrunk as needed to fit -- the choice for
+    #: short labels that read better whole, and for time-varying text
+    #: (countdowns and such), which can't be wrapped. Builds older than
+    #: this field always wrap. Every row type has one, as does
+    #: :class:`Section`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+
+    #: Whether the subtitle word-wraps; see :attr:`title_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+
+    #: Whether the footnote word-wraps; see :attr:`title_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
+
     #: Extra space between the row's content and its footnote (no
     #: effect without one); the footnote's counterpart to
     #: :attr:`spacing_title`. Builds older than this field ignore it.
@@ -1439,6 +1486,17 @@ class CheckboxRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1599,6 +1657,17 @@ class TextInputRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1760,6 +1829,17 @@ class ChoiceRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1903,6 +1983,17 @@ class ColorRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2066,6 +2157,17 @@ class SliderRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2221,6 +2323,17 @@ class NumberRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2359,6 +2472,17 @@ class ButtonControlRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2529,6 +2653,13 @@ class Section(Row):
         float | None, IOAttrs('fns', store_default=False)
     ] = None
 
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
+
     #: See :attr:`ButtonRow.footer_height`.
     footer_height: Annotated[float, IOAttrs('fh', store_default=False)] = 0.0
     footer_scale: Annotated[float, IOAttrs('fs', store_default=False)] = 1.0
@@ -2640,15 +2771,54 @@ class Page:
     #: recognized as such and ignored.
     state: Annotated[dict | None, IOAttrs('st', store_default=False)] = None
 
-    #: What the window's viewer pane shows, for windows at the
-    #: :attr:`WindowLayout.VIEWER` layout (ignored elsewhere): usually a
+    #: What the window's viewer pane shows, for windows at a viewer
+    #: layout (:attr:`WindowLayout.VIEWER` or
+    #: :attr:`WindowLayout.VIEWER_NARROW`; ignored elsewhere): usually a
     #: :class:`bacommon.depiction.CharacterViewerDepiction`. The client
     #: keeps what the pane shows running across pages, so a page re-sent
     #: with a changed depiction (an editor's draft, say) updates the
-    #: picture in place. Without one the pane is left blank.
+    #: picture in place.
+    #:
+    #: Without one there is no pane: the page's rows get the window's
+    #: whole width, so lay them out for that (a confirmation centered in
+    #: the window, say). For an empty pane, send a
+    #: :class:`bacommon.depiction.BlankDepiction` (see
+    #: :func:`blank_viewer`). Builds before
+    #: :data:`PAGE_DRIVEN_VIEWER_BUILD` show a blank pane either way,
+    #: with the rows in their usual column beside it.
     viewer: Annotated[
         bacommon.depiction.Depiction | None, IOAttrs('v', store_default=False)
     ] = None
+
+    #: Whether the viewer pane (if any) is framed. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD` (their panes are framed).
+    viewer_frame_style: Annotated[
+        ViewerFrameStyle,
+        IOAttrs(
+            'vfs',
+            store_default=False,
+            enum_fallback=ViewerFrameStyle.DEFAULT,
+        ),
+    ] = ViewerFrameStyle.DEFAULT
+
+    #: What shows behind the viewer pane's content (rgba; any alpha
+    #: lets the window show through), framed or not. None for the frame
+    #: style's usual one: blending into the window when framed, clear
+    #: when not. Viewers able to keep transparency (a mesh viewer) draw
+    #: over it; others (a character's scene) cover it. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD`.
+    viewer_background_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('vbg', store_default=False),
+    ] = None
+
+    #: Which side the viewer pane (if any) sits on. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD` (their panes are on the
+    #: left).
+    viewer_side: Annotated[
+        ViewerSide,
+        IOAttrs('vsd', store_default=False, enum_fallback=ViewerSide.LEFT),
+    ] = ViewerSide.LEFT
 
     #: Center content vertically when it's smaller than the available height.
     center_vertically: Annotated[bool, IOAttrs('cv', store_default=False)] = (
@@ -2671,6 +2841,31 @@ class Page:
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
+
+
+#: The first client build whose viewer panes follow their page. A page
+#: without a viewer gets no pane (and its rows the whole window), and
+#: :attr:`Page.viewer_frame_style`, :attr:`Page.viewer_background_color`,
+#: :attr:`Page.viewer_side` and
+#: :class:`bacommon.depiction.BlankDepiction` are understood. Lay out a
+#: viewer-less page for the narrow column beside a blank pane for older
+#: builds.
+PAGE_DRIVEN_VIEWER_BUILD = 23066
+
+
+def blank_viewer(
+    engine_build_number: int,
+) -> bacommon.depiction.Depiction | None:
+    """An empty viewer pane for a page, for a client build.
+
+    A :class:`bacommon.depiction.BlankDepiction` (the pane then shows
+    just its background; see :attr:`Page.viewer_background_color`), or
+    None for builds before :data:`PAGE_DRIVEN_VIEWER_BUILD`, which
+    don't know that kind but show no viewer as a blank pane anyway.
+    """
+    if engine_build_number < PAGE_DRIVEN_VIEWER_BUILD:
+        return None
+    return bacommon.depiction.BlankDepiction()
 
 
 class ResponseStatus(Enum):

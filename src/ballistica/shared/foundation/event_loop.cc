@@ -4,8 +4,10 @@
 
 #include <Python.h>
 
+#include <cstdio>
 #include <list>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <vector>
 
@@ -33,6 +35,7 @@ using core::g_core;
 
 EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
     : source_(source), identifier_(identifier_in) {
+  timers_.SetRunObserver(NoteTimerActivity_, this);
   switch (source_) {
     case ThreadSource::kCreate: {
       // IMPORTANT: We grab this lock *before* kicking off our thread, and
@@ -276,13 +279,17 @@ void EventLoop::Run_(bool single_cycle) {
         }
         case ThreadMessage_::Type::kSuspend: {
           assert(!suspended_);
+          NoteActivity_("running suspend callbacks", false);
           RunSuspendCallbacks_();
+          ClearActivity_();
           suspended_ = true;
           break;
         }
         case ThreadMessage_::Type::kUnsuspend: {
           assert(suspended_);
+          NoteActivity_("running unsuspend callbacks", false);
           RunUnsuspendCallbacks_();
+          ClearActivity_();
           suspended_ = false;
           break;
         }
@@ -299,6 +306,7 @@ void EventLoop::Run_(bool single_cycle) {
     if (!suspended_) {
       timers_.Run(g_core->AppTimeMicrosecs());
       RunPendingRunnables_();
+      ClearActivity_();
     }
 
     if (done_ || single_cycle) {
@@ -448,6 +456,43 @@ void EventLoop::Exit() { done_ = true; }
 
 EventLoop::~EventLoop() = default;
 
+void EventLoop::NoteActivity_(const char* what, bool is_type_name) {
+  activity_start_time_.store(core::Platform::TimeMonotonicMicrosecs(),
+                             std::memory_order_relaxed);
+  activity_is_type_name_.store(is_type_name, std::memory_order_relaxed);
+  activity_step_.store(nullptr, std::memory_order_relaxed);
+  activity_.store(what, std::memory_order_relaxed);
+}
+
+void EventLoop::NoteTimerActivity_(void* ctx, Runnable* runnable) {
+  static_cast<EventLoop*>(ctx)->NoteActivity_(typeid(*runnable).name(), true);
+}
+
+auto EventLoop::DescribeActivity() const -> std::string {
+  const char* what = activity_.load(std::memory_order_relaxed);
+  if (what == nullptr) {
+    return "idle";
+  }
+  bool is_type_name = activity_is_type_name_.load(std::memory_order_relaxed);
+  microsecs_t start = activity_start_time_.load(std::memory_order_relaxed);
+  const char* step = activity_step_.load(std::memory_order_relaxed);
+
+  std::string name = (is_type_name && g_core)
+                         ? g_core->platform->DemangleCXXSymbol(what)
+                         : std::string(what);
+  char duration[32];
+  snprintf(duration, sizeof(duration), "%.1f",
+           static_cast<double>(core::Platform::TimeMonotonicMicrosecs() - start)
+               / 1000000.0);
+  // Labels are phrased as activities already ("acquiring Python GIL").
+  std::string out =
+      (is_type_name ? "running " : "") + name + " for " + duration + "s";
+  if (step != nullptr) {
+    out += std::string(" (step: ") + step + ")";
+  }
+  return out;
+}
+
 void EventLoop::LogThreadMessageTally_(
     std::vector<std::pair<LogLevel, std::string>>* log_entries) {
   assert(g_core);
@@ -509,6 +554,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   // thread doing the logging we would get deadlock.
   // So tally up any logs and send them after.
   std::vector<std::pair<LogLevel, std::string>> log_entries;
+  bool describe_activity{};
+  bool overflowed{};
   {
     std::scoped_lock lock(thread_message_mutex_);
 
@@ -548,17 +595,32 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
             LogLevel::kError, "ThreadMessage list > 1000 in thread: " + name_);
 
         LogThreadMessageTally_(&log_entries);
+        describe_activity = true;
       }
     }
 
     // Prevent runaway mem usage if the list gets out of control.
     if (thread_messages_.size() > 10000) {
-      FatalError("ThreadMessage list > 10000 in thread: " + name_);
+      overflowed = true;
     }
 
     // Unlock thread-message list and inform thread that there's something
     // available.
   }
+
+  // A backed-up list almost always means the thread is stuck inside a
+  // single call, so say what it is doing (described outside the lock since
+  // it can demangle/log).
+  if (overflowed) {
+    FatalError("ThreadMessage list > 10000 in thread: " + name_ + "; thread is "
+               + DescribeActivity() + ".");
+  }
+  if (describe_activity) {
+    log_entries.emplace_back(
+        LogLevel::kError,
+        "EventLoop " + name_ + " thread is " + DescribeActivity() + ".");
+  }
+
   thread_message_cv_.notify_all();
 
   // Now log anything we accumulated safely outside of the locked section.
@@ -624,6 +686,7 @@ void EventLoop::RunPendingRunnables_() {
   runnables_.swap(runnables);
   bool do_notify_listeners{};
   for (auto&& i : runnables) {
+    NoteActivity_(typeid(*i.first).name(), true);
     i.first->RunAndLogErrors();
     delete i.first;
 
@@ -769,8 +832,10 @@ void EventLoop::AcquireGIL_() {
       debug_timing ? core::Platform::TimeMonotonicMillisecs() : 0};
 
   if (py_thread_state_) {
+    NoteActivity_("acquiring Python GIL", false);
     PyEval_RestoreThread(py_thread_state_);
     py_thread_state_ = nullptr;
+    ClearActivity_();
   }
 
   if (debug_timing) {

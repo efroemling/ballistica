@@ -426,6 +426,11 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         main_window = self._main_window()
         if main_window:
             main_window.main_window_close(transition=transition)
+
+            # If nothing replaces it (as when navigating, which clears
+            # and then sets), the ui has been dismissed; tell the
+            # app-mode once that's settled.
+            babase.pushcall(babase.WeakCallStrict(self._check_dismissed))
         else:
             # Fallback; if we have a widget but no window, nuke the widget.
             if self._main_window_widget:
@@ -437,6 +442,11 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
+
+    def _check_dismissed(self) -> None:
+        mode = babase.app.mode
+        if not self.has_main_window() and mode is not None:
+            mode.on_main_ui_dismissed()
 
     def save_main_window_state(self, window: MainWindow) -> MainWindowState:
         """Fully initialize a window-state from a window.
@@ -668,104 +678,16 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         If a non-matching auxiliary window exists in the stack, this
         call will back out past that and replace it with this
         (effectively ending the old side-quest and starting a new one).
+
+        With no main window up (mid-game, with just an overlay such as
+        the party window showing), the auxiliary window becomes the
+        top-level one, and backing out of it closes the ui.
         """
-        # pylint: disable=unidiomatic-typecheck
+        from bauiv1._auxwindow import auxiliary_window_activate
 
-        current_main_window = self.get_main_window()
-
-        # Scan our ancestors for auxiliary states matching our type as
-        # well as auxiliary states in general.
-        aux_matching_state: bauiv1.MainWindowState | None = None
-        aux_state: bauiv1.MainWindowState | None = None
-
-        if current_main_window is None:
-            raise RuntimeError(
-                'Not currently handling no-top-level-window case.'
-            )
-
-        state = current_main_window.main_window_back_state
-        while state is not None:
-            assert state.window_type is not None
-            assert state.extra_type_id is not None
-            if state.is_auxiliary:
-                if (
-                    state.window_type is win_type
-                    and state.extra_type_id == win_extra_type_id
-                ):
-                    aux_matching_state = state
-                else:
-                    aux_state = state
-
-            state = state.parent
-
-        # If there's an ancestor auxiliary window-state matching our
-        # type, back out past it (example: poking settings, navigating
-        # down a level or two, and then poking settings again should
-        # back out of settings).
-        if aux_matching_state is not None:
-            current_main_window.main_window_back_state = (
-                aux_matching_state.parent
-            )
-            current_main_window.main_window_back()
-            return
-
-        # If there's an ancestor auxiliary state *not* matching our
-        # type, crop the state and swap in our new auxiliary UI
-        # (example: poking settings, then poking account, then poking
-        # back should end up where things were before the settings
-        # poke).
-        if aux_state is not None:
-            # Blow away the window stack and build a fresh one.
-            self.clear_main_window()
-            self.set_main_window(
-                win_create_call(),
-                from_window=False,  # Disable from-check.
-                back_state=aux_state.parent,
-                suppress_warning=True,
-                is_auxiliary=True,
-                extra_type_id=win_extra_type_id,
-            )
-            return
-
-        # Ok, no auxiliary states found. Now if current window is
-        # auxiliary and the type/extra-id matches, simply do a back.
-        if (
-            current_main_window.main_window_is_auxiliary
-            and type(current_main_window) is win_type
-            and current_main_window.main_window_extra_type_id
-            == win_extra_type_id
-        ):
-            current_main_window.main_window_back()
-            return
-
-        # If current window is auxiliary but type/extra-id doesn't match,
-        # swap it out for our new auxiliary UI.
-        if current_main_window.main_window_is_auxiliary:
-            self.clear_main_window()
-            self.set_main_window(
-                win_create_call(),
-                from_window=False,  # Disable from-check.
-                back_state=current_main_window.main_window_back_state,
-                suppress_warning=True,
-                is_auxiliary=True,
-                extra_type_id=win_extra_type_id,
-            )
-            return
-
-        # Ok, no existing auxiliary stuff was found period. Just
-        # navigate forward to this UI.
-        new_main_win = current_main_window.main_window_replace(
-            win_create_call,
-            is_auxiliary=True,
-            extra_type_id=win_extra_type_id,
+        auxiliary_window_activate(
+            self, win_type, win_create_call, win_extra_type_id
         )
-
-        # We should always be allowed to replace the main win in this
-        # case.
-        assert new_main_win is not None
-
-        # Make sure what got made exactly matches the type we were passed.
-        assert type(new_main_win) is win_type
 
     def _schedule_main_win_recreate(self) -> None:
 

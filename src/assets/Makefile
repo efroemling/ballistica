@@ -253,6 +253,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_controlpermission.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostui.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuihandler.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuikick.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuipages.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuistats.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
@@ -405,6 +410,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_auxwindow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classiccatalogassets.py \
@@ -448,13 +454,16 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_animtargets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_backbutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_cache.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_debugdraw.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_frame.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_panes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popuptext.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
@@ -507,6 +516,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/getremote.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gettokens.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/help.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/hostdocui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/iconpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/inboxui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/ingamemenu.py \
@@ -630,6 +640,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classiccharacterpreview.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classichost.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicinbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicleaguepresidency.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicstore.py \
@@ -637,6 +648,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/walk.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/hostui.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \

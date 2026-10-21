@@ -131,6 +131,18 @@ class Effect(IOMultiType[EffectTypeID]):
         # anything about, drop in a placeholder.
         return Unknown()
 
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        """Whether an untrusted source may run this effect on a client.
+
+        Untrusted sources are describers other than our own servers,
+        such as a game host serving doc-ui pages to its clients. Effects
+        that touch account state or official ui (currency animations
+        and the like) must stay off-limits to them. Clients drop
+        disallowed effects from such sources with a warning.
+        """
+        return False
+
 
 @ioprepped
 @dataclass
@@ -194,6 +206,11 @@ class ScreenMessage(Effect):
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SCREEN_MESSAGE
 
+    @override
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        return True
+
 
 @ioprepped
 @dataclass
@@ -222,6 +239,11 @@ class ScreenMessageV2(Effect):
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SCREEN_MESSAGE_V2
 
+    @override
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        return True
+
 
 class Sound(Enum):
     """Sounds that can be played."""
@@ -245,6 +267,11 @@ class PlaySound(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SOUND
+
+    @override
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        return True
 
 
 @ioprepped
@@ -274,6 +301,11 @@ class PlaySoundV2(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SOUND_V2
+
+    @override
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        return True
 
 
 def walk_effects(
@@ -426,6 +458,12 @@ class Delay(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.DELAY
+
+    @override
+    @classmethod
+    def allowed_in_untrusted(cls) -> bool:
+        # Only spaces out the effects around it.
+        return True
 
 
 @ioprepped

@@ -1,3 +1,61 @@
+### 1.8.4 (build 23068, api 9, 2026-10-20)
+- If audio can't be started at all, the game now runs without sound
+  (with a red notice saying so) instead of exiting with a fatal error.
+- A stuck audio thread no longer brings the app down: position updates
+  are coalesced and new sound plays are dropped while it is backed up.
+- Stuck-thread diagnostics: thread-backlog and slow-suspend errors (and
+  the fatal backlog error) now say what the thread is running and for
+  how long, including which OS audio call the audio thread is in.
+- Android: a text texture the OS fails to render (out of memory, etc.)
+  now draws blank with a warning instead of crashing.
+- Android: launch no longer reads a header for every bundled asset in
+  the apk up front (one random disk read each), which was causing
+  launch ANRs on devices with slow storage. Each one is now read when
+  its asset is first loaded.
+- Android: the classic feature set is no longer imported on the main
+  thread at launch (by a startup handler racing the logic thread),
+  which was causing launch ANRs on slow devices.
+- Joining a game whose host never answers the pre-join requirements
+  probe now fails cleanly instead of attempting an unprepped connect
+  (which a current host refuses with a confusing error). The probe
+  also retries longer, and join failures now log what happened
+  (attempts, socket errors, timeouts). Failures caused by the user's
+  network or a missing host log to `ba.user` (now available to C++
+  as `LogName::kBaUser`) so they don't trigger cloud log reports;
+  anomalies stay on `ba.net`.
+- Hosts can now give connected clients buttons in their in-game menu
+  and party window '...' menu that open doc-ui pages the host serves
+  over the game connection, post a timed party notice below the party
+  icon, and flash the party icon and '...' button
+  (`app.classic.host_ui`; `baclassic.HostUIButton` and
+  `baclassic.HostUIHandler`). Clients refuse host content outside the
+  host's asset packages, drop client-effects and local-actions not
+  allowed from untrusted sources, and cap what a host can declare;
+  hosts rate-limit clients' page requests. Needs build 23067+ at both
+  ends; no scene-protocol change.
+- Classic hosts serve a Stats page by default (players, this game's
+  score/kills/deaths, ping, and verified account), customizable by
+  subclassing `baclassic.HostUIStatsPage`.
+- Kick voting is now a graphical, Python-side system
+  (`baclassic.HostUIKickVotes` at `app.classic.host_ui.kick_votes`)
+  with the same rules as before: choosing Kick on a party member opens
+  the host's kick page, voters get a 'Kick X?' notice with flashing
+  icons and vote Yes/No on a page with a live countdown. Every rule
+  and string is an overridable method; hosts can point kicking at a
+  page of their own (`HostUISubsystem.set_kick_route()`). The old C++
+  chat-based voting ('1'/'2' in chat) is gone; clients older than
+  23067 can no longer start or join kick votes.
+  `bs.set_admins()` and `bs.set_enable_default_kick_voting()` (and
+  the server config's `enable_default_kick_voting`) still work.
+- Doc-ui rows and sections gain `title_wrap`/`subtitle_wrap`/
+  `footnote_wrap` (False keeps text on one line, shrunk to fit) and
+  rows gain `spacing_subtitle`. The time-varying-text wrapping warning
+  now fires once per field instead of on every refresh.
+- Doc-ui windows now show an error page when a page fails to lay out
+  or build, instead of spinning forever or half-building.
+- `HostUISubsystem.post_notice()` and `HostUIButton` labels accept
+  `babase.LangStr`.
+
 ### 1.8.3 (build 23065, api 9, 2026-10-17)
 - New mesh-viewer depiction (`bacommon.depiction.MeshViewerDepiction`):
   a few meshes drawn live in a doc-ui viewer pane, auto-framed and

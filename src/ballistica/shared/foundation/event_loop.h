@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SHARED_FOUNDATION_EVENT_LOOP_H_
 #define BALLISTICA_SHARED_FOUNDATION_EVENT_LOOP_H_
 
+#include <atomic>
 #include <condition_variable>
 #include <csignal>
 #include <list>
@@ -107,6 +108,22 @@ class EventLoop {
 
   auto name() const { return name_; }
 
+  /// Describe what this loop's thread is doing right now, for diagnostics
+  /// when it appears stuck (e.g. "running Foo for 312.0s (step:
+  /// alcOpenDevice)" or "idle"). Safe to call from any thread; the result
+  /// is best-effort (it can mix fields from adjacent activities).
+  auto DescribeActivity() const -> std::string;
+
+  /// Note a finer-grained step within the current activity, typically
+  /// just before a call that could block for a long time (an OS audio
+  /// call, etc.). Must be called from this loop's thread and must be
+  /// passed a string with static storage (a literal). Cleared when the
+  /// next activity starts.
+  void SetActivityStep(const char* step) {
+    assert(ThreadIsCurrent());
+    activity_step_.store(step, std::memory_order_relaxed);
+  }
+
  private:
   struct ThreadMessage_ {
     enum class Type { kShutdown = 999, kRunnable, kSuspend, kUnsuspend };
@@ -159,6 +176,14 @@ class EventLoop {
 
   void BootstrapThread_();
 
+  /// Record that we're starting an activity. Pass a string with static
+  /// storage: a label literal or a typeid(...).name() (which gets
+  /// demangled only when described). Cheap: a clock read and a few
+  /// relaxed stores.
+  void NoteActivity_(const char* what, bool is_type_name);
+  void ClearActivity_() { activity_.store(nullptr, std::memory_order_relaxed); }
+  static void NoteTimerActivity_(void* ctx, Runnable* runnable);
+
   EventLoopID identifier_{EventLoopID::kInvalid};
   ThreadSource source_{};
   bool bootstrapped_{};
@@ -167,6 +192,10 @@ class EventLoop {
   bool done_{};
   bool acquires_python_gil_{};
   std::atomic<size_t> thread_messages_size_approx_{};
+  std::atomic<const char*> activity_{};
+  std::atomic<const char*> activity_step_{};
+  std::atomic<bool> activity_is_type_name_{};
+  std::atomic<microsecs_t> activity_start_time_{};
   std::thread::id thread_id_{};
   std::condition_variable thread_message_cv_;
   std::condition_variable client_listener_cv_;

@@ -15,7 +15,7 @@ import weakref
 import copy
 import time
 
-from efro.util import asserttype
+from efro.util import asserttype, strip_exception_tracebacks
 from efro.error import CleanError, CommunicationError
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
 from bacommon.docui import (
@@ -47,6 +47,8 @@ if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
     import bacommon.clienteffect as clfx
     from bacommon.locale import Locale
+
+    from bauiv1lib.docui._panes import PageGeometries, PaneMode
 
     from bauiv1lib.docui import prep
 
@@ -627,10 +629,7 @@ class DocUIController:
                 request,
                 weakwin=weakref.ref(win),
                 uiscale=bui.app.ui_v1.uiscale,
-                scroll_width=win.scroll_width,
-                scroll_height=win.scroll_height,
-                margins=win.screen_margins,
-                column_insets=win.column_insets,
+                geometries=win.page_geometries(),
                 idprefix=win.main_window_id_prefix,
                 # Cached content has no delayed appearance to soften, so
                 # snap it in rather than animating.
@@ -764,10 +763,7 @@ class DocUIController:
                 win.request,
                 weakwin=weakref.ref(win),
                 uiscale=bui.app.ui_v1.uiscale,
-                scroll_width=win.scroll_width,
-                scroll_height=win.scroll_height,
-                margins=win.screen_margins,
-                column_insets=win.column_insets,
+                geometries=win.page_geometries(),
                 idprefix=win.main_window_id_prefix,
                 # If this window has had a response already, snap things
                 # in immediately with no transitions.
@@ -877,10 +873,7 @@ class DocUIController:
                 win.request,
                 weakwin=weakref.ref(win),
                 uiscale=bui.app.ui_v1.uiscale,
-                scroll_width=win.scroll_width,
-                scroll_height=win.scroll_height,
-                margins=win.screen_margins,
-                column_insets=win.column_insets,
+                geometries=win.page_geometries(),
                 idprefix=win.main_window_id_prefix,
                 immediate=True,
                 explicit_error=explicit_error,
@@ -1280,10 +1273,7 @@ class DocUIController:
         *,
         weakwin: weakref.ref[DocUIWindow],
         uiscale: bui.UIScale,
-        scroll_width: float,
-        scroll_height: float,
-        margins: tuple[float, float, float, float],
-        column_insets: tuple[float, float],
+        geometries: PageGeometries,
         idprefix: str,
         immediate: bool,
         explicit_error: ErrorType | None = None,
@@ -1425,24 +1415,48 @@ class DocUIController:
         _timing.set_current(None)
         t_prep = time.monotonic()
 
-        pageprep = prep.prep_page(
-            prepresponse.page,
-            packages=list(prepresponse.packages),
-            uiscale=uiscale,
-            scroll_width=scroll_width,
-            scroll_height=scroll_height,
-            margins=margins,
-            column_insets=column_insets,
-            immediate=immediate,
-            transition_scale=_transition_scale(shown_time),
-            idprefix=idprefix,
-            description=timing.description,
-        )
+        def _prep(
+            src: dui2.Response,
+        ) -> tuple[prep.PagePrep, PaneMode | None]:
+            # The page lays out beside whatever viewer pane it gets (or
+            # across the window if none); the window follows suit when
+            # it shows the page (see DocUIWindow.instantiate_ui()).
+            pane = geometries.pane_for_page(src.page)
+            geometry = geometries.for_pane(pane)
+            return (
+                prep.prep_page(
+                    src.page,
+                    packages=list(src.packages),
+                    uiscale=uiscale,
+                    scroll_width=geometry.scroll_width,
+                    scroll_height=geometry.scroll_height,
+                    margins=geometry.margins,
+                    column_insets=geometry.column_insets,
+                    immediate=immediate,
+                    transition_scale=_transition_scale(shown_time),
+                    idprefix=idprefix,
+                    description=timing.description,
+                ),
+                pane,
+            )
+
+        try:
+            pageprep, pane = _prep(prepresponse)
+        except Exception as exc:
+            # A page we can't lay out (pages can come from untrusted
+            # sources such as game hosts); show an error page rather
+            # than leaving the window spinning forever.
+            bui.uilog.exception('Error prepping doc-ui page.')
+            strip_exception_tracebacks(exc)
+            response = self.error_response(request)
+            prepresponse = asserttype(response, dui2.Response)
+            pageprep, pane = _prep(prepresponse)
 
         # Carry the de-indexed display-time effects along on the prep;
         # the response we hand to the ui thread is un-de-indexed, so
         # its own copies are not the runnable form.
         pageprep.client_effects = prepresponse.client_effects
+        pageprep.pane = pane
 
         timing.handed_off_at = time.monotonic()
         timing.prep = timing.handed_off_at - t_prep
@@ -1504,7 +1518,33 @@ class DocUIController:
         )
 
         # Set the UI.
-        win.instantiate_ui(pageprep)
+        try:
+            win.instantiate_ui(pageprep)
+        except Exception as exc:
+            # A page we can't build (pages can come from untrusted
+            # sources such as game hosts). Swap in an error page rather
+            # than leaving a half-built one up; unless this already was
+            # one, which would just loop.
+            bui.uilog.exception('Error building doc-ui page.')
+            strip_exception_tracebacks(exc)
+            if self._get_win_data(win).state is _WinState.ERRORED:
+                return
+            self._set_win_data(win, _WinData(_WinState.ERRORED))
+            win.lock_ui()
+            _bgrunner.submit(
+                bui.CallStrict(
+                    self._process_request_in_bg,
+                    win.request,
+                    weakwin=weakref.ref(win),
+                    uiscale=bui.app.ui_v1.uiscale,
+                    geometries=win.page_geometries(),
+                    idprefix=win.main_window_id_prefix,
+                    immediate=True,
+                    explicit_error=self.ErrorType.GENERIC,
+                    timing=self._new_timing(win.request),
+                )
+            )
+            return
 
         # The page is up; if that took long for reasons of our own
         # (nothing to do with the network), say where the time went.

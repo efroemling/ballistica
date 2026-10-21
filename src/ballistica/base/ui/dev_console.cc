@@ -206,6 +206,42 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
   }
 }
 
+/// A button label that shrinks to fit its button (never grows), keeping
+/// a little space clear at each side.
+class DevConsoleFitLabel_ {
+ public:
+  explicit DevConsoleFitLabel_(std::string label) : label_{std::move(label)} {}
+
+  /// The scale to draw our label at for a button of the given size, or
+  /// empty if the label shouldn't be drawn yet.
+  auto Scale(float text_scale, float width, float height)
+      -> std::optional<float> {
+    // Measure once, never stalling a frame on a cold OS-text measure.
+    // Until one lands we draw nothing (rather than drawing unshrunk and
+    // then visibly jumping in size), and try again next frame.
+    if (!label_width_) {
+      label_width_ = g_base->text_graphics->TryGetStringWidth(label_);
+    }
+    if (!label_width_) {
+      return {};
+    }
+    if (*label_width_ <= 0.0f) {
+      return text_scale;
+    }
+    float available = std::max(0.0f, width - 2.0f * kPadFraction * height);
+    if (*label_width_ * text_scale <= available) {
+      return text_scale;
+    }
+    return available / *label_width_;
+  }
+
+ private:
+  /// Side padding, as a fraction of button height.
+  static constexpr float kPadFraction{0.25f};
+  std::string label_;
+  std::optional<float> label_width_;
+};
+
 static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale, float x,
                      float y, const Vector3f& fgcolor, float alpha = 1.0f) {
   SimpleComponent c(pass);
@@ -323,12 +359,14 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   /// whose calls make their own (a window swish, say), so the two don't
   /// stack.
   bool sound;
+  DevConsoleFitLabel_ fit_label;
 
   template <typename F>
   Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
           DevButtonStyle_ style, bool disabled, bool sound, const F& lambda)
-      : attach{attach},
+      : fit_label{label},
+        attach{attach},
         x{x},
         y{y},
         width{width},
@@ -473,8 +511,10 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     float alpha = disabled ? 0.3f : 1.0f;
     DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height, bgcolor,
              alpha);
-    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
-             bottom + y + height * 0.5f, fgcolor, alpha);
+    if (auto scale = fit_label.Scale(text_scale, width, height)) {
+      DrawText(pass, &text_group, *scale, x + XOffs(attach) + width * 0.5f,
+               bottom + y + height * 0.5f, fgcolor, alpha);
+    }
   }
 };
 
@@ -492,13 +532,15 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
   NinePatchMesh mesh;
   TextGroup text_group;
   float text_scale;
+  DevConsoleFitLabel_ fit_label;
 
   template <typename F, typename G>
   ToggleButton_(const std::string& label, float text_scale,
                 DevConsoleHAnchor_ attach, float x, float y, float width,
                 float height, float corner_radius, const F& on_call,
                 const G& off_call)
-      : attach{attach},
+      : fit_label{label},
+        attach{attach},
         x{x},
         y{y},
         width{width},
@@ -552,11 +594,13 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
              pressed ? Vector3f{0.5f, 0.2f, 1.0f}
              : on    ? Vector3f{0.5f, 0.4f, 0.6f}
                      : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
-             bottom + y + height * 0.5f,
-             pressed ? Vector3f{1.0f, 1.0f, 1.0f}
-             : on    ? Vector3f{1.0f, 1.0f, 1.0f}
-                     : Vector3f{0.8f, 0.7f, 0.8f});
+    if (auto scale = fit_label.Scale(text_scale, width, height)) {
+      DrawText(pass, &text_group, *scale, x + XOffs(attach) + width * 0.5f,
+               bottom + y + height * 0.5f,
+               pressed ? Vector3f{1.0f, 1.0f, 1.0f}
+               : on    ? Vector3f{1.0f, 1.0f, 1.0f}
+                       : Vector3f{0.8f, 0.7f, 0.8f});
+    }
   }
 };
 
@@ -573,12 +617,14 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
   TextGroup text_group;
   NinePatchMesh mesh;
   float text_scale;
+  DevConsoleFitLabel_ fit_label;
 
   template <typename F>
   TabButton_(const std::string& label, bool selected, float text_scale,
              DevConsoleHAnchor_ attach, float x, float y, float width,
              float height, const F& call)
-      : attach{attach},
+      : fit_label{label},
+        attach{attach},
         x{x},
         y{y},
         selected{selected},
@@ -639,11 +685,13 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
              pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
              : selected ? Vector3f{0.4f, 0.3f, 0.4f}
                         : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
-             bottom + y + height * 0.5f,
-             pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
-             : selected ? Vector3f{1.0f, 1.0f, 1.0f}
-                        : Vector3f{0.6f, 0.5f, 0.6f});
+    if (auto scale = fit_label.Scale(text_scale, width, height)) {
+      DrawText(pass, &text_group, *scale, x + XOffs(attach) + width * 0.5f,
+               bottom + y + height * 0.5f,
+               pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
+               : selected ? Vector3f{1.0f, 1.0f, 1.0f}
+                          : Vector3f{0.6f, 0.5f, 0.6f});
+    }
   }
 };
 

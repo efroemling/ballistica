@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -768,6 +769,27 @@ void RootWidget::Setup() {
       td.color_a = 0.5f;
       squad_size_text_ = AddText_(td);
     }
+
+    // Party notice: host-set text just below the squad button,
+    // right-aligned to its edge so it stays on screen.
+    {
+      TextDef_ td;
+      td.button = squad_button_;
+      td.width = 400.0f;
+      td.text = "";
+      td.x = 28.0f;
+      td.y = -38.0f;
+      td.scale = 0.7f;
+      td.flatness = 1.0f;
+      td.shadow = 1.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 1.0f;
+      td.color_g = 1.0f;
+      td.color_b = 0.5f;
+      td.h_align = TextWidget::HAlign::kRight;
+      td.v_align = TextWidget::VAlign::kTop;
+      party_notice_text_ = AddText_(td);
+    }
   }
 
   AddMeter_(MeterType_::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "",
@@ -1191,6 +1213,40 @@ void RootWidget::StepInbox_(base::RenderPass* renderpass, seconds_t dt) {
   }
 }
 
+void RootWidget::ApplySquadButtonColor_(float mult) {
+  assert(squad_button_);
+  // The base color tints green while the party window is open.
+  if (party_window_open_) {
+    squad_button_->widget->set_color(0.8f * mult, 1.3f * mult, 0.8f * mult);
+  } else {
+    squad_button_->widget->set_color(mult, mult, mult);
+  }
+}
+
+void RootWidget::StepSquad_(base::RenderPass* renderpass, seconds_t dt) {
+  // Quick-out: we only do work while we're animating.
+  if (!squad_animating_) {
+    return;
+  }
+  assert(squad_button_);
+  auto now{renderpass->frame_def()->display_time()};
+
+  if (now >= squad_flash_end_time_) {
+    squad_animating_ = false;
+    ApplySquadButtonColor_(1.0f);
+    return;
+  }
+
+  // Flash quickly at first to catch the eye (as the inbox button does
+  // when something arrives), then settle into a slower pulse.
+  auto elapsed{now - squad_flash_start_time_};
+  float freq_mult{elapsed < 1.5 ? 4.0f : 1.0f};
+  float mult{
+      1.0f
+      + fabsf(1.5f * sinf(freq_mult * 3.1415f * static_cast<float>(elapsed)))};
+  ApplySquadButtonColor_(mult);
+}
+
 void RootWidget::StepChests_(base::RenderPass* renderpass, seconds_t dt) {
   auto current_display_time = renderpass->frame_def()->display_time();
   // auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
@@ -1510,6 +1566,7 @@ void RootWidget::Update_(base::RenderPass* renderpass) {
   StepChests_(renderpass, time_diff);
   StepLeagueRank_(renderpass, time_diff);
   StepInbox_(renderpass, time_diff);
+  StepSquad_(renderpass, time_diff);
   StepTicketsMeter_(renderpass, time_diff);
   StepTokensMeter_(renderpass, time_diff);
 
@@ -1722,12 +1779,11 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
 
     // Squad button
     if (auto* btn = squad_button_) {
-      if (counts.find("classicparty") != counts.end()) {
-        btn->widget->set_color(0.8f, 1.3f, 0.8f);
-        btn->widget->set_flatness(0.6f);
-      } else {
-        btn->widget->set_color(1.0f, 1.0f, 1.0f);
-        btn->widget->set_flatness(0.0f);
+      party_window_open_ = counts.find("classicparty") != counts.end();
+      btn->widget->set_flatness(party_window_open_ ? 0.6f : 0.0f);
+      // While flashing, StepSquad_ owns the color (on this same base).
+      if (!squad_animating_) {
+        ApplySquadButtonColor_(1.0f);
       }
     } else {
       BA_LOG_ONCE(LogName::kBaUI, LogLevel::kError,
@@ -2678,6 +2734,23 @@ void RootWidget::SetInboxState(int val, bool is_max,
   }
 
   UpdateInboxDisplay_();
+}
+
+void RootWidget::SetPartyNotice(std::shared_ptr<const base::LangStr> text) {
+  assert(party_notice_text_);
+  if (text) {
+    party_notice_text_->widget->SetLangStr(std::move(text));
+  } else {
+    party_notice_text_->widget->SetText("");
+  }
+}
+
+void RootWidget::FlashPartyIcon(seconds_t duration) {
+  auto now{g_base->logic->display_time()};
+  squad_flash_start_time_ = now;
+  squad_flash_end_time_ = now + std::max(0.0, duration);
+  // A zero duration lets the next step restore the normal color.
+  squad_animating_ = true;
 }
 
 void RootWidget::SetAchievementPercentText(const std::string& val) {

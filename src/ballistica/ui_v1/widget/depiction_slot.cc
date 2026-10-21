@@ -98,13 +98,83 @@ static auto ScaledBox(const base::DepictionBox& box, float scale)
   return out;
 }
 
+auto DepictionSlot::MakeContext_(const DrawArgs& args) const
+    -> base::DepictionDrawContext {
+  base::DepictionDrawContext context;
+  context.pass = args.pass;
+  context.transparent = args.transparent;
+  context.brightness = args.brightness;
+  context.opacity = args.opacity;
+  context.disabled = args.disabled;
+  context.mask_texture = args.mask_texture;
+  std::copy(std::begin(frame_color_), std::end(frame_color_),
+            context.frame_color);
+  context.layered_mask = layered_mask_ && args.mask_texture != nullptr;
+  if (has_backing_) {
+    std::copy(std::begin(backing_color_), std::end(backing_color_),
+              context.underlay_color);
+  }
+  std::copy(std::begin(layer1_color_), std::end(layer1_color_),
+            context.layer1_color);
+  std::copy(std::begin(layer2_color_), std::end(layer2_color_),
+            context.layer2_color);
+  context.overlay = overlay_;
+  context.small_placeholder = small_placeholder_;
+  return context;
+}
+
+void DepictionSlot::DrawLayeredBacking_(const DrawArgs& args,
+                                        const base::DepictionBox& box) {
+  // Through the mask, so always in the transparent pass. A depiction
+  // drawing it (beneath what it shows) does so in one go with its own
+  // content and layers; else it's ours, with no content (the mask's
+  // layers still paint, so a pane is framed even with nothing in it).
+  base::TextureAsset* mask = args.mask_texture;
+  if (!args.transparent || !mask->loaded()) {
+    return;
+  }
+  if (depiction_.exists() && depiction_->DrawsHostBacking()) {
+    return;
+  }
+  base::TextureAsset* white = g_ui_v1->assets().white.get();
+  if (!white || !white->loaded()) {
+    return;
+  }
+  base::DepictionDrawContext context = MakeContext_(args);
+  float underlay[4];
+  float layer1[4];
+  float layer2[4];
+  context.StandardLayerColors(underlay, layer1, layer2);
+  base::SimpleComponent c(args.pass);
+  c.SetTransparent(true);
+  c.SetColor(0.0f, 0.0f, 0.0f, 0.0f);
+  c.SetTexture(white);
+  c.SetLayeredMask(mask, underlay, layer1, layer2, context.StandardOpacity());
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(box.x + box.width * 0.5f, box.y + box.height * 0.5f);
+    c.Scale(box.width, box.height, 1.0f);
+    c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
+  }
+  c.Submit();
+}
+
 void DepictionSlot::DrawBacking_(const DrawArgs& args,
                                  const base::DepictionBox& box) {
-  // Solid, so unmasked it goes in the opaque pass; a mask cutting our
-  // edges needs the transparent one.
   base::TextureAsset* mask = args.mask_texture;
   bool masked = mask != nullptr;
-  if (args.transparent != masked || (masked && !mask->loaded())) {
+  if (masked && layered_mask_) {
+    DrawLayeredBacking_(args, box);
+    return;
+  }
+  float alpha = backing_color_[3];
+  if (!masked && alpha <= 0.0f) {
+    return;
+  }
+  // Solid and unmasked goes in the opaque pass; a mask cutting our
+  // edges, or translucency, needs the transparent one.
+  bool transparent = masked || alpha < 1.0f;
+  if (args.transparent != transparent || (masked && !mask->loaded())) {
     return;
   }
   base::TextureAsset* white = g_ui_v1->assets().white.get();
@@ -112,8 +182,14 @@ void DepictionSlot::DrawBacking_(const DrawArgs& args,
     return;
   }
   base::SimpleComponent c(args.pass);
-  c.SetTransparent(masked);
-  c.SetColor(backing_color_[0], backing_color_[1], backing_color_[2], 1.0f);
+  c.SetTransparent(transparent);
+  if (alpha < 1.0f) {
+    c.SetPremultiplied(true);
+    c.SetColor(backing_color_[0] * alpha, backing_color_[1] * alpha,
+               backing_color_[2] * alpha, alpha);
+  } else {
+    c.SetColor(backing_color_[0], backing_color_[1], backing_color_[2], 1.0f);
+  }
   c.SetTexture(white);
   if (masked) {
     c.SetMaskTexture(mask);
@@ -175,19 +251,9 @@ void DepictionSlot::Draw(const DrawArgs& args) {
   const float* color_override = depiction_->EffectiveColorOverride(
       use_color_override_ ? color_override_ : nullptr);
 
-  base::DepictionDrawContext context;
-  context.pass = args.pass;
-  context.transparent = args.transparent;
+  base::DepictionDrawContext context = MakeContext_(args);
   context.box = box;
-  context.brightness = args.brightness;
-  context.opacity = args.opacity;
-  context.disabled = args.disabled;
   context.pixels_per_unit = PixelsPerUnit(*args.owner, args.width);
-  context.mask_texture = args.mask_texture;
-  std::copy(std::begin(frame_color_), std::end(frame_color_),
-            context.frame_color);
-  context.overlay = overlay_;
-  context.small_placeholder = small_placeholder_;
   context.color_override = color_override;
   // (No host switch for this here yet; a depiction's baked one counts.)
   context.team_coloring = depiction_->EffectiveTeamColoring(false);

@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/rect_outline_mesh.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
@@ -1000,7 +1001,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // so always calc them).
   if (bg_dirty_) {
     const UIAssetSet& uiassets = g_ui_v1->assets();
-    auto layout = CalcBackingLayout_(w, h);
+    auto layout = CalcBackingLayout_();
     if (layout.tall) {
       bg_mesh_transparent_ = uiassets.window_hsmall_vmed_transparent;
       bg_mesh_opaque_ = uiassets.window_hsmall_vmed_opaque;
@@ -1010,10 +1011,12 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
     bg_center_fudge_x_ = layout.center_fudge_x;
     bg_center_fudge_y_ = layout.center_fudge_y;
-    bg_width_ = w + layout.l_border + layout.r_border;
-    bg_height_ = h + layout.b_border + layout.t_border;
-    bg_center_x_ = l - layout.l_border + bg_width_ * 0.5f;
-    bg_center_y_ = b - layout.b_border + bg_height_ * 0.5f;
+    // (The unplaced quad; Draw() applies our background offset and
+    // scale itself, as the offset scales with transitions.)
+    bg_width_ = layout.quad_r - layout.quad_l;
+    bg_height_ = layout.quad_t - layout.quad_b;
+    bg_center_x_ = l + 0.5f * (layout.quad_l + layout.quad_r);
+    bg_center_y_ = b + 0.5f * (layout.quad_b + layout.quad_t);
     if (background_) {
       tex_ = layout.tall ? uiassets.window_hsmall_vmed
                          : uiassets.window_hsmall_vsmall;
@@ -1103,7 +1106,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(bg_center_x_ + background_offset_x_ * transition_scale_,
                     bg_center_y_ + background_offset_y_ * transition_scale_,
                     zoffs);
-        c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
+        c.Scale(bg_width_ * background_scale_x_ * transition_scale_,
+                bg_height_ * background_scale_y_ * transition_scale_);
         c.DrawMeshAsset(
             (draw_transparent ? bg_mesh_transparent_ : bg_mesh_opaque_).get());
       }
@@ -1178,6 +1182,25 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
         c.Submit();
       }
+    }
+
+    // Our bounds, for containers drawing a window backing (dev console
+    // UI tab's container-bounds toggle). For clean-layout ones that's
+    // exactly the backing's known-opaque area.
+    if (background_
+        && g_base->graphics->debug_bounds(base::DebugBoundsType::kContainers)) {
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      c.SetTexture(
+          g_base->assets->SolidTexture(base::SolidTextureColor::kWhite));
+      c.SetColor(1.0f, 0.15f, 0.15f, 1.0f);
+      // Children draw scaled about our corner by our transition scale;
+      // follow them.
+      auto mesh = Object::New<base::RectOutlineMesh>(
+          l, b, 0.95f, width_ * transition_scale_, height_ * transition_scale_,
+          2.0f);
+      c.DrawMesh(mesh.get());
+      c.Submit();
     }
   }
 }
@@ -2208,85 +2231,134 @@ auto ContainerWidget::GetCalibratedOpaqueRegion_(float* l, float* b, float* r,
   if (!background_ || alpha_ != 1.0f) {
     return false;
   }
-  float w = width_;
-  float h = height_;
-  if (w <= 0.0f || h <= 0.0f) {
+  if (width_ <= 0.0f || height_ <= 0.0f) {
     return false;
   }
 
-  // Take the same backing layout our bg drawing in Draw() uses, then
-  // apply a per-backing calibrated rect known to be
-  // comfortably interior to that backing's opaque pixels. Rects are in
-  // unit coords over the full backing quad (+-0.5 is the quad edge).
-  // They were measured by rasterizing each backing's opaque+transparent
-  // meshes with the master texture's alpha channel and finding the
-  // largest fully-opaque (alpha=255) axis rect, then shrinking each
-  // edge by ~0.01 for safety (residual transition offsets, resampling
-  // and texture-compression fringe). Measured maxima: vmed x
-  // [-0.404, 0.325] y [-0.371, 0.411]; vsmall x [-0.356, 0.301] y
-  // [-0.215, 0.335]. Eyeball-check with the BA_DEBUG_UI_OPAQUE_RECT
-  // env var, which draws these rects over each backing. Backing setups
-  // not calibrated here simply never qualify.
-  auto layout = CalcBackingLayout_(w, h);
-  float unit_l, unit_r, unit_b, unit_t;
-  if (layout.tall) {
+  auto layout = CalcBackingLayout_();
+  float unit_l, unit_b, unit_r, unit_t;
+  BackingOpaqueUnitRect_(layout.tall, &unit_l, &unit_b, &unit_r, &unit_t);
+  float ql, qb, qr, qt;
+  GetPlacedBackingQuad_(layout, &ql, &qb, &qr, &qt);
+  float qw = qr - ql;
+  float qh = qt - qb;
+  float qcx = 0.5f * (ql + qr);
+  float qcy = 0.5f * (qb + qt);
+  *l = qcx + unit_l * qw;
+  *r = qcx + unit_r * qw;
+  *b = qcy + unit_b * qh;
+  *t = qcy + unit_t * qh;
+  return true;
+}
+
+void ContainerWidget::BackingOpaqueUnitRect_(bool tall, float* l, float* b,
+                                             float* r, float* t) {
+  // Known to lie within each backing's opaque pixels. Measured by
+  // rasterizing each backing's opaque+transparent meshes with the
+  // master texture's alpha channel: first the largest fully-opaque
+  // (alpha=255) axis rect, whose top and bottom were then pulled in by
+  // ~0.01 for safety (residual transition offsets, resampling and
+  // texture-compression fringe); then, within that height, the sides
+  // were measured out again (their limit is the art's rounded corners,
+  // which a shorter rect clears sooner) and pulled in by 0.003.
+  // Measured: vmed x [-0.4115, 0.332] within y [-0.36, 0.40]; vsmall x
+  // [-0.370, 0.312] within y [-0.205, 0.325]. Eyeball-check with the
+  // dev console's container-bounds debug drawing (clean-layout
+  // containers' bounds are exactly these rects) or the
+  // BA_DEBUG_UI_OPAQUE_RECT env var, which draws them over every
+  // backing.
+  if (tall) {
     // window_hsmall_vmed.
-    unit_l = -0.395f;
-    unit_r = 0.315f;
-    unit_b = -0.36f;
-    unit_t = 0.40f;
+    *l = -0.4085f;
+    *r = 0.329f;
+    *b = -0.36f;
+    *t = 0.40f;
   } else {
     // window_hsmall_vsmall.
-    unit_l = -0.345f;
-    unit_r = 0.29f;
-    unit_b = -0.205f;
-    unit_t = 0.325f;
+    *l = -0.367f;
+    *r = 0.309f;
+    *b = -0.205f;
+    *t = 0.325f;
   }
-  float bg_width = w + layout.l_border + layout.r_border;
-  float bg_height = h + layout.b_border + layout.t_border;
-  float bg_center_x = -layout.l_border + bg_width * 0.5f;
-  float bg_center_y = -layout.b_border + bg_height * 0.5f;
-  *l = bg_center_x + unit_l * bg_width;
-  *r = bg_center_x + unit_r * bg_width;
-  *b = bg_center_y + unit_b * bg_height;
-  *t = bg_center_y + unit_t * bg_height;
-  return true;
 }
 
 auto ContainerWidget::GetBackingOpaqueRect(Rect* rect) const -> bool {
   assert(rect);
-  if (!GetCalibratedOpaqueRegion_(&rect->l, &rect->b, &rect->r, &rect->t)) {
-    return false;
-  }
-  // Our backing draws shifted by its offset (see Draw()).
-  rect->l += background_offset_x_;
-  rect->r += background_offset_x_;
-  rect->b += background_offset_y_;
-  rect->t += background_offset_y_;
-  return true;
+  return GetCalibratedOpaqueRegion_(&rect->l, &rect->b, &rect->r, &rect->t);
 }
 
-auto ContainerWidget::CalcBackingLayout_(float width, float height)
-    -> BackingLayout {
+auto ContainerWidget::CalcBackingLayout_() const -> BackingLayout {
   BackingLayout layout;
-  if (height > width * 0.6f) {
-    layout.tall = true;
-    layout.l_border = width * 0.07f;
-    layout.r_border = width * 0.19f;
-    layout.b_border = height * 0.1f;
-    layout.t_border = height * 0.07f;
+  float width = width_;
+  float height = height_;
+
+  // Which art: as asked, or picked by our shape. For clean layouts
+  // that's our (opaque) shape; the cutoff falls between where legacy
+  // layouts' opaque rects land just either side of their own switch
+  // (height > 0.6x width): about 0.574 tall on the taller art and 0.603
+  // on the squatter one. Content boxes can be shaped unlike either,
+  // so callers wanting a particular art should say so.
+  switch (backing_art_) {
+    case BackingArt::kTall:
+      layout.tall = true;
+      break;
+    case BackingArt::kSquat:
+      layout.tall = false;
+      break;
+    case BackingArt::kAuto:
+      layout.tall = height > width
+                                 * (clean_layout_ ? kCleanLayoutTallAspect
+                                                  : kLegacyTallAspect);
+      break;
+  }
+
+  if (clean_layout_) {
+    // Our bounds are the art's known-opaque rect; the full quad hangs
+    // out around them.
+    float ul, ub, ur, ut;
+    BackingOpaqueUnitRect_(layout.tall, &ul, &ub, &ur, &ut);
+    float qw = width / (ur - ul);
+    float qh = height / (ut - ub);
+    // Our left edge sits at unit_l across the quad from its center.
+    float qcx = -ul * qw;
+    float qcy = -ub * qh;
+    layout.quad_l = qcx - 0.5f * qw;
+    layout.quad_r = qcx + 0.5f * qw;
+    layout.quad_b = qcy - 0.5f * qh;
+    layout.quad_t = qcy + 0.5f * qh;
+    return layout;
+  }
+  if (layout.tall) {
+    layout.quad_l = -width * 0.07f;
+    layout.quad_r = width + width * 0.19f;
+    layout.quad_b = -height * 0.1f;
+    layout.quad_t = height + height * 0.07f;
     layout.center_fudge_x = -0.05f;
     layout.center_fudge_y = 0.0f;
   } else {
-    layout.tall = false;
-    layout.l_border = width * 0.12f;
-    layout.r_border = width * 0.19f;
-    layout.b_border = height * 0.45f;
-    layout.t_border = height * 0.23f;
+    layout.quad_l = -width * 0.12f;
+    layout.quad_r = width + width * 0.19f;
+    layout.quad_b = -height * 0.45f;
+    layout.quad_t = height + height * 0.23f;
     layout.center_fudge_x = -0.03f;
     layout.center_fudge_y = 0.1f;
   }
   return layout;
+}
+
+void ContainerWidget::GetPlacedBackingQuad_(const BackingLayout& layout,
+                                            float* l, float* b, float* r,
+                                            float* t) const {
+  // Scaled about its own center (see set_background_scale()), then
+  // shifted (see set_background_offset()).
+  float cx = 0.5f * (layout.quad_l + layout.quad_r) + background_offset_x_;
+  float cy = 0.5f * (layout.quad_b + layout.quad_t) + background_offset_y_;
+  float hw = 0.5f * (layout.quad_r - layout.quad_l) * background_scale_x_;
+  float hh = 0.5f * (layout.quad_t - layout.quad_b) * background_scale_y_;
+  *l = cx - hw;
+  *r = cx + hw;
+  *b = cy - hh;
+  *t = cy + hh;
 }
 
 auto ContainerWidget::GetBackingDrawInfo(BackingDrawInfo* info) const -> bool {
@@ -2295,18 +2367,16 @@ auto ContainerWidget::GetBackingDrawInfo(BackingDrawInfo* info) const -> bool {
     return false;
   }
   const UIAssetSet& uiassets = g_ui_v1->assets();
-  auto layout = CalcBackingLayout_(width_, height_);
+  auto layout = CalcBackingLayout_();
   info->texture = layout.tall ? uiassets.window_hsmall_vmed.get()
                               : uiassets.window_hsmall_vsmall.get();
 
   // Draw() places the backing relative to the same offset it hands
   // DrawChildren(), so in child space it sits at a fixed spot. Its
-  // background-offset shift scales with transitions just like children
-  // do, so it belongs here unscaled.
-  info->rect = Rect(-layout.l_border + background_offset_x_,
-                    -layout.b_border + background_offset_y_,
-                    width_ + layout.r_border + background_offset_x_,
-                    height_ + layout.t_border + background_offset_y_);
+  // background offset scales with transitions just like children do,
+  // so it belongs here unscaled.
+  GetPlacedBackingQuad_(layout, &info->rect.l, &info->rect.b, &info->rect.r,
+                        &info->rect.t);
 
   // Match the color Draw() uses for the backing.
   float s = GetBackingGlowMult();

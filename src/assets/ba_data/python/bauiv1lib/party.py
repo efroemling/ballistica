@@ -6,14 +6,20 @@ import math
 import logging
 from typing import TYPE_CHECKING, cast
 
+import bacommon.hostui as hui
+from bacommon.hostui import HOST_UI_MIN_BUILD
+from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
+from bauiv1lib.hostdocui import show_host_docui_window, button_label
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
+
+    import bacommon.docui.v2
 
     from bauiv1lib.popup import PopupWindow
 
@@ -93,6 +99,13 @@ class PartyWindow(bui.Window):
             iconscale=1.2,
         )
         self._menu_popup: PopupMenuWindow | None = None
+        self._menu_host_buttons: list[hui.Button] = []
+
+        # Flash the '...' button while our host wants it to.
+        self._menu_flash_timer = bui.AppTimer(
+            0.05, bui.WeakCallStrict(self._update_menu_flash), repeat=True
+        )
+        self._menu_flashing = False
 
         info = bs.get_connection_to_host_info_2()
 
@@ -216,6 +229,28 @@ class PartyWindow(bui.Window):
         )
         self._update()
 
+    def _update_menu_flash(self) -> None:
+        classic = bui.app.classic
+        assert classic is not None
+        now = bui.apptime()
+        start, end = classic.host_ui.get_party_menu_flash_times()
+        if now < end:
+            # A quick flash for a moment, then a slower pulse (as the
+            # party icon does).
+            elapsed = now - start
+            freq = 4.0 if elapsed < 1.5 else 1.0
+            mult = 1.0 + abs(1.5 * math.sin(freq * math.pi * elapsed))
+            self._menu_flashing = True
+        elif self._menu_flashing:
+            mult = 1.0
+            self._menu_flashing = False
+        else:
+            return
+        bui.buttonwidget(
+            edit=self._menu_button,
+            color=(0.55 * mult, 0.73 * mult, 0.25 * mult),
+        )
+
     def on_chat_message(self, msg: str) -> None:
         """Called when a new chat message comes through."""
         if not bui.app.config.resolve('Chat Muted'):
@@ -277,6 +312,15 @@ class PartyWindow(bui.Window):
         # connected to a party and if it doesn't seem to be a private
         # party (those are dynamically assigned addresses and ports so
         # it makes no sense to save them).
+        # Then anything our host (or we, when hosting) defined.
+        host_buttons = bui.app.classic.host_ui.get_shown_buttons(
+            hui.ButtonPlacement.PARTY_MENU
+        )
+        for i, button in enumerate(host_buttons):
+            choices.append(f'host{i}')
+            choices_display.append(button_label(button))
+        self._menu_host_buttons = host_buttons
+
         server_info = bs.get_connection_to_host_info_2()
         if server_info is not None and not server_info.name.startswith(
             'Private Party '
@@ -502,6 +546,20 @@ class PartyWindow(bui.Window):
                     _classicassets.strings.party.cant_kick_host,
                     color=(1, 0, 0),
                 )
+            elif (
+                kick_request := self._kick_request(
+                    self._popup_party_member_client_id
+                )
+            ) is not None:
+                # Our host has a page for this; open it.
+                self.close()
+                show_host_docui_window(
+                    hui.Button(
+                        label=LangStrSpecValue.literal(''),
+                        placement=hui.ButtonPlacement.PARTY_MENU,
+                        request=kick_request,
+                    )
+                )
             else:
                 assert self._popup_party_member_client_id is not None
 
@@ -522,6 +580,16 @@ class PartyWindow(bui.Window):
                 cfg.apply_and_commit()
                 self._display_old_msgs = True
                 self._update()
+            if choice.startswith('host'):
+                try:
+                    button = self._menu_host_buttons[int(choice[4:])]
+                except ValueError, IndexError:
+                    button = None
+                if button is not None:
+                    # Party window lives in the overlay stack; get it out
+                    # of the way of the page.
+                    self.close()
+                    show_host_docui_window(button)
             if choice == 'add_to_favorites':
                 info = bs.get_connection_to_host_info_2()
                 if info is not None:
@@ -594,13 +662,22 @@ class PartyWindow(bui.Window):
     def _on_party_member_press(
         self, client_id: int, is_host: bool, widget: bui.Widget
     ) -> None:
-        # if we're the host, pop up 'kick' options for all non-host members
+        # If we're the host, pop up 'kick' options for all non-host
+        # members.
         if bs.get_foreground_host_session() is not None:
             kick_str = _classicassets.strings.ui.kick
         else:
-            # kick-votes appeared in build 14248
             info = bs.get_connection_to_host_info_2()
+            # Kick votes appeared in build 14248.
             if info is None or info.build_number < 14248:
+                return
+            # Hosts with host-ui offer kicking only if they've set a
+            # page for it (see HostUISubsystem.set_kick_route); older
+            # ones run the engine's own kick votes.
+            if (
+                info.build_number >= HOST_UI_MIN_BUILD
+                and self._kick_request(client_id) is None
+            ):
                 return
             kick_str = _classicassets.strings.party.kick_vote
         assert bui.app.classic is not None
@@ -620,6 +697,15 @@ class PartyWindow(bui.Window):
         self._popup_type = 'partyMemberPress'
         self._popup_party_member_client_id = client_id
         self._popup_party_member_is_host = is_host
+
+    def _kick_request(
+        self, client_id: int | None
+    ) -> bacommon.docui.v2.Request | None:
+        """Our host's page for kicking a client (if it offers one)."""
+        classic = bui.app.classic
+        if client_id is None or classic is None:
+            return None
+        return classic.host_ui.get_kick_request(client_id)
 
     def _send_chat_message(self) -> None:
         text = cast(str, bui.textwidget(query=self._text_field)).strip()

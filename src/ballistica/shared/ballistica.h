@@ -120,6 +120,10 @@ enum class LogName : uint8_t {
   kBaUI,
   kBaNetworking,
   kBaDiscord,
+  // Problems specific to this user's machine/setup (their network,
+  // their files, etc.); never triggers cloud log reports. See
+  // babase.userlog.
+  kBaUser,
   kLast  // Sentinel
 };
 

@@ -110,6 +110,32 @@ void ConnectionToHostUDP::Update() {
   // If its been long enough since we've heard anything from the host, error.
   if (current_time_millisecs - last_host_response_time_millisecs_
       > (can_communicate() ? 30000u : 10000u)) {
+    auto silent_secs = std::to_string(
+        (current_time_millisecs - last_host_response_time_millisecs_) / 1000);
+    auto host = addr_->AddressString() + ":" + std::to_string(addr_->Port());
+    if (can_communicate()) {
+      // An established connection went quiet: the host or the network
+      // between us dropped out; nothing to say about our engine.
+      g_core->logging->Log(LogName::kBaUser, LogLevel::kWarning,
+                           "Lost connection to host " + host
+                               + "; heard nothing for " + silent_secs + "s.");
+    } else if (client_id_ == -1 && !got_host_game_packet_) {
+      // Nothing ever came back: unreachable host, wrong address, bad
+      // network, etc.
+      g_core->logging->Log(LogName::kBaUser, LogLevel::kWarning,
+                           "Unable to connect to host " + host
+                               + "; no response after " + silent_secs + "s.");
+    } else {
+      // The host answered but the handshake never finished. That's
+      // not a plain network problem, so make it reportable.
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kWarning,
+          "Connection to host " + host
+              + " never completed (accepted=" + std::to_string(client_id_ != -1)
+              + ", got_game_packets=" + std::to_string(got_host_game_packet_)
+              + ", protocol " + std::to_string(protocol_version())
+              + "); host silent for " + silent_secs + "s.");
+    }
     // If the connection never got established, announce it failed.
     if (!can_communicate()) {
       g_base->ScreenMessage(
@@ -174,6 +200,7 @@ void ConnectionToHostUDP::HandleGamePacket(const std::vector<uint8_t>& buffer) {
   // Keep track of when we last heard from the host for time-out purposes.
   last_host_response_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+  got_host_game_packet_ = true;
 
   ConnectionToHost::HandleGamePacket(buffer);
 }

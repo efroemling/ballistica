@@ -13,6 +13,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, assert_never
 
 from bacommon.langstr import LangStrSpecValue
+import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
 
 if TYPE_CHECKING:
@@ -59,8 +60,8 @@ def _layout_description(layout: dui2.WindowLayout) -> str:
         case dui2.WindowLayout.WIDE_TALL:
             return (
                 f'Provides the same fixed width as {wl.WIDE.name}, but a'
-                ' larger fixed amount of space on medium and large ui'
-                ' scales.'
+                ' larger fixed amount of vertical space on medium and'
+                ' large ui scales.'
             )
         case dui2.WindowLayout.WIDE_TALLER:
             return (
@@ -95,7 +96,9 @@ def _layout_description(layout: dui2.WindowLayout) -> str:
         case dui2.WindowLayout.VIEWER:
             return (
                 f'Provides the same fixed width as {wl.SMALL.name}, but with'
-                ' a viewer alongside for showing content.'
+                ' a viewer alongside for showing content, on whichever side'
+                ' the page asks for. A page with no viewer gets no pane:'
+                ' its rows span the whole window instead.'
             )
         case _:
             assert_never(layout)
@@ -207,10 +210,32 @@ def test_page_window_layouts(
             buttons=_buttons(count),
         )
 
+    # At viewer layouts, a turning powerup box in a pane on the side
+    # asked for (or no viewer, the rows spanning the window).
+    viewer: bdep.Depiction | None = None
+    side = dui2.ViewerSide.LEFT
+    if route.viewer_side is not None:
+        from bauiv1 import _classicassets
+
+        viewer = bdep.MeshViewerDepiction(
+            entries=[
+                bdep.MeshViewerEntry(
+                    mesh=_classicassets.meshes.powerup,
+                    texture=_classicassets.textures.powerup_punch,
+                )
+            ]
+        )
+        side = route.viewer_side
+
     return dui2.Response(
         page=dui2.Page(
             title=_lit('Window Layouts'),
             state=state.encode(),
+            viewer=viewer,
+            viewer_side=side,
+            # Mostly the window showing through, a touch darkened (the
+            # viewers page's 'Dark 25%').
+            viewer_background_color=(0.0, 0.0, 0.0, 0.25),
             rows=[
                 # Info about the layout: a row-less section with just a
                 # subtitle, which joins the heading below it in latching

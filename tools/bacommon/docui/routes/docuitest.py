@@ -124,18 +124,13 @@ class Depictions(TestRoute, path='/depictions'):
 class Viewers(TestRoute, path='/viewers'):
     """Live viewer tests: good cases and bad data, one shown at a time.
 
-    The page's own buttons switch between cases in place.
+    The page's own controls switch cases, and the pane's style and
+    side (page state), in place.
     """
 
     #: Which case the viewer pane shows (a test-page case name; unknown
     #: names show the first).
     case: Annotated[str, IOAttrs('case', store_default=False)] = ''
-
-    #: Whether the page is in a window with an overlay viewer pane
-    #: rather than a framed one. The page's buttons switch cases in
-    #: place when this window's style is theirs, and open a window of
-    #: their style otherwise.
-    overlay: Annotated[bool, IOAttrs('overlay', store_default=False)] = False
 
     @override
     @classmethod
@@ -232,6 +227,13 @@ class WindowLayouts(TestRoute, path='/windowlayouts'):
     #: browse sets the actual layout; this is just for show).
     layout: Annotated[
         dui2.WindowLayout | None, IOAttrs('layout', store_default=False)
+    ] = None
+
+    #: Which side the page's viewer pane sits on at viewer layouts, or
+    #: None for a page with no viewer (its rows then span the window).
+    #: Ignored at other layouts.
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
     ] = None
 
 

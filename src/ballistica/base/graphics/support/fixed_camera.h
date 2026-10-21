@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_SUPPORT_FIXED_CAMERA_H_
 #define BALLISTICA_BASE_GRAPHICS_SUPPORT_FIXED_CAMERA_H_
 
+#include <vector>
+
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/support/depth_of_field.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -48,6 +50,20 @@ class FixedCamera : public Camera {
   auto far_clip() const -> float { return far_clip_; }
   void SetClip(float near_clip, float far_clip);
 
+  /// A ball something lies within, for clipping to.
+  struct ClipSphere {
+    Vector3f center;
+    float radius{};
+  };
+
+  /// Clip each frame to just hold these, as seen from exactly where we
+  /// end up looking from and toward (gyro and shake included): the near
+  /// clip at the least deep of them and the far at the deepest. The
+  /// near clip comes no closer than min_near_ratio times the far one
+  /// (which matters only once we're within one). Empty, we use our set
+  /// clip range (SetClip()) as is.
+  void SetClipSpheres(std::vector<ClipSphere> spheres, float min_near_ratio);
+
   /// What is in focus (where the view is drawn at a quality that has
   /// depth of field). Everything, unless set otherwise; nothing about
   /// what we show moves on its own, so there is nothing for focus to
@@ -70,18 +86,31 @@ class FixedCamera : public Camera {
   /// as far as the device turned, 0 (the default) not at all. Like the
   /// ui's tilt, the turn eases back to center over a couple of seconds
   /// once the device holds still, and is nothing on devices without a
-  /// gyro or while camera gyro is disabled.
+  /// gyro or while camera gyro is disabled. Left/right turns are about
+  /// world up and fade out as we near straight above or below the
+  /// target, where they'd only roll the view.
   auto tilt_orbit() const -> float { return tilt_orbit_; }
   void set_tilt_orbit(float val) { tilt_orbit_ = val; }
 
  private:
   void StepShake_(FrameDef* frame_def);
 
-  /// Our position swung around our target by the device's turn (see
+  struct ViewPose {
+    Vector3f position;
+    Vector3f up;
+  };
+
+  /// Where we actually look from right now, and which way is up for us:
+  /// our pose swung around our target by the device's turn (see
   /// set_tilt_orbit()).
-  auto TiltedPosition_() const -> Vector3f;
+  auto ViewPose_() const -> ViewPose;
+
+  static auto RotateAbout_(const Vector3f& v, const Vector3f& axis, float angle)
+      -> Vector3f;
 
   float tilt_orbit_{};
+  std::vector<ClipSphere> clip_spheres_;
+  float clip_min_near_ratio_{0.01f};
 
   // Shake settings.
   float shake_strength_{};

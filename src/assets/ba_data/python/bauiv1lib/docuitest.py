@@ -218,11 +218,46 @@ class TestDocUIV2Controller(
                 assert_never(action)
 
 
+def _side_name(side: bacommon.docui.v2.ViewerSide | None) -> str:
+    """A viewer pane placement's name (None for no pane)."""
+    return 'None' if side is None else side.name.title()
+
+
 def _window_layouts_row(
     style: bacommon.docui.v2.ScrollEdgeStyle,
 ) -> bacommon.docui.v2.ButtonRow:
-    """A row opening each window layout (and fit test) in a style."""
+    """A row opening each window layout (and fit test) in a style.
+
+    Viewer layouts get a button for each viewer pane placement: left,
+    none (rows spanning the window) and right.
+    """
     import bacommon.docui.v2 as dui2
+
+    from bauiv1lib.docui._panes import layout_has_viewer_pane
+
+    def _buttons(layout: dui2.WindowLayout) -> list[dui2.Button]:
+        name = layout.name.replace('_', ' ').title()
+        if not layout_has_viewer_pane(layout):
+            return [
+                dui2.Button(
+                    label=LangStrSpecValue.literal(name),
+                    size=(120, 80),
+                    action=rt.WindowLayouts(layout=layout).browse(
+                        layout=layout, scroll_edge_style=style
+                    ),
+                )
+            ]
+        sides = (dui2.ViewerSide.LEFT, None, dui2.ViewerSide.RIGHT)
+        return [
+            dui2.Button(
+                label=LangStrSpecValue.literal(f'{name} ({_side_name(side)})'),
+                size=(200, 80),
+                action=rt.WindowLayouts(layout=layout, viewer_side=side).browse(
+                    layout=layout, scroll_edge_style=style
+                ),
+            )
+            for side in sides
+        ]
 
     return dui2.ButtonRow(
         # Dev-only, so baked literals.
@@ -230,18 +265,7 @@ def _window_layouts_row(
             f'Window Layouts ({style.name.lower()} scroll)'
         ),
         buttons=[
-            *(
-                dui2.Button(
-                    label=LangStrSpecValue.literal(
-                        layout.name.replace('_', ' ').title()
-                    ),
-                    size=(120, 80),
-                    action=rt.WindowLayouts(layout=layout).browse(
-                        layout=layout, scroll_edge_style=style
-                    ),
-                )
-                for layout in dui2.WindowLayout
-            ),
+            *(b for layout in dui2.WindowLayout for b in _buttons(layout)),
             *(
                 dui2.Button(
                     label=LangStrSpecValue.literal(
@@ -503,6 +527,14 @@ def _test_v2_page_root(
                             label=LangStrSpecValue.literal('Viewers'),
                             size=(120, 80),
                             action=rt.Viewers().browse(),
+                        ),
+                        dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Viewers (Narrow)'),
+                            size=(160, 80),
+                            action=rt.Viewers().browse(
+                                layout=dui2.WindowLayout.VIEWER_NARROW
+                            ),
                         ),
                         dui2.Button(
                             # Dev-only page, so a baked literal label.

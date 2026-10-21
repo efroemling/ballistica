@@ -424,6 +424,13 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
+  // Say what each straggler is doing; a loop that never suspends is
+  // usually stuck inside one call.
+  for (auto* loop : running_loops) {
+    msg +=
+        "\n  " + loop->name() + " thread is " + loop->DescribeActivity() + ".";
+  }
+
   g_core->logging->Log(LogName::kBa, LogLevel::kError, msg);
 }
 

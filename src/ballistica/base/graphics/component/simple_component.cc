@@ -18,7 +18,29 @@ void SimpleComponent::WriteConfig() {
     // reduces to premultiplied_).
     bool premult_blend =
         premultiplied_ || (texture_.exists() && texture_->premultiplied());
-    if (uv2_fade_) {
+    if (layered_mask_texture_.exists()) {
+      assert(texture_.exists());            // unimplemented combo
+      assert(!colorize_texture_.exists());  // unimplemented combo
+      assert(!mask_texture_.exists());      // unimplemented combo
+      assert(!mask_uv2_texture_.exists());  // unimplemented combo
+      assert(flatness_ == 0.0f);            // unimplemented combo
+      assert(glow_amount_ == 0.0f);         // unimplemented combo
+      assert(shadow_opacity_ == 0.0f);      // unimplemented combo
+      assert(!double_sided_);               // unimplemented combo
+      assert(!uv2_fade_);                   // unimplemented combo
+      ConfigForShading(
+          ShadingType::kSimpleTextureModulatedTransparentLayeredMask);
+      cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
+                             layer_opacity_);
+      cmd_buffer_->PutFloats(layer_underlay_[0], layer_underlay_[1],
+                             layer_underlay_[2], layer_underlay_[3]);
+      cmd_buffer_->PutFloats(layer1_color_[0], layer1_color_[1],
+                             layer1_color_[2], layer1_color_[3]);
+      cmd_buffer_->PutFloats(layer2_color_[0], layer2_color_[1],
+                             layer2_color_[2], layer2_color_[3]);
+      cmd_buffer_->PutTexture(texture_);
+      cmd_buffer_->PutTexture(layered_mask_texture_);
+    } else if (uv2_fade_) {
       assert(texture_.exists());            // unimplemented combo
       assert(!colorize_texture_.exists());  // unimplemented combo
       assert(!mask_texture_.exists());      // unimplemented combo
@@ -189,12 +211,13 @@ void SimpleComponent::WriteConfig() {
   } else {
     // When we're opaque, we can do some shader-swapping optimizations
     // since draw order doesn't matter.
-    assert(flatness_ == 0.0f);            // unimplemented combo
-    assert(glow_amount_ == 0.0f);         // unimplemented combo
-    assert(shadow_opacity_ == 0.0f);      // unimplemented combo
-    assert(!double_sided_);               // unimplemented combo
-    assert(!mask_uv2_texture_.exists());  // unimplemented combo
-    assert(!uv2_fade_);                   // unimplemented combo
+    assert(flatness_ == 0.0f);                // unimplemented combo
+    assert(glow_amount_ == 0.0f);             // unimplemented combo
+    assert(shadow_opacity_ == 0.0f);          // unimplemented combo
+    assert(!double_sided_);                   // unimplemented combo
+    assert(!mask_uv2_texture_.exists());      // unimplemented combo
+    assert(!uv2_fade_);                       // unimplemented combo
+    assert(!layered_mask_texture_.exists());  // unimplemented combo
     if (texture_.exists()) {
       if (colorize_texture_.exists()) {
         assert(!mask_texture_.exists());  // unimplemented combo

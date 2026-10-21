@@ -202,6 +202,21 @@ void DepictionDrawContext::StandardColor(float* rgb) const {
   rgb[0] = rgb[1] = rgb[2] = grey;
 }
 
+void DepictionDrawContext::StandardLayerColors(float* underlay, float* layer1,
+                                               float* layer2) const {
+  std::copy(underlay_color, underlay_color + 4, underlay);
+  std::copy(layer1_color, layer1_color + 4, layer1);
+  std::copy(layer2_color, layer2_color + 4, layer2);
+  StandardColor(underlay);
+  StandardColor(layer1);
+  StandardColor(layer2);
+  // The shader takes its underlay premultiplied.
+  float brightness = StandardBrightness();
+  for (int i = 0; i < 3; ++i) {
+    underlay[i] *= underlay[3] * brightness;
+  }
+}
+
 Depiction::Depiction(std::string type_id)
     : type_id_{std::move(type_id)},
       last_shown_time_{g_base->logic->display_time()} {}
@@ -255,6 +270,8 @@ void Depiction::DrawDebugBounds(const DepictionDrawContext& context,
 auto Depiction::SupportsHost(DepictionHost host) const -> bool { return true; }
 
 void Depiction::Update(millisecs_t now) {}
+
+auto Depiction::DrawsHostBacking() const -> bool { return false; }
 
 auto Depiction::GetInput() -> DepictionInput* { return nullptr; }
 

@@ -2,16 +2,20 @@
 #
 """Doc-ui test page for live viewers (the page's viewer pane).
 
-Shows one case at a time in the pane: viewers that should work, and
-bad data that should show the broken-depiction placeholder (an outlined
-box with a question mark) and log why, rather than a blank pane. The
-page's buttons switch cases in place.
+Shows one case at a time in the pane: viewers that should work, empty
+panes (and no pane at all), and bad data that should show the
+broken-depiction placeholder (an outlined box with a question mark) and
+log why, rather than a blank pane. The page's controls switch the case
+and the pane's frame style, background and side in place.
 """
 
 from enum import Enum
-from typing import TYPE_CHECKING, assert_never
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, assert_never
 
+from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.langstr import LangStrSpecValue
+from bacommon.docui.routes import DocUIState
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
 
@@ -20,9 +24,72 @@ if TYPE_CHECKING:
     import bacommon.docui.routes.docuitest
 
 
+class _Background(Enum):
+    """The pane backgrounds the page can show its cases over."""
+
+    DEFAULT = 'default'
+    SOLID = 'solid'
+    HALF = 'half'
+    TINT = 'tint'
+    CLEAR = 'clear'
+
+
+def _background_color(
+    background: _Background,
+) -> tuple[float, float, float, float] | None:
+    match background:
+        case _Background.DEFAULT:
+            return None
+        case _Background.SOLID:
+            return (0.1, 0.45, 0.45, 1.0)
+        case _Background.HALF:
+            return (0.1, 0.45, 0.45, 0.5)
+        case _Background.TINT:
+            return (0.0, 0.0, 0.0, 0.25)
+        case _Background.CLEAR:
+            return (0.0, 0.0, 0.0, 0.0)
+        case _:
+            assert_never(background)
+
+
+def _background_label(background: _Background) -> LangStrSpecValue:
+    match background:
+        case _Background.DEFAULT:
+            return _lit('Default')
+        case _Background.SOLID:
+            return _lit('Teal')
+        case _Background.HALF:
+            return _lit('Teal 50%')
+        case _Background.TINT:
+            return _lit('Dark 25%')
+        case _Background.CLEAR:
+            return _lit('Clear')
+        case _:
+            assert_never(background)
+
+
+@ioprepped
+@dataclass
+class ViewersState(DocUIState, state_id='docuitest.viewers'):
+    """The viewers page's pane options (switched in place).
+
+    :meta private:
+    """
+
+    # Unframed by default: standalone models look best straight over the
+    # window.
+    frame_style: Annotated[dui2.ViewerFrameStyle, IOAttrs('fs')] = (
+        dui2.ViewerFrameStyle.NO_FRAME
+    )
+    background: Annotated[_Background, IOAttrs('bg')] = _Background.DEFAULT
+    side: Annotated[dui2.ViewerSide, IOAttrs('side')] = dui2.ViewerSide.LEFT
+
+
 class _Case(Enum):
     """The cases the page can show."""
 
+    BLANK = 'blank'
+    NO_VIEWER = 'no_viewer'
     BOX = 'box'
     BOX_INDEXED = 'box_indexed'
     SCENE = 'scene'
@@ -36,9 +103,11 @@ class _Case(Enum):
     LOOK_BLENDED = 'look_blended'
     LOOK_TINT_BLEND = 'look_tint_blend'
     LOOK_BACKGROUND = 'look_background'
-    LOOK_FAR = 'look_far'
+    LOOK_BOUNDS_SCALE = 'look_bounds_scale'
     LOOK_POSED = 'look_posed'
     LOOK_SET_SHOT = 'look_set_shot'
+    LOOK_MOVING_SHOT = 'look_moving_shot'
+    LOOK_MOVE_ONCE = 'look_move_once'
     NO_ENTRIES = 'no_entries'
     INDEX_NO_MANIFEST = 'index_no_manifest'
     INDEX_OUT_OF_RANGE = 'index_out_of_range'
@@ -53,7 +122,7 @@ class _Case(Enum):
 class _Group(Enum):
     """Which section of the page a case's button sits in."""
 
-    WORKING = 'working'
+    EXAMPLES = 'examples'
     LOOKS = 'looks'
     BAD = 'bad'
 
@@ -61,7 +130,9 @@ class _Group(Enum):
 def _group(case: _Case) -> _Group:
     match case:
         case (
-            _Case.BOX
+            _Case.BLANK
+            | _Case.NO_VIEWER
+            | _Case.BOX
             | _Case.BOX_INDEXED
             | _Case.SCENE
             | _Case.UNTEXTURED
@@ -69,7 +140,7 @@ def _group(case: _Case) -> _Group:
             | _Case.DOWNLOADS
             | _Case.CHARACTER
         ):
-            return _Group.WORKING
+            return _Group.EXAMPLES
         case (
             _Case.LOOK_POWERUP
             | _Case.LOOK_BOMBS
@@ -77,9 +148,11 @@ def _group(case: _Case) -> _Group:
             | _Case.LOOK_BLENDED
             | _Case.LOOK_TINT_BLEND
             | _Case.LOOK_BACKGROUND
-            | _Case.LOOK_FAR
+            | _Case.LOOK_BOUNDS_SCALE
             | _Case.LOOK_POSED
             | _Case.LOOK_SET_SHOT
+            | _Case.LOOK_MOVING_SHOT
+            | _Case.LOOK_MOVE_ONCE
         ):
             return _Group.LOOKS
         case (
@@ -103,6 +176,10 @@ def _label(case: _Case) -> str:
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
     match case:
+        case _Case.BLANK:
+            return 'Blank'
+        case _Case.NO_VIEWER:
+            return 'No Viewer'
         case _Case.BOX:
             return 'Powerup Box'
         case _Case.BOX_INDEXED:
@@ -129,12 +206,16 @@ def _label(case: _Case) -> str:
             return 'Tint + Blend'
         case _Case.LOOK_BACKGROUND:
             return 'Background'
-        case _Case.LOOK_FAR:
-            return 'Far'
+        case _Case.LOOK_BOUNDS_SCALE:
+            return 'Bounds Scale'
         case _Case.LOOK_POSED:
             return 'Posed'
         case _Case.LOOK_SET_SHOT:
             return 'Set Shot'
+        case _Case.LOOK_MOVING_SHOT:
+            return 'Moving Shot'
+        case _Case.LOOK_MOVE_ONCE:
+            return 'Move Once'
         case _Case.NO_ENTRIES:
             return 'No Entries'
         case _Case.INDEX_NO_MANIFEST:
@@ -162,8 +243,21 @@ def _description(case: _Case) -> str:
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
     match case:
+        case _Case.BLANK:
+            return (
+                'An empty pane (a blank depiction): just its background'
+                ' (and frame, when framed). Unframed with the default'
+                ' background that is nothing at all, though the pane'
+                ' keeps its room.'
+            )
+        case _Case.NO_VIEWER:
+            return (
+                'A page with no viewer: no pane, and its rows take the'
+                " window's whole width (the style and side settings have"
+                ' nothing to apply to).'
+            )
         case _Case.BOX:
-            return 'A powerup box with its punch texture, framed and turning.'
+            return 'A powerup box with its punch texture, turning.'
         case _Case.BOX_INDEXED:
             return (
                 'The same box, its refs sent as indices into the'
@@ -186,7 +280,11 @@ def _description(case: _Case) -> str:
                 ' cached from another version).'
             )
         case _Case.CHARACTER:
-            return 'A character viewer, for comparison.'
+            return (
+                'A character viewer, for comparison. Its scene keeps no'
+                " transparency, so it covers the pane's background (and"
+                ' shows as a plain rectangle unframed).'
+            )
         case _Case.LOOK_POWERUP:
             return (
                 'A powerup box as the game draws it: its texture plus the'
@@ -201,7 +299,7 @@ def _description(case: _Case) -> str:
         case _Case.LOOK_TINTED:
             return (
                 "Zoe's head tinted through her color mask (red channel"
-                ' blue, green yellow), with a faint character reflection.'
+                ' blue, green magenta), with a faint character reflection.'
             )
         case _Case.LOOK_BLENDED:
             return (
@@ -217,10 +315,10 @@ def _description(case: _Case) -> str:
         case _Case.LOOK_BACKGROUND:
             return (
                 'The in-game powerup box on a background color of its'
-                " own (night blue) instead of the pane's. An overlay pane"
-                ' has no background, so there it shows the window.'
+                " own (night blue, solid), covering the pane's whatever"
+                ' it is.'
             )
-        case _Case.LOOK_FAR:
+        case _Case.LOOK_BOUNDS_SCALE:
             return (
                 'The in-game powerup box with a bounds scale of 2: the'
                 ' camera frames twice its bounds, so it looks half as big.'
@@ -234,9 +332,22 @@ def _description(case: _Case) -> str:
         case _Case.LOOK_SET_SHOT:
             return (
                 'The bombs through a camera placed by hand: down low'
-                ' beside the bomb, looking past it along the row (55'
+                ' beside the bomb, looking along the row at the TNT (55'
                 ' degree field of view, no auto framing). Spin and'
                 ' dragging are off: a completely fixed view.'
+            )
+        case _Case.LOOK_MOVING_SHOT:
+            return (
+                'Set Shot with a ping-pong camera: it sways forward and'
+                ' to the right past the bomb and back again, over and'
+                ' over, still looking at the same point (3 seconds each'
+                ' way, eased in and out).'
+            )
+        case _Case.LOOK_MOVE_ONCE:
+            return (
+                'Moving Shot with looping off: it eases forward and to'
+                ' the right past the bomb once (3 seconds) and stays'
+                ' there.'
             )
         case _Case.NO_ENTRIES:
             return 'A mesh viewer with nothing in it.'
@@ -260,6 +371,11 @@ def _description(case: _Case) -> str:
             assert_never(case)
 
 
+# Set Shot's camera (see _look_depiction).
+_SET_SHOT_FROM = (-2.2, 0.15, 0.8)
+_SET_SHOT_AT = (1.5, 0.0, -0.67)
+
+
 def _look_depiction(case: _Case) -> bdep.MeshViewerDepiction:
     """A Looks case: game objects drawn as the game draws them.
 
@@ -281,13 +397,14 @@ def _look_depiction(case: _Case) -> bdep.MeshViewerDepiction:
         position: tuple[float, float, float],
         *,
         transparent: bool = False,
+        tint2_color: tuple[float, float, float] = (1.0, 0.8, 0.1),
     ) -> bdep.MeshViewerEntry:
         return bdep.MeshViewerEntry(
             mesh=part,
             texture=chars.textures.zoe_color,
             tint_texture=chars.textures.zoe_color_mask,
             tint_color=(0.2, 0.4, 1.0),
-            tint2_color=(1.0, 0.8, 0.1),
+            tint2_color=tint2_color,
             reflection=cubes.reflection_char,
             reflection_scale=(0.1, 0.1, 0.1),
             position=position,
@@ -344,20 +461,56 @@ def _look_depiction(case: _Case) -> bdep.MeshViewerDepiction:
             )
         case _Case.LOOK_SET_SHOT:
             # Tucked in low beside the bomb, looking down the row past
-            # it at the rest.
+            # it toward the TNT box at its far end: aimed about 10
+            # degrees left of the box (at the same distance) so the bomb
+            # beside us stays in view. The gyro swings us around that
+            # point.
             return bdep.MeshViewerDepiction(
                 entries=bombs,
                 spin=False,
                 draggable=False,
-                camera=bdep.MeshViewerCamera(
-                    position=(-2.2, 0.15, 0.8),
-                    target=(-0.4, 0.1, 0.0),
+                camera=bdep.MeshViewerStillCamera(
+                    position=_SET_SHOT_FROM,
+                    target=_SET_SHOT_AT,
                     fov_y=55.0,
+                ),
+            )
+        case _Case.LOOK_MOVING_SHOT | _Case.LOOK_MOVE_ONCE:
+            # Set Shot's camera, swaying forward and to the right and
+            # back, still looking at the same point: 30% of the way
+            # toward that point plus 0.7 to the right of the line of
+            # sight (past the bomb, staying clear of the impact bomb).
+            # Move Once makes the trip just once.
+            return bdep.MeshViewerDepiction(
+                entries=bombs,
+                spin=False,
+                draggable=False,
+                camera=bdep.MeshViewerPingPongCamera(
+                    loop=case is _Case.LOOK_MOVING_SHOT,
+                    a=bdep.MeshViewerCameraPose(
+                        position=_SET_SHOT_FROM,
+                        target=_SET_SHOT_AT,
+                        fov_y=55.0,
+                    ),
+                    b=bdep.MeshViewerCameraPose(
+                        position=(-0.83, 0.105, 1.01),
+                        target=_SET_SHOT_AT,
+                        fov_y=55.0,
+                    ),
+                    travel_time=3.0,
                 ),
             )
         case _Case.LOOK_TINTED:
             return bdep.MeshViewerDepiction(
-                entries=[_zoe(chars.meshes.zoe_head, (0.0, 0.0, 0.0))]
+                # Her hair is the mask's green channel; a loud magenta
+                # there makes the tint unmistakable.
+                entries=[
+                    _zoe(
+                        chars.meshes.zoe_head,
+                        (0.0, 0.0, 0.0),
+                        tint2_color=(1.0, 0.1, 0.9),
+                    )
+                ]
             )
         case _Case.LOOK_BLENDED:
             return bdep.MeshViewerDepiction(
@@ -379,7 +532,7 @@ def _look_depiction(case: _Case) -> bdep.MeshViewerDepiction:
                     ),
                 ]
             )
-        case _Case.LOOK_FAR:
+        case _Case.LOOK_BOUNDS_SCALE:
             return bdep.MeshViewerDepiction(
                 entries=[
                     bdep.MeshViewerEntry(
@@ -413,8 +566,8 @@ def _look_depiction(case: _Case) -> bdep.MeshViewerDepiction:
             raise ValueError(f'Not a Looks case: {case}.')
 
 
-def _depiction(case: _Case) -> bdep.Depiction:
-    """The depiction a case shows."""
+def _depiction(case: _Case) -> bdep.Depiction | None:
+    """The depiction a case shows (None for no viewer)."""
     # pylint: disable=too-many-return-statements
     # pylint: disable=too-many-branches
     from bacommon.assetspec import (
@@ -455,6 +608,10 @@ def _depiction(case: _Case) -> bdep.Depiction:
         )
 
     match case:
+        case _Case.BLANK:
+            return bdep.BlankDepiction()
+        case _Case.NO_VIEWER:
+            return None
         case _Case.BOX:
             return bdep.MeshViewerDepiction(entries=[box])
         case _Case.BOX_INDEXED:
@@ -514,9 +671,11 @@ def _depiction(case: _Case) -> bdep.Depiction:
             | _Case.LOOK_BLENDED
             | _Case.LOOK_TINT_BLEND
             | _Case.LOOK_BACKGROUND
-            | _Case.LOOK_FAR
+            | _Case.LOOK_BOUNDS_SCALE
             | _Case.LOOK_POSED
             | _Case.LOOK_SET_SHOT
+            | _Case.LOOK_MOVING_SHOT
+            | _Case.LOOK_MOVE_ONCE
         ):
             return _look_depiction(case)
         case _Case.NO_ENTRIES:
@@ -572,6 +731,74 @@ def _lit(text: str) -> LangStrSpecValue:
     return LangStrSpecValue.literal(text)
 
 
+def _frame_style_label(style: dui2.ViewerFrameStyle) -> LangStrSpecValue:
+    match style:
+        case dui2.ViewerFrameStyle.DEFAULT:
+            return _lit('Default')
+        case dui2.ViewerFrameStyle.NO_FRAME:
+            return _lit('No Frame')
+        case _:
+            assert_never(style)
+
+
+def _side_label(side: dui2.ViewerSide) -> LangStrSpecValue:
+    match side:
+        case dui2.ViewerSide.LEFT:
+            return _lit('Left')
+        case dui2.ViewerSide.RIGHT:
+            return _lit('Right')
+        case _:
+            assert_never(side)
+
+
+def _group_section(group: _Group, case: _Case) -> dui2.Section:
+    """A group's section of case buttons (each switching in place).
+
+    The page's state (its pane settings) rides along with each.
+    """
+    # pylint: disable=cyclic-import
+    import bacommon.docui.routes.docuitest as rt
+
+    match group:
+        case _Group.EXAMPLES:
+            title, subtitle = (
+                'Examples',
+                'An empty pane on purpose, no pane at all, and viewers'
+                ' that should just work.',
+            )
+        case _Group.LOOKS:
+            title, subtitle = (
+                'Looks',
+                'Game objects as the game draws them: cube-map'
+                ' reflections, tinting, blending.',
+            )
+        case _Group.BAD:
+            title, subtitle = (
+                'Bad Data',
+                'Each should show the placeholder, not a blank pane.',
+            )
+        case _:
+            assert_never(group)
+    return dui2.Section(
+        title=_lit(title),
+        subtitle=_lit(subtitle),
+        rows=[
+            dui2.ButtonRow(
+                buttons=[
+                    dui2.Button(
+                        label=_lit(_label(c)),
+                        size=(150, 70),
+                        selected=c is case,
+                        action=rt.Viewers(case=c.value).replace(),
+                    )
+                    for c in _Case
+                    if _group(c) is group
+                ]
+            )
+        ],
+    )
+
+
 def test_page_viewers(
     route: bacommon.docui.routes.docuitest.Viewers,
 ) -> bacommon.docui.v2.Response:
@@ -583,107 +810,58 @@ def test_page_viewers(
         case = _Case(route.case)
     except ValueError:
         case = _Case.BOX
+    state = route.get_state(ViewersState) or ViewersState()
 
-    def _button(c: _Case, overlay: bool) -> dui2.Button:
-        """A button showing a case in a framed or an overlay pane.
+    # Everything switches in place; the page's state (its pane
+    # settings) rides along with every request.
+    refresh = rt.Viewers(case=case.value).replace(default_sound=False)
 
-        In place when this window's pane is already that style;
-        otherwise in a new window with it (back returns here).
-        """
-        target = rt.Viewers(case=c.value, overlay=overlay)
-        return dui2.Button(
-            label=_lit(_label(c)),
-            size=(150, 70),
-            selected=c is case and overlay == route.overlay,
-            action=(
-                target.replace()
-                if overlay == route.overlay
-                else target.browse(
-                    viewer_style=(
-                        dui2.ViewerStyle.OVERLAY
-                        if overlay
-                        else dui2.ViewerStyle.FRAMED
-                    )
-                )
-            ),
-        )
-
-    # The Looks and Bad Data cases just show in this window's style (bad
-    # data looks the same either way: a '?').
-    working = [c for c in _Case if _group(c) is _Group.WORKING]
-    looks = [c for c in _Case if _group(c) is _Group.LOOKS]
-    bad = [c for c in _Case if _group(c) is _Group.BAD]
-    overlay_cases = (
-        _Case.BOX,
-        _Case.SCENE,
-        _Case.CHARACTER,
-        _Case.MISSING_ASSET,
-    )
-
-    expect = (
-        'Should show the ? placeholder (and log why).'
-        if _group(case) is _Group.BAD
-        else 'Should show it working.'
-    )
+    if case in (_Case.BLANK, _Case.NO_VIEWER):
+        # (Their descriptions say what to expect.)
+        expect = ''
+    else:
+        match _group(case):
+            case _Group.BAD:
+                expect = ' Should show the ? placeholder (and log why).'
+            case _Group.EXAMPLES | _Group.LOOKS:
+                expect = ' Should show it working.'
+            case _:
+                assert_never(_group(case))
     return dui2.Response(
         page=dui2.Page(
             title=_lit('Viewers'),
             viewer=_depiction(case),
+            viewer_frame_style=state.frame_style,
+            viewer_background_color=_background_color(state.background),
+            viewer_side=state.side,
+            state=state.encode(),
             rows=[
                 dui2.Section(
                     subtitle=_lit(
-                        f'{_label(case)} - {_description(case)} {expect}'
-                    ),
-                    rows=[],
-                ),
-                dui2.Section(
-                    title=_lit('Framed'),
-                    subtitle=_lit(
-                        'In a viewer pane with a rounded frame and backing.'
+                        f'{_label(case)} - {_description(case)}{expect}'
                     ),
                     rows=[
-                        dui2.ButtonRow(
-                            buttons=[_button(c, False) for c in working]
-                        )
+                        ViewersState.choice_row(
+                            lambda s: s.frame_style,
+                            choice_label=_frame_style_label,
+                            label=_lit('Frame Style'),
+                            on_change=refresh,
+                        ),
+                        ViewersState.choice_row(
+                            lambda s: s.background,
+                            choice_label=_background_label,
+                            label=_lit('Background'),
+                            on_change=refresh,
+                        ),
+                        ViewersState.choice_row(
+                            lambda s: s.side,
+                            choice_label=_side_label,
+                            label=_lit('Pane Side'),
+                            on_change=refresh,
+                        ),
                     ],
                 ),
-                dui2.Section(
-                    title=_lit('Overlay'),
-                    subtitle=_lit(
-                        'In a viewer pane with no frame or backing: a mesh'
-                        ' viewer composites straight over the window; a'
-                        ' character draws as a plain rectangle.'
-                    ),
-                    rows=[
-                        dui2.ButtonRow(
-                            buttons=[_button(c, True) for c in overlay_cases]
-                        )
-                    ],
-                ),
-                dui2.Section(
-                    title=_lit('Looks'),
-                    subtitle=_lit(
-                        'Game objects as the game draws them: cube-map'
-                        ' reflections, tinting, blending. In this'
-                        " window's pane style."
-                    ),
-                    rows=[
-                        dui2.ButtonRow(
-                            buttons=[_button(c, route.overlay) for c in looks]
-                        )
-                    ],
-                ),
-                dui2.Section(
-                    title=_lit('Bad Data'),
-                    subtitle=_lit(
-                        'Each should show the placeholder, not a blank pane.'
-                    ),
-                    rows=[
-                        dui2.ButtonRow(
-                            buttons=[_button(c, route.overlay) for c in bad]
-                        )
-                    ],
-                ),
+                *(_group_section(g, case) for g in _Group),
             ],
         )
     )
