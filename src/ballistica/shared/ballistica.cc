@@ -54,11 +54,28 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 23070;
+const int kEngineBuildNumber = 23071;
 const char* kEngineVersion = "1.8.5";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
+
+/// Log any of our registered threads still running at Python
+/// finalization. INFO for now while known threads remain; this becomes
+/// a warning once all of them are stopped and joined at shutdown.
+static void ReportLeftoverThreads_(core::CoreFeatureSet* corefs) {
+  auto names = corefs->OtherRegisteredThreadNames();
+  if (names.empty()) {
+    return;
+  }
+  std::string joined;
+  for (auto&& name : names) {
+    joined += (joined.empty() ? "" : ", ") + name;
+  }
+  corefs->logging->Log(
+      LogName::kBaLifecycle, LogLevel::kInfo,
+      "Threads still running at Python finalization: " + joined + ".");
+}
 
 auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   // This code is meant to be run standalone so won't inherit any
@@ -252,6 +269,11 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
       // Let anyone interested know we're trying to go down NOW.
       l_core->set_engine_done();
+
+      // Note any of our threads still running. The goal is for this to
+      // be empty: every thread we start stopped and joined before
+      // Python goes down.
+      ReportLeftoverThreads_(l_core);
 
       // Take the Python interpreter down gracefully. This will block for
       // any outstanding threads/etc.

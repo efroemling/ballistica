@@ -188,7 +188,8 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
 }
 
 auto NetworkReader::RunThread_() -> int {
-  g_core->platform->SetCurrentThreadName("ballistica network-read");
+  // (Also sets the OS-level thread name.)
+  g_core->RegisterThread("network-read");
 
   if (!g_core->HeadlessMode()) {
     remote_server_ = std::make_unique<RemoteAppServer>();

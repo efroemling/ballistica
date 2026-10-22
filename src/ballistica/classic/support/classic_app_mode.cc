@@ -898,7 +898,7 @@ void ClassicAppMode::UpdateGameRoster() {
 
     // Add all connected clients.
     for (auto&& i : connections()->connections_to_clients()) {
-      if (i.second->can_communicate()) {
+      if (i.second.exists() && i.second->can_communicate()) {
         GameRosterEntry entry;
         entry.spec = i.second->peer_spec().GetSpecString();
 

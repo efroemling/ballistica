@@ -51,6 +51,11 @@ class AudioServer {
 
   auto paused() const -> bool { return suspended_; }
 
+  /// How many times we've unsuspended, and the app-time we last did so.
+  /// Diagnostics for streaming-source underruns (see AudioStreamer).
+  auto unsuspend_count() const -> int { return unsuspend_count_; }
+  auto last_unsuspend_time() const -> seconds_t { return last_unsuspend_time_; }
+
   void Shutdown();
   auto shutdown_completed() const { return shutdown_completed_; }
 
@@ -162,6 +167,8 @@ class AudioServer {
   seconds_t last_reset_attempt_time_{-999.0};
   seconds_t shutdown_start_time_{};
   seconds_t last_started_playing_time_{};
+  seconds_t last_unsuspend_time_{-1.0};
+  int unsuspend_count_{};
   millisecs_t last_sound_fade_process_time_{};
 
   std::mutex openalsoft_android_log_mutex_;

@@ -201,6 +201,8 @@
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\empty_app_mode.cc" />

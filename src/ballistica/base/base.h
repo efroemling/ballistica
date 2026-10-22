@@ -967,6 +967,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
  private:
   BaseFeatureSet();
+
+  /// Stop and join our event-loop threads once shutdown completes, or
+  /// report an unclean shutdown and exit if any won't stop in time.
+  void StopEventLoopThreads_();
   void LogStartupMessage_();
   void PrintContextNonLogicThread_();
   void PrintContextForCallableLabel_(const char* label);

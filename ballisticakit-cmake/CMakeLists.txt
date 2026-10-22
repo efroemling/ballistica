@@ -337,6 +337,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_sdl.h
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_vr.cc
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_vr.h
+  ${BA_SRC_ROOT}/ballistica/base/app_adapter/offscreen_gl_windows.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_adapter/offscreen_gl_windows.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.cc
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.cc

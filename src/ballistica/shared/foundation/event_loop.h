@@ -16,6 +16,10 @@
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/timer_list.h"
 
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
+#include <pthread.h>
+#endif
+
 namespace ballistica {
 
 // Special flags we can safely access from interrupt/ctrl handlers.
@@ -42,7 +46,29 @@ class EventLoop {
   }
 
   /// Flags the loop to exit at the end of the next cycle.
+  ///
+  /// Once a loop stops it never runs anything again: its timers stop
+  /// firing, a GIL-holding loop lets go of the GIL for good, and
+  /// anything pushed to it afterward is dropped (synchronous pushes
+  /// return immediately rather than hanging).
   void Exit();
+
+  /// Block until this loop has stopped (see Exit()).
+  ///
+  /// Call from some other thread, without holding the Python GIL (the
+  /// loop may need it to finish its last cycle). Returns false if the
+  /// timeout elapses first.
+  auto WaitForStopped(millisecs_t timeout) -> bool;
+
+  /// Ask the loop to exit, from any thread (Exit() is for the loop's own
+  /// thread). It stops at the end of the cycle that handles the request.
+  void RequestExit();
+
+  /// Join the loop's thread once it has stopped (see WaitForStopped()).
+  ///
+  /// Only for loops that created their own thread. Calling this before
+  /// the loop has stopped is a mistake; it would block until it does.
+  void JoinThread();
 
   void SetAcquiresPythonGIL();
 
@@ -168,6 +194,7 @@ class EventLoop {
   void PushThreadMessage_(const ThreadMessage_& t);
 
   void RunPendingRunnables_();
+  void OnStopped_();
   void RunSuspendCallbacks_();
   void RunUnsuspendCallbacks_();
 
@@ -190,6 +217,7 @@ class EventLoop {
   bool writing_tally_{};
   bool suspended_{};
   bool done_{};
+  bool stopped_{};  // Guarded by thread_message_mutex_.
   bool acquires_python_gil_{};
   std::atomic<size_t> thread_messages_size_approx_{};
   std::atomic<const char*> activity_{};
@@ -197,8 +225,15 @@ class EventLoop {
   std::atomic<bool> activity_is_type_name_{};
   std::atomic<microsecs_t> activity_start_time_{};
   std::thread::id thread_id_{};
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
+  pthread_t pthread_{};
+  bool have_pthread_{};
+#else
+  std::thread* std_thread_{};
+#endif
   std::condition_variable thread_message_cv_;
   std::condition_variable client_listener_cv_;
+  std::condition_variable stopped_cv_;
   std::list<std::pair<Runnable*, bool*>> runnables_;
   std::list<Runnable*> suspend_callbacks_;
   std::list<Runnable*> unsuspend_callbacks_;

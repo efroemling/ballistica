@@ -927,6 +927,8 @@ void AudioServer::SetSuspended_(bool suspend) {
       }
 #endif  // BA_ENABLE_AUDIO
       last_started_playing_time_ = g_core->AppTimeSeconds();
+      last_unsuspend_time_ = last_started_playing_time_;
+      unsuspend_count_++;
       suspended_ = false;
 #if BA_ENABLE_AUDIO
       if (!using_null_device_) {

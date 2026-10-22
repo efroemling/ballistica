@@ -479,7 +479,27 @@ auto PlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
   return wstr;
 }
 
-auto PlatformWindows::CanShowBlockingFatalErrorDialog() -> bool { return true; }
+auto PlatformWindows::CanShowBlockingFatalErrorDialog() -> bool {
+  // Only when someone could see it and click it. A dialog nobody can see
+  // blocks forever, so a fatal error would hang the process instead of
+  // exiting. Session 0 (services, and anything launched over ssh/WSL) has
+  // never been interactive since Vista -- and its window station can still
+  // claim to be visible, so check the session itself first.
+  DWORD session_id{};
+  if (ProcessIdToSessionId(GetCurrentProcessId(), &session_id)
+      && session_id == 0) {
+    return false;
+  }
+  USEROBJECTFLAGS flags{};
+  if (HWINSTA station = GetProcessWindowStation();
+      station
+      && GetUserObjectInformationW(station, UOI_FLAGS, &flags, sizeof(flags),
+                                   nullptr)) {
+    return (flags.dwFlags & WSF_VISIBLE) != 0;
+  }
+  // Couldn't tell; assume the normal desktop case.
+  return true;
+}
 
 void PlatformWindows::BlockingFatalErrorDialog(const std::string& message) {
   // Native Win32 dialog (user32). More robust than SDL for the fatal case

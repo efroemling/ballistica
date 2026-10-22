@@ -433,7 +433,7 @@ class HostUISubsystem:  # pylint: disable=too-many-public-methods
     # Internal.
 
     def start(self) -> None:
-        """Start periodic upkeep.
+        """Start periodic upkeep (as classic app-mode activates).
 
         :meta private:
         """
@@ -441,6 +441,13 @@ class HostUISubsystem:  # pylint: disable=too-many-public-methods
         self._timer = babase.AppTimer(
             1.0, babase.WeakCallStrict(self._tick), repeat=True
         )
+
+    def stop(self) -> None:
+        """Stop periodic upkeep (as classic app-mode deactivates).
+
+        :meta private:
+        """
+        self._timer = None
 
     def on_message_from_host(self, msg: str) -> None:
         """Handle a host-ui message from our host.
@@ -568,11 +575,10 @@ class HostUISubsystem:  # pylint: disable=too-many-public-methods
         self._push(None if clients is None else list(clients))
 
     def _hosting(self) -> bool:
-        # pylint: disable=cyclic-import
-        from baclassic._appmode import ClassicAppMode
-
+        # Our timer runs exactly while classic app-mode is active (see
+        # start()/stop()), so it doubles as that check.
         return (
-            isinstance(babase.app.mode, ClassicAppMode)
+            self._timer is not None
             and bascenev1.get_connection_to_host_info_2() is None
         )
 
@@ -630,11 +636,7 @@ class HostUISubsystem:  # pylint: disable=too-many-public-methods
         )
 
     def _tick(self) -> None:
-        # pylint: disable=cyclic-import
-        from baclassic._appmode import ClassicAppMode
-
-        if not isinstance(babase.app.mode, ClassicAppMode):
-            return
+        # (Only ticks while ClassicAppMode is active; see start()/stop().)
         now = babase.apptime()
 
         if self._hosting():

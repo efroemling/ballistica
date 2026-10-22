@@ -582,7 +582,8 @@ void CorePython::EmitHeldLog_(const HeldLogEntry_& entry) {
 
 void CorePython::LogDeliveryThreadMain_() {
   assert(g_core && g_core->platform);
-  g_core->platform->SetCurrentThreadName("ballistica log-delivery");
+  // (Also sets the OS-level thread name.)
+  g_core->RegisterThread("log-delivery");
   while (true) {
     std::list<HeldLogEntry_> batch;
     {
@@ -598,6 +599,7 @@ void CorePython::LogDeliveryThreadMain_() {
           fprintf(stderr, "[held-log] %s\n", std::get<2>(entry).c_str());
         }
         held_logs_.clear();
+        g_core->UnregisterThread();
         return;
       }
       batch.swap(held_logs_);

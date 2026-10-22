@@ -96,10 +96,10 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
       pthread_attr_t attr;
       BA_PRECONDITION(pthread_attr_init(&attr) == 0);
       BA_PRECONDITION(pthread_attr_setstacksize(&attr, 1024 * 1024) == 0);
-      pthread_t thread;
-      pthread_create(&thread, &attr, funcp, this);
+      BA_PRECONDITION(pthread_create(&pthread_, &attr, funcp, this) == 0);
+      have_pthread_ = true;
 #else
-      new std::thread(func, this);
+      std_thread_ = new std::thread(func, this);
 #endif
 
       // Block until the thread is bootstrapped.
@@ -309,10 +309,72 @@ void EventLoop::Run_(bool single_cycle) {
       ClearActivity_();
     }
 
-    if (done_ || single_cycle) {
+    if (done_) {
+      OnStopped_();
+      break;
+    }
+    if (single_cycle) {
       break;
     }
   }
+}
+
+void EventLoop::OnStopped_() {
+  assert(ThreadIsCurrent());
+
+  // Grab anything still queued for us; none of it will ever run.
+  std::list<ThreadMessage_> leftover;
+  {
+    std::scoped_lock lock(thread_message_mutex_);
+    if (stopped_) {
+      return;
+    }
+    stopped_ = true;
+    leftover.swap(thread_messages_);
+    thread_messages_size_approx_.store(0, std::memory_order_relaxed);
+  }
+
+  // Release anyone waiting synchronously on something that won't run.
+  // We deliberately leak the runnables themselves: the process is on its
+  // way out, and destroying them can drop Python references from a
+  // thread that may not be allowed to touch Python anymore.
+  bool notify_listeners{};
+  for (auto&& msg : leftover) {
+    if (msg.type == ThreadMessage_::Type::kRunnable
+        && msg.completion_flag != nullptr) {
+      *msg.completion_flag = true;
+      notify_listeners = true;
+    }
+  }
+  for (auto&& runnable : runnables_) {
+    if (runnable.second != nullptr) {
+      *runnable.second = true;
+      notify_listeners = true;
+    }
+  }
+  runnables_.clear();
+  if (notify_listeners) {
+    {
+      // Same handshake as RunPendingRunnables_().
+      std::scoped_lock lock(client_listener_mutex_);
+    }
+    client_listener_cv_.notify_all();
+  }
+
+  // A GIL-holding loop lets go of it for good, so whoever finalizes
+  // Python can take it and nothing here runs Python again.
+  if (acquires_python_gil_ && py_thread_state_ == nullptr) {
+    ReleaseGIL_();
+  }
+
+  stopped_cv_.notify_all();
+}
+
+auto EventLoop::WaitForStopped(millisecs_t timeout) -> bool {
+  assert(!ThreadIsCurrent());
+  std::unique_lock lock(thread_message_mutex_);
+  return stopped_cv_.wait_for(lock, std::chrono::milliseconds(timeout),
+                              [this] { return stopped_; });
 }
 
 void EventLoop::CheckInterrupts_() {
@@ -454,6 +516,27 @@ void EventLoop::SetAcquiresPythonGIL() {
 // Explicitly kill the main thread.
 void EventLoop::Exit() { done_ = true; }
 
+void EventLoop::RequestExit() {
+  PushThreadMessage_(ThreadMessage_(ThreadMessage_::Type::kShutdown));
+}
+
+void EventLoop::JoinThread() {
+  assert(source_ == ThreadSource::kCreate);
+  assert(!ThreadIsCurrent());
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
+  if (have_pthread_) {
+    pthread_join(pthread_, nullptr);
+    have_pthread_ = false;
+  }
+#else
+  if (std_thread_ != nullptr) {
+    std_thread_->join();
+    delete std_thread_;
+    std_thread_ = nullptr;
+  }
+#endif
+}
+
 EventLoop::~EventLoop() = default;
 
 void EventLoop::NoteActivity_(const char* what, bool is_type_name) {
@@ -558,6 +641,19 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   bool overflowed{};
   {
     std::scoped_lock lock(thread_message_mutex_);
+
+    // A stopped loop never runs anything again, so drop the message
+    // rather than letting it pile up (leaking any runnable; see
+    // OnStopped_()). A synchronous pusher is still holding
+    // client_listener_mutex_ here and checks its flag before it waits,
+    // so setting the flag is all it takes to release it.
+    if (stopped_) {
+      if (t.type == ThreadMessage_::Type::kRunnable
+          && t.completion_flag != nullptr) {
+        *t.completion_flag = true;
+      }
+      return;
+    }
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);

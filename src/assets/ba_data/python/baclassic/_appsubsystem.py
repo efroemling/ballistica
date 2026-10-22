@@ -392,8 +392,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         plus = babase.app.plus
         assert plus is not None
 
-        self.host_ui.start()
-
         # The classic controls guide is drawn on each machine via a
         # local-display; wire up its handler.
         bascenev1.register_local_display_handler(
@@ -855,6 +853,14 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def get_game_port(self) -> int:
         """:meta private:"""
         return bascenev1.get_game_port()
+
+    def protocol_version(self) -> int:
+        """:meta private:"""
+        return bascenev1.protocol_version()
+
+    def play_cheer_sound(self) -> None:
+        """:meta private:"""
+        _classicassets.audio.cheer.get().play()
 
     def v2_upgrade_window(self, login_name: str, code: str) -> None:
         """:meta private:"""

@@ -137,7 +137,14 @@ def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
             exec_code=exec_code,
             # Markers like 'app exiting (main thread)' are ba.lifecycle
             # INFO lines, filtered at the default WARNING level.
-            env={'BA_LOG_LEVELS': 'ba.lifecycle=INFO'},
+            env={
+                'BA_LOG_LEVELS': 'ba.lifecycle=INFO',
+                # Keep the watchdog's deliberate fatals off the real
+                # servers (where they'd also eat into basn's
+                # per-address report limit that the end-to-end tests
+                # in test_fatal_error_report.py rely on).
+                'BA_FATAL_REPORT_URL': 'http://127.0.0.1:9',
+            },
             timeout=_RUN_TIMEOUT_SECONDS,
         )
     return proc.stdout.decode(errors='replace')
