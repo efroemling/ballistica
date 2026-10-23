@@ -1224,9 +1224,9 @@ class Spaz(bs.Actor):
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
                 if self._last_grabbed_spaz == node.getdelegate(Spaz) and (
-                     0 <= punch_time_diff <= 70 or release_time_diff <= 360
+                    0 <= punch_time_diff <= 70 or release_time_diff <= 360
                 ):
-                     return None
+                    return None
 
             # Only allow one hit per node per punch.
             if node not in self._punched_nodes:
