@@ -92,6 +92,7 @@ class Spaz(bs.Actor):
         assert classic is not None
 
         self._allow_punch_grab = classic.allow_punch_grab
+        self._last_grabbed_spaz = None
 
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
@@ -1216,20 +1217,16 @@ class Spaz(bs.Actor):
             # Prevent punches against other Spaz characters shortly
             # before or after grabbing.
             if not self._allow_punch_grab:
-                is_holding_object = bool(self.node.hold_node)
                 punch_time_diff = (
                     self.last_punch_time_ms - self.last_pickup_time_ms
                 )
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                if node.getdelegate(Spaz):
-                    if 0 <= punch_time_diff <= 70:
-                        if is_holding_object:
-                            return None
-
-                    if release_time_diff <= 360:
-                        return None
+                if self._last_grabbed_spaz == node.getdelegate(Spaz) and (
+                     0 <= punch_time_diff <= 70 or release_time_diff <= 360
+                ):
+                     return None
 
             # Only allow one hit per node per punch.
             if node not in self._punched_nodes:
@@ -1333,6 +1330,9 @@ class Spaz(bs.Actor):
                     spaz and not spaz.is_alive()
                 ):
                     return True
+
+            # Track the last successfully grabbed Spaz instance.
+            self._last_grabbed_spaz = opposingnode.getdelegate(Spaz)
 
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
