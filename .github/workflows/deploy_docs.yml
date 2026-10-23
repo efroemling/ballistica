@@ -15,6 +15,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          save-asset-cache: true
       - name: Make the build
         run: |
           make assets-cmake
@@ -22,13 +24,13 @@ jobs:
 
   build:
     needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
+    # Same runner as the cmake jobs: docs_build installs their build
+    # packages (libsdl3-dev needs 26.04) and shares their sccache objects.
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v7
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
       - name: Build documentation
-        run: make docs
+        uses: ./.github/actions/docs_build
       - name: Upload the build
         uses: actions/upload-pages-artifact@v5
         with:
