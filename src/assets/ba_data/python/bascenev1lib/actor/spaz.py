@@ -92,6 +92,7 @@ class Spaz(bs.Actor):
         assert classic is not None
 
         self._allow_punch_grab = classic.allow_punch_grab
+        self._last_grabbed_spaz = None
 
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
@@ -1203,7 +1204,11 @@ class Spaz(bs.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-            node = bs.getcollision().opposingnode
+
+            try:
+                node = bs.getcollision().opposingnode
+            except bs.NotFoundError:
+                return True
 
             # Don't want to physically affect powerups.
             if node.getdelegate(PowerupBox):
@@ -1218,13 +1223,13 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                if node.getdelegate(Spaz) and (
+                if self._last_grabbed_spaz == node.getdelegate(Spaz) and (
                     0 <= punch_time_diff <= 70 or release_time_diff <= 360
                 ):
                     return None
 
             # Only allow one hit per node per punch.
-            if node and (node not in self._punched_nodes):
+            if node not in self._punched_nodes:
                 punch_momentum_angular = (
                     self.node.punch_momentum_angular * self._punch_power_scale
                 )
@@ -1325,6 +1330,9 @@ class Spaz(bs.Actor):
                     spaz and not spaz.is_alive()
                 ):
                     return True
+
+            # Track the last successfully grabbed Spaz instance.
+            self._last_grabbed_spaz = opposingnode.getdelegate(Spaz)
 
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
