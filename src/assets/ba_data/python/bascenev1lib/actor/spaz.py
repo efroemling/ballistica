@@ -1223,9 +1223,16 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                if self._last_grabbed_spaz == node.getdelegate(Spaz) and (
-                    0 <= punch_time_diff <= 70 or release_time_diff <= 360
-                ):
+                target_spaz = node.getdelegate(Spaz)
+                is_spaz_target = (
+                    self._last_grabbed_spaz is not None and
+                    self._last_grabbed_spaz == target_spaz
+                )
+                timings_match = (
+                    0 <= punch_time_diff <= 70 or
+                    release_time_diff <= 360
+                )
+                if is_spaz_target and timings_match:
                     return None
 
             # Only allow one hit per node per punch.
@@ -1331,8 +1338,15 @@ class Spaz(bs.Actor):
                 ):
                     return True
 
-            # Track the last successfully grabbed Spaz instance.
-            self._last_grabbed_spaz = opposingnode.getdelegate(Spaz)
+            # Track the last successfully grabbed Spaz instance safely.
+            if opposingnode.getnodetype() == 'spaz':
+                delegate = opposingnode.getdelegate(Spaz)
+                if isinstance(delegate, Spaz):
+                    self._last_grabbed_spaz = delegate
+                else:
+                    self._last_grabbed_spaz = None
+            else:
+                self._last_grabbed_spaz = None
 
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
