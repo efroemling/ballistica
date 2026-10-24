@@ -7,6 +7,14 @@
 - The teams/free-for-all playlist browser now shows its playlists as a
   grid instead of one long sideways-scrolling row, opening in a taller
   or full-size window as the number of playlists grows.
+- The experimental native Python REPL (`Use Native Python REPL` config
+  key) now runs each statement on the logic thread, so game APIs work
+  from it, and supports top-level `await` (awaited code runs on the
+  logic thread's asyncio loop without stalling the game), much like
+  `python -m asyncio`. It uses Python's newer pyrepl console when
+  available (line editing, colors and tab completion that don't depend
+  on readline/libedit) and restores the terminal if the app exits while
+  it is waiting for input.
 
 ### 1.8.4 (build 23068, api 9, 2026-10-20)
 - If audio can't be started at all, the game now runs without sound

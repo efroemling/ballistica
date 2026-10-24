@@ -143,6 +143,7 @@ class BasePython {
     kV2AuthRequestCall,
     kV2AuthDataCall,
     kStartNativeReplCall,
+    kRunNativeReplCall,
     kSimpleDialogButtonPressCall,
     kWantedAssetPackagesChangedCall,
     kPurchasePendingNoticeCall,

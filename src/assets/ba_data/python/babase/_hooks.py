@@ -535,15 +535,30 @@ def start_native_repl() -> bool:
         _do_start_native_repl()
         return True
     except Exception:
-        balog.warning('Unable to start native repl; will fall back to legacy.')
+        balog.warning(
+            'Unable to start native repl; will fall back to legacy.',
+            exc_info=True,
+        )
     return False
+
+
+def run_native_repl() -> None:
+    """Run the native Python REPL (called from the stdin thread).
+
+    Input is read here but each statement runs on the logic thread.
+    """
+    from babase._logging import balog
+    from babase import _repl
+
+    try:
+        _repl.run()
+    except Exception:
+        balog.exception('Error running native repl.')
 
 
 def _do_start_native_repl() -> None:
     import sys
     import importlib
-    import readline
-    import rlcompleter
 
     from efro.terminal import Clr
     from babase._logging import balog
@@ -570,8 +585,10 @@ def _do_start_native_repl() -> None:
             file=sys.stderr,
         )
 
-    readline.set_completer(rlcompleter.Completer(main_globals).complete)
-    readline.parse_and_bind('tab: complete')
+    # We're on the main thread here, which some terminal setup needs.
+    from babase import _repl
+
+    _repl.prepare_in_main_thread(main_globals)
 
 
 def v2_auth_request(

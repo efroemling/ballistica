@@ -28,8 +28,11 @@ StdioConsole::StdioConsole() = default;
 
 void StdioConsole::Start() {
   assert(g_base->InLogicThread());
-  use_native_repl_ = g_base->app_config->Resolve(
-      base::AppConfig::BoolID::kUseNativePythonREPL);
+  // The native repl wants a real terminal; piped input (server wrappers,
+  // etc.) stays on the legacy line-at-a-time console.
+  use_native_repl_ =
+      g_base->app_config->Resolve(base::AppConfig::BoolID::kUseNativePythonREPL)
+      && g_core->platform->is_stdin_a_terminal();
 
   g_base->app_adapter->PushMainThreadCall([this] { StartInMainThread_(); });
 }
@@ -54,8 +57,8 @@ void StdioConsole::StartInMainThread_() {
   }
 
   if (use_native_repl_ && native_repl_available) {
-    // Use Python's native interactive loop which includes readline support
-    // for autocompletion, history, and line editing.
+    // Use Python's own interactive console machinery for line editing,
+    // history, and completion.
     event_loop()->PushCall([this] { StartNativePythonREPL_(); });
   } else {
     // Tell our thread to start reading using legacy console.
@@ -68,12 +71,11 @@ void StdioConsole::StartNativePythonREPL_() {
 
   Python::ScopedInterpreterLock gil;
 
-  // Run Python's interactive loop directly. This handles:
-  // - Autocompletion (via readline + rlcompleter)
-  // - Command history (via readline)
-  // - Multi-line statements
-  // - Importing of ballistica modules
-  PyRun_InteractiveLoop(stdin, "<stdin>");
+  // Run Python's interactive console machinery here in the stdin thread
+  // (line editing, history, completion, multi-line statements), but ship
+  // each compiled statement to the logic thread to run so engine APIs
+  // work. See babase._repl.
+  g_base->python->objs().Get(BasePython::ObjID::kRunNativeReplCall).Call();
 }
 
 void StdioConsole::StartLegacyConsole_() {
