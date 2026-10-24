@@ -112,7 +112,10 @@ class LiveViewerDepiction : public base::Depiction,
     // how big we show it, in pixels, so it can make its picture land
     // one to one.
     if (!context.transparent) {
-      source_->SetViewerOverlay(context.overlay);
+      // Through a layered mask we draw over our host's backing
+      // ourselves, so keeping transparency costs nothing and lets a
+      // translucent backing show through.
+      source_->SetViewerOverlay(context.overlay || context.layered_mask);
       source_->SetViewerPixelSize(
           std::max(1, static_cast<int>(
                           std::round(b.width * context.pixels_per_unit))),
@@ -120,8 +123,8 @@ class LiveViewerDepiction : public base::Depiction,
                           std::round(b.height * context.pixels_per_unit))));
     }
 
-    base::TextureAsset* picture = source_->GetViewerTexture();
-    if (picture == nullptr || !picture->loaded()) {
+    base::TextureAsset* picture = ReadyPicture_();
+    if (picture == nullptr) {
       return;
     }
     had_picture_ = true;
@@ -152,14 +155,29 @@ class LiveViewerDepiction : public base::Depiction,
                  * context.StandardBrightness();
     base::SimpleComponent c(context.pass);
     c.SetTransparent(transparent);
-    c.SetColor(cmul, cmul, cmul, alpha);
     c.SetTexture(picture);
-    if (masked) {
+    if (masked && context.layered_mask) {
+      // All of it in one go: our picture over the host's backing, its
+      // layers painted over that. Host opacity applies to the whole;
+      // our fade-in just to the picture (fading in over the backing).
+      float pmul = (picture->premultiplied() ? fade : 1.0f)
+                   * context.StandardBrightness();
+      c.SetColor(pmul, pmul, pmul, fade);
+      float underlay[4];
+      float layer1[4];
+      float layer2[4];
+      context.StandardLayerColors(underlay, layer1, layer2);
+      c.SetLayeredMask(context.mask_texture, underlay, layer1, layer2,
+                       context.StandardOpacity());
+    } else if (masked) {
+      c.SetColor(cmul, cmul, cmul, alpha);
       float frame[3]{context.frame_color[0], context.frame_color[1],
                      context.frame_color[2]};
       context.StandardColor(frame);
       c.SetMaskTexture(context.mask_texture);
       c.SetColorizeColor(frame[0], frame[1], frame[2]);
+    } else {
+      c.SetColor(cmul, cmul, cmul, alpha);
     }
     {
       auto xf = c.ScopedTransform();
@@ -169,6 +187,22 @@ class LiveViewerDepiction : public base::Depiction,
           g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
+  }
+
+  auto DrawsHostBacking() const -> bool override {
+    return ReadyPicture_() != nullptr;
+  }
+
+  /// Our viewer's picture, if we're to draw it.
+  auto ReadyPicture_() const -> base::TextureAsset* {
+    if (!failure_.empty() || !source_.exists()) {
+      return nullptr;
+    }
+    base::TextureAsset* picture = source_->GetViewerTexture();
+    if (picture == nullptr || !picture->loaded()) {
+      return nullptr;
+    }
+    return picture;
   }
 
   auto GetInput() -> base::DepictionInput* override {

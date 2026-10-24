@@ -2,7 +2,9 @@
 
 #include "ballistica/base/base.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <optional>
 #include <string>
@@ -44,6 +46,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/fatal_error.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
@@ -424,6 +427,13 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
+  // Say what each straggler is doing; a loop that never suspends is
+  // usually stuck inside one call.
+  for (auto* loop : running_loops) {
+    msg +=
+        "\n  " + loop->name() + " thread is " + loop->DescribeActivity() + ".";
+  }
+
   g_core->logging->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
@@ -543,6 +553,117 @@ void BaseFeatureSet::RunAppToCompletion() {
   Python::ScopedInterpreterLockRelease gil_release;
 
   g_base->app_adapter->RunMainThreadEventLoopToCompletion();
+
+  StopEventLoopThreads_();
+}
+
+void BaseFeatureSet::StopEventLoopThreads_() {
+  assert(g_core->InMainThread());
+  assert(!Python::HaveGIL());
+
+  // One deadline for all of this, a bit ahead of the shutdown suicide
+  // timer, so a thread that won't stop gets reported as such here
+  // rather than surfacing as a timed-out-shutdown fatal error. The
+  // margin also has to clear the faulthandler traceback dump, which
+  // fires a couple seconds before the suicide timer (see
+  // BasePython::ShutdownFaultHandlerArm()).
+  const millisecs_t margin = 4000;
+  auto now = core::Platform::TimeMonotonicMillisecs();
+  auto deadline = g_core->suicide_deadline()
+                      ? *g_core->suicide_deadline() - margin
+                      : now + 5000;
+  auto remaining = [deadline] {
+    return std::max(millisecs_t{0},
+                    deadline - core::Platform::TimeMonotonicMillisecs());
+  };
+
+  // These are normally near-instant (every loop is idle by now), so
+  // anything slow is worth noise even when it does finish in time.
+  const millisecs_t slow_threshold = 500;
+  auto start_time = now;
+  auto wait_for = [&](EventLoop* loop) -> bool {
+    auto wait_start = core::Platform::TimeMonotonicMillisecs();
+    if (loop->WaitForStopped(std::min(remaining(), slow_threshold))) {
+      return true;
+    }
+    g_core->logging->Log(
+        LogName::kBaLifecycle, LogLevel::kWarning,
+        "Still waiting for the " + loop->name() + " thread to stop after "
+            + std::to_string(core::Platform::TimeMonotonicMillisecs()
+                             - wait_start)
+            + "ms; giving up in " + std::to_string(remaining()) + "ms.");
+    return loop->WaitForStopped(remaining());
+  };
+
+  std::vector<std::string> stuck;
+
+  // The logic thread stops its own loop as the last step of shutdown.
+  // It must stop (and let go of the GIL) before Python gets finalized,
+  // so nothing there can call into a dying interpreter. (We wait
+  // without the GIL; it may need it to finish its last cycle.) It also
+  // feeds the other loops, so it goes first.
+  EventLoop* logic_loop = logic->event_loop();
+  bool logic_stopped = wait_for(logic_loop);
+  if (!logic_stopped) {
+    stuck.emplace_back(logic_loop->name());
+  }
+
+  // Then the loops it feeds. Signal them all, then wait on them all.
+  std::vector<EventLoop*> loops;
+  for (auto* loop :
+       {assets_server->event_loop(), audio_server->event_loop(),
+        bg_dynamics_server ? bg_dynamics_server->event_loop() : nullptr,
+        network_writer->event_loop()}) {
+    if (loop != nullptr) {
+      loops.push_back(loop);
+    }
+  }
+  if (logic_stopped) {
+    for (auto* loop : loops) {
+      loop->RequestExit();
+    }
+    for (auto* loop : loops) {
+      if (!wait_for(loop)) {
+        stuck.emplace_back(loop->name());
+      }
+    }
+  }
+
+  if (!stuck.empty()) {
+    // Something is wedged, possibly while holding the GIL, so we can't
+    // safely take the GIL back to finalize Python (or even to log
+    // through Python). Rather than hanging here or crashing somewhere
+    // misleading in finalization, get out as cleanly as we can, and
+    // report it. Anything still buffered on the Python side is lost.
+    std::string names;
+    for (auto&& name : stuck) {
+      names += (names.empty() ? "" : ", ") + name;
+    }
+    std::string msg = "Thread(s) did not stop after shutdown completed: "
+                      + names + "; exiting without finalizing Python.";
+
+    // Lets tests tag one specific report (see BA_CRASH_TEST_TOKEN in
+    // MonolithicMain()).
+    if (const char* token = getenv("BA_CRASH_TEST_TOKEN")) {
+      if (token[0] != '\0') {
+        msg += std::string(" token=") + token;
+      }
+    }
+    FatalErrorHandling::DoUncleanShutdown(msg);
+  }
+
+  // Everything stopped; the threads are just returning now.
+  logic_loop->JoinThread();
+  for (auto* loop : loops) {
+    loop->JoinThread();
+  }
+
+  auto duration = core::Platform::TimeMonotonicMillisecs() - start_time;
+  g_core->logging->Log(
+      LogName::kBaLifecycle,
+      duration > slow_threshold ? LogLevel::kWarning : LogLevel::kDebug,
+      "Stopped and joined event-loop threads in " + std::to_string(duration)
+          + "ms.");
 }
 
 auto BaseFeatureSet::HavePlus() -> bool {

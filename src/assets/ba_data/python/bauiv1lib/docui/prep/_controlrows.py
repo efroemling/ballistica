@@ -753,11 +753,11 @@ def is_column_row(row: dui2.Row) -> TypeGuard[ColumnRow]:
     return dui2.is_control_row(row) or is_static_button_row(row)
 
 
-def control_row_height(row: ColumnRow) -> float:
-    """Full height of a control row of whatever sort."""
+def control_row_height(row: ColumnRow, *, left: float, right: float) -> float:
+    """Full height of a control row (``left``/``right`` as for prep)."""
     height: float
     if isinstance(row, dui2.ButtonRow):
-        height = static_button_row_height(row)
+        height = static_button_row_height(row, left=left, right=right)
     elif isinstance(row, dui2.CheckboxRow):
         height = checkbox_row_height(row)
     elif isinstance(row, dui2.TextInputRow):
@@ -796,7 +796,7 @@ def control_row_tucks(
     # their full strips (as a scrolling row's do).
     if isinstance(row, dui2.ButtonRow):
         return 0.0, 0.0
-    height = control_row_height(row)
+    height = control_row_height(row, left=left, right=right)
     half = 0.5 * (height - row.padding_top - row.padding_bottom)
     titles_tuck = control_row_titles_tuck(row, row.padding_top + half)
     footnote_tuck = control_row_footnote_tuck(row, row.padding_bottom + half)

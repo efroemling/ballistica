@@ -385,9 +385,21 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](ActorHost):
             glb.allow_kick_idle_players = self.allow_kick_idle_players
             # A server can opt every activity into the old spaz
             # physics; see the 'legacy_spaz_physics' server config
-            # value.
+            # value. GUI players hosting locally can do the same via
+            # the 'Legacy Character Physics' advanced setting, which
+            # servers ignore (their own config decides). Tournaments
+            # honor it for now, though the setting's note reserves the
+            # right to change that.
             classic = babase.app.classic
-            legacy_physics = classic is not None and classic.legacy_spaz_physics
+            legacy_physics = classic is not None and (
+                classic.legacy_spaz_physics
+                or (
+                    classic.server is None
+                    and bool(
+                        babase.app.config.get('Legacy Character Physics', False)
+                    )
+                )
+            )
             glb.legacy_spaz_limbs = self.legacy_spaz_limbs or legacy_physics
             if self.inherits_slow_motion and prev_globals is not None:
                 glb.slow_motion = prev_globals.slow_motion

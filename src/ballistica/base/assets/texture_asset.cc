@@ -26,6 +26,7 @@
 #include "ballistica/base/graphics/texture/pvr.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
@@ -254,12 +255,15 @@ void TextureAsset::DoPreload() {
     assert(!strings.empty());
     assert(strings.size() * 2 == positions.size());
 
+    // Quality downscaling can take a tiny texture to zero, which the OS
+    // bitmap APIs reject.
+    width = std::max(width, 1);
+    height = std::max(height, 1);
+
     void* tex_ref{g_core->platform->CreateTextTexture(
         width, height, strings, positions, visible_widths, scale)};
-    uint8_t* pixels{g_core->platform->GetTextTextureData(tex_ref)};
-
-    assert(pixels);
-    assert(tex_ref);
+    uint8_t* pixels{tex_ref ? g_core->platform->GetTextTextureData(tex_ref)
+                            : nullptr};
 
     // For now just copy it over to our local 32 bit buffer.
     // As an optimization we could convert it to RGBA4444 on the fly or perhaps
@@ -276,14 +280,26 @@ void TextureAsset::DoPreload() {
         static_cast<size_t>(width) * static_cast<size_t>(height) * 4u;
     auto* buffer = static_cast<uint8_t*>(malloc(buffer_size));
     preload_datas_[0].buffers[0] = buffer;
-    memcpy(buffer, pixels, buffer_size);
+    if (pixels) {
+      memcpy(buffer, pixels, buffer_size);
+    } else {
+      // The OS couldn't render this text (out of memory, etc.). Use a
+      // blank texture so the text just doesn't show; the platform logs
+      // the details.
+      memset(buffer, 0, buffer_size);
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                  "Unable to render text texture (" + std::to_string(width)
+                      + "x" + std::to_string(height) + "); drawing it blank.");
+    }
     preload_datas_[0].premultiplied = true;
     preload_datas_[0].widths[0] = width;
     preload_datas_[0].heights[0] = height;
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_8888;
     preload_datas_[0].base_level = 0;
 
-    g_core->platform->FreeTextTexture(tex_ref);
+    if (tex_ref) {
+      g_core->platform->FreeTextTexture(tex_ref);
+    }
 
     // Downsample this down to rgba4444 in-place.
     TextureAssetPreloadData::rgba8888_to_rgba4444_in_place(buffer, buffer_size);

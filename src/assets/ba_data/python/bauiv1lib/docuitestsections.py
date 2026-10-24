@@ -54,7 +54,7 @@ def test_page_sections(
     # A flat translucent card the full column width, its content inset
     # as much as rows' buttons already are from the column, so they lay
     # out exactly as they would without it.
-    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=28.0)
+    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=33.0)
 
     # Inbox-message style: the slab the classic inbox draws, pinned so
     # its visible shape's edges land on the card's (and so on its

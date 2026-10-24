@@ -22,6 +22,8 @@ union SDL_Event;
 
 namespace ballistica::base {
 
+class OffscreenGLWindows;
+
 class AppAdapterSDL : public AppAdapter {
  public:
   /// Return g_base->app_adapter as an AppAdapterSDL. (Assumes it actually
@@ -81,6 +83,7 @@ class AppAdapterSDL : public AppAdapter {
 
   void HandleSDLEvent_(const SDL_Event& event);
   void UpdateScreenSizes_();
+  void SwapBuffers_();
   void ReloadRenderer_(const GraphicsSettings_* settings);
   void OnSDLJoystickAdded_(int index);
   void OnSDLJoystickRemoved_(int index);
@@ -106,7 +109,11 @@ class AppAdapterSDL : public AppAdapter {
   /// Whether our window is currently invisible to the user -- ordered out
   /// or sitting in the dock/taskbar. Nothing we draw can be seen, so we
   /// skip rendering entirely and idle slowly.
-  auto WindowIsInvisible_() const -> bool { return hidden_ || minimized_; }
+  /// Whether nothing we draw can be seen (so we skip drawing). Never true
+  /// for offscreen GL runs, whose frames don't go to the window at all.
+  auto WindowIsInvisible_() const -> bool {
+    return !offscreen_gl_ && (hidden_ || minimized_);
+  }
 
   int max_fps_{60};
   bool done_{};
@@ -147,6 +154,10 @@ class AppAdapterSDL : public AppAdapter {
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
+  /// Set when rendering to an offscreen pbuffer instead of the window
+  /// (Windows BA_OFFSCREEN_GL runs; see OffscreenGLWindows). Lives for the
+  /// rest of the app run once created, like the window.
+  OffscreenGLWindows* offscreen_gl_{};
   SDL_Cursor* hw_cursor_{};
   bool hw_cursor_create_attempted_{};
   seconds_t last_windowevent_close_time_{};

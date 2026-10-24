@@ -257,6 +257,19 @@ void PostPayload(const std::string& payload, std::atomic<int>* result,
             + (response ? std::to_string(response->status)
                         : httplib::to_string(response.error())));
   }
+
+  // Next-launch sends happen in a healthy process, so note how they
+  // went. The server answers 200 even when it drops a report (rate
+  // limits, bad input), saying so only in the body, so include that.
+  if (result == nullptr && g_core != nullptr) {
+    std::string outcome = response
+                              ? "status " + std::to_string(response->status)
+                                    + ", body " + Clamped(response->body, 200)
+                              : httplib::to_string(response.error());
+    g_core->logging->Log(LogName::kBaLifecycle,
+                         ok ? LogLevel::kInfo : LogLevel::kWarning,
+                         std::string(what) + " report sent (" + outcome + ").");
+  }
 }
 
 void SendFatalErrorReport(const std::string& message,

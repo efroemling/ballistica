@@ -116,6 +116,9 @@ void TimerList::Run(TimerMedium target_time) {
     Timer* t = GetExpiredTimer(target_time);
     if (t) {
       assert(!t->dead_);
+      if (run_observer_) {
+        run_observer_(run_observer_ctx_, t->runnable_.get());
+      }
       t->runnable_->RunAndLogErrors();
       // If this timer killed the list, stop; otherwise put it back and keep on
       // trucking.

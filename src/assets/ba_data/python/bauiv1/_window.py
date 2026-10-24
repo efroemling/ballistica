@@ -381,41 +381,42 @@ class MainWindow(Window):
 
         uiv1 = babase.app.ui_v1
 
+        # Backing out of a top-level window closes the ui altogether.
+        if self.main_window_is_top_level:
+            uiv1.clear_main_window()
+            return
+
         # Get ourself transitioning out.
         self.main_window_close()
 
         # Get the 'back' window coming in.
-        if not self.main_window_is_top_level:
+        back_state = self.main_window_back_state
+        if back_state is None:
+            raise RuntimeError(f'Main window {self} provides no back-state.')
 
-            back_state = self.main_window_back_state
-            if back_state is None:
-                raise RuntimeError(
-                    f'Main window {self} provides no back-state.'
-                )
+        # Valid states should have values here.
+        assert back_state.is_top_level is not None
+        assert back_state.is_auxiliary is not None
+        assert back_state.window_type is not None
+        assert back_state.extra_type_id is not None
 
-            # Valid states should have values here.
-            assert back_state.is_top_level is not None
-            assert back_state.is_auxiliary is not None
-            assert back_state.window_type is not None
-            assert back_state.extra_type_id is not None
-
-            # When leaving an auxiliary window, scale the destination
-            # window in instead of sliding to convey that its more of a
-            # 'swapping out' than a 'back' action.
-            backwin = back_state.create_window(
-                transition=(
-                    'in_scale' if self.main_window_is_auxiliary else 'in_left'
-                )
+        # When leaving an auxiliary window, scale the destination window
+        # in instead of sliding to convey that its more of a 'swapping
+        # out' than a 'back' action.
+        backwin = back_state.create_window(
+            transition=(
+                'in_scale' if self.main_window_is_auxiliary else 'in_left'
             )
+        )
 
-            uiv1.set_main_window(
-                backwin,
-                from_window=self,
-                is_back=True,
-                back_state=back_state,
-                suppress_warning=True,
-                extra_type_id=back_state.extra_type_id,
-            )
+        uiv1.set_main_window(
+            backwin,
+            from_window=self,
+            is_back=True,
+            back_state=back_state,
+            suppress_warning=True,
+            extra_type_id=back_state.extra_type_id,
+        )
 
     def main_window_replace(
         self,

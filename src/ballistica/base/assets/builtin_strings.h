@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261014b"
+// Generated from: "a-0.babuiltinassets.261021"
 
 #include <memory>
 
@@ -201,6 +201,12 @@ class BuiltinStrings {
     /// English: "Error playing music: {music}"
     static auto MusicPlayError(LangStr::Sub music)
         -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message shown shortly after launch when the device's audio
+    /// couldn't be started at all; the game keeps running, silently.
+    ///
+    /// English: "Unable to start audio; the game will have no sound."
+    static auto Unavailable() -> std::shared_ptr<const LangStr>;
   };
 
   class Device {

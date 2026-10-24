@@ -156,6 +156,17 @@ namespace ballistica::base {
 // older clients get a legacy (English-literal) screen-message instead.
 #define BA_REJECT_REASON_MIN_BUILD 22939
 
+// Host-defined ui (host doc-ui pages, menu buttons, party notices), in
+// either direction. Its "d" entry is a bacommon.hostui.Message; the
+// engine only routes these between the connection and Python. Neither
+// side sends them to a peer older than BA_HOST_UI_MIN_BUILD (older
+// peers would ignore them anyway). See
+// docs/initiatives/host-docui.md.
+#define BA_JMESSAGE_HOST_UI 2
+
+// Must match bacommon.hostui.HOST_UI_MIN_BUILD.
+#define BA_HOST_UI_MIN_BUILD 23067
+
 // Enable huffman compression for all net packets?
 #define BA_HUFFMAN_NET_COMPRESSION 1
 

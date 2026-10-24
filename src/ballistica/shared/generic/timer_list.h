@@ -43,6 +43,14 @@ class TimerList {
 
   void Clear();
 
+  /// Set a function to be called with each timer's runnable just before
+  /// it runs (event loops use this to track what their thread is doing).
+  using RunObserver = void (*)(void* ctx, Runnable* runnable);
+  void SetRunObserver(RunObserver observer, void* ctx) {
+    run_observer_ = observer;
+    run_observer_ctx_ = ctx;
+  }
+
  private:
   // Returns the next expired timer. When finished with the timer,
   // return it to the list with Timer::submit()
@@ -59,6 +67,8 @@ class TimerList {
   Timer* client_timer_{};
   Timer* timers_{};
   Timer* timers_inactive_{};
+  RunObserver run_observer_{};
+  void* run_observer_ctx_{};
   int next_timer_id_{1};
   bool running_{};
   bool are_clearing_{};

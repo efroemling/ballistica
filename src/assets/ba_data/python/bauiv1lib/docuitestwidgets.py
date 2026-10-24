@@ -686,6 +686,13 @@ def test_page_widgets(
                     footnote=_lit('Eight 150-wide buttons, shrunk to fit.'),
                     debug=debug,
                 ),
+                # One button wider than any layout: it shrinks alone.
+                dui2.ButtonRow(
+                    layout=dui2.ButtonRowLayout.FIXED,
+                    buttons=[_fixed_button('Too Wide', (2000.0, 120.0))],
+                    footnote=_lit('One 2000x120 button, shrunk to fit.'),
+                    debug=debug,
+                ),
                 # Content offset: the group shifts from the row's center
                 # -- the same point band decorations are placed from --
                 # so a button lines up under band art at the same x

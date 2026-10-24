@@ -10,25 +10,28 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import _classiccatalogassets, _commonassets
 
+from bauiv1lib.docui._panes import scroll_widget_rect, viewer_insets_v
+
 if TYPE_CHECKING:
     import bacommon.depiction as bdep
     from bacommon.docui import DocUIResponse
 
     from bauiv1lib.docui._controller import DocUIController
+    from bauiv1lib.docui._frame import WindowFrame
 
-#: Tint for the frame the viewer pane's mask draws around it.
-_VIEWER_FRAME_COLOR = (0.45, 0.4, 0.62)
-
-#: What the viewer pane shows while it has nothing to (and what its
-#: content fades in from): the window backing's color as it reads on
-#: screen (the default container tint times its texture, measured off a
-#: screenshot), so an empty pane blends into the window around it. Also
-#: what live viewers show behind their content by default.
+#: What a framed viewer pane shows behind its content by default (and
+#: all it shows while it has nothing): the window backing's color as it
+#: reads on screen (the default container tint times its texture,
+#: measured off a screenshot), so an empty pane blends into the window
+#: around it. Also what live viewers shown elsewhere draw behind their
+#: content by default.
 VIEWER_BLANK_COLOR = (0.3, 0.28, 0.37)
 
-#: The depiction each pane key last showed, so a rebuilt window's pane
-#: carries on showing it until its page arrives (see ViewerPane).
+#: The depiction (json) and background each pane key last showed, so a
+#: rebuilt window's pane carries on showing them until its page arrives
+#: (see ViewerPane).
 _g_last_depictions: dict[str, str] = {}
+_g_last_backgrounds: dict[str, tuple[float, float, float, float] | None] = {}
 
 
 class ViewerPane:
@@ -36,9 +39,10 @@ class ViewerPane:
 
     An image (:func:`bauiv1.imagewidget`) showing whatever
     the window's page says to (its :attr:`~bacommon.docui.v2.Page.viewer`
-    depiction), styled as a pane (rounded, framed, blending into the
-    window while empty) and passing presses along (a live viewer's
-    poke-to-jump). Kinds it can't show get the usual placeholder.
+    depiction) over the page's background for it, styled as a pane
+    (rounded, framed and shaded, unless not framed) and passing presses
+    along (a live viewer's poke-to-jump). Kinds it can't show get the
+    usual placeholder.
 
     :meta private:
     """
@@ -50,8 +54,12 @@ class ViewerPane:
         position: tuple[float, float],
         size: tuple[float, float],
         *,
-        overlay: bool = False,
+        framed: bool = True,
+        transition_delay: float | None = None,
     ) -> None:
+        """With a ``transition_delay``, the pane fades in rather than
+        just appearing.
+        """
         # Live viewers are kept by key so that what they show carries on
         # through the window showing it being rebuilt (as happens
         # whenever ui-scale or screen size changes) and through pages
@@ -72,27 +80,45 @@ class ViewerPane:
             # showed (a rebuilt window's page arrives a moment after it
             # does; the page then decides).
             depiction=_g_last_depictions.get(self._key, ''),
+            transition_delay=transition_delay,
+            transition_type='fade',
         )
-        if overlay:
-            # No frame, backing or rounding: what we show goes straight
-            # over the window (keeping its transparency, where it can).
-            bui.imagewidget(edit=self.widget, depiction_overlay=True)
-        else:
-            # Rounded edges and a frame, and a backing blending into the
-            # window while there's nothing to show.
+        self._framed = framed
+        if framed:
+            # Rounded edges, a frame and shading: a layered mask, its
+            # layers' colors left at their defaults (black, then white).
+            # Our content and background draw within it.
             bui.imagewidget(
                 edit=self.widget,
                 mask_texture=_classiccatalogassets.textures.viewer_mask.get(),
-                depiction_frame_color=_VIEWER_FRAME_COLOR,
-                depiction_backing_color=VIEWER_BLANK_COLOR,
+                depiction_layered_mask=True,
             )
+        else:
+            # No frame or rounding: what we show goes straight over our
+            # background (keeping its transparency, where it can).
+            bui.imagewidget(edit=self.widget, depiction_overlay=True)
+        self.apply_background(_g_last_backgrounds.get(self._key))
 
     def apply_response(self, response: DocUIResponse | None) -> None:
         """Show what a response's page says to (nothing, if not v2)."""
         if isinstance(response, dui2.Response):
+            self.apply_background(response.page.viewer_background_color)
             self.apply_depiction(response.page.viewer)
         else:
+            self.apply_background(None)
             self.apply_depiction(None)
+
+    def apply_background(
+        self, color: tuple[float, float, float, float] | None
+    ) -> None:
+        """Show a page's background behind what we show (rgba; None
+        for our frame style's usual one).
+        """
+        _g_last_backgrounds[self._key] = color
+        if color is None:
+            # Framed, we blend into the window; else we're clear.
+            color = (*VIEWER_BLANK_COLOR, 1.0) if self._framed else (0, 0, 0, 0)
+        bui.imagewidget(edit=self.widget, depiction_backing_color=color)
 
     def apply_depiction(self, depiction: bdep.Depiction | None) -> None:
         """Show a page's viewer depiction (None for nothing)."""
@@ -139,19 +165,59 @@ def show_vis_area_bounds(
 
 def show_scroll_bounds(
     parent: bui.Widget,
-    left: float,
-    bottom: float,
-    width: float,
-    height: float,
-) -> None:
-    """Outline the rect a window scrolls selected rows into.
+    frame: WindowFrame,
+    uiscale: bui.UIScale,
+    *,
+    has_pane: bool,
+) -> list[bui.Widget]:
+    """Outline a window's scroll-area bounds (and their neighbors).
 
-    That is its scroll area's outline form; a fading scroll area
-    reaches past it (see :class:`~bauiv1lib.docui.DebugDrawKind`).
-    Drawn over the page, which doesn't move it.
+    See :attr:`~bauiv1lib.docui.DebugDrawKind.SCROLL_BOUNDS`. Magenta
+    is the rect selection scrolls rows into; cyan is the scroll widget
+    itself (reaching past that by its margins); yellow is the viewer
+    pane (if ``has_pane``). (The window's own bounds -- its backing's
+    solid part -- are the dev console's container-bounds drawing.)
+    Drawn over the page, which doesn't move them. Returns the outlines'
+    widgets (for redrawing them when the scroll area moves).
 
     :meta private:
     """
+    f = frame
+    outlines: list[
+        tuple[tuple[float, float, float, float], tuple[float, float, float]]
+    ] = [
+        (scroll_widget_rect(f), (0.0, 1.0, 1.0)),
+        (
+            (f.scroll_left, f.scroll_bottom, f.scroll_width, f.scroll_height),
+            (1.0, 0.2, 1.0),
+        ),
+    ]
+    if has_pane:
+        inset_bottom, inset_top = viewer_insets_v(uiscale)
+        outlines.append(
+            (
+                (
+                    f.viewer_left,
+                    f.scroll_bottom + inset_bottom,
+                    f.viewer_width,
+                    f.scroll_height - inset_bottom - inset_top,
+                ),
+                (1.0, 1.0, 0.0),
+            )
+        )
+
+    out: list[bui.Widget] = []
+    for rect, color in outlines:
+        out += _outline_rect(parent, rect, color)
+    return out
+
+
+def _outline_rect(
+    parent: bui.Widget,
+    rect: tuple[float, float, float, float],
+    color: tuple[float, float, float],
+) -> list[bui.Widget]:
+    left, bottom, width, height = rect
     thickness = 2.0
     half = 0.5 * thickness
     edges = [
@@ -160,16 +226,19 @@ def show_scroll_bounds(
         (left - half, bottom - half, thickness, height + thickness),
         (left + width - half, bottom - half, thickness, height + thickness),
     ]
+    out: list[bui.Widget] = []
     for x, y, w, h in edges:
         edge = bui.imagewidget(
             parent=parent,
             position=(x, y),
             size=(w, h),
             texture=_commonassets.textures.white.get(),
-            color=(1.0, 0.2, 1.0),
+            color=color,
             opacity=0.8,
         )
         bui.widget(edit=edge, depth_range=(0.95, 1.0))
+        out.append(edge)
+    return out
 
 
 # How the busy-spinner shown over a pressed widget (a button, an input

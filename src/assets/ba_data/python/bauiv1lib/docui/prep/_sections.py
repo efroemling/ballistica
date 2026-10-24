@@ -569,7 +569,7 @@ def wrap_section_texts(
     )
 
     def _wrap(
-        text: LangStrSpec | int | None, scale: float, field: str
+        text: LangStrSpec | int | None, scale: float, field: str, wrap: bool
     ) -> LangStrSpec | int | None:
         # (Indices are unfolded before prep; native() rejects any that
         # aren't, so leave that to it.)
@@ -581,13 +581,18 @@ def wrap_section_texts(
             scale=scale,
             native=native,
             where=f'{where} {field}',
+            wrap=wrap,
         )
 
     return replace(
         sec,
-        title=_wrap(sec.title, _SECTION_TITLE_SCALE, 'title'),
-        subtitle=_wrap(sec.subtitle, _SECTION_SUBTITLE_SCALE, 'subtitle'),
-        footnote=_wrap(sec.footnote, _SECTION_SUBTITLE_SCALE, 'footnote'),
+        title=_wrap(sec.title, _SECTION_TITLE_SCALE, 'title', sec.title_wrap),
+        subtitle=_wrap(
+            sec.subtitle, _SECTION_SUBTITLE_SCALE, 'subtitle', sec.subtitle_wrap
+        ),
+        footnote=_wrap(
+            sec.footnote, _SECTION_SUBTITLE_SCALE, 'footnote', sec.footnote_wrap
+        ),
     )
 
 

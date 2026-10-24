@@ -13,6 +13,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING, assert_never
 
 from bacommon.langstr import LangStrSpecValue
+import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
 
 if TYPE_CHECKING:
@@ -59,8 +60,8 @@ def _layout_description(layout: dui2.WindowLayout) -> str:
         case dui2.WindowLayout.WIDE_TALL:
             return (
                 f'Provides the same fixed width as {wl.WIDE.name}, but a'
-                ' larger fixed amount of space on medium and large ui'
-                ' scales.'
+                ' larger fixed amount of vertical space on medium and'
+                ' large ui scales.'
             )
         case dui2.WindowLayout.WIDE_TALLER:
             return (
@@ -95,7 +96,9 @@ def _layout_description(layout: dui2.WindowLayout) -> str:
         case dui2.WindowLayout.VIEWER:
             return (
                 f'Provides the same fixed width as {wl.SMALL.name}, but with'
-                ' a viewer alongside for showing content.'
+                ' a viewer alongside for showing content, on whichever side'
+                ' the page asks for. A page with no viewer gets no pane:'
+                ' its rows span the whole window instead.'
             )
         case _:
             assert_never(layout)
@@ -207,10 +210,32 @@ def test_page_window_layouts(
             buttons=_buttons(count),
         )
 
+    # At viewer layouts, a turning powerup box in a pane on the side
+    # asked for (or no viewer, the rows spanning the window).
+    viewer: bdep.Depiction | None = None
+    side = dui2.ViewerSide.LEFT
+    if route.viewer_side is not None:
+        from bauiv1 import _classicassets
+
+        viewer = bdep.MeshViewerDepiction(
+            entries=[
+                bdep.MeshViewerEntry(
+                    mesh=_classicassets.meshes.powerup,
+                    texture=_classicassets.textures.powerup_punch,
+                )
+            ]
+        )
+        side = route.viewer_side
+
     return dui2.Response(
         page=dui2.Page(
             title=_lit('Window Layouts'),
             state=state.encode(),
+            viewer=viewer,
+            viewer_side=side,
+            # Mostly the window showing through, a touch darkened (the
+            # viewers page's 'Dark 25%').
+            viewer_background_color=(0.0, 0.0, 0.0, 0.25),
             rows=[
                 # Info about the layout: a row-less section with just a
                 # subtitle, which joins the heading below it in latching
@@ -332,6 +357,59 @@ def test_page_window_layouts(
     )
 
 
+def _wide_rows_height(layout: dui2.WindowLayout) -> tuple[float, str]:
+    """Height a wide-family page has for its rows, and what it depends on.
+
+    Wide and wider pages promise :data:`WIDE_PAGE_ROWS_HEIGHT`
+    everywhere, so that's what we test against for them. Wide-tall and
+    wide-taller ones get more at medium/large ui-scale (wide-taller's
+    following the screen), so we take theirs from the window frame
+    their windows are laid out with, less page prep's base buffers. At
+    small ui-scale they are wide layouts, so they get wide's.
+    (Called from a background thread; frames are a logic-thread job.)
+    """
+    import bauiv1 as bui
+    from bauiv1lib.docui._frame import window_frames
+    from bauiv1lib.docui._layout import (
+        PAGE_BASE_BUFFER,
+        WIDE_PAGE_ROWS_HEIGHT,
+    )
+
+    match layout:
+        case dui2.WindowLayout.WIDE | dui2.WindowLayout.WIDER:
+            return WIDE_PAGE_ROWS_HEIGHT, 'the same everywhere'
+        case dui2.WindowLayout.WIDE_TALL | dui2.WindowLayout.WIDE_TALLER:
+            pass
+        case _:
+            raise RuntimeError(f'Not a wide-family layout: {layout}.')
+
+    def _measure() -> tuple[float, bui.UIScale]:
+        uiscale = bui.app.ui_v1.uiscale
+        frame = window_frames(
+            layout, uiscale, dui2.ScrollEdgeStyle.FADE, close_style=False
+        )[None]
+        return frame.scroll_height - 2.0 * PAGE_BASE_BUFFER, uiscale
+
+    height, uiscale = bui.logic_thread_submit(_measure).result(timeout=10.0)
+
+    # At small ui-scale these are just wide layouts, so there's no
+    # height of their own to check; test wide's promise instead (what
+    # the wide page does).
+    if uiscale is bui.UIScale.SMALL:
+        return (
+            WIDE_PAGE_ROWS_HEIGHT,
+            'small ui-scale: the same as wide, so nothing new to check',
+        )
+    # (At medium/large the window is its layout's size, so this is
+    # exactly what it gets.)
+    depends = (
+        'this ui-scale'
+        if layout is dui2.WindowLayout.WIDE_TALL
+        else 'this ui-scale and screen'
+    )
+    return height, f'{depends}: {uiscale.name.lower()}'
+
+
 def test_page_wide_fit(
     route: bacommon.docui.routes.docuitest.WideFit,
 ) -> bacommon.docui.v2.Response:
@@ -341,13 +419,34 @@ def test_page_wide_fit(
     """
     from bauiv1lib.docui._layout import (
         BUTTON_ROW_EDGE_INSET,
-        WIDE_PAGE_ROWS_HEIGHT,
         WIDE_PAGE_WIDTH,
+    )
+
+    import bauiv1 as bui
+
+    layout = route.layout
+    wider = layout is dui2.WindowLayout.WIDER
+    rowsheight, height_note = _wide_rows_height(layout)
+
+    # At small ui-scale, pages are at least wide's size but get more on
+    # screens bigger than the smallest (the window fills the screen),
+    # so going 1 over only scrolls on the smallest ones.
+    small = (
+        bui.logic_thread_submit(lambda: bui.app.ui_v1.uiscale).result(
+            timeout=10.0
+        )
+        is bui.UIScale.SMALL
+    )
+    over_label = (
+        '1 over\n(scrolls only on\nthe smallest screens\nat small ui-scale);'
+        '\ntap to fit'
+        if small
+        else '1 over\n(should scroll);\ntap to fit'
     )
 
     # A hair under, so float rounding can't tip it into scrolling (or,
     # when testing the edge, a hair over).
-    rowheight = WIDE_PAGE_ROWS_HEIGHT + (1.0 if route.over else -0.5)
+    rowheight = rowsheight + (1.0 if route.over else -0.5)
 
     # A button row's h-scroll content is its buttons, spacing and
     # padding plus the room its padding starts in from the column's
@@ -363,10 +462,11 @@ def test_page_wide_fit(
         rowwidth - 2.0 * BUTTON_ROW_EDGE_INSET - 2.0 * pad - 2.0 * spacing
     ) / 3
 
-    # (Wider's width follows the screen, so only wide can overflow it.)
+    # (Wider's width follows the screen, so only the others can
+    # overflow it.)
     width_buttons: list[bacommon.docui.v2.Button] = (
         []
-        if route.wider
+        if wider
         else [
             dui2.Button(
                 label=_lit(
@@ -374,7 +474,7 @@ def test_page_wide_fit(
                     + (
                         'fits;\ntap to go 1 over'
                         if not route.wide_over
-                        else '1 over\n(should scroll);\ntap to fit'
+                        else over_label
                     )
                 ),
                 label_scale=0.7,
@@ -386,7 +486,7 @@ def test_page_wide_fit(
 
     return dui2.Response(
         page=dui2.Page(
-            title=_lit('Wider Fit' if route.wider else 'Wide Fit'),
+            title=_lit(layout.name.replace('_', ' ').title() + ' Fit'),
             rows=[
                 dui2.ButtonRow(
                     padding_top=pad,
@@ -404,7 +504,7 @@ def test_page_wide_fit(
                                 + (
                                     'fits;\ntap to go 1 over'
                                     if not route.over
-                                    else '1 over\n(should scroll);\ntap to fit'
+                                    else over_label
                                 )
                             ),
                             label_scale=0.7,
@@ -416,10 +516,13 @@ def test_page_wide_fit(
                         dui2.Button(
                             # (Wider's page width follows the screen.)
                             label=_lit(
-                                f'Page height {WIDE_PAGE_ROWS_HEIGHT:.1f}'
-                                if route.wider
-                                else f'Page {WIDE_PAGE_WIDTH:.1f}'
-                                f' x {WIDE_PAGE_ROWS_HEIGHT:.1f}'
+                                (
+                                    f'Page height {rowsheight:.1f}'
+                                    if wider
+                                    else f'Page {WIDE_PAGE_WIDTH:.1f}'
+                                    f' x {rowsheight:.1f}'
+                                )
+                                + f'\n({height_note})'
                             ),
                             label_scale=0.7,
                             size=(bwidth, bheight),

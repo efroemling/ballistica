@@ -31,6 +31,12 @@
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.h">
       <Filter>ballistica\base\app_adapter</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.cc">
+      <Filter>ballistica\base\app_adapter</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.h">
+      <Filter>ballistica\base\app_adapter</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc">
       <Filter>ballistica\base\app_mode</Filter>
     </ClCompile>

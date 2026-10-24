@@ -71,7 +71,7 @@ void AudioSource::SetPosition(float x, float y, float z) {
     pos = Vector3f(offs.Dot(s.right) * s.pan_scale, offs.Dot(s.up),
                    offs.Dot(s.back));
   }
-  g_base->audio_server->PushSourceSetPositionCall(play_id_, pos);
+  g_base->audio_server->PushSourceSetPositionCall(id_, play_id_, pos);
 }
 
 void AudioSource::SetGain(float val) {

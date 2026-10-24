@@ -13,7 +13,7 @@ from dataclasses import replace
 from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
-from bacommon.langstr import LangStrSpecValue
+from bacommon.langstr import LangStrSpecResource, LangStrSpecValue
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
@@ -82,8 +82,21 @@ _FOOTNOTE_TOP_TO_FIRST_LINE = _ROW_SUBTITLE_LINE_HEIGHT * 0.5
 
 
 #: Time-varying texts already warned about in wrapped fields (see
-#: :func:`wrapped_text`), so each warns once per run.
+#: :func:`wrapped_text`), so each warns once per run. Keyed on where
+#: they are plus their authored form, not their current rendering: a
+#: countdown renders differently every second.
 _warned_live_texts: set[str] = set()
+
+
+def _live_text_key(text: LangStrSpec, where: str) -> str:
+    """A stable key for a time-varying text (for warning once)."""
+    if isinstance(text, LangStrSpecValue):
+        authored = text.value
+    elif isinstance(text, LangStrSpecResource):
+        authored = text.name
+    else:
+        authored = type(text).__name__
+    return f'{where}\0{authored}'
 
 
 def wrapped_text(
@@ -93,8 +106,13 @@ def wrapped_text(
     scale: float,
     native: NativeLangStrFn,
     where: str,
+    wrap: bool = True,
 ) -> LangStrSpec:
     """Word-wrap a row/section text to fit its column.
+
+    With ``wrap`` False (the field's ``*_wrap`` flag), the text comes
+    back as-is: one line, squished to fit like time-varying text below,
+    with no warning.
 
     Evaluates in the current language ignoring the string's own
     line-wrapping hints (we wrap it here instead; the two would
@@ -110,14 +128,19 @@ def wrapped_text(
 
     :meta private:
     """
+    if not wrap:
+        return text
     flat, until_change = native(text).evaluate_timed(wrap=False)
     if until_change is not None:
-        if flat not in _warned_live_texts:
-            _warned_live_texts.add(flat)
+        key = _live_text_key(text, where)
+        if key not in _warned_live_texts:
+            _warned_live_texts.add(key)
             bui.uilog.warning(
                 'Doc-ui %s holds time-varying text (%r); wrapping skipped.'
                 ' Wrapped fields (titles, subtitles, footnotes, popup'
-                ' text) want text that stays put.',
+                ' text) want text that stays put; turn off wrapping'
+                ' for the field (its *_wrap flag) to show it as one'
+                ' line.',
                 where,
                 flat,
             )
@@ -158,7 +181,7 @@ def wrap_row_texts(
     )
 
     def _wrap(
-        text: LangStrSpec | int | None, scale: float, field: str
+        text: LangStrSpec | int | None, scale: float, field: str, wrap: bool
     ) -> LangStrSpec | int | None:
         # (Indices are unfolded before prep; native() rejects any that
         # aren't, so leave that to it.)
@@ -170,13 +193,18 @@ def wrap_row_texts(
             scale=scale,
             native=native,
             where=f'{where} {field}',
+            wrap=wrap,
         )
 
     return replace(
         row,
-        title=_wrap(row.title, _ROW_TITLE_SCALE, 'title'),
-        subtitle=_wrap(row.subtitle, _ROW_SUBTITLE_SCALE, 'subtitle'),
-        footnote=_wrap(row.footnote, _ROW_SUBTITLE_SCALE, 'footnote'),
+        title=_wrap(row.title, _ROW_TITLE_SCALE, 'title', row.title_wrap),
+        subtitle=_wrap(
+            row.subtitle, _ROW_SUBTITLE_SCALE, 'subtitle', row.subtitle_wrap
+        ),
+        footnote=_wrap(
+            row.footnote, _ROW_SUBTITLE_SCALE, 'footnote', row.footnote_wrap
+        ),
     )
 
 
@@ -235,12 +263,25 @@ def _row_title_height(row: TitledRow, native: NativeLangStrFn) -> float:
 
 
 def _row_subtitle_height(row: TitledRow, native: NativeLangStrFn) -> float:
-    """Vertical space a row's subtitle takes (0 for none)."""
+    """Vertical space a row's subtitle takes (0 for none).
+
+    Includes the row's ``spacing_subtitle`` gap above it when there is
+    a title.
+    """
     if row.subtitle is None:
         return 0.0
-    return _ROW_SUBTITLE_HEIGHT + _ROW_SUBTITLE_LINE_HEIGHT * (
-        line_count(row.subtitle, native) - 1
+    return (
+        _row_subtitle_spacing(row)
+        + _ROW_SUBTITLE_HEIGHT
+        + _ROW_SUBTITLE_LINE_HEIGHT * (line_count(row.subtitle, native) - 1)
     )
+
+
+def _row_subtitle_spacing(row: TitledRow) -> float:
+    """The gap between a row's title and subtitle (0 without both)."""
+    if row.title is None or row.subtitle is None:
+        return 0.0
+    return row.spacing_subtitle
 
 
 def row_footnote_height(row: TitledRow, native: NativeLangStrFn) -> float:
@@ -596,7 +637,10 @@ def prep_row_titles(
         )
         y -= title_height
     if row.subtitle is not None:
-        subtitle_height = _row_subtitle_height(row, native)
+        y -= _row_subtitle_spacing(row)
+        subtitle_height = _row_subtitle_height(row, native) - (
+            _row_subtitle_spacing(row)
+        )
         rowprep.titlecalls.append(
             partial(
                 bui.textwidget,

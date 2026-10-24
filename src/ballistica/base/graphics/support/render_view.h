@@ -107,6 +107,12 @@ class RenderView : public Object {
     last_drawn_frame_number_ = val;
   }
 
+  /// Called just before our camera is applied to a frame being built,
+  /// then DrawWorld(): for advancing whatever moves with drawing and
+  /// setting the camera up to match (its clip range, say). Texture
+  /// views only, like DrawWorld().
+  virtual void PrepareFrame(FrameDef* frame_def);
+
   /// Draw our world into the current view of a frame being built.
   /// Called for texture views that something has drawn the texture of
   /// this frame; whatever owns such a view overrides this to draw what

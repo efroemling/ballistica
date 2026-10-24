@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261016a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261021`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 724
+# ba_meta require asset-package 823
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,10 +23,11 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261016a
-_ASSET_PACKAGE = ApverNum(724)
+# a-0.baclassicassets.261021
+_ASSET_PACKAGE = ApverNum(823)
 
 if TYPE_CHECKING:
+    import datetime
     from bascenev1._assetref import (
         CollisionMeshHandle,
         CubeMapTextureHandle,
@@ -5226,6 +5227,88 @@ if TYPE_CHECKING:
                 English: "Welcome to {app_name}!"
             """
 
+    class StringsHostUiGroup:
+        """
+        ::
+
+            Pages and notices a game host serves its connected clients: the
+            party stats page and the kick-vote page.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Column heading in the party stats table showing the verified
+        #:     online account each player is signed in with.
+        #:
+        #:     English: "Account"
+        account_column: LangStr
+
+        def kick_vote_ends(
+            self,
+            *,
+            t: datetime.timedelta | datetime.datetime,
+            now: datetime.datetime | None = None,
+        ) -> LangStr:
+            """
+            ::
+
+                Small line under the Yes/No buttons of a vote to kick a player
+                from the game; {t} counts down live to when the vote closes.
+
+                English: "Ends in {t}"
+            """
+
+        #: ::
+        #:
+        #:     Shown on the kick-vote page when no vote to kick a player is
+        #:     currently running.
+        #:
+        #:     English: "No kick vote is in progress."
+        no_kick_vote: LangStr
+
+        #: ::
+        #:
+        #:     Shown in the party stats table when there are no players to list.
+        #:
+        #:     English: "Nobody is here."
+        nobody_here: LangStr
+
+        #: ::
+        #:
+        #:     Column heading in the party stats table for each player's network
+        #:     latency in milliseconds.
+        #:
+        #:     English: "Ping (ms)"
+        ping_column: LangStr
+
+        #: ::
+        #:
+        #:     Shown on the kick-vote page when the player someone chose to kick
+        #:     has already left the game.
+        #:
+        #:     English: "That player is no longer here."
+        player_gone: LangStr
+
+        #: ::
+        #:
+        #:     Button on the kick-vote page that starts a vote among the other
+        #:     players on whether to kick (remove) the chosen player from the
+        #:     game.
+        #:
+        #:     English: "Start a Kick Vote"
+        start_kick_vote: LangStr
+
+        #: ::
+        #:
+        #:     Title of the page a game host serves listing everyone in the
+        #:     party with their game stats and connection info; also the in-game
+        #:     menu button that opens it.
+        #:
+        #:     English: "Stats"
+        stats_title: LangStr
+
     class StringsInGameMenuGroup:
         """
         ::
@@ -6872,6 +6955,24 @@ if TYPE_CHECKING:
         #:
         #:     English: "Language"
         language: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox label in Advanced settings that makes games the player
+        #:     hosts use the older, pre-1.8 physics for the playable characters
+        #:     (the little fighters), which some long-time players prefer
+        #:     because certain old tricks depend on it.
+        #:
+        #:     English: "Legacy Character Physics"
+        legacy_character_physics: LangStr
+
+        #: ::
+        #:
+        #:     Small note under the Legacy Character Physics checkbox in
+        #:     Advanced settings.
+        #:
+        #:     English: "Note that servers or tournaments may override this."
+        legacy_character_physics_description: LangStr
 
         #: ::
         #:
@@ -9578,6 +9679,7 @@ if TYPE_CHECKING:
         get_remote: StringsGetRemoteGroup
         get_tokens: StringsGetTokensGroup
         help: StringsHelpGroup
+        host_ui: StringsHostUiGroup
         in_game_menu: StringsInGameMenuGroup
         inbox: StringsInboxGroup
         inventory: StringsInventoryGroup
@@ -9792,8 +9894,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1014 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1009 more). Full list in
+    #: The ``strings`` group - 1024 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1019 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10627,6 +10729,16 @@ _TREE = {
             'to_get_the_most': (),
             'welcome': ('app_name',),
         },
+        'host_ui': {
+            'account_column': (),
+            'kick_vote_ends': ('t',),
+            'no_kick_vote': (),
+            'nobody_here': (),
+            'ping_column': (),
+            'player_gone': (),
+            'start_kick_vote': (),
+            'stats_title': (),
+        },
         'in_game_menu': {
             'end_game': (),
             'end_replay': (),
@@ -10838,6 +10950,8 @@ _TREE = {
                 'insecure_connections_description': (),
                 'kick_idle_players': (),
                 'language': (),
+                'legacy_character_physics': (),
+                'legacy_character_physics_description': (),
                 'modding_guide': (),
                 'send_info': (),
                 'show_demos_when_idle': (),
@@ -11344,10 +11458,16 @@ _TREE = {
         'window_bottom_cap': 't',
     },
 }
+_DISPLAY_KINDS = {'strings/host_ui/kick_vote_ends': {'t': 'millis(dir=future)'}}
 
 
 if not TYPE_CHECKING:
     audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
     meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
-    strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
+    strings = LangStrDir(
+        _ASSET_PACKAGE,
+        _TREE['strings'],
+        'strings',
+        display_kinds=_DISPLAY_KINDS,
+    )
     textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

@@ -5,6 +5,7 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <algorithm>
 #include <string>
 
 #include "ballistica/base/graphics/gl/program/program_gl.h"
@@ -89,6 +90,40 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       premult_blend_location_ = glGetUniformLocation(program(), "premultBlend");
       assert(premult_blend_location_ != -1);
     }
+    if (flags & SHD_LAYERED_MASK) {
+      SetTextureUnit("maskTex", kMaskTexUnit);
+      underlay_color_location_ =
+          glGetUniformLocation(program(), "underlayColor");
+      assert(underlay_color_location_ != -1);
+      layer1_color_location_ = glGetUniformLocation(program(), "layer1Color");
+      assert(layer1_color_location_ != -1);
+      layer2_color_location_ = glGetUniformLocation(program(), "layer2Color");
+      assert(layer2_color_location_ != -1);
+      layer_params_location_ = glGetUniformLocation(program(), "layerParams");
+      assert(layer_params_location_ != -1);
+    }
+  }
+
+  /// A layered mask's colors (see GetLayeredMaskFragmentCode_): the
+  /// underlay (premultiplied) and the two painted layers (straight).
+  void SetLayerColors(const float* underlay, const float* layer1,
+                      const float* layer2) {
+    assert(flags_ & SHD_LAYERED_MASK);
+    assert(IsBound());
+    SetVec4_(underlay_color_location_, underlay_color_, underlay);
+    SetVec4_(layer1_color_location_, layer1_color_, layer1);
+    SetVec4_(layer2_color_location_, layer2_color_, layer2);
+  }
+
+  /// A layered mask's settings: an opacity applied to all of it, and
+  /// whether its color and mask textures are premultiplied (1.0) or
+  /// straight (0.0).
+  void SetLayerParams(float opacity, float tex_premultiplied,
+                      float mask_premultiplied) {
+    assert(flags_ & SHD_LAYERED_MASK);
+    assert(IsBound());
+    float vals[4]{opacity, tex_premultiplied, mask_premultiplied, 0.0f};
+    SetVec4_(layer_params_location_, layer_params_, vals);
   }
 
   void SetColorTexture(const TextureAsset* t) {
@@ -261,7 +296,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   }
 
   void SetMaskTexture(const TextureAsset* t) {
-    assert(flags_ & SHD_MASKED);
+    assert((flags_ & SHD_MASKED) || (flags_ & SHD_LAYERED_MASK));
     renderer()->BindTexture_(GL_TEXTURE_2D, t, kMaskTexUnit);
   }
 
@@ -271,6 +306,61 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   }
 
  private:
+  /// Upload a vec4 uniform if it differs from what we last sent.
+  static void SetVec4_(GLint location, float* cached, const float* vals) {
+    if (vals[0] != cached[0] || vals[1] != cached[1] || vals[2] != cached[2]
+        || vals[3] != cached[3]) {
+      std::copy(vals, vals + 4, cached);
+      glUniform4f(location, vals[0], vals[1], vals[2], vals[3]);
+    }
+  }
+
+  /// A layered mask: a picture (colorTex x color) shown over an
+  /// underlay color, then two flat colors painted over that, all within
+  /// a silhouette. The mask's channels, each a coverage from 0 to 1:
+  ///   red: how much of the content (picture over underlay) shows.
+  ///   green: layer1Color painted over that (default black: shadows).
+  ///   blue: layer2Color painted over that (default white: highlights).
+  ///   alpha: how much of the whole result is drawn.
+  /// Layers paint over rather than multiply, so they can add coverage
+  /// where the content has none: a shadow cast over a clear underlay
+  /// darkens whatever is behind the draw. A layer color's alpha scales
+  /// its coverage. Output is premultiplied (premult blend only).
+  static auto GetLayeredMaskFragmentCode_() -> std::string {
+    // clang-format off
+    return
+        "uniform " BA_GLSL_MEDIUMP "sampler2D colorTex;\n"
+        "uniform " BA_GLSL_MEDIUMP "sampler2D maskTex;\n"
+        "uniform " BA_GLSL_MEDIUMP "vec4 color;\n"
+        "uniform " BA_GLSL_MEDIUMP "vec4 underlayColor;\n"
+        "uniform " BA_GLSL_MEDIUMP "vec4 layer1Color;\n"
+        "uniform " BA_GLSL_MEDIUMP "vec4 layer2Color;\n"
+        // x: opacity; y: colorTex premultiplied; z: maskTex
+        // premultiplied.
+        "uniform " BA_GLSL_MEDIUMP "vec4 layerParams;\n"
+        BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV;\n"
+        "void main() {\n"
+        "   " BA_GLSL_MEDIUMP "vec4 tex = "
+            BA_GLSL_TEXTURE2D "(colorTex, vUV);\n"
+        "   tex.rgb *= mix(tex.a, 1.0, layerParams.y);\n"
+        "   " BA_GLSL_MEDIUMP "vec4 content = color * tex;\n"
+        "   content += underlayColor * (1.0 - content.a);\n"
+        "   " BA_GLSL_MEDIUMP "vec4 mask = "
+            BA_GLSL_TEXTURE2D "(maskTex, vUV);\n"
+        // Channels are coverages; a premultiplied mask has them
+        // scaled by its alpha, so undo that.
+        "   " BA_GLSL_MEDIUMP "vec3 m = mix(mask.rgb,"
+            " mask.rgb / max(mask.a, 0.001), layerParams.z);\n"
+        "   " BA_GLSL_MEDIUMP "vec4 l = content * m.r;\n"
+        "   " BA_GLSL_MEDIUMP "float c1 = m.g * layer1Color.a;\n"
+        "   l = vec4(layer1Color.rgb * c1, c1) + l * (1.0 - c1);\n"
+        "   " BA_GLSL_MEDIUMP "float c2 = m.b * layer2Color.a;\n"
+        "   l = vec4(layer2Color.rgb * c2, c2) + l * (1.0 - c2);\n"
+        "   " BA_GLSL_FRAGCOLOR " = l * (mask.a * layerParams.x);\n"
+        "}";
+    // clang-format on
+  }
+
   auto GetName(int flags) -> std::string {
     return "SimpleProgramGL texture:"
            + std::to_string((flags & SHD_TEXTURE) != 0)
@@ -284,7 +374,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
            + std::to_string((flags & SHD_DEPTH_BUG_TEST) != 0)
            + " flatness:" + std::to_string((flags & SHD_FLATNESS) != 0)
            + " textGlow:" + std::to_string((flags & SHD_TEXT_GLOW) != 0)
-           + " uv2Fade:" + std::to_string((flags & SHD_UV2_FADE) != 0);
+           + " uv2Fade:" + std::to_string((flags & SHD_UV2_FADE) != 0)
+           + " layeredMask:" + std::to_string((flags & SHD_LAYERED_MASK) != 0);
   }
 
   static auto UsesUV2(int flags) -> bool {
@@ -352,6 +443,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   }
 
   auto GetFragmentCode(int flags) -> std::string {
+    if (flags & SHD_LAYERED_MASK) {
+      // A shader of its own; no other flags combine with it.
+      assert(flags == (SHD_TEXTURE | SHD_MODULATE | SHD_LAYERED_MASK));
+      return GetLayeredMaskFragmentCode_();
+    }
     // clang-format off
     std::string s;
     if (flags & SHD_TEXTURE) {
@@ -644,6 +740,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   float tex_premultiplied_{};
   float mask_straight_{};
   float premult_blend_{};
+  float underlay_color_[4]{};
+  float layer1_color_[4]{};
+  float layer2_color_[4]{};
+  float layer_params_[4]{};
   GLint color_location_{};
   GLint colorize_color_location_{};
   GLint colorize2_color_location_{};
@@ -656,6 +756,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   GLint tex_premultiplied_location_{};
   GLint mask_straight_location_{};
   GLint premult_blend_location_{};
+  GLint underlay_color_location_{};
+  GLint layer1_color_location_{};
+  GLint layer2_color_location_{};
+  GLint layer_params_location_{};
   int flags_{};
 };
 

@@ -33,6 +33,18 @@ from baclassic._displayitem import (
     depiction_assets,
 )
 from baclassic._music import MusicPlayer
+from baclassic._hostui import HostUIButton, HostUISubsystem
+from baclassic._hostuihandler import HostUIHandler
+from baclassic._hostuikick import (
+    HostUIKickVote,
+    HostUIKickVotes,
+    KickVoteRefusal,
+)
+from baclassic._hostuistats import (
+    HostUIStatsColumn,
+    HostUIStatsContext,
+    HostUIStatsPage,
+)
 from baclassic._clienteffect import (
     ClientEffectContext,
     EffectTarget,
@@ -49,6 +61,15 @@ __all__ = [
     'ClientEffectContext',
     'EffectTarget',
     'EffectTargets',
+    'HostUIButton',
+    'HostUIHandler',
+    'HostUIKickVote',
+    'HostUIKickVotes',
+    'HostUIStatsColumn',
+    'HostUIStatsContext',
+    'HostUIStatsPage',
+    'HostUISubsystem',
+    'KickVoteRefusal',
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',

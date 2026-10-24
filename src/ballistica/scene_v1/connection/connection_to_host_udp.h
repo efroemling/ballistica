@@ -43,6 +43,7 @@ class ConnectionToHostUDP : public ConnectionToHost {
   millisecs_t last_client_id_request_time_{};
   millisecs_t last_disconnect_request_time_{};
   millisecs_t last_host_response_time_millisecs_{};
+  bool got_host_game_packet_{};
   std::unique_ptr<SockAddr> addr_;
 };
 

@@ -54,6 +54,39 @@ class ContainerWidget : public Widget {
     background_offset_x_ = x;
     background_offset_y_ = y;
   }
+
+  /// Scale our background art about its own center (x, y), without
+  /// changing anything else; for fine-tuning how the art fits a
+  /// particular window shape. Everything that follows the art (its
+  /// known-opaque rect, scroll fades blending toward it) follows this.
+  void set_background_scale(float x, float y) {
+    background_scale_x_ = x;
+    background_scale_y_ = y;
+  }
+
+  /// Lay our background art out cleanly: our bounds are exactly its
+  /// known-opaque area (see GetBackingOpaqueRect()), with the art
+  /// hanging out around them, rather than the art being placed around
+  /// our bounds by historical fudge factors. Also drops the scale
+  /// transition's center fudge, so we zoom about our true center.
+  void set_clean_layout(bool val) {
+    clean_layout_ = val;
+    bg_dirty_ = glow_dirty_ = true;
+  }
+
+  /// Which standard window backing art we draw.
+  enum class BackingArt : uint8_t {
+    /// Picked by our shape.
+    kAuto,
+    /// window_hsmall_vmed: boxier, for taller windows.
+    kTall,
+    /// window_hsmall_vsmall: rounder, for squatter windows.
+    kSquat,
+  };
+  void set_backing_art(BackingArt val) {
+    backing_art_ = val;
+    bg_dirty_ = true;
+  }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
   void set_darken_behind(bool val) { darken_behind_ = val; }
@@ -250,20 +283,37 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
-  /// Which standard window backing we draw at a given size, and how far
-  /// past our bounds it extends on each side.
+  /// Which standard window backing we draw at our current size, and
+  /// where its full quad sits (widget-local, before any background
+  /// offset or scale).
   struct BackingLayout {
     bool tall{};  // window_hsmall_vmed; otherwise window_hsmall_vsmall.
-    float l_border{}, r_border{}, b_border{}, t_border{};
-    // These need to be fudged until scaling in/out hits exact target
-    // point. Should look into why this math is off.
+    float quad_l{}, quad_b{}, quad_r{}, quad_t{};
+    // Legacy layouts fudge these until scaling in/out hits the exact
+    // target point; clean ones zoom about their true center.
     float center_fudge_x{}, center_fudge_y{};
   };
-  static auto CalcBackingLayout_(float width, float height) -> BackingLayout;
+  auto CalcBackingLayout_() const -> BackingLayout;
+
+  /// Containers taller than these (height / width) get the taller
+  /// backing art unless told otherwise (see CalcBackingLayout_()).
+  static constexpr float kLegacyTallAspect{0.6f};
+  static constexpr float kCleanLayoutTallAspect{0.59f};
+
+  /// The hand-calibrated known-opaque sub-rect of a standard backing, in
+  /// unit coords over its full quad (+-0.5 is the quad's edge).
+  static void BackingOpaqueUnitRect_(bool tall, float* l, float* b, float* r,
+                                     float* t);
+
+  /// Our backing quad (widget-local), with background offset and scale
+  /// applied; what we actually draw.
+  void GetPlacedBackingQuad_(const BackingLayout& layout, float* l, float* b,
+                             float* r, float* t) const;
 
   // Calc the widget-local bounds of the hand-calibrated known-opaque
-  // sub-rect of our window backing (see CoversScreenOpaquely());
-  // returns false for backing setups with no such calibration.
+  // sub-rect of our window backing as drawn (offset and scale applied;
+  // see CoversScreenOpaquely()); returns false for backing setups with
+  // no such calibration.
   auto GetCalibratedOpaqueRegion_(float* l, float* b, float* r, float* t) const
       -> bool;
 
@@ -311,6 +361,8 @@ class ContainerWidget : public Widget {
   float bg_center_fudge_x_{};
   float background_offset_x_{};
   float background_offset_y_{};
+  float background_scale_x_{1.0f};
+  float background_scale_y_{1.0f};
   float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};
@@ -321,7 +373,9 @@ class ContainerWidget : public Widget {
   bool selection_loops_{true};
   bool is_main_window_stack_{};
   bool is_overlay_window_stack_{};
+  BackingArt backing_art_{BackingArt::kAuto};
   bool bg_dirty_{true};
+  bool clean_layout_{};
   bool glow_dirty_{true};
   bool transitioning_{};
   bool pressed_{};

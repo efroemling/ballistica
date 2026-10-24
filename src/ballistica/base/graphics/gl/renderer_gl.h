@@ -127,7 +127,8 @@ class RendererGL : public Renderer {
     SHD_FLATNESS = 1 << 23,
     SHD_DEPTH_BUG_TEST = 1 << 24,
     SHD_TEXT_GLOW = 1 << 25,
-    SHD_UV2_FADE = 1 << 26
+    SHD_UV2_FADE = 1 << 26,
+    SHD_LAYERED_MASK = 1 << 27
   };
 
   enum VertexAttr {
@@ -326,6 +327,7 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_uv2_fade_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_masked_prog_{};
+  ProgramSimpleGL* simple_tex_mod_layered_mask_prog_{};
   ProgramObjectGL* obj_prog_{};
   ProgramObjectGL* obj_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_transparent_prog_{};

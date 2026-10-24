@@ -76,6 +76,8 @@ void RenderView::SetSize(int width, int height) {
   height_ = height;
 }
 
+void RenderView::PrepareFrame(FrameDef* frame_def) {}
+
 void RenderView::DrawWorld(FrameDef* frame_def) {}
 
 auto RenderView::GetQuality(GraphicsQuality app_quality) const

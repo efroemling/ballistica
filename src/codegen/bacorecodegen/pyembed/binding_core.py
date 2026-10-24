@@ -62,4 +62,6 @@ values = [
     logging.getLogger('ba.net').log,  # kLoggerBaNetworkingLogCall
     logging.getLogger('ba.discord'),  # kLoggerBaDiscord
     logging.getLogger('ba.discord').log,  # kLoggerBaDiscordLogCall
+    logging.getLogger('ba.user'),  # kLoggerBaUser
+    logging.getLogger('ba.user').log,  # kLoggerBaUserLogCall
 ]

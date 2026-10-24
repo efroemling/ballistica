@@ -21,6 +21,7 @@
 #include <cstdlib>
 #endif
 
+#include "ballistica/base/app_adapter/offscreen_gl_windows.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
@@ -88,6 +89,12 @@ static void SetAngleLibPaths_() {
   SDL_SetHint(SDL_HINT_OPENGL_LIBRARY, gles.c_str());
 }
 #endif  // BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
+
+/// The active SDL video driver's name, for error messages.
+static auto SDLVideoDriverName_() -> std::string {
+  const char* name = SDL_GetCurrentVideoDriver();
+  return name ? name : "(none)";
+}
 
 /// RAII-friendly way to mark where in the main thread we're allowed to run
 /// graphics code (only applies in strict-graphics-context mode).
@@ -348,6 +355,13 @@ void AppAdapterSDL::ApplyGraphicsSettings(
       vsync = VSync::kNever;
       break;
   }
+  // Offscreen frames are never presented, so there's no vsync to wait on;
+  // pacing falls to max-fps sleeping.
+  if (offscreen_gl_) {
+    vsync = VSync::kNever;
+    vsync_ = vsync;
+    vsync_actually_enabled_ = false;
+  }
   if (vsync != vsync_) {
     switch (vsync) {
       case VSync::kUnset:
@@ -415,7 +429,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
     auto draw_start_time{g_core->AppTimeMicrosecs()};
     LogEventProcessingTime_(draw_start_time - cycle_start_time, event_count);
     if (!WindowIsInvisible_() && TryRender()) {
-      SDL_GL_SwapWindow(sdl_window_);
+      SwapBuffers_();
     }
 
     // Sleep.
@@ -423,6 +437,16 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
 
     // Repeat.
   }
+}
+
+void AppAdapterSDL::SwapBuffers_() {
+#if BA_HAVE_OFFSCREEN_GL_WINDOWS
+  if (offscreen_gl_) {
+    offscreen_gl_->Swap();
+    return;
+  }
+#endif
+  SDL_GL_SwapWindow(sdl_window_);
 }
 
 void AppAdapterSDL::LogEventProcessingTime_(microsecs_t duration, int count) {
@@ -473,6 +497,17 @@ void AppAdapterSDL::UpdateAppActive_() {
   // before we go active again (hiding an already-minimized window and then
   // unhiding it must not resume play).
   auto active{!hidden_ && !minimized_};
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug, [this] {
+    return "Window visibility: hidden=" + std::to_string(hidden_)
+           + " minimized=" + std::to_string(minimized_)
+           + (offscreen_gl_ ? " (ignored; offscreen GL)" : "") + ".";
+  });
+
+  // Offscreen runs never show the window (on Windows session 0 it may well
+  // report hidden or minimized), so its visibility means nothing there.
+  if (offscreen_gl_) {
+    active = true;
+  }
   if (active == app_active_) {
     return;
   }
@@ -1303,8 +1338,18 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     // is requested via SDL_WINDOW_HIGH_PIXEL_DENSITY (was ALLOW_HIGHDPI), and
     // SDL_WindowFlags is now 64-bit. Bare SDL_WINDOW_FULLSCREEN with no
     // display-mode set gives borderless 'desktop' fullscreen.
-    SDL_WindowFlags flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY
-                            | SDL_WINDOW_RESIZABLE;
+    bool offscreen{};
+#if BA_HAVE_OFFSCREEN_GL_WINDOWS
+    // Offscreen runs draw into their own pbuffer; the window is only for
+    // events and sizing, so SDL mustn't try to give it a GL surface (which
+    // is exactly what fails in session 0).
+    offscreen = OffscreenGLWindows::Requested();
+#endif
+    SDL_WindowFlags flags =
+        SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE;
+    if (!offscreen) {
+      flags |= SDL_WINDOW_OPENGL;
+    }
     if (settings->fullscreen) {
       flags |= SDL_WINDOW_FULLSCREEN;
     }
@@ -1358,11 +1403,22 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     sdl_window_ = SDL_CreateWindow("", width, height, flags);
     if (!sdl_window_) {
       FatalError("Unable to create SDL Window of size " + std::to_string(width)
-                 + " by " + std::to_string(height));
+                 + " by " + std::to_string(height) + " (video driver "
+                 + SDLVideoDriverName_() + "): " + SDL_GetError());
     }
-    sdl_gl_context_ = SDL_GL_CreateContext(sdl_window_);
-    if (!sdl_gl_context_) {
-      FatalError("Unable to create SDL GL Context");
+    if (offscreen) {
+#if BA_HAVE_OFFSCREEN_GL_WINDOWS
+      int pixels_x{}, pixels_y{};
+      SDL_GetWindowSizeInPixels(sdl_window_, &pixels_x, &pixels_y);
+      offscreen_gl_ = new OffscreenGLWindows();
+      offscreen_gl_->Create(pixels_x, pixels_y);
+#endif
+    } else {
+      sdl_gl_context_ = SDL_GL_CreateContext(sdl_window_);
+      if (!sdl_gl_context_) {
+        FatalError("Unable to create SDL GL Context (video driver "
+                   + SDLVideoDriverName_() + "): " + SDL_GetError());
+      }
     }
 
     SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
@@ -1404,6 +1460,13 @@ void AppAdapterSDL::UpdateScreenSizes_() {
   // dimensions. (SDL3 renamed SDL_GL_GetDrawableSize.)
   int pixels_x, pixels_y;
   SDL_GetWindowSizeInPixels(sdl_window_, &pixels_x, &pixels_y);
+
+#if BA_HAVE_OFFSCREEN_GL_WINDOWS
+  // The pbuffer is the 'screen' in offscreen runs; keep it window-sized.
+  if (offscreen_gl_) {
+    offscreen_gl_->Resize(pixels_x, pixels_y);
+  }
+#endif
 
   // Push this over to the logic thread which owns the canonical value
   // for this.

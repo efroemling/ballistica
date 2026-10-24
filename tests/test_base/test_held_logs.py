@@ -46,6 +46,10 @@ def test_fatal_error_drains_held_logs() -> None:
 
     env = dict(os.environ)
     env['BA_CRASH_TEST'] = 'held_logs'
+    # Keep this deliberate fatal's report off the real servers (where
+    # it would also eat into basn's per-address report limit that the
+    # end-to-end tests in test_fatal_error_report.py rely on).
+    env['BA_FATAL_REPORT_URL'] = 'http://127.0.0.1:9'
 
     proc = subprocess.run(
         [binpath],

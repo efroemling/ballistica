@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     import bauiv1
 
     from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._panes import PaneMode
 
 
 #: A usage-site line-wrap override for a native language-string
@@ -326,6 +327,18 @@ class RowPrep:
     #: A static (non-scrolling) button row's buttons, left to right
     #: (laid out like a control row; see :func:`is_control_row`).
     staticbuttons: list[ButtonPrep] | None = None
+    #: A grid row's column count (0 for not a grid). Its
+    #: ``staticbuttons`` then run line by line, each line navigated
+    #: like a row of its own.
+    grid_columns: int = 0
+    #: A grid row's cell height and the gap between its lines, as laid
+    #: out (for its lines' show-buffers).
+    grid_cell_height: float = 0.0
+    grid_line_gap: float = 0.0
+    #: A grid row's per-line (top, bottom) show-buffers, top line
+    #: first, once finalized (they replace the row's own for its
+    #: buttons).
+    grid_show_buffers: list[tuple[float, float]] = field(default_factory=list)
 
     def is_control_row(self) -> bool:
         """Are we laid out like a control row (vs a row of buttons)?
@@ -376,3 +389,11 @@ class PagePrep:
     client_effects: list[bacommon.clienteffect.Effect] = field(
         default_factory=list
     )
+
+    #: The viewer pane the page was laid out beside (None for none, its
+    #: rows then spanning the window); the window lays itself out to
+    #: match when showing it. Attached by the caller, which picks the
+    #: scroll area the page is prepped against.
+    #:
+    #: :meta private:
+    pane: PaneMode | None = None

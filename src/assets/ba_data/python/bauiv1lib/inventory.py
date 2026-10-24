@@ -279,7 +279,6 @@ class InventoryUIController(
             dui2.ButtonRow(
                 spacing_top=-15,
                 spacing_bottom=15,
-                padding_left=13,
                 buttons=buttons,
             ),
         ]
@@ -463,8 +462,8 @@ class InventoryUIController(
                             # like '{test}' displays verbatim instead
                             # of erroring as a substitution token.
                             LangStrSpecValue.literal(tval),
-                            position=(0, -75),
-                            size=(130, 40),
+                            position=(0, -77),
+                            size=(130, 36),
                             flatness=1.0,
                             shadow=1.0,
                             color=tcolor,

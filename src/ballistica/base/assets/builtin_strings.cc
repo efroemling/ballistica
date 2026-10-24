@@ -140,6 +140,10 @@ auto BuiltinStrings::Audio::MusicPlayError(LangStr::Sub music)
                        {{"music", std::move(music)}});
 }
 
+auto BuiltinStrings::Audio::Unavailable() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/audio/unavailable");
+}
+
 auto BuiltinStrings::Device::ThermalFrameRateCap()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/device/thermal_frame_rate_cap");

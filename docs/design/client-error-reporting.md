@@ -104,6 +104,24 @@ back yet) looked exactly like the app silently vanishing.
 - A send that completes after the handler gave up on it produces one
   duplicate report; accepted.
 
+### Unclean shutdowns
+
+Not every bad exit is a fatal error. If the app can't shut down cleanly
+— today, the logic thread hasn't stopped 5 seconds after shutdown
+completes, so Python can't safely be finalized —
+`FatalErrorHandling::DoUncleanShutdown()` reports it through this same
+channel with the message prefixed `UNCLEAN-SHUTDOWN:` (live, else
+deferred like any fatal, so `DEFERRED: UNCLEAN-SHUTDOWN:` on a next
+launch). It shows no dialog: the user asked to quit, and the app does.
+Then, matching fatal errors, unmodified blessed builds `abort()` — the
+platform crash report that produces includes every thread's stack, the
+only way to see where the stuck thread was — and other builds exit 1
+(via `_Exit`, since other threads may still be running).
+
+Separately, the shutdown watchdog still turns a shutdown that hangs
+outright into a regular fatal error (`Timed out waiting for
+shutdown.`).
+
 ### Testing
 
 `BA_CRASH_TEST=1` fires a fatal before core is imported — the harshest
@@ -117,7 +135,14 @@ of prod. A shipped build can never be redirected by its environment.
 `tests/test_base/test_fatal_error_report.py` exercises the whole chain
 and polls Cloud Logging for its token. It runs **against prod** — that
 is the only fleet with both a plaintext route and Cloud Logging — so
-each run leaves one self-identifying entry there.
+each run leaves self-identifying entries there: the live pre-core
+fatal, plus next-launch delivery of a fatal error and of an unclean
+shutdown (`BA_CRASH_TEST=shutdown_logic_stall` stalls the logic thread
+at shutdown).
+
+`tests/test_base/test_fatal_report_delivery.py` covers the same
+live/next-launch × fatal/unclean matrix hermetically, against a local
+listener, so it needs no network or credentials.
 
 ## Native crashes
 

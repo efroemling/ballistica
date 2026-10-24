@@ -106,6 +106,7 @@ class AdvancedState(DocUIState, state_id='settings.advanced'):
     )
     always_use_internal_keyboard: Annotated[bool, IOAttrs('kb')] = False
     allow_extreme_aspect_ratios: Annotated[bool, IOAttrs('ar')] = False
+    legacy_character_physics: Annotated[bool, IOAttrs('lcp')] = False
 
 
 #: Config key for each state field that is a plain config mirror. Built
@@ -125,6 +126,9 @@ _CONFIG_KEYS: dict[str, str] = {
     AdvancedState.key(
         lambda s: s.allow_extreme_aspect_ratios
     ): 'Allow Extreme Aspect Ratios',
+    AdvancedState.key(
+        lambda s: s.legacy_character_physics
+    ): 'Legacy Character Physics',
 }
 
 
@@ -344,6 +348,10 @@ def _page() -> dui2.Response:
         insecure_connections=insecure_mode,
         always_use_internal_keyboard=_bool('Always Use Internal Keyboard'),
         allow_extreme_aspect_ratios=_bool('Allow Extreme Aspect Ratios'),
+        # (Not a native config entry, so no resolve() default.)
+        legacy_character_physics=bool(
+            config.get('Legacy Character Physics', False)
+        ),
     )
     # A stored language we can no longer show reads as Auto.
     if state.language not in {c[0] for c in _language_choices()}:
@@ -425,6 +433,14 @@ def _page() -> dui2.Response:
             lambda s: s.allow_extreme_aspect_ratios,
             label=_advstrs.allow_extreme_aspect_ratios.spec,
             footnote=_advstrs.allow_extreme_aspect_ratios_description.spec,
+            on_change=apply,
+        )
+    )
+    rows.append(
+        astate.checkbox_row(
+            lambda s: s.legacy_character_physics,
+            label=_advstrs.legacy_character_physics.spec,
+            footnote=_advstrs.legacy_character_physics_description.spec,
             on_change=apply,
         )
     )

@@ -225,6 +225,11 @@ class ClassicAppMode(AppMode):
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
 
+        # Host-ui upkeep runs exactly while we're the active mode.
+        classic = bui.app.classic
+        assert classic is not None
+        classic.host_ui.start()
+
         # Register the app-run's hosting package universe: exactly the
         # set the launch metascan discovered (which construct-mode fully
         # resolved before we could activate). Sessions we host may only
@@ -341,8 +346,27 @@ class ClassicAppMode(AppMode):
         if classic is not None:
             classic.save_ui_state()
 
+        # Host-ui upkeep runs exactly while we're the active mode.
+        if classic is not None:
+            classic.host_ui.stop()
+
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
+
+    @override
+    def on_main_ui_dismissed(self) -> None:
+        # Run anything waiting for the menus to go away (see
+        # ClassicAppSubsystem.add_main_menu_close_callback()).
+        classic = bui.app.classic
+        assert classic is not None
+        calls = list(classic.main_menu_resume_callbacks)
+        classic.main_menu_resume_callbacks.clear()
+        for call in calls:
+            try:
+                with bui.ContextRef.empty():
+                    call()
+            except Exception:
+                logging.exception('Error in classic resume callback.')
 
     @override
     def on_app_active_changed(self) -> None:

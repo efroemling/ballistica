@@ -4,6 +4,7 @@
 #define BALLISTICA_CORE_CORE_H_
 
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -61,6 +62,14 @@ class CoreFeatureSet {
   /// Can be used during shutdown or when trying to send a crash-report to
   /// ensure we don't hang indefinitely.
   void StartSuicideTimer(const std::string& action, millisecs_t delay);
+
+  /// Monotonic time (Platform::TimeMonotonicMillisecs()) when the
+  /// suicide timer will fire, or empty if none was started. Shutdown
+  /// steps with their own time limits derive them from this, so they
+  /// give up before the timer turns things into a fatal error.
+  auto suicide_deadline() const -> std::optional<millisecs_t> {
+    return suicide_deadline_;
+  }
 
   /// Apply the config set up by baenv to the engine.
   void ApplyBaEnvConfig();
@@ -169,6 +178,12 @@ class CoreFeatureSet {
   /// Should be called by a thread before it exits.
   void UnregisterThread();
 
+  /// Names of registered threads other than the calling one, sorted.
+  ///
+  /// Every long-lived thread we start registers itself, so at shutdown
+  /// this is the list of our threads still running.
+  auto OtherRegisteredThreadNames() -> std::vector<std::string>;
+
   /// A bool set just before finalizing the Python interpreter and calling
   /// exit() or whatever is intended to be the last gasp of life for the
   /// binary. This can be polled periodically by background threads that may
@@ -249,6 +264,7 @@ class CoreFeatureSet {
   bool event_loops_suspended_{};
   bool tried_importing_base_{};
   bool started_suicide_{};
+  std::optional<millisecs_t> suicide_deadline_;
   bool have_ba_env_vals_{};
   bool app_config_disable_xinput_{};
   bool vr_mode_{};

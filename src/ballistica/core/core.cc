@@ -2,6 +2,7 @@
 
 #include "ballistica/core/core.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -424,6 +425,7 @@ void CoreFeatureSet::UpdateAppTime_() {
 void CoreFeatureSet::StartSuicideTimer(const std::string& action,
                                        millisecs_t delay) {
   if (!started_suicide_) {
+    suicide_deadline_ = Platform::TimeMonotonicMillisecs() + delay;
     new std::thread(WaitThenDie, delay, action);
     started_suicide_ = true;
   }
@@ -458,6 +460,21 @@ void CoreFeatureSet::UnregisterThread() {
   if (i != thread_info_map_.end()) {
     thread_info_map_.erase(i);
   }
+}
+
+auto CoreFeatureSet::OtherRegisteredThreadNames() -> std::vector<std::string> {
+  std::vector<std::string> names;
+  {
+    std::scoped_lock lock(thread_info_map_mutex_);
+    auto current = std::this_thread::get_id();
+    for (auto&& [thread_id, name] : thread_info_map_) {
+      if (thread_id != current) {
+        names.push_back(name);
+      }
+    }
+  }
+  std::sort(names.begin(), names.end());
+  return names;
 }
 
 auto CoreFeatureSet::CurrentThreadName() -> std::string {

@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
@@ -26,8 +27,8 @@ namespace ballistica::base {
 namespace {
 
 // Framing and motion, as bamaster's browser mesh preview does them
-// (bamaster_mesh_preview.ts): everything fit into the unit sphere and
-// seen from this far back, this wide, starting this far above.
+// (bamaster_mesh_preview.ts): everything seen from this many of its
+// radii back, this wide, starting this far above.
 const float kCameraDistance{3.6f};
 const float kFieldOfViewY{36.0f};  // Degrees (0.2 pi).
 const float kStartPitch{0.5f};     // Radians, looking down.
@@ -36,6 +37,12 @@ const float kSpinRate{0.7f};       // Radians per second.
 // Dragging can tilt the camera to just short of straight above or
 // below (straight on, its up direction would be undefined).
 const float kMaxPitch{1.55f};
+
+// Our near clip never comes closer than this share of our far one. It
+// only comes into it with our camera within something's bounds (else
+// the near clip sits at the nearest bounds), and depth buffers can be
+// 16 bits, which loses too much precision far out much below this.
+const float kMinNearClipRatio{0.01f};
 
 const float kPi{3.14159265358979f};
 // Read exactly ``count`` finite numbers into ``out``.
@@ -71,6 +78,12 @@ class MeshViewer::View : public RenderView {
  public:
   View(MeshViewer* viewer, Camera* camera, int width, int height)
       : RenderView(camera, width, height), viewer_(viewer) {}
+
+  void PrepareFrame(FrameDef* frame_def) override {
+    if (MeshViewer* viewer = viewer_.get()) {
+      viewer->PrepareFrame_(frame_def);
+    }
+  }
 
   void DrawWorld(FrameDef* frame_def) override {
     if (MeshViewer* viewer = viewer_.get()) {
@@ -140,9 +153,14 @@ auto MeshViewer::SetDepiction(const std::string& json) -> bool {
 
   float old_yaw = start_yaw_;
   float old_pitch = start_pitch_;
+  std::optional<ManualCamera> old_camera = manual_camera_;
   failure_ = Parse_(json);
   if (!failure_.empty()) {
     entries_.clear();
+  }
+  // A moving camera starts its motion over only if it changed.
+  if (manual_camera_ != old_camera) {
+    camera_time_ = 0.0;
   }
   // Take up a new starting pose -- but an update leaving it as it was
   // (an editor's draft, say) keeps however far it's been dragged.
@@ -159,8 +177,115 @@ auto MeshViewer::SetDepiction(const std::string& json) -> bool {
     spin_angle_ = 0.0f;
   }
   UpdateCamera_();
+  // The character viewer's hand-held wobble (see
+  // bascenev1lib.characterviewer), scaled. By default only a set shot
+  // (a hand-placed camera) wobbles; framed turntables hold still.
+  // (Both amounts clamp to 0..10.)
+  const float shake = std::clamp(
+      camera_shake_ ? *camera_shake_ : (manual_camera_ ? 1.0f : 0.0f), 0.0f,
+      10.0f);
+  camera_->SetShake(1.3f * shake, 100.0f, 2.0f, 0.15f, 1.0f);
+  // Turning the device turns our view around what we're looking at:
+  // a generous swing when we frame things (it reads as turning them in
+  // hand), a subtler one for a set shot (the character viewer's; see
+  // bascenev1lib.characterviewer).
+  camera_->set_tilt_orbit(std::clamp(camera_gyro_, 0.0f, 10.0f)
+                          * (manual_camera_ ? 0.2f : 0.6f));
   view_->set_clear_color(background_ ? *background_ : default_background_);
+  UpdateTransparent_();
   return failure_.empty();
+}
+
+auto MeshViewer::ParseCamera_(const JsonRef& cam)
+    -> std::variant<std::optional<ManualCamera>, std::string> {
+  if (!cam.is_object()) {
+    return std::string("Its camera ('cam') is not an object.");
+  }
+  // A pose: a position ('p') and target ('t') of 3 numbers each and a
+  // field of view ('f') in degrees.
+  auto read_pose = [](const JsonRef& obj, const std::string& what,
+                      CameraPose* pose) -> std::string {
+    auto fov = obj["f"].as_double();
+    if (!obj.is_object() || !ReadVector(obj, "p", &pose->position)
+        || !ReadVector(obj, "t", &pose->target) || !fov || !std::isfinite(*fov)
+        || *fov <= 0.0 || *fov >= 180.0) {
+      return what
+             + " needs a position ('p') and target ('t') of 3 numbers each"
+               " and a field of view ('f') between 0 and 180.";
+    }
+    if ((pose->target - pose->position).Length() < 1.0e-5f) {
+      return what + " looks from its target to itself.";
+    }
+    pose->fov_y = static_cast<float>(*fov);
+    return {};
+  };
+
+  ManualCamera manual;
+  // No kind given is a still camera (the only kind there once was).
+  JsonRef kind = cam["_t"];
+  std::string kind_name =
+      kind.exists() ? std::string(kind.as_string().value_or("")) : "s";
+  if (kind_name == "s") {
+    auto error = read_pose(cam, "Its camera ('cam')", &manual.a);
+    if (!error.empty()) {
+      return error;
+    }
+    return manual;
+  }
+  if (kind_name == "pp") {
+    CameraPose b;
+    for (auto [key, pose] : {std::pair{"a", &manual.a}, std::pair{"b", &b}}) {
+      auto error = read_pose(
+          cam[key], std::string("Its camera's pose '") + key + "' ('cam')",
+          pose);
+      if (!error.empty()) {
+        return error;
+      }
+    }
+    manual.b = b;
+    auto travel = cam["d"].as_double();
+    if (!travel || !std::isfinite(*travel) || *travel <= 0.0) {
+      return std::string(
+          "Its camera's travel time ('cam' 'd') is not a positive number.");
+    }
+    manual.travel_time = static_cast<float>(*travel);
+    if (cam["l"].exists()) {
+      auto loop = cam["l"].as_bool();
+      if (!loop) {
+        return std::string("Its camera's loop ('cam' 'l') is not a bool.");
+      }
+      manual.loop = *loop;
+    }
+    return manual;
+  }
+  // A kind newer than us (or 'u', one our Python side didn't know).
+  return std::optional<ManualCamera>{};
+}
+
+auto MeshViewer::ManualPose_() const -> CameraPose {
+  assert(manual_camera_);
+  const ManualCamera& cam = *manual_camera_;
+  if (!cam.b) {
+    return cam.a;
+  }
+  // One smooth sine wave: a to b and back every two travel times (or,
+  // not looping, its first half: a to b and stop).
+  const double legs = camera_time_ / cam.travel_time;
+  const double phase = (cam.loop ? std::fmod(legs, 2.0) : std::min(legs, 1.0))
+                       * static_cast<double>(kPi);
+  const auto u = static_cast<float>(0.5 - 0.5 * std::cos(phase));
+  const CameraPose& a = cam.a;
+  const CameraPose& b = *cam.b;
+  CameraPose pose;
+  pose.position = a.position + (b.position - a.position) * u;
+  pose.target = a.target + (b.target - a.target) * u;
+  pose.fov_y = a.fov_y + (b.fov_y - a.fov_y) * u;
+  // (Passing through its own target would leave no direction to look:
+  // look the way it started instead.)
+  if ((pose.target - pose.position).Length() < 1.0e-5f) {
+    pose.target = pose.position + (a.target - a.position);
+  }
+  return pose;
 }
 
 auto MeshViewer::Parse_(const std::string& json) -> std::string {
@@ -171,6 +296,8 @@ auto MeshViewer::Parse_(const std::string& json) -> std::string {
   start_yaw_ = 0.0f;
   start_pitch_ = kStartPitch;
   manual_camera_.reset();
+  camera_shake_.reset();
+  camera_gyro_ = 1.0f;
   auto doc = JsonDoc::Parse(json);
   if (!doc || !doc->root().is_object()) {
     return "Its json is not an object.";
@@ -204,21 +331,26 @@ auto MeshViewer::Parse_(const std::string& json) -> std::string {
   }
   start_pitch_ = std::clamp(start_pitch_, -kMaxPitch, kMaxPitch);
   if (root["cam"].exists()) {
-    JsonRef cam = root["cam"];
-    ManualCamera manual;
-    auto fov = cam["f"].as_double();
-    if (!cam.is_object() || !ReadVector(cam, "p", &manual.position)
-        || !ReadVector(cam, "t", &manual.target) || !fov || !std::isfinite(*fov)
-        || *fov <= 0.0 || *fov >= 180.0) {
-      return "Its camera ('cam') needs a position ('p') and target ('t')"
-             " of 3 numbers each and a field of view ('f') between 0 and"
-             " 180.";
+    auto camera = ParseCamera_(root["cam"]);
+    if (auto* error = std::get_if<std::string>(&camera)) {
+      return *error;
     }
-    if ((manual.target - manual.position).Length() < 1.0e-5f) {
-      return "Its camera ('cam') looks from its target to itself.";
+    // (None for a kind we don't know: we frame things ourselves.)
+    manual_camera_ = std::get<std::optional<ManualCamera>>(camera);
+  }
+  if (root["cs"].exists()) {
+    auto shake = root["cs"].as_double();
+    if (!shake || !std::isfinite(*shake)) {
+      return "Its camera shake ('cs') is not a number.";
     }
-    manual.fov_y = static_cast<float>(*fov);
-    manual_camera_ = manual;
+    camera_shake_ = static_cast<float>(*shake);
+  }
+  if (root["cg"].exists()) {
+    auto gyro = root["cg"].as_double();
+    if (!gyro || !std::isfinite(*gyro)) {
+      return "Its camera gyro ('cg') is not a number.";
+    }
+    camera_gyro_ = static_cast<float>(*gyro);
   }
   if (root["bg"].exists()) {
     Vector3f bg;
@@ -314,7 +446,14 @@ void MeshViewer::SetDefaultBackground(const Vector3f& color) {
 
 void MeshViewer::SetTransparent(bool transparent) {
   assert(g_base->InLogicThread());
-  view_->set_transparent(transparent);
+  transparent_ = transparent;
+  UpdateTransparent_();
+}
+
+void MeshViewer::UpdateTransparent_() {
+  // A background our depiction asks for is drawn whatever our host
+  // would like.
+  view_->set_transparent(transparent_ && !background_);
 }
 
 void MeshViewer::Orbit(float dx, float dy) {
@@ -339,31 +478,59 @@ void MeshViewer::Orbit(float dx, float dy) {
 
 void MeshViewer::UpdateCamera_() {
   if (manual_camera_) {
-    const ManualCamera& cam = *manual_camera_;
+    const CameraPose cam = ManualPose_();
     camera_->set_position(cam.position);
     camera_->set_target(cam.target);
     camera_->set_field_of_view_y(cam.fov_y);
     // (Its field of view is what was asked for, whatever our shape.)
     camera_->set_min_field_of_view_x(0.0f);
-    // Clip to what's there: everything lies within the fitted sphere,
-    // and -- as the turntable can always turn it about the origin
-    // (spin or drags) -- so within the sphere that sweeps there.
-    float radius = have_fit_
-                       ? (fit_.radius + fit_.center.Length()) * 1.1f + 0.01f
-                       : 1000.0f;
-    float dist = cam.position.Length();
-    float far_clip = dist + radius;
-    camera_->SetClip(std::max(far_clip * 0.001f, dist - radius), far_clip);
     return;
   }
   camera_->set_field_of_view_y(kFieldOfViewY);
   // Never narrower across than up and down, so a tall, thin picture
   // shrinks what it shows rather than cutting off its sides.
   camera_->set_min_field_of_view_x(kFieldOfViewY);
-  camera_->SetClip(kCameraDistance - 1.5f, kCameraDistance + 1.5f);
+  // Back far enough to frame it all (well, a sphere bounds scale times
+  // its size), looking at its middle.
+  const Vector3f center = have_fit_ ? fit_.center : Vector3f(0.0f, 0.0f, 0.0f);
+  const float dist =
+      kCameraDistance * (have_fit_ ? fit_.radius : 1.0f) * bounds_scale_;
   camera_->set_position(
-      {0.0f, kCameraDistance * sinf(pitch_), kCameraDistance * cosf(pitch_)});
-  camera_->set_target({0.0f, 0.0f, 0.0f});
+      center + Vector3f(0.0f, dist * sinf(pitch_), dist * cosf(pitch_)));
+  camera_->set_target(center);
+}
+
+auto MeshViewer::Pivot_() const -> Vector3f {
+  if (manual_camera_ || !have_fit_) {
+    return {0.0f, 0.0f, 0.0f};
+  }
+  return fit_.center;
+}
+
+void MeshViewer::UpdateClip_() {
+  // Each thing as it is turned right now; our camera fits its clip range
+  // to them each frame from exactly where it ends up looking (gyro and
+  // shake included), so as much depth precision as there can be goes
+  // to what's there.
+  const Vector3f pivot = Pivot_();
+  const float turn_degrees = (spin_angle_ + user_yaw_) * 180.0f / kPi;
+  const Matrix44f turn =
+      Matrix44fTranslate(-pivot.x, -pivot.y, -pivot.z)
+      * Matrix44fRotate(Vector3f(0.0f, 1.0f, 0.0f), turn_degrees)
+      * Matrix44fTranslate(pivot);
+  std::vector<FixedCamera::ClipSphere> spheres;
+  spheres.reserve(fit_.spheres.size());
+  for (const Sphere& s : fit_.spheres) {
+    spheres.push_back({turn * s.center, s.radius});
+  }
+  if (spheres.empty()) {
+    // Nothing with bounds (or not here yet): plenty either way of where
+    // we look at.
+    const float dist =
+        std::max(1.0f, (camera_->target() - camera_->GetPosition()).Length());
+    camera_->SetClip(dist * 0.1f, dist * 10.0f);
+  }
+  camera_->SetClipSpheres(std::move(spheres), kMinNearClipRatio);
 }
 
 void MeshViewer::UpdateMedia_() {
@@ -407,7 +574,7 @@ void MeshViewer::UpdateMedia_() {
     // we showed before just reads as a zoom).
     fit_ = CalcFit_();
     have_fit_ = true;
-    UpdateCamera_();  // (A hand-placed one clips to what's there.)
+    UpdateCamera_();
   }
 }
 
@@ -425,11 +592,8 @@ auto MeshViewer::CalcFit_() const -> Fit {
   // of those, about the middle of their combined box. (The same
   // framing the browser preview does per vertex, from data meshes
   // carry with them.)
-  struct Sphere {
-    Vector3f center;
-    float radius;
-  };
-  std::vector<Sphere> spheres;
+  Fit fit;
+  std::vector<Sphere>& spheres = fit.spheres;
   for (const auto& entry : entries_) {
     if (!entry.mesh_asset.exists() || !entry.mesh_asset->bounds()) {
       continue;
@@ -445,7 +609,6 @@ auto MeshViewer::CalcFit_() const -> Fit {
                             std::abs(entry.scale.z)});
     spheres.push_back({xf * bounds.center(), bounds.radius * scale});
   }
-  Fit fit;
   if (spheres.empty()) {
     return fit;
   }
@@ -464,41 +627,54 @@ auto MeshViewer::CalcFit_() const -> Fit {
   for (const auto& s : spheres) {
     radius = std::max(radius, (s.center - fit.center).Length() + s.radius);
   }
-  fit.radius = radius;
-  // Frame a sphere that much bigger (or smaller) about the same center.
-  radius *= bounds_scale_;
-  fit.scale = radius > 1.0e-6f ? 1.0f / radius : 1.0f;
+  // (A point, or near enough: frame it as a unit's worth.)
+  fit.radius = radius > 1.0e-6f ? radius : 1.0f;
   return fit;
 }
 
-void MeshViewer::Draw_(FrameDef* frame_def) {
+void MeshViewer::PrepareFrame_(FrameDef* frame_def) {
   UpdateMedia_();
 
   // We turn only while drawn: time unseen doesn't count.
   double now = frame_def->display_time();
-  if (spin_ && last_draw_time_ >= 0.0) {
+  if (last_draw_time_ >= 0.0) {
     auto elapsed = static_cast<float>(std::min(now - last_draw_time_, 0.1));
-    spin_angle_ = std::fmod(spin_angle_ + elapsed * kSpinRate, 2.0f * kPi);
+    if (spin_) {
+      spin_angle_ = std::fmod(spin_angle_ + elapsed * kSpinRate, 2.0f * kPi);
+    }
+    // A moving hand-placed camera moves on (it waits for its media,
+    // so it always starts out from its first pose).
+    // (Not looping, it's done once it gets there.)
+    if (manual_camera_ && manual_camera_->b && have_fit_
+        && (manual_camera_->loop
+            || camera_time_ < manual_camera_->travel_time)) {
+      camera_time_ += elapsed;
+      UpdateCamera_();
+    }
   }
   last_draw_time_ = now;
 
+  // (Our camera is applied to the frame next, then we draw.)
+  UpdateClip_();
+}
+
+void MeshViewer::Draw_(FrameDef* frame_def) {
   if (!block_.ready() || !have_fit_) {
     return;
   }
-  const Fit& fit = fit_;
   float turn_degrees = (spin_angle_ + user_yaw_) * 180.0f / kPi;
   // Solid entries first, then blended ones over them.
   for (bool transparent : {false, true}) {
     for (const auto& entry : entries_) {
       if (entry.transparent == transparent) {
-        DrawEntry_(entry, frame_def, fit, turn_degrees);
+        DrawEntry_(entry, frame_def, turn_degrees);
       }
     }
   }
 }
 
 void MeshViewer::DrawEntry_(const Entry& entry, FrameDef* frame_def,
-                            const Fit& fit, float turn_degrees) {
+                            float turn_degrees) {
   ObjectComponent c(frame_def->beauty_pass());
   // (Untextured, a white one: just the color.)
   c.SetTexture(entry.texture_asset.exists()
@@ -535,13 +711,12 @@ void MeshViewer::DrawEntry_(const Entry& entry, FrameDef* frame_def,
   }
   {
     auto xf = c.ScopedTransform();
+    // Everything stays where (and the size) the depiction put it, but
+    // for the turntable's turn about its pivot.
+    const Vector3f pivot = Pivot_();
+    c.Translate(pivot.x, pivot.y, pivot.z);
     c.Rotate(turn_degrees, 0.0f, 1.0f, 0.0f);
-    // (A hand-placed camera sees the depiction's own space, unfitted,
-    // turning about its origin.)
-    if (!manual_camera_) {
-      c.Scale(fit.scale, fit.scale, fit.scale);
-      c.Translate(-fit.center.x, -fit.center.y, -fit.center.z);
-    }
+    c.Translate(-pivot.x, -pivot.y, -pivot.z);
     ApplyEntryTransform_(entry, &c);
     c.DrawMeshAsset(entry.mesh_asset.get());
   }

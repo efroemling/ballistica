@@ -44,6 +44,7 @@ def apply_toolbar_scroll_fades(
     top_fade: float = TOOLBAR_SCROLL_FADE,
     bottom_fade: float = TOOLBAR_SCROLL_FADE,
     left_fade: float = 0.0,
+    right_fade: float = 0.0,
 ) -> None:
     """Fade a full-screen scroll area's content out toward the toolbars.
 
@@ -51,8 +52,9 @@ def apply_toolbar_scroll_fades(
     into the window backing over ``top_fade``/``bottom_fade`` units in
     from the top/bottom (zero for none). The sides get nothing by
     default, as content just scrolls off the screen there; a scroll
-    area whose left edge is on screen instead (beside a viewer pane,
-    say) can fade that one over ``left_fade``. The scroll area must be
+    area with a side edge on screen instead (beside a viewer pane,
+    say) can fade that one over ``left_fade``/``right_fade``. The
+    scroll area must be
     a direct child of a window with a backing, with its top and bottom
     at the virtual rect's (not extended into screen margins), which the
     default :data:`TOOLBAR_SCROLL_FADE` is calibrated against.
@@ -60,5 +62,5 @@ def apply_toolbar_scroll_fades(
     bui.scrollwidget(
         edit=scrollwidget,
         edge_style='fade',
-        edge_fade=(left_fade, bottom_fade, 0.0, top_fade),
+        edge_fade=(left_fade, bottom_fade, right_fade, top_fade),
     )

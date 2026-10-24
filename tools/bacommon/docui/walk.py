@@ -108,6 +108,8 @@ def _walk_depiction(depiction: bdep.Depiction | None) -> None:
         # As images: full specs or indices into its own domain, fetched
         # on demand; deliberately not visited.
         pass
+    elif typeid is t.BLANK:
+        pass
     else:
         assert_never(typeid)
 

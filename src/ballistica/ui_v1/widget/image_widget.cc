@@ -97,7 +97,7 @@ auto ImageWidget::DrawBrightness_(millisecs_t current_time) const -> float {
 
 void ImageWidget::DrawDepiction_(base::RenderPass* pass, bool transparent,
                                  float offs_x, float offs_y,
-                                 float transition_scale,
+                                 float transition_scale, float opacity,
                                  millisecs_t current_time) {
   assert(depiction_slot_);
   DepictionSlot::DrawArgs args;
@@ -110,7 +110,7 @@ void ImageWidget::DrawDepiction_(base::RenderPass* pass, bool transparent,
   args.offset_y = offs_y;
   args.scale = transition_scale;
   args.brightness = DrawBrightness_(current_time);
-  args.opacity = opacity_;
+  args.opacity = opacity;
   if (Widget* draw_controller = draw_control_parent()) {
     args.disabled = draw_controller->IsDrawDisabled();
   }
@@ -135,22 +135,36 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       (static_cast<float>(birth_time_millisecs_) + transition_delay_)
       - static_cast<float>(current_time);
   float transition_scale = 1.0f;
+  float opacity = opacity_;
   if (transition > 0) {
-    if (transition_type_ == TransitionType::kScale) {
-      // Fixed 150ms scale-up at the tail of the transition window
-      // (quadratic ease-out; decelerates as it settles at 1.0).
-      constexpr float kScaleDurationMs = 150.0f;
-      float t = std::max(0.0f, 1.0f - transition / kScaleDurationMs);
-      transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
-    } else {
-      extra_offs_x -= transition * 4.0f;
+    switch (transition_type_) {
+      case TransitionType::kScale: {
+        // Fixed 150ms scale-up at the tail of the transition window
+        // (quadratic ease-out; decelerates as it settles at 1.0).
+        constexpr float kScaleDurationMs = 150.0f;
+        float t = std::max(0.0f, 1.0f - transition / kScaleDurationMs);
+        transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+        break;
+      }
+      case TransitionType::kFade: {
+        // Fixed 200ms fade-in at the tail of the transition window.
+        constexpr float kFadeDurationMs = 200.0f;
+        opacity *= std::max(0.0f, 1.0f - transition / kFadeDurationMs);
+        break;
+      }
+      case TransitionType::kInLeft:
+        extra_offs_x -= transition * 4.0f;
+        break;
     }
+  }
+  if (opacity < 0.001f) {
+    return;
   }
 
   // A depiction stands in for our texture.
   if (depiction_slot_ && depiction_slot_->active()) {
     DrawDepiction_(pass, draw_transparent, extra_offs_x, extra_offs_y,
-                   transition_scale, current_time);
+                   transition_scale, opacity, current_time);
     return;
   }
 
@@ -215,7 +229,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // (premult blend adds rgb directly rather than weighting it by alpha).
       // Straight-alpha textures keep raw rgb and fade via alpha as before.
       float omul =
-          (texture_.exists() && texture_->premultiplied()) ? opacity_ : 1.0f;
+          (texture_.exists() && texture_->premultiplied()) ? opacity : 1.0f;
 
       // Opaque portion may get drawn transparent or opaque depending on our
       // global opacity.
@@ -224,10 +238,10 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         bool should_draw_transparent = false;
 
         // Draw our opaque mesh in the opaque pass.
-        if (!draw_transparent && opacity_ > 0.999f) {
+        if (!draw_transparent && opacity > 0.999f) {
           should_draw = true;
           should_draw_transparent = false;
-        } else if (draw_transparent && opacity_ <= 0.999f) {
+        } else if (draw_transparent && opacity <= 0.999f) {
           // Draw our opaque mesh in the transparent pass.
           should_draw = true;
           should_draw_transparent = true;
@@ -237,7 +251,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           base::SimpleComponent c(pass);
           c.SetTransparent(should_draw_transparent);
           c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
-                     color_blue_ * db * omul, opacity_);
+                     color_blue_ * db * omul, opacity);
           c.SetTexture(texture_);
           if (flatness_ != 0.0f) {
             c.SetFlatness(flatness_);
@@ -290,7 +304,7 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
-                   color_blue_ * db * omul, opacity_);
+                   color_blue_ * db * omul, opacity);
         c.SetTexture(texture_);
         if (flatness_ != 0.0f) {
           c.SetFlatness(flatness_);

@@ -2,6 +2,14 @@
 
 #include "ballistica/base/assets/asset_archive.h"
 
+#if BA_PLATFORM_ANDROID
+#include <fcntl.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
+
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -48,6 +56,57 @@ AssetArchive::~AssetArchive() {
 }
 
 auto AssetArchive::Open(const std::string& path)
+    -> std::unique_ptr<AssetArchive> {
+#if BA_PLATFORM_ANDROID
+  // Debug: BA_DEBUG_COLD_ARCHIVE=1 (test_game_run --debug-cold-archive)
+  // drops the archive's cached pages first, so launch-time costs can be
+  // measured as on a cold boot without root. Pages other mappings
+  // hold (dex, native libs) stay put; ours are unmapped at this point.
+  if (const char* cold = getenv("BA_DEBUG_COLD_ARCHIVE");
+      cold != nullptr && cold[0] == '1') {
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd >= 0) {
+      // A just-installed apk's pages are still dirty, and dirty pages
+      // can't be dropped; flush them first.
+      fdatasync(fd);
+      int r = posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
+      close(fd);
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                           "BA_DEBUG_COLD_ARCHIVE set; evicted archive "
+                           "page cache (result "
+                               + std::to_string(r) + ").");
+    }
+  }
+  struct rusage usage_start{};
+  getrusage(RUSAGE_SELF, &usage_start);
+#endif
+  auto start_time = core::Platform::TimeMonotonicMicrosecs();
+
+  auto archive = OpenImpl_(path);
+
+  if (archive
+      && g_core->logging->LogLevelEnabled(LogName::kBaAssets,
+                                          LogLevel::kDebug)) {
+    auto elapsed = core::Platform::TimeMonotonicMicrosecs() - start_time;
+    std::string faults;
+#if BA_PLATFORM_ANDROID
+    struct rusage usage_end{};
+    getrusage(RUSAGE_SELF, &usage_end);
+    faults = ", " + std::to_string(usage_end.ru_majflt - usage_start.ru_majflt)
+             + " major faults";
+#endif
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "%.1f",
+             static_cast<double>(elapsed) / 1000.0);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug,
+                         "AssetArchive: indexed "
+                             + std::to_string(archive->entries_.size())
+                             + " entries in " + buffer + "ms" + faults + ".");
+  }
+  return archive;
+}
+
+auto AssetArchive::OpenImpl_(const std::string& path)
     -> std::unique_ptr<AssetArchive> {
   auto fail = [&path](const std::string& msg) -> std::unique_ptr<AssetArchive> {
     g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
@@ -130,28 +189,19 @@ auto AssetArchive::Open(const std::string& path)
     }
     std::string name(reinterpret_cast<const char*>(base + pos + 46), name_len);
 
-    // Data offset requires the *local* header's name/extra lengths
-    // (its extra field can differ from the central one).
-    uint32_t local_sig{};
-    uint16_t local_name_len{};
-    uint16_t local_extra_len{};
-    if (!ReadU32(base, map_size, local_offset, &local_sig)
-        || local_sig != kLocalSignature
-        || !ReadU16(base, map_size, local_offset + 26, &local_name_len)
-        || !ReadU16(base, map_size, local_offset + 28, &local_extra_len)) {
-      return fail("malformed local header for '" + name + "'");
-    }
-    size_t data_offset = static_cast<size_t>(local_offset) + 30 + local_name_len
-                         + local_extra_len;
-    // Stored entries must fit fully in the mapping to be servable.
+    // Note: we deliberately don't touch each entry's *local* header
+    // here (needed for its data offset). Those are scattered across
+    // the whole apk, so reading them all is one random disk read per
+    // entry; on slow-storage devices doing that on the main thread at
+    // launch caused ANRs. Get() reads it on demand instead, right next
+    // to the data it is about to serve. The central directory itself
+    // is one contiguous block.
     bool stored = (method == 0);
-    if (stored
-        && (data_offset > map_size || comp_size > map_size - data_offset
-            || comp_size != uncomp_size)) {
-      return fail("stored entry out of bounds: '" + name + "'");
+    if (stored && comp_size != uncomp_size) {
+      return fail("stored entry size mismatch: '" + name + "'");
     }
     archive->entries_[std::move(name)] =
-        Entry_{data_offset, static_cast<size_t>(comp_size), stored};
+        Entry_{local_offset, static_cast<size_t>(comp_size), stored};
 
     pos += 46 + static_cast<size_t>(name_len) + extra_len + comment_len;
   }
@@ -164,7 +214,36 @@ auto AssetArchive::Get(const std::string& entry_name) const
   if (entry == entries_.end() || !entry->second.stored) {
     return {nullptr, 0};
   }
-  return {map_base_ + entry->second.offset, entry->second.size};
+  const Entry_& e{entry->second};
+
+  // The data offset comes from the *local* header's name/extra lengths
+  // (its extra field can differ from the central one). Reading it is
+  // stateless, so this stays lock-free.
+  uint32_t local_sig{};
+  uint16_t local_name_len{};
+  uint16_t local_extra_len{};
+  if (!ReadU32(map_base_, map_size_, e.local_header_offset, &local_sig)
+      || local_sig != kLocalSignature
+      || !ReadU16(map_base_, map_size_, e.local_header_offset + 26,
+                  &local_name_len)
+      || !ReadU16(map_base_, map_size_, e.local_header_offset + 28,
+                  &local_extra_len)) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "AssetArchive: malformed local header for '"
+                             + entry_name + "' ('" + path_ + "').");
+    return {nullptr, 0};
+  }
+  size_t data_offset =
+      e.local_header_offset + 30 + local_name_len + local_extra_len;
+
+  // Stored entries must fit fully in the mapping to be servable.
+  if (data_offset > map_size_ || e.size > map_size_ - data_offset) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "AssetArchive: stored entry out of bounds: '"
+                             + entry_name + "' ('" + path_ + "').");
+    return {nullptr, 0};
+  }
+  return {map_base_ + data_offset, e.size};
 }
 
 }  // namespace ballistica::base

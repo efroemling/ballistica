@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
@@ -460,7 +461,13 @@ void ConnectionSet::ForceDisconnectClients() {
       client->RequestDisconnect();
     }
   }
+  // Empty our list *before* the connections die. A dying connection
+  // removes its players, which updates the game roster, which walks
+  // this list; clearing the map in place would let that walk hit
+  // half-destroyed entries.
+  auto dying = std::move(connections_to_clients_);
   connections_to_clients_.clear();
+  dying.clear();
 }
 
 // Called for low level packets coming in pertaining to udp

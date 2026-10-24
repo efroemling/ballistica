@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_COMPONENT_SIMPLE_COMPONENT_H_
 #define BALLISTICA_BASE_GRAPHICS_COMPONENT_SIMPLE_COMPONENT_H_
 
+#include <algorithm>
+
 #include "ballistica/base/graphics/component/render_component.h"
 
 namespace ballistica::base {
@@ -181,6 +183,28 @@ class SimpleComponent : public RenderComponent {
     uv2_fade_ = enable;
   }
 
+  /// Draw our texture through a layered mask: shown over an underlay
+  /// color, with two flat colors painted over it, all within the mask's
+  /// silhouette. The mask's red channel is how much of the texture
+  /// (over the underlay) shows, green and blue how much of layer1 and
+  /// layer2 are painted over that (in that order), and alpha how much
+  /// of the whole is drawn; opacity scales all of it. Colors are rgba
+  /// (straight). Painting, unlike tinting, adds coverage where there's
+  /// nothing: a shadow layer over a clear underlay darkens what's
+  /// behind. Transparent textured draws only, and not combined with
+  /// other effects (our color still modulates the texture).
+  void SetLayeredMask(TextureAsset* mask, const float* underlay,
+                      const float* layer1, const float* layer2,
+                      float opacity = 1.0f) {
+    EnsureConfiguring();
+    assert(mask);
+    layered_mask_texture_ = mask;
+    std::copy(underlay, underlay + 4, layer_underlay_);
+    std::copy(layer1, layer1 + 4, layer1_color_);
+    std::copy(layer2, layer2 + 4, layer2_color_);
+    layer_opacity_ = opacity;
+  }
+
  protected:
   void WriteConfig() override;
 
@@ -218,6 +242,11 @@ class SimpleComponent : public RenderComponent {
   float glow_amount_{};
   float glow_blur_{};
   float flatness_{};
+  float layer_underlay_[4]{};
+  float layer1_color_[4]{};
+  float layer2_color_[4]{};
+  float layer_opacity_{1.0f};
+  Object::Ref<TextureAsset> layered_mask_texture_;
   Object::Ref<TextureAsset> texture_;
   Object::Ref<TextureAsset> colorize_texture_;
   Object::Ref<TextureAsset> mask_texture_;

@@ -72,6 +72,7 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
     case ShadingType::kSimpleTextureModulatedTransparentGlow:
     case ShadingType::kSimpleTextureModulatedTransparentGlowMaskUV2:
     case ShadingType::kSimpleTextureModulatedTransparentUV2Fade:
+    case ShadingType::kSimpleTextureModulatedTransparentLayeredMask:
     case ShadingType::kSpecial:
     case ShadingType::kShield:
     case ShadingType::kSmoke:
@@ -1145,6 +1146,7 @@ void Graphics::DrawTextureViews_(FrameDef* frame_def) {
     FrameDefView* fview = frame_def->AddTextureView(view);
     frame_def->set_current_view(fview);
 
+    view->PrepareFrame(frame_def);
     Camera* camera = view->camera();
     camera->Update(frame_def->display_time_elapsed_millisecs());
     camera->UpdatePosition();
@@ -2574,6 +2576,9 @@ auto Graphics::DebugBoundsTypeFromName(const std::string& name)
   }
   if (name == "text") {
     return DebugBoundsType::kText;
+  }
+  if (name == "containers") {
+    return DebugBoundsType::kContainers;
   }
   return {};
 }

@@ -91,6 +91,12 @@ class SceneV1Python {
   /// Pass a chat message along to the python UI layer for handling..
   void HandleLocalChatMessage(const std::string& message);
 
+  /// Pass a host-ui jmessage (raw json) from our host to Python.
+  void HandleHostUIMessageFromHost(const std::string& message);
+
+  /// Pass a host-ui jmessage (raw json) from a client to Python.
+  void HandleHostUIMessageFromClient(const std::string& message, int client_id);
+
   void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
@@ -110,6 +116,8 @@ class SceneV1Python {
     kGetPlayerIconCall,
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
+    kHostUIMessageFromHostCall,
+    kHostUIMessageFromClientCall,
     kHostInfoClass,
     kLocalDisplayClass,
     kLast  // Sentinel; must be at end.

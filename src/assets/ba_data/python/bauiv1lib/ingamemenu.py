@@ -5,9 +5,11 @@
 from typing import TYPE_CHECKING, override
 import logging
 
+import bacommon.hostui as hui
 import bauiv1 as bui
 from bauiv1 import _classicassets
 import bascenev1 as bs
+from bauiv1lib.hostdocui import show_host_docui_window, button_label
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -300,34 +302,96 @@ class InGameMenuWindow(bui.MainWindow):
     def _forward_replay(self) -> None:
         bs.seek_replay(2 * pow(2, bs.get_replay_speed_exponent()))
 
+    def _get_custom_menu_entries(self) -> list[dict[str, Any]]:
+        """Custom entries the current (locally hosted) session defines."""
+        session = bs.get_foreground_host_session()
+        if session is None:
+            return []
+        try:
+            custom_menu_entries = session.get_custom_menu_entries()
+            for cme in custom_menu_entries:
+                cme_any: Any = cme  # Type check may not hold true.
+                if (
+                    not isinstance(cme_any, dict)
+                    or 'label' not in cme
+                    or not isinstance(
+                        cme['label'], (str, bui.Lstr, bui.LangStr)
+                    )
+                    or 'call' not in cme
+                    or not callable(cme['call'])
+                ):
+                    raise ValueError('invalid custom menu entry: ' + str(cme))
+        except Exception:
+            logging.exception(
+                'Error getting custom menu entries for %s.', session
+            )
+            return []
+        return custom_menu_entries
+
+    def _add_extra_buttons(
+        self,
+        positions: list[tuple[float, float, float]],
+        custom_menu_entries: list[dict[str, Any]],
+        host_buttons: list[hui.Button],
+    ) -> None:
+        """Add the custom entries and host buttons, in that order."""
+        for i, entry in enumerate(custom_menu_entries):
+            h, v, scale = positions[self._p_index]
+            self._p_index += 1
+
+            # Ask the entry whether we should resume when we call
+            # it (defaults to true).
+            resume = bool(entry.get('resume_on_call', True))
+
+            if resume:
+                call = bui.CallStrict(self._resume_and_call, entry['call'])
+            else:
+                call = bui.CallStrict(
+                    entry['call'], bui.WeakCallStrict(self._resume)
+                )
+
+            bui.buttonwidget(
+                parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|custom{i}',
+                position=(h - self._button_width / 2, v),
+                size=(self._button_width, self._button_height),
+                scale=scale,
+                on_activate_call=call,
+                label=entry['label'],
+                autoselect=self._use_autoselect,
+            )
+
+        for i, button in enumerate(host_buttons):
+            h, v, scale = positions[self._p_index]
+            self._p_index += 1
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|host{i}',
+                position=(h - self._button_width / 2, v),
+                size=(self._button_width, self._button_height),
+                scale=scale,
+                label=button_label(button),
+                autoselect=self._use_autoselect,
+            )
+            bui.buttonwidget(
+                edit=btn,
+                on_activate_call=bui.CallStrict(
+                    show_host_docui_window, button, origin_widget=btn
+                ),
+            )
+
     def _refresh_in_game(
         self, positions: list[tuple[float, float, float]]
     ) -> tuple[float, float, float]:
         assert bui.app.classic is not None
-        custom_menu_entries: list[dict[str, Any]] = []
-        session = bs.get_foreground_host_session()
-        if session is not None:
-            try:
-                custom_menu_entries = session.get_custom_menu_entries()
-                for cme in custom_menu_entries:
-                    cme_any: Any = cme  # Type check may not hold true.
-                    if (
-                        not isinstance(cme_any, dict)
-                        or 'label' not in cme
-                        or not isinstance(
-                            cme['label'], (str, bui.Lstr, bui.LangStr)
-                        )
-                        or 'call' not in cme
-                        or not callable(cme['call'])
-                    ):
-                        raise ValueError(
-                            'invalid custom menu entry: ' + str(cme)
-                        )
-            except Exception:
-                custom_menu_entries = []
-                logging.exception(
-                    'Error getting custom menu entries for %s.', session
-                )
+        custom_menu_entries = self._get_custom_menu_entries()
+
+        # Plus any defined by our host (or by us, if we're hosting).
+        host_buttons = bui.app.classic.host_ui.get_shown_buttons(
+            hui.ButtonPlacement.IN_GAME_MENU
+        )
+        num_extras = len(custom_menu_entries) + len(host_buttons)
+
         variant = bui.app.env.variant
         vart = type(variant)
         arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
@@ -341,7 +405,7 @@ class InGameMenuWindow(bui.MainWindow):
         if self._connected_to_remote_player:
             # In this case we have a leave *and* a disconnect button.
             self._height += 50
-        self._height += 50 * (len(custom_menu_entries))
+        self._height += 50 * num_extras
         uiscale = bui.app.ui_v1.uiscale
         bui.containerwidget(
             edit=self._root_widget,
@@ -358,7 +422,7 @@ class InGameMenuWindow(bui.MainWindow):
         d_h_offset = 0
         v_offset = -50
 
-        for _i in range(6 + len(custom_menu_entries)):
+        for _i in range(6 + num_extras):
             positions.append((h, v, 1.0))
             v += v_offset
             h += h_offset
@@ -394,32 +458,7 @@ class InGameMenuWindow(bui.MainWindow):
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        # Add any custom options defined by the current game.
-        for i, entry in enumerate(custom_menu_entries):
-            h, v, scale = positions[self._p_index]
-            self._p_index += 1
-
-            # Ask the entry whether we should resume when we call
-            # it (defaults to true).
-            resume = bool(entry.get('resume_on_call', True))
-
-            if resume:
-                call = bui.CallStrict(self._resume_and_call, entry['call'])
-            else:
-                call = bui.CallStrict(
-                    entry['call'], bui.WeakCallStrict(self._resume)
-                )
-
-            bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|custom{i}',
-                position=(h - self._button_width / 2, v),
-                size=(self._button_width, self._button_height),
-                scale=scale,
-                on_activate_call=call,
-                label=entry['label'],
-                autoselect=self._use_autoselect,
-            )
+        self._add_extra_buttons(positions, custom_menu_entries, host_buttons)
 
         # Add a 'leave' button if the menu-owner has a player.
         if (self._input_player or self._connected_to_remote_player) and not (
@@ -611,13 +650,6 @@ class InGameMenuWindow(bui.MainWindow):
         assert classic is not None
         classic.resume()
 
+        # (Anything waiting for the menu to go away runs once it has;
+        # see ClassicAppMode.on_main_ui_dismissed().)
         bui.app.ui_v1.clear_main_window()
-
-        # If there's callbacks waiting for us to resume, call them.
-        for call in classic.main_menu_resume_callbacks:
-            try:
-                call()
-            except Exception:
-                logging.exception('Error in classic resume callback.')
-
-        classic.main_menu_resume_callbacks.clear()
