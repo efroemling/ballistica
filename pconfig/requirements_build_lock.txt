@@ -336,9 +336,9 @@ cryptography==50.0.1 \
     # via
     #   -c pconfig/requirements_lock.txt
     #   -r pconfig/requirements_build.txt
-filelock==4.0.4 \
-    --hash=sha256:0df72be195ca7892216d16f2edce8d9b93a571f02402972020a8cff84c594c7b \
-    --hash=sha256:90999ed63a26ccf86b93b959ab10cf1017f422d816be454ed54cbed263e71ab5
+filelock==4.2.1 \
+    --hash=sha256:7be2662e9e826b9bba28afc0f843a123280d799a2ea44bb5d35ccec67905ae44 \
+    --hash=sha256:c4c937ccac2a813cee448e662a56366cfb374c0f8702e75f295c412cc1c5d5a3
     # via
     #   -c pconfig/requirements_lock.txt
     #   -r pconfig/requirements_build.txt
