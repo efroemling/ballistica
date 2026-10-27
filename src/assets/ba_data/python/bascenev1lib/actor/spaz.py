@@ -1204,14 +1204,10 @@ class Spaz(bs.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-
-            try:
-                node = bs.getcollision().opposingnode
-            except bs.NotFoundError:
-                return True
+            node = bs.getcollision().opposingnode
 
             # Don't want to physically affect powerups.
-            if node.getdelegate(PowerupBox):
+            if node and node.getdelegate(PowerupBox):
                 return None
 
             # Prevent punches against other Spaz characters shortly
@@ -1223,20 +1219,36 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                target_spaz = node.getdelegate(Spaz)
-                is_spaz_target = (
-                    self._last_grabbed_spaz is not None and
-                    self._last_grabbed_spaz == target_spaz
-                )
-                timings_match = (
-                    0 <= punch_time_diff <= 70 or
-                    release_time_diff <= 360
-                )
-                if is_spaz_target and timings_match:
-                    return None
+                target_spaz = node.getdelegate(Spaz) if node else None
+
+                if target_spaz is not None:
+                    # Special Check: Allow punches if a spaz was
+                    # released quickly.
+                    if release_time_diff < 100:
+                        pass
+                    else: # Otherwise, do the following checks.
+
+                        # Check 1: Don't allow punching a spaz if was
+                        # succesfully grabbed by us and if an attempt.
+                        # to grab was very close to a punch.
+                        check_one = (
+                            self.node.hold_node is not None and
+                            self.node.hold_node == target_spaz.node and
+                            0 <= punch_time_diff <= 70
+                        )
+                        # Check 2: Don't allow punching a spaz you just
+                        # grabbed. For a short time after release him.
+                        check_two = (
+                            self._last_grabbed_spaz is not None and
+                            self._last_grabbed_spaz == target_spaz and
+                            release_time_diff <= 360
+                        )
+
+                        if check_one or check_two:
+                            return None
 
             # Only allow one hit per node per punch.
-            if node not in self._punched_nodes:
+            if node and (node not in self._punched_nodes):
                 punch_momentum_angular = (
                     self.node.punch_momentum_angular * self._punch_power_scale
                 )
@@ -1338,15 +1350,8 @@ class Spaz(bs.Actor):
                 ):
                     return True
 
-            # Track the last successfully grabbed Spaz instance safely.
-            if opposingnode.getnodetype() == 'spaz':
-                delegate = opposingnode.getdelegate(Spaz)
-                if isinstance(delegate, Spaz):
-                    self._last_grabbed_spaz = delegate
-                else:
-                    self._last_grabbed_spaz = None
-            else:
-                self._last_grabbed_spaz = None
+            # Track the last successfully grabbed Spaz instance.
+            self._last_grabbed_spaz = opposingnode.getdelegate(Spaz)
 
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
