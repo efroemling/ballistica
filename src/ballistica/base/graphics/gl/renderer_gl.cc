@@ -1555,6 +1555,8 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                               &colorize_b, &colorize2_r, &colorize2_g,
                               &colorize2_b, &colorize3_r, &colorize3_g,
                               &colorize3_b);
+            float add_r, add_g, add_b;
+            buffer->GetFloats(&add_r, &add_g, &add_b);
             ProgramSimpleGL* p = simple_tex_mod_colorized_masked_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
@@ -1564,6 +1566,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorize3Color(colorize3_r, colorize3_g, colorize3_b);
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetMaskTexture(buffer->GetTexture());
+            p->SetMaskAddMult(add_r, add_g, add_b);
             // Blending is off here, so the premult additive-frame fade
             // and the straight-mask alpha scale never apply; set 0
             // explicitly since the program object is shared with the
@@ -1604,6 +1607,8 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                               &colorize_b, &colorize2_r, &colorize2_g,
                               &colorize2_b, &colorize3_r, &colorize3_g,
                               &colorize3_b);
+            float add_r, add_g, add_b;
+            buffer->GetFloats(&add_r, &add_g, &add_b);
             ProgramSimpleGL* p = simple_tex_mod_colorized_masked_prog_;
             p->Bind();
             p->SetColor(r, g, b, a);
@@ -1614,6 +1619,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorizeTexture(buffer->GetTexture());
             const TextureAsset* t_mask = buffer->GetTexture();
             p->SetMaskTexture(t_mask);
+            p->SetMaskAddMult(add_r, add_g, add_b);
             // Lets the shader fade the mask's additive frame term for
             // premult textures (straight-alpha gets it free at blend time).
             p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
@@ -1721,6 +1727,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
           case ShadingType::kObjectTransparent: {
             SetDoubleSided_(false);
             bool premult = static_cast<bool>(buffer->GetInt());
+            bool add_premult = static_cast<bool>(buffer->GetInt());
 
             SetBlend(true);
             SetBlendPremult(premult);
@@ -1729,6 +1736,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             buffer->GetFloats(&r, &g, &b, &a);
             ProgramObjectGL* p = obj_transparent_prog_;
             p->Bind();
+            p->SetAddPremultiplied(add_premult ? 1.0f : 0.0f);
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetVignetteTexture(view_data_gl()->vignette_tex);
@@ -1807,6 +1815,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
           case ShadingType::kObjectLightShadowTransparent: {
             SetDoubleSided_(false);
             bool premult = static_cast<bool>(buffer->GetInt());
+            bool add_premult = static_cast<bool>(buffer->GetInt());
             SetBlend(true);
             SetBlendPremult(premult);
             auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
@@ -1818,6 +1827,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                     ? obj_lightshad_facing_transparent_prog_
                     : obj_lightshad_transparent_prog_;
             p->Bind();
+            p->SetAddPremultiplied(add_premult ? 1.0f : 0.0f);
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetVignetteTexture(view_data_gl()->vignette_tex);
@@ -1855,6 +1865,45 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                                      : obj_refl_lightshad_prog_;
             p->Bind();
             p->SetColor(r, g, b);
+            p->SetColorTexture(buffer->GetTexture());
+            p->SetReflectionTexture(buffer->GetTexture());
+            p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
+            p->SetVignetteTexture(view_data_gl()->vignette_tex);
+            GLuint light_shadow_tex;
+            switch (light_shadow) {
+              case LightShadowType::kTerrain:
+                light_shadow_tex =
+                    static_cast<RenderTargetGL*>(light_shadow_render_target())
+                        ->framebuffer()
+                        ->texture();
+                break;
+              case LightShadowType::kObject:
+                light_shadow_tex =
+                    static_cast<RenderTargetGL*>(light_render_target())
+                        ->framebuffer()
+                        ->texture();
+                break;
+              default:
+                light_shadow_tex = 0;
+                FatalError("Unhandled LightShadowType.");
+            }
+            p->SetLightShadowTexture(light_shadow_tex);
+            break;
+          }
+          case ShadingType::kObjectReflectLightShadowTransparent: {
+            SetDoubleSided_(false);
+            bool premult = static_cast<bool>(buffer->GetInt());
+            bool add_premult = static_cast<bool>(buffer->GetInt());
+            SetBlend(true);
+            SetBlendPremult(premult);
+            auto light_shadow = static_cast<LightShadowType>(buffer->GetInt());
+            float r, g, b, a, reflect_r, reflect_g, reflect_b;
+            buffer->GetFloats(&r, &g, &b, &a, &reflect_r, &reflect_g,
+                              &reflect_b);
+            ProgramObjectGL* p = obj_refl_lightshad_transparent_prog_;
+            p->Bind();
+            p->SetAddPremultiplied(add_premult ? 1.0f : 0.0f);
+            p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetReflectionTexture(buffer->GetTexture());
             p->SetReflectionMult(reflect_r, reflect_g, reflect_b);
@@ -2081,6 +2130,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             SetDoubleSided_(false);
 
             bool premult = static_cast<bool>(buffer->GetInt());
+            bool add_premult = static_cast<bool>(buffer->GetInt());
             SetBlend(true);
             SetBlendPremult(premult);
             float r, g, b, a, reflect_r, reflect_g, reflect_b;
@@ -2088,6 +2138,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                               &reflect_b);
             ProgramObjectGL* p = obj_refl_transparent_prog_;
             p->Bind();
+            p->SetAddPremultiplied(add_premult ? 1.0f : 0.0f);
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetReflectionTexture(buffer->GetTexture());  // reflection
@@ -2098,6 +2149,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             SetDoubleSided_(false);
 
             bool premult = static_cast<bool>(buffer->GetInt());
+            bool add_premult = static_cast<bool>(buffer->GetInt());
             SetBlend(true);
             SetBlendPremult(premult);
             float r, g, b, a, add_r, add_g, add_b, reflect_r, reflect_g,
@@ -2106,6 +2158,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                               &reflect_r, &reflect_g, &reflect_b);
             ProgramObjectGL* p = obj_refl_add_transparent_prog_;
             p->Bind();
+            p->SetAddPremultiplied(add_premult ? 1.0f : 0.0f);
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetAddColor(add_r, add_g, add_b);
@@ -2968,6 +3021,9 @@ void RendererGL::Load() {
   RetainShader_(p);
   p = obj_refl_lightshad_prog_ =
       new ProgramObjectGL(this, SHD_LIGHT_SHADOW | SHD_REFLECTION);
+  RetainShader_(p);
+  p = obj_refl_lightshad_transparent_prog_ = new ProgramObjectGL(
+      this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_OBJ_TRANSPARENT);
   RetainShader_(p);
   p = obj_refl_lightshad_worldspace_prog_ = new ProgramObjectGL(
       this, SHD_LIGHT_SHADOW | SHD_REFLECTION | SHD_WORLD_SPACE_PTS);

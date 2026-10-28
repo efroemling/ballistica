@@ -40,7 +40,9 @@ from babase._appsubsystem import AppSubsystem
 from babase._assetresolvetrace import (
     ResolveTrace,
     Tier1Attempt,
+    BlobAttempt,
     LocalResolveTimes,
+    describe_blob_attempts,
 )
 from babase._logging import assetmanagerlog as logger
 
@@ -300,6 +302,14 @@ class AssetResolveError(Exception):
         #: response; else None. Lets callers surface the server's own
         #: wording (e.g. an access-denied message naming the account).
         self.server_message = server_message
+
+
+class _BlobFetchError(AssetResolveError):
+    """A CAS-blob download failed for good; carries how each try went."""
+
+    def __init__(self, message: str, attempts: list[BlobAttempt]) -> None:
+        super().__init__(message)
+        self.attempts = attempts
 
 
 class AssetAuthRequiredError(AssetResolveError):
@@ -3115,14 +3125,18 @@ class AssetSubsystem(AppSubsystem):
         async def _fetch(h: str, s: int) -> None:
             nonlocal have_failure
             try:
-                await self._run_in_pool(
+                attempts = await self._run_in_pool(
                     self._acquire_data_blob,
                     base_url,
                     token_header,
                     (h, s),
                     executor=self._download_executor(),
                 )
+                if trace is not None:
+                    trace.blob_done(attempts, ok=True)
             except Exception as exc:
+                if trace is not None and isinstance(exc, _BlobFetchError):
+                    trace.blob_done(exc.attempts, ok=False)
                 # Un-claim so a later resolve retries this blob. Claims
                 # exist to stop two packages fetching the same blob at
                 # once; a blob that failed is not on disk, so leaving it
@@ -3191,6 +3205,17 @@ class AssetSubsystem(AppSubsystem):
             ) from exc
         assert isinstance(response, ResolveAssetPackageResponse)
         return response
+
+    def _node_connect_address(self) -> str | None:
+        """The IP our transport reached the connected node at, or None.
+
+        Callable from any thread.
+        """
+        plus = _babase.app.plus
+        if plus is None:
+            return None
+        address: str | None = plus.cloud.get_connected_node_address()
+        return address
 
     def _node_base_url(self) -> str | None:
         """Base url for fetches from the connected basn node, or None.
@@ -3387,8 +3412,11 @@ class AssetSubsystem(AppSubsystem):
         base_url: str,
         token_header: str,
         blob: tuple[str, int],
-    ) -> None:
+    ) -> list[BlobAttempt]:
         """Fetch one data blob from the node and atomically write it.
+
+        Returns how each attempt went (for the resolve's trace); on
+        failure raises ``_BlobFetchError``, which carries the same.
 
         ``blob`` is ``(canonical-hash, canonical-size)``. Delegates to the
         shared :func:`bacommon.assetcas.download_cas_blob`, which
@@ -3402,8 +3430,16 @@ class AssetSubsystem(AppSubsystem):
         """
         filehash, size = blob
         url = f'{base_url}/casblob/{filehash}'
-        attempt = 1
+        # The first attempt connects to the address our transport reached
+        # the node at, skipping a fresh DNS lookup (those fail on flaky
+        # resolvers even while the transport is fine); a retry looks the
+        # host up as usual, so the two attempts take different paths.
+        address = self._node_connect_address()
+        attempts: list[BlobAttempt] = []
         while True:
+            via_address = address is not None and not attempts
+            stats = assetcas.CasDownloadStats()
+            started = time.monotonic()
             try:
                 assetcas.download_cas_blob(
                     _babase.app.net.urllib3pool,
@@ -3413,30 +3449,50 @@ class AssetSubsystem(AppSubsystem):
                     token_header=token_header,
                     dest_root=self._writable_assets_root,
                     timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
+                    connect_address=address if via_address else None,
+                    stats=stats,
                 )
-                return
+                attempts.append(
+                    BlobAttempt.make('ok', via_address, started, stats)
+                )
+                return attempts
             except assetcas.CasDownloadError as exc:
                 # A structured refusal from the node (non-200, bad or
                 # missing encoding header, verify failure). Not a blip;
                 # retrying won't change the answer.
-                raise AssetResolveError(str(exc)) from exc
+                attempts.append(
+                    BlobAttempt.make('refused', via_address, started, stats)
+                )
+                raise _BlobFetchError(str(exc), attempts) from exc
             except Exception as exc:
                 # Network-level failure escaping urllib3 (timeouts, reset
                 # connections, dns). download_cas_blob only converts its
                 # own structured errors, so these arrive raw.
+                attempts.append(
+                    BlobAttempt.make(
+                        assetcas.classify_download_error(exc),
+                        via_address,
+                        started,
+                        stats,
+                    )
+                )
                 if (
                     not is_urllib3_communication_error(exc, url=url)
-                    or attempt >= _BLOB_DOWNLOAD_MAX_ATTEMPTS
+                    or len(attempts) >= _BLOB_DOWNLOAD_MAX_ATTEMPTS
                 ):
-                    raise AssetResolveError(
+                    raise _BlobFetchError(
                         f'casblob GET for {filehash} failed: {exc}'
+                        f' (size {size}; attempts:'
+                        f' {describe_blob_attempts(attempts)})',
+                        attempts,
                     ) from exc
                 logger.info(
                     'casblob %s: transient download failure'
-                    ' (attempt %d of %d); retrying in %.0fs (%s).',
+                    ' (attempt %d of %d, %s); retrying in %.0fs (%s).',
                     filehash[:12],
-                    attempt,
+                    len(attempts),
                     _BLOB_DOWNLOAD_MAX_ATTEMPTS,
+                    describe_blob_attempts(attempts[-1:]),
                     _BLOB_DOWNLOAD_RETRY_DELAY_SECONDS,
                     exc,
                 )
@@ -3448,7 +3504,6 @@ class AssetSubsystem(AppSubsystem):
                 # Blocking sleep is correct -- we're already off-thread
                 # in a blob-download worker.
                 time.sleep(_BLOB_DOWNLOAD_RETRY_DELAY_SECONDS)
-                attempt += 1
 
     def _cas_write(self, filehash: str, data: bytes) -> None:
         """Atomically write a CAS blob into the writable root.

@@ -13,6 +13,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/name_def.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
@@ -739,17 +740,14 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   }
 }
 
-auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
-    -> std::string {
-  // Now find the first non-taken variation.
+auto HostSession::GetUnusedPlayerNameNumber(Player* p,
+                                            const std::string& base_name)
+    -> int {
+  // Find the first non-taken variation.
   int index = 1;
   std::string name_test;
   while (true) {
-    if (index > 1) {
-      name_test = base_name + " " + std::to_string(index);
-    } else {
-      name_test = base_name;
-    }
+    name_test = base::NumberNameText(base_name, index);
     bool name_found = false;
     for (auto&& j : players_) {
       if ((j->GetName() == name_test) && (j.get() != p)) {
@@ -760,7 +758,7 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
     if (!name_found) break;
     index += 1;
   }
-  return name_test;
+  return index;
 }
 
 auto HostSession::NewSpazDef(const std::string& json) -> Object::Ref<SpazDef> {

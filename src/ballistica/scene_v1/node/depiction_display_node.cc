@@ -43,6 +43,8 @@ class DepictionDisplayNodeType : public NodeType {
                    suffix_lang_str);
   // (protocol 53)
   BA_BOOL_ATTR(team_coloring, team_coloring, set_team_coloring);
+  // (protocol 57, opt-in: refused on older streams; see min_protocol)
+  BA_FLOAT_ARRAY_ATTR(color_multiply, color_multiply, SetColorMultiply);
 #undef BA_NODE_TYPE_CLASS
 
   DepictionDisplayNodeType()
@@ -61,7 +63,10 @@ class DepictionDisplayNodeType : public NodeType {
         use_color_override(this),
         brightness(this),
         suffix(this),
-        team_coloring(this) {}
+        team_coloring(this),
+        color_multiply(this) {
+    color_multiply.set_min_protocol(kProtocolVersionColorMultiply);
+  }
 };
 
 static NodeType* node_type{};
@@ -213,6 +218,16 @@ void DepictionDisplayNode::SetColorOverride(const std::vector<float>& val) {
   std::copy(val.begin(), val.end(), color_override_);
 }
 
+void DepictionDisplayNode::SetColorMultiply(const std::vector<float>& val) {
+  if (val.size() != 3) {
+    throw Exception("Expected float array of size 3 for color_multiply",
+                    PyExcType::kValue);
+  }
+  for (int i = 0; i < 3; ++i) {
+    color_multiply_[i] = std::max(0.0f, val[i]);
+  }
+}
+
 void DepictionDisplayNode::SetSuffix(const std::string& val) {
   if (suffix_raw_ == val && suffix_mode_ == SuffixMode::kLegacy) {
     return;
@@ -361,6 +376,8 @@ void DepictionDisplayNode::Draw(base::FrameDef* frame_def) {
   context.color_override = color_override;
   context.team_coloring = depiction_->EffectiveTeamColoring(team_coloring_);
   context.brightness = std::max(0.0f, brightness_);
+  std::copy(std::begin(color_multiply_), std::end(color_multiply_),
+            context.color_multiply);
   context.z = vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth();
   context.opacity = std::max(0.0f, opacity_);
   // Overlay units are virtual screen units.

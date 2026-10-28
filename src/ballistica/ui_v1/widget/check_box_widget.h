@@ -37,6 +37,8 @@ class CheckBoxWidget : public Widget {
   /// to the space left of the box; a value here can only shrink it further.
   void SetMaxWidth(float w);
   void SetTextScale(float val) { text_.set_center_scale(val); }
+  void set_text_flatness(float val) { text_.set_flatness(val); }
+  void set_text_shadow(float val) { text_.set_shadow(val); }
   void set_text_color(float r, float g, float b, float a) {
     text_color_r_ = r;
     text_color_g_ = g;

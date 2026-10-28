@@ -119,7 +119,15 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     return;
   }
 
+  // Below full opacity we draw blended (the texture's alpha then
+  // applies too). Fully faded, there's nothing to draw, shadow
+  // included.
+  bool transparent = opacity_ < 1.0f;
+  if (opacity_ <= 0.0f) {
+    return;
+  }
   base::ObjectComponent c(frame_def->beauty_pass());
+  c.SetTransparent(transparent);
   c.SetTexture(color_texture_.exists() ? color_texture_->texture_data()
                                        : nullptr);
   c.SetLightShadow(base::LightShadowType::kObject);
@@ -128,8 +136,10 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     c.SetReflectionScale(reflection_scale_r_, reflection_scale_g_,
                          reflection_scale_b_);
   }
-  if (flashing_ && frame_def->frame_number_filtered() % 10 < 5) {
-    c.SetColor(1.2f, 1.2f, 1.2f);
+  float flash =
+      (flashing_ && frame_def->frame_number_filtered() % 10 < 5) ? 1.2f : 1.0f;
+  if (flash != 1.0f || transparent) {
+    c.SetColor(flash, flash, flash, opacity_);
   }
   if (g_base->graphics->debug_draw()
       && body_->DrawDebug(frame_def->beauty_pass())) {
@@ -158,7 +168,8 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     } else {
       s_density *= 2.3f;
     }
-    s_density *= 0.34f;
+    // (A faded prop casts a faded shadow, and caustics.)
+    s_density *= 0.34f * opacity_;
     {
       base::GraphicsQuality quality = frame_def->quality();
 

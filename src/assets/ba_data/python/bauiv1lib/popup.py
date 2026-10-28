@@ -2,6 +2,7 @@
 #
 """Popup window/menu related functionality."""
 
+import warnings
 import weakref
 from typing import TYPE_CHECKING, override
 
@@ -151,6 +152,11 @@ class PopupMenuWindow(PopupWindow):
     (a list of things to do rather than values to pick from): nothing
     is drawn as current and selection starts at the first pickable
     choice.
+
+    Pass False for ``pick_sounds`` when whatever a pick does makes its
+    own sound (doc-ui menus, whose picked actions sound as button
+    presses would): the menu then plays nothing for clicks on or picks
+    of its items. Canceling it still swishes.
     """
 
     def __init__(
@@ -165,6 +171,7 @@ class PopupMenuWindow(PopupWindow):
         scale: float = 1.0,
         choices_disabled: Sequence[str] | None = None,
         choices_display: Sequence[bui.Lstr | bui.LangStr] | None = None,
+        pick_sounds: bool = True,
     ):
         # FIXME: Clean up a bit.
         # pylint: disable=too-many-branches
@@ -186,6 +193,7 @@ class PopupMenuWindow(PopupWindow):
             maxwidth = _DEFAULT_MENU_MAX_WIDTH
 
         self._transitioning_out = False
+        self._pick_sounds = pick_sounds
         self._choices = list(choices)
         self._choices_display = list(choices_display_fin)
         self._choices_disabled = list(choices_disabled)
@@ -286,6 +294,7 @@ class PopupMenuWindow(PopupWindow):
                 size=(self._width - 40, 28),
                 on_select_call=bui.CallStrict(self._select, index),
                 click_activate=True,
+                enable_sound=self._pick_sounds,
                 color=(
                     (0.5, 0.5, 0.5, 0.5)
                     if inactive
@@ -321,7 +330,8 @@ class PopupMenuWindow(PopupWindow):
             self._current_choice = self._choices[index]
 
     def _activate(self) -> None:
-        bui.play_swish()
+        if self._pick_sounds:
+            bui.play_swish()
         bui.apptimer(0.05, self._transition_out)
         delegate = self._getdelegate()
         if delegate is not None:
@@ -378,11 +388,26 @@ class PopupMenu:
         autoselect: bool = True,
         transition_delay: float | None = None,
         transition_type: Literal['in_left', 'scale'] | None = None,
-        better_bg_fit: bool = False,
+        clean_layout: bool = False,
+        better_bg_fit: bool | None = None,
     ):
-        # Note: 'width' is only a floor; the menu grows to fit its
-        # widest choice. The transition args and 'better_bg_fit' are
-        # handed straight to our button (see bauiv1.buttonwidget).
+        """Create a popup menu.
+
+        Note that ``width`` is only a floor; the menu grows to fit its
+        widest choice. The transition args and ``clean_layout`` are
+        handed straight to its button (see :func:`bauiv1.buttonwidget`).
+        ``better_bg_fit`` is a deprecated alias of ``clean_layout`` and
+        will be removed when api 9 support ends.
+        """
+        # REMOVE WHEN API 9 SUPPORT ENDS.
+        if better_bg_fit is not None:
+            warnings.warn(
+                'PopupMenu\'s better_bg_fit arg will be removed when api 9'
+                ' support ends; use clean_layout instead.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            clean_layout = better_bg_fit
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
@@ -425,7 +450,7 @@ class PopupMenu:
             on_activate_call=lambda: bui.apptimer(0, self._make_popup),
             transition_delay=transition_delay,
             transition_type=transition_type,
-            better_bg_fit=better_bg_fit,
+            clean_layout=clean_layout,
         )
         self._on_value_change_call = None  # Don't wanna call for initial set.
         self._opening_call = opening_call

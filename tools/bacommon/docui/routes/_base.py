@@ -128,24 +128,28 @@ class DocUIRoute:
         unless told otherwise, so a route whose page is best shown at
         some layout declares it once rather than at every link.
 
-        Defaults to :attr:`~bacommon.docui.v2.WindowLayout.WIDE`, which
-        is the same size at every ui-scale, so a one-off page (a
-        confirmation, a dialog) never ends up as a big mostly-empty
-        window. :attr:`~bacommon.docui.v2.WindowLayout.LARGE`, which
-        grows to fill more of the screen at medium/large ui-scale, is
-        for pages built to use that room (store listings and the
-        like), and they ask for it explicitly.
+        Defaults to :attr:`~bacommon.docui.v2.WindowLayout.WIDE_TALL`,
+        a middling shape that suits most pages, short or tall, without
+        ever being a big mostly-empty window. Pages that suit another
+        shape ask for it: :attr:`~bacommon.docui.v2.WindowLayout.WIDE`
+        for short one-off pages (a confirmation, a dialog) and
+        :attr:`~bacommon.docui.v2.WindowLayout.LARGE`, which grows to
+        fill more of the screen at medium/large ui-scale, for pages
+        built to use that room (store listings and the like).
         """
-        return dui2.WindowLayout.WIDE
+        return dui2.WindowLayout.WIDE_TALL
 
     def browse(
         self,
         *,
         default_sound: bool = True,
-        sets: Sequence[DocUIStateAssign] | None = None,
+        sets: Sequence[DocUIStateAssign[DocUIState]] | None = None,
         state: DocUIState | None = None,
         layout: bacommon.docui.v2.WindowLayout | None = None,
         scroll_edge_style: bacommon.docui.v2.ScrollEdgeStyle | None = None,
+        background_color: tuple[float, float, float] | None = None,
+        cancel_button_color: tuple[float, float, float] | None = None,
+        add_to_history: bool = True,
     ) -> bacommon.docui.v2.Browse:
         """Return an action browsing to this route in a new window.
 
@@ -154,8 +158,13 @@ class DocUIRoute:
         entirely; generally what a different page expects. The window
         opens at ``layout``, or at :meth:`get_window_layout` if not
         given, with ``scroll_edge_style`` (or its layout's default if
-        not given). (Its viewer pane, if any, is up to each page; see
-        :attr:`~bacommon.docui.v2.Page.viewer`.)
+        not given) and the frame colors given (see
+        :attr:`bacommon.docui.v2.Browse.background_color`). (Its viewer
+        pane, if any, is up to each page; see
+        :attr:`~bacommon.docui.v2.Page.viewer`.) With
+        ``add_to_history`` off, the new window takes the current one's
+        place in the back history instead of adding to it (see
+        :attr:`bacommon.docui.v2.Browse.add_to_history`).
         """
         from bacommon.docui.routes._state import merge_assigns
 
@@ -166,13 +175,16 @@ class DocUIRoute:
             state=None if state is None else state.encode(),
             layout=self.get_window_layout() if layout is None else layout,
             scroll_edge_style=scroll_edge_style,
+            background_color=background_color,
+            cancel_button_color=cancel_button_color,
+            add_to_history=add_to_history,
         )
 
     def replace(
         self,
         *,
         default_sound: bool = True,
-        sets: Sequence[DocUIStateAssign] | None = None,
+        sets: Sequence[DocUIStateAssign[DocUIState]] | None = None,
         state: DocUIState | None = None,
     ) -> bacommon.docui.v2.Replace:
         """Return an action replacing the current page with this route.
@@ -186,6 +198,50 @@ class DocUIRoute:
             default_sound=default_sound,
             sets=merge_assigns(sets),
             state=None if state is None else state.encode(),
+        )
+
+    @classmethod
+    def close_to(
+        cls, *assigns: DocUIStateAssign[DocUIState], default_sound: bool = True
+    ) -> bacommon.docui.v2.Local:
+        """Return an action closing back to an earlier page of ours.
+
+        Closes the current window and every window above the nearest
+        earlier one showing this route's page, which then refreshes;
+        for leaving a flow several pages deep in one step (say a
+        purchase confirmation returning to the listing the purchase
+        started from). Any ``assigns`` (all for one state type) are
+        handed back into that page's state, as with
+        :meth:`~bacommon.docui.routes.DocUIState.assign_on_return`.
+
+        The page should be one the user is sure to have come through.
+        If it isn't in the window's history the client warns and just
+        closes the one window, which is a bug to fix rather than a
+        fallback to rely on. Matching is by path, so any earlier window
+        showing this route's page counts, whatever its args.
+        """
+        from bacommon.docui.routes._state import (
+            STATE_TYPE_KEY,
+            merge_assigns,
+        )
+
+        values = merge_assigns(assigns)
+        if values is not None:
+            state_type = assigns[0].state_type
+            for assign in assigns:
+                if assign.state_type is not state_type:
+                    raise TypeError(
+                        f'{cls.__name__}.close_to() got assigns for both'
+                        f' {state_type.__name__} and'
+                        f' {assign.state_type.__name__}; return values go'
+                        f' into one page state.'
+                    )
+            values[STATE_TYPE_KEY] = state_type.get_state_id()
+        return dui2.Local(
+            close_window=True,
+            close_to=cls.get_path(),
+            return_sets=values,
+            default_sound=default_sound,
         )
 
     def get_state[S: DocUIState](self, state_type: type[S]) -> S | None:
@@ -331,7 +387,7 @@ class DocUILocalActionBase:
         *,
         close_window: bool = False,
         default_sound: bool = True,
-        sets: Sequence[DocUIStateAssign] | None = None,
+        sets: Sequence[DocUIStateAssign[DocUIState]] | None = None,
     ) -> bacommon.docui.v2.Local:
         """Return an action running this local-action immediately.
 

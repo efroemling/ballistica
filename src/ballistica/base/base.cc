@@ -360,6 +360,7 @@ void BaseFeatureSet::SuspendApp() {
     // good to go.
     running_loops = EventLoop::GetStillSuspendingEventLoops();
     if (running_loops.empty()) {
+      suspend_end_app_time_millisecs_ = g_core->AppTimeMillisecs();
       if (g_buildconfig.debug_build()) {
         g_core->logging->Log(
             LogName::kBa, LogLevel::kDebug,
@@ -376,6 +377,8 @@ void BaseFeatureSet::SuspendApp() {
     core::Platform::SleepMillisecs(1);
   } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
+
+  suspend_end_app_time_millisecs_ = g_core->AppTimeMillisecs();
 
   // If we made it here, we timed out. Complain.
   std::string msg =
@@ -453,6 +456,21 @@ void BaseFeatureSet::UnsuspendApp() {
       + std::to_string(core::Platform::TimeMonotonicMillisecs()));
   app_suspended_ = false;
 
+  // App-time should not advance while we're suspended. It clamps each
+  // jump between reads to a fraction of a second, so the first read
+  // after a freeze barely moves it; a big advance means something kept
+  // reading it while we were supposed to be frozen, and timers on
+  // app-time will have run through the suspension.
+  millisecs_t suspended_app_time_advance{g_core->AppTimeMillisecs()
+                                         - suspend_end_app_time_millisecs_};
+  if (suspended_app_time_advance > 1000) {
+    BA_LOG_ONCE(LogName::kBaLifecycle, LogLevel::kWarning,
+                "App-time advanced "
+                    + std::to_string(suspended_app_time_advance)
+                    + "ms while the app was suspended; expected (nearly) 0. "
+                      "Something kept reading app-time during the suspend.");
+  }
+
   // Spin all event-loops back up.
   EventLoop::SetEventLoopsSuspended(false);
 
@@ -466,8 +484,63 @@ void BaseFeatureSet::UnsuspendApp() {
         "UnsuspendApp() completed in "
             + std::to_string(core::Platform::TimeMonotonicMillisecs()
                              - start_time)
-            + "ms.");
+            + "ms (app-time advanced "
+            + std::to_string(suspended_app_time_advance)
+            + "ms while suspended).");
   }
+}
+
+void BaseFeatureSet::DebugSimulateSuspend(seconds_t duration) {
+  // Public builds are never developer builds.
+  bool allowed{};
+  if (!allowed) {
+    throw Exception("Only available in developer builds.");
+  }
+  // Platforms whose OS runs the main thread suspend for real; only
+  // builds running their own main loop can fake it.
+  if (!app_adapter->ManagesMainThreadEventLoop()) {
+    throw Exception("Not available on this platform.");
+  }
+  if (duration < 0.0 || duration > 600.0) {
+    throw Exception("Duration must be between 0 and 600 seconds.");
+  }
+  app_adapter->PushMainThreadCall([duration] {
+    assert(g_base->InMainThread());
+    if (g_base->app_suspended()) {
+      g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kWarning,
+                           "DebugSimulateSuspend: app is already suspended.");
+      return;
+    }
+    g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo, [duration] {
+      char buffer[64];
+      snprintf(buffer, sizeof(buffer), "%.1f", duration);
+      return std::string("Simulating app suspend for ") + buffer + "s.";
+    });
+
+    // Same order as mobile: go inactive, then suspend (SuspendApp waits
+    // for the inactive state to be applied).
+    bool was_active{g_base->app_active()};
+    if (was_active) {
+      g_base->SetAppActive(false);
+    }
+    g_base->SuspendApp();
+
+    // Now freeze like a backgrounded process: the main thread blocks,
+    // and holding the GIL stops every Python thread as well. (Event-loop
+    // threads are already parked and our UDP sockets are closed.)
+    {
+      Python::ScopedInterpreterLock gil;
+      core::Platform::SleepMillisecs(
+          static_cast<millisecs_t>(duration * 1000.0));
+    }
+
+    g_base->UnsuspendApp();
+    if (was_active) {
+      g_base->SetAppActive(true);
+    }
+    g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                         "Simulated app suspend complete; resumed.");
+  });
 }
 
 void BaseFeatureSet::OnAppShutdownComplete() {

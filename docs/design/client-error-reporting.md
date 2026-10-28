@@ -347,10 +347,16 @@ What we feed it:
   both, and prefer ours for the message and build identity.
 - **Custom keys** via `Platform::SetDebugKey()`.
 
-Two reading traps: the "device" on a report is whatever the device
+Three reading traps: the "device" on a report is whatever the device
 claims to be (bursts of one model within minutes of an upload are
-automated store testing, not players), and 32-bit ARM stacks often
-arrive entirely unsymbolicated.
+automated store testing, not players), 32-bit ARM stacks often arrive
+entirely unsymbolicated, and the ABI is often not stated
+(`UNKNOWN_ARCHITECTURE`). A bare `libmain.so` library path (rather
+than `split_config.<abi>.apk!libmain.so`) together with flagship-phone
+models on an implausibly old Android version is usually a PC emulator
+running the x86_64 build. Look at those addresses against the x86_64
+symbols, not ARM ones. Crashlytics issue 36fd92a1 (2026-10) looked
+like a symbol-archiving mismatch until checked against x86_64.
 
 ## Coverage gaps
 

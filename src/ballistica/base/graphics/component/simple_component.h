@@ -108,6 +108,17 @@ class SimpleComponent : public RenderComponent {
     color_a_ = a;
   }
 
+  /// With a mask texture: an rgb multiplier on what the mask adds (its
+  /// frame and highlight), which SetColor's rgb doesn't reach. Defaults
+  /// to (1,1,1), the legacy look; hosts that scale a whole drawing
+  /// (depictions' brightness and color_multiply) pass their multiplier.
+  void SetMaskAddMult(float r, float g, float b) {
+    EnsureConfiguring();
+    mask_add_mult_[0] = r;
+    mask_add_mult_[1] = g;
+    mask_add_mult_[2] = b;
+  }
+
   void SetColorizeColor(float r, float g, float b, float a = 1.0f) {
     EnsureConfiguring();
     colorize_color_r_ = r;
@@ -218,6 +229,7 @@ class SimpleComponent : public RenderComponent {
   float color_g_{1.0f};
   float color_b_{1.0f};
   float color_a_{1.0f};
+  float mask_add_mult_[3]{1.0f, 1.0f, 1.0f};
   float colorize_color_r_{1.0f};
   float colorize_color_g_{1.0f};
   float colorize_color_b_{1.0f};

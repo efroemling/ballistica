@@ -52,7 +52,7 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
     entry->can_color = true;
     entry->max_flatness = 1.0f;
     entry->mesh.SetText(text, alignment_h, alignment_v, true, 0, 65535,
-                        TextMeshEntryType::kRegular, nullptr);
+                        TextMeshEntryType::kRegular, -1, nullptr);
     entry->tex =
         g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesFontBig);
     entries_.push_back(std::move(entry));
@@ -123,7 +123,7 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       }
 
       entry->mesh.SetText(text, alignment_h, alignment_v, false, min, max,
-                          entry->type, packer.get());
+                          entry->type, *i, packer.get());
 
       if (!entry->mesh.complete()) {
         // Some OS-span measures were cold and got deferred to the
@@ -231,10 +231,9 @@ auto TextGroup::GetCaratPts(const std::string& text_in,
   assert(carat_x && carat_y);
   assert(Utils::IsValidUTF8(text_in));
 
-  // These mirror TextMesh::SetText()'s layout (zero-size bounds;
-  // alignment is relative to the origin).
-  constexpr float kCharOffsetH{-3.0f};
-  constexpr float kCharOffsetV{-3.0f};
+  // This mirrors TextMesh::SetText()'s layout (zero-size bounds;
+  // alignment is relative to the origin), giving the boundary before
+  // the carat's char and the bottom of its row.
   const float row_height{kTextRowHeight};
 
   std::vector<uint32_t> chars = Utils::UnicodeFromUTF8(text_in, "cpt83kd");
@@ -271,16 +270,16 @@ auto TextGroup::GetCaratPts(const std::string& text_in,
   float y_offset;
   switch (alignment_v) {
     case TextMesh::VAlign::kNone:
-      y_offset = kCharOffsetV;
+      y_offset = 0.0f;
       break;
     case TextMesh::VAlign::kTop:
-      y_offset = kCharOffsetV - row_height;
+      y_offset = -row_height;
       break;
     case TextMesh::VAlign::kCenter:
-      y_offset = kCharOffsetV + (text_height / 2) - row_height;
+      y_offset = (text_height / 2) - row_height;
       break;
     case TextMesh::VAlign::kBottom:
-      y_offset = kCharOffsetV + text_height - row_height;
+      y_offset = text_height - row_height;
       break;
     default:
       throw Exception();
@@ -298,7 +297,7 @@ auto TextGroup::GetCaratPts(const std::string& text_in,
   // Horizontal: line origin per alignment. Centered/right lines need the
   // full line width, measured the same way the mesh lays it out
   // (including OS-rendered spans).
-  float x_offset{kCharOffsetH};
+  float x_offset{};
   if (alignment_h == TextMesh::HAlign::kCenter
       || alignment_h == TextMesh::HAlign::kRight) {
     auto line_width = measure(line_start, line_end);

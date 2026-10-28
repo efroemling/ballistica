@@ -15,16 +15,24 @@ class DebugDrawKind(Enum):
     Each element of a page can ask for its own debug drawing (its
     ``debug`` flag); switching a kind on here draws it for every such
     element on every page, whatever the page says.
-    :attr:`SCROLL_BOUNDS` is the window's own (no page asks for it):
-    the rect selection keeps rows scrolled into, which is the scroll
-    area's outline form whatever edge style is drawn.
+    :attr:`LAYOUT` is windows' and popups' own (no page asks for it):
+    the rects a page is laid out against -- where its scroll area
+    reaches out to, the content rect its layout gives it, and where its
+    content starts within that by its insets -- plus where the scroll
+    area's edge fades end, and any viewer pane.
+    :attr:`SHOW_AREAS` shows, for whichever row is selected, what
+    selecting it must bring into view: its titles and footnote, plus
+    any section heading or note attached to it. Selection brings that
+    to the page's inset rect at least, and nudges it further toward the
+    middle (unless the "DocUI No Selection Centering" toggle is on).
     """
 
     ROWS = 'rows'
     SECTIONS = 'sections'
     BUTTONS = 'buttons'
     DECORATIONS = 'decorations'
-    SCROLL_BOUNDS = 'scroll_bounds'
+    LAYOUT = 'layout'
+    SHOW_AREAS = 'show_areas'
 
 
 _enabled: set[DebugDrawKind] = set()
@@ -70,22 +78,61 @@ def _toggle_label(kind: DebugDrawKind) -> str:
             return 'DocUI Buttons'
         case DebugDrawKind.DECORATIONS:
             return 'DocUI Decorations'
-        case DebugDrawKind.SCROLL_BOUNDS:
-            return 'DocUI Scroll Bounds'
+        case DebugDrawKind.LAYOUT:
+            return 'DocUI Layout'
+        case DebugDrawKind.SHOW_AREAS:
+            return 'DocUI Show Areas'
         case _:
             assert_never(kind)
+
+
+_g_no_selection_centering = False
+
+
+def selection_centering_disabled() -> bool:
+    """Whether selecting a row should scroll it only just into view.
+
+    Normally selection nudges what it brings into view toward the
+    middle of the scroll area; with this on (a debugging aid) it
+    scrolls only far enough to bring a row's must-show area to the
+    page's inset rect. Safe from any thread (page prep runs in the
+    background).
+    """
+    return _g_no_selection_centering
+
+
+def set_selection_centering_disabled(disabled: bool) -> None:
+    """Turn selection centering off (or back on); see above.
+
+    Rebuilds the main window in place to apply it. Not saved; off at
+    launch.
+    """
+    global _g_no_selection_centering  # pylint: disable=global-statement
+    if disabled == _g_no_selection_centering:
+        return
+    _g_no_selection_centering = disabled
+    bui.app.ui_v1.request_main_window_recreate()
 
 
 def get_debug_draw_toggles() -> list[bui.DevConsoleToggleDef]:
     """Dev-console toggles for our kinds, for an app-mode to offer.
 
-    See :meth:`babase.AppMode.get_dev_console_ui_debug_draw_toggles`.
+    Plus one that turns off selection centering, so show areas land
+    exactly on their target. See
+    :meth:`babase.AppMode.get_dev_console_ui_debug_draw_toggles`.
     """
     return [
+        *(
+            bui.DevConsoleToggleDef(
+                _toggle_label(kind),
+                partial(debug_draw_enabled, kind),
+                partial(set_debug_draw_enabled, kind),
+            )
+            for kind in DebugDrawKind
+        ),
         bui.DevConsoleToggleDef(
-            _toggle_label(kind),
-            partial(debug_draw_enabled, kind),
-            partial(set_debug_draw_enabled, kind),
-        )
-        for kind in DebugDrawKind
+            'DocUI No Selection Centering',
+            selection_centering_disabled,
+            set_selection_centering_disabled,
+        ),
     ]

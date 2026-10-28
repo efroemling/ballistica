@@ -16,6 +16,7 @@
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/support/viewer_depiction.h"
+#include "ballistica/ui_v1/widget/debug_rect_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -179,7 +180,16 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
         // We want our widgets to cover 0.1f in z space.
         c.Scale(1.0f, 1.0f, 0.1f);
         c.Submit();
+        bool debug_rects{DebugRectWidget::tracking()};
+        if (debug_rects) {
+          DebugRectWidget::BeginFrame(0.0f, 0.0f);
+        }
         root_widget->Draw(overlay_flat_pass, true);
+
+        // Debug rects go in front of everything (see DebugRectWidget).
+        if (debug_rects) {
+          DebugRectWidget::DrawFrontQueue(overlay_flat_pass);
+        }
       }
       c.Submit();
     }

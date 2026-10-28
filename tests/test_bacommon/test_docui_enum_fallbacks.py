@@ -137,3 +137,92 @@ def test_unknown_enum_values_fall_back() -> None:
     # is how clients decode responses).
     with pytest.raises(ValueError):
         dataclass_from_dict(dui2.ButtonRow, data)
+
+
+def test_unknown_window_layout_falls_back() -> None:
+    """A window layout from a newer server shows as WIDE_TALL.
+
+    (A middling shape, rarely far off. An *omitted* layout is another
+    matter: that has always meant LARGE and must keep doing so.)
+    """
+    browse = dui2.Browse(dui2.Request('/foo'), layout=dui2.WindowLayout.VIEWER)
+    data = dataclass_to_dict(browse)
+    data['lo'] = '_unknown_'
+    loaded = dataclass_from_dict(dui2.Browse, data, lossy=True)
+    assert loaded.layout is dui2.WindowLayout.WIDE_TALL
+
+    del data['lo']
+    loaded = dataclass_from_dict(dui2.Browse, data, lossy=True)
+    assert loaded.layout is dui2.WindowLayout.LARGE
+
+
+def test_window_layout_defaults_keep_wire_meaning() -> None:
+    """Layouts default to WIDE_TALL without changing what omission means.
+
+    Clients in the field read an omitted ``Browse`` layout as LARGE
+    and an omitted host-button layout as WIDE, so the new default must
+    be written out and those old meanings must still be what's omitted.
+    """
+    # TODO(2026-11-23): Goes with the soft_defaults on Browse.layout and
+    # hostui.Button.layout; when those go, omission means WIDE_TALL.
+    import bacommon.hostui as hui
+
+    req = dui2.Request('/foo')
+
+    browse = dui2.Browse(req)
+    assert browse.layout is dui2.WindowLayout.WIDE_TALL
+    assert dataclass_to_dict(browse)['lo'] == 'wt'
+    assert 'lo' not in dataclass_to_dict(
+        dui2.Browse(req, layout=dui2.WindowLayout.LARGE)
+    )
+
+    button = hui.Button(
+        label=LangStrSpecValue.literal('x'),
+        placement=hui.ButtonPlacement.PARTY_MENU,
+        request=req,
+    )
+    assert button.layout is dui2.WindowLayout.WIDE_TALL
+    data = dataclass_to_dict(button)
+    assert data['w'] == 'wt'
+    del data['w']
+    assert (
+        dataclass_from_dict(hui.Button, data).layout is dui2.WindowLayout.WIDE
+    )
+
+
+def test_host_button_browse_keeps_legacy_fields() -> None:
+    """A host button made from a browse still reads right on old builds.
+
+    Builds before ``BUTTON_BROWSE_BUILD`` read only ``request`` (with
+    any state folded in) and ``layout``; newer ones read ``browse``.
+    """
+    # TODO: Goes with the deprecated hostui.Button request/layout
+    # fields (removed along with api 9 support).
+    import bacommon.hostui as hui
+
+    browse = dui2.Browse(
+        dui2.Request('/foo', args={'a': 1}),
+        state={'s': 2},
+        layout=dui2.WindowLayout.WIDE,
+        background_color=(0.1, 0.2, 0.3),
+    )
+    button = hui.Button.for_browse(
+        label=LangStrSpecValue.literal('x'),
+        placement=hui.ButtonPlacement.PARTY_MENU,
+        browse=browse,
+    )
+    data = dataclass_to_dict(button)
+
+    # What an old client sees.
+    legacy = dict(data)
+    del legacy['b']
+    old = dataclass_from_dict(hui.Button, legacy)
+    assert old.browse is None
+    assert old.get_browse().request == dui2.Request(
+        '/foo', args={'a': 1}, state={'s': 2}
+    )
+    assert old.get_browse().layout is dui2.WindowLayout.WIDE
+
+    # What a new one sees.
+    new = dataclass_from_dict(hui.Button, data)
+    assert new.get_browse() == browse

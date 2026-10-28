@@ -43,6 +43,8 @@ auto AppMode::DoesWorldFillScreen() -> bool { return false; }
 
 void AppMode::DrawWorld(FrameDef* frame_def) {}
 
+void AppMode::DrawOverlays(FrameDef* frame_def) {}
+
 void AppMode::ChangeGameSpeed(int offs) {}
 
 void AppMode::StepDisplayTime() {}

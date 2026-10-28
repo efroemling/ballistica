@@ -24,6 +24,11 @@ namespace ballistica {
 class JsonRef;
 }
 
+namespace ballistica::base {
+class LangStr;
+class TextGroup;
+}  // namespace ballistica::base
+
 namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
@@ -60,7 +65,10 @@ struct GameRosterEntry {
   std::string spec;                       // wire: "spec" (PlayerSpec string)
   int client_id{};                        // wire: "i" (-1 == the host)
   std::optional<std::string> account_id;  // wire: "a" (public id; v2-auth only)
-  std::vector<Player> players;            // wire: "p"
+  /// The account's name depiction json, wire: "d". Only for accounts
+  /// the host can vouch for: its own and v2-authed clients'.
+  std::optional<std::string> account_name_depiction;
+  std::vector<Player> players;  // wire: "p"
 };
 
 /// Defines high level app behavior when we're active.
@@ -131,6 +139,11 @@ class ClassicAppMode : public base::AppMode {
   auto chat_messages() const -> const std::list<std::string>& {
     return chat_messages_;
   }
+  /// Who sent each of chat_messages() (the name it shows, as the host
+  /// attributed it); always the same length.
+  auto chat_message_senders() const -> const std::list<std::string>& {
+    return chat_message_senders_;
+  }
   void ApplyAppConfig() override;
 
   // Return whichever session is front and center.
@@ -193,6 +206,10 @@ class ClassicAppMode : public base::AppMode {
   void SetPublicPartyName(const std::string& name);
   void SetPublicPartyStatsURL(const std::string& name);
   auto public_party_name() const { return public_party_name_; }
+  /// Whether clients may save us to their favorites (sent in the host
+  /// info each joiner gets on connecting).
+  auto host_allow_favorites() const { return host_allow_favorites_; }
+  void set_host_allow_favorites(bool val) { host_allow_favorites_ = val; }
   auto public_party_player_count() const { return public_party_player_count_; }
   void SetPublicPartyPlayerCount(int count);
   auto ShouldAnnouncePartyJoinsAndLeaves() -> bool;
@@ -264,6 +281,7 @@ class ClassicAppMode : public base::AppMode {
   void HandleGameQuery(const char* buffer, size_t size,
                        sockaddr_storage* from) override;
   void DrawWorld(base::FrameDef* frame_def) override;
+  void DrawOverlays(base::FrameDef* frame_def) override;
   auto DoesWorldFillScreen() -> bool override;
   void RunMainMenu();
 
@@ -338,6 +356,17 @@ class ClassicAppMode : public base::AppMode {
                        bool inbox_count_is_max);
 
  private:
+  /// Draw the connection-down graphic + caption while our host is silent.
+  void DrawHostUnresponsive_(base::FrameDef* frame_def,
+                             millisecs_t silent_millisecs);
+
+  /// Caption for the host-unresponsive indicator: a live 'no contact for
+  /// <duration>' string, built when an outage starts (null otherwise).
+  std::shared_ptr<const base::LangStr> host_silence_lstr_;
+  Object::Ref<base::TextGroup> host_silence_text_group_;
+  /// App-time at which the caption text next needs re-evaluating.
+  millisecs_t host_silence_text_next_eval_{};
+
   /// A SetInternalMusic() request that found no audio source. Retried by
   /// RetryInternalMusic_() until it lands or times out.
   struct PendingInternalMusic_ {
@@ -402,6 +431,7 @@ class ClassicAppMode : public base::AppMode {
   int host_protocol_version_{-1};
 
   std::list<std::string> chat_messages_;
+  std::list<std::string> chat_message_senders_;
   // *All* existing sessions (including old ones waiting to shut down).
   std::vector<Object::Ref<scene_v1::Session> > sessions_;
   Object::WeakRef<scene_v1::Scene> foreground_scene_;
@@ -456,6 +486,7 @@ class ClassicAppMode : public base::AppMode {
   float replay_speed_mult_{1.0f};
   millisecs_t last_connection_to_client_join_time_{};
   std::string public_party_name_;
+  bool host_allow_favorites_{true};
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
   std::string root_ui_league_type_;

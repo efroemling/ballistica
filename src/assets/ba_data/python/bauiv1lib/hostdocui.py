@@ -4,17 +4,21 @@
 
 A host's pages arrive over the game connection and the host is
 untrusted, so before showing one we refuse references outside the
-host's package universe, drop client-effects untrusted sources may not
-run, and drop local-actions entirely. Our own pages (when we're the
-host) skip all that. Design: ``docs/initiatives/host-docui.md``.
+host's package universe and drop client-effects untrusted sources may
+not run. Our own pages (when we're the host) skip all that. Their
+local-actions are limited to the host family
+(:class:`bacommon.docui.routes.classichost.ClassicHostLocalAction`),
+each safe whatever a host passes it; anything else is ignored. Design:
+``docs/initiatives/host-docui.md``.
 """
 
 import concurrent.futures
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, cast, assert_never
 
 from efro.util import strip_exception_tracebacks
 import bacommon.hostui as hui
 import bacommon.docui.v2 as dui2
+import bacommon.docui.routes.classichost as hroutes
 import bacommon.clienteffect as clfx
 from bacommon.docui.walk import page_actions
 import bauiv1 as bui
@@ -28,6 +32,8 @@ if TYPE_CHECKING:
     import bacommon.docui.v2
     from bacommon.assetpackage import ApverNum
     from bacommon.docui import DocUIRequest, DocUIResponse
+
+    from bauiv1lib.docui import DocUILocalAction
 
 #: How long to wait for a host to answer (seconds). Doc-ui windows
 #: share only a couple of background workers, so a silent host must
@@ -91,6 +97,28 @@ class HostDocUIController(DocUIController):
         return response
 
     @override
+    def local_action(self, action: DocUILocalAction) -> None:
+        # Hosts are untrusted: only our host family's actions run, each
+        # safe whatever its fields say. Unknown ones are a host's
+        # business, so ignore them quietly (no error for the player).
+        from bacommon.docui.routes import DocUIRouteError
+
+        try:
+            typed = hroutes.ClassicHostLocalAction.from_name_and_args(
+                action.name, action.args
+            )
+        except DocUIRouteError as exc:
+            bui.uilog.warning('Ignoring local-action from host page: %s', exc)
+            strip_exception_tracebacks(exc)
+            return
+        typed = cast(hroutes.AnyClassicHostLocalAction, typed)
+        match typed:
+            case hroutes.ShowAccount():
+                _show_account(action, typed.account_id)
+            case _:
+                assert_never(typed)
+
+    @override
     def get_cache_key_extra(self) -> str | None:
         # Pages depend on which host we're talking to (and change
         # under us); don't cache them.
@@ -128,25 +156,31 @@ def vet_response(response: bacommon.docui.v2.Response) -> bool:
         return False
 
     response.client_effects = _allowed_effects(response.client_effects)
-    if response.local_action is not None:
-        bui.uilog.warning(
-            'Ignoring local-action %r from host page.', response.local_action
-        )
-        response.local_action = None
-        response.local_action_args = None
     for action in page_actions(response.page):
         if isinstance(action, dui2.Local):
             action.immediate_client_effects = _allowed_effects(
                 action.immediate_client_effects
             )
-            if action.immediate_local_action is not None:
-                bui.uilog.warning(
-                    'Ignoring local-action %r from host page.',
-                    action.immediate_local_action,
-                )
-                action.immediate_local_action = None
-                action.immediate_local_action_args = None
+    # (Local-actions stay; HostDocUIController.local_action() runs only
+    # our safe host family.)
     return True
+
+
+def _show_account(context: DocUILocalAction, account_id: str) -> None:
+    """Open an account's page over the host page it was pressed on."""
+    import bacommon.docui.routes.classicaccount as aroutes
+
+    from bauiv1lib.account.page import ClassicAccountUIController
+
+    # (Anything else isn't an account id; hosts can send anything.)
+    if not account_id.startswith('a-') or len(account_id) > 64:
+        bui.uilog.warning(
+            'Ignoring show-account for invalid account id from host page.'
+        )
+        return
+    ClassicAccountUIController().browse_from(
+        context, aroutes.Account(account_id=account_id)
+    )
 
 
 def _allowed_effects(effects: list[clfx.Effect]) -> list[clfx.Effect]:
@@ -171,22 +205,47 @@ def show_host_docui_window(
 
     :meta private:
     """
+    show_host_docui_page(button.get_browse(), origin_widget)
+
+
+def show_host_docui_page(
+    browse: bacommon.docui.v2.Browse, origin_widget: bui.Widget | None = None
+) -> None:
+    """Open a host page in a new window, as a browse describes.
+
+    For pages a host points us at from outside its pages (its menu
+    buttons, its party member page). The browse's sets, history and
+    sound don't apply.
+
+    :meta private:
+    """
+    import copy
+    import json
+    from dataclasses import replace
+
     from bauiv1lib.docui import DocUIWindow, WindowOptions
 
+    request = (
+        browse.request
+        if browse.state is None
+        else replace(browse.request, state=copy.deepcopy(browse.state))
+    )
     controller = HostDocUIController()
     bui.app.ui_v1.auxiliary_window_activate(
         win_type=DocUIWindow,
         win_create_call=bui.CallStrict(
             controller.create_window,
-            button.request,
+            request,
             origin_widget=origin_widget,
-            options=WindowOptions(layout=button.layout),
+            options=WindowOptions.from_browse(browse),
         ),
-        # Per page, so pressing one host button while another's page is
-        # up goes there rather than toggling the open one away.
+        # Per page (args included: one party member's page is not
+        # another's), so pressing one host button while another's page
+        # is up goes there rather than toggling the open one away.
         win_extra_type_id=(
             f'{HostDocUIController.get_window_extra_type_id()}'
-            f':{button.request.path}'
+            f':{request.path}'
+            f':{json.dumps(request.args, sort_keys=True, default=str)}'
         ),
     )
 

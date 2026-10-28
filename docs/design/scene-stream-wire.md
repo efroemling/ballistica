@@ -21,24 +21,41 @@ was not done (see "Not done" at the end).
 
 ## Compatibility direction
 
-Compatibility runs in exactly one direction. A host speaks only the
-newest protocol (`kProtocolVersionHostMin` == `kProtocolVersionMax` in
-`scene_v1.h`, raised together), so a host never has an older client
-attached — never design, gate, or test for "old client joins new
-host". What must keep working is a new *client* joining an *older*
-server (down to `kProtocolVersionClientMin`) and playing old replays:
-there the legacy stream layouts and sim/draw paths stay exactly as
-they were, and new behavior keys off the session's (or replay
-header's) protocol version. Unknown values arriving from a newer peer
-are ignored rather than treated as errors.
+A host streams exactly one protocol, and only clients that know it can
+join: a client never receives a stream newer than itself. What must
+keep working is a new *client* joining an *older* server (down to
+`kProtocolVersionClientMin`) and playing old replays: there the legacy
+stream layouts and sim/draw paths stay exactly as they were, and new
+behavior keys off the session's (or replay header's) protocol version.
+Unknown values arriving from a newer peer are ignored rather than
+treated as errors.
 
-"Older" means pre-1.8 (37 and below) only. The 1.8 cycle's
-intermediate protocols (`kProtocolVersionDevGapMin`..`Max`, 38 up to
-the one before the final) are refused as a client and for replays
-(`IsJoinableHostProtocol`; Eric, 2026-10-01), so no decode path exists
-for them alone -- a branch serving only that band is dead code. Keep
-`kProtocolVersionDevGapMax` one below `kProtocolVersionMax` on any
-further bump before 1.8 ships (a static_assert enforces it).
+**Opt-in protocols (since 1.8 shipped on 56).** New protocols raise
+`kProtocolVersionMax` only; `kProtocolVersionHostMin` stays at
+`kProtocolVersion1p8`, so hosts stream 56 by default and every 1.8.x
+client can join them. A host moves up through the `SceneV1 Host
+Protocol` config value (a server's `protocol_version`), shutting out
+older clients; once builds knowing the newer protocol are widespread
+the default and floor can follow (Eric, 2026-10-28). So the host side
+now has a real choice too: everything a newer protocol adds must stay
+out of older streams.
+- *Stream-format changes* gate on the stream's protocol
+  (`SessionStream::protocol()`), as `kProtocolVersionLangStrWire` does
+  on the reading side.
+- *New node attrs* are still appended to their type's table (the
+  golden test pins it) and are given a minimum protocol
+  (`NodeAttributeUnbound::set_min_protocol`). `SessionStream` raises a
+  clear error if one is set, connected or animated on an older stream,
+  and `Scene::DumpNodes`, which otherwise writes every attr, leaves
+  them out of older streams' late-joiner dumps. The first is
+  depictiondisplay `color_multiply` (57).
+
+"Older" means pre-1.8 (37 and below), 1.8's own 56, and anything
+newer. The 1.8 cycle's intermediate protocols
+(`kProtocolVersionDevGapMin`..`Max`, 38-55) are refused as a client
+and for replays (`IsJoinableHostProtocol`; Eric, 2026-10-01), so no
+decode path exists for them alone -- a branch serving only that band
+is dead code.
 
 ## Scene confinement
 

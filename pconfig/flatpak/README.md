@@ -121,12 +121,17 @@ That venv is installed offline, from vendored wheels:
   the reduced lockfile from the staged wheels and never touches the
   network.
 
-Both generated files are committed. **Re-run `make flatpak-build-env` and
-commit the result** whenever `pconfig/requirements.txt`, the main lockfile,
-or `pconfig/requirements_build.txt` changes. If a flatpak build fails on a
-missing import, add that package to `requirements_build.txt` and
-regenerate. To bump `uv`, update `UV_VERSION` and `UV_SHA256` in
-`flatpakbuildenv.py` and regenerate.
+Both generated files are committed, and `make upgrade` regenerates them,
+since everything in them is derived: the build lockfile takes its versions
+from the main lockfile, and the module installs the `uv` pinned in
+`pconfig/flatpak/uv.json` (version plus each arch's published checksum).
+`make upgrade` also moves that pin to uv's latest release
+(`make flatpak-uv-upgrade`). After changing `pconfig/requirements_build.txt`
+by hand, run `make flatpak-build-env` and commit the result. `make
+update-check` (so preflight and CI) fails if the build lockfile's versions
+or the module's `uv` don't match what they're derived from. If a flatpak
+build fails on a missing import, add that package to
+`requirements_build.txt` and regenerate.
 
 Note that a venv built from the reduced lockfile has no dev tooling, so
 `make check` / `make test` won't run against it.

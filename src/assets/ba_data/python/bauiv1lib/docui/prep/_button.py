@@ -32,7 +32,7 @@ from bauiv1lib.docui.prep._calls2 import (
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import NativeLangStrFn
 
 #: Size of a button that doesn't give one.
@@ -45,6 +45,23 @@ def button_size(button: dui2.Button) -> tuple[float, float]:
     :meta private:
     """
     return _DEFAULT_BUTTON_SIZE if button.size is None else button.size
+
+
+def row_entry_index(buttons: list[dui2.Button]) -> int:
+    """Which of a row's buttons selection lands on entering the row.
+
+    Its :attr:`~bacommon.docui.v2.Button.row_selected` one, else the
+    first.
+
+    :meta private:
+    """
+    flagged = [i for i, b in enumerate(buttons) if b.row_selected]
+    if len(flagged) > 1:
+        bui.uilog.warning(
+            'Multiple buttons in a doc-ui row flagged row_selected;'
+            ' there can be only one per row. Using the first.'
+        )
+    return flagged[0] if flagged else 0
 
 
 def button_padded_size(button: dui2.Button) -> tuple[float, float]:
@@ -169,7 +186,7 @@ def prep_button(
             transition_type='scale',
             icon_color=button.icon_color,
             iconscale=button.icon_scale,
-            better_bg_fit=True,
+            clean_layout=True,
             enabled=not disabled,
             **_depiction_kwds(button),
         ),
@@ -227,7 +244,7 @@ def prep_button(
 
 
 def instantiate_button(
-    buttonprep: ButtonPrep, *, parent: bui.Widget, window: DocUIWindow
+    buttonprep: ButtonPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widgets for a prepped button (it and its decorations).
 

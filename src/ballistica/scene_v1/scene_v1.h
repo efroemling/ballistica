@@ -46,19 +46,27 @@ const int kProtocolVersionHostMin = 56;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 56;
+const int kProtocolVersionMax = 57;
+
+// The protocol 1.8 shipped on. Since then new protocols are opt-in:
+// kProtocolVersionHostMin stays here (so 1.8.x clients can join any
+// host by default) while kProtocolVersionMax rises; hosts move up via
+// the 'SceneV1 Host Protocol' config value (a server's
+// protocol_version), excluding older clients. Once builds that know a
+// newer protocol are widespread, the default (and with it the floor)
+// can move up (Eric, 2026-10-28).
+const int kProtocolVersion1p8 = 56;
 
 // The 1.8 development protocols (38 through the one before 1.8's
-// final). Only pre-1.8 protocols (37 and below) and the one 1.8 ships
-// on are supported (Eric, 2026-10-01); these intermediate ones' streams
-// are no longer decoded (47 redid much of what they carried), so a
-// leftover dev host or replay on one is refused like any unsupported
-// version rather than mis-decoded. Raise the max alongside
-// kProtocolVersionMax for any further bump before 1.8 ships.
+// final). Only pre-1.8 protocols (37 and below) and the one 1.8 shipped
+// on (and newer) are supported (Eric, 2026-10-01); these intermediate
+// ones' streams are no longer decoded (47 redid much of what they
+// carried), so a leftover dev host or replay on one is refused like any
+// unsupported version rather than mis-decoded.
 const int kProtocolVersionDevGapMin = 38;
 const int kProtocolVersionDevGapMax = 55;
-static_assert(kProtocolVersionDevGapMax == kProtocolVersionMax - 1,
-              "Every 1.8 dev protocol below the current one is in the gap.");
+static_assert(kProtocolVersionDevGapMax == kProtocolVersion1p8 - 1,
+              "Every 1.8 dev protocol below 1.8's own is in the gap.");
 
 /// Whether we can act as a client to (or play a replay of) a stream
 /// protocol.
@@ -462,6 +470,29 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     wire): the roller ball a knocked-out character rests on gets
 //     its full brakes, so the character stops sliding along the
 //     ground (SpazPhysicsTuning down_ball_brakes) (2026-10-12).
+//
+// 57: The first opt-in protocol (see kProtocolVersion1p8): hosts stay
+//     on 56 unless configured up. Depictiondisplay nodes gain
+//     'color_multiply' (rgb, appended; default white), multiplying
+//     everything their depiction draws. It is the first attr with a
+//     minimum protocol (NodeAttributeUnbound::min_protocol): a host on
+//     56 can't set or connect it (SessionStream raises), since its 56
+//     clients wouldn't know the index. That's the pattern for further
+//     opt-in attrs (2026-10-28).
+//
+//     Also under 57 -- prop nodes (and so bombs) gain 'opacity' (a
+//     float, 0-1, default 1; late-index like 'stickiness' so bomb's
+//     'fuse_length' keeps its index): below 1 the prop draws blended,
+//     its texture's alpha included, with reflections, lighting and
+//     shadows fading along. Same minimum-protocol gate (2026-10-28).
+
+// First protocol with depictiondisplay 'color_multiply' (see the 57
+// entry above).
+const int kProtocolVersionColorMultiply = 57;
+
+// First protocol with prop (and bomb) 'opacity' (see the 57 entry
+// above).
+const int kProtocolVersionPropOpacity = 57;
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

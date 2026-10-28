@@ -11,6 +11,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/input/support/remote_app_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/networking/network_writer.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
@@ -22,6 +23,37 @@
 namespace ballistica::base {
 
 NetworkReader::NetworkReader() = default;
+
+auto NetworkReader::ShouldAnswerGameQuery_() -> bool {
+  // Game queries arrive from anyone who can reach our port, and each one
+  // we answer queues a reply on the network-writer thread. A flood of them
+  // (a misbehaving peer, or spoofed queries using us as a reflector) used
+  // to outrun the writer until its queue overflowed and killed the app
+  // (Crashlytics f90b6e83, 1.8.4: 'ThreadMessage list > 10000 in thread:
+  // networkwrite'). Replies are fire-and-forget, so dropping excess ones is
+  // safe; askers just retry or miss us for a moment.
+  auto now = std::chrono::steady_clock::now();
+  if (now - game_query_window_start_ >= std::chrono::seconds(1)) {
+    game_query_window_start_ = now;
+    game_query_window_count_ = 0;
+  }
+  if (game_query_window_count_ >= kMaxGameQueryRepliesPerSecond) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Game-query rate limit hit; dropping excess queries.");
+    return false;
+  }
+
+  // Also back off whenever the writer is already backed up, whatever the
+  // cause; adding to its queue then only brings the overflow closer.
+  auto* writer_loop = g_base->network_writer->event_loop();
+  if (writer_loop && !writer_loop->CheckPushSafety()) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Network writer is backed up; dropping game queries.");
+    return false;
+  }
+  ++game_query_window_count_;
+  return true;
+}
 
 void NetworkReader::SetPort(int port) {
   assert(g_core->InMainThread());
@@ -386,7 +418,9 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_HOST_QUERY:
             case BA_PACKET_HOST_QUERY_V2:
             case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
-              g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
+              if (ShouldAnswerGameQuery_()) {
+                g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
+              }
               break;
             }
 

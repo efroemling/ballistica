@@ -36,6 +36,7 @@ class PythonClassInputDevice : public PythonClass {
   static auto GetPlayerProfiles(PythonClassInputDevice* self) -> PyObject*;
   static auto GetClassicPurchases(PythonClassInputDevice* self) -> PyObject*;
   static auto GetCloudCharacters(PythonClassInputDevice* self) -> PyObject*;
+  static auto IsV2Authed(PythonClassInputDevice* self) -> PyObject*;
   static auto GetV1AccountName(PythonClassInputDevice* self, PyObject* args,
                                PyObject* keywds) -> PyObject*;
   static auto IsAttachedToPlayer(PythonClassInputDevice* self) -> PyObject*;

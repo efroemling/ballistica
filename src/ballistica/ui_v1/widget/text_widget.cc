@@ -47,9 +47,11 @@ const float kDisabledTextGreyScale{0.5f};
 // enough to keep dim grey legible against busy backings.
 const float kDisabledTextShadow{0.2f};
 
-// Where the carat bar is drawn relative to GetCaratPts() output.
-const float kCaratDrawOffsetX{4.0f};
-const float kCaratDrawOffsetY{17.0f};
+// Where the carat bar's center is drawn relative to GetCaratPts()
+// output (a char boundary at the bottom of its row): mid-row, which is
+// where capitals are centered (see kTextBaselineHeight).
+const float kCaratDrawOffsetX{0.0f};
+const float kCaratDrawOffsetY{base::kTextRowHeight * 0.5f};
 
 TextWidget::TextWidget() {
   // We always show our clear button except for in android when we don't
@@ -421,7 +423,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                            res_scale_);
       text_width_ = *text_width;
 
-      // FIXME: doesnt support big.
+      // (Rows of the same height for either font, big included.)
       text_height_ = g_base->text_graphics->GetStringHeight(text_translated_);
       text_group_dirty_ = false;
       WarmCaratMeasures_();
@@ -503,8 +505,6 @@ void TextWidget::CalcMaxScales_(float* max_width_scale,
       && ((text_width_ * center_scale_) > max_width_)) {
     *max_width_scale = max_width_ / (text_width_ * center_scale_);
   }
-  // Currently cant do max-height with big.
-  assert(max_height_ <= 0.0 || !big_);
   if (max_height_ > 0.0f && text_height_ > 0.0
       && ((text_height_ * center_scale_ * *max_width_scale) > max_height_)) {
     *max_height_scale =
@@ -1149,7 +1149,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // potentially-activating-mode.
           pressed_activate_ =
               (click_count == 2 || click_activate_) && !editable_;
-          if (click_count == 1) {
+          if (click_count == 1 && enable_sound_) {
             g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
           }
         }
@@ -1176,7 +1176,9 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           text_translation_dirty_ = true;
           carat_position_ = 0;
           text_group_dirty_ = true;
-          g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
+          if (enable_sound_) {
+            g_base->audio->SafePlaySound(g_ui_v1->assets().tap.get());
+          }
           ApplyText();
         }
 

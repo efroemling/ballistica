@@ -406,6 +406,7 @@
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\screen_messages.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\screen_messages.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\shadow_range.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_big_and_extras_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_glyph_pages_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_graphics.cc" />
@@ -863,6 +864,8 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\column_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\container_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\container_widget.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.cc" />

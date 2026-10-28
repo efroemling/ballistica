@@ -6,6 +6,9 @@ import math
 import logging
 from typing import TYPE_CHECKING, cast
 
+from efro.dataclassio import dataclass_to_json
+import bacommon.depiction as bdep
+import bacommon.docui.v2 as dui2
 import bacommon.hostui as hui
 from bacommon.hostui import HOST_UI_MIN_BUILD
 from bacommon.langstr import LangStrSpecValue
@@ -14,7 +17,11 @@ from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
-from bauiv1lib.hostdocui import show_host_docui_window, button_label
+from bauiv1lib.hostdocui import (
+    show_host_docui_page,
+    show_host_docui_window,
+    button_label,
+)
 
 if TYPE_CHECKING:
     from typing import Sequence, Any
@@ -33,6 +40,8 @@ class PartyWindow(bui.Window):
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
         self._popup_party_member_is_host: bool | None = None
+        self._popup_chat_msg: str | None = None
+        self._popup_chat_browse: bacommon.docui.v2.Browse | None = None
         self._width = 500
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -254,9 +263,12 @@ class PartyWindow(bui.Window):
     def on_chat_message(self, msg: str) -> None:
         """Called when a new chat message comes through."""
         if not bui.app.config.resolve('Chat Muted'):
-            self._add_msg(msg)
+            # (It's the newest message the engine holds; so is its
+            # sender.)
+            senders = bs.get_chat_message_senders()
+            self._add_msg(msg, senders[-1] if senders else None)
 
-    def _add_msg(self, msg: str) -> None:
+    def _add_msg(self, msg: str, sender: str | None) -> None:
         txt = bui.textwidget(
             parent=self._columnwidget,
             h_align='left',
@@ -270,8 +282,13 @@ class PartyWindow(bui.Window):
             maxwidth=self._scroll_width * 0.94,
             shadow=0.3,
             flatness=1.0,
-            on_activate_call=bui.CallStrict(self._copy_msg, msg),
             selectable=True,
+        )
+        bui.textwidget(
+            edit=txt,
+            on_activate_call=bui.CallStrict(
+                self._on_chat_msg_press, msg, sender, txt
+            ),
         )
 
         self._chat_texts.append(txt)
@@ -308,10 +325,6 @@ class PartyWindow(bui.Window):
             )
         ]
 
-        # Allow the 'Add to Favorites' option only if we're actually
-        # connected to a party and if it doesn't seem to be a private
-        # party (those are dynamically assigned addresses and ports so
-        # it makes no sense to save them).
         # Then anything our host (or we, when hosting) defined.
         host_buttons = bui.app.classic.host_ui.get_shown_buttons(
             hui.ButtonPlacement.PARTY_MENU
@@ -321,10 +334,11 @@ class PartyWindow(bui.Window):
             choices_display.append(button_label(button))
         self._menu_host_buttons = host_buttons
 
+        # Allow 'Add to Favorites' only if we're connected to a host
+        # that allows it (hosts whose address won't stay the same, such
+        # as our cloud-hosted games, turn it off).
         server_info = bs.get_connection_to_host_info_2()
-        if server_info is not None and not server_info.name.startswith(
-            'Private Party '
-        ):
+        if server_info is not None and server_info.allow_favorites:
             choices.append('add_to_favorites')
             choices_display.append(
                 _classicassets.strings.party.add_to_favorites
@@ -345,9 +359,6 @@ class PartyWindow(bui.Window):
         self._popup_type = 'menu'
 
     def _update(self) -> None:
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-nested-blocks
-
         # update muted state
         if bui.app.config.resolve('Chat Muted'):
             bui.textwidget(edit=self._muted_text, color=(1, 1, 1, 0.3))
@@ -361,8 +372,12 @@ class PartyWindow(bui.Window):
             # add all existing messages if chat is not muted
             if self._display_old_msgs:
                 msgs = bs.get_chat_messages()
-                for msg in msgs:
-                    self._add_msg(msg)
+                senders = bs.get_chat_message_senders()
+                for i, msg in enumerate(msgs):
+                    self._add_msg(
+                        msg,
+                        senders[i] if len(senders) == len(msgs) else None,
+                    )
                 self._display_old_msgs = False
 
         # update roster section
@@ -407,122 +422,16 @@ class PartyWindow(bui.Window):
                     for x in range(columns):
                         index = y * columns + x
                         if index < len(self._roster):
-                            t_scale = 0.65
-                            pos = (
-                                self._width * 0.53
-                                - c_width_total * 0.5
-                                + c_width * x
-                                - 23,
-                                self._height - 65 - c_height * y - 15,
-                            )
-
-                            # if there are players present for this client, use
-                            # their names as a display string instead of the
-                            # client spec-string
-                            try:
-                                if self._roster[index]['players']:
-                                    # if there's just one, use the full name;
-                                    # otherwise combine short names
-                                    if len(self._roster[index]['players']) == 1:
-                                        p_str = self._roster[index]['players'][
-                                            0
-                                        ]['name_full']
-                                    else:
-                                        p_str = '/'.join(
-                                            [
-                                                entry['name']
-                                                for entry in self._roster[
-                                                    index
-                                                ]['players']
-                                            ]
-                                        )
-                                        if len(p_str) > 25:
-                                            p_str = p_str[:25] + '...'
-                                else:
-                                    p_str = self._roster[index][
-                                        'display_string'
-                                    ]
-                            except Exception:
-                                logging.exception(
-                                    'Error calcing client name str.'
-                                )
-                                p_str = '???'
-
-                            widget = bui.textwidget(
-                                parent=self._root_widget,
-                                position=(pos[0], pos[1]),
-                                scale=t_scale,
-                                size=(c_width * 0.85, 30),
-                                maxwidth=c_width * 0.85,
-                                color=(1, 1, 1) if index == 0 else (1, 1, 1),
-                                selectable=True,
-                                autoselect=True,
-                                click_activate=True,
-                                text=bui.LangStr.from_text(p_str),
-                                h_align='left',
-                                v_align='center',
-                            )
-                            self._name_widgets.append(widget)
-
-                            # in newer versions client_id will be present and
-                            # we can use that to determine who the host is.
-                            # in older versions we assume the first client is
-                            # host
-                            if self._roster[index]['client_id'] is not None:
-                                is_host = self._roster[index]['client_id'] == -1
-                            else:
-                                is_host = index == 0
-
-                            # FIXME: Should pass client_id to these sort of
-                            #  calls; not spec-string (perhaps should wait till
-                            #  client_id is more readily available though).
-                            bui.textwidget(
-                                edit=widget,
-                                on_activate_call=bui.CallStrict(
-                                    self._on_party_member_press,
-                                    self._roster[index]['client_id'],
-                                    is_host,
-                                    widget,
+                            self._add_roster_entry(
+                                index,
+                                pos=(
+                                    self._width * 0.53
+                                    - c_width_total * 0.5
+                                    + c_width * x,
+                                    self._height - 65 - c_height * y,
                                 ),
+                                c_width=c_width,
                             )
-                            pos = (
-                                self._width * 0.53
-                                - c_width_total * 0.5
-                                + c_width * x,
-                                self._height - 65 - c_height * y,
-                            )
-
-                            # Make the assumption that the first roster
-                            # entry is the server.
-                            # FIXME: Shouldn't do this.
-                            if is_host:
-                                twd = min(
-                                    c_width * 0.85,
-                                    bui.get_string_width(
-                                        p_str,
-                                        suppress_warning=True,
-                                        suppress_logic_thread_warning=True,
-                                    )
-                                    * t_scale,
-                                )
-                                self._name_widgets.append(
-                                    bui.textwidget(
-                                        parent=self._root_widget,
-                                        position=(
-                                            pos[0] + twd + 1,
-                                            pos[1] - 0.5,
-                                        ),
-                                        size=(0, 0),
-                                        h_align='left',
-                                        v_align='center',
-                                        maxwidth=c_width * 0.96 - twd,
-                                        color=(0.1, 1, 0.1, 0.5),
-                                        text=_classicassets.strings.party.host,
-                                        scale=0.4,
-                                        shadow=0.1,
-                                        flatness=1.0,
-                                    )
-                                )
                 bui.textwidget(edit=self._empty_str, text='')
                 bui.textwidget(edit=self._empty_str_2, text='')
                 bui.scrollwidget(
@@ -539,7 +448,9 @@ class PartyWindow(bui.Window):
     ) -> None:
         """Called when a choice is selected in the popup."""
         del popup_window  # unused
-        if self._popup_type == 'partyMemberPress':
+        if self._popup_type == 'chatMessagePress':
+            self._on_chat_popup_choice(choice)
+        elif self._popup_type == 'partyMemberPress':
             if self._popup_party_member_is_host:
                 _builtinassets.audio.error.get().play()
                 bui.screenmessage(
@@ -558,6 +469,7 @@ class PartyWindow(bui.Window):
                         label=LangStrSpecValue.literal(''),
                         placement=hui.ButtonPlacement.PARTY_MENU,
                         request=kick_request,
+                        layout=dui2.WindowLayout.WIDE,
                     )
                 )
             else:
@@ -659,11 +571,82 @@ class PartyWindow(bui.Window):
         """Called when the popup is closing."""
         self._menu_popup = None
 
+    def _add_roster_entry(
+        self, index: int, *, pos: tuple[float, float], c_width: float
+    ) -> None:
+        """Add one client's name to the roster section.
+
+        ``pos`` is where the name starts (its left edge, vertically
+        centered).
+        """
+        entry = self._roster[index] if self._roster is not None else None
+        assert entry is not None
+
+        # In newer versions client_id will be present and we can use
+        # that to determine who the host is. In older versions we assume
+        # the first client is host.
+        client_id = entry['client_id']
+        is_host = client_id == -1 if client_id is not None else index == 0
+
+        # Each client shows as a name depiction. The host sends one for
+        # accounts it can vouch for (its own and v2-authed clients');
+        # for anything else, which is only what the client says it is,
+        # we make a plain-text one with no icons (an icon could pass
+        # for an account it doesn't own).
+        depiction = entry.get('account_name_depiction')
+        if not isinstance(depiction, str):
+            try:
+                # (Repeated names get numbered, so members can be told
+                # apart; host pages number them the same way.)
+                p_str = bui.app.lang.remove_custom_unicode_chars(
+                    bs.get_party_member_names().get(
+                        client_id, entry['display_string']
+                    )
+                )
+            except Exception:
+                logging.exception('Error calcing client name str.')
+                p_str = '???'
+            depiction = dataclass_to_json(
+                bdep.NameDepiction(bs.plain_name_json(p_str))
+            )
+
+        # The depiction is the button's whole look, so selection
+        # brightens and pulses the name itself.
+        height = 22.0
+        host_str = _classicassets.strings.party.host.evaluate()
+        widget = bui.buttonwidget(
+            parent=self._root_widget,
+            position=(pos[0], pos[1] - height * 0.5),
+            size=(c_width * 0.85, height),
+            label='',
+            autoselect=True,
+            depiction=depiction,
+            depiction_h_align='left',
+            depiction_hit_area=True,
+            depiction_suffix=f' {host_str}' if is_host else None,
+        )
+        bui.buttonwidget(
+            edit=widget,
+            on_activate_call=bui.CallStrict(
+                self._on_party_member_press, client_id, is_host, widget
+            ),
+        )
+        self._name_widgets.append(widget)
+
     def _on_party_member_press(
         self, client_id: int, is_host: bool, widget: bui.Widget
     ) -> None:
-        # If we're the host, pop up 'kick' options for all non-host
-        # members.
+        # Hosts with a page for party members (our own hosting
+        # included) get it opened; it's the place for everything
+        # about them, kicking included.
+        browse = self._client_page_browse(client_id)
+        if browse is not None:
+            self.close()
+            show_host_docui_page(browse)
+            return
+
+        # Otherwise, if we're the host, pop up 'kick' options for all
+        # non-host members.
         if bs.get_foreground_host_session() is not None:
             kick_str = _classicassets.strings.ui.kick
         else:
@@ -671,8 +654,8 @@ class PartyWindow(bui.Window):
             # Kick votes appeared in build 14248.
             if info is None or info.build_number < 14248:
                 return
-            # Hosts with host-ui offer kicking only if they've set a
-            # page for it (see HostUISubsystem.set_kick_route); older
+            # Hosts with host-ui offer kicking only where their kick
+            # page says so (see HostUISubsystem.set_kick_page); older
             # ones run the engine's own kick votes.
             if (
                 info.build_number >= HOST_UI_MIN_BUILD
@@ -697,6 +680,56 @@ class PartyWindow(bui.Window):
         self._popup_type = 'partyMemberPress'
         self._popup_party_member_client_id = client_id
         self._popup_party_member_is_host = is_host
+
+    def _on_chat_msg_press(
+        self, msg: str, sender: str | None, widget: bui.Widget
+    ) -> None:
+        """Copy a message, or offer its sender's page too if there is one."""
+        client_id = None if sender is None else _sender_client_id(sender)
+        browse = (
+            None if client_id is None else self._client_page_browse(client_id)
+        )
+        if client_id is None or browse is None:
+            self._copy_msg(msg)
+            return
+        # (Named as the party list shows them, which is what the page
+        # opens on.)
+        name = bs.get_party_member_names().get(client_id, sender)
+        uiscale = bui.app.ui_v1.uiscale
+        self._menu_popup = PopupMenuWindow(
+            position=widget.get_screen_space_center(),
+            scale=(
+                2.3
+                if uiscale is bui.UIScale.SMALL
+                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+            ),
+            choices=['copy', 'view'],
+            choices_display=[
+                _commonassets.strings.actions.copy,
+                _classicassets.strings.party.view_member(name=name or '?'),
+            ],
+            current_choice='view',
+            delegate=self,
+        )
+        self._popup_type = 'chatMessagePress'
+        self._popup_chat_msg = msg
+        self._popup_chat_browse = browse
+
+    def _on_chat_popup_choice(self, choice: str) -> None:
+        if choice == 'copy' and self._popup_chat_msg is not None:
+            self._copy_msg(self._popup_chat_msg)
+        elif choice == 'view' and self._popup_chat_browse is not None:
+            self.close()
+            show_host_docui_page(self._popup_chat_browse)
+
+    def _client_page_browse(
+        self, client_id: int | None
+    ) -> bacommon.docui.v2.Browse | None:
+        """Our host's page for a party member (if it offers one)."""
+        classic = bui.app.classic
+        if client_id is None or classic is None:
+            return None
+        return classic.host_ui.get_client_page_browse(client_id)
 
     def _kick_request(
         self, client_id: int | None
@@ -733,3 +766,22 @@ class PartyWindow(bui.Window):
 
         bui.play_swish()
         self.close()
+
+
+def _sender_client_id(sender: str) -> int | None:
+    """Which party member a chat message's sender name is (if clear).
+
+    Hosts (that offer party member pages) name chat senders by their one
+    player's name if they have exactly one in the game, else by the
+    name the party list shows for them; match that against the roster.
+    None if no one, or more than one, matches.
+    """
+    matches: set[int] = set()
+    for entry in bs.get_game_roster():
+        client_id = entry['client_id']
+        if not isinstance(client_id, int):
+            continue
+        names = [p['name'] for p in entry['players']]
+        if sender == (names[0] if len(names) == 1 else entry['display_string']):
+            matches.add(client_id)
+    return next(iter(matches)) if len(matches) == 1 else None

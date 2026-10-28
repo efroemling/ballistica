@@ -292,14 +292,7 @@ auto ClientSession::ResolveIndexedAssetRef_(int32_t pkg_index,
                     + bucket_id + " (key count " + std::to_string(keys.size())
                     + ")");
   }
-  std::string name = apverid + ':' + keys[asset_index];
-  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
-                       [&name, pkg_index, asset_index] {
-                         return "ClientSession: indexed asset ref ("
-                                + std::to_string(pkg_index) + ","
-                                + std::to_string(asset_index) + ") -> " + name;
-                       });
-  return name;
+  return apverid + ':' + keys[asset_index];
 }
 
 auto ClientSession::DoesFillScreen() const -> bool {
@@ -1092,13 +1085,6 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
                                          + result.error());
               }
             }
-            g_core->logging->Log(
-                LogName::kBaNetworking, LogLevel::kDebug, [&val, &parsed] {
-                  return "ClientSession: lang-str attr set (tag "
-                         + std::to_string(static_cast<int>(val[0])) + "): "
-                         + (parsed != nullptr ? parsed->Evaluate()
-                                              : val.substr(1));
-                });
             attr.SetLangStrWire(val, std::move(parsed));
           } else {
             attr.Set(val);

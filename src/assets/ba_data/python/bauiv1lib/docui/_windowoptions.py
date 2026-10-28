@@ -27,12 +27,21 @@ class WindowOptions:
     so a new one is added in one place rather than at every hop.
     """
 
-    #: The window's layout, or None for the wide layout.
+    #: The window's layout, or None for the route's own (or the
+    #: wide-tall layout for a request that isn't a route).
     layout: bacommon.docui.v2.WindowLayout | None = None
 
     #: How its scroll area meets the window, or None to let the layout
     #: decide.
     scroll_edge_style: bacommon.docui.v2.ScrollEdgeStyle | None = None
+
+    #: The window's backing color (rgb), or None for the usual (see
+    #: :attr:`bacommon.docui.v2.Browse.background_color`).
+    background_color: tuple[float, float, float] | None = None
+
+    #: The window's close/back button color (rgb), or None for the
+    #: usual (see :attr:`bacommon.docui.v2.Browse.cancel_button_color`).
+    cancel_button_color: tuple[float, float, float] | None = None
 
     @classmethod
     def from_browse(cls, action: bacommon.docui.v2.Browse) -> WindowOptions:
@@ -43,6 +52,8 @@ class WindowOptions:
         return cls(
             layout=action.layout,
             scroll_edge_style=action.scroll_edge_style,
+            background_color=action.background_color,
+            cancel_button_color=action.cancel_button_color,
         )
 
     def with_route_defaults(

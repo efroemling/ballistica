@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261015`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261028`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 703
+# ba_meta require asset-package 954
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,11 +22,29 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261015
-_ASSET_PACKAGE = ApverNum(703)
+# a-0.baclassicuiassets.261028
+_ASSET_PACKAGE = ApverNum(954)
 
 if TYPE_CHECKING:
     from babase import LangStr
+
+    class StringsAccountGroup:
+        """
+        ::
+
+            Strings for pages about an account (the account information page
+            other pages link to).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Placeholder text on the account information page while it is
+        #:     being built.
+        #:
+        #:     English: "Under Construction"
+        under_construction: LangStr
 
     class StringsEconomyGroup:
         """
@@ -310,6 +328,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when saving a profile whose name has nothing visible in it.
+        #:
+        #:     English: "Invalid name."
+        name_invalid: LangStr
+
+        #: ::
+        #:
         #:     Error when saving a profile whose name contains one of the game's
         #:     icon characters.
         #:
@@ -565,16 +590,18 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        account: StringsAccountGroup
         economy: StringsEconomyGroup
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 63 strings (``economy``, ``profile``,
-    #: ``profiles``, and 60 more). Full list in source.
+    #: The ``strings`` group - 65 strings (``account``, ``economy``,
+    #: ``profile``, ``profiles``, and 61 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
     'strings': {
+        'account': {'under_construction': ()},
         'economy': {
             'received_tickets': ('count',),
             'watch_an_ad': (),
@@ -611,6 +638,7 @@ _TREE = {
             'local_profile_info': (),
             'name_description': (),
             'name_edge_underscore': (),
+            'name_invalid': (),
             'name_no_icons': (),
             'name_not_empty': (),
             'not_enough_tickets': (),

@@ -83,9 +83,10 @@ class TestDocUIV2Controller(
     def _fulfill_route_page(
         self, route: bacommon.docui.routes.docuitest.AnyTestRoute
     ) -> DocUIResponse:
-        # A flat route-to-page dispatch; every case adds a branch and a
-        # return.
+        # A flat route-to-page dispatch; every case adds a branch, a
+        # return and (its page function's import) a local.
         # pylint: disable=too-many-return-statements, too-many-branches
+        # pylint: disable=too-many-locals
 
         match route:
             # Handle some pages purely locally.
@@ -149,6 +150,10 @@ class TestDocUIV2Controller(
                 )
 
                 return test_page_nine_patch(route)
+            case rt.Glyphs():
+                from bauiv1lib.docuitestglyphs import test_page_glyphs
+
+                return test_page_glyphs(route)
             case rt.EmptyPage():
                 from bauiv1lib.docuitestsimple import test_page_empty
 
@@ -165,6 +170,22 @@ class TestDocUIV2Controller(
                 from bauiv1lib.docuitestnav import test_page_nav
 
                 return test_page_nav(route)
+            case rt.Drill():
+                from bauiv1lib.docuitestdrill import test_page_drill
+
+                return test_page_drill(route)
+            case rt.DrillLevel():
+                from bauiv1lib.docuitestdrill import test_page_drill_level
+
+                return test_page_drill_level(route)
+            case rt.Popups() | rt.PopupsMain() | rt.PopupsOther():
+                from bauiv1lib.docuitestpopups import test_page_popups
+
+                return test_page_popups(route)
+            case rt.Themes() | rt.ThemesPopup():
+                from bauiv1lib.docuitestthemes import test_page_themes
+
+                return test_page_themes(route)
             case rt.WindowLayouts():
                 from bauiv1lib.docuitestlayouts import (
                     test_page_window_layouts,
@@ -179,10 +200,10 @@ class TestDocUIV2Controller(
                 from bauiv1lib.docuitestgrids import test_page_button_grids
 
                 return test_page_button_grids(route)
-            case rt.WideFit():
-                from bauiv1lib.docuitestlayouts import test_page_wide_fit
+            case rt.LayoutFit():
+                from bauiv1lib.docuitestlayouts import test_page_layout_fit
 
-                return test_page_wide_fit(route)
+                return test_page_layout_fit(route)
 
             # Ship web-tests off to some webserver to handle.
             case rt.WebTestGet() | rt.WebTestPost():
@@ -222,80 +243,6 @@ class TestDocUIV2Controller(
                 assert_never(action)
 
 
-def _layout_title(layout: bacommon.docui.v2.WindowLayout) -> str:
-    """A window layout's name, title-cased (``WIDE_TALL`` -> ``Wide Tall``)."""
-    return layout.name.replace('_', ' ').title()
-
-
-def _side_name(side: bacommon.docui.v2.ViewerSide | None) -> str:
-    """A viewer pane placement's name (None for no pane)."""
-    return 'None' if side is None else side.name.title()
-
-
-def _window_layouts_row(
-    style: bacommon.docui.v2.ScrollEdgeStyle,
-) -> bacommon.docui.v2.ButtonRow:
-    """A row opening each window layout (and fit test) in a style.
-
-    Viewer layouts get a button for each viewer pane placement: left,
-    none (rows spanning the window) and right.
-    """
-    import bacommon.docui.v2 as dui2
-
-    from bauiv1lib.docui._panes import layout_has_viewer_pane
-
-    def _buttons(layout: dui2.WindowLayout) -> list[dui2.Button]:
-        name = layout.name.replace('_', ' ').title()
-        if not layout_has_viewer_pane(layout):
-            return [
-                dui2.Button(
-                    label=LangStrSpecValue.literal(name),
-                    size=(120, 80),
-                    action=rt.WindowLayouts(layout=layout).browse(
-                        layout=layout, scroll_edge_style=style
-                    ),
-                )
-            ]
-        sides = (dui2.ViewerSide.LEFT, None, dui2.ViewerSide.RIGHT)
-        return [
-            dui2.Button(
-                label=LangStrSpecValue.literal(f'{name} ({_side_name(side)})'),
-                size=(200, 80),
-                action=rt.WindowLayouts(layout=layout, viewer_side=side).browse(
-                    layout=layout, scroll_edge_style=style
-                ),
-            )
-            for side in sides
-        ]
-
-    return dui2.ButtonRow(
-        # Dev-only, so baked literals.
-        title=LangStrSpecValue.literal(
-            f'Window Layouts ({style.name.lower()} scroll)'
-        ),
-        buttons=[
-            *(b for layout in dui2.WindowLayout for b in _buttons(layout)),
-            *(
-                dui2.Button(
-                    label=LangStrSpecValue.literal(
-                        _layout_title(layout) + ' Fit'
-                    ),
-                    size=(120, 80),
-                    action=rt.WideFit(layout=layout).browse(
-                        layout=layout, scroll_edge_style=style
-                    ),
-                )
-                for layout in (
-                    dui2.WindowLayout.WIDE,
-                    dui2.WindowLayout.WIDE_TALL,
-                    dui2.WindowLayout.WIDE_TALLER,
-                    dui2.WindowLayout.WIDER,
-                )
-            ),
-        ],
-    )
-
-
 def _test_v2_page_root(
     route: bacommon.docui.routes.docuitest.Root,
 ) -> bacommon.docui.v2.Response:
@@ -315,7 +262,12 @@ def _test_v2_page_root(
     import bacommon.docui.v2 as dui2
 
     from bauiv1 import _docuiv2testassets
-    from bauiv1lib.docuitestlayouts import layout_test_decos
+    from bauiv1lib.docuitestlayouts import (
+        layout_picker_rows,
+        layout_test_decos,
+        layout_tests_rows,
+        layout_theme_rows,
+    )
 
     strs = _docuiv2testassets.strings
 
@@ -334,54 +286,65 @@ def _test_v2_page_root(
             action=reload,
         )
 
+    # What our 'Window Layouts' row has picked (it rides along with
+    # every request we make, so it survives our other buttons).
+    arrived = route.get_state(rt.RootState)
+    state = rt.RootState() if arrived is None else arrived
+
     response = dui2.Response(
         page=dui2.Page(
             title=strs.nav.test_root_title.spec,
+            state=state.encode(),
             rows=[
-                dui2.ButtonRow(
-                    debug=debug,
-                    header_height=100,
-                    header_decorations_left=[
+                # (Tall enough that the nub at the bottom stays inside
+                # the band, with about the room at the bottom that the
+                # texts have at the top.)
+                dui2.HeaderRow(
+                    116,
+                    decorations_left=[
                         dui2.Text(
                             text=strs.common.header_left.spec,
-                            position=(0, 10 + 20),
+                            position=(0, 10 + 28),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=dui2.HAlign.LEFT,
                             debug=debug,
                         ),
                     ],
-                    header_decorations_center=[
+                    decorations_center=[
                         dui2.Text(
                             text=strs.common.hello_from_docui.spec,
-                            position=(0, 10 + 20),
+                            position=(0, 10 + 28),
                             size=(300, 30),
                             debug=debug,
                         ),
                         dui2.Text(
                             text=strs.common.docui_reference.spec,
                             scale=0.5,
-                            position=(0, -18 + 20),
+                            position=(0, -18 + 28),
                             size=(600, 23),
                             debug=debug,
                         ),
                         dui2.Image(
                             texture=_classicassets.textures.nub,
-                            position=(0, -58 + 20),
+                            position=(0, -58 + 28),
                             size=(60, 60),
                         ),
                     ],
-                    header_decorations_right=[
+                    decorations_right=[
                         dui2.Text(
                             text=strs.common.header_right.spec,
-                            position=(0, 10 + 20),
+                            position=(0, 10 + 28),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=dui2.HAlign.RIGHT,
                             debug=debug,
                         ),
                     ],
-                    title=strs.nav.some_tests.spec,
+                ),
+                dui2.TitleRow(strs.nav.some_tests.spec),
+                dui2.ButtonRow(
+                    debug=debug,
                     buttons=[
                         dui2.Button(
                             label=strs.nav.browse.spec,
@@ -461,8 +424,8 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
+                dui2.TitleRow(strs.nav.few_more_tests.spec),
                 dui2.ButtonRow(
-                    title=strs.nav.few_more_tests.spec,
                     buttons=[
                         dui2.Button(
                             label=(
@@ -560,14 +523,20 @@ def _test_v2_page_root(
                             action=rt.NinePatch().browse(),
                         ),
                         dui2.Button(
+                            # Dev-only page, so a baked literal label.
+                            label=LangStrSpecValue.literal('Glyphs'),
+                            size=(120, 80),
+                            action=rt.Glyphs().browse(),
+                        ),
+                        dui2.Button(
                             label=strs.layout.empty_page.spec,
                             size=(120, 80),
                             action=rt.EmptyPage().browse(),
                         ),
                     ],
                 ),
+                dui2.TitleRow(strs.nav.even_more_tests.spec),
                 dui2.ButtonRow(
-                    title=strs.nav.even_more_tests.spec,
                     buttons=[
                         dui2.Button(
                             label=strs.cloud.cloud_msg_get.spec,
@@ -584,105 +553,32 @@ def _test_v2_page_root(
                             size=(120, 80),
                             action=rt.BoundsTests().browse(),
                         ),
-                        # Dev-only page, so baked literal labels.
                         dui2.Button(
-                            label=LangStrSpecValue.literal('Widgets Small'),
+                            label=LangStrSpecValue.literal('Drill Down'),
                             size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.SMALL
-                            ),
+                            action=rt.Drill().browse(),
                         ),
                         dui2.Button(
-                            label=LangStrSpecValue.literal(
-                                'Widgets Small Tall'
-                            ),
+                            label=LangStrSpecValue.literal('Popups'),
                             size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.SMALL_TALL
-                            ),
+                            action=rt.Popups().browse(),
                         ),
                         dui2.Button(
-                            label=LangStrSpecValue.literal(
-                                'Widgets Small Taller'
-                            ),
+                            label=LangStrSpecValue.literal('Page Themes'),
                             size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.SMALL_TALLER
-                            ),
-                        ),
-                        dui2.Button(
-                            label=LangStrSpecValue.literal('Widgets Wide'),
-                            size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.WIDE
-                            ),
-                        ),
-                        dui2.Button(
-                            label=LangStrSpecValue.literal('Widgets Wider'),
-                            size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.WIDER
-                            ),
-                        ),
-                        dui2.Button(
-                            label=LangStrSpecValue.literal('Widgets Large'),
-                            size=(120, 80),
-                            action=rt.Widgets().browse(
-                                layout=dui2.WindowLayout.LARGE
-                            ),
-                        ),
-                        dui2.Button(
-                            label=LangStrSpecValue.literal('Nav Test'),
-                            size=(120, 80),
-                            action=rt.NavTest().browse(
-                                layout=dui2.WindowLayout.SMALL
-                            ),
+                            action=rt.Themes().browse(),
                         ),
                     ],
                 ),
-                # One row per scroll edge style, so the two can be
-                # compared directly (content should sit in exactly the
-                # same place in both).
-                *(
-                    _window_layouts_row(style)
-                    for style in (
-                        dui2.ScrollEdgeStyle.FADE,
-                        dui2.ScrollEdgeStyle.OUTLINE,
-                    )
-                ),
+                # Pick a layout for rows below to use.
+                *layout_picker_rows(route, state),
+                *layout_theme_rows(route, state),
+                *layout_tests_rows(state),
+                dui2.TitleRow(strs.layout.empty_row.spec),
+                dui2.ButtonRow(buttons=[]),
+                # Dev-only, so a baked literal.
+                dui2.TitleRow(LangStrSpecValue.literal('Button Tests')),
                 dui2.ButtonRow(
-                    # Dev-only, so baked literals. (Every layout, to see
-                    # how sections and cards behave at each width.)
-                    title=LangStrSpecValue.literal('Sections'),
-                    buttons=[
-                        dui2.Button(
-                            label=LangStrSpecValue.literal(
-                                layout.name.replace('_', ' ').title()
-                            ),
-                            size=(120, 80),
-                            action=rt.Sections().browse(layout=layout),
-                        )
-                        for layout in dui2.WindowLayout
-                    ],
-                ),
-                dui2.ButtonRow(
-                    # Dev-only, so baked literals. (Every layout, since
-                    # grids reflow to each width.)
-                    title=LangStrSpecValue.literal('Button Grids'),
-                    buttons=[
-                        dui2.Button(
-                            label=LangStrSpecValue.literal(
-                                layout.name.replace('_', ' ').title()
-                            ),
-                            size=(120, 80),
-                            action=rt.ButtonGrids().browse(layout=layout),
-                        )
-                        for layout in dui2.WindowLayout
-                    ],
-                ),
-                dui2.ButtonRow(title=strs.layout.empty_row.spec, buttons=[]),
-                dui2.ButtonRow(
-                    title=strs.layout.layout_tests.spec,
                     debug=debug,
                     buttons=[
                         dui2.Button(
@@ -727,14 +623,15 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
-                dui2.ButtonRow(
-                    title=strs.layout.long_row_test.spec,
-                    # Dev-only page, so baked literals.
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(strs.layout.long_row_test.spec),
+                # Dev-only page, so baked literals.
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Look - a subtitle! - These buttons reload the page'
                         ' - all scrolling should remain intact.'
-                    ),
-                    footnote=LangStrSpecValue.literal('Look - a footnote!'),
+                    )
+                ),
+                dui2.ButtonRow(
                     buttons=[
                         dui2.Button(
                             size=(150, 100),
@@ -818,8 +715,11 @@ def _test_v2_page_root(
                         *[_long_row_button(i) for i in range(9, 17)],
                     ],
                 ),
+                dui2.FootnoteRow(
+                    LangStrSpecValue.literal('Look - a footnote!')
+                ),
+                dui2.SubtitleRow(strs.layout.subtitle_only.spec),
                 dui2.ButtonRow(
-                    subtitle=strs.layout.subtitle_only.spec,
                     buttons=[
                         dui2.Button(size=(200, 120)),
                     ],
@@ -827,9 +727,9 @@ def _test_v2_page_root(
                 # Same again, so a subtitle-only row can be judged
                 # against a plain button row above it as well as
                 # against a footnote.
+                # Dev-only page, so a baked literal.
+                dui2.SubtitleRow(LangStrSpecValue.literal('Subtitle only 2')),
                 dui2.ButtonRow(
-                    # Dev-only page, so a baked literal.
-                    subtitle=LangStrSpecValue.literal('Subtitle only 2'),
                     buttons=[
                         dui2.Button(size=(200, 120)),
                     ],
@@ -847,23 +747,19 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
+                dui2.TitleRow(
+                    strs.layout.centered_faded_title.spec,
+                    color=(0.6, 0.6, 1.0, 0.3),
+                    flatness=1.0,
+                    shadow=1.0,
+                ),
+                dui2.SubtitleRow(
+                    strs.layout.testing_centered.spec,
+                    color=(1.0, 0.5, 1.0, 0.5),
+                    flatness=1.0,
+                    shadow=0.0,
+                ),
                 dui2.ButtonRow(
-                    title=strs.layout.centered_faded_title.spec,
-                    title_color=(0.6, 0.6, 1.0, 0.3),
-                    title_flatness=1.0,
-                    title_shadow=1.0,
-                    subtitle=strs.layout.testing_centered.spec,
-                    subtitle_color=(1.0, 0.5, 1.0, 0.5),
-                    subtitle_flatness=1.0,
-                    subtitle_shadow=0.0,
-                    # Styled on its own, not inheriting the subtitle's
-                    # overrides. (Dev-only page, so a baked literal.)
-                    footnote=LangStrSpecValue.literal(
-                        'Footnote with its own color, flatness and shadow.'
-                    ),
-                    footnote_color=(0.4, 1.0, 1.0, 1.0),
-                    footnote_flatness=0.0,
-                    footnote_shadow=1.0,
                     center_content=True,
                     center_title=True,
                     buttons=[
@@ -874,12 +770,24 @@ def _test_v2_page_root(
                         ),
                     ],
                 ),
-                # Right-alignment tests. (Dev-only, so baked literals.)
-                dui2.ButtonRow(
-                    title=LangStrSpecValue.literal('Right Aligned Title'),
-                    subtitle=LangStrSpecValue.literal(
-                        'Testing right-aligned title, subtitle, and content'
+                # Styled on its own, not inheriting the subtitle's
+                # overrides. (Dev-only page, so a baked literal.)
+                dui2.FootnoteRow(
+                    LangStrSpecValue.literal(
+                        'Footnote with its own color, flatness and shadow.'
                     ),
+                    color=(0.4, 1.0, 1.0, 1.0),
+                    flatness=0.0,
+                    shadow=1.0,
+                ),
+                # Right-alignment tests. (Dev-only, so baked literals.)
+                dui2.TitleRow(LangStrSpecValue.literal('Right Aligned Title')),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
+                        'Testing right-aligned title, subtitle, and content'
+                    )
+                ),
+                dui2.ButtonRow(
                     title_align=dui2.HAlign.RIGHT,
                     content_align=dui2.HAlign.RIGHT,
                     debug=debug,
@@ -895,11 +803,15 @@ def _test_v2_page_root(
                 # Same, but with more buttons than fit; alignment only
                 # applies to rows with room to spare, so this one should
                 # simply fill its width and scroll like any other.
-                dui2.ButtonRow(
-                    title=LangStrSpecValue.literal('Right Aligned Scrolling'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(
+                    LangStrSpecValue.literal('Right Aligned Scrolling')
+                ),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Too many buttons to fit; should scroll normally'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
                     title_align=dui2.HAlign.RIGHT,
                     content_align=dui2.HAlign.RIGHT,
                     debug=debug,
@@ -910,29 +822,35 @@ def _test_v2_page_root(
                         )
                         for i in range(16)
                     ],
-                    # The first row's header test, flipped upside down
-                    # as a footer.
-                    footer_height=100,
-                    footer_decorations_left=[
+                ),
+                # The first row's header test, flipped upside down as a
+                # footer. (Decorations sit lower than the header's
+                # mirror image to keep clear of the scroll-bar strip,
+                # which reaches 12 into the band below the row's
+                # buttons; the bottom line sits at -36 so its glyphs
+                # stay inside the band's -50 edge.)
+                dui2.FooterRow(
+                    100,
+                    decorations_left=[
                         dui2.Text(
                             text=LangStrSpecValue.literal('Footer Left'),
-                            position=(0, -10 - 20),
+                            position=(0, -36),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=dui2.HAlign.LEFT,
                             debug=debug,
                         ),
                     ],
-                    footer_decorations_center=[
+                    decorations_center=[
                         dui2.Image(
                             texture=_classicassets.textures.nub,
-                            position=(0, 58 - 20),
+                            position=(0, 58 - 32),
                             size=(60, 60),
                         ),
                         dui2.Text(
                             text=strs.common.docui_reference.spec,
                             scale=0.5,
-                            position=(0, 18 - 20),
+                            position=(0, 18 - 32),
                             size=(600, 23),
                             debug=debug,
                         ),
@@ -940,15 +858,15 @@ def _test_v2_page_root(
                             text=LangStrSpecValue.literal(
                                 'Hello from a DocUI footer!'
                             ),
-                            position=(0, -10 - 20),
+                            position=(0, -36),
                             size=(300, 30),
                             debug=debug,
                         ),
                     ],
-                    footer_decorations_right=[
+                    decorations_right=[
                         dui2.Text(
                             text=LangStrSpecValue.literal('Footer Right'),
-                            position=(0, -10 - 20),
+                            position=(0, -36),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=dui2.HAlign.RIGHT,

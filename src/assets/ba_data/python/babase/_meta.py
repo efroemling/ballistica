@@ -2,6 +2,7 @@
 #
 """Functionality related to dynamic discoverability of classes."""
 
+import os
 import logging
 from threading import Thread, Event
 from functools import partial
@@ -9,22 +10,18 @@ from typing import TYPE_CHECKING
 
 import _babase
 
-from bacommon.metascan import DirectoryScan, ScanResults
+from efro.util import strip_exception_tracebacks
+from bacommon.metascan import (
+    APP_SCAN_ALIAS,
+    DEPRECATED_EXPORT_SHORTCUTS,
+    DirectoryScan,
+    ScanResults,
+)
+from bacommon.metascancache import ScanCache
 from babase._logging import lifecyclelog
 
 if TYPE_CHECKING:
     from typing import Callable
-
-
-# Legacy export-type shortcut names. The scanner substitutes the
-# canonical class path and emits a deprecation warning when it sees
-# any of these.
-_DEPRECATED_EXPORT_SHORTCUTS: dict[str, str] = {
-    # DEPRECATED as of 6/2025.
-    'plugin': 'babase.Plugin',
-    # DEPRECATED as of 12/2023.
-    'keyboard': 'bauiv1.Keyboard',
-}
 
 
 class MetadataSubsystem:
@@ -48,6 +45,13 @@ class MetadataSubsystem:
 
         self._scan_complete_cb: Callable[[], None] | None = None
 
+        # Where per-module scan outcomes persist between launches (see
+        # ScanCache), what keys files with frozen mtimes, and where a
+        # build-time seed may live.
+        self._scan_cache_path: str | None = None
+        self._scan_cache_frozen_salt: str | None = None
+        self._scan_seed_path: str | None = None
+
     def start_scan(self, scan_complete_cb: Callable[[], None]) -> None:
         """Begin the overall scan.
 
@@ -62,19 +66,34 @@ class MetadataSubsystem:
         env = _babase.app.env
 
         self._scan_complete_cb = scan_complete_cb
+        appdir = env.python_directory_app
+        userdir = env.python_directory_user
+        aliases: dict[str, str] = {}
+        if appdir is not None:
+            aliases[appdir] = APP_SCAN_ALIAS
+        if userdir is not None:
+            aliases[userdir] = 'user'
         self._scan = DirectoryScan(
-            paths=[
-                path
-                for path in [
-                    env.python_directory_app,
-                    env.python_directory_user,
-                ]
-                if path is not None
-            ],
+            paths=[path for path in [appdir, userdir] if path is not None],
             expected_api_version=env.api_version,
-            deprecated_export_shortcuts=_DEPRECATED_EXPORT_SHORTCUTS,
+            deprecated_export_shortcuts=DEPRECATED_EXPORT_SHORTCUTS,
             expects_extras=True,
+            path_aliases=aliases,
         )
+
+        # Reusing last launch's per-module outcomes (for whatever
+        # hasn't changed) saves reading and parsing most of the source
+        # each launch. Installs that freeze file mtimes (flatpak/nix)
+        # get their files keyed by build instead, as with our pyc cache.
+        # Store apks also ship a seed for the first launch.
+        self._scan_cache_path = os.path.join(
+            env.cache_directory, 'metascan.json'
+        )
+        self._scan_cache_frozen_salt = f'build {env.engine_build_number}'
+        if appdir is not None:
+            self._scan_seed_path = os.path.join(
+                os.path.dirname(appdir), 'metascan_seed.json'
+            )
 
         lifecyclelog.debug('meta-scan bg thread kicked off')
         Thread(target=self._run_scan_in_bg).start()
@@ -167,22 +186,66 @@ class MetadataSubsystem:
 
     def _run_scan_in_bg(self) -> None:
         """Runs a scan (for use in background thread)."""
+        cache: ScanCache | None = None
+        seeded = False
         try:
             assert self._scan is not None
+            if self._scan_cache_path is not None:
+                cache = ScanCache.load(
+                    self._scan_cache_path, self._scan_cache_frozen_salt
+                )
+                # With no cache of our own yet (first launch, cleared
+                # cache) or one from an older build (whose entries for
+                # anything the update changed will miss), fall back on
+                # this build's seed if it has one.
+                if self._scan_seed_path is not None and (
+                    cache.empty or cache.install_changed
+                ):
+                    seeded = cache.load_seed(self._scan_seed_path)
+                self._scan.cache = cache
             self._scan.run()
             results = self._scan.results
             self._scan = None
         except Exception:
             logging.exception('metascan: Error running scan in bg.')
             results = ScanResults(announce_errors_occurred=True)
+            cache = None
 
         # Place results and tell the logic thread they're ready. Note
         # that scanresults must be fully in place before we set the
         # event; waiters read it as soon as they wake.
         self.scanresults = results
         self._scan_results_ready.set()
-        lifecyclelog.debug('meta-scan bg thread done')
+        lifecyclelog.debug(
+            'meta-scan bg thread done (cache: %s)',
+            (
+                'none'
+                if cache is None
+                else (
+                    f'{cache.hits} hits ({cache.seed_hits} from seed),'
+                    f' {cache.misses} misses'
+                )
+            ),
+        )
         _babase.pushcall(self._handle_scan_results, from_other_thread=True)
+
+        if cache is not None:
+            _check_scan_cache_health(cache, seeded)
+
+        # Save the cache for next launch (after handing off results,
+        # so this never delays anyone waiting on them).
+        if cache is not None and self._scan_cache_path is not None:
+            try:
+                cache.save(self._scan_cache_path)
+            except Exception as exc:
+                # Just costs next launch a full scan; not worth more
+                # than a log line.
+                logging.warning(
+                    'metascan: Unable to save scan cache to %s: %s',
+                    self._scan_cache_path,
+                    exc,
+                )
+                strip_exception_tracebacks(exc)
 
     def _handle_scan_results(self) -> None:
         """Called in the logic thread with results of a completed scan."""
@@ -235,3 +298,35 @@ class MetadataSubsystem:
         # Let the game know we're done.
         assert self._scan_complete_cb is not None
         self._scan_complete_cb()
+
+
+def _check_scan_cache_health(cache: ScanCache, seeded: bool) -> None:
+    """Warn if the scan cache plainly isn't doing its job.
+
+    These would otherwise only show up as slower launches.
+    """
+    if seeded:
+        # A seed is built from exactly the app files this build ships,
+        # so it should cover every one of them. (The count includes
+        # any app module that logs its own warning, but none should.)
+        app_misses = cache.misses_by_alias.get(APP_SCAN_ALIAS, 0)
+        if app_misses:
+            logging.warning(
+                'metascan: Seed missed %d app module(s); does it match'
+                ' this build?',
+                app_misses,
+            )
+    elif (
+        not cache.empty
+        and not cache.install_changed
+        and cache.hits == 0
+        and cache.misses >= 20
+    ):
+        # A cache from this same install matching nothing at all means
+        # module identities aren't stable here (something touching
+        # every file each launch, or keys computed inconsistently).
+        logging.warning(
+            'metascan: Scan cache matched none of %d module(s);'
+            ' caching is not working.',
+            cache.misses,
+        )

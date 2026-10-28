@@ -940,9 +940,12 @@ update-check: env-pre-update
 #                                                                              #
 ################################################################################
 
-# Bump any pinned version numbers to latest.
+# Bump any pinned version numbers to latest. (The flatpak build env is
+# derived from the main lockfile and the uv pin, so it follows them.)
 upgrade: env
 	@$(MAKE) venv-upgrade
+	@$(MAKE) flatpak-uv-upgrade
+	@$(MAKE) flatpak-build-env
 	@$(MAKE) python-site-packages
 	@$(MAKE) assetpins-latest
 	@$(PCOMMANDBATCH) echo GRN Upgrade-Project: SUCCESS!
@@ -1638,6 +1641,11 @@ flatpak-build-env: env
  -c pconfig/requirements_lock.txt \
  pconfig/requirements_build.txt -o pconfig/requirements_build_lock.txt
 	$(PCOMMAND) generate_flatpak_build_env
+
+# Pin the latest uv release for flatpak builds (pconfig/flatpak/uv.json).
+# Part of 'make upgrade'; run flatpak-build-env afterward to use it.
+flatpak-uv-upgrade: env
+	$(PCOMMAND) flatpak_uv_upgrade
 
 flatpak-clean:
 	rm build/flatpak -rf

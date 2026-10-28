@@ -47,8 +47,7 @@ if TYPE_CHECKING:
 #: to its center. Wider than tall: three just fit across a WIDE page's
 #: grid at our scale and spacing (measured: the grid gets 816.76 there,
 #: three take 816.16; any wider and it drops to two columns). The
-#: grid spreads its columns apart to take up the rest (see
-#: _GRID_MAX_SPREAD).
+#: grid scales a hair to take up the rest (see _GRID_MIN_SCALE).
 _BW = 264.0
 _BH = 230.0
 
@@ -61,11 +60,18 @@ _BH = 230.0
 _BUTTON_SCALE = 0.98
 _BUTTON_SPACING = 20.0
 
-#: Most extra spacing the grid adds between columns to span the page's
-#: width: plenty to fill a WIDE page exactly (it needs well under 1),
-#: while wider layouts' gaps grow just this much (the grid then sits
-#: centered).
-_GRID_MAX_SPREAD = 5.0
+#: How far the grid may scale (everything in it alike) to span the
+#: page's width, so its edges line up with the page's title: a WIDE
+#: page needs well under 1% (see _BW); LARGE pages, whose width
+#: follows the screen, scale up to fill the room beside the columns
+#: that fit or down to fit one more. A grid can always reach the edge
+#: when max/min is at least the width ratio of one more column to the
+#: columns that fit: 1.342 going from 3 columns to 4 and 1.255 from 4
+#: to 5, both covered (1.353), and less for more columns. (Measured
+#: 2026-10-23, medium/large ui-scale at four screen shapes: LARGE pages
+#: get 1029-1774 wide, so 4-6 columns, every one spanning the width.)
+_GRID_MIN_SCALE = 0.85
+_GRID_MAX_SCALE = 1.15
 
 
 #: How far the customize row is pushed down into the page's bottom
@@ -570,13 +576,12 @@ def _page(
 
     pvars = PlaylistTypeVars(kind.sessiontype())
     rows: list[dui2.Row] = [
+        dui2.TitleRow(_classicassets.strings.playlist.playlists.spec),
         dui2.ButtonRow(
-            title=_classicassets.strings.playlist.playlists.spec,
             layout=dui2.ButtonRowLayout.GRID,
-            # (Spreads to fill a WIDE page's sliver of leftover width
-            # (see _BW); wider layouts get a little extra breathing room
-            # between columns and sit centered in the rest.)
-            grid_max_spread=_GRID_MAX_SPREAD,
+            # (Scales to span the page's width; see _GRID_MIN_SCALE.)
+            grid_min_scale=_GRID_MIN_SCALE,
+            grid_max_scale=_GRID_MAX_SCALE,
             content_align=dui2.HAlign.CENTER,
             button_spacing=_BUTTON_SPACING,
             buttons=[

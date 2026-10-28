@@ -44,6 +44,12 @@ class ConnectionToClient : public Connection {
   auto GetCloudCharacters() const -> PyObject* {
     return cloud_characters_.get();
   }
+  /// This client's account's name depiction json (as the master server
+  /// composed it), or empty if unknown. Only ever set via v2 auth, so
+  /// it is verified whenever present.
+  auto peer_account_name_depiction() const -> const std::string& {
+    return peer_account_name_depiction_;
+  }
   auto build_number() const -> int { return build_number_; }
   /// Send a screen-message. ``s`` is the legacy flat/resource-json text
   /// every build understands; ``tagged``, when non-empty, is a lang-str
@@ -81,8 +87,9 @@ class ConnectionToClient : public Connection {
   auto v2_authed() const { return v2_authed_; }
 
   auto public_device_id() const { return public_device_id_; }
-  // Returns a spec for this client that incorporates their player names
-  // or their peer name if they have no players.
+  // Returns the spec this client goes by in chat: their player's name if
+  // they have exactly one player in the game, else their peer spec (the
+  // name the party list shows).
   auto GetCombinedSpec() -> PlayerSpec;
 
   auto protocol_version() const {
@@ -140,6 +147,7 @@ class ConnectionToClient : public Connection {
   PythonRef player_profiles_;
   PythonRef classic_purchases_;
   PythonRef cloud_characters_;
+  std::string peer_account_name_depiction_;
   bool got_v1_auth_from_master_server_{};
   bool v2_auth_decided_{};
   bool v2_auth_offered_{};

@@ -1,12 +1,224 @@
-### 1.8.5 (build 23071, api 9, 2026-10-22)
+### 1.8.5 (build 23076, api 9, 2026-10-28)
+- Asset downloads now connect to the IP address the cloud connection
+  already reached the node at, instead of looking the node's name up
+  again, so they no longer fail on flaky DNS while everything else
+  works (a retry still looks the name up, as a different path). Failed
+  downloads now log what kind of failure each attempt was (dns,
+  connect, read-timeout, tls, ...), which path it took, and how many
+  bytes arrived, and slow-resolve summaries count blobs fetched,
+  failed, retried and fetched via IP.
 - Doc-ui button rows have a new `GRID` layout: equal-size cells that
   wrap onto as many lines as it takes, with up/down navigation
-  following columns. `grid_max_spread` lets a grid widen the gaps
-  between its columns (by up to that much each) to span the row's full
-  width.
+  following columns. A grid scales everything alike to span its row's
+  width (up to fill the room beside its columns, or down to fit one
+  more), within `grid_min_scale`/`grid_max_scale`. Builds predating
+  grids show them as a scrolling row.
+- Doc-ui pages control their own look: `Page.h_inset`/`v_inset`,
+  `button_color` and `default_button_color`, plus `background_color`
+  and `cancel_button_color` on `Browse` and `Popup` for the window
+  around them (build 23075; older builds use the usual look). Every
+  window layout now promises its pages a content rect of a known size
+  (the `bacommon.docui.v2` `*_CONTENT_*` constants), and selecting a
+  row scrolls its must-show area fully into view. New debug toggles
+  draw layout rects, row parts and show areas
+  (`bauiv1.debugrectwidget()` draws such rects in general).
+- Doc-ui spacing is set by kind: `Page.spacing` gives the room around
+  titles, subtitles, footnotes, button rows, control rows and sections
+  (the larger side wins; container edges get none), and
+  `Page.row_spacing` is now a flat override. New standalone rows
+  (`TitleRow`, `SubtitleRow`, `FootnoteRow`, `HeaderRow`, `FooterRow`)
+  attach to the row beside them and lay out exactly as that row's own
+  title, footnote or bands would (build 23075; older builds skip them).
+- Client doc-ui controllers can open a page of another doc-ui domain
+  on top of their window from one of their own local-actions
+  (`TypedDocUIController.browse_from()`; Back returns to the page the
+  press came from). Get More Characters/Icons now open the store this
+  way instead of replacing the profile editor.
+- `WIDE_TALL` is now the default doc-ui window layout everywhere: for
+  routes (`DocUIRoute.get_window_layout()`), `Browse.layout`, host-ui
+  buttons, and windows opened with none. It's also what a layout the
+  client doesn't know shows as (previously `LARGE`, or `WIDE` for host
+  buttons). On the wire an omitted layout still means what it always
+  has.
 - The teams/free-for-all playlist browser now shows its playlists as a
   grid instead of one long sideways-scrolling row, opening in a taller
   or full-size window as the number of playlists grows.
+- Android x86/x86_64: fixed a crash drawing text on some PC emulators,
+  whose memory allocator hands out less-aligned memory than the
+  compiler assumed (`-fnew-alignment=8` for those ABIs).
+- Using a C++ object after it has been destroyed, or releasing a
+  reference to it twice, is now caught in release builds too: it
+  reports a fatal error naming the reference type, instead of crashing
+  somewhere unrelated.
+- The party window lists each client as their account: the account's
+  name capsule for accounts the host can vouch for (its own and clients
+  that joined with v2 auth), plain text otherwise. Capsule entries are
+  buttons, so controller selection highlights them.
+- Global profile icons are back in player names shown in game text
+  (join messages, score names, etc.), cloud profiles included. Names
+  from clients that joined without v2 auth get no icons, since nothing
+  about them is verified.
+- Player names with nothing visible in them (only zero-width or
+  direction-mark characters and the like) now fall back to a default
+  name, and profile editors refuse to save them. See
+  `bacommon.text.has_visible_chars()`.
+- New `allow_favorites` server config option (default true); hosts with
+  it off tell clients not to offer 'Add to Favorites' for them. Our
+  cloud-hosted public and private games turn it off, since their
+  addresses change with every launch. (This replaces a check on the
+  party name.)
+- Doc-ui: a window-closing `Local` action can now close back to a named
+  earlier page several windows down (`Local.close_to`; build it with
+  `DocUIRoute.close_to()`), handing values back to it as `return_sets`
+  does. The profile editor's delete and upgrade pages now open in
+  windows of their own and use it. The doc-ui test pages have a 'Drill
+  Down' example.
+- `bauiv1.buttonwidget()`'s `better_bg_fit` arg (and `PopupMenu`'s) is now
+  `clean_layout`, matching container and scroll widgets (the old name still
+  works with a deprecation warning until api 9 support ends; see
+  CHANGELOG_API_VERSIONS.md). Every doc-ui button now uses it, so its bounds
+  are its art: window back/close buttons, number-row and color-row buttons and
+  popup-text OK buttons look the same as before, but number and color buttons
+  now line up with the right edge of other control rows. Small and
+  back-small clean-layout buttons place a centered label slightly off
+  their art's true center, where it reads as centered on that art; and
+  legacy (non-clean-layout) small and back-small buttons now place one
+  exactly where clean-layout ones do relative to their art, so they look
+  the same at any size.
+- Text placement no longer relies on fudge factors. Glyph metrics now
+  say where each glyph's ink really is (measured from the font atlases
+  and baked into the glyph data; the big font and custom glyphs are now
+  data too, instead of being computed at startup from hand-tuned
+  tweaks), and one named baseline height puts capitals exactly mid-row.
+  Built-in-font text used to draw about half a unit right of center and
+  a third of a unit high; big-font characters are now each centered on
+  their advance and the row; custom glyphs are each centered in their
+  advance (and button-style symbols such as arrows and controller
+  buttons on the row too); OS-drawn text is unchanged; the text caret
+  now centers on the row and sits on the character boundary.
+- Profile icons, flags and account/platform logos each gain a
+  full-size `_FULL` twin character (`SpecialChar.FEDORA_FULL` and so
+  on; see `SpecialChar.full_size`) for showing framed or as a button
+  label. The long-standing characters stay the small raised forms
+  shown before names; they're now derived from their twins.
+- Custom-glyph atlas pages are set per glyph rather than by codepoint,
+  so related characters can sit together whatever sheet their art is
+  on.
+- Doc-ui pages can open popup windows (`bacommon.docui.v2.Popup`, and
+  the typed `PopupRoute`): a page shown over the current one without
+  leaving it, which can refresh, replace, browse from or close its
+  parent as it goes. Clients from build 23073 show them. Popups have no
+  title or close button unless asked for (`show_title` /
+  `show_close_button`); a press outside one, or back, closes it. There's
+  no fixed largest popup size (`POPUP_MAX_SIZE` is gone): clients shrink
+  a popup that wouldn't fit their screen and its page scrolls, so a tall
+  menu shows whole at a large ui-scale. Popups always keep 100 units in
+  from the screen's edges, so they're wholly on screen and there's
+  always somewhere outside one to press to dismiss it.
+- Big-font text widgets now honor `max_height` (it used to trip an
+  assertion in debug builds), and `babase.get_string_width()` can measure
+  big-font text. Doc-ui text decorations can draw with the big font
+  (`bacommon.docui.v2.Text.big`).
+- The doc-ui test pages have a 'Glyphs' page showing every custom glyph,
+  big-font character and some ordinary and OS-rendered ones against
+  their measured bounds and anchor points.
+- Host-ui buttons (`baclassic.HostUIButton`) now take a `browse` (made
+  with a route's `browse()`, as for a page's own links), so they can set
+  their page's state and their window's full look: layout, scroll edge
+  style, background and close-button colors. Clients before build 23075
+  use only its request, state and layout. Its `route` and `layout`
+  fields (new in 1.8.4) are gone: pass
+  `browse=MyRoute().browse(layout=...)`.
+- Classic hosts now serve a page for each party member
+  (`baclassic.HostUIClientPage`: account, ping, players, kick) and each
+  player (`baclassic.HostUIPlayerPage`: look, this game's stats, party
+  member, kick). Pressing a name in the party list opens its member's
+  page (hosts choose it with `HostUISubsystem.set_client_page()`); stats
+  rows open player pages. Kicks from these pages go through the kick
+  vote (or, for admins and the host, a confirmation), which names the
+  other players on the same device a kick would also remove. The kick
+  page now opens in a small window. A member's verified account can be
+  pressed to open an about-the-account page from the master server
+  (`classicaccount` doc-ui domain; a placeholder for now), via the host
+  local-action `ShowAccount`; host pages may use only that safe family
+  of local-actions (`ClassicHostLocalAction`).
+- Tapping a chat message in the party window offers its sender's party
+  member page as well as copying it, on hosts that serve one
+  (`bascenev1.get_chat_message_senders()`).
+- Hosts now name chat senders by their player's name if they have
+  exactly one in the game, else by their party-list name, instead of
+  joining several players' names with '/' (cut off at 25 bytes).
+- Where kicking leads is now decided in one public place,
+  `HostUISubsystem.set_kick_page()`, asked with a `baclassic.HostUIKickRequest`
+  (who would be kicked, who is asking, which player they picked) for party
+  member pages, player pages and older clients' party lists alike. The
+  standard kick vote is just its default getter
+  (`HostUIKickVotes.get_kick_page()`), with no special handling elsewhere,
+  so a host's own kick page now applies to admins and during votes too.
+  `set_kick_route()`/`get_kick_route()` (new in 1.8.4) are gone; use
+  `set_kick_page()`/`get_kick_page()`. Turning kick voting off no longer
+  stops admins and the host kicking from old clients' party lists.
+  (Host-side api only: clients of every build behave as before.)
+- The built-in host pages (stats, party member, player, kick vote) are
+  now made the way a modder's would be, so any of them can be swapped
+  out, or its module copied as a starting point (each module's
+  docstring says how). Links between pages go through public hooks:
+  `HostUISubsystem.get_client_page()`,
+  `HostUISubsystem.player_page.get_browse()` (which can now return None
+  for no player links), and `get_kick_page()`. The building
+  blocks they draw players with are public too:
+  `baclassic.host_ui_text()`, `host_ui_player_icon()` and
+  `host_ui_player_name()`, along with
+  `SessionPlayer.get_icon_depiction_json()`,
+  `get_name_depiction_json()` and `get_name_number()`.
+  `HostUIClientPage.get_player_route()` and
+  `HostUIPlayerPage.get_client_route()` (new in 1.8.4) are gone; links
+  follow the host's page hooks instead.
+- Names always draw as name depictions in the party list and host
+  pages, with a plain one made for anyone lacking their own (an
+  unverified client, a bot), rather than as a depiction sometimes and
+  plain text or a button other times; `host_ui_player_name()` now
+  always returns a depiction.
+- Hosts now strip icon characters (the private-use glyphs that mark
+  accounts and global profiles) from every client's chat text, verified
+  or not, so a message can't pass for someone else's. Who sent it is
+  still shown as before. (`Utils::StripIconChars()` in C++ now does
+  this and `PlayerSpec::WithoutIcons()`.)
+- Clients too old for host-ui kick votes (before build 23067) that try
+  to kick someone now get a message saying kick votes need version
+  1.8.4 or newer, instead of nothing happening.
+- Repeated party-list names are numbered ("iPhone", "iPhone 2", ...) in
+  the party window and host pages
+  (`bascenev1.get_party_member_names()`).
+- Name depictions can show a name as in game: `max_chars` shortens its
+  text ("A Rather L...") and `number` numbers it ("efro 2"), keeping
+  any capsule or icon look; clients that predate them show the full
+  name. Host pages now show players' names this way, and the game's own
+  short names shorten with the same code
+  (`bacommon.depiction.IN_GAME_NAME_MAX_CHARS`).
+- Depictions can now be color-multiplied: everything a depiction draws
+  (and its suffix and loading standins) is multiplied by the host's
+  `color_multiply`, replacing nothing, so the result is predictable for
+  any kind. Masked art such as character icons' frames now follows both
+  it and brightness (so frames flash with their button too), via a new
+  multiplier on what a mask adds (`SimpleComponent::SetMaskAddMult`;
+  other masked drawing looks as before). Doc-ui `Depiction` decorations
+  take it as rgba (its alpha is opacity), and image/button widgets as
+  `depiction_color_multiply` (rgb).
+- Scene protocol 57 exists but is opt-in: hosts stay on 56 (what 1.8
+  shipped with) unless set higher with the `SceneV1 Host Protocol`
+  config value or a server's `protocol_version`, which shuts out older
+  clients. Under 57, `depictiondisplay` nodes gain `color_multiply`. Node
+  attrs can now require a minimum host protocol: setting, connecting or
+  animating one on an older host raises an error saying so, and
+  late-joiner dumps leave them out.
+- Also under 57, prop nodes (and bombs) gain `opacity` (0-1): below 1
+  they draw blended, their texture's alpha included, with reflections,
+  lighting and shadows fading along. Lit, reflective objects can now
+  draw transparent, and transparent objects with premultiplied textures
+  now fade their lighting, reflections and vignette with them instead
+  of keeping them at full strength (which also fixes over-bright
+  fading meshes).
 
 ### 1.8.4 (build 23068, api 9, 2026-10-20)
 - If audio can't be started at all, the game now runs without sound

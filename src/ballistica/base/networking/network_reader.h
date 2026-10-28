@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_NETWORKING_NETWORK_READER_H_
 #define BALLISTICA_BASE_NETWORKING_NETWORK_READER_H_
 
+#include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -40,6 +41,10 @@ class NetworkReader {
   auto RunThread_() -> int;
   void PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
                                   const SockAddr& addr);
+
+  /// Rate-limit + backpressure gate for answering game queries. Reader
+  /// thread only.
+  auto ShouldAnswerGameQuery_() -> bool;
   static auto RunThreadStatic_(void* self) -> int {
     return static_cast<NetworkReader*>(self)->RunThread_();
   }
@@ -58,6 +63,12 @@ class NetworkReader {
   std::mutex paused_mutex_;
   std::condition_variable paused_cv_;
   std::unique_ptr<RemoteAppServer> remote_server_;
+
+  // Far above any real LAN scan (each scanning client sends a query every
+  // second or so), far below what overflows the writer.
+  static constexpr int kMaxGameQueryRepliesPerSecond{200};
+  std::chrono::steady_clock::time_point game_query_window_start_{};
+  int game_query_window_count_{};
 };
 
 }  // namespace ballistica::base

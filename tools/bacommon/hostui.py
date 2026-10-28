@@ -38,6 +38,14 @@ if TYPE_CHECKING:
 #: engine's ``networking.h``, which enforces the same gate natively.
 HOST_UI_MIN_BUILD = 23067
 
+#: First engine build that reads :attr:`Button.browse` (older ones read
+#: only its deprecated ``request`` and ``layout``).
+BUTTON_BROWSE_BUILD = 23075
+
+#: First engine build that reads :attr:`State.client_page` (older ones
+#: offer only :attr:`State.kick`'s popup on party members).
+CLIENT_PAGE_BUILD = 23075
+
 #: Largest request (serialized) a client will send a host. Hosts kick
 #: clients whose messages exceed 50000 bytes, so stay well under that.
 MAX_REQUEST_BYTES = 40000
@@ -126,19 +134,82 @@ class Button:
         IOAttrs('p', enum_fallback=ButtonPlacement.UNKNOWN),
     ]
 
-    #: The page to open; sent back to the host when pressed.
+    #: (Deprecated; read :attr:`browse` when set.) The page to open,
+    #: with any state :attr:`browse` sends folded in. Hosts fill it in
+    #: from :attr:`browse` for builds before
+    #: :data:`BUTTON_BROWSE_BUILD`, which read only this and
+    #: :attr:`layout`.
+    #
+    # TODO: Remove along with api 9 support, with layout, raising
+    # HOST_UI_MIN_BUILD to at least BUTTON_BROWSE_BUILD and making
+    # browse required. Retire the 'r' and 'w' keys (never reuse them).
     request: Annotated[dui2.Request, IOAttrs('r')]
 
-    #: The window layout to open the page in. (Defaults to wide, like
-    #: routes do.)
+    #: (Deprecated; read :attr:`browse` when set.) The window layout to
+    #: open the page in; :attr:`browse`'s layout, for builds before
+    #: :data:`BUTTON_BROWSE_BUILD`. (On the wire an omitted value means
+    #: wide, as it always has, so any other layout is always written
+    #: out.) One the client doesn't know shows as wide-tall, as
+    #: :attr:`bacommon.docui.v2.Browse.layout` does.
     layout: Annotated[
         dui2.WindowLayout,
         IOAttrs(
             'w',
             store_default=False,
-            enum_fallback=dui2.WindowLayout.WIDE,
+            soft_default=dui2.WindowLayout.WIDE,
+            enum_fallback=dui2.WindowLayout.WIDE_TALL,
         ),
-    ] = dui2.WindowLayout.WIDE
+    ] = dui2.WindowLayout.WIDE_TALL
+
+    #: How pressing the button opens its page, as for a page's own
+    #: links. It carries the request (sent back to the host), any state
+    #: to send with it, and the window's look (layout, scroll edge
+    #: style, frame colors). Its ``sets``, ``add_to_history`` and
+    #: ``default_sound`` don't apply (there's no page to take state from
+    #: or history to add to, and menus make their own sounds). Read from
+    #: :data:`BUTTON_BROWSE_BUILD` on; older builds ignore it.
+    browse: Annotated[dui2.Browse | None, IOAttrs('b', store_default=False)] = (
+        None
+    )
+
+    @classmethod
+    def for_browse(
+        cls,
+        *,
+        label: LangStrSpec,
+        placement: ButtonPlacement,
+        browse: dui2.Browse,
+    ) -> Button:
+        """A button opening a page as ``browse`` says, for any build.
+
+        Fills in the deprecated fields from ``browse`` too, for builds
+        before :data:`BUTTON_BROWSE_BUILD`.
+        """
+        import copy
+        from dataclasses import replace
+
+        request = (
+            browse.request
+            if browse.state is None
+            else replace(browse.request, state=copy.deepcopy(browse.state))
+        )
+        return cls(
+            label=label,
+            placement=placement,
+            request=request,
+            layout=browse.layout,
+            browse=browse,
+        )
+
+    def get_browse(self) -> dui2.Browse:
+        """How pressing this button opens its page.
+
+        From the deprecated fields if a host before
+        :data:`BUTTON_BROWSE_BUILD` sent it.
+        """
+        if self.browse is not None:
+            return self.browse
+        return dui2.Browse(self.request, layout=self.layout)
 
 
 @ioprepped
@@ -156,6 +227,26 @@ class KickTarget:
     request: Annotated[dui2.Request, IOAttrs('r')]
 
     #: The key in the request's args that takes the player's client id.
+    client_id_arg: Annotated[str, IOAttrs('a')]
+
+
+@ioprepped
+@dataclass
+class ClientPageTarget:
+    """Where a host takes clients who pick a party member.
+
+    Clients from :data:`CLIENT_PAGE_BUILD` on open this page when a
+    party member's name is pressed (in the party list or chat), with
+    the member's client id put in :attr:`browse`'s request args under
+    :attr:`client_id_arg`. Hosts not sending one get the party list's
+    older kick popup (see :class:`KickTarget`).
+    """
+
+    #: How to open the page (its client-id arg gets filled in). Its
+    #: ``sets``, ``add_to_history`` and ``default_sound`` don't apply.
+    browse: Annotated[dui2.Browse, IOAttrs('b')]
+
+    #: The key in the request's args that takes the client id.
     client_id_arg: Annotated[str, IOAttrs('a')]
 
 
@@ -197,6 +288,12 @@ class State:
     #: Where to take clients who ask to kick a party member (None: the
     #: host offers no kicking).
     kick: Annotated[KickTarget | None, IOAttrs('k', store_default=False)] = None
+
+    #: Where to take clients who pick a party member (None: the host
+    #: has no page for that). Read from :data:`CLIENT_PAGE_BUILD` on.
+    client_page: Annotated[
+        ClientPageTarget | None, IOAttrs('c', store_default=False)
+    ] = None
 
 
 class MessageTypeID(Enum):

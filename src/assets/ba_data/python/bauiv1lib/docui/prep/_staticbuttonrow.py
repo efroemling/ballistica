@@ -26,10 +26,12 @@ from bauiv1lib.docui.prep._button import (
 )
 
 if TYPE_CHECKING:
+    from typing import Callable
+
     from bacommon.assetpackage import ApverNum
     import bauiv1 as bui
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import (
         ButtonPrep,
         NativeLangStrFn,
@@ -93,14 +95,15 @@ class _GridMetrics:
 
     columns: int
     lines: int
-    #: Cell size and gaps, as laid out (shrunk if the grid had to be).
+    #: Cell size and gaps, as laid out (scaled with the grid).
     cell_width: float
     cell_height: float
     column_gap: float
     line_gap: float
-    #: How much the whole grid shrank to fit (1.0 for not at all).
+    #: How much the whole grid scaled, to fit or to span its width
+    #: (1.0 for not at all).
     factor: float
-    #: Cell size before any shrinking.
+    #: Cell size before any scaling.
     natural_cell: tuple[float, float]
 
     @property
@@ -152,28 +155,73 @@ def _grid_metrics(row: dui2.ButtonRow, *, avail: float) -> _GridMetrics:
     # (No wider than it has buttons for; a short grid aligns as a
     # narrower block.)
     columns = max(1, min(columns, count))
-    natural_width = columns * cell_w + (columns - 1) * col_gap
-    factor = min(1.0, avail / natural_width)
-    # Widen the gaps between columns toward spanning the width, by at
-    # most the row's max spread each: the outer columns land on its
-    # edges when that's enough, and fall short by the rest otherwise.
-    # (Capping each gap rather than switching all-or-nothing keeps
-    # spacing changing smoothly with the width. A shrunk grid already
-    # spans it; a single column has no gaps.)
-    widen = 0.0
-    if row.grid_max_spread > 0.0 and factor == 1.0 and columns > 1:
-        slack = avail - natural_width
-        widen = min(max(0.0, slack) / (columns - 1), row.grid_max_spread)
+
+    def _natural_width(cols: int) -> float:
+        return cols * cell_w + (cols - 1) * col_gap
+
+    # Too wide to fit at all (one column, or the row's own column
+    # count): shrink to fit.
+    factor = min(1.0, avail / _natural_width(columns))
+    if factor == 1.0:
+        columns, factor = _grid_fit_scale(
+            row,
+            columns=columns,
+            count=count,
+            avail=avail,
+            natural_width=_natural_width,
+        )
     return _GridMetrics(
         columns=columns,
         lines=math.ceil(count / columns) if count else 0,
         cell_width=cell_w * factor,
         cell_height=cell_h * factor,
-        column_gap=col_gap * factor + widen,
+        column_gap=col_gap * factor,
         line_gap=line_gap * factor,
         factor=factor,
         natural_cell=(cell_w, cell_h),
     )
+
+
+def _grid_fit_scale(
+    row: dui2.ButtonRow,
+    *,
+    columns: int,
+    count: int,
+    avail: float,
+    natural_width: Callable[[int], float],
+) -> tuple[int, float]:
+    """Columns and scale for a grid that fits at its natural size.
+
+    Scales it (within the row's min/max scale) to span ``avail``
+    exactly when it can: up to fill the room beside ``columns``, or
+    down to fit one more column; whichever is nearer 1.0. When
+    neither can, it scales up as far as allowed, falling short: that
+    keeps scale changing smoothly with the width instead of jumping
+    when the edge comes within reach. (It still jumps where the
+    column count changes, as it must.)
+    """
+    min_scale = min(1.0, row.grid_min_scale)
+    max_scale = max(1.0, row.grid_max_scale)
+    if min_scale == 1.0 and max_scale == 1.0:
+        return columns, 1.0
+
+    def _distance(factor: float) -> float:
+        # How far a scale is from 1.0, up or down alike.
+        return max(factor, 1.0 / factor)
+
+    # The scale each candidate needs to span the width exactly, for
+    # those that can within bounds.
+    spans: list[tuple[int, float]] = []
+    grow = avail / natural_width(columns)
+    if grow <= max_scale:
+        spans.append((columns, grow))
+    if row.grid_columns is None and columns < count:
+        shrink = avail / natural_width(columns + 1)
+        if shrink >= min_scale:
+            spans.append((columns + 1, shrink))
+    if spans:
+        return min(spans, key=lambda s: _distance(s[1]))
+    return columns, max_scale
 
 
 def _padded_avail(row: dui2.ButtonRow, *, left: float, right: float) -> float:
@@ -436,6 +484,7 @@ def prep_static_button_row(
             rowprep.grid_columns = metrics.columns
             rowprep.grid_cell_height = metrics.cell_height
             rowprep.grid_line_gap = metrics.line_gap
+            rowprep.grid_top = area_bottom + metrics.height
         case dui2.ButtonRowLayout.SCROLL:
             raise RuntimeError('Expected a static button row.')
         case _:
@@ -460,7 +509,7 @@ def prep_static_button_row(
 
 
 def instantiate_static_button_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> list[bui.Widget]:
     """Create the widgets for a prepped static button row.
 

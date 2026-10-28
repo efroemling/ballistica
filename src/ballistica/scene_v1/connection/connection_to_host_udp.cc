@@ -7,16 +7,30 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
-#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
 namespace ballistica::scene_v1 {
+
+// Note: our timers here use real (monotonic) time, not app/display time.
+// Those pause while we're suspended (backgrounded) but the host's clock
+// doesn't, and these timers are guesses about what the host is doing.
+static auto NowMillisecs_() -> millisecs_t {
+  return core::Platform::TimeMonotonicMillisecs();
+}
+
+/// When disconnecting, the longest we wait for the host to ack.
+constexpr millisecs_t kDisconnectAckWaitMillisecs{2000};
+
+/// When disconnecting from a host that has already been silent this
+/// long, don't wait for an ack at all.
+constexpr millisecs_t kDisconnectHostSilentGiveUpMillisecs{1000};
 
 auto ConnectionToHostUDP::SwitchProtocol() -> bool {
   if (protocol_version() > kProtocolVersionClientMin) {
@@ -40,8 +54,7 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
       last_client_id_request_time_(0),
       last_disconnect_request_time_(0),
       did_die_(false),
-      last_host_response_time_millisecs_(
-          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {
+      last_host_response_time_millisecs_(NowMillisecs_()) {
   GetRequestID_();
   g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this, &addr] {
     return "ConnectionToHostUDP: created for " + addr.AddressString() + ":"
@@ -76,8 +89,12 @@ void ConnectionToHostUDP::Update() {
     return;
   }
 
-  auto current_time_millisecs =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+  // Already on our way out; nothing more to do.
+  if (did_die_) {
+    return;
+  }
+
+  auto current_time_millisecs = NowMillisecs_();
 
   // If we've not gotten a client_id from the host yet, keep pestering it.
   if (!errored()) {
@@ -134,6 +151,13 @@ void ConnectionToHostUDP::Update() {
               + " never completed (accepted=" + std::to_string(client_id_ != -1)
               + ", got_game_packets=" + std::to_string(got_host_game_packet_)
               + ", protocol " + std::to_string(protocol_version())
+              + ", request_id " + std::to_string(request_id_) + ", dropped "
+              + std::to_string(mismatched_request_id_packets_)
+              + " host packet(s) with another request_id"
+              + (mismatched_request_id_packets_
+                     ? " (last " + std::to_string(last_mismatched_request_id_)
+                           + ")"
+                     : std::string())
               + "); host silent for " + silent_secs + "s.");
     }
     // If the connection never got established, announce it failed.
@@ -148,8 +172,28 @@ void ConnectionToHostUDP::Update() {
     Die();
     return;
   } else if (errored()) {
-    // If we've errored, keep sending disconnect-requests periodically. Once
-    // we get a response (or time out in the above code) we'll die.
+    if (disconnect_start_time_millisecs_ == 0) {
+      disconnect_start_time_millisecs_ = current_time_millisecs;
+    }
+
+    // Don't hold the user hostage waiting for an ack. If the host has
+    // already gone quiet, it is likely gone entirely (quit, crashed,
+    // dropped off the network) and will never answer; and even a live
+    // host acks within a round trip. So give up quickly either way;
+    // the host times us out on its own if our requests never reached
+    // it.
+    if (HostSilentMillisecs() > kDisconnectHostSilentGiveUpMillisecs
+        || current_time_millisecs - disconnect_start_time_millisecs_
+               > kDisconnectAckWaitMillisecs) {
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                           "ConnectionToHostUDP: no disconnect ack from "
+                           "host; dropping connection.");
+      Die();
+      return;
+    }
+
+    // Keep sending disconnect-requests periodically. Once we get a
+    // response (or give up above) we'll die.
     if (current_time_millisecs - last_disconnect_request_time_ > 1000) {
       last_disconnect_request_time_ = current_time_millisecs;
 
@@ -198,8 +242,7 @@ void ConnectionToHostUDP::SendDisconnectRequest() {
 
 void ConnectionToHostUDP::HandleGamePacket(const std::vector<uint8_t>& buffer) {
   // Keep track of when we last heard from the host for time-out purposes.
-  last_host_response_time_millisecs_ =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+  last_host_response_time_millisecs_ = NowMillisecs_();
   got_host_game_packet_ = true;
 
   ConnectionToHost::HandleGamePacket(buffer);
@@ -239,12 +282,44 @@ void ConnectionToHostUDP::Error(const std::string& msg) {
 
 auto ConnectionToHostUDP::GetAsUDP() -> ConnectionToHostUDP* { return this; }
 
+void ConnectionToHostUDP::NoteMismatchedRequestIdPacket(
+    uint8_t packet_request_id) {
+  mismatched_request_id_packets_++;
+  last_mismatched_request_id_ = packet_request_id;
+  if (mismatched_request_id_packets_ == 1) {
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kDebug, [this, packet_request_id] {
+          return "ConnectionToHostUDP: dropping host packets tagged"
+                 " request_id "
+                 + std::to_string(packet_request_id) + " (ours is "
+                 + std::to_string(request_id_) + ").";
+        });
+  }
+}
+
+auto ConnectionToHostUDP::HostSilentMillisecs() const -> millisecs_t {
+  return NowMillisecs_() - last_host_response_time_millisecs_;
+}
+
 void ConnectionToHostUDP::RequestDisconnect() {
   // Mark us as errored so all future communication results in more
   // disconnect requests.
   set_errored(true);
   if (client_id_ != -1) {
     SendDisconnectRequest();
+  }
+
+  // If the host has already gone quiet, it is likely gone entirely
+  // (quit, crashed, dropped off the network) and will never ack, so
+  // leave immediately. Our request above still goes out in case it is
+  // just slow. Same if we never got far enough to have a client id.
+  if (!did_die_
+      && (client_id_ == -1
+          || HostSilentMillisecs() > kDisconnectHostSilentGiveUpMillisecs)) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                         "ConnectionToHostUDP: host already silent; "
+                         "disconnecting without waiting for ack.");
+    Die();
   }
 }
 

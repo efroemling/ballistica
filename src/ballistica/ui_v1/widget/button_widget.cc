@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -29,12 +30,12 @@ constexpr float kDisabledBodyGreyScale{0.85f};
 /// A standard-disabled button's icon alpha, as a multiple of its own.
 constexpr float kDisabledIconAlphaScale{0.4f};
 
-/// Label margin at each side for a centered label, without better-bg-fit
+/// Label margin at each side for a centered label, without clean-layout
 /// (legacy buttons; these fit their labels sideways only, at a fixed
 /// margin, as they always have).
 constexpr float kTextSideMargin{15.0f};
 
-/// With better-bg-fit (doc-ui buttons), every label margin is a fixed
+/// With clean-layout (doc-ui buttons), every label margin is a fixed
 /// amount or a fraction of our size along its axis, whichever is
 /// smaller. Our backing art stretches to our size on each axis, so its
 /// visible edge does too: the fraction keeps small buttons' labels clear
@@ -53,8 +54,94 @@ constexpr float kFitTextVertMarginFraction{0.2f};
 constexpr float kFitTextSideMargin{20.0f};
 constexpr float kFitTextVertMargin{12.0f};
 
+/// How a standard button style's art mesh is placed. With clean-layout
+/// its quad is scaled by fit_scale about fit_center (fractions of our
+/// size), which puts its visible art exactly on our bounds; legacy
+/// placement instead grows our bounds by the fixed borders (so the art
+/// overhangs them by amounts that don't scale with the button).
+struct ButtonArtGeometry {
+  float fit_center_x;
+  float fit_center_y;
+  float fit_scale_x;
+  float fit_scale_y;
+  float border_l;
+  float border_r;
+  float border_b;
+  float border_t;
+};
+constexpr ButtonArtGeometry kSmallArt{0.5f,  0.49f, 1.158f, 1.16f,
+                                      10.0f, 14.0f, 9.0f,   5.0f};
+constexpr ButtonArtGeometry kBackSmallArt{0.624f, 0.488f, 1.35f, 1.28f,
+                                          10.0f,  14.0f,  9.0f,  5.0f};
+constexpr ButtonArtGeometry kSquareArt{0.521f, 0.495f, 1.155f, 1.169f,
+                                       6.0f,   9.0f,   6.0f,   6.0f};
+
+/// The box (left, bottom, width, height) legacy placement draws a
+/// style's visible art over: what a clean-layout button's bounds would
+/// be for the same art.
+struct ArtBox {
+  float l;
+  float b;
+  float w;
+  float h;
+};
+static auto LegacyArtBox(const ButtonArtGeometry& art, float width,
+                         float height) -> ArtBox {
+  float quad_w = width + art.border_l + art.border_r;
+  float quad_h = height + art.border_b + art.border_t;
+  float quad_cx = (width - art.border_l + art.border_r) * 0.5f;
+  float quad_cy = (height - art.border_b + art.border_t) * 0.5f;
+  float art_w = quad_w / art.fit_scale_x;
+  float art_h = quad_h / art.fit_scale_y;
+  return {quad_cx - art.fit_center_x * art_w,
+          quad_cy - art.fit_center_y * art_h, art_w, art_h};
+}
+
+/// Where a centered label sits in a small-style button, as fractions of
+/// its visible art's box: our bounds with clean-layout; with legacy
+/// placement, the box its art covers there (LegacyArtBox()), so both
+/// look the same. That art's shading (a thicker, darker rim at its
+/// right and bottom) makes a label at its true center read as low and
+/// to the right; this shifts it up and left so it reads as centered.
+/// (The doc-ui glyphs test page mirrors these; keep it in sync.)
+constexpr float kSmallFitLabelCenterX{0.47f};
+constexpr float kSmallFitLabelCenterY{0.545f};
+
+/// The same for back-small-style buttons (the arrow-shaped backing).
+constexpr float kBackSmallFitLabelCenterX{0.52f};
+constexpr float kBackSmallFitLabelCenterY{0.5f};
+
+/// The same for square-style buttons. X was tuned on the close X, which
+/// is centered in its glyph. Y was 0.53 from that too, but that lifted
+/// labels in large square buttons visibly high (Eric, 2026-10-26).
+constexpr float kSquareFitLabelCenterX{0.49f};
+constexpr float kSquareFitLabelCenterY{0.5f};
+
+/// A style's art geometry and centered-label spot (see above), for the
+/// styles that have one.
+struct LabelFit {
+  const ButtonArtGeometry* art;
+  float x;
+  float y;
+};
+static auto LabelFitForStyle(ButtonWidget::Style style)
+    -> std::optional<LabelFit> {
+  switch (style) {
+    case ButtonWidget::Style::kSmall:
+      return LabelFit{&kSmallArt, kSmallFitLabelCenterX, kSmallFitLabelCenterY};
+    case ButtonWidget::Style::kBackSmall:
+      return LabelFit{&kBackSmallArt, kBackSmallFitLabelCenterX,
+                      kBackSmallFitLabelCenterY};
+    case ButtonWidget::Style::kSquare:
+      return LabelFit{&kSquareArt, kSquareFitLabelCenterX,
+                      kSquareFitLabelCenterY};
+    default:
+      return std::nullopt;
+  }
+}
+
 /// Distance from our edge to a left/right-aligned label (with
-/// better-bg-fit, at most kFitTextMarginFraction of our width).
+/// clean-layout, at most kFitTextMarginFraction of our width).
 constexpr float kAlignedTextInset{20.0f};
 
 /// Gap between our right edge and an accessory glyph's area.
@@ -70,14 +157,14 @@ constexpr float kAccessoryRegion{kAccessoryEdgeInset + kAccessoryWidth};
 /// Scale an accessory glyph draws at.
 constexpr float kAccessoryScale{0.69f};
 
-/// With better-bg-fit, buttons shorter than this shrink their accessory
+/// With clean-layout, buttons shorter than this shrink their accessory
 /// (glyph and region together) in proportion, so a small popup-menu
 /// button keeps room for its label; taller ones get it at full size.
 /// (Doc-ui choice-row buttons are this tall.)
 constexpr float kAccessoryFullSizeHeight{46.0f};
 
 auto ButtonWidget::AccessoryScale_() const -> float {
-  if (!better_bg_fit_) {
+  if (!clean_layout_) {
     return 1.0f;
   }
   return std::clamp(height_ / kAccessoryFullSizeHeight, 0.0f, 1.0f);
@@ -95,6 +182,35 @@ ButtonWidget::ButtonWidget()
 }
 
 ButtonWidget::~ButtonWidget() = default;
+
+void ButtonWidget::SetRole(Role role, const Vector3f* color,
+                           const Vector4f* text_color) {
+  role_ = role;
+  role_color_set_ = (color != nullptr);
+  if (color) {
+    role_color_ = *color;
+  }
+  role_text_color_set_ = (text_color != nullptr);
+  if (text_color) {
+    role_text_color_ = *text_color;
+  }
+}
+
+auto ButtonWidget::BodyColor_() const -> Vector3f {
+  if (!color_set_ && role_color_set_) {
+    return role_color_;
+  }
+  return {color_red_, color_green_, color_blue_};
+}
+
+auto ButtonWidget::LabelColor_() const -> Vector4f {
+  // Our role's label color only goes with its body color: a button with
+  // a color of its own keeps the label color that goes with that.
+  if (!text_color_set_ && !color_set_ && role_text_color_set_) {
+    return role_text_color_;
+  }
+  return {text_color_r_, text_color_g_, text_color_b_, text_color_a_};
+}
 
 auto ButtonWidget::GetDepictionSlot() -> DepictionSlot& {
   if (!depiction_slot_) {
@@ -248,8 +364,12 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   bool remote_icons = false;
 
-  if (icon_type_ == IconType::kCancel && device != nullptr
-      && device->IsRemoteControl()) {
+  // Start buttons always show the start icon; cancel buttons show the
+  // cancel icon unless they have one of their own.
+  bool start_icon = (role_ == Role::kStart);
+  bool cancel_icon = (role_ == Role::kCancel && !icon_.exists());
+
+  if (cancel_icon && device != nullptr && device->IsRemoteControl()) {
     remote_icons = true;
   }
 
@@ -321,15 +441,15 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // The horizontal span our label (plus any icon) lives in. A centered
   // label keeps its margins; an aligned one hugs its edge; an accessory
-  // takes over the right end. With better-bg-fit, each is capped at a
+  // takes over the right end. With clean-layout, each is capped at a
   // fraction of our width and the accessory shrinks on short buttons
   // (see kFitTextMarginFraction and kAccessoryFullSizeHeight).
   bool text_centered = text_h_align_ == TextWidget::HAlign::kCenter;
   float width_cap = width_ * kFitTextMarginFraction;
-  float side_margin = better_bg_fit_ ? std::min(kFitTextSideMargin, width_cap)
-                                     : kTextSideMargin;
-  float aligned_inset = better_bg_fit_ ? std::min(kAlignedTextInset, width_cap)
-                                       : kAlignedTextInset;
+  float side_margin =
+      clean_layout_ ? std::min(kFitTextSideMargin, width_cap) : kTextSideMargin;
+  float aligned_inset = clean_layout_ ? std::min(kAlignedTextInset, width_cap)
+                                      : kAlignedTextInset;
   float accessory_scale = AccessoryScale_();
   float text_span_l = text_centered ? side_margin : aligned_inset;
   float text_span_r = width_
@@ -360,7 +480,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     };
 
-    if (better_bg_fit_) {
+    if (clean_layout_) {
       // Sideways, accounting for our icon if we have it; then the same
       // vertically (see kFitTextMarginFraction).
       fit(string_width, text_span_r - text_span_l - icon_width);
@@ -385,14 +505,14 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // 0.5) hand-rolled disabled buttons have long used), icons fade, and
   // our label takes TextWidget's disabled look (set further down).
   bool disabled_look = StandardDisabled_();
-  float color_r{color_red_};
-  float color_g{color_green_};
-  float color_b{color_blue_};
+  Vector3f body_color{BodyColor_()};
+  float color_r{body_color.x};
+  float color_g{body_color.y};
+  float color_b{body_color.z};
   float icon_alpha{icon_color_alpha_};
   if (disabled_look) {
-    float grey =
-        kDisabledBodyGreyScale
-        * (0.3f * color_red_ + 0.59f * color_green_ + 0.11f * color_blue_);
+    float grey = kDisabledBodyGreyScale
+                 * (0.3f * color_r + 0.59f * color_g + 0.11f * color_b);
     color_r = color_g = color_b = grey;
     icon_alpha *= kDisabledIconAlphaScale;
   }
@@ -447,12 +567,12 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       args.pass = pass;
       args.transparent = draw_transparent;
       // Standing in for a custom texture, we take the box that texture
-      // draws to: without better-bg-fit that overhangs our bounds by 4%
+      // draws to: without clean-layout that overhangs our bounds by 4%
       // a side (see below), and art authored for it (the toolbar
       // chests) should come out the same size either way.
       float dep_border_x{};
       float dep_border_y{};
-      if (texture_.exists() && !better_bg_fit_) {
+      if (texture_.exists() && !clean_layout_) {
         dep_border_x = 0.04f * width_;
         dep_border_y = 0.04f * height_;
       }
@@ -532,7 +652,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         l_border = r_border = 0.04f * width_;
         b_border = t_border = 0.04f * height_;
 
-        if (better_bg_fit_) {
+        if (clean_layout_) {
           // Just fit exactly to the widget bounds. If we need adjustments
           // we can expose args.
           bg_scale_center_x = 0.5f;
@@ -566,7 +686,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_back_transparent.get()
                              : g_ui_v1->assets().button_back_opaque.get();
-            if (better_bg_fit_) {
+            if (clean_layout_) {
               bg_scale_center_x = 0.523f;
               bg_scale_center_y = 0.46f;
               bg_scale_x = 1.01f;
@@ -586,17 +706,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                 draw_transparent
                     ? g_ui_v1->assets().button_back_small_transparent.get()
                     : g_ui_v1->assets().button_back_small_opaque.get();
-            if (better_bg_fit_) {
-              bg_scale_center_x = 0.624f;
-              bg_scale_center_y = 0.488f;
-              bg_scale_x = 1.35f;
-              bg_scale_y = 1.28f;
+            if (clean_layout_) {
+              bg_scale_center_x = kBackSmallArt.fit_center_x;
+              bg_scale_center_y = kBackSmallArt.fit_center_y;
+              bg_scale_x = kBackSmallArt.fit_scale_x;
+              bg_scale_y = kBackSmallArt.fit_scale_y;
               do_draw_better_fit = true;
             } else {
-              l_border = 10;
-              r_border = 14;
-              b_border = 9;
-              t_border = 5;
+              l_border = kBackSmallArt.border_l;
+              r_border = kBackSmallArt.border_r;
+              b_border = kBackSmallArt.border_b;
+              t_border = kBackSmallArt.border_t;
             }
             break;
           }
@@ -605,7 +725,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_tab_transparent.get()
                              : g_ui_v1->assets().button_tab_opaque.get();
-            if (better_bg_fit_) {
+            if (clean_layout_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.5f;
               bg_scale_x = 1.04f;
@@ -624,17 +744,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_square_transparent.get()
                              : g_ui_v1->assets().button_square_opaque.get();
-            if (better_bg_fit_) {
-              bg_scale_center_x = 0.521f;
-              bg_scale_center_y = 0.495f;
-              bg_scale_x = 1.155f;
-              bg_scale_y = 1.169f;
+            if (clean_layout_) {
+              bg_scale_center_x = kSquareArt.fit_center_x;
+              bg_scale_center_y = kSquareArt.fit_center_y;
+              bg_scale_x = kSquareArt.fit_scale_x;
+              bg_scale_y = kSquareArt.fit_scale_y;
               do_draw_better_fit = true;
             } else {
-              l_border = 6;
-              r_border = 9;
-              b_border = 6;
-              t_border = 6;
+              l_border = kSquareArt.border_l;
+              r_border = kSquareArt.border_r;
+              b_border = kSquareArt.border_b;
+              t_border = kSquareArt.border_t;
             }
 
             break;
@@ -657,7 +777,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_larger_transparent.get()
                              : g_ui_v1->assets().button_larger_opaque.get();
-            if (better_bg_fit_) {
+            if (clean_layout_) {
               bg_scale_center_x = 0.506f;
               bg_scale_center_y = 0.47f;
               bg_scale_x = 1.055f;
@@ -676,7 +796,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_large_transparent.get()
                              : g_ui_v1->assets().button_large_opaque.get();
-            if (better_bg_fit_) {
+            if (clean_layout_) {
               bg_scale_center_x = 0.503f;
               bg_scale_center_y = 0.452f;
               bg_scale_x = 1.06f;
@@ -695,7 +815,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_medium_transparent.get()
                              : g_ui_v1->assets().button_medium_opaque.get();
-            if (better_bg_fit_) {
+            if (clean_layout_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.48f;
               bg_scale_x = 1.05f;
@@ -717,17 +837,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_asset = draw_transparent
                              ? g_ui_v1->assets().button_small_transparent.get()
                              : g_ui_v1->assets().button_small_opaque.get();
-            if (better_bg_fit_) {
-              bg_scale_center_x = 0.5f;
-              bg_scale_center_y = 0.49f;
-              bg_scale_x = 1.158f;
-              bg_scale_y = 1.16f;
+            if (clean_layout_) {
+              bg_scale_center_x = kSmallArt.fit_center_x;
+              bg_scale_center_y = kSmallArt.fit_center_y;
+              bg_scale_x = kSmallArt.fit_scale_x;
+              bg_scale_y = kSmallArt.fit_scale_y;
               do_draw_better_fit = true;
             } else {
-              l_border = 10;
-              r_border = 14;
-              b_border = 9;
-              t_border = 5;
+              l_border = kSmallArt.border_l;
+              r_border = kSmallArt.border_r;
+              b_border = kSmallArt.border_b;
+              t_border = kSmallArt.border_t;
             }
             break;
           }
@@ -759,11 +879,11 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // Draw icon.
       if ((show_icons) && draw_transparent) {
         bool do_draw_icon = true;
-        if (icon_type_ == IconType::kStart) {
+        if (start_icon) {
           c.SetColor(1.4f * mult * color_r, 1.4f * mult * color_g,
                      1.4f * mult * color_b, 1.0f);
           c.SetTexture(g_ui_v1->assets().start_button.get());
-        } else if (icon_type_ == IconType::kCancel) {
+        } else if (cancel_icon) {
           if (remote_icons) {
             c.SetColor(1.0f * mult * (1.0f), 1.0f * mult * (1.0f),
                        1.0f * mult * (1.0f), 1.0f);
@@ -834,15 +954,21 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Translate(1.0f * extra_offs_x, 1.0f * extra_offs_y, 0.5f);
       c.Scale(1, 1, 0.5f);
 
-      // Special case - fudge text centering for small back buttons.
-      if (style_ == Style::kBackSmall && text_centered) {
-        if (better_bg_fit_) {
-          c.Translate(width_ * 0.55, height_ * 0.5f);
-        } else {
-          c.Translate(width_ * 0.4f, height_ * 0.48f);
-        }
-        // Shift over for our icon if we have it.
-        c.Translate(icon_width * 0.5f, 0, 0);
+      // Legacy (non-clean-layout) small and back-small buttons place a
+      // centered label where clean-layout ones do, relative to their
+      // art: within the box legacy placement draws the art's visible
+      // part over (see LegacyArtBox()).
+      // (Only over our style's own art: not a custom texture or a
+      // depiction standing in for it.)
+      std::optional<LabelFit> label_fit;
+      if (text_centered && !texture_.exists()
+          && !(depiction_slot_ && depiction_slot_->active())) {
+        label_fit = LabelFitForStyle(style_);
+      }
+      if (label_fit && !clean_layout_) {
+        ArtBox art = LegacyArtBox(*label_fit->art, width_, height_);
+        c.Translate(art.l + label_fit->x * art.w + icon_width * 0.5f,
+                    art.b + label_fit->y * art.h);
       } else {
         // Anchor per our label's alignment; an icon precedes the label.
         float anchor_x;
@@ -857,15 +983,21 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             anchor_x = (text_span_l + text_span_r + icon_width) * 0.5f;
             break;
         }
-        c.Translate(anchor_x, height_ * 0.5f);
+        float anchor_y = height_ * 0.5f;
+        if (label_fit) {
+          anchor_x += width_ * (label_fit->x - 0.5f);
+          anchor_y = height_ * label_fit->y;
+        }
+        c.Translate(anchor_x, anchor_y);
       }
       if (string_scale != 1.0f) {
         c.Scale(string_scale, string_scale);
       }
       c.Submit();
 
-      text_->set_color(mult * text_color_r_, mult * text_color_g_,
-                       mult * text_color_b_, text_color_a_);
+      Vector4f label_color{LabelColor_()};
+      text_->set_color(mult * label_color.x, mult * label_color.y,
+                       mult * label_color.z, label_color.a);
       text_->set_flatness(text_flatness_);
       text_->SetEnabled(!disabled_look);
       text_->Draw(pass, draw_transparent);
@@ -888,8 +1020,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Scale(kAccessoryScale * accessory_scale,
               kAccessoryScale * accessory_scale, 0.5f);
       c.Submit();
-      accessory_text_->set_color(mult * text_color_r_, mult * text_color_g_,
-                                 mult * text_color_b_, text_color_a_);
+      Vector4f label_color{LabelColor_()};
+      accessory_text_->set_color(mult * label_color.x, mult * label_color.y,
+                                 mult * label_color.z, label_color.a);
       accessory_text_->set_flatness(text_flatness_);
       accessory_text_->SetEnabled(!disabled_look);
       accessory_text_->Draw(pass, draw_transparent);

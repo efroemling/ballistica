@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 
     from bacommon.docui import DocUIRequest
 
+    from bauiv1lib.docui._controller import DocUIController
+
 
 class DocUIMainWindowState(bui.MainWindowState):
     """Recreates a doc-ui window (for back navigation and the like).
@@ -35,10 +37,15 @@ class DocUIMainWindowState(bui.MainWindowState):
         ],
         request: DocUIRequest,
         uiopenstate: bui.UIOpenState | None,
+        controller_type: type[DocUIController],
     ) -> None:
         super().__init__()
         self.create_call = create_call
         self.request = request
+
+        # Which controller's page this is (closing back to a page only
+        # considers windows of the closing window's own controller).
+        self.controller_type = controller_type
 
         # We simply need to hold on to this to keep the ui-open-state
         # alive.
@@ -66,6 +73,13 @@ class DocUIMainWindowState(bui.MainWindowState):
             )
             return
         self.request = replace(request, state={**request.state, **values})
+
+    def get_path(self) -> str | None:
+        """The path of the page we recreate (None for older formats)."""
+        import bacommon.docui.v2 as dui2
+
+        request = self.request
+        return request.path if isinstance(request, dui2.Request) else None
 
     @override
     def get_ui_open_states(self) -> list[bui.UIOpenState]:

@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
+    from bacommon.assetcas import CasDownloadStats
 
 #: A resolve taking at least this long (from request to finish) gets a
 #: summary line logged; see :meth:`ResolveTrace.summary_level_name`.
@@ -133,6 +134,57 @@ class Tier1Attempt:
 
 
 @dataclass
+class BlobAttempt:
+    """One attempt at downloading one CAS blob.
+
+    :meta private:
+    """
+
+    #: 'ok', or the failure's kind (see
+    #: ``bacommon.assetcas.classify_download_error``).
+    outcome: str
+    #: Whether it connected to the transport's address (skipping a DNS
+    #: lookup) rather than looking the node's host up.
+    via_address: bool
+    seconds: float
+    bytes_received: int
+    content_length: int | None
+
+    @classmethod
+    def make(
+        cls,
+        outcome: str,
+        via_address: bool,
+        started: float,
+        stats: CasDownloadStats,
+    ) -> BlobAttempt:
+        """An attempt that started at ``started`` (monotonic) and just ended."""
+        return cls(
+            outcome=outcome,
+            via_address=via_address,
+            seconds=time.monotonic() - started,
+            bytes_received=stats.bytes_received,
+            content_length=stats.content_length,
+        )
+
+
+def describe_blob_attempts(attempts: list[BlobAttempt]) -> str:
+    """Blob attempts in brief: ``#1 dns via ip 0.1s 0/12345B; ...``.
+
+    :meta private:
+    """
+    parts: list[str] = []
+    for i, att in enumerate(attempts):
+        total = '?' if att.content_length is None else str(att.content_length)
+        via = 'ip' if att.via_address else 'dns'
+        parts.append(
+            f'#{i + 1} {att.outcome} via {via}'
+            f' {att.seconds:.1f}s {att.bytes_received}/{total}B'
+        )
+    return '; '.join(parts)
+
+
+@dataclass
 class ResolveTrace:
     """Timing and outcome bookkeeping for one gated resolve.
 
@@ -160,6 +212,15 @@ class ResolveTrace:
     tier1_attempts: list[Tier1Attempt] = field(default_factory=list)
     build_poll_seconds: float = 0.0
     fetch_bytes: int = 0
+    #: Blob downloads that succeeded, and failed for good.
+    blobs_ok: int = 0
+    blobs_failed: int = 0
+    #: Blob downloads that needed more than one attempt (either way).
+    blobs_retried: int = 0
+    #: Blob downloads that went to the transport's address.
+    blobs_via_address: int = 0
+    #: Failed blob-download attempts by kind (dns, read-timeout, ...).
+    blob_failure_kinds: dict[str, int] = field(default_factory=dict)
     fetch_started_at: float | None = None
     fetch_seconds: float = 0.0
     network_available_start: bool | None = None
@@ -187,6 +248,34 @@ class ResolveTrace:
         if self.node_waiters == 0 and self.node_wait_since is not None:
             self.node_wait_seconds += time.monotonic() - self.node_wait_since
             self.node_wait_since = None
+
+    def blob_done(self, attempts: list[BlobAttempt], ok: bool) -> None:
+        """Note one blob download finished, and how its attempts went."""
+        if ok:
+            self.blobs_ok += 1
+        else:
+            self.blobs_failed += 1
+        if len(attempts) > 1:
+            self.blobs_retried += 1
+        if attempts and attempts[0].via_address:
+            self.blobs_via_address += 1
+        for att in attempts:
+            if att.outcome != 'ok':
+                self.blob_failure_kinds[att.outcome] = (
+                    self.blob_failure_kinds.get(att.outcome, 0) + 1
+                )
+
+    def _blobs_summary(self) -> str:
+        """Blob downloads in brief."""
+        kinds = ', '.join(
+            f'{kind} {count}'
+            for kind, count in sorted(self.blob_failure_kinds.items())
+        )
+        return (
+            f'blobs {self.blobs_ok} ok, {self.blobs_failed} failed,'
+            f' {self.blobs_retried} retried, {self.blobs_via_address} via ip'
+            + (f' (failed attempts: {kinds})' if kinds else '')
+        )
 
     def _attempts_summary(self) -> str:
         """Tier-1 attempts grouped by attempt number and outcome."""
@@ -238,6 +327,7 @@ class ResolveTrace:
         return (
             self.node_wait_timeouts > 0
             or any(a.outcome != 'ok' for a in self.tier1_attempts)
+            or bool(self.blob_failure_kinds)
             or self.queue_seconds >= _TROUBLED_QUEUE_SECONDS
             or (self.outcome is not None and self.outcome != 'ok')
         )
@@ -281,6 +371,7 @@ class ResolveTrace:
             f' build-poll {self.build_poll_seconds:.1f}s;'
             f' fetched {self.fetch_bytes} bytes in'
             f' {self.fetch_seconds:.1f}s;'
+            f' {self._blobs_summary()};'
             f' network available {self.network_available_start}'
             f'->{self.network_available_end},'
             f' transport connected {self.transport_connected_start}'

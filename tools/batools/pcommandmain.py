@@ -167,6 +167,7 @@ from batools.pcommands3 import (
     remove_docker_images,
     generate_flathub_manifest,
     generate_flatpak_build_env,
+    flatpak_uv_upgrade,
     flatpak_add_release,
     flatpak_prebuilt_inputs,
     gen_pyembed,

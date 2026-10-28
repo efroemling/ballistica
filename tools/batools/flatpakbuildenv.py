@@ -37,23 +37,154 @@ from efrotools.util import readfile, writefile
 if TYPE_CHECKING:
     from typing import Any
 
+#: The build arches, as flatpak names them; each is also the substring
+#: identifying a manylinux wheel (and a uv release asset) built for it.
+BUILD_ARCHES = ('x86_64', 'aarch64')
+
 # uv is not in the runtime or the SDK and `make env` requires it, so we
 # supply it as a pinned source rather than piping an install script from
-# the network (which no Flathub build could do anyway). Bump both the
-# version and the checksums together; the checksums are published as
-# <asset>.sha256 next to each release asset.
-UV_VERSION = '0.12.23'
-#
-# Keyed by flatpak arch name, which is also the substring identifying a
-# manylinux wheel built for it; these keys are the build arches.
-UV_SHA256 = {
-    'x86_64': (
-        '9167d72b3319674b6303c4cbe071854bba13ebdf3d76b1a7cbdc175471fb66d6'
-    ),
-    'aarch64': (
-        '6524bd338177ed50d035d39354e12545e993bbeba2ecbddf0480c5b3a81d313f'
-    ),
-}
+# the network (which no Flathub build could do anyway). The pin (version
+# plus each arch's tarball checksum, as published in the <asset>.sha256
+# file next to each release asset) lives in this file, written by
+# upgrade_uv_pin() as part of `make upgrade`.
+UV_PIN_PATH = 'pconfig/flatpak/uv.json'
+
+_UV_REPO = 'astral-sh/uv'
+
+# Files whose pins have to agree (see check_consistency()).
+_MAIN_LOCK_PATH = 'pconfig/requirements_lock.txt'
+_BUILD_LOCK_PATH = 'pconfig/requirements_build_lock.txt'
+_MODULE_PATH = 'pconfig/flatpak/python-build-env.yml'
+
+
+@dataclass
+class UvPin:
+    """The uv release flatpak builds install, with per-arch checksums."""
+
+    version: str
+    sha256: dict[str, str]
+
+
+def load_uv_pin(projroot: str) -> UvPin:
+    """Read the uv pin."""
+    path = os.path.join(projroot, UV_PIN_PATH)
+    try:
+        data = json.loads(readfile(path))
+        pin = UvPin(version=str(data['version']), sha256=dict(data['sha256']))
+    except Exception as exc:
+        raise CleanError(f"Unable to read uv pin '{path}': {exc}") from exc
+    if sorted(pin.sha256) != sorted(BUILD_ARCHES):
+        arches = ', '.join(BUILD_ARCHES)
+        raise CleanError(
+            f"uv pin '{path}' must have checksums for exactly {arches}."
+        )
+    return pin
+
+
+def _uv_asset_url(version: str, arch: str) -> str:
+    return (
+        f'https://github.com/{_UV_REPO}/releases/download/'
+        f'{version}/uv-{arch}-unknown-linux-gnu.tar.gz'
+    )
+
+
+def _fetch_text(url: str, *, attempts: int = 3) -> str:
+    """Fetch a url's text, retrying transient failures.
+
+    ``make upgrade`` runs this unattended, and a truncated read now and
+    then (seen on PyPI's json api) shouldn't fail the whole upgrade.
+    """
+    import time
+
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                data: bytes = response.read()
+                return data.decode()
+        except Exception as exc:
+            if attempt + 1 == attempts:
+                raise CleanError(f'Unable to fetch {url}: {exc}') from exc
+            time.sleep(2.0 * (attempt + 1))
+    raise RuntimeError('unreachable')
+
+
+def upgrade_uv_pin(projroot: str) -> None:
+    """Pin the latest uv release, with its published checksums.
+
+    The checksums come from the same release as the tarballs, so this
+    gives the same assurance as copying them by hand; their job is to
+    make every later build get exactly the binary pinned here.
+    """
+    release = json.loads(
+        _fetch_text(f'https://api.github.com/repos/{_UV_REPO}/releases/latest')
+    )
+    version = str(release['tag_name'])
+    sha256: dict[str, str] = {}
+    for arch in BUILD_ARCHES:
+        # The .sha256 file is '<hex digest> <asset name>'.
+        digest = _fetch_text(_uv_asset_url(version, arch) + '.sha256').split()
+        if not digest or not re.fullmatch(r'[0-9a-f]{64}', digest[0]):
+            raise CleanError(
+                f'Unexpected checksum file for uv {version} on {arch}.'
+            )
+        sha256[arch] = digest[0]
+
+    old = load_uv_pin(projroot)
+    writefile(
+        os.path.join(projroot, UV_PIN_PATH),
+        json.dumps({'version': version, 'sha256': sha256}, indent=2) + '\n',
+    )
+    if old.version == version:
+        print(f'uv pin is current ({version}).', flush=True)
+    else:
+        print(
+            f'{Clr.GRN}uv pin {old.version} -> {version}.{Clr.RST}',
+            flush=True,
+        )
+
+
+def check_consistency(projroot: str) -> None:
+    """Make sure the flatpak build env matches what it's derived from.
+
+    The build lockfile pins each package to its version in the main
+    lockfile, and the flatpak module supplies the pinned uv; both go
+    stale silently when the main lock or the uv pin moves without a
+    ``make flatpak-build-env``. Offline and cheap: compares pins only.
+    """
+    main_path = os.path.join(projroot, _MAIN_LOCK_PATH)
+    build_path = os.path.join(projroot, _BUILD_LOCK_PATH)
+    module_path = os.path.join(projroot, _MODULE_PATH)
+    if not all(os.path.exists(p) for p in (build_path, module_path)):
+        return
+
+    fix = 'Run `make flatpak-build-env` and commit the result.'
+    main = {_canonical(p.name): p.version for p in parse_lockfile(main_path)}
+    for pkg in parse_lockfile(build_path):
+        want = main.get(_canonical(pkg.name))
+        if want != pkg.version:
+            has = want if want is not None else 'no such package'
+            raise CleanError(
+                f'{_BUILD_LOCK_PATH} pins {pkg.name}=={pkg.version} but'
+                f' {_MAIN_LOCK_PATH} has {has}. {fix}'
+            )
+
+    pin = load_uv_pin(projroot)
+    module = readfile(module_path)
+    for arch in BUILD_ARCHES:
+        if (
+            _uv_asset_url(pin.version, arch) not in module
+            or pin.sha256[arch] not in module
+        ):
+            raise CleanError(
+                f'{_MODULE_PATH} does not supply the uv pinned in'
+                f' {UV_PIN_PATH} ({pin.version}, {arch}). {fix}'
+            )
+
+
+def _canonical(name: str) -> str:
+    """A package name in PEP 503 normalized form."""
+    return re.sub(r'[-_.]+', '-', name).lower()
+
 
 # Where the generated module stages its payload, relative to
 # FLATPAK_DEST (/app). The manifests name the absolute form in
@@ -109,9 +240,8 @@ def _pypi_release_files(pkg: LockedPackage) -> list[dict[str, Any]]:
     """Return the PyPI files for a package whose hash we have pinned."""
     url = f'https://pypi.org/pypi/{pkg.name}/{pkg.version}/json'
     try:
-        with urllib.request.urlopen(url, timeout=60) as response:
-            data = json.loads(response.read().decode())
-    except Exception as exc:
+        data = json.loads(_fetch_text(url))
+    except CleanError as exc:
         raise CleanError(
             f'Unable to fetch PyPI metadata for'
             f' {pkg.name}=={pkg.version}: {exc}'
@@ -225,7 +355,7 @@ def select_distributions(
         return [(None, min(universal, key=_wheel_rank))]
 
     per_arch: dict[str, dict[str, Any]] = {}
-    for arch in UV_SHA256:
+    for arch in BUILD_ARCHES:
         matches = [
             f
             for f in wheels
@@ -234,7 +364,7 @@ def select_distributions(
         if matches:
             per_arch[arch] = min(matches, key=_wheel_rank)
     if per_arch:
-        if len(per_arch) != len(UV_SHA256):
+        if len(per_arch) != len(BUILD_ARCHES):
             got = ', '.join(per_arch)
             raise CleanError(
                 f'{pkg.name}=={pkg.version} has manylinux wheels for'
@@ -247,7 +377,7 @@ def select_distributions(
 
 
 def write_flatpak_module(
-    path: str, packages: list[LockedPackage], lock_name: str
+    path: str, packages: list[LockedPackage], lock_name: str, uv_pin: UvPin
 ) -> None:
     """Write the flatpak-builder module supplying uv and the wheels."""
     lines = [
@@ -269,13 +399,12 @@ def write_flatpak_module(
         'sources:',
     ]
 
-    for arch, sha256 in UV_SHA256.items():
+    for arch in BUILD_ARCHES:
         lines += [
             '  - type: archive',
             f'    only-arches: [{arch}]',
-            '    url: https://github.com/astral-sh/uv/releases/download/'
-            f'{UV_VERSION}/uv-{arch}-unknown-linux-gnu.tar.gz',
-            f'    sha256: {sha256}',
+            f'    url: {_uv_asset_url(uv_pin.version, arch)}',
+            f'    sha256: {uv_pin.sha256[arch]}',
         ]
 
     # One PyPI metadata request per package; they are independent, so
@@ -302,16 +431,16 @@ def write_flatpak_module(
 
 def generate(projroot: str) -> None:
     """Regenerate the flatpak module from the build lockfile."""
-    lock_path = os.path.join('pconfig', 'requirements_build_lock.txt')
-    module_path = os.path.join('pconfig', 'flatpak', 'python-build-env.yml')
-
-    packages = parse_lockfile(os.path.join(projroot, lock_path))
+    packages = parse_lockfile(os.path.join(projroot, _BUILD_LOCK_PATH))
     print(
         f'{Clr.BLD}Selecting wheels for {len(packages)}'
         f' build packages...{Clr.RST}',
         flush=True,
     )
     write_flatpak_module(
-        os.path.join(projroot, module_path), packages, lock_path
+        os.path.join(projroot, _MODULE_PATH),
+        packages,
+        _BUILD_LOCK_PATH,
+        load_uv_pin(projroot),
     )
-    print(f'{Clr.GRN}Wrote {module_path}.{Clr.RST}', flush=True)
+    print(f'{Clr.GRN}Wrote {_MODULE_PATH}.{Clr.RST}', flush=True)

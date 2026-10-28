@@ -91,6 +91,28 @@ def set_admins(admins: list[str]) -> None:
         classic.host_ui.admins = set(admins)
 
 
+def get_party_member_names() -> dict[int, str]:
+    """Each party member's name as party lists show it, by client id.
+
+    That's their account's name (or, if not signed in, their device's);
+    -1 is the host. Repeated names get numbered in roster order
+    ("iPhone", "iPhone 2", ...), which every peer sees the same, so the
+    host and its clients agree on who is who.
+
+    :meta private:
+    """
+    names: dict[int, str] = {}
+    counts: dict[str, int] = {}
+    for entry in _bascenev1.get_game_roster():
+        client_id = entry['client_id']
+        name = entry['display_string']
+        if not isinstance(client_id, int) or not isinstance(name, str):
+            continue
+        count = counts[name] = counts.get(name, 0) + 1
+        names[client_id] = name if count == 1 else f'{name} {count}'
+    return names
+
+
 def set_enable_default_kick_voting(enable: bool) -> None:
     """Turn the standard kick-vote system on or off.
 
@@ -115,6 +137,10 @@ class HostInfo:
 
     # Note this can be None for non-ip hosts such as bluetooth.
     port: int | None
+
+    # Whether the host lets clients save it to their favorites (see
+    # :func:`set_host_allow_favorites`).
+    allow_favorites: bool = True
 
 
 @dataclass

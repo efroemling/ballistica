@@ -340,6 +340,7 @@ class RendererGL : public Renderer {
   ProgramObjectGL* obj_lightshad_facing_prog_{};
   ProgramObjectGL* obj_lightshad_facing_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_worldspace_prog_{};
   ProgramObjectGL* obj_refl_lightshad_colorize_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_prog_{};
