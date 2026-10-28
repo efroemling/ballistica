@@ -42,6 +42,7 @@
  "ba_data/python/babase/_meta.py",
  "ba_data/python/babase/_net.py",
  "ba_data/python/babase/_plugin.py",
+ "ba_data/python/babase/_repl.py",
  "ba_data/python/babase/_simpledialog.py",
  "ba_data/python/babase/_stringedit.py",
  "ba_data/python/babase/_text.py",

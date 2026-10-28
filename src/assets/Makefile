@@ -231,6 +231,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
   $(BUILD_DIR)/ba_data/python/babase/_net.py \
   $(BUILD_DIR)/ba_data/python/babase/_plugin.py \
+  $(BUILD_DIR)/ba_data/python/babase/_repl.py \
   $(BUILD_DIR)/ba_data/python/babase/_simpledialog.py \
   $(BUILD_DIR)/ba_data/python/babase/_stringedit.py \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
