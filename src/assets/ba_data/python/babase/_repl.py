@@ -19,13 +19,14 @@ import types
 import inspect
 import importlib
 import threading
+import contextlib
 import concurrent.futures
 from typing import TYPE_CHECKING, override
 
 import _babase
 
 if TYPE_CHECKING:
-    from typing import Any, Generator
+    from typing import Any, Generator, Iterator
     import asyncio
 
     import babase
@@ -43,17 +44,33 @@ async def _run_in_context(
     return await _context_steps(coro, ctx)
 
 
+class _Escaped:
+    """A SystemExit or KeyboardInterrupt raised by an awaited statement.
+
+    asyncio re-raises those two out of the task step instead of storing
+    them on the task, which would take them out through the logic
+    thread's event loop (and Py_Exit() the process from there). We
+    return them as a value instead and runcode() re-raises them on the
+    stdin thread.
+    """
+
+    def __init__(self, exc: BaseException) -> None:
+        self.exc = exc
+
+
 @types.coroutine
 def _context_steps(
     coro: types.CoroutineType[Any, Any, Any], ctx: babase.ContextRef
 ) -> Generator[Any, Any, Any]:
     step, arg = coro.send, None
     while True:
-        with ctx:
+        with ctx, _quitters():
             try:
                 yielded = step(arg)
             except StopIteration as exc:
                 return exc.value
+            except (SystemExit, KeyboardInterrupt) as exc:
+                return _Escaped(exc)
         try:
             step, arg = coro.send, (yield yielded)
         except BaseException as exc:  # pylint: disable=broad-except
@@ -67,6 +84,30 @@ def _pyrepl(submodule: str) -> Any:
     colors and completion; we drive it the same way asyncio's REPL does.
     """
     return importlib.import_module(f'_pyrepl.{submodule}')
+
+
+@contextlib.contextmanager
+def _quitters() -> Iterator[None]:
+    """Provide exit() and quit() while REPL code is running.
+
+    Regular Python gets these from site; we don't run that, and
+    babase._env deletes them anyway since raising SystemExit anywhere
+    else on the logic thread would take the process down hard. So they
+    only exist in builtins while a REPL statement runs. pyrepl handles
+    a bare 'exit' itself. code's Quitter (unlike site's) doesn't close
+    stdin; it's just missing from typeshed.
+    """
+    added = []
+    for name in ('exit', 'quit'):
+        if not hasattr(builtins, name):
+            quitter = code.Quitter(name)  # type: ignore[attr-defined]
+            setattr(builtins, name, quitter)
+            added.append(name)
+    try:
+        yield
+    finally:
+        for name in added:
+            delattr(builtins, name)
 
 
 # Whether pyrepl came up; decided on the main thread (see
@@ -102,7 +143,8 @@ class _LogicThreadConsoleMixin(code.InteractiveConsole):
                 return
             _babase.user_ran_commands()
             try:
-                result = types.FunctionType(code, self.locals)()
+                with _quitters():
+                    result = types.FunctionType(code, self.locals)()
                 if not inspect.iscoroutine(result):
                     fut.set_result(result)
                     return
@@ -121,8 +163,10 @@ class _LogicThreadConsoleMixin(code.InteractiveConsole):
                     fut.set_exception(KeyboardInterrupt())
                 elif (exc := tsk.exception()) is not None:
                     fut.set_exception(exc)
+                elif isinstance(res := tsk.result(), _Escaped):
+                    fut.set_exception(res.exc)
                 else:
-                    fut.set_result(tsk.result())
+                    fut.set_result(res)
 
             task.add_done_callback(_done)
 
@@ -151,7 +195,8 @@ class _LogicThreadConsoleMixin(code.InteractiveConsole):
                 # then quits the app).
                 raise
             self._show_user_traceback(exc)
-            return None
+            # Tells pyrepl to skip the rest of a multi-statement paste.
+            return getattr(self, 'STATEMENT_FAILED', None)
 
     def _show_user_traceback(self, exc: BaseException) -> None:
         # Drop our own plumbing frames (futures, task wrappers, etc.) so
@@ -259,21 +304,19 @@ def _restore_terminal_at_exit() -> None:
         except Exception:
             pass
 
-    _babase.atexit(_restore)
+    # _babase.atexit() (which runs before our threads go down) is only
+    # available in monolithic builds.
+    if _babase.app.env.monolithic_build:
+        _babase.atexit(_restore)
+    else:
+        import atexit
+
+        atexit.register(_restore)
 
 
 def run() -> None:
     """Run the interactive loop; call from the stdin thread."""
     assert not _babase.in_logic_thread()
-
-    # Regular Python gets these from site; we don't run that. They go in
-    # builtins (not our locals) so pyrepl's bare 'exit' command still
-    # works. code's Quitter (unlike site's) doesn't close stdin; it's
-    # just missing from typeshed.
-    for name in ('exit', 'quit'):
-        if not hasattr(builtins, name):
-            quitter = code.Quitter(name)  # type: ignore[attr-defined]
-            setattr(builtins, name, quitter)
 
     console = _make_console(sys.modules['__main__'].__dict__)
     try:
