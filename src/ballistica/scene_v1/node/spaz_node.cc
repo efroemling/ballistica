@@ -700,6 +700,7 @@ class SpazNodeType : public NodeType {
         behavior_version(this),
         pickup_before_hitbox(this),
         pickup_release_time_ms(this),
+        hold_duration_ms(this),
         spaz_def(this),
         use_spaz_def_color(this),
         use_spaz_def_highlight(this),
@@ -707,8 +708,7 @@ class SpazNodeType : public NodeType {
         boxing_gloves_color_texture(this),
         boxing_gloves_color(this),
         boxing_gloves_scale(this),
-        team_coloring(this),
-        hold_duration_ms(this) {}
+        team_coloring(this) {}
 };
 
 static NodeType* node_type{};
@@ -3543,6 +3543,10 @@ void SpazNode::Step() {
   if (holding_something_) {
     if (!pickup_joint_.IsAlive()) {
       holding_something_ = false;
+      if (hold_start_time_ms_ > 0) {  // Reset this for the next grip.
+        hold_duration_ms_ = scene()->time() - hold_start_time_ms_;
+        hold_start_time_ms_ = 0;
+      }
       DispatchDropMessage();
     }
   }
@@ -6201,7 +6205,7 @@ void SpazNode::DropHeldObject() {
     if (hold_start_time_ms_ > 0) {
       int64_t hold_duration = scene()->time() - hold_start_time_ms_;
       hold_duration_ms_ = hold_duration;
-      hold_start_time_ms_ = 0; // Reset this for the next grip.
+      hold_start_time_ms_ = 0;  // Reset this for the next grip.
     }
 
     // Dispatch user messages last now that all is in place.

@@ -731,6 +731,8 @@ class SpazNode : public Node {
   bool billboard_cross_out_{};
   bool pickup_before_hitbox_{};
   float pickup_release_time_ms_{};
+  int64_t hold_start_time_ms_{0};
+  int64_t hold_duration_ms_{0};
   base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
   base::JointFixedEF* hair_front_right_joint_{};
@@ -827,8 +829,6 @@ class SpazNode : public Node {
   float run_gas_{};
   float hurt_{};
   float hurt_smoothed_{};
-  int64_t hold_start_time_ms_{0};
-  int64_t hold_duration_ms_{0};
   // Starts long ago rather than at 0: our life bar shows for a while
   // after a hurt change, and a spaz in a young scene (a ui viewer's, or
   // any spawned in its first seconds) has had none.
