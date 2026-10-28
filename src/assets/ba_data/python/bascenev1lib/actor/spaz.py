@@ -1224,7 +1224,7 @@ class Spaz(bs.Actor):
                 if target_spaz is not None:
                     # Special Check: Allow punches if a spaz was
                     # released quickly.
-                    if release_time_diff < 100:
+                    if release_time_diff < 200:
                         pass
                     else: # Otherwise, do the following checks.
 
