@@ -1,4 +1,4 @@
-### 1.8.5 (build 23076, api 9, 2026-10-28)
+### 1.8.5 (build 23077, api 9, 2026-10-28)
 - Asset downloads now connect to the IP address the cloud connection
   already reached the node at, instead of looking the node's name up
   again, so they no longer fail on flaky DNS while everything else
