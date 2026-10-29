@@ -35,6 +35,7 @@ from typing import TYPE_CHECKING, assert_never
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
 import bacommon.docui.routes.classichost as hroutes
+from bacommon.docui.presets import section_button
 from bacommon.langstr import LangStrSpecValue
 
 import babase
@@ -43,6 +44,7 @@ from bascenev1 import _classicassets, _commonassets
 
 from baclassic._hostuikick import HostUIKickRequest
 from baclassic._hostuiparts import (
+    host_ui_gone_page,
     host_ui_player_icon,
     host_ui_player_name,
     host_ui_text,
@@ -118,8 +120,10 @@ class HostUIClientPage:
         return hroutes.Client(client_id=client_id).browse()
 
     def get_title(self, client_id: int) -> str | babase.LangStr:
-        """The page's title: the member's name as the party list shows it."""
-        return _host_ui().get_client_name(client_id) or '?'
+        """The page's title: "Host" for the host, else "Client <id>"."""
+        if client_id == -1:
+            return _classicassets.strings.host_ui.role_host
+        return _classicassets.strings.host_ui.client_title(id=str(client_id))
 
     def get_refresh_interval(self) -> float | None:
         """How often (seconds) the page refreshes while open (None: never)."""
@@ -134,7 +138,7 @@ class HostUIClientPage:
         return _host_ui().get_client_players(client_id)
 
     def get_kick_route(self, client_id: int, viewer: int) -> DocUIRoute | None:
-        """The page the kick button opens, or None for no kick button.
+        """The page the kick button opens (None: the button is disabled).
 
         By default the host's kick page for this viewer (see
         :meth:`baclassic.HostUISubsystem.set_kick_page`).
@@ -157,6 +161,19 @@ class HostUIClientPage:
             return _classicassets.strings.party.kick_vote
         return _classicassets.strings.ui.kick
 
+    def get_kick_unavailable_text(
+        self, client_id: int, viewer: int
+    ) -> str | babase.LangStr | None:
+        """Why the kick button is disabled, noted under it (None: no note).
+
+        By default the host's reason (see
+        :meth:`baclassic.HostUISubsystem.get_kick_unavailable_text`).
+        Only shown while :meth:`get_kick_route` returns None.
+        """
+        return _host_ui().get_kick_unavailable_text(
+            HostUIKickRequest(client_id=client_id, viewer=viewer)
+        )
+
     def get_account_action(
         self, client_id: int, account_id: str
     ) -> bacommon.docui.v2.Action | None:
@@ -171,12 +188,12 @@ class HostUIClientPage:
         return hroutes.ShowAccount(account_id=account_id).local()
 
     def get_role_text(self, client_id: int) -> str | babase.LangStr | None:
-        """The member's role row: host, admin, or None for no row."""
+        """The member's role row: host, admin or member (None: no row)."""
         if client_id == -1:
             return _classicassets.strings.host_ui.role_host
         if _host_ui().kick_votes.is_admin(client_id):
             return _classicassets.strings.host_ui.role_admin
-        return None
+        return _classicassets.strings.host_ui.role_member
 
     def build(
         self, route: DocUIRoute, client_id: int, viewer: int
@@ -262,7 +279,7 @@ class HostUIPlayerPage:
     def get_kick_route(
         self, player: bascenev1.SessionPlayer, viewer: int
     ) -> DocUIRoute | None:
-        """The page the kick button opens, or None for no kick button.
+        """The page the kick button opens (None: the button is disabled).
 
         Kicks remove the player's whole party member (every player on
         their device; the kick page names the others). By default the
@@ -291,6 +308,23 @@ class HostUIPlayerPage:
             return _classicassets.strings.party.kick_vote
         return _classicassets.strings.ui.kick
 
+    def get_kick_unavailable_text(
+        self, player: bascenev1.SessionPlayer, viewer: int
+    ) -> str | babase.LangStr | None:
+        """Why the kick button is disabled, noted under it (None: no note).
+
+        By default the host's reason (see
+        :meth:`baclassic.HostUISubsystem.get_kick_unavailable_text`).
+        Only shown while :meth:`get_kick_route` returns None.
+        """
+        return _host_ui().get_kick_unavailable_text(
+            HostUIKickRequest(
+                client_id=player.inputdevice.client_id,
+                viewer=viewer,
+                player_id=player.id,
+            )
+        )
+
     def build(
         self, route: DocUIRoute, player_id: int, viewer: int
     ) -> bacommon.docui.v2.Response:
@@ -313,17 +347,23 @@ def _build_client_page(
 ) -> dui2.Response:
     host_ui = _host_ui()
     if host_ui.get_client_name(client_id) is None:
-        return _gone_page()
+        return host_ui_gone_page()
 
     players = page.get_players(client_id)
-    kick_route = page.get_kick_route(client_id, viewer)
-    kick_row = (
-        None
-        if kick_route is None
-        else _kick_row(page.get_kick_text(client_id, viewer), kick_route)
+    # (Always shown; disabled when this viewer can't kick this member.)
+    kick_row: dui2.ButtonRow | None = _kick_row(
+        page.get_kick_text(client_id, viewer),
+        page.get_kick_route(client_id, viewer),
+        page.get_kick_unavailable_text(client_id, viewer),
     )
     first: dui2.ButtonRow
-    note: babase.LangStr | None = None
+    note: tuple[babase.LangStr, babase.LangStr] | None = None
+    # With no players, the players heading still shows, with a line
+    # saying there are none where the players would be.
+    no_players_note = (
+        _classicassets.strings.host_ui.players_title,
+        _classicassets.strings.host_ui.no_players,
+    )
     if players:
         first = dui2.ButtonRow(
             title=host_ui_text(_classicassets.strings.host_ui.players_title),
@@ -339,28 +379,13 @@ def _build_client_page(
             # first line).
             grid_line_spacing=0.0,
         )
-    elif kick_row is not None:
+    else:
         # No players to list: the kick button is the first (and only)
         # thing to select, and the note goes above it.
-        note = _classicassets.strings.host_ui.not_in_game
+        assert kick_row is not None
+        note = no_players_note
         first = kick_row
         kick_row = None
-    else:
-        # Nothing at all to select here, so a subtle Ok to leave by;
-        # the note goes above it.
-        note = _classicassets.strings.host_ui.not_in_game
-        first = dui2.ButtonRow(
-            buttons=[
-                dui2.Button(
-                    label=host_ui_text(_commonassets.strings.actions.ok),
-                    action=dui2.Local(close_window=True),
-                    size=(200.0, 60.0),
-                    style=dui2.ButtonStyle.MEDIUM,
-                    color=_WINDOW_COLOR,
-                )
-            ],
-            center_content=True,
-        )
     # A verified account gets a row of its own, to press; the member's
     # other fields (and any note) go in a header band atop that first
     # row.
@@ -506,14 +531,18 @@ def _client_fields(
 def _add_fields_band(
     row: dui2.ButtonRow,
     fields: list[_Field],
-    note: str | babase.LangStr | None = None,
+    note: (
+        tuple[str | babase.LangStr, str | babase.LangStr | LangStrSpec] | None
+    ) = None,
 ) -> None:
     """Put labeled values in a header band atop ``row``, one per line.
 
     Labels sit at the band's left decoration point, which is inset as
     row titles are, and are styled as titles; so they line up with
     and match the row's own title. Values sit at its right point. A
-    ``note`` goes centered on a line of its own below them.
+    ``note`` (a title and its text) goes below them: the title on a
+    line of its own, styled as a row title, and the text centered on
+    the next, so it reads like a row with nothing in it.
 
     (A standalone :class:`~bacommon.docui.v2.HeaderRow` per field
     would be tidier, but builds before ``TEXT_ROW_BUILD`` skip those
@@ -521,7 +550,7 @@ def _add_fields_band(
     """
     width = _CARD_WIDTH * 0.5 - _EDGE_PAD
     # The fields, then a gap between them and the row.
-    lines = len(fields) + (0 if note is None else 1)
+    lines = len(fields) + (0 if note is None else 2)
     if row.title is not None:
         # Space the row's title as one more line: the client centers
         # it this far into its strip (the band's bottom edge).
@@ -532,10 +561,13 @@ def _add_fields_band(
     left: list[dui2.Decoration] = []
     right: list[dui2.Decoration] = []
     if note is not None:
+        note_title, note_text = note
+        title_y = height * 0.5 - _FIELD_HEIGHT * (len(fields) + 0.5)
+        left.append(_field_label(note_title, title_y))
         row.header_decorations_center = [
             _text(
-                note,
-                (0.0, height * 0.5 - _FIELD_HEIGHT * (len(fields) + 0.5)),
+                note_text,
+                (0.0, title_y - _FIELD_HEIGHT),
                 _CARD_WIDTH - 2.0 * _EDGE_PAD,
                 color=_LABEL_COLOR,
                 h_align=dui2.HAlign.CENTER,
@@ -564,11 +596,15 @@ def _build_player_page(
 ) -> dui2.Response:
     player = page.get_player(player_id)
     if player is None:
-        return _gone_page()
+        return host_ui_gone_page()
     rows: list[dui2.Row] = [_player_stats_row(page, player)]
-    kick_route = page.get_kick_route(player, viewer)
-    if kick_route is not None:
-        rows.append(_kick_row(page.get_kick_text(player, viewer), kick_route))
+    rows.append(
+        _kick_row(
+            page.get_kick_text(player, viewer),
+            page.get_kick_route(player, viewer),
+            page.get_kick_unavailable_text(player, viewer),
+        )
+    )
     return _response(
         _classicassets.strings.multi_team.player, rows, route, page
     )
@@ -586,9 +622,13 @@ _CONNECTION_BUTTON_SIZE = (260.0, 34.0)
 _ACCOUNT_BUTTON_SIZE = (300.0, 40.0)
 
 #: The account row's pull on the row after it (its ``spacing_top``),
-#: so the field lines stay one apart across the two rows. (Tuned by eye
-#: against the band's own line spacing.)
-_ACCOUNT_ROW_PULL = -15.0
+#: so the field lines stay one apart across the two rows. (Measured
+#: against the band's own line spacing; -15 left Account and Ping ~8.5
+#: units closer than the other lines.)
+_ACCOUNT_ROW_PULL = -6.5
+
+#: The footer band holding a disabled kick button's note (why).
+_KICK_NOTE_HEIGHT = 34.0
 
 
 def _player_stats_row(
@@ -596,17 +636,24 @@ def _player_stats_row(
 ) -> dui2.ButtonRow:
     """The player's icon and name, then a row of columns.
 
-    Columns are this game's stats, the party member they play from (a
-    button opening its page), and ping. It's all one row: the icon,
-    name and column titles go in its header band, and the button is
-    its content, carrying the other columns' values as decorations so
-    they sit level with it. Everything is placed from the row's center,
-    so it holds together at any width.
+    Columns are their team (in team games), this game's stats, the
+    party member they play from (a button opening its page), and ping.
+    It's all one row: the icon, name and column titles go in its header
+    band, and the button is its content, carrying the other columns'
+    values as decorations so they sit level with it. Everything is
+    placed from the row's center, so it holds together at any width.
     """
     client_id = player.inputdevice.client_id
 
-    # Columns before and after the connection button's.
-    before = page.get_stats(player)
+    # Columns before and after the connection button's. (The team, if
+    # any, leads; its value is drawn in the team's color.)
+    team = _team_of(player)
+    team_cols: list[tuple[str | babase.LangStr, str | babase.LangStr]] = (
+        []
+        if team is None
+        else [(_classicassets.strings.host_ui.team_column, team.name)]
+    )
+    before = [*team_cols, *page.get_stats(player)]
     hstrs = _classicassets.strings.host_ui
     after: list[tuple[str | babase.LangStr, str | babase.LangStr]] = [
         (hstrs.ping_label, _ping_text(client_id))
@@ -634,16 +681,31 @@ def _player_stats_row(
     # from its center to their columns.
     values: list[dui2.Decoration] = []
     for i, ((_title, value), x) in enumerate(zip(columns, xs)):
-        # (The host's ping is a placeholder, so dim it.)
-        dim = client_id == -1 and i == len(columns) - 1
-        text = _text(
-            value,
-            (x - button_x, 0.0),
-            _STAT_COLUMN_WIDTH - 10.0,
-            scale=1.1,
-            h_align=dui2.HAlign.CENTER,
-            color=_DIM_COLOR if dim else _VALUE_COLOR,
-        )
+        if team is not None and i == 0:
+            # The team's name, in its color (brightened if dark, as the
+            # game does for team-colored text); flat and shadowed to
+            # read on the card whatever the color.
+            text = _text(
+                value,
+                (x - button_x, 0.0),
+                _STAT_COLUMN_WIDTH - 10.0,
+                scale=1.1,
+                h_align=dui2.HAlign.CENTER,
+                color=(*_rgb(babase.safecolor(_rgb(team.color))), 1.0),
+                flatness=1.0,
+                shadow=1.0,
+            )
+        else:
+            # (The host's ping is a placeholder, so dim it.)
+            dim = client_id == -1 and i == len(columns) - 1
+            text = _text(
+                value,
+                (x - button_x, 0.0),
+                _STAT_COLUMN_WIDTH - 10.0,
+                scale=1.1,
+                h_align=dui2.HAlign.CENTER,
+                color=_DIM_COLOR if dim else _VALUE_COLOR,
+            )
         text.highlight = False
         values.append(text)
 
@@ -663,21 +725,19 @@ def _player_heading(
 ) -> tuple[float, list[dui2.Decoration]]:
     """The player page's header band: its height and decorations.
 
-    Top down: the big icon, the name (and team), then the columns'
-    titles (each at its x).
+    Top down: the big icon, the name, then the columns' titles (each
+    at its x).
     """
-    team = _team_of(player)
     name_height = 50.0
-    team_height = 0.0 if team is None else 30.0
     titles_height = 24.0
-    # (The name sits close under its icon, and clear of the values.)
-    icon_gap = 4.0
+    # (The name sits close under its icon, with just enough room that a
+    # capsule name doesn't touch it, and clear of the values.)
+    icon_gap = 12.0
     values_gap = 28.0
     height = (
         _BIG_ICON_SIZE
         + icon_gap
         + name_height
-        + team_height
         + values_gap
         + titles_height
         + 2.0
@@ -697,18 +757,6 @@ def _player_heading(
         )
     )
     y -= name_height
-    if team is not None:
-        decorations.append(
-            _text(
-                team.name,
-                (0.0, y - team_height * 0.5),
-                _CARD_WIDTH * 0.6,
-                scale=0.8,
-                color=(*_rgb(team.color), 1.0),
-                h_align=dui2.HAlign.CENTER,
-            )
-        )
-        y -= team_height
     y -= values_gap
     for title, x in titles:
         decorations.append(
@@ -803,53 +851,51 @@ def _player_button(
     )
 
 
-def _kick_row(label: str | babase.LangStr, route: DocUIRoute) -> dui2.ButtonRow:
-    return dui2.ButtonRow(
-        buttons=[
-            dui2.Button(
-                label=host_ui_text(label),
-                action=route.browse(),
-                size=(400.0, 80.0),
-                style=dui2.ButtonStyle.LARGE,
-                color=(0.7, 0.3, 0.3, 1.0),
-                # (A light red label, as on the profile editor's Delete
-                # Profile button.)
-                label_color=(1.0, 0.7, 0.65, 1.0),
-            )
-        ],
-        center_content=True,
+def _kick_row(
+    label: str | babase.LangStr,
+    route: DocUIRoute | None,
+    unavailable_text: str | babase.LangStr | None,
+) -> dui2.ButtonRow:
+    """The kick button's row; disabled (greyed) if there's no route.
+
+    It's always there, so the page keeps its shape whether or not this
+    viewer can kick this member. A disabled one gets
+    ``unavailable_text`` (why) as a subtle centered note under it.
+    """
+    # Spans the column, like the full-width section buttons on settings
+    # pages (same style and height as bacommon.docui.presets'
+    # section_button; a FILL row ignores the width). A disabled one
+    # gets a no-op action too: builds predating Button.disabled show it
+    # as a normal button.
+    button = section_button(
+        host_ui_text(label),
+        dui2.Local() if route is None else route.browse(),
+    )
+    button.disabled = route is None
+    # (Red, with a light red label, as on the profile editor's Delete
+    # Profile button.)
+    button.color = (0.7, 0.3, 0.3, 1.0)
+    button.label_color = (1.0, 0.7, 0.65, 1.0)
+    row = dui2.ButtonRow(
+        buttons=[button],
+        layout=dui2.ButtonRowLayout.FILL,
         padding_top=30.0,
     )
-
-
-def _gone_page() -> dui2.Response:
-    """For someone no longer here: say so, with an Ok to leave."""
-    return dui2.Response(
-        page=dui2.Page(
-            title=_lit(''),
-            rows=[
-                dui2.ButtonRow(
-                    title=host_ui_text(
-                        _classicassets.strings.host_ui.player_gone
-                    ),
-                    buttons=[
-                        dui2.Button(
-                            label=host_ui_text(
-                                _commonassets.strings.actions.ok
-                            ),
-                            action=dui2.Local(close_window=True),
-                            size=(200.0, 70.0),
-                            style=dui2.ButtonStyle.MEDIUM,
-                        )
-                    ],
-                    center_title=True,
-                    center_content=True,
-                    padding_top=30.0,
-                )
-            ],
-            center_vertically=True,
-        )
-    )
+    if route is None and unavailable_text is not None:
+        # (A footer band rather than the row's footnote, which aligns
+        # like a title; this one is centered.)
+        row.footer_height = _KICK_NOTE_HEIGHT
+        row.footer_decorations_center = [
+            _text(
+                unavailable_text,
+                (0.0, 0.0),
+                _CARD_WIDTH - 2.0 * _EDGE_PAD,
+                scale=0.8,
+                color=_DIM_COLOR,
+                h_align=dui2.HAlign.CENTER,
+            )
+        ]
+    return row
 
 
 def _response(
@@ -914,6 +960,8 @@ def _text(
     scale: float = 1.0,
     color: tuple[float, float, float, float] = _VALUE_COLOR,
     h_align: dui2.HAlign = dui2.HAlign.LEFT,
+    flatness: float | None = None,
+    shadow: float | None = None,
 ) -> dui2.Text:
     # (Text anchors at its position, so left-aligned text starts there.)
     return dui2.Text(
@@ -923,6 +971,8 @@ def _text(
         scale=scale,
         h_align=h_align,
         color=color,
+        flatness=flatness,
+        shadow=shadow,
     )
 
 

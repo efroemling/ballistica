@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261028`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261029`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 954
+# ba_meta require asset-package 972
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261028
-_ASSET_PACKAGE = ApverNum(954)
+# a-0.baclassicuiassets.261029
+_ASSET_PACKAGE = ApverNum(972)
 
 if TYPE_CHECKING:
     from babase import LangStr

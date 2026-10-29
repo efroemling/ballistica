@@ -283,6 +283,7 @@ class PopupMenuWindow(PopupWindow):
             self._columnwidget = bui.columnwidget(
                 parent=self._offset_widget, border=2, margin=0
             )
+        self._choice_widgets: dict[str, bui.Widget] = {}
         for index, choice in enumerate(choices):
             if len(choices_display_fin) == len(choices):
                 choice_display_name = choices_display_fin[index]
@@ -313,6 +314,7 @@ class PopupMenuWindow(PopupWindow):
                 glow_type='uniform',
             )
             bui.widget(edit=wdg, allow_preserve_selection=False)
+            self._choice_widgets[choice] = wdg
 
             if choice == self._current_choice:
                 bui.containerwidget(
@@ -341,6 +343,16 @@ class PopupMenuWindow(PopupWindow):
                 delegate.popup_menu_selected_choice, self, self._current_choice
             )
             bui.apptimer(0, call)
+
+    def get_choice_widget(self, choice: str) -> bui.Widget | None:
+        """The widget showing a choice (None if gone or not a choice).
+
+        Still valid when the delegate hears of a selection (the menu
+        transitions out just after), so it can be an ``origin_widget``
+        for a window the choice opens.
+        """
+        wdg = self._choice_widgets.get(choice)
+        return wdg if wdg else None
 
     def _getdelegate(self) -> Any:
         return None if self._delegate is None else self._delegate()

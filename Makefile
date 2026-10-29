@@ -1597,11 +1597,21 @@ $(FLATPAK_ICON):
 flatpak-prebuilt-inputs: flatpak-prefetch
 	$(PCOMMAND) flatpak_prebuilt_inputs
 
+# Flatpak builds use Flathub's own packaged flatpak-builder
+# (org.flatpak.Builder, installed by flatpak-deps), not the distro's.
+# It bundles a current flatpak, which the manifest's conditional
+# finish-args (--device-if) need (1.17+; Ubuntu 26.04 ships 1.16), and
+# it's the tooling Flathub itself builds with. It installs dependencies
+# through flatpak's D-Bus services, so it needs a session bus; where
+# there is none (CI runners), dbus-run-session starts one for it.
+FLATPAK_BUILDER ?= $(if $(DBUS_SESSION_BUS_ADDRESS),,dbus-run-session) \
+ flatpak run org.flatpak.Builder
+
 # One-time setup for flatpak-linux, run by hand (or as its own CI step)
-# since it changes your user flatpak installation: installs the SDK,
-# runtime and extensions the manifest names, from the flathub remote,
-# so their versions live only in the manifest. Adding that remote is
-# left to you.
+# since it changes your user flatpak installation: installs (or updates)
+# org.flatpak.Builder plus the SDK, runtime and extensions the manifest
+# names, from the flathub remote, so their versions live only in the
+# manifest. Adding that remote is left to you.
 flatpak-deps:
 	@flatpak remote-list --user --columns=name | grep -qx flathub || { \
  echo "Error: no 'flathub' flatpak remote for your user. Add it with:"; \
@@ -1609,7 +1619,9 @@ flatpak-deps:
  "https://flathub.org/repo/flathub.flatpakrepo"; \
  echo "then re-run 'make flatpak-deps'."; \
  exit 1; }
-	flatpak-builder --user --install-deps-from=flathub --install-deps-only \
+	flatpak install --user --noninteractive --or-update flathub \
+	org.flatpak.Builder
+	$(FLATPAK_BUILDER) --user --install-deps-from=flathub --install-deps-only \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
 	pconfig/flatpak/net.froemling.bombsquad.yml
@@ -1617,7 +1629,7 @@ flatpak-deps:
 # Needs the SDK etc. installed first; see flatpak-deps.
 flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
-	flatpak-builder --repo=./.cache/flatpak/repo \
+	$(FLATPAK_BUILDER) --repo=./.cache/flatpak/repo \
 	--force-clean --keep-build-dirs \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \

@@ -667,10 +667,11 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
         client_instance_buffer[data_size - 4] = 0;  // terminate string
         std::string client_instance_uuid = &(client_instance_buffer[0]);
 
-        if (static_cast<int>(connections_to_clients_.size() + 1)
+        if (static_cast<int>(connections_to_clients_.size()
+                             + (appmode->PartyCountsHost() ? 1 : 0))
             >= appmode->public_party_max_size()) {
           // If we've reached our party size limit (including ourself in
-          // that count), reject.
+          // that count unless we're a dedicated server), reject.
 
           // Newer version have a specific party-full message; send that
           // first but also follow up with a generic deny message for older

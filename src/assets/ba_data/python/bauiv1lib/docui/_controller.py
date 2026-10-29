@@ -301,12 +301,13 @@ class DocUIController:
                     request, self.ErrorType.COMMUNICATION_ERROR
                 )
 
-        except Exception:
+        except Exception as exc:
             # For now, consider all errors communication errors (should
             # result in retry buttons in some cases). Can get more
             # specific in the future for cases where retries would not
             # help.
             bui.netlog.info('Error in docui http request.', exc_info=True)
+            strip_exception_tracebacks(exc)
             return self.error_response(
                 request, self.ErrorType.COMMUNICATION_ERROR
             )
@@ -375,14 +376,20 @@ class DocUIController:
                 exc,
                 f' [cause: {causestr}]' if causes else '',
             )
+            # The chain's tracebacks reach this controller, the request
+            # and (via rpcws) the whole transport session; field gc
+            # reports showed those held as a cycle after dropped
+            # sessions.
+            strip_exception_tracebacks(exc)
             return self.error_response(
                 request, self.ErrorType.COMMUNICATION_ERROR
             )
-        except Exception:
+        except Exception as exc:
             # Unexpected; this is a real bug worth a full traceback.
             bui.uilog.exception(
                 'Unexpected error fetching doc-ui (domain=%r).', domain
             )
+            strip_exception_tracebacks(exc)
             return self.error_response(request)
 
     @staticmethod
@@ -1523,8 +1530,9 @@ class DocUIController:
                     ),
                 )
             )
-        except Exception:
+        except Exception as exc:
             bui.uilog.exception('Error running local-action %s.', name)
+            strip_exception_tracebacks(exc)
 
     def _get_win_data(self, window: DocUIPageHost) -> _WinData:
         val = getattr(window, '_wcdata')
@@ -1597,8 +1605,9 @@ class DocUIController:
                 # The one exception case we officially handle. Translate
                 # this to an error response with a custom message.
                 response = self.error_response(request, custom_message=str(exc))
+                strip_exception_tracebacks(exc)
 
-            except Exception:
+            except Exception as exc:
                 # fulfill_request is expected to gracefully return even
                 # on errors. Make noise if it didn't.
                 bui.uilog.exception(
@@ -1607,6 +1616,7 @@ class DocUIController:
                     'Use error_response() when errors occur.',
                     exc_info=True,
                 )
+                strip_exception_tracebacks(exc)
                 error = self.ErrorType.GENERIC
 
         # Validate any response we got.
@@ -1649,10 +1659,11 @@ class DocUIController:
                         prepresponse = copy.deepcopy(response)
                         _resolve.deindex_response(prepresponse)
                         timing.deindex = time.monotonic() - t_deindex
-                    except Exception:
+                    except Exception as exc:
                         bui.uilog.exception(
                             'Error resolving v2 doc-ui response.'
                         )
+                        strip_exception_tracebacks(exc)
                         error = self.ErrorType.GENERIC
                         response = None
                         prepresponse = None

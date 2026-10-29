@@ -20,7 +20,7 @@ from bacommon.langstr import LangStrSpec, LangStrSpecValue
 
 import babase
 import bascenev1
-from bascenev1 import _commonassets, _classiccatalogassets
+from bascenev1 import _classicassets, _commonassets, _classiccatalogassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -42,6 +42,39 @@ def host_ui_text(text: str | babase.LangStr | LangStrSpec) -> LangStrSpec:
     if isinstance(text, babase.LangStr):
         return dataclass_from_json(LangStrSpec, text.to_resource_json())
     return text
+
+
+def host_ui_gone_page() -> dui2.Response:
+    """For someone no longer here: say so, with an Ok to leave.
+
+    :meta private:
+    """
+    return dui2.Response(
+        page=dui2.Page(
+            title=LangStrSpecValue.literal(''),
+            rows=[
+                dui2.ButtonRow(
+                    title=host_ui_text(
+                        _classicassets.strings.host_ui.player_gone
+                    ),
+                    buttons=[
+                        dui2.Button(
+                            label=host_ui_text(
+                                _commonassets.strings.actions.ok
+                            ),
+                            action=dui2.Local(close_window=True),
+                            size=(200.0, 70.0),
+                            style=dui2.ButtonStyle.MEDIUM,
+                        )
+                    ],
+                    center_title=True,
+                    center_content=True,
+                    padding_top=30.0,
+                )
+            ],
+            center_vertically=True,
+        )
+    )
 
 
 def host_ui_player_icon(

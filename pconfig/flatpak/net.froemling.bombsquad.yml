@@ -22,7 +22,12 @@ finish-args:
   - --socket=fallback-x11
   - --socket=pulseaudio
   - --device=dri
-  # - --device=input
+  # Game controllers. Flatpaks older than 1.15.6 have no 'input' device
+  # and get 'all' instead, so controllers work there too. (The
+  # conditional syntax needs flatpak 1.17+ to build; see FLATPAK_BUILDER
+  # in the Makefile.)
+  - --device=input
+  - --device-if=all:!has-input-device
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm22

@@ -711,6 +711,10 @@ void ClassicAppMode::OnGameRosterChanged_() {
   g_base->ui->SetSquadSizeLabel(GetPartySize());
 }
 
+auto ClassicAppMode::PartyCountsHost() const -> bool {
+  return !g_classic->server_mode();
+}
+
 auto ClassicAppMode::GetPartySize() const -> int {
   assert(g_base->InLogicThread());
   return static_cast<int>(game_roster_.size());
@@ -884,13 +888,17 @@ void ClassicAppMode::UpdateGameRoster() {
   // Our party-roster is an array of client entries, each with player-specs.
   game_roster_.clear();
 
-  int total_party_size = 1;  // include ourself here..
+  // The size we report counts ourself (unless we're a dedicated server;
+  // see PartyCountsHost()).
+  int total_party_size = PartyCountsHost() ? 1 : 0;
 
   // Add ourself first (that's currently how they know we're the party leader)
   // ..but only if we have a connected client (otherwise our party is
-  // considered 'empty').
-
-  bool include_self = (connections()->GetConnectedClientCount() > 0);
+  // considered 'empty'). A dedicated server leaves itself off entirely:
+  // it's not a member anyone plays with or needs to see. (Clients
+  // identify the host by its -1 client_id, not by position.)
+  bool include_self =
+      (connections()->GetConnectedClientCount() > 0) && PartyCountsHost();
 
   if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.

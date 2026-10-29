@@ -425,7 +425,7 @@ class PartyWindow(bui.Window):
                             self._add_roster_entry(
                                 index,
                                 pos=(
-                                    self._width * 0.53
+                                    self._width * 0.5
                                     - c_width_total * 0.5
                                     + c_width * x,
                                     self._height - 65 - c_height * y,
@@ -447,9 +447,10 @@ class PartyWindow(bui.Window):
         self, popup_window: PopupMenuWindow, choice: str
     ) -> None:
         """Called when a choice is selected in the popup."""
-        del popup_window  # unused
         if self._popup_type == 'chatMessagePress':
-            self._on_chat_popup_choice(choice)
+            self._on_chat_popup_choice(
+                choice, popup_window.get_choice_widget(choice)
+            )
         elif self._popup_type == 'partyMemberPress':
             if self._popup_party_member_is_host:
                 _builtinassets.audio.error.get().play()
@@ -576,8 +577,8 @@ class PartyWindow(bui.Window):
     ) -> None:
         """Add one client's name to the roster section.
 
-        ``pos`` is where the name starts (its left edge, vertically
-        centered).
+        ``pos`` is its column's left edge (vertically centered); the
+        name is centered in the column.
         """
         entry = self._roster[index] if self._roster is not None else None
         assert entry is not None
@@ -611,19 +612,20 @@ class PartyWindow(bui.Window):
             )
 
         # The depiction is the button's whole look, so selection
-        # brightens and pulses the name itself.
+        # brightens and pulses the name itself. (No "(host)" marker: the
+        # host is always listed first, and its page says so.)
         height = 22.0
-        host_str = _classicassets.strings.party.host.evaluate()
+        width = c_width * 0.85
         widget = bui.buttonwidget(
             parent=self._root_widget,
-            position=(pos[0], pos[1] - height * 0.5),
-            size=(c_width * 0.85, height),
+            # (Centered in the column, as is the name within it.)
+            position=(pos[0] + (c_width - width) * 0.5, pos[1] - height * 0.5),
+            size=(width, height),
             label='',
             autoselect=True,
             depiction=depiction,
-            depiction_h_align='left',
+            depiction_h_align='center',
             depiction_hit_area=True,
-            depiction_suffix=f' {host_str}' if is_host else None,
         )
         bui.buttonwidget(
             edit=widget,
@@ -641,8 +643,10 @@ class PartyWindow(bui.Window):
         # about them, kicking included.
         browse = self._client_page_browse(client_id)
         if browse is not None:
+            # (Open it before closing ourself so it can scale in from
+            # the pressed button while that still exists.)
+            show_host_docui_page(browse, origin_widget=widget)
             self.close()
-            show_host_docui_page(browse)
             return
 
         # Otherwise, if we're the host, pop up 'kick' options for all
@@ -715,12 +719,19 @@ class PartyWindow(bui.Window):
         self._popup_chat_msg = msg
         self._popup_chat_browse = browse
 
-    def _on_chat_popup_choice(self, choice: str) -> None:
+    def _on_chat_popup_choice(
+        self, choice: str, choice_widget: bui.Widget | None
+    ) -> None:
         if choice == 'copy' and self._popup_chat_msg is not None:
             self._copy_msg(self._popup_chat_msg)
         elif choice == 'view' and self._popup_chat_browse is not None:
+            # (The page scales in from the View item, which still
+            # exists while the menu transitions out; open it before
+            # closing ourself.)
+            show_host_docui_page(
+                self._popup_chat_browse, origin_widget=choice_widget
+            )
             self.close()
-            show_host_docui_page(self._popup_chat_browse)
 
     def _client_page_browse(
         self, client_id: int | None

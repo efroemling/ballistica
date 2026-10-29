@@ -284,6 +284,27 @@ class HostUISubsystem:  # pylint: disable=too-many-public-methods
             return None
         return self._ask_kick_page(request)
 
+    def get_kick_unavailable_text(
+        self, request: HostUIKickRequest
+    ) -> str | babase.LangStr | None:
+        """Why :meth:`get_kick_page` offers no kick, if it can say.
+
+        For showing beside a disabled kick button. None if a kick is
+        offered, or if a custom kick page getter (see
+        :meth:`set_kick_page`) declined, since only it knows why.
+        """
+        if request.client_id == -1:
+            return _classicassets.strings.party.cant_kick_host
+        if request.client_id == request.viewer:
+            return _classicassets.strings.host_ui.cant_kick_self
+        if request.client_id not in self.get_client_ids():
+            return None
+        if not self._kick_page_offered:
+            return _classicassets.strings.host_ui.kicking_disabled
+        if self._kick_page_getter is not None:
+            return None
+        return self.kick_votes.get_kick_unavailable_text(request)
+
     def _ask_kick_page(self, request: HostUIKickRequest) -> DocUIRoute | None:
         if not self._kick_page_offered:
             return None

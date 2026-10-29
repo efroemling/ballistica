@@ -188,6 +188,12 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_size() const { return public_party_size_; }
   void SetPublicPartySize(int count);
   auto public_party_max_size() const { return public_party_max_size_; }
+
+  /// Whether we (the host) count as a party member: in the roster,
+  /// the party size we report, and against the max party size. Hosts
+  /// do (someone plays there); a dedicated server (explicit server
+  /// mode) doesn't, so its sizes and max count client devices only.
+  auto PartyCountsHost() const -> bool;
   void SetPublicPartyQueueEnabled(bool enabled);
   auto public_party_queue_enabled() const {
     return public_party_queue_enabled_;
@@ -469,7 +475,8 @@ class ClassicAppMode : public base::AppMode {
   millisecs_t next_long_update_report_time_{};
   int debug_speed_exponent_{};
   int replay_speed_exponent_{};
-  int public_party_size_{1};  // Always count ourself (is that what we want?).
+  // (Counts ourself unless we're a dedicated server; see PartyCountsHost().)
+  int public_party_size_{1};
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};

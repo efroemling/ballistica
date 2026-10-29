@@ -1,3 +1,31 @@
+### 1.8.6 (build 23082, api 9, 2026-10-29)
+- Dedicated servers (server mode) no longer count themselves as a party
+  member: they leave themselves out of the party roster clients see,
+  and out of the party size and max size they report and enforce.
+  `max_party_size` in server configs is now the max number of client
+  devices (its default goes from 6 to 5 to match); older configs that
+  added one for the server will now allow one extra device. Regular
+  hosts still count themselves, since they're playing too.
+- Fixed several reference cycles that kept dropped or failed cloud
+  connections (and any doc-ui page whose request was in flight when one
+  dropped) in memory until the next garbage-collection pass: closing a
+  connection that timed out, connection attempts that timed out during
+  their opening handshake, and doc-ui fetch errors.
+- Writing the meta-scan cache no longer leaves a reference cycle behind
+  (it used `json.dump()`, which goes through Python's pure-Python
+  encoder); this was most of the "Explicit gc pass handled N objects"
+  warning many 1.8.5 installs logged on their first launch.
+- The garbage-collection warning threshold no longer counts the
+  leftovers of classes a module replaced as it was imported (the
+  stdlib's `@enum._simple_enum` does this for `uuid.SafeUUID`,
+  `re.RegexFlag` and others). They are unavoidable one-time residue;
+  the log line still reports them, as "(N of them import residue, not
+  counted)".
+- Garbage-collection reports now say where any collected asyncio
+  transports were connected (peer address, protocol chain, closing
+  state). A transport only reaches the collector if something
+  abandoned it without closing it, so this points at the culprit.
+
 ### 1.8.5 (build 23079, api 9, 2026-10-28)
 - Asset downloads now connect to the IP address the cloud connection
   already reached the node at, instead of looking the node's name up

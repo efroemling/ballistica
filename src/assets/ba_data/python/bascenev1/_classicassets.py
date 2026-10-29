@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261028`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261029a`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 955
+# ba_meta require asset-package 971
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261028
-_ASSET_PACKAGE = ApverNum(955)
+# a-0.baclassicassets.261029a
+_ASSET_PACKAGE = ApverNum(971)
 
 if TYPE_CHECKING:
     import datetime
@@ -5247,6 +5247,33 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Shown under a disabled Kick button on the page of a party member
+        #:     who is an admin.
+        #:
+        #:     English: "Admins can't be kicked."
+        cant_kick_admin: LangStr
+
+        #: ::
+        #:
+        #:     Shown under a disabled Kick button on your own page in the party
+        #:     window.
+        #:
+        #:     English: "You can't kick yourself."
+        cant_kick_self: LangStr
+
+        def client_title(self, *, id: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title of a party member's page in the party window (for anyone
+                but the host); the placeholder is that connection's numeric
+                client id.
+
+                English: "Client {id}"
+            """
+
+        #: ::
+        #:
         #:     Column heading on a player's page above the button showing which
         #:     party member that player plays from.
         #:
@@ -5292,6 +5319,22 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Shown under a disabled Kick button when the game host has turned
+        #:     off voting to kick players.
+        #:
+        #:     English: "Kick voting is disabled."
+        kick_voting_disabled: LangStr
+
+        #: ::
+        #:
+        #:     Shown under a disabled Kick button when the game host has turned
+        #:     off kicking players entirely.
+        #:
+        #:     English: "Kicking is disabled."
+        kicking_disabled: LangStr
+
+        #: ::
+        #:
         #:     Shown on the kick-vote page when no vote to kick a player is
         #:     currently running.
         #:
@@ -5300,18 +5343,18 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Note shown under the Players heading on a party member's page
+        #:     when they have no players in the game.
+        #:
+        #:     English: "Has no players in the game currently."
+        no_players: LangStr
+
+        #: ::
+        #:
         #:     Shown in the party stats table when there are no players to list.
         #:
         #:     English: "Nobody is here."
         nobody_here: LangStr
-
-        #: ::
-        #:
-        #:     Note on a party member's page when they have no players in the
-        #:     game.
-        #:
-        #:     English: "Not in the game right now."
-        not_in_game: LangStr
 
         #: ::
         #:
@@ -5334,7 +5377,7 @@ if TYPE_CHECKING:
         #:     Ping value on the host's own member and player pages (latency to
         #:     yourself does not apply).
         #:
-        #:     English: "n/a (host)"
+        #:     English: "n/a"
         ping_host: LangStr
 
         #: ::
@@ -5396,6 +5439,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Value of the Role line on a regular party member's page.
+        #:
+        #:     English: "Member"
+        role_member: LangStr
+
+        #: ::
+        #:
         #:     Button on the kick-vote page that starts a vote among the other
         #:     players on whether to kick (remove) the chosen player from the
         #:     game.
@@ -5411,6 +5461,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Stats"
         stats_title: LangStr
+
+        #: ::
+        #:
+        #:     Column heading on a player's page above the name of the team that
+        #:     player is on (team games only).
+        #:
+        #:     English: "Team"
+        team_column: LangStr
 
     class StringsInGameMenuGroup:
         """
@@ -6309,13 +6367,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Your party is empty"
         empty: LangStr
-
-        #: ::
-        #:
-        #:     Parenthetical marker for the party host.
-        #:
-        #:     English: "(host)"
-        host: LangStr
 
         #: ::
         #:
@@ -10008,8 +10059,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1037 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1032 more). Full list in
+    #: The ``strings`` group - 1043 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1038 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -10845,13 +10896,18 @@ _TREE = {
         },
         'host_ui': {
             'account_column': (),
+            'cant_kick_admin': (),
+            'cant_kick_self': (),
+            'client_title': ('id',),
             'connection_column': (),
             'kick_also_removes': ('names',),
             'kick_removes_all': ('names',),
             'kick_vote_ends': ('t',),
+            'kick_voting_disabled': (),
+            'kicking_disabled': (),
             'no_kick_vote': (),
+            'no_players': (),
             'nobody_here': (),
-            'not_in_game': (),
             'not_verified': (),
             'ping_column': (),
             'ping_host': (),
@@ -10862,8 +10918,10 @@ _TREE = {
             'role_admin': (),
             'role_host': (),
             'role_label': (),
+            'role_member': (),
             'start_kick_vote': (),
             'stats_title': (),
+            'team_column': (),
         },
         'in_game_menu': {
             'end_game': (),
@@ -10979,7 +11037,6 @@ _TREE = {
             'chat_message': (),
             'chat_muted': (),
             'empty': (),
-            'host': (),
             'kick_vote': (),
             'mute_chat': (),
             'title': (),

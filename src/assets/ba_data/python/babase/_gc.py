@@ -17,6 +17,8 @@ from babase._appsubsystem import AppSubsystem
 from babase._logging import gc_log
 
 if TYPE_CHECKING:
+    from typing import Any
+
     import babase
 
 
@@ -384,8 +386,28 @@ class GarbageCollectionSubsystem(AppSubsystem):
         duration = now2 - starttime
         self._total_num_gc_objects += num_affected_objs
 
+        # Leave out leftovers of classes their own module replaced (see
+        # _import_residue()); they are a one-time cost of importing
+        # certain stdlib modules, not cycles anything could fix. That
+        # scan costs ~0.6us per collected object, so only do it when
+        # its answer matters: when it could turn the one-time warning
+        # into info, or when our info-level line is being shown.
+        num_residue = 0
+        if num_affected_objs and (
+            (
+                num_affected_objs >= self._warning_threshold
+                and not self._showed_standard_mode_warning
+            )
+            or gc_log.isEnabledFor(logging.INFO)
+        ):
+            try:
+                num_residue = len(_import_residue())
+            except Exception:
+                gc_log.exception('Error finding gc import residue.')
+        num_counted = num_affected_objs - num_residue
+
         if (
-            num_affected_objs >= self._warning_threshold
+            num_counted >= self._warning_threshold
             and not self._showed_standard_mode_warning
         ):
             loglevel: int = logging.WARNING
@@ -446,10 +468,16 @@ class GarbageCollectionSubsystem(AppSubsystem):
             if self._last_collection_time is None
             else f' from last {now - self._last_collection_time:.1f}s'
         )
+        residue_desc = (
+            f' ({num_residue} of them import residue, not counted)'
+            if num_residue
+            else ''
+        )
         gc_log.log(
             loglevel,
-            'Explicit gc pass handled %d objects%s in %.3fs (total: %d).%s',
+            'Explicit gc pass handled %d objects%s%s in %.3fs (total: %d).%s',
             num_affected_objs,
+            residue_desc,
             from_last,
             duration,
             self._total_num_gc_objects,
@@ -526,6 +554,103 @@ def _inline_extra(tpname: str, type_paths: list[str]) -> str:
     return ''
 
 
+def _import_residue() -> set[int]:
+    """Ids of collected objects that are just class-definition leftovers.
+
+    Some modules build a class and then immediately replace it with
+    another of the same name; the stdlib's ``@enum._simple_enum`` does
+    this for ``uuid.SafeUUID``, ``re.RegexFlag``,
+    ``_ast_unparse._Precedence`` and others. The discarded original is
+    a reference cycle (a class always refers to itself through its
+    ``__dict__`` and ``__mro__``), so it waits for a gc pass, along
+    with everything only it refers to (e.g. ``enum.auto`` objects).
+    That happens once per module, whenever the module first gets
+    imported, which can be any pass. Nothing can fix it, so it doesn't
+    count toward the warning threshold.
+
+    We recognize a discarded class as a collected class whose module
+    now binds its name to a different class of that name.
+    """
+    import sys
+
+    garbage_ids = {id(obj) for obj in gc.garbage}
+    residue: set[int] = set()
+    for obj in gc.garbage:
+        if not isinstance(obj, type) or id(obj) in residue:
+            continue
+        module = sys.modules.get(obj.__module__)
+        name = obj.__qualname__
+        if module is None or '.' in name:
+            continue
+        live = getattr(module, name, None)
+        if (
+            live is None
+            or live is obj
+            or not isinstance(live, type)
+            or live.__name__ != obj.__name__
+        ):
+            continue
+        # Claim the class and the collected objects it reaches without
+        # passing through another class (its dict, mro tuple,
+        # descriptors, member values).
+        # (Any: these are arbitrary collected objects of any type, as
+        # gc.garbage and gc.get_referents() themselves are typed.)
+        pending: list[Any] = [obj]
+        while pending:
+            item = pending.pop()
+            if id(item) in residue:
+                continue
+            residue.add(id(item))
+            for ref in gc.get_referents(item):
+                if (
+                    id(ref) in garbage_ids
+                    and id(ref) not in residue
+                    and not isinstance(ref, type)
+                ):
+                    pending.append(ref)
+    return residue
+
+
+def _summarize_garbage_transports() -> str:
+    """Say where any collected asyncio transports were connected.
+
+    A transport only reaches the cyclic gc if it was never closed (a
+    close drops the self-referencing read callback that otherwise
+    holds it), so each one is a socket some code path abandoned. The
+    peer address and protocol chain identify which path.
+    """
+    import asyncio
+
+    counts: dict[str, int] = {}
+    for obj in gc.garbage:
+        if not isinstance(obj, asyncio.BaseTransport):
+            continue
+        try:
+            # Plain reads of the transport's stored extras; nothing
+            # here touches the (possibly half-dead) socket.
+            peer = obj.get_extra_info('peername')
+            protos: list[str] = []
+            proto: asyncio.BaseProtocol | None = obj.get_protocol()
+            # Follow an SSL protocol to the app protocol behind it.
+            while proto is not None and len(protos) < 3:
+                protos.append(type(proto).__qualname__)
+                proto = getattr(proto, '_app_protocol', None)
+            protostr = '>'.join(protos) or None
+            desc = (
+                f'{type(obj).__qualname__} peer={peer}'
+                f' protocol={protostr} closing={obj.is_closing()}'
+            )
+        except Exception as exc:
+            desc = f'{type(obj).__qualname__} (unreadable: {exc!r})'
+        counts[desc] = counts.get(desc, 0) + 1
+    if not counts:
+        return ''
+    return '\nCollected transports:' + ''.join(
+        f'\n  {count}x {desc}'
+        for desc, count in sorted(counts.items(), key=lambda i: (-i[1], i[0]))
+    )
+
+
 def _summarize_garbage(loglevel: int) -> str:
     """Print stuff about gc.garbage to aid in breaking ref cycles."""
     from efro.debug import summarize_garbage
@@ -571,6 +696,8 @@ def _summarize_garbage(loglevel: int) -> str:
             key=lambda i: (-i[1], i[0]),
         )
     )
+
+    obj_summary += _summarize_garbage_transports()
 
     for debug_obj_type, dumps in sorted(summary.ref_dumps.items()):
         for i, dump in enumerate(dumps):

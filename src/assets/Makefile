@@ -650,6 +650,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/_clouddialog.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudfilecodec.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/color.py \
   $(BUILD_DIR)/ba_data/python/bacommon/consolechannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/depiction.py \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \

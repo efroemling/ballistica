@@ -20,6 +20,7 @@ from bacommon.servermanager import (
 )
 import babase
 import bascenev1
+import _baclassic
 
 if TYPE_CHECKING:
     from typing import Any
@@ -89,6 +90,10 @@ class ServerController:
     """Overall controller for the app in server mode."""
 
     def __init__(self, config: ServerConfig) -> None:
+        # Let the native layer know (a server leaves itself off the
+        # party roster it sends clients, for one).
+        _baclassic.set_server_mode(True)
+
         self._config = config
         self._playlist_name = '__default__'
         self._ran_access_check = False
