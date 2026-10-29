@@ -595,6 +595,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           if (auto n = root["n"].as_string()) {
             party_name_ = Utils::GetValidUTF8(std::string(*n).c_str(), "bsmhi");
           }
+          // Whether we may save the host to favorites.
+          allow_favorites_ = root["f"].bool_or(true);
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got invalid json in hostinfo message: "

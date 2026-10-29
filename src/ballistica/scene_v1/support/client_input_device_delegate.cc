@@ -118,4 +118,8 @@ auto ClientInputDeviceDelegate::GetCloudCharacters() const -> PyObject* {
 
 auto ClientInputDeviceDelegate::IsRemoteClient() const -> bool { return true; }
 
+auto ClientInputDeviceDelegate::IsV2Authed() const -> bool {
+  return connection_to_client_.exists() && connection_to_client_->v2_authed();
+}
+
 }  // namespace ballistica::scene_v1

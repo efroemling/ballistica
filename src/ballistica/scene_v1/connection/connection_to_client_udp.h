@@ -22,6 +22,7 @@ class ConnectionToClientUDP : public ConnectionToClient {
   void Update() override;
   void HandleGamePacket(const std::vector<uint8_t>& buffer) override;
   auto client_instance_uuid() const { return client_instance_uuid_; }
+  auto request_id() const -> uint8_t { return request_id_; }
   auto GetAsUDP() -> ConnectionToClientUDP* override;
   void RequestDisconnect() override;
   void Die();

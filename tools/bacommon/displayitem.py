@@ -26,10 +26,14 @@ from typing import TYPE_CHECKING, assert_never
 from efro.util import pairs_from_flat
 
 import bacommon.legacydisplayitem as lditm
-import bacommon.docui.v2 as dui2
 from bacommon.langstr import LangStrSpecValue
 
 if TYPE_CHECKING:
+    # (Imported where used rather than up top: it's a big module, and
+    # clients import this one at launch long before they draw any
+    # display-items. Lazy imports can replace this once on 3.15+.)
+    import bacommon.docui.v2 as dui2
+
     from bacommon.assetspec import TextureSpec
     from bacommon.classic import ClassicChestAppearance, ChestTints
 
@@ -124,6 +128,8 @@ class DisplayItem:
         can carry types newer than the code depicting them, and
         silently dropping one is how a reward goes missing.
         """
+        import bacommon.docui.v2 as dui2
+
         item = self.wrapper.item
         itemtype = item.get_type_id()
 
@@ -225,7 +231,7 @@ class DisplayItem:
                     position=_at(layout.text_x_offs, layout.text_y_offs),
                     # A zero max-width/height disables that constraint.
                     size=(layout.text_max_width or 0.0, 0.0),
-                    h_align=layout.text_h_align,
+                    h_align=dui2.HAlign.CENTER,
                     scale=width * layout.text_mult,
                     color=text_color,
                     flatness=1.0,
@@ -262,6 +268,8 @@ def _debug_bounds(
     height: float,
 ) -> list[dui2.Decoration]:
     """Return the provided-bounds and constrained-bounds debug rects."""
+    import bacommon.docui.v2 as dui2
+
     return [
         dui2.Image(
             texture=assets.white,
@@ -290,6 +298,7 @@ def _chest_image(
     depth_range: tuple[float, float] | None,
 ) -> dui2.Image:
     """Return the image depicting a chest item."""
+    import bacommon.docui.v2 as dui2
     from bacommon.classic import (
         CHEST_APPEARANCE_COLORS,
         CHEST_APPEARANCE_COLOR_DEFAULT,
@@ -341,7 +350,6 @@ class _Layout:
     text_x_offs: float = 0.0
     text_y_offs: float = 0.0
     text_max_width: float | None = None
-    text_h_align: dui2.HAlign = dui2.HAlign.CENTER
 
     #: When set, draw the text with the image fixed to its right, the
     #: pair centered and fitted in a box of this size by the client (it

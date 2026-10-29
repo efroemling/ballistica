@@ -660,6 +660,11 @@ void TextureAsset::DoLoad() {
   // Likewise the authored role, for the draw-time slot checks.
   role_ = preload_datas_[0].role;
 
+  // And the size we're drawing at, for callers that lay out by the
+  // texture's own aspect ratio.
+  width_ = preload_datas_[0].widths[base_level_];
+  height_ = preload_datas_[0].heights[base_level_];
+
   // If we're done, kill our preload data.
   preload_datas_.clear();
 }

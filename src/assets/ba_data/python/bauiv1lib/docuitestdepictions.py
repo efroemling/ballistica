@@ -342,6 +342,7 @@ def test_page_depictions(
         position: tuple[float, float] = _BOX_CENTER,
         h_align: dui2.HAlign = dui2.HAlign.CENTER,
         v_align: dui2.VAlign = dui2.VAlign.CENTER,
+        color_multiply: tuple[float, float, float, float] | None = None,
     ) -> dui2.Depiction:
         return dui2.Depiction(
             depiction=depiction,
@@ -350,11 +351,20 @@ def test_page_depictions(
             h_align=h_align,
             v_align=v_align,
             debug=debug,
+            color_multiply=color_multiply,
         )
 
-    def _kind_buttons(*, disabled: bool) -> list[dui2.Button]:
+    def _kind_buttons(
+        *,
+        disabled: bool = False,
+        color_multiply: tuple[float, float, float, float] | None = None,
+    ) -> list[dui2.Button]:
         return [
-            _button(label, [_depiction(dep, size)], disabled=disabled)
+            _button(
+                label,
+                [_depiction(dep, size, color_multiply=color_multiply)],
+                disabled=disabled,
+            )
             for label, dep, size in kinds
         ]
 
@@ -555,62 +565,73 @@ def test_page_depictions(
         ),
     ]
 
-    def _row(
+    def _rows(
         title: str, subtitle: str, buttons: list[dui2.Button]
-    ) -> dui2.ButtonRow:
-        return dui2.ButtonRow(
-            debug=debug,
-            title=LangStrSpecValue.literal(title),
-            subtitle=LangStrSpecValue.literal(subtitle),
-            buttons=buttons,
-        )
+    ) -> list[dui2.Row]:
+        return [
+            dui2.TitleRow(LangStrSpecValue.literal(title)),
+            dui2.SubtitleRow(LangStrSpecValue.literal(subtitle)),
+            dui2.ButtonRow(debug=debug, buttons=buttons),
+        ]
 
     return dui2.Response(
         page=dui2.Page(
             title=LangStrSpecValue.literal('Depictions'),
             rows=[
-                _row(
+                *_rows(
                     'Kinds',
                     'Each kind on a button; hover, press, and select them'
                     ' to see them follow the button.',
                     _kind_buttons(disabled=False),
                 ),
-                _row(
+                *_rows(
                     'Disabled',
                     'The same on disabled buttons: faded and greyed.',
                     _kind_buttons(disabled=True),
                 ),
-                _row(
+                *_rows(
+                    'Color multiply (red)',
+                    'Each kind times (1, 0.4, 0.4): whatever it draws,'
+                    ' multiplied; nothing replaced. Still follows its'
+                    ' button.',
+                    _kind_buttons(color_multiply=(1.0, 0.4, 0.4, 1.0)),
+                ),
+                *_rows(
+                    'Color multiply (dim, faded)',
+                    'Each kind times (0.5, 0.5, 0.5) at half opacity.',
+                    _kind_buttons(color_multiply=(0.5, 0.5, 0.5, 0.5)),
+                ),
+                *_rows(
                     'Fit and alignment',
                     'A square icon fitted into other shapes, a name'
                     ' shrinking to fit, and a composite.',
                     fit_buttons,
                 ),
-                _row(
+                *_rows(
                     'Hit area',
                     'Icon bodies on wide buttons. The first takes presses'
                     ' and hover anywhere in its box; the rest only over'
                     ' the icon (grown to a minimum size).',
                     hit_buttons,
                 ),
-                _row(
+                *_rows(
                     'Precise fit',
                     'White shapes fitted into boxes, the expected fit'
                     ' half-black over each: any fringe is a misfit.',
                     [_precise_button(*case) for case in _PRECISE_SQUARE],
                 ),
-                _row(
+                *_rows(
                     'Precise fit (shaped boxes)',
                     'The same in wide and tall boxes.',
                     [_precise_button(*case) for case in _PRECISE_SHAPED],
                 ),
-                _row(
+                *_rows(
                     'Precise fit (button bodies)',
                     'Each white shape is the button itself (its depiction'
                     ' body), the expected fit half-black over it.',
                     [_precise_body_button(case) for case in _PRECISE_BODIES],
                 ),
-                _row(
+                *_rows(
                     'Precise fit (button bodies, scaled and styled)',
                     'The same on scaled buttons and other styles.',
                     [

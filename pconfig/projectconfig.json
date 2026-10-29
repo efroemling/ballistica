@@ -1,5 +1,5 @@
 {
-  "assets": "a-0.babuiltinassets.261021",
+  "assets": "a-0.babuiltinassets.261028",
   "code_source_dirs": [
     "src/ballistica"
   ],
@@ -23,7 +23,7 @@
     "bauiv1lib": "buil"
   },
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
-  "engine_build_number": 23071,
+  "engine_build_number": 23077,
   "name": "BallisticaKit",
   "public": true,
   "python_paths": [

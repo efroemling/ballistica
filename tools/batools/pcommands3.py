@@ -99,6 +99,18 @@ def generate_flatpak_build_env() -> None:
     batools.flatpakbuildenv.generate(str(pcommand.PROJROOT))
 
 
+def flatpak_uv_upgrade() -> None:
+    """Pin the latest uv release for flatpak builds.
+
+    Rewrites pconfig/flatpak/uv.json (version plus each build arch's
+    published checksum). Part of ``make upgrade``, which then regenerates
+    the flatpak build env to use it. Needs network access.
+    """
+    import batools.flatpakbuildenv
+
+    batools.flatpakbuildenv.upgrade_uv_pin(str(pcommand.PROJROOT))
+
+
 def _github_repo() -> str:
     """Return 'owner/repo' from GITHUB_REPOSITORY or the git remote."""
     import os

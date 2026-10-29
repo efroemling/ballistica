@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -120,32 +121,26 @@ void ConnectionSet::SendChatMessage(const std::string& message,
       // (not that it really matters; chat messages are tiny overall)
       our_spec_string = PlayerSpec::GetAccountPlayerSpec().GetSpecString();
     } else {
-      // As a host we want to do the equivalent of
-      // ConnectionToClient::GetCombinedSpec() except for local connections (so
-      // send our name as the combination of local players if possible). Look
-      // for players coming from this client-connection; if we find any, make a
-      // spec out of their name(s).
-      std::string p_name_combined;
+      // As a host we go by the same rule as
+      // ConnectionToClient::GetCombinedSpec(), for our local players: our
+      // one player's name if we have exactly one, else our account (the
+      // name the party list shows for us).
+      std::string only_name;
+      int count{};
       if (auto* hs =
               dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
         for (auto&& p : hs->players()) {
           auto* delegate = p->input_device_delegate();
-          if (p->accepted() && p->name_is_real() && delegate != nullptr
-              && !delegate->IsRemoteClient()) {
-            if (!p_name_combined.empty()) {
-              p_name_combined += "/";
-            }
-            p_name_combined += p->GetName();
+          if (p->accepted() && p->name_is_real() && !p->GetName().empty()
+              && delegate != nullptr && !delegate->IsRemoteClient()) {
+            count++;
+            only_name = p->GetName();
           }
         }
       }
-      if (p_name_combined.size() > classic::kMaxPartyNameCombinedSize) {
-        p_name_combined.resize(classic::kMaxPartyNameCombinedSize);
-        p_name_combined += "...";
-      }
-      if (!p_name_combined.empty()) {
+      if (count == 1) {
         our_spec_string =
-            PlayerSpec::GetDummyPlayerSpec(p_name_combined).GetSpecString();
+            PlayerSpec::GetDummyPlayerSpec(only_name).GetSpecString();
       } else {
         our_spec_string = PlayerSpec::GetAccountPlayerSpec().GetSpecString();
       }
@@ -489,6 +484,14 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
         // accepted; hooray!
         ConnectionToHostUDP* hc = GetConnectionToHostUDP();
         if (hc && hc->request_id() == request_id) {
+          if (hc->client_id() == -1) {
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug, [&data, request_id] {
+                  return "ConnectionToHostUDP: accepted as client id="
+                         + std::to_string(data[1]) + " (request_id "
+                         + std::to_string(request_id) + ").";
+                });
+          }
           hc->set_client_id(data[1]);
         }
       }
@@ -577,6 +580,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           std::vector<uint8_t> data2(data_size - 2);
           memcpy(data2.data(), data + 2, data_size - 2);
           hc->HandleGamePacketCompressed(data2);
+        } else if (hc && hc->addr() == addr) {
+          hc->NoteMismatchedRequestIdPacket(request_id);
         }
       }
       break;
@@ -696,14 +701,42 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           Object::Ref<ConnectionToClientUDP> connection_to_client;
 
           // Go through and see if we already have a client-connection for
-          // this request-id.
+          // this client.
+          std::optional<int> stale_connection_id;
           for (auto&& i : connections_to_clients_) {
             if (ConnectionToClientUDP* cc_udp = i.second->GetAsUDP()) {
               if (cc_udp->client_instance_uuid() == client_instance_uuid) {
-                connection_to_client = cc_udp;
+                // A repeat of the request we already accepted is
+                // normal (they resend until our accept arrives); keep
+                // that connection. A different request id means they
+                // gave up on that connection and started over (say we
+                // were backgrounded and they timed us out). That old
+                // connection tags its packets with the old id, which
+                // they now ignore, so it has to go.
+                if (cc_udp->request_id() == request_id) {
+                  connection_to_client = cc_udp;
+                } else {
+                  stale_connection_id = cc_udp->id();
+                  auto stale_msg = [cc_udp, request_id, &addr] {
+                    return "ConnectionSet: " + addr.AddressString() + ":"
+                           + std::to_string(addr.Port())
+                           + " sent a new join request (request_id "
+                           + std::to_string(request_id)
+                           + "); dropping its stale connection id="
+                           + std::to_string(cc_udp->id()) + " (request_id "
+                           + std::to_string(cc_udp->request_id())
+                           + ", connected="
+                           + std::to_string(cc_udp->can_communicate()) + ").";
+                  };
+                  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                                       stale_msg);
+                }
                 break;
               }
             }
+          }
+          if (stale_connection_id.has_value()) {
+            HandleClientDisconnected(*stale_connection_id);
           }
           if (!connection_to_client.exists()) {
             // Create them a client object.
@@ -734,6 +767,15 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             connection_to_client = Object::New<ConnectionToClientUDP>(
                 addr, client_instance_uuid, request_id, client_id);
             connections_to_clients_[client_id] = connection_to_client;
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug,
+                [client_id, request_id, &addr] {
+                  return "ConnectionSet: accepted join request from "
+                         + addr.AddressString() + ":"
+                         + std::to_string(addr.Port())
+                         + " as new connection id=" + std::to_string(client_id)
+                         + " (request_id " + std::to_string(request_id) + ").";
+                });
           }
 
           // Stash the protocol version they claimed. We don't gate

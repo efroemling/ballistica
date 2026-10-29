@@ -22,15 +22,23 @@ namespace ballistica::base {
 const int kTextMaxUnicodeVal = 999999;
 const float kTextRowHeight = 32.0f;
 
-/// Nominal capital-letter height at text scale 1 (the baked Latin
-/// glyphs'; OS-drawn text shares their em size, so lands within a few
-/// percent). Fixed, never measured per string, so things sized by it
-/// don't change from string to string. Much less than kTextRowHeight,
-/// which includes room for descenders, accents and line spacing.
-const float kTextCapHeight = 21.0f;
+/// Capital-letter height at text scale 1: our font's flat-topped and
+/// flat-bottomed capitals' ink, measured from its atlas (OS-drawn text
+/// shares its em size, so lands within a few percent). Fixed, never
+/// measured per string, so things sized by it don't change from string
+/// to string. Much less than kTextRowHeight, which includes room for
+/// descenders, accents and line spacing.
+const float kTextCapHeight = 20.37f;
 
-constexpr int kFontExtrasRows{5};
-constexpr int kFontExtrasColumns{5};
+/// How far above the bottom of its kTextRowHeight row a line's baseline
+/// (its glyphs' pen origin, ours and OS-drawn alike) sits. Chosen so
+/// our font's capitals (20.37 units tall, measured from its atlas) have
+/// their ink exactly centered in the row, which is what vertically
+/// centered text centers by.
+constexpr float kTextBaselineHeight{5.817f};
+
+/// How many extras atlas pages (font_extras..font_extras5) our custom
+/// glyphs draw from.
 constexpr int kFontExtrasPages{5};
 
 // Encapsulates text-display functionality used by the logic thread.
@@ -114,6 +122,14 @@ class TextGraphics {
   void GetFontPagesForText(const std::string& text, std::set<int>* font_pages);
   void GetFontPageCharRange(int page, uint32_t* first_char,
                             uint32_t* last_char);
+
+  /// Whether a char is one of our custom glyphs (SpecialChar).
+  static auto IsSpecialChar(uint32_t val) -> bool;
+
+  /// The font page (a FontPage extras value) a custom glyph draws from;
+  /// set per glyph by its data, not implied by its codepoint. Only
+  /// valid for IsSpecialChar() chars.
+  static auto SpecialCharFontPage(uint32_t val) -> int;
   // Note: text *measurement* (GetOSTextSpanWidth/BoundsAndWidth,
   // GetStringWidth, GetStringHeight) is callable from any thread: the
   // span cache is mutex-guarded, glyph-page loads are mutex-guarded,
@@ -269,9 +285,10 @@ class TextGraphics {
 
   // Keys ordered by last use; front = least-recently-used.
   std::list<std::string> text_span_bounds_cache_lru_;
-  Glyph
-      glyphs_extras_[kFontExtrasRows * kFontExtrasColumns * kFontExtrasPages]{};
-  Glyph glyphs_big_[64]{};
+
+  /// Our custom glyphs: g_glyphs_extras, with superscript icons'
+  /// entries derived from their full-size twins.
+  std::vector<Glyph> glyphs_extras_;
 };
 
 }  // namespace ballistica::base

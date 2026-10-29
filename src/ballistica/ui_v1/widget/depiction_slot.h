@@ -104,6 +104,14 @@ class DepictionSlot {
   }
   void set_use_color_override(bool val) { use_color_override_ = val; }
 
+  /// A multiplier on everything the depiction draws (see
+  /// base::DepictionDrawContext::color_multiply); the suffix too.
+  void set_color_multiply(float r, float g, float b) {
+    color_multiply_[0] = r;
+    color_multiply_[1] = g;
+    color_multiply_[2] = b;
+  }
+
   void set_backing_color(float r, float g, float b, float a = 1.0f) {
     has_backing_ = true;
     backing_color_[0] = r;
@@ -180,6 +188,7 @@ class DepictionSlot {
   float layer2_color_[4]{1.0f, 1.0f, 1.0f, 1.0f};
   bool use_color_override_{};
   float color_override_[3]{1.0f, 1.0f, 1.0f};
+  float color_multiply_[3]{1.0f, 1.0f, 1.0f};
   base::DepictionSuffix suffix_;
 };
 

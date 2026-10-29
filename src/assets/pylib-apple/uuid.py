@@ -66,9 +66,9 @@ from enum import Enum, _simple_enum
 __author__ = 'Ka-Ping Yee <ping@zesty.ca>'
 
 # The recognized platforms - known behaviors
-if sys.platform in {'win32', 'darwin', 'emscripten', 'wasi'}:
+if sys.platform in {'win32', 'darwin', 'emscripten', 'wasi', 'ios', 'tvos', 'visionos', 'watchos'}:  # efro: skip platform
     _AIX = _LINUX = False
-elif sys.platform == 'linux':
+elif sys.platform in ('linux', 'android'):  # efro: skip platform
     _LINUX = True
     _AIX = False
 else:

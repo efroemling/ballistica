@@ -283,6 +283,8 @@ auto SceneV1InputDeviceDelegate::GetAccountName(bool full) const
   }
 }
 
+auto SceneV1InputDeviceDelegate::IsV2Authed() const -> bool { return false; }
+
 auto SceneV1InputDeviceDelegate::IsRemoteClient() const -> bool {
   return false;
 }

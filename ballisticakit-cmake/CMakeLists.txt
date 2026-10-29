@@ -549,6 +549,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/shadow_range.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_big_and_extras_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_glyph_pages_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_page_map_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.cc
@@ -1006,6 +1007,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/column_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/container_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/container_widget.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/debug_rect_widget.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/debug_rect_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/depiction_slot.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/fading_scroll_thumb.cc

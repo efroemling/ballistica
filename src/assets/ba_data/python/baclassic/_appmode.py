@@ -228,7 +228,7 @@ class ClassicAppMode(AppMode):
         # Host-ui upkeep runs exactly while we're the active mode.
         classic = bui.app.classic
         assert classic is not None
-        classic.host_ui.start()
+        classic.host_ui_start()
 
         # Register the app-run's hosting package universe: exactly the
         # set the launch metascan discovered (which construct-mode fully
@@ -348,7 +348,7 @@ class ClassicAppMode(AppMode):
 
         # Host-ui upkeep runs exactly while we're the active mode.
         if classic is not None:
-            classic.host_ui.stop()
+            classic.host_ui_stop()
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()

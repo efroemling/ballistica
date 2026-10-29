@@ -48,6 +48,12 @@ class ServerConfig:
     # Whether the default kick-voting system is enabled.
     enable_default_kick_voting: bool = True
 
+    # Whether clients may save this server to their favorites. Turn this
+    # off if your server's address or port don't stay the same (for
+    # instance if it gets relaunched somewhere new each time), since a
+    # saved entry would stop working.
+    allow_favorites: bool = True
+
     # If True, disables the punch-grab protection added in 1.8.0,
     # restoring the classic behavior where punches landed shortly
     # before or after grabs deal damage to other players (the

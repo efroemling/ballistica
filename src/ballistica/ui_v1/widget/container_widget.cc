@@ -24,6 +24,7 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
+#include "ballistica/ui_v1/widget/debug_rect_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -188,6 +189,15 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
     base::EmptyComponent c(pass);
     c.SetTransparent(true);
 
+    // Debug rects need to know where they land on screen (see
+    // DebugRectWidget); only tracked while any exist.
+    bool track_transforms{DebugRectWidget::tracking()};
+    Rect child_clip;
+    bool has_child_clip{track_transforms && GetChildClipRect(&child_clip)};
+    // (A stack's children are top-level windows.)
+    bool children_toplevel{track_transforms
+                           && dynamic_cast<StackWidget*>(this) != nullptr};
+
     for (size_t i = 0; i < w_count; i++) {
       if (single_depth_root_) {
         if (i == 0) {
@@ -248,7 +258,20 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
         c.Translate(x_offset + tx, y_offset + ty, this_z_offs);
         c.Scale(s, s, this_layer_thickness);
         c.Submit();
-        w.Draw(pass, draw_transparent);
+        if (track_transforms) {
+          // (The transforms above, flattened to 2d: our transition
+          // scale about our backing's center, then the child's spot
+          // and scale.)
+          float ts{transition_scale_};
+          DebugRectWidget::PushChildTransform(
+              bg_center_x_ * (1.0f - ts) + ts * (x_offset + tx),
+              bg_center_y_ * (1.0f - ts) + ts * (y_offset + ty), ts * s,
+              has_child_clip, child_clip, &w, children_toplevel);
+          w.Draw(pass, draw_transparent);
+          DebugRectWidget::PopChildTransform();
+        } else {
+          w.Draw(pass, draw_transparent);
+        }
       }
       c.Submit();
     }
@@ -1310,30 +1333,51 @@ void ContainerWidget::Clear() {
   prev_selected_widget_ = nullptr;
 }
 
-void ContainerWidget::SetCancelButton(ButtonWidget* button) {
-  assert(button);
+// The label color our cancel buttons get when they have no color of their
+// own.
+static const Vector4f kCancelButtonTextColor{0.9f, 0.9f, 1.0f, 1.0f};
 
-  if (!button->is_color_set()) {
-    button->set_color(0.7f, 0.4f, 0.34f);
-    button->set_text_color(0.9f, 0.9f, 1.0f, 1.0f);
+void ContainerWidget::SetCancelButton(ButtonWidget* button) {
+  ButtonWidget* old{cancel_button_.get()};
+  if (old != nullptr && old != button
+      && old->role() == ButtonWidget::Role::kCancel) {
+    old->SetRole(ButtonWidget::Role::kNone, nullptr, nullptr);
   }
   cancel_button_ = button;
-
-  // Don't give it a back icon if it has a custom assigned one..
-  // FIXME: This should be dynamic.
-  if (button->icon() == nullptr) {
-    button->set_icon_type(ButtonWidget::IconType::kCancel);
+  if (button) {
+    button->SetRole(ButtonWidget::Role::kCancel, &cancel_button_color_,
+                    &kCancelButtonTextColor);
   }
 }
 
 void ContainerWidget::SetStartButton(ButtonWidget* button) {
-  assert(button);
-  if (!button->is_color_set()) {
-    button->set_color(0.2f, 0.8f, 0.55f);
+  ButtonWidget* old{start_button_.get()};
+  if (old != nullptr && old != button
+      && old->role() == ButtonWidget::Role::kStart) {
+    old->SetRole(ButtonWidget::Role::kNone, nullptr, nullptr);
   }
   start_button_ = button;
+  if (button) {
+    button->SetRole(ButtonWidget::Role::kStart, &start_button_color_, nullptr);
+  }
+}
 
-  button->set_icon_type(ButtonWidget::IconType::kStart);
+void ContainerWidget::SetStartButtonColor(const Vector3f& color) {
+  start_button_color_ = color;
+  if (start_button_.exists()
+      && start_button_->role() == ButtonWidget::Role::kStart) {
+    start_button_->SetRole(ButtonWidget::Role::kStart, &start_button_color_,
+                           nullptr);
+  }
+}
+
+void ContainerWidget::SetCancelButtonColor(const Vector3f& color) {
+  cancel_button_color_ = color;
+  if (cancel_button_.exists()
+      && cancel_button_->role() == ButtonWidget::Role::kCancel) {
+    cancel_button_->SetRole(ButtonWidget::Role::kCancel, &cancel_button_color_,
+                            &kCancelButtonTextColor);
+  }
 }
 
 static auto _IsTransitionOut(ContainerWidget::TransitionType type) {

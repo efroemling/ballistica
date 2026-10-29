@@ -119,21 +119,20 @@ def test_page_nine_patch(
             ],
         )
 
-    def _row(
+    def _rows(
         title: str, subtitle: str, buttons: list[dui2.Button]
-    ) -> dui2.ButtonRow:
-        return dui2.ButtonRow(
-            debug=debug,
-            title=LangStrSpecValue.literal(title),
-            subtitle=LangStrSpecValue.literal(subtitle),
-            buttons=buttons,
-        )
+    ) -> list[dui2.Row]:
+        return [
+            dui2.TitleRow(LangStrSpecValue.literal(title)),
+            dui2.SubtitleRow(LangStrSpecValue.literal(subtitle)),
+            dui2.ButtonRow(debug=debug, buttons=buttons),
+        ]
 
     return dui2.Response(
         page=dui2.Page(
             title=LangStrSpecValue.literal('9-Patch'),
             rows=[
-                _row(
+                *_rows(
                     'Bounds check',
                     'Opaque 9-patches (red) on dark buttons. With debug on,'
                     ' each should be one solid tint edge to edge: any dark'
@@ -144,7 +143,7 @@ def test_page_nine_patch(
                         _bounds_check((90.0, 140.0)),
                     ],
                 ),
-                _row(
+                *_rows(
                     'Tile-fit',
                     'The middle repeats at the ends\' scale, fitted to a'
                     ' whole number of copies; stripes run straight through.',
@@ -155,7 +154,7 @@ def test_page_nine_patch(
                         _button('tall', (240.0, 90.0)),
                     ],
                 ),
-                _row(
+                *_rows(
                     'Stretch',
                     'The same art with its middle stretched instead; stripes'
                     ' flatten between the ends.',
@@ -166,7 +165,7 @@ def test_page_nine_patch(
                         _button('tall', (240.0, 90.0), tile=False),
                     ],
                 ),
-                _row(
+                *_rows(
                     'Tinted',
                     'Greyscale art tinted three colors through an rgb tint'
                     ' texture sharing its 9-patch layout.',
@@ -176,7 +175,7 @@ def test_page_nine_patch(
                         _button('team, long', (420.0, 50.0), tints=_TEAM),
                     ],
                 ),
-                _row(
+                *_rows(
                     'Borders',
                     'Smaller ends than the height, and ends too big for the'
                     ' box (they shrink to fit; the box never grows).',

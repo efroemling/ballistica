@@ -9,7 +9,7 @@
 # pylint: disable=too-many-lines
 
 from typing import TYPE_CHECKING, assert_never
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 import weakref
 import copy
@@ -34,6 +34,7 @@ from bauiv1lib.docui import _bgrunner, _cache, _timing
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._menu import DocUIMenuWindow
 from bauiv1lib.docui._popuptext import DocUIPopupTextWindow
+from bauiv1lib.docui._popupwindow import DocUIPopupWindow
 from bauiv1lib.docui._window import DocUIWindow
 from bauiv1lib.docui._windowoptions import WindowOptions
 from bauiv1lib.docui._windowstate import DocUIMainWindowState
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
     import bacommon.clienteffect as clfx
     from bacommon.locale import Locale
 
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui._panes import PageGeometries, PaneMode
 
     from bauiv1lib.docui import prep
@@ -628,9 +630,8 @@ class DocUIController:
                 self._process_request_in_bg,
                 request,
                 weakwin=weakref.ref(win),
-                uiscale=bui.app.ui_v1.uiscale,
                 geometries=win.page_geometries(),
-                idprefix=win.main_window_id_prefix,
+                idprefix=win.host_id_prefix,
                 # Cached content has no delayed appearance to soften, so
                 # snap it in rather than animating.
                 immediate=cached is not None,
@@ -762,9 +763,8 @@ class DocUIController:
                 self._process_request_in_bg,
                 win.request,
                 weakwin=weakref.ref(win),
-                uiscale=bui.app.ui_v1.uiscale,
                 geometries=win.page_geometries(),
-                idprefix=win.main_window_id_prefix,
+                idprefix=win.host_id_prefix,
                 # If this window has had a response already, snap things
                 # in immediately with no transitions.
                 immediate=has_had_response,
@@ -778,7 +778,7 @@ class DocUIController:
 
     def replace(
         self,
-        win: DocUIWindow,
+        win: DocUIPageHost,
         request: DocUIRequest,
         *,
         origin_widget: bui.Widget | None = None,
@@ -797,7 +797,7 @@ class DocUIController:
         assert bui.in_logic_thread()
 
         if is_refresh:
-            win.main_window_save_shared_state()
+            win.save_shared_state()
 
         win.request = request
 
@@ -830,7 +830,7 @@ class DocUIController:
 
     def _submit_fresh_request(
         self,
-        win: DocUIWindow,
+        win: DocUIPageHost,
         origin_widget: bui.Widget | None,
         is_refresh: bool,
         *,
@@ -872,9 +872,8 @@ class DocUIController:
                 self._process_request_in_bg,
                 win.request,
                 weakwin=weakref.ref(win),
-                uiscale=bui.app.ui_v1.uiscale,
                 geometries=win.page_geometries(),
-                idprefix=win.main_window_id_prefix,
+                idprefix=win.host_id_prefix,
                 immediate=True,
                 explicit_error=explicit_error,
                 timing=self._new_timing(win.request),
@@ -888,7 +887,7 @@ class DocUIController:
 
     def run_action(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         widgetid: str | None,
         action: bacommon.docui.v2.Action | None,
         is_timed: bool = False,
@@ -900,6 +899,7 @@ class DocUIController:
         on-change action changes; ``trigger`` is its state key then.)
         """
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
 
         import bacommon.docui.v2 as dui
@@ -939,6 +939,14 @@ class DocUIController:
                 bui.uilog.warning(
                     'Ignoring BROWSE action (disallowed in timed actions).'
                 )
+            elif not isinstance(window, DocUIWindow):
+                # Popups browse through their parent (a parent action),
+                # so it's clear whose state goes along.
+                bui.uilog.warning(
+                    'Ignoring BROWSE action (disallowed in popups;'
+                    ' browse from the parent instead).'
+                )
+                _builtinassets.audio.error.get().play()
             else:
                 if action.default_sound:
                     bui.play_swish()
@@ -948,27 +956,41 @@ class DocUIController:
                     state=action.state,
                     trigger=trigger,
                 )
-                window.main_window_replace(
-                    lambda: self.create_window(
-                        browserequest,
-                        origin_widget=widget,
-                        auxiliary_style=False,
-                        suppress_win_extra_type_warning=True,
-                        options=WindowOptions.from_browse(action),
+                if action.add_to_history:
+                    window.main_window_replace(
+                        lambda: self.create_window(
+                            browserequest,
+                            origin_widget=widget,
+                            auxiliary_style=False,
+                            suppress_win_extra_type_warning=True,
+                            options=WindowOptions.from_browse(action),
+                        )
                     )
-                )
+                else:
+                    # Taking our place in the history rather than adding
+                    # us to it: we scale out as it scales in.
+                    window.main_window_swap(
+                        lambda: self.create_window(
+                            browserequest,
+                            transition='in_scale',
+                            auxiliary_style=False,
+                            suppress_win_extra_type_warning=True,
+                            options=WindowOptions.from_browse(action),
+                        )
+                    )
 
         elif action_type is dui.ActionTypeID.REPLACE:
             assert isinstance(action, dui.Replace)
 
             # Play default click sound only if this is coming from a
-            # button.
-            if widget is not None and action.default_sound:
+            # button press (an input row firing its on-change has
+            # already made its own sound).
+            if widget is not None and trigger is None and action.default_sound:
                 _builtinassets.audio.click01.get().play()
 
             # Force a state save so if our UI gets rebuilt with the same
             # IDs we'll wind up with the same selection and whatnot.
-            window.main_window_save_shared_state()
+            window.save_shared_state()
             self.replace(
                 window,
                 window.request_for_action(
@@ -987,9 +1009,10 @@ class DocUIController:
                     # Always play close-window swish, even if we don't have
                     # a source button.
                     bui.play_swish()
-                elif widget is not None:
+                elif widget is not None and trigger is None:
                     # Only play press sounds if this is coming from a
-                    # button; the local-action says which.
+                    # button press (not an input row's on-change, which
+                    # made its own); the local-action says which.
                     self._play_press_sound(
                         PressSound.CLICK
                         if action.immediate_local_action is None
@@ -1001,10 +1024,17 @@ class DocUIController:
             if action.sets:
                 window.set_page_state_values(action.sets)
 
-            if action.close_window:
-                if action.return_sets:
-                    self._apply_return_sets(window, action.return_sets)
-                window.main_window_back()
+            if action.close_window and isinstance(window, DocUIPopupWindow):
+                self._close_popup(window, action, is_timed=is_timed)
+            elif action.close_window:
+                assert isinstance(window, DocUIWindow)
+                self._close_window(window, action)
+            elif action.close_to is not None:
+                bui.uilog.warning(
+                    'Ignoring doc-ui close_to %r on an action that does'
+                    ' not close its window.',
+                    action.close_to,
+                )
             elif action.return_sets:
                 bui.uilog.warning(
                     'Ignoring doc-ui return values on an action that'
@@ -1037,6 +1067,18 @@ class DocUIController:
                 ' and menu items).'
             )
 
+        elif action_type is dui.ActionTypeID.POPUP:
+            assert isinstance(action, dui.Popup)
+            if is_timed or trigger is not None:
+                # As with browses and menus: only presses open popups.
+                bui.uilog.warning(
+                    'Ignoring POPUP action (only allowed on presses).'
+                )
+            else:
+                if action.default_sound:
+                    bui.play_swish()
+                self._open_popup(window, widget, widgetid, action)
+
         elif action_type is dui.ActionTypeID.UNKNOWN:
             assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
@@ -1047,7 +1089,7 @@ class DocUIController:
 
     def run_button_action(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         widgetid: str,
         action: bacommon.docui.v2.Action | None,
         popup: prep.MenuPrep | prep.PopupTextPrep | None,
@@ -1123,7 +1165,7 @@ class DocUIController:
             bui.play_swish()
         DocUIPopupTextWindow(widget, popup)
 
-    def _refuse_if_locked(self, window: DocUIWindow) -> bool:
+    def _refuse_if_locked(self, window: DocUIPageHost) -> bool:
         """Tell the user to try again if a window is locked; True if so."""
         if not window.locked:
             return False
@@ -1138,7 +1180,7 @@ class DocUIController:
 
     def run_input_local_action(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         widgetid: str,
         key: str,
         action: bacommon.docui.v2.Local,
@@ -1169,7 +1211,7 @@ class DocUIController:
 
     def input_changed(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         widgetid: str,
         key: str,
         value: Any,
@@ -1188,6 +1230,210 @@ class DocUIController:
         # page sends next.
         if on_change is not None:
             self.run_action(window, widgetid, on_change, trigger=key)
+
+    def _open_popup(
+        self,
+        host: DocUIPageHost,
+        widget: bui.Widget | None,
+        widgetid: str | None,
+        action: bacommon.docui.v2.Popup,
+    ) -> None:
+        """Open a popup over a window (replacing any it has).
+
+        From a popup, the new one replaces it over the same parent.
+        """
+        if isinstance(host, DocUIPopupWindow):
+            parent = host.parent
+            # Actions run on the parent come from the button that opened
+            # the first popup in the chain.
+            opener_widget_id = host.opener_widget_id
+        else:
+            assert isinstance(host, DocUIWindow)
+            parent = host
+            opener_widget_id = widgetid
+        if parent is None:
+            return
+
+        # The popup's request carries no state of its own yet; the
+        # parent's (with the action's sets applied) goes along as its
+        # parent state.
+        parent.pull_page_state_values()
+        parent_state = copy.deepcopy(parent.page_state)
+        if parent_state is not None and action.sets:
+            parent_state.update(copy.deepcopy(action.sets))
+        request = replace(action.request, state=None, parent_state=parent_state)
+
+        popup = DocUIPopupWindow(
+            self,
+            request,
+            parent=parent,
+            action=action,
+            origin_widget=widget,
+            opener_widget_id=opener_widget_id,
+        )
+        parent.set_popup(popup)
+        self._set_win_data(
+            popup,
+            _WinData(
+                _WinState.FETCHING_FRESH_REQUEST,
+                fetch_locale=bui.app.locale.current_locale,
+            ),
+        )
+        popup.lock_ui()
+        host_ref: weakref.ref[DocUIPageHost] = weakref.ref(popup)
+        _bgrunner.submit(
+            bui.CallStrict(
+                self._process_request_in_bg,
+                request,
+                weakwin=host_ref,
+                geometries=popup.page_geometries(),
+                idprefix=popup.host_id_prefix,
+                immediate=False,
+                shown_time=time.monotonic(),
+                timing=self._new_timing(request),
+            )
+        )
+
+    def _close_popup(
+        self,
+        popup: DocUIPopupWindow,
+        action: bacommon.docui.v2.Local,
+        *,
+        is_timed: bool,
+    ) -> None:
+        """Close a popup, then do whatever it says to its parent."""
+        import bacommon.docui.v2 as dui2
+
+        parent = popup.parent
+        popup.dismiss()
+        if parent is None:
+            return
+
+        if action.close_to is not None:
+            bui.uilog.warning(
+                'Ignoring doc-ui close_to %r in a popup; close the parent'
+                ' back with a parent action instead.',
+                action.close_to,
+            )
+
+        parent_type_id = (parent.page_state or {}).get('_t')
+
+        # Values handed back go into the parent's state.
+        if action.return_sets:
+            values = dict(action.return_sets)
+            if values.pop('_t', None) != parent_type_id:
+                bui.uilog.warning(
+                    'Ignoring doc-ui popup return values for state %r;'
+                    ' the parent page has %r.',
+                    action.return_sets.get('_t'),
+                    parent_type_id,
+                )
+            elif values:
+                parent.set_page_state_values(values)
+
+        if action.parent_action is not None:
+            if (
+                action.parent_state_id is not None
+                and action.parent_state_id != parent_type_id
+            ):
+                bui.uilog.warning(
+                    'Ignoring doc-ui popup parent action for state %r;'
+                    ' the parent page has %r.',
+                    action.parent_state_id,
+                    parent_type_id,
+                )
+                return
+            parent_action = action.parent_action
+            if not isinstance(
+                parent_action, (dui2.Browse, dui2.Replace, dui2.Local)
+            ) or (
+                isinstance(parent_action, dui2.Local)
+                and (
+                    parent_action.parent_action is not None
+                    or parent_action.refresh_parent
+                )
+            ):
+                bui.uilog.warning(
+                    'Ignoring doc-ui popup parent action of type %s.',
+                    type(parent_action).__name__,
+                )
+                return
+            # From the button that opened us, if it is still there (the
+            # parent's page may have been rebuilt under us).
+            opener = popup.opener_widget_id
+            if opener is not None and bui.widget_by_id(opener) is None:
+                opener = None
+            self.run_action(parent, opener, parent_action, is_timed=is_timed)
+            return
+
+        if action.refresh_parent or action.return_sets:
+            if parent.locked:
+                # A request of its own is out and will bring a fresh
+                # page (with any values we handed back in its state).
+                bui.uilog.debug(
+                    'Doc-ui popup parent busy; skipping its refresh.'
+                )
+                return
+            self.replace(parent, parent.request, is_refresh=True)
+
+    def _close_window(
+        self, window: DocUIWindow, action: bacommon.docui.v2.Local
+    ) -> None:
+        """Close a window, back one step or to a page it names."""
+        if action.parent_action is not None or action.refresh_parent:
+            bui.uilog.warning(
+                'Ignoring doc-ui popup parent action/refresh outside a'
+                ' popup.'
+            )
+        if action.close_to is not None:
+            target = self._find_close_to_target(window, action.close_to)
+            if target is not None:
+                if action.return_sets:
+                    target.apply_return_sets(action.return_sets)
+                window.main_window_back_to(target)
+                return
+            # Should not happen: the page means to return somewhere
+            # we never came through, so the user lands somewhere
+            # unintended. Say so loudly; the page needs fixing.
+            bui.uilog.warning(
+                'Doc-ui close_to target %r not found among the earlier'
+                ' windows of %s (back stack: %s); closing just one'
+                ' window instead.',
+                action.close_to,
+                type(self).__name__,
+                self._describe_back_stack(window),
+            )
+        if action.return_sets:
+            self._apply_return_sets(window, action.return_sets)
+        window.main_window_back()
+
+    def _find_close_to_target(
+        self, window: DocUIWindow, path: str
+    ) -> DocUIMainWindowState | None:
+        """Find the nearest earlier window of ours showing a path.
+
+        Only looks through consecutive windows of our own controller;
+        never past them into anything else.
+        """
+        state = window.main_window_back_state
+        while isinstance(
+            state, DocUIMainWindowState
+        ) and state.controller_type is type(self):
+            if state.get_path() == path:
+                return state
+            state = state.parent
+        return None
+
+    def _describe_back_stack(self, window: DocUIWindow) -> str:
+        """Our earlier windows' paths, nearest first (for warnings)."""
+        paths: list[str] = []
+        state = window.main_window_back_state
+        while isinstance(
+            state, DocUIMainWindowState
+        ) and state.controller_type is type(self):
+            paths.append(repr(state.get_path()))
+            state = state.parent
+        return ' <- '.join(paths) if paths else 'none'
 
     @staticmethod
     def _apply_return_sets(window: DocUIWindow, values: dict) -> None:
@@ -1212,7 +1458,7 @@ class DocUIController:
         local_action: str | None,
         local_action_args: dict | None,
         widget: bui.Widget | None,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         is_timed: bool,
         trigger: str | None = None,
     ) -> None:
@@ -1239,40 +1485,60 @@ class DocUIController:
                 client_effects, targets=window.anim_targets
             )
         if local_action is not None:
-            try:
-                self.local_action(
-                    DocUILocalAction(
-                        name=local_action,
-                        args=(
-                            {}
-                            if local_action_args is None
-                            else local_action_args
-                        ),
-                        widget=widget,
-                        window=window,
-                        trigger=trigger,
-                    )
-                )
-            except Exception:
-                bui.uilog.exception(
-                    'Error running local-action %s.',
-                    local_action,
-                )
+            self._run_local_action(
+                window,
+                local_action,
+                {} if local_action_args is None else local_action_args,
+                widget=widget,
+                trigger=trigger,
+            )
 
-    def _get_win_data(self, window: DocUIWindow) -> _WinData:
+    def _run_local_action(
+        self,
+        host: DocUIPageHost,
+        name: str,
+        args: dict,
+        *,
+        widget: bui.Widget | None,
+        trigger: str | None = None,
+    ) -> None:
+        """Run a local-action for a page in a window or popup."""
+        window = host.host_main_window()
+        if window is None:
+            # A popup whose window has gone.
+            bui.uilog.debug(
+                'Dropping doc-ui local-action %s; its window is gone.', name
+            )
+            return
+        try:
+            self.local_action(
+                DocUILocalAction(
+                    name=name,
+                    args=args,
+                    widget=widget,
+                    window=window,
+                    trigger=trigger,
+                    popup=(
+                        host if isinstance(host, DocUIPopupWindow) else None
+                    ),
+                )
+            )
+        except Exception:
+            bui.uilog.exception('Error running local-action %s.', name)
+
+    def _get_win_data(self, window: DocUIPageHost) -> _WinData:
         val = getattr(window, '_wcdata')
         assert isinstance(val, _WinData)
         return val
 
-    def _set_win_data(self, window: DocUIWindow, data: _WinData) -> None:
+    def _set_win_data(self, window: DocUIPageHost, data: _WinData) -> None:
         setattr(window, '_wcdata', data)
 
     def _process_request_in_bg(
         self,
         request: DocUIRequest,
         *,
-        weakwin: weakref.ref[DocUIWindow],
-        uiscale: bui.UIScale,
+        weakwin: weakref.ref[DocUIPageHost],
         geometries: PageGeometries,
         idprefix: str,
         immediate: bool,
@@ -1293,7 +1559,6 @@ class DocUIController:
         page that was slow for local reasons can say where the time
         went (see the _timing module).
         """
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
@@ -1427,11 +1692,7 @@ class DocUIController:
                 prep.prep_page(
                     src.page,
                     packages=list(src.packages),
-                    uiscale=uiscale,
-                    scroll_width=geometry.scroll_width,
-                    scroll_height=geometry.scroll_height,
-                    margins=geometry.margins,
-                    column_insets=geometry.column_insets,
+                    geometry=geometry,
                     immediate=immediate,
                     transition_scale=_transition_scale(shown_time),
                     idprefix=idprefix,
@@ -1480,7 +1741,7 @@ class DocUIController:
     def _handle_response_in_ui_thread(
         self,
         response: DocUIResponse,
-        weakwin: weakref.ref[DocUIWindow],
+        weakwin: weakref.ref[DocUIPageHost],
         pageprep: prep.PagePrep,
         timing: _timing.PageTiming | None = None,
     ) -> None:
@@ -1490,10 +1751,10 @@ class DocUIController:
 
         t_start = time.monotonic()
 
-        # If our target window died since we made the request, no
-        # biggie.
+        # If our target window died since we made the request (or a
+        # popup has closed), no biggie.
         win = weakwin()
-        if win is None:
+        if win is None or not win.host_alive():
             return
 
         # Currently should only be sending ourself v2 responses here.
@@ -1536,9 +1797,8 @@ class DocUIController:
                     self._process_request_in_bg,
                     win.request,
                     weakwin=weakref.ref(win),
-                    uiscale=bui.app.ui_v1.uiscale,
                     geometries=win.page_geometries(),
-                    idprefix=win.main_window_id_prefix,
+                    idprefix=win.host_id_prefix,
                     immediate=True,
                     explicit_error=self.ErrorType.GENERIC,
                     timing=self._new_timing(win.request),
@@ -1582,24 +1842,16 @@ class DocUIController:
                     pageprep.client_effects, targets=win.anim_targets
                 )
             if response.local_action is not None:
-                try:
-                    self.local_action(
-                        DocUILocalAction(
-                            name=response.local_action,
-                            args=(
-                                {}
-                                if response.local_action_args is None
-                                else response.local_action_args
-                            ),
-                            widget=None,
-                            window=win,
-                        )
-                    )
-                except Exception:
-                    bui.uilog.exception(
-                        'Error running local-action %s.',
-                        response.local_action,
-                    )
+                self._run_local_action(
+                    win,
+                    response.local_action,
+                    (
+                        {}
+                        if response.local_action_args is None
+                        else response.local_action_args
+                    ),
+                    widget=None,
+                )
 
         # Possibly take further action depending on state.
         if state is _WinState.REDISPLAYING_OLD_STATE:
@@ -1625,7 +1877,7 @@ class DocUIController:
             assert_never(state)
 
     def _set_idle_and_schedule_timed_action(
-        self, response: DocUIResponse, weakwin: weakref.ref[DocUIWindow]
+        self, response: DocUIResponse, weakwin: weakref.ref[DocUIPageHost]
     ) -> None:
         import bacommon.docui.v2 as dui2
 
@@ -1652,7 +1904,7 @@ class DocUIController:
 
     def _run_timed_action(
         self,
-        weakwin: weakref.ref[DocUIWindow],
+        weakwin: weakref.ref[DocUIPageHost],
         action: bacommon.docui.v2.Action,
     ) -> None:
         # If our target window died since we set this timer, no biggie.

@@ -104,6 +104,17 @@ class NodeAttributeUnbound {
     return static_cast<bool>(flags_ & kNodeAttributeFlagLangStr);
   }
 
+  /// The oldest stream protocol this attr can be set or connected
+  /// under (0 = any). For attrs added in an opt-in protocol: a host on
+  /// an older one can't send them (its clients wouldn't know their
+  /// index), so SessionStream refuses with a clear error instead (see
+  /// CheckStreamProtocol).
+  auto min_protocol() const -> int { return min_protocol_; }
+  void set_min_protocol(int val) { min_protocol_ = val; }
+
+  /// Raise if a stream on ``protocol`` can't carry this attr.
+  void CheckStreamProtocol(int protocol) const;
+
   /// Set a lang-str-flagged string attr from its tagged wire value plus
   /// an optionally pre-parsed LangStr (for the kLangStrWireTagLangStr
   /// leg; null otherwise). Only meaningful on attrs flagged
@@ -146,6 +157,7 @@ class NodeAttributeUnbound {
   std::string name_;
   uint32_t flags_;
   int index_;
+  int min_protocol_{};
   friend class NodeType;
 };
 

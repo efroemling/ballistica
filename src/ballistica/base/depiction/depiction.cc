@@ -157,11 +157,14 @@ void DepictionSuffix::Draw(const DepictionDrawContext& context,
     c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
     float cmul = t->premultiplied() ? alpha : 1.0f;
     const float* ergb = text_group_->GetElementCanColor(e) ? color : nullptr;
+    // (The host's multiplier goes over either.)
+    const float* m = context.color_multiply;
     if (ergb) {
-      c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
+      c.SetColor(ergb[0] * cmul * m[0], ergb[1] * cmul * m[1],
+                 ergb[2] * cmul * m[2], alpha);
     } else {
       float plain = cmul * brightness;
-      c.SetColor(plain, plain, plain, alpha);
+      c.SetColor(plain * m[0], plain * m[1], plain * m[2], alpha);
     }
     c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), 1.0f));
     {
@@ -191,6 +194,13 @@ auto DepictionDrawContext::StandardOpacity() const -> float {
 
 auto DepictionDrawContext::StandardBrightness() const -> float {
   return disabled ? brightness * kDisabledBrightnessScale : brightness;
+}
+
+void DepictionDrawContext::StandardMultiplier(float* rgb) const {
+  float b = StandardBrightness();
+  for (int i = 0; i < 3; ++i) {
+    rgb[i] = b * color_multiply[i];
+  }
 }
 
 void DepictionDrawContext::StandardColor(float* rgb) const {
@@ -297,15 +307,16 @@ void DrawDepictionLoading(const DepictionDrawContext& context, float size) {
     return;
   }
   float alpha = 0.25f * context.StandardOpacity();
-  float cmul =
-      (spinner->premultiplied() ? alpha : 1.0f) * context.StandardBrightness();
+  float cmul = spinner->premultiplied() ? alpha : 1.0f;
+  float mult[3];
+  context.StandardMultiplier(mult);
   float side = std::min(b.width, b.height) * size;
   auto turns = static_cast<float>(
       std::fmod(static_cast<double>(g_core->AppTimeMillisecs()) / 1000.0, 1.0));
   SimpleComponent c(context.pass);
   c.SetTransparent(true);
   c.SetTexture(spinner);
-  c.SetColor(cmul, cmul, cmul, alpha);
+  c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
   {
     auto xf = c.ScopedTransform();
     c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
@@ -341,7 +352,8 @@ void DepictionPlaceholder::Draw(const DepictionDrawContext& context) {
          side};
   }
   float alpha = 0.4f * context.StandardOpacity();
-  float bright = context.StandardBrightness();
+  float mult[3];
+  context.StandardMultiplier(mult);
   TextureAsset* white = g_base->assets->SolidTexture(SolidTextureColor::kWhite);
 
   // The outline, just inside the box (remade only when the box moves;
@@ -360,7 +372,7 @@ void DepictionPlaceholder::Draw(const DepictionDrawContext& context) {
     c.SetTransparent(true);
     c.SetTexture(white);
     float cmul = white->premultiplied() ? alpha : 1.0f;
-    c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
+    c.SetColor(mult[0] * cmul, mult[1] * cmul, mult[2] * cmul, alpha);
     c.DrawMesh(outline_.get());
     c.Submit();
   }
@@ -378,7 +390,7 @@ void DepictionPlaceholder::Draw(const DepictionDrawContext& context) {
     }
     c.SetTexture(t);
     float cmul = t->premultiplied() ? alpha : 1.0f;
-    c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
+    c.SetColor(mult[0] * cmul, mult[1] * cmul, mult[2] * cmul, alpha);
     c.SetFlatness(1.0f);
     {
       auto xf = c.ScopedTransform();

@@ -122,26 +122,30 @@ def test_page_text_images(
         page=dui2.Page(
             title=LangStrSpecValue.literal('Text Images'),
             rows=[
-                dui2.ButtonRow(
-                    debug=debug,
-                    title=LangStrSpecValue.literal('Size-to-fit'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(LangStrSpecValue.literal('Size-to-fit')),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Same oversized count+coin in every button;'
                         ' only the box differs.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
+                    debug=debug,
                     buttons=[
                         # Unconstrained: overflows the button entirely.
                         _button('no size', (0.0, 0.0)),
                     ]
                     + [_button(f'size {name}', box) for name, box in _BOXES],
                 ),
-                dui2.ButtonRow(
-                    debug=debug,
-                    title=LangStrSpecValue.literal('Alignment'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(LangStrSpecValue.literal('Alignment')),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Content smaller than its box, so alignment'
                         ' is the only thing moving it.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
+                    debug=debug,
                     buttons=[
                         _button(
                             'left/top',
@@ -160,13 +164,15 @@ def test_page_text_images(
                         ),
                     ],
                 ),
-                dui2.ButtonRow(
-                    debug=debug,
-                    title=LangStrSpecValue.literal('Variations'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(LangStrSpecValue.literal('Variations')),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Left image, both ends, a visual offset, art'
                         ' insets, a tint.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
+                    debug=debug,
                     buttons=[
                         _button(
                             'left',

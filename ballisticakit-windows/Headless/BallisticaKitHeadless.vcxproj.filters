@@ -667,6 +667,9 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\shadow_range.h">
       <Filter>ballistica\base\graphics\support</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_big_and_extras_data.h">
+      <Filter>ballistica\base\graphics\text</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_glyph_pages_data.h">
       <Filter>ballistica\base\graphics\text</Filter>
     </ClInclude>
@@ -2036,6 +2039,12 @@
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\container_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.h">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.cc">

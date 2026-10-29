@@ -344,6 +344,11 @@ auto BuiltinStrings::Net::LeftParty(LangStr::Sub name)
   return MakeResource_("strings/net/left_party", {{"name", std::move(name)}});
 }
 
+auto BuiltinStrings::Net::NoServerContact(LangStr::Sub t)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/no_server_contact", {{"t", std::move(t)}});
+}
+
 auto BuiltinStrings::Net::PlayerJoinedParty(LangStr::Sub name)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/player_joined_party",
@@ -494,6 +499,12 @@ auto BuiltinStrings::Session::KickVoteStarted(LangStr::Sub name)
                        {{"name", std::move(name)}});
 }
 
+auto BuiltinStrings::Session::KickVotesNeedUpdate(LangStr::Sub version)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_votes_need_update",
+                       {{"version", std::move(version)}});
+}
+
 auto BuiltinStrings::Session::KickVotesNeeded(int64_t count)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/session/kick_votes_needed", {{"count", count}});
@@ -592,9 +603,9 @@ auto BuiltinStrings::Store::UnavailableTemporarily()
   return MakeResource_("strings/store/unavailable_temporarily");
 }
 
-auto BuiltinStrings::Time::DurationValue(int64_t t)
+auto BuiltinStrings::Time::DurationValue(LangStr::Sub t)
     -> std::shared_ptr<const LangStr> {
-  return MakeResource_("strings/time/duration_value", {{"t", t}});
+  return MakeResource_("strings/time/duration_value", {{"t", std::move(t)}});
 }
 
 auto BuiltinStrings::Time::SuffixHours(LangStr::Sub count)

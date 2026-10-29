@@ -544,6 +544,12 @@ void Scene::DumpNodes(SessionStream* out) {
     //  defaults; would need to add that functionality to NodeType.
     NodeType* node_type = node->type();
     for (auto&& i2 : node_type->attributes_by_index()) {
+      // Attrs newer than our stream's protocol are left out: its peers
+      // don't know them, and nothing can have set them on it (see
+      // NodeAttributeUnbound::min_protocol).
+      if (i2->min_protocol() > out->protocol()) {
+        continue;
+      }
       NodeAttribute attr;
       attr.assign(node, i2);
       if (!attr.is_read_only()) {

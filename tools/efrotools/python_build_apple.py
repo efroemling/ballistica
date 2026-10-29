@@ -760,6 +760,13 @@ def _patch_modules_setup(pydir: str) -> None:
     patch_modules_setup(pydir, 'apple', python_version=PY_VER)
 
 
+def _patch_uuid(pydir: str) -> None:
+    """Keep ``import uuid`` from pulling in ctypes (see pybuild)."""
+    from efrotools.pybuild import patch_uuid_platform_check
+
+    patch_uuid_platform_check(pydir)
+
+
 def _patch_configure_darwin_cross_release(pydir: str) -> None:
     """Give a macOS cross build (x86_64 on Apple Silicon) a release.
 
@@ -1160,6 +1167,7 @@ def build(rootdir: str, slice_name: str) -> None:
     # ------------------------------------------------------------------
     print('Patching Modules/Setup.stdlib.in...')
     _patch_modules_setup(pydir)
+    _patch_uuid(pydir)
 
     # ------------------------------------------------------------------
     # 5. Build environment.

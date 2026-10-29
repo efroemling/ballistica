@@ -29,11 +29,11 @@ from bauiv1lib.docui.prep._rowtext import wrapped_text
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
 
-    from typing import Any, Callable
+    from typing import Any, Callable, Literal
 
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
-    from bauiv1lib.docui import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import WrapOverride
 
 
@@ -147,23 +147,38 @@ def _debug_rect(
     position: tuple[float, float],
     size: tuple[float, float],
     color: tuple[float, float, float],
-    opacity: float,
-    tdelay: float | None,
+    fill_opacity: float,
+    *,
+    opacity: float | None = None,
+    edge_width: float | None = None,
+    info: str | None = None,
+    info_anchor: Literal[
+        'top_left', 'top_right', 'right', 'bottom_left'
+    ] = 'top_left',
 ) -> DecorationPrep:
-    """A flat translucent rect, for showing bounds during development."""
+    """A translucent outlined rect, for showing bounds in development.
+
+    Drawn in front of everything (scroll fades included); see
+    :func:`bauiv1.debugrectwidget`. Its outline's ``opacity`` defaults
+    to 4x its fill's.
+    """
     return DecorationPrep(
         call=partial(
-            bui.imagewidget,
+            bui.debugrectwidget,
             position=position,
             size=size,
             color=color,
-            opacity=opacity,
-            transition_delay=tdelay,
-            transition_type='scale',
+            opacity=(
+                min(1.0, 4.0 * fill_opacity) if opacity is None else opacity
+            ),
+            fill_opacity=fill_opacity,
+            edge_width=edge_width,
+            info=info,
+            info_anchor=info_anchor,
         ),
-        textures={'texture': _white()},
+        textures={},
         meshes={},
-        highlight=True,
+        highlight=False,
     )
 
 
@@ -227,6 +242,7 @@ def prep_text(
                     color=text.color,
                     text=_native(text.text, packages),
                     literal=True,
+                    big=text.big,
                     transition_delay=tdelay,
                     transition_type='scale',
                     depth_range=text.depth_range,
@@ -272,20 +288,7 @@ def prep_text(
             assert_never(text.v_align)
 
         out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.imagewidget,
-                    position=(mwxoffs, mwyoffs),
-                    size=(mwfull, mhfull),
-                    color=(1, 0, 0),
-                    opacity=0.2,
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                ),
-                textures={'texture': _white()},
-                meshes={},
-                highlight=True,
-            )
+            _debug_rect((mwxoffs, mwyoffs), (mwfull, mhfull), (1, 0, 0), 0.2)
         )
 
 
@@ -381,7 +384,7 @@ def _prep_text_with_images(
     """
     lstr = _native(text.text, packages)
     evaluated = lstr.evaluate()
-    textw = bui.get_string_width(evaluated, suppress_warning=True)
+    textw = bui.get_string_width(evaluated, suppress_warning=True, big=text.big)
 
     left = text.image_left
     right = text.image_right
@@ -410,6 +413,7 @@ def _prep_text_with_images(
                 color=text.color,
                 text=lstr,
                 literal=True,
+                big=text.big,
                 transition_delay=tdelay,
                 transition_type='scale',
                 depth_range=text.depth_range,
@@ -576,11 +580,7 @@ def prep_image(
     if wants_debug_draw(image.debug, DebugDrawKind.DECORATIONS):
         out_decoration_preps.append(
             _debug_rect(
-                (xoffsfin, yoffsfin),
-                (widthfull, heightfull),
-                (0, 1, 0),
-                0.2,
-                tdelay,
+                (xoffsfin, yoffsfin), (widthfull, heightfull), (0, 1, 0), 0.2
             )
         )
 
@@ -592,27 +592,85 @@ def prep_row_debug(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a row."""
+    del tdelay  # (Debug rects simply appear.)
 
-    textures: dict[str, str] = {'texture': _white()}
+    # (Exact bounds: edges draw inside them, so rows butted up to each
+    # other each show their own.)
+    out_decoration_preps.append(_debug_rect(pos, size, (0, 0, 1.0), 0.1))
 
-    # Shrink the square we draw a tiny bit so rows butted up to
-    # eachother can be seen.
-    border_shrink = 1.0
 
-    out_decoration_preps.append(
-        DecorationPrep(
-            call=partial(
-                bui.imagewidget,
-                position=(pos[0], pos[1] + border_shrink),
-                size=(size[0], size[1] - 2.0 * border_shrink),
-                color=(0, 0, 1.0),
-                opacity=0.1,
-                transition_delay=tdelay,
-                transition_type='scale',
-            ),
-            textures=textures,
-            meshes={},
-            highlight=True,
+def _dnum(val: float) -> str:
+    return f'{val:.4g}'
+
+
+def prep_section_debug_rects(
+    sec: dui2.Section,
+    *,
+    x: tuple[float, float],
+    top: float,
+    bottom: float,
+    head: tuple[float, float],
+    foot: tuple[float, float] | None,
+    out_head: list[DecorationPrep],
+    out_foot: list[DecorationPrep],
+) -> None:
+    """Prep a section's debug rects: itself, its heading and its note.
+
+    ``x`` is the rects' left and right; the rest are (top, bottom) y
+    values. The heading's rect goes in ``out_head``, and the note's and
+    then the section's in ``out_foot``.
+
+    :meta private:
+    """
+    left, right = x
+    pads = (
+        ''
+        if sec.backing is None
+        else (
+            f', pad t{_dnum(sec.backing.padding_top)}'
+            f' b{_dnum(sec.backing.padding_bottom)}'
+        )
+    )
+    spacing = (
+        f', spacing t{_dnum(sec.spacing_top)} b{_dnum(sec.spacing_bottom)}'
+        if sec.spacing_top or sec.spacing_bottom
+        else ''
+    )
+
+    def _part(
+        rect: tuple[float, float] | None,
+        kind: str,
+        color: tuple[float, float, float],
+        out: list[DecorationPrep],
+        anchor: Literal['top_left', 'bottom_left'],
+    ) -> None:
+        if rect is None or rect[0] - rect[1] <= 0.0:
+            return
+        out.append(
+            _debug_rect(
+                (left, rect[1]),
+                (right - left, rect[0] - rect[1]),
+                color,
+                0.12,
+                opacity=0.8,
+                info=f'{kind} {_dnum(rect[0] - rect[1])}',
+                info_anchor=anchor,
+            )
+        )
+
+    _part(head, 'head', (0.0, 0.85, 0.85), out_head, 'top_left')
+    _part(foot, 'foot', (0.85, 0.3, 1.0), out_foot, 'bottom_left')
+    # (After the others, so its thinner outline frames theirs.)
+    out_foot.append(
+        _debug_rect(
+            (left, bottom),
+            (right - left, top - bottom),
+            (1.0, 0.7, 0.0),
+            0.04,
+            opacity=0.9,
+            edge_width=1.5,
+            info=f'section {_dnum(top - bottom)}{pads}{spacing}',
+            info_anchor='right',
         )
     )
 
@@ -682,26 +740,9 @@ def prep_row_debug_button(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a button."""
-    xoffs = bcorner[0]
-    yoffs = bcorner[1]
-
-    textures: dict[str, str] = {'texture': _white()}
-
+    del tdelay  # (Debug rects simply appear.)
     out_decoration_preps.append(
-        DecorationPrep(
-            call=partial(
-                bui.imagewidget,
-                position=(xoffs, yoffs),
-                size=bsize,
-                color=(0.0, 0.0, 1),
-                opacity=0.15,
-                transition_delay=tdelay,
-                transition_type='scale',
-            ),
-            textures=textures,
-            meshes={},
-            highlight=True,
-        )
+        _debug_rect((bcorner[0], bcorner[1]), bsize, (0.0, 0.0, 1), 0.15)
     )
 
 
@@ -712,25 +753,13 @@ def prep_button_debug(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a button."""
-    textures: dict[str, str] = {'texture': _white()}
-
+    del tdelay  # (Debug rects simply appear.)
     out_decoration_preps.append(
-        DecorationPrep(
-            call=partial(
-                bui.imagewidget,
-                position=(
-                    bcenter[0] - bsize[0] * 0.5,
-                    bcenter[1] - bsize[1] * 0.5,
-                ),
-                size=bsize,
-                color=(0, 1, 0),
-                opacity=0.1,
-                transition_delay=tdelay,
-                transition_type='scale',
-            ),
-            textures=textures,
-            meshes={},
-            highlight=True,
+        _debug_rect(
+            (bcenter[0] - bsize[0] * 0.5, bcenter[1] - bsize[1] * 0.5),
+            bsize,
+            (0, 1, 0),
+            0.1,
         )
     )
 
@@ -811,3 +840,37 @@ def prep_popup_text(
         height = _POPUP_TEXT_MAX_HEIGHT
 
     return PopupTextPrep(text=native, width=width, height=height)
+
+
+def set_start_button_color(
+    color: tuple[float, float, float], root: bui.Widget
+) -> None:
+    """Root post-call: the color the root's start button takes.
+
+    :meta private:
+    """
+    bui.containerwidget(edit=root, start_button_color=color)
+
+
+def set_start_button(buttonid: str, root: bui.Widget) -> None:
+    """Root post-call: make a button the root's start button.
+
+    :meta private:
+    """
+    widget = bui.widget_by_id(buttonid)
+    if widget:
+        bui.containerwidget(edit=root, start_button=widget)
+
+
+def set_selected_button(buttonid: str, root: bui.Widget) -> None:
+    """Root post-call: select a button.
+
+    (The window scrolls it into view once any restored scroll is
+    applied; see ``PagePrep.selected_widget_id``.)
+
+    :meta private:
+    """
+    del root  # Unused.
+    widget = bui.widget_by_id(buttonid)
+    if widget:
+        widget.global_select()

@@ -999,6 +999,14 @@ void ScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
   }
 }
 
+auto ScrollWidget::ChildClipRect_() const -> Rect {
+  if (clean_layout_) {
+    return {0.0f, 0.0f, width(), height()};
+  }
+  return {border_width_, border_height_ + 1.0f, width() - border_width_,
+          height() - border_height_ - 1.0f};
+}
+
 void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   have_drawn_ = true;
 
@@ -1025,11 +1033,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    auto scissor = c.ScopedScissor(
-        clean_layout_ ? Rect(l, b, l + width(), b + height())
-                      : Rect(l + border_width_, b + border_height_ + 1.0f,
-                             l + (width() - border_width_),
-                             b + (height() - border_height_) - 1.0f));
+    auto scissor = c.ScopedScissor(ChildClipRect_());
     c.Submit();  // Get out of the way for children drawing.
 
     set_simple_culling_bottom(clean_layout_ ? b : b + border_height_ + 1.0f);

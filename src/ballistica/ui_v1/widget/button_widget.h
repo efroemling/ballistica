@@ -7,6 +7,8 @@
 #include <string>
 #include <utility>
 
+#include "ballistica/shared/math/vector3f.h"
+#include "ballistica/shared/math/vector4f.h"
 #include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
@@ -29,6 +31,7 @@ class ButtonWidget : public Widget {
   void set_height(float height) { height_ = height; }
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
+  /// Our own color. Once set it wins over any role color (see SetRole()).
   void set_color(float r, float g, float b) {
     color_set_ = true;
     color_red_ = r;
@@ -50,7 +53,9 @@ class ButtonWidget : public Widget {
     tint3_color_green_ = g;
     tint3_color_blue_ = b;
   }
+  /// Our own label color. Once set it wins over any role label color.
   void set_text_color(float r, float g, float b, float a) {
+    text_color_set_ = true;
     text_color_r_ = r;
     text_color_g_ = g;
     text_color_b_ = b;
@@ -77,10 +82,20 @@ class ButtonWidget : public Widget {
     kLarger,
     kSquareWide,
   };
-  void set_better_bg_fit(bool val) { better_bg_fit_ = val; }
+  void set_clean_layout(bool val) { clean_layout_ = val; }
   auto set_style(Style s) { style_ = s; }
-  enum class IconType : uint8_t { kNone, kCancel, kStart };
+  /// A special job a container gives us: its start (default) or cancel
+  /// button.
+  enum class Role : uint8_t { kNone, kCancel, kStart };
   enum class TransitionType : uint8_t { kInLeft, kScale };
+
+  /// Give us a role, with the colors that go with it (null for none).
+  /// Our containers call this; a role's colors apply only where our own
+  /// color or label color isn't set, and leave us when the role does, so
+  /// a button that stops being a start or cancel button goes back to
+  /// whatever it showed before.
+  void SetRole(Role role, const Vector3f* color, const Vector4f* text_color);
+  auto role() const -> Role { return role_; }
 
   /// A small built-in glyph drawn at our right edge, telling what a press
   /// does. The label's space shrinks to make room for it.
@@ -107,7 +122,6 @@ class ButtonWidget : public Widget {
   /// Mirrors TextWidget::GetQueryText(); this is what `buttonwidget(
   /// query=...)` returns.
   auto GetQueryText() -> std::string { return text_->GetQueryText(); }
-  auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }
   auto set_text_scale(float val) { text_scale_ = val; }
   void SetTexture(base::TextureAsset* t);
@@ -163,7 +177,6 @@ class ButtonWidget : public Widget {
   auto set_opacity(float val) { opacity_ = val; }
   auto GetDrawBrightness(millisecs_t time) const -> float override;
   auto IsDrawDisabled() const -> bool override { return StandardDisabled_(); }
-  auto is_color_set() const -> bool { return color_set_; }
   void OnLanguageChange() override;
 
   auto set_target_extra_left(float val) { target_extra_left_ = val; }
@@ -199,6 +212,13 @@ class ButtonWidget : public Widget {
   std::unique_ptr<DepictionSlot> depiction_slot_;
   bool text_width_dirty_ = true;
   bool color_set_ = false;
+  bool text_color_set_ = false;
+
+  /// The colors our role brings, if any (see SetRole()).
+  bool role_color_set_{};
+  bool role_text_color_set_{};
+  Vector3f role_color_{};
+  Vector4f role_text_color_{};
   void DoActivate(bool is_repeat = false);
   auto GetMult(millisecs_t current_time) const -> float;
 
@@ -210,10 +230,17 @@ class ButtonWidget : public Widget {
   auto RotatePointToLocal(float x, float y) const -> std::pair<float, float>;
 
   /// Scale for our accessory glyph and its region: 1 except on short
-  /// better-bg-fit buttons, which shrink it to keep room for the label.
+  /// clean-layout buttons, which shrink it to keep room for the label.
   auto AccessoryScale_() const -> float;
 
-  IconType icon_type_{};
+  /// The color we draw in: our own if set, else our role's, else the
+  /// default.
+  auto BodyColor_() const -> Vector3f;
+
+  /// The label color we draw in, by the same rule as BodyColor_().
+  auto LabelColor_() const -> Vector4f;
+
+  Role role_{};
   Accessory accessory_{};
   TextWidget::HAlign text_h_align_{TextWidget::HAlign::kCenter};
   Style style_{};
@@ -232,7 +259,8 @@ class ButtonWidget : public Widget {
 
   /// We were disabled mid-press; claim the release silently.
   bool claim_release_silently_{};
-  bool better_bg_fit_{};
+  /// Fit our art (and label) to our bounds (see buttonwidget docs).
+  bool clean_layout_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t transition_delay_{};

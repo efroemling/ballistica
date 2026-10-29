@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, assert_never
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _commonassets
 
 from bauiv1lib.docui._debugdraw import DebugDrawKind, wants_debug_draw
 from bauiv1lib.docui.prep._types import (
@@ -26,8 +25,6 @@ from bauiv1lib.docui.prep._types import (
 
 if TYPE_CHECKING:
     from typing import Literal
-
-    from bacommon.assetspec import TextureSpec
 
 
 def prep_depiction(
@@ -49,6 +46,8 @@ def prep_depiction(
     left = bcenter[0] + decoration.position[0] * bscale - width * 0.5
     bottom = bcenter[1] + decoration.position[1] * bscale - height * 0.5
     debug = wants_debug_draw(decoration.debug, DebugDrawKind.DECORATIONS)
+    # Our rgba multiplier is the widget's rgb one plus its opacity.
+    multiply = decoration.color_multiply
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -68,6 +67,10 @@ def prep_depiction(
                 depiction_use_color_override=(
                     decoration.color_override is not None
                 ),
+                depiction_color_multiply=(
+                    None if multiply is None else multiply[:3]
+                ),
+                opacity=None if multiply is None else multiply[3],
             ),
             textures={},
             meshes={},
@@ -89,17 +92,16 @@ def prep_depiction(
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
-                    bui.imagewidget,
+                    bui.debugrectwidget,
                     position=(left, bottom),
                     size=(width, height),
                     color=(1, 0, 0),
-                    opacity=0.2,
-                    transition_delay=tdelay,
-                    transition_type='scale',
+                    opacity=0.8,
+                    fill_opacity=0.2,
                 ),
-                textures={'texture': _texname(_commonassets.textures.white)},
+                textures={},
                 meshes={},
-                highlight=True,
+                highlight=False,
             )
         )
 
@@ -130,12 +132,3 @@ def v_align_arg(val: dui2.VAlign) -> Literal['top', 'center', 'bottom']:
     if val is dui2.VAlign.BOTTOM:
         return 'bottom'
     assert_never(val)
-
-
-def _texname(spec: TextureSpec) -> str:
-    # Safe up-call: _calls only imports prep modules from inside
-    # functions, so by the time this runs it is fully imported.
-    # pylint: disable-next=cyclic-import
-    from bauiv1lib.docui.prep._calls import refstr
-
-    return refstr(spec)

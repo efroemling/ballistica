@@ -219,7 +219,9 @@ class InventoryUIController(
         if self._player_profiles_only:
             page = response.page
             page.center_vertically = True
-            page.padding_top = page.padding_bottom = -22.0
+            page.v_inset = (
+                dui2.DEFAULT_V_INSET if page.v_inset is None else page.v_inset
+            ) - 22.0
             lastrow = page.rows[-1] if page.rows else None
             if isinstance(lastrow, dui2.ButtonRow):
                 lastrow.spacing_bottom = 0.0
@@ -270,14 +272,13 @@ class InventoryUIController(
             )
 
         return [
+            dui2.TitleRow(profstrs.legacy_title.spec),
+            dui2.SubtitleRow(profstrs.legacy_explanation.spec),
             dui2.ButtonRow(
-                title=profstrs.legacy_title.spec,
-                subtitle=profstrs.legacy_explanation.spec,
                 button_spacing=15,
                 buttons=self._get_profile_buttons(),
             ),
             dui2.ButtonRow(
-                spacing_top=-15,
                 spacing_bottom=15,
                 buttons=buttons,
             ),
@@ -307,8 +308,18 @@ class InventoryUIController(
                 self._set_legacy_profiles(context, True)
             case sroutes.ShowCloudProfiles():
                 self._set_legacy_profiles(context, False)
+            case sroutes.ShowStore():
+                self._show_store(context)
             case _:
                 assert_never(action)
+
+    def _show_store(self, action: DocUILocalAction) -> None:
+        """Push the store's top level on top of our window."""
+        from bauiv1lib.store import StoreUIController
+
+        # Backing out of the store returns to the page we came from
+        # (which then refetches, picking up anything just bought).
+        StoreUIController().browse_from(action, sroutes.Root())
 
     @override
     def restore_window_shared_state(
@@ -434,6 +445,10 @@ class InventoryUIController(
                 dui2.Button(
                     texture=_commonassets.textures.white,
                     size=(145, 175),
+                    # Room for the name, which hangs this far below the
+                    # button (keep in lockstep with bamaster's
+                    # classic/profilelistui.py).
+                    padding_bottom=8.0,
                     action=sroutes.EditProfile(profile=p_name).local(),
                     # color=(0.6, 0.5, 0.7, 1.0),
                     color=(1, 1, 1, 0.0),

@@ -19,7 +19,8 @@ _MARGIN_X = 40.0
 _MARGIN_TOP = 35.0
 _MARGIN_BOTTOM = 25.0
 _TEXT_BUTTON_SPACING = 25.0
-_BUTTON_SIZE = (140.0, 50.0)
+# (A clean-layout button, so this is its art's size.)
+_BUTTON_SIZE = (148.0, 49.0)
 
 _BG_COLOR = (0.45, 0.4, 0.6)
 
@@ -74,6 +75,9 @@ class DocUIPopupTextWindow(PopupWindow):
             textcolor=(0.9, 0.9, 0.9),
             label=_commonassets.strings.actions.ok,
             autoselect=True,
+            clean_layout=True,
+            # Closing makes its own sound (see _on_ok_press()).
+            enable_sound=False,
             on_activate_call=self._on_ok_press,
         )
         bui.containerwidget(

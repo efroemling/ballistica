@@ -66,6 +66,11 @@ class AppMode {
 
   virtual void DrawWorld(FrameDef* frame_def);
 
+  /// Draw any app-mode status overlays (connection-trouble indicators,
+  /// etc.). Called every frame, after the world and ui, regardless of
+  /// whether the world itself was drawn.
+  virtual void DrawOverlays(FrameDef* frame_def);
+
   /// Called whenever screen size changes.
   virtual void OnScreenSizeChange();
 

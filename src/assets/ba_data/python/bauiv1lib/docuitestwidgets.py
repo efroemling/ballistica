@@ -9,6 +9,11 @@ from bacommon.langstr import LangStrSpecValue
 import bacommon.docui.v2 as dui2
 from bauiv1 import _commonassets
 
+from bauiv1lib.docuitestbuttonrows import (
+    fill_and_fixed_rows,
+    style_for_square,
+)
+
 if TYPE_CHECKING:
     import bacommon.docui.v2
     import bacommon.docui.routes.docuitest
@@ -26,6 +31,22 @@ _POPUP_LONG = (
 def _lit(text: str) -> LangStrSpecValue:
     # A dev-only page, so baked literals throughout.
     return LangStrSpecValue.literal(text)
+
+
+def style_for_size(size: tuple[float, float]) -> dui2.ButtonStyle:
+    """A button style whose art suits a button of this size.
+
+    Square art looks stretched on wide buttons, so anything over 1.5x
+    as wide as tall gets wider art: medium up to 3.5x, large past
+    that.
+    """
+    width, height = size
+    aspect = width / max(1.0, height)
+    if aspect <= 1.5:
+        return dui2.ButtonStyle.SQUARE
+    if aspect <= 3.5:
+        return dui2.ButtonStyle.MEDIUM
+    return dui2.ButtonStyle.LARGE
 
 
 def _flavor_label(
@@ -74,40 +95,6 @@ def _band_text(
         color=(1, 1, 1, 0.4),
         h_align=h_align,
         debug=debug,
-    )
-
-
-def _fill_button(label: str, width: float = 100.0) -> bacommon.docui.v2.Button:
-    """A button for fill-row demos (a do-nothing large one).
-
-    Its width only matters relative to its row-mates'.
-    """
-    return dui2.Button(
-        label=_lit(label),
-        style=dui2.ButtonStyle.LARGE,
-        size=(width, 60.0),
-        action=dui2.Local(),
-    )
-
-
-def _fixed_button(
-    label: str, size: tuple[float, float] = (150.0, 50.0)
-) -> bacommon.docui.v2.Button:
-    """A do-nothing button at its own size, for fixed-row demos."""
-    return dui2.Button(
-        label=_lit(label),
-        size=size,
-        style=_style_for(size),
-        action=dui2.Local(),
-    )
-
-
-def _style_for(size: tuple[float, float]) -> dui2.ButtonStyle:
-    """Square backing for squarish buttons; medium for wide ones."""
-    return (
-        dui2.ButtonStyle.SQUARE
-        if size[0] <= size[1] * 1.5
-        else dui2.ButtonStyle.MEDIUM
     )
 
 
@@ -194,6 +181,7 @@ def test_page_widgets(
     """Control rows, plus a readout of the state each request carried."""
     # pylint: disable=cyclic-import
     import bacommon.docui.routes.docuitest as rt
+    from bauiv1lib.docuitestlayouts import with_test_viewer
 
     wstate = rt.WidgetTestState
 
@@ -205,15 +193,17 @@ def test_page_widgets(
     debug = route.debug
 
     return dui2.Response(
-        page=dui2.Page(
+        page=with_test_viewer(
+            route.viewer_side,
+            route.theme,
             title=_lit('Widgets'),
             # Declared once, here; everything below refers to it.
             state=state.encode(),
             rows=[
                 # One tall flat panel: the state this request carried,
                 # one field per line.
+                dui2.TitleRow(_lit('Page State')),
                 dui2.ButtonRow(
-                    title=_lit('Page State'),
                     content_align=dui2.HAlign.CENTER,
                     debug=debug,
                     buttons=[
@@ -271,19 +261,21 @@ def test_page_widgets(
                 ),
                 # No on-change action, so toggling this does nothing
                 # until something else on the page fires a request.
+                dui2.TitleRow(_lit('Checkboxes (title only)')),
                 wstate.checkbox_row(
                     lambda s: s.plain,
                     label=_lit('Plain (goes out with the next request)'),
-                    title=_lit('Checkboxes (title only)'),
                     debug=debug,
                 ),
                 # Re-requests the page the moment it changes.
                 wstate.checkbox_row(
                     lambda s: s.live,
                     label=_lit('Live (re-requests the page when changed)'),
-                    footnote=_lit('A footnote: small text below the control.'),
                     on_change=route.replace(default_sound=False),
                     debug=debug,
+                ),
+                dui2.FootnoteRow(
+                    _lit('A footnote: small text below the control.')
                 ),
                 wstate.checkbox_row(
                     lambda s: s.checked_disabled,
@@ -301,20 +293,24 @@ def test_page_widgets(
                 ),
                 # Text inputs. Labels get up to half the row (squished
                 # to fit past that); the box gets whatever is left.
+                dui2.TitleRow(_lit('Text Inputs (title + subtitle)')),
+                dui2.SubtitleRow(
+                    _lit(
+                        'Labels take up to 2/3; boxes get 1/3 to 2/3'
+                        '\n(a two-line subtitle)'
+                    )
+                ),
                 wstate.text_input_row(
                     lambda s: s.text_short,
                     label=_lit('Hi'),
                     max_chars=16,
-                    title=_lit('Text Inputs (title + subtitle)'),
-                    subtitle=_lit(
-                        'Labels take up to 2/3; boxes get 1/3 to 2/3'
-                        '\n(a two-line subtitle)'
-                    ),
-                    footnote=_lit(
+                    debug=debug,
+                ),
+                dui2.FootnoteRow(
+                    _lit(
                         'Text-input footnote (title + subtitle + footnote).'
                         '\nA second line; the strip grows to fit.'
-                    ),
-                    debug=debug,
+                    )
                 ),
                 wstate.text_input_row(
                     lambda s: s.text_medium,
@@ -330,10 +326,10 @@ def test_page_widgets(
                     ),
                     debug=debug,
                 ),
+                dui2.SubtitleRow(_lit('(subtitle only, no title)')),
                 wstate.text_input_row(
                     lambda s: s.text_live,
                     label=_lit('Live (re-requests when applied)'),
-                    subtitle=_lit('(subtitle only, no title)'),
                     on_change=route.replace(default_sound=False),
                     debug=debug,
                 ),
@@ -344,16 +340,16 @@ def test_page_widgets(
                     debug=debug,
                 ),
                 # Choices.
+                dui2.TitleRow(_lit('Choices (right-aligned title)')),
+                dui2.SubtitleRow(_lit('and subtitle')),
                 wstate.choice_row(
                     lambda s: s.flavor,
                     choice_label=_flavor_label,
                     label=_lit('Flavor'),
-                    title=_lit('Choices (right-aligned title)'),
-                    subtitle=_lit('and subtitle'),
-                    footnote=_lit('and footnote'),
                     title_align=dui2.HAlign.RIGHT,
                     debug=debug,
                 ),
+                dui2.FootnoteRow(_lit('and footnote')),
                 wstate.choice_row(
                     lambda s: s.flavor_live,
                     choice_label=_flavor_label,
@@ -389,9 +385,9 @@ def test_page_widgets(
                         ('hard', _lit('Hard')),
                     ],
                     label=_lit('Difficulty (string choices)'),
-                    footnote=_lit('Choice-row footnote.'),
                     debug=debug,
                 ),
+                dui2.FootnoteRow(_lit('Choice-row footnote.')),
                 wstate.choice_row(
                     lambda s: s.region,
                     choices=[
@@ -446,6 +442,7 @@ def test_page_widgets(
                 # Slider: the sound-settings volume shape. on_drag is a
                 # local action reading the live value from page state
                 # (throttled like ConfigSlider); on_change re-requests.
+                dui2.TitleRow(_lit('Slider\n(a two-line title)')),
                 wstate.slider_row(
                     lambda s: s.volume,
                     min_value=0.0,
@@ -453,15 +450,14 @@ def test_page_widgets(
                     increment=0.05,
                     as_percent=True,
                     label=_lit('Volume (messages while dragging)'),
-                    title=_lit('Slider\n(a two-line title)'),
-                    footnote=_lit(
-                        'Slider footnote: drag applies at 0.5s cadence.'
-                    ),
                     on_drag=rt.ShowVolume().local(default_sound=False),
                     drag_interval=0.5,
                     drag_delay=0.5,
                     on_change=route.replace(default_sound=False),
                     debug=debug,
+                ),
+                dui2.FootnoteRow(
+                    _lit('Slider footnote: drag applies at 0.5s cadence.')
                 ),
                 wstate.slider_row(
                     lambda s: s.volume_disabled,
@@ -475,17 +471,17 @@ def test_page_widgets(
                 ),
                 # Number: each '-'/'+' press steps the value and
                 # re-requests; holding a button repeats.
+                dui2.TitleRow(_lit('Number')),
                 wstate.number_row(
                     lambda s: s.series_length,
                     min_value=1.0,
                     max_value=21.0,
                     increment=2.0,
                     label=_lit('Series length (re-requests per press)'),
-                    title=_lit('Number'),
-                    footnote=_lit('Number-row footnote.'),
                     on_change=route.replace(default_sound=False),
                     debug=debug,
                 ),
+                dui2.FootnoteRow(_lit('Number-row footnote.')),
                 wstate.number_row(
                     lambda s: s.series_length_disabled,
                     min_value=1.0,
@@ -497,14 +493,14 @@ def test_page_widgets(
                 ),
                 # Color: picks update state locally; the request fires
                 # once when the picker closes with a change.
+                dui2.TitleRow(_lit('Color')),
                 wstate.color_row(
                     lambda s: s.tint,
                     label=_lit('Tint (re-requests when picker closes)'),
-                    title=_lit('Color'),
-                    footnote=_lit('Color-row footnote.'),
                     on_change=route.replace(default_sound=False),
                     debug=debug,
                 ),
+                dui2.FootnoteRow(_lit('Color-row footnote.')),
                 wstate.color_row(
                     lambda s: s.tint_disabled,
                     label=_lit('Disabled (selectable; picker won\'t open)'),
@@ -515,18 +511,20 @@ def test_page_widgets(
                 # page likes at the right, and no value of their own.
                 # Here the button shows a 'current selection' (a map
                 # preview) and browses somewhere, as a picker would.
+                dui2.TitleRow(_lit('Button Control')),
                 dui2.ButtonControlRow(
                     button=_map_button(rt.NavTest().browse()),
                     label=_lit('Map (browses when pressed)'),
-                    title=_lit('Button Control'),
-                    footnote=_lit(
+                    debug=debug,
+                ),
+                dui2.FootnoteRow(
+                    _lit(
                         'Button-control-row footnote, styled as a warning'
                         ' (footnote_color/flatness/shadow).'
                     ),
-                    footnote_color=(1.0, 0.45, 0.3, 1.0),
-                    footnote_flatness=1.0,
-                    footnote_shadow=0.0,
-                    debug=debug,
+                    color=(1.0, 0.45, 0.3, 1.0),
+                    flatness=1.0,
+                    shadow=0.0,
                 ),
                 dui2.ButtonControlRow(
                     button=_map_button(rt.NavTest().browse()),
@@ -539,21 +537,25 @@ def test_page_widgets(
                 # and below it wherever they are long enough to run
                 # into it (in a narrow window, say). Text that stops
                 # short of the button sits beside it instead.
+                dui2.TitleRow(
+                    _lit(
+                        'A title long enough to reach all the way over'
+                        ' to the button at the right'
+                    )
+                ),
                 dui2.ButtonControlRow(
                     button=_map_button(rt.NavTest().browse(), scale=1.6),
                     label=_lit(
                         'A long label which gets squished to fit beside'
                         ' its button'
                     ),
-                    title=_lit(
-                        'A title long enough to reach all the way over'
-                        ' to the button at the right'
-                    ),
-                    footnote=_lit(
+                    debug=debug,
+                ),
+                dui2.FootnoteRow(
+                    _lit(
                         'And a footnote doing the same down here, which'
                         ' goes on long enough to pass under the button.'
-                    ),
-                    debug=debug,
+                    )
                 ),
                 # Extreme: a very tall button, with a title and a
                 # several-line footnote running over and under it. They
@@ -561,205 +563,55 @@ def test_page_widgets(
                 # height. (Then a short one with the same text, for
                 # contrast.)
                 *(
-                    dui2.ButtonControlRow(
-                        button=dui2.Button(
-                            label=_lit(label),
-                            style=_style_for((140.0, height)),
-                            size=(140.0, height),
-                            action=dui2.Local(),
-                        ),
-                        label=_lit('Label'),
-                        title=_lit(
-                            'A title running all the way over to the'
-                            ' button at the right, as long titles do'
-                        ),
-                        footnote=_lit(
-                            'A footnote running under the button at the'
-                            ' right.\nIt has a few lines, each of them long'
-                            ' enough to reach the button.\nThe last line'
-                            ' too, so all of it stays clear of the button.'
-                        ),
-                        debug=debug,
-                    )
+                    row
                     for label, height in (('Tall', 150.0), ('Short', 35.0))
-                ),
-                # Fill rows: one or more buttons sharing the full width
-                # control rows span, so their edges line up with the
-                # labels and controls above and below. They never scroll
-                # sideways (nothing clips).
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    title=_lit('Fill Rows'),
-                    buttons=[_fill_button('One Button')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    buttons=[_fill_button('Left'), _fill_button('Right')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    buttons=[
-                        _fill_button('One'),
-                        _fill_button('Two'),
-                        _fill_button('Three'),
-                    ],
-                    footnote=_lit('Fill-row footnote.'),
-                    debug=debug,
-                ),
-                # Widths share the row in proportion to the buttons' own.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    buttons=[
-                        _fill_button('1x'),
-                        _fill_button('2x', width=200.0),
-                    ],
-                    footnote=_lit('Sized 100 and 200: a 1:2 split.'),
-                    debug=debug,
-                ),
-                # All the text a fill row takes, between plain ones, to
-                # judge its spacing against its neighbors.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    buttons=[_fill_button('Plain Above')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    title=_lit('Titled Fill Row'),
-                    subtitle=_lit('With a subtitle under its title'),
-                    footnote=_lit('And a footnote under its buttons.'),
-                    buttons=[_fill_button('A'), _fill_button('B')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FILL,
-                    buttons=[_fill_button('Plain Below')],
-                    debug=debug,
-                ),
-                # Fixed rows: buttons at their own sizes, straight on
-                # the page (nothing clips), aligned like a scrolling
-                # row's. First the same buttons both ways: they should
-                # land in the same place.
-                dui2.ButtonRow(
-                    title=_lit('Fixed Rows'),
-                    subtitle=_lit('A scrolling row, then a fixed one'),
-                    buttons=[_fixed_button('Alpha'), _fixed_button('Beta')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    buttons=[_fixed_button('Alpha'), _fixed_button('Beta')],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    content_align=dui2.HAlign.CENTER,
-                    buttons=[_fixed_button('Centered', (180.0, 40.0))],
-                    debug=debug,
-                ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    content_align=dui2.HAlign.RIGHT,
-                    buttons=[
-                        _fixed_button('Right', (120.0, 40.0)),
-                        _fixed_button('Aligned', (120.0, 40.0)),
-                    ],
-                    debug=debug,
-                ),
-                # Mixed heights center on the tallest.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    content_align=dui2.HAlign.CENTER,
-                    buttons=[
-                        _fixed_button('Short', (120.0, 35.0)),
-                        _fixed_button('Tall', (120.0, 80.0)),
-                        _fixed_button('Short', (120.0, 35.0)),
-                    ],
-                    debug=debug,
-                ),
-                # Too many to fit: they all shrink together.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    buttons=[_fixed_button(f'#{num}') for num in range(1, 9)],
-                    footnote=_lit('Eight 150-wide buttons, shrunk to fit.'),
-                    debug=debug,
-                ),
-                # One button wider than any layout: it shrinks alone.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    buttons=[_fixed_button('Too Wide', (2000.0, 120.0))],
-                    footnote=_lit('One 2000x120 button, shrunk to fit.'),
-                    debug=debug,
-                ),
-                # Content offset: the group shifts from the row's center
-                # -- the same point band decorations are placed from --
-                # so a button lines up under band art at the same x
-                # whatever the layout's width or insets.
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    center_content=True,
-                    content_offset=-200.0,
-                    header_height=40.0,
-                    header_decorations_center=[
-                        dui2.Text(
-                            text=_lit('x=-200'),
-                            position=(-200.0, 9.0),
-                            size=(150.0, 20.0),
-                            scale=0.6,
-                            color=(1.0, 1.0, 1.0, 0.5),
+                    for row in (
+                        dui2.TitleRow(
+                            _lit(
+                                'A title running all the way over to the'
+                                ' button at the right, as long titles do'
+                            )
+                        ),
+                        dui2.ButtonControlRow(
+                            button=dui2.Button(
+                                label=_lit(label),
+                                style=style_for_square((140.0, height)),
+                                size=(140.0, height),
+                                action=dui2.Local(),
+                            ),
+                            label=_lit('Label'),
                             debug=debug,
                         ),
-                        dui2.Text(
-                            text=_lit('▼'),
-                            position=(-200.0, -9.0),
-                            size=(30.0, 20.0),
-                            scale=0.7,
-                            color=(1.0, 1.0, 1.0, 0.5),
-                            debug=debug,
+                        dui2.FootnoteRow(
+                            _lit(
+                                'A footnote running under the button at the'
+                                ' right.\nIt has a few lines, each of them'
+                                ' long enough to reach the button.\nThe last'
+                                ' line too, so all of it stays clear of the'
+                                ' button.'
+                            )
                         ),
-                    ],
-                    buttons=[_fixed_button('Offset -200', (180.0, 40.0))],
-                    footnote=_lit(
-                        'content_offset=-200: centered under band art'
-                        ' at x=-200.'
-                    ),
-                    debug=debug,
+                    )
                 ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    center_content=True,
-                    content_offset=150.0,
-                    buttons=[
-                        _fixed_button('Group', (120.0, 40.0)),
-                        _fixed_button('Shifted', (120.0, 40.0)),
-                    ],
-                    footnote=_lit(
-                        'Two buttons, content_offset=150: they move as a'
-                        ' group, spacing unchanged.'
-                    ),
-                    debug=debug,
+                # Text rows standing alone (attach off): spaced from
+                # both neighbors like rows rather than hugging one.
+                dui2.TitleRow(
+                    _lit('A standalone title (attach=False)'), attach=False
                 ),
-                dui2.ButtonRow(
-                    layout=dui2.ButtonRowLayout.FIXED,
-                    center_content=True,
-                    content_offset=5000.0,
-                    buttons=[_fixed_button('Clamped', (150.0, 40.0))],
-                    footnote=_lit(
-                        'content_offset=5000: slides back in at the'
-                        ' right edge rather than leaving the row.'
-                    ),
-                    debug=debug,
+                dui2.SubtitleRow(
+                    _lit('And a standalone subtitle, attached to nothing.'),
+                    attach=False,
                 ),
+                # Fill and fixed rows (see docuitestbuttonrows).
+                *fill_and_fixed_rows(debug),
                 # Control rows get the same spacing and header/footer
                 # bands button rows do. (The typed-state helpers don't
                 # take these, so they get set on what the helpers
                 # return.)
+                dui2.TitleRow(_lit('Control-Row Spacing & Bands')),
                 replace(
                     wstate.checkbox_row(
                         lambda s: s.spacing_top_demo,
-                        title=_lit('Control-Row Spacing & Bands'),
                         label=_lit('spacing_top=40 (big gap above)'),
                         debug=debug,
                     ),
@@ -773,30 +625,33 @@ def test_page_widgets(
                     ),
                     spacing_bottom=40.0,
                 ),
-                replace(
-                    wstate.checkbox_row(
-                        lambda s: s.bands_demo,
-                        label=_lit('Header and footer bands (50 tall)'),
-                        debug=debug,
-                    ),
-                    header_height=50.0,
-                    header_decorations_left=[
+                # (Bands attached from header/footer rows.)
+                dui2.HeaderRow(
+                    50.0,
+                    decorations_left=[
                         _band_text('header left', dui2.HAlign.LEFT, debug)
                     ],
-                    header_decorations_center=[
+                    decorations_center=[
                         _band_text('header center', dui2.HAlign.CENTER, debug)
                     ],
-                    header_decorations_right=[
+                    decorations_right=[
                         _band_text('header right', dui2.HAlign.RIGHT, debug)
                     ],
-                    footer_height=50.0,
-                    footer_decorations_left=[
+                ),
+                wstate.checkbox_row(
+                    lambda s: s.bands_demo,
+                    label=_lit('Header and footer bands (50 tall)'),
+                    debug=debug,
+                ),
+                dui2.FooterRow(
+                    50.0,
+                    decorations_left=[
                         _band_text('footer left', dui2.HAlign.LEFT, debug)
                     ],
-                    footer_decorations_center=[
+                    decorations_center=[
                         _band_text('footer center', dui2.HAlign.CENTER, debug)
                     ],
-                    footer_decorations_right=[
+                    decorations_right=[
                         _band_text('footer right', dui2.HAlign.RIGHT, debug)
                     ],
                 ),
@@ -804,8 +659,8 @@ def test_page_widgets(
                 # carry the same action; only the enabled one runs it (the
                 # disabled one selects on tap and answers presses with an
                 # error sound).
+                dui2.TitleRow(_lit('Buttons: normal and disabled')),
                 dui2.ButtonRow(
-                    title=_lit('Buttons: normal and disabled'),
                     debug=debug,
                     buttons=[
                         dui2.Button(
@@ -842,12 +697,8 @@ def test_page_widgets(
                 # that item's action as if a button had been pressed
                 # with it. The disabled one never opens. Menu buttons
                 # draw like any other button, so a small '...' works too.
+                dui2.TitleRow(_lit('Menu buttons: normal and disabled')),
                 dui2.ButtonRow(
-                    title=_lit('Menu buttons: normal and disabled'),
-                    footnote=_lit(
-                        'Picking an item runs its action; one item is'
-                        ' itself disabled.'
-                    ),
                     debug=debug,
                     buttons=[
                         dui2.Button(
@@ -871,12 +722,17 @@ def test_page_widgets(
                         ),
                     ],
                 ),
+                dui2.FootnoteRow(
+                    _lit(
+                        'Picking an item runs its action; one item is'
+                        ' itself disabled.'
+                    )
+                ),
                 # Popup text: a press pops up the text at the button,
                 # sized to fit it, with an ok button. A small '?' is
                 # the intended use; the long one shows wrapping.
+                dui2.TitleRow(_lit('Popup text buttons')),
                 dui2.ButtonRow(
-                    title=_lit('Popup text buttons'),
-                    footnote=_lit('Ok or a press outside the popup closes it.'),
                     debug=debug,
                     buttons=[
                         dui2.Button(
@@ -902,17 +758,20 @@ def test_page_widgets(
                         ),
                     ],
                 ),
+                dui2.FootnoteRow(
+                    _lit('Ok or a press outside the popup closes it.')
+                ),
                 # Small buttons, where label margins are fractions of
                 # the button's size (capped at fixed amounts on bigger
                 # ones) so labels keep a usable share of the space.
+                dui2.TitleRow(_lit('Small buttons')),
                 dui2.ButtonRow(
-                    title=_lit('Small buttons'),
                     debug=debug,
                     buttons=[
                         dui2.Button(
                             label=_lit(label),
                             size=size,
-                            style=_style_for(size),
+                            style=style_for_square(size),
                             action=dui2.Local(),
                         )
                         for label, size in [
@@ -925,9 +784,6 @@ def test_page_widgets(
                 ),
                 dui2.ButtonRow(
                     content_align=dui2.HAlign.RIGHT,
-                    footnote=_lit(
-                        'Button-row footnote (follows the title alignment).'
-                    ),
                     debug=debug,
                     buttons=[
                         dui2.Button(
@@ -968,7 +824,20 @@ def test_page_widgets(
                             style=dui2.ButtonStyle.MEDIUM,
                             action=replace(route, debug=not debug).replace(),
                         ),
+                        # Control-row navigation at a page's edges (a
+                        # control row as the very last row).
+                        dui2.Button(
+                            label=_lit('Nav Test'),
+                            size=(180, 60),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            action=rt.NavTest().browse(
+                                layout=dui2.WindowLayout.SMALL
+                            ),
+                        ),
                     ],
+                ),
+                dui2.FootnoteRow(
+                    _lit('Button-row footnote (follows the title alignment).')
                 ),
             ],
         )

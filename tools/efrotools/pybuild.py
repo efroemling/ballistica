@@ -1205,6 +1205,34 @@ def gather(do_android: bool) -> None:
     print('Great success!')
 
 
+def patch_uuid_platform_check(pydir: str) -> None:
+    """Keep ``import uuid`` from calling platform.system() on mobile.
+
+    uuid.py special-cases a few ``sys.platform`` values at import time
+    and calls ``platform.system()`` for anything else. On Android that
+    reaches ``android_ver()``, and on iOS-family platforms
+    ``ios_ver()``-style calls, which import ctypes and load libc / the
+    ObjC runtime. We hit that on every boot (websockets imports uuid,
+    for one), and on Android it once landed on the main thread during
+    launch and caused ANRs. We list those platforms explicitly with the
+    same results platform.system() would have produced.
+    """
+    fname = os.path.join(pydir, 'Lib', 'uuid.py')
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        "if sys.platform in {'win32', 'darwin', 'emscripten', 'wasi'}:\n",
+        "if sys.platform in {'win32', 'darwin', 'emscripten', 'wasi',"
+        " 'ios', 'tvos', 'visionos', 'watchos'}:  # efro: skip platform\n",
+    )
+    txt = replace_exact(
+        txt,
+        "elif sys.platform == 'linux':\n",
+        "elif sys.platform in ('linux', 'android'):  # efro: skip platform\n",
+    )
+    writefile(fname, txt)
+
+
 def tweak_empty_py_files(dirpath: str) -> None:
     """Find any zero-length Python files and make them length 1
 

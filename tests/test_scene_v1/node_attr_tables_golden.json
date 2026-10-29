@@ -232,6 +232,10 @@
   [
    "stickiness",
    "float"
+  ],
+  [
+   "opacity",
+   "float"
   ]
  ],
  "flag": [
@@ -359,6 +363,10 @@
   ],
   [
    "stickiness",
+   "float"
+  ],
+  [
+   "opacity",
    "float"
   ]
  ],
@@ -1400,6 +1408,10 @@
   [
    "team_coloring",
    "bool"
+  ],
+  [
+   "color_multiply",
+   "float-array"
   ]
  ]
 }

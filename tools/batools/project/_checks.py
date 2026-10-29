@@ -517,6 +517,12 @@ def check_misc(self: ProjectUpdater) -> None:
                 ):
                     raise CleanError('Not using prod v2 master server.')
 
+    # The flatpak build env is derived from the main lockfile and the uv
+    # pin; make sure it hasn't been left behind by either.
+    import batools.flatpakbuildenv
+
+    batools.flatpakbuildenv.check_consistency(self.projroot)
+
     # Make sure we've got the right Python version in a few files.
     if not self.public:
 

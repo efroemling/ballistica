@@ -77,6 +77,27 @@ The rule of thumb when writing or reviewing an API-consuming tool:
 > module's public surface, regardless of where its underlying
 > object happens to live.
 
+## Lazy re-exports (until Python 3.15)
+
+A package `__init__.py` imports everything it re-exports, so a
+re-export of something heavy that most runs never use costs launch
+time for everyone. `baclassic` re-exports host-ui this way (it pulls
+in the whole doc-ui wire format): those names live in a
+`_LAZY_EXPORTS` table and load on first access through a module
+`__getattr__` (PEP 562), with a `TYPE_CHECKING` import of the same
+names for mypy and the docs.
+
+Such a module **must also define `__dir__`** listing the lazy names.
+Sphinx autodoc and our docs tools find members through `dir()`; a lazy
+name missing from it is silently left out of the docs, and nothing
+fails (`--fail-on-warning` doesn't catch it). After adding a lazy
+re-export, diff the `make docs` output for that package against the
+previous build.
+
+Only use this where profiling shows the launch cost is real. On Python
+3.15+, replace these with PEP 810 lazy imports
+(`lazy from x import y`) and drop the `__getattr__`/`__dir__` pair.
+
 ## Marking internal api
 
 Anything that shows up in the Sphinx docs counts as public api. Some

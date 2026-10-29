@@ -254,10 +254,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hooks.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hostui.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuibutton.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hostuihandler.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hostuikick.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuimembers.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hostuipages.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuiparts.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hostuistats.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hostuiwire.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
@@ -430,6 +434,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/page.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/signin.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/v2proxy.py \
@@ -460,11 +465,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_debugdraw.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_frame.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_host.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_layout.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_menu.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagelook.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_pagestate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_panes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popuptext.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_popupwindow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_scrollrestore.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_timing.py \
@@ -479,20 +487,30 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_buttoncontrolrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_colorrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_controlrows.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_decorations.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_depiction.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_headings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_instantiate.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_numberrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_rowbands.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_rowdebug.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_rowtext.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_sections.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_showareas.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_sliderrow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_staticbuttonrow.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_styling.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_textrows.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_textstyles.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestanimation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestbuttonrows.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestdepictions.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestdrill.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestglyphs.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestgrids.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestitems.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestlayouts.py \
@@ -500,10 +518,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnames.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestnav.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestninepatch.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestpopups.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsections.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestsimple.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextimages.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitesttextwrap.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestthemes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestviewers.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestwidgets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
@@ -638,7 +658,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/presets.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_base.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_popup.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/_state.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicaccount.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classiccharacterpreview.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classicchest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/routes/classichost.py \
@@ -666,6 +688,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/logreporting.py \
   $(BUILD_DIR)/ba_data/python/bacommon/meshzstddict.py \
   $(BUILD_DIR)/ba_data/python/bacommon/metascan.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/metascancache.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/basntosandbox.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/sandboxtobasn.py \

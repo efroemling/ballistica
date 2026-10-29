@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261021"
+// Generated from: "a-0.babuiltinassets.261028"
 
 #include <memory>
 
@@ -496,6 +496,15 @@ class BuiltinStrings {
     /// English: "Left {name}'s party."
     static auto LeftParty(LangStr::Sub name) -> std::shared_ptr<const LangStr>;
 
+    /// Caption shown in the middle of the screen, under a 'connection down'
+    /// graphic, while connected to a game host (server) that has stopped
+    /// responding; {t} counts up live from when the host was last heard from
+    /// (e.g. '5s', '1m 5s').
+    ///
+    /// English: "No server contact for {t}"
+    static auto NoServerContact(LangStr::Sub t)
+        -> std::shared_ptr<const LangStr>;
+
     /// Screen-message when another player joins the party you are in; the
     /// placeholder is their display name.
     ///
@@ -686,6 +695,14 @@ class BuiltinStrings {
     static auto KickVoteStarted(LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
 
+    /// Screen-message a game host sends a player whose game is too old for kick
+    /// votes when they try to kick someone; the placeholder is the minimum game
+    /// version number (such as 1.8.4).
+    ///
+    /// English: "Kick votes need version {version} or newer; please update."
+    static auto KickVotesNeedUpdate(LangStr::Sub version)
+        -> std::shared_ptr<const LangStr>;
+
     /// Screen-message showing how many more yes votes a kick vote needs to
     /// pass.
     ///
@@ -818,7 +835,7 @@ class BuiltinStrings {
     /// from those embedded components, so this entry must always exist here.
     ///
     /// English: "{t}"
-    static auto DurationValue(int64_t t) -> std::shared_ptr<const LangStr>;
+    static auto DurationValue(LangStr::Sub t) -> std::shared_ptr<const LangStr>;
 
     /// Compact hours suffix used in formatted time values.
     ///

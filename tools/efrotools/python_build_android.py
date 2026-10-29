@@ -660,6 +660,13 @@ def _patch_ctypes(pydir: str) -> None:
     writefile(fname, txt)
 
 
+def _patch_uuid(pydir: str) -> None:
+    """Keep ``import uuid`` from pulling in ctypes (see pybuild)."""
+    from efrotools.pybuild import patch_uuid_platform_check
+
+    patch_uuid_platform_check(pydir)
+
+
 def _patch_android_makefile(pydir: str) -> None:
     """Patch the configure-generated Makefile for static-link correctness.
 
@@ -896,6 +903,7 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
     _patch_fileutils_h(pydir)
     _patch_fileutils_c(pydir)
     _patch_ctypes(pydir)
+    _patch_uuid(pydir)
 
     # 4. Configure Python.
     py_short = PY_VER.replace('.', '')

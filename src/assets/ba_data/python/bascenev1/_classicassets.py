@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261021`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261028`` (bascenev1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 823
+# ba_meta require asset-package 955
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261021
-_ASSET_PACKAGE = ApverNum(823)
+# a-0.baclassicassets.261028
+_ASSET_PACKAGE = ApverNum(955)
 
 if TYPE_CHECKING:
     import datetime
@@ -5245,6 +5245,36 @@ if TYPE_CHECKING:
         #:     English: "Account"
         account_column: LangStr
 
+        #: ::
+        #:
+        #:     Column heading on a player's page above the button showing which
+        #:     party member that player plays from.
+        #:
+        #:     English: "Connection"
+        connection_column: LangStr
+
+        def kick_also_removes(self, *, names: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Shown on the page for kicking a player whose device has other
+                players in the game; the placeholder is a comma-separated list
+                of those players' names.
+
+                English: "Also removes {names} (on the same device)."
+            """
+
+        def kick_removes_all(self, *, names: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Shown on the page for kicking a party member; the placeholder is
+                a comma-separated list of the names of all their players in the
+                game.
+
+                English: "Removes {names} (all on this device)."
+            """
+
         def kick_vote_ends(
             self,
             *,
@@ -5277,6 +5307,22 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Note on a party member's page when they have no players in the
+        #:     game.
+        #:
+        #:     English: "Not in the game right now."
+        not_in_game: LangStr
+
+        #: ::
+        #:
+        #:     Value of the Account line on a party member's page when their
+        #:     account could not be verified.
+        #:
+        #:     English: "Not verified"
+        not_verified: LangStr
+
+        #: ::
+        #:
         #:     Column heading in the party stats table for each player's network
         #:     latency in milliseconds.
         #:
@@ -5285,11 +5331,68 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Ping value on the host's own member and player pages (latency to
+        #:     yourself does not apply).
+        #:
+        #:     English: "n/a (host)"
+        ping_host: LangStr
+
+        #: ::
+        #:
+        #:     Label of the line or column showing a party member's network
+        #:     latency on their member and player pages; the value beside it is
+        #:     in milliseconds.
+        #:
+        #:     English: "Ping"
+        ping_label: LangStr
+
+        def ping_value(self, *, ms: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Network latency shown on party member and player pages; the
+                placeholder is a whole number of milliseconds.
+
+                English: "{ms} ms"
+            """
+
+        #: ::
+        #:
         #:     Shown on the kick-vote page when the player someone chose to kick
         #:     has already left the game.
         #:
         #:     English: "That player is no longer here."
         player_gone: LangStr
+
+        #: ::
+        #:
+        #:     Heading above a party member's player buttons on their page in
+        #:     the party window.
+        #:
+        #:     English: "Players"
+        players_title: LangStr
+
+        #: ::
+        #:
+        #:     Value of the Role line on an admin's member page.
+        #:
+        #:     English: "Admin"
+        role_admin: LangStr
+
+        #: ::
+        #:
+        #:     Value of the Role line on the host's own member page.
+        #:
+        #:     English: "Host"
+        role_host: LangStr
+
+        #: ::
+        #:
+        #:     Label of the Role line on a party member's page; the value beside
+        #:     it is their role.
+        #:
+        #:     English: "Role"
+        role_label: LangStr
 
         #: ::
         #:
@@ -6241,6 +6344,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "Unmute Chat"
         unmute_chat: LangStr
+
+        def view_member(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Menu item shown when pressing a chat message in the party
+                window; the placeholder is the sender's name.
+
+                English: "View {name}"
+            """
 
     class StringsPartyQueueGroup:
         """
@@ -9772,6 +9885,7 @@ if TYPE_CHECKING:
         chest_icon_multi: TextureHandle
         circle_zig_zag: TextureHandle
         clay_stroke: TextureHandle
+        connection_down: TextureHandle
         controller_icon: TextureHandle
         cross_out: TextureHandle
         cross_out_mask: TextureHandle
@@ -9894,14 +10008,14 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1024 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1019 more). Full list in
+    #: The ``strings`` group - 1037 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1032 more). Full list in
     #: source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 160 assets (``achievement_boxer``,
+    #: The ``textures`` group - 161 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
-    #: ``achievement_empty``, ``achievement_flawless_victory``, and 155 more).
+    #: ``achievement_empty``, ``achievement_flawless_victory``, and 156 more).
     #: Full list in source.
     textures: TexturesGroup
 
@@ -10731,11 +10845,23 @@ _TREE = {
         },
         'host_ui': {
             'account_column': (),
+            'connection_column': (),
+            'kick_also_removes': ('names',),
+            'kick_removes_all': ('names',),
             'kick_vote_ends': ('t',),
             'no_kick_vote': (),
             'nobody_here': (),
+            'not_in_game': (),
+            'not_verified': (),
             'ping_column': (),
+            'ping_host': (),
+            'ping_label': (),
+            'ping_value': ('ms',),
             'player_gone': (),
+            'players_title': (),
+            'role_admin': (),
+            'role_host': (),
+            'role_label': (),
             'start_kick_vote': (),
             'stats_title': (),
         },
@@ -10858,6 +10984,7 @@ _TREE = {
             'mute_chat': (),
             'title': (),
             'unmute_chat': (),
+            'view_member': ('name',),
         },
         'party_queue': {'waiting_in_line': ()},
         'play': {'one_to_four_players': (), 'two_to_eight_players': ()},
@@ -11346,6 +11473,7 @@ _TREE = {
         'chest_icon_multi': 't',
         'circle_zig_zag': 't',
         'clay_stroke': 't',
+        'connection_down': 't',
         'controller_icon': 't',
         'cross_out': 't',
         'cross_out_mask': 't',

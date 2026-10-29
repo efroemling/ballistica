@@ -3,10 +3,12 @@
 """The doc-ui pages classic hosts serve their clients by default.
 
 The pages themselves live with what they're for: the stats page in
-``baclassic._hostuistats`` (:class:`baclassic.HostUIStatsPage`) and
-the kick vote's in ``baclassic._hostuikick``
-(:class:`baclassic.HostUIKickVotes`); this routes the default classic
-host routes to them.
+``baclassic._hostuistats`` (:class:`baclassic.HostUIStatsPage`), the
+party member and player pages in ``baclassic._hostuimembers``
+(:class:`baclassic.HostUIClientPage`,
+:class:`baclassic.HostUIPlayerPage`), and the kick vote's in
+``baclassic._hostuikick`` (:class:`baclassic.HostUIKickVotes`); this
+routes the default classic host routes to them.
 """
 
 from typing import TYPE_CHECKING, assert_never
@@ -29,10 +31,18 @@ def fulfill_classic_host_route(
     match route:
         case hroutes.Stats():
             return host_ui.stats_page.build(route)
+        case hroutes.Client():
+            return host_ui.client_page.build(route, route.client_id, client_id)
+        case hroutes.Player():
+            return host_ui.player_page.build(route, route.player_id, client_id)
         case hroutes.KickVote():
-            return host_ui.kick_votes.build_page(client_id, route.client_id)
+            return host_ui.kick_votes.build_page(
+                client_id, route.client_id, route.player_id
+            )
         case hroutes.KickVoteStart():
-            return host_ui.kick_votes.handle_start(client_id, route.client_id)
+            return host_ui.kick_votes.handle_start(
+                client_id, route.client_id, route.player_id
+            )
         case hroutes.KickVoteCast():
             return host_ui.kick_votes.handle_cast(client_id, route.yes)
         case _:

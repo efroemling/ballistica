@@ -4,20 +4,26 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
+#include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/classic.h"
@@ -28,6 +34,7 @@
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
+#include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/client_input_device.h"
@@ -48,6 +55,15 @@
 namespace ballistica::classic {
 
 const int kMaxChatMessages{40};
+
+/// How long a host must go silent before we show the
+/// host-not-responding indicator.
+const millisecs_t kHostUnresponsiveIndicatorMillisecs{1500};
+
+/// Drawn height (virtual units) and overlay depth of that indicator;
+/// width follows from its texture's aspect ratio.
+const float kHostUnresponsiveIndicatorHeight{180.0f};
+const float kHostUnresponsiveIndicatorZDepth{-0.06f};
 
 // Budget for the json payload of a v2 host-query packet, keeping the
 // full datagram comfortably inside a single un-fragmented packet on
@@ -671,6 +687,9 @@ void ClassicAppMode::SetGameRoster(const JsonRef& roster) {
     if (auto account_id = client["a"].as_string()) {
       entry.account_id = std::string(*account_id);
     }
+    if (auto depiction = client["d"].as_string()) {
+      entry.account_name_depiction = std::string(*depiction);
+    }
     for (JsonRef player : client["p"].elements()) {
       if (!player.is_object()) {
         continue;
@@ -832,6 +851,9 @@ auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
     if (entry.account_id.has_value()) {
       client.Add("a", *entry.account_id);
     }
+    if (entry.account_name_depiction.has_value()) {
+      client.Add("d", *entry.account_name_depiction);
+    }
   }
   std::string s = builder.Write();
 
@@ -893,6 +915,10 @@ void ClassicAppMode::UpdateGameRoster() {
         }
       }
       entry.client_id = -1;  // -1 client_id means we're the host.
+      // Our own account's name, when signed in (empty otherwise).
+      if (!root_ui_account_depiction_.empty()) {
+        entry.account_name_depiction = root_ui_account_depiction_;
+      }
       game_roster_.push_back(std::move(entry));
     }
 
@@ -932,6 +958,10 @@ void ClassicAppMode::UpdateGameRoster() {
         if (i.second->v2_authed()
             && !i.second->peer_public_account_id().empty()) {
           entry.account_id = i.second->peer_public_account_id();
+          if (!i.second->peer_account_name_depiction().empty()) {
+            entry.account_name_depiction =
+                i.second->peer_account_name_depiction();
+          }
         }
         game_roster_.push_back(std::move(entry));
         total_party_size += 1;
@@ -1198,13 +1228,16 @@ void ClassicAppMode::LocalDisplayChatMessage(
       }
       b2[msg_len] = 0;
 
-      std::string final_message =
-          scene_v1::PlayerSpec(b1.data()).GetDisplayString() + ": " + b2.data();
+      std::string sender = scene_v1::PlayerSpec(b1.data()).GetDisplayString();
+      std::string final_message = sender + ": " + b2.data();
 
-      // Store it locally.
+      // Store it locally (with who sent it, so the party window can
+      // link messages to their senders).
       chat_messages_.push_back(final_message);
+      chat_message_senders_.push_back(sender);
       while (chat_messages_.size() > kMaxChatMessages) {
         chat_messages_.pop_front();
+        chat_message_senders_.pop_front();
       }
 
       // Show it on the screen if they don't have their chat window open
@@ -1412,6 +1445,120 @@ void ClassicAppMode::DrawWorld(base::FrameDef* frame_def) {
   if (auto* session = GetForegroundSession()) {
     session->Draw(frame_def);
     frame_def->set_benchmark_type(session->benchmark_type());
+  }
+}
+
+void ClassicAppMode::DrawOverlays(base::FrameDef* frame_def) {
+  // Host-not-responding indicator: shown when we're connected to a host
+  // but haven't heard from it for a bit, so a stalled game has a visible
+  // reason.
+  auto* host = connections_->GetConnectionToHostUDP();
+  millisecs_t silent_millisecs{};
+  bool show = host && host->can_communicate() && g_scene_v1->have_assets();
+  if (show) {
+    silent_millisecs = host->HostSilentMillisecs();
+    show = silent_millisecs >= kHostUnresponsiveIndicatorMillisecs;
+  }
+  if (!show) {
+    // Outage over (or never started); the next one gets a fresh caption.
+    host_silence_lstr_.reset();
+    return;
+  }
+  DrawHostUnresponsive_(frame_def, silent_millisecs);
+}
+
+void ClassicAppMode::DrawHostUnresponsive_(base::FrameDef* frame_def,
+                                           millisecs_t silent_millisecs) {
+  auto now = g_core->AppTimeMillisecs();
+
+  // New outage: build its caption. The time target is the moment we
+  // last heard from the host, so LangStr's native duration formatting
+  // ticks it up on its own.
+  if (!host_silence_lstr_) {
+    auto target = std::make_shared<base::LangStr>();
+    target->form = base::LangStr::Form::kTimeTarget;
+    target->target_millis = static_cast<int64_t>(std::llround(
+                                g_base->TimeSinceEpochCloudSeconds() * 1000.0))
+                            - silent_millisecs;
+    host_silence_lstr_ = base::BuiltinStrings::Net::NoServerContact(
+        std::shared_ptr<const base::LangStr>(target));
+    host_silence_text_next_eval_ = 0;
+    if (!host_silence_text_group_.exists()) {
+      host_silence_text_group_ = Object::New<base::TextGroup>();
+    }
+  }
+
+  // Re-evaluate only when the visible text would change.
+  if (now >= host_silence_text_next_eval_) {
+    std::optional<int64_t> until_change;
+    auto text = host_silence_lstr_->Evaluate(&until_change);
+    if (text != host_silence_text_group_->text()) {
+      host_silence_text_group_->SetText(text, base::TextMesh::HAlign::kCenter,
+                                        base::TextMesh::VAlign::kTop);
+    }
+    host_silence_text_next_eval_ =
+        now + (until_change.has_value() ? *until_change : 1000);
+  }
+
+  // Fade in quickly once we pass the threshold.
+  float fade = std::min(
+      1.0f,
+      static_cast<float>(silent_millisecs - kHostUnresponsiveIndicatorMillisecs)
+          / 250.0f);
+
+  float center_x = g_base->graphics->screen_virtual_width() * 0.5f;
+  float center_y = g_base->graphics->screen_virtual_height() * 0.5f;
+  float height = kHostUnresponsiveIndicatorHeight;
+
+  // The graphic, at its texture's own aspect ratio. (It is loaded when
+  // our asset set is handed over, so it should long since be ready; if
+  // somehow it isn't, skip it until it is.)
+  auto* tex = g_scene_v1->assets().connection_down.get();
+  if (tex->loaded() && tex->width() > 0 && tex->height() > 0) {
+    float aspect =
+        static_cast<float>(tex->width()) / static_cast<float>(tex->height());
+    base::SimpleComponent c(frame_def->overlay_pass());
+    c.SetTransparent(true);
+    c.SetTexture(tex);
+    // Premultiplied textures need us to premultiply our color too or it
+    // stays full-bright while fading (see premultiplied-alpha.md).
+    float cmul = tex->premultiplied() ? fade : 1.0f;
+    c.SetColor(cmul, cmul, cmul, fade);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(center_x, center_y, kHostUnresponsiveIndicatorZDepth);
+      c.Scale(height * aspect, height, 1.0f);
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+    }
+    c.Submit();
+  }
+
+  // Caption under it: a dark offset copy for legibility over busy game
+  // visuals, then the text itself.
+  float text_y = center_y - height * 0.5f - 6.0f;
+  int elem_count = host_silence_text_group_->GetElementCount();
+  for (int pass = 0; pass < 2; ++pass) {
+    bool shadow = (pass == 0);
+    base::SimpleComponent c(frame_def->overlay_pass());
+    c.SetTransparent(true);
+    for (int e = 0; e < elem_count; e++) {
+      auto* etex = host_silence_text_group_->GetElementTexture(e);
+      float alpha = fade * (shadow ? 0.6f : 1.0f);
+      float cmul = etex->premultiplied() ? alpha : 1.0f;
+      float bright = shadow ? 0.0f : 1.0f;
+      c.SetTexture(etex);
+      c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
+      c.SetFlatness(1.0f);
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(center_x + (shadow ? 2.0f : 0.0f),
+                    text_y - (shadow ? 2.0f : 0.0f),
+                    kHostUnresponsiveIndicatorZDepth + 0.001f);
+        c.DrawMesh(host_silence_text_group_->GetElementMesh(e));
+      }
+    }
+    c.Submit();
   }
 }
 
@@ -2161,6 +2308,10 @@ void ClassicAppMode::SetRootUIAccountDepiction(const std::string& json) {
     if (auto* root_widget = uiv1_->root_widget()) {
       root_widget->SetAccountDepiction(root_ui_account_depiction_);
     }
+  }
+  // Our party roster shows it too, while we're hosting.
+  if (dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
+    UpdateGameRoster();
   }
 }
 

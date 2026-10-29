@@ -2819,6 +2819,39 @@ static PyMethodDef PyReloadHooksDef = {
     "native layer to see your changes.",
 };
 
+// ------------------------ debug_simulate_suspend -----------------------------
+
+static auto PyDebugSimulateSuspend(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  double duration;
+  static const char* kwlist[] = {"duration", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char**>(kwlist), &duration)) {
+    return nullptr;
+  }
+  g_base->DebugSimulateSuspend(duration);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDebugSimulateSuspendDef = {
+    "debug_simulate_suspend",             // name
+    (PyCFunction)PyDebugSimulateSuspend,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "debug_simulate_suspend(duration: float) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Simulate a mobile app being backgrounded for ``duration`` seconds.\n"
+    "\n"
+    "Developer builds that run their own main loop (SDL and headless)\n"
+    "only. Runs the normal deactivate and suspend sequence, freezes the\n"
+    "process (Python threads included) for the duration, then resumes.\n"
+    "Returns immediately; the suspend begins shortly after.",
+};
+
 // ---------------------------- verify_ed25519 ---------------------------------
 
 static auto PyVerifyEd25519(PyObject* self, PyObject* args, PyObject* keywds)
@@ -3066,6 +3099,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySuppressConfigAndStateWritesDef,
       PyGetSuppressConfigAndStateWritesDef,
       PyReloadHooksDef,
+      PyDebugSimulateSuspendDef,
       PySimpleDialogCreateDef,
       PySimpleDialogUpdateDef,
       PySimpleDialogDismissDef,

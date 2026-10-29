@@ -13,7 +13,11 @@ from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 
-from bauiv1lib.docui.prep._rowtext import control_width, label_want_width
+from bauiv1lib.docui.prep._rowtext import (
+    control_label_style,
+    control_width,
+    label_want_width,
+)
 from bauiv1lib.docui.prep._types import SliderPrep
 
 if TYPE_CHECKING:
@@ -21,7 +25,7 @@ if TYPE_CHECKING:
 
     import bacommon.docui.v2 as dui2
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 SLIDER_HEIGHT = 50.0
@@ -104,7 +108,7 @@ def prep_slider_row(
             maxwidth=max(1.0, labelright - left),
             h_align='left',
             v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
+            **control_label_style(row),
             enabled=enabled,
             transition_delay=tdelay,
             transition_type='scale',
@@ -170,7 +174,7 @@ class _SliderRowDriver:
 
     def __init__(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         prep: SliderPrep,
         valuetext: bui.Widget,
         value: float,
@@ -263,7 +267,7 @@ class _SliderRowDriver:
 
 
 def instantiate_slider_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widgets for a prepped slider row.
 

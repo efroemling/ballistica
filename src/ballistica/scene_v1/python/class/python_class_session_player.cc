@@ -838,6 +838,18 @@ auto PythonClassSessionPlayer::GetNameDepiction(PythonClassSessionPlayer* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSessionPlayer::GetNameNumber(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  return PyLong_FromLong(p->name_number());
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassSessionPlayer::GetNameDepictionJson(
     PythonClassSessionPlayer* self) -> PyObject* {
   BA_PYTHON_TRY;
@@ -1022,9 +1034,9 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "Return the json :meth:`get_icon_depiction` builds from, if any.\n"
      "\n"
      "For keeping a player's icon somewhere that outlives scenes (a\n"
-     "stats record, say).\n"
-     "\n"
-     ":meta private:"},
+     "stats record, say), or sending it elsewhere (host-ui pages; see\n"
+     ":func:`baclassic.host_ui_player_icon`). It decodes as a\n"
+     "``bacommon.depiction.Depiction``."},
     {"get_name_depiction", (PyCFunction)GetNameDepiction, METH_NOARGS,
      "get_name_depiction() -> bascenev1.Depiction | None\n"
      "\n"
@@ -1048,9 +1060,17 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "Return the json :meth:`get_name_depiction` builds from, if any.\n"
      "\n"
      "For keeping a player's name somewhere that outlives scenes (a\n"
-     "stats record, say).\n"
+     "stats record, say), or sending it elsewhere (host-ui pages; see\n"
+     ":func:`baclassic.host_ui_player_name`). It decodes as a\n"
+     "``bacommon.depiction.Depiction``."},
+    {"get_name_number", (PyCFunction)GetNameNumber, METH_NOARGS,
+     "get_name_number() -> int\n"
      "\n"
-     ":meta private:"},
+     "Return the number the player's name took to stay unique.\n"
+     "\n"
+     "Players whose names would collide get numbered (\"efro 2\"); 1\n"
+     "means unnumbered. Name depictions take it as their ``number``\n"
+     "to show the name as :meth:`getname` does."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"

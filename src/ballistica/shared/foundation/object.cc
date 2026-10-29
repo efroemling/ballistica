@@ -3,6 +3,7 @@
 #include "ballistica/shared/foundation/object.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -84,6 +85,31 @@ Object::~Object() {
     tmp->next_ = nullptr;
     tmp->obj_ = nullptr;
   }
+
+  // Mark ourself dead for ref-op checks. Volatile so the compiler can't
+  // drop it as a dead store on an object about to be freed.
+  *static_cast<volatile uint32_t*>(&object_canary_) = kObjectCanaryDead;
+}
+
+void Object::ObjectRefCheckFailed_(const char* op, std::string_view via) const {
+  // Note: the object may be destroyed or garbage here, so only read raw
+  // fields; no virtual calls.
+  char buffer[128];
+  snprintf(buffer, sizeof(buffer), " (canary 0x%08x, strong refs %d).",
+           static_cast<unsigned int>(object_canary_), object_strong_ref_count_);
+  std::string state;
+  if (object_canary_ == kObjectCanaryDead) {
+    state = "an already-destroyed Object";
+  } else if (object_canary_ == kObjectCanaryAlive) {
+    state = "an Object with no strong refs left (double release?)";
+  } else {
+    state = "an invalid Object (garbage or reused memory)";
+  }
+  FatalError("Bad Object ref " + std::string(op) + " on " + state + " at "
+             + Utils::PtrToString(this) + " via "
+             + (via.empty() ? std::string("direct call")
+                            : "Ref<" + std::string(via) + ">")
+             + buffer);
 }
 
 void Object::ObjectPostInit() {

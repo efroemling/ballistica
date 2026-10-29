@@ -22,6 +22,12 @@ from bacommon.docui.routes._state import (
     DocUIStateAssign,
     validate_page_state,
 )
+from bacommon.docui.routes._popup import (
+    PopupRoute,
+    PopupParent,
+    validate_popup_page,
+    validate_route_page,
+)
 
 __all__ = [
     'family_members',
@@ -33,4 +39,8 @@ __all__ = [
     'DocUIState',
     'DocUIStateAssign',
     'validate_page_state',
+    'PopupRoute',
+    'PopupParent',
+    'validate_popup_page',
+    'validate_route_page',
 ]

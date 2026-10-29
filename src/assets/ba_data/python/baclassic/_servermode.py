@@ -441,6 +441,7 @@ class ServerController:
             self._config.enable_default_kick_voting
         )
         bascenev1.set_admins(self._config.admins)
+        bascenev1.set_host_allow_favorites(self._config.allow_favorites)
 
         # Call set-enabled last (will push state to the cloud).
         bascenev1.set_public_party_max_size(self._config.max_party_size)

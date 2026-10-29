@@ -1,6 +1,26 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""The standard host kick vote (see :class:`HostUIKickVotes`)."""
+"""The standard host kick vote (see :class:`HostUIKickVotes`).
+
+To create your own version of this, either:
+
+- **Tweak it:** subclass :class:`HostUIKickVotes`, override just the
+  methods you want to change (its rules and its text are all methods),
+  and assign an instance to ``babase.app.classic.host_ui.kick_votes``.
+  Or
+- **Start from it:** copy this module into your plugin as the starting
+  point for kicking of your own, serve its page from a route of your
+  own (see :class:`baclassic.HostUIHandler`), and point every kick
+  button at it with ``host_ui.set_kick_page()``.
+
+A copy uses only public api, with two kinds of exception to swap out:
+
+- Imports from ``baclassic._hostui*`` modules: take those names from
+  ``baclassic`` instead (``baclassic.host_ui_text`` and friends).
+- The engine's own asset wrappers (``bascenev1._classicassets`` and
+  co.) supply its localized strings and textures; they're private.
+  Use plain strings, or your own asset-package's generated wrapper.
+"""
 
 import logging
 import datetime
@@ -11,16 +31,20 @@ from typing import TYPE_CHECKING, assert_never
 import bacommon.docui.v2 as dui2
 from bacommon.langstr import LangStrSpec, LangStrSpecValue
 import bacommon.docui.routes.classichost as hroutes
-from efro.dataclassio import dataclass_from_json
 
 import babase
 import bascenev1
 from bascenev1 import _builtinassets, _classicassets, _commonassets
 
+from baclassic._hostuibutton import HostUIButton
+from baclassic._hostuiparts import host_ui_text
+
 if TYPE_CHECKING:
+    from typing import Callable
+
     from bacommon.docui.routes import DocUIRoute
 
-    from baclassic._hostui import HostUIButton, HostUISubsystem
+    from baclassic._hostui import HostUISubsystem
 
 logger = logging.getLogger('ba.net')
 
@@ -51,6 +75,25 @@ class KickVoteRefusal(Enum):
     COOLDOWN = 'cooldown'
 
 
+@dataclass(frozen=True)
+class HostUIKickRequest:
+    """Someone asking to kick a party member.
+
+    What a kick page getter is called with (see
+    :meth:`baclassic.HostUISubsystem.set_kick_page`).
+    """
+
+    #: Who would be kicked (a client id).
+    client_id: int
+
+    #: Who is asking (a client id; -1 for the host).
+    viewer: int
+
+    #: The player they picked them by (a session player id), if any:
+    #: from a player's page, say, rather than their party member's.
+    player_id: int | None = None
+
+
 @dataclass
 class HostUIKickVote:
     """A kick vote in progress."""
@@ -69,6 +112,10 @@ class HostUIKickVote:
 
     #: Votes so far, by client id (True for yes). The starter votes yes.
     votes: dict[int, bool] = field(default_factory=dict)
+
+    #: Other players on the target's device (who go with them), as of
+    #: the vote starting; see :meth:`HostUIKickVotes.get_target_others`.
+    target_others: list[str] = field(default_factory=list)
 
 
 class HostUIKickVotes:  # pylint: disable=too-many-public-methods
@@ -92,9 +139,9 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
     - *Running votes* -- the machinery that applies the rules.
     - *The page* -- the vote's doc-ui page.
 
-    Subclass this, copy in just the methods you want to change (those
-    in the first two sections use only public api), and assign an
-    instance to ``host_ui.kick_votes``; for example, for longer votes::
+    Subclass this, override just the methods you want to change, and
+    assign an instance to ``host_ui.kick_votes``; for example, for
+    longer votes::
 
         class MyKickVotes(baclassic.HostUIKickVotes):
             def get_vote_duration(self) -> float:
@@ -102,11 +149,12 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
 
         babase.app.classic.host_ui.kick_votes = MyKickVotes()
 
-    To replace kick votes with something else entirely, turn this off
-    (:meth:`set_enabled`, or the server config's
-    ``enable_default_kick_voting``) and point
-    :meth:`baclassic.HostUISubsystem.set_kick_route` at a page of your
-    own.
+    Where kicking leads is decided by one public hook,
+    :meth:`baclassic.HostUISubsystem.set_kick_page`, whose default is
+    this class's :meth:`get_kick_page` (nothing else treats this vote
+    specially). To replace kick votes with something else entirely,
+    point that hook at a page of your own, copying or calling
+    :meth:`get_kick_page` for any of its behavior you want to keep.
 
     The vote's notice uses the single party notice clients have; the
     most recently posted notice wins, so a notice posted during a vote
@@ -283,6 +331,60 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
         """The screen message everyone gets when someone is kicked."""
         return _builtinassets.strings.session.kick_occurred(name=name)
 
+    def get_target_name(
+        self, client_id: int, player_id: int | None = None
+    ) -> str | None:
+        """What to call whoever a kick would remove (None if not here).
+
+        Kicks remove a whole client (every player on that device), but
+        people pick who to kick by player or by party member. So: the
+        player picked (``player_id``), else the client's one player, else
+        the client's name as the party list shows it.
+        """
+        host_ui = self.get_host_ui()
+        client_name = host_ui.get_client_name(client_id)
+        if client_name is None:
+            return None
+        players = host_ui.get_client_players(client_id)
+        for player in players:
+            if player.id == player_id:
+                return player.getname()
+        if len(players) == 1:
+            return players[0].getname()
+        return client_name
+
+    def get_target_others(
+        self, client_id: int, player_id: int | None = None
+    ) -> list[str]:
+        """Names of players a kick would also remove.
+
+        That is, those on the client besides the one
+        :meth:`get_target_name` names (all of them when it names the
+        client).
+        """
+        players = self.get_host_ui().get_client_players(client_id)
+        if any(p.id == player_id for p in players):
+            return [p.getname() for p in players if p.id != player_id]
+        if len(players) == 1:
+            return []
+        return [p.getname() for p in players]
+
+    def get_also_kicks_text(
+        self, others: list[str], named_player: bool
+    ) -> str | babase.LangStr:
+        """The page's line on who else a kick removes.
+
+        ``others`` come from :meth:`get_target_others`; ``named_player``
+        is whether the target is named by one of their
+        players (so ``others`` are the rest) or by their client (so
+        ``others`` are all of them).
+        """
+        names = ', '.join(others)
+        hstrs = _classicassets.strings.host_ui
+        if named_player:
+            return hstrs.kick_also_removes(names=names)
+        return hstrs.kick_removes_all(names=names)
+
     def get_refusal_text(
         self, refusal: KickVoteRefusal, starter_client_id: int
     ) -> str | babase.LangStr:
@@ -328,20 +430,42 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
     def set_enabled(self, enabled: bool) -> None:
         """Turn kick voting on or off.
 
-        Also offers (or stops offering) this vote's page as where
-        clients go to kick someone (see
-        :meth:`baclassic.HostUISubsystem.set_kick_route`).
+        Admins (and the host) can still kick while it's off (see
+        :meth:`get_kick_page`).
         """
         self._enabled = enabled
         if not enabled and self.vote is not None:
             self.end_vote(passed=False, quiet=True)
-        self.get_host_ui().set_kick_route(
-            self.get_kick_route if enabled else None
-        )
+        # (Who gets a kick button may have changed.)
+        self.get_host_ui().refresh_clients()
 
-    def get_kick_route(self, client_id: int) -> DocUIRoute:
-        """The page clients get when they choose to kick someone."""
-        return hroutes.KickVote(client_id=client_id)
+    def get_kick_page(self, request: HostUIKickRequest) -> DocUIRoute | None:
+        """Where a kick request goes; the default kick page getter.
+
+        :meth:`baclassic.HostUISubsystem.set_kick_page` uses this
+        unless set otherwise, and it uses only public api, so it doubles
+        as an example of a getter: the vote page (:meth:`get_kick_route`)
+        for admins and the host (who confirm a kick there instead of
+        starting a vote) and, while voting is on, for everyone else.
+        None (no kick option) for kicking admins or the host, or for
+        non-admins while voting is off. (Kicking the host, yourself, or
+        someone not here is ruled out before this is asked.)
+        """
+        if self.is_admin(request.client_id):
+            return None
+        if not self.is_admin(request.viewer) and not self.enabled:
+            return None
+        return self.get_kick_route(request.client_id, request.player_id)
+
+    def get_kick_route(
+        self, client_id: int, player_id: int | None = None
+    ) -> DocUIRoute:
+        """The page clients get when they choose to kick someone.
+
+        ``player_id`` is the player they picked them by, if any (see
+        :meth:`get_target_name`).
+        """
+        return hroutes.KickVote(client_id=client_id, player_id=player_id)
 
     def get_start_wait(self, client_id: int) -> float:
         """Seconds until a client may start a vote (0 if they may now)."""
@@ -349,15 +473,21 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
         return max(0.0, allowed - babase.apptime())
 
     def start_vote(
-        self, starter_client_id: int, target_client_id: int
+        self,
+        starter_client_id: int,
+        target_client_id: int,
+        player_id: int | None = None,
     ) -> KickVoteRefusal | None:
         """Start a vote (or, for admins, just kick).
 
-        Returns why it couldn't be started, if it couldn't.
+        ``player_id`` is the player the target was picked by, if any
+        (see :meth:`get_target_name`). Returns why it couldn't be
+        started, if it couldn't.
         """
         host_ui = self.get_host_ui()
+        name = self.get_target_name(target_client_id, player_id)
         if self.is_admin(starter_client_id):
-            if target_client_id not in host_ui.get_client_ids():
+            if name is None or target_client_id == -1:
                 return KickVoteRefusal.NOT_PRESENT
             if self.is_admin(target_client_id):
                 return KickVoteRefusal.ADMIN
@@ -366,7 +496,7 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
                 starter_client_id,
                 target_client_id,
             )
-            self.kick(target_client_id)
+            self.kick(target_client_id, name=name)
             return None
         refusal = self.get_refusal(starter_client_id, target_client_id)
         if refusal is not None:
@@ -378,7 +508,7 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
             )
             return refusal
 
-        name = host_ui.get_client_name(target_client_id) or '?'
+        name = name or '?'
         duration = self.get_vote_duration()
         self.vote = HostUIKickVote(
             target_client_id=target_client_id,
@@ -386,6 +516,7 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
             starter_client_id=starter_client_id,
             end_time=babase.apptime() + duration,
             votes={starter_client_id: True},
+            target_others=self.get_target_others(target_client_id, player_id),
         )
         logger.info(
             'Kick vote started by client %d against client %d (%r);'
@@ -533,19 +664,14 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
         While a vote runs, a button to its page in everyone's party
         menu.
         """
-        # pylint: disable=cyclic-import
-        # (Safe: baclassic imports us, so it's loaded by now.)
-        from baclassic import HostUIButton
-
         del client_id  # Same for everyone.
         if self.vote is None:
             return []
         return [
             HostUIButton(
                 label=self.get_title_text(),
-                route=hroutes.KickVote(),
+                browse=hroutes.KickVote().browse(),
                 placement='party_menu',
-                layout=dui2.WindowLayout.WIDE,
             )
         ]
 
@@ -570,26 +696,44 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
     # The page.
 
     def build_page(
-        self, client_id: int, target_client_id: int | None
+        self,
+        client_id: int,
+        target_client_id: int | None,
+        player_id: int | None = None,
     ) -> dui2.Response:
         """The vote's page, for one client.
 
         ``target_client_id`` is who they chose to kick, if they came
-        here to kick someone. Refreshes itself every second. Its text
-        comes from the methods above; the layout is engine machinery,
-        so override those rather than this.
+        here to kick someone (and ``player_id`` the player they chose
+        them by, if any). Admins (and the host) get asked to confirm a
+        kick instead. Refreshes itself every second. Its text comes from
+        the methods above; override those to change it. For a different
+        layout, copy this module (see its notes).
         """
-        return _build_page(self, client_id, target_client_id, None)
+        return _build_page(
+            self, client_id, _Target.make(target_client_id, player_id)
+        )
 
     def handle_start(
-        self, client_id: int, target_client_id: int
+        self, client_id: int, target_client_id: int, player_id: int | None
     ) -> dui2.Response:
-        """A client pressed 'Start a Kick Vote'; returns their new page.
+        """A client pressed 'Start a Kick Vote' (or 'Kick').
+
+        Returns their new page.
 
         :meta private:
         """
-        refusal = self.start_vote(client_id, target_client_id)
-        return _build_page(self, client_id, target_client_id, refusal)
+        target = _Target(target_client_id, player_id)
+        name = self.get_target_name(target_client_id, player_id)
+        admin = self.is_admin(client_id)
+        refusal = self.start_vote(client_id, target_client_id, player_id)
+        return _build_page(
+            self,
+            client_id,
+            target,
+            refusal=refusal,
+            kicked_name=name if admin and refusal is None else None,
+        )
 
     def handle_cast(self, client_id: int, yes: bool) -> dui2.Response:
         """A client voted; returns their new page.
@@ -597,17 +741,11 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
         :meta private:
         """
         self.cast_vote(client_id, yes)
-        return _build_page(self, client_id, None, None)
+        return _build_page(self, client_id, None)
 
 
 #: Marks the choice a voter made (both buttons grey out once they vote).
 _CHECK = '✓ '
-
-
-def _spec(value: str | babase.LangStr) -> LangStrSpec:
-    if isinstance(value, str):
-        return LangStrSpecValue.literal(value)
-    return dataclass_from_json(LangStrSpec, value.to_resource_json())
 
 
 def _vote_button(
@@ -616,32 +754,71 @@ def _vote_button(
     action: dui2.Action | None,
 ) -> dui2.Button:
     """A big square Yes or No (greyed out once there's no voting)."""
-    text = _spec(label)
+    text = host_ui_text(label)
     if voted_this:
         text = LangStrSpecValue(_CHECK + '{l}', {'l': text})
     return dui2.Button(
         label=text,
         action=action,
-        size=(220.0, 200.0),
+        size=(220.0, 130.0),
         label_scale=1.5,
         selected=voted_this,
         disabled=action is None,
     )
 
 
+@dataclass
+class _Target:
+    """Who someone came to the page to kick."""
+
+    client_id: int
+    player_id: int | None
+
+    @classmethod
+    def make(
+        cls, client_id: int | None, player_id: int | None
+    ) -> _Target | None:
+        """A target, if there's a client to target."""
+        return None if client_id is None else cls(client_id, player_id)
+
+
+def _lines(
+    *texts: str | babase.LangStr | LangStrSpec | None,
+) -> LangStrSpec | None:
+    """Texts as one, a line each (Nones left out; None if all are)."""
+    specs = [
+        t if isinstance(t, LangStrSpec) else host_ui_text(t)
+        for t in texts
+        if t is not None
+    ]
+    if not specs:
+        return None
+    if len(specs) == 1:
+        return specs[0]
+    return LangStrSpecValue(
+        '\n'.join(f'{{l{i}}}' for i in range(len(specs))),
+        {f'l{i}': s for i, s in enumerate(specs)},
+    )
+
+
 def _build_page(
     votes: HostUIKickVotes,
     client_id: int,
-    target_client_id: int | None,
-    refusal: KickVoteRefusal | None,
+    target: _Target | None,
+    *,
+    refusal: KickVoteRefusal | None = None,
+    kicked_name: str | None = None,
 ) -> dui2.Response:
-    """Implements HostUIKickVotes.build_page() and friends."""
+    """Implements HostUIKickVotes.build_page() and friends.
+
+    ``kicked_name`` is who an admin just kicked, if they did.
+    """
     vote = votes.vote
     rows: list[dui2.Row] = []
 
     def _row(
         title: str | babase.LangStr,
-        subtitle: str | babase.LangStr | None = None,
+        subtitle: str | babase.LangStr | LangStrSpec | None = None,
         buttons: list[dui2.Button] | None = None,
         padding_top: float | None = None,
         footnote: str | babase.LangStr | None = None,
@@ -651,7 +828,7 @@ def _build_page(
             # get a 'nothing here' placeholder).
             buttons = [
                 dui2.Button(
-                    label=_spec(_commonassets.strings.actions.ok),
+                    label=host_ui_text(_commonassets.strings.actions.ok),
                     action=dui2.Local(close_window=True),
                     size=(200.0, 70.0),
                     style=dui2.ButtonStyle.MEDIUM,
@@ -661,8 +838,8 @@ def _build_page(
                 padding_top = 30.0
         rows.append(
             dui2.ButtonRow(
-                title=_spec(title),
-                subtitle=None if subtitle is None else _spec(subtitle),
+                title=host_ui_text(title),
+                subtitle=_lines(subtitle),
                 buttons=buttons,
                 layout=dui2.ButtonRowLayout.FIXED,
                 center_title=True,
@@ -672,7 +849,7 @@ def _build_page(
                 # Some air around the tally line.
                 spacing_subtitle=0.0 if subtitle is None else 8.0,
                 spacing_title=0.0 if subtitle is None else 16.0,
-                footnote=None if footnote is None else _spec(footnote),
+                footnote=None if footnote is None else host_ui_text(footnote),
                 # (Time-varying, so one line rather than wrapped.)
                 footnote_wrap=False,
                 spacing_footnote=0.0 if footnote is None else 20.0,
@@ -682,8 +859,25 @@ def _build_page(
     refusal_text = (
         None if refusal is None else votes.get_refusal_text(refusal, client_id)
     )
-    if vote is not None:
+    if kicked_name is not None:
+        # (An admin's kick; the player is gone, so no refreshing.)
+        _row(votes.get_kicked_text(kicked_name))
+        return dui2.Response(
+            page=dui2.Page(
+                title=host_ui_text(votes.get_title_text()),
+                rows=rows,
+                center_vertically=True,
+            )
+        )
+    if target is not None and (vote is None or votes.is_admin(client_id)):
+        _add_start_row(votes, client_id, target, refusal_text, _row)
+    elif vote is not None:
         needed = votes.get_votes_needed_text(max(0, votes.get_votes_needed()))
+        also = (
+            votes.get_also_kicks_text(vote.target_others, named_player=True)
+            if vote.target_others
+            else None
+        )
         time_left = votes.get_time_left_text(
             babase.utc_now_cloud()
             + datetime.timedelta(seconds=vote.end_time - babase.apptime())
@@ -699,7 +893,7 @@ def _build_page(
             can_vote = voted is None and client_id in votes.get_voters()
             _row(
                 votes.get_question_text(vote.target_name),
-                refusal_text or needed,
+                _lines(also, refusal_text or needed),
                 [
                     _vote_button(
                         votes.get_yes_text(),
@@ -722,42 +916,64 @@ def _build_page(
                 ],
                 footnote=time_left,
             )
-    elif target_client_id is not None:
-        name = votes.get_host_ui().get_client_name(target_client_id)
-        if name is None:
-            _row(votes.get_refusal_text(KickVoteRefusal.NOT_PRESENT, client_id))
-        else:
-            _row(
-                votes.get_question_text(name),
-                refusal_text,
-                [
-                    dui2.Button(
-                        label=_spec(
-                            votes.get_admin_kick_text()
-                            if votes.is_admin(client_id)
-                            else votes.get_start_text()
-                        ),
-                        action=hroutes.KickVoteStart(
-                            client_id=target_client_id
-                        ).replace(),
-                        size=(400.0, 80.0),
-                        style=dui2.ButtonStyle.LARGE,
-                    )
-                ],
-                padding_top=30.0,
-            )
     else:
         _row(votes.get_no_vote_text(), refusal_text)
 
     return dui2.Response(
         page=dui2.Page(
-            title=_spec(votes.get_title_text()),
+            title=host_ui_text(votes.get_title_text()),
             rows=rows,
             center_vertically=True,
         ),
         # Keep it current while it's up.
-        timed_action=hroutes.KickVote(client_id=target_client_id).replace(
-            default_sound=False
-        ),
+        timed_action=hroutes.KickVote(
+            client_id=None if target is None else target.client_id,
+            player_id=None if target is None else target.player_id,
+        ).replace(default_sound=False),
         timed_action_delay=1.0,
+    )
+
+
+def _add_start_row(
+    votes: HostUIKickVotes,
+    client_id: int,
+    target: _Target,
+    refusal_text: str | babase.LangStr | None,
+    add_row: Callable[..., None],
+) -> None:
+    """'Kick X?' with a button to start a vote (or for admins, to kick).
+
+    (For admins, it's the kick's confirmation.)
+    """
+    name = votes.get_target_name(target.client_id, target.player_id)
+    if name is None or target.client_id == -1:
+        add_row(votes.get_refusal_text(KickVoteRefusal.NOT_PRESENT, client_id))
+        return
+    others = votes.get_target_others(target.client_id, target.player_id)
+    players = votes.get_host_ui().get_client_players(target.client_id)
+    add_row(
+        votes.get_question_text(name),
+        (
+            votes.get_also_kicks_text(
+                others, named_player=len(others) < len(players)
+            )
+            if others
+            else None
+        ),
+        [
+            dui2.Button(
+                label=host_ui_text(
+                    votes.get_admin_kick_text()
+                    if votes.is_admin(client_id)
+                    else votes.get_start_text()
+                ),
+                action=hroutes.KickVoteStart(
+                    client_id=target.client_id, player_id=target.player_id
+                ).replace(),
+                size=(400.0, 80.0),
+                style=dui2.ButtonStyle.LARGE,
+            )
+        ],
+        padding_top=30.0,
+        footnote=refusal_text,
     )

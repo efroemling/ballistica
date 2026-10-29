@@ -444,7 +444,11 @@ def test_every_action_type_is_handled() -> None:
     for typeid in dui2.ActionTypeID:
         actiontype = dui2.Action.get_type(typeid)
         action: dui2.Action
-        if actiontype is dui2.Browse or actiontype is dui2.Replace:
+        if (
+            actiontype is dui2.Browse
+            or actiontype is dui2.Replace
+            or actiontype is dui2.Popup
+        ):
             action = actiontype(request=dui2.Request('/'))
         elif actiontype is dui2.Menu:
             action = dui2.Menu(items=[dui2.MenuItem(label=_res('item'))])

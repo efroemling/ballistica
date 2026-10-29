@@ -61,6 +61,7 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
     case ShadingType::kObjectLightShadowTransparent:
     case ShadingType::kObjectLightShadowFacingRatioTransparent:
     case ShadingType::kObjectReflectTransparent:
+    case ShadingType::kObjectReflectLightShadowTransparent:
     case ShadingType::kObjectReflectAddTransparent:
     case ShadingType::kSimpleTextureModulatedTransparent:
     case ShadingType::kSimpleTextureModulatedTransFlatness:
@@ -1024,6 +1025,7 @@ void Graphics::BuildAndPushFrameDef() {
 
     RenderPass* overlay_pass = frame_def->overlay_pass();
     DrawMiscOverlays(frame_def);
+    g_base->app_mode()->DrawOverlays(frame_def);
 
     // SimpleDialogs (asset-resolve progress, dead-in-the-water errors, etc.):
     // over all game/UI but under the dev console (which DrawDevUI submits next,

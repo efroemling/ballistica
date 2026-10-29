@@ -19,7 +19,7 @@ class TextMesh : public MeshIndexedDualTextureFull {
   TextMesh();
   void SetText(const std::string& text, HAlign alignment_h, VAlign alignment_v,
                bool big, uint32_t min_val, uint32_t max_val,
-               TextMeshEntryType entry_type, TextPacker* packer);
+               TextMeshEntryType entry_type, int font_page, TextPacker* packer);
   auto text() const -> const std::string& { return text_; }
 
   /// Whether the last SetText() built full geometry. False when any

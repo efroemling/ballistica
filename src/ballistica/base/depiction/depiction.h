@@ -79,6 +79,14 @@ struct DepictionDrawContext {
   float opacity{1.0f};
   bool disabled{};
 
+  /// An rgb multiplier on everything the depiction draws, set by its
+  /// host (a depictiondisplay node's or doc-ui depiction's
+  /// color_multiply): whatever it would draw, times this. Unlike
+  /// color_override it replaces nothing, so the result is predictable
+  /// for any kind. Kinds apply it with brightness, through
+  /// StandardMultiplier().
+  float color_multiply[3]{1.0f, 1.0f, 1.0f};
+
   /// Physical pixels per box unit, as settled on screen (transitions
   /// aside), so kinds that render to a texture can size it to land one
   /// to one. Computed by the host from its own corners.
@@ -143,6 +151,11 @@ struct DepictionDrawContext {
   /// desaturating a texture's own colors, so tints carry the grey).
   auto StandardOpacity() const -> float;
   auto StandardBrightness() const -> float;
+
+  /// The final multiplier on what a kind draws (rgb, into ``rgb``):
+  /// StandardBrightness() times color_multiply. Kinds scale their draw
+  /// colors by it where they'd otherwise scale by brightness alone.
+  void StandardMultiplier(float* rgb) const;
 
   /// Grey an rgb color in place if disabled (to a grey scaled from its
   /// luminance, as disabled buttons and text do); else leave it be.

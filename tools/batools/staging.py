@@ -202,6 +202,11 @@ class BuildStager:
                 flush=True,
             )
 
+            # Store apks seed the meta-scan cache for first launches.
+            from batools.metascanseed import stage_seed
+
+            stage_seed(self.dst, self.projroot, self.asset_bundle_profile)
+
     def _parse_args(self, args: list[str]) -> None:
         """Parse args and apply to ourself."""
 

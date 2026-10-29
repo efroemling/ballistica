@@ -31,6 +31,9 @@ class Player : public Object {
   void SetName(const std::string& name, const std::string& full_name,
                bool real);
   auto name_is_real() const -> bool { return name_is_real_; }
+  /// The number our name took to not collide with another player's
+  /// (1 = unnumbered; see base::NumberNameText).
+  auto name_number() const -> int { return name_number_; }
 
   void ResetInput();
   auto GetHostSession() const -> HostSession*;
@@ -174,6 +177,7 @@ class Player : public Object {
   int id_{};
   std::string name_;
   std::string full_name_;
+  int name_number_{1};
 
   // Is the current name real (as opposed to a standin
   // title such as '<choosing player>')

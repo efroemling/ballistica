@@ -28,6 +28,10 @@ class MainMenuWindow(bui.MainWindow):
         # have a visual hitch when the user taps them.
         bui.app.threadpool.submit_no_wait(self._preload_modules)
 
+        # Same for host-ui, which our in-game and party menus use.
+        if bui.app.classic is not None:
+            bui.app.classic.preload_host_ui()
+
         bui.set_analytics_screen('Main Menu')
         self._show_remote_app_info_on_first_launch()
 
@@ -95,6 +99,17 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.gather as _unused9
         import bauiv1lib.watch as _unused10
         import bauiv1lib.playdocui as _unused11
+
+        # Co-op campaigns get built on first use and need all of these.
+        import bascenev1lib.game.onslaught as _unused12
+        import bascenev1lib.game.football as _unused13
+        import bascenev1lib.game.runaround as _unused14
+        import bascenev1lib.game.thelaststand as _unused15
+        import bascenev1lib.game.race as _unused16
+        import bascenev1lib.game.targetpractice as _unused17
+        import bascenev1lib.game.meteorshower as _unused18
+        import bascenev1lib.game.easteregghunt as _unused19
+        import bascenev1lib.game.ninjafight as _unused20
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app

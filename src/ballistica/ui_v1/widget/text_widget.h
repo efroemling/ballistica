@@ -77,6 +77,7 @@ class TextWidget : public Widget {
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
+  void set_enable_sound(bool enabled) { enable_sound_ = enabled; }
   void SetOnSubmitCall(PyObject* call_tuple);
   void SetOnApplyCall(PyObject* call_tuple);
   void SetOnActivateCall(PyObject* call_tuple);
@@ -186,6 +187,9 @@ class TextWidget : public Widget {
   bool text_group_dirty_{true};
   bool outline_dirty_{true};
   bool click_activate_{};
+
+  // Whether presses (clicks, the clear button) play their tap sound.
+  bool enable_sound_{true};
   bool mouse_over_{};
   bool pressed_{};
   bool pressed_activate_{};

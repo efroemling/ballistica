@@ -151,8 +151,9 @@ class LiveViewerDepiction : public base::Depiction,
     }
     // A render view's texture is premultiplied, so our modulate color
     // must be too (see docs/design/premultiplied-alpha.md).
-    float cmul = (picture->premultiplied() ? alpha : 1.0f)
-                 * context.StandardBrightness();
+    float cmul = picture->premultiplied() ? alpha : 1.0f;
+    float mult[3];
+    context.StandardMultiplier(mult);
     base::SimpleComponent c(context.pass);
     c.SetTransparent(transparent);
     c.SetTexture(picture);
@@ -160,9 +161,8 @@ class LiveViewerDepiction : public base::Depiction,
       // All of it in one go: our picture over the host's backing, its
       // layers painted over that. Host opacity applies to the whole;
       // our fade-in just to the picture (fading in over the backing).
-      float pmul = (picture->premultiplied() ? fade : 1.0f)
-                   * context.StandardBrightness();
-      c.SetColor(pmul, pmul, pmul, fade);
+      float pmul = picture->premultiplied() ? fade : 1.0f;
+      c.SetColor(pmul * mult[0], pmul * mult[1], pmul * mult[2], fade);
       float underlay[4];
       float layer1[4];
       float layer2[4];
@@ -170,14 +170,17 @@ class LiveViewerDepiction : public base::Depiction,
       c.SetLayeredMask(context.mask_texture, underlay, layer1, layer2,
                        context.StandardOpacity());
     } else if (masked) {
-      c.SetColor(cmul, cmul, cmul, alpha);
+      c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
       float frame[3]{context.frame_color[0], context.frame_color[1],
                      context.frame_color[2]};
       context.StandardColor(frame);
       c.SetMaskTexture(context.mask_texture);
+      // (The host's frame is drawn as the mask's addition; it follows
+      // brightness and color_multiply like the picture does.)
+      c.SetMaskAddMult(mult[0], mult[1], mult[2]);
       c.SetColorizeColor(frame[0], frame[1], frame[2]);
     } else {
-      c.SetColor(cmul, cmul, cmul, alpha);
+      c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
     }
     {
       auto xf = c.ScopedTransform();
