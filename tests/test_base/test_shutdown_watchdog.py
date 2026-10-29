@@ -43,6 +43,7 @@ the combined output.
 """
 
 import os
+import time
 import tempfile
 
 import pytest
@@ -131,6 +132,7 @@ def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
     ) as tmpdir:
         config_dir = os.path.join(tmpdir, 'ba_root')
         os.makedirs(config_dir)
+        start_time = time.monotonic()
         proc = apprun.run_headless_capture(
             purpose=f'shutdown-watchdog {instance}',
             config_dir=config_dir,
@@ -147,16 +149,48 @@ def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
             },
             timeout=_RUN_TIMEOUT_SECONDS,
         )
-    return proc.stdout.decode(errors='replace')
+        elapsed = time.monotonic() - start_time
+    # Note how the run ended, so a failure shows whether the process
+    # died on its own or was killed at our timeout.
+    return (
+        proc.stdout.decode(errors='replace')
+        + f'\n{_RUN_FOOTER} exit status {proc.returncode}'
+        f' after {elapsed:.1f}s (timeout {_RUN_TIMEOUT_SECONDS}s).\n'
+    )
+
+
+# Marks the line _run_shutdown_scenario appends about how the run ended.
+_RUN_FOOTER = '[shutdown-watchdog test]'
+
+# Lines worth showing from anywhere in a failed run's output. The tail
+# alone is usually all thread dump, which hides how the run ended.
+_KEY_LINE_MARKERS = (
+    'FATAL',
+    'Fatal',
+    'fatal',
+    'Timeout (',
+    'app exiting',
+    'Shutting down',
+    'suicide',
+    'ERROR',
+    'Error',
+    _RUN_FOOTER,
+)
 
 
 def _assert_in(out: str, needle: str, desc: str) -> None:
     """Assert that ``needle`` appears in ``out`` with a helpful failure."""
     if needle in out:
         return
+    key_lines = '\n'.join(
+        line
+        for line in out.splitlines()
+        if any(marker in line for marker in _KEY_LINE_MARKERS)
+    )
     raise AssertionError(
         f'Missing expected marker ({desc}): {needle!r}\n'
-        f'--- output (tail) ---\n{out[-4000:]}'
+        f'--- key lines ---\n{key_lines}\n'
+        f'--- output (tail) ---\n{out[-2000:]}'
     )
 
 
