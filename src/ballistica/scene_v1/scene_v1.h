@@ -46,7 +46,7 @@ const int kProtocolVersionHostMin = 56;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 57;
+const int kProtocolVersionMax = 58;
 
 // The protocol 1.8 shipped on. Since then new protocols are opt-in:
 // kProtocolVersionHostMin stays here (so 1.8.x clients can join any
@@ -485,6 +485,11 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     'fuse_length' keeps its index): below 1 the prop draws blended,
 //     its texture's alpha included, with reflections, lighting and
 //     shadows fading along. Same minimum-protocol gate (2026-10-28).
+//
+// 58: hold_duration_ms: how long the spaz has been holding its
+//     current pickup while holding, or how long the last completed hold
+//     lasted while not holding. Used by the Python-side grab-punch
+//     anti-exploit to distinguish real grabs from micro-grabs.
 
 // First protocol with depictiondisplay 'color_multiply' (see the 57
 // entry above).
@@ -493,6 +498,10 @@ const int kProtocolVersionColorMultiply = 57;
 // First protocol with prop (and bomb) 'opacity' (see the 57 entry
 // above).
 const int kProtocolVersionPropOpacity = 57;
+
+// First protocol with the spaz hold_duration_ms attr (see the 58 entry
+// above).
+const int kProtocolVersionHoldDuration = 58;
 
 // First protocol with the compact (varint) stream framing; see the 44
 // entry above.

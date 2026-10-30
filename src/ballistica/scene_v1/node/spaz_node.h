@@ -279,6 +279,9 @@ class SpazNode : public Node {
   auto get_pickup_release_time_ms() const -> float {
     return pickup_release_time_ms_;
   }
+  auto get_hold_duration_ms() const -> int {
+    return static_cast<int>(hold_duration_ms_);
+  }
   auto pickup_pressed() const -> bool { return pickup_pressed_; }
   void SetPickupPressed(bool val);
   auto hold_position_pressed() const -> bool { return hold_position_pressed_; }
@@ -728,6 +731,8 @@ class SpazNode : public Node {
   bool billboard_cross_out_{};
   bool pickup_before_hitbox_{};
   float pickup_release_time_ms_{};
+  int64_t hold_start_time_ms_{0};
+  int64_t hold_duration_ms_{0};
   base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
   base::JointFixedEF* hair_front_right_joint_{};

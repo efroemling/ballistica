@@ -629,6 +629,8 @@ def _special_class_cases(classname: str) -> str:
             '    behavior_version: int = 0\n'
             '    pickup_before_hitbox: bool = False\n'
             '    pickup_release_time_ms: float = 0\n'
+            '    #: Available on spaz node.\n'
+            '    hold_duration_ms: int = 0\n'
             '    host_only: bool = False\n'
             '    visible: bool = True\n'
             "    config: str = ''\n"
