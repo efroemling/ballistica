@@ -778,6 +778,23 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
   };                                                                      \
   Attr_##NAME NAME;
 
+// Like BA_INT_ATTR_READONLY but with deferred wire-index assignment; see
+// BA_INT_ATTR_READONLY.
+#define BA_INT_ATTR_READONLY_LATE(NAME, GETTER)                                \
+  class Attr_##NAME : public NodeAttributeUnboundInt {                    \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundInt(node_type, #NAME,                       \
+                                  kNodeAttributeFlagReadOnly              \
+                                      | kNodeAttributeFlagLateIndex) {}   \
+    auto GetAsInt(Node* node) -> int64_t override {                       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
 // Defines an int attr subclass that interfaces with specific getter/setter
 // calls.
 #define BA_INT64_ATTR(NAME, GETTER, SETTER)                               \
