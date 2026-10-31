@@ -780,7 +780,7 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
 
 // Like BA_INT_ATTR_READONLY but with deferred wire-index assignment; see
 // BA_INT_ATTR_READONLY.
-#define BA_INT_ATTR_READONLY_LATE(NAME, GETTER)                                \
+#define BA_INT_ATTR_READONLY_LATE(NAME, GETTER)                           \
   class Attr_##NAME : public NodeAttributeUnboundInt {                    \
    public:                                                                \
     explicit Attr_##NAME(NodeType* node_type)                             \
