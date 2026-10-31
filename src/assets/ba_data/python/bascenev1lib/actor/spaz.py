@@ -239,7 +239,7 @@ class Spaz(bs.Actor):
         self._grab_start_time_ms: int | None = None
         self._last_hold_duration_ms = 0
         self._last_hold_end_time_ms = -9999
-        self._last_grabbed_spaz: bs.Node | None = None
+        self._last_grab_was_spaz = False
         if self.default_shields:
             self.equip_shields()
         self._dropped_bomb_callbacks: list[Callable[[Spaz, bs.Actor], Any]] = []
@@ -1244,10 +1244,10 @@ class Spaz(bs.Actor):
                 release_time_diff = now_ms - self.node.pickup_release_time_ms
                 target_spaz = node.getdelegate(Spaz)
 
-                # Only care if the victim is a Spaz we actually grabbed.
-                # If the punch connected before the grab did, this is a
-                # normal punch-grab and should be left alone.
-                if target_spaz is not None and node is self._last_grabbed_spaz:
+                # Only care if the victim is a Spaz and the last thing we
+                # grabbed was also a Spaz. Grabbing props or flags must
+                # never block a normal punch.
+                if target_spaz is not None and self._last_grab_was_spaz:
                     # A re-grab restarts the node's live timer, so keep
                     # using the hold that just ended until it is old
                     # enough to ignore.
@@ -1379,22 +1379,25 @@ class Spaz(bs.Actor):
             now_ms = int(bs.time() * 1000)
             # Grabbing a new node replaces any current hold without a drop
             # message, so close out the previous hold ourselves.
-            if self._grab_start_time_ms is not None and (
-                self._last_grabbed_spaz is not None
+            if (
+                self._grab_start_time_ms is not None
+                and self._last_grab_was_spaz
             ):
                 self._last_hold_duration_ms = now_ms - self._grab_start_time_ms
                 self._last_hold_end_time_ms = now_ms
             self.node.hold_node = opposingnode
             self._grab_start_time_ms = now_ms
             # Only holds on another Spaz count towards the anti-exploit.
-            self._last_grabbed_spaz = (
-                opposingnode if opposingnode.getdelegate(Spaz) else None
+            self._last_grab_was_spaz = (
+                opposingnode.getdelegate(Spaz) is not None
             )
         elif isinstance(msg, bs.DropMessage):
             if self._grab_start_time_ms is not None:
                 now_ms = int(bs.time() * 1000)
                 # Only holds on another Spaz count towards the anti-exploit.
-                if self._last_grabbed_spaz is not None:
+                # Keep the flag set afterwards: the release window still
+                # needs to know the last grab was on a Spaz.
+                if self._last_grab_was_spaz:
                     self._last_hold_duration_ms = (
                         now_ms - self._grab_start_time_ms
                     )
