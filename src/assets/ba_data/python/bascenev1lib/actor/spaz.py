@@ -1388,9 +1388,8 @@ class Spaz(bs.Actor):
             self.node.hold_node = opposingnode
             self._grab_start_time_ms = now_ms
             # Only holds on another Spaz count towards the anti-exploit.
-            self._last_grab_was_spaz = (True if
+            self._last_grab_was_spaz = (
                 opposingnode.getdelegate(Spaz) is not None
-                else False
             )
         elif isinstance(msg, bs.DropMessage):
             if self._grab_start_time_ms is not None:
@@ -1461,6 +1460,10 @@ class Spaz(bs.Actor):
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = 0
             self.node.hold_node = node
+            # Keep the anti-exploit state in sync with hold_node: taking
+            # a bomb out must not leave us flagged as holding a Spaz.
+            self._last_grab_was_spaz = False
+            self._grab_start_time_ms = None
 
     def set_land_mine_count(self, count: int) -> None:
         """Set the number of land-mines this spaz is carrying."""
