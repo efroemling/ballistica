@@ -1388,8 +1388,9 @@ class Spaz(bs.Actor):
             self.node.hold_node = opposingnode
             self._grab_start_time_ms = now_ms
             # Only holds on another Spaz count towards the anti-exploit.
-            self._last_grab_was_spaz = (
+            self._last_grab_was_spaz = (True if
                 opposingnode.getdelegate(Spaz) is not None
+                else False
             )
         elif isinstance(msg, bs.DropMessage):
             if self._grab_start_time_ms is not None:
