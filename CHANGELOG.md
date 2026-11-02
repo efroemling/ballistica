@@ -1,3 +1,55 @@
+### 1.8.7 (build 23085, api 9, 2026-11-01)
+- Fixed local network play on Android 17, which now requires a
+  permission for local network access. The game asks for it when you
+  open Gather, and shows a warning with a way to grant it wherever
+  local play needs it. Also fixed nearby-game discovery on devices
+  (such as Pixels) that filter broadcast traffic.
+- Reworked nearby-game discovery. Games now find each other through
+  Bonjour/NSD (DNS-SD) as well as LAN broadcast, on Apple platforms,
+  Android and Windows, so the Nearby tab works on networks that drop
+  broadcasts, and finds hosts on non-default ports. Each device is
+  listed once however many ways it was found, joined by its fastest
+  address. IPv6 addresses (including link-local) work, so nearby play
+  works on IPv6-only networks too. Discovery sends far less traffic
+  than before, and copes better with lost packets on Wi-Fi.
+- Joins and Public-tab pings now go through the system resolver, so
+  joining by IPv4 address works on IPv6-only (NAT64) networks, and
+  host names work as addresses. A join with several addresses for one
+  host races them and uses the first to answer.
+- Fixed Windows hosts dropping their game sockets for a second
+  whenever a device they had sent to went away (and re-advertising
+  themselves each time, which left stale duplicate entries in other
+  devices' Nearby lists).
+- Fixed 'That player is no longer here' on the stats Connection page
+  in solo games.
+- Team red no longer shows as coral in screen messages, the
+  scoreboard, player names and a few other spots.
+- Text and images drawn over toolbar buttons (achievement percent,
+  party count) now move with device tilt exactly as their button does.
+- Music from the classic game no longer keeps playing after switching
+  to another app mode.
+- Android: the app's name and native dialog text (and, on Apple
+  platforms, the local-network permission prompt) are now translated
+  from the same asset-package strings as everything else. Ethernet-only
+  Android TV boxes are supported again.
+- Linux: the game now asks for an OpenGL 3.2+ core profile (falling
+  back to the old request), fixing "OpenGL too old" on some Mesa
+  drivers.
+- iOS/tvOS: a shutdown via SIGTERM now exits cleanly instead of hitting
+  a fatal error.
+- New `babase.app.nearby` subsystem (`NearbyScan`, `NearbyHost`,
+  `NearbyRoute`) for nearby-host discovery, and
+  `babase.DualStackUDPEndpoint` (IPv4 and IPv6 sockets as one asyncio
+  endpoint). `bascenev1.connect_to_party()` takes a list of addresses.
+  The old `host_scan_cycle()` / `end_host_scanning()` are removed.
+- New `REMOTE_GAME_QUERY_V2` / `RESPONSE_V2` packets carry the game's
+  app-instance uuid, so remote-app answers merge with game answers.
+- App modes now declare which networking they want (classic game
+  networking, remote-app server), and sockets open and close to match.
+  New `remote` and `squads` feature sets; `RemoteAppMode` turns a device
+  into a controller for a nearby game (a placeholder for the future
+  BombSquad Remote).
+
 ### 1.8.6 (build 23082, api 9, 2026-10-29)
 - Dedicated servers (server mode) no longer count themselves as a party
   member: they leave themselves out of the party roster clients see,

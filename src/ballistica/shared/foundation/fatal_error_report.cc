@@ -200,13 +200,16 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
   // time we get here) and a server-side build->masterhash lookup that
   // only ever existed on the v1 master-server. These four cost
   // nothing and catch obvious tinkering, which is all we need to keep
-  // modded builds from drowning out real signal.
+  // modded builds from drowning out real signal. 'modpending' marks a
+  // false 'modded' that can't be trusted yet: some check hadn't finished
+  // (see CoreFeatureSet::ModdedCheckPending()).
   if (recorded != nullptr) {
     // Mirrored from the crashed process as it ran, so these are its
     // values rather than ours. core_alive answers the same question
     // 'coregone' does, but as of the moment of the fault.
     if (recorded->core_alive) {
       root.Add("modded", recorded->modded);
+      root.Add("modpending", recorded->modpending);
       root.Add("rancmds", recorded->rancmds);
       root.Add("workspaces", recorded->workspaces);
       root.Add("custompy", recorded->custompy);
@@ -215,13 +218,12 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
       root.Add("coregone", true);
     }
   } else if (g_core != nullptr) {
-    root.Add("modded", g_core->user_ran_commands || g_core->workspaces_in_use
-                           || g_core->using_custom_app_python_dir()
-                           || g_core->user_python_present);
-    root.Add("rancmds", g_core->user_ran_commands);
-    root.Add("workspaces", g_core->workspaces_in_use);
+    root.Add("modded", g_core->IsUserModified());
+    root.Add("modpending", g_core->ModdedCheckPending());
+    root.Add("rancmds", g_core->user_ran_commands());
+    root.Add("workspaces", g_core->workspaces_in_use());
     root.Add("custompy", g_core->using_custom_app_python_dir());
-    root.Add("userpy", g_core->user_python_present);
+    root.Add("userpy", g_core->user_python_present());
   } else {
     // Distinguish "we know it is clean" from "we could not tell".
     root.Add("coregone", true);

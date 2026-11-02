@@ -23,6 +23,10 @@ class ButtonWidget : public Widget {
   static constexpr float kDefaultColorG{0.7f};
   static constexpr float kDefaultColorB{0.2f};
 
+  /// How far we shift per unit of device tilt. Overlays that must stay
+  /// registered with a button (text or images drawn on it) match this.
+  static constexpr float kTiltShift{0.02f};
+
   ButtonWidget();
   ~ButtonWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;

@@ -1072,7 +1072,16 @@ class PrivateGatherTab(GatherTab):
             if bs.app.classic is not None:
                 bs.app.classic.save_ui_state()
 
-            bs.connect_to_party(cresult.address4, port=cresult.port)
+            # Offer both addresses (IPv6 preferred); the join races
+            # them and uses whichever answers first.
+            bs.connect_to_party(
+                [
+                    a
+                    for a in (cresult.address6, cresult.address4)
+                    if a is not None
+                ],
+                port=cresult.port,
+            )
         except Exception:
             self._debug_server_comm('got connect response error')
             _builtinassets.audio.error.get().play()

@@ -478,7 +478,15 @@ class LogReporter:
             # showing exactly the levels the server configured - as
             # do build-integrity (blessed) and user-taint (modified)
             # states so obviously-tinkered-with clients can be
-            # filtered out the way the old v1 reporting allowed.
+            # filtered out the way the old v1 reporting allowed. Both
+            # are None while their checks are still running, so a
+            # False always means known-clean.
+            if _babase.is_user_modified():
+                modified: bool | None = True
+            elif _babase.is_user_modified_pending():
+                modified = None
+            else:
+                modified = False
             report = bacommon.cloud.ClientLogReportMessage(
                 archive_zstd=payload,
                 trigger_level=trigger_level,
@@ -487,7 +495,7 @@ class LogReporter:
                 client_time=utc_now(),
                 cloud_controlled_logging=cloud_controlled_logging(),
                 blessed=plus.blessed_state(),
-                modified=_babase.is_user_modified(),
+                modified=modified,
             )
 
             # Send under the account when we have one so the report is

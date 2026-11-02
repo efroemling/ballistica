@@ -145,8 +145,8 @@ class AppMode:
         """Called when the mode is becoming the active one for the app.
 
         ``config`` is the object created by
-        :meth:`new_app_mode_config` for this activation, possibly
-        amended by plugins. Modes that define their own config type
+        :meth:`~babase.AppMode.new_app_mode_config` for this activation,
+        possibly amended by plugins. Modes that define their own config type
         should begin with ``assert isinstance(config, TheirConfig)``
         to recover the concrete type, then set themselves (and any
         app-subsystems they use) up from it.
@@ -160,7 +160,8 @@ class AppMode:
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both
-        :meth:`on_deactivate()` and :meth:`on_app_active_changed()`
+        :meth:`~babase.AppMode.on_deactivate()` and
+        :meth:`~babase.AppMode.on_app_active_changed()`
         (when active is False).
         """
 
@@ -187,7 +188,8 @@ class AppMode:
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both
-        :meth:`on_deactivate()` and :meth:`on_app_active_changed()`
+        :meth:`~babase.AppMode.on_deactivate()` and
+        :meth:`~babase.AppMode.on_app_active_changed()`
         (when active is False).
         """
 

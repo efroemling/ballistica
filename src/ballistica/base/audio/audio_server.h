@@ -61,6 +61,11 @@ class AudioServer {
 
   // Client sources use these to pass settings to the server.
   void PushSourceSetIsMusicCall(uint32_t play_id, bool val);
+
+  /// Stop every source currently playing music. Music never carries
+  /// across app-modes; this runs on each app-mode switch as a backstop
+  /// for modes that don't stop their own.
+  void PushStopMusicCall();
   void PushSourceSetPositionalCall(uint32_t play_id, bool val);
   /// Positions are coalesced: while one update for a source's play is
   /// still queued, newer ones just replace its value. They are sent

@@ -393,6 +393,12 @@ def _writefuncs(
                 returnstr = 'return [(0, 0.0)]'
             elif returns == 'tuple[str, float | None]':
                 returnstr = "return ('blah', None)"
+            elif returns == 'tuple[str, str]':
+                returnstr = "return ('blah', 'blah2')"
+            elif returns == (
+                'list[tuple[bool, str, str, str, str, int, dict[str, str]]]'
+            ):
+                returnstr = "return [(True, 'a', 'b', 'c', 'd', 0, {})]"
             elif returns in {
                 'session.Session',
                 'team.Team',

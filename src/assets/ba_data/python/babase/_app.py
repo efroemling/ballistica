@@ -21,6 +21,7 @@ from babase._locale import LocaleSubsystem
 from babase._plugin import PluginSubsystem
 from babase._meta import MetadataSubsystem
 from babase._net import NetworkSubsystem
+from babase._nearby import NearbySubsystem
 from babase._workspace import WorkspaceSubsystem
 from babase._assetsubsystem import AssetSubsystem
 from babase._appcomponent import AppComponentSubsystem
@@ -167,6 +168,11 @@ class App:
 
         #: Subsystem for wrangling analytics.
         self.analytics: AnalyticsSubsystem = AnalyticsSubsystem()
+
+        #: Finding games and other app instances on nearby networks.
+        self.nearby: NearbySubsystem = self.register_subsystem(
+            NearbySubsystem()
+        )
 
         #: Incremented each time the app leaves the
         #: :attr:`~babase.AppState.SUSPENDED` state. This can be a simple
@@ -811,6 +817,11 @@ class App:
         assert not self._initial_sign_in_completed
 
         lifecyclelog.info('initial-sign-in complete')
+
+        # Every path here (signed out, signed in with no workspace, or
+        # a workspace loaded) has settled whether a workspace is in use,
+        # so error reporting can stop calling that signal pending.
+        _babase.set_workspaces_state_known()
 
         # Tell meta it can start scanning extra stuff that just showed
         # up (namely account workspaces).

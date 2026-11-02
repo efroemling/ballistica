@@ -25,6 +25,19 @@ class AppMode {
   /// Called just before the app-mode ceases being the active one.
   virtual void OnDeactivate();
 
+  /// Whether this app-mode uses classic networking: the engine's
+  /// well-known UDP socket for hosting/joining classic games, the shared
+  /// send path, and answering LAN scan queries and pings. While no
+  /// active app-mode wants this or the remote-app server, that socket is
+  /// closed and we don't listen on the local network at all.
+  virtual auto WantsClassicNetworking() const -> bool;
+
+  /// Whether this app-mode runs the remote-app server (phones/tablets as
+  /// controllers via the remote app; it shares the classic socket today).
+  /// Remote connections survive switches between app-modes that both
+  /// want this.
+  virtual auto WantsRemoteAppServer() const -> bool;
+
   /// Logic thread callbacks that run while the app-mode is active.
   virtual void OnAppStart();
   virtual void OnAppSuspend();

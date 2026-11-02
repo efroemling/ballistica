@@ -59,12 +59,20 @@ class MainMenuWindow(bui.MainWindow):
         self._height = 100.0
         self._demo_menu_button: bui.Widget | None = None
         self._gather_button: bui.Widget | None = None
+        self._gather_title: bui.Widget | None = None
+        self._gather_warning_shown: bool | None = None
         self._play_button: bui.Widget | None = None
         self._watch_button: bui.Widget | None = None
         self._how_to_play_button: bui.Widget | None = None
         self._credits_button: bui.Widget | None = None
 
         self._refresh()
+
+        # Flag the gather button while we lack local-network permission
+        # (Android 17+), and keep that current.
+        self._gather_warning_timer = bui.AppTimer(
+            1.0, bui.WeakCallStrict(self._update_gather_warning), repeat=True
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -331,7 +339,9 @@ class MainMenuWindow(bui.MainWindow):
             transition_delay=thistdelay,
             on_activate_call=self._gather_press,
         )
-        bui.textwidget(
+        # (We append a warning emoji to this while we lack local-network
+        # permission; see _update_gather_warning.)
+        self._gather_title = bui.textwidget(
             parent=self._root_widget,
             position=(h, v + side_button_height * side_button_scale * 0.25),
             size=(0, 0),
@@ -344,6 +354,8 @@ class MainMenuWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
         )
+        self._gather_warning_shown = None
+        self._update_gather_warning()
         icon_size = side_button_width * side_button_scale * 0.63
         bui.imagewidget(
             parent=self._root_widget,
@@ -559,10 +571,47 @@ class MainMenuWindow(bui.MainWindow):
             lambda: HelpWindow(origin_widget=self._how_to_play_button),
         )
 
+    def _update_gather_warning(self) -> None:
+        from bauiv1lib.localnetwork import local_network_permission_missing
+
+        if not self._gather_title:
+            return
+        missing = local_network_permission_missing()
+        if missing != self._gather_warning_shown:
+            self._gather_warning_shown = missing
+            title = _classicassets.strings.gather.title
+            bui.textwidget(
+                edit=self._gather_title,
+                text=(
+                    bui.LangStr.join([title, bui.LangStr.from_text('⚠️')], ' ')
+                    if missing
+                    else title
+                ),
+            )
+
     def _gather_press(self) -> None:
+        from bauiv1lib.localnetwork import (
+            local_network_permission_missing,
+            show_local_network_permission_dialog,
+        )
+
+        # Lacking local-network permission? Explain and offer to request
+        # it first; 'Not Now' carries on into the gather window.
+        if local_network_permission_missing():
+            show_local_network_permission_dialog(
+                origin_widget=self._gather_button,
+                on_continue=bui.WeakCallStrict(self._open_gather_window),
+            )
+            return
+        self._open_gather_window()
+
+    def _open_gather_window(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.gather import GatherWindow
 
+        # The dialog path calls us later; make sure we're still in charge.
+        if not self.main_window_has_control():
+            return
         self.main_window_replace(
             lambda: GatherWindow(origin_widget=self._gather_button)
         )

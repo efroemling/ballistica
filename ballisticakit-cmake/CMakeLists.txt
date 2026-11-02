@@ -4,7 +4,7 @@ project(BallisticaKit)
 option(HEADLESS "build headless server" OFF)
 option(DISCORD "enable Discord Social SDK integration" OFF)
 option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" ON)
-option(STATIC_BUILD "build with static libs" OFF)
+option(PORTABLE "self-contained Linux build using bundled deps" OFF)
 
 # Which app variant to build. Variant describes the distribution
 # audience for a build (who it is distributed to and how the master
@@ -12,7 +12,7 @@ option(STATIC_BUILD "build with static libs" OFF)
 # headless-ness. See the AppVariant enum in tools/bacommon/app.py for
 # the full story.
 set(VARIANT generic CACHE STRING "app variant to build")
-set(BA_VALID_VARIANTS generic test_build server server_basn)
+set(BA_VALID_VARIANTS generic test_build server server_basn steam)
 if(NOT VARIANT IN_LIST BA_VALID_VARIANTS)
   message(FATAL_ERROR
     "Invalid VARIANT '${VARIANT}'; expected one of: ${BA_VALID_VARIANTS}.")
@@ -21,17 +21,44 @@ endif()
 set(CMAKE_CXX_STANDARD 23)
 set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 
-# ============= STATIC BUILD CONFIGURATION =============
-if(STATIC_BUILD)
-  # Prefer static libraries for find_package
-  # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  set(BA_OPENAL_LIB "${PROJECT_ROOT_DIR}/build/static_dependencies/libopenal.a")
-  set(BA_OPENAL_INCLUDE_DIR "${PROJECT_ROOT_DIR}/build/static_dependencies/include")
-
-  set(PKG_CONFIG_STATIC ON)
-  set(Python3_USE_STATIC_LIBS ON)
-  message(STATUS "Static build enabled - configuring for static libraries")
-endif() #STATIC_BUILD
+# ============= PORTABLE BUILD CONFIGURATION =============
+# Self-contained Linux builds (Steam, the downloads page): link our own
+# Python, OpenSSL, OpenAL Soft, zstd, etc. statically from
+# src/external/linux-portable-deps (built in Valve's Steam Runtime SDK
+# container by `make linux-portable-deps-cloud`) instead of the build
+# host's libraries, and link the C++ runtime statically. Meant to be
+# configured inside that same SDK container; see
+# docs/initiatives/linux-portable-builds.md.
+if(PORTABLE)
+  if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "PORTABLE builds are Linux-only.")
+  endif()
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
+    set(_BA_PORTABLE_ARCH x86_64)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+    set(_BA_PORTABLE_ARCH arm64)
+  else()
+    message(FATAL_ERROR
+      "PORTABLE: unsupported arch ${CMAKE_SYSTEM_PROCESSOR}.")
+  endif()
+  # Debug builds pair with the --with-pydebug Python flavor.
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(_BA_PORTABLE_DEPS
+      "${PROJECT_ROOT_DIR}/src/external/linux-portable-deps-debug")
+    set(_BA_PORTABLE_PYLIB "libpython3.14d.a")
+  else()
+    set(_BA_PORTABLE_DEPS
+      "${PROJECT_ROOT_DIR}/src/external/linux-portable-deps")
+    set(_BA_PORTABLE_PYLIB "libpython3.14.a")
+  endif()
+  set(_BA_PORTABLE_LIBDIR "${_BA_PORTABLE_DEPS}/lib/linux_${_BA_PORTABLE_ARCH}")
+  if(NOT EXISTS "${_BA_PORTABLE_LIBDIR}/${_BA_PORTABLE_PYLIB}")
+    message(FATAL_ERROR
+      "PORTABLE: bundled deps not found at ${_BA_PORTABLE_LIBDIR};"
+      " run 'make linux-portable-deps-cloud'.")
+  endif()
+  message(STATUS "Portable build using deps in ${_BA_PORTABLE_LIBDIR}")
+endif()
 # =======================================================
 
 # Stuff applying everywhere.
@@ -41,12 +68,18 @@ add_library(common_deps INTERFACE)
 # The header is vendored (src/external/zstd, matching the 1.5.7 that our
 # embedded Apple/Android pythons carry); the library is the system one
 # that Python links (brew 'zstd' on mac, libzstd-dev on Linux; we only
-# use the stable API so any 1.4+ is fine).
+# use the stable API so any 1.4+ is fine), or the bundled static one in
+# portable builds.
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
 target_include_directories(common_deps INTERFACE
   ${PROJECT_ROOT_DIR}/src/external/zstd/include)
-target_link_libraries(common_deps INTERFACE PkgConfig::ZSTD)
+if(PORTABLE)
+  target_link_libraries(common_deps INTERFACE
+    "${_BA_PORTABLE_LIBDIR}/libzstd.a")
+else()
+  pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET libzstd)
+  target_link_libraries(common_deps INTERFACE PkgConfig::ZSTD)
+endif()
   
 # Stuff applying to all ba targets.
 add_library(ba_deps INTERFACE)
@@ -67,29 +100,62 @@ if(APPLE)
 
 endif()  # APPLE
 
-set(Python3_FIND_FRAMEWORK NEVER)
-# TODO: Look into using Development.Module/Development.Embed here.
-find_package(Python3 3.14 EXACT REQUIRED COMPONENTS Development)
+if(PORTABLE)
+  # Our bundled static Python (all extension modules built in) plus the
+  # static libs it links against. The engine reads the stdlib from the
+  # staged pylib dir next to ba_data (BA_CONTAINS_PYTHON_DIST), as on
+  # Android/Apple.
+  add_library(Python3::Python INTERFACE IMPORTED)
+  target_include_directories(Python3::Python INTERFACE
+    "${_BA_PORTABLE_DEPS}/include/python3.14")
+  target_link_libraries(Python3::Python INTERFACE
+    "${_BA_PORTABLE_LIBDIR}/${_BA_PORTABLE_PYLIB}"
+    "${_BA_PORTABLE_LIBDIR}/libssl.a"
+    "${_BA_PORTABLE_LIBDIR}/libcrypto.a"
+    "${_BA_PORTABLE_LIBDIR}/libffi.a"
+    "${_BA_PORTABLE_LIBDIR}/libsqlite3.a"
+    "${_BA_PORTABLE_LIBDIR}/liblzma.a"
+    "${_BA_PORTABLE_LIBDIR}/libbz2.a"
+    "${_BA_PORTABLE_LIBDIR}/libz.a"
+    "${_BA_PORTABLE_LIBDIR}/libuuid.a"
+    "${_BA_PORTABLE_LIBDIR}/libzstd.a"
+    m dl pthread util)
+  target_compile_definitions(common_deps INTERFACE BA_CONTAINS_PYTHON_DIST=1)
+else()
+  set(Python3_FIND_FRAMEWORK NEVER)
+  # TODO: Look into using Development.Module/Development.Embed here.
+  find_package(Python3 3.14 EXACT REQUIRED COMPONENTS Development)
+endif()
 
-  
 if(HEADLESS)
   target_compile_definitions(common_deps INTERFACE BA_HEADLESS_BUILD=1)
 else()
-  pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
-  pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
-  
-  if(STATIC_BUILD)
-    message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
-    add_library(openal STATIC IMPORTED)
-    set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
-    set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
-    target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
+  if(PORTABLE)
+    # (The engine includes <al.h> directly, as OpenAL's pkg-config sets
+    # up, so point at the AL subdir.)
+    add_library(BaOpenAL INTERFACE IMPORTED)
+    target_include_directories(BaOpenAL INTERFACE
+      "${_BA_PORTABLE_DEPS}/include/AL")
+    target_link_libraries(BaOpenAL INTERFACE
+      "${_BA_PORTABLE_LIBDIR}/libopenal.a")
+    set(_BA_OPENAL_LIB BaOpenAL)
+  else()
+    pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
+    set(_BA_OPENAL_LIB PkgConfig::OPENAL)
   endif()
+  pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
   pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
   pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
   
-  # On linux, prefer modern libOpenGL.so over legacy libGL.so.
-  set(OpenGL_GL_PREFERENCE GLVND)
+  # On linux, prefer modern libOpenGL.so over legacy libGL.so -- except
+  # in portable builds: the Steam Runtime (sniper) ships libGL.so.1 but
+  # not libOpenGL.so.0, and libGL.so.1 is what every GL-capable system
+  # has.
+  if(PORTABLE)
+    set(OpenGL_GL_PREFERENCE LEGACY)
+  else()
+    set(OpenGL_GL_PREFERENCE GLVND)
+  endif()
 
   # GL backend selection. On macOS we build against ANGLE (GL ES -> Metal)
   # when the vendored xcframework is present, and otherwise fall back to the
@@ -153,23 +219,13 @@ else()
     set(_BA_GL_LIBS OpenGL::GL)
   endif()
 
-  if(STATIC_BUILD)
-    target_link_libraries(ba_deps INTERFACE
-      openal
-      PkgConfig::SDL3
-      PkgConfig::OGG
-      PkgConfig::VORBISFILE
-      ${_BA_GL_LIBS}
-    )
-  else()
-    target_link_libraries(ba_deps INTERFACE
-      PkgConfig::OPENAL
-      PkgConfig::SDL3
-      PkgConfig::OGG
-      PkgConfig::VORBISFILE
-      ${_BA_GL_LIBS}
-    )
-  endif()
+  target_link_libraries(ba_deps INTERFACE
+    ${_BA_OPENAL_LIB}
+    PkgConfig::SDL3
+    PkgConfig::OGG
+    PkgConfig::VORBISFILE
+    ${_BA_GL_LIBS}
+  )
 
   # Pango+Cairo for OS font rendering (unicode text rendering + line
   # breaks) on Linux/macOS cmake builds. Required by default so a
@@ -585,6 +641,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/input/support/remote_app_server.h
   ${BA_SRC_ROOT}/ballistica/base/logic/logic.cc
   ${BA_SRC_ROOT}/ballistica/base/logic/logic.h
+  ${BA_SRC_ROOT}/ballistica/base/networking/nearby_services.cc
+  ${BA_SRC_ROOT}/ballistica/base/networking/nearby_services.h
   ${BA_SRC_ROOT}/ballistica/base/networking/network_reader.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/network_reader.h
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.cc
@@ -620,6 +678,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_nearby.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_nearby.h
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.cc
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
@@ -692,6 +752,16 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.cc
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.h
+  ${BA_SRC_ROOT}/ballistica/remote/python/methods/python_methods_remote.cc
+  ${BA_SRC_ROOT}/ballistica/remote/python/methods/python_methods_remote.h
+  ${BA_SRC_ROOT}/ballistica/remote/python/remote_python.cc
+  ${BA_SRC_ROOT}/ballistica/remote/python/remote_python.h
+  ${BA_SRC_ROOT}/ballistica/remote/remote.cc
+  ${BA_SRC_ROOT}/ballistica/remote/remote.h
+  ${BA_SRC_ROOT}/ballistica/remote/support/remote_app_mode.cc
+  ${BA_SRC_ROOT}/ballistica/remote/support/remote_app_mode.h
+  ${BA_SRC_ROOT}/ballistica/remote/support/remote_input_device_delegate.cc
+  ${BA_SRC_ROOT}/ballistica/remote/support/remote_input_device_delegate.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/assets/scene_asset.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/assets/scene_asset.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/assets/scene_collision_mesh.cc
@@ -971,6 +1041,14 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/python/python_object_set.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.h
+  ${BA_SRC_ROOT}/ballistica/squads/python/methods/python_methods_squads.cc
+  ${BA_SRC_ROOT}/ballistica/squads/python/methods/python_methods_squads.h
+  ${BA_SRC_ROOT}/ballistica/squads/python/squads_python.cc
+  ${BA_SRC_ROOT}/ballistica/squads/python/squads_python.h
+  ${BA_SRC_ROOT}/ballistica/squads/squads.cc
+  ${BA_SRC_ROOT}/ballistica/squads/squads.h
+  ${BA_SRC_ROOT}/ballistica/squads/support/squads_app_mode.cc
+  ${BA_SRC_ROOT}/ballistica/squads/support/squads_app_mode.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/methods/python_methods_template_fs.cc
@@ -1128,14 +1206,16 @@ endif()
 # ======================================================
 
 
-# ============= STATIC BUILD LINKING CONFIGURATION =============
-if(STATIC_BUILD)
-  if(MSVC)
-    add_link_options(/SUBSYSTEM:CONSOLE)
-  else()
-    add_link_options(-static-libgcc -static-libstdc++)
-  endif()
-  message(STATUS "Static build: C++ runtime linked statically")
+# ============= PORTABLE BUILD LINKING CONFIGURATION =============
+# Static C++ runtime (the SDK's gcc-14 runtime is newer than what the
+# Steam Runtime or older distros ship), and look beside the binary for
+# any shared libs we bundle there (SDL3 in downloads-page packages).
+if(PORTABLE)
+  target_link_options(ballisticakitbin PRIVATE
+    -static-libgcc -static-libstdc++)
+  set_target_properties(ballisticakitbin PROPERTIES
+    BUILD_RPATH "$ORIGIN"
+    INSTALL_RPATH "$ORIGIN")
 endif()
 # ==============================================================
 

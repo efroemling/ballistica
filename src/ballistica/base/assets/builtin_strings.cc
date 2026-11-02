@@ -376,6 +376,23 @@ auto BuiltinStrings::Net::UnavailableNoConnection()
   return MakeResource_("strings/net/unavailable_no_connection");
 }
 
+auto BuiltinStrings::Os::AppName() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/os/app_name");
+}
+
+auto BuiltinStrings::Os::AppNameVr() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/os/app_name_vr");
+}
+
+auto BuiltinStrings::Os::FatalError(LangStr::Sub email)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/os/fatal_error", {{"email", std::move(email)}});
+}
+
+auto BuiltinStrings::Os::LocalNetworkUsage() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/os/local_network_usage");
+}
+
 auto BuiltinStrings::Plugins::ClassLoadError(LangStr::Sub plugin,
                                              LangStr::Sub error)
     -> std::shared_ptr<const LangStr> {
@@ -644,6 +661,10 @@ auto BuiltinStrings::Ui::ClipboardNotSupported()
 
 auto BuiltinStrings::Ui::CopiedToClipboard() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/copied_to_clipboard");
+}
+
+auto BuiltinStrings::Ui::Done() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/done");
 }
 
 auto BuiltinStrings::Ui::Error() -> std::shared_ptr<const LangStr> {

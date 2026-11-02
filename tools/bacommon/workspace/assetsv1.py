@@ -1263,6 +1263,36 @@ class AssetsV1StrConvCache:
 
 @ioprepped
 @dataclass
+class AssetsV1StrTranslateFailure:
+    """One locale's most recent failed translation of a ``.bstr``.
+
+    Written by the master's translate runs when a locale could not be
+    completed, and cleared when that locale next translates. It only
+    *applies* while :attr:`state` still matches the locale's current
+    up-to-date state: editing the brief (or anything else feeding the
+    translation) makes a stale failure moot without anyone clearing it.
+    """
+
+    #: ``needs_input`` (the checks kept rejecting it; the brief needs
+    #: work) or ``retryable`` (a temporary service problem). A plain
+    #: string rather than an enum so kinds added later never break an
+    #: older reader of stored data.
+    kind: Annotated[str, IOAttrs('k')]
+
+    #: Person-facing English explanation (for a rejected translation,
+    #: what the output reads back as and why that is wrong).
+    reason: Annotated[str, IOAttrs('r')]
+
+    #: When the failure happened.
+    time: Annotated[datetime.datetime, IOAttrs('t')]
+
+    #: The locale's up-to-date state (see :class:`AssetsV1StrState`)
+    #: the failed attempt was working from.
+    state: Annotated[str | None, IOAttrs('s', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
 class AssetsV1PathValsStrV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
@@ -1320,6 +1350,14 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     conv: Annotated[
         AssetsV1StrConvCache | None, IOAttrs('conv', store_default=False)
     ] = None
+
+    #: Locales whose most recent translation failed (see
+    #: :class:`AssetsV1StrTranslateFailure`). Maintained by the
+    #: master's translate runs; shown in the workspace UI.
+    failures: Annotated[
+        dict[Locale, AssetsV1StrTranslateFailure],
+        IOAttrs('tf', store_default=False),
+    ] = field(default_factory=dict)
 
     @override
     @classmethod

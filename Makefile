@@ -1556,6 +1556,19 @@ docker-clean:
 
 ################################################################################
 #                                                                              #
+#                                Linux Portable                                #
+#                                                                              #
+################################################################################
+
+# Self-contained Linux builds for Steam and the downloads page, built in
+# Valve's Steam Runtime SDK container (sniper on x86_64, Steam Runtime 4
+# on arm64) instead of against the build host's libraries. See
+# docs/initiatives/linux-portable-builds.md. (The cmake side,
+# -DPORTABLE=ON, is public; these targets lean on our build hosts.)
+
+
+################################################################################
+#                                                                              #
 #                                   Flatpak                                    #
 #                                                                              #
 ################################################################################

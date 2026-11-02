@@ -19,6 +19,7 @@
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
+#include "ballistica/base/python/methods/python_methods_nearby.h"
 #include "ballistica/base/python/methods/python_methods_test.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
@@ -37,6 +38,7 @@ extern "C" auto PyInit__babase() -> PyObject* {
                                   PythonMethodsBase1::GetMethods(),
                                   PythonMoethodsBase3::GetMethods(),
                                   PythonMethodsBase2::GetMethods(),
+                                  PythonMethodsNearby::GetMethods(),
                                   PythonMethodsTest::GetMethods(),
                               },
                               [](PyObject* module) -> int {

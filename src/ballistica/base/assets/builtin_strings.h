@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261029"
+// Generated from: "a-0.babuiltinassets.261102"
 
 #include <memory>
 
@@ -540,6 +540,43 @@ class BuiltinStrings {
     static auto UnavailableNoConnection() -> std::shared_ptr<const LangStr>;
   };
 
+  class Os {
+   public:
+    /// The app's name as the operating system shows it (e.g. under the app's
+    /// icon on an Android home screen). Generated into native OS resource
+    /// files; spinoff projects override it with their own name.
+    ///
+    /// English: "BallisticaKit"
+    static auto AppName() -> std::shared_ptr<const LangStr>;
+
+    /// The name of the app's virtual-reality edition as the operating system
+    /// shows it (e.g. under the app's icon on an Android home screen).
+    /// Generated into native OS resource files; spinoff projects override it
+    /// with their own name.
+    ///
+    /// English: "BallisticaKit VR"
+    static auto AppNameVr() -> std::shared_ptr<const LangStr>;
+
+    /// Message in the native Android dialog shown when the app hits an
+    /// unrecoverable error and must close; technical error details are appended
+    /// below it. The placeholder is the support email address. Generated into
+    /// native OS resource files.
+    ///
+    /// English: "Uh oh; something is missing or broken. Please try reinstalling
+    /// the app or contact {email} for help."
+    static auto FatalError(LangStr::Sub email)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Body text of the operating system's local-network permission prompt on
+    /// Apple platforms (Info.plist NSLocalNetworkUsageDescription). The OS
+    /// shows the app's name in the prompt's title, above this text. Generated
+    /// into native OS resource files.
+    ///
+    /// English: "Used to find and join games on your local network and to
+    /// connect controllers."
+    static auto LocalNetworkUsage() -> std::shared_ptr<const LangStr>;
+  };
+
   class Plugins {
    public:
     /// Error message for a plugin class that failed to load.
@@ -881,6 +918,12 @@ class BuiltinStrings {
     ///
     /// English: "Copied to clipboard."
     static auto CopiedToClipboard() -> std::shared_ptr<const LangStr>;
+
+    /// Generic label for a button that confirms and finishes an edit (used by
+    /// e.g. the native Android text-edit dialog's confirm button).
+    ///
+    /// English: "Done"
+    static auto Done() -> std::shared_ptr<const LangStr>;
 
     /// Generic Error title used on error dialogs (e.g. the boot-time asset-
     /// update dialog when a load fails).

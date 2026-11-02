@@ -329,6 +329,7 @@ _IDEMPOTENT_COMMAND_PREFIXES: tuple[tuple[str, ...], ...] = (
     ('assetpackage', '_assemble'),
     ('assetpackage', 'version'),
     ('assetpackage', '_listing'),
+    ('assetpackage', '_strings'),
     ('assetpackage', 'wrapper'),
     ('account', 'info'),
     # Read-only server-side: a listing returns what exists, and a get

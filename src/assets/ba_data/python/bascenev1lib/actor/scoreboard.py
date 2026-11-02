@@ -42,7 +42,7 @@ class _Entry:
         self._flash_colors: bool | None = None
         self._score: float | None = None
 
-        safe_team_color = bs.safecolor(team.color, target_intensity=1.0)
+        safe_team_color = bs.safecolor(team.color)
 
         # FIXME: Should not do things conditionally for vr-mode, as there may
         #  be non-vr clients connected which will also get these value.

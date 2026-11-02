@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261029`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261102`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 973
+# ba_meta require asset-package 1007
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261029
-_ASSET_PACKAGE = ApverNum(973)
+# a-0.babuiltinassets.261102
+_ASSET_PACKAGE = ApverNum(1007)
 
 if TYPE_CHECKING:
     import datetime
@@ -801,6 +801,61 @@ if TYPE_CHECKING:
         #:     connection?)"
         unavailable_no_connection: LangStr
 
+    class StringsOsGroup:
+        """
+        ::
+
+            Strings the operating system shows from the app's native resource
+            files (app name, native dialog text, permission prompts); generated
+            into Android strings.xml and Apple string catalogs at pin time.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The app's name as the operating system shows it (e.g. under the
+        #:     app's icon on an Android home screen). Generated into native OS
+        #:     resource files; spinoff projects override it with their own name.
+        #:
+        #:     English: "BallisticaKit"
+        app_name: LangStr
+
+        #: ::
+        #:
+        #:     The name of the app's virtual-reality edition as the operating
+        #:     system shows it (e.g. under the app's icon on an Android home
+        #:     screen). Generated into native OS resource files; spinoff
+        #:     projects override it with their own name.
+        #:
+        #:     English: "BallisticaKit VR"
+        app_name_vr: LangStr
+
+        def fatal_error(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Message in the native Android dialog shown when the app hits an
+                unrecoverable error and must close; technical error details are
+                appended below it. The placeholder is the support email address.
+                Generated into native OS resource files.
+
+                English: "Uh oh; something is missing or broken. Please try
+                reinstalling the app or contact {email} for help."
+            """
+
+        #: ::
+        #:
+        #:     Body text of the operating system's local-network permission
+        #:     prompt on Apple platforms (Info.plist
+        #:     NSLocalNetworkUsageDescription). The OS shows the app's name in
+        #:     the prompt's title, above this text. Generated into native OS
+        #:     resource files.
+        #:
+        #:     English: "Used to find and join games on your local network and
+        #:     to connect controllers."
+        local_network_usage: LangStr
+
     class StringsPluginsGroup:
         """
         ::
@@ -1352,6 +1407,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Generic label for a button that confirms and finishes an edit
+        #:     (used by e.g. the native Android text-edit dialog's confirm
+        #:     button).
+        #:
+        #:     English: "Done"
+        done: LangStr
+
+        #: ::
+        #:
         #:     Generic Error title used on error dialogs (e.g. the boot-time
         #:     asset-update dialog when a load fails).
         #:
@@ -1552,6 +1616,7 @@ if TYPE_CHECKING:
         device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
+        os: StringsOsGroup
         plugins: StringsPluginsGroup
         replay: StringsReplayGroup
         scripts: StringsScriptsGroup
@@ -1615,8 +1680,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 138 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 133 more). Full list in source.
+    #: The ``strings`` group - 143 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 138 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1702,6 +1767,12 @@ _TREE = {
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
+        'os': {
+            'app_name': (),
+            'app_name_vr': (),
+            'fatal_error': ('email',),
+            'local_network_usage': (),
+        },
         'plugins': {
             'class_load_error': ('plugin', 'error'),
             'detected': (),
@@ -1763,6 +1834,7 @@ _TREE = {
             'cancel': (),
             'clipboard_not_supported': (),
             'copied_to_clipboard': (),
+            'done': (),
             'error': (),
             'game_center': (),
             'google_play': (),

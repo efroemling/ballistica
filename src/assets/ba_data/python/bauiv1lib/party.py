@@ -389,7 +389,9 @@ class PartyWindow(bui.Window):
             for widget in self._name_widgets:
                 widget.delete()
             self._name_widgets = []
-            if not self._roster:
+            # A host alone is on the roster but isn't a party yet; show
+            # the empty-party message instead of just ourself.
+            if not any(e['client_id'] != -1 for e in self._roster):
                 top_section_height = 60
                 bui.textwidget(
                     edit=self._empty_str,

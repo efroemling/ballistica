@@ -12,6 +12,7 @@ from efrotools.util import is_wsl_windows_build_path
 from efrotools.pyver import PYVER, PYVERNODOT
 from batools._bundlestage import sync_asset_bundle
 from batools._pycstage import update_pycs
+from batools._serverstage import stage_server_file
 
 
 def stage_build(projroot: str, args: list[str] | None = None) -> None:
@@ -325,6 +326,8 @@ class BuildStager:
         else:
             raise RuntimeError('No valid platform arg provided.')
 
+        self._apply_portable(args, platform_arg)
+
         # Every staged build bundles a named asset-package profile (see
         # batools.assetbundleprofiles). Default: server builds
         # (``serverdst`` set) get the headless-minimal profile, other
@@ -376,6 +379,20 @@ class BuildStager:
                 else None
             ),
         )
+
+    def _apply_portable(self, args: list[str], platform_arg: str) -> None:
+        # Linux portable builds (cmake -DPORTABLE=ON) bring their own
+        # Python and read its stdlib from a pylib dir beside ba_data.
+        if not extract_flag(args, '-portable'):
+            return
+        if platform_arg not in ('-cmake', '-cmakeserver'):
+            raise RuntimeError(
+                f'-portable is only valid with -cmake/-cmakeserver'
+                f' (got {platform_arg}).'
+            )
+        self.desc = f'{self.desc} (portable)'
+        self.include_pylib = True
+        self.pylib_src_path = 'pylib-linux-portable'
 
     def _parse_android_args(self) -> None:
         # Android serves everything staged here directly out of the
@@ -875,7 +892,7 @@ class BuildStager:
         modeval = 'debug' if self.debug else 'release'
 
         # NOTE: staging these directly from src; not build.
-        _stage_server_file(
+        stage_server_file(
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/'
@@ -889,13 +906,13 @@ class BuildStager:
                 ),
             ),
         )
-        _stage_server_file(
+        stage_server_file(
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/README.txt',
             outfilename=os.path.join(self.serverdst, 'README.txt'),
         )
-        _stage_server_file(
+        stage_server_file(
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/'
@@ -904,96 +921,9 @@ class BuildStager:
         )
         if self.win_type is not None:
             fname = 'launch_ballisticakit_server.bat'
-            _stage_server_file(
+            stage_server_file(
                 projroot=self.projroot,
                 mode=modeval,
                 infilename=f'{self.projroot}/src/assets/server_package/{fname}',
                 outfilename=os.path.join(self.serverdst, fname),
             )
-
-
-def _write_if_changed(
-    path: str, contents: str, make_executable: bool = False
-) -> None:
-    changed: bool
-    try:
-        with open(path, encoding='utf-8') as infile:
-            existing = infile.read()
-        changed = contents != existing
-    except FileNotFoundError:
-        changed = True
-    if changed:
-        with open(path, 'w', encoding='utf-8') as outfile:
-            outfile.write(contents)
-        if make_executable:
-            subprocess.run(['chmod', '+x', path], check=True)
-
-
-def _stage_server_file(
-    projroot: str, mode: str, infilename: str, outfilename: str
-) -> None:
-    """Stage files for the server environment with some filtering."""
-    import batools.build
-    from efrotools.util import replace_exact
-
-    if mode not in ('debug', 'release'):
-        raise RuntimeError(
-            f"Invalid server-file-staging mode '{mode}';"
-            f" expected 'debug' or 'release'."
-        )
-
-    print(f'Building server file: {os.path.basename(outfilename)}')
-
-    os.makedirs(os.path.dirname(outfilename), exist_ok=True)
-
-    basename = os.path.basename(infilename)
-    if basename == 'config_template.toml':
-        # Inject all available config values into the config file.
-        _write_if_changed(
-            outfilename,
-            batools.build.filter_server_config_toml(str(projroot), infilename),
-        )
-
-    elif basename == 'ballisticakit_server.py':
-        # Run Python in opt mode for release builds.
-        with open(infilename, encoding='utf-8') as infile:
-            lines = infile.read().splitlines()
-            if mode == 'release':
-                lines[0] = replace_exact(
-                    lines[0],
-                    f'#!/usr/bin/env -S python{PYVER} -B',
-                    f'#!/usr/bin/env -S python{PYVER} -OB',
-                )
-        _write_if_changed(
-            outfilename, '\n'.join(lines) + '\n', make_executable=True
-        )
-    elif basename == 'README.txt':
-        with open(infilename, encoding='utf-8') as infile:
-            readme = infile.read()
-        _write_if_changed(outfilename, readme)
-    elif basename == 'launch_ballisticakit_server.bat':
-        # Run Python in opt mode for release builds.
-        with open(infilename, encoding='utf-8') as infile:
-            lines = infile.read().splitlines()
-        if mode == 'release':
-            lines[1] = replace_exact(
-                lines[1],
-                ':: Python interpreter.',
-                ':: Python interpreter. (in opt mode)',
-            )
-            lines[2] = replace_exact(
-                lines[2],
-                'dist\\\\python.exe -B ballisticakit_server.py',
-                'dist\\\\python.exe -OB ballisticakit_server.py',
-            )
-        else:
-            # In debug mode we use the bundled debug interpreter.
-            lines[2] = replace_exact(
-                lines[2],
-                'dist\\\\python.exe -B ballisticakit_server.py',
-                'dist\\\\python_d.exe -B ballisticakit_server.py',
-            )
-
-        _write_if_changed(outfilename, '\n'.join(lines) + '\n')
-    else:
-        raise RuntimeError(f"Unknown server file for staging: '{basename}'.")

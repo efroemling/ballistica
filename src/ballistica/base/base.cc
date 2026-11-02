@@ -583,6 +583,11 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
       app_mode_->OnDeactivate();
     }
 
+    // Music never carries across app-modes. The outgoing mode should
+    // have stopped its own; this catches any that didn't. (Other sounds
+    // are left alone so ui sounds aren't cut off by the switch.)
+    audio_server->PushStopMusicCall();
+
     // Set and build up new one.
     app_mode_ = mode;
 
@@ -596,6 +601,19 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     input->RebuildInputDeviceDelegates();
 
     app_mode_->OnActivate();
+
+    // Bring our local-network listener up or down to match what the new
+    // mode wants. We apply this only once the new mode is active, so the
+    // socket stays up (and remote-app connections survive) across
+    // switches between modes that both want it.
+    {
+      bool classic_networking = app_mode_->WantsClassicNetworking();
+      bool remote_app_server = app_mode_->WantsRemoteAppServer();
+      app_adapter->PushMainThreadCall([classic_networking, remote_app_server] {
+        g_base->network_reader->SetWantedFeatures(classic_networking,
+                                                  remote_app_server);
+      });
+    }
 
     // Let some stuff know.
     logic->OnAppModeChanged();

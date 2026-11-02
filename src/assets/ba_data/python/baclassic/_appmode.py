@@ -329,8 +329,9 @@ class ClassicAppMode(AppMode):
         # Store latest league vis vals for any active account.
         self._save_account_state()
 
-        # Stop being informed of account changes.
+        # Stop being informed of account and connectivity changes.
         self._on_primary_account_changed_callback = None
+        self._on_connectivity_changed_callback = None
 
         # Cancel any ui-pause we may have had going.
         self._purchase_ui_pause = None
@@ -349,6 +350,10 @@ class ClassicAppMode(AppMode):
         # Host-ui upkeep runs exactly while we're the active mode.
         if classic is not None:
             classic.host_ui_stop()
+
+        # Our music stops with us.
+        if classic is not None:
+            classic.music.on_app_mode_deactivate()
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
