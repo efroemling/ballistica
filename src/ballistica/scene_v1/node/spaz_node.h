@@ -279,9 +279,9 @@ class SpazNode : public Node {
   auto get_pickup_release_time_ms() const -> float {
     return pickup_release_time_ms_;
   }
-  auto get_hold_duration_ms() const -> int {
-    return static_cast<int>(hold_duration_ms_);
-  }
+  /// How long the current hold has lasted, or the last completed hold on
+  /// another Spaz if it ended very recently (see RecordGrabPunchHold).
+  auto get_hold_duration_ms() const -> int;
   auto pickup_pressed() const -> bool { return pickup_pressed_; }
   void SetPickupPressed(bool val);
   auto hold_position_pressed() const -> bool { return hold_position_pressed_; }
@@ -339,6 +339,9 @@ class SpazNode : public Node {
     return a->CollideCallback(c, count, colliding_body, opposingbody);
   }
   void DropHeldObject();
+  /// Record the hold we are ending (if it was on another Spaz) so the
+  /// grab-punch anti-exploit can still see how long it lasted.
+  void RecordGrabPunchHold();
   void ApplyTorque(float x, float y, float z);
   // The classic Zoe hair rig (legacy female-hair style): four main-sim
   // bodies synced host-to-client like any limb.
@@ -733,6 +736,14 @@ class SpazNode : public Node {
   float pickup_release_time_ms_{};
   int64_t hold_start_time_ms_{0};
   int64_t hold_duration_ms_{0};
+  // Grab-punch anti-exploit: how long a completed hold on another Spaz
+  // stays visible to get_hold_duration_ms(). This matches the 360ms
+  // release window used by the Python check in spaz.py. Keeping it here
+  // means a re-grab at punch impact cannot reset the measured duration.
+  static constexpr int64_t kGrabPunchHoldGraceMs = 360;
+  int64_t last_spaz_hold_duration_ms_{0};
+  int64_t last_spaz_hold_end_time_ms_{0};
+  bool hold_was_spaz_{false};
   base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
   base::JointFixedEF* hair_front_right_joint_{};

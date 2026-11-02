@@ -488,8 +488,10 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //
 // 58: hold_duration_ms: how long the spaz has been holding its
 //     current pickup while holding, or how long the last completed hold
-//     lasted while not holding. Used by the Python-side grab-punch
-//     anti-exploit to distinguish real grabs from micro-grabs.
+//     lasted while not holding. A recently completed hold on another
+//     Spaz is reported for a short grace period so a re-grab at punch
+//     impact cannot reset the measured duration. Used by the Python-side
+//     grab-punch anti-exploit to distinguish real grabs from micro-grabs.
 
 // First protocol with depictiondisplay 'color_multiply' (see the 57
 // entry above).

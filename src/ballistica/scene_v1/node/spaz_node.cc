@@ -3550,6 +3550,7 @@ void SpazNode::Step() {
   // If we're holding something and it died, tell userland.
   if (holding_something_) {
     if (!pickup_joint_.IsAlive()) {
+      RecordGrabPunchHold();
       holding_something_ = false;
       if (hold_start_time_ms_ > 0) {  // Reset this for the next grip.
         hold_start_time_ms_ = 0;
@@ -6196,6 +6197,26 @@ void SpazNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
   hand1[0] = hand1[1] = hand1[2] = 0.0f;
   hand2[0] = hand2[1] = hand2[2] = 0.0f;
 }
+auto SpazNode::get_hold_duration_ms() const -> int {
+  int64_t duration = hold_duration_ms_;
+  if (last_spaz_hold_end_time_ms_ > 0) {
+    int64_t now = scene()->time();
+    if (now - last_spaz_hold_end_time_ms_ <= kGrabPunchHoldGraceMs) {
+      duration = std::max(duration, last_spaz_hold_duration_ms_);
+    }
+  }
+  return static_cast<int>(duration);
+}
+
+void SpazNode::RecordGrabPunchHold() {
+  if (hold_was_spaz_ && hold_start_time_ms_ > 0) {
+    int64_t now = scene()->time();
+    last_spaz_hold_duration_ms_ = now - hold_start_time_ms_;
+    last_spaz_hold_end_time_ms_ = now;
+  }
+  hold_was_spaz_ = false;
+}
+
 void SpazNode::DropHeldObject() {
   if (holding_something_) {
     if (hold_node_.exists()) {
@@ -6205,6 +6226,7 @@ void SpazNode::DropHeldObject() {
     assert(!pickup_joint_.IsAlive());
 
     pickup_release_time_ms_ = scene()->time();
+    RecordGrabPunchHold();
     holding_something_ = false;
     hold_body_ = 0;
 
@@ -7920,6 +7942,9 @@ void SpazNode::SetHoldNode(Node* val) {
                       + a->GetObjectDescription());
     }
 
+    // A new grab replaces any current hold without a drop message, so
+    // close out the previous hold ourselves.
+    RecordGrabPunchHold();
     hold_node_ = val;
     holding_something_ = true;
     last_pickup_time_ = scene()->time();
@@ -7929,6 +7954,7 @@ void SpazNode::SetHoldNode(Node* val) {
       hold_duration_ms_ = 0;
     }
     hold_start_time_ms_ = scene()->time();
+    hold_was_spaz_ = (dynamic_cast<SpazNode*>(val) != nullptr);
 
     assert(a && b);
     {
