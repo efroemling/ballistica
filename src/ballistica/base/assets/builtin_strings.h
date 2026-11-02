@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261102"
+// Generated from: "a-0.babuiltinassets.261102a"
 
 #include <memory>
 
@@ -542,21 +542,6 @@ class BuiltinStrings {
 
   class Os {
    public:
-    /// The app's name as the operating system shows it (e.g. under the app's
-    /// icon on an Android home screen). Generated into native OS resource
-    /// files; spinoff projects override it with their own name.
-    ///
-    /// English: "BallisticaKit"
-    static auto AppName() -> std::shared_ptr<const LangStr>;
-
-    /// The name of the app's virtual-reality edition as the operating system
-    /// shows it (e.g. under the app's icon on an Android home screen).
-    /// Generated into native OS resource files; spinoff projects override it
-    /// with their own name.
-    ///
-    /// English: "BallisticaKit VR"
-    static auto AppNameVr() -> std::shared_ptr<const LangStr>;
-
     /// Message in the native Android dialog shown when the app hits an
     /// unrecoverable error and must close; technical error details are appended
     /// below it. The placeholder is the support email address. Generated into

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261102`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261102a`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1007
+# ba_meta require asset-package 1008
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-# a-0.babuiltinassets.261102
-_ASSET_PACKAGE = ApverNum(1007)
+# a-0.babuiltinassets.261102a
+_ASSET_PACKAGE = ApverNum(1008)
 
 if TYPE_CHECKING:
     import datetime
@@ -811,25 +811,6 @@ if TYPE_CHECKING:
 
             See source for the full asset list.
         """
-
-        #: ::
-        #:
-        #:     The app's name as the operating system shows it (e.g. under the
-        #:     app's icon on an Android home screen). Generated into native OS
-        #:     resource files; spinoff projects override it with their own name.
-        #:
-        #:     English: "BallisticaKit"
-        app_name: LangStr
-
-        #: ::
-        #:
-        #:     The name of the app's virtual-reality edition as the operating
-        #:     system shows it (e.g. under the app's icon on an Android home
-        #:     screen). Generated into native OS resource files; spinoff
-        #:     projects override it with their own name.
-        #:
-        #:     English: "BallisticaKit VR"
-        app_name_vr: LangStr
 
         def fatal_error(self, *, email: str | LangStr) -> LangStr:
             """
@@ -1680,8 +1661,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 143 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 138 more). Full list in source.
+    #: The ``strings`` group - 141 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 136 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1767,12 +1748,7 @@ _TREE = {
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
-        'os': {
-            'app_name': (),
-            'app_name_vr': (),
-            'fatal_error': ('email',),
-            'local_network_usage': (),
-        },
+        'os': {'fatal_error': ('email',), 'local_network_usage': ()},
         'plugins': {
             'class_load_error': ('plugin', 'error'),
             'detected': (),

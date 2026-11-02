@@ -43,8 +43,9 @@ class OsString:
     #: Neutral key; also the Android string-resource name.
     key: str
 
-    #: Logical path of the string in the builtin asset package.
-    entry: str
+    #: Logical path of the string in the builtin asset package, or None
+    #: for a string with a fixed value instead (see ``fixed``).
+    entry: str | None
 
     #: Whether it goes into Android ``strings.xml`` files.
     android: bool = False
@@ -52,11 +53,21 @@ class OsString:
     #: The ``Info.plist`` key it localizes on Apple platforms, if any.
     apple_plist_key: str | None = None
 
+    #: The value (in every language) of a string with no ``entry``.
+    #: Spinoff dsts can still override it per language.
+    fixed: str | None = None
+
 
 #: Every OS resource string, and where each comes from and goes.
+#:
+#: The app names are fixed values rather than package strings: the
+#: core project's own name needs no translating (spinoff renames it like
+#: any other mention, and dsts override it per language), and a package
+#: string would put the name into the shipped Python wrappers, where
+#: spinoff's renaming changes the scripts and so breaks blessing.
 OS_STRINGS: list[OsString] = [
-    OsString('app_name', 'strings/os/app_name', android=True),
-    OsString('app_name_vr', 'strings/os/app_name_vr', android=True),
+    OsString('app_name', None, android=True, fixed='BallisticaKit'),
+    OsString('app_name_vr', None, android=True, fixed='BallisticaKit VR'),
     OsString('fatal_error', 'strings/os/fatal_error', android=True),
     OsString('ok', 'strings/ui/ok', android=True),
     OsString('done', 'strings/ui/done', android=True),
@@ -154,12 +165,21 @@ class OsStringsData:
 
 
 def fetch_data(projroot: Path, apverid: str) -> OsStringsData:
-    """Fetch every :data:`OS_STRINGS` entry's values from ``apverid``."""
-    by_entry = _fetch_strings(projroot, apverid, [s.entry for s in OS_STRINGS])
-    return OsStringsData(
-        apverid=apverid,
-        strings={s.key: by_entry[s.entry] for s in OS_STRINGS},
-    )
+    """Fetch every :data:`OS_STRINGS` entry's values from ``apverid``.
+
+    Fixed-value strings come along as just their English value (which
+    every other language falls back to).
+    """
+    entries = [s.entry for s in OS_STRINGS if s.entry is not None]
+    by_entry = _fetch_strings(projroot, apverid, entries)
+    strings: dict[str, dict[str, str]] = {}
+    for ostr in OS_STRINGS:
+        if ostr.entry is not None:
+            strings[ostr.key] = by_entry[ostr.entry]
+        else:
+            assert ostr.fixed is not None
+            strings[ostr.key] = {'eng': ostr.fixed}
+    return OsStringsData(apverid=apverid, strings=strings)
 
 
 def fetch_override_data(projroot: Path, apverid: str) -> OsStringsData:
