@@ -288,6 +288,13 @@ class Sim:
         # (time, address) of every send.
         self.sends: list[tuple[float, tuple[str, int]]] = []
         self.broadcasts = 0
+
+        # The protocol reads the clock as it's built, so it must already
+        # see ours. (Otherwise the first sim of a run gets the real
+        # monotonic time, which is behind our clock on a freshly booted
+        # machine such as a CI runner, so it thinks it's been stable for
+        # ages and starts out on the slow cycle.)
+        _patch(self)
         self.proto = impl._DiscoveryProtocol(
             # (Our stand-in has only the parts of a loop it uses.)
             loop=cast('asyncio.AbstractEventLoop', self.loop),
