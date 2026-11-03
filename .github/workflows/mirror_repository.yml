@@ -19,10 +19,15 @@ jobs:
             host: gitlab.com
             user: oauth2
             token_secret: GITLAB_TOKEN
-          - mirror: codeberg
-            host: codeberg.org
-            user: ''
-            token_secret: CODEBERG_TOKEN
+          # Codeberg disabled 2026-11-03: every push started failing
+          # with "could not read Username for 'https://codeberg.org'",
+          # meaning the CODEBERG_TOKEN secret is missing or empty (an
+          # expired/revoked token). Re-enable these lines once a fresh
+          # token is set in the repo's Actions secrets.
+          # - mirror: codeberg
+          #   host: codeberg.org
+          #   user: ''
+          #   token_secret: CODEBERG_TOKEN
     name: mirror (${{ matrix.mirror }})
     steps:
       - name: Checkout with full history
