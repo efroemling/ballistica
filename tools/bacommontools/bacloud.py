@@ -39,6 +39,8 @@ from bacommon.bacloud import (
 )
 
 if TYPE_CHECKING:
+    from compression.zstd import ZstdDecompressor
+
     from bacommon.bacloud import ResponseData, StandardResponseData
 
     from bacommontools.bacloudsession import BacloudSession
@@ -129,6 +131,28 @@ _g_pool = _make_pool()
 def _err_body(response: urllib3.response.BaseHTTPResponse) -> str:
     """Best-effort decode of a (small) error-response body for messages."""
     return response.data.decode('utf-8', 'replace')
+
+
+def _stream_decoder(
+    entry: StandardResponseData.SignedDownloadEntry,
+) -> ZstdDecompressor | None:
+    """Return a streaming decoder for a signed download, or None if raw."""
+    from bacommon.cloudfilecodec import CompressionType
+
+    match entry.compression:
+        case CompressionType.UNCOMPRESSED:
+            return None
+        case CompressionType.ZSTD:
+            from compression.zstd import ZstdDecompressor
+
+            return ZstdDecompressor()
+        case _:
+            # Dictionary codecs never ride signed downloads (servers only
+            # send plain zstd); refuse rather than write garbage.
+            raise CleanError(
+                f'Download of {entry.path} uses unsupported encoding'
+                f' {entry.compression.name}; update bacloud.'
+            )
 
 
 # Server selection precedence:
@@ -1080,6 +1104,7 @@ class App:
         prepare_req = UploadPlanPrepareRequest(
             files=files,
             cloud_file_category=plan.cloud_file_category,
+            form_code=plan.form_code,
         )
         prepare_cmd = _upload_plan_sibling(
             plan.finalize_command, '_upload_plan_prepare'
@@ -1194,6 +1219,9 @@ class App:
             tmp = f'{entry.path}.tmp'
             hasher = hashlib.sha256()
             total = 0
+            # Bytes may arrive compressed (v30+); sha256/size describe
+            # the decoded bytes, so decode before hashing.
+            decoder = _stream_decoder(entry)
             with _g_pool.request(
                 'GET',
                 entry.download_url,
@@ -1210,9 +1238,22 @@ class App:
                     for chunk in resp.stream(chunk_size):
                         if not chunk:
                             continue
+                        if decoder is not None:
+                            chunk = decoder.decompress(chunk)
+                            if not chunk:
+                                continue
                         outfile.write(chunk)
                         hasher.update(chunk)
                         total += len(chunk)
+            if decoder is not None and not decoder.eof:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} ended mid-way through'
+                    ' its compressed stream.'
+                )
 
             if total != entry.size:
                 try:

@@ -15,9 +15,7 @@ or are not yet covered (macOS).
 """
 
 import hashlib
-import json
 import os
-import urllib.error
 import urllib.request
 
 from efro.error import CleanError
@@ -60,33 +58,27 @@ def _sha256_file(path: str) -> str:
 
 def _fetch_symbols_for_exe(exe_path: str, host: str) -> bool:
     """Fetch symbols for one binary; return True if fetched."""
-    exe_sha = _sha256_file(exe_path)
-    url = f'https://{host}/api/v1/prefab-symbols/{exe_sha}'
-    try:
-        with urllib.request.urlopen(url) as response:
-            info = json.loads(response.read())
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            print(
-                f'{Clr.YLW}No symbols available for'
-                f' {Clr.BLD}{exe_path}{Clr.RST}{Clr.YLW} (symbols are'
-                f' kept for recent builds only).{Clr.RST}'
-            )
-            return False
-        raise CleanError(
-            f'Symbols lookup failed for {exe_path}:'
-            f' HTTP {exc.code} from {url}.'
-        ) from exc
+    from batools.winsymbols import lookup_prefab_symbols
 
-    pdb_path = os.path.join(os.path.dirname(exe_path), info['file_name'])
-    size_mb = info['size'] / (1024 * 1024)
+    exe_sha = _sha256_file(exe_path)
+    info = lookup_prefab_symbols(exe_sha, host)
+    if info is None:
+        print(
+            f'{Clr.YLW}No symbols available for'
+            f' {Clr.BLD}{exe_path}{Clr.RST}{Clr.YLW} (symbols are'
+            f' kept for recent builds only).{Clr.RST}'
+        )
+        return False
+
+    pdb_path = os.path.join(os.path.dirname(exe_path), info.file_name)
+    size_mb = info.size / (1024 * 1024)
     print(
         f'Downloading symbols for {Clr.BLD}{exe_path}{Clr.RST}'
         f' ({size_mb:.1f} MB)...',
         flush=True,
     )
     pdb_path_tmp = f'{pdb_path}.download'
-    with urllib.request.urlopen(info['download_url']) as response:
+    with urllib.request.urlopen(info.download_url) as response:
         with open(pdb_path_tmp, 'wb') as outfile:
             while True:
                 chunk = response.read(1024 * 1024)

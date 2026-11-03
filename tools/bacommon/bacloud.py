@@ -28,6 +28,7 @@ from efro.dataclassio import (
     IOMultiType,
 )
 from bacommon import securedata
+from bacommon.cloudfilecodec import CompressionType
 
 if TYPE_CHECKING:
     pass
@@ -222,7 +223,20 @@ if TYPE_CHECKING:
 #               tracks ``BACLOUD_VERSION`` as usual, so older clients
 #               get the standard "please update" rejection rather than
 #               an undecodable type id.
-BACLOUD_VERSION = 29
+# 30 (2026-11): Signed downloads may arrive compressed. Adds
+#               ``SignedDownloadEntry.compression`` (soft default
+#               uncompressed); the client decodes zstd while streaming
+#               and checks sha256/size against the decoded bytes. Also
+#               ``UploadPlan.form_code``, echoed back in
+#               ``UploadPlanPrepareRequest.form_code``, so the server
+#               knows which storage form a plan's uploads go to. This
+#               lets the server hand out cloud-file *forms* stored
+#               compressed (e.g. archives set to compress) without an
+#               uncompressed copy. ``MIN_VERSION`` tracks
+#               ``BACLOUD_VERSION`` as usual (an old client would write
+#               the compressed bytes and fail its sha256 check), so
+#               prod and push-public land together.
+BACLOUD_VERSION = 30
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -409,6 +423,9 @@ class UploadPlanPrepareRequest:
     #: CloudFileCategory value (e.g. 'archive_misc'). Tells the
     #: server which bucket new uploads should land in.
     cloud_file_category: Annotated[str, IOAttrs('ct')]
+
+    #: Echo of :attr:`StandardResponseData.UploadPlan.form_code` (v30+).
+    form_code: Annotated[str, IOAttrs('fm', store_default=False)] = ''
 
 
 @ioprepped
@@ -652,6 +669,15 @@ class StandardResponseData(ResponseData):
         #: belt-and-suspenders sanity check against the streamed total.
         size: Annotated[int, IOAttrs('s')]
 
+        #: How the bytes at ``download_url`` are encoded (v30+). The
+        #: client decodes while streaming; ``sha256`` and ``size``
+        #: always describe the *decoded* bytes. Servers send only
+        #: uncompressed or plain zstd for now.
+        compression: Annotated[
+            CompressionType,
+            IOAttrs('c', soft_default=CompressionType.UNCOMPRESSED),
+        ] = CompressionType.UNCOMPRESSED
+
     @ioprepped
     @dataclass
     class SignedDownloadsProgress:
@@ -714,6 +740,11 @@ class StandardResponseData(ResponseData):
 
         #: Optional description shown to the user during the upload.
         description: Annotated[str, IOAttrs('de', store_default=False)] = ''
+
+        #: Server-chosen storage form for new uploads (v30+; opaque to
+        #: the client, which echoes it in the prepare request). Empty
+        #: means the server's default.
+        form_code: Annotated[str, IOAttrs('fm', store_default=False)] = ''
 
     @ioprepped
     @dataclass
