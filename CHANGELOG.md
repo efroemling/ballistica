@@ -1,4 +1,84 @@
-### 1.8.5 (build 23077, api 9, 2026-10-28)
+### 1.8.7 (build 23089, api 9, 2026-11-04)
+- Fixed local network play on Android 17, which now requires a
+  permission for local network access. The game asks for it when you
+  open Gather, and shows a warning with a way to grant it wherever
+  local play needs it. Also fixed nearby-game discovery on devices
+  (such as Pixels) that filter broadcast traffic.
+- Reworked nearby-game discovery. Games now find each other through
+  Bonjour/NSD (DNS-SD) as well as LAN broadcast, on Apple platforms,
+  Android and Windows, so the Nearby tab works on networks that drop
+  broadcasts, and finds hosts on non-default ports. Each device is
+  listed once however many ways it was found, joined by its fastest
+  address. IPv6 addresses (including link-local) work, so nearby play
+  works on IPv6-only networks too. Discovery sends far less traffic
+  than before, and copes better with lost packets on Wi-Fi.
+- Joins and Public-tab pings now go through the system resolver, so
+  joining by IPv4 address works on IPv6-only (NAT64) networks, and
+  host names work as addresses. A join with several addresses for one
+  host races them and uses the first to answer.
+- Fixed Windows hosts dropping their game sockets for a second
+  whenever a device they had sent to went away (and re-advertising
+  themselves each time, which left stale duplicate entries in other
+  devices' Nearby lists).
+- Fixed 'That player is no longer here' on the stats Connection page
+  in solo games.
+- Team red no longer shows as coral in screen messages, the
+  scoreboard, player names and a few other spots.
+- Text and images drawn over toolbar buttons (achievement percent,
+  party count) now move with device tilt exactly as their button does.
+- Music from the classic game no longer keeps playing after switching
+  to another app mode.
+- Android: the app's name and native dialog text (and, on Apple
+  platforms, the local-network permission prompt) are now translated
+  from the same asset-package strings as everything else. Ethernet-only
+  Android TV boxes are supported again.
+- Linux: the game now asks for an OpenGL 3.2+ core profile (falling
+  back to the old request), fixing "OpenGL too old" on some Mesa
+  drivers.
+- iOS/tvOS: a shutdown via SIGTERM now exits cleanly instead of hitting
+  a fatal error.
+- New `babase.app.nearby` subsystem (`NearbyScan`, `NearbyHost`,
+  `NearbyRoute`) for nearby-host discovery, and
+  `babase.DualStackUDPEndpoint` (IPv4 and IPv6 sockets as one asyncio
+  endpoint). `bascenev1.connect_to_party()` takes a list of addresses.
+  The old `host_scan_cycle()` / `end_host_scanning()` are removed.
+- New `REMOTE_GAME_QUERY_V2` / `RESPONSE_V2` packets carry the game's
+  app-instance uuid, so remote-app answers merge with game answers.
+- App modes now declare which networking they want (classic game
+  networking, remote-app server), and sockets open and close to match.
+  New `remote` and `squads` feature sets; `RemoteAppMode` turns a device
+  into a controller for a nearby game (a placeholder for the future
+  BombSquad Remote).
+
+### 1.8.6 (build 23082, api 9, 2026-10-29)
+- Dedicated servers (server mode) no longer count themselves as a party
+  member: they leave themselves out of the party roster clients see,
+  and out of the party size and max size they report and enforce.
+  `max_party_size` in server configs is now the max number of client
+  devices (its default goes from 6 to 5 to match); older configs that
+  added one for the server will now allow one extra device. Regular
+  hosts still count themselves, since they're playing too.
+- Fixed several reference cycles that kept dropped or failed cloud
+  connections (and any doc-ui page whose request was in flight when one
+  dropped) in memory until the next garbage-collection pass: closing a
+  connection that timed out, connection attempts that timed out during
+  their opening handshake, and doc-ui fetch errors.
+- Writing the meta-scan cache no longer leaves a reference cycle behind
+  (it used `json.dump()`, which goes through Python's pure-Python
+  encoder); this was most of the "Explicit gc pass handled N objects"
+  warning many 1.8.5 installs logged on their first launch.
+- The garbage-collection warning threshold no longer counts the
+  leftovers of classes a module replaced as it was imported (the
+  stdlib's `@enum._simple_enum` does this for `uuid.SafeUUID`,
+  `re.RegexFlag` and others). They are unavoidable one-time residue;
+  the log line still reports them, as "(N of them import residue, not
+  counted)".
+- Garbage-collection reports now say where any collected asyncio
+  transports were connected (peer address, protocol chain, closing
+  state). A transport only reaches the collector if something
+  abandoned it without closing it, so this points at the culprit.
+
+### 1.8.5 (build 23079, api 9, 2026-10-28)
 - Asset downloads now connect to the IP address the cloud connection
   already reached the node at, instead of looking the node's name up
   again, so they no longer fail on flaky DNS while everything else

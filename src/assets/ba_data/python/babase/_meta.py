@@ -260,10 +260,12 @@ class MetadataSubsystem:
         # user-modified for error reporting, whether or not anything
         # ends up loading it (same presence-based stance the blessing
         # hash takes). Plugins need no commands run to take effect, so
-        # the commands-run flag alone misses them.
+        # the commands-run flag alone misses them. Report the verdict
+        # either way: until we do, that signal reads as pending.
         userdir = _babase.app.env.python_directory_user
-        if userdir is not None and results.module_counts.get(userdir, 0) > 0:
-            _babase.set_user_python_present()
+        _babase.set_user_python_scan_result(
+            userdir is not None and results.module_counts.get(userdir, 0) > 0
+        )
 
         do_play_error_sound = False
 

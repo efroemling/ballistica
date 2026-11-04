@@ -348,7 +348,7 @@ auto ButtonWidget::GetDrawBrightness(millisecs_t time) const -> float {
 void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
-  Vector3f tilt = 0.02f * g_base->input->tilt();
+  Vector3f tilt = kTiltShift * g_base->input->tilt();
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
 

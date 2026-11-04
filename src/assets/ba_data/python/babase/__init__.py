@@ -37,6 +37,7 @@ from _babase import (
     fullscreen_control_key_shortcut,
     fullscreen_control_set,
     can_display_chars,
+    can_request_permission,
     clipboard_get_text_async,
     clipboard_has_text,
     clipboard_is_supported,
@@ -258,6 +259,18 @@ from babase._assetsubsystem import (
     AssetResolveError,
 )
 from babase._env import DEFAULT_REQUEST_TIMEOUT_SECONDS
+from babase._dualstack import DualStackUDPEndpoint
+from babase._nearby import (
+    NearbyGameInfo,
+    NearbyHost,
+    NearbyRemoteInfo,
+    NearbyRoute,
+    NearbyRouteType,
+    NearbyScan,
+    NearbyService,
+    NearbySource,
+    NearbySubsystem,
+)
 from babase._net import get_ip_address_type, NetworkSubsystem
 from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._simpledialog import SimpleDialog
@@ -342,6 +355,7 @@ __all__ = [
     'fullscreen_control_key_shortcut',
     'fullscreen_control_set',
     'can_display_chars',
+    'can_request_permission',
     'charstr',
     'clipboard_get_text',
     'clipboard_get_text_async',
@@ -367,6 +381,7 @@ __all__ = [
     'DisplayTimer',
     'discord_sign_in',
     'do_once',
+    'DualStackUDPEndpoint',
     'ConstructAppMode',
     'EmptyAppMode',
     'env',
@@ -443,6 +458,15 @@ __all__ = [
     'native_review_request',
     'native_review_request_supported',
     'native_stack_trace',
+    'NearbyGameInfo',
+    'NearbyHost',
+    'NearbyRemoteInfo',
+    'NearbyRoute',
+    'NearbyRouteType',
+    'NearbyScan',
+    'NearbyService',
+    'NearbySource',
+    'NearbySubsystem',
     'netlog',
     'NetworkSubsystem',
     'NodeNotFoundError',

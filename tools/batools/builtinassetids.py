@@ -33,6 +33,10 @@ pre-marked autogen sections in checked-in source files:
   ``strings/`` dir; the remaining path segments map to nested classes
   (namespaces are barred by the one-namespace-per-featureset rule) and
   the leaf method name.
+* ``pconfig/osstrings.json`` — the per-locale values of the strings
+  that end up in native OS resource files (Android ``strings.xml``,
+  Apple string catalogs); ``update_project`` renders those files from
+  it offline. See :mod:`batools.osstrings`.
 
 This is invoked by ``assetpins`` when the pin changes (it talks to the
 cloud for the listing, so it lives there, not in ``make update`` --
@@ -804,6 +808,8 @@ def compute_splices(
     # clang-formatted, so this only normalizes the spliced region.
     from efrotools.code import format_cpp_str
 
+    from batools import osstrings
+
     result = collect(projroot, apverid)
     if base_h_existing is None:
         base_h_existing = (projroot / TARGET_BASE_H).read_text()
@@ -842,6 +848,9 @@ def compute_splices(
             render_strings_cc(result),
             filename='builtin_strings.cc',
         ),
+        # The OS resource strings' per-locale values; update_project
+        # renders the native resource files from this offline.
+        osstrings.DATA_PATH: osstrings.fetch_data(projroot, apverid).to_json(),
     }
 
 
@@ -864,7 +873,7 @@ def generate(projroot: Path, apverid: str, check: bool = False) -> bool:
     changed = False
     for rel_path, new_text in spliced.items():
         path = projroot / rel_path
-        existing = path.read_text()
+        existing = path.read_text() if path.exists() else None
         if new_text == existing:
             continue
         changed = True

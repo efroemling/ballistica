@@ -160,6 +160,7 @@ ctx.no_filter_dirs = {
     'src/external',
     'src/assets/pylib-android',
     'src/assets/pylib-apple',
+    'src/assets/pylib-linux-portable',
     'src/assets/ba_data/python-site-packages',
     'src/assets/windows',
 }

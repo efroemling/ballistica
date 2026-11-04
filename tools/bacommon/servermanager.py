@@ -90,11 +90,12 @@ class ServerConfig:
     # LAN browser tab.
     port: int = 43210
 
-    # Max devices in the party. Note that this does *NOT* mean max
-    # players. Any device in the party can have more than one player on
-    # it if they have multiple controllers. Also, this number currently
-    # includes the server so generally make it 1 bigger than you need.
-    max_party_size: int = 6
+    # Max client devices in the party. Note that this does *NOT* mean
+    # max players. Any device in the party can have more than one player
+    # on it if they have multiple controllers. The server itself doesn't
+    # count (before build 23081 it did, so older configs may list one
+    # more than they need).
+    max_party_size: int = 5
 
     # Max players that can join a session. If present this will override
     # the session's preferred max_players. if a value below 0 is given

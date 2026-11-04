@@ -39,7 +39,10 @@ from bacommon.bacloud import (
 )
 
 if TYPE_CHECKING:
+    from compression.zstd import ZstdDecompressor
+
     from bacommon.bacloud import ResponseData, StandardResponseData
+    from bacommon.cloudfilecodec import CompressionType
 
     from bacommontools.bacloudsession import BacloudSession
 
@@ -131,6 +134,28 @@ def _err_body(response: urllib3.response.BaseHTTPResponse) -> str:
     return response.data.decode('utf-8', 'replace')
 
 
+def _stream_decoder(
+    entry: StandardResponseData.SignedDownloadEntry,
+) -> ZstdDecompressor | None:
+    """Return a streaming decoder for a signed download, or None if raw."""
+    from bacommon.cloudfilecodec import CompressionType
+
+    match entry.compression:
+        case CompressionType.UNCOMPRESSED:
+            return None
+        case CompressionType.ZSTD:
+            from compression.zstd import ZstdDecompressor
+
+            return ZstdDecompressor()
+        case _:
+            # Dictionary codecs never ride signed downloads (servers only
+            # send plain zstd); refuse rather than write garbage.
+            raise CleanError(
+                f'Download of {entry.path} uses unsupported encoding'
+                f' {entry.compression.name}; update bacloud.'
+            )
+
+
 # Server selection precedence:
 #   1. BACLOUD_SERVER — explicit host override (e.g. a specific basn
 #      node). Wins if set; otherwise we derive from BA_FLEET.
@@ -191,6 +216,49 @@ def _hash_file(path: str) -> tuple[int, str]:
                 break
             h.update(chunk)
     return size, h.hexdigest()
+
+
+def _put_upload(
+    path: str,
+    upload_url: str,
+    upload_headers: dict[str, str],
+    encoding: CompressionType,
+    level: int,
+    *,
+    label: str | None = None,
+) -> None:
+    """PUT a local file to a signed upload URL, encoded as asked (v31).
+
+    Compressed uploads go through a temp file holding the encoded bytes
+    (the server verifies them by decoding). Setting Content-Length
+    forces a non-chunked PUT, which the signed URL needs; urllib3
+    streams the file object in fixed-size chunks, so memory stays
+    bounded regardless of file size.
+    """
+    from bacommon.bacloud import encode_upload_file
+
+    encoded = encode_upload_file(path, encoding, level)
+    send_path = path if encoded is None else encoded
+    try:
+        put_headers = dict(upload_headers)
+        put_headers['Content-Length'] = str(os.path.getsize(send_path))
+        with open(send_path, 'rb') as infile:
+            response = _g_pool.request(
+                'PUT',
+                upload_url,
+                body=infile,
+                headers=put_headers,
+                retries=False,
+            )
+    finally:
+        if encoded is not None:
+            os.unlink(encoded)
+    if not 200 <= response.status < 300:
+        raise CleanError(
+            f'GCS upload of {label or path} failed:'
+            f' status={response.status}'
+            f' body={_err_body(response)!r}'
+        )
 
 
 def _upload_plan_sibling(finalize_command: str, sibling: str) -> str:
@@ -329,6 +397,7 @@ _IDEMPOTENT_COMMAND_PREFIXES: tuple[tuple[str, ...], ...] = (
     ('assetpackage', '_assemble'),
     ('assetpackage', 'version'),
     ('assetpackage', '_listing'),
+    ('assetpackage', '_strings'),
     ('assetpackage', 'wrapper'),
     ('account', 'info'),
     # Read-only server-side: a listing returns what exists, and a get
@@ -949,28 +1018,13 @@ class App:
         for entry in uploads_signed:
             if not os.path.exists(entry.path):
                 raise CleanError(f'File not found: {entry.path}')
-            file_size = os.path.getsize(entry.path)
-            # Setting Content-Length explicitly forces a non-chunked PUT,
-            # which is required for the signed URL's Content-MD5 binding
-            # to validate against a single body on the GCS side. urllib3
-            # streams the file object in fixed-size chunks (no slurp), so
-            # memory stays bounded regardless of file size.
-            put_headers = dict(entry.upload_headers)
-            put_headers['Content-Length'] = str(file_size)
-            with open(entry.path, 'rb') as infile:
-                response = _g_pool.request(
-                    'PUT',
-                    entry.upload_url,
-                    body=infile,
-                    headers=put_headers,
-                    retries=False,
-                )
-            if not 200 <= response.status < 300:
-                raise CleanError(
-                    f'GCS upload of {entry.path} failed:'
-                    f' status={response.status}'
-                    f' body={_err_body(response)!r}'
-                )
+            _put_upload(
+                entry.path,
+                entry.upload_url,
+                entry.upload_headers,
+                entry.upload_encoding,
+                entry.upload_level,
+            )
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
 
@@ -1079,6 +1133,7 @@ class App:
         prepare_req = UploadPlanPrepareRequest(
             files=files,
             cloud_file_category=plan.cloud_file_category,
+            form_code=plan.form_code,
         )
         prepare_cmd = _upload_plan_sibling(
             plan.finalize_command, '_upload_plan_prepare'
@@ -1101,24 +1156,14 @@ class App:
                 continue
             assert item.upload_url is not None
             assert item.session_id is not None
-            local = local_paths[item.name]
-            file_size = os.path.getsize(local)
-            put_headers = dict(item.upload_headers)
-            put_headers['Content-Length'] = str(file_size)
-            with open(local, 'rb') as infile:
-                resp = _g_pool.request(
-                    'PUT',
-                    item.upload_url,
-                    body=infile,
-                    headers=put_headers,
-                    retries=False,
-                )
-            if not 200 <= resp.status < 300:
-                raise CleanError(
-                    f'GCS upload of {item.name} failed:'
-                    f' status={resp.status}'
-                    f' body={_err_body(resp)!r}'
-                )
+            _put_upload(
+                local_paths[item.name],
+                item.upload_url,
+                item.upload_headers,
+                item.upload_encoding,
+                item.upload_level,
+                label=item.name,
+            )
             sessions[item.name] = item.session_id
 
         # Phase 4: finalize uploaded files (if any).
@@ -1193,6 +1238,9 @@ class App:
             tmp = f'{entry.path}.tmp'
             hasher = hashlib.sha256()
             total = 0
+            # Bytes may arrive compressed (v30+); sha256/size describe
+            # the decoded bytes, so decode before hashing.
+            decoder = _stream_decoder(entry)
             with _g_pool.request(
                 'GET',
                 entry.download_url,
@@ -1209,9 +1257,22 @@ class App:
                     for chunk in resp.stream(chunk_size):
                         if not chunk:
                             continue
+                        if decoder is not None:
+                            chunk = decoder.decompress(chunk)
+                            if not chunk:
+                                continue
                         outfile.write(chunk)
                         hasher.update(chunk)
                         total += len(chunk)
+            if decoder is not None and not decoder.eof:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} ended mid-way through'
+                    ' its compressed stream.'
+                )
 
             if total != entry.size:
                 try:

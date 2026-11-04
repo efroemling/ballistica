@@ -1154,7 +1154,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             playerspaztype = PlayerSpaz
 
         light_color = babase.normalized_color(color)
-        display_color = babase.safecolor(color, target_intensity=0.75)
+        display_color = babase.safecolor(color)
         spaz = playerspaztype(
             color=color,
             highlight=highlight,

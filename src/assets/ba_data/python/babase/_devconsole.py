@@ -138,7 +138,18 @@ class DevConsoleTab:
 
     @property
     def width(self) -> float:
-        """The current tab width. Only valid during refreshes."""
+        """The current tab width. Only valid during refreshes.
+
+        This is the full screen's virtual width, so content laid out
+        across all of it can run off narrow or oddly shaped displays.
+        For a row that should always be fully visible, use the width
+        of the virtual safe area instead (first value of
+        :func:`~babase.get_virtual_safe_area_size()`, capped at this
+        value), centered on x=0 (``h_anchor='center'``, the default).
+        Button and text coordinates are raw virtual units; they are not
+        multiplied by :attr:`base_scale`. The UI tab's main row and the
+        AppModes tab's buttons both fill exactly this space.
+        """
         assert _babase.app.devconsole.is_refreshing
         return _babase.dev_console_tab_width()
 

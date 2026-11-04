@@ -775,6 +775,12 @@
     <ClInclude Include="..\..\src\ballistica\base\logic\logic.h">
       <Filter>ballistica\base\logic</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\networking\nearby_services.cc">
+      <Filter>ballistica\base\networking</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\networking\nearby_services.h">
+      <Filter>ballistica\base\networking</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\networking\network_reader.cc">
       <Filter>ballistica\base\networking</Filter>
     </ClCompile>
@@ -878,6 +884,12 @@
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.h">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_nearby.cc">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_nearby.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_test.cc">
@@ -1095,6 +1107,36 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\core\support\core_config.h">
       <Filter>ballistica\core\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\remote\python\methods\python_methods_remote.cc">
+      <Filter>ballistica\remote\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\remote\python\methods\python_methods_remote.h">
+      <Filter>ballistica\remote\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\remote\python\remote_python.cc">
+      <Filter>ballistica\remote\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\remote\python\remote_python.h">
+      <Filter>ballistica\remote\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\remote\remote.cc">
+      <Filter>ballistica\remote</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\remote\remote.h">
+      <Filter>ballistica\remote</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\remote\support\remote_app_mode.cc">
+      <Filter>ballistica\remote\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\remote\support\remote_app_mode.h">
+      <Filter>ballistica\remote\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\remote\support\remote_input_device_delegate.cc">
+      <Filter>ballistica\remote\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\remote\support\remote_input_device_delegate.h">
+      <Filter>ballistica\remote\support</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_asset.cc">
       <Filter>ballistica\scene_v1\assets</Filter>
@@ -1933,6 +1975,30 @@
     <ClInclude Include="..\..\src\ballistica\shared\python\python_ref.h">
       <Filter>ballistica\shared\python</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\squads\python\methods\python_methods_squads.cc">
+      <Filter>ballistica\squads\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\squads\python\methods\python_methods_squads.h">
+      <Filter>ballistica\squads\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\squads\python\squads_python.cc">
+      <Filter>ballistica\squads\python</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\squads\python\squads_python.h">
+      <Filter>ballistica\squads\python</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\squads\squads.cc">
+      <Filter>ballistica\squads</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\squads\squads.h">
+      <Filter>ballistica\squads</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\squads\support\squads_app_mode.cc">
+      <Filter>ballistica\squads\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\squads\support\squads_app_mode.h">
+      <Filter>ballistica\squads\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.cc">
       <Filter>ballistica\template_fs\python\class</Filter>
     </ClCompile>
@@ -2422,6 +2488,10 @@
     <Filter Include="ballistica\core\platform\windows" />
     <Filter Include="ballistica\core\python" />
     <Filter Include="ballistica\core\support" />
+    <Filter Include="ballistica\remote" />
+    <Filter Include="ballistica\remote\python" />
+    <Filter Include="ballistica\remote\python\methods" />
+    <Filter Include="ballistica\remote\support" />
     <Filter Include="ballistica\scene_v1" />
     <Filter Include="ballistica\scene_v1\assets" />
     <Filter Include="ballistica\scene_v1\connection" />
@@ -2439,6 +2509,10 @@
     <Filter Include="ballistica\shared\math" />
     <Filter Include="ballistica\shared\networking" />
     <Filter Include="ballistica\shared\python" />
+    <Filter Include="ballistica\squads" />
+    <Filter Include="ballistica\squads\python" />
+    <Filter Include="ballistica\squads\python\methods" />
+    <Filter Include="ballistica\squads\support" />
     <Filter Include="ballistica\template_fs" />
     <Filter Include="ballistica\template_fs\python" />
     <Filter Include="ballistica\template_fs\python\class" />

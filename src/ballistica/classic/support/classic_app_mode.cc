@@ -75,21 +75,6 @@ const size_t kHostQueryV2MaxJsonBytes{1400};
 // etc.) rides in the headroom up to kHostQueryV2MaxJsonBytes.
 const size_t kRequirementsPageBudgetBytes{1300};
 
-struct ClassicAppMode::ScanResultsEntryPriv_ {
-  scene_v1::PlayerSpec player_spec;
-  std::string address;
-  uint32_t last_query_id{};
-  millisecs_t last_contact_time{};
-  // Extras delivered only by V2 query responses.
-  bool has_v2{};
-  std::string party_name;
-  int party_size{};
-  int party_max_size{};
-  bool auth_required{};
-  int build_number{};
-  int protocol_version{};
-};
-
 base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
     base::InputDevice* device) {
   // We create a special delegate for our special ClientInputDevice types;
@@ -110,6 +95,14 @@ bool ClassicAppMode::IsInMainMenu() const {
 }
 
 static ClassicAppMode* g_classic_app_mode{};
+
+void ClassicAppMode::OnDeactivate() {
+  assert(g_base->InLogicThread());
+
+  // Our music doesn't outlive us (nor does a pending request to start
+  // some, which would otherwise kick in after we're gone).
+  SetInternalMusic(nullptr);
+}
 
 void ClassicAppMode::OnActivate() {
   assert(g_base->InLogicThread());
@@ -139,12 +132,7 @@ void ClassicAppMode::OnAppShutdown() {
   connections_->Shutdown();
 }
 
-void ClassicAppMode::OnAppSuspend() {
-  assert(g_base->InLogicThread());
-
-  // App is going into background or whatnot. Kill any sockets/etc.
-  EndHostScanning();
-}
+void ClassicAppMode::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
 void ClassicAppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
@@ -172,6 +160,12 @@ void ClassicAppMode::Reset_() {
   // Tear down any existing session.
   foreground_session_.Clear();
   PruneSessions_();
+
+  // Its roster goes with it (we list ourself while hosting, so it's not
+  // empty even with nobody connected). Whatever session comes next
+  // fills it back in.
+  game_roster_.clear();
+  OnGameRosterChanged_();
 
   // If all is well our sessions should all be dead at this point.
   if (g_scene_v1->session_count != 0) {
@@ -233,321 +227,6 @@ void ClassicAppMode::Reset_() {
   if (!result.exists()) {
     throw Exception("Error calling kOnEngineDidResetCall.");
   }
-}
-
-// Note: for now we're making our host-scan network calls directly from the
-// logic thread. This is generally not a good idea since it appears that even
-// in non-blocking mode they're still blocking for 3-4ms sometimes. But for
-// now since this is only used minimally and only while in the UI I guess it's
-// ok.
-void ClassicAppMode::HostScanCycle() {
-  assert(g_base->InLogicThread());
-
-  // We need to create a scanner socket - an ipv4 socket we can send out
-  // broadcast messages from.
-  if (scan_socket_ == -1) {
-    scan_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
-
-    if (scan_socket_ == -1) {
-      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                           "Error opening scan socket: "
-                               + g_core->platform->GetSocketErrorString()
-                               + ".");
-      return;
-    }
-
-    // Since this guy lives in the logic-thread we need it to not block.
-    if (!g_core->platform->SetSocketNonBlocking(scan_socket_)) {
-      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                           "Error setting socket non-blocking.");
-      g_core->platform->CloseSocket(scan_socket_);
-      scan_socket_ = -1;
-      return;
-    }
-
-    // Bind to whatever.
-    struct sockaddr_in serv_addr{};
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
-    serv_addr.sin_port = 0;                         // any
-    int result =
-        ::bind(scan_socket_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    if (result == 1) {
-      g_core->logging->Log(
-          LogName::kBaNetworking, LogLevel::kError,
-          "Error binding socket: " + g_core->platform->GetSocketErrorString()
-              + ".");
-      g_core->platform->CloseSocket(scan_socket_);
-      scan_socket_ = -1;
-      return;
-    }
-
-    // Enable broadcast on the socket.
-    BA_SOCKET_SETSOCKOPT_VAL_TYPE op_val{1};
-    result = setsockopt(scan_socket_, SOL_SOCKET, SO_BROADCAST, &op_val,
-                        sizeof(op_val));
-
-    if (result != 0) {
-      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                           "Error enabling broadcast for scan-socket: "
-                               + g_core->platform->GetSocketErrorString()
-                               + ".");
-      g_core->platform->CloseSocket(scan_socket_);
-      scan_socket_ = -1;
-      return;
-    }
-  }
-
-  // Ok we've got a valid scanner socket. Now lets send out broadcast pings on
-  // all available networks.
-  //
-  // We broadcast both query forms: v1 for old hosts and v2 (which
-  // carries a json description of us so hosts can tailor their
-  // response) for new ones. New hosts answer both; results get
-  // deduped by app-instance-uuid with v2 data preferred.
-  uint8_t data[5];
-  data[0] = BA_PACKET_HOST_QUERY;
-  memcpy(data + 1, &next_scan_query_id_, 4);
-
-  std::vector<uint8_t> data_v2;
-  {
-    JsonBuilder builder;
-    JsonObjBuilder dict = builder.root_object();
-    dict.Add("b", kEngineBuildNumber);
-    dict.Add("v", 1);
-    std::string query_json = builder.Write();
-    data_v2.resize(5 + query_json.size());
-    data_v2[0] = BA_PACKET_HOST_QUERY_V2;
-    memcpy(data_v2.data() + 1, &next_scan_query_id_, 4);
-    memcpy(data_v2.data() + 5, query_json.data(), query_json.size());
-  }
-
-  std::vector<uint32_t> addrs = g_core->platform->GetBroadcastAddrs();
-  for (auto&& i : addrs) {
-    sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(kDefaultPort);  // NOLINT
-    addr.sin_addr.s_addr = htonl(i);      // NOLINT
-
-    for (int form = 0; form < 2; ++form) {
-      auto* send_data =
-          (form == 0) ? reinterpret_cast<socket_send_data_t*>(data)
-                      : reinterpret_cast<socket_send_data_t*>(data_v2.data());
-      size_t send_size = (form == 0) ? sizeof(data) : data_v2.size();
-      BA_DEBUG_TIME_CHECK_BEGIN(sendto);
-      ssize_t result = sendto(scan_socket_, send_data, send_size, 0,
-                              reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-      BA_DEBUG_TIME_CHECK_END(sendto, 10);
-      if (result == -1) {
-        int err = g_core->platform->GetSocketError();
-        switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
-          case ENETUNREACH:
-            break;
-          case EPERM:
-          case EACCES:
-            // The network, a VPN, or the OS forbids broadcasts; the
-            // LAN scan just finds nothing. Repeats every scan, so say
-            // it once.
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kInfo,
-                        "Broadcasts not permitted here ("
-                            + g_core->platform->GetSocketErrorString()
-                            + "); LAN game scan will find nothing.");
-            break;
-          default:
-            g_core->logging->Log(
-                LogName::kBaNetworking, LogLevel::kError,
-                "Error on scan-socket sendto: "
-                    + g_core->platform->GetSocketErrorString());
-        }
-      }
-    }
-  }
-  next_scan_query_id_++;
-
-  // ..and see if any responses came in from previous sends.
-  // (Buffer covers max v1 responses (366 bytes) as well as max-size v2
-  // json responses.)
-  char buffer[5 + kHostQueryV2MaxJsonBytes];
-  sockaddr_storage from{};
-  socklen_t from_size = sizeof(from);
-  while (true) {
-    BA_DEBUG_TIME_CHECK_BEGIN(recvfrom);
-    ssize_t result = recvfrom(scan_socket_, buffer, sizeof(buffer), 0,
-                              reinterpret_cast<sockaddr*>(&from), &from_size);
-    BA_DEBUG_TIME_CHECK_END(recvfrom, 10);
-
-    if (result == -1) {
-      int err = g_core->platform->GetSocketError();
-      switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
-        case EWOULDBLOCK:
-          break;
-        default:
-          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                               "Error: recvfrom error: "
-                                   + g_core->platform->GetSocketErrorString());
-          break;
-      }
-      break;
-    }
-
-    if (result > 2 && buffer[0] == BA_PACKET_HOST_QUERY_RESPONSE) {
-      // Size should be between 13 and 366 (1 byte type, 4 byte query_id, 4
-      // byte protocol_id, 1 byte id_len, 1 byte player_spec_len, 1-100 byte
-      // id, 1-255 byte player-spec).
-      if (result >= 14 && result <= 366) {
-        uint32_t protocol_version;
-        uint32_t query_id;
-
-        memcpy(&query_id, buffer + 1, 4);
-        memcpy(&protocol_version, buffer + 5, 4);
-        auto id_len = static_cast<uint32_t>(buffer[9]);
-        auto player_spec_len = static_cast<uint32_t>(buffer[10]);
-
-        if (id_len > 0 && id_len <= 100 && player_spec_len > 0
-            && player_spec_len <= 255
-            && (11 + id_len + player_spec_len == result)) {
-          char id[101];
-          char player_spec_str[256];
-          memcpy(id, buffer + 11, id_len);
-          memcpy(player_spec_str, buffer + 11 + id_len, player_spec_len);
-
-          id[id_len] = 0;
-          player_spec_str[player_spec_len] = 0;
-
-          // Add or modify an entry for this.
-          {
-            std::scoped_lock lock(scan_results_mutex_);
-
-            // Ignore if it looks like its us.
-            if (id != g_base->LocalAppInstanceUUID()) {
-              std::string key = id;
-              auto i = scan_results_.find(key);
-
-              // Make a new entry if its not there.
-              bool do_update_entry = (i == scan_results_.end()
-                                      || i->second.last_query_id != query_id);
-              if (do_update_entry) {
-                ScanResultsEntryPriv_& entry(scan_results_[key]);
-                entry.player_spec = scene_v1::PlayerSpec(player_spec_str);
-                char buffer2[256];
-                entry.address = inet_ntop(
-                    AF_INET,
-                    &((reinterpret_cast<sockaddr_in*>(&from))->sin_addr),
-                    buffer2, sizeof(buffer2));
-                entry.last_query_id = query_id;
-                entry.last_contact_time = g_core->AppTimeMillisecs();
-              }
-            }
-            PruneScanResults_();
-          }
-        } else {
-          g_core->logging->Log(
-              LogName::kBaNetworking, LogLevel::kError,
-              "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
-        }
-      } else {
-        g_core->logging->Log(
-            LogName::kBaNetworking, LogLevel::kError,
-            "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
-      }
-    } else if (result >= 6
-               && static_cast<uint8_t>(buffer[0])
-                      == BA_PACKET_HOST_QUERY_RESPONSE_V2) {
-      uint32_t query_id;
-      memcpy(&query_id, buffer + 1, 4);
-
-      auto doc = JsonDoc::Parse(
-          std::string_view(buffer + 5, static_cast<size_t>(result) - 5),
-          {.max_bytes = kHostQueryV2MaxJsonBytes});
-      if (!doc || !doc->root().is_object()) {
-        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                    "Got unparsable v2 host-query-response packet.");
-        continue;
-      }
-      JsonRef response = doc->root();
-      auto instance_id = response["i"].as_string();
-      auto player_spec_str = response["s"].as_string();
-      if (!instance_id.has_value() || !player_spec_str.has_value()) {
-        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                    "Got incomplete v2 host-query-response packet.");
-        continue;
-      }
-
-      // Add or modify an entry for this (ignoring ourself). Unlike v1
-      // responses, v2 always updates the entry — it carries strictly
-      // more info, so it wins whichever order the pair arrives in.
-      {
-        std::scoped_lock lock(scan_results_mutex_);
-        if (*instance_id != g_base->LocalAppInstanceUUID()) {
-          ScanResultsEntryPriv_& entry(
-              scan_results_[std::string(*instance_id)]);
-          entry.player_spec =
-              scene_v1::PlayerSpec(std::string(*player_spec_str));
-          char buffer2[256];
-          entry.address = inet_ntop(
-              AF_INET, &((reinterpret_cast<sockaddr_in*>(&from))->sin_addr),
-              buffer2, sizeof(buffer2));
-          entry.last_query_id = query_id;
-          entry.last_contact_time = g_core->AppTimeMillisecs();
-          entry.has_v2 = true;
-          entry.party_name = std::string(response["n"].string_or(""));
-          entry.party_size = static_cast<int>(response["sz"].int_or(0));
-          entry.party_max_size = static_cast<int>(response["szx"].int_or(0));
-          entry.auth_required = response["a"].bool_or(false);
-          entry.build_number = static_cast<int>(response["b"].int_or(0));
-          entry.protocol_version = static_cast<int>(response["p"].int_or(0));
-        }
-        PruneScanResults_();
-      }
-    }
-  }
-}
-
-void ClassicAppMode::EndHostScanning() {
-  if (scan_socket_ != -1) {
-    g_core->platform->CloseSocket(scan_socket_);
-    scan_socket_ = -1;
-  }
-}
-
-void ClassicAppMode::PruneScanResults_() {
-  millisecs_t t = g_core->AppTimeMillisecs();
-  auto i = scan_results_.begin();
-  while (i != scan_results_.end()) {
-    auto i_next = i;
-    i_next++;
-    if (t - i->second.last_contact_time > 3000) {
-      scan_results_.erase(i);
-    }
-    i = i_next;
-  }
-}
-
-auto ClassicAppMode::GetScanResults()
-    -> std::vector<ClassicAppMode::ScanResultsEntry> {
-  std::vector<ScanResultsEntry> results;
-  results.resize(scan_results_.size());
-  {
-    std::scoped_lock lock(scan_results_mutex_);
-    int out_num = 0;
-    for (auto&& i : scan_results_) {
-      ScanResultsEntryPriv_& in(i.second);
-      ScanResultsEntry& out(results[out_num]);
-      out.display_string = in.player_spec.GetDisplayString();
-      out.address = in.address;
-      out.has_v2 = in.has_v2;
-      out.party_name = in.party_name;
-      out.party_size = in.party_size;
-      out.party_max_size = in.party_max_size;
-      out.auth_required = in.auth_required;
-      out.build_number = in.build_number;
-      out.protocol_version = in.protocol_version;
-      out_num++;
-    }
-    PruneScanResults_();
-  }
-  return results;
 }
 
 void ClassicAppMode::SetHostingAssetPackages(
@@ -711,9 +390,20 @@ void ClassicAppMode::OnGameRosterChanged_() {
   g_base->ui->SetSquadSizeLabel(GetPartySize());
 }
 
+auto ClassicAppMode::PartyCountsHost() const -> bool {
+  return !g_classic->server_mode();
+}
+
 auto ClassicAppMode::GetPartySize() const -> int {
   assert(g_base->InLogicThread());
-  return static_cast<int>(game_roster_.size());
+
+  // A host alone is on the roster but isn't a party; count it as empty.
+  for (auto&& entry : game_roster_) {
+    if (entry.client_id != -1) {
+      return static_cast<int>(game_roster_.size());
+    }
+  }
+  return 0;
 }
 
 auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
@@ -884,13 +574,18 @@ void ClassicAppMode::UpdateGameRoster() {
   // Our party-roster is an array of client entries, each with player-specs.
   game_roster_.clear();
 
-  int total_party_size = 1;  // include ourself here..
+  // The size we report counts ourself (unless we're a dedicated server;
+  // see PartyCountsHost()).
+  int total_party_size = PartyCountsHost() ? 1 : 0;
 
-  // Add ourself first (that's currently how they know we're the party leader)
-  // ..but only if we have a connected client (otherwise our party is
-  // considered 'empty').
-
-  bool include_self = (connections()->GetConnectedClientCount() > 0);
+  // Add ourself first (that's currently how they know we're the party
+  // leader). We're always on the roster, even with nobody connected: code
+  // asking about who's in the game (host ui pages, etc.) must find us.
+  // UI showing the party treats a host-only roster as an empty party
+  // instead (see GetPartySize()). A dedicated server leaves itself off
+  // entirely: it's not a member anyone plays with or needs to see.
+  // (Clients identify the host by its -1 client_id, not by position.)
+  bool include_self = PartyCountsHost();
 
   if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
@@ -1107,6 +802,11 @@ void ClassicAppMode::LaunchHostSession(PyObject* session_type_obj,
     SetForegroundSession(old_foreground_session.get());
     throw Exception(std::string("HostSession failed: ") + e.what());
   }
+
+  // We're always on our own roster while hosting, so put ourself there
+  // now (and drop the old session's players) rather than waiting for a
+  // player or client to change things.
+  UpdateGameRoster();
 }
 
 void ClassicAppMode::LaunchReplaySession(const std::string& file_name) {

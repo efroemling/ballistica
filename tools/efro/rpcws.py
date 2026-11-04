@@ -312,8 +312,11 @@ class RPCWSEndpoint:
         if self._transport_close_task is not None:
             try:
                 await asyncio.wait_for(self._transport_close_task, timeout=10.0)
-            except Exception:
-                pass
+            except Exception as exc:
+                # A failed close leaves nothing for us to do, but its
+                # traceback would keep this endpoint and its transport
+                # alive as a reference cycle.
+                strip_exception_tracebacks(exc)
 
     async def _run_read_loop(self) -> None:
         """Read incoming WebSocket messages and dispatch them."""

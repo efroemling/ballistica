@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/assets/mesh_asset.h"
@@ -86,6 +87,12 @@ class ImageWidget : public Widget {
   void set_transition_delay(float val) { transition_delay_ = val; }
   void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_tilt_scale(float s) { tilt_scale_ = s; }
+
+  /// How far we shift per unit of device tilt, overriding the default
+  /// (tilt-scale-based, plus extra when drawn over a draw-control
+  /// parent). Overlays that must stay registered with their button set
+  /// this to the button's own shift.
+  void set_tilt_shift(float val) { tilt_shift_ = val; }
   void set_radial_amount(float val) { radial_amount_ = val; }
   void set_rotate(float val) { rotate_ = val; }
 
@@ -118,6 +125,7 @@ class ImageWidget : public Widget {
   std::unique_ptr<DepictionSlot> depiction_slot_;
   TransitionType transition_type_{TransitionType::kInLeft};
   float tilt_scale_{1.0f};
+  std::optional<float> tilt_shift_;
   float transition_delay_{};
   millisecs_t birth_time_millisecs_{};
   Object::Ref<base::TextureAsset> texture_;

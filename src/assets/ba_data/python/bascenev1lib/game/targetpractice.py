@@ -357,7 +357,7 @@ class Target(bs.Actor):
             # If there's more than 1 player in the game, include their
             # names and colors so they know who got the hit.
             if len(activity.players) > 1:
-                popupcolor = bs.safecolor(player.color, target_intensity=0.75)
+                popupcolor = bs.safecolor(player.color)
                 popupstr += ' ' + player.getname()
             PopupText(
                 popupstr,

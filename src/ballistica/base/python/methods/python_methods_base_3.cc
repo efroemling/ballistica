@@ -555,6 +555,41 @@ static PyMethodDef PyRequestPermissionDef = {
     ":meta private:",
 };
 
+// ------------------------- can_request_permission ----------------------------
+
+static auto PyCanRequestPermission(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  PyObject* permission_obj;
+  static const char* kwlist[] = {"permission", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O", const_cast<char**>(kwlist), &permission_obj)) {
+    return nullptr;
+  }
+  Permission permission = g_base->python->GetPyEnum_Permission(permission_obj);
+  if (g_core->platform->CanRequestPermission(permission)) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCanRequestPermissionDef = {
+    "can_request_permission",             // name
+    (PyCFunction)PyCanRequestPermission,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "can_request_permission(permission: babase.Permission) -> bool\n"
+    "\n"
+    "Whether requesting a permission can still show a system prompt.\n"
+    "\n"
+    "False once the user has denied it for good; it can then only be\n"
+    "granted in system settings.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------- add_network_availability_callback -----------------------
 
 static auto PyAddNetworkAvailabilityCallback(PyObject* self, PyObject* args,
@@ -742,9 +777,9 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  const char* h =
-      ((g_core->user_ran_commands || g_core->workspaces_in_use) ? "cjief3l"
-                                                                : "wofocj8");
+  const char* h = ((g_core->user_ran_commands() || g_core->workspaces_in_use())
+                       ? "cjief3l"
+                       : "wofocj8");
   return PyUnicode_FromString(h);
   BA_PYTHON_CATCH;
 }
@@ -783,7 +818,7 @@ static PyMethodDef PyGetIdleTimeDef = {
 
 static auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->user_ran_commands) {
+  if (g_core->user_ran_commands()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -803,7 +838,7 @@ static PyMethodDef PyHasUserRunCommandsDef = {
 
 static auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->workspaces_in_use) {
+  if (g_core->workspaces_in_use()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -3048,6 +3083,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyInLogicThreadDef,
       PyInMainMenuDef,
       PyRequestPermissionDef,
+      PyCanRequestPermissionDef,
       PyHavePermissionDef,
       PyAddNetworkAvailabilityCallbackDef,
       PyUnlockAllInputDef,

@@ -19,6 +19,7 @@
 
 #if !BA_PLATFORM_WINDOWS
 #include <dirent.h>
+#include <net/if.h>
 #include <sys/mman.h>
 #endif
 #include <fcntl.h>
@@ -969,6 +970,8 @@ void Platform::AndroidSetResString(const std::string& res) {
 
 void Platform::SetOSGameLoadingState(bool loading) {}
 
+void Platform::SetLocalNetworkListening(bool listening) {}
+
 auto Platform::GetDeviceV1AccountID() -> std::string {
   if (g_core->HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();
@@ -1213,24 +1216,27 @@ auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
   std::vector<uint32_t> addrs;
   struct ifaddrs* ifaddr{};
   if (getifaddrs(&ifaddr) != -1) {
-    int i = 0;
     for (ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
       // Turns out this can be null if the interface has no addrs.
-      if (ifa->ifa_addr == nullptr) {
+      if (ifa->ifa_addr == nullptr || ifa->ifa_netmask == nullptr
+          || ifa->ifa_addr->sa_family != AF_INET) {
         continue;
       }
-      int family = ifa->ifa_addr->sa_family;
-      if (family == AF_INET) {
-        if (ifa->ifa_addr != nullptr) {
-          uint32_t addr = ntohl(  // NOLINT (clang-tidy signed bitwise whining)
-              (reinterpret_cast<sockaddr_in*>(ifa->ifa_addr))->sin_addr.s_addr);
-          uint32_t sub = ntohl(  // NOLINT (clang-tidy signed bitwise whining)
-              (reinterpret_cast<sockaddr_in*>(ifa->ifa_netmask))
-                  ->sin_addr.s_addr);
-          uint32_t broadcast = addr | (~sub);
-          addrs.push_back(broadcast);
-          i++;
-        }
+      // Only interfaces where a broadcast can reach anyone: up, and
+      // neither loopback nor point-to-point (VPN tunnels, cellular
+      // links), whose 'broadcast' address goes nowhere useful.
+      auto flags = ifa->ifa_flags;
+      if (!(flags & IFF_UP) || !(flags & IFF_BROADCAST)
+          || (flags & IFF_LOOPBACK) || (flags & IFF_POINTOPOINT)) {
+        continue;
+      }
+      uint32_t addr = ntohl(  // NOLINT (clang-tidy signed bitwise whining)
+          (reinterpret_cast<sockaddr_in*>(ifa->ifa_addr))->sin_addr.s_addr);
+      uint32_t sub = ntohl(  // NOLINT (clang-tidy signed bitwise whining)
+          (reinterpret_cast<sockaddr_in*>(ifa->ifa_netmask))->sin_addr.s_addr);
+      uint32_t broadcast = addr | (~sub);
+      if (std::find(addrs.begin(), addrs.end(), broadcast) == addrs.end()) {
+        addrs.push_back(broadcast);
       }
     }
     freeifaddrs(ifaddr);
@@ -1238,6 +1244,8 @@ auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
   return addrs;
 #endif
 }
+
+void Platform::ConfigureUDPSocket(int sd) {}
 
 auto Platform::SetSocketNonBlocking(int sd) -> bool {
 // This default implementation covers non-windows platforms.
@@ -1477,6 +1485,8 @@ auto Platform::HavePermission(Permission p) -> bool {
   // Its assumed everything is accessible unless we override saying no.
   return true;
 }
+
+auto Platform::CanRequestPermission(Permission p) -> bool { return true; }
 
 void Platform::SetDebugKey(const std::string& key, const std::string& value) {}
 

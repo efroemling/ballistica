@@ -172,6 +172,9 @@ from batools.pcommands3 import (
     flatpak_prebuilt_inputs,
     gen_pyembed,
     require_unsandboxed,
+    linux_portable_deps_build,
+    linux_portable_deps_gather,
+    linux_portable_engine_build,
 )
 from batools.pcommands4 import (
     ios_sim_run,

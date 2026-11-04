@@ -399,6 +399,39 @@ MESSAGES: list[Message] = [
             ' effects (API 29+). Sent once when native init completes.'
         ),
     ),
+    Message(
+        name='LocalNetworkPermissionState',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[Field('granted', BOOL), Field('can_request', BOOL)],
+        doc=(
+            "State of Android 17's ACCESS_LOCAL_NETWORK runtime"
+            ' permission (always granted below API 37). can_request is'
+            ' false once the user has denied it for good, when a'
+            ' request no longer shows a dialog and Settings is the'
+            ' only way to grant it. Sent when native init completes,'
+            ' on every resume, and after each request.'
+        ),
+    ),
+    Message(
+        name='NearbyServiceEvent',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[
+            Field('added', BOOL),
+            Field('service_type', STR),
+            Field('instance', STR),
+            Field('name', STR),
+            Field('address', STR),
+            Field('port', INT),
+            Field('txt_keys', STR_LIST),
+            Field('txt_values', STR_LIST),
+        ],
+        doc=(
+            'A DNS-SD browse result from NsdManager (see NearbyBrowse):'
+            ' added=true reports an address for a service instance,'
+            ' false that the instance went away. instance identifies it'
+            ' across both. txt_keys/txt_values are its TXT record.'
+        ),
+    ),
     # ---- Native -> Java ----
     Message(
         name='RunMainThreadCall',
@@ -555,6 +588,53 @@ MESSAGES: list[Message] = [
             'engine sends false when the construct-mode asset gate opens '
             '(bring-up complete). Devices whose Power HAL wires the '
             'GAME_LOADING power mode can boost clocks for the duration.'
+        ),
+    ),
+    Message(
+        name='RequestLocalNetworkPermission',
+        direction=Dir.NATIVE_TO_JAVA,
+        doc=(
+            "Request Android 17's ACCESS_LOCAL_NETWORK permission. Java"
+            ' sends LocalNetworkPermissionState back with the outcome.'
+        ),
+    ),
+    Message(
+        name='SetLocalNetworkListening',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('listening', BOOL)],
+        doc=(
+            "Whether the engine's local-network listener (classic"
+            ' networking / the remote-app server) is up: true while an'
+            ' app-mode wants it and the app is not suspended. Java holds'
+            ' a wifi multicast lock while true; many devices (Pixels'
+            ' among them) drop inbound broadcast without one, which'
+            ' hides us from LAN scans.'
+        ),
+    ),
+    Message(
+        name='NearbyAdvertise',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[
+            Field('service_type', STR),
+            Field('port', INT),
+            Field('name', STR),
+            Field('txt_keys', STR_LIST),
+            Field('txt_values', STR_LIST),
+        ],
+        doc=(
+            'Advertise our game socket as a DNS-SD service via'
+            ' NsdManager (replacing any earlier registration of that'
+            ' type); port 0 stops advertising the type.'
+        ),
+    ),
+    Message(
+        name='NearbyBrowse',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('service_types', STR_LIST)],
+        doc=(
+            'Browse for these DNS-SD service types via NsdManager,'
+            ' replacing any earlier browse (empty stops browsing).'
+            ' Results come back as NearbyServiceEvent.'
         ),
     ),
     Message(

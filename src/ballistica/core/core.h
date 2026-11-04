@@ -196,14 +196,43 @@ class CoreFeatureSet {
   Platform* const platform;
   Logging* const logging;
 
-  // The following are misc values that should be migrated to applicable
-  // component classes or private vars.
-  bool workspaces_in_use{};
+  // Modded-run ("user taint") signals: has anything user-driven had a
+  // chance to alter engine behavior this run? Every error-reporting
+  // channel carries these (see docs/design/client-error-reporting.md).
+  // The positive values latch -- once true they stay true for the run.
+  // Two of them come from checks that take a while to finish, and those
+  // say so: until a check completes its flag reads false, so ask
+  // ModdedCheckPending() before treating a false as "clean".
+
+  /// Whether the user has run code of their own (dev console, stdio
+  /// console, cloud console). Known from launch; false means none yet.
+  auto user_ran_commands() const { return user_ran_commands_; }
+  void SetUserRanCommands();
+
+  /// Whether a signed-in account has an active workspace. Only
+  /// meaningful once workspaces_state_known(), which comes when initial
+  /// sign-in settles (signed in or not).
+  auto workspaces_in_use() const { return workspaces_in_use_; }
+  void SetWorkspacesInUse(bool val);
+  auto workspaces_state_known() const { return workspaces_state_known_; }
+  void SetWorkspacesStateKnown();
+
+  /// Whether the startup meta-scan found any importable Python in the
+  /// user python (mods) dir. Only meaningful once
+  /// user_python_scan_complete().
+  auto user_python_present() const { return user_python_present_; }
+  auto user_python_scan_complete() const { return user_python_scan_complete_; }
+  void SetUserPythonScanResult(bool present);
+
+  /// True if any modded signal has latched.
+  auto IsUserModified() const -> bool;
+
+  /// True if no modded signal has latched yet but at least one check
+  /// (baenv config, the mods-dir scan, workspace state) hasn't
+  /// finished, so a false IsUserModified() can't yet be read as clean.
+  auto ModdedCheckPending() const -> bool;
+
   bool reset_vr_orientation{};
-  bool user_ran_commands{};
-  /// Whether the meta-scan found any importable Python in the user
-  /// python (mods) dir. Set once that scan completes; false before.
-  bool user_python_present{};
   int master_server_source{};
   std::vector<EventLoop*> suspendable_event_loops;
 
@@ -243,6 +272,12 @@ class CoreFeatureSet {
   void UpdateAppTime_();
   void PostInit_();
 
+  /// Push the modded signals to the platform's crash-reporter keys
+  /// (Platform::SetDebugKey; Crashlytics on Google Play Android, a
+  /// no-op elsewhere). Called whenever a signal changes, and pushes only
+  /// keys whose value differs from what was last pushed.
+  void UpdateModdedDebugKeys_();
+
   CoreConfig core_config_;
   PyObject* initial_app_config_{};
   std::unordered_map<std::thread::id, std::string> thread_info_map_;
@@ -270,6 +305,13 @@ class CoreFeatureSet {
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
   bool engine_done_{};
+  bool user_ran_commands_{};
+  bool workspaces_in_use_{};
+  bool workspaces_state_known_{};
+  bool user_python_present_{};
+  bool user_python_scan_complete_{};
+  std::mutex modded_debug_keys_mutex_;
+  std::unordered_map<std::string, std::string> pushed_modded_debug_keys_;
 };
 
 }  // namespace ballistica::core

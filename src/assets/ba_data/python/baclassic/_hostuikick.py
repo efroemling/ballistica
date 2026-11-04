@@ -457,6 +457,20 @@ class HostUIKickVotes:  # pylint: disable=too-many-public-methods
             return None
         return self.get_kick_route(request.client_id, request.player_id)
 
+    def get_kick_unavailable_text(
+        self, request: HostUIKickRequest
+    ) -> str | babase.LangStr | None:
+        """Why :meth:`get_kick_page` offers no kick, if it doesn't.
+
+        For showing beside a disabled kick button. None if it does
+        offer one.
+        """
+        if self.is_admin(request.client_id):
+            return _classicassets.strings.host_ui.cant_kick_admin
+        if not self.is_admin(request.viewer) and not self.enabled:
+            return _classicassets.strings.host_ui.kick_voting_disabled
+        return None
+
     def get_kick_route(
         self, client_id: int, player_id: int | None = None
     ) -> DocUIRoute:

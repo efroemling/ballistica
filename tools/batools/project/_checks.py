@@ -487,6 +487,18 @@ def check_builtin_asset_ids(self: ProjectUpdater) -> None:
             f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
         )
 
+    # Ditto for the OS resource strings' fetched values (which the
+    # native resource files are rendered from).
+    from batools.osstrings import DATA_PATH, OsStringsData
+
+    os_apverid = OsStringsData.load(Path(self.projroot, DATA_PATH)).apverid
+    if os_apverid != apverid:
+        raise CleanError(
+            f'{DATA_PATH} was fetched from {os_apverid}, not the'
+            f' projectconfig "assets" pin ({apverid}); it is stale. Run'
+            f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
+        )
+
 
 def check_misc(self: ProjectUpdater) -> None:
     """Check misc project stuff."""

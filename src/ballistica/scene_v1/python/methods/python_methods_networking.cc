@@ -19,6 +19,7 @@
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/huffman.h"
+#include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/scene_v1/support/zstd_packet_codec.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -934,73 +935,31 @@ static PyMethodDef PySetMasterServerSourceDef = {
     "(internal)",
 };
 
-// ----------------------------- host_scan_cycle -------------------------------
+// ------------------------ player_spec_display_string -------------------------
 
-static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyPlayerSpecDisplayString(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->HostScanCycle();
-  std::vector<classic::ClassicAppMode::ScanResultsEntry> results =
-      appmode->GetScanResults();
-  PyObject* py_list = PyList_New(0);
-  for (auto&& i : results) {
-    PyObject* py_dict =
-        Py_BuildValue("{ss ss sO ss si si sO si si}",              // format
-                      "display_string", i.display_string.c_str(),  //
-                      "address", i.address.c_str(),                //
-                      "has_v2", i.has_v2 ? Py_True : Py_False,     //
-                      "party_name", i.party_name.c_str(),          //
-                      "party_size", i.party_size,                  //
-                      "party_max_size", i.party_max_size,          //
-                      "auth_required", i.auth_required ? Py_True : Py_False,  //
-                      "build_number", i.build_number,                         //
-                      "protocol_version", i.protocol_version);
-    PyList_Append(py_list, py_dict);
-    Py_DECREF(py_dict);
+  const char* spec{};
+  static const char* kwlist[] = {"spec", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &spec)) {
+    return nullptr;
   }
-  return py_list;
+  return PyUnicode_FromString(PlayerSpec(spec).GetDisplayString().c_str());
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyHostScanCycleDef = {
-    "host_scan_cycle",             // name
-    (PyCFunction)PyHostScanCycle,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyPlayerSpecDisplayStringDef = {
+    "player_spec_display_string",            // name
+    (PyCFunction)PyPlayerSpecDisplayString,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
 
-    "host_scan_cycle() -> list[dict[str, Any]]\n"
+    "player_spec_display_string(spec: str) -> str\n"
     "\n"
-    "Run a lan-scan cycle and return results gathered so far.\n"
-    "\n"
-    "Hosts answering only the old v1 query form have ``has_v2`` False\n"
-    "and carry defaults for the v2-only fields (``party_name``,\n"
-    "``party_size``, ``party_max_size``, ``auth_required``,\n"
-    "``build_number``, ``protocol_version``).\n"
-    "\n"
-    "(internal)\n"
+    "Return how a player-spec string displays (account icon + name).\n"
     "\n"
     ":meta private:",
-};
-
-// ---------------------------- end_host_scanning ------------------------------
-
-static auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->EndHostScanning();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyEndHostScanningDef = {
-    "end_host_scanning",             // name
-    (PyCFunction)PyEndHostScanning,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-
-    "end_host_scanning() -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -1244,8 +1203,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPacketCompressionDictDef,
       PyPacketCompressionSelftestDef,
       PyHaveConnectedClientsDef,
-      PyEndHostScanningDef,
-      PyHostScanCycleDef,
+      PyPlayerSpecDisplayStringDef,
       PySetMasterServerSourceDef,
       PyGetGamePortDef,
       PyDisconnectFromHostDef,

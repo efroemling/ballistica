@@ -214,6 +214,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabui.py \
+  $(BUILD_DIR)/ba_data/python/babase/_dualstack.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
@@ -229,6 +230,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_logreporting.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
+  $(BUILD_DIR)/ba_data/python/babase/_nearby.py \
+  $(BUILD_DIR)/ba_data/python/babase/_nearbyimpl.py \
+  $(BUILD_DIR)/ba_data/python/babase/_nearbyroutes.py \
   $(BUILD_DIR)/ba_data/python/babase/_net.py \
   $(BUILD_DIR)/ba_data/python/babase/_plugin.py \
   $(BUILD_DIR)/ba_data/python/babase/_simpledialog.py \
@@ -281,6 +285,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_consolesession.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/baremote/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baremote/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/baremote/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/baremote/_client.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
@@ -311,6 +319,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_generated/scene_asset_set.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_healthbar.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_hooks.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_hostprobe.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_level.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_lobby.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_localdisplay.py \
@@ -407,6 +416,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/maps.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/session/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/tutorial.py \
+  $(BUILD_DIR)/ba_data/python/basquads/__init__.py \
+  $(BUILD_DIR)/ba_data/python/basquads/_appmode.py \
+  $(BUILD_DIR)/ba_data/python/basquads/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/__init__.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
@@ -548,6 +560,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/presidency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/rankwindow.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/localnetwork.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/meshviewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
@@ -650,6 +663,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/_clouddialog.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudfilecodec.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/color.py \
   $(BUILD_DIR)/ba_data/python/bacommon/consolechannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/depiction.py \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \
@@ -1803,6 +1817,523 @@ SCRIPT_TARGETS_ZSTDDICT_PRIVATE_ANDROID = \
 # Rule to copy src asset scripts to dst.
 # (and make non-writable so I'm less likely to accidentally edit them there)
 $(SCRIPT_TARGETS_PY_PRIVATE_ANDROID) : ../../.efrocachemap
+	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
+
+
+SCRIPT_TARGETS_PY_PRIVATE_LINUX_PORTABLE = \
+  $(BUILD_DIR)/pylib-linux-portable/__future__.py \
+  $(BUILD_DIR)/pylib-linux-portable/__hello__.py \
+  $(BUILD_DIR)/pylib-linux-portable/_aix_support.py \
+  $(BUILD_DIR)/pylib-linux-portable/_android_support.py \
+  $(BUILD_DIR)/pylib-linux-portable/_apple_support.py \
+  $(BUILD_DIR)/pylib-linux-portable/_ast_unparse.py \
+  $(BUILD_DIR)/pylib-linux-portable/_collections_abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/_colorize.py \
+  $(BUILD_DIR)/pylib-linux-portable/_compat_pickle.py \
+  $(BUILD_DIR)/pylib-linux-portable/_ios_support.py \
+  $(BUILD_DIR)/pylib-linux-portable/_markupbase.py \
+  $(BUILD_DIR)/pylib-linux-portable/_opcode_metadata.py \
+  $(BUILD_DIR)/pylib-linux-portable/_osx_support.py \
+  $(BUILD_DIR)/pylib-linux-portable/_py_abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/_py_warnings.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pydatetime.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pydecimal.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyio.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pylong.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/_module_completer.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/_threading_handler.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/base_eventqueue.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/commands.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/completing_reader.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/console.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/fancy_termios.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/historical_reader.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/input.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/keymap.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/main.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/pager.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/reader.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/readline.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/terminfo.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/trace.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/types.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/unix_console.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/unix_eventqueue.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/utils.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/windows_console.py \
+  $(BUILD_DIR)/pylib-linux-portable/_pyrepl/windows_eventqueue.py \
+  $(BUILD_DIR)/pylib-linux-portable/_sitebuiltins.py \
+  $(BUILD_DIR)/pylib-linux-portable/_strptime.py \
+  $(BUILD_DIR)/pylib-linux-portable/_sysconfigdata__linux_aarch64-linux-gnu.py \
+  $(BUILD_DIR)/pylib-linux-portable/_sysconfigdata__linux_x86_64-linux-gnu.py \
+  $(BUILD_DIR)/pylib-linux-portable/_sysconfigdata_d_linux_aarch64-linux-gnu.py \
+  $(BUILD_DIR)/pylib-linux-portable/_sysconfigdata_d_linux_x86_64-linux-gnu.py \
+  $(BUILD_DIR)/pylib-linux-portable/_threading_local.py \
+  $(BUILD_DIR)/pylib-linux-portable/_weakrefset.py \
+  $(BUILD_DIR)/pylib-linux-portable/abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/annotationlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/antigravity.py \
+  $(BUILD_DIR)/pylib-linux-portable/argparse.py \
+  $(BUILD_DIR)/pylib-linux-portable/ast.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/base_events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/base_futures.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/base_subprocess.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/base_tasks.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/constants.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/coroutines.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/exceptions.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/format_helpers.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/futures.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/graph.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/locks.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/log.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/mixins.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/proactor_events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/protocols.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/queues.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/runners.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/selector_events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/sslproto.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/staggered.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/streams.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/subprocess.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/taskgroups.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/tasks.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/threads.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/timeouts.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/tools.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/transports.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/trsock.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/unix_events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/windows_events.py \
+  $(BUILD_DIR)/pylib-linux-portable/asyncio/windows_utils.py \
+  $(BUILD_DIR)/pylib-linux-portable/base64.py \
+  $(BUILD_DIR)/pylib-linux-portable/bdb.py \
+  $(BUILD_DIR)/pylib-linux-portable/bisect.py \
+  $(BUILD_DIR)/pylib-linux-portable/bz2.py \
+  $(BUILD_DIR)/pylib-linux-portable/cProfile.py \
+  $(BUILD_DIR)/pylib-linux-portable/calendar.py \
+  $(BUILD_DIR)/pylib-linux-portable/cmd.py \
+  $(BUILD_DIR)/pylib-linux-portable/code.py \
+  $(BUILD_DIR)/pylib-linux-portable/codecs.py \
+  $(BUILD_DIR)/pylib-linux-portable/codeop.py \
+  $(BUILD_DIR)/pylib-linux-portable/collections/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/colorsys.py \
+  $(BUILD_DIR)/pylib-linux-portable/compileall.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/_common/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/_common/_streams.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/bz2.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/gzip.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/lzma.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/zlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/zstd/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/compression/zstd/_zstdfile.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/futures/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/futures/_base.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/futures/interpreter.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/futures/process.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/futures/thread.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/pylib-linux-portable/concurrent/interpreters/_queues.py \
+  $(BUILD_DIR)/pylib-linux-portable/configparser.py \
+  $(BUILD_DIR)/pylib-linux-portable/contextlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/contextvars.py \
+  $(BUILD_DIR)/pylib-linux-portable/copy.py \
+  $(BUILD_DIR)/pylib-linux-portable/copyreg.py \
+  $(BUILD_DIR)/pylib-linux-portable/csv.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/_aix.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/_endian.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/_layout.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/macholib/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/macholib/dyld.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/macholib/dylib.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/macholib/framework.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/util.py \
+  $(BUILD_DIR)/pylib-linux-portable/ctypes/wintypes.py \
+  $(BUILD_DIR)/pylib-linux-portable/curses/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/curses/ascii.py \
+  $(BUILD_DIR)/pylib-linux-portable/curses/has_key.py \
+  $(BUILD_DIR)/pylib-linux-portable/curses/panel.py \
+  $(BUILD_DIR)/pylib-linux-portable/curses/textpad.py \
+  $(BUILD_DIR)/pylib-linux-portable/dataclasses.py \
+  $(BUILD_DIR)/pylib-linux-portable/datetime.py \
+  $(BUILD_DIR)/pylib-linux-portable/decimal.py \
+  $(BUILD_DIR)/pylib-linux-portable/difflib.py \
+  $(BUILD_DIR)/pylib-linux-portable/dis.py \
+  $(BUILD_DIR)/pylib-linux-portable/doctest.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/_encoded_words.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/_header_value_parser.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/_parseaddr.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/_policybase.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/base64mime.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/charset.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/contentmanager.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/encoders.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/errors.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/feedparser.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/generator.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/header.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/headerregistry.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/iterators.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/message.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/application.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/audio.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/base.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/image.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/message.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/multipart.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/nonmultipart.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/mime/text.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/parser.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/policy.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/quoprimime.py \
+  $(BUILD_DIR)/pylib-linux-portable/email/utils.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/_win_cp_codecs.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/aliases.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/ascii.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/base64_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/big5.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/big5hkscs.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/bz2_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/charmap.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp037.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1006.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1026.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1125.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1140.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1250.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1251.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1252.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1253.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1254.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1255.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1256.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1257.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp1258.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp273.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp424.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp437.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp500.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp720.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp737.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp775.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp850.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp852.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp855.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp856.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp857.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp858.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp860.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp861.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp862.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp863.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp864.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp865.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp866.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp869.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp874.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp875.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp932.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp949.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/cp950.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/euc_jis_2004.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/euc_jisx0213.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/euc_jp.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/euc_kr.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/gb18030.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/gb2312.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/gbk.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/hex_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/hp_roman8.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/hz.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/idna.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp_1.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp_2.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp_2004.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp_3.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_jp_ext.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso2022_kr.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_1.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_10.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_11.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_13.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_14.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_15.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_16.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_2.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_3.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_4.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_5.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_6.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_7.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_8.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/iso8859_9.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/johab.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/koi8_r.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/koi8_t.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/koi8_u.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/kz1048.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/latin_1.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_arabic.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_croatian.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_cyrillic.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_farsi.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_greek.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_iceland.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_latin2.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_roman.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_romanian.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mac_turkish.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/mbcs.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/oem.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/palmos.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/ptcp154.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/punycode.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/quopri_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/raw_unicode_escape.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/rot_13.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/shift_jis.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/shift_jis_2004.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/shift_jisx0213.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/tis_620.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/undefined.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/unicode_escape.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_16.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_16_be.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_16_le.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_32.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_32_be.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_32_le.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_7.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_8.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/utf_8_sig.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/uu_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/encodings/zlib_codec.py \
+  $(BUILD_DIR)/pylib-linux-portable/enum.py \
+  $(BUILD_DIR)/pylib-linux-portable/filecmp.py \
+  $(BUILD_DIR)/pylib-linux-portable/fileinput.py \
+  $(BUILD_DIR)/pylib-linux-portable/fnmatch.py \
+  $(BUILD_DIR)/pylib-linux-portable/fractions.py \
+  $(BUILD_DIR)/pylib-linux-portable/ftplib.py \
+  $(BUILD_DIR)/pylib-linux-portable/functools.py \
+  $(BUILD_DIR)/pylib-linux-portable/genericpath.py \
+  $(BUILD_DIR)/pylib-linux-portable/getopt.py \
+  $(BUILD_DIR)/pylib-linux-portable/getpass.py \
+  $(BUILD_DIR)/pylib-linux-portable/gettext.py \
+  $(BUILD_DIR)/pylib-linux-portable/glob.py \
+  $(BUILD_DIR)/pylib-linux-portable/graphlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/gzip.py \
+  $(BUILD_DIR)/pylib-linux-portable/hashlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/heapq.py \
+  $(BUILD_DIR)/pylib-linux-portable/hmac.py \
+  $(BUILD_DIR)/pylib-linux-portable/html/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/html/entities.py \
+  $(BUILD_DIR)/pylib-linux-portable/html/parser.py \
+  $(BUILD_DIR)/pylib-linux-portable/http/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/http/client.py \
+  $(BUILD_DIR)/pylib-linux-portable/http/cookiejar.py \
+  $(BUILD_DIR)/pylib-linux-portable/http/cookies.py \
+  $(BUILD_DIR)/pylib-linux-portable/http/server.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/_abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/_bootstrap.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/_bootstrap_external.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/machinery.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_adapters.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_collections.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_functools.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_itertools.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_meta.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/_text.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/metadata/diagnose.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/readers.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/_adapters.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/_common.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/_functional.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/_itertools.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/abc.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/readers.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/resources/simple.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/simple.py \
+  $(BUILD_DIR)/pylib-linux-portable/importlib/util.py \
+  $(BUILD_DIR)/pylib-linux-portable/inspect.py \
+  $(BUILD_DIR)/pylib-linux-portable/io.py \
+  $(BUILD_DIR)/pylib-linux-portable/ipaddress.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/decoder.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/encoder.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/scanner.py \
+  $(BUILD_DIR)/pylib-linux-portable/json/tool.py \
+  $(BUILD_DIR)/pylib-linux-portable/keyword.py \
+  $(BUILD_DIR)/pylib-linux-portable/linecache.py \
+  $(BUILD_DIR)/pylib-linux-portable/locale.py \
+  $(BUILD_DIR)/pylib-linux-portable/logging/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/logging/config.py \
+  $(BUILD_DIR)/pylib-linux-portable/logging/handlers.py \
+  $(BUILD_DIR)/pylib-linux-portable/lzma.py \
+  $(BUILD_DIR)/pylib-linux-portable/mailbox.py \
+  $(BUILD_DIR)/pylib-linux-portable/mimetypes.py \
+  $(BUILD_DIR)/pylib-linux-portable/modulefinder.py \
+  $(BUILD_DIR)/pylib-linux-portable/netrc.py \
+  $(BUILD_DIR)/pylib-linux-portable/ntpath.py \
+  $(BUILD_DIR)/pylib-linux-portable/nturl2path.py \
+  $(BUILD_DIR)/pylib-linux-portable/numbers.py \
+  $(BUILD_DIR)/pylib-linux-portable/opcode.py \
+  $(BUILD_DIR)/pylib-linux-portable/operator.py \
+  $(BUILD_DIR)/pylib-linux-portable/optparse.py \
+  $(BUILD_DIR)/pylib-linux-portable/os.py \
+  $(BUILD_DIR)/pylib-linux-portable/pathlib/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/pathlib/_local.py \
+  $(BUILD_DIR)/pylib-linux-portable/pathlib/_os.py \
+  $(BUILD_DIR)/pylib-linux-portable/pathlib/types.py \
+  $(BUILD_DIR)/pylib-linux-portable/pdb.py \
+  $(BUILD_DIR)/pylib-linux-portable/pickle.py \
+  $(BUILD_DIR)/pylib-linux-portable/pickletools.py \
+  $(BUILD_DIR)/pylib-linux-portable/pkgutil.py \
+  $(BUILD_DIR)/pylib-linux-portable/platform.py \
+  $(BUILD_DIR)/pylib-linux-portable/plistlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/poplib.py \
+  $(BUILD_DIR)/pylib-linux-portable/posixpath.py \
+  $(BUILD_DIR)/pylib-linux-portable/pprint.py \
+  $(BUILD_DIR)/pylib-linux-portable/profile.py \
+  $(BUILD_DIR)/pylib-linux-portable/pstats.py \
+  $(BUILD_DIR)/pylib-linux-portable/pty.py \
+  $(BUILD_DIR)/pylib-linux-portable/py_compile.py \
+  $(BUILD_DIR)/pylib-linux-portable/pyclbr.py \
+  $(BUILD_DIR)/pylib-linux-portable/pydoc.py \
+  $(BUILD_DIR)/pylib-linux-portable/queue.py \
+  $(BUILD_DIR)/pylib-linux-portable/quopri.py \
+  $(BUILD_DIR)/pylib-linux-portable/random.py \
+  $(BUILD_DIR)/pylib-linux-portable/re/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/re/_casefix.py \
+  $(BUILD_DIR)/pylib-linux-portable/re/_compiler.py \
+  $(BUILD_DIR)/pylib-linux-portable/re/_constants.py \
+  $(BUILD_DIR)/pylib-linux-portable/re/_parser.py \
+  $(BUILD_DIR)/pylib-linux-portable/reprlib.py \
+  $(BUILD_DIR)/pylib-linux-portable/rlcompleter.py \
+  $(BUILD_DIR)/pylib-linux-portable/runpy.py \
+  $(BUILD_DIR)/pylib-linux-portable/sched.py \
+  $(BUILD_DIR)/pylib-linux-portable/secrets.py \
+  $(BUILD_DIR)/pylib-linux-portable/selectors.py \
+  $(BUILD_DIR)/pylib-linux-portable/shelve.py \
+  $(BUILD_DIR)/pylib-linux-portable/shlex.py \
+  $(BUILD_DIR)/pylib-linux-portable/shutil.py \
+  $(BUILD_DIR)/pylib-linux-portable/signal.py \
+  $(BUILD_DIR)/pylib-linux-portable/site.py \
+  $(BUILD_DIR)/pylib-linux-portable/smtplib.py \
+  $(BUILD_DIR)/pylib-linux-portable/socket.py \
+  $(BUILD_DIR)/pylib-linux-portable/socketserver.py \
+  $(BUILD_DIR)/pylib-linux-portable/sqlite3/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/sqlite3/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/sqlite3/dbapi2.py \
+  $(BUILD_DIR)/pylib-linux-portable/sqlite3/dump.py \
+  $(BUILD_DIR)/pylib-linux-portable/sre_compile.py \
+  $(BUILD_DIR)/pylib-linux-portable/sre_constants.py \
+  $(BUILD_DIR)/pylib-linux-portable/sre_parse.py \
+  $(BUILD_DIR)/pylib-linux-portable/ssl.py \
+  $(BUILD_DIR)/pylib-linux-portable/stat.py \
+  $(BUILD_DIR)/pylib-linux-portable/statistics.py \
+  $(BUILD_DIR)/pylib-linux-portable/string/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/string/templatelib.py \
+  $(BUILD_DIR)/pylib-linux-portable/stringprep.py \
+  $(BUILD_DIR)/pylib-linux-portable/struct.py \
+  $(BUILD_DIR)/pylib-linux-portable/subprocess.py \
+  $(BUILD_DIR)/pylib-linux-portable/symtable.py \
+  $(BUILD_DIR)/pylib-linux-portable/sysconfig/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/sysconfig/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/tabnanny.py \
+  $(BUILD_DIR)/pylib-linux-portable/tarfile.py \
+  $(BUILD_DIR)/pylib-linux-portable/tempfile.py \
+  $(BUILD_DIR)/pylib-linux-portable/textwrap.py \
+  $(BUILD_DIR)/pylib-linux-portable/this.py \
+  $(BUILD_DIR)/pylib-linux-portable/threading.py \
+  $(BUILD_DIR)/pylib-linux-portable/timeit.py \
+  $(BUILD_DIR)/pylib-linux-portable/token.py \
+  $(BUILD_DIR)/pylib-linux-portable/tokenize.py \
+  $(BUILD_DIR)/pylib-linux-portable/tomllib/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/tomllib/_parser.py \
+  $(BUILD_DIR)/pylib-linux-portable/tomllib/_re.py \
+  $(BUILD_DIR)/pylib-linux-portable/tomllib/_types.py \
+  $(BUILD_DIR)/pylib-linux-portable/trace.py \
+  $(BUILD_DIR)/pylib-linux-portable/traceback.py \
+  $(BUILD_DIR)/pylib-linux-portable/tracemalloc.py \
+  $(BUILD_DIR)/pylib-linux-portable/tty.py \
+  $(BUILD_DIR)/pylib-linux-portable/types.py \
+  $(BUILD_DIR)/pylib-linux-portable/typing.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/error.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/parse.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/request.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/response.py \
+  $(BUILD_DIR)/pylib-linux-portable/urllib/robotparser.py \
+  $(BUILD_DIR)/pylib-linux-portable/uuid.py \
+  $(BUILD_DIR)/pylib-linux-portable/warnings.py \
+  $(BUILD_DIR)/pylib-linux-portable/wave.py \
+  $(BUILD_DIR)/pylib-linux-portable/weakref.py \
+  $(BUILD_DIR)/pylib-linux-portable/webbrowser.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/NodeFilter.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/domreg.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/expatbuilder.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/minicompat.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/minidom.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/pulldom.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/dom/xmlbuilder.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/etree/ElementInclude.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/etree/ElementPath.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/etree/ElementTree.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/etree/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/etree/cElementTree.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/parsers/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/parsers/expat.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/_exceptions.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/expatreader.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/handler.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/saxutils.py \
+  $(BUILD_DIR)/pylib-linux-portable/xml/sax/xmlreader.py \
+  $(BUILD_DIR)/pylib-linux-portable/xmlrpc/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/xmlrpc/client.py \
+  $(BUILD_DIR)/pylib-linux-portable/xmlrpc/server.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipapp.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipfile/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipfile/__main__.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipfile/_path/glob.py \
+  $(BUILD_DIR)/pylib-linux-portable/zipimport.py \
+  $(BUILD_DIR)/pylib-linux-portable/zoneinfo/__init__.py \
+  $(BUILD_DIR)/pylib-linux-portable/zoneinfo/_common.py \
+  $(BUILD_DIR)/pylib-linux-portable/zoneinfo/_tzpath.py \
+  $(BUILD_DIR)/pylib-linux-portable/zoneinfo/_zoneinfo.py
+
+SCRIPT_TARGETS_SO_PRIVATE_LINUX_PORTABLE = \
+  
+
+SCRIPT_TARGETS_ZSTDDICT_PRIVATE_LINUX_PORTABLE = \
+  
+
+# Rule to copy src asset scripts to dst.
+# (and make non-writable so I'm less likely to accidentally edit them there)
+$(SCRIPT_TARGETS_PY_PRIVATE_LINUX_PORTABLE) : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 
@@ -3713,6 +4244,8 @@ SCRIPT_TARGETS_MAC = $(SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC) \
 SCRIPT_TARGETS_IOS = $(SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC) \
  $(SCRIPT_TARGETS_SO_PRIVATE_APPLE_MAC)
 SCRIPT_TARGETS_ANDROID = $(SCRIPT_TARGETS_PY_PRIVATE_ANDROID)
+# Bundled stdlib for linux-portable (Steam / downloads page) builds.
+SCRIPT_TARGETS_LINUX_PORTABLE = $(SCRIPT_TARGETS_PY_PRIVATE_LINUX_PORTABLE)
 
 # Script targets needed by all platforms.
 SCRIPT_TARGETS_COMMON = $(SCRIPT_TARGETS_PY_PUBLIC) \
@@ -3729,13 +4262,16 @@ scripts-win-x64: $(SCRIPT_TARGETS_WIN_X64) $(SCRIPT_TARGETS_COMMON)
 scripts-mac: $(SCRIPT_TARGETS_MAC) $(SCRIPT_TARGETS_COMMON)
 scripts-ios: $(SCRIPT_TARGETS_IOS) $(SCRIPT_TARGETS_COMMON)
 scripts-android: $(SCRIPT_TARGETS_ANDROID) $(SCRIPT_TARGETS_COMMON)
+scripts-linux-portable: $(SCRIPT_TARGETS_LINUX_PORTABLE) \
+  $(SCRIPT_TARGETS_COMMON)
 
 # Build scripts for all platforms
 scripts: scripts-cmake scripts-win-Win32 scripts-win-x64 scripts-mac \
-  scripts-ios scripts-android
+  scripts-ios scripts-android scripts-linux-portable
 scripts-clean:
 	rm -rf $(BUILD_DIR)/ba_data/python $(BUILD_DIR)/ba_data/python-site-packages \
   $(BUILD_DIR)/pylib-android $(BUILD_DIR)/pylib-apple \
+  $(BUILD_DIR)/pylib-linux-portable \
   $(BUILD_DIR)/windows/Win32/Lib $(BUILD_DIR)/windows/x64/Lib
 
 # Build all required assets for a specific platform.

@@ -151,6 +151,12 @@ class ProjectUpdater:
         for path in self._enqueued_updates:
             self.generate_file(path)
 
+        # Native OS resource files (Android strings.xml, Apple string
+        # catalogs) from the committed OS-strings data. (Not part of
+        # 'empty' mode, which does only what is explicitly asked.)
+        if self.run_file_checks:
+            self._generate_os_strings_files()
+
         # Run some lovely checks.
         if self.run_file_checks:
             from batools.project import _checks, _checks_cpp, _checks_apidocs
@@ -432,6 +438,29 @@ class ProjectUpdater:
         # exists when the plus feature-set is present).
         if 'plus' in self.feature_sets:
             self.enqueue_update('src/assets/ba_data/python/baplus/_cloud.py')
+
+    def _generate_os_strings_files(self) -> None:
+        """Render native OS resource files from ``pconfig/osstrings.json``.
+
+        Core repo only. Spinoff dsts get these files from spinoff
+        itself, which layers in the dst's own overrides (so the dst's
+        copies must not be regenerated here); the public repo carries
+        neither the Android nor the Xcode project.
+        """
+        from batools import osstrings
+
+        if self.public:
+            return
+        if 'ballistica' + 'kit' != 'ballisticakit':
+            return
+        data = osstrings.OsStringsData.load(
+            Path(self.projroot, osstrings.DATA_PATH)
+        )
+        existing = {
+            path: Path(self.projroot, path).read_text(encoding='utf-8')
+            for path in osstrings.APPLE_PLISTS
+        }
+        self._generated_files.update(osstrings.render_files(data, existing))
 
     def _update_xcode_projects(self) -> None:
         # from batools.xcode import update_xcode_project

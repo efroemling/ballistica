@@ -214,8 +214,18 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
             )
         return None
 
+    def _eng_has_line_break(strfile: AssetsV1StringFileV1) -> bool | None:
+        for locale, output in strfile.outputs.items():
+            if locale.value != 'eng':
+                continue
+            if isinstance(output.value, str):
+                return '\n' in output.value
+            return any('\n' in f for f in output.value.forms.values())
+        return None
+
     errors: list[str] = []
     warnings: list[str] = []
+    break_warnings: list[str] = []
     for path in sorted(Path(ws_dir).rglob('*.bstr')):
         rel = path.relative_to(ws_dir)
         try:
@@ -241,6 +251,18 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
                         f' `prose` if it is meant to be unbounded,'
                         f' or pin a line count. (D21)'
                     )
+                # Briefs must never ask for line breaks: translation
+                # strips them (the display layer wraps), so a break in a
+                # brief only costs a rejected attempt per locale. Flag
+                # briefs holding one whose English output came back
+                # without it -- i.e. a break the pipeline threw away.
+                # (Keep-as-is formatting templates whose output really
+                # does carry a newline, like compose/line_pair, pass.)
+                if (
+                    '\n' in strfile.input
+                    and _eng_has_line_break(strfile) is False
+                ):
+                    break_warnings.append(f'  {rel}')
         except CleanError as exc:
             errors.append(f'  {rel}: {exc}')
         except Exception as exc:
@@ -250,6 +272,19 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
         print(
             f'{Clr.YLW}Warning: {len(warnings)} unconstrained-layout'
             f' {label}:\n' + '\n'.join(warnings) + f'{Clr.RST}'
+        )
+    if break_warnings:
+        label = 'brief' if len(break_warnings) == 1 else 'briefs'
+        print(
+            f'{Clr.YLW}Warning: {len(break_warnings)} {label} asking for'
+            f' line breaks. Translations never keep line breaks (the'
+            f' display layer wraps text), so each break costs a rejected'
+            f' attempt per locale and changes nothing. Describe the text'
+            f' on one line, and give the string a wrap path-val'
+            f' ("wrap": {{"mn": N, "mx": N}} in workspace.json) if it'
+            f' needs a fixed line count:\n'
+            + '\n'.join(break_warnings)
+            + f'{Clr.RST}'
         )
     if errors:
         label = 'brief' if len(errors) == 1 else 'briefs'

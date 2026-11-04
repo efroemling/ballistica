@@ -91,8 +91,15 @@ class DevConsoleTabAppModes(DevConsoleTab):
             )
             return
 
-        bwidth = 300
+        # Buttons are 300 wide while they all fit in the virtual safe
+        # area; past that they share its width evenly (labels shrink to
+        # fit on their own).
         bpadding = 5
+        usable_width = (
+            min(self.width, _babase.get_virtual_safe_area_size()[0])
+            - 2.0 * bpadding
+        )
+        bwidth = min(300.0, usable_width / max(1, len(self._app_modes)))
 
         xoffs = -0.5 * bwidth * len(self._app_modes)
 

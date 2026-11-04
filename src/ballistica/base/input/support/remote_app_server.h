@@ -40,7 +40,14 @@ class RemoteAppServer {
   void HandleData(int sd, uint8_t* data, size_t data_size,
                   struct sockaddr* from, size_t from_size);
 
+  /// Drop every connected client, removing their controllers (as when
+  /// switching to an app-mode that doesn't run the remote server). The
+  /// remote apps aren't told (the protocol has no host-side disconnect);
+  /// they notice when their state stops being acked.
+  void DropAllClients();
+
  private:
+  void RemoveClient_(int index);
   auto GetClient(int request_id, struct sockaddr* addr, size_t addr_len,
                  const char* name, bool using_v2) -> int;
   struct RemoteAppClient {

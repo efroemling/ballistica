@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_NETWORKING_NETWORK_READER_H_
 #define BALLISTICA_BASE_NETWORKING_NETWORK_READER_H_
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <memory>
@@ -27,6 +28,13 @@ class NetworkReader {
   void SetPort(int port);
   void OnAppSuspend();
   void OnAppUnsuspend();
+
+  /// Set which networking features the current app-mode wants (see
+  /// AppMode::WantsClassicNetworking() and
+  /// AppMode::WantsRemoteAppServer()). Our sockets are open only while
+  /// at least one is wanted and the app is not suspended. Main thread
+  /// only.
+  void SetWantedFeatures(bool classic_networking, bool remote_app_server);
   auto port4() const { return port4_; }
   auto port6() const { return port6_; }
   auto sd_mutex() -> std::mutex& { return sd_mutex_; }
@@ -37,7 +45,26 @@ class NetworkReader {
   void DoSelect_(bool* can_read_4, bool* can_read_6);
   void DoPoll_(bool* can_read_4, bool* can_read_6);
   void OpenSockets_();
+  void CloseSockets_();
   void PokeSelf_();
+
+  /// Whether our sockets should currently be open.
+  auto ShouldListen_() const -> bool {
+    return !paused_ && (classic_wanted_ || remote_wanted_);
+  }
+
+  /// Tell the platform whether we're listening (Android holds a wifi
+  /// multicast lock so broadcast scan queries reach us). Main thread
+  /// only; calls through only on changes.
+  void UpdatePlatformListeningState_();
+
+  /// Advertise our socket (Bonjour etc.) for whatever we currently
+  /// serve, or stop advertising if it's closed. Any thread.
+  void UpdateAdvertising_();
+
+  /// Drop all remote-app clients if that's been requested. Reader
+  /// thread only (the remote server lives there).
+  void ProcessPendingRemoteDrop_();
   auto RunThread_() -> int;
   void PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
                                   const SockAddr& addr);
@@ -58,7 +85,13 @@ class NetworkReader {
   int port6_{-1};
   int sd4_{-1};
   int sd6_{-1};
-  bool paused_{};
+  // These are written with paused_mutex_ held and read freely by the
+  // reader thread.
+  std::atomic<bool> paused_{};
+  std::atomic<bool> classic_wanted_{};
+  std::atomic<bool> remote_wanted_{};
+  std::atomic<bool> remote_drop_pending_{};
+  bool platform_listening_{};
   std::thread* thread_{};
   std::mutex paused_mutex_;
   std::condition_variable paused_cv_;

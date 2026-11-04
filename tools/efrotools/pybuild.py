@@ -290,7 +290,7 @@ def patch_modules_setup(
     python_dir: str, baseplatform: str, python_version: str = '3.13'
 ) -> None:
     """Muck with the Setup.* files Python uses to build modules."""
-    if baseplatform not in ('android', 'apple'):
+    if baseplatform not in ('android', 'apple', 'linux'):
         raise ValueError(f'Unsupported baseplatform: {baseplatform!r}')
 
     if python_version not in ('3.13', '3.14'):

@@ -305,7 +305,7 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
           float r = i->color.x;
           float g = i->color.y;
           float b = i->color.z;
-          Graphics::GetSafeColor(&r, &g, &b, 0.85f);
+          Graphics::GetSafeColor(&r, &g, &b);
 
           int elem_count = i->GetText().GetElementCount();
           for (int e = 0; e < elem_count; e++) {

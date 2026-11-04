@@ -61,6 +61,7 @@ class PlatformWindows : public Platform {
   void CloseSocket(int socket) override;
   auto GetBroadcastAddrs() -> std::vector<uint32_t> override;
   auto SetSocketNonBlocking(int sd) -> bool override;
+  void ConfigureUDPSocket(int sd) override;
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;
 

@@ -73,7 +73,13 @@ Decisions, and why:
   the plus feature-set (often gone at fatal time) and a server-side
   build lookup that only ever existed on the v1 master server. When
   `g_core` itself is gone the report says `coregone=True` rather than
-  claiming a clean build.
+  claiming a clean build. Two of the signals come from checks that
+  take a while (the mods-dir scan; workspace state, settled at initial
+  sign-in), and `custompy` waits on baenv config, so a report from
+  before they finish can't be read as clean: those reports carry
+  `modpending=True` (builds 1.8.7+; `CoreFeatureSet::
+  ModdedCheckPending()`). The signals live behind `CoreFeatureSet`
+  setters, which also push them to Crashlytics as custom keys.
 
 ### Deferred delivery
 
@@ -179,7 +185,7 @@ report is a fatal-error report carrying an extra `crash` block.
 | OS version | `CrashInfoSetOSVersion()`, right after core imports | Empty until then, or when the platform can't tell; omitted from the report when empty. Driver-level crashes often depend on the OS build as much as on the driver. On Windows it is the true version (`10.0.<build>.<revision>`; a build of 22000+ is Windows 11) |
 | Renderer identity | `CrashInfoSetRenderer()`, at GL context setup | The GL renderer and version strings, e.g. ANGLE version, backend, GPU, driver. The field most likely to reveal a GPU-driver crash, and one a field report has no other way to get |
 | App-state bits (1 = app-active, 2 = app-suspended), update count | `CrashInfoUpdateRuntime()`, each logic-thread display-time update | Per drawn frame with a GUI, ~10 Hz headless. Answers "was it even in the foreground?" and, with uptime, separates a startup crash from one twenty minutes in |
-| Modded signals, `core_alive` | Same | Mirrored as the app runs. `core_alive` answers the fatal channel's `coregone` question as of the fault, not as of sending |
+| Modded signals, `modpending`, `core_alive` | Same | Mirrored as the app runs. `core_alive` answers the fatal channel's `coregone` question as of the fault, not as of sending. `modpending` (format 4, 1.8.7+) as in the fatal channel. A crash before the first logic update finds them all still zero |
 | Fault code, fault address, faulting module + base, access type/address, crash time | The crash handler | Module + offset is the useful half: it survives ASLR and is what archived symbols resolve against |
 
 **Coupling:** `GetOSVersionString()` is also hashed into
@@ -345,7 +351,8 @@ What we feed it:
   `ReportFatalError` logs in builds after 23040. The same error is also
   reported through the [fatal errors](#fatal-errors) channel — expect
   both, and prefer ours for the message and build identity.
-- **Custom keys** via `Platform::SetDebugKey()`.
+- **Custom keys** via `Platform::SetDebugKey()` — the modded signals
+  and build blessing, plus `LastUpdateTime`.
 
 Three reading traps: the "device" on a report is whatever the device
 claims to be (bursts of one model within minutes of an upload are

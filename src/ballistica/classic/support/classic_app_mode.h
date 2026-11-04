@@ -188,6 +188,12 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_size() const { return public_party_size_; }
   void SetPublicPartySize(int count);
   auto public_party_max_size() const { return public_party_max_size_; }
+
+  /// Whether we (the host) count as a party member: in the roster,
+  /// the party size we report, and against the max party size. Hosts
+  /// do (someone plays there); a dedicated server (explicit server
+  /// mode) doesn't, so its sizes and max count client devices only.
+  auto PartyCountsHost() const -> bool;
   void SetPublicPartyQueueEnabled(bool enabled);
   auto public_party_queue_enabled() const {
     return public_party_queue_enabled_;
@@ -259,25 +265,8 @@ class ClassicAppMode : public base::AppMode {
   void SetInternalMusic(base::SoundAsset* music, float volume = 1.0,
                         bool loop = true, uint32_t fade_out_millisecs = 0);
 
-  // Run a cycle of host scanning (basically sending out a broadcast packet
-  // to see who's out there).
-  void HostScanCycle();
-  void EndHostScanning();
-
-  struct ScanResultsEntry {
-    std::string display_string;
-    std::string address;
-    // V2-scan extras; defaults apply for hosts seen only via V1 scans.
-    bool has_v2{};
-    std::string party_name;
-    int party_size{};
-    int party_max_size{};
-    bool auth_required{};
-    int build_number{};
-    int protocol_version{};
-  };
-
-  auto GetScanResults() -> std::vector<ScanResultsEntry>;
+  // (Finding hosts on the LAN is babase's nearby-discovery's job; we
+  // only answer.)
   void HandleGameQuery(const char* buffer, size_t size,
                        sockaddr_storage* from) override;
   void DrawWorld(base::FrameDef* frame_def) override;
@@ -292,6 +281,9 @@ class ClassicAppMode : public base::AppMode {
   auto buffer_time() const { return buffer_time_; }
   void set_buffer_time(int val) { buffer_time_ = val; }
   void OnActivate() override;
+  void OnDeactivate() override;
+  auto WantsClassicNetworking() const -> bool override { return true; }
+  auto WantsRemoteAppServer() const -> bool override { return true; }
   auto GetHeadlessNextDisplayTimeStep() -> microsecs_t override;
 
   auto host_protocol_version() const {
@@ -384,18 +376,10 @@ class ClassicAppMode : public base::AppMode {
   void RetryInternalMusic_();
   void CancelInternalMusicRetry_();
   void OnGameRosterChanged_();
-  void PruneScanResults_();
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
   void Reset_();
   void PruneSessions_();
   void HandleQuitOnIdle_();
-
-  struct ScanResultsEntryPriv_;
-
-  // Note: would use an unordered_map here but gcc doesn't seem to allow
-  // forward declarations of their template params.
-  std::map<std::string, ScanResultsEntryPriv_> scan_results_;
-  std::mutex scan_results_mutex_;
 
   // The launch-metascan hosting set. Written once from the logic thread;
   // read by the network-reader thread when answering V2 host-queries.
@@ -426,8 +410,6 @@ class ClassicAppMode : public base::AppMode {
   seconds_t root_ui_chest_2_ad_allow_time_;
   seconds_t root_ui_chest_3_ad_allow_time_;
 
-  uint32_t next_scan_query_id_{};
-  int scan_socket_{-1};
   int host_protocol_version_{-1};
 
   std::list<std::string> chat_messages_;
@@ -469,7 +451,8 @@ class ClassicAppMode : public base::AppMode {
   millisecs_t next_long_update_report_time_{};
   int debug_speed_exponent_{};
   int replay_speed_exponent_{};
-  int public_party_size_{1};  // Always count ourself (is that what we want?).
+  // (Counts ourself unless we're a dedicated server; see PartyCountsHost().)
+  int public_party_size_{1};
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};

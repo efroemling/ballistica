@@ -125,8 +125,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
-  Vector3f tilt = tilt_scale_ * 0.01f * g_base->input->tilt();
-  if (draw_control_parent()) tilt += 0.02f * g_base->input->tilt();
+  float tilt_shift = tilt_scale_ * 0.01f;
+  if (draw_control_parent()) tilt_shift += 0.02f;
+  Vector3f tilt = tilt_shift_.value_or(tilt_shift) * g_base->input->tilt();
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
 

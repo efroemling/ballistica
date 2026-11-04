@@ -623,35 +623,104 @@ auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
   return debug_graphs_[name].get();
 }
 
+namespace {
+
+// OKLab conversions (sRGB channels in 0..1, gamma-encoded). Doubles,
+// to match bacommon.color's Python closely.
+
+auto SrgbToLinear(double v) -> double {
+  return v <= 0.04045 ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4);
+}
+
+auto LinearToSrgb(double v) -> double {
+  return v <= 0.0031308 ? 12.92 * v : 1.055 * std::pow(v, 1.0 / 2.4) - 0.055;
+}
+
+void SrgbToOklab(const double* rgb, double* lab) {
+  double r = SrgbToLinear(std::clamp(rgb[0], 0.0, 1.0));
+  double g = SrgbToLinear(std::clamp(rgb[1], 0.0, 1.0));
+  double b = SrgbToLinear(std::clamp(rgb[2], 0.0, 1.0));
+  double l = std::cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  double m = std::cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  double s = std::cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  lab[0] = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  lab[1] = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  lab[2] = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+}
+
+void OklabToLinear(const double* lab, double* rgb) {
+  double l = lab[0] + 0.3963377774 * lab[1] + 0.2158037573 * lab[2];
+  double m = lab[0] - 0.1055613458 * lab[1] - 0.0638541728 * lab[2];
+  double s = lab[0] - 0.0894841775 * lab[1] - 1.2914855480 * lab[2];
+  l = l * l * l;
+  m = m * m * m;
+  s = s * s * s;
+  rgb[0] = 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  rgb[1] = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  rgb[2] = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+}
+
+auto InGamut(const double* rgb) -> bool {
+  for (int i = 0; i < 3; ++i) {
+    if (rgb[i] < -0.0001 || rgb[i] > 1.0001) {
+      return false;
+    }
+  }
+  return true;
+}
+
+}  // namespace
+
+// Keep in step with its pure-Python twin, bacommon.color.safe_color()
+// (for code that can't call the engine); a test checks they match.
 void Graphics::GetSafeColor(float* red, float* green, float* blue,
                             float target_intensity) {
   assert(red && green && blue);
 
-  // Mult our color up to try and hit the target intensity.
-  float intensity = 0.2989f * (*red) + 0.5870f * (*green) + 0.1140f * (*blue);
-  if (intensity < target_intensity) {
-    float s = target_intensity / std::max(0.001f, intensity);
-    *red = std::min(1.0f, (*red) * s);
-    *green = std::min(1.0f, (*green) * s);
-    *blue = std::min(1.0f, (*blue) * s);
+  // Lift the color's perceptual lightness (OKLab L) to a floor, keeping
+  // its hue, and take away only as much chroma as it takes to stay a
+  // displayable color. Never darkens; colors already light enough pass
+  // through untouched. (Before 2026-10 this scaled RGB up toward a
+  // luma target, which dimmed nothing but left saturated blues dark and
+  // shifted darker hues, such as brown toward orange.) The floor eases
+  // out from 0 at target_intensity 0 (no change) to 0.755 at 1.0
+  // (higher goes pastel): quick at first, flattening toward the top,
+  // so low targets differ visibly and high ones don't wash out. About
+  // 0.63 at the default 0.6.
+  double target = std::clamp(static_cast<double>(target_intensity), 0.0, 1.0);
+  double min_lightness = 0.755 * target * (2.0 - target);
+  double rgb[3] = {*red, *green, *blue};
+  double lab[3];
+  SrgbToOklab(rgb, lab);
+  if (lab[0] >= min_lightness) {
+    return;
   }
+  double chroma = std::hypot(lab[1], lab[2]);
+  double hue = std::atan2(lab[2], lab[1]);
 
-  // We may still be short of our target intensity due to clamping (ie:
-  // (10,0,0) will not look any brighter than (1,0,0)) if that's the case,
-  // just convert the difference to a grey value and add that to all
-  // channels... this *still* might not get us there so lets do it a few times
-  // if need be.  (i'm sure there's a less bone-headed way to do this)
-  for (int i = 0; i < 4; i++) {
-    float remaining =
-        (0.2989f * (*red) + 0.5870f * (*green) + 0.1140f * (*blue)) - 1.0f;
-    if (remaining > 0.0f) {
-      *red = std::min(1.0f, (*red) + 0.2989f * remaining);
-      *green = std::min(1.0f, (*green) + 0.5870f * remaining);
-      *blue = std::min(1.0f, (*blue) + 0.1140f * remaining);
+  // Binary-search the most chroma that fits at the new lightness.
+  double lo{0.0};
+  double hi{chroma};
+  double best[3] = {min_lightness, 0.0, 0.0};
+  for (int i = 0; i < 20; ++i) {
+    double mid = (lo + hi) * 0.5;
+    double trial[3] = {min_lightness, mid * std::cos(hue), mid * std::sin(hue)};
+    double lin[3];
+    OklabToLinear(trial, lin);
+    if (InGamut(lin)) {
+      best[0] = trial[0];
+      best[1] = trial[1];
+      best[2] = trial[2];
+      lo = mid;
     } else {
-      break;
+      hi = mid;
     }
   }
+  double lin[3];
+  OklabToLinear(best, lin);
+  *red = static_cast<float>(LinearToSrgb(std::clamp(lin[0], 0.0, 1.0)));
+  *green = static_cast<float>(LinearToSrgb(std::clamp(lin[1], 0.0, 1.0)));
+  *blue = static_cast<float>(LinearToSrgb(std::clamp(lin[2], 0.0, 1.0)));
 }
 
 void Graphics::BrightenColor(float* rgb, float brightness) {

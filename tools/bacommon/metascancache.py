@@ -182,8 +182,12 @@ class ScanCache:
         if dirname:
             os.makedirs(dirname, exist_ok=True)
         tmppath = f'{path}.tmp'
+        # (dumps() + write() rather than dump(): dump() streams through
+        # json's pure-Python encoder, whose recursive closures leave a
+        # ~33-object reference cycle per call; dumps() uses the C one.)
+        jsonstr = json.dumps(data, separators=(',', ':'))
         with open(tmppath, 'w', encoding='utf-8') as outfile:
-            json.dump(data, outfile, separators=(',', ':'))
+            outfile.write(jsonstr)
         os.replace(tmppath, path)
 
     def get(self, name: str, key: list) -> ModuleOutcome | None:

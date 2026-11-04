@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.261021`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.261029`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages: shared vocabulary, plus a little
@@ -11,7 +11,7 @@ BaClassicAssets. Keep it light: no ui chrome, nothing large.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 820
+# ba_meta require asset-package 975
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -25,8 +25,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.bacommonassets.261021
-_ASSET_PACKAGE = ApverNum(820)
+# a-0.bacommonassets.261029
+_ASSET_PACKAGE = ApverNum(975)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import MeshHandle, SoundHandle, TextureHandle

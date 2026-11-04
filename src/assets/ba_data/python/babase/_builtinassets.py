@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261028`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261102a`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 953
+# ba_meta require asset-package 1008
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-# a-0.babuiltinassets.261028
-_ASSET_PACKAGE = ApverNum(953)
+# a-0.babuiltinassets.261102a
+_ASSET_PACKAGE = ApverNum(1008)
 
 if TYPE_CHECKING:
     import datetime
@@ -801,6 +801,42 @@ if TYPE_CHECKING:
         #:     connection?)"
         unavailable_no_connection: LangStr
 
+    class StringsOsGroup:
+        """
+        ::
+
+            Strings the operating system shows from the app's native resource
+            files (app name, native dialog text, permission prompts); generated
+            into Android strings.xml and Apple string catalogs at pin time.
+
+            See source for the full asset list.
+        """
+
+        def fatal_error(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Message in the native Android dialog shown when the app hits an
+                unrecoverable error and must close; technical error details are
+                appended below it. The placeholder is the support email address.
+                Generated into native OS resource files.
+
+                English: "Uh oh; something is missing or broken. Please try
+                reinstalling the app or contact {email} for help."
+            """
+
+        #: ::
+        #:
+        #:     Body text of the operating system's local-network permission
+        #:     prompt on Apple platforms (Info.plist
+        #:     NSLocalNetworkUsageDescription). The OS shows the app's name in
+        #:     the prompt's title, above this text. Generated into native OS
+        #:     resource files.
+        #:
+        #:     English: "Used to find and join games on your local network and
+        #:     to connect controllers."
+        local_network_usage: LangStr
+
     class StringsPluginsGroup:
         """
         ::
@@ -1352,6 +1388,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Generic label for a button that confirms and finishes an edit
+        #:     (used by e.g. the native Android text-edit dialog's confirm
+        #:     button).
+        #:
+        #:     English: "Done"
+        done: LangStr
+
+        #: ::
+        #:
         #:     Generic Error title used on error dialogs (e.g. the boot-time
         #:     asset-update dialog when a load fails).
         #:
@@ -1552,6 +1597,7 @@ if TYPE_CHECKING:
         device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
+        os: StringsOsGroup
         plugins: StringsPluginsGroup
         replay: StringsReplayGroup
         scripts: StringsScriptsGroup
@@ -1615,8 +1661,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 138 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 133 more). Full list in source.
+    #: The ``strings`` group - 141 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 136 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1702,6 +1748,7 @@ _TREE = {
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
+        'os': {'fatal_error': ('email',), 'local_network_usage': ()},
         'plugins': {
             'class_load_error': ('plugin', 'error'),
             'detected': (),
@@ -1763,6 +1810,7 @@ _TREE = {
             'cancel': (),
             'clipboard_not_supported': (),
             'copied_to_clipboard': (),
+            'done': (),
             'error': (),
             'game_center': (),
             'google_play': (),

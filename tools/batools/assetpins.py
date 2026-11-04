@@ -11,7 +11,12 @@ two places:
 - per-wrapper ``# ba_meta require asset-package <id>`` lines
   inside Python wrapper modules (server-generated; see the
   ``GET /api/v1/admin/asset-package-versions/{id}/python-wrapper``
-  REST endpoint).
+  REST endpoint),
+- in spinoff dst projects, a ``ctx.os_strings_package = '<id>'`` line
+  in ``pconfig/spinoffconfig.py``: the package whose strings override
+  the src's OS resource strings (the app name, say). Moving it
+  re-fetches the dst's ``pconfig/osstrings_override.json``, which
+  spinoff layers over the src values (see :mod:`batools.osstrings`).
 
 Per the global build-system design, this is the only build-flow
 step that talks to the cloud and the only one that mutates
@@ -198,7 +203,8 @@ def describe_apverid_fetch_failure(
 class Pin:
     """One discovered asset-package pin."""
 
-    #: Pin-kind identifier; one of ``projectconfig`` or ``wrapper``.
+    #: Pin-kind identifier; one of ``projectconfig``, ``wrapper`` or
+    #: ``spinoffconfig``.
     kind: str
     #: File the pin lives in, relative to projroot.
     file_path: Path
@@ -560,6 +566,7 @@ def _stage_update_writes(
             if splice_future is not None:
                 for rel_path, content in splice_future.result().items():
                     staged[projroot / rel_path] = content
+    _stage_override_write(projroot, resolved, staged, pin_msgs)
     fetch_secs = time.monotonic() - fetch_start
 
     projectconfig_changed = _assemble_pin_stages(
@@ -757,9 +764,54 @@ def _plan_enum_splices(
     # comment above ``kBuiltinAssetsApvernum`` (mirrors
     # check_builtin_asset_ids in batools/project/_checks.py).
     base_h = (projroot / 'src/ballistica/base/base.h').read_text()
-    splice_stale = f'// Builtin asset-package: {pc_apverid}\n' not in base_h
+    splice_stale = (
+        f'// Builtin asset-package: {pc_apverid}\n' not in base_h
+        or _osstrings_apverid(projroot) != pc_apverid
+    )
     fetch_needed = pc_changed or splice_stale
     return pc_apverid, fetch_needed, splice_stale and not pc_changed
+
+
+def _stage_override_write(
+    projroot: Path,
+    resolved: list[tuple[Pin, str]],
+    staged: dict[Path, str],
+    pin_msgs: list[str],
+) -> None:
+    """Stage a fresh spinoff dst OS-strings override file, if needed.
+
+    Needed when the spinoffconfig pin moves, or (self-healing, like the
+    enum splices) when the committed override file doesn't match it.
+    """
+    from batools.osstrings import (
+        OVERRIDE_PATH,
+        OsStringsData,
+        fetch_override_data,
+    )
+
+    sc_apverid = next(
+        (apv for pin, apv in resolved if pin.kind == 'spinoffconfig'), None
+    )
+    if sc_apverid is None:
+        return
+    path = projroot / OVERRIDE_PATH
+    if path.exists() and OsStringsData.load(path).apverid == sc_apverid:
+        return
+    staged[path] = fetch_override_data(projroot, sc_apverid).to_json()
+    pin_msgs.append(
+        f'  {Clr.BLD}{OVERRIDE_PATH}{Clr.RST}'
+        f' fetched from {Clr.CYN}{sc_apverid}{Clr.RST}.'
+    )
+
+
+def _osstrings_apverid(projroot: Path) -> str | None:
+    """The builtin version ``osstrings.json`` was fetched from (if any)."""
+    from batools.osstrings import DATA_PATH, OsStringsData
+
+    path = projroot / DATA_PATH
+    if not path.exists():
+        return None
+    return OsStringsData.load(path).apverid
 
 
 def _apply_staged_writes(staged: dict[Path, str]) -> set[Path]:
@@ -828,7 +880,51 @@ def _discover_pins(projroot: Path) -> list[Pin]:
     # carrying a ``# ba_meta require asset-package <id>`` line.
     pins.extend(_discover_wrapper_pins(projroot))
 
+    # A spinoff dst's OS-strings override package.
+    sc_value = _read_spinoffconfig_pin(projroot)
+    if sc_value is not None:
+        account, package = _account_and_package_or_bare_dev(sc_value)
+        pins.append(
+            Pin(
+                kind='spinoffconfig',
+                file_path=Path(_SPINOFFCONFIG_PATH),
+                apverid=sc_value,
+                pin_type=(
+                    PinType.DEV
+                    if is_unresolved_dev(sc_value)
+                    else classify_apverid(sc_value)
+                ),
+                account=account,
+                package=package,
+            )
+        )
+
     return pins
+
+
+_SPINOFFCONFIG_PATH = 'pconfig/spinoffconfig.py'
+
+_RE_SPINOFFCONFIG_PIN = re.compile(
+    r"^(ctx\.os_strings_package\s*=\s*)'([^']*)'", re.MULTILINE
+)
+
+
+def _read_spinoffconfig_pin(projroot: Path) -> str | None:
+    """The ``ctx.os_strings_package`` pin in spinoffconfig.py, if any."""
+    path = projroot / _SPINOFFCONFIG_PATH
+    if not path.exists():
+        return None
+    matches = _RE_SPINOFFCONFIG_PIN.findall(path.read_text())
+    if not matches:
+        return None
+    if len(matches) > 1:
+        raise CleanError(
+            f'Found {len(matches)} ctx.os_strings_package lines in'
+            f' {_SPINOFFCONFIG_PATH}; expected at most one.'
+        )
+    value = matches[0][1]
+    assert isinstance(value, str)
+    return value
 
 
 def _discover_wrapper_pins(projroot: Path) -> list[Pin]:
@@ -1326,7 +1422,25 @@ def _compute_pin_write(
         return _compute_projectconfig_write(projroot, new_apverid)
     if pin.kind == 'wrapper':
         return _compute_wrapper_write(projroot, pin, new_apverid)
+    if pin.kind == 'spinoffconfig':
+        return _compute_spinoffconfig_write(projroot, new_apverid)
     raise CleanError(f'Internal error: unknown pin kind {pin.kind!r}.')
+
+
+def _compute_spinoffconfig_write(
+    projroot: Path, new_apverid: str
+) -> tuple[Path, str]:
+    """Compute spinoffconfig.py with its OS-strings pin moved."""
+    path = projroot / _SPINOFFCONFIG_PATH
+    new_text, count = _RE_SPINOFFCONFIG_PIN.subn(
+        lambda m: f"{m.group(1)}'{new_apverid}'", path.read_text(), count=1
+    )
+    if count == 0:
+        raise CleanError(
+            f'Could not locate ctx.os_strings_package in {path} for'
+            ' writeback.'
+        )
+    return path, new_text
 
 
 def _compute_projectconfig_write(
