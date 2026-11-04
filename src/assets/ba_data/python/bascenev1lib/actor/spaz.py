@@ -24,13 +24,6 @@ POWERUP_WEAR_OFF_TIME = 20000
 BASE_PUNCH_POWER_SCALE = 1.2
 BASE_PUNCH_COOLDOWN = 400
 
-# A Spaz must have been held at least this long for the grab-punch
-# anti-exploit to block a punch. Shorter 'micro grabs'/shoves are ignored
-# so that quick grab-punch-throws stay usable. Note that scene time moves
-# in 8 ms steps (kGameStepMilliseconds), so thresholds are multiples of 8:
-# this is 5 steps.
-GRAB_PUNCH_MIN_HOLD_MS = 40
-
 
 class PickupMessage:
     """We wanna pick something up."""
@@ -1246,7 +1239,8 @@ class Spaz(bs.Actor):
                 # stay usable.
                 if hold_duration <= 32:
                     pass
-                # Check 2: Punching right after starting a grab is the combo.
+                # Check 2: If the punch press was close to the previous
+                # pickup press, block it.
                 elif 0 <= punch_time_diff <= 70:
                     invalid_punch = True
                 # Check 3: After a release, only block if the last grab was a
