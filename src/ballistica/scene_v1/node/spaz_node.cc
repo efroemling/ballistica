@@ -2802,6 +2802,11 @@ void SpazNode::Step() {
     wake_slide_--;
   }
 
+  // If we're knocked out or frozen, drop whatever we're holding.
+  if (behavior_version_ >= 3 && (knockout_ || frozen_)) {
+    DropHeldObject();
+  }
+
   // if we're wanting to throw something...
   if (throwing_) {
     throwing_ = false;
