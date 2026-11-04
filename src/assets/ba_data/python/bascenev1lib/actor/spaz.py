@@ -1233,29 +1233,34 @@ class Spaz(bs.Actor):
             # Prevent punches against other Spaz characters shortly
             # before or after grabbing.
             if not self._allow_punch_grab:
-                now_ms = int(bs.time() * 1000)
                 punch_time_diff = (
                     self.last_punch_time_ms - self.last_pickup_time_ms
                 )
-                release_time_diff = now_ms - self.node.pickup_release_time_ms
-                target_spaz = node.getdelegate(Spaz)
+                release_time_diff = (
+                    int(bs.time() * 1000) - self.node.pickup_release_time_ms
+                )
+                hold_duration = self.node.hold_duration_ms
+                invalid_punch = False
 
-                # Only care if the victim is a Spaz and the last thing we
-                # grabbed was also a Spaz. Grabbing props or flags must
-                # never block a normal punch.
-                if target_spaz is not None and self._last_grab_was_spaz:
-                    hold_duration = self.node.hold_duration_ms
+                # Check 1: Don't block micro-grabs/shoves; short holds
+                # stay usable.
+                if hold_duration <= 32:
+                    pass
+                # Check 2: Punching right after starting a grab is the combo.
+                elif 0 <= punch_time_diff <= 70:
+                    invalid_punch = True
+                # Check 3: After a release, only block if the last grab was a
+                # Spaz; bombs and flags must never block a punch.
+                elif release_time_diff <= 360 and self._last_grab_was_spaz:
+                    invalid_punch = True
 
-                    # Don't block micro-grabs/shoves; those are the
-                    # risky-but-legit version of this combo.
-                    if hold_duration >= GRAB_PUNCH_MIN_HOLD_MS and (
-                        0 <= punch_time_diff <= 70 or release_time_diff <= 360
-                    ):
-                        # Remember this for the rest of the punch; the
-                        # same fist can collide again on a later tick,
-                        # where the timing may no longer look blocked.
-                        self._blocked_punch_nodes.add(node)
-                        return None
+                # Only care if the victim is a Spaz and the punch is invalid.
+                if node.getdelegate(Spaz) and invalid_punch:
+                    # Remember this for the rest of the punch; the
+                    # same fist can collide again on a later tick,
+                    # where the timing may no longer look blocked.
+                    self._blocked_punch_nodes.add(node)
+                    return None
 
             # Only allow one hit per node per punch.
             if (
