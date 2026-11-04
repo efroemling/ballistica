@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from compression.zstd import ZstdDecompressor
 
     from bacommon.bacloud import ResponseData, StandardResponseData
+    from bacommon.cloudfilecodec import CompressionType
 
     from bacommontools.bacloudsession import BacloudSession
 
@@ -215,6 +216,49 @@ def _hash_file(path: str) -> tuple[int, str]:
                 break
             h.update(chunk)
     return size, h.hexdigest()
+
+
+def _put_upload(
+    path: str,
+    upload_url: str,
+    upload_headers: dict[str, str],
+    encoding: CompressionType,
+    level: int,
+    *,
+    label: str | None = None,
+) -> None:
+    """PUT a local file to a signed upload URL, encoded as asked (v31).
+
+    Compressed uploads go through a temp file holding the encoded bytes
+    (the server verifies them by decoding). Setting Content-Length
+    forces a non-chunked PUT, which the signed URL needs; urllib3
+    streams the file object in fixed-size chunks, so memory stays
+    bounded regardless of file size.
+    """
+    from bacommon.bacloud import encode_upload_file
+
+    encoded = encode_upload_file(path, encoding, level)
+    send_path = path if encoded is None else encoded
+    try:
+        put_headers = dict(upload_headers)
+        put_headers['Content-Length'] = str(os.path.getsize(send_path))
+        with open(send_path, 'rb') as infile:
+            response = _g_pool.request(
+                'PUT',
+                upload_url,
+                body=infile,
+                headers=put_headers,
+                retries=False,
+            )
+    finally:
+        if encoded is not None:
+            os.unlink(encoded)
+    if not 200 <= response.status < 300:
+        raise CleanError(
+            f'GCS upload of {label or path} failed:'
+            f' status={response.status}'
+            f' body={_err_body(response)!r}'
+        )
 
 
 def _upload_plan_sibling(finalize_command: str, sibling: str) -> str:
@@ -974,28 +1018,13 @@ class App:
         for entry in uploads_signed:
             if not os.path.exists(entry.path):
                 raise CleanError(f'File not found: {entry.path}')
-            file_size = os.path.getsize(entry.path)
-            # Setting Content-Length explicitly forces a non-chunked PUT,
-            # which is required for the signed URL's Content-MD5 binding
-            # to validate against a single body on the GCS side. urllib3
-            # streams the file object in fixed-size chunks (no slurp), so
-            # memory stays bounded regardless of file size.
-            put_headers = dict(entry.upload_headers)
-            put_headers['Content-Length'] = str(file_size)
-            with open(entry.path, 'rb') as infile:
-                response = _g_pool.request(
-                    'PUT',
-                    entry.upload_url,
-                    body=infile,
-                    headers=put_headers,
-                    retries=False,
-                )
-            if not 200 <= response.status < 300:
-                raise CleanError(
-                    f'GCS upload of {entry.path} failed:'
-                    f' status={response.status}'
-                    f' body={_err_body(response)!r}'
-                )
+            _put_upload(
+                entry.path,
+                entry.upload_url,
+                entry.upload_headers,
+                entry.upload_encoding,
+                entry.upload_level,
+            )
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
 
@@ -1127,24 +1156,14 @@ class App:
                 continue
             assert item.upload_url is not None
             assert item.session_id is not None
-            local = local_paths[item.name]
-            file_size = os.path.getsize(local)
-            put_headers = dict(item.upload_headers)
-            put_headers['Content-Length'] = str(file_size)
-            with open(local, 'rb') as infile:
-                resp = _g_pool.request(
-                    'PUT',
-                    item.upload_url,
-                    body=infile,
-                    headers=put_headers,
-                    retries=False,
-                )
-            if not 200 <= resp.status < 300:
-                raise CleanError(
-                    f'GCS upload of {item.name} failed:'
-                    f' status={resp.status}'
-                    f' body={_err_body(resp)!r}'
-                )
+            _put_upload(
+                local_paths[item.name],
+                item.upload_url,
+                item.upload_headers,
+                item.upload_encoding,
+                item.upload_level,
+                label=item.name,
+            )
             sessions[item.name] = item.session_id
 
         # Phase 4: finalize uploaded files (if any).

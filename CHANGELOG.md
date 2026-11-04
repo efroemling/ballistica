@@ -1,4 +1,4 @@
-### 1.8.7 (build 23088, api 9, 2026-11-03)
+### 1.8.7 (build 23089, api 9, 2026-11-04)
 - Fixed local network play on Android 17, which now requires a
   permission for local network access. The game asks for it when you
   open Gather, and shows a warning with a way to grant it wherever

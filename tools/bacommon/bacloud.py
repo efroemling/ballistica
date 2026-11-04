@@ -236,7 +236,50 @@ if TYPE_CHECKING:
 #               ``BACLOUD_VERSION`` as usual (an old client would write
 #               the compressed bytes and fail its sha256 check), so
 #               prod and push-public land together.
-BACLOUD_VERSION = 30
+# 31 (2026-11): The client compresses uploads itself. Adds
+#               ``upload_encoding`` + ``upload_level`` to
+#               ``SignedUploadEntry`` and ``UploadPlanPrepareItem``: the
+#               server picks each file's stored encoding (by name), the
+#               client zstd-encodes the file at that level and PUTs the
+#               encoded bytes, and the server verifies them by streaming
+#               decode and stores them as sent (no uncompressed copy, no
+#               server-side conversion). ``UploadPlan.form_code`` now
+#               names whether a plan's files are compressed and their
+#               tier. ``MIN_VERSION`` tracks ``BACLOUD_VERSION`` (an old
+#               client would upload plain bytes into a zstd session).
+BACLOUD_VERSION = 31
+
+
+def encode_upload_file(
+    path: str, encoding: CompressionType, level: int
+) -> str | None:
+    """Encode a local file for upload as the server asked (v31+).
+
+    Returns the path of a temp file holding the encoded bytes (the
+    caller deletes it), or None when the file goes up as-is. Streams,
+    so memory stays bounded for any file size.
+    """
+    import os
+    import tempfile
+
+    if encoding is CompressionType.UNCOMPRESSED:
+        return None
+    if encoding is not CompressionType.ZSTD:
+        raise ValueError(f'Cannot encode uploads as {encoding.value}.')
+
+    from compression import zstd
+
+    fd, tmppath = tempfile.mkstemp(prefix='bacloud-upload-', suffix='.zst')
+    try:
+        compressor = zstd.ZstdCompressor(level=level)
+        with os.fdopen(fd, 'wb') as outfile, open(path, 'rb') as infile:
+            while chunk := infile.read(1024 * 1024):
+                outfile.write(compressor.compress(chunk))
+            outfile.write(compressor.flush())
+    except BaseException:
+        os.unlink(tmppath)
+        raise
+    return tmppath
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -456,6 +499,16 @@ class UploadPlanPrepareItem:
     #: Passed back to the server in the finalize request.
     session_id: Annotated[str | None, IOAttrs('s', store_default=False)] = None
 
+    #: Encoding to PUT the file's bytes in (v31+; see
+    #: ``encode_upload_file``).
+    upload_encoding: Annotated[
+        CompressionType,
+        IOAttrs('e', soft_default=CompressionType.UNCOMPRESSED),
+    ] = CompressionType.UNCOMPRESSED
+
+    #: zstd level for :attr:`upload_encoding` (0 when uncompressed).
+    upload_level: Annotated[int, IOAttrs('l', soft_default=0)] = 0
+
 
 @ioprepped
 @dataclass
@@ -613,6 +666,16 @@ class StandardResponseData(ResponseData):
         #: in the next ``end_command`` args under ``uploads_signed`` to
         #: tell the server which upload to finalize.
         session_id: Annotated[str, IOAttrs('s')]
+
+        #: Encoding to PUT the file's bytes in (v31+): the client
+        #: encodes the local file first (see ``encode_upload_file``).
+        upload_encoding: Annotated[
+            CompressionType,
+            IOAttrs('e', soft_default=CompressionType.UNCOMPRESSED),
+        ] = CompressionType.UNCOMPRESSED
+
+        #: zstd level for :attr:`upload_encoding` (0 when uncompressed).
+        upload_level: Annotated[int, IOAttrs('l', soft_default=0)] = 0
 
     @ioprepped
     @dataclass
