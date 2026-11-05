@@ -92,6 +92,7 @@ class Spaz(bs.Actor):
         assert classic is not None
 
         self._allow_punch_grab = classic.allow_punch_grab
+        self._last_grab_was_spaz = False
 
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
@@ -113,6 +114,10 @@ class Spaz(bs.Actor):
         else:
             self._hockey = False
         self._punched_nodes: set[bs.Node] = set()
+        # Nodes whose punch hit was cancelled by the punch-grab
+        # anti-exploit this punch; keep ignoring them until the next
+        # punch so a later collision tick can't sneak the hit through.
+        self._blocked_punch_nodes: set[bs.Node] = set()
         self._cursed = False
         self._connected_to_player: bs.Player | None = None
         materials = [
@@ -423,6 +428,7 @@ class Spaz(bs.Actor):
             if self.punch_callback is not None:
                 self.punch_callback(self)
             self._punched_nodes = set()  # Reset this.
+            self._blocked_punch_nodes = set()
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
             play_swish_sound = (
@@ -1203,7 +1209,11 @@ class Spaz(bs.Actor):
         elif isinstance(msg, PunchHitMessage):
             if not self.node:
                 return None
-            node = bs.getcollision().opposingnode
+
+            try:
+                node = bs.getcollision().opposingnode
+            except bs.NotFoundError:
+                return True
 
             # Don't want to physically affect powerups.
             if node.getdelegate(PowerupBox):
@@ -1218,13 +1228,44 @@ class Spaz(bs.Actor):
                 release_time_diff = (
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
-                if node.getdelegate(Spaz) and (
-                    0 <= punch_time_diff <= 70 or release_time_diff <= 360
-                ):
-                    return None
+                hold_duration = self.node.hold_duration_ms
+                target_spaz = node.getdelegate(Spaz)
+                invalid_punch = False
+
+                # Only care if the victim is a Spaz.
+                if target_spaz is not None:
+                    # Check 1: Don't block micro-grabs/shoves; short holds
+                    # stay usable.
+                    if hold_duration <= 32 and (
+                        # Only care if we're holding the target spaz
+                        # in this moment; otherwise do other checks.
+                        self.node.hold_node is not None
+                        and self.node.hold_node is target_spaz.node
+                    ):
+                        pass
+                    # Check 2: If the punch press was close to the previous
+                    # pickup press, block it.
+                    elif 0 <= punch_time_diff <= 70:
+                        invalid_punch = True
+                    # Check 3: After a release, block punches
+                    # for a short time.
+                    elif release_time_diff <= 360:
+                        invalid_punch = True
+
+                    # If the last grab was a Spaz, and this punch was
+                    # flagged as invalid, block it.
+                    if self._last_grab_was_spaz and invalid_punch:
+                        # Remember this for the rest of the punch; the
+                        # same fist can collide again on a later tick,
+                        # where the timing may no longer look blocked.
+                        self._blocked_punch_nodes.add(node)
+                        return None
 
             # Only allow one hit per node per punch.
-            if node and (node not in self._punched_nodes):
+            if (
+                node not in self._punched_nodes
+                and node not in self._blocked_punch_nodes
+            ):
                 punch_momentum_angular = (
                     self.node.punch_momentum_angular * self._punch_power_scale
                 )
@@ -1329,6 +1370,12 @@ class Spaz(bs.Actor):
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
             self.node.hold_node = opposingnode
+
+            # Was the last grab a spaz?
+            # Used for the punch-grab anti-exploit logic.
+            self._last_grab_was_spaz = (
+                opposingnode.getdelegate(Spaz) is not None
+            )
         elif isinstance(msg, bs.CelebrateMessage):
             if self.node:
                 self.node.handlemessage('celebrate', int(msg.duration * 1000))
@@ -1386,6 +1433,10 @@ class Spaz(bs.Actor):
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = 0
             self.node.hold_node = node
+            # Taking a bomb out sets hold_node directly, so no
+            # PickupMessage fires. Keep the grab-punch flag in sync here.
+            # TODO: use bs.PickUpMessage from SetHoldNode instead.
+            self._last_grab_was_spaz = False
 
     def set_land_mine_count(self, count: int) -> None:
         """Set the number of land-mines this spaz is carrying."""

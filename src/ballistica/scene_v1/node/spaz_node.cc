@@ -613,6 +613,8 @@ class SpazNodeType : public NodeType {
   // (protocol 53) Our color is a team's: tone our other tints down so
   // it stays dominant.
   BA_BOOL_ATTR(team_coloring, team_coloring, set_team_coloring);
+  // (protocol 58) hold_duration_ms, appended last with _LATE.
+  BA_INT_ATTR_READONLY_LATE(hold_duration_ms, get_hold_duration_ms);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -706,7 +708,10 @@ class SpazNodeType : public NodeType {
         boxing_gloves_color_texture(this),
         boxing_gloves_color(this),
         boxing_gloves_scale(this),
-        team_coloring(this) {}
+        team_coloring(this),
+        hold_duration_ms(this) {
+    hold_duration_ms.set_min_protocol(kProtocolVersionHoldDuration);
+  }
 };
 
 static NodeType* node_type{};
@@ -2017,6 +2022,11 @@ void SpazNode::Step() {
   }
 
   step_count_++;
+
+  // Keep hold_duration_ms_ live while holding.
+  if (holding_something_ && hold_start_time_ms_ > 0) {
+    hold_duration_ms_ = scene()->time() - hold_start_time_ms_;
+  }
 
   const dReal* p_head = dGeomGetPosition(body_head_->geom());
   const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
@@ -3540,7 +3550,11 @@ void SpazNode::Step() {
   // If we're holding something and it died, tell userland.
   if (holding_something_) {
     if (!pickup_joint_.IsAlive()) {
+      RecordGrabPunchHold();
       holding_something_ = false;
+      if (hold_start_time_ms_ > 0) {  // Reset this for the next grip.
+        hold_start_time_ms_ = 0;
+      }
       DispatchDropMessage();
     }
   }
@@ -6183,6 +6197,26 @@ void SpazNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
   hand1[0] = hand1[1] = hand1[2] = 0.0f;
   hand2[0] = hand2[1] = hand2[2] = 0.0f;
 }
+auto SpazNode::get_hold_duration_ms() const -> int {
+  int64_t duration = hold_duration_ms_;
+  if (last_spaz_hold_end_time_ms_ > 0) {
+    int64_t now = scene()->time();
+    if (now - last_spaz_hold_end_time_ms_ <= kGrabPunchHoldGraceMs) {
+      duration = std::max(duration, last_spaz_hold_duration_ms_);
+    }
+  }
+  return static_cast<int>(duration);
+}
+
+void SpazNode::RecordGrabPunchHold() {
+  if (hold_was_spaz_ && hold_start_time_ms_ > 0) {
+    int64_t now = scene()->time();
+    last_spaz_hold_duration_ms_ = now - hold_start_time_ms_;
+    last_spaz_hold_end_time_ms_ = now;
+  }
+  hold_was_spaz_ = false;
+}
+
 void SpazNode::DropHeldObject() {
   if (holding_something_) {
     if (hold_node_.exists()) {
@@ -6192,8 +6226,14 @@ void SpazNode::DropHeldObject() {
     assert(!pickup_joint_.IsAlive());
 
     pickup_release_time_ms_ = scene()->time();
+    RecordGrabPunchHold();
     holding_something_ = false;
     hold_body_ = 0;
+
+    // Reset this for the next grip.
+    if (hold_start_time_ms_ > 0) {
+      hold_start_time_ms_ = 0;
+    }
 
     // Dispatch user messages last now that all is in place.
     if (hold_node_.exists()) {
@@ -7902,9 +7942,19 @@ void SpazNode::SetHoldNode(Node* val) {
                       + a->GetObjectDescription());
     }
 
+    // A new grab replaces any current hold without a drop message, so
+    // close out the previous hold ourselves.
+    RecordGrabPunchHold();
     hold_node_ = val;
     holding_something_ = true;
     last_pickup_time_ = scene()->time();
+    // Starting a fresh hold; clear any previous duration before the new
+    // start time replaces it. hold_duration_ms_ then goes live in Step().
+    if (hold_duration_ms_ > 0) {
+      hold_duration_ms_ = 0;
+    }
+    hold_start_time_ms_ = scene()->time();
+    hold_was_spaz_ = (dynamic_cast<SpazNode*>(val) != nullptr);
 
     assert(a && b);
     {
