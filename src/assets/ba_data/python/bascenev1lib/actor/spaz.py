@@ -1239,8 +1239,8 @@ class Spaz(bs.Actor):
                     if hold_duration <= 32 and (
                         # Only care if we're holding the target spaz
                         # in this moment; otherwise do other checks.
-                        self.node.hold_node is not None and
-                        self.node.hold_node is target_spaz.node
+                        self.node.hold_node is not None
+                        and self.node.hold_node is target_spaz.node
                     ):
                         pass
                     # Check 2: If the punch press was close to the previous
@@ -1433,8 +1433,9 @@ class Spaz(bs.Actor):
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = 0
             self.node.hold_node = node
-            # Keep the anti-exploit state in sync with hold_node: taking
-            # a bomb out must not leave us flagged as holding a Spaz.
+            # Taking a bomb out sets hold_node directly, so no
+            # PickupMessage fires. Keep the grab-punch flag in sync here.
+            # TODO: use bs.PickUpMessage from SetHoldNode instead.
             self._last_grab_was_spaz = False
 
     def set_land_mine_count(self, count: int) -> None:
