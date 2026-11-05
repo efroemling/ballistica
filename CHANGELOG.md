@@ -1,4 +1,7 @@
 ### 1.8.7 (build 23089, api 9, 2026-11-04)
+- Fixed the punch-grab protection blocking normal punches after releasing a
+  bomb, flag, or prop. It now only blocks punches after a real grab on another
+  Spaz, so micro-grabs and shoves still work.
 - Fixed local network play on Android 17, which now requires a
   permission for local network access. The game asks for it when you
   open Gather, and shows a warning with a way to grant it wherever
