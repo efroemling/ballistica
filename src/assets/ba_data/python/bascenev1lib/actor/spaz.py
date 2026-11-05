@@ -92,6 +92,7 @@ class Spaz(bs.Actor):
         assert classic is not None
 
         self._allow_punch_grab = classic.allow_punch_grab
+        self._last_grab_was_spaz = False
 
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
@@ -113,7 +114,7 @@ class Spaz(bs.Actor):
         else:
             self._hockey = False
         self._punched_nodes: set[bs.Node] = set()
-        # Nodes whose punch hit was cancelled by the grab-punch
+        # Nodes whose punch hit was cancelled by the punch-grab
         # anti-exploit this punch; keep ignoring them until the next
         # punch so a later collision tick can't sneak the hit through.
         self._blocked_punch_nodes: set[bs.Node] = set()
@@ -224,11 +225,6 @@ class Spaz(bs.Actor):
         self._last_hit_time: int | None = None
         self._num_times_hit = 0
         self._bomb_held = False
-
-        # Anti grab-punch exploit state. The node tracks how long the
-        # current (or last completed) hold lasted; we only need to know
-        # whether that hold was on another Spaz.
-        self._last_grab_was_spaz = False
         if self.default_shields:
             self.equip_shields()
         self._dropped_bomb_callbacks: list[Callable[[Spaz, bs.Actor], Any]] = []
@@ -1426,9 +1422,6 @@ class Spaz(bs.Actor):
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = 0
             self.node.hold_node = node
-            # Keep the anti-exploit state in sync with hold_node: taking
-            # a bomb out must not leave us flagged as holding a Spaz.
-            self._last_grab_was_spaz = False
 
     def set_land_mine_count(self, count: int) -> None:
         """Set the number of land-mines this spaz is carrying."""
