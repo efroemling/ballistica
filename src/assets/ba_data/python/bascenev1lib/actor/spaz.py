@@ -1229,37 +1229,22 @@ class Spaz(bs.Actor):
                     int(bs.time() * 1000) - self.node.pickup_release_time_ms
                 )
                 hold_duration = self.node.hold_duration_ms
-                target_spaz = node.getdelegate(Spaz)
-                invalid_punch = False
 
-                # Only care if the victim is a Spaz.
-                if target_spaz is not None:
-                    # Check 1: Don't block micro-grabs/shoves; short holds
-                    # stay usable.
-                    if hold_duration <= 32 and (
-                        # Only care if we're holding the target spaz
-                        # in this moment; otherwise do other checks.
-                        self.node.hold_node is not None
-                        and self.node.hold_node is target_spaz.node
-                    ):
-                        pass
-                    # Check 2: If the punch press was close to the previous
-                    # pickup press, block it.
-                    elif 0 <= punch_time_diff <= 70:
-                        invalid_punch = True
-                    # Check 3: After a release, block punches
-                    # for a short time.
-                    elif release_time_diff <= 360:
-                        invalid_punch = True
-
-                    # If the last grab was a Spaz, and this punch was
-                    # flagged as invalid, block it.
-                    if self._last_grab_was_spaz and invalid_punch:
-                        # Remember this for the rest of the punch; the
-                        # same fist can collide again on a later tick,
-                        # where the timing may no longer look blocked.
-                        self._blocked_punch_nodes.add(node)
-                        return None
+                # Block only if the victim 'is' and 'was' a Spaz,
+                # the hold (current or just released) was long enough
+                # to not be a micro-grab/shove, and the punch was pressed
+                # near the pickup or the grab was released recently.
+                if (
+                    node.getdelegate(Spaz)
+                    and self._last_grab_was_spaz
+                    and hold_duration >= 40
+                    and (0 <= punch_time_diff <= 70 or release_time_diff <= 360)
+                ):
+                    # Remember this for the rest of the punch; the
+                    # same fist can collide again on a later tick,
+                    # where the timing may no longer look blocked.
+                    self._blocked_punch_nodes.add(node)
+                    return None
 
             # Only allow one hit per node per punch.
             if (
