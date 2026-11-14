@@ -1212,8 +1212,8 @@ class Spaz(bs.Actor):
 
             try:
                 node = bs.getcollision().opposingnode
-            except bs.NotFoundError:
-                return True
+            except bs.NodeNotFoundError:
+                return None
 
             # Don't want to physically affect powerups.
             if node.getdelegate(PowerupBox):
