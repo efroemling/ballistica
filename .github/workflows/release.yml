@@ -292,32 +292,6 @@ jobs:
           docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
 
-  manifest_docker_server_multiarch:
-    needs:
-      [
-        upload_docker_x86_64_server_release_image,
-        upload_docker_arm64_server_release_image,
-      ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create manifest
-        run: |
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }} \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }}
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest
-
   upload_docker_x86_64_gui_release_image:
     runs-on: ubuntu-latest
     steps:
@@ -376,31 +350,19 @@ jobs:
           docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
 
-  manifest_docker_gui_multiarch:
+  # Multiarch tags (<version> and latest) for both images; see
+  # docker_multiarch.yml, which can also be run by hand to redo them.
+  manifest_docker_multiarch:
     needs:
       [
+        upload_docker_x86_64_server_release_image,
+        upload_docker_arm64_server_release_image,
         upload_docker_x86_64_gui_release_image,
         upload_docker_arm64_gui_release_image,
       ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create manifest
-        run: |
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }} \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }}
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest
+    uses: ./.github/workflows/docker_multiarch.yml
+    with:
+      version: ${{ github.ref_name }}
 
   ################################################################################
   #                                                                              #
