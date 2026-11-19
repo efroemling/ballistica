@@ -170,6 +170,7 @@ class ProjectUpdater:
             _checks.check_builtin_asset_ids(self)
             _checks.check_asset_name_compat(self)
             _checks_apidocs.check_internal_api_modules(self)
+            _checks.check_test_durations_age(self)
 
         # Make sure nobody is changing this while processing.
         self._can_generate_files = False

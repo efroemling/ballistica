@@ -185,6 +185,7 @@ from batools.pcommands4 import (
     dump_symbols_fetch,
     push_ipa_to_archive,
     push_apk_to_archive,
+    stamp_test_durations,
 )
 
 # pylint: enable=unused-import

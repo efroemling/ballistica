@@ -102,7 +102,7 @@ def _key(controller: 'DocUIController', request: 'DocUIRequest') -> str | None:
         f'{ctp.__module__}.{ctp.__qualname__}'
         f'|{extra}'
         f'|{accountid}'
-        f'|{bui.app.locale.current_locale.name}'
+        f'|{bui.app.locale.current_locale.value}'
         f'|{reqkey}'
     )
 

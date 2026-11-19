@@ -285,7 +285,9 @@ def scriptfiles() -> None:
     """
     import efrotools.code
 
-    paths = efrotools.code.get_script_filenames(projroot=pcommand.PROJROOT)
+    paths = efrotools.code.get_script_filenames(
+        projroot=pcommand.PROJROOT, include_generated=True
+    )
     assert not any(' ' in path for path in paths)
     if '-lines' in sys.argv:
         print('\n'.join(paths))

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261102a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261118b`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1008
+# ba_meta require asset-package 1250
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261102a
-_ASSET_PACKAGE = ApverNum(1008)
+# a-0.babuiltinassets.261118b
+_ASSET_PACKAGE = ApverNum(1250)
 
 if TYPE_CHECKING:
     import datetime
@@ -110,7 +110,7 @@ if TYPE_CHECKING:
                 purchased/awarded item; the placeholder is the item name (may be
                 raw text or a nested translated name).
 
-                English: "You got a {item}!"
+                English: "You got {item}!"
             """
 
     class StringsAssetsGroup:
@@ -191,7 +191,7 @@ if TYPE_CHECKING:
                 dialog (this state is nearly always seen by the author, since
                 dev/test versions only resolve for them).
 
-                English: "{detail} Fix the file in the source Workspace and try
+                English: "{detail} Fix the file in the source workspace and try
                 again."
             """
 
@@ -353,10 +353,9 @@ if TYPE_CHECKING:
             """
             ::
 
-                Short lowercase label identifying a numbered joystick axis by
-                index; used inline in axis-name displays such as the
-                controls-configuration UI. The {number} placeholder is the axis
-                index.
+                Short label identifying a numbered joystick axis by index; used
+                inline in axis-name displays such as the controls-configuration
+                UI. The {number} placeholder is the axis index.
 
                 English: "axis {number}"
             """
@@ -365,8 +364,8 @@ if TYPE_CHECKING:
             """
             ::
 
-                Short lowercase label identifying a numbered controller button
-                by index; used inline in button-name displays such as the
+                Short label identifying a numbered controller button by index;
+                used inline in button-name displays such as the
                 controls-configuration UI. The {number} placeholder is the
                 button index.
 
@@ -671,8 +670,8 @@ if TYPE_CHECKING:
         #:     Screen-message when connecting fails because the host runs a
         #:     NEWER game version (so updating locally will fix it).
         #:
-        #:     English: "Host is running a newer version. Update your game and
-        #:     try again."
+        #:     English: "Host is running a newer version of the game. Update to
+        #:     the latest version and try again."
         incompatible_newer_version_host: LangStr
 
         #: ::
@@ -787,8 +786,8 @@ if TYPE_CHECKING:
         #:     Screen-message when connecting to game servers is refused because
         #:     this app version is too old for them.
         #:
-        #:     English: "Server functionality is no longer supported in this
-        #:     version of the game; Please update to a newer version."
+        #:     English: "Connecting to servers is no longer supported in this
+        #:     version of the game; please update to a newer version."
         server_unsupported: LangStr
 
         #: ::
@@ -1250,8 +1249,8 @@ if TYPE_CHECKING:
         #:
         #:     Limited-time offer to remove ads via a token pack.
         #:
-        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
-        #:     IN-GAME ADS."
+        #:     English: "LIMITED TIME OFFER: Purchase ANY token pack to remove
+        #:     in-game ads."
         remove_ads_token_offer: LangStr
 
         #: ::
@@ -1356,9 +1355,9 @@ if TYPE_CHECKING:
             """
             ::
 
-                Lowercase hint shown (with an error sound) when the player hits
-                the edge of a UI list; tells them how to move focus out of it.
-                The two placeholders are substituted with left/right arrow glyph
+                Hint shown (with an error sound) when the player hits the edge
+                of a UI list; tells them how to move focus out of it. The two
+                placeholders are substituted with left/right arrow glyph
                 characters.
 
                 English: "press {left} or {right} to exit list"
@@ -1521,7 +1520,7 @@ if TYPE_CHECKING:
         #:     Generic screen-message for a failure with no more specific
         #:     explanation available.
         #:
-        #:     English: "Unknown error"
+        #:     English: "unknown error"
         unknown_error: LangStr
 
         #: ::
@@ -1566,7 +1565,7 @@ if TYPE_CHECKING:
 
                 Error message that a workspace failed to sync.
 
-                English: "Error syncing Workspace {workspace}. See log for
+                English: "Error syncing workspace {workspace}. See log for
                 details."
             """
 
@@ -1576,8 +1575,8 @@ if TYPE_CHECKING:
 
                 Notice that a previously synced workspace is being reused.
 
-                English: "Can't sync Workspace '{workspace}'. Reusing previously
-                synced version."
+                English: "Can't sync workspace '{workspace}'. Reusing the
+                previously synced version."
             """
 
     class StringsGroup:

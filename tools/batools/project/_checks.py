@@ -42,6 +42,10 @@ CROSS_FEATURESET_PRIVATE_IMPORT_ALLOWLIST: set[str] = {
 
 def check_makefiles(self: ProjectUpdater) -> None:
     """Check all project makefiles."""
+    from efrotools.projectchecks import check_makefile_trunk_order
+
+    # The shared cross-project build-order rule for the top-level one.
+    check_makefile_trunk_order(Path(self.projroot))
 
     # Run a few sanity checks on whatever makefiles we come across.
     fpaths = (
@@ -81,9 +85,13 @@ def check_makefiles(self: ProjectUpdater) -> None:
 
 def check_python_files(self: ProjectUpdater) -> None:
     """Check all project python files."""
-    from efrotools.code import get_script_filenames
+    from efrotools.code import GENERATED_DIR_NAMES, get_script_filenames
 
-    scriptfiles = get_script_filenames(Path(self.projroot))
+    # No generated files: update runs before codegen (see
+    # get_script_filenames).
+    scriptfiles = get_script_filenames(
+        Path(self.projroot), include_generated=False
+    )
 
     for fname in scriptfiles:
         _check_python_file(self, fname)
@@ -129,6 +137,12 @@ def check_python_files(self: ProjectUpdater) -> None:
             # Don't delve into pycache dirs.
             if '__pycache__' in dirs:
                 dirs.remove('__pycache__')
+
+            # Nor into codegen output; it may not exist yet or may be
+            # mid-regeneration (update runs before codegen).
+            for dirname in GENERATED_DIR_NAMES:
+                if dirname in dirs:
+                    dirs.remove(dirname)
 
             # Make sure there's an__init__.py (I tend to forget this
             # sometimes).
@@ -515,19 +529,13 @@ def check_misc(self: ProjectUpdater) -> None:
             encoding='utf-8',
         ) as infile:
             msconfig = infile.read()
+            # Builds always compile in prod; non-prod fleets are only
+            # picked at runtime (BA_FLEET in developer builds).
             if (
-                '// Compile-Time Fleet Selection '
-                '------------------------------------------------\n'
-                '\n'
-                '// Exactly one of these should be 1.\n'
-                '// PROD\n'
-                '#if 1\n'
-            ) not in msconfig:
-                if (
-                    os.environ.get('BA_ALLOW_NON_PROD_V2_MASTER_SERVER', '0')
-                    != '1'
-                ):
-                    raise CleanError('Not using prod v2 master server.')
+                '#define BA_MASTER_SERVER_V2_FLEET BA_FLEET_PROD_NAME\n'
+                not in msconfig
+            ):
+                raise CleanError('Not using prod v2 master server.')
 
     # The flatpak build env is derived from the main lockfile and the uv
     # pin; make sure it hasn't been left behind by either.
@@ -696,3 +704,26 @@ def _wrapper_logical_paths(wrapper_path: Path) -> set[str]:
 
     _walk(data, '')
     return paths
+
+
+def check_test_durations_age(self: ProjectUpdater) -> None:
+    """Fail when the pytest-split durations recording gets stale.
+
+    See :mod:`batools.testdurations`. This is deliberately time-based:
+    it can start failing with no code change, which is how it nags us
+    to rebalance the CI test shards every few months.
+    """
+    if not self.check:
+        return
+
+    # Core internal repo only: spinoff dsts get a spinoff-managed copy
+    # of the durations file they can't regenerate, and the public repo
+    # shouldn't inherit a time bomb from our CI housekeeping.
+    if self.public:
+        return
+    if 'ballistica' + 'kit' != 'ballisticakit':
+        return
+
+    from batools.testdurations import check_recorded_date
+
+    check_recorded_date(Path(self.projroot))

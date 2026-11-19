@@ -290,3 +290,99 @@ def materialize_profile(
         raise CleanError(f"Profile '{profile.name}' has no materializer.")
 
     return packages
+
+
+#: Sidecar written next to an assembled bundle's manifest, recording what
+#: it was assembled for. Never staged into ba_data (staging copies only
+#: manifest.json and blobs), so its format is free to change.
+ASSEMBLED_INFO_FILENAME = 'assembled.json'
+
+
+@dataclass
+class BundleAssembledInfo:
+    """What an assembled bundle was assembled for (its sidecar)."""
+
+    #: The projectconfig ``"assets"`` pin (readable string id) at
+    #: assembly time.
+    builtin_apverid: str
+
+    #: Numeric ids (as text) of every package in the bundle.
+    apvernums: list[str]
+
+    #: Fleet the bundle was assembled against (``BA_FLEET``), or None
+    #: for a bundle assembled before this was recorded.
+    fleet: str | None
+
+
+def assembled_info_path(projroot: str, cache_dir: str) -> str:
+    """Path of a bundle cache dir's assembled-info sidecar."""
+    import os
+
+    return os.path.join(
+        projroot, '.cache/asset_bundle', cache_dir, ASSEMBLED_INFO_FILENAME
+    )
+
+
+def read_assembled_info(
+    projroot: str, cache_dir: str
+) -> BundleAssembledInfo | None:
+    """Read a bundle's sidecar; None if absent or unreadable."""
+    import json
+
+    try:
+        with open(
+            assembled_info_path(projroot, cache_dir), encoding='utf-8'
+        ) as infile:
+            raw = json.load(infile)
+        fleet = raw.get('fleet')
+        return BundleAssembledInfo(
+            builtin_apverid=str(raw['builtin_apverid']),
+            apvernums=[str(a) for a in raw['apvernums']],
+            fleet=None if fleet is None else str(fleet),
+        )
+    except Exception:
+        return None
+
+
+def write_assembled_info(
+    projroot: str, cache_dir: str, info: BundleAssembledInfo
+) -> None:
+    """Write a bundle's sidecar."""
+    import json
+
+    with open(
+        assembled_info_path(projroot, cache_dir), 'w', encoding='utf-8'
+    ) as outfile:
+        json.dump(
+            {
+                'builtin_apverid': info.builtin_apverid,
+                'apvernums': sorted(info.apvernums),
+                'fleet': info.fleet,
+            },
+            outfile,
+            indent=1,
+        )
+
+
+def current_builtin_apverid(projroot: str) -> str | None:
+    """The projectconfig ``"assets"`` pin (offline; no server lookup)."""
+    from pathlib import Path
+
+    from efrotools.project import getprojectconfig
+
+    apverid = getprojectconfig(Path(projroot)).get('assets')
+    return apverid if isinstance(apverid, str) and apverid else None
+
+
+def current_scanned_apvernums(projroot: str) -> list[str]:
+    """Packages the bundled Python declares it requires (offline)."""
+    from pathlib import Path
+
+    return [str(a) for a in _scanned_apvernums(Path(projroot))]
+
+
+def current_fleet() -> str:
+    """The fleet a bundle assembled now would be assembled against."""
+    import os
+
+    return os.environ.get('BA_FLEET', 'prod').lower()

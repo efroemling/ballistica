@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261029`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261118a`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 972
+# ba_meta require asset-package 1257
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,8 +22,8 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261029
-_ASSET_PACKAGE = ApverNum(972)
+# a-0.baclassicuiassets.261118a
+_ASSET_PACKAGE = ApverNum(1257)
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -138,7 +138,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for the profile character.
+        #:     Field label for the profile character, in small text beside its
+        #:     control.
         #:
         #:     English: "character"
         character: LangStr
@@ -182,7 +183,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile color.
+        #:     Field label for the profile color, in small text beside its
+        #:     control.
         #:
         #:     English: "color"
         color: LangStr
@@ -243,6 +245,16 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when starting a global-profile upgrade while the profile's
+        #:     name is longer than a global profile's name may be (a starter
+        #:     profile's name can be).
+        #:
+        #:     English: "This name is too long for a global profile. Shorten it
+        #:     and save first."
+        global_name_too_long: LangStr
+
+        #: ::
+        #:
         #:     Parenthetical marker labeling a global profile.
         #:
         #:     English: "(global profile)"
@@ -258,7 +270,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile highlight color.
+        #:     Field label for the profile highlight color, in small text beside
+        #:     its control.
         #:
         #:     English: "highlight"
         highlight: LangStr
@@ -273,7 +286,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile icon.
+        #:     Field label for the profile icon, in small text beside its
+        #:     control.
         #:
         #:     English: "icon"
         icon: LangStr
@@ -508,7 +522,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Single-line parenthetical hint; keep the parentheses.
+        #:     Single-line parenthetical hint under the profile list heading.
         #:
         #:     English: "(custom player names and appearances for this account)"
         explanation: LangStr
@@ -595,8 +609,8 @@ if TYPE_CHECKING:
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 65 strings (``account``, ``economy``,
-    #: ``profile``, ``profiles``, and 61 more). Full list in source.
+    #: The ``strings`` group - 66 strings (``account``, ``economy``,
+    #: ``profile``, ``profiles``, and 62 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -627,6 +641,7 @@ _TREE = {
             'delete_this_profile': (),
             'get_more_characters': (),
             'get_more_icons': (),
+            'global_name_too_long': (),
             'global_profile': (),
             'global_profile_info': (),
             'highlight': (),

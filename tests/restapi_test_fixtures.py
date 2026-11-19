@@ -3,6 +3,7 @@
 """Shared pytest fixtures for REST live-server tests."""
 
 import os
+import re
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -67,25 +68,24 @@ def retry_transient(
 #   1. ``BALLISTICA_URL`` — explicit URL override (e.g. a custom
 #      test server). Wins if set; otherwise we derive the URL from
 #      ``BA_FLEET``.
-#   2. ``BA_FLEET`` — ``'prod'`` (default), ``'test'``, or ``'dev'``.
+#   2. ``BA_FLEET`` — ``'prod'`` (default) or a per-machine fleet
+#      such as ``'devfromini'`` / ``'testfromini'``, served at
+#      ``https://<fleet>.ballistica.net``. (The bare ``'dev'`` and
+#      ``'test'`` fleets are retired.)
 # Default is intentionally ``prod``: this file lands in the public
 # repo via spinoff, and a random clone running these tests should
-# never accidentally talk to the dev server. Dev/test runs override
+# never accidentally talk to a dev server. Dev/test runs override
 # explicitly.
-_FLEET_URLS = {
-    'prod': 'https://ballistica.net',
-    'test': 'https://test.ballistica.net',
-    'dev': 'https://dev.ballistica.net',
-}
+_FLEET_RE = re.compile(r'(dev|test)[a-z0-9]+')
 
 
 def _resolve_fleet() -> str:
     """Return the selected fleet name; raise on invalid values."""
     fleet = os.environ.get('BA_FLEET', 'prod').lower()
-    if fleet not in _FLEET_URLS:
+    if fleet != 'prod' and not _FLEET_RE.fullmatch(fleet):
         raise CleanError(
-            f'Invalid BA_FLEET value {fleet!r};'
-            f' expected one of {sorted(_FLEET_URLS)}.'
+            f'Invalid BA_FLEET value {fleet!r}; expected prod or a'
+            f' per-machine fleet such as devfromini or testfromini.'
         )
     return fleet
 
@@ -95,7 +95,10 @@ def _resolve_server_url() -> str:
     override = os.environ.get('BALLISTICA_URL')
     if override:
         return override
-    return _FLEET_URLS[_resolve_fleet()]
+    fleet = _resolve_fleet()
+    if fleet == 'prod':
+        return 'https://ballistica.net'
+    return f'https://{fleet}.ballistica.net'
 
 
 #: The resolved fleet for the current test run. Test modules import

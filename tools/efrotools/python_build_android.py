@@ -31,21 +31,22 @@ if TYPE_CHECKING:
 # ``--out`` paths follow automatically.
 #
 # Both 3.13.12 and 3.14.4 have been verified building all 8 slices
-# end-to-end on linbeast as of 2026-05-03; 3.14.7 is the active
-# version as of 2026-09-27. To switch back:
+# end-to-end on linbeast as of 2026-05-03; 3.14.10 is the active
+# version as of 2026-11-11. To switch back:
 #   PY_VER = '3.13'
 #   PY_VER_EXACT = '3.13.12'
 PY_VER = '3.14'
-PY_VER_EXACT = '3.14.7'
+PY_VER_EXACT = '3.14.10'
 ANDROID_API_VER = 24
-OPENSSL_VER = '3.0.22'
-ZLIB_VER = '1.3.2'
+# 3.5 LTS (matches the Apple build); the 3.0 LTS line went EOL 2026-09.
+OPENSSL_VER = '3.5.9'
+ZLIB_VER = '1.4'
 XZ_VER = '5.8.4'
 ZSTD_VER = '1.5.7'
 BZIP2_VER = '1.0.8'
 LIBFFI_VER = '3.8.0'
 LIBUUID_VER: tuple[str, str] = ('2.42', '2.42.4')  # (minor, full)
-SQLITE_VER: tuple[str, str] = ('2026', '3530400')  # (year, autoconf id)
+SQLITE_VER: tuple[str, str] = ('2026', '3540100')  # (year, autoconf id)
 
 # Versioned host triple used for configure --host=.
 ARCH_TARGETS: dict[str, str] = {
@@ -184,7 +185,9 @@ def _build_zlib(
 ) -> None:
     """Build and install zlib into dep_sysroot."""
     print('Building zlib...')
-    url = f'https://www.zlib.net/zlib-{ZLIB_VER}.tar.gz'
+    # zlib.net's top level only carries the newest release (older ones
+    # move to fossils/ and 404 there); fossils/ holds every version.
+    url = f'https://www.zlib.net/fossils/zlib-{ZLIB_VER}.tar.gz'
     tarball = _fetch(url, cache_dir)
     srcdir = _extract(tarball, build_dir)
 

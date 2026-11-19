@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets2.261009`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets2.261118`` (bauiv1).
 
 Classic characters whose sources are not intended to go public: each a whole
 character (body textures and color masks, body part meshes, voice sounds, icon
@@ -12,7 +12,7 @@ template or featured.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 545
+# ba_meta require asset-package 1231
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -26,8 +26,8 @@ from bauiv1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccharacterassets2.261009
-_ASSET_PACKAGE = ApverNum(545)
+# a-0.baclassiccharacterassets2.261118
+_ASSET_PACKAGE = ApverNum(1231)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import (
@@ -87,9 +87,12 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Chinese locales use the official mascot
-        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
-        #:     brand).
+        #:     picker, and gameplay UIs. The mascot and its name are another
+        #:     company's, so every language's text is supplied by hand
+        #:     ("Translate automatically" and "Review translations" are off):
+        #:     both Chinese locales use the official name, the rest keep what
+        #:     they had on 2026-11-13. When a language is added, lock it on the
+        #:     Translation Overrides page and give it its text.
         #:
         #:     English: "Taobao Mascot"
         taobao_mascot: LangStr
@@ -179,8 +182,8 @@ _CHARACTERS = {
     'characters': {
         'taobao_mascot': (
             (
-                '{"b":{"tx":{"a":545,"n":"textures/ali_icon"},'
-                '"cm":{"a":545,"n":"textures/ali_icon_color_mask"},'
+                '{"b":{"tx":{"a":1231,"n":"textures/ali_icon"},'
+                '"cm":{"a":1231,"n":"textures/ali_icon_color_mask"},'
                 '"cl":[1.0,0.5,0.0],"hl":[1.0,1.0,1.0]}}'
             ),
             'strings/characters/taobao_mascot',

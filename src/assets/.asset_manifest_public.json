@@ -176,6 +176,7 @@
  "ba_data/python/bacommontools/__init__.py",
  "ba_data/python/bacommontools/bacloud.py",
  "ba_data/python/bacommontools/bacloudsession.py",
+ "ba_data/python/bacommontools/fleethost.py",
  "ba_data/python/bacommontools/meshcompile.py",
  "ba_data/python/bacommontools/pcommands.py",
  "ba_data/python/baenv.py",

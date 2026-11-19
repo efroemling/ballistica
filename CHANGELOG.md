@@ -1,3 +1,12 @@
+### 1.8.8 (build 23090, api 9, 2026-11-19)
+- Retranslated the game's text in every language from scratch under new,
+  more detailed translation guidelines. Translations are more accurate
+  and more consistent, use the same names for game terms (characters,
+  modes, items) everywhere, and use a friendlier, informal tone where
+  the language allows it.
+- Fixed spazzes having no arms or legs for players who joined a game
+  mid-round on a server using legacy spaz physics.
+
 ### 1.8.7 (build 23089, api 9, 2026-11-04)
 - Fixed local network play on Android 17, which now requires a
   permission for local network access. The game asks for it when you

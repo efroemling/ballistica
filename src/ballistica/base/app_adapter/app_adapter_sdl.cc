@@ -223,12 +223,25 @@ void AppAdapterSDL::SetHardwareCursorVisible(bool visible) {
   }
 }
 
+// Whether SDL wants already-premultiplied cursor pixels. Xcursor expects
+// premultiplied alpha, but SDL's X11 backend before 3.4.20 copies our
+// pixels to it unchanged (fixed upstream in SDL PR #16537). There,
+// straight-alpha pixels give a speckled bright fringe around the cursor
+// edge (seen on the Steam Deck with the Steam runtime's SDL 3.4.18), so
+// we hand those SDLs premultiplied pixels instead.
+static auto SDLWantsPremultipliedCursorPixels_() -> bool {
+  const char* driver = SDL_GetCurrentVideoDriver();
+  return driver != nullptr && strcmp(driver, "x11") == 0
+         && SDL_GetVersion() < SDL_VERSIONNUM(3, 4, 20);
+}
+
 // Build an SDL surface (owning its pixels) from one RGBA8 mip level.
 // SDL surfaces want straight (non-premultiplied) alpha; the cursor
 // texture ships premultiplied (asset-packages decision #23), so
-// un-premultiply if needed.
+// un-premultiply when asked (the caller skips that when SDL wants
+// premultiplied pixels; see SDLWantsPremultipliedCursorPixels_).
 static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
-                                 bool premultiplied) -> SDL_Surface* {
+                                 bool unpremultiply) -> SDL_Surface* {
   SDL_Surface* surface =
       SDL_CreateSurface(mip.width, mip.height, SDL_PIXELFORMAT_RGBA32);
   if (surface == nullptr) {
@@ -239,7 +252,7 @@ static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
     uint8_t* row = dst + y * surface->pitch;
     memcpy(row, mip.rgba.data() + static_cast<size_t>(y) * mip.width * 4,
            static_cast<size_t>(mip.width) * 4);
-    if (premultiplied) {
+    if (unpremultiply) {
       for (int x = 0; x < mip.width; ++x) {
         uint8_t* px = row + x * 4;
         int a = px[3];
@@ -271,14 +284,16 @@ auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
          && img->mips[base].width > kHardwareCursorLogicalSize) {
     ++base;
   }
-  SDL_Surface* surface =
-      CreateCursorSurface_(img->mips[base], img->premultiplied);
+  // Pixels already premultiplied when SDL wants them that way need no
+  // un-premultiplying.
+  bool unpremultiply =
+      img->premultiplied && !SDLWantsPremultipliedCursorPixels_();
+  SDL_Surface* surface = CreateCursorSurface_(img->mips[base], unpremultiply);
   if (surface == nullptr) {
     return nullptr;
   }
   for (size_t i = 0; i < base; ++i) {
-    if (SDL_Surface* alt =
-            CreateCursorSurface_(img->mips[i], img->premultiplied)) {
+    if (SDL_Surface* alt = CreateCursorSurface_(img->mips[i], unpremultiply)) {
       SDL_AddSurfaceAlternateImage(surface, alt);
       // AddSurfaceAlternateImage holds its own reference.
       SDL_DestroySurface(alt);

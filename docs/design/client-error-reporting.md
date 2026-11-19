@@ -20,6 +20,17 @@ All three land in Cloud Logging; `cloud_log_query` is the reader for
 each. Everything a client sends is **untrusted**: the fatal and crash
 channels are unauthenticated by design, and the server treats their
 contents as hints about what broke, never as facts about who sent it.
+`cloud_log_query` reflects that in how it prints every `baSrc=client`
+line:
+- each line gets a `[client-supplied]` prefix;
+- line breaks and invisible or direction-changing characters are
+  escaped (`\n`, `‮`, ...), so one entry can't forge extra log
+  lines;
+- the text is middle-truncated to a few hundred characters, keeping
+  the head and the server-added tail.
+
+Pass `--full-client-text` for the whole message, e.g. a complete stack
+trace.
 
 ## Fatal errors
 

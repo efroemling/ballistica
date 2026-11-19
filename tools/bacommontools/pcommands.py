@@ -17,10 +17,10 @@ def bacurl() -> None:
 
     Examples::
 
-        bacurl https://dev.ballistica.net/api/v1/admin/stats/catalog
+        bacurl https://devfromini.ballistica.net/api/v1/admin/stats/catalog
         bacurl -X POST -H 'Content-Type: application/json' \\
             -d '{"dry_run":true}' \\
-            https://dev.ballistica.net/api/v1/admin/stats/flush
+            https://devfromini.ballistica.net/api/v1/admin/stats/flush
     """
     import json
     import subprocess

@@ -1125,40 +1125,49 @@ test-ex-verbose: py_check_prepass
 # test-ex-splitN shards. Regenerate with test-ex-split-durations.
 TEST_EX_DURATIONS_PATH = pconfig/test_ex_durations
 
+# Shared pytest-split args for the test-ex-splitN shards. We use
+# least_duration (deal the slowest tests out across shards first)
+# rather than the default duration_based_chunks, which cuts the
+# collection order into contiguous slices and so piles neighboring
+# slow tests (e.g. app-run tests in test_base) into one shard.
+TEST_EX_SPLIT_ARGS = --splits 4 --splitting-algorithm least_duration \
+  --durations-path $(TEST_EX_DURATIONS_PATH)
+
 # Run a slice of the extended tests (pytest-split shard 1..4 of 4).
 # Lets multiple shards run concurrently across CI executors.
 test-ex-split1: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 1/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 1 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 1 $(TEST_TARGET)
 
 test-ex-split2: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 2/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 2 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 2 $(TEST_TARGET)
 
 test-ex-split3: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 3/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 3 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 3 $(TEST_TARGET)
 
 test-ex-split4: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 4/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 4 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 4 $(TEST_TARGET)
 
 # Run the full extended test suite and record per-test durations
 # at $(TEST_EX_DURATIONS_PATH) so future test-ex-splitN shards
-# can balance by historical runtime instead of test count.
+# can balance by historical runtime instead of test count. Starts
+# from scratch (--clean-durations) so deleted tests drop out, then
+# stamps the recording date; update-check fails once that stamp is
+# a few months old (see batools.testdurations). Run unsandboxed;
+# sandbox-failed tests record bogus (too-fast) times.
 test-ex-split-durations: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(recording durations\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --store-durations \
+	@$(PCOMMAND) pytest -v --store-durations --clean-durations \
       --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) stamp_test_durations
 
 # Run tests with any caching disabled.
 test-full: test

@@ -160,27 +160,23 @@ def _stream_decoder(
 #   1. BACLOUD_SERVER — explicit host override (e.g. a specific basn
 #      node). Wins if set; otherwise we derive from BA_FLEET.
 #   2. BA_FLEET — matches the env var the client uses. 'prod'
-#      (default) routes to regional.ballistica.net directly. 'test'
-#      and 'dev' query their fleet's master server for a healthy
-#      basn node hostname (since those fleets have no regional.*
+#      (default) routes to regional.ballistica.net directly. Per-machine
+#      fleets ('devfromini', 'testfromini', ...; bare 'dev'/'test' mean
+#      this machine's) query their master server for a healthy basn
+#      node hostname (since those fleets have no regional.*
 #      equivalent).
 BACLOUD_SERVER_OVERRIDE = os.getenv('BACLOUD_SERVER')
 BA_FLEET = os.getenv('BA_FLEET', 'prod').lower()
 
-_FLEET_MASTER_HOSTS = {
-    'prod': 'regional.ballistica.net',
-    'test': 'test.ballistica.net',
-    'dev': 'dev.ballistica.net',
-}
 
-#: The master server proper per fleet (the prod entry above is the
-#: node-side regional endpoint), for the one thing bacloud sends the
-#: master directly: a session anomaly report.
-_FLEET_CLIENT_LOG_URLS = {
-    'prod': 'https://www.ballistica.net/api/v1/clientlog',
-    'test': 'https://test.ballistica.net/api/v1/clientlog',
-    'dev': 'https://dev.ballistica.net/api/v1/clientlog',
-}
+def _fleet_master_host(fleet: str) -> str | None:
+    """The master server host for a fleet value, or None if unknown.
+
+    See :func:`bacommontools.fleethost.fleet_master_host`.
+    """
+    from bacommontools.fleethost import fleet_master_host
+
+    return fleet_master_host(fleet)
 
 
 def _caller_build_number() -> int:
@@ -718,16 +714,17 @@ class App:
         if BACLOUD_SERVER_OVERRIDE:
             return BACLOUD_SERVER_OVERRIDE
 
-        if BA_FLEET not in _FLEET_MASTER_HOSTS:
+        master = _fleet_master_host(BA_FLEET)
+        if master is None:
             raise CleanError(
-                f'Invalid BA_FLEET value {BA_FLEET!r};'
-                f' expected one of {sorted(_FLEET_MASTER_HOSTS)}.'
+                f'Invalid BA_FLEET value {BA_FLEET!r}; expected prod,'
+                f' test, dev, or a per-machine test<machine> /'
+                f' dev<machine> (lowercase letters and digits).'
             )
 
         if BA_FLEET == 'prod':
-            return _FLEET_MASTER_HOSTS['prod']
-
-        master = _FLEET_MASTER_HOSTS[BA_FLEET]
+            # Prod's nodes sit behind a regional endpoint directly.
+            return 'regional.ballistica.net'
         try:
             import json
 
@@ -784,12 +781,17 @@ class App:
 
         assert self._server is not None
         bearer = self._api_key or self._state.login_token
+        # The master server proper (not the node-side regional host),
+        # for the one thing bacloud sends it directly: a session anomaly
+        # report.
+        master = _fleet_master_host(BA_FLEET)
+        client_log_url = (
+            None if master is None else f'https://{master}/api/v1/clientlog'
+        )
         attempts = 4
         for attempt in range(1, attempts + 1):
             session = BacloudSession.open(
-                self._server,
-                bearer,
-                client_log_url=_FLEET_CLIENT_LOG_URLS.get(BA_FLEET),
+                self._server, bearer, client_log_url=client_log_url
             )
             if session is not None:
                 self._session = session

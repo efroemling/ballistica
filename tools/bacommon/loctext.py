@@ -237,7 +237,7 @@ _RULE_FOR_LOCALE: dict[Locale, Callable[[int], PluralCategory]] = {
     # East-Slavic one/few/many.
     Locale.RUSSIAN: _rule_russian,
     Locale.UKRAINIAN: _rule_russian,
-    Locale.BELARUSSIAN: _rule_russian,
+    Locale.BELARUSIAN: _rule_russian,
     # Polish one/few/many.
     Locale.POLISH: _rule_polish,
     # West-Slavic one/few/other.

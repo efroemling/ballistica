@@ -49,8 +49,8 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 # Both 3.13.11 and 3.14.2 have been verified on this pipeline as of
-# 2026-05-03 (all 10 slices + gather); 3.14.7 is the active version as
-# of 2026-09-27 (macosx.x86_64 now cross-compiled; no Rosetta needed).
+# 2026-05-03 (all 10 slices + gather); 3.14.10 is the active version as
+# of 2026-11-11 (macosx.x86_64 now cross-compiled; no Rosetta needed).
 # To switch active version, change all three constants
 # together (they must agree). Per-version differences in module sets
 # etc. live in ``efrotools.pybuild.patch_modules_setup`` keyed off
@@ -65,13 +65,13 @@ if TYPE_CHECKING:
 #   BEEWARE_BRANCH = '3.13'
 #   OPENSSL_VER = '3.0.18-1'
 PY_VER = '3.14'
-PY_VER_EXACT = '3.14.7'
+PY_VER_EXACT = '3.14.10'
 BEEWARE_BRANCH = '3.14'
 # BEEWARE_COMMIT: str | None = None  # Pin to a commit hash to override branch.
 BEEWARE_COMMIT: str | None = None
 
 # Prebuilt dep versions from beeware/cpython-apple-source-deps.
-OPENSSL_VER = '3.5.8-1'
+OPENSSL_VER = '3.5.9-1'
 LIBFFI_VER = '3.4.7-2'
 XZ_VER = '5.6.4-2'
 BZIP2_VER = '1.0.8-2'

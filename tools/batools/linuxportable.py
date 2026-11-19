@@ -57,7 +57,7 @@ SDK_IMAGES: dict[str, str] = {
 
 # Sniper's cmake (3.25) is too old for OpenAL Soft 1.25 (needs 3.26+),
 # so we use Kitware's prebuilt (runs on glibc 2.17+) for every arch.
-CMAKE_VER = '3.31.6'
+CMAKE_VER = '4.4.5'
 
 # SDL3 we build to ship beside the binary in downloads-page packages
 # (Steam builds use the runtime's). Built with upstream's defaults, which
@@ -66,7 +66,7 @@ CMAKE_VER = '3.31.6'
 # missing on a distro would keep the game from starting. Keep it >= the
 # SDK's SDL3 (whose headers we compile against; 3.4.18 in the pinned
 # sniper SDK).
-SDL3_VER = '3.4.18'
+SDL3_VER = '3.4.20'
 
 # Host 'uname -m' value per arch (also Kitware's cmake tarball arch).
 UNAME_ARCHS: dict[str, str] = {'x86_64': 'x86_64', 'arm64': 'aarch64'}
@@ -347,7 +347,11 @@ class _Builder:
 
     def _build_zlib(self) -> None:
         print('Building zlib...', flush=True)
-        srcdir = self._src(f'https://www.zlib.net/zlib-{ZLIB_VER}.tar.gz')
+        # fossils/ keeps every release; the top level 404s once a newer
+        # zlib ships.
+        srcdir = self._src(
+            f'https://www.zlib.net/fossils/zlib-{ZLIB_VER}.tar.gz'
+        )
         self._configure_make_install(
             srcdir, ['./configure', f'--prefix={self.sysroot}', '--static']
         )

@@ -21,15 +21,6 @@ import urllib.request
 from efro.error import CleanError
 from efro.terminal import Clr
 
-# Master-server host per fleet; mirrors the scheme used by bacloud
-# (BA_FLEET env var, 'prod' default). Only meaningful for developer
-# setups; public users always talk to prod.
-_FLEET_HOSTS = {
-    'prod': 'www.ballistica.net',
-    'test': 'test.ballistica.net',
-    'dev': 'dev.ballistica.net',
-}
-
 # Windows prefab binaries that can have .pdb symbol sidecars.
 _EXE_PATHS = [
     'build/prefab/full/windows_x86_64_gui/debug/BallisticaKit.exe',
@@ -134,8 +125,11 @@ def fetch_prefab_symbols() -> None:
     builds ship ANGLE, so fetching only our own symbols would leave a
     common crash class unsymbolicated.
     """
+    from bacommontools.fleethost import fleet_master_host
+
+    # Same scheme as bacloud (BA_FLEET env var, 'prod' default).
     fleet = os.environ.get('BA_FLEET', 'prod').lower()
-    host = _FLEET_HOSTS.get(fleet)
+    host = fleet_master_host(fleet)
     if host is None:
         raise CleanError(f"Invalid BA_FLEET value '{fleet}'.")
 

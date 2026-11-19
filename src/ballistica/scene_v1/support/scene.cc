@@ -19,6 +19,7 @@
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"
+#include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -521,25 +522,12 @@ void Scene::DumpNodes(SessionStream* out) {
   // Dumps commands to the output stream to recreate scene's nodes
   // in their current state.
 
-  // First we go through and create all nodes.
-  // We have to do this all at once before setting attrs since any node
-  // can refer to any other in an attr set.
-  for (auto&& i : nodes_) {
-    Node* node = i.get();
-    assert(node);
-
-    // Add the node.
-    out->AddNode(node);
-  }
-
   std::vector<std::pair<NodeAttribute, Node*> > node_attr_sets;
 
-  // Now go through and set *most* node attr values.
-  for (auto&& i1 : nodes_) {
-    Node* node = i1.get();
-    assert(node);
-
-    // Now we need to set *all* of its attrs in order.
+  // Sets *most* of a node's attr values (node-attrs are collected in
+  // node_attr_sets and set at the very end).
+  auto dump_attrs = [out, &node_attr_sets](Node* node) {
+    // We need to set *all* of its attrs in order.
     // FIXME: Could be nice to send only ones that have changed from
     //  defaults; would need to add that functionality to NodeType.
     NodeType* node_type = node->type();
@@ -641,6 +629,37 @@ void Scene::DumpNodes(SessionStream* out) {
             break;
         }
       }
+    }
+  };
+
+  // The globals node's attrs get set right after it is created, before
+  // the nodes after it exist. Other nodes read globals values when they
+  // are constructed (spazzes pick their limb backend from
+  // 'legacy_spaz_limbs'), so they must see the real values, as they
+  // did when the host created them, not the defaults. Globals has no
+  // node-attrs, so setting it this early is safe.
+  Node* globals = globals_node_;
+
+  // First we go through and create all nodes.
+  // We have to do this all at once before setting attrs since any node
+  // can refer to any other in an attr set.
+  for (auto&& i : nodes_) {
+    Node* node = i.get();
+    assert(node);
+
+    // Add the node.
+    out->AddNode(node);
+    if (node == globals) {
+      dump_attrs(node);
+    }
+  }
+
+  // Now go through and set *most* node attr values.
+  for (auto&& i : nodes_) {
+    Node* node = i.get();
+    assert(node);
+    if (node != globals) {
+      dump_attrs(node);
     }
   }
 
