@@ -37,8 +37,11 @@ namespace ballistica::scene_v1 {
 // data is stored; these protocol versions just need to be observed by
 // anything emitting or ingesting scene streams.
 
-// Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 56;
+// Oldest protocol version we can act as a host for. Hosts stream at
+// least this (the 'SceneV1 Host Protocol' setting is clamped to
+// kProtocolVersionHostMin..kProtocolVersionMax), so it is also the
+// default.
+const int kProtocolVersionHostMin = 57;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -49,12 +52,14 @@ const int kProtocolVersionClientMin = 24;
 const int kProtocolVersionMax = 57;
 
 // The protocol 1.8 shipped on. Since then new protocols are opt-in:
-// kProtocolVersionHostMin stays here (so 1.8.x clients can join any
-// host by default) while kProtocolVersionMax rises; hosts move up via
-// the 'SceneV1 Host Protocol' config value (a server's
+// kProtocolVersionHostMin stays put (so older 1.8.x clients can join
+// any host by default) while kProtocolVersionMax rises; hosts move up
+// via the 'SceneV1 Host Protocol' config value (a server's
 // protocol_version), excluding older clients. Once builds that know a
 // newer protocol are widespread, the default (and with it the floor)
-// can move up (Eric, 2026-10-28).
+// can move up (Eric, 2026-10-28). It did for 57 in 1.8.9 (Eric,
+// 2026-11-20), so 1.8.0-1.8.4 clients (which top out at 56) can no
+// longer join current hosts.
 const int kProtocolVersion1p8 = 56;
 
 // The 1.8 development protocols (38 through the one before 1.8's
@@ -485,6 +490,9 @@ inline auto IsJoinableHostProtocol(int version) -> bool {
 //     'fuse_length' keeps its index): below 1 the prop draws blended,
 //     its texture's alpha included, with reflections, lighting and
 //     shadows fading along. Same minimum-protocol gate (2026-10-28).
+//
+//     57 became the default and the floor for hosting in 1.8.9
+//     (kProtocolVersionHostMin; 2026-11-20).
 
 // First protocol with depictiondisplay 'color_multiply' (see the 57
 // entry above).

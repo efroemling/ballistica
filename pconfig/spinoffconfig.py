@@ -197,6 +197,7 @@ ctx.filter_file_names = {
     'ci.yml',
     'cd.yml',
     'deploy_docs.yml',
+    'docker_multiarch.yml',
     'mirror_repository.yml',
     'nightly.yml',
     'release.yml',

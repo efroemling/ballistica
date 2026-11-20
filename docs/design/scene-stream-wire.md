@@ -36,7 +36,10 @@ treated as errors.
 client can join them. A host moves up through the `SceneV1 Host
 Protocol` config value (a server's `protocol_version`), shutting out
 older clients; once builds knowing the newer protocol are widespread
-the default and floor can follow (Eric, 2026-10-28). So the host side
+the default and floor can follow (Eric, 2026-10-28). They did for 57
+in 1.8.9 (`kProtocolVersionHostMin` = 57, Eric 2026-11-20), cutting
+off 1.8.0–1.8.4 clients; the opt-in rules below still apply to the
+next protocol above the floor. So the host side
 now has a real choice too: everything a newer protocol adds must stay
 out of older streams.
 - *Stream-format changes* gate on the stream's protocol

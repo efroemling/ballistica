@@ -1,4 +1,7 @@
-### 1.8.9 (build 23092, api 9, 2026-11-20)
+### 1.8.9 (build 23093, api 9, 2026-11-20)
+- Games are now hosted on protocol 57 by default, and 57 is the oldest
+  protocol a game can be hosted on. Players on 1.8.0 through 1.8.4 need
+  to update to join games hosted on this version or newer.
 - For modders: when an asset package the game loads has been scheduled
   for deletion by its owner, the game now logs a warning saying when it
   goes away, so mods using it can move off it in time.
