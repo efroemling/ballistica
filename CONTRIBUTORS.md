@@ -88,3 +88,6 @@
 
 ### spaceKite
 - Updated OARS content rating
+
+### Maxwell (itsre3)
+- Bug fixes
