@@ -659,6 +659,15 @@ class ResolveAssetPackageResponse(Response):
         IOAttrs('ep', soft_default=None, store_default=False),
     ] = None
 
+    #: When the resolved version's package is to be deleted by its
+    #: owner, or ``None`` (also from older servers). It still resolves
+    #: until then; after that, anything using it loses it. The client
+    #: says so in its local log (never as a log report), for modders.
+    pending_deletion_time: Annotated[
+        datetime.datetime | None,
+        IOAttrs('pdt', soft_default=None, store_default=False),
+    ] = None
+
 
 @ioprepped
 @dataclass

@@ -89,6 +89,38 @@ _ResolveAccum = tuple[
     dict[ApverNum, dict[str, str]],
 ]
 
+#: Packages already warned about as pending deletion this run (string or
+#: numeric id as text), so each is mentioned once.
+_pending_deletion_warned: set[str] = set()
+
+
+def _note_pending_deletion(
+    apvernum: ApverNum, response: ResolveAssetPackageResponse
+) -> None:
+    """Warn once per run if a resolved package is pending deletion.
+
+    Its owner has asked for it to be deleted; it keeps working until
+    the given time. Logged on the user logger, which never arms a log
+    report, so popular mods using such a package can't flood the server
+    with reports; modders see it in their logs and the dev console.
+    """
+    from babase._logging import userlog
+
+    when = response.pending_deletion_time
+    if when is None:
+        return
+    label = response.resolved_apverid or str(apvernum)
+    if label in _pending_deletion_warned:
+        return
+    _pending_deletion_warned.add(label)
+    userlog.warning(
+        'Asset package %s is scheduled for deletion by its owner on'
+        ' %s UTC. Anything using it (such as a mod) will lose it then.',
+        label,
+        when.strftime('%Y-%m-%d %H:%M'),
+    )
+
+
 #: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
 #: shared app threadpool). Each in-flight download buffers its whole blob in
 #: RAM, so peak download memory is roughly this times blob-size -- a real
@@ -2977,6 +3009,8 @@ class AssetSubsystem(AppSubsystem):
             raise errcls(msg, code, response.error, response.error_package)
         if not response.buckets:
             raise AssetResolveError(f'{apvernum}: resolve returned no buckets.')
+
+        _note_pending_deletion(apvernum, response)
 
         # Reject anything substituted on a capability axis before we
         # commit a byte of it (tier substitution is expected; profile /

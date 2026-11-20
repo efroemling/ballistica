@@ -1649,10 +1649,14 @@ flatpak-deps:
 	pconfig/flatpak/net.froemling.bombsquad.yml
 
 # Needs the SDK etc. installed first; see flatpak-deps.
+# --disable-rofiles-fuse: the sandboxed org.flatpak.Builder can't start
+# rofiles-fuse on GitHub's x86_64 runners ("fusermount: file descriptor
+# 4 is not a socket"); it's only a guard against build commands
+# modifying cached files, so builds don't need it.
 flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
 	$(FLATPAK_BUILDER) --repo=./.cache/flatpak/repo \
-	--force-clean --keep-build-dirs \
+	--force-clean --keep-build-dirs --disable-rofiles-fuse \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
 	pconfig/flatpak/net.froemling.bombsquad.yml

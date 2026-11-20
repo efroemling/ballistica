@@ -38,6 +38,49 @@ class SigningConfig:
     certpass: str
 
 
+@ioprepped
+@dataclass
+class AppleApiKey:
+    """An App Store Connect API key (localconfig ``apple_api_key``).
+
+    When present, builds that pass ``-allowProvisioningUpdates`` also
+    get the ``-authenticationKey*`` args, which lets xcodebuild create
+    and renew provisioning profiles with no Apple account signed in
+    (as over SSH).
+    """
+
+    keyfile: str
+    key_id: str
+    issuer_id: str
+
+
+def get_apple_api_key(projroot: str) -> AppleApiKey | None:
+    """Return the localconfig's App Store Connect API key, if any."""
+    lconfig = getlocalconfig(projroot=Path(projroot))
+    keydict = lconfig.get('apple_api_key')
+    if keydict is None:
+        return None
+    key = dataclass_from_dict(AppleApiKey, keydict)
+    if not os.path.exists(key.keyfile):
+        raise CleanError(
+            f"Apple API key file not found at '{key.keyfile}'"
+            ' (localconfig apple_api_key.keyfile).'
+        )
+    return key
+
+
+def apple_api_key_args(key: AppleApiKey) -> list[str]:
+    """Return the xcodebuild args that authenticate with an API key."""
+    return [
+        '-authenticationKeyPath',
+        key.keyfile,
+        '-authenticationKeyID',
+        key.key_id,
+        '-authenticationKeyIssuerID',
+        key.issuer_id,
+    ]
+
+
 #: Signing certs expiring within this many days get warned about.
 SIGNING_CERT_WARN_DAYS = 7
 
@@ -167,11 +210,13 @@ _KNOWN_FAILURE_CAUSES: list[tuple[str, str]] = [
     ),
     (
         'No profiles for',
-        "This machine has no provisioning profile for the app's bundle"
-        " id, and a build over SSH can't fetch one (it has no Apple"
-        ' account). Do one device build of this scheme in the Xcode GUI'
-        ' on this machine while signed in to the Apple account; that'
-        f' saves the profile for later builds. See {SIGNING_RENEWAL_DOC}.',
+        "No provisioning profile for the app's bundle id could be found"
+        ' or created. Builds passing -allowProvisioningUpdates create'
+        ' one themselves through the localconfig apple_api_key (an App'
+        ' Store Connect API key with the Admin or App Manager role); if'
+        ' that is missing, or this build does not pass the flag, do one'
+        ' device build of this scheme in the Xcode GUI on this machine'
+        f' while signed in. See {SIGNING_RENEWAL_DOC}.',
     ),
     (
         'Asset bundle is out of date',
@@ -268,6 +313,14 @@ class XCodeBuild:
         # and make snooping harder.
         self._keychain_name = f'build{os.urandom(8).hex()}.keychain'
         self._keychain_pass = os.urandom(16).hex()
+
+        # Provisioning updates over SSH need API-key credentials (there
+        # is no signed-in Apple account there).
+        self._apple_api_key: AppleApiKey | None = (
+            get_apple_api_key(projroot)
+            if '-allowProvisioningUpdates' in args
+            else None
+        )
 
         self._signingconfigname: str | None = None
         self._signingconfig: SigningConfig | None = None
@@ -603,7 +656,10 @@ class XCodeBuild:
             raise RuntimeError(f'{flag} value not found') from exc
 
     def _build_cmd_args(self) -> list[str]:
-        return ['xcodebuild'] + self._args
+        cmd = ['xcodebuild'] + self._args
+        if self._apple_api_key is not None:
+            cmd += apple_api_key_args(self._apple_api_key)
+        return cmd
 
     def _run_cmd(self, cmd: list[str]) -> None:
         # reset some state

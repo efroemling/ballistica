@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261118b`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261120`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1250
+# ba_meta require asset-package 1286
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261118b
-_ASSET_PACKAGE = ApverNum(1250)
+# a-0.babuiltinassets.261120
+_ASSET_PACKAGE = ApverNum(1286)
 
 if TYPE_CHECKING:
     import datetime

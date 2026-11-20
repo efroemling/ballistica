@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261118c`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261120`` (bauiv1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1254
+# ba_meta require asset-package 1287
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261118c
-_ASSET_PACKAGE = ApverNum(1254)
+# a-0.baclassicassets.261120
+_ASSET_PACKAGE = ApverNum(1287)
 
 if TYPE_CHECKING:
     import datetime
@@ -9639,14 +9639,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     The remote-control companion app's name; byte-identical in every
-        #:     language.
-        #:
-        #:     English: "BombSquad Remote"
-        remote_app_name: LangStr
-
-        #: ::
-        #:
         #:     Generic "Stats" label.
         #:
         #:     English: "Stats"
@@ -10044,8 +10036,8 @@ if TYPE_CHECKING:
     #: in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1041 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``controls``, ``coop``, and 1036 more). Full list in
+    #: The ``strings`` group - 1040 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``controls``, ``coop``, and 1035 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -11437,7 +11429,6 @@ _TREE = {
             'practice': (),
             'quit_app_confirm': ('app_name',),
             'rank': (),
-            'remote_app_name': (),
             'stats': (),
             'trophies': (),
         },

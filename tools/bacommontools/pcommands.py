@@ -11,9 +11,12 @@ def bacurl() -> None:
     Reads ``ballistica_api_key`` from ``pconfig/localconfig.json`` and
     passes it as a Bearer token in the Authorization header. All
     arguments are forwarded to curl. The ``-s`` (silent) flag is added
-    automatically. HTTP errors exit non-zero (--fail-with-body) so piped
-    JSON parsing fails loudly instead of KeyError-ing on error payloads;
-    the error body still prints.
+    automatically, along with ``-S`` so curl's own errors (bad URL, DNS,
+    connect failures) still print instead of exiting silently. HTTP
+    errors exit non-zero (--fail-with-body) so piped JSON parsing fails
+    loudly instead of KeyError-ing on error payloads; the error body
+    still prints. A bare path (``/api/...``) is refused with a hint,
+    since curl would otherwise fail on it with no output.
 
     Examples::
 
@@ -32,6 +35,15 @@ def bacurl() -> None:
     if not args:
         raise CleanError('Usage: bacurl [curl-args...] <url>')
 
+    # A bare path makes curl exit 3 ('URL malformed'), which -s would
+    # hide entirely; catch it here with a clear message instead.
+    for arg in args:
+        if arg.startswith('/api/'):
+            raise CleanError(
+                f'bacurl needs a full URL, not a bare path: {arg!r}.'
+                f' E.g. https://www.ballistica.net{arg}'
+            )
+
     try:
         with open('pconfig/localconfig.json', encoding='utf-8') as f:
             cfg = json.load(f)
@@ -45,6 +57,7 @@ def bacurl() -> None:
     cmd = [
         'curl',
         '-s',
+        '-S',
         '--fail-with-body',
         '-H',
         f'Authorization: Bearer {api_key}',

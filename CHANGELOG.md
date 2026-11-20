@@ -1,3 +1,8 @@
+### 1.8.9 (build 23092, api 9, 2026-11-20)
+- For modders: when an asset package the game loads has been scheduled
+  for deletion by its owner, the game now logs a warning saying when it
+  goes away, so mods using it can move off it in time.
+
 ### 1.8.8 (build 23090, api 9, 2026-11-19)
 - Retranslated the game's text in every language from scratch under new,
   more detailed translation guidelines. Translations are more accurate

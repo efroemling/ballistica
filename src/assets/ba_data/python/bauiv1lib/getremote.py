@@ -6,7 +6,7 @@ from typing import override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import _classicassets
+from bauiv1 import _classicassets, _builtinassets
 
 
 class GetBSRemoteWindow(PopupWindow):
@@ -58,7 +58,7 @@ class GetBSRemoteWindow(PopupWindow):
             position=(self._width * 0.5, 60),
             text=_classicassets.strings.get_remote.info_short(
                 app_name=_classicassets.strings.ui.app_name,
-                remote_app_name=_classicassets.strings.ui.remote_app_name,
+                remote_app_name=_builtinassets.strings.ui.remote_app_name,
             ),
         )
 
