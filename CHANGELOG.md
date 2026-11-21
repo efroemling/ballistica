@@ -1,6 +1,14 @@
 ### 1.8.10 (build 23094, api 9, 2026-11-20)
 - Fixed an error (and no cheer sound) when a tournament result message
   arrived.
+- The experimental native Python REPL (`Use Native Python REPL` config
+  key) now runs each statement on the logic thread, so game APIs work
+  from it, and supports top-level `await` (awaited code runs on the
+  logic thread's asyncio loop without stalling the game), much like
+  `python -m asyncio`. It uses Python's newer pyrepl console when
+  available (line editing, colors and tab completion that don't depend
+  on readline/libedit) and restores the terminal if the app exits while
+  it is waiting for input.
 
 ### 1.8.9 (build 23093, api 9, 2026-11-20)
 - Games are now hosted on protocol 57 by default, and 57 is the oldest

@@ -89,6 +89,7 @@ values = [
     _hooks.v2_auth_request,  # kV2AuthRequestCall
     _hooks.v2_auth_data,  # kV2AuthDataCall
     _hooks.start_native_repl,  # kStartNativeReplCall
+    _hooks.run_native_repl,  # kRunNativeReplCall
     _simpledialog.dispatch_button,  # kSimpleDialogButtonPressCall
     _hooks.wanted_asset_packages_changed,  # kWantedAssetPackagesChangedCall
     _hooks.purchase_pending_notice,  # kPurchasePendingNoticeCall
