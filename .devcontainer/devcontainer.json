@@ -1,0 +1,43 @@
+{
+  "name": "Ballistica Development",
+
+  // The docker build's toolchain image (the build-env stage of
+  // pconfig/docker/Dockerfile, published by
+  // .github/workflows/docker_build_env.yml), so the dev container and
+  // the docker build can't drift apart. :latest tracks main. To work
+  // on an older version, swap the tag for that version (e.g.
+  // :1.8.0b20) or for the deps-<hash> matching its Dockerfile. A fork
+  // that publishes its own can point this at
+  // ghcr.io/<owner>/ballistica/bombsquad_build_env instead.
+  "image": "ghcr.io/efroemling/ballistica/bombsquad_build_env:latest",
+
+  // Ubuntu images (23.04+) already have a non-root 'ubuntu' user at
+  // uid 1000, so use that one: a separate 'vscode' user would get uid
+  // 1001, and its uid can't be remapped to the host's (1000 is taken),
+  // which leaves it unable to write the bind-mounted checkout.
+  // common-utils just sets that user up (sudo, shell); the uid is
+  // matched to the host's at startup.
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "ubuntu"
+    }
+  },
+  "remoteUser": "ubuntu",
+
+  // The repo lands in the default /workspaces/<repo> (the only option
+  // in Codespaces). The venv and the generated tools/pcommand wrappers
+  // record absolute paths, so when reusing a local checkout that
+  // already has a .venv from the host, run `make env-clean` and
+  // `rm -rf .venv` before `make env`.
+
+  // Bootstrap the dev env: .venv, tool configs, tools/pcommand.
+  "postCreateCommand": "make env",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-vscode.cpptools"]
+    }
+  },
+
+  "shutdownAction": "none"
+}

@@ -5,6 +5,12 @@ on:
   push:
   pull_request:
 
+# Cancel superseded runs, except on main, which gets a unique group so
+# its runs are never cancelled or dropped from the queue.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   make_linux_gui_debug_build:
     name: Linux (${{ matrix.arch }}) GUI (debug)
