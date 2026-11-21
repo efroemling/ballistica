@@ -610,9 +610,15 @@ class EditProfileWindow(
                 char = p_info.get('character', 'Spaz')
                 appearance = classic.spaz_appearances.get(char)
                 if appearance:
-                    spazappearance.ui_sound(
-                        random.choice(appearance.death_sounds)
-                    ).play()
+                    # Death sounds could possibly be a empty list due
+                    # to the new SpazDef system; try picking one,
+                    # and just pass if it fails.
+                    sound = None
+                    try:
+                        sound = random.choice(appearance.death_sounds)
+                        spazappearance.ui_sound(sound).play()
+                    except IndexError:
+                        pass
 
         plus.add_v1_account_transaction(
             {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._existing_profile}
