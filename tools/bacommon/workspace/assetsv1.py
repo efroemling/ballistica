@@ -255,6 +255,14 @@ class AssetsV1GlobalVals(IOExtendedData):
         ),
     ] = PackageSourceSharing.PRIVATE
 
+    #: Whether copies made from this package's shared sources name its
+    #: owner in their credit (the CC BY 4.0 attribution shown with
+    #: them). An owner may ask not to be credited, a right CC BY 4.0
+    #: gives; copies then show a credit without the name.
+    credit_on_copies: Annotated[
+        bool, IOAttrs('credit_on_copies', store_default=False)
+    ] = True
+
 
 def derive_asset_package_name(workspace_name: str) -> str:
     """Derive a default asset-package name from a workspace name.

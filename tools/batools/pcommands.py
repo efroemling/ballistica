@@ -721,6 +721,7 @@ def _camel_case_split(string: str) -> list[str]:
 
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
+    import os
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
@@ -757,6 +758,16 @@ def efro_gradle() -> None:
             flush=True,
         )
 
+    # Likewise never leave a Gradle daemon behind from the sandbox. A
+    # daemon inherits the sandbox it was started in (no DNS, no
+    # network) and lives on for hours, and later builds, including
+    # unsandboxed ones in a normal terminal, reuse any compatible
+    # daemon; theirs then fail too, with "nodename nor servname
+    # provided" for every repository host (hit 2026-11-20). Fix for an
+    # already-poisoned daemon: ./gradlew --stop outside the sandbox.
+    if in_sandbox and '--no-daemon' not in args:
+        args.append('--no-daemon')
+
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(target)]
@@ -780,8 +791,29 @@ def efro_gradle() -> None:
 
     filter_gradle_file(buildfilename, enabled_tags)
 
+    # A JAVA_HOME naming a JDK this machine doesn't have (e.g. Android
+    # Studio's on a Mac without Studio, inherited from a stale shell)
+    # makes gradlew refuse to start; fall back to one that exists.
+    env = dict(os.environ)
+    java_home = env.get('JAVA_HOME')
+    if java_home is not None and not os.path.isdir(java_home):
+        for candidate in (
+            '/Applications/Android Studio.app/Contents/jbr/Contents/Home',
+            '/opt/homebrew/opt/openjdk@21',
+            '/opt/homebrew/opt/openjdk',
+            '/usr/lib/jvm/java-17-openjdk-amd64',
+        ):
+            if os.path.isdir(candidate):
+                print(
+                    f'{Clr.YLW}efro_gradle: JAVA_HOME {java_home!r} does'
+                    f' not exist; using {candidate!r}.{Clr.RST}',
+                    flush=True,
+                )
+                env['JAVA_HOME'] = candidate
+                break
+
     try:
-        subprocess.run(args, check=True)
+        subprocess.run(args, check=True, env=env)
         errored = False
     except BaseException:
         errored = True
@@ -887,26 +919,6 @@ def genchangelog() -> None:
     from batools.changelog import generate
 
     generate(projroot=str(pcommand.PROJROOT))
-
-
-def get_changelog() -> None:
-    """Print the changelog for a specified version"""
-    from efro.error import CleanError
-    from efro.terminal import Clr
-
-    from batools.changelog import get_version_changelog
-
-    args = pcommand.get_args()
-    if len(args) != 1:
-        raise CleanError('Expected 1 arg: version')
-    version_str = args[0]
-
-    changelog_list = get_version_changelog(
-        version=version_str, projroot=str(pcommand.PROJROOT)
-    )
-    print(f'{Clr.BLD}Changelog for version ' f'{version_str}:{Clr.RST}\n')
-    for entry in changelog_list:
-        print(f'{Clr.CYN}-{Clr.RST} {entry}')
 
 
 def android_sdk_utils() -> None:

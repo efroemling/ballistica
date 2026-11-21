@@ -32,10 +32,18 @@ if TYPE_CHECKING:
 @ioprepped
 @dataclass
 class SigningConfig:
-    """Info about signing."""
+    """Info about signing.
+
+    ``installer_certfile``/``installer_certpass`` optionally add a
+    second identity to the build's temp keychain: Mac App Store exports
+    sign the app with an Apple Distribution certificate (``certfile``)
+    and the uploaded ``.pkg`` with a Mac Installer Distribution one.
+    """
 
     certfile: str
     certpass: str
+    installer_certfile: str | None = None
+    installer_certpass: str | None = None
 
 
 @ioprepped
@@ -569,26 +577,39 @@ class XCodeBuild:
                 check=True,
                 capture_output=True,
             )
-            subprocess.run(
-                [
-                    'security',
-                    'import',
-                    self._signingconfig.certfile,
-                    '-k',
-                    self._keychain_name,
-                    '-f',
-                    'pkcs12',
-                    '-A',
-                    '-T',
-                    '/usr/bin/codesign',
-                    '-T',
-                    '/usr/bin/security',
-                    '-P',
-                    self._signingconfig.certpass,
-                ],
-                check=True,
-                capture_output=True,
-            )
+            certs = [
+                (self._signingconfig.certfile, self._signingconfig.certpass)
+            ]
+            if self._signingconfig.installer_certfile is not None:
+                certs.append(
+                    (
+                        self._signingconfig.installer_certfile,
+                        self._signingconfig.installer_certpass or '',
+                    )
+                )
+            for certfile, certpass in certs:
+                subprocess.run(
+                    [
+                        'security',
+                        'import',
+                        certfile,
+                        '-k',
+                        self._keychain_name,
+                        '-f',
+                        'pkcs12',
+                        '-A',
+                        '-T',
+                        '/usr/bin/codesign',
+                        '-T',
+                        '/usr/bin/productbuild',
+                        '-T',
+                        '/usr/bin/security',
+                        '-P',
+                        certpass,
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
             subprocess.run(
                 [
                     'security',

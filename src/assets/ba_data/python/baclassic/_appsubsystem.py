@@ -16,6 +16,7 @@ from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
 from bauiv1 import _classiccatalogassets as uicatalogassets
+from bauiv1 import _classicassets as uiclassicassets
 import bascenev1
 from bascenev1 import _classicassets
 
@@ -996,8 +997,16 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         return bascenev1.protocol_version()
 
     def play_cheer_sound(self) -> None:
-        """:meta private:"""
-        _classicassets.audio.cheer.get().play()
+        """Play the cheer sound from any context (or none).
+
+        Called from app-timer callbacks with no context set (v1
+        server screen messages), so this uses the context-free
+        bauiv1 sound wrapper; the bascenev1 one demands a scene-v1
+        context and raises a ContextError there.
+
+        :meta private:
+        """
+        uiclassicassets.audio.cheer.get().play()
 
     def v2_upgrade_window(self, login_name: str, code: str) -> None:
         """:meta private:"""

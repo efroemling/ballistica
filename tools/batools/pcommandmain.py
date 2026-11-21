@@ -117,7 +117,6 @@ from batools.pcommands import (
     cmake_prep_dir,
     gen_binding_code,
     genchangelog,
-    get_changelog,
     android_sdk_utils,
     logcat,
     gen_cpp_enums,
@@ -175,6 +174,7 @@ from batools.pcommands3 import (
     linux_portable_deps_build,
     linux_portable_deps_gather,
     linux_portable_engine_build,
+    get_changelog,
 )
 from batools.pcommands4 import (
     ios_sim_run,

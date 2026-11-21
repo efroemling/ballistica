@@ -580,3 +580,23 @@ def linux_portable_engine_build() -> None:
         fast='--fast' in present,
         deploy=deploy,
     )
+
+
+def get_changelog() -> None:
+    """Print the changelog for a specified version"""
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    from batools.changelog import get_version_changelog
+
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg: version')
+    version_str = args[0]
+
+    changelog_list = get_version_changelog(
+        version=version_str, projroot=str(pcommand.PROJROOT)
+    )
+    print(f'{Clr.BLD}Changelog for version ' f'{version_str}:{Clr.RST}\n')
+    for entry in changelog_list:
+        print(f'{Clr.CYN}-{Clr.RST} {entry}')

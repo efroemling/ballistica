@@ -1,3 +1,7 @@
+### 1.8.10 (build 23094, api 9, 2026-11-20)
+- Fixed an error (and no cheer sound) when a tournament result message
+  arrived.
+
 ### 1.8.9 (build 23093, api 9, 2026-11-20)
 - Games are now hosted on protocol 57 by default, and 57 is the oldest
   protocol a game can be hosted on. Players on 1.8.0 through 1.8.4 need
