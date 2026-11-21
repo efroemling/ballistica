@@ -462,6 +462,7 @@ class Assets {
   bool sys_assets_loaded_{};
 
   std::vector<std::string> asset_paths_;
+  std::optional<std::string> user_asset_path_;
   std::unordered_map<std::string, std::string> packages_;
   AssetPackageRegistry package_registry_;
   std::string bundled_manifest_path_;

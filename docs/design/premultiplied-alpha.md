@@ -23,7 +23,7 @@ premult_blend = premultiplied_ || (texture && texture->premultiplied())
 - `premult_blend == false` → `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)`
   (straight alpha): the hardware multiplies source RGB by source alpha for you.
 
-Both paths are kept on purpose — legacy/modder textures (DDS/KTX/PVR) are
+Both paths are kept on purpose — legacy/modder textures (DDS/KTX) are
 straight-alpha and must keep working. The cost of supporting both is
 negligible.
 

@@ -1,6 +1,22 @@
-### 1.8.10 (build 23094, api 9, 2026-11-20)
+### 1.8.10 (build 23095, api 9, 2026-11-21)
 - Fixed an error (and no cheer sound) when a tournament result message
   arrived.
+- Assets can now be loaded from 'textures', 'audio', 'meshes', and
+  'data' dirs within the mods dir. These replace the 'textures2',
+  'audio2', 'meshes2', and 'data2' locations that were searched in
+  ba_data previously. As of 1.8, Android builds load assets directly
+  from the .apk file which makes placing modded assets in ba_data
+  difficult; this should make things easier. I still encourage you to
+  migrate to asset packages, but this should allow old-style modding to
+  continue working.
+- Android mods folder is now accessible from the Files app. The 'Show
+  Mods Folder' button in settings will take you there.
+- Loose textures in the mods dir now use the same formats on iOS as
+  on Android: '.ktx' files (ETC2/ETC1), which iOS GPUs read natively.
+  Desktop builds still use '.dds' (DXT1/DXT5). Support for '.pvr'
+  (PVRTC) textures has been removed; it was never really used. KTX2
+  textures with modern formats like ASTC and BC7 are available through
+  asset packages.
 
 ### 1.8.9 (build 23093, api 9, 2026-11-20)
 - Games are now hosted on protocol 57 by default, and 57 is the oldest

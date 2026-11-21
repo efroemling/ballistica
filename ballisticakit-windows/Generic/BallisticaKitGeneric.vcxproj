@@ -428,8 +428,6 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx2.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx2.h" />
-    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc" />
-    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\pvr.h" />
     <ClInclude Include="..\..\src\ballistica\base\input\device\feedback_event.h" />
     <ClCompile Include="..\..\src\ballistica\base\input\device\input_device.cc" />
     <ClInclude Include="..\..\src\ballistica\base\input\device\input_device.h" />

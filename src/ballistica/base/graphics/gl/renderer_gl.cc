@@ -52,13 +52,6 @@
 // Turn this off to see how much blend overdraw is occurring.
 #define BA_GL_ENABLE_BLEND 1
 
-#ifndef GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG
-#define GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG 0x8C02
-#endif
-#ifndef GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG
-#define GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG 0x8C03
-#endif
-
 #ifndef GL_ETC1_RGB8_OES
 #define GL_ETC1_RGB8_OES 0x8D64
 #endif
@@ -373,13 +366,6 @@ void RendererGL::CheckGLCapabilities_() {
     c_types.push_back(TextureCompressionType::kS3TC);
   }
 
-  // Limiting pvr support to iOS for the moment.
-  if (!g_buildconfig.platform_android()) {
-    if (CheckGLExtension(extensions, "texture_compression_pvrtc")) {
-      c_types.push_back(TextureCompressionType::kPVR);
-    }
-  }
-
   // Pretty much all Android devices should support ETC1.
   if (CheckGLExtension(extensions, "compressed_ETC1_RGB8_texture")) {
     c_types.push_back(TextureCompressionType::kETC1);
@@ -418,10 +404,26 @@ void RendererGL::CheckGLCapabilities_() {
   // S3TC, so it lands on fallback_v1.
   {
     std::string detected;
-    const char* names[] = {"S3TC", "PVR", "ETC1", "ETC2", "ASTC", "BPTC"};
     for (auto t : c_types) {
-      auto idx = static_cast<size_t>(t);
-      detected += std::string(" ") + (idx < 6 ? names[idx] : "?");
+      const char* name{"?"};
+      switch (t) {
+        case TextureCompressionType::kS3TC:
+          name = "S3TC";
+          break;
+        case TextureCompressionType::kETC1:
+          name = "ETC1";
+          break;
+        case TextureCompressionType::kETC2:
+          name = "ETC2";
+          break;
+        case TextureCompressionType::kASTC:
+          name = "ASTC";
+          break;
+        case TextureCompressionType::kBPTC:
+          name = "BPTC";
+          break;
+      }
+      detected += std::string(" ") + name;
     }
     g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kInfo,
@@ -636,12 +638,6 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
       break;
     case TextureFormat::kDXT5:
       return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-      break;
-    case TextureFormat::kPVR2:
-      return GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG;
-      break;
-    case TextureFormat::kPVR4:
-      return GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG;
       break;
     case TextureFormat::kETC1:
       return GL_ETC1_RGB8_OES;

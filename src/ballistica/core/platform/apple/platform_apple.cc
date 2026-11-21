@@ -169,6 +169,20 @@ auto PlatformApple::DoGetCacheDirectoryMonolithicDefault()
 #endif
 }
 
+auto PlatformApple::DoGetUserPythonDirectoryMonolithicDefault()
+    -> std::optional<std::string> {
+#if BA_PLATFORM_IOS && BA_XCODE_BUILD
+  // Our Documents dir is visible in the Files app ('On My iPhone') since
+  // our Info.plist sets UIFileSharingEnabled, so putting mods there is
+  // how users can install loose mods (and media; see
+  // Assets::FindAssetFile).
+  return std::string(BallisticaKit::FromCpp::getDocumentsDirectoryPath())
+         + "/mods";
+#else
+  return Platform::DoGetUserPythonDirectoryMonolithicDefault();
+#endif
+}
+
 auto PlatformApple::DoHasTouchScreen() -> bool {
 #if BA_PLATFORM_IOS
   return true;

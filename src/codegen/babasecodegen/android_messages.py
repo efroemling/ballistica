@@ -443,6 +443,17 @@ MESSAGES: list[Message] = [
         ),
     ),
     Message(
+        name='OpenDirExternally',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('path', STR)],
+        doc=(
+            'Show a directory in the system file browser. Only dirs inside'
+            ' the mods dir can be shown (via ModsDocumentsProvider); for'
+            ' anything else, or if no browser handles it, the Java side'
+            ' sends back a ScreenMessage with the path instead.'
+        ),
+    ),
+    Message(
         name='MusicPlay',
         direction=Dir.NATIVE_TO_JAVA,
         fields=[Field('filename', STR)],

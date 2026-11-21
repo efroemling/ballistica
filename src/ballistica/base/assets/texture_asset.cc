@@ -23,7 +23,6 @@
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/ktx2.h"
-#include "ballistica/base/graphics/texture/pvr.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -394,30 +393,6 @@ void TextureAsset::DoPreload() {
                  &preload_datas_[0].base_level,
                  &preload_datas_[0].premultiplied, &preload_datas_[0].wrap_h,
                  &preload_datas_[0].wrap_v, &preload_datas_[0].role);
-      } else if (matches(".android_dds")) {
-        // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
-        LoadDDS(file_name_full_, preload_datas_[0].buffers,
-                preload_datas_[0].widths, preload_datas_[0].heights,
-                preload_datas_[0].formats, preload_datas_[0].sizes,
-                texture_quality, static_cast<uint8_t>(min_quality_),
-                &preload_datas_[0].base_level);
-
-        // We should only be loading this if we support etc1 in hardware.
-        assert(g_base->graphics->placeholder_client_context()
-                   ->SupportsTextureCompressionType(
-                       TextureCompressionType::kETC1));
-
-        // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
-        if (!g_base->graphics->placeholder_client_context()
-                 ->SupportsTextureCompressionType(
-                     TextureCompressionType::kS3TC)) {
-          if ((preload_datas_[0].formats[preload_datas_[0].base_level]
-               == TextureFormat::kDXT5)
-              || (preload_datas_[0].formats[preload_datas_[0].base_level]
-                  == TextureFormat::kDXT1)) {
-            preload_datas_[0].ConvertToUncompressed(this);
-          }
-        }
       } else if (matches(".dds")) {
         // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
@@ -466,18 +441,6 @@ void TextureAsset::DoPreload() {
           preload_datas_[0].ConvertToUncompressed(this);
         }
 
-      } else if (matches(".pvr")) {
-        // Pvr for all (.pvr files).
-        LoadPVR(file_name_full_, preload_datas_[0].buffers,
-                preload_datas_[0].widths, preload_datas_[0].heights,
-                preload_datas_[0].formats, preload_datas_[0].sizes,
-                texture_quality, static_cast<uint8_t>(min_quality_),
-                &preload_datas_[0].base_level);
-
-        // We should only be loading this if we support pvr in hardware.
-        assert(
-            g_base->graphics->placeholder_client_context()
-                ->SupportsTextureCompressionType(TextureCompressionType::kPVR));
       } else if (matches(".nop")) {
         // Dummy path for headless; nothing to do here.
       } else {
@@ -536,39 +499,7 @@ void TextureAsset::DoPreload() {
               throw Exception();
           }
 
-          // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds files).
-          if (file_name_size > 12
-              && !strcmp(file_name_full_.c_str() + file_name_size - 12,
-                         ".android_dds")) {
-            try {
-              LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
-                      preload_datas_[d].heights, preload_datas_[d].formats,
-                      preload_datas_[d].sizes, texture_quality,
-                      static_cast<uint8_t>(min_quality_),
-                      &preload_datas_[d].base_level);
-            } catch (const std::exception& e) {
-              throw Exception("Error loading file '" + file_name_full_
-                              + "': " + e.what());
-            }
-
-            // We should only be loading this if we support etc1 in hardware.
-            assert(g_base->graphics->placeholder_client_context()
-                       ->SupportsTextureCompressionType(
-                           TextureCompressionType::kETC1));
-
-            // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
-            if (!g_base->graphics->placeholder_client_context()
-                     ->SupportsTextureCompressionType(
-                         TextureCompressionType::kS3TC)) {
-              if ((preload_datas_[d].formats[preload_datas_[d].base_level]
-                   == TextureFormat::kDXT5)
-                  || (preload_datas_[d].formats[preload_datas_[d].base_level]
-                      == TextureFormat::kDXT1)) {
-                preload_datas_[d].ConvertToUncompressed(this);
-              }
-            }
-          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                             ".dds")) {
+          if (!strcmp(file_name_full_.c_str() + file_name_size - 4, ".dds")) {
             // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
             LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                     preload_datas_[d].heights, preload_datas_[d].formats,
@@ -612,19 +543,6 @@ void TextureAsset::DoPreload() {
               preload_datas_[d].ConvertToUncompressed(this);
             }
 
-          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                             ".pvr")) {
-            // Pvr for both non-alpha and alpha (.pvr files).
-            try {
-              LoadPVR(name, preload_datas_[d].buffers, preload_datas_[d].widths,
-                      preload_datas_[d].heights, preload_datas_[d].formats,
-                      preload_datas_[d].sizes, texture_quality,
-                      static_cast<uint8_t>(min_quality_),
-                      &preload_datas_[d].base_level);
-            } catch (const std::exception& e) {
-              throw Exception("Error loading file '" + file_name_full_
-                              + "': " + e.what());
-            }
           } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
                              ".nop")) {
             // Dummy path for headless; nothing to do here.

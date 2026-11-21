@@ -712,12 +712,6 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx2.h">
       <Filter>ballistica\base\graphics\texture</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc">
-      <Filter>ballistica\base\graphics\texture</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\pvr.h">
-      <Filter>ballistica\base\graphics\texture</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\input\device\feedback_event.h">
       <Filter>ballistica\base\input\device</Filter>
     </ClInclude>

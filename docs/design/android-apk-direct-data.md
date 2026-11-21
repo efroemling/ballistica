@@ -170,10 +170,10 @@ memcpy-style accesses (`AssetBlob::ReadAt`, the sequential
 types. The zip index parser follows the same rule. Any new parser over
 blobs must too.
 
-(The legacy dds/pvr/ktx texture loaders were never converted; current
-pipelines ship only ktx2, so they are deletion candidates rather than
-conversion targets. Runtime-written sound peak-cache files stay plain
-files by design.)
+(The legacy dds/ktx texture loaders were never converted; current
+pipelines ship only ktx2, so the legacy loaders now only read loose
+modder textures from the mods dir, which are plain files anyway.
+Runtime-written sound peak-cache files stay plain files by design.)
 
 ## Gotchas that fail silently
 

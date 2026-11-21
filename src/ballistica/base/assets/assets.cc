@@ -66,8 +66,19 @@ static const bool kShowPruningInfo = false;
 #define PENDING_LOAD_PROCESS_TIME 5
 
 Assets::Assets() {
-  asset_paths_.emplace_back(g_core->GetDataDirectory() + BA_DIRSLASH
-                            + "ba_data");
+  // Legacy bare-name media lookups (see FindAssetFile). The user mods
+  // dir is probed first; it is where modders put loose media now
+  // (mods/textures/, mods/audio/, etc.). The on-disk ba_data dir is
+  // probed too, except on platforms serving ba_data from a bundled
+  // archive (Android): there it is no longer ours to read, and leftover
+  // content from old builds gets pruned at launch.
+  if (auto user_dir = g_core->GetUserPythonDirectory()) {
+    user_asset_path_ = *user_dir;
+  }
+  if (!g_core->platform->GetBundledAssetsArchiveInfo()) {
+    asset_paths_.emplace_back(g_core->GetDataDirectory() + BA_DIRSLASH
+                              + "ba_data");
+  }
   for (bool& have_pending_load : have_pending_loads_) {
     have_pending_load = false;
   }
@@ -1353,14 +1364,12 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       //        && g_base->graphics_server->texture_quality_set());
       prefix = "textures/";
 
-#if BA_PLATFORM_ANDROID && !BA_ANDROID_DDS_BUILD
-      // On most android builds we go for .ktx, which contains etc2 and etc1.
+#if BA_PLATFORM_ANDROID || BA_PLATFORM_IOS_TVOS
+      // Mobile (GLES 3, which mandates etc2) uses .ktx, which contains
+      // etc2 and etc1.
       ext = ".ktx";
-#elif BA_PLATFORM_IOS_TVOS
-      // On iOS we use pvr.
-      ext = ".pvr";
 #else
-      // all else defaults to dds
+      // All else uses .dds (dxt1/dxt5).
       ext = ".dds";
 #endif
       break;
@@ -1368,22 +1377,6 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
     default:
       break;
   }
-
-  // Modder-override prefix: probe ``<type>2/`` before ``<type>/`` so
-  // existing mods that drop assets into ``textures2/`` / ``audio2/``
-  // / ``meshes2/`` keep working until they migrate to the
-  // asset-package wrapper flow. Our builds never populate these dirs
-  // — the probe is a no-op when absent. Remove once mod migration is
-  // complete.
-  std::string prefix_override;
-  {
-    std::string base_prefix(prefix);
-    if (!base_prefix.empty() && base_prefix.back() == '/') {
-      prefix_override = base_prefix.substr(0, base_prefix.size() - 1) + "2/";
-    }
-  }
-
-  const std::vector<std::string>& asset_paths_used = asset_paths_;
 
   auto check_exists = [](const std::string& path) -> bool {
     // '#' denotes a cube map texture, which is actually 6 files.
@@ -1396,13 +1389,17 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
     return g_core->platform->FilePathExists(path);
   };
 
-  for (auto&& i : asset_paths_used) {
-    if (!prefix_override.empty()) {
-      file_out = i + "/" + prefix_override + name + ext;
-      if (check_exists(file_out)) {
-        return file_out;
-      }
+  // The mods dir comes first so modder media takes priority over
+  // anything under ba_data. (It replaces the old ``<type>2/`` override
+  // dirs under ba_data, which are no longer searched.)
+  if (user_asset_path_.has_value()) {
+    file_out = *user_asset_path_ + "/" + prefix + name + ext;
+    if (check_exists(file_out)) {
+      return file_out;
     }
+  }
+
+  for (auto&& i : asset_paths_) {
     file_out = i + "/" + prefix + name + ext;
     if (check_exists(file_out)) {
       return file_out;

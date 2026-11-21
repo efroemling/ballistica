@@ -169,8 +169,7 @@ class TextureAsset : public Asset {
   /// by content hash — bare or with the bundled transport suffix —
   /// never by a content extension). CAS blobs dispatch on content
   /// magic bytes at preload; legacy on-disk assets dispatch on the
-  /// path's suffix (``.dds``, ``.android_dds``, ``.ktx``, ``.pvr``,
-  /// ``.nop``).
+  /// path's suffix (``.dds``, ``.ktx``, ``.nop``).
   bool is_cas_blob_{};
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};

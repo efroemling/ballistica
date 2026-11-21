@@ -298,8 +298,6 @@ enum class TextureFormat : uint8_t {
   kDXT1,
   kDXT5,
   kETC1,
-  kPVR2,
-  kPVR4,
   kETC2_RGB,
   kETC2_RGBA,
   kBC7,
@@ -325,7 +323,6 @@ enum class TextureFormat : uint8_t {
 
 enum class TextureCompressionType : uint8_t {
   kS3TC,
-  kPVR,
   kETC1,
   kETC2,
   kASTC,

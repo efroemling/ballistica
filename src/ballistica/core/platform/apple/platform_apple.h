@@ -23,6 +23,8 @@ class PlatformApple : public Platform {
       -> std::optional<std::string> override;
   auto DoGetCacheDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
+  auto DoGetUserPythonDirectoryMonolithicDefault()
+      -> std::optional<std::string> override;
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
