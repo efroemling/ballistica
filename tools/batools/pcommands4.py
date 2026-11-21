@@ -51,18 +51,6 @@ def ios_sim_log() -> None:
     )
 
 
-#: Master-server host per fleet, for the freshness check below. Kept
-#: local and tiny on purpose: this is a best-effort diagnostic, so it
-#: must not drag bacloud's fleet-resolution machinery (and its import
-#: cost) into a command whose whole job is to print a path fast.
-_FLEET_HOSTS = {
-    None: 'www.ballistica.net',
-    'prod': 'www.ballistica.net',
-    'test': 'test.ballistica.net',
-    'dev': 'dev.ballistica.net',
-}
-
-
 def _local_snapshot_id(ws_dir: str) -> str | None:
     """The snapshot id a local checkout was last synced to, if known."""
     import os
@@ -88,7 +76,10 @@ def _cloud_snapshot_id(name: str, fleet: str | None) -> str | None:
     import json
     import urllib.request
 
-    host = _FLEET_HOSTS.get(fleet)
+    # (fleethost is stdlib-only, so this stays fast; bacloud would not.)
+    from bacommontools.fleethost import fleet_master_host
+
+    host = fleet_master_host(fleet or 'prod')
     if host is None:
         return None
     try:
@@ -214,8 +205,18 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
             )
         return None
 
+    def _eng_has_line_break(strfile: AssetsV1StringFileV1) -> bool | None:
+        for locale, output in strfile.outputs.items():
+            if locale.value != 'eng':
+                continue
+            if isinstance(output.value, str):
+                return '\n' in output.value
+            return any('\n' in f for f in output.value.forms.values())
+        return None
+
     errors: list[str] = []
     warnings: list[str] = []
+    break_warnings: list[str] = []
     for path in sorted(Path(ws_dir).rglob('*.bstr')):
         rel = path.relative_to(ws_dir)
         try:
@@ -241,6 +242,18 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
                         f' `prose` if it is meant to be unbounded,'
                         f' or pin a line count. (D21)'
                     )
+                # Briefs must never ask for line breaks: translation
+                # strips them (the display layer wraps), so a break in a
+                # brief only costs a rejected attempt per locale. Flag
+                # briefs holding one whose English output came back
+                # without it -- i.e. a break the pipeline threw away.
+                # (Keep-as-is formatting templates whose output really
+                # does carry a newline, like compose/line_pair, pass.)
+                if (
+                    '\n' in strfile.input
+                    and _eng_has_line_break(strfile) is False
+                ):
+                    break_warnings.append(f'  {rel}')
         except CleanError as exc:
             errors.append(f'  {rel}: {exc}')
         except Exception as exc:
@@ -250,6 +263,19 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
         print(
             f'{Clr.YLW}Warning: {len(warnings)} unconstrained-layout'
             f' {label}:\n' + '\n'.join(warnings) + f'{Clr.RST}'
+        )
+    if break_warnings:
+        label = 'brief' if len(break_warnings) == 1 else 'briefs'
+        print(
+            f'{Clr.YLW}Warning: {len(break_warnings)} {label} asking for'
+            f' line breaks. Translations never keep line breaks (the'
+            f' display layer wraps text), so each break costs a rejected'
+            f' attempt per locale and changes nothing. Describe the text'
+            f' on one line, and give the string a wrap path-val'
+            f' ("wrap": {{"mn": N, "mx": N}} in workspace.json) if it'
+            f' needs a fixed line count:\n'
+            + '\n'.join(break_warnings)
+            + f'{Clr.RST}'
         )
     if errors:
         label = 'brief' if len(errors) == 1 else 'briefs'
@@ -525,3 +551,15 @@ def push_apk_to_archive() -> None:
             'android-test-builds' if archive_id is None else archive_id
         ),
     )
+
+
+def stamp_test_durations() -> None:
+    """Stamp today's date into the pytest-split durations file.
+
+    Run by ``make test-ex-split-durations`` after a successful
+    recording; the project check fails once the stamp gets too old.
+    See :mod:`batools.testdurations`.
+    """
+    from batools.testdurations import stamp_recorded_date
+
+    stamp_recorded_date(pcommand.PROJROOT)

@@ -386,13 +386,34 @@ class MainWindow(Window):
             uiv1.clear_main_window()
             return
 
-        # Get ourself transitioning out.
-        self.main_window_close()
-
-        # Get the 'back' window coming in.
         back_state = self.main_window_back_state
         if back_state is None:
             raise RuntimeError(f'Main window {self} provides no back-state.')
+        self._main_window_back_to(back_state)
+
+    def main_window_back_to(self, back_state: MainWindowState) -> None:
+        """Move back to an earlier state in the main window stack.
+
+        ``back_state`` must be in our chain of back-states (ours or one
+        of its parents); the states between are dropped. Is a no-op if
+        the main window does not have control.
+
+        :meta private:
+        """
+        if not self.main_window_has_control():
+            return
+        state: MainWindowState | None = self.main_window_back_state
+        while state is not None and state is not back_state:
+            state = state.parent
+        if state is None:
+            raise ValueError(f'{back_state} is not in our back-state chain.')
+        self._main_window_back_to(back_state)
+
+    def _main_window_back_to(self, back_state: MainWindowState) -> None:
+        uiv1 = babase.app.ui_v1
+
+        # Get ourself transitioning out.
+        self.main_window_close()
 
         # Valid states should have values here.
         assert back_state.is_top_level is not None
@@ -506,6 +527,53 @@ class MainWindow(Window):
             suppress_warning=True,
         )
         return new_window
+
+    def main_window_swap(
+        self,
+        new_window: Callable[[], MainWindow],
+        extra_type_id: str = '',
+    ) -> MainWindow | None:
+        """Swap ourself out for a new MainWindow that takes our place.
+
+        Unlike :meth:`main_window_replace`, we don't go into the back
+        history: going back from the new window goes wherever going
+        back from us would have (closing the UI if we're top-level), and
+        it keeps our auxiliary-ness. We scale out; create the new window
+        with an ``'in_scale'`` transition to match.
+
+        Returns the new MainWindow. Will no-op and return None if we are
+        not allowed to replace the MainWindow.
+        """
+        if not self.main_window_has_control():
+            babase.uilog.debug(
+                'main_window_swap:'
+                ' no-op due to main_window_has_control() returning False.',
+                stack_info=True,
+            )
+            return None
+
+        # (Created before we close, as for main_window_replace(), since
+        # creating it may look at the current main window.)
+        window = new_window()
+
+        ui = babase.app.ui_v1
+        back_state = self.main_window_back_state
+        is_top_level = self.main_window_is_top_level
+        is_auxiliary = self.main_window_is_auxiliary
+
+        # (As auxiliary_window_activate() swaps one auxiliary window for
+        # another: clear, then set with our place in the stack.)
+        ui.clear_main_window(transition='out_scale')
+        ui.set_main_window(
+            window,
+            from_window=False,  # (We just cleared ourself.)
+            back_state=back_state,
+            is_top_level=is_top_level,
+            is_auxiliary=is_auxiliary,
+            extra_type_id=extra_type_id,
+            suppress_warning=True,
+        )
+        return window
 
     def on_main_window_close(self) -> None:
         """Called before transitioning out a main window.

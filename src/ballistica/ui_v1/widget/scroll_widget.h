@@ -19,6 +19,10 @@ class ScrollWidget : public ContainerWidget {
   void Draw(base::RenderPass* pass, bool transparent) override;
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto GetWidgetTypeName() -> std::string override { return "scroll"; }
+  auto GetChildClipRect(Rect* rect) const -> bool override {
+    *rect = ChildClipRect_();
+    return true;
+  }
   auto GetScrollState() -> std::optional<ScrollState> override;
   auto SetScrollOffset(float offset) -> bool override;
   auto set_capture_arrows(bool val) { capture_arrows_ = val; }
@@ -127,6 +131,8 @@ class ScrollWidget : public ContainerWidget {
   void UpdateLayout() override;
 
  private:
+  /// The rect (in our space) our children draw clipped to.
+  auto ChildClipRect_() const -> Rect;
   void ClampScrolling_(bool velocity_clamp, bool position_clamp,
                        millisecs_t current_time_millisecs);
   void UpdateScrolling_(millisecs_t current_time_millisecs);

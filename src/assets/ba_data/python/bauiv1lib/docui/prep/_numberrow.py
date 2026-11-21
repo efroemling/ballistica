@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 
+from bauiv1lib.docui.prep._rowtext import control_label_style
 from bauiv1lib.docui.prep._types import NumberPrep
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
     import bacommon.docui.v2 as dui2
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 NUMBER_HEIGHT = 50.0
@@ -28,16 +29,17 @@ NUMBER_HEIGHT = 50.0
 # A number row's '+' button sits at the row's right with the '-' left
 # of it; the value readout sits left of those, and the label (at the
 # row's left, like other control rows') gets what is left after a fixed
-# gap. The gaps start from ConfigNumberEdit's (14 and 22 around
+# gap. The buttons are clean-layout, so these are their art's sizes and
+# gaps. The gaps start from ConfigNumberEdit's (14 and 22 around
 # 28-unit buttons) scaled to our button size, with the value held a
 # little farther off so it reads as clearly its own thing, and the
 # buttons pulled a bit closer together.
-_NUMBER_BUTTON_SIZE = 40.0
-_NUMBER_BUTTON_GAP = 25.0
+_NUMBER_BUTTON_SIZE = (55.0, 47.0)
+_NUMBER_BUTTON_GAP = 10.0
 
 # Scale of the buttons' '-' and '+' labels.
 _NUMBER_BUTTON_TEXT_SCALE = 1.2
-_NUMBER_VALUE_GAP = 26.0
+_NUMBER_VALUE_GAP = 20.0
 _NUMBER_VALUE_WIDTH = 60.0
 _NUMBER_LABEL_GAP = 32.0
 
@@ -68,11 +70,12 @@ def prep_number_row(
     bottom += row.padding_bottom
     center_y = bottom + NUMBER_HEIGHT * 0.5
 
-    plusleft = right - _NUMBER_BUTTON_SIZE
-    minusleft = plusleft - _NUMBER_BUTTON_GAP - _NUMBER_BUTTON_SIZE
+    bwidth, bheight = _NUMBER_BUTTON_SIZE
+    plusleft = right - bwidth
+    minusleft = plusleft - _NUMBER_BUTTON_GAP - bwidth
     valueright = minusleft - _NUMBER_VALUE_GAP
     labelright = valueright - _NUMBER_VALUE_WIDTH - _NUMBER_LABEL_GAP
-    buttonbottom = center_y - _NUMBER_BUTTON_SIZE * 0.5
+    buttonbottom = center_y - bheight * 0.5
 
     # A disabled row dims its label and readout (their enabled=False is
     # purely a dimming here; they aren't selectable) and disables both
@@ -90,7 +93,7 @@ def prep_number_row(
             maxwidth=max(1.0, labelright - left),
             h_align='left',
             v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
+            **control_label_style(row),
             enabled=enabled,
             transition_delay=tdelay,
             transition_type='scale',
@@ -110,12 +113,13 @@ def prep_number_row(
             bui.buttonwidget,
             id=buttonid,
             position=(buttonleft, buttonbottom),
-            size=(_NUMBER_BUTTON_SIZE, _NUMBER_BUTTON_SIZE),
+            size=_NUMBER_BUTTON_SIZE,
             label=label,
             text_scale=_NUMBER_BUTTON_TEXT_SCALE,
             autoselect=True,
             # Holding a button keeps stepping, as ConfigNumberEdit's do.
             repeat=True,
+            clean_layout=True,
             transition_delay=tdelay,
             transition_type='scale',
         )
@@ -163,7 +167,7 @@ class _NumberRowDriver:
 
     def __init__(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         prep: NumberPrep,
         valuetext: bui.Widget,
         value: float,
@@ -259,7 +263,7 @@ class _NumberRowDriver:
 
 
 def instantiate_number_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> list[bui.Widget]:
     """Create the widgets for a prepped number row.
 

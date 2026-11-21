@@ -9,6 +9,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/math/rect.h"
+#include "ballistica/shared/math/vector3f.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -34,8 +35,16 @@ class ContainerWidget : public Widget {
   };
 
   void SetTransition(TransitionType t);
+  /// Make a button our cancel or start button (null for none). The old
+  /// one loses the role, and with it the role's colors (see
+  /// ButtonWidget::SetRole()).
   void SetCancelButton(ButtonWidget* button);
   void SetStartButton(ButtonWidget* button);
+
+  /// The colors our start and cancel buttons draw in when they have none
+  /// of their own. Applies to the current ones right away.
+  void SetStartButtonColor(const Vector3f& color);
+  void SetCancelButtonColor(const Vector3f& color);
   void SetOnCancelCall(PyObject* call_tuple);
 
   // Set a widget to selected (must already have been added to dialog). Pass
@@ -275,6 +284,11 @@ class ContainerWidget : public Widget {
   virtual void UpdateLayout() {}
   void CheckLayout();
 
+  /// The rect (in our space) our children are clipped to as we draw
+  /// them, if any. Only debug rects use this (see DebugRectWidget); the
+  /// clipping itself is up to each container's Draw().
+  virtual auto GetChildClipRect(Rect* rect) const -> bool { return false; }
+
   void set_modal_children(bool val) { modal_children_ = val; }
 
   auto width() const -> float { return width_; }
@@ -330,6 +344,8 @@ class ContainerWidget : public Widget {
   Object::Ref<base::TextureAsset> tex_;
   Object::WeakRef<ButtonWidget> cancel_button_;
   Object::WeakRef<ButtonWidget> start_button_;
+  Vector3f start_button_color_{0.2f, 0.8f, 0.55f};
+  Vector3f cancel_button_color_{0.7f, 0.4f, 0.34f};
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
   Object::Ref<base::MeshAsset> bg_mesh_transparent_;

@@ -111,12 +111,13 @@ class CharacterIconDepiction : public Depiction {
     float alpha = context.StandardOpacity();
     // Premultiplied art composites 'over' only if rgb is scaled by
     // alpha (see image node).
-    float cmul =
-        (tex->premultiplied() ? alpha : 1.0f) * context.StandardBrightness();
+    float cmul = tex->premultiplied() ? alpha : 1.0f;
+    float mult[3];
+    context.StandardMultiplier(mult);
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     c.SetTexture(tex);
-    c.SetColor(cmul, cmul, cmul, alpha);
+    c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
     if (tint) {
       c.SetColorizeTexture(tint);
       c.SetColorizeColor(color[0], color[1], color[2]);
@@ -124,6 +125,8 @@ class CharacterIconDepiction : public Depiction {
       c.SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
     }
     c.SetMaskTexture(assets.character_icon_mask());
+    // (So the mask's frame and highlight follow along too.)
+    c.SetMaskAddMult(mult[0], mult[1], mult[2]);
     {
       auto xf = c.ScopedTransform();
       c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
@@ -163,12 +166,20 @@ class CharacterIconDepiction : public Depiction {
 class NameDepiction : public Depiction {
  public:
   /// ``json`` is a name block on its own ({"b": ..., "c": ...}).
-  explicit NameDepiction(std::string json) : Depiction(kTypeName) {
+  /// ``max_chars`` and ``number`` show its text as an in-game name
+  /// (shortened, numbered; see ShortenNameText and NumberNameText);
+  /// 0 and 1 leave it as is.
+  NameDepiction(std::string json, int max_chars, int number)
+      : Depiction(kTypeName) {
     if (auto doc = JsonDoc::Parse(json)) {
       if (auto name = NameDef::Parse(doc->root())) {
         name_ = std::move(*name);
       }
     }
+    // (The text every tier draws, capsules included; a glyph goes
+    // before it, uncounted, as in-game names carry none.)
+    name_.basic.text =
+        NumberNameText(ShortenNameText(name_.basic.text, max_chars), number);
     // A glyph tier puts its icon before the text (unless a capsule,
     // which brings its own icon, draws instead); otherwise it is
     // exactly the basic tier.
@@ -371,9 +382,11 @@ class NameDepiction : public Depiction {
     float rgb[3]{rgba[0], rgba[1], rgba[2]};
     ctx.StandardColor(rgb);
     float alpha = rgba[3] * ctx.StandardOpacity();
-    float cmul =
-        (tex->premultiplied() ? alpha : 1.0f) * ctx.StandardBrightness();
-    c->SetColor(rgb[0] * cmul, rgb[1] * cmul, rgb[2] * cmul, alpha);
+    float cmul = tex->premultiplied() ? alpha : 1.0f;
+    float mult[3];
+    ctx.StandardMultiplier(mult);
+    c->SetColor(rgb[0] * cmul * mult[0], rgb[1] * cmul * mult[1],
+                rgb[2] * cmul * mult[2], alpha);
   }
 
   void DrawCapsuleBody_(const DepictionDrawContext& context,
@@ -526,6 +539,11 @@ class NameDepiction : public Depiction {
     // in text widgets (and can only brighten by a multiply).
     float rgb_plain[3]{brightness, brightness, brightness};
     context.StandardColor(rgb_plain);
+    // The host's multiplier goes over the lot (glyphs included).
+    for (int i = 0; i < 3; ++i) {
+      rgb[i] *= context.color_multiply[i];
+      rgb_plain[i] *= context.color_multiply[i];
+    }
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     int elem_count = text_group_.GetElementCount();
@@ -695,10 +713,12 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
       context.StandardColor(tint2);
       context.StandardColor(tint3);
       float alpha = color_[3] * context.StandardOpacity();
-      float cmul = (texture_asset_->premultiplied() ? alpha : 1.0f)
-                   * context.StandardBrightness();
+      float cmul = texture_asset_->premultiplied() ? alpha : 1.0f;
+      float mult[3];
+      context.StandardMultiplier(mult);
       c.SetTexture(texture_asset_.get());
-      c.SetColor(color[0] * cmul, color[1] * cmul, color[2] * cmul, alpha);
+      c.SetColor(color[0] * cmul * mult[0], color[1] * cmul * mult[1],
+                 color[2] * cmul * mult[2], alpha);
       if (has_flat_) {
         // One flat color in place of the usual coloring (no colorize).
         c.SetFlatness(flatness_);
@@ -716,6 +736,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
       }
       if (mask_texture_asset_.exists()) {
         c.SetMaskTexture(mask_texture_asset_.get());
+        c.SetMaskAddMult(mult[0], mult[1], mult[2]);
       }
     }
     {
@@ -807,7 +828,13 @@ void RegisterBaseDepictionKinds() {
         if (!json) {
           return {};
         }
-        return Object::New<Depiction, NameDepiction>(std::move(*json));
+        // (Clamped to sane ranges; the wire is untrusted.)
+        int max_chars = static_cast<int>(
+            std::clamp<int64_t>(src.root["mc"].as_int().value_or(0), 0, 1000));
+        int number = static_cast<int>(
+            std::clamp<int64_t>(src.root["nn"].as_int().value_or(1), 1, 1000));
+        return Object::New<Depiction, NameDepiction>(std::move(*json),
+                                                     max_chars, number);
       });
   DepictionRegistry::RegisterKind(
       kTypeImage,

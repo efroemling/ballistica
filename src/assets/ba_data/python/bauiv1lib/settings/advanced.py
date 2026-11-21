@@ -31,7 +31,7 @@ from bauiv1 import _commonassets, _classicassets
 from bauiv1lib.docui import TypedDocUIController
 
 if TYPE_CHECKING:
-    from typing import Literal
+    from typing import Literal, Callable
 
     from bacommon.docui import DocUIResponse
     from bacommon.langstr import LangStrSpec
@@ -374,12 +374,14 @@ def _page() -> dui2.Response:
                 size=(150.0, 45.0),
                 action=SendTranslationFeedback().local(),
             ),
-            # (Wrapped at display time by its max-chars-per-line wrap
-            # params, so each language gets however many lines it needs;
-            # the row grows to fit.)
-            footnote=_advstrs.improve_translations_description(
+        ),
+        # (Wrapped at display time by its max-chars-per-line wrap
+        # params, so each language gets however many lines it needs;
+        # the row grows to fit.)
+        dui2.FootnoteRow(
+            _advstrs.improve_translations_description(
                 app_name=_classicassets.strings.ui.app_name
-            ).spec,
+            ).spec
         ),
         astate.checkbox_row(
             lambda s: s.kick_idle_players,
@@ -410,40 +412,40 @@ def _page() -> dui2.Response:
                 on_change=apply,
             )
         )
-    rows.append(
+    rows += [
         astate.choice_row(
             lambda s: s.insecure_connections,
             choice_label=_insecure_label,
             label=_advstrs.insecure_connections.spec,
-            footnote=_advstrs.insecure_connections_description.spec,
             on_change=apply,
-        )
-    )
+        ),
+        dui2.FootnoteRow(_advstrs.insecure_connections_description.spec),
+    ]
     if show_internal_keyboard:
-        rows.append(
+        rows += [
             astate.checkbox_row(
                 lambda s: s.always_use_internal_keyboard,
                 label=_advstrs.always_use_internal_keyboard.spec,
-                footnote=_advstrs.always_use_internal_keyboard_description.spec,
                 on_change=apply,
-            )
-        )
-    rows.append(
+            ),
+            dui2.FootnoteRow(
+                _advstrs.always_use_internal_keyboard_description.spec
+            ),
+        ]
+    rows += [
         astate.checkbox_row(
             lambda s: s.allow_extreme_aspect_ratios,
             label=_advstrs.allow_extreme_aspect_ratios.spec,
-            footnote=_advstrs.allow_extreme_aspect_ratios_description.spec,
             on_change=apply,
-        )
-    )
-    rows.append(
+        ),
+        dui2.FootnoteRow(_advstrs.allow_extreme_aspect_ratios_description.spec),
         astate.checkbox_row(
             lambda s: s.legacy_character_physics,
             label=_advstrs.legacy_character_physics.spec,
-            footnote=_advstrs.legacy_character_physics_description.spec,
             on_change=apply,
-        )
-    )
+        ),
+        dui2.FootnoteRow(_advstrs.legacy_character_physics_description.spec),
+    ]
 
     def _button(label: LangStrSpec, target: Target) -> dui2.Button:
         return section_button(label, Open(target=target).local())
@@ -509,90 +511,56 @@ def _apply_setting(context: DocUILocalAction) -> None:
 
 def _open(target: Target, context: DocUILocalAction) -> None:
     # pylint: disable=cyclic-import
-    window = context.window
     match target:
         case Target.MODDING_GUIDE:
             bui.open_url('https://ballistica.net/wiki/modding-guide')
-            return
         case Target.MODS_FOLDER:
             from babase.modutils import show_user_scripts
 
             show_user_scripts()
-            return
-        case (
-            Target.DEV_TOOLS
-            | Target.PLUGINS
-            | Target.VR_TEST
-            | Target.NET_TEST
-            | Target.BENCHMARKS
-            | Target.SEND_INFO
-        ):
-            pass
-        case _:
-            assert_never(target)
 
-    # The rest replace us with another window; no-op if we're not in
-    # control.
-    if not window.main_window_has_control():
-        return
-    origin = context.widget
-    match target:
+        # Other doc-ui domains.
         case Target.DEV_TOOLS:
             from bauiv1lib.settings import devtools
 
-            window.main_window_replace(
-                lambda: devtools.DevToolsController().create_window(
-                    devtools.Root(),
-                    origin_widget=origin,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    devtools.DevToolsController.get_window_extra_type_id()
-                ),
-            )
-        case Target.PLUGINS:
-            from bauiv1lib.settings.plugins import PluginWindow
-
-            window.main_window_replace(
-                lambda: PluginWindow(origin_widget=origin)
-            )
-        case Target.VR_TEST:
-            from bauiv1lib.settings.vrtesting import VRTestingWindow
-
-            window.main_window_replace(
-                lambda: VRTestingWindow(transition='in_right')
-            )
-        case Target.NET_TEST:
-            from bauiv1lib.settings.nettesting import NetTestingWindow
-
-            window.main_window_replace(
-                lambda: NetTestingWindow(transition='in_right')
-            )
+            devtools.DevToolsController().browse_from(context, devtools.Root())
         case Target.BENCHMARKS:
             from bauiv1lib.settings import benchmarks
 
-            window.main_window_replace(
-                lambda: benchmarks.BenchmarksController().create_window(
-                    benchmarks.Root(),
-                    origin_widget=origin,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    benchmarks.BenchmarksController.get_window_extra_type_id()
-                ),
+            benchmarks.BenchmarksController().browse_from(
+                context, benchmarks.Root()
             )
         case Target.SEND_INFO:
             from bauiv1lib import sendinfo
 
-            window.main_window_replace(
-                lambda: sendinfo.SendInfoController().create_window(
-                    sendinfo.Root(),
-                    origin_widget=origin,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    sendinfo.SendInfoController.get_window_extra_type_id()
-                ),
+            sendinfo.SendInfoController().browse_from(context, sendinfo.Root())
+
+        # Legacy windows.
+        case Target.PLUGINS:
+            from bauiv1lib.settings.plugins import PluginWindow
+
+            origin = context.widget
+            _replace_with(context, lambda: PluginWindow(origin_widget=origin))
+        case Target.VR_TEST:
+            from bauiv1lib.settings.vrtesting import VRTestingWindow
+
+            _replace_with(
+                context, lambda: VRTestingWindow(transition='in_right')
+            )
+        case Target.NET_TEST:
+            from bauiv1lib.settings.nettesting import NetTestingWindow
+
+            _replace_with(
+                context, lambda: NetTestingWindow(transition='in_right')
             )
         case _:
             assert_never(target)
+
+
+def _replace_with(
+    context: DocUILocalAction, call: Callable[[], bui.MainWindow]
+) -> None:
+    # No-op if we're not in control.
+    window = context.window
+    if window.main_window_has_control():
+        window.main_window_replace(call)

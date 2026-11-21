@@ -79,24 +79,27 @@ def test_page_text_wrapping(
 
     debug = route.debug
 
-    def _row(
+    def _rows(
         button: str,
         *,
         title: str | None = None,
         subtitle: str | LangStrSpecValue | None = None,
         footnote: str | None = None,
         align: dui2.HAlign | None = None,
-    ) -> bacommon.docui.v2.ButtonRow:
-        return dui2.ButtonRow(
-            title=None if title is None else _lit(title),
-            subtitle=(
-                _lit(subtitle) if isinstance(subtitle, str) else subtitle
+    ) -> list[bacommon.docui.v2.Row]:
+        """A button row with its texts as standalone text rows."""
+        if isinstance(subtitle, str):
+            subtitle = _lit(subtitle)
+        return [
+            *([] if title is None else [dui2.TitleRow(_lit(title))]),
+            *([] if subtitle is None else [dui2.SubtitleRow(subtitle)]),
+            dui2.ButtonRow(
+                title_align=align,
+                buttons=[_btn(button)],
+                debug=debug,
             ),
-            footnote=None if footnote is None else _lit(footnote),
-            title_align=align,
-            buttons=[_btn(button)],
-            debug=debug,
-        )
+            *([] if footnote is None else [dui2.FootnoteRow(_lit(footnote))]),
+        ]
 
     soon = LangStrSpecTimeTarget.at(
         babase.utc_now_cloud() + datetime.timedelta(minutes=10)
@@ -106,36 +109,36 @@ def test_page_text_wrapping(
         page=dui2.Page(
             title=_lit('Text Wrapping'),
             rows=[
-                _row(
+                *_rows(
                     'English',
                     title=_LONG_EN,
                     subtitle=_LONG_EN,
                     footnote=_LONG_EN,
                 ),
-                _row(
+                *_rows(
                     'CJK + Thai',
                     title=_LONG_JA,
                     subtitle=_LONG_ZH,
                     footnote=_LONG_TH,
                 ),
-                _row(
+                *_rows(
                     'Mixed',
                     title='Short titles stay on one line',
                     footnote=_LONG_MIXED,
                 ),
-                _row(
+                *_rows(
                     'Centered',
                     title=_LONG_EN,
                     subtitle=_LONG_EN,
                     align=dui2.HAlign.CENTER,
                 ),
-                _row(
+                *_rows(
                     'Right',
                     title=_LONG_EN,
                     subtitle=_LONG_EN,
                     align=dui2.HAlign.RIGHT,
                 ),
-                _row(
+                *_rows(
                     'Newlines',
                     title='Authored line breaks are kept:',
                     subtitle=(
@@ -147,7 +150,7 @@ def test_page_text_wrapping(
                         ' which stays exactly where it was written.'
                     ),
                 ),
-                _row(
+                *_rows(
                     'Long word',
                     title=(
                         'Pneumonoultramicroscopicsilicovolcanoconiosis'
@@ -159,14 +162,14 @@ def test_page_text_wrapping(
                         ' characters instead.'
                     ),
                 ),
+                dui2.TitleRow(_lit(_LONG_EN)),
+                dui2.SubtitleRow(_lit(_LONG_EN)),
                 dui2.ButtonControlRow(
                     button=_btn('Control'),
                     label=_lit('A control row label'),
-                    title=_lit(_LONG_EN),
-                    subtitle=_lit(_LONG_EN),
-                    footnote=_lit(_LONG_EN),
                     debug=debug,
                 ),
+                dui2.FootnoteRow(_lit(_LONG_EN)),
                 dui2.Section(
                     title=_lit(_LONG_EN),
                     subtitle=_lit(_LONG_EN),
@@ -178,7 +181,7 @@ def test_page_text_wrapping(
                     ),
                     debug=debug,
                     rows=[
-                        _row(
+                        *_rows(
                             'In a card',
                             title=_LONG_JA,
                             subtitle=_LONG_EN,
@@ -186,7 +189,7 @@ def test_page_text_wrapping(
                         ),
                     ],
                 ),
-                _row(
+                *_rows(
                     'Live time',
                     title='Live text is not wrapped',
                     subtitle=LangStrSpecValue(

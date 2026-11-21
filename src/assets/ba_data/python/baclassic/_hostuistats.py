@@ -1,27 +1,56 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""The host-ui stats page (see :class:`HostUIStatsPage`)."""
+"""The host-ui stats page (see :class:`HostUIStatsPage`).
 
-import logging
+To create your own version of this, either:
+
+- **Tweak it:** subclass :class:`HostUIStatsPage`, override just the
+  methods you want to change (columns, title, which players, their
+  order, cell values), and assign an instance to
+  ``babase.app.classic.host_ui.stats_page``. Or
+- **Start from it:** copy this whole module into your plugin as the
+  starting point for a page of your own, serve it from a route of your
+  own (see :class:`baclassic.HostUIHandler`), and point the menu's
+  Stats button at it with ``host_ui.set_buttons()`` (or drop the
+  button with ``set_buttons([])``).
+
+A copy uses only public api, with two kinds of exception to swap out:
+
+- Imports from ``baclassic._hostui*`` modules: take those names from
+  ``baclassic`` instead (``baclassic.host_ui_text`` and friends).
+- The engine's own asset wrappers (``bascenev1._classicassets`` and
+  co.) supply its localized strings and textures; they're private.
+  Use plain strings, or your own asset-package's generated wrapper.
+
+Link to players with ``host_ui.player_page.get_browse()`` so that
+whatever player page the host offers is the one your rows open.
+"""
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from efro.util import strip_exception_tracebacks
-from efro.dataclassio import dataclass_from_json
 import bacommon.depiction as bdep
 import bacommon.docui.v2 as dui2
-from bacommon.langstr import LangStrSpec, LangStrSpecValue
+from bacommon.langstr import LangStrSpecValue
 
 import babase
 import bascenev1
-from bascenev1 import _commonassets, _classiccatalogassets, _classicassets
+from bascenev1 import _commonassets, _classicassets
+
+from baclassic._hostuiparts import (
+    host_ui_player_icon,
+    host_ui_player_name,
+    host_ui_text,
+)
 
 if TYPE_CHECKING:
-    from typing import Callable, Sequence
+    from typing import Callable
 
     import bacommon.depiction
     import bacommon.docui.v2
     from bacommon.docui.routes import DocUIRoute
+
+    from baclassic._hostui import HostUISubsystem
 
 #: Stats table geometry (a wide page has ~880 units for content).
 _ROW_WIDTH = 800.0
@@ -59,8 +88,9 @@ class HostUIStatsContext:
     Gathered once per page, so columns can look things up cheaply.
     """
 
-    #: Verified account ids by client id (-1 being the host's own); see
-    #: ``bascenev1.get_game_roster()``.
+    #: Verified account ids by client id (-1 being the host's own), for
+    #: those who have one; see
+    #: :meth:`~baclassic.HostUISubsystem.get_client_account_id`.
     account_ids: dict[int, str]
 
     #: The session's stats records (what between-round score screens
@@ -127,13 +157,11 @@ class HostUIStatsPage:
 
         babase.app.classic.host_ui.stats_page = MyStatsPage()
 
-    Subclass rather than copy the whole class: copy in just the methods
-    you want to change. Those hold only the decisions (title, refresh
-    rate, columns, which players and in what order, cell values) and
-    use only public api, while the default columns' localized titles,
-    the table layout and wire details stay in the engine, so they keep
-    working as it updates. A table under a route
-    of your own works the same way: subclass this, and return
+    Subclassing keeps everything you don't override up to date as the
+    engine updates. For a page that differs more (a different layout,
+    say), copy this module as a starting point instead; see the
+    module's notes (``baclassic._hostuistats``) for what a copy needs.
+    A table under a route of your own works either way: return
     ``self.build(route)`` from your :class:`baclassic.HostUIHandler`.
     Pages are built on the logic thread; see
     :class:`baclassic.HostUIHandler` for keeping big ones cheap.
@@ -150,11 +178,11 @@ class HostUIStatsPage:
     def get_columns(self) -> list[HostUIStatsColumn]:
         """The table's columns, left to right (after the player's)."""
         return [
+            self.account_column(),
             self.score_column(),
             self.kills_column(),
             self.deaths_column(),
             self.ping_column(),
-            self.account_column(),
         ]
 
     # The default columns (for reuse in subclasses' get_columns()).
@@ -304,8 +332,10 @@ class HostUIStatsPage:
         """Build the page; ``route`` is the one being served.
 
         (It is what the page refreshes itself with.) Gathers players and
-        values through the methods above and lays out the table; the
-        layout is engine machinery, so override those rather than this.
+        values through the methods above and lays out the table (see
+        the module docs for making a version of your own). Each row
+        opens its player's page (see
+        :meth:`baclassic.HostUIPlayerPage.get_browse`).
         """
         return _build_page(self, route)
 
@@ -314,13 +344,15 @@ def _build_page(
     page: HostUIStatsPage, route: DocUIRoute
 ) -> bacommon.docui.v2.Response:
     """Implements HostUIStatsPage.build()."""
+    host_ui = _host_ui()
     session = bascenev1.get_foreground_host_session()
     players = [] if session is None else page.get_players(session)
     context = HostUIStatsContext(
         account_ids={
-            e['client_id']: e['account_id']
-            for e in bascenev1.get_game_roster()
-            if e['account_id'] is not None
+            client_id: account_id
+            for client_id in (-1, *host_ui.get_client_ids())
+            if (account_id := host_ui.get_client_account_id(client_id))
+            is not None
         },
         records=(
             {}
@@ -350,7 +382,13 @@ def _build_page(
     geom = _geometry([columns[i] for i in shown])
 
     rows: list[dui2.Row] = [
-        _player_row(player, [vals[i] for i in shown], geom, n == 0)
+        _player_row(
+            player,
+            [vals[i] for i in shown],
+            geom,
+            n == 0,
+            host_ui.player_page.get_browse(player.id),
+        )
         for n, (player, vals) in enumerate(zip(players, values))
     ]
     if not rows:
@@ -358,7 +396,7 @@ def _build_page(
 
     refresh = page.get_refresh_interval()
     return dui2.Response(
-        page=dui2.Page(title=_spec(page.get_title()), rows=rows),
+        page=dui2.Page(title=host_ui_text(page.get_title()), rows=rows),
         # Keep it current while it's up.
         timed_action=(
             None if refresh is None else route.replace(default_sound=False)
@@ -367,14 +405,14 @@ def _build_page(
     )
 
 
+def _host_ui() -> HostUISubsystem:
+    classic = babase.app.classic
+    assert classic is not None
+    return classic.host_ui
+
+
 def _lit(text: str) -> LangStrSpecValue:
     return LangStrSpecValue.literal(text)
-
-
-def _spec(value: str | babase.LangStr) -> LangStrSpec:
-    if isinstance(value, str):
-        return _lit(value)
-    return dataclass_from_json(LangStrSpec, value.to_resource_json())
 
 
 @dataclass
@@ -416,13 +454,13 @@ def _add_header(row: dui2.ButtonRow, geom: _Geometry) -> None:
     row.header_height = 54.0
     titles = [
         (
-            _spec(_classicassets.strings.multi_team.player),
+            host_ui_text(_classicassets.strings.multi_team.player),
             geom.player_left,
             _PLAYER_WIDTH,
         )
     ]
     titles += [
-        (_spec(column.title), left, column.width)
+        (host_ui_text(column.title), left, column.width)
         for column, left in geom.columns
     ]
     env = babase.app.env
@@ -460,59 +498,27 @@ def _player_row(
     values: list[_CellValue],
     geom: _Geometry,
     header: bool,
+    browse: dui2.Browse | None,
 ) -> dui2.ButtonRow:
     """One player: icon, name, then a value per shown column.
 
     The player's own depictions carry their colors (their team's in team
-    games), so they show as they do in the game.
+    games), so they show as they do in the game. Pressing the row does
+    ``browse`` (opening the player's page), if given.
     """
     decorations: list[dui2.Decoration] = []
 
-    icon_center = (geom.player_left + _ICON_SIZE * 0.5, 0.0)
-    icon = _depiction_from_json(player.get_icon_depiction_json())
-    if icon is not None:
-        decorations.append(
-            dui2.Depiction(
-                depiction=icon,
-                position=icon_center,
-                size=(_ICON_SIZE, _ICON_SIZE),
-            )
-        )
-    elif (legacy_icon := _legacy_icon(player, icon_center)) is not None:
-        # Players on legacy profiles or random looks have their
-        # old-style icon instead (a tinted character texture).
-        decorations.append(legacy_icon)
-    else:
-        # Anyone else (bots, say) gets a faint box holding the spot.
-        box = _ICON_SIZE * 0.8
-        decorations += [
-            dui2.Image(
-                texture=_commonassets.textures.white,
-                position=icon_center,
-                size=(box, box),
-                color=(1.0, 1.0, 1.0, 0.08),
-            ),
-            dui2.Text(
-                text=_lit('?'),
-                position=icon_center,
-                size=(box, box),
-                scale=0.9,
-                color=(1.0, 1.0, 1.0, 0.25),
-            ),
-        ]
-    name = _depiction_from_json(player.get_name_depiction_json())
+    decorations += host_ui_player_icon(
+        player, (geom.player_left + _ICON_SIZE * 0.5, 0.0), _ICON_SIZE
+    )
     decorations.append(
-        _cell(
-            player.getname(full=True) if name is None else name,
-            geom.name_left,
-            geom.name_width,
-        )
+        _cell(host_ui_player_name(player), geom.name_left, geom.name_width)
     )
 
     for (column, left), value in zip(geom.columns, values):
         decorations.append(_cell(value, left, column.width - _COLUMN_GAP))
 
-    row = _table_row(decorations)
+    row = _table_row(decorations, action=browse)
     if header:
         _add_header(row, geom)
     return row
@@ -530,7 +536,7 @@ def _cell(value: _CellValue, left: float, width: float) -> dui2.Decoration:
         )
     # Text anchors at its position instead.
     return dui2.Text(
-        text=_spec('-' if value is None else value),
+        text=host_ui_text('-' if value is None else value),
         position=(left, 0.0),
         size=(width, 28.0),
         scale=0.9,
@@ -545,7 +551,7 @@ def _empty_row(geom: _Geometry) -> dui2.ButtonRow:
     row = _table_row(
         [
             dui2.Text(
-                text=_spec(_classicassets.strings.host_ui.nobody_here),
+                text=host_ui_text(_classicassets.strings.host_ui.nobody_here),
                 position=(0.0, 0.0),
                 size=(_ROW_WIDTH - 2.0 * _EDGE_PAD, 30.0),
                 color=_TITLE_COLOR,
@@ -558,9 +564,14 @@ def _empty_row(geom: _Geometry) -> dui2.ButtonRow:
 
 
 def _table_row(
-    decorations: list[dui2.Decoration], height: float = _ROW_HEIGHT
+    decorations: list[dui2.Decoration],
+    height: float = _ROW_HEIGHT,
+    action: dui2.Action | None = None,
 ) -> dui2.ButtonRow:
-    """A table row: one invisible full-width button, packed tight."""
+    """A table row: one invisible full-width button, packed tight.
+
+    Pressing it does ``action`` (or nothing).
+    """
     return dui2.ButtonRow(
         center_content=True,
         padding_top=0.0,
@@ -572,60 +583,12 @@ def _table_row(
                 style=dui2.ButtonStyle.SQUARE,
                 texture=_commonassets.textures.white,
                 color=_ROW_COLOR,
-                action=dui2.Local(default_sound=False),
+                action=(
+                    dui2.Local(default_sound=False)
+                    if action is None
+                    else action
+                ),
                 decorations=decorations,
             )
         ],
     )
-
-
-def _legacy_icon(
-    player: bascenev1.SessionPlayer, center: tuple[float, float]
-) -> dui2.Image | None:
-    """A player's old-style icon as an image, if it can be shown.
-
-    That is, if it is all from our own asset-packages (clients refuse
-    anything else, and with it the whole page). Icons that aren't (a
-    mod's legacy texture names, say) give None.
-    """
-    info = player.get_icon_info()
-    try:
-        texture = bascenev1.texture_spec_from_ref(info['texture'])
-        tint_texture = bascenev1.texture_spec_from_ref(info['tint_texture'])
-    except KeyError, ValueError:
-        return None
-    mask_texture = _classiccatalogassets.textures.character_icon_mask
-    scanresults = babase.app.meta.scanresults
-    universe = set() if scanresults is None else set(scanresults.asset_packages)
-    # (Reading identity, not building a path.)
-    # pylint: disable-next=protected-access
-    if any(t._apvernum not in universe for t in (texture, tint_texture)):
-        return None
-    tint3 = info.get('tint3_color')
-    return dui2.Image(
-        texture=texture,
-        tint_texture=tint_texture,
-        tint_color=_rgb(info['tint_color']),
-        tint2_color=_rgb(info['tint2_color']),
-        tint3_color=None if tint3 is None else _rgb(tint3),
-        mask_texture=mask_texture,
-        position=center,
-        size=(_ICON_SIZE, _ICON_SIZE),
-    )
-
-
-def _rgb(color: Sequence[float]) -> tuple[float, float, float]:
-    return (float(color[0]), float(color[1]), float(color[2]))
-
-
-def _depiction_from_json(depjson: str | None) -> bdep.Depiction | None:
-    if depjson is None:
-        return None
-    # Not lossy: this is our own data, and lossy objects can't be
-    # written back out (which serving it does).
-    try:
-        return dataclass_from_json(bdep.Depiction, depjson)
-    except Exception as exc:
-        logging.exception('Invalid depiction json.')
-        strip_exception_tracebacks(exc)
-        return None

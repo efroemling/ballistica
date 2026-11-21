@@ -443,8 +443,9 @@ def parse_config_h(fp, vars=None):
     if vars is None:
         vars = {}
     import re
-    define_rx = re.compile("#define ([A-Z][A-Za-z0-9_]+) (.*)\n")
-    undef_rx = re.compile("/[*] #undef ([A-Z][A-Za-z0-9_]+) [*]/\n")
+    name_rx = '(?:[A-Z]|_Py_)[A-Za-z0-9_]+'
+    define_rx = re.compile(fr"#define ({name_rx}) (.*)\n")
+    undef_rx = re.compile(fr"/[*] #undef ({name_rx}) [*]/\n")
 
     while True:
         line = fp.readline()
@@ -750,7 +751,7 @@ def get_platform():
             osname = sys.platform
             machine = sys.implementation._multiarch
         elif sys.platform == "watchos":
-            release = get_config_vars().get("WATCHOS_DEPLOYMENT_TARGET", "4.0")
+            release = get_config_vars().get("WATCHOS_DEPLOYMENT_TARGET", "9.0")
             osname = sys.platform
             machine = sys.implementation._multiarch
         elif sys.platform == "visionos":

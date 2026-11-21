@@ -1153,6 +1153,16 @@ void AudioServer::PushResetCall() {
   event_loop()->PushCall([this] { Reset_(); });
 }
 
+void AudioServer::PushStopMusicCall() {
+  event_loop()->PushCall([this] {
+    for (auto&& i : sources_) {
+      if (i->current_is_music()) {
+        i->Stop();
+      }
+    }
+  });
+}
+
 void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
   // Only the newest listener position matters, so while one update is
   // still queued just replace its value (these come in every 100ms, and

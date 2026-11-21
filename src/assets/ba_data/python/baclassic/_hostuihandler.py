@@ -100,7 +100,7 @@ class HostUIHandler:
         host_ui.handler = MyHandler()
         host_ui.set_buttons(
             host_ui.get_buttons()
-            + [baclassic.HostUIButton(label='Rules', route=Rules())]
+            + [baclassic.HostUIButton(label='Rules', browse=Rules().browse())]
         )
 
     To change the default stats page rather than add one, see

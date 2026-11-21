@@ -106,6 +106,8 @@ auto DepictionSlot::MakeContext_(const DrawArgs& args) const
   context.brightness = args.brightness;
   context.opacity = args.opacity;
   context.disabled = args.disabled;
+  std::copy(std::begin(color_multiply_), std::end(color_multiply_),
+            context.color_multiply);
   context.mask_texture = args.mask_texture;
   std::copy(std::begin(frame_color_), std::end(frame_color_),
             context.frame_color);

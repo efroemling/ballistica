@@ -8,28 +8,22 @@ from typing import TYPE_CHECKING, assert_never
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
-from bauiv1lib.docui._layout import (
-    SMALL_UI_VIEWER_EDGE_FADE,
-    SIDE_EDGE_FADE,
-    fade_scroll_extents,
-)
-from bauiv1lib.utils import TOOLBAR_SCROLL_FADE, apply_toolbar_scroll_fades
-
 if TYPE_CHECKING:
     from bauiv1lib.docui._frame import WindowFrame
+    from bauiv1lib.docui._pagelook import PageLook
 
 
 def viewer_insets_v(uiscale: bui.UIScale) -> tuple[float, float]:
     """How far a viewer pane's bottom and top edges sit in from the
-    scroll area's (negative: out past it).
+    content rect's (negative: out past it).
 
-    At small ui-scale it clears the toolbars it runs under (by less than
-    page content's clearance, as the pane's own frame and rounded
+    At small ui-scale it reaches out a little past content toward the
+    toolbars (still clear of them: the pane's own frame and rounded
     corners already read as spacing). All tuned by eye.
     """
     match uiscale:
         case bui.UIScale.SMALL:
-            return (55.0, 55.0)
+            return (-15.0, -15.0)
         case bui.UIScale.MEDIUM | bui.UIScale.LARGE:
             # The whole pane a touch lower.
             return (-5.0, 5.0)
@@ -37,19 +31,62 @@ def viewer_insets_v(uiscale: bui.UIScale) -> tuple[float, float]:
             assert_never(uiscale)
 
 
-def fade_scroll_lengths() -> tuple[float, float, float, float]:
-    """How far a fade-style scroll area's fades reach in from its edges.
+def viewer_pane_rect(
+    frame: WindowFrame, uiscale: bui.UIScale
+) -> tuple[float, float, float, float]:
+    """Where a window frame's viewer pane goes (x, y, width, height).
 
-    Returns (left, right, bottom, top), at medium/large ui-scale. Free to
-    differ from ``fade_scroll_extents()`` (a longer fade reaches past
-    where an outline would clip, into content's space): the top one
-    runs long, as content passing up behind the title otherwise muddles
-    it. The sides reach out not at all, but sideways-scrolling rows
-    still pass under them; those fade within the empty strip before
-    content instead of cutting off hard.
+    Beside its scroll area, spanning its content rect's height with its
+    edges nudged per ui-scale (see :func:`viewer_insets_v`).
+    (Meaningless for a frame with no pane.)
     """
-    _left, _right, bottom, top = fade_scroll_extents()
-    return SIDE_EDGE_FADE, SIDE_EDGE_FADE, bottom, 2.0 * top
+    inset_bottom, inset_top = viewer_insets_v(uiscale)
+    return (
+        frame.viewer_left,
+        frame.content_bottom + inset_bottom,
+        frame.viewer_width,
+        frame.content_height - inset_bottom - inset_top,
+    )
+
+
+def edge_fades(
+    frame: WindowFrame, look: PageLook
+) -> tuple[float, float, float, float] | None:
+    """How far a frame's scroll-area edge fades reach in for a page.
+
+    (left, right, bottom, top), in from the extend rect's edges; None
+    for no fades. Each is the frame's fade length on that side (see
+    :class:`~bauiv1lib.docui._frame.WindowFrame`), shortened to end by
+    the page's inset line (the side's extend plus the page's horizontal
+    or vertical inset), so content at rest is never faded. A shortened
+    fade is squeezed, not cut off: it still runs all the way from clear
+    to solid.
+    """
+    if frame.fade_lengths is None:
+        return None
+    fleft, fright, fbottom, ftop = frame.fade_lengths
+    eleft, eright, ebottom, etop = frame.extends
+    h_inset, v_inset = look.h_inset, look.v_inset
+    return (
+        max(0.0, min(fleft, eleft + h_inset)),
+        max(0.0, min(fright, eright + h_inset)),
+        max(0.0, min(fbottom, ebottom + v_inset)),
+        max(0.0, min(ftop, etop + v_inset)),
+    )
+
+
+def apply_edge_fades(
+    scrollwidget: bui.Widget, fades: tuple[float, float, float, float] | None
+) -> None:
+    """Give a scroll widget edge fades (see :func:`edge_fades`)."""
+    if fades is None:
+        return
+    fleft, fright, fbottom, ftop = fades
+    bui.scrollwidget(
+        edit=scrollwidget,
+        edge_style='fade',
+        edge_fade=(fleft, fbottom, fright, ftop),
+    )
 
 
 def layout_has_viewer_pane(layout: dui2.WindowLayout) -> bool:
@@ -101,21 +138,25 @@ def page_pane_mode(
 
 @dataclass(frozen=True)
 class ScrollGeometry:
-    """The scroll area a page is laid out against (see page prep)."""
+    """What a page is laid out against (see page prep).
 
-    scroll_width: float
-    scroll_height: float
-    margins: tuple[float, float, float, float]
-    column_insets: tuple[float, float]
+    Its frame's content rect size, extends and page-arrow insets (see
+    :class:`~bauiv1lib.docui._frame.WindowFrame`).
+    """
+
+    content_width: float
+    content_height: float
+    extends: tuple[float, float, float, float]
+    page_arrow_insets: tuple[float, float]
 
     @classmethod
     def from_frame(cls, frame: WindowFrame) -> ScrollGeometry:
-        """A window frame's scroll area."""
+        """A window (or popup) frame's."""
         return cls(
-            scroll_width=frame.scroll_width,
-            scroll_height=frame.scroll_height,
-            margins=frame.margins,
-            column_insets=frame.column_insets,
+            content_width=frame.content_width,
+            content_height=frame.content_height,
+            extends=frame.extends,
+            page_arrow_insets=frame.page_arrow_insets,
         )
 
 
@@ -168,56 +209,37 @@ def scroll_widget_rect(
 ) -> tuple[float, float, float, float]:
     """Where a window's scroll widget goes (x, y, width, height).
 
-    Its frame's scroll area, reaching out by its margins.
+    Its frame's content rect, reaching out by its extends (its extend
+    rect).
     """
-    mleft, mright, mbottom, mtop = frame.margins
+    ext_left, ext_right, ext_bottom, ext_top = frame.extends
     return (
-        frame.scroll_left - mleft,
-        frame.scroll_bottom - mbottom,
-        frame.scroll_width + mleft + mright,
-        frame.scroll_height + mbottom + mtop,
+        frame.content_left - ext_left,
+        frame.content_bottom - ext_bottom,
+        frame.content_width + ext_left + ext_right,
+        frame.content_height + ext_bottom + ext_top,
     )
 
 
-def style_scroll_edges(
-    scrollwidget: bui.Widget,
+def window_edge_fades(
     frame: WindowFrame,
     *,
     uiscale: bui.UIScale,
-    scroll_edge_style: dui2.ScrollEdgeStyle,
     toolbar_visibility: str,
-) -> None:
-    """Set up a window's scroll-area edge fades for its frame."""
-    pane_side = frame.pane_side
-    if uiscale is bui.UIScale.SMALL:
-        # (A minimal toolbar has nothing at the bottom to fade toward.
-        # Beside a viewer pane that edge is on screen, where
-        # sideways-scrolling rows would otherwise cut off hard -- over
-        # the pane's edge, even, which overlaps the scroll area here.)
-        apply_toolbar_scroll_fades(
-            scrollwidget,
-            bottom_fade=(
-                0.0
-                if toolbar_visibility == 'menu_minimal'
-                else TOOLBAR_SCROLL_FADE
-            ),
-            left_fade=(
-                SMALL_UI_VIEWER_EDGE_FADE
-                if pane_side is dui2.ViewerSide.LEFT
-                else 0.0
-            ),
-            right_fade=(
-                SMALL_UI_VIEWER_EDGE_FADE
-                if pane_side is dui2.ViewerSide.RIGHT
-                else 0.0
-            ),
-        )
-    elif scroll_edge_style is dui2.ScrollEdgeStyle.FADE:
-        # Fades over the stretch it reaches out past an outline one (see
-        # fade_scroll_extents()), and a bit more at the top.
-        fleft, fright, fbottom, ftop = fade_scroll_lengths()
-        bui.scrollwidget(
-            edit=scrollwidget,
-            edge_style='fade',
-            edge_fade=(fleft, fbottom, fright, ftop),
-        )
+    look: PageLook,
+) -> tuple[float, float, float, float] | None:
+    """How far a window's scroll-area edge fades reach in (or None).
+
+    Its frame's for its page (see :func:`edge_fades`), less any at the
+    bottom at small ui-scale under a minimal toolbar, which has nothing
+    there to fade toward.
+    """
+    fades = edge_fades(frame, look)
+    if (
+        fades is not None
+        and uiscale is bui.UIScale.SMALL
+        and toolbar_visibility == 'menu_minimal'
+    ):
+        fleft, fright, _fbottom, ftop = fades
+        return (fleft, fright, 0.0, ftop)
+    return fades

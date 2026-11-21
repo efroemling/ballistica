@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.261021`` (babase).
+"""Asset-package wrapper for ``a-0.bacommonassets.261118a`` (babase).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages: shared vocabulary, plus a little
@@ -11,7 +11,7 @@ BaClassicAssets. Keep it light: no ui chrome, nothing large.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 820
+# ba_meta require asset-package 1243
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -25,8 +25,8 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-# a-0.bacommonassets.261021
-_ASSET_PACKAGE = ApverNum(820)
+# a-0.bacommonassets.261118a
+_ASSET_PACKAGE = ApverNum(1243)
 
 if TYPE_CHECKING:
     from babase._assetref import MeshHandle, SimpleSoundHandle, TextureHandle
@@ -89,8 +89,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Button label granting a request for permission and remembering
-        #:     it, so the same requester is not asked about again for a while.
+        #:     Button label on a permission prompt granting the request and
+        #:     remembering it, so the same requester is not asked again.
         #:
         #:     English: "Always Allow"
         always_allow: LangStr
@@ -643,7 +643,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Name of the Belarussian language (endonym: Беларуская), for
+        #:     Name of the Belarusian language (endonym: Беларуская), for
         #:     language pickers.
         #:
         #:     English: "Belarusian"
@@ -816,9 +816,12 @@ if TYPE_CHECKING:
 
                 Confirmation notice shown after the display language is
                 switched. The placeholder is filled with the name of the new
-                language, already written in that language.
+                language, already written in that language, exactly as it
+                appears in the language list: a standalone entry that cannot be
+                inflected. So the notice is a label followed by the name, not a
+                sentence the name has to fit into grammatically.
 
-                English: "Display language set to {language}."
+                English: "Display language: {language}"
             """
 
         #: ::
@@ -1043,7 +1046,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic lowercase "loading" status word.
+        #:     Generic "loading" status word.
         #:
         #:     English: "loading"
         loading: LangStr
@@ -1154,7 +1157,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase "unavailable" status indicator.
+        #:     "Unavailable" status indicator.
         #:
         #:     English: "unavailable"
         unavailable_status: LangStr
@@ -1331,7 +1334,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase "total" label.
+        #:     "Total" label.
         #:
         #:     English: "total"
         total: LangStr

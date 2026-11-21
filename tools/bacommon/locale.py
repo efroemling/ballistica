@@ -103,6 +103,20 @@ def language_picker_label(locale: LocaleResolved, translated_name: str) -> str:
     return f'{locale.endonym} {LANGUAGE_PICKER_SEPARATOR} {translated_name}'
 
 
+#: Long values that have since been corrected, mapped to the current
+#: ones, so a value stored or sent before the change still reads
+#: (:meth:`Locale.from_long_value`). Belarusian was 'Belarussian' until
+#: 2026-11-17 (saved 'Lang' settings, older clients).
+#:
+#: Band-aid; keep 'Belarussian' until 2027-11-17. It matters only for a
+#: client config last saved by build 23089 or older that no fixed build
+#: has opened yet (the first launch of a fixed build rewrites the
+#: setting; babase.LocaleSubsystem). After a year, someone updating from
+#: a 2026 build just gets their device language back. Remove together
+#: with that startup rewrite.
+_RENAMED_LONG_VALUES: dict[str, str] = {'Belarussian': 'Belarusian'}
+
+
 class Locale(Enum):
     """A distinct grouping of language, cultural norms, etc.
 
@@ -126,7 +140,7 @@ class Locale(Enum):
     PORTUGUESE_PORTUGAL = 'prtg_pr'
     PORTUGUESE_BRAZIL = 'prtg_brz'
     ARABIC = 'arabc'
-    BELARUSSIAN = 'blrs'
+    BELARUSIAN = 'blrs'
     CROATIAN = 'croat'
     CZECH = 'czch'
     DANISH = 'dnsh'
@@ -172,8 +186,11 @@ class Locale(Enum):
     def long_value(self) -> str:
         """A longer more human readable alternative to value.
 
-        Like the regular enum values, these values will never change and
-        can be used for persistent storage/etc.
+        Like the regular enum values, these values are meant never to
+        change and can be used for persistent storage/etc. The one
+        exception so far: Belarusian, misspelled 'Belarussian' until
+        2026-11-17. :meth:`from_long_value` still reads the old
+        spelling, so stored values keep working.
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
@@ -196,8 +213,9 @@ class Locale(Enum):
             return 'PortugueseBrazil'
         if self is cls.ARABIC:
             return 'Arabic'
-        if self is cls.BELARUSSIAN:
-            return 'Belarussian'
+        if self is cls.BELARUSIAN:
+            # ('Belarussian' until 2026-11-17; see _RENAMED_LONG_VALUES.)
+            return 'Belarusian'
         if self is cls.CROATIAN:
             return 'Croatian'
         if self is cls.CZECH:
@@ -274,7 +292,12 @@ class Locale(Enum):
 
     @classmethod
     def from_long_value(cls, value: str) -> Locale:
-        """Given a long value, return a Locale."""
+        """Given a long value, return a Locale.
+
+        A long value since corrected (stored or sent before the
+        correction) reads as its locale too; see :attr:`long_value`.
+        """
+        value = _RENAMED_LONG_VALUES.get(value, value)
 
         # Build a map of long-values to locales on demand.
         storekey = '_from_long_value'
@@ -295,6 +318,16 @@ class Locale(Enum):
         Intended as instructions to humans or AI for translating. For
         most locales this is simply the language name, but for special
         ones like pirate-speak it may include instructions.
+
+        Unlike the value and the long value, this may be reworded. Where
+        it is a plain language name, keep it one that reads as the long
+        value once case, spaces and punctuation are dropped (``Spanish
+        (Latin America)`` for ``SpanishLatinAmerica``). String briefs
+        name a language by this text on its manual-translation line and
+        read the line back against the long value
+        (``bacommon.strbrief``), so a description that no longer matches
+        cannot break a stored line, but new lines for that language
+        then fall back to the less readable long value.
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
@@ -317,8 +350,8 @@ class Locale(Enum):
             return 'Portuguese (Brazil)'
         if self is cls.ARABIC:
             return 'Arabic'
-        if self is cls.BELARUSSIAN:
-            return 'Belarussian'
+        if self is cls.BELARUSIAN:
+            return 'Belarusian'
         if self is cls.CROATIAN:
             return 'Croatian'
         if self is cls.CZECH:
@@ -422,8 +455,8 @@ class Locale(Enum):
             return R.SPANISH_SPAIN
         if self is cls.ARABIC:
             return R.ARABIC
-        if self is cls.BELARUSSIAN:
-            return R.BELARUSSIAN
+        if self is cls.BELARUSIAN:
+            return R.BELARUSIAN
         if self is cls.CROATIAN:
             return R.CROATIAN
         if self is cls.CZECH:
@@ -509,7 +542,7 @@ class LocaleResolved(Enum):
     PORTUGUESE_PORTUGAL = 'prtg_pr'
     PORTUGUESE_BRAZIL = 'prtg_brz'
     ARABIC = 'arabc'
-    BELARUSSIAN = 'blrs'
+    BELARUSIAN = 'blrs'
     CROATIAN = 'croat'
     CZECH = 'czch'
     DANISH = 'dnsh'
@@ -578,8 +611,8 @@ class LocaleResolved(Enum):
             return Locale.PORTUGUESE_BRAZIL
         if self is cls.ARABIC:
             return Locale.ARABIC
-        if self is cls.BELARUSSIAN:
-            return Locale.BELARUSSIAN
+        if self is cls.BELARUSIAN:
+            return Locale.BELARUSIAN
         if self is cls.CROATIAN:
             return Locale.CROATIAN
         if self is cls.CZECH:
@@ -700,7 +733,7 @@ class LocaleResolved(Enum):
             return 'Português (Brasil)'
         if self is cls.ARABIC:
             return 'العربية'
-        if self is cls.BELARUSSIAN:
+        if self is cls.BELARUSIAN:
             return 'Беларуская'
         if self is cls.CROATIAN:
             return 'Hrvatski'
@@ -829,7 +862,7 @@ class LocaleResolved(Enum):
             return ' '
         if self is cls.ARABIC:
             return ' '
-        if self is cls.BELARUSSIAN:
+        if self is cls.BELARUSIAN:
             return ' '
         if self is cls.CROATIAN:
             return ' '
@@ -941,7 +974,7 @@ class LocaleResolved(Enum):
             return ','
         if self is cls.ARABIC:
             return '.'
-        if self is cls.BELARUSSIAN:
+        if self is cls.BELARUSIAN:
             return ','
         if self is cls.CROATIAN:
             return ','
@@ -1041,7 +1074,7 @@ class LocaleResolved(Enum):
             val = 'pt-BR'
         elif self is cls.ARABIC:
             val = 'ar'
-        elif self is cls.BELARUSSIAN:
+        elif self is cls.BELARUSIAN:
             val = 'be'
         elif self is cls.CROATIAN:
             val = 'hr'
@@ -1303,7 +1336,7 @@ class LocaleResolved(Enum):
         if lang == 'ar':
             return cls.ARABIC
         if lang == 'be':
-            return cls.BELARUSSIAN
+            return cls.BELARUSIAN
         if lang == 'hr':
             return cls.CROATIAN
         if lang == 'cs':

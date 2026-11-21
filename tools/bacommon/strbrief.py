@@ -63,6 +63,8 @@ from efro.error import CleanError
 
 if TYPE_CHECKING:
     from typing import NoReturn
+
+    from bacommon.locale import Locale
     from collections.abc import Iterable, Callable
 
 
@@ -305,6 +307,247 @@ _BRIEF_FORMAT_HELP = (
 )
 
 
+#: A whole line giving one or more languages their exact text:
+#: ``[Serbian: "..."]`` or ``[Spanish (Spain), Spanish (Latin America):
+#: "..."]``. The text runs to the last quote before the closing
+#: bracket, so quotes inside it need no escaping.
+_EXACT_LINE_RE = re.compile(r'^\s*\[([^\[\]:"]+):\s*"(.*)"\s*\]\s*$')
+
+#: A whole line with the bracket-and-colon shape of an exact-value
+#: line, well-formed or not. Such lines never reach translators; the
+#: strict readers report the ones :data:`_EXACT_LINE_RE` rejects.
+_EXACT_SHAPE_RE = re.compile(r'^\s*\[[^\[\]:"]+:.*\]\s*$')
+
+#: The same construct sitting inside a line of prose (for the "put it
+#: on its own line" error; only reported when it names a language).
+_EXACT_INLINE_RE = re.compile(r'\[([^\[\]:"]+):\s*"[^\n]*"\s*\]')
+
+_NAME_SQUASH_RE = re.compile(r'[^a-z0-9]')
+
+
+def _is_comment_line(line: str) -> bool:
+    return line.lstrip().startswith('#')
+
+
+def _locale_for_language_name(name: str) -> 'Locale | None':
+    """The translated-to locale a language name in a brief refers to.
+
+    Matches a locale's long name however it is spaced and punctuated
+    (``Spanish (Spain)``, ``SpanishSpain``, ``spanish-spain``), or its
+    short code (``spn_spn``). Only languages we translate to match, so
+    a name covering several of them (``Spanish``, ``Chinese``) does
+    not.
+    """
+    from bacommon.locale import LocaleResolved
+
+    squashed = _NAME_SQUASH_RE.sub('', name.casefold())
+    if not squashed:
+        return None
+    # (Belarusian's long value was 'Belarussian' until 2026-11-17;
+    # brief lines written then still read.) Band-aid; keep until a scan
+    # of every workspace, other accounts' included, finds no
+    # '[Belarussian: ...]' line. First-party briefs were fixed on
+    # 2026-11-17, but the editor wrote that label for anyone who locked
+    # Belarusian before then.
+    if squashed == 'belarussian':
+        squashed = 'belarusian'
+    for locr in LocaleResolved:
+        loc = locr.locale
+        if squashed == _NAME_SQUASH_RE.sub('', loc.long_value.casefold()):
+            return loc
+        if name.strip().casefold() == loc.value:
+            return loc
+    return None
+
+
+def translator_brief(text: str) -> str:
+    """The part of a brief ``input`` that translators (and checks) read.
+
+    A brief may carry two things that are not for translators:
+
+    * comment lines (first non-space character ``#``): notes from the
+      author to other authors;
+    * exact-value lines (``[Serbian: "..."]``): one language's text,
+      used as written instead of being translated (see
+      :func:`brief_exact_values`).
+
+    This drops both and joins what is left into one line (each line
+    trimmed, blank ones skipped, a single space between them). So
+    adding, changing or removing a comment or an exact value, or
+    re-breaking the brief's lines, leaves the result -- and so every
+    other language's translation state, which is hashed from it --
+    untouched. A one-line brief with no stray space at its ends comes
+    back unchanged, which is every brief written before this existed.
+
+    One line also because line breaks in a brief carry nothing a
+    translation can keep: translated text never holds one.
+
+    Never raises: a malformed exact-value line is dropped all the same
+    (the strict readers report it).
+    """
+    lines: list[str] = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if (
+            not line
+            or _is_comment_line(line)
+            or _EXACT_SHAPE_RE.match(line) is not None
+        ):
+            continue
+        lines.append(line)
+    return ' '.join(lines)
+
+
+def brief_exact_values(text: str) -> 'dict[Locale, str]':
+    """The exact text a brief ``input`` gives particular languages.
+
+    From its ``[Language: "text"]`` lines (several languages may share
+    a line, comma-separated). Such a language is not translated; its
+    output is this text. A language locked with no text yet
+    (``[German: ""]``; see :func:`brief_manual_lines`) has no exact value and
+    is not in the result.
+
+    Raises :class:`~efro.error.CleanError` on a malformed line, a name
+    that is not one of our languages, a language given twice, or one of
+    these written inside a line of prose rather than on its own line.
+    (Whether the text carries the right ``{name}`` tokens is checked by
+    :func:`parse_brief`, which knows the brief's tags.)
+    """
+    return {
+        loc: value for loc, value in brief_manual_lines(text).items() if value
+    }
+
+
+def brief_manual_lines(text: str) -> 'dict[Locale, str]':
+    """Every language a brief ``input`` locks, with the text it gives.
+
+    A locked language is never translated automatically: its text is
+    the one on its ``[Language: "text"]`` line. The text may be empty
+    (``[German: ""]``): the language is locked but has been given no
+    text yet, which is what locking a language with no translation to
+    start from leaves. It then has no output until someone supplies
+    one. :func:`brief_exact_values` is this without the empty ones.
+
+    Raises as :func:`brief_exact_values` does.
+    """
+    out: 'dict[Locale, str]' = {}
+    for lineno, line in enumerate(text.split('\n'), start=1):
+        if _is_comment_line(line):
+            continue
+        match = _EXACT_LINE_RE.match(line)
+        if match is None:
+            if _EXACT_SHAPE_RE.match(line) is not None:
+                raise CleanError(
+                    f'Line {lineno} of the brief looks like an exact'
+                    f' value for a language but is not written as'
+                    f' `[Language: "text"]`: {line.strip()!r}.'
+                )
+            for inline in _EXACT_INLINE_RE.finditer(line):
+                names = inline.group(1).split(',')
+                if all(_locale_for_language_name(n) is not None for n in names):
+                    raise CleanError(
+                        f'Line {lineno} of the brief has an exact value'
+                        f' for a language inside other text; put'
+                        f' {inline.group(0)!r} on a line of its own.'
+                    )
+            continue
+        value = match.group(2).strip()
+        for name in match.group(1).split(','):
+            loc = _locale_for_language_name(name)
+            if loc is None:
+                raise CleanError(
+                    f'Line {lineno} of the brief gives an exact value'
+                    f' for {name.strip()!r}, which is not one of the'
+                    f' languages we translate to. Use a name such as'
+                    f' "German", "Spanish (Spain)" or "Chinese'
+                    f' (Simplified)".'
+                )
+            if loc in out:
+                raise CleanError(
+                    f'The brief gives {loc.description} an exact value'
+                    f' more than once.'
+                )
+            out[loc] = value
+    return out
+
+
+def language_name_for_brief(loc: 'Locale') -> str:
+    """How to name ``loc`` on an exact-value line so it reads back.
+
+    Its description where that is a plain name (``German``, ``Spanish
+    (Spain)``); its long name otherwise (the costume locales, whose
+    descriptions are instructions).
+    """
+    for name in (loc.description, loc.long_value):
+        if _locale_for_language_name(name) is loc:
+            return name
+    return loc.value
+
+
+def with_exact_values(text: str, values: 'dict[Locale, str]') -> str:
+    """A brief ``input`` with its locked languages set to ``values``.
+
+    Locking a language is giving it an exact value; unlocking is taking
+    the line away. Every existing exact-value line is dropped and one
+    line per language in ``values`` is written at the end, in language
+    order; comments and everything else stay where they are. An empty
+    text locks a language that has none yet (see :func:`brief_manual_lines`,
+    which is what ``values`` should start from so no lock is lost). If
+    the brief already locks exactly ``values``, it comes back untouched,
+    so saving without a change changes nothing.
+
+    Raises :class:`~efro.error.CleanError` if the brief's current
+    exact-value lines are malformed (see :func:`brief_exact_values`), or
+    a value holds a line break.
+    """
+    if brief_manual_lines(text) == values:
+        return text
+    for loc, value in values.items():
+        if '\n' in value or '\r' in value:
+            raise CleanError(
+                f'The exact {language_name_for_brief(loc)} value must be'
+                ' one line.'
+            )
+    lines = [
+        line
+        for line in text.split('\n')
+        if _is_comment_line(line) or _EXACT_LINE_RE.match(line) is None
+    ]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if values:
+        lines.append('')
+        lines += [
+            f'[{language_name_for_brief(loc)}: "{values[loc].strip()}"]'
+            for loc in sorted(values, key=language_name_for_brief)
+        ]
+    return '\n'.join(lines)
+
+
+def _check_exact_values(sig: BriefSignature, text: str) -> None:
+    """Check a brief's exact values against its tags (see parse_brief)."""
+    locks = brief_manual_lines(text)
+    if not locks:
+        return
+    # (A lock with no text yet has nothing to check against the tags,
+    # but is refused in a plural brief like any other.)
+    exact = {loc: value for loc, value in locks.items() if value}
+    if sig.pivot is not None:
+        raise CleanError(
+            'Exact values for a language (`[Language: "text"]`) are not'
+            ' supported in a brief with a plural count'
+            f' (`{{{sig.pivot.name}|plural}}`).'
+        )
+    for loc, value in exact.items():
+        try:
+            validate_round_trip(sig, [value], require_count=False)
+        except CleanError as exc:
+            raise CleanError(
+                f'The exact {loc.description} value in the brief does'
+                f' not fit its substitutions. {exc}'
+            ) from exc
+
+
 def parse_brief(text: str) -> BriefSignature:
     """Extract + validate the tag signature from a brief ``input``.
 
@@ -313,7 +556,18 @@ def parse_brief(text: str) -> BriefSignature:
     unsupported spec, a bad spec argument, a duplicate arg name, or more
     than one form-producing spec (the coexistence invariant -- a string
     with two independent counts should be split into two entries).
+
+    Tags are read from the translators' part of the brief only
+    (:func:`translator_brief`): nothing in a comment line counts, and
+    an exact-value line's ``{name}`` tokens are instead checked against
+    the brief's own (a bad exact-value line raises here too).
     """
+    sig = _parse_brief_tags(translator_brief(text))
+    _check_exact_values(sig, text)
+    return sig
+
+
+def _parse_brief_tags(text: str) -> BriefSignature:
     # A pasted raw ICU message is the most common mistake; catch it with a
     # message that points at the brief format rather than letting it fail
     # as a confusing tag-by-tag parse error.

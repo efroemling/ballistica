@@ -117,7 +117,7 @@ change behavior a mod may be relying on or can now take advantage of.
   `self.main_window_replace(lambda: MyNiftyWin(some_arg))`. Look at `bauiv1lib`
   for examples.
 - `bauiv1.uicleanupcheck()` will be removed. To prepare for this, use
-  `ba*.app.ui_v1.add_use_cleanup_check()` instead.
+  `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - The `extra_type_id` arg to `ba*.app.ui_v1.set_main_window()` will no longer
   have a default value. If you are using this method (generally you should not),
   make sure you are passing this. It is mainly for use with DocUI windows; in
@@ -173,3 +173,9 @@ change behavior a mod may be relying on or can now take advantage of.
   It is not a change notification; text can be edited without it ever
   running. The old names keep working with a deprecation warning and will be
   removed when api 9 support ends.
+- The `better_bg_fit` arg to `bauiv1.buttonwidget()` and
+  `bauiv1lib.popup.PopupMenu` is deprecated; use `clean_layout` instead. It is
+  the same thing, renamed to match the `clean_layout` args on container and
+  scroll widgets: the button's art is fit to its bounds rather than hanging
+  outside them. The old name keeps working with a deprecation warning and will
+  be removed when api 9 support ends.

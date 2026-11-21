@@ -99,6 +99,18 @@ def generate_flatpak_build_env() -> None:
     batools.flatpakbuildenv.generate(str(pcommand.PROJROOT))
 
 
+def flatpak_uv_upgrade() -> None:
+    """Pin the latest uv release for flatpak builds.
+
+    Rewrites pconfig/flatpak/uv.json (version plus each build arch's
+    published checksum). Part of ``make upgrade``, which then regenerates
+    the flatpak build env to use it. Needs network access.
+    """
+    import batools.flatpakbuildenv
+
+    batools.flatpakbuildenv.upgrade_uv_pin(str(pcommand.PROJROOT))
+
+
 def _github_repo() -> str:
     """Return 'owner/repo' from GITHUB_REPOSITORY or the git remote."""
     import os
@@ -480,3 +492,111 @@ def require_unsandboxed() -> None:
             ' offline), so this cannot produce a correct result. Run it'
             ' from a normal shell instead.'
         )
+
+
+def _linux_portable_deps_args() -> tuple[str, bool]:
+    from efro.error import CleanError
+    from batools.linuxportable import ARCHS
+
+    args = sys.argv[2:]
+    debug = '--debug' in args
+    args = [a for a in args if a != '--debug']
+    if len(args) != 1 or args[0] not in ARCHS:
+        raise CleanError(
+            f'Expected args: <ARCH> [--debug]; ARCH is one of {ARCHS}.'
+        )
+    return args[0], debug
+
+
+def linux_portable_deps_build() -> None:
+    """Build bundled deps for linux-portable builds (args: ARCH [--debug]).
+
+    Runs on a docker-equipped Linux host of that arch; compiles inside
+    the Steam Runtime SDK container. See batools.linuxportable.
+    """
+    from batools.linuxportable import build
+
+    arch, debug = _linux_portable_deps_args()
+    build(str(pcommand.PROJROOT), arch, debug)
+
+
+def linux_portable_deps_gather() -> None:
+    """Copy built linux-portable deps into the project (ARCH [--debug])."""
+    from batools.linuxportable import gather
+
+    arch, debug = _linux_portable_deps_args()
+    gather(str(pcommand.PROJROOT), arch, debug)
+
+
+def linux_portable_engine_build() -> None:
+    """Build a portable engine (args: KIND ARCH BUILDTYPE [flags] [-D...]).
+
+    KIND is server, gui or steam; BUILDTYPE debug or release; extra -D
+    args go to cmake. Flags: --smoke boots the result in Steam
+    runtime/distro containers; --bundle gathers the shared libs a
+    downloads-page package ships; --dev makes a developer build (own
+    build dir); --fast skips checks and smoke runs (iteration);
+    --deploy DIR writes a debug-stripped binary (+ needed libs) there.
+    Runs on a docker-equipped Linux host of that arch. See
+    batools.linuxportableengine.
+    """
+    from efro.error import CleanError
+    from batools.linuxportable import ARCHS
+    from batools.linuxportableengine import KINDS, build
+
+    args = sys.argv[2:]
+    deploy: str | None = None
+    if '--deploy' in args:
+        idx = args.index('--deploy')
+        if idx + 1 >= len(args):
+            raise CleanError('--deploy requires a DIR arg.')
+        deploy = args[idx + 1]
+        del args[idx : idx + 2]
+    flags = {'--smoke', '--bundle', '--dev', '--fast'}
+    present = {a for a in args if a in flags}
+    args = [a for a in args if a not in flags]
+    cmake_args = [a for a in args if a.startswith('-D')]
+    args = [a for a in args if not a.startswith('-D')]
+    if (
+        len(args) != 3
+        or args[0] not in KINDS
+        or args[1] not in ARCHS
+        or args[2] not in ('debug', 'release')
+    ):
+        raise CleanError(
+            'Expected args: KIND ARCH BUILDTYPE [--smoke] [--bundle] [--dev]'
+            ' [--fast] [--deploy DIR] [-DFOO=BAR ...];'
+            f' KIND in {KINDS}, ARCH in {ARCHS}, BUILDTYPE debug/release.'
+        )
+    build(
+        str(pcommand.PROJROOT),
+        kind=args[0],
+        arch=args[1],
+        buildtype=args[2],
+        extra_cmake_args=cmake_args,
+        smoke='--smoke' in present,
+        bundle='--bundle' in present,
+        dev='--dev' in present,
+        fast='--fast' in present,
+        deploy=deploy,
+    )
+
+
+def get_changelog() -> None:
+    """Print the changelog for a specified version"""
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    from batools.changelog import get_version_changelog
+
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg: version')
+    version_str = args[0]
+
+    changelog_list = get_version_changelog(
+        version=version_str, projroot=str(pcommand.PROJROOT)
+    )
+    print(f'{Clr.BLD}Changelog for version ' f'{version_str}:{Clr.RST}\n')
+    for entry in changelog_list:
+        print(f'{Clr.CYN}-{Clr.RST} {entry}')

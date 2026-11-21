@@ -430,7 +430,7 @@ class HelpWindow(bui.MainWindow):
         if not app.env.vr:
             txt = _classicassets.strings.help.controllers_info(
                 app_name=_classicassets.strings.ui.app_name,
-                remote_app_name=_classicassets.strings.ui.remote_app_name,
+                remote_app_name=_builtinassets.strings.ui.remote_app_name,
             ).evaluate()
         else:
             txt = _classicassets.strings.help.devices_info(

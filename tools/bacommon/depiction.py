@@ -262,6 +262,13 @@ class CharacterIconDepiction(Depiction):
         return DepictionTypeID.CHARACTER_ICON
 
 
+#: How many characters of a name show in game before it shortens (see
+#: :attr:`NameDepiction.max_chars`). The game's own short player names
+#: shorten by it, so name depictions given it show names exactly as
+#: the game does.
+IN_GAME_NAME_MAX_CHARS = 10
+
+
 @ioprepped
 @dataclass
 class NameDepiction(Depiction):
@@ -285,6 +292,18 @@ class NameDepiction(Depiction):
 
     #: See :class:`Depiction`.
     team_coloring: Annotated[bool, IOAttrs('tco', store_default=False)] = False
+
+    #: Shorten the name's text as in-game names are. Text longer than
+    #: this many characters shows its first that many followed by
+    #: '...' (in-game names use :data:`IN_GAME_NAME_MAX_CHARS`). None
+    #: for no limit. Only the text shortens; a capsule or glyph keeps
+    #: its look. Clients that predate this show the whole text.
+    max_chars: Annotated[int | None, IOAttrs('mc', store_default=False)] = None
+
+    #: Number the name's text as in-game names are when they'd collide.
+    #: 2 shows "efro 2" (after any shortening); 1 (or None) for none.
+    #: Clients that predate this leave the text unnumbered.
+    number: Annotated[int | None, IOAttrs('nn', store_default=False)] = None
 
     @override
     @classmethod

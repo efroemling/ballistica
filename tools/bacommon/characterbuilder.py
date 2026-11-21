@@ -526,3 +526,14 @@ class CharacterBuilder:
 
     #: The character itself.
     data: Annotated[CharacterBuilderData, IOAttrs('data')]
+
+    #: Optional free-form notes on this character for people browsing
+    #: its package (shown with it on the package's contents pages).
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    #: How strongly to prefer this character for its package's
+    #: thumbnail: higher goes first, ties keep contents order, and a
+    #: negative value never appears there.
+    thumbnail_priority: Annotated[
+        int, IOAttrs('thumbnail_priority', store_default=False)
+    ] = 0

@@ -90,6 +90,19 @@ void NodeAttributeUnbound::NotReadableError(Node* node) {
                   + " node is not readable");
 }
 
+void NodeAttributeUnbound::CheckStreamProtocol(int protocol) const {
+  if (protocol < min_protocol_) {
+    throw Exception(
+        "Attribute '" + name_ + "' on " + node_type_->name()
+            + " nodes needs host protocol " + std::to_string(min_protocol_)
+            + " or newer; this session is hosted at "
+            + std::to_string(protocol)
+            + " (see the 'SceneV1 Host Protocol' config value, or a"
+              " server's protocol_version setting).",
+        PyExcType::kValue);
+  }
+}
+
 void NodeAttributeUnbound::NotWritableError(Node* node) {
   throw Exception("Attribute '" + name() + "' on " + node->type()->name()
                   + " node is not writable");

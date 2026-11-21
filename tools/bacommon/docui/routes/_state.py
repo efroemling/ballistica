@@ -43,19 +43,24 @@ STATE_TYPE_KEY = '_t'
 _g_state_types: dict[str, type[DocUIState]] = {}
 
 
-@dataclass
-class DocUIStateAssign:
-    """A value to be assigned into a page's state.
+@dataclass(frozen=True)
+class DocUIStateAssign[S: DocUIState]:
+    """A value to be assigned into a page's state of type ``S``.
 
-    Create these via :meth:`DocUIState.assign`.
+    Create these via :meth:`DocUIState.assign`. (Frozen, which makes
+    the type covariant: an assign for ``FooState`` is also a
+    ``DocUIStateAssign[DocUIState]``, the form taken by things that
+    accept assigns for any state type.)
     """
 
-    state_type: type[DocUIState]
+    state_type: type[S]
     key: str
     value: Any
 
 
-def merge_assigns(assigns: Sequence[DocUIStateAssign] | None) -> dict | None:
+def merge_assigns(
+    assigns: Sequence[DocUIStateAssign[DocUIState]] | None,
+) -> dict | None:
     """Return the wire form for a set of assigns (or None for none)."""
     if not assigns:
         return None
@@ -187,18 +192,18 @@ class DocUIState:
     @classmethod
     def assign[V](
         cls, field: Callable[[Self], V], value: V
-    ) -> DocUIStateAssign: ...
+    ) -> DocUIStateAssign[Self]: ...
 
     @overload
     @classmethod
     def assign[V](
         cls, field: Callable[[Self], V | None], value: V
-    ) -> DocUIStateAssign: ...
+    ) -> DocUIStateAssign[Self]: ...
 
     @classmethod
     def assign[V](
         cls, field: Callable[[Self], V | None], value: V
-    ) -> DocUIStateAssign:
+    ) -> DocUIStateAssign[Self]:
         """Return an assignment of a value to one of our fields.
 
         For passing as ``sets`` when creating actions:
@@ -217,7 +222,7 @@ class DocUIState:
 
     @classmethod
     def assign_locally(
-        cls, *assigns: DocUIStateAssign, default_sound: bool = True
+        cls, *assigns: DocUIStateAssign[Self], default_sound: bool = True
     ) -> bacommon.docui.v2.Local:
         """Return an action assigning values with no request involved.
 
@@ -230,7 +235,7 @@ class DocUIState:
 
     @classmethod
     def assign_on_return(
-        cls, *assigns: DocUIStateAssign, default_sound: bool = True
+        cls, *assigns: DocUIStateAssign[Self], default_sound: bool = True
     ) -> bacommon.docui.v2.Local:
         """Return an action closing the window, handing values back.
 
@@ -697,13 +702,17 @@ def _field_is_optional(statetype: type[DocUIState], key: str) -> bool:
 
 
 def _check_on_change(on_change: bacommon.docui.v2.Action | None) -> None:
-    if isinstance(on_change, (dui2.Browse, dui2.Menu, dui2.PopupText)):
+    if isinstance(
+        on_change, (dui2.Browse, dui2.Menu, dui2.PopupText, dui2.Popup)
+    ):
         raise ValueError(
             'on_change actions cannot open windows, menus or popups.'
         )
 
 
-def validate_page_state(page: bacommon.docui.v2.Page) -> None:
+def validate_page_state(
+    page: bacommon.docui.v2.Page, *, in_popup: bool = False
+) -> None:
     """Make sure a page's use of its state hangs together.
 
     Checks that everything referring to the page's state by key
@@ -712,13 +721,23 @@ def validate_page_state(page: bacommon.docui.v2.Page) -> None:
     calls, but nothing static ties them to the *same* state type as
     the page's, so that part gets checked here. Pages whose state is
     of no type known to us (third party ones, say) are left alone.
+
+    With ``in_popup`` (a page shown in a popup window), actions opening
+    another popup are left out: their ``sets`` go to the popup's parent
+    (see :func:`~bacommon.docui.routes.validate_popup_page`).
     """
     keys_used: list[tuple[str, str]] = []
 
     def _action(action: dui2.Action | None, where: str) -> None:
-        # (A menu's items' actions included.)
-        for act in flatten_action(action):
-            if isinstance(act, (dui2.Browse, dui2.Replace, dui2.Local)):
+        # (A menu's items' actions included; parent actions not, since
+        # those set keys of the page a popup is over, not ours. See
+        # validate_popup_page() for them.)
+        for act in flatten_action(action, parent_actions=False):
+            if isinstance(act, dui2.Popup) and in_popup:
+                continue
+            if isinstance(
+                act, (dui2.Browse, dui2.Replace, dui2.Local, dui2.Popup)
+            ):
                 for key in act.sets or {}:
                     keys_used.append((key, where))
 

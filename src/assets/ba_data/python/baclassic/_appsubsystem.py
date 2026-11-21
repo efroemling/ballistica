@@ -4,6 +4,7 @@
 
 """Provides classic app subsystem."""
 
+import sys
 import time
 import random
 import logging
@@ -15,6 +16,7 @@ from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
 from bauiv1 import _classiccatalogassets as uicatalogassets
+from bauiv1 import _classicassets as uiclassicassets
 import bascenev1
 from bascenev1 import _classicassets
 
@@ -27,7 +29,6 @@ from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
 from baclassic._characterpreview import CharacterPreview
 from baclassic._cloudprofiles import CloudProfiles
-from baclassic._hostui import HostUISubsystem
 from baclassic import _input
 
 if TYPE_CHECKING:
@@ -43,6 +44,11 @@ if TYPE_CHECKING:
     from baclassic._servermode import ServerController
     from baclassic._net import MasterServerCallback
     from baclassic._clienteffect import EffectTargets
+    from baclassic._hostui import HostUISubsystem
+
+#: Module holding host-ui; loaded only once it looks needed (see
+#: ClassicAppSubsystem.host_ui).
+_HOST_UI_MODULE = 'baclassic._hostui'
 
 
 class ClassicAppSubsystem(babase.AppSubsystem):
@@ -128,6 +134,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: unknown) — in which case the lobby falls back to the
         #: legacy ``player_profiles`` with the legacy-profile warning.
         cloud_characters: list[str] | None
+        #: The account's name depiction json as the master server
+        #: composed it, or ``None`` when it didn't send one.
+        account_name_depiction: str | None
         expire_time: float
 
     from baclassic._music import MusicPlayMode
@@ -141,8 +150,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.store = StoreSubsystem()
         self.music = MusicSubsystem()
 
-        # Co-op Campaigns.
-        self.campaigns: dict[str, bascenev1.Campaign] = {}
+        # Co-op Campaigns (built on first access; see campaigns).
+        self._campaigns: dict[str, bascenev1.Campaign] | None = None
         self.custom_coop_practice_games: list[str] = []
 
         # Lobby.
@@ -236,9 +245,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.invite_confirm_windows: list[Any] = []  # FIXME: Don't use Any.
         self.party_window: weakref.ref[PartyWindow] | None = None
 
-        #: The buttons, pages and party notices a host gives its
-        #: clients (and shows itself).
-        self.host_ui = HostUISubsystem()
+        # Host-ui; created on first need (see host_ui).
+        self._host_ui: HostUISubsystem | None = None
+        self._host_ui_active = False
+        self._host_ui_watch_timer: babase.AppTimer | None = None
+        self._host_ui_bg_load_started = False
+        self._host_ui_create_when_loaded = False
+
         self.main_menu_resume_callbacks: list = []
         self.saved_ui_state: bauiv1.MainWindowState | None = None
 
@@ -277,17 +290,21 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # If it was accepted, keep their auth data around just long enough
         # for them to connect.
         if result.allow:
-            now = time.monotonic()
             if account_name_depiction is not None:
-                self.host_ui.note_account_name_depiction(
+                # A client is on its way in, so host-ui is about to be
+                # needed; load it off-thread rather than hitching here.
+                host_ui = await self._get_host_ui_async()
+                host_ui.note_account_name_depiction(
                     request.account_id, account_name_depiction
                 )
+            now = time.monotonic()
             self.v2_auth_datas[token] = self.V2AuthData(
                 account_id=request.account_id,
                 account_tag=request.account_tag,
                 player_profiles=player_profiles,
                 classic_purchases=classic_purchases,
                 cloud_characters=cloud_characters,
+                account_name_depiction=account_name_depiction,
                 expire_time=now + 30.0,
             )
 
@@ -416,7 +433,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         stdmaps.register_all_maps()
 
         spazappearance.register_appearances()
-        bascenev1.init_campaigns()
 
         launch_count = cfg.get('launchCount', 0)
         launch_count += 1
@@ -724,6 +740,128 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             entry, include_tickets=include_tickets
         )
 
+    @property
+    def campaigns(self) -> dict[str, bascenev1.Campaign]:
+        """Co-op campaigns by name.
+
+        The built-in campaigns get built on first access rather than
+        at launch, since building them imports every co-op game
+        module. The main menu pre-imports those modules in the
+        background, so first access is normally cheap.
+        """
+        if self._campaigns is None:
+            # Set before building; registering goes through here.
+            self._campaigns = {}
+            bascenev1.init_campaigns()
+        return self._campaigns
+
+    @property
+    def host_ui(self) -> HostUISubsystem:
+        """The buttons, pages and party notices a host gives its clients.
+
+        (And shows itself.) Created on first use: most runs never host
+        anyone or join a host that uses it, and its code is costly to
+        load at launch. It gets loaded in the background as soon as it
+        looks needed (a client connecting to us, us connecting to a
+        host, or the main menu warming up), so first use is normally
+        cheap.
+        """
+        if self._host_ui is None:
+            from baclassic._hostui import HostUISubsystem
+
+            host_ui = self._host_ui = HostUISubsystem()
+            self._host_ui_watch_timer = None
+            if self._host_ui_active:
+                # Bring our own ui up to date now rather than on the
+                # next upkeep tick; whoever wanted us may be about to
+                # show what we hold.
+                host_ui.start(tick_now=True)
+        return self._host_ui
+
+    def host_ui_start(self) -> None:
+        """Start host-ui upkeep (as classic app-mode activates).
+
+        :meta private:
+        """
+        self._host_ui_active = True
+        if self._host_ui is not None:
+            self._host_ui.start()
+            return
+
+        # No host-ui yet; watch for signs it's needed.
+        self._host_ui_watch_timer = babase.AppTimer(
+            1.0,
+            babase.WeakCallStrict(self._watch_for_host_ui_need),
+            repeat=True,
+        )
+
+    def host_ui_stop(self) -> None:
+        """Stop host-ui upkeep (as classic app-mode deactivates).
+
+        :meta private:
+        """
+        self._host_ui_active = False
+        self._host_ui_watch_timer = None
+        if self._host_ui is not None:
+            self._host_ui.stop()
+
+    def preload_host_ui(self) -> None:
+        """Load host-ui's code in the background ahead of need.
+
+        Safe to call any number of times; does nothing once loaded.
+
+        :meta private:
+        """
+        if self._host_ui_bg_load_started or _HOST_UI_MODULE in sys.modules:
+            return
+        self._host_ui_bg_load_started = True
+        babase.app.threadpool.submit_no_wait(self._load_host_ui_bg)
+
+    def _watch_for_host_ui_need(self) -> None:
+        """Watch (while we have no host-ui) for signs it's needed."""
+        if self._host_ui is not None:
+            self._host_ui_watch_timer = None
+            return
+        connected_to_host = bascenev1.get_connection_to_host_info_2()
+        has_clients = any(
+            e['client_id'] != -1 for e in bascenev1.get_game_roster()
+        )
+        if connected_to_host is None and not has_clients:
+            return
+
+        # Load it off-thread, then create it so it can start keeping
+        # clients (or our view of our host) up to date.
+        self._host_ui_watch_timer = None
+        self._host_ui_create_when_loaded = True
+        if _HOST_UI_MODULE in sys.modules:
+            self._on_host_ui_loaded()
+        else:
+            self.preload_host_ui()
+
+    def _load_host_ui_bg(self) -> None:
+        import importlib
+
+        try:
+            importlib.import_module(_HOST_UI_MODULE)
+        except Exception:
+            logging.exception('Error preloading host-ui.')
+        babase.pushcall(self._on_host_ui_loaded, from_other_thread=True)
+
+    def _on_host_ui_loaded(self) -> None:
+        if self._host_ui_create_when_loaded and self._host_ui is None:
+            _ = self.host_ui  # (Creates it.)
+
+    async def _get_host_ui_async(self) -> HostUISubsystem:
+        """Get host-ui, loading its code off-thread if need be."""
+        if self._host_ui is None and _HOST_UI_MODULE not in sys.modules:
+            import asyncio
+            import importlib
+
+            await asyncio.get_running_loop().run_in_executor(
+                None, importlib.import_module, _HOST_UI_MODULE
+            )
+        return self.host_ui
+
     def getcampaign(self, name: str) -> bascenev1.Campaign:
         """Return a campaign by name."""
         return self.campaigns[name]
@@ -859,8 +997,16 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         return bascenev1.protocol_version()
 
     def play_cheer_sound(self) -> None:
-        """:meta private:"""
-        _classicassets.audio.cheer.get().play()
+        """Play the cheer sound from any context (or none).
+
+        Called from app-timer callbacks with no context set (v1
+        server screen messages), so this uses the context-free
+        bauiv1 sound wrapper; the bascenev1 one demands a scene-v1
+        context and raises a ContextError there.
+
+        :meta private:
+        """
+        uiclassicassets.audio.cheer.get().play()
 
     def v2_upgrade_window(self, login_name: str, code: str) -> None:
         """:meta private:"""

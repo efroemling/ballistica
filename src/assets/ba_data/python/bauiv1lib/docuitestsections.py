@@ -5,6 +5,7 @@
 :meta private:
 """
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 import bacommon.docui.v2 as dui2
@@ -38,8 +39,7 @@ def test_page_sections(
 
     :meta private:
     """
-    # pylint: disable=cyclic-import
-    import bacommon.docui.routes.docuitest as rt
+    from bauiv1lib.docuitestlayouts import with_test_viewer
 
     debug = route.debug
     center = dui2.HAlign.CENTER
@@ -51,10 +51,10 @@ def test_page_sections(
             debug=debug,
         )
 
-    # A flat translucent card the full column width, its content inset
-    # as much as rows' buttons already are from the column, so they lay
-    # out exactly as they would without it.
-    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=33.0)
+    # A flat translucent card at the default margin (the page's side
+    # inset, so its sides sit just clear of the side fades), its
+    # content a little further in.
+    flat = dui2.SectionBacking(color=(0.35, 0.55, 1.0, 0.3), content_inset=16.0)
 
     # Inbox-message style: the slab the classic inbox draws, pinned so
     # its visible shape's edges land on the card's (and so on its
@@ -94,7 +94,9 @@ def test_page_sections(
         )
 
     return dui2.Response(
-        page=dui2.Page(
+        page=with_test_viewer(
+            route.viewer_side,
+            route.theme,
             title=_lit('Sections'),
             rows=[
                 # The simplest section: just a heading over its rows,
@@ -113,20 +115,55 @@ def test_page_sections(
                     debug=debug,
                     rows=[_fill('Four'), _fill('Five', 'Six')],
                 ),
-                # A flat backing, heading-less and unpadded: exactly the
-                # union of its rows' bounds (toggle debug to compare).
+                # The same said with text rows (how pages for newer
+                # builds should): identical layout.
+                dui2.Section(
+                    debug=debug,
+                    rows=[
+                        dui2.TitleRow(
+                            _lit('The Same, As Text Rows'),
+                            size=dui2.TitleSize.HEADING,
+                            align=center,
+                        ),
+                        dui2.SubtitleRow(
+                            _lit('A HEADING TitleRow and a SubtitleRow.'),
+                            align=center,
+                        ),
+                        _fill('Four'),
+                        _fill('Five', 'Six'),
+                        dui2.FootnoteRow(
+                            _lit('A standalone FootnoteRow (attach off).'),
+                            attach=False,
+                            align=center,
+                        ),
+                    ],
+                ),
+                # A flat backing, heading-less and unpadded: top to
+                # bottom, exactly the union of its rows' bounds (toggle
+                # debug to compare).
                 dui2.Section(
                     backing=flat,
                     debug=debug,
                     rows=[
                         _fill('Seven'),
+                        dui2.TitleRow(_lit('A row title inside it')),
                         dui2.ButtonRow(
                             layout=dui2.ButtonRowLayout.FILL,
-                            title=_lit('A row title inside it'),
-                            footnote=_lit('A row footnote inside it.'),
                             buttons=[_btn('Eight'), _btn('Nine')],
                             debug=debug,
                         ),
+                        dui2.FootnoteRow(_lit('A row footnote inside it.')),
+                    ],
+                ),
+                # The same card with no margin: edge to edge, its sides
+                # in the side fades (how every card drew before cards
+                # got margins).
+                dui2.Section(
+                    backing=replace(flat, margin=0.0, content_inset=33.0),
+                    debug=debug,
+                    rows=[
+                        dui2.TitleRow(_lit('Margin 0 (edge to edge)')),
+                        _fill('Ten', 'Eleven'),
                     ],
                 ),
                 # Inbox-message prototypes: back-to-back slab cards,
@@ -190,31 +227,36 @@ def test_page_sections(
                         )
                     ],
                 ),
-                # Cards pulled edge to edge: sections normally stand 26
-                # apart (the page's 10 row spacing plus a heading's 16
-                # standoff above), so -26 has the slabs' solid edges
+                # Cards pulled edge to edge: sections normally stand
+                # the page's row spacing (the default, as this page
+                # sets none) plus a heading's 16 standoff apart, so
+                # pulling back that much has the slabs' solid edges
                 # just touch.
                 *[
                     dui2.Section(
                         title=_lit(f'Edge-to-edge card {num}'),
                         title_align=center,
                         backing=slab,
-                        spacing_top=0.0 if num == 1 else -26.0,
+                        spacing_top=(
+                            0.0
+                            if num == 1
+                            else -(dui2.DEFAULT_SECTION_SPACING + 16.0)
+                        ),
                         debug=debug,
                         rows=[_narrow(f'Button {num}')],
                     )
                     for num in range(1, 4)
                 ],
                 # A plain row after a section stands apart from it.
+                dui2.TitleRow(_lit('Plain rows after a section')),
                 dui2.ButtonRow(
-                    title=_lit('Plain rows after a section'),
                     center_content=True,
                     buttons=[
                         dui2.Button(
                             label=_lit('Hide Debug' if debug else 'Show Debug'),
                             size=(200, 60),
                             style=dui2.ButtonStyle.MEDIUM,
-                            action=rt.Sections(debug=not debug).replace(),
+                            action=replace(route, debug=not debug).replace(),
                         ),
                     ],
                     debug=debug,

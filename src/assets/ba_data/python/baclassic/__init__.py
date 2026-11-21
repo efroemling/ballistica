@@ -17,6 +17,7 @@ designed in a more modular way.
 # `ba*.app.classic`.
 
 import logging
+from typing import TYPE_CHECKING
 
 from _baclassic import reload_hooks
 from baclassic._appmode import ClassicAppMode, ClassicAppModeConfig
@@ -33,24 +34,85 @@ from baclassic._displayitem import (
     depiction_assets,
 )
 from baclassic._music import MusicPlayer
-from baclassic._hostui import HostUIButton, HostUISubsystem
-from baclassic._hostuihandler import HostUIHandler
-from baclassic._hostuikick import (
-    HostUIKickVote,
-    HostUIKickVotes,
-    KickVoteRefusal,
-)
-from baclassic._hostuistats import (
-    HostUIStatsColumn,
-    HostUIStatsContext,
-    HostUIStatsPage,
-)
 from baclassic._clienteffect import (
     ClientEffectContext,
     EffectTarget,
     EffectTargets,
 )
 
+# Host-ui is re-exported lazily: it pulls in the whole doc-ui wire
+# format, and most runs never host anyone or join a host that uses it,
+# so loading it at launch was a waste (~90ms on a mid-range phone).
+# These names load on first access instead. app.classic.host_ui loads
+# them in the background ahead of need (see ClassicAppSubsystem).
+#
+# TODO: Once we're on Python 3.15+, replace this with PEP 810 lazy
+# imports ('lazy from baclassic._hostui import ...') and drop
+# __getattr__/__dir__ below.
+_LAZY_EXPORTS: dict[str, str] = {
+    'HostUIButton': 'baclassic._hostuibutton',
+    'HostUIClientPage': 'baclassic._hostuimembers',
+    'HostUIPlayerPage': 'baclassic._hostuimembers',
+    'HostUISubsystem': 'baclassic._hostui',
+    'HostUIHandler': 'baclassic._hostuihandler',
+    'HostUIKickRequest': 'baclassic._hostuikick',
+    'HostUIKickVote': 'baclassic._hostuikick',
+    'HostUIKickVotes': 'baclassic._hostuikick',
+    'KickVoteRefusal': 'baclassic._hostuikick',
+    'HostUIStatsColumn': 'baclassic._hostuistats',
+    'HostUIStatsContext': 'baclassic._hostuistats',
+    'HostUIStatsPage': 'baclassic._hostuistats',
+    'host_ui_player_icon': 'baclassic._hostuiparts',
+    'host_ui_player_name': 'baclassic._hostuiparts',
+    'host_ui_text': 'baclassic._hostuiparts',
+}
+
+if TYPE_CHECKING:
+    from types import FunctionType
+
+    from baclassic._hostuiparts import (
+        host_ui_player_icon,
+        host_ui_player_name,
+        host_ui_text,
+    )
+    from baclassic._hostui import HostUISubsystem
+    from baclassic._hostuibutton import HostUIButton
+    from baclassic._hostuihandler import HostUIHandler
+    from baclassic._hostuikick import (
+        HostUIKickRequest,
+        HostUIKickVote,
+        HostUIKickVotes,
+        KickVoteRefusal,
+    )
+    from baclassic._hostuimembers import HostUIClientPage, HostUIPlayerPage
+    from baclassic._hostuistats import (
+        HostUIStatsColumn,
+        HostUIStatsContext,
+        HostUIStatsPage,
+    )
+
+
+def __getattr__(name: str) -> type | FunctionType:
+    modname = _LAZY_EXPORTS.get(name)
+    if modname is None:
+        raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
+    import importlib
+
+    value: type | FunctionType = getattr(importlib.import_module(modname), name)
+
+    # Cache it so we only come through here once per name.
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    # Without this, tools that list our members via dir() (sphinx
+    # autodoc, for one) would silently skip the lazy exports.
+    return sorted({*globals(), *_LAZY_EXPORTS})
+
+
+# (Pylint can't see the lazy exports above.)
+# pylint: disable=undefined-all-variable
 __all__ = [
     'ChestAppearanceDisplayInfo',
     'CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT',
@@ -62,13 +124,19 @@ __all__ = [
     'EffectTarget',
     'EffectTargets',
     'HostUIButton',
+    'HostUIClientPage',
     'HostUIHandler',
+    'HostUIKickRequest',
     'HostUIKickVote',
     'HostUIKickVotes',
+    'HostUIPlayerPage',
     'HostUIStatsColumn',
     'HostUIStatsContext',
     'HostUIStatsPage',
     'HostUISubsystem',
+    'host_ui_player_icon',
+    'host_ui_player_name',
+    'host_ui_text',
     'KickVoteRefusal',
     'Achievement',
     'AchievementSubsystem',

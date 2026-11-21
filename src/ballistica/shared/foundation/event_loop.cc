@@ -364,7 +364,17 @@ void EventLoop::OnStopped_() {
   // A GIL-holding loop lets go of it for good, so whoever finalizes
   // Python can take it and nothing here runs Python again.
   if (acquires_python_gil_ && py_thread_state_ == nullptr) {
-    ReleaseGIL_();
+    if (source_ == ThreadSource::kCreate) {
+      // Our thread exits right after this, so delete its Python thread
+      // state rather than just detaching it. A detached one stays in the
+      // interpreter's thread list pointing at a thread that no longer
+      // exists, and Python's faulthandler (the shutdown watchdog's thread
+      // dump) reads that dead thread's name and segfaults.
+      PyThreadState_Clear(PyThreadState_Get());
+      PyThreadState_DeleteCurrent();  // Also releases the GIL.
+    } else {
+      ReleaseGIL_();
+    }
   }
 
   stopped_cv_.notify_all();

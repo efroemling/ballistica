@@ -33,9 +33,13 @@ void ObjectComponent::WriteConfig() {
   // caller-managed premult (premultiplied_, e.g. additive glows) is left alone.
   // Mirrors the image_widget convention; see
   // docs/design/premultiplied-alpha.md.
-  float cmul = (transparent_ && !premultiplied_ && texture_->premultiplied())
-                   ? color_a_
-                   : 1.0f;
+  bool add_premult =
+      transparent_ && !premultiplied_ && texture_->premultiplied();
+  float cmul = add_premult ? color_a_ : 1.0f;
+  // add_premult also goes to every transparent shading: the terms its
+  // shader adds after the base color (lighting offset, reflection, add
+  // color, vignette) must then scale with alpha too (see
+  // ProgramObjectGL::SetAddPremultiplied).
   if (facing_ratio_) {
     assert(!Reflects_());                             // Unsupported combo.
     assert(light_shadow_ != LightShadowType::kNone);  // Required.
@@ -46,6 +50,7 @@ void ObjectComponent::WriteConfig() {
     if (transparent_) {
       ConfigForShading(ShadingType::kObjectLightShadowFacingRatioTransparent);
       cmd_buffer_->PutInt(premult_blend);
+      cmd_buffer_->PutInt(add_premult);
       cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
       cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul, color_b_ * cmul,
                              color_a_);
@@ -66,6 +71,7 @@ void ObjectComponent::WriteConfig() {
       if (transparent_) {
         ConfigForShading(ShadingType::kObjectTransparent);
         cmd_buffer_->PutInt(premult_blend);
+        cmd_buffer_->PutInt(add_premult);
         cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul,
                                color_b_ * cmul, color_a_);
         cmd_buffer_->PutTexture(texture_);
@@ -79,6 +85,7 @@ void ObjectComponent::WriteConfig() {
         assert(!world_space_);  // Unsupported combo.
         ConfigForShading(ShadingType::kObjectLightShadowTransparent);
         cmd_buffer_->PutInt(premult_blend);
+        cmd_buffer_->PutInt(add_premult);
         cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
         cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul,
                                color_b_ * cmul, color_a_);
@@ -100,6 +107,7 @@ void ObjectComponent::WriteConfig() {
         if (have_color_add_) {
           ConfigForShading(ShadingType::kObjectReflectAddTransparent);
           cmd_buffer_->PutInt(premult_blend);
+          cmd_buffer_->PutInt(add_premult);
           cmd_buffer_->PutFloats(
               color_r_ * cmul, color_g_ * cmul, color_b_ * cmul, color_a_,
               color_add_r_, color_add_g_, color_add_b_, reflection_scale_r_,
@@ -109,6 +117,7 @@ void ObjectComponent::WriteConfig() {
         } else {
           ConfigForShading(ShadingType::kObjectReflectTransparent);
           cmd_buffer_->PutInt(premult_blend);
+          cmd_buffer_->PutInt(add_premult);
           cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul,
                                  color_b_ * cmul, color_a_, reflection_scale_r_,
                                  reflection_scale_g_, reflection_scale_b_);
@@ -124,9 +133,23 @@ void ObjectComponent::WriteConfig() {
         cmd_buffer_->PutTexture(texture_);
         cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
       }
+    } else if (transparent_) {
+      // Lit, shadowed, reflective and transparent (a faded prop, say).
+      assert(!double_sided_);               // Unsupported combo.
+      assert(!colorize_texture_.exists());  // Unsupported combo.
+      assert(!have_color_add_);             // Unsupported combo.
+      assert(!world_space_);                // Unsupported combo.
+      ConfigForShading(ShadingType::kObjectReflectLightShadowTransparent);
+      cmd_buffer_->PutInt(premult_blend);
+      cmd_buffer_->PutInt(add_premult);
+      cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
+      cmd_buffer_->PutFloats(color_r_ * cmul, color_g_ * cmul, color_b_ * cmul,
+                             color_a_, reflection_scale_r_, reflection_scale_g_,
+                             reflection_scale_b_);
+      cmd_buffer_->PutTexture(texture_);
+      cmd_buffer_->PutCubeMapTexture(ReflectionCubeMap_());
     } else {
       // With add.
-      assert(!transparent_);  // Unsupported combo.
       if (!have_color_add_) {
         if (colorize_texture_.exists()) {
           assert(!double_sided_);  // Unsupported combo.

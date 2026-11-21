@@ -24,8 +24,8 @@ def test_page_2() -> bacommon.docui.v2.Response:
         page=dui2.Page(
             title=strs.nav.test_two_title.spec,
             rows=[
+                dui2.TitleRow(strs.nav.more_tests.spec),
                 dui2.ButtonRow(
-                    title=strs.nav.more_tests.spec,
                     buttons=[
                         dui2.Button(
                             label=strs.nav.browse.spec,
@@ -69,8 +69,8 @@ def test_page_long() -> bacommon.docui.v2.Response:
             title=strs.nav.test.spec,
             center_vertically=True,
             rows=[
+                dui2.TitleRow(strs.common.that_took_a_while.spec),
                 dui2.ButtonRow(
-                    title=strs.common.that_took_a_while.spec,
                     center_title=True,
                     center_content=True,
                     buttons=[
@@ -104,9 +104,9 @@ def test_page_timed_actions(
             title=strs.nav.test.spec,
             center_vertically=True,
             rows=[
+                dui2.TitleRow(strs.common.hello_there_num(num=str(val)).spec),
+                dui2.SubtitleRow(strs.common.each_change.spec),
                 dui2.ButtonRow(
-                    title=strs.common.hello_there_num(num=str(val)).spec,
-                    subtitle=strs.common.each_change.spec,
                     center_title=True,
                     center_content=True,
                     buttons=[

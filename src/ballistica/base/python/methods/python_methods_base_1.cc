@@ -833,7 +833,7 @@ static auto PyUserRanCommands(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  g_core->user_ran_commands = true;
+  g_core->SetUserRanCommands();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -848,24 +848,55 @@ static PyMethodDef PyUserRanCommandsDef = {
     ":meta private:",
 };
 
-// ------------------------ set_user_python_present ----------------------------
+// ---------------------- set_user_python_scan_result --------------------------
 
-static auto PySetUserPythonPresent(PyObject* self) -> PyObject* {
+static auto PySetUserPythonScanResult(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
+  int present;
+  if (!PyArg_ParseTuple(args, "p", &present)) {
+    return nullptr;
+  }
   assert(g_core);
-  g_core->user_python_present = true;
+  g_core->SetUserPythonScanResult(static_cast<bool>(present));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetUserPythonPresentDef = {
-    "set_user_python_present",            // name
-    (PyCFunction)PySetUserPythonPresent,  // method
-    METH_NOARGS,                          // flags
+static PyMethodDef PySetUserPythonScanResultDef = {
+    "set_user_python_scan_result",           // name
+    (PyCFunction)PySetUserPythonScanResult,  // method
+    METH_VARARGS,                            // flags
 
-    "set_user_python_present() -> None\n"
+    "set_user_python_scan_result(present: bool) -> None\n"
     "\n"
-    "Note that the user python (mods) dir holds importable Python.\n"
+    "Report the meta-scan's verdict on the user python (mods) dir:\n"
+    "whether it holds importable Python. Until this is called the\n"
+    "mods-dir modded signal reads as pending.\n"
+    "\n"
+    ":meta private:",
+};
+
+// ----------------------- set_workspaces_state_known --------------------------
+
+static auto PySetWorkspacesStateKnown(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_core);
+  g_core->SetWorkspacesStateKnown();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetWorkspacesStateKnownDef = {
+    "set_workspaces_state_known",            // name
+    (PyCFunction)PySetWorkspacesStateKnown,  // method
+    METH_NOARGS,                             // flags
+
+    "set_workspaces_state_known() -> None\n"
+    "\n"
+    "Note that initial sign-in has settled, so whether a workspace is\n"
+    "in use is now known (until then that modded signal reads as\n"
+    "pending).\n"
     "\n"
     ":meta private:",
 };
@@ -879,8 +910,7 @@ static auto PyIsUserModified(PyObject* self) -> PyObject* {
   // fatal-error reporter sends (fatal_error_report.cc); these flags
   // only ever go one way within a run, so a False is a "clean so far".
   assert(g_core);
-  if (g_core->user_ran_commands || g_core->workspaces_in_use
-      || g_core->using_custom_app_python_dir() || g_core->user_python_present) {
+  if (g_core->IsUserModified()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -897,6 +927,32 @@ static PyMethodDef PyIsUserModifiedDef = {
     "Whether user actions could have modified engine behavior this\n"
     "run (commands run, workspaces in use, custom app scripts, or\n"
     "Python present in the mods dir).\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------ is_user_modified_pending ---------------------------
+
+static auto PyIsUserModifiedPending(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_core);
+  if (g_core->ModdedCheckPending()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsUserModifiedPendingDef = {
+    "is_user_modified_pending",            // name
+    (PyCFunction)PyIsUserModifiedPending,  // method
+    METH_NOARGS,                           // flags
+
+    "is_user_modified_pending() -> bool\n"
+    "\n"
+    "Whether a False is_user_modified() can't be read as clean yet:\n"
+    "nothing has flagged the run as modified, but at least one check\n"
+    "(app config, the mods-dir scan, workspace state) hasn't finished.\n"
     "\n"
     ":meta private:",
 };
@@ -2441,8 +2497,10 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMusicPlayerStopDef,
       PyAppInstanceUUIDDef,
       PyUserRanCommandsDef,
-      PySetUserPythonPresentDef,
+      PySetUserPythonScanResultDef,
+      PySetWorkspacesStateKnownDef,
       PyIsUserModifiedDef,
+      PyIsUserModifiedPendingDef,
       PyReloadMediaDef,
       PyReloadChangedMediaDef,
       PyMacMusicAppInitDef,

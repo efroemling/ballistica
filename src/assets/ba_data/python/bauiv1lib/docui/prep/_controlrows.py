@@ -21,9 +21,9 @@ from bauiv1lib.docui.prep._types import (
     CheckboxPrep,
     TextInputPrep,
     ChoicePrep,
-    ColorPrep,
 )
 from bauiv1lib.docui.prep._rowtext import (
+    control_label_style,
     control_width,
     control_row_footnote_tuck,
     control_row_titles_tuck,
@@ -52,13 +52,18 @@ from bauiv1lib.docui.prep._sliderrow import (
     prep_slider_row,
     instantiate_slider_row,
 )
+from bauiv1lib.docui.prep._colorrow import (
+    color_row_height,
+    prep_color_row,
+    instantiate_color_row,
+)
 
 if TYPE_CHECKING:
     from bacommon.assetpackage import ApverNum
 
     from typing import Any, Callable, Sequence, TypeGuard
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 CHECKBOX_HEIGHT = 50.0
@@ -108,6 +113,11 @@ def prep_checkbox_row(
                 CHECKBOX_HEIGHT,
             ),
             text='' if row.label is None else native(row.label),
+            # (Its label's look: only what's set, so the checkbox's own
+            # defaults hold otherwise.)
+            textcolor=row.label_color,
+            textflatness=row.label_flatness,
+            textshadow=row.label_shadow,
             style='right',
             autoselect=True,
             enabled=not row.disabled,
@@ -125,7 +135,7 @@ def prep_checkbox_row(
 
 
 def instantiate_checkbox_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widget for a prepped checkbox row."""
     prep = rowprep.checkbox
@@ -227,7 +237,7 @@ def prep_text_input_row(
             maxwidth=max(1.0, boxleft - gap - left),
             h_align='left',
             v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
+            **control_label_style(row),
             enabled=enabled,
             transition_delay=tdelay,
             transition_type='scale',
@@ -266,7 +276,7 @@ def prep_text_input_row(
 
 
 def instantiate_text_input_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widgets for a prepped text-input row.
 
@@ -431,7 +441,7 @@ def prep_choice_row(
             maxwidth=max(1.0, bleft - _TEXT_INPUT_LABEL_GAP - left),
             h_align='left',
             v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
+            **control_label_style(row),
             # (A disabled row dims its label; see instantiate_choice_row()
             # for its button.)
             enabled=not row.disabled,
@@ -451,7 +461,7 @@ def prep_choice_row(
             'transition_delay': tdelay,
             'transition_type': 'scale',
             # Backing drawn to our bounds, like doc-ui button rows.
-            'better_bg_fit': True,
+            'clean_layout': True,
         },
         choice_labels=choice_labels,
         choice_values=[c.value for c in row.choices],
@@ -465,7 +475,7 @@ def prep_choice_row(
 
 
 def instantiate_choice_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widgets for a prepped choice row.
 
@@ -536,202 +546,6 @@ def instantiate_choice_row(
         newkey = _key_for(newvalue)
         if button and newkey is not None:
             menu.set_choice(newkey)
-
-    window.pagestate.register_pusher(prep.key, _push)
-    window.register_spinner_position(button, prep.button_center)
-    return button
-
-
-COLOR_HEIGHT = 50.0
-
-# The swatch button in a color row sits at the row's right.
-_COLOR_SWATCH_SIZE = (70.0, 40.0)
-
-
-def color_row_height(row: dui2.ColorRow) -> float:
-    """Full height of a color row."""
-    return row.padding_top + row.padding_bottom + COLOR_HEIGHT
-
-
-def prep_color_row(
-    row: dui2.ColorRow,
-    rowprep: RowPrep,
-    *,
-    left: float,
-    right: float,
-    bottom: float,
-    idprefix: str,
-    tdelay: float | None,
-    native: NativeLangStrFn,
-) -> None:
-    """Fill out prep for a color row.
-
-    ``left``/``right`` are where our label should start and our swatch
-    should end (before any padding the row asks for).
-    """
-    left += row.padding_left
-    right -= row.padding_right
-    bottom += row.padding_bottom
-    center_y = bottom + COLOR_HEIGHT * 0.5
-    bwidth, bheight = _COLOR_SWATCH_SIZE
-    bleft = right - bwidth
-
-    labelcall: Callable[..., bui.Widget] | None = None
-    if row.label is not None:
-        labelcall = partial(
-            bui.textwidget,
-            position=(left, center_y),
-            size=(0, 0),
-            text=native(row.label),
-            literal=True,
-            maxwidth=max(1.0, bleft - _TEXT_INPUT_LABEL_GAP - left),
-            h_align='left',
-            v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
-            enabled=not row.disabled,
-            transition_delay=tdelay,
-            transition_type='scale',
-        )
-
-    # See prep_checkbox_row() for why ids look like this.
-    widgetid = f'{idprefix}|input.{row.name}'
-    rowprep.color = ColorPrep(
-        labelcall=labelcall,
-        buttoncall=partial(
-            bui.buttonwidget,
-            id=widgetid,
-            position=(bleft, center_y - bheight * 0.5),
-            size=(bwidth, bheight),
-            button_type='square',
-            label='',
-            # (A disabled swatch goes grey like any disabled button.)
-            enabled=not row.disabled,
-            autoselect=True,
-            transition_delay=tdelay,
-            transition_type='scale',
-        ),
-        key=row.name,
-        on_change=row.on_change,
-        widgetid=widgetid,
-        button_center=(bleft + bwidth * 0.5, center_y),
-    )
-
-
-def _as_color(value: Any) -> tuple[float, float, float] | None:
-    """A state value as an rgb tuple, if it is one."""
-    if (
-        isinstance(value, (list, tuple))
-        and len(value) == 3
-        and all(isinstance(v, (int, float)) for v in value)
-    ):
-        return (float(value[0]), float(value[1]), float(value[2]))
-    return None
-
-
-class _ColorRowPicker:
-    """Delegate for a color row's picker popup.
-
-    Records each color the picker reports into the page's state right
-    away (so a press elsewhere sends the latest), but only fires the
-    row's on-change action once, when the picker closes with a color
-    different from the one it opened on; the exact-color picker streams
-    intermediate values that nobody wants a request per.
-    """
-
-    def __init__(
-        self,
-        window: DocUIWindow,
-        prep: ColorPrep,
-        button: bui.Widget,
-        initial: tuple[float, float, float],
-    ) -> None:
-        self._window = weakref.ref(window)
-        self._prep = prep
-        self._button = button
-        self._initial = initial
-        self._color = initial
-
-    def color_picker_selected_color(
-        self, picker: Any, color: Sequence[float]
-    ) -> None:
-        """Called by the picker for each color it lands on."""
-        del picker  # Unused.
-        window = self._window()
-        if window is None:
-            return
-        self._color = (color[0], color[1], color[2])
-        if self._button:
-            bui.buttonwidget(edit=self._button, color=self._color)
-        window.set_page_state_values(
-            {self._prep.key: list(self._color)}, push=False
-        )
-
-    def color_picker_closing(self, picker: Any) -> None:
-        """Called by the picker as it goes away."""
-        del picker  # Unused.
-        window = self._window()
-        if window is None:
-            return
-        # Take the global selection back from the picker *before* firing
-        # our change: that may re-request the page, which saves the
-        # window's selection first, and main-windows save the global
-        # selection (see MainWindow.main_window_save_shared_state()) --
-        # otherwise that'd be one of the picker's (id-less) swatches.
-        if self._button:
-            self._button.global_select()
-        if self._color != self._initial:
-            window.controller.input_changed(
-                window,
-                self._prep.widgetid,
-                self._prep.key,
-                list(self._color),
-                self._prep.on_change,
-            )
-
-
-def instantiate_color_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
-) -> bui.Widget:
-    """Create the widgets for a prepped color row.
-
-    Returns the swatch button (the part that can be selected).
-    """
-    prep = rowprep.color
-    assert prep is not None
-
-    if prep.labelcall is not None:
-        prep.labelcall(parent=parent)
-
-    # (See instantiate_checkbox_row() for why values are fetched here.)
-    color = _as_color((window.page_state or {}).get(prep.key)) or (
-        1.0,
-        1.0,
-        1.0,
-    )
-
-    button = prep.buttoncall(parent=parent, color=color)
-
-    def _pick() -> None:
-        from bauiv1lib.colorpicker import ColorPicker
-
-        if not button:
-            return
-        current = _as_color((window.page_state or {}).get(prep.key)) or color
-        ColorPicker(
-            parent=parent,
-            position=button.get_screen_space_center(),
-            initial_color=current,
-            delegate=_ColorRowPicker(window, prep, button, current),
-            # (In proportion with doc-ui windows, like our other popups.)
-            scale=popup_scale(),
-        )
-
-    bui.buttonwidget(edit=button, on_activate_call=_pick)
-
-    def _push(newvalue: Any) -> None:
-        newcolor = _as_color(newvalue)
-        if button and newcolor is not None:
-            bui.buttonwidget(edit=button, color=newcolor)
 
     window.pagestate.register_pusher(prep.key, _push)
     window.register_spinner_position(button, prep.button_center)
@@ -957,7 +771,7 @@ def prep_control_row(
 
 
 def instantiate_control_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> list[bui.Widget]:
     """Create widgets for a prepped control row of whatever sort.
 

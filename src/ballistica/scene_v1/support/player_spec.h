@@ -46,6 +46,12 @@ class PlayerSpec {
   /// party hosts, etc.
   static auto GetDummyPlayerSpec(const std::string& name) -> PlayerSpec;
 
+  /// Return a copy with no icons: private-use glyphs dropped from the
+  /// names and no account type (so no account icon). For specs a peer
+  /// reports about itself, which nobody has verified; an icon in one
+  /// could pass for an account or global profile it doesn't own.
+  auto WithoutIcons() const -> PlayerSpec;
+
   auto valid() const { return valid_; }
 
  private:

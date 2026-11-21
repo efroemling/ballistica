@@ -83,12 +83,25 @@ def test_page_button_grids(
     :meta private:
     """
     from bauiv1 import _classicassets
+    from bauiv1lib.docuitestlayouts import with_test_viewer
 
     tex = _classicassets.textures
     debug = route.debug
 
-    def _grid(row: bacommon.docui.v2.ButtonRow) -> bacommon.docui.v2.ButtonRow:
-        return replace(row, layout=dui2.ButtonRowLayout.GRID, debug=debug)
+    def _grid(
+        row: bacommon.docui.v2.ButtonRow,
+        *,
+        title: str | None = None,
+        subtitle: str | None = None,
+        footnote: str | None = None,
+    ) -> list[bacommon.docui.v2.Row]:
+        """A grid button row with its texts as standalone text rows."""
+        return [
+            *([] if title is None else [dui2.TitleRow(_lit(title))]),
+            *([] if subtitle is None else [dui2.SubtitleRow(_lit(subtitle))]),
+            replace(row, layout=dui2.ButtonRowLayout.GRID, debug=debug),
+            *([] if footnote is None else [dui2.FootnoteRow(_lit(footnote))]),
+        ]
 
     icons = [
         tex.powerup_bomb,
@@ -104,7 +117,9 @@ def test_page_button_grids(
     ]
 
     return dui2.Response(
-        page=dui2.Page(
+        page=with_test_viewer(
+            route.viewer_side,
+            route.theme,
             title=_lit('Button Grids'),
             rows=[
                 dui2.ButtonRow(
@@ -118,41 +133,37 @@ def test_page_button_grids(
                         )
                     ],
                 ),
-                _grid(
-                    dui2.ButtonRow(
-                        title=_lit('Auto columns (as many as fit)'),
-                        subtitle=_lit(
-                            'Up/down should move within a column; down from'
-                            ' above the short last line goes to its last'
-                            ' button.'
-                        ),
-                        buttons=_numbered(14),
-                    )
-                ),
-                # The same with a generous grid_max_spread at each
-                # alignment (which a stretched grid's full lines ignore;
-                # its short last line should start at the left in all
-                # three), then a fill row to compare its edges against.
-                *(
-                    _grid(
-                        dui2.ButtonRow(
-                            title=_lit(
-                                f'The same with grid_max_spread=1000,'
-                                f' {align.name.lower()}-aligned'
-                            ),
-                            buttons=_numbered(14),
-                            grid_max_spread=1000.0,
-                            content_align=align,
-                        )
-                    )
-                    for align in dui2.HAlign
-                ),
-                dui2.ButtonRow(
-                    title=_lit('A fill row, for comparing edges'),
-                    footnote=_lit(
-                        'The stretched grids above should span exactly this'
-                        ' wide, their buttons at their own size.'
+                *_grid(
+                    dui2.ButtonRow(buttons=_numbered(14)),
+                    title='Auto columns (as many as fit)',
+                    subtitle=(
+                        'Up/down should move within a column; down from'
+                        ' above the short last line goes to its last'
+                        ' button.'
                     ),
+                ),
+                # The same with generous scale bounds at each alignment
+                # (which a grid spanning the width ignores; its short
+                # last line should start at the left in all three),
+                # then a fill row to compare its edges against.
+                *(
+                    row
+                    for align in dui2.HAlign
+                    for row in _grid(
+                        dui2.ButtonRow(
+                            buttons=_numbered(14),
+                            grid_min_scale=0.5,
+                            grid_max_scale=2.0,
+                            content_align=align,
+                        ),
+                        title=(
+                            f'The same, scaling 0.5-2.0 to span,'
+                            f' {align.name.lower()}-aligned'
+                        ),
+                    )
+                ),
+                dui2.TitleRow(_lit('A fill row, for comparing edges')),
+                dui2.ButtonRow(
                     layout=dui2.ButtonRowLayout.FILL,
                     buttons=[
                         _btn(
@@ -164,156 +175,158 @@ def test_page_button_grids(
                     ],
                     debug=debug,
                 ),
-                _grid(
+                dui2.FootnoteRow(
+                    _lit(
+                        'The scaled grids above should span exactly this'
+                        ' wide, everything in them scaled alike.'
+                    )
+                ),
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit('4 columns, centered, short last line'),
-                        footnote=_lit(
-                            'The grid centers as a block; its last line'
-                            " starts at the grid's left so columns stay"
-                            ' lined up.'
-                        ),
                         buttons=_numbered(10),
                         grid_columns=4,
                         content_align=dui2.HAlign.CENTER,
-                    )
+                    ),
+                    title='4 columns, centered, short last line',
+                    footnote=(
+                        'The grid centers as a block; its last line'
+                        " starts at the grid's left so columns stay"
+                        ' lined up.'
+                    ),
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit('Fewer buttons than fit, right-aligned'),
                         buttons=_numbered(3),
                         content_align=dui2.HAlign.RIGHT,
-                    )
+                    ),
+                    title='Fewer buttons than fit, right-aligned',
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit('Exactly 3 columns, centered'),
                         buttons=_numbered(8),
                         grid_columns=3,
                         content_align=dui2.HAlign.CENTER,
-                    )
+                    ),
+                    title='Exactly 3 columns, centered',
                 ),
-                # grid_max_spread caps, in pairs that differ only in it:
-                # a grid with a smallish leftover (under a column, how
-                # much depending on the layout's width) at a small cap
-                # and a generous one, then two with lots of room to
-                # spare at a moderate cap and a huge one.
+                # Scale bounds, in sets that differ only in them: a grid
+                # with a leftover under a column (how much depending on
+                # the layout's width) at tight, typical and shrink-only
+                # bounds, then grids with lots of room to spare.
                 *(
-                    _grid(
+                    row
+                    for lo, hi, note in (
+                        (
+                            0.98,
+                            1.02,
+                            'Tight bounds: spans the width only when it'
+                            ' nearly does already; otherwise grows 2% and'
+                            ' falls short.',
+                        ),
+                        (
+                            0.9,
+                            1.1,
+                            'Typical bounds: grows to fill the room, or'
+                            ' shrinks to fit one more column, whichever is'
+                            ' the smaller change.',
+                        ),
+                        (
+                            0.85,
+                            1.0,
+                            'Shrink only: spans the width by fitting one'
+                            ' more column when it can; never grows.',
+                        ),
+                    )
+                    for row in _grid(
                         dui2.ButtonRow(
-                            title=_lit(
-                                f'160-wide cells, grid_max_spread={amt:g}'
-                            ),
-                            footnote=_lit(note),
                             buttons=_numbered(12),
                             grid_cell_width=160.0,
-                            grid_max_spread=amt,
-                        )
-                    )
-                    for amt, note in (
-                        (
-                            4.0,
-                            'Each gap grows by at most 4, so it usually'
-                            ' falls a little short of the right edge.',
+                            grid_min_scale=lo,
+                            grid_max_scale=hi,
                         ),
-                        (
-                            1000.0,
-                            'The same, but the cap never binds, so it'
-                            ' always spans the width.',
-                        ),
+                        title=f'160-wide cells, scale {lo:g}-{hi:g}',
+                        footnote=note,
                     )
                 ),
                 *(
-                    _grid(
-                        dui2.ButtonRow(
-                            title=_lit(
-                                f'Two buttons, centered, grid_max_spread='
-                                f'{amt:g}'
-                            ),
-                            footnote=_lit(note),
-                            buttons=_numbered(2),
-                            grid_max_spread=amt,
-                            content_align=dui2.HAlign.CENTER,
-                        )
-                    )
-                    for amt, note in (
+                    row
+                    for hi, note in (
                         (
-                            40.0,
-                            'Its one gap grows by 40, and the pair stays'
+                            1.1,
+                            'Nowhere near the width: grows 10% and stays'
                             ' centered.',
                         ),
                         (
-                            1000.0,
-                            'Spreads all the way: one button at each edge.',
+                            10.0,
+                            'Grows until the pair spans the width (or the'
+                            ' buttons get very big).',
                         ),
+                    )
+                    for row in _grid(
+                        dui2.ButtonRow(
+                            buttons=_numbered(2),
+                            grid_min_scale=0.9,
+                            grid_max_scale=hi,
+                            content_align=dui2.HAlign.CENTER,
+                        ),
+                        title=f'Two buttons, centered, scale up to {hi:g}',
+                        footnote=note,
                     )
                 ),
                 *(
-                    _grid(
+                    row
+                    for hi, note in (
+                        (
+                            1.1,
+                            'Grows 10%, still short of the width,'
+                            ' left-aligned.',
+                        ),
+                        (
+                            10.0,
+                            'Grows until its 3 columns span the width.',
+                        ),
+                    )
+                    for row in _grid(
                         dui2.ButtonRow(
-                            title=_lit(
-                                f'Exactly 3 columns, grid_max_spread={amt:g}'
-                            ),
-                            footnote=_lit(note),
                             buttons=_numbered(6),
                             grid_columns=3,
-                            grid_max_spread=amt,
-                        )
-                    )
-                    for amt, note in (
-                        (
-                            40.0,
-                            'Each gap grows by 40, still well short of'
-                            ' the width, left-aligned.',
+                            grid_max_scale=hi,
                         ),
-                        (
-                            1000.0,
-                            'Spreads all the way: wide gaps between'
-                            ' columns.',
-                        ),
+                        title=f'Exactly 3 columns, scale up to {hi:g}',
+                        footnote=note,
                     )
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit(
-                            '10 columns of big buttons (shrinks to fit)'
-                        ),
                         buttons=_numbered(20, (140.0, 140.0)),
                         grid_columns=10,
-                    )
+                    ),
+                    title='10 columns of big buttons (shrinks to fit)',
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit(
-                            'Icons in roomy cells (160x110, 25 between lines)'
-                        ),
                         buttons=[_icon_btn(t, 70.0) for t in icons],
                         grid_cell_width=160.0,
                         grid_cell_height=110.0,
                         grid_line_spacing=25.0,
                         content_align=dui2.HAlign.CENTER,
-                    )
+                    ),
+                    title='Icons in roomy cells (160x110, 25 between lines)',
                 ),
-                _grid(
-                    dui2.ButtonRow(
-                        title=_lit(
-                            'Mixed sizes in auto cells (cells fit the biggest)'
-                        ),
-                        buttons=_mixed(),
-                    )
+                *_grid(
+                    dui2.ButtonRow(buttons=_mixed()),
+                    title='Mixed sizes in auto cells (cells fit the biggest)',
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit(
-                            'Mixed sizes in 90x90 cells (big ones shrink)'
-                        ),
                         buttons=_mixed(),
                         grid_cell_width=90.0,
                         grid_cell_height=90.0,
-                    )
+                    ),
+                    title='Mixed sizes in 90x90 cells (big ones shrink)',
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit('Cell width 200, height from the buttons'),
                         buttons=[
                             _wide(label)
                             for label in (
@@ -327,23 +340,24 @@ def test_page_button_grids(
                         ],
                         grid_cell_width=200.0,
                         button_spacing=5.0,
-                    )
+                    ),
+                    title='Cell width 200, height from the buttons',
                 ),
-                _grid(
+                *_grid(
                     dui2.ButtonRow(
-                        title=_lit('Cells wider than the row (shrinks to fit)'),
-                        footnote=_lit(
-                            '2000-wide cells: one column, the whole grid'
-                            ' shrunk until a cell fits.'
-                        ),
                         buttons=_numbered(3),
                         grid_cell_width=2000.0,
-                    )
+                    ),
+                    title='Cells wider than the row (shrinks to fit)',
+                    footnote=(
+                        '2000-wide cells: one column, the whole grid'
+                        ' shrunk until a cell fits.'
+                    ),
                 ),
                 # Down out of the last grid should land here, and up
                 # from here back into its bottom line.
+                dui2.TitleRow(_lit('A fill row after the grids')),
                 dui2.ButtonRow(
-                    title=_lit('A fill row after the grids'),
                     layout=dui2.ButtonRowLayout.FILL,
                     buttons=[
                         _btn(

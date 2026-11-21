@@ -27,11 +27,16 @@ pre-marked autogen sections in checked-in source files:
   listing entry (which carries the brief's ordered ``params`` + author
   ``docs``) becomes one static method building a pure resource-form
   ``LangStr`` — integer-valued params (``count``, plus the display-kind
-  wire ints ``millis``/``bytes``) type as ``int64_t``, ``text`` params
-  as ``LangStr::Sub``. String sources must live under a top-level
+  wire int ``bytes``) type as ``int64_t``; ``text`` params, and
+  ``millis`` params (so they can take a live time target), type as
+  ``LangStr::Sub``. String sources must live under a top-level
   ``strings/`` dir; the remaining path segments map to nested classes
   (namespaces are barred by the one-namespace-per-featureset rule) and
   the leaf method name.
+* ``pconfig/osstrings.json`` — the per-locale values of the strings
+  that end up in native OS resource files (Android ``strings.xml``,
+  Apple string catalogs); ``update_project`` renders those files from
+  it offline. See :mod:`batools.osstrings`.
 
 This is invoked by ``assetpins`` when the pin changes (it talks to the
 cloud for the listing, so it lives there, not in ``make update`` --
@@ -101,12 +106,17 @@ class AssetEntry:
 
 
 # Param kinds carried as plain integers on the wire (and thus typed
-# ``int64_t`` in the accessors): the plural-pivot ``count`` plus the
-# display-formatter value kinds (signed target-minus-now milliseconds
-# for ``millis``; byte counts for ``bytes``). Kind semantics live
-# server-side in bacommon.strbrief.SPECS; here they only pick a C++
-# type.
-INT_PARAM_KINDS = ('count', 'millis', 'bytes')
+# ``int64_t`` in the accessors): the plural-pivot ``count`` plus byte
+# counts for the ``bytes`` display formatter. ``millis`` is deliberately
+# NOT here even though its wire value is an int: it types as
+# ``LangStr::Sub`` so a caller can pass either a fixed millisecond
+# count (an ``int64_t`` converts implicitly) or a time-target LangStr
+# that counts live. Kind semantics live server-side in
+# bacommon.strbrief.SPECS; here they only pick a C++ type.
+INT_PARAM_KINDS = ('count', 'bytes')
+
+# Param kinds typed ``LangStr::Sub`` in the accessors.
+SUB_PARAM_KINDS = ('text', 'millis')
 
 
 @dataclass
@@ -115,10 +125,10 @@ class StringEntry:
 
     ``params`` is the brief's ordered call signature as
     ``(name, kind)`` pairs. Integer-valued kinds -- ``'count'`` (the
-    plural pivot) and the display-formatter wire ints ``'millis'`` /
-    ``'bytes'`` -- type as ``int64_t``; ``'text'`` types as
-    ``LangStr::Sub``. ``docs`` is the combined author doc text from
-    the ``.bstr``.
+    plural pivot) and the display-formatter wire int ``'bytes'`` --
+    type as ``int64_t``; ``'text'`` and ``'millis'`` (which may be a
+    live time target) type as ``LangStr::Sub``. ``docs`` is the
+    combined author doc text from the ``.bstr``.
     """
 
     # Logical asset path within the package (e.g.
@@ -273,11 +283,11 @@ def _collect_string(
                 f'String {logical_name!r} param {name!r} is not a'
                 ' valid lowercase identifier; rename in the brief.'
             )
-        if pkind != 'text' and pkind not in INT_PARAM_KINDS:
+        if pkind not in SUB_PARAM_KINDS and pkind not in INT_PARAM_KINDS:
             return (
                 f'String {logical_name!r} param {name!r} has unknown'
                 f' kind {pkind!r} (this generator understands'
-                f" 'text' plus the int kinds {INT_PARAM_KINDS};"
+                f' {SUB_PARAM_KINDS} plus the int kinds {INT_PARAM_KINDS};'
                 ' it may need updating).'
             )
         params.append((name, pkind))
@@ -798,6 +808,8 @@ def compute_splices(
     # clang-formatted, so this only normalizes the spliced region.
     from efrotools.code import format_cpp_str
 
+    from batools import osstrings
+
     result = collect(projroot, apverid)
     if base_h_existing is None:
         base_h_existing = (projroot / TARGET_BASE_H).read_text()
@@ -836,6 +848,9 @@ def compute_splices(
             render_strings_cc(result),
             filename='builtin_strings.cc',
         ),
+        # The OS resource strings' per-locale values; update_project
+        # renders the native resource files from this offline.
+        osstrings.DATA_PATH: osstrings.fetch_data(projroot, apverid).to_json(),
     }
 
 
@@ -858,7 +873,7 @@ def generate(projroot: Path, apverid: str, check: bool = False) -> bool:
     changed = False
     for rel_path, new_text in spliced.items():
         path = projroot / rel_path
-        existing = path.read_text()
+        existing = path.read_text() if path.exists() else None
         if new_text == existing:
             continue
         changed = True

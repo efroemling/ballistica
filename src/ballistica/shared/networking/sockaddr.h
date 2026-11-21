@@ -18,7 +18,7 @@ class SockAddr {
 
   // Creates from an ipv4 or ipv6 address string; throws an exception on
   // error.
-  SockAddr(const std::string& addr, int port);
+  SockAddr(const std::string& addr_in, int port);
 
   explicit SockAddr(const sockaddr_storage& addr_in) {
     addr_ = addr_in;

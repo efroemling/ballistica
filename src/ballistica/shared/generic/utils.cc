@@ -8,6 +8,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/core/core.h"
@@ -213,6 +214,13 @@ auto Utils::UnicodeFromUTF8(const std::string& s_in, const char* loc)
   // s is valid now, so the checked decode will not throw.
   utf8::utf8to32(s.begin(), s.end(), std::back_inserter(vals));
   return vals;
+}
+
+auto Utils::StripIconChars(const std::string& s, const char* loc)
+    -> std::string {
+  std::vector<uint32_t> uni = UnicodeFromUTF8(s, loc);
+  std::erase_if(uni, [](uint32_t c) { return c >= 0xE000 && c <= 0xF8FF; });
+  return UTF8FromUnicode(std::move(uni));
 }
 
 auto Utils::UTF8FromUnicodeChar(uint32_t c) -> std::string {

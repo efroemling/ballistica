@@ -117,7 +117,6 @@ from batools.pcommands import (
     cmake_prep_dir,
     gen_binding_code,
     genchangelog,
-    get_changelog,
     android_sdk_utils,
     logcat,
     gen_cpp_enums,
@@ -167,10 +166,15 @@ from batools.pcommands3 import (
     remove_docker_images,
     generate_flathub_manifest,
     generate_flatpak_build_env,
+    flatpak_uv_upgrade,
     flatpak_add_release,
     flatpak_prebuilt_inputs,
     gen_pyembed,
     require_unsandboxed,
+    linux_portable_deps_build,
+    linux_portable_deps_gather,
+    linux_portable_engine_build,
+    get_changelog,
 )
 from batools.pcommands4 import (
     ios_sim_run,
@@ -181,6 +185,7 @@ from batools.pcommands4 import (
     dump_symbols_fetch,
     push_ipa_to_archive,
     push_apk_to_archive,
+    stamp_test_durations,
 )
 
 # pylint: enable=unused-import

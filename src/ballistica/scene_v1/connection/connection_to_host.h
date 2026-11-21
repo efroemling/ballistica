@@ -45,6 +45,9 @@ class ConnectionToHost : public Connection {
     // FIXME should we return peer name as fallback?..
     return party_name_;
   }
+  /// Whether the host lets us save it to our favorites (per its host
+  /// info; hosts that don't say allow it).
+  auto allow_favorites() const -> bool { return allow_favorites_; }
 
   /// The password to present to the host (empty = none). Set at connect
   /// time; the client sends HMAC(password, host-salt) in its CLIENT_INFO
@@ -60,6 +63,7 @@ class ConnectionToHost : public Connection {
 
  private:
   std::string party_name_;
+  bool allow_favorites_{true};
   std::string peer_hash_input_;
   std::string peer_hash_;
   std::string join_password_;

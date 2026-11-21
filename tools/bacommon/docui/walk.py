@@ -176,11 +176,18 @@ def _walk_decorations(
             assert_never(dectypeid)
 
 
-def flatten_action(action: dui2.Action | None) -> 'Iterator[dui2.Action]':
-    """Yield an action and, for a menu, the actions of its items.
+def flatten_action(
+    action: dui2.Action | None, *, parent_actions: bool = True
+) -> 'Iterator[dui2.Action]':
+    """Yield an action and those it carries.
 
-    Menus don't nest (a client refuses to open one from a menu item),
-    so a menu sitting in a menu item is yielded but not descended into.
+    That is: for a menu, the actions of its items, and for a popup's
+    local action, its ``parent_action`` (unless ``parent_actions`` is
+    False; that one runs on a different page, so consumers that care
+    which page an action acts on leave it out). Menus don't nest (a
+    client refuses to open one from a menu item), so a menu sitting in
+    a menu item is yielded but not descended into; likewise a parent
+    action's own parent action.
     """
     if action is None:
         return
@@ -189,26 +196,46 @@ def flatten_action(action: dui2.Action | None) -> 'Iterator[dui2.Action]':
         for item in action.items:
             if item.action is not None:
                 yield item.action
+                if parent_actions and isinstance(item.action, dui2.Local):
+                    if item.action.parent_action is not None:
+                        yield item.action.parent_action
+    elif parent_actions and isinstance(action, dui2.Local):
+        if action.parent_action is not None:
+            yield action.parent_action
 
 
-def page_actions(page: dui2.Page) -> 'Iterator[dui2.Action]':
+def page_actions(
+    page: dui2.Page, *, parent_actions: bool = True
+) -> 'Iterator[dui2.Action]':
     """Yield every action in a page, menu items' included.
+
+    See :func:`flatten_action` for ``parent_actions``.
 
     For consumers that care about what actions carry (client-effects,
     state assignments) rather than where they hang.
     """
     for row in dui2.all_rows(page.rows):
         if dui2.is_input_row(row):
-            yield from flatten_action(row.on_change)
+            yield from flatten_action(
+                row.on_change, parent_actions=parent_actions
+            )
             if isinstance(row, dui2.TextInputRow):
-                yield from flatten_action(row.on_submit)
+                yield from flatten_action(
+                    row.on_submit, parent_actions=parent_actions
+                )
             elif isinstance(row, dui2.SliderRow):
-                yield from flatten_action(row.on_drag)
+                yield from flatten_action(
+                    row.on_drag, parent_actions=parent_actions
+                )
         elif isinstance(row, dui2.ButtonControlRow):
-            yield from flatten_action(row.button.action)
+            yield from flatten_action(
+                row.button.action, parent_actions=parent_actions
+            )
         elif isinstance(row, dui2.ButtonRow):
             for button in row.buttons:
-                yield from flatten_action(button.action)
+                yield from flatten_action(
+                    button.action, parent_actions=parent_actions
+                )
 
 
 def _walk_control_row(
@@ -319,6 +346,7 @@ def walk_page(
             elif (
                 acttypeid is dui2.ActionTypeID.BROWSE
                 or acttypeid is dui2.ActionTypeID.REPLACE
+                or acttypeid is dui2.ActionTypeID.POPUP
                 or acttypeid is dui2.ActionTypeID.UNKNOWN
             ):
                 # Nothing to visit: requests hold no strings or refs,

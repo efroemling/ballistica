@@ -27,6 +27,8 @@ namespace ballistica::scene_v1 {
 /// 'h_align'/'v_align'. Protocol 47 (see scene_v1.h). Design:
 /// docs/initiatives/depictions.md.
 ///
+/// Since protocol 57 (opt-in; hosts on 56 can't set it): 'color_multiply'
+/// (rgb) multiplies everything the depiction (and suffix) draws.
 /// Since protocol 53: 'team_coloring' says the depiction's main color
 /// is a team's and should stay dominant (each kind tones its other
 /// colors down as it sees fit; see base::DepictionDrawContext).
@@ -72,6 +74,10 @@ class DepictionDisplayNode : public Node {
   void set_use_color_override(bool val) { use_color_override_ = val; }
   auto brightness() const -> float { return brightness_; }
   void set_brightness(float val) { brightness_ = val; }
+  auto color_multiply() const -> std::vector<float> {
+    return {color_multiply_[0], color_multiply_[1], color_multiply_[2]};
+  }
+  void SetColorMultiply(const std::vector<float>& val);
   auto team_coloring() const -> bool { return team_coloring_; }
   void set_team_coloring(bool val) { team_coloring_ = val; }
   auto GetSuffix() const -> std::string { return suffix_raw_; }
@@ -122,6 +128,7 @@ class DepictionDisplayNode : public Node {
   float color_override_[3]{1.0f, 1.0f, 1.0f};
   bool use_color_override_{};
   float brightness_{1.0f};
+  float color_multiply_[3]{1.0f, 1.0f, 1.0f};
   bool team_coloring_{};
   std::string suffix_raw_;
   SuffixMode suffix_mode_{SuffixMode::kLegacy};

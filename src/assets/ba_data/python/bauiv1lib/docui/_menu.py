@@ -2,7 +2,6 @@
 #
 """The menus doc-ui buttons can pop up."""
 
-from dataclasses import replace
 from typing import TYPE_CHECKING
 import weakref
 
@@ -16,19 +15,20 @@ from bauiv1lib.docui._layout import popup_scale
 if TYPE_CHECKING:
     from bauiv1lib.popup import PopupWindow
     from bauiv1lib.docui.prep import MenuPrep
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
 
 
 class DocUIMenuWindow(PopupMenuWindow):
     """The menu popped up by a doc-ui button with a menu action.
 
     Picking an item runs its action as if the button itself had been
-    pressed with it.
+    pressed with it, sound included (the menu plays none of its own for
+    picks).
     """
 
     def __init__(
         self,
-        window: DocUIWindow,
+        window: DocUIPageHost,
         widgetid: str,
         button: bui.Widget,
         menu: MenuPrep,
@@ -57,6 +57,9 @@ class DocUIMenuWindow(PopupMenuWindow):
                 k for k, off in zip(keys, menu.disabled, strict=True) if off
             ],
             choices_display=menu.labels,
+            # Picks sound as their actions do (as a button press with
+            # that action would); the menu itself stays quiet.
+            pick_sounds=False,
         )
 
     def popup_menu_selected_choice(
@@ -76,14 +79,14 @@ class DocUIMenuWindow(PopupMenuWindow):
         action = self._actions[int(choice)]
 
         # Text pops up from our button, as if it had been pressed with
-        # this action. (A pick already made the menu's sound.)
+        # this action.
         popup_text = self._popup_texts[int(choice)]
         if isinstance(action, dui2.PopupText) and popup_text is not None:
             self._button.global_select()
             window.controller.run_button_action(
                 window,
                 self._widgetid,
-                replace(action, default_sound=False),
+                action,
                 popup_text,
             )
             return
@@ -94,10 +97,6 @@ class DocUIMenuWindow(PopupMenuWindow):
             )
             _builtinassets.audio.error.get().play()
             return
-
-        # A pick already made the menu's sound.
-        if isinstance(action, (dui2.Browse, dui2.Replace, dui2.Local)):
-            action = replace(action, default_sound=False)
 
         # Take the global selection back before running anything: a
         # request saves the window's selection first, and we are still

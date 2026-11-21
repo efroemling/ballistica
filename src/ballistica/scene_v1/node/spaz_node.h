@@ -355,6 +355,8 @@ class SpazNode : public Node {
   // Which limb backend this spaz uses: the bg-dynamics rig (latest
   // protocol) or the main-sim bodies (older servers). A dev override
   // (BA_SPAZ_LIMBS=main|bg; test_game_run --limbs) wins for A/B tests.
+  // Ask it only at construction; afterward use main_sim_limbs_, since
+  // the globals it reads can change under a live spaz.
   auto UseBgLimbs_() const -> bool;
   // The transform a limb's display mesh is drawn with (limb indices as
   // in BuildLimbRigConfig_). bg limbs: the rig's relative pose composed

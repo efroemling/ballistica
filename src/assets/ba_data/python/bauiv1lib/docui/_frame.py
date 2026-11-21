@@ -11,20 +11,24 @@ import bauiv1 as bui
 from bauiv1lib.utils import get_screen_margins
 from bauiv1lib.docui._backbutton import back_button_geometry
 from bauiv1lib.docui._layout import (
-    SMALL_COLUMN_MAX_WIDTH,
+    DEFAULT_EDGE_FADE,
     SMALL_UI_SCROLL_EXTRA,
+    SMALL_UI_TOOLBAR_CLEARANCE,
     TITLE_BAND_HEIGHT,
-    VIEWER_NARROW_COLUMN_FRACTION,
+    POPUP_EDGE_MARGIN,
+    POPUP_FADE_REACH,
+    POPUP_TITLE_BAND_HEIGHT,
     VIEWER_SCREEN_BUFFER,
     column_inset,
     fade_scroll_extents,
     layout_geometry,
+    root_scale,
     title_lift,
     window_content_drop,
     window_insets,
     window_scroll_overhang,
 )
-from bauiv1lib.docui._panes import scroll_widget_rect, viewer_insets_v
+from bauiv1lib.docui._panes import scroll_widget_rect, viewer_pane_rect
 
 
 @dataclass
@@ -38,10 +42,22 @@ class WindowFrame:
     solid art. ``stack_offset`` is where the container sits relative to
     the screen's center (screen units).
 
-    The scroll rect is where an outline-style scroll area sits;
-    ``margins`` (left, right, bottom, top) is how far the actual scroll
-    area reaches past it, with content inset to match (screen margins at
-    small ui-scale, fade extents otherwise).
+    The content rect is the area the layout gives its page: the page
+    lays out against it, its own insets placing its content within it
+    (selection keeps rows inside it, too). ``extends`` (left, right,
+    bottom, top) is how far the scroll area reaches out past it without
+    moving content -- under the title band or toolbars, out to the
+    screen margins, across a narrow column's sides -- extra room content
+    can be seen in (scrolled, or fading) but is never placed in.
+    ``page_arrow_insets`` (left, right) is how far in from the scroll
+    area's sides sideways-scrolling rows' page arrows sit (clear of the
+    screen margins, so on screen).
+
+    ``fade_lengths`` (left, right, bottom, top) is the longest each
+    side's scroll-area edge fade may run, in from the extend rect's
+    edge (0 for none); None for an outline-style scroll area, which
+    doesn't fade. Each page shortens them to end by where its content
+    starts (see :func:`~bauiv1lib.docui._panes.edge_fades`).
     """
 
     width: float
@@ -52,12 +68,13 @@ class WindowFrame:
     vis_top: float
     vis_width: float
     vis_height: float
-    scroll_left: float
-    scroll_bottom: float
-    scroll_width: float
-    scroll_height: float
-    margins: tuple[float, float, float, float]
-    column_insets: tuple[float, float]
+    content_left: float
+    content_bottom: float
+    content_width: float
+    content_height: float
+    extends: tuple[float, float, float, float]
+    page_arrow_insets: tuple[float, float]
+    fade_lengths: tuple[float, float, float, float] | None
 
     #: The viewer pane's side, or None for no pane.
     pane_side: dui2.ViewerSide | None
@@ -65,10 +82,12 @@ class WindowFrame:
 
     @property
     def viewer_left(self) -> float:
-        """Where the viewer pane (if any) starts."""
+        """Where the viewer pane (if any) starts: just past the scroll
+        area's side (which doesn't extend into a screen margin there)."""
+        ext_left, ext_right, _, _ = self.extends
         if self.pane_side is dui2.ViewerSide.RIGHT:
-            return self.scroll_left + self.scroll_width
-        return self.scroll_left - self.viewer_width
+            return self.content_left + self.content_width + ext_right
+        return self.content_left - ext_left - self.viewer_width
 
     @property
     def vis_center(self) -> tuple[float, float]:
@@ -113,15 +132,7 @@ def window_frames(
         for frame in frames.values():
             rects.append(scroll_widget_rect(frame))
             if frame.pane_side is not None:
-                inset_bottom, inset_top = viewer_insets_v(uiscale)
-                rects.append(
-                    (
-                        frame.viewer_left,
-                        frame.scroll_bottom + inset_bottom,
-                        frame.viewer_width,
-                        frame.scroll_height - inset_bottom - inset_top,
-                    )
-                )
+                rects.append(viewer_pane_rect(frame, uiscale))
         back_scale, back_size, back_offset = back_button_geometry(
             layout, scroll_edge_style, close_style=close_style
         )
@@ -152,8 +163,8 @@ def window_frames(
             stack_offset=stack_offset,
             vis_left=frame.vis_left - left,
             vis_top=frame.vis_top - bottom,
-            scroll_left=frame.scroll_left - left,
-            scroll_bottom=frame.scroll_bottom - bottom,
+            content_left=frame.content_left - left,
+            content_bottom=frame.content_bottom - bottom,
         )
         for side, frame in frames.items()
     }
@@ -218,10 +229,10 @@ def _centered_frame(
     # In small ui we extend our scrollable area out into the side
     # screen margins (space between the virtual bounds and the actual
     # screen edges) while keeping content laid out within the virtual
-    # bounds (page prep gets these margins so it can lay things out
-    # accordingly). Our top and bottom stay at the virtual bounds',
-    # where our toolbar fades are calibrated. Elsewhere, a fading scroll
-    # area reaches out similarly (see fade_scroll_extents()).
+    # bounds (these become part of our extends). Our top and bottom
+    # stay at the virtual bounds', where our toolbar fades are
+    # calibrated. Elsewhere, a fading scroll area reaches out similarly
+    # (see fade_scroll_extents()).
     if small:
         mleft, mright, _, _ = get_screen_margins(rscale)
         mbottom = mtop = 0.0
@@ -255,6 +266,14 @@ def _centered_frame(
             rscale=rscale,
         )
 
+    # At small ui-scale our scroll area runs full-screen, under the
+    # toolbars; content keeps clear of them. Like screen margins and a
+    # narrow column's sides, that's extend: room the scroll area reaches
+    # into without content moving. (A fixed amount, never reaching on to
+    # the screen margins: how much fading shows under the toolbars
+    # mustn't depend on a device's margins.)
+    clearance = SMALL_UI_TOOLBAR_CLEARANCE if small else 0.0
+
     return WindowFrame(
         width=width,
         height=height,
@@ -264,15 +283,47 @@ def _centered_frame(
         vis_top=vis_top,
         vis_width=vis_width,
         vis_height=vis_height,
-        scroll_left=scroll_left,
-        scroll_bottom=scroll_bottom,
-        scroll_width=scroll_width,
-        scroll_height=scroll_height,
-        margins=(mleft, mright, mbottom, mtop),
-        column_insets=(col_inset, col_inset),
+        content_left=scroll_left + col_inset,
+        content_bottom=scroll_bottom + clearance,
+        content_width=scroll_width - 2.0 * col_inset,
+        content_height=scroll_height - 2.0 * clearance,
+        extends=(
+            mleft + col_inset,
+            mright + col_inset,
+            mbottom + clearance,
+            mtop + clearance,
+        ),
+        page_arrow_insets=(mleft, mright),
+        fade_lengths=_window_fade_lengths(small, scroll_edge_style, pane_side),
         pane_side=pane_side,
         viewer_width=viewer_width,
     )
+
+
+def _window_fade_lengths(
+    small: bool,
+    scroll_edge_style: dui2.ScrollEdgeStyle,
+    pane_side: dui2.ViewerSide | None,
+) -> tuple[float, float, float, float] | None:
+    """A window frame's fade lengths (see :class:`WindowFrame`).
+
+    At small ui-scale our sides run off the screen's edges, where
+    content just scrolls away, so they get none; but not a side facing
+    a viewer pane, which is on screen. (Sides only: our top and bottom
+    run under the toolbars, and fade to keep them readable.) Otherwise,
+    all of them if we fade at all.
+    """
+    fade = DEFAULT_EDGE_FADE
+    if small:
+        return (
+            fade if pane_side is dui2.ViewerSide.LEFT else 0.0,
+            fade if pane_side is dui2.ViewerSide.RIGHT else 0.0,
+            fade,
+            fade,
+        )
+    if scroll_edge_style is dui2.ScrollEdgeStyle.FADE:
+        return (fade, fade, fade, fade)
+    return None
 
 
 def _viewer_screen_overlap(
@@ -302,19 +353,15 @@ def viewer_pane_width(layout: dui2.WindowLayout, scroll_width: float) -> float:
     """Width taken from one side of the scroll area for a viewer pane.
 
     Zero for layouts without room for one. A viewer layout keeps a small
-    layout's column width for the page itself and gives the rest to the
-    viewer, which doesn't scroll with the page.
+    layout's content width for the page itself (a narrow viewer layout
+    a narrower one) and gives the rest to the viewer, which doesn't
+    scroll with the page.
     """
     match layout:
         case dui2.WindowLayout.VIEWER:
-            return max(0.0, scroll_width - SMALL_COLUMN_MAX_WIDTH)
+            return max(0.0, scroll_width - dui2.SMALL_CONTENT_WIDTH)
         case dui2.WindowLayout.VIEWER_NARROW:
-            # A narrower column; the viewer gets the rest.
-            return max(
-                0.0,
-                scroll_width
-                - VIEWER_NARROW_COLUMN_FRACTION * SMALL_COLUMN_MAX_WIDTH,
-            )
+            return max(0.0, scroll_width - dui2.NARROW_CONTENT_WIDTH)
         case (
             dui2.WindowLayout.LARGE
             | dui2.WindowLayout.SMALL
@@ -328,3 +375,70 @@ def viewer_pane_width(layout: dui2.WindowLayout, scroll_width: float) -> float:
             return 0.0
         case _:
             assert_never(layout)
+
+
+def popup_frame(
+    size: tuple[float, float],
+    uiscale: bui.UIScale,
+    virtual_size: tuple[float, float],
+    *,
+    title_band: bool,
+    scroll_edge_style: dui2.ScrollEdgeStyle,
+) -> WindowFrame:
+    """Lay out a doc-ui popup window around a content area.
+
+    ``size`` is the content area (the popup's page lays out in exactly
+    that; see :attr:`bacommon.docui.v2.Popup.size`): raised to
+    :data:`bacommon.docui.v2.POPUP_MIN_SIZE`, and shrunk as needed so
+    the whole popup fits ``virtual_size`` (the virtual screen), less
+    POPUP_EDGE_MARGIN at each edge, at this ui-scale's root scale; its
+    page scrolls if it doesn't fit then.
+    ``title_band`` is whether a band for the title and close button
+    sits above it. As in windows, the popup's bounds are exactly its
+    scroll area and that band; a fading scroll area
+    (``scroll_edge_style``) reaches out past the content area at top
+    and bottom by POPUP_FADE_REACH, and the popup grows to cover it.
+    The root scale matches windows', keeping content the same size on
+    screen. The popup places itself (``stack_offset`` is left zero;
+    see ``DocUIPopupWindow``).
+    """
+    scale = root_scale(uiscale)
+    # Laid out cleanly, as windows are: our bounds are just what must
+    # sit on solid backing art (the scroll area, reach-out included,
+    # and any title band), the art hanging out around them.
+    reach = (
+        POPUP_FADE_REACH
+        if scroll_edge_style is dui2.ScrollEdgeStyle.FADE
+        else 0.0
+    )
+    band = POPUP_TITLE_BAND_HEIGHT if title_band else 0.0
+    lo = dui2.POPUP_MIN_SIZE
+    room_w = virtual_size[0] - 2.0 * POPUP_EDGE_MARGIN[0]
+    room_h = virtual_size[1] - 2.0 * POPUP_EDGE_MARGIN[1]
+    cwidth = max(lo[0], min(room_w / scale, size[0]))
+    cheight = max(lo[1], min(room_h / scale - 2.0 * reach - band, size[1]))
+    width = cwidth
+    height = cheight + 2.0 * reach + band
+    return WindowFrame(
+        width=width,
+        height=height,
+        root_scale=scale,
+        stack_offset=(0.0, 0.0),
+        vis_left=0.0,
+        vis_top=height,
+        vis_width=width,
+        vis_height=height,
+        content_left=0.0,
+        content_bottom=reach,
+        content_width=cwidth,
+        content_height=cheight,
+        extends=(0.0, 0.0, reach, reach),
+        page_arrow_insets=(0.0, 0.0),
+        fade_lengths=(
+            (DEFAULT_EDGE_FADE,) * 4
+            if scroll_edge_style is dui2.ScrollEdgeStyle.FADE
+            else None
+        ),
+        pane_side=None,
+        viewer_width=0.0,
+    )

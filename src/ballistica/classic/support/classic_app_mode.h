@@ -24,6 +24,11 @@ namespace ballistica {
 class JsonRef;
 }
 
+namespace ballistica::base {
+class LangStr;
+class TextGroup;
+}  // namespace ballistica::base
+
 namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
@@ -60,7 +65,10 @@ struct GameRosterEntry {
   std::string spec;                       // wire: "spec" (PlayerSpec string)
   int client_id{};                        // wire: "i" (-1 == the host)
   std::optional<std::string> account_id;  // wire: "a" (public id; v2-auth only)
-  std::vector<Player> players;            // wire: "p"
+  /// The account's name depiction json, wire: "d". Only for accounts
+  /// the host can vouch for: its own and v2-authed clients'.
+  std::optional<std::string> account_name_depiction;
+  std::vector<Player> players;  // wire: "p"
 };
 
 /// Defines high level app behavior when we're active.
@@ -131,6 +139,11 @@ class ClassicAppMode : public base::AppMode {
   auto chat_messages() const -> const std::list<std::string>& {
     return chat_messages_;
   }
+  /// Who sent each of chat_messages() (the name it shows, as the host
+  /// attributed it); always the same length.
+  auto chat_message_senders() const -> const std::list<std::string>& {
+    return chat_message_senders_;
+  }
   void ApplyAppConfig() override;
 
   // Return whichever session is front and center.
@@ -175,6 +188,12 @@ class ClassicAppMode : public base::AppMode {
   auto public_party_size() const { return public_party_size_; }
   void SetPublicPartySize(int count);
   auto public_party_max_size() const { return public_party_max_size_; }
+
+  /// Whether we (the host) count as a party member: in the roster,
+  /// the party size we report, and against the max party size. Hosts
+  /// do (someone plays there); a dedicated server (explicit server
+  /// mode) doesn't, so its sizes and max count client devices only.
+  auto PartyCountsHost() const -> bool;
   void SetPublicPartyQueueEnabled(bool enabled);
   auto public_party_queue_enabled() const {
     return public_party_queue_enabled_;
@@ -193,6 +212,10 @@ class ClassicAppMode : public base::AppMode {
   void SetPublicPartyName(const std::string& name);
   void SetPublicPartyStatsURL(const std::string& name);
   auto public_party_name() const { return public_party_name_; }
+  /// Whether clients may save us to their favorites (sent in the host
+  /// info each joiner gets on connecting).
+  auto host_allow_favorites() const { return host_allow_favorites_; }
+  void set_host_allow_favorites(bool val) { host_allow_favorites_ = val; }
   auto public_party_player_count() const { return public_party_player_count_; }
   void SetPublicPartyPlayerCount(int count);
   auto ShouldAnnouncePartyJoinsAndLeaves() -> bool;
@@ -242,28 +265,12 @@ class ClassicAppMode : public base::AppMode {
   void SetInternalMusic(base::SoundAsset* music, float volume = 1.0,
                         bool loop = true, uint32_t fade_out_millisecs = 0);
 
-  // Run a cycle of host scanning (basically sending out a broadcast packet
-  // to see who's out there).
-  void HostScanCycle();
-  void EndHostScanning();
-
-  struct ScanResultsEntry {
-    std::string display_string;
-    std::string address;
-    // V2-scan extras; defaults apply for hosts seen only via V1 scans.
-    bool has_v2{};
-    std::string party_name;
-    int party_size{};
-    int party_max_size{};
-    bool auth_required{};
-    int build_number{};
-    int protocol_version{};
-  };
-
-  auto GetScanResults() -> std::vector<ScanResultsEntry>;
+  // (Finding hosts on the LAN is babase's nearby-discovery's job; we
+  // only answer.)
   void HandleGameQuery(const char* buffer, size_t size,
                        sockaddr_storage* from) override;
   void DrawWorld(base::FrameDef* frame_def) override;
+  void DrawOverlays(base::FrameDef* frame_def) override;
   auto DoesWorldFillScreen() -> bool override;
   void RunMainMenu();
 
@@ -274,6 +281,9 @@ class ClassicAppMode : public base::AppMode {
   auto buffer_time() const { return buffer_time_; }
   void set_buffer_time(int val) { buffer_time_ = val; }
   void OnActivate() override;
+  void OnDeactivate() override;
+  auto WantsClassicNetworking() const -> bool override { return true; }
+  auto WantsRemoteAppServer() const -> bool override { return true; }
   auto GetHeadlessNextDisplayTimeStep() -> microsecs_t override;
 
   auto host_protocol_version() const {
@@ -338,6 +348,17 @@ class ClassicAppMode : public base::AppMode {
                        bool inbox_count_is_max);
 
  private:
+  /// Draw the connection-down graphic + caption while our host is silent.
+  void DrawHostUnresponsive_(base::FrameDef* frame_def,
+                             millisecs_t silent_millisecs);
+
+  /// Caption for the host-unresponsive indicator: a live 'no contact for
+  /// <duration>' string, built when an outage starts (null otherwise).
+  std::shared_ptr<const base::LangStr> host_silence_lstr_;
+  Object::Ref<base::TextGroup> host_silence_text_group_;
+  /// App-time at which the caption text next needs re-evaluating.
+  millisecs_t host_silence_text_next_eval_{};
+
   /// A SetInternalMusic() request that found no audio source. Retried by
   /// RetryInternalMusic_() until it lands or times out.
   struct PendingInternalMusic_ {
@@ -355,18 +376,10 @@ class ClassicAppMode : public base::AppMode {
   void RetryInternalMusic_();
   void CancelInternalMusicRetry_();
   void OnGameRosterChanged_();
-  void PruneScanResults_();
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
   void Reset_();
   void PruneSessions_();
   void HandleQuitOnIdle_();
-
-  struct ScanResultsEntryPriv_;
-
-  // Note: would use an unordered_map here but gcc doesn't seem to allow
-  // forward declarations of their template params.
-  std::map<std::string, ScanResultsEntryPriv_> scan_results_;
-  std::mutex scan_results_mutex_;
 
   // The launch-metascan hosting set. Written once from the logic thread;
   // read by the network-reader thread when answering V2 host-queries.
@@ -397,11 +410,10 @@ class ClassicAppMode : public base::AppMode {
   seconds_t root_ui_chest_2_ad_allow_time_;
   seconds_t root_ui_chest_3_ad_allow_time_;
 
-  uint32_t next_scan_query_id_{};
-  int scan_socket_{-1};
   int host_protocol_version_{-1};
 
   std::list<std::string> chat_messages_;
+  std::list<std::string> chat_message_senders_;
   // *All* existing sessions (including old ones waiting to shut down).
   std::vector<Object::Ref<scene_v1::Session> > sessions_;
   Object::WeakRef<scene_v1::Scene> foreground_scene_;
@@ -439,7 +451,8 @@ class ClassicAppMode : public base::AppMode {
   millisecs_t next_long_update_report_time_{};
   int debug_speed_exponent_{};
   int replay_speed_exponent_{};
-  int public_party_size_{1};  // Always count ourself (is that what we want?).
+  // (Counts ourself unless we're a dedicated server; see PartyCountsHost().)
+  int public_party_size_{1};
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
@@ -456,6 +469,7 @@ class ClassicAppMode : public base::AppMode {
   float replay_speed_mult_{1.0f};
   millisecs_t last_connection_to_client_join_time_{};
   std::string public_party_name_;
+  bool host_allow_favorites_{true};
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
   std::string root_ui_league_type_;

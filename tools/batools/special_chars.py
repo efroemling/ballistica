@@ -43,7 +43,7 @@ def generate_cpp() -> str:
         'namespace ballistica::base {',
         '',
         '/// Special characters the engine can display.',
-        'enum class SpecialChar : uint8_t {',
+        'enum class SpecialChar : uint16_t {',
     ]
     out += [f'  {cpp_name(char)},' for char in SpecialChar]
     out += [
@@ -57,6 +57,34 @@ def generate_cpp() -> str:
     out += [
         f'    {_cpp_string(char.value)},  // {cpp_name(char)}'
         for char in SpecialChar
+    ]
+    end = max(ord(char.value) for char in SpecialChar) + 1
+    pairs = [
+        (char, full)
+        for char in SpecialChar
+        if (full := char.full_size) is not None and full is not char
+    ]
+    out += [
+        '};',
+        '',
+        '/// One past the highest special character codepoint (the glyph',
+        '/// table must cover through here).',
+        f'inline constexpr uint32_t kSpecialCharCodepointEnd = 0x{end:04X};',
+        '',
+        '/// Two-form icons: (superscript, full-size) codepoints. The',
+        "/// superscript's glyph is derived from its full-size twin's (see",
+        '/// SpecialChar.full_size).',
+        'struct SpecialCharSuperscriptPair {',
+        '  uint32_t superscript;',
+        '  uint32_t full_size;',
+        '};',
+        'inline constexpr SpecialCharSuperscriptPair'
+        ' kSpecialCharSuperscriptPairs[] = {',
+    ]
+    out += [
+        f'    {{0x{ord(char.value):04X}, 0x{ord(full.value):04X}}},'
+        f'  // {cpp_name(char)}'
+        for char, full in pairs
     ]
     out += [
         '};',

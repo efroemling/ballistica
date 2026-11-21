@@ -15,7 +15,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any
 
-    from batools.assetbundleprofiles import BundlePackage
+    from batools.assetbundleprofiles import (
+        BundleAssembledInfo,
+        BundlePackage,
+    )
 
 
 def build(projroot: str, args: list[str]) -> None:
@@ -59,6 +62,7 @@ def build(projroot: str, args: list[str]) -> None:
         get_profile,
         bundle_cache_dirname,
         materialize_profile,
+        write_assembled_info,
     )
 
     form_factor = extract_arg(args, '--form-factor')
@@ -76,17 +80,14 @@ def build(projroot: str, args: list[str]) -> None:
     )
     triples, expected_coords = _plan_assembles(packages)
 
-    force_refetch = os.environ.get('BA_ASSET_BUNDLE_FORCE_REFETCH') == '1'
-    if not force_refetch and os.path.exists(bundle_path):
-        try:
-            with open(bundle_path, encoding='utf-8') as infile:
-                existing = json.load(infile)
-        except Exception:
-            existing = None
-        if isinstance(existing, dict) and _bundle_satisfies(
-            existing, expected_coords
-        ):
-            return
+    assembled = _assembled_info_for(projroot, packages)
+
+    if os.environ.get(
+        'BA_ASSET_BUNDLE_FORCE_REFETCH'
+    ) != '1' and can_skip_assembly(
+        projroot, cache_dir, bundle_path, expected_coords, assembled
+    ):
+        return
 
     print(
         f'{Clr.BLU}Assembling bundle profile {cache_dir!r}'
@@ -110,11 +111,92 @@ def build(projroot: str, args: list[str]) -> None:
         # This top-level manifest is not content-addressed (stable path,
         # only json.load-parsed), so the format is free to change.
         json.dump(merged, outfile, indent=1, sort_keys=True)
+    write_assembled_info(projroot, cache_dir, assembled)
     print(
         f'{Clr.GRN}Assembled bundle profile {cache_dir!r} in'
         f' {time.monotonic() - t_start:.1f}s.{Clr.RST}',
         flush=True,
     )
+
+
+def _assembled_info_for(
+    projroot: str, packages: list[BundlePackage]
+) -> BundleAssembledInfo:
+    """What a bundle assembled right now would be assembled for."""
+    from batools.assetbundleprofiles import (
+        BundleAssembledInfo,
+        current_builtin_apverid,
+        current_fleet,
+    )
+
+    return BundleAssembledInfo(
+        builtin_apverid=current_builtin_apverid(projroot) or '',
+        apvernums=sorted(str(p.apvernum) for p in packages),
+        fleet=current_fleet(),
+    )
+
+
+def can_skip_assembly(
+    projroot: str,
+    cache_dir: str,
+    bundle_path: str,
+    expected_coords: dict[str, set[str]],
+    assembled: BundleAssembledInfo,
+) -> bool:
+    """Whether the cached bundle already matches what we'd assemble.
+
+    True when it holds exactly the expected packages/coords, unless it
+    was assembled against a non-prod fleet and this assembly is for prod
+    (a non-prod fleet's built content can differ even at the same pins).
+    Backfills the sidecar for bundles assembled before it existed.
+
+    :meta private:
+    """
+    import os
+    import json
+
+    from efro.terminal import Clr
+
+    from batools.assetbundleprofiles import (
+        read_assembled_info,
+        write_assembled_info,
+    )
+
+    if not os.path.exists(bundle_path):
+        return False
+    try:
+        with open(bundle_path, encoding='utf-8') as infile:
+            existing = json.load(infile)
+    except Exception:
+        return False
+    if not isinstance(existing, dict) or not _bundle_satisfies(
+        existing, expected_coords
+    ):
+        return False
+    prior = read_assembled_info(projroot, cache_dir)
+    if prior is None:
+        # Assembled before the sidecar existed: record what we know. The
+        # fleet it came from is unknown, so leave it None (checks skip
+        # it) rather than guess.
+        assembled.fleet = None
+        write_assembled_info(projroot, cache_dir, assembled)
+        return True
+    # Only one cross-fleet reuse is refused: non-prod-assembled content
+    # going into a prod build. Non-prod builds may reuse anything
+    # (including a prod bundle), so `--fleet dev` style runs keep working
+    # even when that fleet has no nodes up to assemble against.
+    if (
+        prior.fleet is not None
+        and prior.fleet != 'prod'
+        and assembled.fleet == 'prod'
+    ):
+        print(
+            f'{Clr.YLW}Bundle {cache_dir!r} was assembled against the'
+            f' {prior.fleet} fleet; reassembling for prod.{Clr.RST}',
+            flush=True,
+        )
+        return False
+    return True
 
 
 def _plan_assembles(

@@ -21,6 +21,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/lang_str.h"
+#include "ballistica/base/support/name_def.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -709,11 +710,13 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* s_obj;
   int suppress_warning = 0;
   int suppress_logic_thread_warning = 0;
+  int big = 0;
   static const char* kwlist[] = {"string", "suppress_warning",
-                                 "suppress_logic_thread_warning", nullptr};
+                                 "suppress_logic_thread_warning", "big",
+                                 nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "O|ii", const_cast<char**>(kwlist), &s_obj,
-          &suppress_warning, &suppress_logic_thread_warning)) {
+          args, keywds, "O|iip", const_cast<char**>(kwlist), &s_obj,
+          &suppress_warning, &suppress_logic_thread_warning, &big)) {
     return nullptr;
   }
   if (!suppress_warning) {
@@ -732,11 +735,11 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   assert(g_base->graphics);
   float strwidth;
   if (TextGraphics::HasOSChars(s)) {
-    auto measure = [&s] {
+    auto measure = [&s, big] {
       // Release the GIL while measuring (see PyGetStringHeight for why).
       float val;
       Py_BEGIN_ALLOW_THREADS;
-      val = g_base->text_graphics->GetStringWidth(s);
+      val = g_base->text_graphics->GetStringWidth(s, big);
       Py_END_ALLOW_THREADS;
       return val;
     };
@@ -747,7 +750,7 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
       strwidth = measure();
     }
   } else {
-    strwidth = g_base->text_graphics->GetStringWidth(s);
+    strwidth = g_base->text_graphics->GetStringWidth(s, big);
   }
   return Py_BuildValue("f", strwidth);
   BA_PYTHON_CATCH;
@@ -759,9 +762,11 @@ static PyMethodDef PyGetStringWidthDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "get_string_width(string: str, suppress_warning: bool = False,\n"
-    "  suppress_logic_thread_warning: bool = False) -> float\n"
+    "  suppress_logic_thread_warning: bool = False, big: bool = False)\n"
+    "  -> float\n"
     "\n"
-    "Given a string, returns its width in the standard small app font.\n"
+    "Given a string, returns its width in the standard small app font\n"
+    "(or with 'big', the big font text widgets draw with 'big' set).\n"
     "\n"
     "Pass suppress_logic_thread_warning=True to acknowledge a logic-thread\n"
     "call site measuring OS-rendered text (foreign scripts, emoji,\n"
@@ -2213,10 +2218,43 @@ static PyMethodDef PyPreferredTextureProfileDef = {
     "desktop / ``'mobile_v1'`` (ASTC) on mobile, each falling back to\n"
     "``'fallback_v1'`` when the compressed format isn't supported."};
 
+// --------------------------- shorten_name_text -------------------------------
+
+static auto PyShortenNameText(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* text;
+  int max_chars;
+  static const char* kwlist[] = {"text", "max_chars", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "si", const_cast<char**>(kwlist), &text, &max_chars)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(ShortenNameText(text, max_chars).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyShortenNameTextDef = {
+    "shorten_name_text",             // name
+    (PyCFunction)PyShortenNameText,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "shorten_name_text(text: str, max_chars: int) -> str\n"
+    "\n"
+    "Shorten a name as in-game names are.\n"
+    "\n"
+    "Cuts it to its first ``max_chars`` characters followed by '...' if\n"
+    "longer. The same code name depictions with a ``max_chars`` draw\n"
+    "with, so the two always match (see\n"
+    "bacommon.depiction.NameDepiction).\n"
+    "\n"
+    ":meta private:"};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyShortenNameTextDef,
       PySetBaseAssetSetDef,
       PyRestoreBaseAssetPlaceholdersDef,
       PyRegisterAssetPackageBucketDef,

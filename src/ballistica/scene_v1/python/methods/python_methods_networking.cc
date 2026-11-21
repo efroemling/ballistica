@@ -19,6 +19,7 @@
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/huffman.h"
+#include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/scene_v1/support/zstd_packet_codec.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -114,6 +115,37 @@ static PyMethodDef PySetPublicPartyNameDef = {
     "set_public_party_name(name: str) -> None\n"
     "\n"
     "(internal)",
+};
+
+// ------------------------ set_host_allow_favorites ---------------------------
+
+static auto PySetHostAllowFavorites(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int allow;
+  static const char* kwlist[] = {"allow", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &allow)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  appmode->set_host_allow_favorites(allow);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostAllowFavoritesDef = {
+    "set_host_allow_favorites",            // name
+    (PyCFunction)PySetHostAllowFavorites,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "set_host_allow_favorites(allow: bool) -> None\n"
+    "\n"
+    "Set whether clients joining us may save us to their favorites.\n"
+    "\n"
+    "Turn this off when our address or port won't stay the same, since\n"
+    "a saved entry would stop working. Clients learn it as they\n"
+    "connect, so set it before anyone joins.",
 };
 
 // ----------------------- set_public_party_stats_url --------------------------
@@ -580,8 +612,9 @@ static auto PyGetConnectionToHostInfo2(PyObject* self, PyObject* args,
     auto args =
         g_core->python->objs().Get(core::CorePython::ObjID::kEmptyTuple);
     auto keywds = PythonRef::Stolen(Py_BuildValue(
-        "{sssisOsO}", "name", hc->party_name().c_str(), "build_number",
-        hc->build_number(), "address", addr_obj.get(), "port", port_obj.get()));
+        "{sssisOsOsO}", "name", hc->party_name().c_str(), "build_number",
+        hc->build_number(), "address", addr_obj.get(), "port", port_obj.get(),
+        "allow_favorites", hc->allow_favorites() ? Py_True : Py_False));
     auto result = g_scene_v1->python->objs()
                       .Get(SceneV1Python::ObjID::kHostInfoClass)
                       .Call(args, keywds);
@@ -902,73 +935,31 @@ static PyMethodDef PySetMasterServerSourceDef = {
     "(internal)",
 };
 
-// ----------------------------- host_scan_cycle -------------------------------
+// ------------------------ player_spec_display_string -------------------------
 
-static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyPlayerSpecDisplayString(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->HostScanCycle();
-  std::vector<classic::ClassicAppMode::ScanResultsEntry> results =
-      appmode->GetScanResults();
-  PyObject* py_list = PyList_New(0);
-  for (auto&& i : results) {
-    PyObject* py_dict =
-        Py_BuildValue("{ss ss sO ss si si sO si si}",              // format
-                      "display_string", i.display_string.c_str(),  //
-                      "address", i.address.c_str(),                //
-                      "has_v2", i.has_v2 ? Py_True : Py_False,     //
-                      "party_name", i.party_name.c_str(),          //
-                      "party_size", i.party_size,                  //
-                      "party_max_size", i.party_max_size,          //
-                      "auth_required", i.auth_required ? Py_True : Py_False,  //
-                      "build_number", i.build_number,                         //
-                      "protocol_version", i.protocol_version);
-    PyList_Append(py_list, py_dict);
-    Py_DECREF(py_dict);
+  const char* spec{};
+  static const char* kwlist[] = {"spec", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &spec)) {
+    return nullptr;
   }
-  return py_list;
+  return PyUnicode_FromString(PlayerSpec(spec).GetDisplayString().c_str());
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyHostScanCycleDef = {
-    "host_scan_cycle",             // name
-    (PyCFunction)PyHostScanCycle,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyPlayerSpecDisplayStringDef = {
+    "player_spec_display_string",            // name
+    (PyCFunction)PyPlayerSpecDisplayString,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
 
-    "host_scan_cycle() -> list[dict[str, Any]]\n"
+    "player_spec_display_string(spec: str) -> str\n"
     "\n"
-    "Run a lan-scan cycle and return results gathered so far.\n"
-    "\n"
-    "Hosts answering only the old v1 query form have ``has_v2`` False\n"
-    "and carry defaults for the v2-only fields (``party_name``,\n"
-    "``party_size``, ``party_max_size``, ``auth_required``,\n"
-    "``build_number``, ``protocol_version``).\n"
-    "\n"
-    "(internal)\n"
+    "Return how a player-spec string displays (account icon + name).\n"
     "\n"
     ":meta private:",
-};
-
-// ---------------------------- end_host_scanning ------------------------------
-
-static auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->EndHostScanning();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyEndHostScanningDef = {
-    "end_host_scanning",             // name
-    (PyCFunction)PyEndHostScanning,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-
-    "end_host_scanning() -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -1063,7 +1054,9 @@ static auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : appmode->chat_messages()) {
-    PyList_Append(py_list, PyUnicode_FromString(i.c_str()));
+    // (PyList_Append doesn't steal the reference.)
+    PythonRef item(PyUnicode_FromString(i.c_str()), PythonRef::kSteal);
+    PyList_Append(py_list, item.get());
   }
   return py_list;
   BA_PYTHON_CATCH;
@@ -1077,6 +1070,43 @@ static PyMethodDef PyGetChatMessagesDef = {
     "get_chat_messages() -> list[str]\n"
     "\n"
     "(internal)",
+};
+
+// ----------------------- get_chat_message_senders ----------------------------
+
+static auto PyGetChatMessageSenders(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  PyObject* py_list = PyList_New(0);
+  for (auto&& i : appmode->chat_message_senders()) {
+    PythonRef item(PyUnicode_FromString(i.c_str()), PythonRef::kSteal);
+    PyList_Append(py_list, item.get());
+  }
+  return py_list;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetChatMessageSendersDef = {
+    "get_chat_message_senders",            // name
+    (PyCFunction)PyGetChatMessageSenders,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "get_chat_message_senders() -> list[str]\n"
+    "\n"
+    "Who sent each message :func:`get_chat_messages` returns.\n"
+    "\n"
+    "The names they show with, as the host attributed them; the list\n"
+    "lines up with that one.\n"
+    "\n"
+    ":meta private:",
 };
 
 // -----------------------------------------------------------------------------
@@ -1173,8 +1203,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPacketCompressionDictDef,
       PyPacketCompressionSelftestDef,
       PyHaveConnectedClientsDef,
-      PyEndHostScanningDef,
-      PyHostScanCycleDef,
+      PyPlayerSpecDisplayStringDef,
       PySetMasterServerSourceDef,
       PyGetGamePortDef,
       PyDisconnectFromHostDef,
@@ -1197,10 +1226,12 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyGetPublicPartyMaxSizeDef,
       PySetPublicPartyStatsURLDef,
       PySetPublicPartyNameDef,
+      PySetHostAllowFavoritesDef,
       PySetPublicPartyEnabledDef,
       PyGetPublicPartyEnabledDef,
       PyChatMessageDef,
       PyGetChatMessagesDef,
+      PyGetChatMessageSendersDef,
   };
 }
 

@@ -17,6 +17,11 @@ from bauiv1 import _builtinassets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
+from bauiv1lib.localnetwork import (
+    WARNING_HEIGHT,
+    LocalNetworkPermissionWarning,
+    local_network_permission_missing,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -113,6 +118,7 @@ class ManualGatherTab(GatherTab):
         self._party_edit_addr_text: bui.Widget | None = None
         self._party_edit_port_text: bui.Widget | None = None
         self._no_parties_added_text: bui.Widget | None = None
+        self._permission_warning: LocalNetworkPermissionWarning | None = None
 
     @override
     def on_activate(
@@ -256,6 +262,16 @@ class ManualGatherTab(GatherTab):
         if value is SubTabType.FAVORITES:
             self._build_favorites_tab(region_width, region_height)
 
+        # Warn along the bottom while we lack local-network permission
+        # (Android 17+); joining by a local address needs it. (Rebuilt
+        # with the sub-tab, since that clears our container.)
+        self._permission_warning = LocalNetworkPermissionWarning(
+            parent=self._container,
+            position=(region_width * 0.5, WARNING_HEIGHT * 0.5),
+            width=650.0,
+            idprefix=self._idprefix,
+        )
+
     # The old manual tab
     def _build_join_by_address_tab(
         self, region_width: float, region_height: float
@@ -390,7 +406,15 @@ class ManualGatherTab(GatherTab):
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
 
         c_height = self._scroll_height - 20
-        sub_scroll_height = c_height - 63
+        sub_scroll_height = float(c_height - 63)
+
+        # Lacking local-network permission (Android 17+)? Shrink the list
+        # and its buttons to leave room for the warning along the
+        # bottom. (Rebuilt with each sub-tab switch.)
+        warning_space = (
+            WARNING_HEIGHT if local_network_permission_missing() else 0.0
+        )
+        sub_scroll_height -= warning_space
         self._favorites_scroll_width = sub_scroll_width = (
             680 if uiscale is bui.UIScale.SMALL else 640
         )
@@ -402,7 +426,7 @@ class ManualGatherTab(GatherTab):
             107
             if uiscale is bui.UIScale.SMALL
             else 142 if uiscale is bui.UIScale.MEDIUM else 190
-        )
+        ) - warning_space / 3.0
         b_space_extra = (
             0
             if uiscale is bui.UIScale.SMALL
@@ -799,6 +823,7 @@ class ManualGatherTab(GatherTab):
     @override
     def on_deactivate(self) -> None:
         self._access_check_timer = None
+        self._permission_warning = None
 
     def _connect(
         self, textwidget: bui.Widget, port_textwidget: bui.Widget

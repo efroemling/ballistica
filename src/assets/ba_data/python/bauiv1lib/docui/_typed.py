@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
     from bauiv1lib.docui._types import DocUILocalAction
     from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._windowoptions import WindowOptions
 
 
 class TypedDocUIController[
@@ -107,7 +108,7 @@ class TypedDocUIController[
     @final
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         import bacommon.docui.v2 as dui2
-        from bacommon.docui.routes import DocUIRouteError, validate_page_state
+        from bacommon.docui.routes import DocUIRouteError, validate_route_page
 
         if not isinstance(request, dui2.Request):
             raise CleanError('Invalid request version.')
@@ -123,10 +124,11 @@ class TypedDocUIController[
         # quoted since pylint doesn't see class-scoped type params.)
         response = self.fulfill_route(cast('RouteT', route))
 
-        # Catch pages whose inputs/sets don't match their state type
-        # (nothing static can; see validate_page_state()).
+        # Catch pages whose inputs/sets don't match their state type,
+        # or popup pages breaking popup rules (nothing static can; see
+        # validate_route_page()).
         if isinstance(response, dui2.Response):
-            validate_page_state(response.page)
+            validate_route_page(route, response.page)
         return response
 
     @override
@@ -150,3 +152,73 @@ class TypedDocUIController[
             return
 
         self.run_local_action(cast('ActionT', typedaction), action)
+
+    def browse_from(
+        self,
+        context: DocUILocalAction,
+        route: RouteT,
+        *,
+        options: WindowOptions | None = None,
+    ) -> None:
+        """Open one of our pages on top of another domain's window.
+
+        The cross-domain equivalent of a ``Browse``: call it on the
+        *target* controller from the *source* controller's
+        :meth:`run_local_action` (``StoreUIController().browse_from(
+        context, sroutes.Root())``). The page opens in a new window
+        pushed onto the source's back stack, so backing out returns to
+        the page the press came from (which then refreshes).
+
+        Pages can't name other domains themselves. The source domain
+        declares one local-action per place its pages may go, and the
+        client code handling it picks the target controller and route,
+        so a page only ever chooses among those, passing nothing but
+        the local-action's own typed fields. Accordingly:
+
+        - The route is the target's own route type, so mypy rejects a
+          route from any other domain.
+        - Only presses can do this; a local-action run by an input
+          row's change or attached to a response is ignored, as is a
+          ``Browse`` from either.
+        - The route must be a GET: the press lands on a page of the
+          target domain, never directly runs one of its POSTs.
+        - No page state travels: the request is built from the route
+          alone, even for a route decoded from an incoming request
+          (which otherwise carries that request's state along).
+        """
+        import bacommon.docui.v2 as dui2
+
+        from bauiv1lib.docui._windowoptions import WindowOptions
+
+        if route.get_method() is not dui2.RequestMethod.GET:
+            raise ValueError(
+                f'browse_from() needs a GET route; got {type(route)}.'
+            )
+        if context.trigger is not None or context.widget is None:
+            bui.uilog.warning(
+                'Ignoring cross-domain browse to %s from local-action %r;'
+                ' only presses may open windows.',
+                type(route).__name__,
+                context.name,
+            )
+            return
+
+        window = context.window
+        if not window.main_window_has_control():
+            return
+
+        # route.request() alone: never any page state (see above).
+        request = route.request()
+        opts = (
+            WindowOptions() if options is None else options
+        ).with_route_defaults(route)
+        widget = context.widget
+        window.main_window_replace(
+            lambda: self.create_window(
+                request,
+                origin_widget=widget,
+                auxiliary_style=False,
+                options=opts,
+            ),
+            extra_type_id=self.get_window_extra_type_id(),
+        )

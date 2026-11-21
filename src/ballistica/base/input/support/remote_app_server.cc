@@ -3,7 +3,10 @@
 #include "ballistica/base/input/support/remote_app_server.h"
 
 #include <cstdio>
+#include <cstring>
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
@@ -18,6 +21,7 @@
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/input_types.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -72,6 +76,40 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
       // here, but I don't know what we could do in response. Just gonna ignore
       // them.
       // }
+      break;
+    }
+    case BA_PACKET_REMOTE_GAME_QUERY_V2: {
+      // Type byte + 4 byte query-id + at minimum '{}'. Anyone can send
+      // these, so stay quiet about junk.
+      if (amt < 7 || amt > 512) {
+        break;
+      }
+      auto doc = JsonDoc::Parse(
+          std::string_view(reinterpret_cast<const char*>(buffer + 5), amt - 5),
+          {.max_bytes = 512});
+      if (!doc || !doc->root().is_object() || doc->root()["v"].int_or(0) < 1) {
+        break;
+      }
+      std::string response;
+      {
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("v", 1);
+        dict.Add("i", g_base->LocalAppInstanceUUID());
+        dict.Add("n", g_core->platform->GetDeviceName());
+        dict.Add("b", kEngineBuildNumber);
+        response = builder.Write();
+      }
+      std::vector<uint8_t> msg(5 + response.size());
+      msg[0] = BA_PACKET_REMOTE_GAME_RESPONSE_V2;
+      memcpy(msg.data() + 1, buffer + 1, 4);
+      memcpy(msg.data() + 5, response.data(), response.size());
+
+      // This needs to be locked during any sd changes/writes.
+      std::scoped_lock lock(g_base->network_reader->sd_mutex());
+      sendto(socket, reinterpret_cast<socket_send_data_t*>(msg.data()),
+             static_cast_check_fit<socket_send_length_t>(msg.size()), 0, addr,
+             static_cast<socklen_t>(addr_len));
       break;
     }
     case BA_PACKET_REMOTE_ID_REQUEST: {
@@ -156,32 +194,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
       // They told us they're leaving.. free up their slot.
       if (amt == 2 && buffer[1] < kMaxRemoteAppClients) {
         int joystickID = buffer[1];
-
-        // Tell our delegate to kill its local joystick.
-        RemoteAppClient* client = clients_ + joystickID;
-        if (clients_[joystickID].in_use) {
-          // Print 'Billy Bob's iPhone Disconnected'.
-          char m[256];
-          snprintf(m, sizeof(m), "%s", client->display_name);
-
-          std::string s =
-              BuiltinStrings::Input::ControllerDisconnected(m)->Evaluate();
-          g_base->logic->event_loop()->PushCall([s] {
-            g_base->graphics->screenmessages->AddScreenMessage(
-                s, false, Vector3f(1, 1, 1));
-          });
-          g_base->logic->event_loop()->PushCall([] {
-            // (Silent until an app-mode supplies the jingle.)
-            if (auto* sound =
-                    g_base->assets->base_assets().cork_pop_if_supplied()) {
-              g_base->audio->SafePlaySound(sound);
-            }
-          });
-          g_base->input->PushRemoveInputDeviceCall(client->joystick_, false);
-          client->joystick_ = nullptr;
-          client->in_use = false;
-          client->name[0] = 0;
-        }
+        RemoveClient_(joystickID);
 
         // Send an ack.
         uint8_t data[1] = {BA_PACKET_REMOTE_DISCONNECT_ACK};
@@ -348,6 +361,41 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
     }
     default:
       break;
+  }
+}
+
+void RemoteAppServer::RemoveClient_(int index) {
+  if (index < 0 || index >= kMaxRemoteAppClients || !clients_[index].in_use) {
+    return;
+  }
+  RemoteAppClient* client = clients_ + index;
+
+  // Print 'Billy Bob's iPhone Disconnected'.
+  char m[256];
+  snprintf(m, sizeof(m), "%s", client->display_name);
+
+  std::string s = BuiltinStrings::Input::ControllerDisconnected(m)->Evaluate();
+  g_base->logic->event_loop()->PushCall([s] {
+    g_base->graphics->screenmessages->AddScreenMessage(s, false,
+                                                       Vector3f(1, 1, 1));
+  });
+  g_base->logic->event_loop()->PushCall([] {
+    // (Silent until an app-mode supplies the jingle.)
+    if (auto* sound = g_base->assets->base_assets().cork_pop_if_supplied()) {
+      g_base->audio->SafePlaySound(sound);
+    }
+  });
+
+  // Tell our delegate to kill its local joystick.
+  g_base->input->PushRemoveInputDeviceCall(client->joystick_, false);
+  client->joystick_ = nullptr;
+  client->in_use = false;
+  client->name[0] = 0;
+}
+
+void RemoteAppServer::DropAllClients() {
+  for (int i = 0; i < kMaxRemoteAppClients; ++i) {
+    RemoveClient_(i);
   }
 }
 

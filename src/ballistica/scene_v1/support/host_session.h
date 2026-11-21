@@ -107,8 +107,10 @@ class HostSession : public Session {
   // New HostActivities should call this in their constructors.
   void AddHostActivity(HostActivity* sgc);
 
-  auto GetUnusedPlayerName(Player* p, const std::string& base_name)
-      -> std::string;
+  /// The number ``p`` takes so ``base_name`` doesn't collide with
+  /// another player's name (1 = unnumbered; see base::NumberNameText).
+  auto GetUnusedPlayerNameNumber(Player* p, const std::string& base_name)
+      -> int;
   auto ContextAllowsDefaultTimerTypes() -> bool override;
   auto TimeToNextEvent() -> std::optional<microsecs_t> override;
 

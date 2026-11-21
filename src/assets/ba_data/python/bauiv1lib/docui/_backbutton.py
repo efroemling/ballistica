@@ -51,14 +51,16 @@ def back_button_nudge_x(
 #: See back_button_nudge_x().
 _VIEWER_BACK_NUDGE_X = 45.0
 
-#: The back button's base geometry (medium/large ui-scale): scale,
-#: size (close style, back style), and its bottom-left's offset from
-#: the window's visible top-left. These placed it; it read a little
-#: small, so back_button_geometry() grows it about its center.
+#: The back button's base geometry (medium/large ui-scale): scale, and
+#: per style (close, back) its size and its bottom-left's offset from
+#: the window's visible top-left. It is a clean-layout button, so these
+#: are its art's. These placed it; it read a little small, so
+#: back_button_geometry() grows it about its center.
 _BACK_BASE_SCALE = 0.8
-_BACK_CLOSE_SIZE = (50.0, 50.0)
-_BACK_BACK_SIZE = (60.0, 55.0)
-_BACK_BASE_OFFSET = (2.0, -33.0)
+_BACK_CLOSE_SIZE = (64.0, 55.0)
+_BACK_CLOSE_OFFSET = (-2.0, -36.2)
+_BACK_BACK_SIZE = (62.0, 54.0)
+_BACK_BACK_OFFSET = (-3.4, -33.6)
 _BACK_GROW = 1.1
 
 
@@ -73,7 +75,11 @@ def back_button_geometry(
     layout's nudge included), at medium/large ui-scale. ``close_style``
     is whether it is a close (auxiliary window) rather than back button.
     """
-    size = _BACK_CLOSE_SIZE if close_style else _BACK_BACK_SIZE
+    size, base_offset = (
+        (_BACK_CLOSE_SIZE, _BACK_CLOSE_OFFSET)
+        if close_style
+        else (_BACK_BACK_SIZE, _BACK_BACK_OFFSET)
+    )
     # Grown about its center: the bottom-left moves back by half the
     # growth in each axis.
     shift = tuple(
@@ -83,9 +89,9 @@ def back_button_geometry(
         _BACK_BASE_SCALE * _BACK_GROW,
         size,
         (
-            _BACK_BASE_OFFSET[0]
+            base_offset[0]
             + back_button_nudge_x(layout, scroll_edge_style)
             - shift[0],
-            _BACK_BASE_OFFSET[1] - shift[1],
+            base_offset[1] - shift[1],
         ),
     )

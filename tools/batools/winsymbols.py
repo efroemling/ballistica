@@ -21,6 +21,7 @@ import os
 import struct
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 
 from efro.error import CleanError
 
@@ -189,26 +190,75 @@ def _module_codeview(data: bytes, off: int) -> tuple[str, str, str] | None:
     return modname, os.path.basename(pdbname), _format_key(guid, age)
 
 
+#: Longest we keep retrying a lookup the server says to retry later.
+_LOOKUP_RETRY_BUDGET = 300.0
+
+
+@dataclass
+class PrefabSymbolsInfo:
+    """What the prefab-symbols endpoint says about one symbols file."""
+
+    file_name: str
+    size: int
+    download_url: str
+
+
+def lookup_prefab_symbols(key: str, host: str) -> PrefabSymbolsInfo | None:
+    """Look up a symbols file by key; return its info, or None if absent.
+
+    The server may answer 503 with ``Retry-After`` while it prepares an
+    uncompressed copy of a compressed-stored file (symbols archives are
+    stored zstd); we wait as told and retry, within a budget.
+    """
+    import json
+    import time
+
+    url = f'https://{host}/api/v1/prefab-symbols/{key}'
+    deadline = time.monotonic() + _LOOKUP_RETRY_BUDGET
+    announced = False
+    while True:
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                info = json.loads(response.read().decode())
+            return PrefabSymbolsInfo(
+                file_name=str(info['file_name']),
+                size=int(info['size']),
+                download_url=str(info['download_url']),
+            )
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return None
+            if exc.code == 503 and time.monotonic() < deadline:
+                try:
+                    delay = float(exc.headers.get('Retry-After', '5'))
+                except ValueError:
+                    delay = 5.0
+                if not announced:
+                    print(
+                        f'Server is preparing symbols for {key};' ' waiting...',
+                        flush=True,
+                    )
+                    announced = True
+                time.sleep(min(max(delay, 1.0), 30.0))
+                continue
+            raise CleanError(
+                f'Symbols lookup failed ({exc.code}) for {key}.'
+            ) from exc
+        except urllib.error.URLError as exc:
+            raise CleanError(
+                f'Symbols lookup failed for {key}: {exc}.'
+            ) from exc
+
+
 def fetch_symbols_for_key(key: str, host: str) -> tuple[str, bytes] | None:
     """Fetch a symbols file by lookup key; None if the server has none.
 
     Shared by every caller so the endpoint, error handling and the
     'not published / expired' case stay in one place.
     """
-    url = f'https://{host}/api/v1/prefab-symbols/{key}'
-    try:
-        with urllib.request.urlopen(url, timeout=30) as response:
-            import json
+    info = lookup_prefab_symbols(key, host)
+    if info is None:
+        return None
 
-            info = json.loads(response.read().decode())
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            return None
-        raise CleanError(
-            f'Symbols lookup failed ({exc.code}) for {key}.'
-        ) from exc
-    except urllib.error.URLError as exc:
-        raise CleanError(f'Symbols lookup failed for {key}: {exc}.') from exc
-
-    with urllib.request.urlopen(info['download_url'], timeout=300) as response:
-        return info['file_name'], response.read()
+    with urllib.request.urlopen(info.download_url, timeout=300) as response:
+        return info.file_name, response.read()

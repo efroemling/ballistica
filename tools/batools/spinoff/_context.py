@@ -258,6 +258,14 @@ class SpinoffContext:
 
         self.dst_name = 'Untitled'
 
+        # An asset-package version whose strings override the src's OS
+        # resource strings (the app's translated name, say) in the
+        # native resource files spinoff writes. ``assetpins`` manages
+        # this pin and fetches the dst's override file from it; spinoff
+        # itself only reads that file (see batools.osstrings).
+        self.os_strings_package: str | None = None
+        self._os_strings_rendered: dict[str, str] | None = None
+
         self._src_config_path = os.path.join(
             self._src_root, 'pconfig', 'spinoffconfig.py'
         )
@@ -722,6 +730,18 @@ class SpinoffContext:
         hashfiles.add(self._src_config_path)
         hashfiles.add(self._dst_config_path)
 
+        # OS resource strings are rendered (not just filtered) when the
+        # dst overrides some, so their renderer and the dst's override
+        # values count too.
+        import batools.osstrings
+
+        hashfiles.add(batools.osstrings.__file__)
+        override_path = os.path.join(
+            self._dst_root, batools.osstrings.OVERRIDE_PATH
+        )
+        if os.path.exists(override_path):
+            hashfiles.add(override_path)
+
         self._envhash = get_files_hash(sorted(hashfiles))
 
     def _read_state(self) -> None:
@@ -1039,6 +1059,10 @@ class SpinoffContext:
     def _filter_file(self, src_path: str, text: str) -> str:
         """Run filtering on a given file."""
 
+        # Native OS resource files are re-rendered with the dst's
+        # string overrides (if it has any) before normal filtering.
+        text = self._os_strings_render(src_path, text)
+
         # Run our registered filter call.
         out = self.filter_file_call(self, src_path, text)
 
@@ -1071,6 +1095,45 @@ class SpinoffContext:
             )
 
         return out
+
+    def _os_strings_render(self, src_path: str, text: str) -> str:
+        """A src file's contents with the dst's OS-string overrides in.
+
+        Returns ``text`` untouched for files that aren't OS resource
+        outputs, or when the dst overrides nothing (the src's own
+        rendering is then exactly right).
+        """
+        from batools import osstrings
+
+        if self.os_strings_package is None:
+            return text
+        if self._os_strings_rendered is None:
+            override_path = Path(self._dst_root, osstrings.OVERRIDE_PATH)
+            if not override_path.exists():
+                raise CleanError(
+                    f'ctx.os_strings_package is set but'
+                    f' {osstrings.OVERRIDE_PATH} does not exist; run'
+                    ' `tools/pcommand assetpins update all latest`.'
+                )
+            override = osstrings.OsStringsData.load(override_path)
+            if override.apverid != self.os_strings_package:
+                raise CleanError(
+                    f'{osstrings.OVERRIDE_PATH} was fetched from'
+                    f' {override.apverid}, but ctx.os_strings_package is'
+                    f' {self.os_strings_package}; run'
+                    ' `tools/pcommand assetpins update all latest`.'
+                )
+            base = osstrings.OsStringsData.load(
+                Path(self._src_root, osstrings.DATA_PATH)
+            )
+            existing = {
+                path: Path(self._src_root, path).read_text(encoding='utf-8')
+                for path in osstrings.APPLE_PLISTS
+            }
+            self._os_strings_rendered = osstrings.render_files(
+                osstrings.merge(base, override), existing
+            )
+        return self._os_strings_rendered.get(src_path, text)
 
     def _ensure_parent_repo_tool_configs_exist(self) -> None:
         if not self._built_parent_repo_tool_configs:

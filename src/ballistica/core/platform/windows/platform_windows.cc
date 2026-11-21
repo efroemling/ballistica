@@ -633,6 +633,14 @@ int PlatformWindows::GetSocketError() {
       return EINTR;
     case WSAEWOULDBLOCK:
       return EWOULDBLOCK;
+    case WSAECONNRESET:
+      return ECONNRESET;
+    case WSAENETRESET:
+      return ENETRESET;
+    case WSAECONNREFUSED:
+      return ECONNREFUSED;
+    case WSAEMSGSIZE:
+      return EMSGSIZE;
     default:
       return val;
   }
@@ -1385,16 +1393,15 @@ std::vector<uint32_t> PlatformWindows::GetBroadcastAddrs() {
       for (int i = 0; i < static_cast<int>(pIPAddrTable->dwNumEntries); i++) {
         uint32_t addr = ntohl(pIPAddrTable->table[i].dwAddr);
         uint32_t subnet = ntohl(pIPAddrTable->table[i].dwMask);
+        // Skip loopback and single-host (/32, e.g. VPN) entries; a
+        // broadcast there reaches nobody.
+        if ((addr >> 24) == 127 || subnet == 0xFFFFFFFF) {
+          continue;
+        }
         uint32_t broadcast = addr | (~subnet);
-        addrs.push_back(broadcast);
-        // cout << "ADDR IS " << ((addr>>24)&0xFF) << "." << ((addr>>16)&0xFF)
-        // << "." << ((addr>>8)&0xFF) << "." << ((addr>>0)&0xFF) << endl; cout
-        // << "NETMASK IS " << ((subnet>>24)&0xFF) << "." <<
-        // ((subnet>>16)&0xFF)
-        // << "." << ((subnet>>8)&0xFF) << "." << ((subnet>>0)&0xFF) << endl;
-        // cout << "BROADCAST IS " << ((broadcast>>24)&0xFF) << "." <<
-        // ((broadcast>>16)&0xFF) << "." << ((broadcast>>8)&0xFF) << "." <<
-        // ((broadcast>>0)&0xFF) << endl;
+        if (std::find(addrs.begin(), addrs.end(), broadcast) == addrs.end()) {
+          addrs.push_back(broadcast);
+        }
       }
     }
 
@@ -1418,6 +1425,33 @@ bool PlatformWindows::SetSocketNonBlocking(int sd) {
     return false;
   }
   return true;
+}
+
+// From mstcpip.h (which drags in more of the SDK than it's worth here).
+#ifndef SIO_UDP_CONNRESET
+#define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR, 12)
+#endif
+#ifndef SIO_UDP_NETRESET
+#define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
+#endif
+
+void PlatformWindows::ConfigureUDPSocket(int sd) {
+  // By default Windows turns an ICMP 'port unreachable' reply to one of
+  // our sends into a WSAECONNRESET on a later receive (and an ICMP 'TTL
+  // expired' into WSAENETRESET), as if a UDP socket had a connection to
+  // lose. Sending to a peer that has left is routine for us, so switch
+  // both off.
+  for (auto code : {SIO_UDP_CONNRESET, SIO_UDP_NETRESET}) {
+    BOOL report = FALSE;
+    DWORD returned{};
+    if (WSAIoctl(static_cast<SOCKET>(sd), code, &report, sizeof(report),
+                 nullptr, 0, &returned, nullptr, nullptr)
+        != 0) {
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                           "Error configuring UDP socket: "
+                               + g_core->platform->GetSocketErrorString());
+    }
+  }
 }
 
 std::string PlatformWindows::GetLegacyPlatformName() { return "windows"; }

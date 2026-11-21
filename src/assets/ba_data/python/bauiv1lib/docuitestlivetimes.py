@@ -78,12 +78,14 @@ def test_page_live_times(
         page=dui2.Page(
             title=LangStrSpecValue.literal('Live Times'),
             rows=[
-                dui2.ButtonRow(
-                    title=LangStrSpecValue.literal('Countdowns'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(LangStrSpecValue.literal('Countdowns')),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Each re-renders only when its visible text'
                         ' changes, then rests at zero.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
                     buttons=[
                         _button(
                             'seconds (crosses a minute)',
@@ -115,12 +117,16 @@ def test_page_live_times(
                         ),
                     ],
                 ),
-                dui2.ButtonRow(
-                    title=LangStrSpecValue.literal('Elapsed and crossing zero'),
-                    subtitle=LangStrSpecValue.literal(
+                dui2.TitleRow(
+                    LangStrSpecValue.literal('Elapsed and crossing zero')
+                ),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Counting up from the page start, and values that'
                         ' pass their moment while you watch.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
                     buttons=[
                         _button(
                             'since page start',
@@ -160,15 +166,19 @@ def test_page_live_times(
                         ),
                     ],
                 ),
-                dui2.ButtonRow(
-                    title=LangStrSpecValue.literal(
+                dui2.TitleRow(
+                    LangStrSpecValue.literal(
                         'OS-rendered text and button labels'
-                    ),
-                    subtitle=LangStrSpecValue.literal(
+                    )
+                ),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
                         'Non-Latin words around ticking digits must reuse'
                         ' one OS text texture (a warning fires if not);'
                         ' labels tick too.'
-                    ),
+                    )
+                ),
+                dui2.ButtonRow(
                     buttons=[
                         _button(
                             'Japanese',

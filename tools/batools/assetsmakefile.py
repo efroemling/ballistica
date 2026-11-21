@@ -260,6 +260,8 @@ def _get_py_targets(
                 in_subset = 'private-apple-mac'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
                 in_subset = 'private-android'
+            elif proot.startswith(f'{ASSETS_SRC}/pylib-linux-portable'):
+                in_subset = 'private-linux-portable'
             else:
                 in_subset = 'private-common'
 
@@ -673,6 +675,14 @@ def generate_assets_makefile(
                 all_targets_private,
                 subset='private-android',
                 suffix='_PRIVATE_ANDROID',
+            ),
+            _get_py_targets_subset(
+                projroot,
+                codegen_manifests,
+                explicit_sources,
+                all_targets_private,
+                subset='private-linux-portable',
+                suffix='_PRIVATE_LINUX_PORTABLE',
             ),
             _get_py_targets_subset(
                 projroot,

@@ -10,6 +10,8 @@
 #define BA_VARIANT "server"
 #elif BA_VARIANT_SERVER_BASN
 #define BA_VARIANT "server_basn"
+#elif BA_VARIANT_STEAM
+#define BA_VARIANT "steam"
 #else
 #define BA_VARIANT "generic"
 #ifndef BA_VARIANT_GENERIC

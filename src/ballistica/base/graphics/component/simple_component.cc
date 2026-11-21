@@ -70,6 +70,8 @@ void SimpleComponent::WriteConfig() {
               colorize_color_g_, colorize_color_b_, colorize_color2_r_,
               colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
               colorize_color3_g_, colorize_color3_b_);
+          cmd_buffer_->PutFloats(mask_add_mult_[0], mask_add_mult_[1],
+                                 mask_add_mult_[2]);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(colorize_texture_);
           cmd_buffer_->PutTexture(mask_texture_);
@@ -174,6 +176,8 @@ void SimpleComponent::WriteConfig() {
                                          colorize_color2_g_, colorize_color2_b_,
                                          colorize_color3_r_, colorize_color3_g_,
                                          colorize_color3_b_);
+                  cmd_buffer_->PutFloats(mask_add_mult_[0], mask_add_mult_[1],
+                                         mask_add_mult_[2]);
                   cmd_buffer_->PutTexture(texture_);
                   cmd_buffer_->PutTexture(
                       g_base->assets->SolidTexture(SolidTextureColor::kBlack));
@@ -239,6 +243,8 @@ void SimpleComponent::WriteConfig() {
               colorize_color_g_, colorize_color_b_, colorize_color2_r_,
               colorize_color2_g_, colorize_color2_b_, colorize_color3_r_,
               colorize_color3_g_, colorize_color3_b_);
+          cmd_buffer_->PutFloats(mask_add_mult_[0], mask_add_mult_[1],
+                                 mask_add_mult_[2]);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(
               g_base->assets->SolidTexture(SolidTextureColor::kBlack));

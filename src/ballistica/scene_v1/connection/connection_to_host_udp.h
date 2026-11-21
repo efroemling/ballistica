@@ -34,7 +34,17 @@ class ConnectionToHostUDP : public ConnectionToHost {
   void SendDisconnectRequest();
   const auto& addr() const { return *addr_; }
 
+  /// How long it has been (display-time millisecs) since we last heard
+  /// from the host.
+  auto HostSilentMillisecs() const -> millisecs_t;
+
+  /// Note a host game packet we dropped because it carried a request id
+  /// other than ours (diagnostics for joins that never complete).
+  void NoteMismatchedRequestIdPacket(uint8_t packet_request_id);
+
  private:
+  int mismatched_request_id_packets_{};
+  uint8_t last_mismatched_request_id_{};
   void GetRequestID_();
 
   bool did_die_{};
@@ -42,6 +52,8 @@ class ConnectionToHostUDP : public ConnectionToHost {
   int client_id_{};
   millisecs_t last_client_id_request_time_{};
   millisecs_t last_disconnect_request_time_{};
+  /// When we started disconnecting (0 while not disconnecting).
+  millisecs_t disconnect_start_time_millisecs_{};
   millisecs_t last_host_response_time_millisecs_{};
   bool got_host_game_packet_{};
   std::unique_ptr<SockAddr> addr_;

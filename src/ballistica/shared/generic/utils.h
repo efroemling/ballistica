@@ -54,6 +54,13 @@ class Utils {
   static auto UTF8FromUnicodeChar(uint32_t c) -> std::string;
   static auto UTF8StringLength(const char* val) -> int;
 
+  /// Return text with our icon glyphs (the unicode private-use area)
+  /// removed. For text from peers, where an icon could pass for an
+  /// account or global profile someone doesn't own. ``loc`` tags any
+  /// invalid-utf8 warning, as for UnicodeFromUTF8().
+  static auto StripIconChars(const std::string& s, const char* loc)
+      -> std::string;
+
   /// Replace a single occurrence of key with replacement in the target string.
   /// Returns whether a replacement occurred.
   static auto StringReplaceOne(std::string* target, const std::string& key,

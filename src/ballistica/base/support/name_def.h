@@ -138,6 +138,22 @@ struct NameDef {
   static auto Parse(const JsonRef& block) -> std::optional<NameDef>;
 };
 
+// How in-game names shorten and number. These are the one
+// implementation of both: the host names its players with them (the
+// lobby's short names via Python's babase shorten_name_text(), and
+// HostSession's numbering of colliding names), and name depictions
+// asked to show a name that way (bacommon.depiction.NameDepiction's
+// max_chars and number) draw with them, so the two always match.
+
+/// ``text`` cut to its first ``max_chars`` characters (unicode code
+/// points) followed by "..." if it's longer; as is otherwise, or if
+/// ``max_chars`` is below 1.
+auto ShortenNameText(const std::string& text, int max_chars) -> std::string;
+
+/// ``text`` numbered as a name colliding with others: "efro 2". As is
+/// for numbers below 2 (the first of a name goes unnumbered).
+auto NumberNameText(const std::string& text, int number) -> std::string;
+
 }  // namespace ballistica::base
 
 #endif  // BALLISTICA_BASE_SUPPORT_NAME_DEF_H_

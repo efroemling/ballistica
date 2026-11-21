@@ -121,31 +121,44 @@ That venv is installed offline, from vendored wheels:
   the reduced lockfile from the staged wheels and never touches the
   network.
 
-Both generated files are committed. **Re-run `make flatpak-build-env` and
-commit the result** whenever `pconfig/requirements.txt`, the main lockfile,
-or `pconfig/requirements_build.txt` changes. If a flatpak build fails on a
-missing import, add that package to `requirements_build.txt` and
-regenerate. To bump `uv`, update `UV_VERSION` and `UV_SHA256` in
-`flatpakbuildenv.py` and regenerate.
+Both generated files are committed, and `make upgrade` regenerates them,
+since everything in them is derived: the build lockfile takes its versions
+from the main lockfile, and the module installs the `uv` pinned in
+`pconfig/flatpak/uv.json` (version plus each arch's published checksum).
+`make upgrade` also moves that pin to uv's latest release
+(`make flatpak-uv-upgrade`). After changing `pconfig/requirements_build.txt`
+by hand, run `make flatpak-build-env` and commit the result. `make
+update-check` (so preflight and CI) fails if the build lockfile's versions
+or the module's `uv` don't match what they're derived from. If a flatpak
+build fails on a missing import, add that package to
+`requirements_build.txt` and regenerate.
 
 Note that a venv built from the reduced lockfile has no dev tooling, so
 `make check` / `make test` won't run against it.
 
 ## Building locally
 
-Install `flatpak` and `flatpak-builder`. Then, once, add the `flathub`
-remote for your user and install the build dependencies:
+Install `flatpak` (any version). You don't need your distro's
+`flatpak-builder`: builds run Flathub's packaged one,
+`org.flatpak.Builder` (`FLATPAK_BUILDER` in the Makefile), which
+bundles a current flatpak. The manifest needs that: its conditional
+finish-args (`--device-if`, for game controllers) only build with
+flatpak 1.17 or newer, and distros lag (Ubuntu 26.04 ships 1.16). It's
+also what Flathub builds with, so local and CI builds match Flathub's.
+
+Then, once, add the `flathub` remote for your user and install the build
+dependencies:
 
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 make flatpak-deps
 ```
 
-`make flatpak-deps` runs `flatpak-builder --user
---install-deps-from=flathub --install-deps-only` against
-`net.froemling.bombsquad.yml`, which installs (or updates) the SDK,
-runtime and extensions the manifest names, so their versions live only in
-the manifest. It's a separate step, not part of the build, because it
+`make flatpak-deps` installs (or updates) `org.flatpak.Builder`, then
+runs it with `--user --install-deps-from=flathub --install-deps-only`
+against `net.froemling.bombsquad.yml`, which installs (or updates) the
+SDK, runtime and extensions the manifest names, so their versions live
+only in the manifest. It's a separate step, not part of the build, because it
 changes your user flatpak installation (about 1GB). If the `flathub`
 remote is missing it stops and prints the `remote-add` command above
 rather than adding it for you. Re-run it after the manifest's runtime
@@ -198,8 +211,17 @@ flatpak-prebuilt-inputs` (`pcommand flatpak_prebuilt_inputs`). It holds
 what `make flatpak-prefetch` fetches (see above), icon and
 `releases.xml` included, and is extracted over the git checkout.
 
-Two jobs in `.github/workflows/release.yml` handle this. They only run
-when the repo owner is `efroemling` or `Loup-Garou911XD`.
+The app's Flathub repo is
+[flathub/net.froemling.bombsquad](https://github.com/flathub/net.froemling.bombsquad).
+Its `master` is protected: changes arrive only as pull requests, which
+Flathub test-builds (the `flathub/build` check), and merging one
+publishes that build.
+
+Two jobs in the public repo's `.github/workflows/release.yml` handle
+this. (`.github/` exists only in the public repo; pubsync never touches
+it.) The first runs when the repo owner is `efroemling` or
+`Loup-Garou911XD`; the second only for `efroemling`, so a release
+tagged on a fork never opens a PR against the real app repo.
 
 ```
 git tag v1.x.y ─► release.yml
@@ -210,10 +232,14 @@ git tag v1.x.y ─► release.yml
                    │    attach it to the GitHub release
                    │
                    └─ release_generate_flathub_manifest   (needs the job above)
-                        clone <owner>/flathub, branch net.froemling.bombsquad, into build/flathub
+                        clone flathub/net.froemling.bombsquad into build/flathub, branch update-<tag>
                         make flatpak-generate-flathub-manifest
-                        commit + push to <owner>/flathub (net.froemling.bombsquad branch)
+                        push update-<tag>, open a PR into master
 ```
+
+Re-running the second job force-pushes the same branch, which updates
+the open PR rather than opening another. If the generated files already
+match `master`, the job does nothing.
 
 ### Release history
 
@@ -247,13 +273,20 @@ generate_flathub_manifest` (in `tools/batools/pcommands3.py`), which:
    manifest's included project source: a `git` source (url, tag and
    commit) followed by an `archive` source for the prebuilt inputs.
 
-The push uses the `FLATHUB_PUSH_PAT` repository secret, a token with
-push access to the `<owner>/flathub` repo.
+The push and the PR use the `FLATHUB_PUSH_PAT` secret in the public
+repo: a token from Eric's GitHub account, which has write access to
+`flathub/net.froemling.bombsquad` (a classic PAT with `public_repo`
+scope). The PR is opened as that account.
 
-From there the update goes to Flathub through the usual Flathub flow,
-which is outside this repo: a pull request from that branch into the
-app's Flathub repository. Once it's merged, Flathub's buildbot builds the
-manifest and publishes the new version.
+The `/push-public` skill then follows the PR: it waits for the
+`flathub/build` check and merges the PR when it's green, and stops and
+reports if it fails. Once the PR is merged, Flathub builds `master`
+again and publishes it (the `flat-manager/*` statuses on the merge
+commit).
+
+(Until 2026-10, before the app was accepted, the job pushed to the
+`net.froemling.bombsquad` branch of a fork, `efroemling/flathub`, which
+was the submission PR's branch. That fork is no longer used.)
 
 ### Release checklist
 

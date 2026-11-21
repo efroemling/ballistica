@@ -593,6 +593,14 @@ class LanguageSubsystem(AppSubsystem):
             raise ValueError('Invalid Input; must be length 1')
         return 0xE000 <= ord(char) <= 0xF8FF
 
+    def remove_custom_unicode_chars(self, text: str) -> str:
+        """Return text without any chars in our custom unicode range.
+
+        For names nobody has verified: an icon glyph in one could pass
+        for an account or global profile it doesn't own.
+        """
+        return ''.join(c for c in text if not 0xE000 <= ord(c) <= 0xF8FF)
+
 
 class Lstr:
     """Used to define strings in a language-independent way.

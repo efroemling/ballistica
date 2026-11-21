@@ -223,12 +223,25 @@ void AppAdapterSDL::SetHardwareCursorVisible(bool visible) {
   }
 }
 
+// Whether SDL wants already-premultiplied cursor pixels. Xcursor expects
+// premultiplied alpha, but SDL's X11 backend before 3.4.20 copies our
+// pixels to it unchanged (fixed upstream in SDL PR #16537). There,
+// straight-alpha pixels give a speckled bright fringe around the cursor
+// edge (seen on the Steam Deck with the Steam runtime's SDL 3.4.18), so
+// we hand those SDLs premultiplied pixels instead.
+static auto SDLWantsPremultipliedCursorPixels_() -> bool {
+  const char* driver = SDL_GetCurrentVideoDriver();
+  return driver != nullptr && strcmp(driver, "x11") == 0
+         && SDL_GetVersion() < SDL_VERSIONNUM(3, 4, 20);
+}
+
 // Build an SDL surface (owning its pixels) from one RGBA8 mip level.
 // SDL surfaces want straight (non-premultiplied) alpha; the cursor
 // texture ships premultiplied (asset-packages decision #23), so
-// un-premultiply if needed.
+// un-premultiply when asked (the caller skips that when SDL wants
+// premultiplied pixels; see SDLWantsPremultipliedCursorPixels_).
 static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
-                                 bool premultiplied) -> SDL_Surface* {
+                                 bool unpremultiply) -> SDL_Surface* {
   SDL_Surface* surface =
       SDL_CreateSurface(mip.width, mip.height, SDL_PIXELFORMAT_RGBA32);
   if (surface == nullptr) {
@@ -239,7 +252,7 @@ static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
     uint8_t* row = dst + y * surface->pitch;
     memcpy(row, mip.rgba.data() + static_cast<size_t>(y) * mip.width * 4,
            static_cast<size_t>(mip.width) * 4);
-    if (premultiplied) {
+    if (unpremultiply) {
       for (int x = 0; x < mip.width; ++x) {
         uint8_t* px = row + x * 4;
         int a = px[3];
@@ -271,14 +284,16 @@ auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
          && img->mips[base].width > kHardwareCursorLogicalSize) {
     ++base;
   }
-  SDL_Surface* surface =
-      CreateCursorSurface_(img->mips[base], img->premultiplied);
+  // Pixels already premultiplied when SDL wants them that way need no
+  // un-premultiplying.
+  bool unpremultiply =
+      img->premultiplied && !SDLWantsPremultipliedCursorPixels_();
+  SDL_Surface* surface = CreateCursorSurface_(img->mips[base], unpremultiply);
   if (surface == nullptr) {
     return nullptr;
   }
   for (size_t i = 0; i < base; ++i) {
-    if (SDL_Surface* alt =
-            CreateCursorSurface_(img->mips[i], img->premultiplied)) {
+    if (SDL_Surface* alt = CreateCursorSurface_(img->mips[i], unpremultiply)) {
       SDL_AddSurfaceAlternateImage(surface, alt);
       // AddSurfaceAlternateImage holds its own reference.
       SDL_DestroySurface(alt);
@@ -1355,6 +1370,8 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     }
 
     int context_flags{};
+    // Whether we're asking for a core profile we can fall back from.
+    bool core_with_fallback{};
 #if BA_OPENGL_IS_ES
     // ANGLE: OpenGL ES 3.0 via D3D11 (Windows) or Metal (macOS). SDL creates
     // and manages the EGL/ANGLE context for us.
@@ -1378,18 +1395,24 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                           SDL_GL_CONTEXT_PROFILE_CORE);
       context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+    } else if (g_buildconfig.platform_linux()) {
+      // On Linux ask for a 3.2+ core profile; drivers hand back
+      // the newest core version they support. Our renderer only uses the
+      // GL ES 3 / core subset (it also runs on ES 3 and Mac 4.1 core), so
+      // core costs nothing, and it's the only reliable way to get a
+      // modern version out of Mesa: its compatibility contexts may report
+      // a lower version than the driver supports (llvmpipe capped compat
+      // contexts at 3.1 until Mesa 21.3, below our 3.2 minimum). If a
+      // driver refuses core outright we fall back to asking for nothing
+      // in particular (a compatibility context) below.
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                          SDL_GL_CONTEXT_PROFILE_CORE);
+      core_with_fallback = true;
     } else {
-      // On other platforms, let's not ask for anything in particular.
-      // We'll work with whatever they give us if its 4.x or 3.x or we'll
-      // show a lovely error if it's older.
-
-      // Wondering if there would be a smarter strategy here; for example
-      // trying a few different specific core profiles.
-
-      // Actually, in reading a bit more, Nvidia actually recommends
-      // compatibility profiles and their core profiles may actually be
-      // slightly slower due to extra checks, so what we're doing here might
-      // be optimal.
+      // Elsewhere (the Windows Meta/Rift build, the only other desktop-GL
+      // SDL build) ask for nothing in particular, as Linux used to.
     }
 #endif  // BA_OPENGL_IS_ES
     if (g_buildconfig.debug_build()) {
@@ -1415,6 +1438,18 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
 #endif
     } else {
       sdl_gl_context_ = SDL_GL_CreateContext(sdl_window_);
+      if (!sdl_gl_context_ && core_with_fallback) {
+        g_core->logging->Log(
+            LogName::kBaGraphics, LogLevel::kInfo,
+            std::string("Unable to create a GL core-profile context (")
+                + SDL_GetError() + "); falling back to the driver default.");
+        // SDL's desktop defaults: 2.1 with no profile (whatever the driver
+        // gives by default; usually its newest compatibility version).
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+        sdl_gl_context_ = SDL_GL_CreateContext(sdl_window_);
+      }
       if (!sdl_gl_context_) {
         FatalError("Unable to create SDL GL Context (video driver "
                    + SDLVideoDriverName_() + "): " + SDL_GetError());

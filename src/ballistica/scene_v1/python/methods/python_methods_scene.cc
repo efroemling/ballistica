@@ -775,6 +775,11 @@ static auto PyAnimCurve(PyObject* self, PyObject* args, PyObject* keywds)
   // the stream changes: under kProtocolVersionAnimCurveCommand the
   // eight commands this emits are folded into one kAddAnimCurve.
   SessionStream* stream = scene->GetSceneStream();
+  // (Before making anything: an attr our stream can't carry fails here
+  // rather than leaving a half-made curve behind.)
+  if (stream) {
+    target_attr->CheckStreamProtocol(stream->protocol());
+  }
   bool fold = stream != nullptr && stream->CanFoldAnimCurve();
   if (fold) {
     stream->BeginFold();
@@ -1603,13 +1608,23 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
       account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
     }
 
+    PythonRef depiction_ref;
+    if (client.account_name_depiction.has_value()) {
+      depiction_ref.Steal(PyUnicode_FromString(
+          Utils::GetValidUTF8(client.account_name_depiction->c_str(), "ggr3")
+              .c_str()));
+    } else {
+      depiction_ref.Acquire(Py_None);
+    }
+
     auto py_client{PythonRef::Stolen(Py_BuildValue(
-        "{sssssOsOsO}", "display_string",
+        "{sssssOsOsOsO}", "display_string",
         client.spec.empty()
             ? ""
             : PlayerSpec(client.spec).GetDisplayString().c_str(),
         "spec_string", client.spec.c_str(), "players", py_player_list.get(),
-        "client_id", client_id_ref.get(), "account_id", account_id_ref.get()))};
+        "client_id", client_id_ref.get(), "account_id", account_id_ref.get(),
+        "account_name_depiction", depiction_ref.get()))};
 
     PyList_Append(py_client_list.get(), py_client.get());
   }

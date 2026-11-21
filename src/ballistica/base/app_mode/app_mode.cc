@@ -16,6 +16,9 @@ AppMode::AppMode() = default;
 void AppMode::OnActivate() {}
 void AppMode::OnDeactivate() {}
 
+auto AppMode::WantsClassicNetworking() const -> bool { return false; }
+auto AppMode::WantsRemoteAppServer() const -> bool { return false; }
+
 void AppMode::OnAppStart() {}
 void AppMode::OnAppSuspend() {}
 void AppMode::OnAppUnsuspend() {}
@@ -42,6 +45,8 @@ void AppMode::HandleGameQuery(const char* buffer, size_t size,
 auto AppMode::DoesWorldFillScreen() -> bool { return false; }
 
 void AppMode::DrawWorld(FrameDef* frame_def) {}
+
+void AppMode::DrawOverlays(FrameDef* frame_def) {}
 
 void AppMode::ChangeGameSpeed(int offs) {}
 

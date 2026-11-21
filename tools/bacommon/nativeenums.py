@@ -106,3 +106,4 @@ class Permission(Enum):
     """Permissions that can be requested from the OS."""
 
     STORAGE = 0
+    LOCAL_NETWORK = 1

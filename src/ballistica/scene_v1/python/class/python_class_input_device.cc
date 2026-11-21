@@ -381,6 +381,20 @@ auto PythonClassInputDevice::GetCloudCharacters(PythonClassInputDevice* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassInputDevice::IsV2Authed(PythonClassInputDevice* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
+  if (!d) {
+    throw Exception(PyExcType::kInputDeviceNotFound);
+  }
+  if (d->IsV2Authed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
                                               PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -534,6 +548,14 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "the lobby falls back to the legacy player profiles.\n"
      "\n"
      "(internal)"},
+    {"is_v2_authed", (PyCFunction)IsV2Authed, METH_NOARGS,
+     "is_v2_authed() -> bool\n"
+     "\n"
+     "Return whether this is a remote client that joined with v2 auth.\n"
+     "\n"
+     "Its account is then verified by the master server, so names and\n"
+     "icons that come with it (its account, its profiles) can be shown\n"
+     "as they are. Always ``False`` for local devices."},
     {"get_classic_purchases", (PyCFunction)GetClassicPurchases, METH_NOARGS,
      "get_classic_purchases() -> list[str] | None\n"
      "\n"

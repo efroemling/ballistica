@@ -757,7 +757,7 @@ void RootWidget::Setup() {
       td.button = squad_button_;
       td.width = 70.0f;
       td.text = "0";
-      td.x = -2.0f;
+      td.x = -1.5f;
       td.y = -10.0f;
       td.scale = 1.0f;
       td.flatness = 1.0f;
@@ -1044,8 +1044,8 @@ void RootWidget::Setup() {
     achievements_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(achievements_button_);
 
-    auto centerx = -1.5f;
-    auto centery = 8.0f;
+    auto centerx = -1.0f;
+    auto centery = 9.0f;
     {
       TextDef_ td;
       td.button = achievements_button_;
@@ -1664,6 +1664,10 @@ auto RootWidget::AddText_(const TextDef_& def) -> RootWidget::Text_* {
   t.widget->set_depth_range(def.depth_min, def.depth_max);
   assert(def.button->widget.exists());
   t.widget->set_draw_control_parent(def.button->widget.get());
+
+  // Shift with tilt exactly as our button does so we stay registered on
+  // it (text over buttons otherwise shifts twice as far by default).
+  t.widget->set_tilt_shift(ButtonWidget::kTiltShift);
   t.x = def.x;
   t.y = def.y;
   AddWidget(t.widget.get());
@@ -1685,6 +1689,10 @@ auto RootWidget::AddImage_(const ImageDef_& def) -> RootWidget::Image_* {
   img.widget->set_color(def.color_r, def.color_g, def.color_b);
   assert(def.button->widget.exists());
   img.widget->set_draw_control_parent(def.button->widget.get());
+
+  // Shift with tilt exactly as our button does so we stay registered on
+  // it (images over buttons otherwise shift half again as far).
+  img.widget->set_tilt_shift(ButtonWidget::kTiltShift);
   img.x = def.x - def.width * 0.5f;
   img.y = def.y - def.height * 0.5f;
   AddWidget(img.widget.get());

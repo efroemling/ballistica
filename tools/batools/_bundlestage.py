@@ -45,6 +45,90 @@ def collect_bundle_hashes(projroot: str, bundle_manifest_path: str) -> set[str]:
     return hashes
 
 
+def _assemble_command(profile: str) -> str:
+    """The command that (re)assembles a bundle cache dir."""
+    if profile.startswith('store-'):
+        form_factor = profile.removeprefix('store-')
+        return (
+            f'tools/pcommand asset_bundle_build store'
+            f' --form-factor {form_factor}'
+        )
+    return f'tools/pcommand asset_bundle_build {profile}'
+
+
+def verify_bundle_assembled_for_project(projroot: str, profile: str) -> None:
+    """Fail clearly if the bundle was assembled for different pins.
+
+    Reads the sidecar ``asset_bundle_build`` writes next to the manifest
+    (what the bundle was assembled for) and compares it, offline, with
+    the project as it is now: the builtin pin in projectconfig, and for
+    store bundles every package the bundled Python requires. A bundle
+    assembled before the sidecar existed is skipped (the base.h check
+    after this still guards it).
+
+    Matching pins mean the right *versions*; they don't prove fresh
+    content (a dev-track pin, or a server pipeline bump, changes built
+    output under the same pin; that's what ``--force-refetch`` is for).
+
+    :meta private:
+    """
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    from batools.assetbundleprofiles import (
+        current_builtin_apverid,
+        current_fleet,
+        current_scanned_apvernums,
+        read_assembled_info,
+    )
+
+    info = read_assembled_info(projroot, profile)
+    if info is None:
+        return
+    fix = (
+        f'Assemble it outside the build with `make mac-staging` (Xcode'
+        f' builds) or `{_assemble_command(profile)}`, then rebuild.'
+    )
+
+    pin = current_builtin_apverid(projroot)
+    if pin and info.builtin_apverid and info.builtin_apverid != pin:
+        raise CleanError(
+            f"Asset bundle '{profile}' is out of date: it was assembled"
+            f' for {info.builtin_apverid}, but the project now pins'
+            f' {pin}.\n{fix}'
+        )
+
+    is_store = profile.startswith('store')
+    if is_store:
+        missing = sorted(
+            set(current_scanned_apvernums(projroot)) - set(info.apvernums)
+        )
+        if missing:
+            raise CleanError(
+                f"Asset bundle '{profile}' is out of date: the bundled"
+                f' code now requires asset packages {missing} that it'
+                f' doesn\'t contain.\n{fix}'
+            )
+
+    if info.fleet is not None:
+        if is_store and info.fleet != 'prod':
+            raise CleanError(
+                f"Store bundle '{profile}' was assembled against the"
+                f' {info.fleet} fleet; shipping builds must bundle'
+                f' prod-assembled content. Reassemble with'
+                f' BA_FLEET unset (prod).'
+            )
+        # Non-prod builds may use a bundle from any fleet; only flag
+        # non-prod content in a prod build.
+        if info.fleet != 'prod' and current_fleet() == 'prod':
+            print(
+                f"{Clr.YLW}Warning: asset bundle '{profile}' was assembled"
+                f' against the {info.fleet} fleet, but this build targets'
+                f' prod.{Clr.RST}',
+                flush=True,
+            )
+
+
 def _verify_builtin_package_bundled(
     projroot: str, profile: str, bundle_manifest_path: str
 ) -> None:
@@ -85,14 +169,17 @@ def _verify_builtin_package_bundled(
 
     if builtin_apvernum not in bundled:
         raise CleanError(
-            f"Builtin-asset splice is stale: base.h kBuiltinAssetsApvernum"
-            f" is '{builtin_apvernum}', but the staged"
-            f" '{profile}' bundle contains"
-            f' {sorted(bundled)}. The compiled-in builtin package is not'
-            f' in the bundle, so this build would crash on launch. Re-sync'
-            f' the splice with `tools/pcommand assetpins update'
-            f' babuiltinassets <ver>` (now self-healing) or `tools/pcommand'
-            f' gen_builtin_asset_ids`, then rebuild.'
+            f'Asset bundle is out of date: this build expects builtin'
+            f' package #{builtin_apvernum} (base.h), but the assembled'
+            f" '{profile}' bundle holds {sorted(bundled)}, so it would"
+            f' crash on launch.\n'
+            f'Usually the bundle is the stale side: bundles are assembled'
+            f' outside the build (Xcode only stages them). Assemble it with'
+            f' `make mac-staging` (Xcode builds) or `tools/pcommand'
+            f' asset_bundle_build {profile}`, then rebuild.\n'
+            f'If base.h is the stale side instead (`make update-check`'
+            f' reports it), re-sync it with `tools/pcommand assetpins'
+            f' update babuiltinassets <ver>`.'
         )
 
 
@@ -185,6 +272,7 @@ def sync_asset_bundle(
     # Last-chance consistency gate before this bundle becomes a
     # runnable artifact: the compiled-in builtin package must be one
     # of the packages we're staging (see the function docstring).
+    verify_bundle_assembled_for_project(projroot, profile)
     _verify_builtin_package_bundled(projroot, profile, bundle_manifest_path)
 
     wanted_hashes = collect_bundle_hashes(projroot, bundle_manifest_path)

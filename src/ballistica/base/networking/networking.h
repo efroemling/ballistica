@@ -67,6 +67,19 @@ namespace ballistica::base {
 #define BA_PACKET_HOST_REQUIREMENTS_QUERY 40
 #define BA_PACKET_HOST_REQUIREMENTS_RESPONSE 41
 
+// V2 remote-app discovery (added after build 23084): query is 1 type byte + 4
+// byte query-id + a json dict describing the asker ('v':
+// query-format-version, 'b': engine-build-number); response is 1 type
+// byte + the echoed query-id + a json dict ('v': format-version, 'i':
+// app-instance-uuid, 'n': device name, 'b': engine-build-number). The
+// uuid lets nearby discovery merge a game's remote-app answers with its
+// game-query answers (and dedupe hosts reachable several ways); the
+// query-id gives round-trip times. Served by the remote-app server, so
+// answered exactly when an app-mode wants remote controllers. Old
+// builds drop it; askers also send the v1 query for those.
+#define BA_PACKET_REMOTE_GAME_QUERY_V2 42
+#define BA_PACKET_REMOTE_GAME_RESPONSE_V2 43
+
 // Connection/disconnection.
 #define BA_PACKET_CLIENT_REQUEST 24
 #define BA_PACKET_CLIENT_ACCEPT 25

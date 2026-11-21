@@ -243,6 +243,10 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     )
 
 
+#: Names of dirs holding codegen output (never checked in to git).
+GENERATED_DIR_NAMES = frozenset({'generated', '_generated'})
+
+
 def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     """Return the list of files to lint-check or auto-format.
 
@@ -310,7 +314,12 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
         cachepath.unlink()
 
     cache = FileCache(cachepath)
-    filenames = get_script_filenames(projroot)
+
+    # No generated files: formatting can run before codegen (or next to
+    # it under a parallel make), and rewriting codegen output would
+    # dirty the targets that depend on it. Generators that want
+    # formatted output format it themselves.
+    filenames = get_script_filenames(projroot, include_generated=False)
 
     # Calc a config hash so we redo formatting after it changes (or
     # after a black upgrade, which can change its output).
@@ -423,8 +432,18 @@ def _should_include_script(fnamefull: str) -> bool:
     return False
 
 
-def get_script_filenames(projroot: Path) -> list[str]:
-    """Return the Python filenames to lint-check or auto-format."""
+def get_script_filenames(
+    projroot: Path, *, include_generated: bool
+) -> list[str]:
+    """Return the project's Python filenames.
+
+    Pass True for ``include_generated`` only from steps that run after
+    codegen and want its output (linting, type checking). Anything that
+    runs as part of ``update``/``update-check`` must pass False: update
+    comes before codegen in the build order, so files under
+    ``generated``/``_generated`` dirs may not exist yet, or may be
+    mid-regeneration when a parallel check run reads them.
+    """
     from efrotools.project import getprojectconfig
 
     proot = f'{projroot}/'
@@ -434,7 +453,9 @@ def get_script_filenames(projroot: Path) -> list[str]:
     if places is None:
         raise RuntimeError('python_source_dirs not declared in config')
     for place in places:
-        for root, _dirs, files in os.walk(os.path.join(projroot, place)):
+        for root, dirs, files in os.walk(os.path.join(projroot, place)):
+            if not include_generated:
+                dirs[:] = [d for d in dirs if d not in GENERATED_DIR_NAMES]
             for fname in files:
                 fnamefull = os.path.join(root, fname)
                 # Skip symlinks (we conceivably operate on the original too)
@@ -517,7 +538,7 @@ def pylint(
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
         raise RuntimeError('pylintrc not found where expected')
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
 
     if any(' ' in name for name in filenames):
         raise RuntimeError('found space in path; unexpected')
@@ -1092,7 +1113,7 @@ def zmypy(projroot: Path, full: bool) -> None:
     """Type check all of our scripts using mypy."""
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
     desc = '(full)' if full else '(incremental)'
     print(f'{Clr.BLU}Running Zmypy {desc}...{Clr.RST}', flush=True)
     starttime = time.monotonic()
@@ -1199,7 +1220,7 @@ def mypy(projroot: Path, full: bool, output_format: str = 'text') -> None:
     """
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
     desc = '(full)' if full else '(incremental)'
     if output_format == 'text':
         print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
@@ -1220,7 +1241,7 @@ def dmypy(projroot: Path) -> None:
     """Type check all of our scripts using mypy in daemon mode."""
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
 
     # Special case; explicitly kill the daemon.
     if '-stop' in sys.argv:

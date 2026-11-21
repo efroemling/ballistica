@@ -85,3 +85,9 @@
 ### TheMikirog
 - Punch grab exploit fix
 - Volume slider value to perceived volume fix
+
+### spaceKite
+- Updated OARS content rating
+
+### Maxwell (itsre3)
+- Bug fixes

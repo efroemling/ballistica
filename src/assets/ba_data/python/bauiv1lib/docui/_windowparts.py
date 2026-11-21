@@ -2,15 +2,15 @@
 #
 """Pieces of a doc-ui window that get built apart from it."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 
 import bauiv1 as bui
-from bauiv1 import _classiccatalogassets, _commonassets
+from bauiv1 import _classiccatalogassets
 
-from bauiv1lib.docui._panes import scroll_widget_rect, viewer_insets_v
+from bauiv1lib.docui._panes import scroll_widget_rect
 
 if TYPE_CHECKING:
     import bacommon.depiction as bdep
@@ -163,82 +163,108 @@ def show_vis_area_bounds(
         )
 
 
-def show_scroll_bounds(
+type _Rect = tuple[float, float, float, float]
+
+type _Anchor = Literal['top_left', 'top', 'top_right', 'bottom_left', 'bottom']
+
+
+def _num(val: float) -> str:
+    return f'{val:.4g}'
+
+
+def _sides(vals: tuple[float, float, float, float]) -> str:
+    """(left, right, bottom, top) values, labeled."""
+    left, right, bottom, top = (_num(v) for v in vals)
+    return f'l{left} r{right} b{bottom} t{top}'
+
+
+def _shrunk(
+    rect: _Rect, left: float, right: float, bottom: float, top: float
+) -> _Rect:
+    x, y, w, h = rect
+    return (x + left, y + bottom, w - left - right, h - bottom - top)
+
+
+def show_layout_bounds(
     parent: bui.Widget,
     frame: WindowFrame,
-    uiscale: bui.UIScale,
     *,
-    has_pane: bool,
+    insets: tuple[float, float],
+    fades: tuple[float, float, float, float] | None,
+    pane_rect: _Rect | None = None,
 ) -> list[bui.Widget]:
-    """Outline a window's scroll-area bounds (and their neighbors).
+    """Outline the rects a window's (or popup's) page is laid out against.
 
-    See :attr:`~bauiv1lib.docui.DebugDrawKind.SCROLL_BOUNDS`. Magenta
-    is the rect selection scrolls rows into; cyan is the scroll widget
-    itself (reaching past that by its margins); yellow is the viewer
-    pane (if ``has_pane``). (The window's own bounds -- its backing's
-    solid part -- are the dev console's container-bounds drawing.)
-    Drawn over the page, which doesn't move them. Returns the outlines'
-    widgets (for redrawing them when the scroll area moves).
+    See :attr:`~bauiv1lib.docui.DebugDrawKind.LAYOUT`. Cyan is the
+    extend rect (the scroll widget, reaching out past the content rect
+    by the frame's extends); magenta is the content rect (selection
+    keeps rows within it); green is the inset rect (``insets``: the
+    page's horizontal and vertical ones), where resting content starts;
+    orange is where ``fades`` (left, right, bottom, top; None for none)
+    end, in from the extend rect's edges; yellow is ``pane_rect`` (a
+    viewer pane), if any. Labels give the numbers. (The window's own
+    bounds -- its backing's solid part -- are the dev console's
+    container-bounds drawing.) Drawn over the page, which doesn't move
+    them. Returns the outlines' widgets (for redrawing them when any of
+    this changes).
 
     :meta private:
     """
     f = frame
-    outlines: list[
-        tuple[tuple[float, float, float, float], tuple[float, float, float]]
-    ] = [
-        (scroll_widget_rect(f), (0.0, 1.0, 1.0)),
+    extend = scroll_widget_rect(f)
+    content = (
+        f.content_left,
+        f.content_bottom,
+        f.content_width,
+        f.content_height,
+    )
+    h_inset, v_inset = insets
+    inset = _shrunk(content, h_inset, h_inset, v_inset, v_inset)
+    ext = f.extends
+    outlines: list[tuple[_Rect, tuple[float, float, float], str, _Anchor]] = [
         (
-            (f.scroll_left, f.scroll_bottom, f.scroll_width, f.scroll_height),
+            extend,
+            (0.0, 1.0, 1.0),
+            f'extend {_sides(ext)}',
+            'top_left',
+        ),
+        (
+            content,
             (1.0, 0.2, 1.0),
+            f'content {_num(content[2])}x{_num(content[3])}',
+            'top',
+        ),
+        (
+            inset,
+            (0.2, 1.0, 0.2),
+            f'inset h{_num(h_inset)} v{_num(v_inset)}',
+            'top_right',
         ),
     ]
-    if has_pane:
-        inset_bottom, inset_top = viewer_insets_v(uiscale)
+    if fades is not None:
         outlines.append(
             (
-                (
-                    f.viewer_left,
-                    f.scroll_bottom + inset_bottom,
-                    f.viewer_width,
-                    f.scroll_height - inset_bottom - inset_top,
-                ),
-                (1.0, 1.0, 0.0),
+                _shrunk(extend, *fades),
+                (1.0, 0.55, 0.0),
+                f'fades {_sides(fades)}',
+                'bottom_left',
             )
         )
+    if pane_rect is not None:
+        outlines.append((pane_rect, (1.0, 1.0, 0.0), 'viewer pane', 'bottom'))
 
-    out: list[bui.Widget] = []
-    for rect, color in outlines:
-        out += _outline_rect(parent, rect, color)
-    return out
-
-
-def _outline_rect(
-    parent: bui.Widget,
-    rect: tuple[float, float, float, float],
-    color: tuple[float, float, float],
-) -> list[bui.Widget]:
-    left, bottom, width, height = rect
-    thickness = 2.0
-    half = 0.5 * thickness
-    edges = [
-        (left - half, bottom - half, width + thickness, thickness),
-        (left - half, bottom + height - half, width + thickness, thickness),
-        (left - half, bottom - half, thickness, height + thickness),
-        (left + width - half, bottom - half, thickness, height + thickness),
-    ]
-    out: list[bui.Widget] = []
-    for x, y, w, h in edges:
-        edge = bui.imagewidget(
+    return [
+        bui.debugrectwidget(
             parent=parent,
-            position=(x, y),
-            size=(w, h),
-            texture=_commonassets.textures.white.get(),
+            position=(left, bottom),
+            size=(width, height),
             color=color,
             opacity=0.8,
+            info=info,
+            info_anchor=anchor,
         )
-        bui.widget(edit=edge, depth_range=(0.95, 1.0))
-        out.append(edge)
-    return out
+        for (left, bottom, width, height), color, info, anchor in outlines
+    ]
 
 
 # How the busy-spinner shown over a pressed widget (a button, an input

@@ -9,24 +9,66 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     if: github.repository == 'efroemling/ballistica'
+    strategy:
+      # Each mirror is independent; one being down shouldn't stop the
+      # other.
+      fail-fast: false
+      matrix:
+        include:
+          - mirror: gitlab
+            host: gitlab.com
+            user: oauth2
+            token_secret: GITLAB_TOKEN
+          # Codeberg disabled 2026-11-03: every push started failing
+          # with "could not read Username for 'https://codeberg.org'",
+          # meaning the CODEBERG_TOKEN secret is missing or empty (an
+          # expired/revoked token). Re-enable these lines once a fresh
+          # token is set in the repo's Actions secrets.
+          # - mirror: codeberg
+          #   host: codeberg.org
+          #   user: ''
+          #   token_secret: CODEBERG_TOKEN
+    name: mirror (${{ matrix.mirror }})
     steps:
       - name: Checkout with full history
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Push to GitLab
+      - name: Push to ${{ matrix.mirror }}
+        env:
+          TOKEN: ${{ secrets[matrix.token_secret] }}
+          MIRROR_HOST: ${{ matrix.host }}
+          MIRROR_USER: ${{ matrix.user }}
         run: |
-          git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/efroemling/ballistica.git
-          if [ "${{ github.ref_type }}" = "branch" ]; then
-            git push gitlab HEAD:main --force
+          if [ -n "$MIRROR_USER" ]; then
+            auth="$MIRROR_USER:$TOKEN"
+          else
+            auth="$TOKEN"
           fi
-          git push gitlab --tags --force
+          git remote add mirror "https://$auth@$MIRROR_HOST/efroemling/ballistica.git"
 
-      - name: Push to Codeberg
-        run: |
-          git remote add codeberg https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/efroemling/ballistica.git
-          if [ "${{ github.ref_type }}" = "branch" ]; then
-            git push codeberg HEAD:main --force
+          # Push only the ref that triggered this run. A release pushes
+          # main and a tag at the same moment, starting two runs; if
+          # both pushed every tag they'd race on the new one and one
+          # would get 'reference already exists'.
+          if [ "$GITHUB_REF_TYPE" = "branch" ]; then
+            refspec="HEAD:refs/heads/main"
+          else
+            refspec="$GITHUB_REF:$GITHUB_REF"
           fi
-          git push codeberg --tags --force
+
+          # Mirror hosts have occasional short outages (503/504s), so
+          # retry a few times before giving up.
+          for attempt in 1 2 3 4; do
+            if git push mirror "$refspec" --force; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 4 ]; then
+              delay=$((attempt * 30))
+              echo "::warning::Push to $MIRROR_HOST failed (attempt $attempt/4); retrying in ${delay}s..."
+              sleep "$delay"
+            fi
+          done
+          echo "::error::Push to $MIRROR_HOST failed after 4 attempts."
+          exit 1

@@ -42,6 +42,7 @@ namespace ballistica::scene_v1 {
 SessionStream::SessionStream(HostSession* host_session, bool save_replay)
     : app_mode_{classic::ClassicAppMode::GetActiveOrThrow()},
       host_session_{host_session} {
+  protocol_ = app_mode_->host_protocol_version();
   compact_ =
       app_mode_->host_protocol_version() >= kProtocolVersionCompactStream;
   reliable_corrections_ = getenv("BA_RELIABLE_CORRECTIONS") != nullptr;
@@ -1588,6 +1589,8 @@ void SessionStream::ConnectNodeAttribute(Node* src_node,
     throw Exception("Nodes are from different scenes");
   }
   assert(src_node->scene() == dst_node->scene());
+  src_attr->CheckStreamProtocol(protocol_);
+  dst_attr->CheckStreamProtocol(protocol_);
   WriteCommandInt64_4(SessionCommand::kConnectNodeAttribute,
                       src_node->stream_id(), src_attr->index(),
                       dst_node->stream_id(), dst_attr->index());
@@ -1603,8 +1606,13 @@ void SessionStream::NodeMessage(Node* node, const char* buffer, size_t size) {
   EndCommand();
 }
 
-void SessionStream::SetNodeAttr(const NodeAttribute& attr, float val) {
+void SessionStream::CheckAttr_(const NodeAttribute& attr) {
   assert(IsValidNode(attr.node));
+  attr.attr->CheckStreamProtocol(protocol_);
+}
+
+void SessionStream::SetNodeAttr(const NodeAttribute& attr, float val) {
+  CheckAttr_(attr);
   WriteCommandInt64_2(SessionCommand::kSetNodeAttrFloat, attr.node->stream_id(),
                       attr.index());
   WriteFloat(val);
@@ -1612,14 +1620,14 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, float val) {
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, int64_t val) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrInt32, attr.node->stream_id(),
                       attr.index(), val);
   EndCommand();
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, bool val) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrBool, attr.node->stream_id(),
                       attr.index(), val);
   EndCommand();
@@ -1627,7 +1635,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, bool val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<float>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   size_t count{vals.size()};
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrFloats,
                       attr.node->stream_id(), attr.index(),
@@ -1640,7 +1648,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<int64_t>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   size_t count{vals.size()};
   WriteCommandInt64_3(SessionCommand::kSetNodeAttrInt32s,
                       attr.node->stream_id(), attr.index(),
@@ -1653,7 +1661,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::string& val) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   WriteCommandInt64_2(SessionCommand::kSetNodeAttrString,
                       attr.node->stream_id(), attr.index());
   WriteString(val);
@@ -1661,7 +1669,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, Node* val) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (val) {
     assert(IsValidNode(val));
     if (attr.node->scene() != val->scene()) {
@@ -1678,7 +1686,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, Node* val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<Node*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     if (g_buildconfig.debug_build()) {
       for ([[maybe_unused]] auto val : vals) {
@@ -1712,7 +1720,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, Player* val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<Material*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMaterial(val));
@@ -1740,8 +1748,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneTexture* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidTexture(val));
     if (attr.node->scene() != val->scene()) {
       throw Exception("texture/node are from different scenes");
@@ -1756,8 +1764,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneTexture* val) {
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, SpazDef* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidSpazDef(val));
     // Scene objects never cross scenes (see
     // docs/design/scene-stream-wire.md, "Scene confinement"). (Not
@@ -1778,8 +1786,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, SpazDef* val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 SceneDepiction* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidDepiction(val));
     // Confined to one scene, as for spaz defs.
     if (host_session_ && attr.node->scene() != val->scene()) {
@@ -1796,7 +1804,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneTexture*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     for ([[maybe_unused]] auto val : vals) {
       assert(IsValidTexture(val));
@@ -1824,8 +1832,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneSound* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidSound(val));
     if (attr.node->scene() != val->scene()) {
       throw Exception("sound/node are from different scenes");
@@ -1841,7 +1849,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneSound* val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneSound*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     for ([[maybe_unused]] auto val : vals) {
       assert(IsValidSound(val));
@@ -1869,8 +1877,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneMesh* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidMesh(val));
     if (attr.node->scene() != val->scene()) {
       throw Exception("mesh/node are from different scenes");
@@ -1886,7 +1894,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr, SceneMesh* val) {
 
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneMesh*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMesh(val));
@@ -1914,8 +1922,8 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 SceneCollisionMesh* val) {
+  CheckAttr_(attr);
   if (val) {
-    assert(IsValidNode(attr.node));
     assert(IsValidCollisionMesh(val));
     if (attr.node->scene() != val->scene()) {
       throw Exception("collision_mesh/node are from different scenes");
@@ -1930,7 +1938,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
 }
 void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneCollisionMesh*>& vals) {
-  assert(IsValidNode(attr.node));
+  CheckAttr_(attr);
   if (g_buildconfig.debug_build()) {
     for ([[maybe_unused]] auto val : vals) {
       assert(IsValidCollisionMesh(val));
@@ -2046,8 +2054,7 @@ void SessionStream::ScreenMessageTop(const std::string& val, float r, float g,
   WriteCommandInt64_2(SessionCommand::kScreenMessageTop, texture->stream_id(),
                       tint_texture->stream_id());
   WriteString(val);
-  // (We only ever write at kProtocolVersionMax, which carries tint3;
-  // see kProtocolVersionTint3.)
+  // (Every protocol we host carries tint3; see kProtocolVersionTint3.)
   float f[12];
   f[0] = r;
   f[1] = g;

@@ -79,6 +79,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
       mask_straight_location_ = glGetUniformLocation(program(), "maskStraight");
       assert(mask_straight_location_ != -1);
+      mask_add_mult_location_ = glGetUniformLocation(program(), "maskAddMult");
+      assert(mask_add_mult_location_ != -1);
     }
     if (flags & SHD_MASKED) {
       SetTextureUnit("maskTex", kMaskTexUnit);
@@ -248,6 +250,22 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (mask_straight != mask_straight_) {
       mask_straight_ = mask_straight;
       glUniform1f(mask_straight_location_, mask_straight_);
+    }
+  }
+
+  // An rgb multiplier on what the mask *adds* (its g-channel frame and
+  // b-channel highlight), which the modulate color's rgb otherwise
+  // doesn't reach. (1,1,1) leaves the legacy look; depictions pass their
+  // brightness/color_multiply so a whole masked icon follows them.
+  void SetMaskAddMult(float r, float g, float b) {
+    assert((flags_ & SHD_MASKED) && (flags_ & SHD_MODULATE));
+    assert(IsBound());
+    if (r != mask_add_mult_[0] || g != mask_add_mult_[1]
+        || b != mask_add_mult_[2]) {
+      mask_add_mult_[0] = r;
+      mask_add_mult_[1] = g;
+      mask_add_mult_[2] = b;
+      glUniform3f(mask_add_mult_location_, r, g, b);
     }
   }
 
@@ -477,6 +495,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     }
     if ((flags & SHD_MASKED) && (flags & SHD_MODULATE)) {
       s += "uniform " BA_GLSL_MEDIUMP "float maskStraight;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "vec3 maskAddMult;\n";
     }
     if (flags & SHD_SHADOW) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
@@ -584,7 +603,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           if (flags & SHD_MODULATE) {
             s += " * vec4(vec3(mask.r) * maskMult, mask.a) + "
                  "vec4((vec3(mask.g) * colorizeColor.rgb + vec3(mask.b))"
-                 " * maskMult * mix(1.0, color.a, texPremultiplied), 0.0)";
+                 " * maskMult * mix(1.0, color.a, texPremultiplied)"
+                 " * maskAddMult, 0.0)";
           } else {
             s += " * vec4(vec3(mask.r), mask.a) + "
                  "vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)";
@@ -739,6 +759,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   float flatness_{};
   float tex_premultiplied_{};
   float mask_straight_{};
+  // (Matches GL's zeroed start; every masked draw sets it, so its first
+  // (1,1,1) uploads.)
+  float mask_add_mult_[3]{};
   float premult_blend_{};
   float underlay_color_[4]{};
   float layer1_color_[4]{};
@@ -755,6 +778,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   GLint flatness_location{};
   GLint tex_premultiplied_location_{};
   GLint mask_straight_location_{};
+  GLint mask_add_mult_location_{};
   GLint premult_blend_location_{};
   GLint underlay_color_location_{};
   GLint layer1_color_location_{};

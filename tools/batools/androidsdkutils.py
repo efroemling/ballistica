@@ -103,6 +103,114 @@ def get_sdk_dir(projroot: str) -> str:
     return sdk_dir
 
 
+def gradle_sdk_pins(projroot: str) -> list[tuple[str, str]]:
+    """The SDK packages the Android project pins, as (package, path).
+
+    Reads ``ndkVersion`` and ``compileSdk`` (+ ``compileSdkMinor``)
+    from the app's build.gradle. ``path`` is the package's dir relative
+    to the SDK root.
+    """
+    import re
+
+    gradlepath = Path(
+        projroot, 'ballisticakit-android/BallisticaKit/build.gradle'
+    )
+    text = gradlepath.read_text(encoding='utf-8')
+
+    def _value(name: str) -> str | None:
+        found = re.findall(
+            rf'^\s*{name}\s+[\'"]?([0-9.]+)[\'"]?\s*$', text, re.MULTILINE
+        )
+        if len(found) > 1:
+            raise CleanError(f'Expected at most one {name} in {gradlepath}.')
+        return found[0] if found else None
+
+    pins: list[tuple[str, str]] = []
+    ndk = _value('ndkVersion')
+    if ndk is not None:
+        pins.append((f'ndk;{ndk}', f'ndk/{ndk}'))
+    sdk = _value('compileSdk')
+    if sdk is not None:
+        minor = _value('compileSdkMinor')
+        platform = (
+            f'android-{sdk}' if minor is None else f'android-{sdk}.{minor}'
+        )
+        pins.append((f'platforms;{platform}', f'platforms/{platform}'))
+    return pins
+
+
+def find_sdkmanager(sdk_dir: str) -> str | None:
+    """The SDK manager command to use for ``sdk_dir`` (None if none).
+
+    The SDK's own cmdline-tools copy where present (Android Studio
+    installs, and Macs set up by our tooling); otherwise the snap
+    wrapper ``androidsdk`` (linbeast) or an ``sdkmanager`` on PATH.
+    """
+    import shutil
+
+    own = os.path.join(sdk_dir, 'cmdline-tools', 'latest', 'bin', 'sdkmanager')
+    if os.path.isfile(own):
+        return own
+    # Non-interactive shells (cloudshell builds) may lack /snap/bin or
+    # /opt/homebrew/bin on PATH, so check those spots directly too.
+    for path in ('/snap/bin/androidsdk', '/opt/homebrew/bin/sdkmanager'):
+        if os.path.exists(path):
+            return path
+    for name in ('androidsdk', 'sdkmanager'):
+        found = shutil.which(name)
+        if found is not None:
+            return found
+    return None
+
+
+def sync(projroot: str, sdk_dir: str) -> None:
+    """Install any SDK packages the project pins that are missing.
+
+    Cheap when everything is present (a few dir checks, no network), so
+    every Android build runs it (via ``check``); only a pin bump pays
+    for a download. Never removes anything: several checkouts (e.g. a
+    spinoff whose pin lags) can share one SDK, so pruning old packages
+    is left to machine upkeep.
+    """
+    import subprocess
+
+    missing = [
+        pkg
+        for pkg, path in gradle_sdk_pins(projroot)
+        if not os.path.isdir(os.path.join(sdk_dir, path))
+    ]
+    if not missing:
+        return
+    manager = find_sdkmanager(sdk_dir)
+    if manager is None:
+        raise CleanError(
+            f'Android SDK at {sdk_dir} is missing {missing} and no'
+            ' sdkmanager was found to install them; install them by hand'
+            ' (sdkmanager --sdk_root=<sdk> <package>...).'
+        )
+    print(
+        f'Installing pinned Android SDK packages {missing} into'
+        f' {sdk_dir}...',
+        file=sys.stderr,
+    )
+    # License prompts get answered from stdin. The licenses were
+    # accepted when each SDK was set up; new packages occasionally ask
+    # again.
+    subprocess.run(
+        [manager, f'--sdk_root={sdk_dir}', *missing],
+        input='y\n' * 20,
+        text=True,
+        check=True,
+    )
+    still = [
+        pkg
+        for pkg, path in gradle_sdk_pins(projroot)
+        if not os.path.isdir(os.path.join(sdk_dir, path))
+    ]
+    if still:
+        raise CleanError(f'SDK packages still missing after install: {still}')
+
+
 def run(projroot: str, args: list[str]) -> None:
     """Main script entry point."""
 
@@ -111,7 +219,13 @@ def run(projroot: str, args: list[str]) -> None:
 
     command = args[0]
 
-    valid_args = ['check', 'get-sdk-path', 'get-ndk-path', 'get-adb-path']
+    valid_args = [
+        'check',
+        'sync',
+        'get-sdk-path',
+        'get-ndk-path',
+        'get-adb-path',
+    ]
     if command not in valid_args:
         print('INVALID ARG; expected one of', valid_args, file=sys.stderr)
         sys.exit(255)
@@ -134,6 +248,11 @@ def run(projroot: str, args: list[str]) -> None:
                 file=sys.stderr,
             )
             sys.exit(255)
+
+    # Every build's 'check' also makes sure the pinned NDK and platform
+    # are installed (cheap when they are).
+    if command in ('check', 'sync'):
+        sync(projroot, sdk_dir)
 
     if command == 'get-sdk-path':
         print(sdk_dir)

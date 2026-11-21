@@ -10,11 +10,17 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
+from bacommon.text import has_visible_chars
 import bacommon.depiction as bdep
 import babase
 import _bascenev1
 from bascenev1 import _assetref
-from bascenev1._character import name_text, plain_name_json, split_character
+from bascenev1._character import (
+    name_glyph,
+    name_text,
+    plain_name_json,
+    split_character,
+)
 from bascenev1._profile import get_player_profile_colors
 from bascenev1._gameutils import animate, animate_array
 
@@ -654,15 +660,7 @@ class Chooser:
         """Update this chooser's position."""
 
         assert self._text_node
-        spacing = 350
-        sessionteams = self.lobby.sessionteams
-        offs = (
-            spacing * -0.5 * len(sessionteams)
-            + spacing * self._selected_team_index
-            + 250
-        )
-        if len(sessionteams) > 1:
-            offs -= 35
+        offs = self._team_offset()
         animate_array(
             self._text_node,
             'position',
@@ -675,11 +673,31 @@ class Chooser:
                 ),
             },
         )
+        self._slide_icon_into_place()
+
+    def _team_offset(self) -> float:
+        """Horizontal offset for our selected team's column."""
+        spacing = 350
+        sessionteams = self.lobby.sessionteams
+        offs = (
+            spacing * -0.5 * len(sessionteams)
+            + spacing * self._selected_team_index
+            + 250
+        )
+        if len(sessionteams) > 1:
+            offs -= 35
+        return offs
+
+    def _slide_icon_into_place(self) -> None:
+        """Slide our icon from where it is to its spot for our team."""
         animate_array(
             self.icon,
             'position',
             2,
-            {0: self.icon.position, 0.1: (-130 + offs, self._vpos + 22)},
+            {
+                0: self.icon.position,
+                0.1: (-130 + self._team_offset(), self._vpos + 22),
+            },
         )
 
     def get_character_name(self) -> str:
@@ -870,6 +888,7 @@ class Chooser:
         want = 'depictiondisplay' if cloud else 'image'
         if self.icon and self.icon.getnodetype() == want:
             return False
+        replacing = bool(self.icon)
         position = self.icon.position if self.icon else (-130, self._vpos + 20)
         if self.icon:
             self.icon.delete()
@@ -900,6 +919,11 @@ class Chooser:
                     'attach': 'topCenter',
                 },
             )
+        # The old node's slide animation died with it, so if we swapped
+        # mid-slide (a team change just before a profile change) we'd
+        # freeze partway there. Finish the slide on the new node.
+        if replacing:
+            self._slide_icon_into_place()
         return True
 
     def _do_nothing(self) -> None:
@@ -932,11 +956,16 @@ class Chooser:
             # the host so that's ok.
             name = _classicassets.strings.lobby.create_edit_player.evaluate()
         else:
-            # If we have a regular profile marked as global with an icon,
-            # use it (for full only).
+            # If we have a global profile, its icon goes in front (for
+            # full only). A cloud profile's name says so with a glyph
+            # (the cloud decides what's global); a legacy one is marked
+            # global and carries its icon.
             if full:
                 try:
-                    if self._profiles[name_raw].get('global', False):
+                    glyph = name_glyph(self._cloud_name_by_name.get(name_raw))
+                    if glyph is not None:
+                        name = glyph + name
+                    elif self._profiles[name_raw].get('global', False):
                         icon = (
                             self._profiles[name_raw]['icon']
                             if 'icon' in self._profiles[name_raw]
@@ -950,9 +979,38 @@ class Chooser:
                 # least some hope of reading them in-game.
                 clamp = True
 
+        name = self._sanitize_name(name)
+
         if clamp:
-            if len(name) > 10:
-                name = name[:10] + '...'
+            # (The same shortening name depictions do; see
+            # bacommon.depiction.NameDepiction.max_chars.)
+            name = babase.shorten_name_text(name, bdep.IN_GAME_NAME_MAX_CHARS)
+        return name
+
+    def _sanitize_name(self, name: str) -> str:
+        """Make a name safe to show everyone."""
+        # A remote player without v2 auth has nothing verified: their
+        # account and profiles are just what they say they are, so
+        # their names show no icons (one could pass for an account or
+        # global profile they don't own).
+        try:
+            device = self._sessionplayer.inputdevice
+            verified = not device.is_remote_client or device.is_v2_authed()
+        except babase.InputDeviceNotFoundError:
+            verified = False  # (Gone; play it safe.)
+        if not verified:
+            name = babase.app.lang.remove_custom_unicode_chars(name)
+
+        # A name with nothing that draws (say, only zero-width or
+        # direction-mark chars) would leave a blank in everyone's lists
+        # and messages; use the device's default name instead.
+        if not has_visible_chars(name):
+            try:
+                name = self._sessionplayer.inputdevice.get_default_player_name()
+            except babase.InputDeviceNotFoundError:
+                name = ''
+            if not has_visible_chars(name):
+                name = '???'
         return name
 
     def _set_ready(self, ready: bool) -> None:

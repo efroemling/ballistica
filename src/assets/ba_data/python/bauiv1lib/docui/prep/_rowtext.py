@@ -52,12 +52,12 @@ _ROW_TITLE_LINE_HEIGHT = 30.0 * _ROW_TITLE_SCALE
 _ROW_SUBTITLE_HEIGHT = 30.0
 _ROW_SUBTITLE_LINE_HEIGHT = 22.0
 
-#: A footnote is a subtitle on the bottom of its row: same scale,
-#: color and per-line height. Its strip is the text's lines plus this
-#: much padding *below*; the text hugs the top of the strip so it
-#: reads as part of its own row rather than the next one -- the mirror
-#: of a subtitle, which hugs the content below it.
-_ROW_FOOTNOTE_PADDING_BOTTOM = 10.0
+# A footnote is a subtitle on the bottom of its row, and its mirror:
+# same scale, color, strip heights and per-line height, its text
+# centered in its strip just as a subtitle's is, so it sits as far
+# below its row's content as a subtitle sits above it (Eric,
+# 2026-10-26; it used to hug its strip's top, 4 closer, with 10 of
+# padding below).
 
 #: How far (center to center) a control row's label sits from the
 #: nearest line of its subtitle above or footnote below: the same as a
@@ -78,7 +78,7 @@ _TITLE_LAST_LINE_TO_BOTTOM = _ROW_TITLE_HEIGHT_NO_SUBTITLE - (
     _ROW_TITLE_HEIGHT_WITH_SUBTITLE * 0.5
 )
 _SUBTITLE_LAST_LINE_TO_BOTTOM = _ROW_SUBTITLE_HEIGHT * 0.5
-_FOOTNOTE_TOP_TO_FIRST_LINE = _ROW_SUBTITLE_LINE_HEIGHT * 0.5
+_FOOTNOTE_TOP_TO_FIRST_LINE = _ROW_SUBTITLE_HEIGHT * 0.5
 
 
 #: Time-varying texts already warned about in wrapped fields (see
@@ -153,11 +153,11 @@ def wrap_row_texts(
     *,
     width: float,
     margins: tuple[float, float, float, float],
-    buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
     native: NativeLangStrFn,
     where: str,
+    title_scale: float | None = None,
 ) -> TitledRow:
     """A copy of a row with its title/subtitle/footnote wrapped.
 
@@ -166,6 +166,8 @@ def wrap_row_texts(
     the same geometry), so everything downstream -- strip heights,
     reach checks, the widgets -- just sees text with more lines. The
     row itself (likely shared with a cached page) is left alone.
+    ``title_scale`` is the title's, if not a row title's (a heading's
+    is larger).
 
     :meta private:
     """
@@ -175,7 +177,6 @@ def wrap_row_texts(
         row_title_align(row),
         width=width,
         margins=margins,
-        buffers=buffers,
         header_insets=header_insets,
         center=center,
     )
@@ -198,7 +199,12 @@ def wrap_row_texts(
 
     return replace(
         row,
-        title=_wrap(row.title, _ROW_TITLE_SCALE, 'title', row.title_wrap),
+        title=_wrap(
+            row.title,
+            _ROW_TITLE_SCALE if title_scale is None else title_scale,
+            'title',
+            row.title_wrap,
+        ),
         subtitle=_wrap(
             row.subtitle, _ROW_SUBTITLE_SCALE, 'subtitle', row.subtitle_wrap
         ),
@@ -294,10 +300,11 @@ def row_footnote_height(row: TitledRow, native: NativeLangStrFn) -> float:
     """
     if row.footnote is None:
         return 0.0
+    # (The same strip a subtitle gets.)
     return (
         _row_footnote_spacing(row)
-        + _ROW_SUBTITLE_LINE_HEIGHT * line_count(row.footnote, native)
-        + _ROW_FOOTNOTE_PADDING_BOTTOM
+        + _ROW_SUBTITLE_HEIGHT
+        + _ROW_SUBTITLE_LINE_HEIGHT * (line_count(row.footnote, native) - 1)
     )
 
 
@@ -463,7 +470,6 @@ def prep_row_footnote(
     y: float,
     width: float,
     margins: tuple[float, float, float, float],
-    buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
     tdelaybase: float | None,
@@ -485,19 +491,16 @@ def prep_row_footnote(
         title_align,
         width=width,
         margins=margins,
-        buffers=buffers,
         header_insets=header_insets,
         center=center,
     )
-    # The text block sits just under the row's footnote spacing at the
-    # top of the strip; the padding sits below it (see
-    # _ROW_FOOTNOTE_PADDING_BOTTOM).
-    text_top = y + row_footnote_height(row, native) - _row_footnote_spacing(row)
-    text_height = _ROW_SUBTITLE_LINE_HEIGHT * line_count(row.footnote, native)
+    # The text block sits centered in the strip under the row's
+    # footnote spacing, as a subtitle's does in its own.
+    strip_height = row_footnote_height(row, native) - _row_footnote_spacing(row)
     rowprep.titlecalls.append(
         partial(
             bui.textwidget,
-            position=(title_x, text_top - text_height * 0.5),
+            position=(title_x, y + strip_height * 0.5),
             size=(0, 0),
             text=native(row.footnote, wrap=NO_WRAP),
             color=(
@@ -547,6 +550,27 @@ def _row_title_spacing(row: TitledRow) -> float:
     return row.spacing_title
 
 
+#: A control row's label color unless it (or its page) says otherwise.
+_CONTROL_LABEL_COLOR = (0.75, 1.0, 0.7, 1.0)
+
+
+def control_label_style(row: dui2.AnyControlRow) -> dict:
+    """Text-widget kwargs for a control row's label's look.
+
+    Its own (``label_color`` etc., with the page's text looks filled
+    in during prep), else the usual.
+
+    :meta private:
+    """
+    return {
+        'color': (
+            _CONTROL_LABEL_COLOR if row.label_color is None else row.label_color
+        ),
+        'flatness': row.label_flatness,
+        'shadow': row.label_shadow,
+    }
+
+
 def row_title_align(row: TitledRow) -> dui2.HAlign:
     """A row's effective title alignment.
 
@@ -569,7 +593,6 @@ def prep_row_titles(
     y: float,
     width: float,
     margins: tuple[float, float, float, float],
-    buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
     tdelaybase: float | None,
@@ -587,7 +610,6 @@ def prep_row_titles(
         title_align,
         width=width,
         margins=margins,
-        buffers=buffers,
         header_insets=header_insets,
         center=center,
     )
@@ -674,7 +696,6 @@ def row_text_x_and_maxwidth(
     *,
     width: float,
     margins: tuple[float, float, float, float],
-    buffers: tuple[float, float],
     header_insets: tuple[float, float],
     center: tuple[float, float],
 ) -> tuple[float, float]:
@@ -687,19 +708,16 @@ def row_text_x_and_maxwidth(
     :meta private:
     """
     margin_left, margin_right = margins[0], margins[1]
-    left_buffer, right_buffer = buffers
     header_inset_left, header_inset_right = header_insets
     maxwidth = (
         width
         - margin_left
         - margin_right
-        - left_buffer
-        - right_buffer
         - header_inset_left
         - header_inset_right
     )
     if align is dui2.HAlign.LEFT:
-        return margin_left + left_buffer + header_inset_left, max(1.0, maxwidth)
+        return margin_left + header_inset_left, max(1.0, maxwidth)
     if align is dui2.HAlign.CENTER:
         return center[0], max(1.0, center[1])
     if align is dui2.HAlign.RIGHT:
@@ -707,7 +725,7 @@ def row_text_x_and_maxwidth(
         # titles as far in from their buttons' edge as left-aligned
         # ones are from theirs: ~20 units.)
         return (
-            width - margin_right - right_buffer - header_inset_right,
+            width - margin_right - header_inset_right,
             max(1.0, maxwidth),
         )
     assert_never(align)

@@ -11,7 +11,7 @@ can be dragged around behind it.
 
 import weakref
 from enum import Enum
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs
@@ -347,17 +347,11 @@ def _page() -> dui2.Response:
         )
 
     rows: list[dui2.Row] = [
-        replace(
-            tstate.choice_row(
-                lambda s: s.movement,
-                choice_label=_movement_label,
-                label=_tsstrs.movement.spec,
-                on_change=apply,
-            ),
-            # How to reposition the controls (which are live behind
-            # us), and a word of encouragement for swipe controls.
-            header_height=80.0,
-            header_decorations_center=[
+        # How to reposition the controls (which are live behind us),
+        # and a word of encouragement for swipe controls.
+        dui2.HeaderRow(
+            80.0,
+            decorations_center=[
                 _band_text(
                     _tsstrs.drag_controls.spec,
                     22.0,
@@ -372,6 +366,12 @@ def _page() -> dui2.Response:
                     flatness=1.0,
                 ),
             ],
+        ),
+        tstate.choice_row(
+            lambda s: s.movement,
+            choice_label=_movement_label,
+            label=_tsstrs.movement.spec,
+            on_change=apply,
         ),
         _scale_row(
             lambda s: s.movement_scale, _tsstrs.movement_control_scale.spec

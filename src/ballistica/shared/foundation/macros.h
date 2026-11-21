@@ -70,6 +70,15 @@
 #define BA_DEBUG_TIME_CHECK_END(name, time) ((void)0)
 #endif
 
+// Keep a function out of line even in optimized builds. Handy for
+// splitting hot spots into separately-named stack frames so crash
+// reports can tell them apart.
+#if defined(_MSC_VER)
+#define BA_NOINLINE __declspec(noinline)
+#else
+#define BA_NOINLINE __attribute__((noinline))
+#endif
+
 // Disallow copying for a class.
 #define BA_DISALLOW_CLASS_COPIES(type) \
   type(const type& foo) = delete;      \

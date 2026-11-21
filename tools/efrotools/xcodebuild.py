@@ -7,6 +7,7 @@
 import json
 import os
 import sys
+import datetime
 import time
 import shlex
 import logging
@@ -31,10 +32,206 @@ if TYPE_CHECKING:
 @ioprepped
 @dataclass
 class SigningConfig:
-    """Info about signing."""
+    """Info about signing.
+
+    ``installer_certfile``/``installer_certpass`` optionally add a
+    second identity to the build's temp keychain: Mac App Store exports
+    sign the app with an Apple Distribution certificate (``certfile``)
+    and the uploaded ``.pkg`` with a Mac Installer Distribution one.
+    """
 
     certfile: str
     certpass: str
+    installer_certfile: str | None = None
+    installer_certpass: str | None = None
+
+
+@ioprepped
+@dataclass
+class AppleApiKey:
+    """An App Store Connect API key (localconfig ``apple_api_key``).
+
+    When present, builds that pass ``-allowProvisioningUpdates`` also
+    get the ``-authenticationKey*`` args, which lets xcodebuild create
+    and renew provisioning profiles with no Apple account signed in
+    (as over SSH).
+    """
+
+    keyfile: str
+    key_id: str
+    issuer_id: str
+
+
+def get_apple_api_key(projroot: str) -> AppleApiKey | None:
+    """Return the localconfig's App Store Connect API key, if any."""
+    lconfig = getlocalconfig(projroot=Path(projroot))
+    keydict = lconfig.get('apple_api_key')
+    if keydict is None:
+        return None
+    key = dataclass_from_dict(AppleApiKey, keydict)
+    if not os.path.exists(key.keyfile):
+        raise CleanError(
+            f"Apple API key file not found at '{key.keyfile}'"
+            ' (localconfig apple_api_key.keyfile).'
+        )
+    return key
+
+
+def apple_api_key_args(key: AppleApiKey) -> list[str]:
+    """Return the xcodebuild args that authenticate with an API key."""
+    return [
+        '-authenticationKeyPath',
+        key.keyfile,
+        '-authenticationKeyID',
+        key.key_id,
+        '-authenticationKeyIssuerID',
+        key.issuer_id,
+    ]
+
+
+#: Signing certs expiring within this many days get warned about.
+SIGNING_CERT_WARN_DAYS = 7
+
+#: Where the yearly signing-cert renewal steps live.
+SIGNING_RENEWAL_DOC = 'docs/design/apple-signing.md (private repo)'
+
+
+@dataclass
+class SigningCertInfo:
+    """A signing certificate's name and expiry."""
+
+    subject: str
+    not_after: datetime.datetime
+
+    def days_left(self) -> float:
+        """Days until expiry (negative once expired)."""
+        now = datetime.datetime.now(datetime.UTC)
+        return (self.not_after - now).total_seconds() / 86400.0
+
+
+def signing_cert_infos(config: SigningConfig) -> list[SigningCertInfo]:
+    """Return the identity certificates in a signing config's .p12.
+
+    Reads them with ``openssl`` (the password goes through the
+    environment, never the command line). Only the client certs that
+    pair with the private key are returned, not the CA chain.
+    """
+    env = dict(os.environ, EFRO_SIGNING_P12_PASS=config.certpass)
+    base = [
+        'openssl',
+        'pkcs12',
+        '-in',
+        config.certfile,
+        '-clcerts',
+        '-nokeys',
+        '-passin',
+        'env:EFRO_SIGNING_P12_PASS',
+    ]
+    # Keychain exports often use algorithms OpenSSL 3+ only reads in
+    # legacy mode; LibreSSL has no such flag. Try plain first.
+    result = subprocess.run(base, env=env, capture_output=True, check=False)
+    if result.returncode != 0:
+        result = subprocess.run(
+            base + ['-legacy'], env=env, capture_output=True, check=False
+        )
+    if result.returncode != 0:
+        errtext = result.stderr.decode(errors='replace').strip()
+        raise CleanError(
+            f"Unable to read signing cert '{config.certfile}': {errtext}"
+        )
+    pem = result.stdout.decode()
+    begin = '-----BEGIN CERTIFICATE-----'
+    out: list[SigningCertInfo] = []
+    for chunk in pem.split(begin)[1:]:
+        info = subprocess.run(
+            ['openssl', 'x509', '-noout', '-subject', '-enddate'],
+            input=(begin + chunk).encode(),
+            capture_output=True,
+            check=True,
+        ).stdout.decode()
+        subject = ''
+        not_after: datetime.datetime | None = None
+        for line in info.splitlines():
+            if line.startswith('subject='):
+                subject = line.removeprefix('subject=').strip()
+            elif line.startswith('notAfter='):
+                not_after = datetime.datetime.strptime(
+                    line.removeprefix('notAfter=').strip(),
+                    '%b %d %H:%M:%S %Y %Z',
+                ).replace(tzinfo=datetime.UTC)
+        if not_after is not None:
+            out.append(SigningCertInfo(subject=subject, not_after=not_after))
+    return out
+
+
+def check_signing_config(
+    name: str, config: SigningConfig, warn_days: float
+) -> str | None:
+    """Check a signing config's cert; return a warning, or None if fine.
+
+    Raises :class:`~efro.error.CleanError` if no cert in it is still
+    valid (every cloud build using it would fail to sign).
+    """
+    infos = signing_cert_infos(config)
+    if not infos:
+        raise CleanError(
+            f"Signing config '{name}' holds no identity certificate"
+            f" ('{config.certfile}')."
+        )
+    best = max(infos, key=lambda i: i.not_after)
+    days = best.days_left()
+    if days <= 0:
+        raise CleanError(
+            f"Signing config '{name}' has expired: its certificate"
+            f' ({best.subject}) expired on {best.not_after:%Y-%m-%d}, so'
+            f' every build signing with it fails (codesign reports'
+            f' errSecInternalComponent, or xcodebuild a bare code 65).'
+            f' Renew it: see {SIGNING_RENEWAL_DOC}.'
+        )
+    if days <= warn_days:
+        return (
+            f"Signing config '{name}' expires in {days:.0f} days"
+            f' ({best.not_after:%Y-%m-%d}; {best.subject}). Renew it'
+            f' soon: see {SIGNING_RENEWAL_DOC}.'
+        )
+    return None
+
+
+#: Recognizable causes of xcodebuild failures: (output substring, hint).
+_KNOWN_FAILURE_CAUSES: list[tuple[str, str]] = [
+    (
+        'errSecInternalComponent',
+        'codesign could not use the signing key. Usually the signing'
+        " config's certificate has expired (so automatic signing fell"
+        ' back to a login-keychain identity a non-interactive build'
+        f' cannot use); see {SIGNING_RENEWAL_DOC}.',
+    ),
+    (
+        'No signing certificate',
+        'No valid signing certificate was found; the signing config'
+        f' may have expired. See {SIGNING_RENEWAL_DOC}.',
+    ),
+    (
+        'requires a provisioning profile',
+        'Provisioning failed; make sure Xcode is signed in to the Apple'
+        ' account and the device is registered in the profile.',
+    ),
+    (
+        'No profiles for',
+        "No provisioning profile for the app's bundle id could be found"
+        ' or created. Builds passing -allowProvisioningUpdates create'
+        ' one themselves through the localconfig apple_api_key (an App'
+        ' Store Connect API key with the Admin or App Manager role); if'
+        ' that is missing, or this build does not pass the flag, do one'
+        ' device build of this scheme in the Xcode GUI on this machine'
+        f' while signed in. See {SIGNING_RENEWAL_DOC}.',
+    ),
+    (
+        'Asset bundle is out of date',
+        'The staged asset bundle is stale; assemble it outside Xcode'
+        ' (`make mac-staging`) and rebuild.',
+    ),
+]
 
 
 # HOW THIS WORKS:
@@ -125,6 +322,14 @@ class XCodeBuild:
         self._keychain_name = f'build{os.urandom(8).hex()}.keychain'
         self._keychain_pass = os.urandom(16).hex()
 
+        # Provisioning updates over SSH need API-key credentials (there
+        # is no signed-in Apple account there).
+        self._apple_api_key: AppleApiKey | None = (
+            get_apple_api_key(projroot)
+            if '-allowProvisioningUpdates' in args
+            else None
+        )
+
         self._signingconfigname: str | None = None
         self._signingconfig: SigningConfig | None = None
         if '-baSigningConfig' in args:
@@ -196,16 +401,12 @@ class XCodeBuild:
                 if self._returncode == 65:
                     # Generic xcodebuild build-failure code; can be
                     # anything from signing issues to filesystem
-                    # denials. Re-run with XCODEBUILDVERBOSE=1 to see
-                    # xcodebuild's actual output.
+                    # denials. Show what our output filter hid.
+                    self._print_failure_details()
                     raise CleanError(
-                        'Build failed with code 65.\n'
-                        'Re-run with XCODEBUILDVERBOSE=1 to see the'
-                        ' underlying xcodebuild output. Common causes'
-                        ' include expired/misconfigured signing certs'
-                        ' (make sure the current device is registered in'
-                        ' your provisioning profile) and filesystem'
-                        ' denials under sandboxes.'
+                        'Build failed with code 65 (see the details and'
+                        ' any likely cause above; XCODEBUILDVERBOSE=1'
+                        ' shows the full xcodebuild output).'
                     )
 
                 # Getting this error sometimes after xcode updates.
@@ -242,11 +443,52 @@ class XCodeBuild:
                     self._run_cmd(self._build_cmd_args())
 
             if self._returncode != 0:
+                self._print_failure_details()
                 raise CleanError(
                     f'Command failed with code {self._returncode}.'
                 )
         finally:
             self._tear_down_keychain()
+
+    def _print_failure_details(self) -> None:
+        """Print the parts of the full output that explain a failure.
+
+        Normal output is heavily filtered, which can hide the actual
+        cause of a failure (a build phase's own error message, or
+        xcodebuild's summary of the commands that failed). On failure we
+        print every error-looking line plus the tail of the raw output.
+        Skipped in verbose mode, which already printed everything.
+        """
+        if self._verbose:
+            return
+        lines = [line.rstrip('\n') for line in self._output]
+        errors: list[str] = []
+        markers = ('error:', 'errsec', 'failed with a nonzero exit code')
+        for line in lines:
+            lowered = line.lower()
+            if any(m in lowered for m in markers) and line not in errors:
+                errors.append(line)
+        fulltext = '\n'.join(lines)
+        hints = [hint for key, hint in _KNOWN_FAILURE_CAUSES if key in fulltext]
+        max_errors = 40
+        tail_lines = 30
+        print(
+            f'{Clr.RED}{Clr.BLD}xcodebuild failed; details from its'
+            f' output:{Clr.RST}',
+            flush=True,
+        )
+        if errors:
+            print(f'{Clr.RED}Error lines:{Clr.RST}')
+            for line in errors[:max_errors]:
+                print(f'  {line}')
+            if len(errors) > max_errors:
+                print(f'  ... and {len(errors) - max_errors} more.')
+        print(f'{Clr.RED}Last {tail_lines} lines of output:{Clr.RST}')
+        for line in lines[-tail_lines:]:
+            print(f'  {line}')
+        for hint in hints:
+            print(f'{Clr.YLW}{Clr.BLD}Likely cause: {hint}{Clr.RST}')
+        sys.stdout.flush()
 
     def _get_keychain_file_lock(self) -> FileLock:
         """Return a lock that we hold while mucking with keychain stuff."""
@@ -260,27 +502,8 @@ class XCodeBuild:
 
     def _set_up_keychain(self) -> None:
 
-        # NOTE TO FUTURE SELF:
-        #
-        # I go through this pain once a year when my dev signing config
-        # expires. This manifests as sudden signing errors for all apple
-        # cloud builds. Just making note what I had to do this year
-        # (2025) to get it working again.
-        #
-        # - Under 'Manage Certificates' in xcode, hover over existing
-        #   one (currently called MacBook Fro) and see that it has
-        #   expired.
-        #
-        # - Create new 'Apple Development' cert. Save it with existing
-        #   name and password for mac-dev from localconfig.
-        #
-        # - After this synced to FroMini, seems I needed to sign-in to
-        #   my apple account again for whatever reason in xcode. After
-        #   doing that and building things in the gui there, cloud
-        #   builds started working again.
-        #
-        # - NOTE TO SELF - looks like my dev-id certificate is set to
-        #   expire Jan 2027 so I'll need to make a new one.
+        # Signing certs expire yearly, which makes every cloud build
+        # fail to sign; renewal steps are in SIGNING_RENEWAL_DOC.
 
         # If we're specifying a signing configuration, this sets it up
         # via a temporary keychain.
@@ -288,6 +511,18 @@ class XCodeBuild:
         # And similarly https://xcodebuild.tips/pages/certificates-and-keys/
         if self._signingconfig is None:
             return
+
+        # Fail fast, with the actual reason, if the cert has expired
+        # (otherwise the build runs for minutes and then fails to sign
+        # with an opaque error).
+        assert self._signingconfigname is not None
+        warning = check_signing_config(
+            self._signingconfigname,
+            self._signingconfig,
+            warn_days=SIGNING_CERT_WARN_DAYS,
+        )
+        if warning is not None:
+            print(f'{Clr.YLW}Warning: {warning}{Clr.RST}', flush=True)
 
         # We're mucking with keychain settings here which is a global thing.
         # Let's try to at least avoid two of us mucking with it at once.
@@ -342,26 +577,39 @@ class XCodeBuild:
                 check=True,
                 capture_output=True,
             )
-            subprocess.run(
-                [
-                    'security',
-                    'import',
-                    self._signingconfig.certfile,
-                    '-k',
-                    self._keychain_name,
-                    '-f',
-                    'pkcs12',
-                    '-A',
-                    '-T',
-                    '/usr/bin/codesign',
-                    '-T',
-                    '/usr/bin/security',
-                    '-P',
-                    self._signingconfig.certpass,
-                ],
-                check=True,
-                capture_output=True,
-            )
+            certs = [
+                (self._signingconfig.certfile, self._signingconfig.certpass)
+            ]
+            if self._signingconfig.installer_certfile is not None:
+                certs.append(
+                    (
+                        self._signingconfig.installer_certfile,
+                        self._signingconfig.installer_certpass or '',
+                    )
+                )
+            for certfile, certpass in certs:
+                subprocess.run(
+                    [
+                        'security',
+                        'import',
+                        certfile,
+                        '-k',
+                        self._keychain_name,
+                        '-f',
+                        'pkcs12',
+                        '-A',
+                        '-T',
+                        '/usr/bin/codesign',
+                        '-T',
+                        '/usr/bin/productbuild',
+                        '-T',
+                        '/usr/bin/security',
+                        '-P',
+                        certpass,
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
             subprocess.run(
                 [
                     'security',
@@ -429,7 +677,10 @@ class XCodeBuild:
             raise RuntimeError(f'{flag} value not found') from exc
 
     def _build_cmd_args(self) -> list[str]:
-        return ['xcodebuild'] + self._args
+        cmd = ['xcodebuild'] + self._args
+        if self._apple_api_key is not None:
+            cmd += apple_api_key_args(self._apple_api_key)
+        return cmd
 
     def _run_cmd(self, cmd: list[str]) -> None:
         # reset some state
