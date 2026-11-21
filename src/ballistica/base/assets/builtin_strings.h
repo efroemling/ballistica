@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261014b"
+// Generated from: "a-0.babuiltinassets.261120"
 
 #include <memory>
 
@@ -65,7 +65,7 @@ class BuiltinStrings {
     /// item; the placeholder is the item name (may be raw text or a nested
     /// translated name).
     ///
-    /// English: "You got a {item}!"
+    /// English: "You got {item}!"
     static auto YouGotItem(LangStr::Sub item) -> std::shared_ptr<const LangStr>;
   };
 
@@ -119,7 +119,7 @@ class BuiltinStrings {
     /// is nearly always seen by the author, since dev/test versions only
     /// resolve for them).
     ///
-    /// English: "{detail} Fix the file in the source Workspace and try again."
+    /// English: "{detail} Fix the file in the source workspace and try again."
     static auto ContentErrorGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
@@ -201,6 +201,12 @@ class BuiltinStrings {
     /// English: "Error playing music: {music}"
     static auto MusicPlayError(LangStr::Sub music)
         -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message shown shortly after launch when the device's audio
+    /// couldn't be started at all; the game keeps running, silently.
+    ///
+    /// English: "Unable to start audio; the game will have no sound."
+    static auto Unavailable() -> std::shared_ptr<const LangStr>;
   };
 
   class Device {
@@ -218,16 +224,16 @@ class BuiltinStrings {
 
   class Input {
    public:
-    /// Short lowercase label identifying a numbered joystick axis by index;
-    /// used inline in axis-name displays such as the controls-configuration UI.
-    /// The {number} placeholder is the axis index.
+    /// Short label identifying a numbered joystick axis by index; used inline
+    /// in axis-name displays such as the controls-configuration UI. The
+    /// {number} placeholder is the axis index.
     ///
     /// English: "axis {number}"
     static auto Axis(LangStr::Sub number) -> std::shared_ptr<const LangStr>;
 
-    /// Short lowercase label identifying a numbered controller button by index;
-    /// used inline in button-name displays such as the controls-configuration
-    /// UI. The {number} placeholder is the button index.
+    /// Short label identifying a numbered controller button by index; used
+    /// inline in button-name displays such as the controls-configuration UI.
+    /// The {number} placeholder is the button index.
     ///
     /// English: "button {number}"
     static auto Button(LangStr::Sub number) -> std::shared_ptr<const LangStr>;
@@ -445,8 +451,8 @@ class BuiltinStrings {
     /// Screen-message when connecting fails because the host runs a NEWER game
     /// version (so updating locally will fix it).
     ///
-    /// English: "Host is running a newer version. Update your game and try
-    /// again."
+    /// English: "Host is running a newer version of the game. Update to the
+    /// latest version and try again."
     static auto IncompatibleNewerVersionHost()
         -> std::shared_ptr<const LangStr>;
 
@@ -490,6 +496,15 @@ class BuiltinStrings {
     /// English: "Left {name}'s party."
     static auto LeftParty(LangStr::Sub name) -> std::shared_ptr<const LangStr>;
 
+    /// Caption shown in the middle of the screen, under a 'connection down'
+    /// graphic, while connected to a game host (server) that has stopped
+    /// responding; {t} counts up live from when the host was last heard from
+    /// (e.g. '5s', '1m 5s').
+    ///
+    /// English: "No server contact for {t}"
+    static auto NoServerContact(LangStr::Sub t)
+        -> std::shared_ptr<const LangStr>;
+
     /// Screen-message when another player joins the party you are in; the
     /// placeholder is their display name.
     ///
@@ -514,8 +529,8 @@ class BuiltinStrings {
     /// Screen-message when connecting to game servers is refused because this
     /// app version is too old for them.
     ///
-    /// English: "Server functionality is no longer supported in this version of
-    /// the game; Please update to a newer version."
+    /// English: "Connecting to servers is no longer supported in this version
+    /// of the game; please update to a newer version."
     static auto ServerUnsupported() -> std::shared_ptr<const LangStr>;
 
     /// Error shown when something cannot be reached, most likely because there
@@ -523,6 +538,28 @@ class BuiltinStrings {
     ///
     /// English: "This is currently unavailable (no internet connection?)"
     static auto UnavailableNoConnection() -> std::shared_ptr<const LangStr>;
+  };
+
+  class Os {
+   public:
+    /// Message in the native Android dialog shown when the app hits an
+    /// unrecoverable error and must close; technical error details are appended
+    /// below it. The placeholder is the support email address. Generated into
+    /// native OS resource files.
+    ///
+    /// English: "Uh oh; something is missing or broken. Please try reinstalling
+    /// the app or contact {email} for help."
+    static auto FatalError(LangStr::Sub email)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Body text of the operating system's local-network permission prompt on
+    /// Apple platforms (Info.plist NSLocalNetworkUsageDescription). The OS
+    /// shows the app's name in the prompt's title, above this text. Generated
+    /// into native OS resource files.
+    ///
+    /// English: "Used to find and join games on your local network and to
+    /// connect controllers."
+    static auto LocalNetworkUsage() -> std::shared_ptr<const LangStr>;
   };
 
   class Plugins {
@@ -680,6 +717,14 @@ class BuiltinStrings {
     static auto KickVoteStarted(LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
 
+    /// Screen-message a game host sends a player whose game is too old for kick
+    /// votes when they try to kick someone; the placeholder is the minimum game
+    /// version number (such as 1.8.4).
+    ///
+    /// English: "Kick votes need version {version} or newer; please update."
+    static auto KickVotesNeedUpdate(LangStr::Sub version)
+        -> std::shared_ptr<const LangStr>;
+
     /// Screen-message showing how many more yes votes a kick vote needs to
     /// pass.
     ///
@@ -777,8 +822,8 @@ class BuiltinStrings {
 
     /// Limited-time offer to remove ads via a token pack.
     ///
-    /// English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE IN-GAME
-    /// ADS."
+    /// English: "LIMITED TIME OFFER: Purchase ANY token pack to remove in-game
+    /// ads."
     static auto RemoveAdsTokenOffer() -> std::shared_ptr<const LangStr>;
 
     /// Status shown while a free (zero-price) item is being requested; the
@@ -812,7 +857,7 @@ class BuiltinStrings {
     /// from those embedded components, so this entry must always exist here.
     ///
     /// English: "{t}"
-    static auto DurationValue(int64_t t) -> std::shared_ptr<const LangStr>;
+    static auto DurationValue(LangStr::Sub t) -> std::shared_ptr<const LangStr>;
 
     /// Compact hours suffix used in formatted time values.
     ///
@@ -835,9 +880,9 @@ class BuiltinStrings {
 
   class Ui {
    public:
-    /// Lowercase hint shown (with an error sound) when the player hits the edge
-    /// of a UI list; tells them how to move focus out of it. The two
-    /// placeholders are substituted with left/right arrow glyph characters.
+    /// Hint shown (with an error sound) when the player hits the edge of a UI
+    /// list; tells them how to move focus out of it. The two placeholders are
+    /// substituted with left/right arrow glyph characters.
     ///
     /// English: "press {left} or {right} to exit list"
     static auto ArrowsToExitList(LangStr::Sub left, LangStr::Sub right)
@@ -858,6 +903,12 @@ class BuiltinStrings {
     ///
     /// English: "Copied to clipboard."
     static auto CopiedToClipboard() -> std::shared_ptr<const LangStr>;
+
+    /// Generic label for a button that confirms and finishes an edit (used by
+    /// e.g. the native Android text-edit dialog's confirm button).
+    ///
+    /// English: "Done"
+    static auto Done() -> std::shared_ptr<const LangStr>;
 
     /// Generic Error title used on error dialogs (e.g. the boot-time asset-
     /// update dialog when a load fails).
@@ -949,7 +1000,7 @@ class BuiltinStrings {
     /// Generic screen-message for a failure with no more specific explanation
     /// available.
     ///
-    /// English: "Unknown error"
+    /// English: "unknown error"
     static auto UnknownError() -> std::shared_ptr<const LangStr>;
 
     /// Gentle non-urgent screen-message notice, shown once shortly after
@@ -975,14 +1026,14 @@ class BuiltinStrings {
 
     /// Error message that a workspace failed to sync.
     ///
-    /// English: "Error syncing Workspace {workspace}. See log for details."
+    /// English: "Error syncing workspace {workspace}. See log for details."
     static auto SyncError(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
 
     /// Notice that a previously synced workspace is being reused.
     ///
-    /// English: "Can't sync Workspace '{workspace}'. Reusing previously synced
-    /// version."
+    /// English: "Can't sync workspace '{workspace}'. Reusing the previously
+    /// synced version."
     static auto SyncReuse(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
   };

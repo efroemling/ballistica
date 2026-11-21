@@ -124,6 +124,7 @@ class LazyBuildCategory(Enum):
     ASSETS = 'assets_src'
     CODEGEN = 'codegen_src'
     CMAKE = 'cmake_src'
+    LINUX_PORTABLE_NATIVE = 'linux_portable_native_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
     VANILLA_COMPLETIONS = 'vanilla_completions_src'
@@ -199,6 +200,41 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 lambda root, dirname: not (
                     root == 'src'
                     and dirname in {'codegen', 'tools', 'external'}
+                )
+            ),
+            command=command,
+        ).run()
+
+    # Remote linux-portable binary builds (the Steam Deck iteration
+    # loop). Only what goes into the binary -- notably NOT src/assets,
+    # so a .py-only edit skips the remote build round trip entirely.
+    # (Embedded python is covered: pyembed generates into src/ballistica.)
+    elif category is LazyBuildCategory.LINUX_PORTABLE_NATIVE:
+        native_externals = {
+            'cpp-httplib',
+            'linux-portable-deps',
+            'linux-portable-deps-debug',
+            'monocypher',
+            'open_dynamics_engine-ef',
+            'qr_code_generator',
+            'stb',
+            'utfcpp',
+            'yyjson',
+            'zstd',
+        }
+        LazyBuildContext(
+            target=target,
+            buildlockname=None,
+            srcpaths=[
+                'src/ballistica',
+                'src/external',
+                'ballisticakit-cmake/CMakeLists.txt',
+                'tools/batools/linuxportable.py',
+                'tools/batools/linuxportableengine.py',
+            ],
+            dirfilter=(
+                lambda root, dirname: not (
+                    root == 'src/external' and dirname not in native_externals
                 )
             ),
             command=command,
@@ -735,11 +771,17 @@ def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
     return False
 
 
-def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
+def cmake_prep_dir(
+    dirname: str,
+    verbose: bool = False,
+    extra_entries: dict[str, str] | None = None,
+) -> None:
     """Create a dir, recreating it when cmake/python/etc. versions change.
 
     Useful to prevent builds from breaking when cmake or other components
-    are updated.
+    are updated. ``extra_entries`` adds caller-specific values that should
+    also force a fresh dir when they change (a build container image, a
+    configure-time option set, etc.).
     """
     import json
 
@@ -803,6 +845,9 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
         else ''
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
+
+    for name, value in (extra_entries or {}).items():
+        entries.append(Entry(name, value))
 
     # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')

@@ -70,6 +70,8 @@ class CorePython {
     kLoggerBaNetworkingLogCall,
     kLoggerBaDiscord,
     kLoggerBaDiscordLogCall,
+    kLoggerBaUser,
+    kLoggerBaUserLogCall,
     kPrependSysPathCall,
     kWarmStart1Call,
     kWarmStart1CompletedCall,

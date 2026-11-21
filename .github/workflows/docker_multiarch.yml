@@ -1,0 +1,66 @@
+name: Docker Multiarch Tags
+
+# Points a release's multiarch tags (bombsquad_server:<version> and
+# bombsquad_gui:<version>, plus :latest) at its per-arch images
+# (release_<version>_x86_64 / _arm64). The Release workflow calls this
+# once both arches are uploaded; run it by hand to redo the tags for an
+# already-published release (a re-run of Release would use the
+# workflow as of the tagged commit).
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Release tag, such as v1.8.8"
+        required: true
+        type: string
+      latest:
+        description: "Also point :latest at this release"
+        required: false
+        default: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, such as v1.8.8"
+        required: true
+        type: string
+      latest:
+        description: "Also point :latest at this release"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  tag_multiarch:
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [bombsquad_server, bombsquad_gui]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # imagetools (not 'docker manifest') because the per-arch images
+      # are pushed as manifest lists, which 'docker manifest create'
+      # refuses to nest.
+      - name: Create multiarch tags
+        env:
+          VERSION: ${{ inputs.version }}
+          LATEST: ${{ inputs.latest }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          repo="ghcr.io/${GITHUB_REPOSITORY,,}/${IMAGE}"
+          tags=(-t "${repo}:${VERSION}")
+          if [ "${LATEST}" = "true" ]; then
+            tags+=(-t "${repo}:latest")
+          fi
+          docker buildx imagetools create "${tags[@]}" \
+            "${repo}:release_${VERSION}_x86_64" \
+            "${repo}:release_${VERSION}_arm64"
+          docker buildx imagetools inspect "${repo}:${VERSION}"

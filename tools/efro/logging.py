@@ -343,7 +343,9 @@ class LogHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
 
         if __debug__:
-            starttime = time.monotonic()
+            # Each branch below sets the later stamps; starting them all
+            # here keeps every one defined on every path.
+            starttime = formattime = echotime = time.monotonic()
 
         # Called by logging to send us records.
 
@@ -437,8 +439,6 @@ class LogHandler(logging.Handler):
             )
 
         if __debug__:
-            # pylint: disable=used-before-assignment
-            #
             # Make noise if we're taking a significant amount of time
             # here. Limit the noise to once every so often though;
             # otherwise we could get a feedback loop where every log

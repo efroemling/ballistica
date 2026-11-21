@@ -121,9 +121,7 @@ class AssetGroup:
         self._node = node
         self._prefix = prefix
 
-    def __getattr__(
-        self, name: str
-    ) -> (
+    def __getattr__(self, name: str) -> (
         'AssetGroup | SimpleSoundHandle | TextureHandle'
         ' | MeshHandle | CubeMapTextureHandle'
     ):

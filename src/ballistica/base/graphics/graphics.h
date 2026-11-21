@@ -88,9 +88,11 @@ const millisecs_t kDebugVirtualBoundsABPeriod{1000};
 // the calibration target UIs are built against. Fixed virtual-unit
 // values on purpose - the margin UIs calibrate against must be
 // identical on every device and window shape - and sized to comfortably
-// exceed anything OS insets produce in the wild (worst current case is
-// an iPhone notch at roughly 100 units pre-bleed).
-const float kMaxVirtualBoundsMarginX = 80.0f;
+// exceed anything OS insets produce in the wild (worst known case is an
+// iPhone 17 Pro's 62pt landscape inset: about 111 units pre-bleed, 81
+// after kVirtualBoundsBleed's 30; it tripped the 80 x was originally,
+// hence 90).
+const float kMaxVirtualBoundsMarginX = 90.0f;
 const float kMaxVirtualBoundsMarginY = 40.0f;
 
 // Automatic screen-inset amounts (0-1; see Graphics::ScreenInsetAmount).

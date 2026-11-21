@@ -2,58 +2,107 @@
 #
 """Functionality related to net play."""
 
-import os
-import time
-import json
-import socket
 import asyncio
 import logging
-from enum import Enum
 from typing import TYPE_CHECKING, assert_never
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from efro.util import strip_exception_tracebacks
-from bacommon.assetpackage import ApverNum, AssetPackageResolveError
+from bacommon.assetpackage import AssetPackageResolveError
 
 import babase
 
 import _bascenev1
+from bascenev1._hostprobe import (
+    HostProbeOutcome,
+    HostRequirements,
+    probe_host,
+)
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Sequence
+
+    from bacommon.assetpackage import ApverNum
 
 netlog = logging.getLogger('ba.net')
-
-# Wire packet-type bytes; must match BA_PACKET_HOST_REQUIREMENTS_QUERY
-# / _RESPONSE and BA_PACKET_HOST_QUERY / _RESPONSE in
-# ballistica/base/networking/networking.h.
-_REQS_QUERY_PACKET_TYPE = 40
-_REQS_RESPONSE_PACKET_TYPE = 41
-_HOST_QUERY_PACKET_TYPE = 22
-_HOST_QUERY_RESPONSE_PACKET_TYPE = 23
-
-# First protocol whose hosts REQUIRE the pre-join requirements exchange
-# (must match kProtocolVersionLangStrWire in scene_v1.h). The legacy
-# discovery query (which every host generation answers) reports the
-# host's protocol, letting the probe distinguish 'legacy host with no
-# requirements' from 'new host whose requirements responses got lost'
-# by testimony rather than timeout.
-_LANG_STR_WIRE_PROTOCOL = 39
-
-# The exchange rides lossy UDP, so each page is retried a few times
-# with short waits. Once a host has *proven* alive-and-new (it answered
-# the discovery query reporting a lang-str-era protocol), the budget
-# extends: at that point silence is definitely loss, not oldness.
-_REQS_ATTEMPT_TIMEOUT = 0.75
-_REQS_PAGE_ATTEMPTS = 3
-_REQS_PAGE_ATTEMPTS_ALIVE = 8
-
-# Refuse to chase absurd page counts from a hostile/buggy host.
-_REQS_MAX_PAGES = 64
 
 # The in-flight pre-join task, if any (see connect_to_party's
 # latest-wins behavior).
 _g_prejoin_task: asyncio.Task[None] | None = None
+
+# The addresses/port of the in-flight pre-join, plus an id unique to
+# that request. Set synchronously by connect_to_party (the task itself
+# only starts on a later loop pass) so repeat requests are caught at
+# once.
+_g_prejoin_target: tuple[tuple[str, ...], int, int] | None = None
+_g_next_prejoin_id = 0
+
+# The addresses asked for in our most recent native connection attempt,
+# and the one it actually used (the probe's winner).
+_g_native_join: tuple[tuple[str, ...], str] | None = None
+
+# The package universe of the host we most recently connected to (None
+# if it advertised none).
+_g_joined_host_asset_packages: frozenset[ApverNum] | None = None
+
+
+def get_joined_host_asset_packages() -> frozenset[ApverNum] | None:
+    """The package universe of the host we last joined.
+
+    That is, the asset-package-versions it advertised before we
+    connected (which we resolved before connecting). None if it
+    advertised none (such as an older host).
+
+    :meta private:
+    """
+    return _g_joined_host_asset_packages
+
+
+def set_admins(admins: list[str]) -> None:
+    """Set the v2 account ids (a-XXX) of this host's admins.
+
+    Admins can't be kicked by vote, and kick anyone they choose to
+    without one. (Sets ``app.classic.host_ui.admins``.)
+
+    :meta private:
+    """
+    classic = babase.app.classic
+    if classic is not None:
+        classic.host_ui.admins = set(admins)
+
+
+def get_party_member_names() -> dict[int, str]:
+    """Each party member's name as party lists show it, by client id.
+
+    That's their account's name (or, if not signed in, their device's);
+    -1 is the host. Repeated names get numbered in roster order
+    ("iPhone", "iPhone 2", ...), which every peer sees the same, so the
+    host and its clients agree on who is who.
+
+    :meta private:
+    """
+    names: dict[int, str] = {}
+    counts: dict[str, int] = {}
+    for entry in _bascenev1.get_game_roster():
+        client_id = entry['client_id']
+        name = entry['display_string']
+        if not isinstance(client_id, int) or not isinstance(name, str):
+            continue
+        count = counts[name] = counts.get(name, 0) + 1
+        names[client_id] = name if count == 1 else f'{name} {count}'
+    return names
+
+
+def set_enable_default_kick_voting(enable: bool) -> None:
+    """Turn the standard kick-vote system on or off.
+
+    (Calls ``app.classic.host_ui.kick_votes.set_enabled()``.)
+
+    :meta private:
+    """
+    classic = babase.app.classic
+    if classic is not None:
+        classic.host_ui.kick_votes.set_enabled(enable)
 
 
 @dataclass
@@ -69,266 +118,23 @@ class HostInfo:
     # Note this can be None for non-ip hosts such as bluetooth.
     port: int | None
 
-
-@dataclass
-class HostRequirements:
-    """Everything a host requires of clients joining it.
-
-    Fetched from prospective hosts by the pre-join requirements query
-    (see :func:`connect_to_party`).
-    """
-
-    asset_packages: list[ApverNum] = field(default_factory=list)
-    password_required: bool = False
-
-
-class HostProbeOutcome(Enum):
-    """No-requirements outcomes of :func:`fetch_host_requirements`."""
-
-    #: The host answered the legacy discovery query reporting a
-    #: pre-lang-str protocol: a confirmed old host with no requirements
-    #: to fetch. Connect immediately.
-    LEGACY = 'legacy'
-
-    #: Nothing answered anything -- the address is unreachable, bogus,
-    #: or down. The plain connect attempt surfaces the error the user
-    #: actually cares about.
-    SILENT = 'silent'
-
-    #: The host proved alive AND lang-str-era (or began the exchange)
-    #: but never completed the requirements listing despite an extended
-    #: retry budget. Joining it unprepped could only strand; fail the
-    #: join like a standard connection failure.
-    UNRESPONSIVE = 'unresponsive'
-
-
-def fetch_host_requirements(
-    address: str, port: int
-) -> HostRequirements | HostProbeOutcome:
-    """Probe a prospective host for its join requirements.
-
-    Fires the paged UDP requirements query and the legacy discovery
-    query together (fragments merge across pages: lists concatenate,
-    scalars are first-seen; the discovery response's protocol version
-    disambiguates old hosts from packet loss without waiting out
-    timeouts). Blocking (network waits up to a few seconds); call from
-    a background thread.
-
-    Returns the host's :class:`HostRequirements`, or a
-    :class:`HostProbeOutcome` describing why there are none.
-    """
-    try:
-        infos = socket.getaddrinfo(address, port, type=socket.SOCK_DGRAM)
-    except OSError:
-        # Unresolvable address; let the real connect path report that.
-        return HostProbeOutcome.SILENT
-    family, stype, proto, _canonname, sockaddr = infos[0]
-
-    # Values here are parsed json, hence Any.
-    merged: dict[str, Any] = {}
-    try:
-        with socket.socket(family, stype, proto) as sock:
-            # Connecting the socket pins the peer address, so the kernel
-            # filters out datagrams from anyone but the host we asked.
-            sock.connect(sockaddr)
-
-            first = _probe_page_zero(sock)
-            if isinstance(first, HostProbeOutcome):
-                return first
-            resp_page_count, fragment = first
-            page_count = min(resp_page_count, _REQS_MAX_PAGES)
-            _merge_requirements_fragment(merged, fragment)
-
-            sock.settimeout(_REQS_ATTEMPT_TIMEOUT)
-            for page in range(1, page_count):
-                result = _fetch_requirements_page(sock, page)
-                if result is None:
-                    # The host proved itself new by answering page 0
-                    # but went dark mid-listing; joining on a partial
-                    # listing could only strand.
-                    return HostProbeOutcome.UNRESPONSIVE
-                _, fragment = result
-                _merge_requirements_fragment(merged, fragment)
-    except OSError:
-        return HostProbeOutcome.SILENT
-
-    asset_packages = merged.get('ap')
-    if not isinstance(asset_packages, list):
-        asset_packages = []
-    return HostRequirements(
-        # Hosts advertise numeric ids as text (engine package keys).
-        asset_packages=[
-            ApverNum(int(pkg))
-            for pkg in asset_packages
-            if isinstance(pkg, str) and pkg.isdigit()
-        ],
-        password_required=bool(merged.get('pw')),
-    )
-
-
-def _merge_requirements_fragment(
-    merged: dict[str, Any], fragment: dict[str, Any]
-) -> None:
-    for key, val in fragment.items():
-        if isinstance(val, list):
-            merged.setdefault(key, []).extend(val)
-        else:
-            merged.setdefault(key, val)
-
-
-def _probe_page_zero(
-    sock: socket.socket,
-) -> tuple[int, dict[str, Any]] | HostProbeOutcome:
-    """Run the combined discovery + requirements-page-0 probe.
-
-    Each attempt sends the requirements query for page 0 plus (until
-    one is answered) a legacy discovery query, then sorts incoming
-    datagrams for the remainder of the attempt window. A discovery
-    response reporting a pre-lang-str protocol short-circuits to
-    LEGACY; one reporting a lang-str-era protocol proves the host
-    alive-and-new, extending the retry budget and turning final
-    failure into UNRESPONSIVE rather than SILENT.
-    """
-    host_protocol: int | None = None
-    attempts = 0
-    while attempts < (
-        _REQS_PAGE_ATTEMPTS
-        if host_protocol is None
-        else _REQS_PAGE_ATTEMPTS_ALIVE
-    ):
-        attempts += 1
-        reqs_query_id = os.urandom(4)
-        disc_query_id = os.urandom(4)
-        try:
-            sock.send(
-                bytes([_REQS_QUERY_PACKET_TYPE])
-                + reqs_query_id
-                + _requirements_query_payload(0)
-            )
-            if host_protocol is None:
-                sock.send(bytes([_HOST_QUERY_PACKET_TYPE]) + disc_query_id)
-            deadline = time.monotonic() + _REQS_ATTEMPT_TIMEOUT
-            while True:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0.0:
-                    break
-                sock.settimeout(remaining)
-                data = sock.recv(1500)
-                if (
-                    len(data) >= 5
-                    and data[0] == _REQS_RESPONSE_PACKET_TYPE
-                    and data[1:5] == reqs_query_id
-                ):
-                    result = _parse_requirements_response(data, page=0)
-                    if result is None:
-                        # Malformed data won't improve with retries and
-                        # only a new host emits this packet type at all.
-                        return HostProbeOutcome.UNRESPONSIVE
-                    return result
-                if (
-                    host_protocol is None
-                    and len(data) >= 9
-                    and data[0] == _HOST_QUERY_RESPONSE_PACKET_TYPE
-                    and data[1:5] == disc_query_id
-                ):
-                    host_protocol = int.from_bytes(data[5:9], 'little')
-                    if host_protocol < _LANG_STR_WIRE_PROTOCOL:
-                        netlog.debug(
-                            'Discovery response reports legacy protocol'
-                            ' %d; no requirements to fetch.',
-                            host_protocol,
-                        )
-                        return HostProbeOutcome.LEGACY
-                    netlog.debug(
-                        'Discovery response reports protocol %d; host is'
-                        ' alive and requires the requirements exchange.',
-                        host_protocol,
-                    )
-        except OSError:
-            # Includes the attempt-window timeout; loop back around.
-            continue
-    return (
-        HostProbeOutcome.SILENT
-        if host_protocol is None
-        else HostProbeOutcome.UNRESPONSIVE
-    )
-
-
-def _requirements_query_payload(page: int) -> bytes:
-    return json.dumps(
-        {
-            'v': 1,
-            'b': babase.app.env.engine_build_number,
-            'p': page,
-        },
-        separators=(',', ':'),
-    ).encode()
-
-
-def _parse_requirements_response(
-    data: bytes, page: int
-) -> tuple[int, dict[str, Any]] | None:
-    """Validate/parse a requirements response datagram body.
-
-    Returns ``(page_count, requirements_fragment)``, or None for
-    malformed data (which won't improve with retries).
-    """
-    try:
-        response = json.loads(data[5:])
-    except ValueError:
-        return None
-    if not isinstance(response, dict):
-        return None
-    version = response.get('v')
-    if not isinstance(version, int) or version < 1:
-        return None
-    resp_page_count = response.get('n')
-    fragment = response.get('r')
-    if (
-        response.get('p') != page
-        or not isinstance(resp_page_count, int)
-        or resp_page_count < 1
-        or not isinstance(fragment, dict)
-    ):
-        return None
-    return resp_page_count, fragment
-
-
-def _fetch_requirements_page(
-    sock: socket.socket, page: int
-) -> tuple[int, dict[str, Any]] | None:
-    """Fetch a single requirements page over a connected UDP socket.
-
-    Returns ``(page_count, requirements_fragment)``, or None if the
-    host never produced a valid response for this page.
-    """
-    query = _requirements_query_payload(page)
-    for _attempt in range(_REQS_PAGE_ATTEMPTS):
-        query_id = os.urandom(4)
-        try:
-            sock.send(bytes([_REQS_QUERY_PACKET_TYPE]) + query_id + query)
-            while True:
-                data = sock.recv(1500)
-                if (
-                    len(data) >= 5
-                    and data[0] == _REQS_RESPONSE_PACKET_TYPE
-                    and data[1:5] == query_id
-                ):
-                    break
-        except OSError:
-            continue
-
-        # Got a response to *this* query; validate it. A host serving
-        # malformed data won't improve with retries, so treat that the
-        # same as no response.
-        return _parse_requirements_response(data, page)
-    return None
+    # Whether the host lets clients save it to their favorites (see
+    # :func:`set_host_allow_favorites`).
+    allow_favorites: bool = True
 
 
 def connect_to_party(
-    address: str, port: int = 43210, print_progress: bool = True
-) -> None:
+    address: str | Sequence[str],
+    port: int = 43210,
+    print_progress: bool = True,
+) -> bool:
     """Attempt to connect to a party at a given address.
+
+    ``address`` may be an IP address or hostname, or several of them
+    for the same host (say its IPv6 and IPv4 addresses, or every route
+    nearby discovery knows); they are raced, preferring earlier ones,
+    and the join uses whichever answers first (see
+    :func:`fetch_host_requirements`).
 
     Runs the pre-join requirements exchange first: the prospective host
     is asked what it requires of joiners (its asset-package listing,
@@ -339,20 +145,85 @@ def connect_to_party(
     connect; hosts new enough to require the exchange never get an
     unprepped connect (a failed exchange fails the join).
 
+    A request for the host a join is already in progress to is ignored
+    (players tend to tap a join button repeatedly, and restarting the
+    join each time would keep it from ever completing). Returns whether
+    a new join attempt was started.
+
     (internal)
     """
+    # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target, _g_next_prejoin_id
     assert babase.in_logic_thread()
+
+    addresses = (address,) if isinstance(address, str) else tuple(address)
+    if not addresses:
+        raise ValueError('No address given.')
+    label = addresses[0] if len(addresses) == 1 else ', '.join(addresses)
+
+    if _is_join_pending(addresses, port):
+        netlog.debug(
+            'Ignoring connect request for %s:%d; already joining it.',
+            label,
+            port,
+        )
+        return False
 
     # Latest-wins: a new connect request cancels any pre-join exchange
     # still in flight (the user clicked a different party).
-    global _g_prejoin_task  # pylint: disable=global-statement
     if _g_prejoin_task is not None and not _g_prejoin_task.done():
         _g_prejoin_task.cancel()
     _g_prejoin_task = None
 
+    prejoin_id = _g_next_prejoin_id
+    _g_next_prejoin_id += 1
+    _g_prejoin_target = (addresses, port, prejoin_id)
+
+    # Give immediate feedback; the requirements exchange can take a few
+    # seconds before the actual connect starts.
+    if print_progress:
+        # The wrapper import stays deferred: bascenev1 is fully imported
+        # by the time this runs; the cycle pylint sees is structural
+        # only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _builtinassets
+
+        babase.screenmessage(_builtinassets.strings.net.connecting)
+
     babase.app.create_async_task(
-        _prejoin_and_connect(address, port, print_progress),
-        name=f'connect_to_party {address}:{port}',
+        _prejoin_and_connect(
+            addresses, label, port, print_progress, prejoin_id
+        ),
+        name=f'connect_to_party {label}:{port}',
+    )
+    return True
+
+
+def _is_join_pending(addresses: tuple[str, ...], port: int) -> bool:
+    """Is a join to this host already underway?
+
+    Covers both the pre-join exchange and the native connection attempt
+    that follows it (which gets cleared if it fails or times out). Any
+    overlap with the addresses of the join underway counts.
+    """
+    if (
+        _g_prejoin_target is not None
+        and _g_prejoin_target[1] == port
+        and set(_g_prejoin_target[0]) & set(addresses)
+    ):
+        return True
+    info = _bascenev1.get_connection_to_host_info_2()
+    if info is None or info.port != port:
+        return False
+    if info.address in addresses:
+        return True
+    # The native connection uses the address that won the probe, which
+    # can differ from what was asked for (a hostname, a NAT64-translated
+    # literal, the IPv6 one of several...).
+    return (
+        _g_native_join is not None
+        and _g_native_join[1] == info.address
+        and bool(set(_g_native_join[0]) & set(addresses))
     )
 
 
@@ -536,9 +407,9 @@ def _interpret_probe_result(
 ) -> tuple[HostRequirements | None, bool]:
     """Translate a probe result into ``(requirements, proceed)``.
 
-    ``requirements`` is None for hosts with none (confirmed-legacy or
-    silent); ``proceed`` False means the join should be aborted (an
-    alive new host that wouldn't complete the exchange).
+    ``requirements`` is None for confirmed-legacy hosts (which have
+    none); ``proceed`` False means the join should be aborted (we
+    couldn't learn the host's requirements).
     """
     if isinstance(proberesult, HostRequirements):
         return proberesult, True
@@ -550,25 +421,17 @@ def _interpret_probe_result(
             port,
         )
         return None, True
-    if proberesult is HostProbeOutcome.SILENT:
-        netlog.debug(
-            'No probe response from %s:%d; proceeding to the plain'
-            ' connect (it surfaces unreachable-host errors).',
-            address,
-            port,
-        )
-        return None, True
-    if proberesult is HostProbeOutcome.UNRESPONSIVE:
-        # The host is alive and new but wouldn't complete the exchange;
-        # joining unprepped could only strand us (and the native
-        # handshake gate would refuse it anyway). Fail like a standard
-        # connection failure.
-        netlog.warning(
-            'Host %s:%d is alive but did not complete the requirements'
-            ' exchange; aborting join.',
-            address,
-            port,
-        )
+    if proberesult in (
+        HostProbeOutcome.SILENT,
+        HostProbeOutcome.UNRESPONSIVE,
+    ):
+        # We couldn't learn the host's requirements. Never connect
+        # anyway: a lang-str-era host would refuse the unprepped
+        # handshake (or we'd strand), and old hosts are identified by
+        # their discovery-query answer (LEGACY above), so silence
+        # proves nothing about age. Fail like a standard connection
+        # failure. (fetch_host_requirements already logged the
+        # details.)
         # The wrapper import stays deferred: bascenev1 is fully imported
         # by the time this runs; the cycle pylint sees is structural
         # only.
@@ -584,17 +447,28 @@ def _interpret_probe_result(
 
 
 async def _prejoin_and_connect(
-    address: str, port: int, print_progress: bool
+    addresses: tuple[str, ...],
+    address: str,
+    port: int,
+    print_progress: bool,
+    prejoin_id: int,
 ) -> None:
-    """Requirements exchange + content downloads + the actual connect."""
-    global _g_prejoin_task  # pylint: disable=global-statement
+    """Requirements exchange + content downloads + the actual connect.
+
+    (``address`` is a label for messages; ``addresses`` is what we
+    actually try.)
+    """
+    # pylint: disable=global-statement
+    global _g_prejoin_task, _g_prejoin_target, _g_native_join
     task = asyncio.current_task()
     _g_prejoin_task = task
     password = ''
     try:
         try:
-            proberesult = await babase.app.asyncio_loop.run_in_executor(
-                babase.app.threadpool, fetch_host_requirements, address, port
+            proberesult, connect_address = (
+                await babase.app.asyncio_loop.run_in_executor(
+                    babase.app.threadpool, probe_host, addresses, port
+                )
             )
         except asyncio.CancelledError:
             netlog.debug('Pre-join requirements fetch cancelled.')
@@ -605,6 +479,8 @@ async def _prejoin_and_connect(
         )
         if not proceed:
             return
+        # (Anything but a failure means some address answered.)
+        assert connect_address is not None
 
         if requirements is not None and requirements.password_required:
             # Password gate runs first: no point downloading content for
@@ -627,18 +503,53 @@ async def _prejoin_and_connect(
             ):
                 return
 
+        # Remember the host's package universe; it is fixed for the
+        # host's whole run (asset-packages.md decision #36), so it
+        # bounds what host-defined ui may reference for this whole
+        # connection.
+        global _g_joined_host_asset_packages  # pylint: disable=global-statement
+        _g_joined_host_asset_packages = (
+            None
+            if requirements is None
+            else frozenset(requirements.asset_packages)
+        )
+
         # Requirements are met (or the host has none); on to the
-        # actual connection attempt. The prepped flag tells the native
-        # layer the exchange ran; unprepped handshakes with
+        # actual connection attempt, at the resolved address that
+        # answered the probe -- never the raw text, which on an
+        # IPv6-only network (NAT64; what App Review tests on) may only
+        # work in its synthesized IPv6 form. The prepped flag tells the
+        # native layer the exchange ran; unprepped handshakes with
         # lang-str-era hosts get refused there as a structural
         # backstop.
+        if connect_address not in addresses:
+            netlog.debug(
+                'Joining %s:%d via %s.', address, port, connect_address
+            )
+        _g_native_join = (addresses, connect_address)
         _bascenev1.connect_to_party(
-            address,
+            connect_address,
             port=port,
             print_progress=print_progress,
             password=password,
             prepped=requirements is not None,
         )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        # A bug somewhere in the join path; don't leave the user
+        # staring at 'Connecting...' with nothing happening.
+        netlog.exception('Unexpected error joining %s:%d.', address, port)
+        strip_exception_tracebacks(exc)
+        # The wrapper import stays deferred: bascenev1 is fully imported
+        # by the time this runs; the cycle pylint sees is structural
+        # only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _builtinassets
+
+        babase.screenmessage(
+            _builtinassets.strings.net.connection_failed, color=(1, 0, 0)
+        )
     finally:
         if _g_prejoin_task is task:
             _g_prejoin_task = None
+        if _g_prejoin_target == (addresses, port, prejoin_id):
+            _g_prejoin_target = None

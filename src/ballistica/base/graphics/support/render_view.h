@@ -84,6 +84,13 @@ class RenderView : public Object {
   auto clear_color() const -> const Vector3f& { return clear_color_; }
   void set_clear_color(const Vector3f& val) { clear_color_ = val; }
 
+  /// Whether our texture has an alpha channel and starts each frame
+  /// fully transparent (clear color ignored), so what we draw can be
+  /// composited over whatever is behind it (texture views only). Our
+  /// texture is premultiplied, so draw it as such.
+  auto transparent() const -> bool { return transparent_; }
+  void set_transparent(bool val) { transparent_ = val; }
+
   /// The texture we draw to (texture views only). Draw this anywhere
   /// a texture can be drawn; its being drawn in a frame is what gets
   /// our world drawn for that frame, so a view nothing is showing
@@ -99,6 +106,12 @@ class RenderView : public Object {
   void set_last_drawn_frame_number(int64_t val) {
     last_drawn_frame_number_ = val;
   }
+
+  /// Called just before our camera is applied to a frame being built,
+  /// then DrawWorld(): for advancing whatever moves with drawing and
+  /// setting the camera up to match (its clip range, say). Texture
+  /// views only, like DrawWorld().
+  virtual void PrepareFrame(FrameDef* frame_def);
 
   /// Draw our world into the current view of a frame being built.
   /// Called for texture views that something has drawn the texture of
@@ -236,6 +249,7 @@ class RenderView : public Object {
   int height_{};
   GraphicsQuality max_quality_{GraphicsQuality::kHigher};
   Vector3f clear_color_{0.0f, 0.0f, 0.0f};
+  bool transparent_{};
   int64_t last_drawn_frame_number_{-1};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<Camera> camera_;

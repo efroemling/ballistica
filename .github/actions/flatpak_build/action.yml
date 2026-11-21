@@ -28,7 +28,10 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt install -y flatpak flatpak-builder
+        # (Builds use Flathub's packaged org.flatpak.Builder, which
+        # 'make flatpak-deps' installs; the distro's flatpak-builder
+        # is too old for the manifest.)
+        sudo apt install -y flatpak
 
     - name: Install flatpak build dependencies
       shell: bash

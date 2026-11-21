@@ -11,7 +11,7 @@ can be dragged around behind it.
 
 import weakref
 from enum import Enum
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs
@@ -34,7 +34,11 @@ if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
     from bacommon.langstr import LangStrSpec
 
-    from bauiv1lib.docui import DocUILocalAction, DocUIWindow
+    from bauiv1lib.docui import (
+        DocUILocalAction,
+        DocUIWindow,
+        WindowOptions,
+    )
 
 _tsstrs = _classicassets.strings.settings.controllers.touchscreen
 
@@ -191,7 +195,7 @@ class TouchscreenSettingsController(
         auxiliary_style: bool = True,
         uiopenstateid: str | None = None,
         suppress_win_extra_type_warning: bool = False,
-        layout: bacommon.docui.v2.WindowLayout | None = None,
+        options: WindowOptions | None = None,
     ) -> DocUIWindow:
         win = super().create_window(
             request,
@@ -200,7 +204,7 @@ class TouchscreenSettingsController(
             auxiliary_style=auxiliary_style,
             uiopenstateid=uiopenstateid,
             suppress_win_extra_type_warning=suppress_win_extra_type_warning,
-            layout=layout,
+            options=options,
         )
         _TouchEditing.hold_for(win)
         return win
@@ -343,17 +347,11 @@ def _page() -> dui2.Response:
         )
 
     rows: list[dui2.Row] = [
-        replace(
-            tstate.choice_row(
-                lambda s: s.movement,
-                choice_label=_movement_label,
-                label=_tsstrs.movement.spec,
-                on_change=apply,
-            ),
-            # How to reposition the controls (which are live behind
-            # us), and a word of encouragement for swipe controls.
-            header_height=80.0,
-            header_decorations_center=[
+        # How to reposition the controls (which are live behind us),
+        # and a word of encouragement for swipe controls.
+        dui2.HeaderRow(
+            80.0,
+            decorations_center=[
                 _band_text(
                     _tsstrs.drag_controls.spec,
                     22.0,
@@ -368,6 +366,12 @@ def _page() -> dui2.Response:
                     flatness=1.0,
                 ),
             ],
+        ),
+        tstate.choice_row(
+            lambda s: s.movement,
+            choice_label=_movement_label,
+            label=_tsstrs.movement.spec,
+            on_change=apply,
         ),
         _scale_row(
             lambda s: s.movement_scale, _tsstrs.movement_control_scale.spec

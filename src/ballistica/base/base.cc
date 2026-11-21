@@ -2,7 +2,9 @@
 
 #include "ballistica/base/base.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <optional>
 #include <string>
@@ -44,6 +46,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/fatal_error.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
@@ -357,6 +360,7 @@ void BaseFeatureSet::SuspendApp() {
     // good to go.
     running_loops = EventLoop::GetStillSuspendingEventLoops();
     if (running_loops.empty()) {
+      suspend_end_app_time_millisecs_ = g_core->AppTimeMillisecs();
       if (g_buildconfig.debug_build()) {
         g_core->logging->Log(
             LogName::kBa, LogLevel::kDebug,
@@ -373,6 +377,8 @@ void BaseFeatureSet::SuspendApp() {
     core::Platform::SleepMillisecs(1);
   } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
+
+  suspend_end_app_time_millisecs_ = g_core->AppTimeMillisecs();
 
   // If we made it here, we timed out. Complain.
   std::string msg =
@@ -424,6 +430,13 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
+  // Say what each straggler is doing; a loop that never suspends is
+  // usually stuck inside one call.
+  for (auto* loop : running_loops) {
+    msg +=
+        "\n  " + loop->name() + " thread is " + loop->DescribeActivity() + ".";
+  }
+
   g_core->logging->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
@@ -443,6 +456,21 @@ void BaseFeatureSet::UnsuspendApp() {
       + std::to_string(core::Platform::TimeMonotonicMillisecs()));
   app_suspended_ = false;
 
+  // App-time should not advance while we're suspended. It clamps each
+  // jump between reads to a fraction of a second, so the first read
+  // after a freeze barely moves it; a big advance means something kept
+  // reading it while we were supposed to be frozen, and timers on
+  // app-time will have run through the suspension.
+  millisecs_t suspended_app_time_advance{g_core->AppTimeMillisecs()
+                                         - suspend_end_app_time_millisecs_};
+  if (suspended_app_time_advance > 1000) {
+    BA_LOG_ONCE(LogName::kBaLifecycle, LogLevel::kWarning,
+                "App-time advanced "
+                    + std::to_string(suspended_app_time_advance)
+                    + "ms while the app was suspended; expected (nearly) 0. "
+                      "Something kept reading app-time during the suspend.");
+  }
+
   // Spin all event-loops back up.
   EventLoop::SetEventLoopsSuspended(false);
 
@@ -456,8 +484,63 @@ void BaseFeatureSet::UnsuspendApp() {
         "UnsuspendApp() completed in "
             + std::to_string(core::Platform::TimeMonotonicMillisecs()
                              - start_time)
-            + "ms.");
+            + "ms (app-time advanced "
+            + std::to_string(suspended_app_time_advance)
+            + "ms while suspended).");
   }
+}
+
+void BaseFeatureSet::DebugSimulateSuspend(seconds_t duration) {
+  // Public builds are never developer builds.
+  bool allowed{};
+  if (!allowed) {
+    throw Exception("Only available in developer builds.");
+  }
+  // Platforms whose OS runs the main thread suspend for real; only
+  // builds running their own main loop can fake it.
+  if (!app_adapter->ManagesMainThreadEventLoop()) {
+    throw Exception("Not available on this platform.");
+  }
+  if (duration < 0.0 || duration > 600.0) {
+    throw Exception("Duration must be between 0 and 600 seconds.");
+  }
+  app_adapter->PushMainThreadCall([duration] {
+    assert(g_base->InMainThread());
+    if (g_base->app_suspended()) {
+      g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kWarning,
+                           "DebugSimulateSuspend: app is already suspended.");
+      return;
+    }
+    g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo, [duration] {
+      char buffer[64];
+      snprintf(buffer, sizeof(buffer), "%.1f", duration);
+      return std::string("Simulating app suspend for ") + buffer + "s.";
+    });
+
+    // Same order as mobile: go inactive, then suspend (SuspendApp waits
+    // for the inactive state to be applied).
+    bool was_active{g_base->app_active()};
+    if (was_active) {
+      g_base->SetAppActive(false);
+    }
+    g_base->SuspendApp();
+
+    // Now freeze like a backgrounded process: the main thread blocks,
+    // and holding the GIL stops every Python thread as well. (Event-loop
+    // threads are already parked and our UDP sockets are closed.)
+    {
+      Python::ScopedInterpreterLock gil;
+      core::Platform::SleepMillisecs(
+          static_cast<millisecs_t>(duration * 1000.0));
+    }
+
+    g_base->UnsuspendApp();
+    if (was_active) {
+      g_base->SetAppActive(true);
+    }
+    g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                         "Simulated app suspend complete; resumed.");
+  });
 }
 
 void BaseFeatureSet::OnAppShutdownComplete() {
@@ -500,6 +583,11 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
       app_mode_->OnDeactivate();
     }
 
+    // Music never carries across app-modes. The outgoing mode should
+    // have stopped its own; this catches any that didn't. (Other sounds
+    // are left alone so ui sounds aren't cut off by the switch.)
+    audio_server->PushStopMusicCall();
+
     // Set and build up new one.
     app_mode_ = mode;
 
@@ -513,6 +601,19 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     input->RebuildInputDeviceDelegates();
 
     app_mode_->OnActivate();
+
+    // Bring our local-network listener up or down to match what the new
+    // mode wants. We apply this only once the new mode is active, so the
+    // socket stays up (and remote-app connections survive) across
+    // switches between modes that both want it.
+    {
+      bool classic_networking = app_mode_->WantsClassicNetworking();
+      bool remote_app_server = app_mode_->WantsRemoteAppServer();
+      app_adapter->PushMainThreadCall([classic_networking, remote_app_server] {
+        g_base->network_reader->SetWantedFeatures(classic_networking,
+                                                  remote_app_server);
+      });
+    }
 
     // Let some stuff know.
     logic->OnAppModeChanged();
@@ -543,6 +644,117 @@ void BaseFeatureSet::RunAppToCompletion() {
   Python::ScopedInterpreterLockRelease gil_release;
 
   g_base->app_adapter->RunMainThreadEventLoopToCompletion();
+
+  StopEventLoopThreads_();
+}
+
+void BaseFeatureSet::StopEventLoopThreads_() {
+  assert(g_core->InMainThread());
+  assert(!Python::HaveGIL());
+
+  // One deadline for all of this, a bit ahead of the shutdown suicide
+  // timer, so a thread that won't stop gets reported as such here
+  // rather than surfacing as a timed-out-shutdown fatal error. The
+  // margin also has to clear the faulthandler traceback dump, which
+  // fires a couple seconds before the suicide timer (see
+  // BasePython::ShutdownFaultHandlerArm()).
+  const millisecs_t margin = 4000;
+  auto now = core::Platform::TimeMonotonicMillisecs();
+  auto deadline = g_core->suicide_deadline()
+                      ? *g_core->suicide_deadline() - margin
+                      : now + 5000;
+  auto remaining = [deadline] {
+    return std::max(millisecs_t{0},
+                    deadline - core::Platform::TimeMonotonicMillisecs());
+  };
+
+  // These are normally near-instant (every loop is idle by now), so
+  // anything slow is worth noise even when it does finish in time.
+  const millisecs_t slow_threshold = 500;
+  auto start_time = now;
+  auto wait_for = [&](EventLoop* loop) -> bool {
+    auto wait_start = core::Platform::TimeMonotonicMillisecs();
+    if (loop->WaitForStopped(std::min(remaining(), slow_threshold))) {
+      return true;
+    }
+    g_core->logging->Log(
+        LogName::kBaLifecycle, LogLevel::kWarning,
+        "Still waiting for the " + loop->name() + " thread to stop after "
+            + std::to_string(core::Platform::TimeMonotonicMillisecs()
+                             - wait_start)
+            + "ms; giving up in " + std::to_string(remaining()) + "ms.");
+    return loop->WaitForStopped(remaining());
+  };
+
+  std::vector<std::string> stuck;
+
+  // The logic thread stops its own loop as the last step of shutdown.
+  // It must stop (and let go of the GIL) before Python gets finalized,
+  // so nothing there can call into a dying interpreter. (We wait
+  // without the GIL; it may need it to finish its last cycle.) It also
+  // feeds the other loops, so it goes first.
+  EventLoop* logic_loop = logic->event_loop();
+  bool logic_stopped = wait_for(logic_loop);
+  if (!logic_stopped) {
+    stuck.emplace_back(logic_loop->name());
+  }
+
+  // Then the loops it feeds. Signal them all, then wait on them all.
+  std::vector<EventLoop*> loops;
+  for (auto* loop :
+       {assets_server->event_loop(), audio_server->event_loop(),
+        bg_dynamics_server ? bg_dynamics_server->event_loop() : nullptr,
+        network_writer->event_loop()}) {
+    if (loop != nullptr) {
+      loops.push_back(loop);
+    }
+  }
+  if (logic_stopped) {
+    for (auto* loop : loops) {
+      loop->RequestExit();
+    }
+    for (auto* loop : loops) {
+      if (!wait_for(loop)) {
+        stuck.emplace_back(loop->name());
+      }
+    }
+  }
+
+  if (!stuck.empty()) {
+    // Something is wedged, possibly while holding the GIL, so we can't
+    // safely take the GIL back to finalize Python (or even to log
+    // through Python). Rather than hanging here or crashing somewhere
+    // misleading in finalization, get out as cleanly as we can, and
+    // report it. Anything still buffered on the Python side is lost.
+    std::string names;
+    for (auto&& name : stuck) {
+      names += (names.empty() ? "" : ", ") + name;
+    }
+    std::string msg = "Thread(s) did not stop after shutdown completed: "
+                      + names + "; exiting without finalizing Python.";
+
+    // Lets tests tag one specific report (see BA_CRASH_TEST_TOKEN in
+    // MonolithicMain()).
+    if (const char* token = getenv("BA_CRASH_TEST_TOKEN")) {
+      if (token[0] != '\0') {
+        msg += std::string(" token=") + token;
+      }
+    }
+    FatalErrorHandling::DoUncleanShutdown(msg);
+  }
+
+  // Everything stopped; the threads are just returning now.
+  logic_loop->JoinThread();
+  for (auto* loop : loops) {
+    loop->JoinThread();
+  }
+
+  auto duration = core::Platform::TimeMonotonicMillisecs() - start_time;
+  g_core->logging->Log(
+      LogName::kBaLifecycle,
+      duration > slow_threshold ? LogLevel::kWarning : LogLevel::kDebug,
+      "Stopped and joined event-loop threads in " + std::to_string(duration)
+          + "ms.");
 }
 
 auto BaseFeatureSet::HavePlus() -> bool {

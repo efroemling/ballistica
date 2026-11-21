@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261012`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261118a`` (bauiv1).
 
 The catalog of classic content as menus and the store present it: map names and
 previews, game names and descriptions, co-op level names, and the currency and
@@ -14,7 +14,7 @@ on it.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 648
+# ba_meta require asset-package 1255
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -28,8 +28,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccatalogassets.261012
-_ASSET_PACKAGE = ApverNum(648)
+# a-0.baclassiccatalogassets.261118a
+_ASSET_PACKAGE = ApverNum(1255)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -250,7 +250,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Carry the flag for {arg1} seconds"
+                English: "carry the flag for {arg1} seconds"
             """
 
         def crush_of_your_enemies(self, *, arg1: str | LangStr) -> LangStr:
@@ -317,7 +317,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Defeat {arg1} enemies"
+                English: "kill {arg1} enemies"
             """
 
         #: ::
@@ -382,7 +382,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Return {arg1} flags"
+                English: "return {arg1} flags"
             """
 
         #: ::
@@ -428,7 +428,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Run {arg1} laps"
+                English: "run {arg1} laps"
             """
 
         def run_laps_your_entire_team_has(
@@ -492,7 +492,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Score {arg1} goals"
+                English: "score {arg1} goals"
             """
 
         #: ::
@@ -535,7 +535,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Secure all {arg1} flags"
+                English: "secure all {arg1} flags"
             """
 
         #: ::
@@ -571,7 +571,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Secure the flag for {arg1} seconds"
+                English: "secure the flag for {arg1} seconds"
             """
 
         #: ::
@@ -610,7 +610,7 @@ if TYPE_CHECKING:
 
                 Minigame objective description (start-of-match / game lists).
 
-                English: "Touch {arg1} flags"
+                English: "touch {arg1} flags"
             """
 
         #: ::

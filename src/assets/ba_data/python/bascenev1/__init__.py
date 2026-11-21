@@ -48,6 +48,12 @@ from babase import (
     lock_all_input,
     Lstr,
     translate_server_text,
+    NearbyGameInfo,
+    NearbyHost,
+    NearbyRoute,
+    NearbyRouteType,
+    NearbyScan,
+    NearbyService,
     NodeNotFoundError,
     normalized_color,
     NotFoundError,
@@ -89,7 +95,7 @@ from _bascenev1 import (
     disconnect_client,
     disconnect_from_host,
     emitfx,
-    end_host_scanning,
+    get_chat_message_senders,
     get_chat_messages,
     get_client_ping,
     get_connection_to_host_info,
@@ -100,6 +106,8 @@ from _bascenev1 import (
     get_input_devices,
     get_game_port,
     get_game_roster,
+    host_ui_send_to_client,
+    host_ui_send_to_host,
     get_local_active_input_devices_count,
     get_public_party_enabled,
     get_public_party_max_size,
@@ -122,7 +130,7 @@ from _bascenev1 import (
     gettexture,
     have_connected_clients,
     have_touchscreen_input,
-    host_scan_cycle,
+    player_spec_display_string,
     InputDevice,
     is_in_replay,
     is_replay_paused,
@@ -149,12 +157,11 @@ from _bascenev1 import (
     broadcastmessage,
     SessionData,
     SessionPlayer,
-    set_admins,
     set_authenticate_clients,
     set_debug_speed_exponent,
+    set_host_allow_favorites,
     set_host_password,
     set_hosting_asset_packages,
-    set_enable_default_kick_voting,
     set_internal_music,
     set_map_bounds,
     set_master_server_source,
@@ -183,6 +190,7 @@ from bascenev1._generated.scene_asset_set import (
 )
 from bascenev1._assetref import (
     texture_from_ref,
+    texture_spec_from_ref,
     TextureHandle,
     MeshHandle,
     SoundHandle,
@@ -192,7 +200,12 @@ from bascenev1._assetref import (
 from bascenev1._actor import Actor
 from bascenev1._actorhost import ActorHost
 from bascenev1._campaign import init_campaigns, Campaign
-from bascenev1._character import CharacterParts, name_text, split_character
+from bascenev1._character import (
+    CharacterParts,
+    name_text,
+    plain_name_json,
+    split_character,
+)
 from bascenev1._collision import Collision, getcollision
 from bascenev1._coopgame import CoopGameActivity
 from bascenev1._coopsession import CoopSession
@@ -256,13 +269,19 @@ from bascenev1._multiteamsession import (
     DEFAULT_TEAM_NAMES,
 )
 from bascenev1._music import MusicType, setmusic
-from bascenev1._net import (
-    connect_to_party,
+from bascenev1._hostprobe import (
     fetch_host_requirements,
-    HostInfo,
     HostProbeOutcome,
     HostRequirements,
+)
+from bascenev1._net import (
+    connect_to_party,
+    get_joined_host_asset_packages,
+    get_party_member_names,
+    HostInfo,
     resolve_asset_packages_with_dialog,
+    set_admins,
+    set_enable_default_kick_voting,
 )
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
@@ -320,6 +339,7 @@ __all__ = [
     'get_input_devices',
     'getlocaldisplay',
     'texture_from_ref',
+    'texture_spec_from_ref',
     'Activity',
     'ActivityData',
     'ActivityNotFoundError',
@@ -392,7 +412,6 @@ __all__ = [
     'emitfx',
     'EmptyPlayer',
     'EmptyTeam',
-    'end_host_scanning',
     'existing',
     'fade_screen',
     'filter_playlist',
@@ -403,6 +422,7 @@ __all__ = [
     'GameActivity',
     'GameResults',
     'GameTip',
+    'get_chat_message_senders',
     'get_chat_messages',
     'get_client_ping',
     'get_connection_to_host_info',
@@ -417,6 +437,10 @@ __all__ = [
     'get_game_port',
     'get_game_roster',
     'get_game_roster',
+    'get_joined_host_asset_packages',
+    'get_party_member_names',
+    'host_ui_send_to_client',
+    'host_ui_send_to_host',
     'get_local_active_input_devices_count',
     'get_map_class',
     'get_map_display_string',
@@ -451,7 +475,6 @@ __all__ = [
     'HostInfo',
     'HostProbeOutcome',
     'HostRequirements',
-    'host_scan_cycle',
     'ImpactDamageMessage',
     'increment_analytics_count',
     'init_campaigns',
@@ -483,6 +506,12 @@ __all__ = [
     'prepare_replay',
     'launch_replay',
     'name_text',
+    'NearbyGameInfo',
+    'NearbyHost',
+    'NearbyRoute',
+    'NearbyRouteType',
+    'NearbyScan',
+    'NearbyService',
     'newactivity',
     'newnode',
     'Node',
@@ -501,6 +530,8 @@ __all__ = [
     'PlayerNotFoundError',
     'PlayerRecord',
     'PlayerScoredMessage',
+    'player_spec_display_string',
+    'plain_name_json',
     'Plugin',
     'PowerupAcceptMessage',
     'PowerupMessage',
@@ -534,6 +565,7 @@ __all__ = [
     'set_authenticate_clients',
     'set_debug_speed_exponent',
     'set_enable_default_kick_voting',
+    'set_host_allow_favorites',
     'set_host_password',
     'set_hosting_asset_packages',
     'set_internal_music',

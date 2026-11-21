@@ -2,33 +2,36 @@
 #
 """Pieces of a doc-ui window that get built apart from it."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 
 import bauiv1 as bui
 from bauiv1 import _classiccatalogassets
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+
+from bauiv1lib.docui._panes import scroll_widget_rect
 
 if TYPE_CHECKING:
     import bacommon.depiction as bdep
     from bacommon.docui import DocUIResponse
 
     from bauiv1lib.docui._controller import DocUIController
+    from bauiv1lib.docui._frame import WindowFrame
 
-#: Tint for the frame the viewer pane's mask draws around it.
-_VIEWER_FRAME_COLOR = (0.45, 0.4, 0.62)
+#: What a framed viewer pane shows behind its content by default (and
+#: all it shows while it has nothing): the window backing's color as it
+#: reads on screen (the default container tint times its texture,
+#: measured off a screenshot), so an empty pane blends into the window
+#: around it. Also what live viewers shown elsewhere draw behind their
+#: content by default.
+VIEWER_BLANK_COLOR = (0.3, 0.28, 0.37)
 
-#: What the viewer pane shows while it has nothing to (and what its
-#: content fades in from): the window backing's color as it reads on
-#: screen (the default container tint times its texture, measured off a
-#: screenshot), so an empty pane blends into the window around it.
-_VIEWER_BLANK_COLOR = (0.3, 0.28, 0.37)
-
-#: The depiction each pane key last showed, so a rebuilt window's pane
-#: carries on showing it until its page arrives (see ViewerPane).
+#: The depiction (json) and background each pane key last showed, so a
+#: rebuilt window's pane carries on showing them until its page arrives
+#: (see ViewerPane).
 _g_last_depictions: dict[str, str] = {}
+_g_last_backgrounds: dict[str, tuple[float, float, float, float] | None] = {}
 
 
 class ViewerPane:
@@ -36,9 +39,10 @@ class ViewerPane:
 
     An image (:func:`bauiv1.imagewidget`) showing whatever
     the window's page says to (its :attr:`~bacommon.docui.v2.Page.viewer`
-    depiction), styled as a pane (rounded, framed, blending into the
-    window while empty) and passing presses along (a live viewer's
-    poke-to-jump). Kinds it can't show get the usual placeholder.
+    depiction) over the page's background for it, styled as a pane
+    (rounded, framed and shaded, unless not framed) and passing presses
+    along (a live viewer's poke-to-jump). Kinds it can't show get the
+    usual placeholder.
 
     :meta private:
     """
@@ -49,7 +53,13 @@ class ViewerPane:
         parent: bui.Widget,
         position: tuple[float, float],
         size: tuple[float, float],
+        *,
+        framed: bool = True,
+        transition_delay: float | None = None,
     ) -> None:
+        """With a ``transition_delay``, the pane fades in rather than
+        just appearing.
+        """
         # Live viewers are kept by key so that what they show carries on
         # through the window showing it being rebuilt (as happens
         # whenever ui-scale or screen size changes) and through pages
@@ -63,22 +73,52 @@ class ViewerPane:
             size=size,
             depiction_key=self._key,
             depiction_take_input=True,
-            # Rounded edges and a frame.
-            mask_texture=_classiccatalogassets.textures.viewer_mask.get(),
-            depiction_frame_color=_VIEWER_FRAME_COLOR,
-            depiction_backing_color=_VIEWER_BLANK_COLOR,
+            # A '?' for something we can't show goes small in our
+            # middle; one filling us would read as our frame.
+            depiction_small_placeholder=True,
             # Until our page arrives, carry on showing whatever we last
             # showed (a rebuilt window's page arrives a moment after it
             # does; the page then decides).
             depiction=_g_last_depictions.get(self._key, ''),
+            transition_delay=transition_delay,
+            transition_type='fade',
         )
+        self._framed = framed
+        if framed:
+            # Rounded edges, a frame and shading: a layered mask, its
+            # layers' colors left at their defaults (black, then white).
+            # Our content and background draw within it.
+            bui.imagewidget(
+                edit=self.widget,
+                mask_texture=_classiccatalogassets.textures.viewer_mask.get(),
+                depiction_layered_mask=True,
+            )
+        else:
+            # No frame or rounding: what we show goes straight over our
+            # background (keeping its transparency, where it can).
+            bui.imagewidget(edit=self.widget, depiction_overlay=True)
+        self.apply_background(_g_last_backgrounds.get(self._key))
 
     def apply_response(self, response: DocUIResponse | None) -> None:
         """Show what a response's page says to (nothing, if not v2)."""
         if isinstance(response, dui2.Response):
+            self.apply_background(response.page.viewer_background_color)
             self.apply_depiction(response.page.viewer)
         else:
+            self.apply_background(None)
             self.apply_depiction(None)
+
+    def apply_background(
+        self, color: tuple[float, float, float, float] | None
+    ) -> None:
+        """Show a page's background behind what we show (rgba; None
+        for our frame style's usual one).
+        """
+        _g_last_backgrounds[self._key] = color
+        if color is None:
+            # Framed, we blend into the window; else we're clear.
+            color = (*VIEWER_BLANK_COLOR, 1.0) if self._framed else (0, 0, 0, 0)
+        bui.imagewidget(edit=self.widget, depiction_backing_color=color)
 
     def apply_depiction(self, depiction: bdep.Depiction | None) -> None:
         """Show a page's viewer depiction (None for nothing)."""
@@ -123,21 +163,108 @@ def show_vis_area_bounds(
         )
 
 
-def add_toolbar_scroll_fades(
-    root: bui.Widget,
-    position: tuple[float, float],
-    size: tuple[float, float],
-    *,
-    bottom: bool,
-) -> None:
-    """Fade a full-screen scroll area's content toward the toolbars.
+type _Rect = tuple[float, float, float, float]
 
-    Along the top always; along the bottom only with ``bottom`` (a
-    minimal toolbar has nothing down there).
+type _Anchor = Literal['top_left', 'top', 'top_right', 'bottom_left', 'bottom']
+
+
+def _num(val: float) -> str:
+    return f'{val:.4g}'
+
+
+def _sides(vals: tuple[float, float, float, float]) -> str:
+    """(left, right, bottom, top) values, labeled."""
+    left, right, bottom, top = (_num(v) for v in vals)
+    return f'l{left} r{right} b{bottom} t{top}'
+
+
+def _shrunk(
+    rect: _Rect, left: float, right: float, bottom: float, top: float
+) -> _Rect:
+    x, y, w, h = rect
+    return (x + left, y + bottom, w - left - right, h - bottom - top)
+
+
+def show_layout_bounds(
+    parent: bui.Widget,
+    frame: WindowFrame,
+    *,
+    insets: tuple[float, float],
+    fades: tuple[float, float, float, float] | None,
+    pane_rect: _Rect | None = None,
+) -> list[bui.Widget]:
+    """Outline the rects a window's (or popup's) page is laid out against.
+
+    See :attr:`~bauiv1lib.docui.DebugDrawKind.LAYOUT`. Cyan is the
+    extend rect (the scroll widget, reaching out past the content rect
+    by the frame's extends); magenta is the content rect (selection
+    keeps rows within it); green is the inset rect (``insets``: the
+    page's horizontal and vertical ones), where resting content starts;
+    orange is where ``fades`` (left, right, bottom, top; None for none)
+    end, in from the extend rect's edges; yellow is ``pane_rect`` (a
+    viewer pane), if any. Labels give the numbers. (The window's own
+    bounds -- its backing's solid part -- are the dev console's
+    container-bounds drawing.) Drawn over the page, which doesn't move
+    them. Returns the outlines' widgets (for redrawing them when any of
+    this changes).
+
+    :meta private:
     """
-    scroll_fade_top(root, position[0], position[1], size[0], size[1])
-    if bottom:
-        scroll_fade_bottom(root, position[0], position[1], size[0], size[1])
+    f = frame
+    extend = scroll_widget_rect(f)
+    content = (
+        f.content_left,
+        f.content_bottom,
+        f.content_width,
+        f.content_height,
+    )
+    h_inset, v_inset = insets
+    inset = _shrunk(content, h_inset, h_inset, v_inset, v_inset)
+    ext = f.extends
+    outlines: list[tuple[_Rect, tuple[float, float, float], str, _Anchor]] = [
+        (
+            extend,
+            (0.0, 1.0, 1.0),
+            f'extend {_sides(ext)}',
+            'top_left',
+        ),
+        (
+            content,
+            (1.0, 0.2, 1.0),
+            f'content {_num(content[2])}x{_num(content[3])}',
+            'top',
+        ),
+        (
+            inset,
+            (0.2, 1.0, 0.2),
+            f'inset h{_num(h_inset)} v{_num(v_inset)}',
+            'top_right',
+        ),
+    ]
+    if fades is not None:
+        outlines.append(
+            (
+                _shrunk(extend, *fades),
+                (1.0, 0.55, 0.0),
+                f'fades {_sides(fades)}',
+                'bottom_left',
+            )
+        )
+    if pane_rect is not None:
+        outlines.append((pane_rect, (1.0, 1.0, 0.0), 'viewer pane', 'bottom'))
+
+    return [
+        bui.debugrectwidget(
+            parent=parent,
+            position=(left, bottom),
+            size=(width, height),
+            color=color,
+            opacity=0.8,
+            info=info,
+            info_anchor=anchor,
+        )
+        for (left, bottom, width, height), color, info, anchor in outlines
+    ]
 
 
 # How the busy-spinner shown over a pressed widget (a button, an input
@@ -157,13 +284,15 @@ def make_busy_spinner(
     spinner_positions: list[tuple[bui.Widget, tuple[float, float]]],
     root_widget: bui.Widget,
     window_center: tuple[float, float],
-    restored: bool,
 ) -> bui.Widget:
     """Make the spinner a doc-ui window shows while it is busy.
 
     A press shows its spinner where the press was: in the pressed
     widget's parent, at the spot registered for that widget if any,
     else its center. Otherwise the spinner goes at the window's center.
+    The two look different: right over a widget the simple spinner
+    reads best, while over the window backing (with or without content
+    under it) we use the bomb.
     """
     parent = None if origin_widget is None else origin_widget.parent
     if parent is not None:
@@ -177,6 +306,7 @@ def make_busy_spinner(
             parent=parent,
             position=position,
             size=48,
+            style='simple',
             fade_delay=REFRESH_SPINNER_FADE_DELAY,
             fade_duration=REFRESH_SPINNER_FADE_DURATION,
         )
@@ -184,9 +314,6 @@ def make_busy_spinner(
         parent=root_widget,
         position=window_center,
         size=48,
-        # With restored windows we're likely to have stuff under the
-        # spinner. Bomb looks nicer but simple is more readable in those
-        # cases.
-        style='simple' if restored else 'bomb',
+        style='bomb',
         # (Default fade timing: this one was never instant.)
     )

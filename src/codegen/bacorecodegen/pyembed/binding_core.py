@@ -3,7 +3,6 @@
 # Python objects should be added here along with their associated c++ enum.
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 
-import uuid
 import json
 import copy
 import logging
@@ -15,7 +14,12 @@ import sys
 # values here and keep them synced up.
 
 
+# Note: uuid gets imported on first use rather than up top. This module
+# runs on the Android main thread during launch, so its imports count
+# against launch ANRs.
 def _uuid() -> str:
+    import uuid
+
     return str(uuid.uuid4())
 
 
@@ -62,4 +66,6 @@ values = [
     logging.getLogger('ba.net').log,  # kLoggerBaNetworkingLogCall
     logging.getLogger('ba.discord'),  # kLoggerBaDiscord
     logging.getLogger('ba.discord').log,  # kLoggerBaDiscordLogCall
+    logging.getLogger('ba.user'),  # kLoggerBaUser
+    logging.getLogger('ba.user').log,  # kLoggerBaUserLogCall
 ]

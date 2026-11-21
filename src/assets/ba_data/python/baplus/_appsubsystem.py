@@ -2,6 +2,7 @@
 #
 """Provides plus app subsystem."""
 
+import sys
 from typing import TYPE_CHECKING, override
 
 from babase import AppSubsystem
@@ -46,10 +47,15 @@ class PlusAppSubsystem(AppSubsystem):
     @override
     def on_app_mode_activated(self) -> None:
         """:meta private:"""
+        # A console session may be holding a permission question that
+        # no earlier app-mode was able to ask; this mode might be. The
+        # module loads only when a session starts, so if it isn't
+        # loaded nothing can be waiting (and importing it just to find
+        # that out costs tens of ms at launch on a phone).
+        if 'baplus._consolesession' not in sys.modules:
+            return
         from baplus._consolesession import console_session_manager
 
-        # A console session may be holding a permission question that
-        # no earlier app-mode was able to ask; this mode might be.
         console_session_manager.notify_app_mode_activated()
 
     @staticmethod

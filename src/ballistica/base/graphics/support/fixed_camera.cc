@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/graphics/graphics.h"
@@ -50,35 +52,53 @@ void FixedCamera::ApplyToFrameDef(FrameDef* frame_def) {
   }
 
   // Swung around our target by however far the device has turned.
-  const Vector3f position = TiltedPosition_();
+  const ViewPose pose = ViewPose_();
+  const Vector3f& position = pose.position;
+  Vector3f up = pose.up;
 
   // Aim at our target, turned by however far our shake has us off it
-  // (left/right about world up, then up/down about our right).
+  // (left/right about our own up, then up/down about our own right, so
+  // it wobbles the same on screen whichever way we face).
   StepShake_(frame_def);
   Vector3f target = target_;
   if (shake_yaw_ != 0.0f || shake_pitch_ != 0.0f) {
     const float kDegToRad = kPi / 180.0f;
-    Vector3f dir = target_ - position;
-    const float yaw = shake_yaw_ * kDegToRad;
-    const float cy = cosf(yaw);
-    const float sy = sinf(yaw);
-    dir = Vector3f(dir.x * cy + dir.z * sy, dir.y, -dir.x * sy + dir.z * cy);
-    Vector3f right = Vector3f::Cross(dir, Vector3f(0.0f, 1.0f, 0.0f));
-    if (right.LengthSquared() > 0.000001f) {
+    Vector3f dir = RotateAbout_(target_ - position, up, shake_yaw_ * kDegToRad);
+    Vector3f right = Vector3f::Cross(dir, up);
+    if (right.LengthSquared() > 1.0e-12f) {
       right = right.Normalized();
       const float pitch = shake_pitch_ * kDegToRad;
-      const float cp = cosf(pitch);
-      const float sp = sinf(pitch);
-      // Rodrigues rotation of dir about right (dir is perpendicular to
-      // right, so the dot term drops out).
-      dir = dir * cp + Vector3f::Cross(right, dir) * sp;
+      dir = RotateAbout_(dir, right, pitch);
+      up = RotateAbout_(up, right, pitch);
     }
     target = position + dir;
   }
 
+  // Clip to just what we're told is there, from exactly where we're
+  // looking from and toward. Clip planes go by depth (along our aim),
+  // and a sphere spans exactly its center's depth plus or minus its
+  // radius.
+  float near_clip = near_clip_;
+  float far_clip = far_clip_;
+  if (!clip_spheres_.empty()) {
+    Vector3f aim = target - position;
+    aim = aim.LengthSquared() > 1.0e-12f ? aim.Normalized()
+                                         : Vector3f(0.0f, 0.0f, -1.0f);
+    float nearest{std::numeric_limits<float>::max()};
+    float deepest{std::numeric_limits<float>::lowest()};
+    for (const ClipSphere& s : clip_spheres_) {
+      const float depth = Vector3f::Dot(s.center - position, aim);
+      nearest = std::min(nearest, depth - s.radius);
+      deepest = std::max(deepest, depth + s.radius);
+    }
+    // (A hair of slack for rounding: a mesh can touch its bounds.)
+    constexpr float kRounding{1.001f};
+    far_clip = std::max(deepest * kRounding, 0.001f);
+    near_clip = std::max(nearest / kRounding, far_clip * clip_min_near_ratio_);
+  }
+
   for (RenderPass* pass : passes) {
-    pass->SetCamera(position, target, Vector3f(0.0f, 1.0f, 0.0f), near_clip_,
-                    far_clip_,
+    pass->SetCamera(position, target, up, near_clip, far_clip,
                     -1.0f,  // Auto x fov.
                     field_of_view_y, false, 0.0f, 0.0f, 0.0f,
                     0.0f,  // Not using tangent fovs.
@@ -86,9 +106,32 @@ void FixedCamera::ApplyToFrameDef(FrameDef* frame_def) {
   }
 }
 
-auto FixedCamera::TiltedPosition_() const -> Vector3f {
+auto FixedCamera::RotateAbout_(const Vector3f& v, const Vector3f& axis,
+                               float angle) -> Vector3f {
+  // Rodrigues' rotation formula (axis must be unit length).
+  const float c = cosf(angle);
+  const float s = sinf(angle);
+  return v * c + Vector3f::Cross(axis, v) * s
+         + axis * (Vector3f::Dot(axis, v) * (1.0f - c));
+}
+
+auto FixedCamera::ViewPose_() const -> ViewPose {
+  // Our unswung pose: up is world up's share across our aim (as a
+  // camera given world up as up would be), or, looking straight up or
+  // down, whatever's handy.
+  const Vector3f world_up{0.0f, 1.0f, 0.0f};
+  Vector3f offset = position_ - target_;
+  const float dist = offset.Length();
+  if (dist < 0.0001f) {
+    return {position_, world_up};
+  }
+  const Vector3f forward = offset * (-1.0f / dist);
+  Vector3f right = Vector3f::Cross(forward, world_up);
+  right = right.LengthSquared() > 1.0e-12f ? right.Normalized()
+                                           : Vector3f(1.0f, 0.0f, 0.0f);
+  Vector3f up = Vector3f::Cross(right, forward);
   if (tilt_orbit_ == 0.0f) {
-    return position_;
+    return {position_, up};
   }
 
   // Input's tilt is the gyro's turn rate (radians per second) summed
@@ -102,33 +145,34 @@ auto FixedCamera::TiltedPosition_() const -> Vector3f {
   const float yaw = tilt.y * kTiltToRad * tilt_orbit_;
   const float pitch = -tilt.x * kTiltToRad * tilt_orbit_;
   if (yaw == 0.0f && pitch == 0.0f) {
-    return position_;
+    return {position_, up};
   }
 
-  Vector3f offset = position_ - target_;
-  const float dist = offset.Length();
-  if (dist < 0.0001f) {
-    return position_;
-  }
+  // Swing around our target, up/down first: about our right (which is
+  // level), so it changes our elevation over the target. Our up turns
+  // with us, so even swinging over the top nothing flips. (Turning
+  // about right by a positive angle lowers us, hence the negative.)
+  offset = RotateAbout_(offset, right, -pitch);
+  up = RotateAbout_(up, right, -pitch);
 
-  // Left/right: around world up through our target.
-  const float cy = cosf(yaw);
-  const float sy = sinf(yaw);
-  offset = Vector3f(offset.x * cy + offset.z * sy, offset.y,
-                    -offset.x * sy + offset.z * cy);
-
-  // Up/down: change our elevation over our target, stopping short of
-  // straight above or below it (where which way is up would flip).
-  const float horizontal = sqrtf(offset.x * offset.x + offset.z * offset.z);
-  if (horizontal < 0.0001f) {
-    return target_ + offset;
+  // Then left/right about world up, so the world stays upright on
+  // screen. Near straight above or below the target that turn would
+  // just roll the view, so it fades out with our resulting elevation:
+  // full when level, none looking straight up or down.
+  const float level = sqrtf(offset.x * offset.x + offset.z * offset.z) / dist;
+  const float level_yaw = yaw * level;
+  if (level_yaw != 0.0f) {
+    offset = RotateAbout_(offset, world_up, level_yaw);
+    up = RotateAbout_(up, world_up, level_yaw);
   }
-  const float kMaxElevation{80.0f * kPi / 180.0f};
-  const float elevation = std::clamp(atan2f(offset.y, horizontal) + pitch,
-                                     -kMaxElevation, kMaxElevation);
-  const float out = cosf(elevation) * dist / horizontal;
-  return target_
-         + Vector3f(offset.x * out, sinf(elevation) * dist, offset.z * out);
+  return {target_ + offset, up};
+}
+
+void FixedCamera::SetClipSpheres(std::vector<ClipSphere> spheres,
+                                 float min_near_ratio) {
+  assert(min_near_ratio > 0.0f && min_near_ratio < 1.0f);
+  clip_spheres_ = std::move(spheres);
+  clip_min_near_ratio_ = min_near_ratio;
 }
 
 void FixedCamera::SetShake(float strength, float stiffness, float damping,

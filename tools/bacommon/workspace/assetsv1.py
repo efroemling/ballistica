@@ -19,7 +19,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, override, assert_never
 
-from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
+from efro.dataclassio import ioprepped, IOAttrs, IOMultiType, IOExtendedData
 from bacommon.locale import Locale
 from bacommon.langstr import WrapParams
 from bacommon.loctext import StringSelector
@@ -66,29 +66,74 @@ class ConventionsMode(Enum):
     STRICT = 'strict'
 
 
-class PackageResolveAccess(Enum):
-    """Who may resolve a package's *prod* versions.
+class PackageVisibility(Enum):
+    """Whether a package is out in the world at all.
 
     Orthogonal to the version track: a track says how released a
-    version is, this says who may have it. ``PRIVATE`` applies the same
-    owner-or-dev-team check that dev/test versions always get, so
-    resolve access only ever *adds* restriction to prod -- it can never
-    make a dev/test version public.
+    version is, this says whether clients may have the package at all.
 
     ``PUBLIC`` is the default and what every package had before this
-    existed. Exists for packages nothing fetches at runtime -- content
-    the master evaluates itself, or build-time sources embedded into
-    other packages -- not as a general publishing control.
+    existed: prod versions resolve for anyone, dev/test versions for
+    the owner and dev team.
 
-    Gates the *resolve*, not the content. A private package's entries
-    can still reach clients verbatim -- formatter components are
-    embedded by value into each consuming package's language blobs at
-    build time -- so this says "nothing fetches this package at
+    ``UNLISTED`` is public for *use* and private for *browsing*: clients
+    resolve and download it exactly as a public package (any code may
+    require it), but it's left out of public package listings, and its
+    web pages (version page, contents, asset pages, previews) are for
+    its owner, dev team and admins only. Like an unlisted video: not
+    findable, not secret -- its contents reach every client that uses
+    it.
+
+    ``SERVER_ONLY`` is for packages nothing fetches at runtime --
+    content the master evaluates itself, or build-time sources embedded
+    into other packages. No client may resolve any version of it, on
+    any track, whatever its account (the owner's included, so nothing
+    can come to depend on it by accident and work only for them). The
+    server's own uses (pins in the owner's and dev team's workspaces,
+    builds, the owner's web pages) are unaffected. Such packages are
+    also left out of public package listings.
+
+    Gates the *resolve*, not the content. A server-only package's
+    entries can still reach clients verbatim -- formatter components
+    are embedded by value into each consuming package's language blobs
+    at build time -- so this says "nothing fetches this package at
     runtime", never "these strings are secret".
+
+    ``SERVER_ONLY`` is stored as ``'private'``, the value it had as the
+    old ``PackageResolveAccess.PRIVATE``, so stored and cached records
+    (shared by every fleet) read the same on old and new code; the
+    name ``'server_only'`` is accepted on input too (``workspace.json``
+    is written by hand).
     """
 
     PUBLIC = 'public'
-    PRIVATE = 'private'
+    UNLISTED = 'unlisted'
+    SERVER_ONLY = 'private'
+
+    @property
+    def pretty(self) -> str:
+        """Human-facing display name (use in UIs; not wire values)."""
+        cls = PackageVisibility
+        if self is cls.PUBLIC:
+            return 'Public'
+        if self is cls.UNLISTED:
+            return 'Unlisted'
+        if self is cls.SERVER_ONLY:
+            return 'Server Only'
+        assert_never(self)
+
+    @property
+    def client_usable(self) -> bool:
+        """Whether clients may resolve the package (public or unlisted)."""
+        return self is not PackageVisibility.SERVER_ONLY
+
+    @override
+    @classmethod
+    def _missing_(cls, value: object) -> PackageVisibility | None:
+        # Accept the member's name as well as its stored value.
+        if value == 'server_only':
+            return cls.SERVER_ONLY
+        return None
 
 
 class PackageSourceSharing(Enum):
@@ -97,7 +142,7 @@ class PackageSourceSharing(Enum):
     Governs *source* availability only -- who may copy the exporting
     workspace's snapshot as the starting point for a workspace of their
     own. It says nothing about who can *use* the published assets;
-    that's the track plus :class:`PackageResolveAccess`.
+    that's the track plus :class:`PackageVisibility`.
 
     Package-wide (not per-version): sharing intent belongs to the
     package, and a per-version value meant every republish silently
@@ -123,8 +168,17 @@ class PackageSourceSharing(Enum):
 
 @ioprepped
 @dataclass
-class AssetsV1GlobalVals:
+class AssetsV1GlobalVals(IOExtendedData):
     """Global values for an assets_v1 workspace."""
+
+    @override
+    @classmethod
+    def will_input(cls, data: dict) -> None:
+        # Hand-written workspace.json files may still use the old name
+        # for 'visibility'.
+        if 'resolve_access' in data:
+            legacy = data.pop('resolve_access')
+            data.setdefault('visibility', legacy)
 
     base_assets: Annotated[
         str | None, IOAttrs('base_assets', store_default=False)
@@ -172,22 +226,21 @@ class AssetsV1GlobalVals:
         ),
     ] = ConventionsMode.RELAXED
 
-    #: Who may resolve this package's *prod* versions (see
-    #: :class:`PackageResolveAccess`). Set by hand in ``workspace.json``
+    #: Whether clients may have this package at all (see
+    #: :class:`PackageVisibility`). Set by hand in ``workspace.json``
     #: -- deliberately not exposed in the UI, same as ``conventions``,
     #: since its use is limited to server-side packages. Unknown stored
     #: values fall back to public: failing closed here would break asset
-    #: resolves for every client, and private packages are private from
-    #: birth and reached by their owner (who short-circuits before this
-    #: is ever consulted).
-    resolve_access: Annotated[
-        PackageResolveAccess,
+    #: resolves for every client. (The key was ``resolve_access`` until
+    #: 2026-11; :meth:`will_input` still reads that.)
+    visibility: Annotated[
+        PackageVisibility,
         IOAttrs(
-            'resolve_access',
+            'visibility',
             store_default=False,
-            enum_fallback=PackageResolveAccess.PUBLIC,
+            enum_fallback=PackageVisibility.PUBLIC,
         ),
-    ] = PackageResolveAccess.PUBLIC
+    ] = PackageVisibility.PUBLIC
 
     #: Who may start a workspace of their own from this package's source
     #: (see :class:`PackageSourceSharing`). Package-wide policy, resolved
@@ -260,12 +313,71 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     """Our initial version of string file data."""
 
     class StylePreset(Enum):
-        """Preset for general styling in translated strings."""
+        """Preset for general styling in translated strings.
 
+        Tells the translator what kind of text a string is, so every
+        locale styles it the way that kind of text is written there.
+        """
+
+        #: Running text -- sentences, messages, body copy. No styling
+        #: guidance; the brief may add its own.
         NONE = 'none'
-        TITLE = 'title'
+
+        #: A standalone UI label -- a button, a window or section
+        #: heading, a menu item, a tab, an entry in a list or popup (a
+        #: language name in a language picker, say). Not text that sits inside a
+        #: sentence. English uses Title Case; most other languages
+        #: capitalize just the first word, even ones that write the
+        #: same word in lowercase mid-sentence (Spanish 'Sueco' as a
+        #: list entry, 'sueco' in a sentence). (Stored as 'title': the
+        #: preset's original name, kept so existing strings are
+        #: untouched.)
+        LABEL = 'title'
+
+        #: Intense, eye-catching text. English uses ALL CAPS.
         LOUD = 'loud'
+
+        #: Soft, understated text. English uses all lowercase.
         SOFT = 'soft'
+
+    class StringType(Enum):
+        """What kind of string an entry is.
+
+        Most are ``REGULAR``: text shown somewhere. The rest declare
+        the entry a *term*: a word or name other strings refer to
+        (``{@terms:...}``) instead of each translating it afresh. A
+        term's type says what the thing is, which decides how each
+        language writes it: both the form its own translation takes
+        (always as written in the middle of a sentence) and how the
+        strings that use it case and inflect it.
+        """
+
+        #: An ordinary string; not a term.
+        REGULAR = 'regular'
+
+        #: A name the game gives one of its own things (a product, a
+        #: currency).
+        TERM_NAME = 'term_name'
+
+        #: An ordinary word or phrase for a kind of thing; not a name.
+        TERM_THING = 'term_thing'
+
+        #: An action (a verb), stored in its base form.
+        TERM_ACTION = 'term_action'
+
+        def is_term(self) -> bool:
+            """Whether this type declares a term."""
+            return self is not type(self).REGULAR
+
+    class TranslationMode(Enum):
+        """How a language of an entry gets its text."""
+
+        #: Translated by the pipeline from the brief.
+        AUTOMATIC = 'automatic'
+
+        #: Written by a person, on the language's exact-value line in
+        #: the brief (``[German: "..."]``); never generated.
+        MANUAL = 'manual'
 
     class TranslationEffort(Enum):
         """How much model effort a string's translations warrant.
@@ -301,9 +413,11 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         context, so localized output respects both the space available
         and the register the slot implies. The CHARS_* budgets are
         display-width in *Latin* characters -- wide-glyph scripts (CJK)
-        target roughly half the character count -- and are aims, not
-        hard caps (soft enforcement with generous slack; see
-        ``char_budget``).
+        target roughly half the character count -- and are aims, never
+        outranking meaning: a translation past its budget is asked for
+        a shorter version that says everything, and ships long if there
+        is none. Text past 1.5 times the budget never ships; the string
+        goes back to its author.
         """
 
         #: Unset -- no slot declared and no size constraint. Note this
@@ -333,13 +447,17 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         def char_budget(self) -> int | None:
             """The preset's rough character budget (None if unbounded)."""
             cls = type(self)
-            return {
-                cls.NONE: None,
-                cls.CHARS_20: 20,
-                cls.CHARS_40: 40,
-                cls.CHARS_80: 80,
-                cls.PROSE: None,
-            }[self]
+            match self:
+                case cls.NONE | cls.PROSE:
+                    return None
+                case cls.CHARS_20:
+                    return 20
+                case cls.CHARS_40:
+                    return 40
+                case cls.CHARS_80:
+                    return 80
+                case _:
+                    assert_never(self)
 
     @override
     @classmethod
@@ -367,6 +485,11 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     input_modtime: Annotated[
         datetime.datetime, IOAttrs('input_modtime', time_format='float')
     ]
+    #: What kind of string this is; anything but ``REGULAR`` makes it
+    #: a term.
+    string_type: Annotated[
+        StringType, IOAttrs('string_type', store_default=False)
+    ] = StringType.REGULAR
     style_preset: Annotated[
         StylePreset, IOAttrs('style_preset', store_default=False)
     ] = StylePreset.NONE
@@ -419,6 +542,59 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         str, IOAttrs('english_exact', store_default=False)
     ] = ''
 
+    #: The mode of a language that has neither a text of its own in
+    #: the brief nor an entry in ``language_modes``; that includes a
+    #: language added to the game later. ``MANUAL`` is for an entry
+    #: whose every text is written by a person (another company's
+    #: product name as that company writes it in each language, say):
+    #: a language without a text is then an error until someone
+    #: supplies it, never a machine translation. Not part of the
+    #: translation digest: changing it makes only the languages it
+    #: leaves without a text due.
+    default_translation_mode: Annotated[
+        TranslationMode,
+        IOAttrs(
+            'default_translation_mode',
+            store_default=False,
+            enum_fallback=TranslationMode.AUTOMATIC,
+        ),
+    ] = TranslationMode.AUTOMATIC
+
+    #: Languages given a mode of their own, for what a line in the
+    #: brief cannot say: ``MANUAL`` with no text yet, or ``AUTOMATIC``
+    #: although the default is manual. A language with a text on its
+    #: brief line is manual whatever this holds.
+    language_modes: Annotated[
+        dict[Locale, TranslationMode],
+        IOAttrs('language_modes', store_default=False),
+    ] = field(default_factory=dict)
+
+    #: Manual languages whose text no model reviews -- they are held to
+    #: the mechanical checks only (one line, substitutions, writing
+    #: system and the like). For text a model cannot judge, or that
+    #: its author vouches for. Means nothing for an automatic
+    #: language, which is always reviewed. Part of that language's own
+    #: state, so switching it makes that language due and no other.
+    unreviewed_languages: Annotated[
+        list[Locale], IOAttrs('unreviewed_languages', store_default=False)
+    ] = field(default_factory=list)
+
+    #: Older form of ``default_translation_mode``: off means a manual
+    #: default. Still read (entries stored with it keep working);
+    #: nothing sets it any more.
+    translate_automatically: Annotated[
+        bool, IOAttrs('translate_automatically', store_default=False)
+    ] = True
+
+    #: Older form of ``unreviewed_languages``: off, together with
+    #: ``translate_automatically`` off, means no language of the entry
+    #: is reviewed. Still read; folded into the entry's translation
+    #: digest while in effect, as it always was. Nothing sets it any
+    #: more.
+    review_translations: Annotated[
+        bool, IOAttrs('review_translations', store_default=False)
+    ] = True
+
     #: For a shared *term*: the phrases whose literal appearance in a
     #: consuming brief means "this should be a ``{@...}`` ref to me"
     #: (empty = the term's own English text, which is right for most
@@ -431,6 +607,11 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     mention_phrases: Annotated[
         list[str], IOAttrs('mention_phrases', store_default=False)
     ] = field(default_factory=list)
+
+    # (Stored key 'ignore_outside_refs' was once a list of third-party
+    # references the author had dismissed. Retired 2026-11-10, unused:
+    # a brief now says in its own words how such a name is to be
+    # treated. Don't reuse the key; an old file may still carry it.)
 
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
@@ -1068,6 +1249,13 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     #: Sphinx docs). Empty string means no docs.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
+    #: How strongly to prefer this texture for its package's thumbnail:
+    #: higher goes first, ties keep contents order, and a negative value
+    #: never appears there (handy for masks and other data textures).
+    thumbnail_priority: Annotated[
+        int, IOAttrs('thumbnail_priority', store_default=False)
+    ] = 0
+
     #: Halve the fallback flavor's level0 downsize divisor (2 instead
     #: of 4) so this asset's fallback carries a higher-res top mip. For
     #: the rare asset whose fallback bytes get consumed directly rather
@@ -1191,6 +1379,21 @@ class AssetsV1StrTermDeps:
     #: no spec'd params stores ``[]``.
     kinds: Annotated[list[str] | None, IOAttrs('k', store_default=False)] = None
 
+    #: Languages whose exact value in the brief (a
+    #: ``[Language: "text"]`` line; see
+    #: :func:`bacommon.strbrief.brief_exact_values`) is not yet the
+    #: file's stored translation for them, as locale value -> a short
+    #: hash of that text. Such a language is due until the text has
+    #: passed the checks and been stored; one whose stored translation
+    #: already equals its exact value is absent (clean depends on the
+    #: text, not where it came from). ``None`` on records predating the
+    #: field, which consumers treat as a cache miss; a file with none
+    #: pending stores ``{}``. (Stored key 'x' briefly held every exact
+    #: value's hash, 2026-11-10; don't reuse it.)
+    exact_pending: Annotated[
+        dict[str, str] | None, IOAttrs('xp', store_default=False)
+    ] = None
+
 
 @ioprepped
 @dataclass
@@ -1260,6 +1463,53 @@ class AssetsV1StrConvCache:
         field(default_factory=list)
     )
 
+    #: The entry's notices -- things worth knowing that never block
+    #: (which languages have Review off). A record written before
+    #: these existed has none, which is right for it: what a notice
+    #: reports is set by fields that postdate it, and setting one
+    #: changes the file and so the ``state``.
+    notices: Annotated[list[str], IOAttrs('notices', store_default=False)] = (
+        field(default_factory=list)
+    )
+
+
+@ioprepped
+@dataclass
+class AssetsV1StrTranslateFailure:
+    """One locale's most recent failed translation of a ``.bstr``.
+
+    Written by the master's translate runs when a locale could not be
+    completed, and cleared when that locale next translates. It only
+    *applies* while :attr:`state` still matches the locale's current
+    up-to-date state: editing the brief (or anything else feeding the
+    translation) makes a stale failure moot without anyone clearing it.
+    """
+
+    #: ``needs_input`` (the checks kept rejecting it; the brief needs
+    #: work) or ``retryable`` (a temporary service problem). A plain
+    #: string rather than an enum so kinds added later never break an
+    #: older reader of stored data.
+    kind: Annotated[str, IOAttrs('k')]
+
+    #: Person-facing English explanation (for a rejected translation,
+    #: what the output reads back as and why that is wrong).
+    reason: Annotated[str, IOAttrs('r')]
+
+    #: When the failure happened.
+    time: Annotated[datetime.datetime, IOAttrs('t')]
+
+    #: The locale's up-to-date state (see :class:`AssetsV1StrState`)
+    #: the failed attempt was working from.
+    state: Annotated[str | None, IOAttrs('s', store_default=False)] = None
+
+    #: Id of the master's translation trace for the failed attempt (see
+    #: :attr:`AssetsV1PathValsStrV1.traces`), if one was recorded.
+    trace: Annotated[str | None, IOAttrs('tr', store_default=False)] = None
+
+    # (Stored key 'or' once held the outside references behind a
+    # failure, for an ignore button that no longer exists. Don't reuse
+    # it: old records may still carry it.)
+
 
 @ioprepped
 @dataclass
@@ -1320,6 +1570,33 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     conv: Annotated[
         AssetsV1StrConvCache | None, IOAttrs('conv', store_default=False)
     ] = None
+
+    #: Locales whose most recent translation failed (see
+    #: :class:`AssetsV1StrTranslateFailure`). Maintained by the
+    #: master's translate runs; shown in the workspace UI.
+    failures: Annotated[
+        dict[Locale, AssetsV1StrTranslateFailure],
+        IOAttrs('tf', store_default=False),
+    ] = field(default_factory=dict)
+
+    #: Per-locale id of the translation trace (the master's step-by-step
+    #: record of the model calls and checks) that produced that locale's
+    #: current output. Maintained by the master's translate runs; traces
+    #: expire after a while, so an id here may no longer resolve.
+    traces: Annotated[
+        dict[Locale, str],
+        IOAttrs('tt', store_default=False),
+    ] = field(default_factory=dict)
+
+    #: Locales whose current output was shipped with reservations. Every
+    #: attempt was rejected and the master's final review used the best
+    #: it could find while judging it not fully right. Maps the locale
+    #: to that review's note (plain English, for maintainers). Cleared
+    #: when the locale is next translated without reservations.
+    reservations: Annotated[
+        dict[Locale, str],
+        IOAttrs('trv', store_default=False),
+    ] = field(default_factory=dict)
 
     @override
     @classmethod
@@ -1523,6 +1800,13 @@ class AssetsV1PathValsMeshV1(AssetsV1PathVals):
     #: comment above the asset in generated wrapper modules (and in the
     #: Sphinx docs). Empty string means no docs.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    #: How strongly to prefer this mesh for its package's thumbnail:
+    #: higher goes first, ties keep contents order, and a negative value
+    #: never appears there.
+    thumbnail_priority: Annotated[
+        int, IOAttrs('thumbnail_priority', store_default=False)
+    ] = 0
 
     @override
     @classmethod

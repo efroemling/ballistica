@@ -11,6 +11,8 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/input/support/remote_app_server.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/networking/nearby_services.h"
+#include "ballistica/base/networking/network_writer.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
@@ -22,6 +24,37 @@
 namespace ballistica::base {
 
 NetworkReader::NetworkReader() = default;
+
+auto NetworkReader::ShouldAnswerGameQuery_() -> bool {
+  // Game queries arrive from anyone who can reach our port, and each one
+  // we answer queues a reply on the network-writer thread. A flood of them
+  // (a misbehaving peer, or spoofed queries using us as a reflector) used
+  // to outrun the writer until its queue overflowed and killed the app
+  // (Crashlytics f90b6e83, 1.8.4: 'ThreadMessage list > 10000 in thread:
+  // networkwrite'). Replies are fire-and-forget, so dropping excess ones is
+  // safe; askers just retry or miss us for a moment.
+  auto now = std::chrono::steady_clock::now();
+  if (now - game_query_window_start_ >= std::chrono::seconds(1)) {
+    game_query_window_start_ = now;
+    game_query_window_count_ = 0;
+  }
+  if (game_query_window_count_ >= kMaxGameQueryRepliesPerSecond) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Game-query rate limit hit; dropping excess queries.");
+    return false;
+  }
+
+  // Also back off whenever the writer is already backed up, whatever the
+  // cause; adding to its queue then only brings the overflow closer.
+  auto* writer_loop = g_base->network_writer->event_loop();
+  if (writer_loop && !writer_loop->CheckPushSafety()) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Network writer is backed up; dropping game queries.");
+    return false;
+  }
+  ++game_query_window_count_;
+  return true;
+}
 
 void NetworkReader::SetPort(int port) {
   assert(g_core->InMainThread());
@@ -46,6 +79,7 @@ void NetworkReader::OnAppSuspend() {
   if (port4_ != -1) {
     PokeSelf_();
   }
+  UpdatePlatformListeningState_();
 }
 
 void NetworkReader::OnAppUnsuspend() {
@@ -59,6 +93,86 @@ void NetworkReader::OnAppUnsuspend() {
 
   // Poke our thread so it can go on its way.
   paused_cv_.notify_all();
+  UpdatePlatformListeningState_();
+}
+
+void NetworkReader::SetWantedFeatures(bool classic_networking,
+                                      bool remote_app_server) {
+  assert(g_core->InMainThread());
+  bool was_listening;
+  bool now_listening;
+  {
+    std::scoped_lock<std::mutex> lock(paused_mutex_);
+    was_listening = ShouldListen_();
+
+    // Losing the remote server drops its clients (their controllers go
+    // away), whether or not our sockets stay up for classic.
+    if (remote_wanted_ && !remote_app_server) {
+      remote_drop_pending_ = true;
+    }
+    classic_wanted_ = classic_networking;
+    remote_wanted_ = remote_app_server;
+    now_listening = ShouldListen_();
+  }
+
+  // Wake our thread: to open sockets, to close them (a poke breaks it
+  // out of its wait for packets), or to process a remote-client drop.
+  paused_cv_.notify_all();
+  if (port4_ != -1 && (was_listening || remote_drop_pending_)) {
+    PokeSelf_();
+  }
+  if (now_listening != was_listening) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [=] {
+      return std::string("NetworkReader: ")
+             + (now_listening ? "listening" : "no longer listening")
+             + " (classic-networking=" + (classic_networking ? "true" : "false")
+             + ", remote-app-server=" + (remote_app_server ? "true" : "false")
+             + ").";
+    });
+  }
+  UpdatePlatformListeningState_();
+
+  // Sockets that stay open may now serve something different.
+  UpdateAdvertising_();
+}
+
+void NetworkReader::UpdateAdvertising_() {
+  int port{};
+  {
+    std::scoped_lock lock(sd_mutex_);
+    port = (sd4_ != -1 && ShouldListen_()) ? port4_ : 0;
+  }
+  NearbyServices::Get().SetAdvertised(port, classic_wanted_, remote_wanted_);
+}
+
+void NetworkReader::UpdatePlatformListeningState_() {
+  assert(g_core->InMainThread());
+  auto no_udp_env_var = g_core->platform->GetEnv("BA_NO_UDP");
+  bool listening =
+      ShouldListen_() && !(no_udp_env_var && *no_udp_env_var == "1");
+  if (listening != platform_listening_) {
+    platform_listening_ = listening;
+    g_core->platform->SetLocalNetworkListening(listening);
+  }
+}
+
+void NetworkReader::ProcessPendingRemoteDrop_() {
+  if (remote_drop_pending_.exchange(false) && remote_server_) {
+    remote_server_->DropAllClients();
+  }
+}
+
+void NetworkReader::CloseSockets_() {
+  // This needs to be locked during any sd changes/writes.
+  std::scoped_lock lock(sd_mutex_);
+  if (sd4_ != -1) {
+    g_core->platform->CloseSocket(sd4_);
+    sd4_ = -1;
+  }
+  if (sd6_ != -1) {
+    g_core->platform->CloseSocket(sd6_);
+    sd6_ = -1;
+  }
 }
 
 void NetworkReader::PokeSelf_() {
@@ -188,22 +302,33 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
 }
 
 auto NetworkReader::RunThread_() -> int {
-  g_core->platform->SetCurrentThreadName("ballistica network-read");
+  // (Also sets the OS-level thread name.)
+  g_core->RegisterThread("network-read");
 
-  if (!g_core->HeadlessMode()) {
+  // Headless builds normally have no use for remote-app controllers.
+  bool want_remote_server{!g_core->HeadlessMode()};
+  if (want_remote_server) {
     remote_server_ = std::make_unique<RemoteAppServer>();
   }
 
   // Do this whole thing in a loop. If we get put to sleep we just start
   // over.
   while (true) {
-    // Sleep until we're unpaused.
-    if (paused_) {
+    // Sleep until we should be listening (unsuspended, with an app-mode
+    // wanting our sockets), handling any remote-client drops requested
+    // while we wait.
+    while (true) {
+      ProcessPendingRemoteDrop_();
       std::unique_lock<std::mutex> lock(paused_mutex_);
-      paused_cv_.wait(lock, [this] { return (!paused_); });
+      if (ShouldListen_()) {
+        break;
+      }
+      paused_cv_.wait(
+          lock, [this] { return ShouldListen_() || remote_drop_pending_; });
     }
 
     OpenSockets_();
+    UpdateAdvertising_();
 
     // Now just listen and forward messages along.
     char buffer[10000];
@@ -262,6 +387,22 @@ auto NetworkReader::RunThread_() -> int {
                       "NetworkReader Recv got length 0; this shouldn't "
                       "happen");
         } else if (rresult == -1) {
+          // Errors that belong to one packet (or none) rather than the
+          // socket: skip them and keep listening. (Reopening the sockets
+          // drops traffic for a second and, via the re-advertise, can
+          // pile up renamed DNS-SD registrations on some OSes.)
+          int err = g_core->platform->GetSocketError();
+          if (err == EWOULDBLOCK || err == EAGAIN || err == EINTR
+              || err == ECONNRESET || err == ENETRESET || err == ECONNREFUSED
+              || err == EMSGSIZE) {
+            continue;
+          }
+          auto err_str = g_core->platform->GetSocketErrorString();
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [=] {
+            return "NetworkReader: receive failed (" + err_str
+                   + "); reopening sockets.";
+          });
+
           // This needs to be locked during any sd changes/writes.
           std::scoped_lock lock(sd_mutex_);
 
@@ -277,20 +418,29 @@ auto NetworkReader::RunThread_() -> int {
         } else {
           assert(from_size >= 0);
           auto rresult2{static_cast<size_t>(rresult)};
-          // If we get *any* data while paused, kill both our sockets (we
-          // ping ourself for this purpose).
-          if (paused_) {
-            // This needs to be locked during any sd changes/writes.
-            std::scoped_lock lock(sd_mutex_);
-            if (sd4_ != -1) {
-              g_core->platform->CloseSocket(sd4_);
-              sd4_ = -1;
-            }
-            if (sd6_ != -1) {
-              g_core->platform->CloseSocket(sd6_);
-              sd6_ = -1;
-            }
+          // Any remote-client drop requested by an app-mode switch (we
+          // get poked for this purpose).
+          ProcessPendingRemoteDrop_();
+
+          // If we get *any* data while we shouldn't be listening
+          // (suspended, or no app-mode wants us), kill both our sockets
+          // (we ping ourself for this purpose).
+          if (!ShouldListen_()) {
+            CloseSockets_();
             break;
+          }
+
+          // Only serve the packet types the current app-mode wants;
+          // anything else is dropped as if we weren't here.
+          auto packet_type = static_cast<uint8_t>(buffer[0]);
+          bool is_remote_packet =
+              (packet_type >= BA_PACKET_REMOTE_PING
+               && packet_type <= BA_PACKET_REMOTE_STATE2)
+              || packet_type == BA_PACKET_REMOTE_GAME_QUERY_V2
+              || packet_type == BA_PACKET_REMOTE_GAME_RESPONSE_V2;
+          if (packet_type != BA_PACKET_POKE
+              && !(is_remote_packet ? remote_wanted_ : classic_wanted_)) {
+            continue;
           }
           switch (buffer[0]) {
             case BA_PACKET_POKE:
@@ -352,6 +502,8 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_REMOTE_DISCONNECT_ACK:
             case BA_PACKET_REMOTE_GAME_QUERY:
             case BA_PACKET_REMOTE_GAME_RESPONSE:
+            case BA_PACKET_REMOTE_GAME_QUERY_V2:
+            case BA_PACKET_REMOTE_GAME_RESPONSE_V2:
               // These packets are associated with the remote app; let the
               // remote-server handle them.
               if (remote_server_) {
@@ -385,7 +537,9 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_HOST_QUERY:
             case BA_PACKET_HOST_QUERY_V2:
             case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
-              g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
+              if (ShouldAnswerGameQuery_()) {
+                g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
+              }
               break;
             }
 
@@ -400,6 +554,9 @@ auto NetworkReader::RunThread_() -> int {
         break;
       }
     }
+
+    // Our sockets are gone; stop advertising them.
+    UpdateAdvertising_();
 
     // Sleep for a moment to keep us from running wild if we're unable to block.
     core::Platform::SleepMillisecs(1000);
@@ -474,6 +631,7 @@ void NetworkReader::OpenSockets_() {
                              + g_core->platform->GetSocketErrorString());
   } else {
     g_core->platform->SetSocketNonBlocking(sd4_);
+    g_core->platform->ConfigureUDPSocket(sd4_);
 
     // Bind to local server port.
     struct sockaddr_in serv_addr{};
@@ -539,6 +697,7 @@ void NetworkReader::OpenSockets_() {
     }
 
     g_core->platform->SetSocketNonBlocking(sd6_);
+    g_core->platform->ConfigureUDPSocket(sd6_);
     struct sockaddr_in6 serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin6_family = AF_INET6;

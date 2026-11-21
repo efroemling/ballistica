@@ -32,6 +32,7 @@ class PythonClassViewerSource
 
  private:
   static auto GetIdleTime(PythonClassViewerSource* self) -> PyObject*;
+  static auto MarkRetired(PythonClassViewerSource* self) -> PyObject*;
 };
 
 }  // namespace ballistica::ui_v1

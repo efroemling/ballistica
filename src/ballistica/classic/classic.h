@@ -122,10 +122,17 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
 
   auto* stress_test() const { return stress_test_; }
 
+  /// Whether we're a dedicated server (the server manager's explicit
+  /// server mode; not merely a headless build). Set from Python when
+  /// server mode starts.
+  auto server_mode() const { return server_mode_; }
+  void set_server_mode(bool val) { server_mode_ = val; }
+
  private:
   ClassicFeatureSet();
   V1AccountType v1_account_type_{V1AccountType::kInvalid};
   StressTest* stress_test_;
+  bool server_mode_{};
 };
 
 }  // namespace ballistica::classic

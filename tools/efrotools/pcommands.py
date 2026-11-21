@@ -70,9 +70,9 @@ def requirements_upgrade() -> None:
             # else floats. Exact-match means a future websockets release
             # goes stale loudly (resolver conflict) rather than silently
             # pinning forever; re-check genai's cap when that fires.
-            # (Re-checked 2026-10-13 at websockets 17.2: genai 2.30.1
+            # (Re-checked 2026-10-21 at websockets 17.3: genai 2.32.0
             # still caps <17.)
-            filterlines.append(('websockets==17.2', 'websockets==16.1.1'))
+            filterlines.append(('websockets==17.3', 'websockets==16.1.1'))
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
                 reqs_new = reqs_new.replace(fsrc, fdst)
@@ -285,7 +285,9 @@ def scriptfiles() -> None:
     """
     import efrotools.code
 
-    paths = efrotools.code.get_script_filenames(projroot=pcommand.PROJROOT)
+    paths = efrotools.code.get_script_filenames(
+        projroot=pcommand.PROJROOT, include_generated=True
+    )
     assert not any(' ' in path for path in paths)
     if '-lines' in sys.argv:
         print('\n'.join(paths))

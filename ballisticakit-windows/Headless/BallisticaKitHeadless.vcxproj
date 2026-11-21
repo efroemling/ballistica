@@ -194,6 +194,8 @@
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_sdl.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app_adapter\app_adapter_vr.h" />
+    <ClCompile Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\app_adapter\offscreen_gl_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode.cc" />
     <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h" />
     <ClCompile Include="..\..\src\ballistica\base\app_mode\empty_app_mode.cc" />
@@ -394,6 +396,8 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_client_context.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\graphics_settings.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\graphics_settings.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\support\mesh_viewer.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\support\mesh_viewer.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\net_graph.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\net_graph.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h" />
@@ -402,6 +406,7 @@
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\screen_messages.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\screen_messages.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\shadow_range.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_big_and_extras_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_glyph_pages_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_graphics.cc" />
@@ -437,6 +442,8 @@
     <ClInclude Include="..\..\src\ballistica\base\input\support\remote_app_server.h" />
     <ClCompile Include="..\..\src\ballistica\base\logic\logic.cc" />
     <ClInclude Include="..\..\src\ballistica\base\logic\logic.h" />
+    <ClCompile Include="..\..\src\ballistica\base\networking\nearby_services.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\networking\nearby_services.h" />
     <ClCompile Include="..\..\src\ballistica\base\networking\network_reader.cc" />
     <ClInclude Include="..\..\src\ballistica\base\networking\network_reader.h" />
     <ClCompile Include="..\..\src\ballistica\base\networking\network_writer.cc" />
@@ -472,6 +479,8 @@
     <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_2.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.h" />
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_nearby.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_nearby.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_test.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_test.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc" />
@@ -544,6 +553,16 @@
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h" />
     <ClCompile Include="..\..\src\ballistica\core\support\core_config.cc" />
     <ClInclude Include="..\..\src\ballistica\core\support\core_config.h" />
+    <ClCompile Include="..\..\src\ballistica\remote\python\methods\python_methods_remote.cc" />
+    <ClInclude Include="..\..\src\ballistica\remote\python\methods\python_methods_remote.h" />
+    <ClCompile Include="..\..\src\ballistica\remote\python\remote_python.cc" />
+    <ClInclude Include="..\..\src\ballistica\remote\python\remote_python.h" />
+    <ClCompile Include="..\..\src\ballistica\remote\remote.cc" />
+    <ClInclude Include="..\..\src\ballistica\remote\remote.h" />
+    <ClCompile Include="..\..\src\ballistica\remote\support\remote_app_mode.cc" />
+    <ClInclude Include="..\..\src\ballistica\remote\support\remote_app_mode.h" />
+    <ClCompile Include="..\..\src\ballistica\remote\support\remote_input_device_delegate.cc" />
+    <ClInclude Include="..\..\src\ballistica\remote\support\remote_input_device_delegate.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\assets\scene_asset.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\assets\scene_collision_mesh.cc" />
@@ -823,6 +842,14 @@
     <ClInclude Include="..\..\src\ballistica\shared\python\python_object_set.h" />
     <ClCompile Include="..\..\src\ballistica\shared\python\python_ref.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\python\python_ref.h" />
+    <ClCompile Include="..\..\src\ballistica\squads\python\methods\python_methods_squads.cc" />
+    <ClInclude Include="..\..\src\ballistica\squads\python\methods\python_methods_squads.h" />
+    <ClCompile Include="..\..\src\ballistica\squads\python\squads_python.cc" />
+    <ClInclude Include="..\..\src\ballistica\squads\python\squads_python.h" />
+    <ClCompile Include="..\..\src\ballistica\squads\squads.cc" />
+    <ClInclude Include="..\..\src\ballistica\squads\squads.h" />
+    <ClCompile Include="..\..\src\ballistica\squads\support\squads_app_mode.cc" />
+    <ClInclude Include="..\..\src\ballistica\squads\support\squads_app_mode.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.cc" />
     <ClInclude Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\python\methods\python_methods_template_fs.cc" />
@@ -831,6 +858,8 @@
     <ClInclude Include="..\..\src\ballistica\template_fs\python\template_fs_python.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\template_fs.cc" />
     <ClInclude Include="..\..\src\ballistica\template_fs\template_fs.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_mesh_viewer.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_mesh_viewer.h" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h" />
@@ -857,6 +886,8 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\column_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\container_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\container_widget.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\debug_rect_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\depiction_slot.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\fading_scroll_thumb.cc" />

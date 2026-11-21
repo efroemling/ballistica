@@ -47,6 +47,9 @@ class AudioStreamer : public Object {
   void set_format(Format format) { format_ = format; }
 
  private:
+  auto UnderrunDetails_(ALenum state, ALint queued, ALint processed,
+                        millisecs_t update_gap, bool resumed) -> std::string;
+
   Format format_{Format::kInvalid};
   bool playing_{};
   bool loops_{};
@@ -55,6 +58,13 @@ class AudioStreamer : public Object {
   /// had to kick it, and when we last logged about it.
   int restart_count_{};
   millisecs_t last_restart_log_time_{-99999};
+  /// When Update() last ran (app-time, so suspended spans don't count) and
+  /// the audio server's unsuspend count at that point; lets an underrun
+  /// report say whether we were starved or a suspend/resume came between.
+  millisecs_t last_update_time_{-1};
+  int last_update_unsuspend_count_{};
+  /// Sample rate of the most recent buffer we filled (for headroom math).
+  unsigned int last_rate_{};
   ALuint buffers_[kAudioStreamBufferCount]{};
   ALuint source_{};
   std::string file_name_;

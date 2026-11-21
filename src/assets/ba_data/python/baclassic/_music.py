@@ -165,6 +165,24 @@ class MusicSubsystem:
         if self._music_player is not None:
             self._music_player.shutdown()
 
+    def on_app_mode_deactivate(self) -> None:
+        """Should be called when the classic app-mode deactivates.
+
+        Our music doesn't outlive the mode, and we forget what was
+        requested so a later activation starts from silence (otherwise
+        a 'continuous' request for the same music would find it
+        'already playing' and do nothing).
+        """
+        # The native app-mode stops its own internal music as it
+        # deactivates; we just drop our record of it.
+        self._playing_internal_music = False
+        if self._music_player is not None:
+            self._music_player.stop()
+        for mode in self.music_types:
+            self.music_types[mode] = None
+        self._test_soundtrack = None
+        self._os_music_resume_timer = None
+
     def have_music_player(self) -> bool:
         """Returns whether a music player is present."""
         return self._music_player_type is not None

@@ -350,6 +350,8 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'tuple[float, float, float] | None':
                 returnstr = 'return (0.0, 0.0, 0.0)'
+            elif returns == 'tuple[float, float, float, float] | None':
+                returnstr = 'return (0.0, 0.0, 0.0, 0.0)'
             elif returns == 'bauiv1.Widget | None':
                 returnstr = 'import bauiv1\nreturn bauiv1.Widget()'
             elif returns in {
@@ -391,6 +393,12 @@ def _writefuncs(
                 returnstr = 'return [(0, 0.0)]'
             elif returns == 'tuple[str, float | None]':
                 returnstr = "return ('blah', None)"
+            elif returns == 'tuple[str, str]':
+                returnstr = "return ('blah', 'blah2')"
+            elif returns == (
+                'list[tuple[bool, str, str, str, str, int, dict[str, str]]]'
+            ):
+                returnstr = "return [(True, 'a', 'b', 'c', 'd', 0, {})]"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -731,6 +739,9 @@ def _special_class_cases(classname: str) -> str:
             '    use_spaz_def_highlight: bool = False\n'
             '    #: Available on spaz and depictiondisplay nodes.\n'
             '    team_coloring: bool = False\n'
+            '    #: Available on depictiondisplay node. Needs host protocol\n'
+            '    #: 57 or newer (opt-in; setting it on an older one raises).\n'
+            '    color_multiply: Sequence[float] = (1.0, 1.0, 1.0)\n'
             '    #: Available on spaz node.\n'
             '    boxing_gloves_mesh: bascenev1.Mesh | None = None\n'
             '    #: Available on spaz node.\n'

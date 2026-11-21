@@ -2,7 +2,11 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -11,6 +15,7 @@
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 
 namespace ballistica::base {
@@ -109,7 +114,102 @@ void MeshAsset::DoPreload() {
       throw Exception();
   }
 
+  // Derived data (bounds and such) follows in newer files; work out
+  // whatever a file doesn't carry while we still have its vertices.
+  ReadTrailer_(&reader);
+  DeriveMissingTrailerData_();
+
 #endif  // BA_HEADLESS_BUILD
+}
+
+void MeshAsset::ReadTrailer_(AssetBlobReader* reader) {
+  uint32_t magic{};
+  if (reader->remaining() == 0) {
+    return;  // A file from before the trailer.
+  }
+  if (!reader->ReadInto(&magic, sizeof(magic)) || magic != kBobTrailerMagic) {
+    // Anything else after the indices is something we don't
+    // understand; the mesh itself is fine without it.
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         "Unrecognized trailing data in mesh '"
+                             + file_name_full_ + "'; ignoring it.");
+    return;
+  }
+  while (reader->remaining() > 0) {
+    uint32_t tag{};
+    uint32_t length{};
+    if (!reader->ReadInto(&tag, sizeof(tag))
+        || !reader->ReadInto(&length, sizeof(length))
+        || length > reader->remaining()) {
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                           "Truncated trailer in mesh '" + file_name_full_
+                               + "'; ignoring the rest of it.");
+      return;
+    }
+    // Read this section whole; then interpret it if we know it (and it
+    // holds at least what we expect -- later versions may append).
+    std::vector<uint8_t> data(length);
+    if (length > 0) {
+      reader->ReadInto(data.data(), length);
+    }
+    if (tag == kBobTrailerTagBounds && length >= 7 * sizeof(float)) {
+      float vals[7];
+      memcpy(vals, data.data(), sizeof(vals));
+      Bounds bounds;
+      bounds.box_min = {vals[0], vals[1], vals[2]};
+      bounds.box_max = {vals[3], vals[4], vals[5]};
+      bounds.radius = vals[6];
+      bounds_ = bounds;
+    } else if (tag == kBobTrailerTagUVRange && length >= 4 * sizeof(float)) {
+      std::array<float, 4> range{};
+      memcpy(range.data(), data.data(), sizeof(float) * 4);
+      uv_range_ = range;
+    }
+  }
+}
+
+void MeshAsset::DeriveMissingTrailerData_() {
+  if (vertices_.empty()) {
+    return;
+  }
+  if (!bounds_) {
+    // As the mesh compiler computes it: a box, then the farthest any
+    // vertex sits from its center.
+    Bounds bounds;
+    bounds.box_min = {vertices_[0].position[0], vertices_[0].position[1],
+                      vertices_[0].position[2]};
+    bounds.box_max = bounds.box_min;
+    for (const auto& v : vertices_) {
+      bounds.box_min.x = std::min(bounds.box_min.x, v.position[0]);
+      bounds.box_min.y = std::min(bounds.box_min.y, v.position[1]);
+      bounds.box_min.z = std::min(bounds.box_min.z, v.position[2]);
+      bounds.box_max.x = std::max(bounds.box_max.x, v.position[0]);
+      bounds.box_max.y = std::max(bounds.box_max.y, v.position[1]);
+      bounds.box_max.z = std::max(bounds.box_max.z, v.position[2]);
+    }
+    Vector3f center = bounds.center();
+    float radius_sq{};
+    for (const auto& v : vertices_) {
+      float dx = v.position[0] - center.x;
+      float dy = v.position[1] - center.y;
+      float dz = v.position[2] - center.z;
+      radius_sq = std::max(radius_sq, dx * dx + dy * dy + dz * dz);
+    }
+    bounds.radius = sqrtf(radius_sq);
+    bounds_ = bounds;
+  }
+  if (!uv_range_) {
+    uint16_t umin{0xFFFF}, vmin{0xFFFF}, umax{}, vmax{};
+    for (const auto& v : vertices_) {
+      umin = std::min(umin, v.uv[0]);
+      vmin = std::min(vmin, v.uv[1]);
+      umax = std::max(umax, v.uv[0]);
+      vmax = std::max(vmax, v.uv[1]);
+    }
+    const float scale = 1.0f / 65535.0f;
+    uv_range_ = std::array<float, 4>{umin * scale, vmin * scale, umax * scale,
+                                     vmax * scale};
+  }
 }
 
 void MeshAsset::DoLoad() {

@@ -101,6 +101,23 @@ auto Audio::SourceBeginNew(SoundAsset* for_sound) -> AudioSource* {
 auto Audio::SourceBeginNew(const AudioPlaySpec& spec) -> AudioSource* {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
 
+  // An audio thread this backed up is almost always stuck inside a single
+  // (OS audio) call, so it can't play anything anyway. Starting or
+  // stealing sources would just keep growing its message list until it
+  // overflows and kills the app.
+  if (auto* loop = g_base->audio_server->event_loop();
+      loop != nullptr && !loop->CheckPushSafety()) {
+    static bool warned{};
+    if (!warned) {
+      warned = true;
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "Audio thread is backed up; dropping new sound "
+                           "plays. Audio thread is "
+                               + loop->DescribeActivity() + ".");
+    }
+    return nullptr;
+  }
+
   SoundAsset* sound = spec.sound;
   int group = spec.overrides.group.value_or(sound ? sound->play_group() : -1);
   AudioPriority priority = spec.overrides.priority.value_or(

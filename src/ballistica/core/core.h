@@ -4,6 +4,7 @@
 #define BALLISTICA_CORE_CORE_H_
 
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -61,6 +62,14 @@ class CoreFeatureSet {
   /// Can be used during shutdown or when trying to send a crash-report to
   /// ensure we don't hang indefinitely.
   void StartSuicideTimer(const std::string& action, millisecs_t delay);
+
+  /// Monotonic time (Platform::TimeMonotonicMillisecs()) when the
+  /// suicide timer will fire, or empty if none was started. Shutdown
+  /// steps with their own time limits derive them from this, so they
+  /// give up before the timer turns things into a fatal error.
+  auto suicide_deadline() const -> std::optional<millisecs_t> {
+    return suicide_deadline_;
+  }
 
   /// Apply the config set up by baenv to the engine.
   void ApplyBaEnvConfig();
@@ -169,6 +178,12 @@ class CoreFeatureSet {
   /// Should be called by a thread before it exits.
   void UnregisterThread();
 
+  /// Names of registered threads other than the calling one, sorted.
+  ///
+  /// Every long-lived thread we start registers itself, so at shutdown
+  /// this is the list of our threads still running.
+  auto OtherRegisteredThreadNames() -> std::vector<std::string>;
+
   /// A bool set just before finalizing the Python interpreter and calling
   /// exit() or whatever is intended to be the last gasp of life for the
   /// binary. This can be polled periodically by background threads that may
@@ -181,14 +196,43 @@ class CoreFeatureSet {
   Platform* const platform;
   Logging* const logging;
 
-  // The following are misc values that should be migrated to applicable
-  // component classes or private vars.
-  bool workspaces_in_use{};
+  // Modded-run ("user taint") signals: has anything user-driven had a
+  // chance to alter engine behavior this run? Every error-reporting
+  // channel carries these (see docs/design/client-error-reporting.md).
+  // The positive values latch -- once true they stay true for the run.
+  // Two of them come from checks that take a while to finish, and those
+  // say so: until a check completes its flag reads false, so ask
+  // ModdedCheckPending() before treating a false as "clean".
+
+  /// Whether the user has run code of their own (dev console, stdio
+  /// console, cloud console). Known from launch; false means none yet.
+  auto user_ran_commands() const { return user_ran_commands_; }
+  void SetUserRanCommands();
+
+  /// Whether a signed-in account has an active workspace. Only
+  /// meaningful once workspaces_state_known(), which comes when initial
+  /// sign-in settles (signed in or not).
+  auto workspaces_in_use() const { return workspaces_in_use_; }
+  void SetWorkspacesInUse(bool val);
+  auto workspaces_state_known() const { return workspaces_state_known_; }
+  void SetWorkspacesStateKnown();
+
+  /// Whether the startup meta-scan found any importable Python in the
+  /// user python (mods) dir. Only meaningful once
+  /// user_python_scan_complete().
+  auto user_python_present() const { return user_python_present_; }
+  auto user_python_scan_complete() const { return user_python_scan_complete_; }
+  void SetUserPythonScanResult(bool present);
+
+  /// True if any modded signal has latched.
+  auto IsUserModified() const -> bool;
+
+  /// True if no modded signal has latched yet but at least one check
+  /// (baenv config, the mods-dir scan, workspace state) hasn't
+  /// finished, so a false IsUserModified() can't yet be read as clean.
+  auto ModdedCheckPending() const -> bool;
+
   bool reset_vr_orientation{};
-  bool user_ran_commands{};
-  /// Whether the meta-scan found any importable Python in the user
-  /// python (mods) dir. Set once that scan completes; false before.
-  bool user_python_present{};
   int master_server_source{};
   std::vector<EventLoop*> suspendable_event_loops;
 
@@ -228,6 +272,12 @@ class CoreFeatureSet {
   void UpdateAppTime_();
   void PostInit_();
 
+  /// Push the modded signals to the platform's crash-reporter keys
+  /// (Platform::SetDebugKey; Crashlytics on Google Play Android, a
+  /// no-op elsewhere). Called whenever a signal changes, and pushes only
+  /// keys whose value differs from what was last pushed.
+  void UpdateModdedDebugKeys_();
+
   CoreConfig core_config_;
   PyObject* initial_app_config_{};
   std::unordered_map<std::thread::id, std::string> thread_info_map_;
@@ -249,11 +299,19 @@ class CoreFeatureSet {
   bool event_loops_suspended_{};
   bool tried_importing_base_{};
   bool started_suicide_{};
+  std::optional<millisecs_t> suicide_deadline_;
   bool have_ba_env_vals_{};
   bool app_config_disable_xinput_{};
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
   bool engine_done_{};
+  bool user_ran_commands_{};
+  bool workspaces_in_use_{};
+  bool workspaces_state_known_{};
+  bool user_python_present_{};
+  bool user_python_scan_complete_{};
+  std::mutex modded_debug_keys_mutex_;
+  std::unordered_map<std::string, std::string> pushed_modded_debug_keys_;
 };
 
 }  // namespace ballistica::core

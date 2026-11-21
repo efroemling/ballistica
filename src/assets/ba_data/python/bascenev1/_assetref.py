@@ -36,6 +36,7 @@ from babase import (
     wrapper_langstr,
 )
 from bacommon.assetpackage import ApverNum
+from bacommon.depiction import CharacterViewerDepiction
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
@@ -48,6 +49,7 @@ if TYPE_CHECKING:
     import babase
     import bascenev1
     import bauiv1
+    import bacommon.assetspec
 
 
 # These leaves add only a ``get()`` method (no new fields), so they need no
@@ -259,9 +261,7 @@ class AssetGroup:
         self._node = node
         self._prefix = prefix
 
-    def __getattr__(
-        self, name: str
-    ) -> (
+    def __getattr__(self, name: str) -> (
         'AssetGroup | TextureHandle | MeshHandle'
         ' | SoundHandle | CollisionMeshHandle | CubeMapTextureHandle'
     ):
@@ -275,9 +275,7 @@ class AssetGroup:
         return _make(self._apvernum, path, child)
 
 
-def _make(
-    apvernum: ApverNum, path: str, kind: str
-) -> (
+def _make(apvernum: ApverNum, path: str, kind: str) -> (
     'TextureHandle | MeshHandle | SoundHandle'
     ' | CollisionMeshHandle | CubeMapTextureHandle'
 ):
@@ -366,6 +364,15 @@ class CharacterHandle:
             depiction = made[key] = _bascenev1.Depiction(self._data[1])
         return depiction
 
+    def get_viewer_depiction(self) -> CharacterViewerDepiction:
+        """Return a live viewer of this character, as depiction data.
+
+        For ui that shows the character standing in a little scene of
+        its own (a doc-ui viewer pane, say) rather than in a game.
+        """
+        check_asset_package_load(self._apvernum, self._path)
+        return CharacterViewerDepiction(self._data[0])
+
     def get_name(self) -> 'babase.LangStr':
         """Return this character's name."""
         return wrapper_langstr(self._apvernum, self._data[2])
@@ -433,6 +440,22 @@ def texture_from_ref(ref: str) -> 'bascenev1.Texture':
     """
     apvernum, assetname = _split_ref(ref)
     return _bascenev1.aptextureget(apvernum, assetname)
+
+
+def texture_spec_from_ref(ref: str) -> bacommon.assetspec.TextureSpec:
+    """Make a texture spec from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only: for refs that arrive as
+    data (stored player profiles' icons, say) and must be passed on as
+    a spec (to a doc-ui page). Raises ValueError for anything that is
+    not a qualified ref.
+
+    :meta private:
+    """
+    from efro.dataclassio import dataclass_from_dict
+
+    apvernum, assetname = _split_ref(ref)
+    return dataclass_from_dict(_TextureSpec, {'a': apvernum, 'n': assetname})
 
 
 def qualified_ref(spec: '_TextureSpec') -> str:

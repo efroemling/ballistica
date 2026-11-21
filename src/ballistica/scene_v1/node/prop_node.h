@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_PROP_NODE_H_
 #define BALLISTICA_SCENE_V1_NODE_PROP_NODE_H_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -13,6 +14,7 @@
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/scene_v1.h"
 
 namespace ballistica::scene_v1 {
 
@@ -46,6 +48,10 @@ class PropNode : public Node {
   // How strongly a sticky prop sticks; 1.0 is the classic behavior.
   auto stickiness() const -> float { return stickiness_; }
   void SetStickiness(float val);
+  // How opaque we draw (0-1); below 1 we blend, texture alpha included,
+  // and our shadow fades along.
+  auto opacity() const -> float { return opacity_; }
+  void SetOpacity(float val) { opacity_ = std::clamp(val, 0.0f, 1.0f); }
   auto shadow_size() const -> float { return shadow_size_; }
   void set_shadow_size(float val) { shadow_size_ = val; }
   auto stick_to_owner() const -> bool { return stick_to_owner_; }
@@ -114,6 +120,7 @@ class PropNode : public Node {
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
   bool sticky_{};
   float stickiness_{1.0f};
+  float opacity_{1.0f};
   Object::WeakRef<Node> owner_;
   bool flashing_{};
   bool stick_to_owner_{};
@@ -171,6 +178,8 @@ class PropNodeType : public NodeType {
   // protocol-changes list in scene_v1.h (42/43).
   BA_FLOAT_ARRAY_ATTR_LATE(rotate, GetRotate, SetRotate);
   BA_FLOAT_ATTR_LATE(stickiness, stickiness, SetStickiness);
+  // (protocol 57, opt-in: refused on older streams; see min_protocol)
+  BA_FLOAT_ATTR_LATE(opacity, opacity, SetOpacity);
 #undef BA_NODE_TYPE_CLASS
 
   explicit PropNodeType(const char* sub_type_name = nullptr,
@@ -200,7 +209,10 @@ class PropNodeType : public NodeType {
         extra_acceleration(this),
         gravity_scale(this),
         rotate(this),
-        stickiness(this) {}
+        stickiness(this),
+        opacity(this) {
+    opacity.set_min_protocol(kProtocolVersionPropOpacity);
+  }
 };
 
 }  // namespace ballistica::scene_v1

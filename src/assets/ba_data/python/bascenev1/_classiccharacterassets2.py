@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets2.261009``
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets2.261118``
 (bascenev1).
 
 Classic characters whose sources are not intended to go public: each a whole
@@ -13,7 +13,7 @@ template or featured.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 545
+# ba_meta require asset-package 1231
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -27,8 +27,8 @@ from bascenev1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccharacterassets2.261009
-_ASSET_PACKAGE = ApverNum(545)
+# a-0.baclassiccharacterassets2.261118
+_ASSET_PACKAGE = ApverNum(1231)
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (
@@ -88,9 +88,12 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Chinese locales use the official mascot
-        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
-        #:     brand).
+        #:     picker, and gameplay UIs. The mascot and its name are another
+        #:     company's, so every language's text is supplied by hand
+        #:     ("Translate automatically" and "Review translations" are off):
+        #:     both Chinese locales use the official name, the rest keep what
+        #:     they had on 2026-11-13. When a language is added, lock it on the
+        #:     Translation Overrides page and give it its text.
         #:
         #:     English: "Taobao Mascot"
         taobao_mascot: LangStr
@@ -180,34 +183,34 @@ _CHARACTERS = {
     'characters': {
         'taobao_mascot': (
             (
-                '{"b":{"ct":{"a":545,"n":"textures/ali_color"},'
-                '"cm":{"a":545,"n":"textures/ali_color_mask"},'
-                '"mh":{"a":545,"n":"meshes/ali_head"},'
-                '"mt":{"a":545,"n":"meshes/ali_torso"},'
-                '"mua":{"a":545,"n":"meshes/ali_upper_arm"},'
-                '"mul":{"a":545,"n":"meshes/ali_upper_leg"},'
-                '"mll":{"a":545,"n":"meshes/ali_lower_leg"},'
-                '"mto":{"a":545,"n":"meshes/ali_toes"},'
-                '"mfa":{"a":545,"n":"meshes/ali_fore_arm"},'
-                '"mhn":{"a":545,"n":"meshes/ali_hand"},'
-                '"sj":[{"a":545,"n":"audio/ali1"},{"a":545,'
-                '"n":"audio/ali2"},{"a":545,"n":"audio/ali3"},'
-                '{"a":545,"n":"audio/ali4"}],"sa":[{"a":545,'
-                '"n":"audio/ali1"},{"a":545,"n":"audio/ali2"},'
-                '{"a":545,"n":"audio/ali3"},{"a":545,'
-                '"n":"audio/ali4"}],"si":[{"a":545,'
-                '"n":"audio/ali_hit1"},{"a":545,"n":"audio/ali_hit2"}],'
-                '"sd":[{"a":545,"n":"audio/ali_death"}],'
-                '"sp":[{"a":545,"n":"audio/ali1"},{"a":545,'
-                '"n":"audio/ali2"},{"a":545,"n":"audio/ali3"},'
-                '{"a":545,"n":"audio/ali4"}],"sf":[{"a":545,'
+                '{"b":{"ct":{"a":1231,"n":"textures/ali_color"},'
+                '"cm":{"a":1231,"n":"textures/ali_color_mask"},'
+                '"mh":{"a":1231,"n":"meshes/ali_head"},'
+                '"mt":{"a":1231,"n":"meshes/ali_torso"},'
+                '"mua":{"a":1231,"n":"meshes/ali_upper_arm"},'
+                '"mul":{"a":1231,"n":"meshes/ali_upper_leg"},'
+                '"mll":{"a":1231,"n":"meshes/ali_lower_leg"},'
+                '"mto":{"a":1231,"n":"meshes/ali_toes"},'
+                '"mfa":{"a":1231,"n":"meshes/ali_fore_arm"},'
+                '"mhn":{"a":1231,"n":"meshes/ali_hand"},'
+                '"sj":[{"a":1231,"n":"audio/ali1"},{"a":1231,'
+                '"n":"audio/ali2"},{"a":1231,"n":"audio/ali3"},'
+                '{"a":1231,"n":"audio/ali4"}],"sa":[{"a":1231,'
+                '"n":"audio/ali1"},{"a":1231,"n":"audio/ali2"},'
+                '{"a":1231,"n":"audio/ali3"},{"a":1231,'
+                '"n":"audio/ali4"}],"si":[{"a":1231,'
+                '"n":"audio/ali_hit1"},{"a":1231,"n":"audio/ali_hit2"}],'
+                '"sd":[{"a":1231,"n":"audio/ali_death"}],'
+                '"sp":[{"a":1231,"n":"audio/ali1"},{"a":1231,'
+                '"n":"audio/ali2"},{"a":1231,"n":"audio/ali3"},'
+                '{"a":1231,"n":"audio/ali4"}],"sf":[{"a":1231,'
                 '"n":"audio/ali_fall"}],"cl":[1.0,0.5,0.0],"hl":[1.0,1.0,'
                 '1.0],"tr":0.11,"so":[0.03,-0.05,0.0],"le":"n","re":"n",'
                 '"rs":0.25}}'
             ),
             (
-                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":545,'
-                '\\"n\\":\\"textures/ali_icon\\"},\\"cm\\":{\\"a\\":545,'
+                '{"j":"{\\"b\\":{\\"tx\\":{\\"a\\":1231,'
+                '\\"n\\":\\"textures/ali_icon\\"},\\"cm\\":{\\"a\\":1231,'
                 '\\"n\\":\\"textures/ali_icon_color_mask\\"},\\"cl\\":[1.0,'
                 '0.5,0.0],\\"hl\\":[1.0,1.0,1.0]}}","_t":"ci"}'
             ),

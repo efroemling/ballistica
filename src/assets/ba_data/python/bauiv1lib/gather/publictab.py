@@ -318,16 +318,29 @@ class PingThread(Thread):
         try:
             import socket
 
-            socket_type = bui.get_ip_address_type(self._address)
-            sock = socket.socket(socket_type, socket.SOCK_DGRAM)
-            sock.connect((self._address, self._port))
+            # Go through the system resolver rather than using the raw
+            # address: on IPv6-only networks (NAT64) an IPv4 literal
+            # only works in its synthesized IPv6 form.
+            # (Unresolvable here counts as unreachable.)
+            try:
+                infos = socket.getaddrinfo(
+                    self._address, self._port, type=socket.SOCK_DGRAM
+                )
+            except socket.gaierror:
+                infos = []
 
             accessible = False
             starttime = time.time()
 
+            if infos:
+                family, stype, proto, _canonname, sockaddr = infos[0]
+                sock = socket.socket(family, stype, proto)
+                sock.connect(sockaddr)
+                sock.settimeout(1)
+
             # Send a few pings and wait a second for a response.
-            sock.settimeout(1)
-            for _i in range(3):
+            for _i in range(3 if sock is not None else 0):
+                assert sock is not None
                 sock.send(b'\x0b')
                 result: bytes | None
                 try:

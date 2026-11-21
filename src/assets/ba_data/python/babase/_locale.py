@@ -123,6 +123,14 @@ class LocaleSubsystem(AppSubsystem):
                 applog.error(
                     'Invalid Lang "%s"; falling back to default.', lang
                 )
+            else:
+                # A long value corrected since it was saved (Belarusian,
+                # 2026-11-17) is stored again in its current spelling,
+                # so whatever reads 'Lang' later sees that. Band-aid;
+                # keep until 2027-11-17, then remove together with
+                # bacommon.locale's _RENAMED_LONG_VALUES entry.
+                if lang != locale.long_value:
+                    _babase.app.config['Lang'] = locale.long_value
         # Convert the locale to resolved and back again to make sure
         # we're loading a currently-supported one (for example this will
         # convert 'Spanish' to 'SpanishLatinAmerica').
@@ -362,6 +370,12 @@ class LocaleSubsystem(AppSubsystem):
             cfg.pop('Lang', None)
         cfg.commit()
         applog.info('Switched language to %s.', locale.long_value)
+
+        # Our locale is part of the app-instance-info the cloud keeps for
+        # us; let it know so server-rendered text follows the switch.
+        plus = _babase.app.plus
+        if plus is not None:
+            plus.cloud.on_app_instance_info_changed()
         return True
 
     @staticmethod
@@ -399,7 +413,7 @@ class LocaleSubsystem(AppSubsystem):
             rlocale is cls.ENGLISH
             or rlocale is cls.PORTUGUESE_PORTUGAL
             or rlocale is cls.PORTUGUESE_BRAZIL
-            or rlocale is cls.BELARUSSIAN
+            or rlocale is cls.BELARUSIAN
             or rlocale is cls.CROATIAN
             or rlocale is cls.CZECH
             or rlocale is cls.DANISH

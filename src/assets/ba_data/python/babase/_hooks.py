@@ -593,7 +593,9 @@ def v2_auth_request(
 
 def v2_auth_data(
     token: str,
-) -> None | tuple[str, str, dict, list[str] | None, list[str] | None]:
+) -> (
+    None | tuple[str, str, dict, list[str] | None, list[str] | None, str | None]
+):
     """Look up autheneticated v2 account data via a token."""
     assert _babase.in_logic_thread()
 
@@ -613,6 +615,7 @@ def v2_auth_data(
         authdata.player_profiles,
         authdata.classic_purchases,
         authdata.cloud_characters,
+        authdata.account_name_depiction,
     )
 
 

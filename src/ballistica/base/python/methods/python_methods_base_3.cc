@@ -555,6 +555,41 @@ static PyMethodDef PyRequestPermissionDef = {
     ":meta private:",
 };
 
+// ------------------------- can_request_permission ----------------------------
+
+static auto PyCanRequestPermission(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  PyObject* permission_obj;
+  static const char* kwlist[] = {"permission", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O", const_cast<char**>(kwlist), &permission_obj)) {
+    return nullptr;
+  }
+  Permission permission = g_base->python->GetPyEnum_Permission(permission_obj);
+  if (g_core->platform->CanRequestPermission(permission)) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCanRequestPermissionDef = {
+    "can_request_permission",             // name
+    (PyCFunction)PyCanRequestPermission,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "can_request_permission(permission: babase.Permission) -> bool\n"
+    "\n"
+    "Whether requesting a permission can still show a system prompt.\n"
+    "\n"
+    "False once the user has denied it for good; it can then only be\n"
+    "granted in system settings.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------- add_network_availability_callback -----------------------
 
 static auto PyAddNetworkAvailabilityCallback(PyObject* self, PyObject* args,
@@ -742,9 +777,9 @@ auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  const char* h =
-      ((g_core->user_ran_commands || g_core->workspaces_in_use) ? "cjief3l"
-                                                                : "wofocj8");
+  const char* h = ((g_core->user_ran_commands() || g_core->workspaces_in_use())
+                       ? "cjief3l"
+                       : "wofocj8");
   return PyUnicode_FromString(h);
   BA_PYTHON_CATCH;
 }
@@ -783,7 +818,7 @@ static PyMethodDef PyGetIdleTimeDef = {
 
 static auto PyHasUserRunCommands(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->user_ran_commands) {
+  if (g_core->user_ran_commands()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -803,7 +838,7 @@ static PyMethodDef PyHasUserRunCommandsDef = {
 
 static auto PyWorkspacesInUse(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->workspaces_in_use) {
+  if (g_core->workspaces_in_use()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -2519,8 +2554,11 @@ static PyMethodDef PySetDebugBoundsDef = {
     "The dev console's UI tab has a button for each kind. Kinds:\n"
     "``'name_depictions'``, ``'image_depictions'`` and\n"
     "``'character_icon_depictions'`` (each such depiction's whole box in\n"
-    "red and the part of it the depiction takes up in green), and\n"
-    "``'text'`` (every glyph quad of all text filled translucent red).\n"
+    "red and the part of it the depiction takes up in green),\n"
+    "``'text'`` (every glyph quad of all text filled translucent red),\n"
+    "and ``'containers'`` (the bounds of every container drawing a window\n"
+    "backing, in red; for clean-layout containers exactly the backing's\n"
+    "known-opaque area).\n"
     "Not saved; off at launch.\n"
     "\n"
     ":meta private:",
@@ -2816,6 +2854,39 @@ static PyMethodDef PyReloadHooksDef = {
     "native layer to see your changes.",
 };
 
+// ------------------------ debug_simulate_suspend -----------------------------
+
+static auto PyDebugSimulateSuspend(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  double duration;
+  static const char* kwlist[] = {"duration", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char**>(kwlist), &duration)) {
+    return nullptr;
+  }
+  g_base->DebugSimulateSuspend(duration);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDebugSimulateSuspendDef = {
+    "debug_simulate_suspend",             // name
+    (PyCFunction)PyDebugSimulateSuspend,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "debug_simulate_suspend(duration: float) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Simulate a mobile app being backgrounded for ``duration`` seconds.\n"
+    "\n"
+    "Developer builds that run their own main loop (SDL and headless)\n"
+    "only. Runs the normal deactivate and suspend sequence, freezes the\n"
+    "process (Python threads included) for the duration, then resumes.\n"
+    "Returns immediately; the suspend begins shortly after.",
+};
+
 // ---------------------------- verify_ed25519 ---------------------------------
 
 static auto PyVerifyEd25519(PyObject* self, PyObject* args, PyObject* keywds)
@@ -3012,6 +3083,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyInLogicThreadDef,
       PyInMainMenuDef,
       PyRequestPermissionDef,
+      PyCanRequestPermissionDef,
       PyHavePermissionDef,
       PyAddNetworkAvailabilityCallbackDef,
       PyUnlockAllInputDef,
@@ -3063,6 +3135,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySuppressConfigAndStateWritesDef,
       PyGetSuppressConfigAndStateWritesDef,
       PyReloadHooksDef,
+      PyDebugSimulateSuspendDef,
       PySimpleDialogCreateDef,
       PySimpleDialogUpdateDef,
       PySimpleDialogDismissDef,

@@ -20,6 +20,7 @@ from bauiv1lib.docui.prep._button import (
     instantiate_button,
 )
 from bauiv1lib.docui.prep._rowtext import (
+    control_label_style,
     titles_clear_rise,
     footnote_clear_drop,
 )
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
     import bacommon.docui.v2 as dui2
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
     from bauiv1lib.docui.prep._types import NativeLangStrFn, RowPrep
 
 # A button control row is never shorter than the other control rows,
@@ -173,7 +174,7 @@ def prep_button_control_row(
             maxwidth=max(1.0, labelright - left),
             h_align='left',
             v_align='center',
-            color=(0.75, 1.0, 0.7, 1.0),
+            **control_label_style(row),
             # (A disabled row dims its label.)
             enabled=not row.disabled,
             transition_delay=tdelay,
@@ -197,7 +198,7 @@ def prep_button_control_row(
 
 
 def instantiate_button_control_row(
-    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIWindow
+    rowprep: RowPrep, *, parent: bui.Widget, window: DocUIPageHost
 ) -> bui.Widget:
     """Create the widgets for a prepped button control row.
 

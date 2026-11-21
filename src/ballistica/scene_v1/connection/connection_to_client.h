@@ -44,6 +44,12 @@ class ConnectionToClient : public Connection {
   auto GetCloudCharacters() const -> PyObject* {
     return cloud_characters_.get();
   }
+  /// This client's account's name depiction json (as the master server
+  /// composed it), or empty if unknown. Only ever set via v2 auth, so
+  /// it is verified whenever present.
+  auto peer_account_name_depiction() const -> const std::string& {
+    return peer_account_name_depiction_;
+  }
   auto build_number() const -> int { return build_number_; }
   /// Send a screen-message. ``s`` is the legacy flat/resource-json text
   /// every build understands; ``tagged``, when non-empty, is a lang-str
@@ -80,21 +86,10 @@ class ConnectionToClient : public Connection {
   /// optional auth, only for those that could.
   auto v2_authed() const { return v2_authed_; }
 
-  /// Return whether this client is an admin. Will only return true once their
-  /// account id has been verified by the master server.
-  auto IsAdmin() const -> bool;
-
-  auto kick_voted() const { return kick_voted_; }
-  auto set_kick_voted(bool val) { kick_voted_ = val; }
-  auto kick_vote_choice() const { return kick_vote_choice_; }
-  auto set_kick_vote_choice(bool val) { kick_vote_choice_ = val; }
-  auto set_next_kick_vote_allow_time(millisecs_t val) {
-    next_kick_vote_allow_time_ = val;
-  }
-  auto next_kick_vote_allow_time() const { return next_kick_vote_allow_time_; }
   auto public_device_id() const { return public_device_id_; }
-  // Returns a spec for this client that incorporates their player names
-  // or their peer name if they have no players.
+  // Returns the spec this client goes by in chat: their player's name if
+  // they have exactly one player in the game, else their peer spec (the
+  // name the party list shows).
   auto GetCombinedSpec() -> PlayerSpec;
 
   auto protocol_version() const {
@@ -147,13 +142,12 @@ class ConnectionToClient : public Connection {
   int id_{-1};
   int build_number_{};
   bool got_client_info_{};
-  bool kick_voted_{};
-  bool kick_vote_choice_{};
   std::string token_;
   std::string peer_hash_;
   PythonRef player_profiles_;
   PythonRef classic_purchases_;
   PythonRef cloud_characters_;
+  std::string peer_account_name_depiction_;
   bool got_v1_auth_from_master_server_{};
   bool v2_auth_decided_{};
   bool v2_auth_offered_{};
@@ -161,7 +155,6 @@ class ConnectionToClient : public Connection {
   bool v2_authed_{};
   std::string v2_auth_app_instance_id_;
   std::vector<millisecs_t> last_chat_times_;
-  millisecs_t next_kick_vote_allow_time_{};
   millisecs_t chat_block_time_{};
   millisecs_t last_remove_player_time_{-99999};
   int next_chat_block_seconds_{10};

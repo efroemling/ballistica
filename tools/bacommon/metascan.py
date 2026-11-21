@@ -32,6 +32,7 @@ live in the consumer.
 """
 
 import os
+import zlib
 import logging
 import pkgutil
 import zipimport
@@ -42,8 +43,10 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from bacommon.assetpackage import ApverNum
+from bacommon.metascancache import FROZEN_MTIME_NS, ModuleOutcome, ScanCache
 
 if TYPE_CHECKING:
+    from typing import Callable
     from concurrent.futures import Future
     from _typeshed.importlib import PathEntryFinderProtocol
 
@@ -53,6 +56,20 @@ if TYPE_CHECKING:
 # majority of files).
 _MARKER_BYTES = b'# ba_meta'
 _MARKER_STR = '# ba_meta'
+
+#: Scan-path alias the app uses for its own Python dir, and so what
+#: build tooling must seed that dir's cache entries under.
+APP_SCAN_ALIAS = 'app'
+
+#: Legacy export-type shortcut names the app accepts, mapped to the
+#: canonical class paths it substitutes (with a deprecation warning).
+#: Shared so build tooling scans exactly as the app does.
+DEPRECATED_EXPORT_SHORTCUTS: dict[str, str] = {
+    # DEPRECATED as of 6/2025.
+    'plugin': 'babase.Plugin',
+    # DEPRECATED as of 12/2023.
+    'keyboard': 'bauiv1.Keyboard',
+}
 
 
 @runtime_checkable
@@ -90,6 +107,119 @@ def _is_scannable_path(path: str) -> bool:
     except zipimport.ZipImportError, OSError:
         return False
     return True
+
+
+def _zip_entry_identity(
+    finder: zipimport.zipimporter, display: str
+) -> tuple[bool, list | None]:
+    """Is ``display`` in the importer's archive, and its identity if so.
+
+    The identity is the entry's uncompressed size and CRC32, read from
+    the directory zipimport already holds in memory (its private
+    table-of-contents; anything unexpected there just means no
+    identity, so no caching).
+    """
+    pathname = display
+    if os.altsep:
+        pathname = pathname.replace(os.altsep, os.sep)
+    prefix = finder.archive + os.sep
+    key = pathname[len(prefix) :] if pathname.startswith(prefix) else pathname
+    try:
+        files = _zip_toc(finder)
+    except Exception:
+        # Can't look; let the read decide whether it exists.
+        _warn_zip_identity_unavailable()
+        return True, None
+    if key not in files:
+        return False, None
+    toc_entry = files[key]
+    if toc_entry is None:
+        return True, None  # (zipimport's placeholder; not a real file.)
+    try:
+        # (path, compress, data_size, file_size, file_offset, time,
+        # date, crc)
+        return True, ['z', int(toc_entry[3]), int(toc_entry[7])]
+    except Exception:
+        _warn_zip_identity_unavailable()
+        return True, None
+
+
+def _zip_toc(finder: zipimport.zipimporter) -> dict:
+    """zipimport's private in-memory table of contents for an archive."""
+    # pylint: disable=protected-access
+    toc: dict = finder._get_files()  # type: ignore[attr-defined]
+    return toc
+
+
+_g_warned_zip_identity = False
+
+
+def _warn_zip_identity_unavailable() -> None:
+    """Note (once) that zipimport internals didn't look as expected.
+
+    Scanning still works, but nothing in zip archives gets cached, so
+    Android launches lose the scan cache entirely. Likely a Python
+    update changed zipimport's private table-of-contents.
+    """
+    global _g_warned_zip_identity  # pylint: disable=global-statement
+    if _g_warned_zip_identity:
+        return
+    _g_warned_zip_identity = True
+    logging.warning(
+        'metascan: zipimport internals look different than expected;'
+        ' zip archive contents will not be cached (scans run slower).'
+    )
+
+
+def _locate_direct(
+    finder: importlib.machinery.FileFinder | _SupportsGetData,
+    display: str,
+    *,
+    content: bool,
+) -> tuple[list | None, Callable[[], bytes | None]] | None:
+    """Identity and reader for a module read directly (no find_spec).
+
+    None if the module has no source there. With ``content``, plain
+    files are read right away and keyed like zip entries (size and
+    CRC32), for building seeds.
+    """
+    if isinstance(finder, _SupportsGetData):
+        gfinder = finder
+        identity: list | None = None
+        if isinstance(finder, zipimport.zipimporter):
+            found, identity = _zip_entry_identity(finder, display)
+            if not found:
+                return None
+
+        def _read_get_data() -> bytes | None:
+            try:
+                return gfinder.get_data(display)
+            except OSError:
+                return None
+
+        return identity, _read_get_data
+
+    if content:
+        try:
+            with open(display, 'rb') as infile:
+                data = infile.read()
+        except OSError:
+            return None
+        return ['z', len(data), zlib.crc32(data)], lambda: data
+
+    try:
+        stat = os.stat(display)
+    except OSError:
+        return None
+
+    def _read_file() -> bytes | None:
+        try:
+            with open(display, 'rb') as infile:
+                return infile.read()
+        except OSError:
+            return None
+
+    return ['f', stat.st_size, stat.st_mtime_ns], _read_file
 
 
 def extract_meta_lines(lines: list[str]) -> dict[int, list[str]]:
@@ -167,6 +297,36 @@ class ScanResults:
         return self.exports.get(name, [])
 
 
+def write_seed(
+    python_dir: str,
+    alias: str,
+    outpath: str,
+    *,
+    expected_api_version: int | None,
+    deprecated_export_shortcuts: dict[str, str] | None = None,
+) -> int:
+    """Precompute a :class:`ScanCache` seed for a Python dir.
+
+    For a dir that will ship inside a zip archive (an Android apk):
+    entries get keyed by content as zip entries are, under ``alias``
+    (which the app must also use for that dir), so at runtime they
+    apply to exactly the files they were computed from. The scan
+    settings must match the app's too. Returns the entry count.
+    """
+    cache = ScanCache()
+    scan = DirectoryScan(
+        paths=[python_dir],
+        expected_api_version=expected_api_version,
+        deprecated_export_shortcuts=deprecated_export_shortcuts,
+        cache=cache,
+        path_aliases={python_dir: alias},
+        content_identities=True,
+    )
+    scan.run()
+    cache.save(outpath)
+    return cache.entry_count
+
+
 class DirectoryScan:
     """Scans path entries for ``# ba_meta`` directives.
 
@@ -212,13 +372,29 @@ class DirectoryScan:
         *,
         expects_extras: bool = False,
         max_workers: int | None = None,
+        cache: ScanCache | None = None,
+        path_aliases: dict[str, str] | None = None,
+        content_identities: bool = False,
     ) -> None:
         """Given one or more paths, parses available meta information.
 
         It is assumed that these paths are also in PYTHONPATH.
         Paths may be directories, zip archives, or paths inside zip
         archives.
+
+        ``path_aliases`` gives scan paths stable names for cache keys
+        (cache entries are keyed relative to their scan path, so an
+        app's Python dir can move, as an apk's install path does on
+        every update, without invalidating them). ``content_identities``
+        keys plain files by size and CRC32 of their contents instead of
+        mtime, matching how zip entries are keyed; it's for generating
+        seeds (see :class:`ScanCache`), and reads every file.
         """
+        #: Optional cache of per-module outcomes (see ScanCache). May be
+        #: assigned any time before run().
+        self.cache = cache
+        self._path_aliases = dict(path_aliases or {})
+        self._content_identities = content_identities
         # Skip non-existent/unscannable paths completely.
         self.base_paths = [str(p) for p in paths if _is_scannable_path(p)]
         self.expected_api_version = expected_api_version
@@ -243,6 +419,17 @@ class DirectoryScan:
         # they're doing a cold multi-file scan on idle cores.
         self._max_workers = max_workers if max_workers is not None else 1
         self.results = ScanResults()
+
+        # Our settings shape every module's outcome, so cached outcomes
+        # only apply to scans with the same ones. (A short digest of
+        # them, since it goes in every cache entry's key.)
+        settings = repr(
+            (
+                expected_api_version,
+                sorted(self.deprecated_export_shortcuts.items()),
+            )
+        )
+        self._cache_sig = format(zlib.crc32(settings.encode()), '08x')
 
     def set_extras(self, paths: list[str]) -> None:
         """Set extra portion."""
@@ -335,6 +522,7 @@ class DirectoryScan:
                 self._scan_module(
                     results,
                     children,
+                    root=path,
                     path=epath,
                     finder=efinder,
                     fullname=ename,
@@ -362,20 +550,26 @@ class DirectoryScan:
                     results.announce_errors_occurred = True
         return results
 
-    def _load_module_payload(
+    def _locate_module(
         self,
         path: str,
         finder: PathEntryFinderProtocol,
         fullname: str,
         ispkg: bool,
-    ) -> tuple[str, bytes | str, list[str]] | None:
-        """Locate and read a module's raw source via its loader.
+    ) -> (
+        tuple[str, list[str], list | None, Callable[[], bytes | str | None]]
+        | None
+    ):
+        """Find a module's source without reading it yet.
 
-        Returns ``(display_path, payload, submodule_locations)``
-        where payload is raw utf-8 bytes when possible (only files
-        that pass the marker prefilter get decoded) or already-str
-        for get_source-only loaders. ``None`` for modules that can't
-        carry meta tags (sourceless modules, unsupported loaders).
+        Returns ``(display_path, submodule_locations, identity,
+        read)``. ``identity`` keys the module's source for caching
+        (None if it can't be trusted to), and ``read()`` returns the
+        raw source: utf-8 bytes when possible (only files that pass the
+        marker prefilter get decoded) or already-str for
+        get_source-only loaders, or None if it turns out unreadable.
+        Returns None for modules that can't carry meta tags (sourceless
+        modules, unsupported loaders).
         """
         tail = fullname.rpartition('.')[2]
         if isinstance(
@@ -394,17 +588,13 @@ class DirectoryScan:
             else:
                 display = os.path.join(path, tail + '.py')
                 sublocs = []
-            data: bytes
-            try:
-                if isinstance(finder, _SupportsGetData):
-                    data = finder.get_data(display)
-                else:
-                    with open(display, 'rb') as infile:
-                        data = infile.read()
-            except OSError:
-                # No .py source present (bytecode-only, etc).
-                return None
-            return display, data, sublocs
+            direct = _locate_direct(
+                finder, display, content=self._content_identities
+            )
+            if direct is None:
+                return None  # No .py source (bytecode-only, etc).
+            identity, read = direct
+            return display, sublocs, identity, read
 
         spec = finder.find_spec(fullname)
         if (
@@ -415,20 +605,63 @@ class DirectoryScan:
             or not spec.origin.endswith('.py')
         ):
             return None
-        sublocs = list(spec.submodule_search_locations or [])
-        if isinstance(spec.loader, _SupportsGetData):
-            return spec.origin, spec.loader.get_data(spec.origin), sublocs
-        if isinstance(spec.loader, _SupportsGetSource):
-            source = spec.loader.get_source(fullname)
-            if source is not None:
-                return spec.origin, source, sublocs
+        origin = spec.origin
+        loader = spec.loader
+        specsublocs = list(spec.submodule_search_locations or [])
+        if isinstance(loader, _SupportsGetData):
+            gloader = loader
+            return (
+                origin,
+                specsublocs,
+                None,
+                lambda: gloader.get_data(origin),
+            )
+        if isinstance(loader, _SupportsGetSource):
+            sloader = loader
+            return (
+                origin,
+                specsublocs,
+                None,
+                lambda: sloader.get_source(fullname),
+            )
         return None
+
+    def _cache_name_and_key(
+        self,
+        root: str,
+        display: str,
+        fullname: str,
+        is_top_level: bool,
+        identity: list | None,
+    ) -> tuple[str, list | None]:
+        """A module's cache entry name, and key (None if uncacheable)."""
+        # Entries are named relative to their scan path (under its
+        # alias, if any) so they survive that path moving.
+        alias = self._path_aliases.get(root, root)
+        rootprefix = root + os.sep
+        relpath = (
+            display[len(rootprefix) :]
+            if display.startswith(rootprefix)
+            else display
+        )
+        cachename = f'{alias}:{relpath}'
+
+        cache = self.cache
+        if cache is None or identity is None:
+            return cachename, None
+        if identity[0] == 'f' and identity[2] <= FROZEN_MTIME_NS:
+            # Frozen mtime (flatpak/nix); key by install version instead.
+            if cache.frozen_salt is None:
+                return cachename, None
+            identity = ['F', identity[1], cache.frozen_salt]
+        return cachename, [self._cache_sig, fullname, is_top_level, *identity]
 
     def _scan_module(
         self,
         results: ScanResults,
         children: list[tuple[str, str]],
         *,
+        root: str,
         path: str,
         finder: PathEntryFinderProtocol,
         fullname: str,
@@ -436,10 +669,55 @@ class DirectoryScan:
         is_top_level: bool,
     ) -> None:
         """Scan an individual module and add the findings to results."""
-        loaded = self._load_module_payload(path, finder, fullname, ispkg)
-        if loaded is None:
+        located = self._locate_module(path, finder, fullname, ispkg)
+        if located is None:
             return
-        display, payload, sublocs = loaded
+        display, sublocs, identity, read = located
+
+        cache = self.cache
+        cachename, key = self._cache_name_and_key(
+            root, display, fullname, is_top_level, identity
+        )
+        outcome: ModuleOutcome | None = None
+        if key is not None:
+            assert cache is not None
+            outcome = cache.get(cachename, key)
+        if outcome is None:
+            payload = read()
+            if payload is None:
+                return
+            outcome = self._compute_outcome(
+                display, fullname, is_top_level, payload
+            )
+            if key is not None and outcome.cacheable:
+                assert cache is not None
+                cache.put(cachename, key, outcome)
+
+        for exporttype, classname in outcome.exports:
+            results.exports.setdefault(exporttype, []).append(classname)
+        for apvernum, modulename in outcome.asset_packages:
+            results.asset_packages.setdefault(ApverNum(apvernum), []).append(
+                modulename
+            )
+        if outcome.incorrect_api:
+            results.incorrect_api_modules.append(fullname)
+        if outcome.announce:
+            results.announce_errors_occurred = True
+
+        # If its a package, queue its contents for scanning.
+        if outcome.recurse:
+            for subpath in sublocs:
+                children.append((subpath, f'{fullname}.'))
+
+    def _compute_outcome(
+        self,
+        display: str,
+        fullname: str,
+        is_top_level: bool,
+        payload: bytes | str,
+    ) -> ModuleOutcome:
+        """Work out what a module contributes, from its source."""
+        outcome = ModuleOutcome()
 
         # Cheap prefilter on the raw data: no marker anywhere means
         # no directives, so skip decode/line-splitting entirely.
@@ -454,12 +732,12 @@ class DirectoryScan:
             flines = []
             meta_lines = {}
         required_api = self._get_api_requirement(
-            results, display, meta_lines, is_top_level
+            outcome, display, meta_lines, is_top_level
         )
 
         # Top level modules with no discernible api version get ignored.
         if is_top_level and required_api is None:
-            return
+            return outcome
 
         # If we find a module requiring a different api version than the
         # consumer expects, warn and ignore. If no api was supplied, do
@@ -476,21 +754,19 @@ class DirectoryScan:
                 required_api,
                 self.expected_api_version,
             )
-            results.incorrect_api_modules.append(fullname)
-            return
+            outcome.incorrect_api = True
+            return outcome
 
         # Ok; can proceed with a full scan of this module.
         self._process_module_meta_tags(
-            results, display, fullname, flines, meta_lines
+            outcome, display, fullname, flines, meta_lines
         )
-
-        # If its a package, queue its contents for scanning.
-        for subpath in sublocs:
-            children.append((subpath, f'{fullname}.'))
+        outcome.recurse = True
+        return outcome
 
     def _process_module_meta_tags(
         self,
-        results: ScanResults,
+        outcome: ModuleOutcome,
         display: str,
         modulename: str,
         flines: list[str],
@@ -506,7 +782,7 @@ class DirectoryScan:
                     display,
                     lindex + 1,
                 )
-                results.announce_errors_occurred = True
+                outcome.announce = True
             elif (
                 len(mline) == 4 and mline[1] == 'require' and mline[2] == 'api'
             ):
@@ -530,11 +806,9 @@ class DirectoryScan:
                         lindex + 1,
                         mline[3],
                     )
-                    results.announce_errors_occurred = True
+                    outcome.announce = True
                 else:
-                    results.asset_packages.setdefault(
-                        ApverNum(int(mline[3])), []
-                    ).append(modulename)
+                    outcome.asset_packages.append((int(mline[3]), modulename))
             elif len(mline) != 3 or mline[1] != 'export':
                 # No other directive shapes are recognized.
                 logging.warning(
@@ -542,12 +816,12 @@ class DirectoryScan:
                     display,
                     lindex + 1,
                 )
-                results.announce_errors_occurred = True
+                outcome.announce = True
             else:
                 # Looks like we've got a valid export line!
                 exporttypestr = mline[2]
                 export_class_name = self._get_export_class_name(
-                    results, display, flines, lindex
+                    outcome, display, flines, lindex
                 )
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
@@ -568,16 +842,14 @@ class DirectoryScan:
                             exporttypestr,
                             canonical,
                         )
-                        results.announce_errors_occurred = True
+                        outcome.announce = True
                         exporttypestr = canonical
 
-                    results.exports.setdefault(exporttypestr, []).append(
-                        classname
-                    )
+                    outcome.exports.append((exporttypestr, classname))
 
     def _get_export_class_name(
         self,
-        results: ScanResults,
+        outcome: ModuleOutcome,
         display: str,
         lines: list[str],
         lindex: int,
@@ -608,12 +880,12 @@ class DirectoryScan:
                 display,
                 lindexorig + 1,
             )
-            results.announce_errors_occurred = True
+            outcome.announce = True
         return classname
 
     def _get_api_requirement(
         self,
-        results: ScanResults,
+        outcome: ModuleOutcome,
         display: str,
         meta_lines: dict[int, list[str]],
         toplevel: bool,
@@ -636,7 +908,7 @@ class DirectoryScan:
                 ' lines found; ignoring module.',
                 display,
             )
-            results.announce_errors_occurred = True
+            outcome.announce = True
         elif not values and toplevel and meta_lines:
             # If we're a top-level module containing meta lines but no
             # valid "require api" line found, complain.
@@ -645,5 +917,5 @@ class DirectoryScan:
                 ' line found; ignoring module.',
                 display,
             )
-            results.announce_errors_occurred = True
+            outcome.announce = True
         return None

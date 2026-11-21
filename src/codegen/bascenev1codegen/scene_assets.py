@@ -468,5 +468,24 @@ SPEC = SceneAssetSpec(
                 ),
             ],
         ),
+        Group(
+            name='connection',
+            default_module='_classicassets',
+            doc=(
+                'Status art for our connection to a game host, drawn'
+                ' over everything while joined to one.'
+            ),
+            slots=[
+                Slot(
+                    name='connection_down',
+                    kind=Kind.TEXTURE,
+                    doc=(
+                        'Shown mid-screen while the host has stopped'
+                        ' responding.'
+                    ),
+                    default='textures.connection_down',
+                ),
+            ],
+        ),
     ],
 )

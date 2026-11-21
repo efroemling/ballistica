@@ -25,13 +25,6 @@ from batools.winsymbols import (
     is_system_module_path,
 )
 
-#: Master-server host per fleet; mirrors prefabsymbols.
-_FLEET_HOSTS = {
-    'prod': 'www.ballistica.net',
-    'test': 'test.ballistica.net',
-    'dev': 'dev.ballistica.net',
-}
-
 #: Where fetched symbols land. Laid out one dir per key
 #: (``<pdb-name>/<key>/<pdb-name>``) rather than flat: two dumps from
 #: different builds both want a file called ``libGLESv2.pdb``, and a
@@ -53,8 +46,10 @@ def stage_symbols_for_dump(dump_path: str, host: str | None = None) -> str:
         raise CleanError(f'Dump not found: {dump_path}.')
 
     if host is None:
+        from bacommontools.fleethost import fleet_master_host
+
         fleet = os.environ.get('BA_FLEET', 'prod').lower()
-        host = _FLEET_HOSTS.get(fleet)
+        host = fleet_master_host(fleet)
         if host is None:
             raise CleanError(f"Invalid BA_FLEET value '{fleet}'.")
 

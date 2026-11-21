@@ -19,7 +19,9 @@ if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
     import bauiv1
 
-    from bauiv1lib.docui._window import DocUIWindow
+    from bauiv1lib.docui._host import DocUIPageHost
+    from bauiv1lib.docui._panes import PaneMode
+    from bauiv1lib.docui._pagelook import PageLook
 
 
 #: A usage-site line-wrap override for a native language-string
@@ -308,6 +310,26 @@ class RowPrep:
     #: heading above / note below that attached itself to this row.
     show_buffer_top: float = 0.0
     show_buffer_bottom: float = 0.0
+    #: The (bottom, top) of the selectable part those buffers extend
+    #: from, and the (left, right) of the row's column; for show-area
+    #: debug rects.
+    show_part: tuple[float, float] = (0.0, 0.0)
+    show_x: tuple[float, float] = (0.0, 0.0)
+    #: Which of a row of buttons' buttons navigation lands on entering
+    #: the row (see :func:`~bauiv1lib.docui.prep._button.row_entry_index`).
+    entry_index: int = 0
+    #: A control row's selectable widgets' own (bottom, top), in the
+    #: order instantiation returns them. They can sit inside the part
+    #: show-buffers are figured from (within the row's padding, say),
+    #: and the engine applies buffers to a widget's own bounds, so each
+    #: gets its buffers adjusted to match.
+    control_spans: list[tuple[float, float]] = field(default_factory=list)
+    #: Show-area debug rects, made per selectable widget and drawn only
+    #: while it is selected: per grid line (one list for any other
+    #: row), each called with ``parent`` and ``selected_widget``.
+    show_area_calls: list[list[Callable[..., bauiv1.Widget]]] = field(
+        default_factory=list
+    )
     #: A section marker: draws its text and decorations, but holds
     #: nothing selectable and takes no part in navigation.
     is_section: bool = False
@@ -326,6 +348,20 @@ class RowPrep:
     #: A static (non-scrolling) button row's buttons, left to right
     #: (laid out like a control row; see :func:`is_control_row`).
     staticbuttons: list[ButtonPrep] | None = None
+    #: A grid row's column count (0 for not a grid). Its
+    #: ``staticbuttons`` then run line by line, each line navigated
+    #: like a row of its own.
+    grid_columns: int = 0
+    #: A grid row's cell height and the gap between its lines, as laid
+    #: out (for its lines' show-buffers).
+    grid_cell_height: float = 0.0
+    grid_line_gap: float = 0.0
+    #: The top of a grid's top line, as laid out.
+    grid_top: float = 0.0
+    #: A grid row's per-line (top, bottom) show-buffers, top line
+    #: first, once finalized (they replace the row's own for its
+    #: buttons).
+    grid_show_buffers: list[tuple[float, float]] = field(default_factory=list)
 
     def is_control_row(self) -> bool:
         """Are we laid out like a control row (vs a row of buttons)?
@@ -365,6 +401,10 @@ class PagePrep:
     #: snap its scroll position too rather than gliding to the restored
     #: selection.
     immediate: bool
+    #: The look the page was laid out in (its values, defaults
+    #: applied); the window follows suit where that reaches it (its
+    #: side fades).
+    look: PageLook
     #: Effects to run when this page is first displayed, de-indexed
     #: ready to run. They ride here rather than being read back off the
     #: response because the response is cached un-de-indexed; prep is
@@ -376,3 +416,17 @@ class PagePrep:
     client_effects: list[bacommon.clienteffect.Effect] = field(
         default_factory=list
     )
+
+    #: The widget id of the page's ``selected`` button, if any. The
+    #: window scrolls it into view after applying any restored scroll,
+    #: and only where nothing was restored (so returning to a page keeps
+    #: where it was scrolled to).
+    selected_widget_id: str | None = None
+
+    #: The viewer pane the page was laid out beside (None for none, its
+    #: rows then spanning the window); the window lays itself out to
+    #: match when showing it. Attached by the caller, which picks the
+    #: scroll area the page is prepped against.
+    #:
+    #: :meta private:
+    pane: PaneMode | None = None

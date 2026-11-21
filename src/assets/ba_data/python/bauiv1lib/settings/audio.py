@@ -204,13 +204,12 @@ def _page() -> dui2.Response:
 
     # Soundtracks need a music player, which only some platforms have.
     if bui.app.classic.music.have_music_player():
-        rows.append(
+        rows += [
             dui2.ButtonRow(
                 center_content=True,
                 spacing_top=20,
                 # The description sits under the button as the row's
                 # footnote, centered like the button.
-                footnote=_audstrs.soundtrack_description.spec,
                 title_align=dui2.HAlign.CENTER,
                 buttons=[
                     section_button(
@@ -219,8 +218,9 @@ def _page() -> dui2.Response:
                         size=SectionButtonSize.MEDIUM,
                     )
                 ],
-            )
-        )
+            ),
+            dui2.FootnoteRow(_audstrs.soundtrack_description.spec),
+        ]
 
     return dui2.Response(
         page=dui2.Page(

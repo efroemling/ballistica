@@ -20,6 +20,7 @@ import base64
 import hashlib
 import logging
 import tempfile
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import urllib3
@@ -51,8 +52,61 @@ logger = logging.getLogger(__name__)
 CAS_INTEGRITY_MARKER = 'CAS-INTEGRITY'
 
 
+#: Body read size for :func:`download_cas_blob` (it streams, so a failed
+#: download can say how far it got).
+_READ_CHUNK_BYTES = 64 * 1024
+
+
 class CasDownloadError(Exception):
     """A CAS-blob fetch, hash-verify, or write failed."""
+
+
+@dataclass
+class CasDownloadStats:
+    """How far one :func:`download_cas_blob` call got (filled in as it goes).
+
+    For diagnosing failures: a read timeout with most of the bytes in is
+    a slow link, one with none is a stall.
+    """
+
+    #: Body bytes received so far (as served, so possibly compressed).
+    bytes_received: int = 0
+
+    #: The response's ``Content-Length``, if it got that far and sent one.
+    content_length: int | None = None
+
+
+def classify_download_error(exc: BaseException) -> str:
+    """A short name for what kind of network failure an exception is.
+
+    For logs and tallies: ``dns``, ``connect``, ``connect-timeout``,
+    ``read-timeout``, ``tls``, ``protocol``, ``refused`` (a structured
+    :class:`CasDownloadError`), or the exception's type name for
+    anything else. Looks through urllib3's ``MaxRetryError`` wrapper.
+    """
+    # (A flat exception-type ladder; one return per kind.)
+    # pylint: disable=too-many-return-statements
+    import urllib3.exceptions as uexc
+
+    if isinstance(exc, CasDownloadError):
+        return 'refused'
+    if isinstance(exc, uexc.MaxRetryError) and exc.reason is not None:
+        exc = exc.reason
+    # (Order matters: NameResolutionError is a NewConnectionError, and
+    # NewConnectionError a ConnectTimeoutError, in urllib3 2.x.)
+    if isinstance(exc, uexc.NameResolutionError):
+        return 'dns'
+    if isinstance(exc, uexc.NewConnectionError):
+        return 'connect'
+    if isinstance(exc, uexc.ConnectTimeoutError):
+        return 'connect-timeout'
+    if isinstance(exc, (uexc.ReadTimeoutError, TimeoutError)):
+        return 'read-timeout'
+    if isinstance(exc, uexc.SSLError):
+        return 'tls'
+    if isinstance(exc, uexc.ProtocolError):
+        return 'protocol'
+    return type(exc).__name__
 
 
 def encode_asset_token(token: securedata.Archive) -> str:
@@ -159,6 +213,59 @@ def cas_write(dest_root: str, filehash: str, data: bytes) -> None:
         raise
 
 
+def _open_blob_response(
+    pool: urllib3.PoolManager,
+    base_url: str,
+    path: str,
+    *,
+    headers: dict[str, str],
+    timeout: urllib3.util.Timeout,
+    connect_address: str | None,
+) -> urllib3.BaseHTTPResponse:
+    """Start a GET of ``path`` on ``base_url``'s host (body unread).
+
+    Connects to ``connect_address`` if given, rather than looking the
+    host up; see :func:`download_cas_blob`.
+    """
+    if connect_address is None:
+        return pool.request(
+            'GET',
+            f'{base_url}{path}',
+            headers=headers,
+            timeout=timeout,
+            preload_content=False,
+        )
+    parsed = urllib3.util.parse_url(base_url)
+    host = parsed.host
+    scheme = parsed.scheme
+    if host is None or scheme is None:
+        raise ValueError(f'Invalid base url {base_url!r}.')
+    default_port = 443 if scheme == 'https' else 80
+    port = parsed.port or default_port
+    # Verify the certificate for, and send SNI as, the host; only the
+    # address we connect to differs.
+    connpool = pool.connection_from_host(
+        connect_address,
+        port=port,
+        scheme=scheme,
+        pool_kwargs=(
+            {'server_hostname': host, 'assert_hostname': host}
+            if scheme == 'https'
+            else {}
+        ),
+    )
+    return connpool.urlopen(
+        'GET',
+        path,
+        headers={
+            **headers,
+            'Host': host if port == default_port else f'{host}:{port}',
+        },
+        timeout=timeout,
+        preload_content=False,
+    )
+
+
 def download_cas_blob(
     pool: urllib3.PoolManager,
     base_url: str,
@@ -168,8 +275,18 @@ def download_cas_blob(
     token_header: str,
     dest_root: str,
     timeout_seconds: float,
+    connect_address: str | None = None,
+    stats: CasDownloadStats | None = None,
 ) -> None:
     """Fetch one CAS blob from a node and atomically write it.
+
+    ``connect_address``, if given, is an IP address to connect to in
+    place of looking up ``base_url``'s host (the address a transport
+    already reached the node at, say, so a fetch can't fail on a DNS
+    lookup the transport didn't need). The host is still what TLS
+    verifies the certificate against (and sends as SNI) and what goes in
+    the ``Host`` header, so the request is otherwise identical.
+    ``stats``, if given, is filled in as the download goes.
 
     Issues ``GET {base_url}/casblob/{filehash}?size={size}`` with the
     capability token in the ``X-Asset-Token`` header and an
@@ -192,10 +309,10 @@ def download_cas_blob(
     :class:`CasDownloadError` on a non-200 response, a missing/unknown
     served-encoding header, a decompress failure, or a verify failure.
     """
-    url = f'{base_url}/casblob/{filehash}?size={size}'
-    response = pool.request(
-        'GET',
-        url,
+    response = _open_blob_response(
+        pool,
+        base_url,
+        f'/casblob/{filehash}?size={size}',
         headers={
             'X-Asset-Token': token_header,
             CAS_ACCEPT_COMPRESSION_HEADER: format_compression_accept(
@@ -203,12 +320,24 @@ def download_cas_blob(
             ),
         },
         timeout=urllib3.util.Timeout(total=timeout_seconds),
+        connect_address=connect_address,
     )
-    if response.status != 200:
-        raise CasDownloadError(
-            f'casblob GET for {filehash} failed: HTTP {response.status}.'
-        )
-    data = response.data
+    try:
+        if response.status != 200:
+            raise CasDownloadError(
+                f'casblob GET for {filehash} failed: HTTP {response.status}.'
+            )
+        length = response.headers.get('Content-Length')
+        if stats is not None and length is not None and length.isdigit():
+            stats.content_length = int(length)
+        chunks: list[bytes] = []
+        for chunk in response.stream(_READ_CHUNK_BYTES):
+            chunks.append(chunk)
+            if stats is not None:
+                stats.bytes_received += len(chunk)
+        data = b''.join(chunks)
+    finally:
+        response.release_conn()
 
     # The node's response header is authoritative for how the bytes are
     # encoded. A node always sends it; its absence means a node too old to

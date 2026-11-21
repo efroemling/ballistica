@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -318,6 +320,21 @@ void Logic::OnAppShutdownComplete() {
 
   g_base->app_adapter->PushMainThreadCall(
       [] { g_base->OnAppShutdownComplete(); });
+
+  // Test hook: wedge this thread (GIL held) right when the main thread
+  // starts waiting for us to stop, to exercise its give-up path.
+  // Exercised by tests/test_base/test_shutdown_clean.py.
+  if (const char* crashenv = getenv("BA_CRASH_TEST")) {
+    if (!strcmp(crashenv, "shutdown_logic_stall")) {
+      core::Platform::SleepMillisecs(60000);
+    }
+  }
+
+  // And that's it for us. Stop our loop so nothing more runs here: app
+  // timers and the like would otherwise keep firing into Python while
+  // the main thread is finalizing it. The main thread waits for this
+  // before it finalizes (see BaseFeatureSet::RunAppToCompletion()).
+  event_loop()->Exit();
 }
 
 void Logic::ApplyAppConfig() {

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261012`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccharacterassets.261118`` (bauiv1).
 
 Everything a classic character is made of: body textures and color masks, body
 part meshes, voice sounds, icons and icon color masks, and display names -- a
@@ -12,7 +12,7 @@ costs roughly the new character's own art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 645
+# ba_meta require asset-package 1230
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -26,8 +26,8 @@ from bauiv1._assetref import AssetGroup, CharacterGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccharacterassets.261012
-_ASSET_PACKAGE = ApverNum(645)
+# a-0.baclassiccharacterassets.261118
+_ASSET_PACKAGE = ApverNum(1230)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import (
@@ -522,8 +522,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Translate the "Agent" title;
-        #:     keep/transliterate "Johnson".
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Agent Johnson"
         agent_johnson: LangStr
@@ -531,8 +530,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Robot designation: keep as "B-9000"
-        #:     (transliterate letters/digits only where the script requires).
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "B-9000"
         b9000: LangStr
@@ -540,10 +538,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Bernard"
         bernard: LangStr
@@ -551,8 +546,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. A warm, familiar granny-ish given name:
-        #:     keep/adapt "Betty" or use an equivalent common local name.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Betty"
         betty: LangStr
@@ -560,8 +554,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful nickname: playful
-        #:     diminutive/pet-name forms for "bones/skeleton" work well.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Bones"
         bones: LangStr
@@ -569,8 +562,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's standard
-        #:     Easter-bunny term.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Easter Bunny"
         easter_bunny: LangStr
@@ -578,9 +570,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name: a frosty/snowy
-        #:     name-like form (playful beats a generic "snowman" where a natural
-        #:     option exists).
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Frosty"
         frosty: LangStr
@@ -588,10 +578,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented wizardly pun name: "grumble" +
-        #:     a Gandalf/Dumbledore-style suffix. A local grumble-pun in the
-        #:     same shape is ideal; otherwise transliterate. Never a generic
-        #:     "wizard" word alone, and never an actual name from other fiction.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Grumbledorf"
         grumbledorf: LangStr
@@ -599,10 +586,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded. Use local name order conventions.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Jack Morgan"
         jack_morgan: LangStr
@@ -610,10 +594,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Kronk"
         kronk: LangStr
@@ -621,8 +602,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
-        #:     translate the meaning as a name-like form.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Lucky"
         lucky: LangStr
@@ -630,10 +610,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Mel"
         mel: LangStr
@@ -641,10 +618,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Pascal"
         pascal: LangStr
@@ -652,9 +626,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. English puns pixel/pixie. Either keep
-        #:     "Pixel" (transliterated as needed) or use a fairy/sprite word
-        #:     that lands a similar double meaning.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Pixel"
         pixel: LangStr
@@ -662,8 +634,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Use each culture's traditional
-        #:     gift-bringer name.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Santa Claus"
         santa_claus: LangStr
@@ -671,8 +642,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Descriptive name: translate the meaning
-        #:     (snake + shadow, ninja-flavored).
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Snake Shadow"
         snake_shadow: LangStr
@@ -690,10 +660,7 @@ if TYPE_CHECKING:
         #: ::
         #:
         #:     Character display name shown in the store, inventory, character
-        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
-        #:     Latin-script locales; transliterate phonetically in non-Latin
-        #:     scripts. Established legacy renames in some locales are
-        #:     intentional and were seeded.
+        #:     picker, and gameplay UIs.
         #:
         #:     English: "Zoe"
         zoe: LangStr
@@ -1446,144 +1413,144 @@ _CHARACTERS = {
     'characters': {
         'agent_johnson': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/agent_icon"},'
-                '"cm":{"a":645,"n":"textures/agent_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/agent_icon"},'
+                '"cm":{"a":1230,"n":"textures/agent_icon_color_mask"},'
                 '"cl":[0.3,0.3,0.33],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/agent_johnson',
         ),
         'b9000': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/cyborg_icon"},'
-                '"cm":{"a":645,"n":"textures/cyborg_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/cyborg_icon"},'
+                '"cm":{"a":1230,"n":"textures/cyborg_icon_color_mask"},'
                 '"hl":[1.0,0.0,0.0]}}'
             ),
             'strings/characters/b9000',
         ),
         'bernard': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/bear_icon"},'
-                '"cm":{"a":645,"n":"textures/bear_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/bear_icon"},'
+                '"cm":{"a":1230,"n":"textures/bear_icon_color_mask"},'
                 '"cl":[0.7,0.5,0.0]}}'
             ),
             'strings/characters/bernard',
         ),
         'betty': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/old_lady_icon"},'
-                '"cm":{"a":645,"n":"textures/old_lady_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/old_lady_icon"},'
+                '"cm":{"a":1230,"n":"textures/old_lady_icon_color_mask"},'
                 '"cl":[0.2,1.0,1.0],"hl":[0.5,0.25,1.0]}}'
             ),
             'strings/characters/betty',
         ),
         'bones': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/bones_icon"},'
-                '"cm":{"a":645,"n":"textures/bones_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/bones_icon"},'
+                '"cm":{"a":1230,"n":"textures/bones_icon_color_mask"},'
                 '"cl":[0.6,0.9,1.0],"hl":[0.6,0.9,1.0]}}'
             ),
             'strings/characters/bones',
         ),
         'easter_bunny': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/bunny_icon"},'
-                '"cm":{"a":645,"n":"textures/bunny_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/bunny_icon"},'
+                '"cm":{"a":1230,"n":"textures/bunny_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[1.0,0.5,0.5]}}'
             ),
             'strings/characters/easter_bunny',
         ),
         'frosty': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/frosty_icon"},'
-                '"cm":{"a":645,"n":"textures/frosty_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/frosty_icon"},'
+                '"cm":{"a":1230,"n":"textures/frosty_icon_color_mask"},'
                 '"cl":[0.5,0.5,1.0],"hl":[1.0,0.5,0.0]}}'
             ),
             'strings/characters/frosty',
         ),
         'grumbledorf': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/wizard_icon"},'
-                '"cm":{"a":645,"n":"textures/wizard_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/wizard_icon"},'
+                '"cm":{"a":1230,"n":"textures/wizard_icon_color_mask"},'
                 '"cl":[0.2,0.4,1.0],"hl":[0.06,0.15,0.4]}}'
             ),
             'strings/characters/grumbledorf',
         ),
         'jack_morgan': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/jack_icon"},'
-                '"cm":{"a":645,"n":"textures/jack_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/jack_icon"},'
+                '"cm":{"a":1230,"n":"textures/jack_icon_color_mask"},'
                 '"cl":[1.0,0.2,0.1],"hl":[1.0,1.0,0.0]}}'
             ),
             'strings/characters/jack_morgan',
         ),
         'kronk': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/kronk_icon"},'
-                '"cm":{"a":645,"n":"textures/kronk_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/kronk_icon"},'
+                '"cm":{"a":1230,"n":"textures/kronk_icon_color_mask"},'
                 '"cl":[0.4,0.5,0.4],"hl":[1.0,0.5,0.3]}}'
             ),
             'strings/characters/kronk',
         ),
         'lucky': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/assassin_icon"},'
-                '"cm":{"a":645,"n":"textures/assassin_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/assassin_icon"},'
+                '"cm":{"a":1230,"n":"textures/assassin_icon_color_mask"},'
                 '"cl":[0.2,1.0,0.5],"hl":[1.0,0.3,0.0]}}'
             ),
             'strings/characters/lucky',
         ),
         'mel': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/mel_icon"},'
-                '"cm":{"a":645,"n":"textures/mel_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/mel_icon"},'
+                '"cm":{"a":1230,"n":"textures/mel_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[0.1,0.6,0.1]}}'
             ),
             'strings/characters/mel',
         ),
         'pascal': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/penguin_icon"},'
-                '"cm":{"a":645,"n":"textures/penguin_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/penguin_icon"},'
+                '"cm":{"a":1230,"n":"textures/penguin_icon_color_mask"},'
                 '"cl":[0.3,0.5,0.8],"hl":[1.0,0.0,0.0]}}'
             ),
             'strings/characters/pascal',
         ),
         'pixel': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/pixie_icon"},'
-                '"cm":{"a":645,"n":"textures/pixie_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/pixie_icon"},'
+                '"cm":{"a":1230,"n":"textures/pixie_icon_color_mask"},'
                 '"cl":[0.0,1.0,0.7],"hl":[0.65,0.35,0.75]}}'
             ),
             'strings/characters/pixel',
         ),
         'santa_claus': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/santa_icon"},'
-                '"cm":{"a":645,"n":"textures/santa_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/santa_icon"},'
+                '"cm":{"a":1230,"n":"textures/santa_icon_color_mask"},'
                 '"cl":[1.0,0.0,0.0],"hl":[1.0,1.0,1.0]}}'
             ),
             'strings/characters/santa_claus',
         ),
         'snake_shadow': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/ninja_icon"},'
-                '"cm":{"a":645,"n":"textures/ninja_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/ninja_icon"},'
+                '"cm":{"a":1230,"n":"textures/ninja_icon_color_mask"},'
                 '"cl":[1.0,1.0,1.0],"hl":[0.55,0.8,0.55]}}'
             ),
             'strings/characters/snake_shadow',
         ),
         'spaz': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/neo_spaz_icon"},'
-                '"cm":{"a":645,'
+                '{"b":{"tx":{"a":1230,"n":"textures/neo_spaz_icon"},'
+                '"cm":{"a":1230,'
                 '"n":"textures/neo_spaz_icon_color_mask"}}}'
             ),
             'strings/characters/spaz',
         ),
         'zoe': (
             (
-                '{"b":{"tx":{"a":645,"n":"textures/zoe_icon"},'
-                '"cm":{"a":645,"n":"textures/zoe_icon_color_mask"},'
+                '{"b":{"tx":{"a":1230,"n":"textures/zoe_icon"},'
+                '"cm":{"a":1230,"n":"textures/zoe_icon_color_mask"},'
                 '"cl":[0.6,0.6,0.6],"hl":[0.0,1.0,0.0]}}'
             ),
             'strings/characters/zoe',

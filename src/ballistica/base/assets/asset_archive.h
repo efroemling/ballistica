@@ -40,9 +40,13 @@ class AssetArchive {
 
  private:
   AssetArchive() = default;
+  static auto OpenImpl_(const std::string& path)
+      -> std::unique_ptr<AssetArchive>;
 
   struct Entry_ {
-    size_t offset;
+    /// Where the entry's local header starts; Get() reads it to find
+    /// the data (see Open() for why not up front).
+    size_t local_header_offset;
     size_t size;
     bool stored;
   };

@@ -1,10 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.badocuiv2testassets.261007`` (bauiv1)."""
+"""Asset-package wrapper for ``a-0.badocuiv2testassets.261118a`` (bauiv1)."""
 
 # ba_meta require api 9
-# ba_meta require asset-package 445
+# ba_meta require asset-package 1249
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -18,8 +18,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.badocuiv2testassets.261007
-_ASSET_PACKAGE = ApverNum(445)
+# a-0.badocuiv2testassets.261118a
+_ASSET_PACKAGE = ApverNum(1249)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import TextureHandle
@@ -126,7 +126,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Screen-message from the centered-content test button.
+        #:     Sample button label on the centered-content layout test.
         #:
         #:     English: "Hello There!"
         hello_there: LangStr
@@ -211,10 +211,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Button firing client-effects immediately on press (no request
+        #:     Button firing client effects immediately on press (no request
         #:     round-trip).
         #:
-        #:     English: "Immediate ClientEffects"
+        #:     English: "Immediate Client Effects"
         immediate_client_effects: LangStr
 
         #: ::
@@ -274,14 +274,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Display Items"
         display_items: LangStr
-
-        #: ::
-        #:
-        #:     Debug legend describing the display-item layout matrix.
-        #:
-        #:     English: "top=FULL, center=COMPACT, bottom=ICON; left=regular,
-        #:     right=unknown"
-        display_items_sub: LangStr
 
     class StringsLayoutGroup:
         """
@@ -386,24 +378,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Title of the layout-tests button-row.
-        #:
-        #:     English: "Layout Tests"
-        layout_tests: LangStr
-
-        #: ::
-        #:
         #:     Title of the horizontally-scrolling long button-row.
         #:
         #:     English: "Long Row Test"
         long_row_test: LangStr
-
-        #: ::
-        #:
-        #:     Subtitle on the long-row layout test.
-        #:
-        #:     English: "Look - a subtitle!"
-        look_a_subtitle: LangStr
 
         #: ::
         #:
@@ -629,8 +607,8 @@ if TYPE_CHECKING:
         capsule_stripes: TextureHandle
         capsule_stripes_tint: TextureHandle
 
-    #: The ``strings`` group - 70 strings (``cloud``, ``common``, ``effects``,
-    #: ``items``, ``layout``, and 65 more). Full list in source.
+    #: The ``strings`` group - 67 strings (``cloud``, ``common``, ``effects``,
+    #: ``items``, ``layout``, and 62 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 2 assets (``capsule_stripes``,
@@ -672,11 +650,7 @@ _TREE = {
             'response_effects_hello': (),
             'response_local_action': (),
         },
-        'items': {
-            'display_item_tests': (),
-            'display_items': (),
-            'display_items_sub': (),
-        },
+        'items': {'display_item_tests': (), 'display_items': ()},
         'layout': {
             'background_texture': (),
             'bounds_test': (),
@@ -691,9 +665,7 @@ _TREE = {
             'empty_page_title': (),
             'empty_row': (),
             'hello': (),
-            'layout_tests': (),
             'long_row_test': (),
-            'look_a_subtitle': (),
             'max_height_test': (),
             'max_width_test': (),
             'row_with_no_title': (),

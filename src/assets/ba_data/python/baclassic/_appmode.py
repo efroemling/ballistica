@@ -213,12 +213,22 @@ class ClassicAppMode(AppMode):
         # pylint: disable-next=cyclic-import
         from bascenev1lib.characterviewer import CharacterViewer
 
+        from bauiv1lib.meshviewer import MeshViewer
+
         bui.app.ui_v1.live_depictions[
             bacommon.depiction.DepictionTypeID.CHARACTER_VIEWER.value
         ] = CharacterViewer.for_depiction
+        bui.app.ui_v1.live_depictions[
+            bacommon.depiction.DepictionTypeID.MESH_VIEWER.value
+        ] = MeshViewer.for_depiction
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
+
+        # Host-ui upkeep runs exactly while we're the active mode.
+        classic = bui.app.classic
+        assert classic is not None
+        classic.host_ui_start()
 
         # Register the app-run's hosting package universe: exactly the
         # set the launch metascan discovered (which construct-mode fully
@@ -319,8 +329,9 @@ class ClassicAppMode(AppMode):
         # Store latest league vis vals for any active account.
         self._save_account_state()
 
-        # Stop being informed of account changes.
+        # Stop being informed of account and connectivity changes.
         self._on_primary_account_changed_callback = None
+        self._on_connectivity_changed_callback = None
 
         # Cancel any ui-pause we may have had going.
         self._purchase_ui_pause = None
@@ -336,8 +347,31 @@ class ClassicAppMode(AppMode):
         if classic is not None:
             classic.save_ui_state()
 
+        # Host-ui upkeep runs exactly while we're the active mode.
+        if classic is not None:
+            classic.host_ui_stop()
+
+        # Our music stops with us.
+        if classic is not None:
+            classic.music.on_app_mode_deactivate()
+
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_deactivate()
+
+    @override
+    def on_main_ui_dismissed(self) -> None:
+        # Run anything waiting for the menus to go away (see
+        # ClassicAppSubsystem.add_main_menu_close_callback()).
+        classic = bui.app.classic
+        assert classic is not None
+        calls = list(classic.main_menu_resume_callbacks)
+        classic.main_menu_resume_callbacks.clear()
+        for call in calls:
+            try:
+                with bui.ContextRef.empty():
+                    call()
+            except Exception:
+                logging.exception('Error in classic resume callback.')
 
     @override
     def on_app_active_changed(self) -> None:

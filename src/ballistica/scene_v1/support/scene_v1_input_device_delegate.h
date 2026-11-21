@@ -72,6 +72,10 @@ class SceneV1InputDeviceDelegate : public base::InputDeviceDelegate {
   // FIXME: redundant.
   virtual auto IsRemoteClient() const -> bool;
 
+  /// Whether this is a remote client that joined with v2 auth (so the
+  /// master server has verified its account). False for local devices.
+  virtual auto IsV2Authed() const -> bool;
+
   static void ResetRandomNames();
 
   /// Return the default base player name for players using this input device.

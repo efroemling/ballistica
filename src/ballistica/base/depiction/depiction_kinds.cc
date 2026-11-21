@@ -30,6 +30,7 @@ namespace {
 const char* const kTypeImage = "i";
 const char* const kTypeCharacterIcon = "ci";
 const char* const kTypeName = "n";
+const char* const kTypeBlank = "bl";
 
 /// A character's icon: its art tinted by its colors through the round
 /// icon mask, or the standard-spaz standin (in those same colors) while
@@ -110,12 +111,13 @@ class CharacterIconDepiction : public Depiction {
     float alpha = context.StandardOpacity();
     // Premultiplied art composites 'over' only if rgb is scaled by
     // alpha (see image node).
-    float cmul =
-        (tex->premultiplied() ? alpha : 1.0f) * context.StandardBrightness();
+    float cmul = tex->premultiplied() ? alpha : 1.0f;
+    float mult[3];
+    context.StandardMultiplier(mult);
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     c.SetTexture(tex);
-    c.SetColor(cmul, cmul, cmul, alpha);
+    c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
     if (tint) {
       c.SetColorizeTexture(tint);
       c.SetColorizeColor(color[0], color[1], color[2]);
@@ -123,6 +125,8 @@ class CharacterIconDepiction : public Depiction {
       c.SetColorizeColor3(highlight2[0], highlight2[1], highlight2[2]);
     }
     c.SetMaskTexture(assets.character_icon_mask());
+    // (So the mask's frame and highlight follow along too.)
+    c.SetMaskAddMult(mult[0], mult[1], mult[2]);
     {
       auto xf = c.ScopedTransform();
       c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
@@ -162,12 +166,20 @@ class CharacterIconDepiction : public Depiction {
 class NameDepiction : public Depiction {
  public:
   /// ``json`` is a name block on its own ({"b": ..., "c": ...}).
-  explicit NameDepiction(std::string json) : Depiction(kTypeName) {
+  /// ``max_chars`` and ``number`` show its text as an in-game name
+  /// (shortened, numbered; see ShortenNameText and NumberNameText);
+  /// 0 and 1 leave it as is.
+  NameDepiction(std::string json, int max_chars, int number)
+      : Depiction(kTypeName) {
     if (auto doc = JsonDoc::Parse(json)) {
       if (auto name = NameDef::Parse(doc->root())) {
         name_ = std::move(*name);
       }
     }
+    // (The text every tier draws, capsules included; a glyph goes
+    // before it, uncounted, as in-game names carry none.)
+    name_.basic.text =
+        NumberNameText(ShortenNameText(name_.basic.text, max_chars), number);
     // A glyph tier puts its icon before the text (unless a capsule,
     // which brings its own icon, draws instead); otherwise it is
     // exactly the basic tier.
@@ -370,9 +382,11 @@ class NameDepiction : public Depiction {
     float rgb[3]{rgba[0], rgba[1], rgba[2]};
     ctx.StandardColor(rgb);
     float alpha = rgba[3] * ctx.StandardOpacity();
-    float cmul =
-        (tex->premultiplied() ? alpha : 1.0f) * ctx.StandardBrightness();
-    c->SetColor(rgb[0] * cmul, rgb[1] * cmul, rgb[2] * cmul, alpha);
+    float cmul = tex->premultiplied() ? alpha : 1.0f;
+    float mult[3];
+    ctx.StandardMultiplier(mult);
+    c->SetColor(rgb[0] * cmul * mult[0], rgb[1] * cmul * mult[1],
+                rgb[2] * cmul * mult[2], alpha);
   }
 
   void DrawCapsuleBody_(const DepictionDrawContext& context,
@@ -525,6 +539,11 @@ class NameDepiction : public Depiction {
     // in text widgets (and can only brighten by a multiply).
     float rgb_plain[3]{brightness, brightness, brightness};
     context.StandardColor(rgb_plain);
+    // The host's multiplier goes over the lot (glyphs included).
+    for (int i = 0; i < 3; ++i) {
+      rgb[i] *= context.color_multiply[i];
+      rgb_plain[i] *= context.color_multiply[i];
+    }
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
     int elem_count = text_group_.GetElementCount();
@@ -667,8 +686,16 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
     const DepictionBox& b = context.box;
     MeshAsset* quad =
         g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1);
+    if (block_.failed()) {
+      // Our art can never be had (broken refs, a package that doesn't
+      // exist); say so rather than look busy forever.
+      placeholder_.Draw(context);
+      return;
+    }
     if (!block_.ready()) {
-      DrawLoading_(context, quad);
+      // (Loads that might still come right retry indefinitely; ones
+      // that never will show the placeholder above.)
+      DrawDepictionLoading(context);
       return;
     }
     SimpleComponent c(context.pass);
@@ -686,10 +713,12 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
       context.StandardColor(tint2);
       context.StandardColor(tint3);
       float alpha = color_[3] * context.StandardOpacity();
-      float cmul = (texture_asset_->premultiplied() ? alpha : 1.0f)
-                   * context.StandardBrightness();
+      float cmul = texture_asset_->premultiplied() ? alpha : 1.0f;
+      float mult[3];
+      context.StandardMultiplier(mult);
       c.SetTexture(texture_asset_.get());
-      c.SetColor(color[0] * cmul, color[1] * cmul, color[2] * cmul, alpha);
+      c.SetColor(color[0] * cmul * mult[0], color[1] * cmul * mult[1],
+                 color[2] * cmul * mult[2], alpha);
       if (has_flat_) {
         // One flat color in place of the usual coloring (no colorize).
         c.SetFlatness(flatness_);
@@ -707,6 +736,7 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
       }
       if (mask_texture_asset_.exists()) {
         c.SetMaskTexture(mask_texture_asset_.get());
+        c.SetMaskAddMult(mult[0], mult[1], mult[2]);
       }
     }
     {
@@ -721,36 +751,6 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   }
 
  private:
-  /// Standin while the art isn't local: the app's busy spinner, mostly
-  /// faded and turning, a third of the box. (Loads retry indefinitely,
-  /// so there's no failed look; see depictions.md, Image.)
-  static void DrawLoading_(const DepictionDrawContext& context,
-                           MeshAsset* quad) {
-    const DepictionBox& b = context.box;
-    TextureAsset* spinner = g_base->assets->base_assets().depiction_spinner();
-    if (!spinner) {
-      return;
-    }
-    float alpha = 0.25f * context.StandardOpacity();
-    float cmul = (spinner->premultiplied() ? alpha : 1.0f)
-                 * context.StandardBrightness();
-    float size = std::min(b.width, b.height) / 3.0f;
-    auto turns = static_cast<float>(std::fmod(
-        static_cast<double>(g_core->AppTimeMillisecs()) / 1000.0, 1.0));
-    SimpleComponent c(context.pass);
-    c.SetTransparent(true);
-    c.SetTexture(spinner);
-    c.SetColor(cmul, cmul, cmul, alpha);
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
-      c.Scale(size, size, 1.0f);
-      c.Rotate(-360.0f * turns, 0.0f, 0.0f, 1.0f);
-      c.DrawMeshAsset(quad);
-    }
-    c.Submit();
-  }
-
   static auto ReadFloats(const JsonRef& root, const char* key, float* out,
                          size_t count) -> bool {
     JsonRef arr = root[key];
@@ -784,9 +784,19 @@ class ImageDepiction : public Depiction, public DepictionTintControl {
   float flatness_{};
   MediaBlock block_;
   MediaRetryPacer pacer_;
+  DepictionPlaceholder placeholder_;
   Object::Ref<TextureAsset> texture_asset_;
   Object::Ref<TextureAsset> mask_texture_asset_;
   Object::Ref<TextureAsset> tint_texture_asset_;
+};
+
+/// Nothing at all: an empty doc-ui viewer pane, say, where its host's
+/// backing (and frame) are what show.
+class BlankDepiction : public Depiction {
+ public:
+  BlankDepiction() : Depiction(kTypeBlank) {}
+
+  void Draw(const DepictionDrawContext& context) override {}
 };
 
 // The component json a character icon (an icon block) or name (a name
@@ -818,7 +828,13 @@ void RegisterBaseDepictionKinds() {
         if (!json) {
           return {};
         }
-        return Object::New<Depiction, NameDepiction>(std::move(*json));
+        // (Clamped to sane ranges; the wire is untrusted.)
+        int max_chars = static_cast<int>(
+            std::clamp<int64_t>(src.root["mc"].as_int().value_or(0), 0, 1000));
+        int number = static_cast<int>(
+            std::clamp<int64_t>(src.root["nn"].as_int().value_or(1), 1, 1000));
+        return Object::New<Depiction, NameDepiction>(std::move(*json),
+                                                     max_chars, number);
       });
   DepictionRegistry::RegisterKind(
       kTypeImage,
@@ -828,6 +844,11 @@ void RegisterBaseDepictionKinds() {
           return {};
         }
         return Object::Ref<Depiction>(out.get());
+      });
+  DepictionRegistry::RegisterKind(
+      kTypeBlank,
+      [](const DepictionRegistry::Source& src) -> Object::Ref<Depiction> {
+        return Object::New<Depiction, BlankDepiction>();
       });
 }
 

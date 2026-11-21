@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 
+#include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
@@ -193,7 +194,7 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
                 "Human readable name of the device running this app.");
 
   envs["supports_soft_quit"] = BoolEntry_(
-      g_buildconfig.platform_android() || g_buildconfig.platform_ios_tvos(),
+      g_base->app_adapter->CanSoftQuit(),
       "Whether the running app supports 'soft' quit options.\n"
       "\n"
       "This generally applies to mobile derived OSs, where an act of\n"

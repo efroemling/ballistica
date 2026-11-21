@@ -78,6 +78,11 @@ class TextureAsset : public Asset {
   /// come from the asset pipeline.
   auto role() const -> TextureRole { return role_; }
 
+  /// Pixel size of the level we draw from (the base level). Only
+  /// meaningful once loaded() is true; 0 before that.
+  auto width() const -> int { return width_; }
+  auto height() const -> int { return height_; }
+
   /// Note that this texture is being bound to a slot a shader reads as
   /// a picture. Warns (once per texture) if it was built as data. The
   /// render components call these from their texture setters, so every
@@ -172,6 +177,8 @@ class TextureAsset : public Asset {
   TextureMinQuality min_quality_{TextureMinQuality::kLow};
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
+  int width_{};
+  int height_{};
   bool premultiplied_{};
   TextureRole role_{TextureRole::kUnknown};
   bool role_slot_warned_{};

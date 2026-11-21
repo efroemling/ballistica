@@ -193,9 +193,7 @@ void StdioConsole::PushCommand_(const std::string& command) {
     // These are always run in whichever context is 'visible'.
     ScopedSetContext ssc(g_base->app_mode()->GetForegroundContext());
     PythonCommand cmd(command, "<stdin>");
-    if (!g_core->user_ran_commands) {
-      g_core->user_ran_commands = true;
-    }
+    g_core->SetUserRanCommands();
 
     // Eval this if possible (so we can possibly print return value).
     if (cmd.CanEval()) {

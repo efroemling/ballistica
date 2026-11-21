@@ -23,7 +23,7 @@ TextMesh::TextMesh() : MeshIndexedDualTextureFull(MeshDrawType::kStatic) {
 void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
                        VAlign alignment_v, bool big, uint32_t min_val,
                        uint32_t max_val, TextMeshEntryType entry_type,
-                       TextPacker* packer) {
+                       int font_page, TextPacker* packer) {
   // (An incomplete build must be allowed to re-run with the same text
   // once its deferred measures come in.)
   if (text_in == text_ && complete_) {
@@ -81,13 +81,9 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
   float char_width;
   float char_height;
   float row_height;
-  float char_offset_h;
-  float char_offset_v;
 
   char_width = char_height = 32.0f;
   row_height = kTextRowHeight;
-  char_offset_h = -3.0f;
-  char_offset_v = 7.0f;
   uint32_t char_val;
   float line_length;
 
@@ -119,17 +115,17 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
 
   switch (alignment_v) {
     case VAlign::kNone:
-      y_offset = b + char_offset_v;
+      y_offset = b + kTextBaselineHeight;
       break;
     case VAlign::kTop:
-      y_offset = b + char_offset_v + (t - b) - row_height;
+      y_offset = b + kTextBaselineHeight + (t - b) - row_height;
       break;
     case VAlign::kCenter:
-      y_offset =
-          b + char_offset_v + ((t - b) / 2) + (text_height / 2) - row_height;
+      y_offset = b + kTextBaselineHeight + ((t - b) / 2) + (text_height / 2)
+                 - row_height;
       break;
     case VAlign::kBottom:
-      y_offset = b + char_offset_v + text_height - row_height;
+      y_offset = b + kTextBaselineHeight + text_height - row_height;
       break;
     default:
       throw Exception();
@@ -166,7 +162,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
 
       switch (alignment_h) {
         case HAlign::kLeft:
-          x_offset = l + char_offset_h;
+          x_offset = l;
           break;
         case HAlign::kCenter:
         case HAlign::kRight: {
@@ -240,9 +236,9 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
             os_span_l.clear();
           }
           if (alignment_h == HAlign::kCenter) {
-            x_offset = l + char_offset_h + ((r - l) / 2) - (line_length / 2);
+            x_offset = l + ((r - l) / 2) - (line_length / 2);
           } else {
-            x_offset = l + char_offset_h + (r - l) - line_length;
+            x_offset = l + (r - l) - line_length;
           }
           break;
         }
@@ -265,6 +261,13 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
         // (technically OS might be able to render these but don't allow that)
         if (entry_type != TextMeshEntryType::kExtras
             && (char_val >= 0xE000 && char_val <= 0xF8FF)) {
+          draw = false;
+        }
+        // An extras page draws just the custom glyphs whose data puts
+        // them on it (pages don't follow codepoints).
+        if (entry_type == TextMeshEntryType::kExtras
+            && (!TextGraphics::IsSpecialChar(char_val)
+                || TextGraphics::SpecialCharFontPage(char_val) != font_page)) {
           draw = false;
         }
 
@@ -502,8 +505,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
         *index32++ = index_offset + 2;
       }
 
-      // Fudge-factor for lining OS-spans up with our stuff.
-      x_offset = i.x + 3.0f;
+      x_offset = i.x;
       y_offset = i.y;
 
       // Bot left.

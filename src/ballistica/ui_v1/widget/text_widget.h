@@ -77,6 +77,7 @@ class TextWidget : public Widget {
   auto always_show_carat() const -> bool { return always_show_carat_; }
   void set_always_show_carat(bool val) { always_show_carat_ = val; }
   void set_click_activate(bool enabled) { click_activate_ = enabled; }
+  void set_enable_sound(bool enabled) { enable_sound_ = enabled; }
   void SetOnSubmitCall(PyObject* call_tuple);
   void SetOnApplyCall(PyObject* call_tuple);
   void SetOnActivateCall(PyObject* call_tuple);
@@ -121,6 +122,12 @@ class TextWidget : public Widget {
   void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_flatness(float flatness) { flatness_ = flatness; }
   void set_shadow(float shadow) { shadow_ = shadow; }
+
+  /// How far we shift per unit of device tilt, overriding the default
+  /// (0.01, or 0.04 when drawn over a draw-control parent). Overlays
+  /// that must stay registered with their button set this to the
+  /// button's own shift.
+  void set_tilt_shift(float val) { tilt_shift_ = val; }
   void set_res_scale(float res_scale);
   void set_allow_clear_button(bool val) { allow_clear_button_ = val; }
   auto TryGetTextWidth() -> std::optional<float>;
@@ -186,6 +193,9 @@ class TextWidget : public Widget {
   bool text_group_dirty_{true};
   bool outline_dirty_{true};
   bool click_activate_{};
+
+  // Whether presses (clicks, the clear button) play their tap sound.
+  bool enable_sound_{true};
   bool mouse_over_{};
   bool pressed_{};
   bool pressed_activate_{};
@@ -222,6 +232,7 @@ class TextWidget : public Widget {
   float color_a_{1.0f};
   float flatness_{};
   float shadow_{0.5f};
+  std::optional<float> tilt_shift_;
   float padding_{};
   float width_{50.0f};
   float height_{30.0f};

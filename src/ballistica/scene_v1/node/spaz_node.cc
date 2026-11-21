@@ -4468,7 +4468,7 @@ void SpazNode::DrawDebugBodies_(base::FrameDef* frame_def) {
   // Main-sim limbs draw as bodies below; bg limbs draw from the rig
   // output further down, in the same role colors pulled toward blue
   // (BGDynamicsDebugTint) like everything else bg-simulated.
-  const bool bg_limbs = UseBgLimbs_();
+  const bool bg_limbs = !main_sim_limbs_;
   const Entry entries[] = {
       // Core.
       {body_head_.get(), 1.0f, 1.0f, 1.0f},
@@ -6488,7 +6488,7 @@ static void AppendBgRigTestAntenna(
   adef.stiffness = 0.8f;
   adef.damping = 0.7f;
   adef.drag = 0.5f;
-  adef.curl = 0.2f;
+  adef.curl = 0.1f;
   adef.length = 0.5f;
   adef.segments.resize(3);
   defs->push_back(std::move(adef));
@@ -6640,7 +6640,9 @@ void SpazNode::BuildLimbRigConfig_(
 
 void SpazNode::UpdateAttachments_() {
   bool changed = false;
-  bool want_limbs = UseBgLimbs_();
+  // (The backend chosen at construction, never a fresh UseBgLimbs_():
+  // that re-reads globals, which can change under a live spaz.)
+  bool want_limbs = !main_sim_limbs_;
   // (The twins copy the torso's shape and mass, so a torso resize
   // rebuilds too.)
   if (want_limbs != rig_has_limbs_ || rig_torso_radius_ != torso_radius_
@@ -7784,7 +7786,11 @@ auto SpazNode::UseBgLimbs_() const -> bool {
 
 auto SpazNode::LimbRenderMatrix_(int limb, Matrix44f* m) -> bool {
   assert(limb >= 0 && limb < kLimbCount);
-  if (UseBgLimbs_()) {
+  // Draw from whichever backend this spaz was built with. (Asking
+  // UseBgLimbs_() again here would re-read globals, which can change
+  // under a live spaz -- a client joining mid-game used to see its
+  // 'legacy_spaz_limbs' flip after spazzes existed, and drew no limbs.)
+  if (!main_sim_limbs_) {
     const base::BGDynamicsCharacterRig::Output* out =
         attachment_rig_ ? attachment_rig_->output() : nullptr;
     if (!out || limb >= static_cast<int>(out->limbs.size())) {

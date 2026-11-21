@@ -4,6 +4,8 @@
 
 from typing import TYPE_CHECKING
 
+from bacommon.app import AppPlatform
+
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
@@ -30,10 +32,13 @@ class ConfirmWindow:
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
         scale: float | None = None,
+        cancel_action: Callable[[], Any] | None = None,
     ):
         """Show the window.
 
         ``scale`` overrides the window's default per-ui-scale scale.
+        ``cancel_action``, if given, runs when the cancel button is
+        pressed (a back/escape press just dismisses the window).
         """
         ui = bui.app.ui_v1
 
@@ -49,6 +54,7 @@ class ConfirmWindow:
         height += 40
         width = max(width, 360)
         self._action = action
+        self._cancel_action = cancel_action
 
         self._permanent_ok_fade = permanent_ok_fade
 
@@ -106,9 +112,16 @@ class ConfirmWindow:
                 position=(20, 20),
                 size=(150, 50),
                 label=cancel_text,
-                on_activate_call=self._cancel,
+                on_activate_call=self._cancel_press,
             )
-            bui.containerwidget(edit=self.root_widget, cancel_button=btn)
+            if cancel_action is None:
+                bui.containerwidget(edit=self.root_widget, cancel_button=btn)
+            else:
+                # Back/escape should just dismiss; only an actual press
+                # of the cancel button runs the cancel action.
+                bui.containerwidget(
+                    edit=self.root_widget, on_cancel_call=self._cancel
+                )
             ok_button_h = width - 175
         else:
             # if they don't want a cancel button, we still want back
@@ -140,6 +153,13 @@ class ConfirmWindow:
             ),
             start_button=btn,
         )
+
+    def _cancel_press(self) -> None:
+        if not self.root_widget:
+            return
+        self._cancel()
+        if self._cancel_action is not None:
+            self._cancel_action()
 
     def _cancel(self) -> None:
         bui.containerwidget(
@@ -188,13 +208,15 @@ class QuitWindow:
         if swish:
             bui.play_swish()
 
-        # Generally Macs say Quit and other stuff says Exit
+        # Generally Macs say Quit, iPads say Close (quitting there closes
+        # our window), and other stuff says Exit.
         strs = _classicassets.strings.ui
-        confirmstr = (
-            strs.quit_app_confirm
-            if platform is type(platform).MACOS
-            else strs.exit_app_confirm
-        )
+        if platform is AppPlatform.MACOS:
+            confirmstr = strs.quit_app_confirm
+        elif platform is AppPlatform.IOS:
+            confirmstr = strs.close_app_confirm
+        else:
+            confirmstr = strs.exit_app_confirm
         quit_text = confirmstr(app_name=strs.app_name)
 
         self._root_widget = ui.quit_window = ConfirmWindow(

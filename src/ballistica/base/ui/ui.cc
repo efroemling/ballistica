@@ -1165,11 +1165,11 @@ void UI::DevConsoleButtonCenter_(float* x, float* y) const {
     *y = vheight * 0.5f * static_cast<float>(dev_console_button_anchor_y_)
          + dev_console_button_custom_y_;
   } else {
-    // Default: docked at the left edge, 75% of the way up. Virtual
+    // Default: docked at the right edge, 75% of the way up. Virtual
     // coords span the virtual *bounds* (which cutout insets already
     // shape), so this stays clear of camera cutouts — unlike a
     // previous vertically-centered default, which could overlap them.
-    *x = bszh;
+    *x = vwidth - bszh;
     *y = vheight * 0.75f;
   }
   // Never let the button get stranded out of reach (dragged towards an

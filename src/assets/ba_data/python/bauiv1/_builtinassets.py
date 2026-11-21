@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261014b`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261120`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 689
+# ba_meta require asset-package 1286
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261014b
-_ASSET_PACKAGE = ApverNum(689)
+# a-0.babuiltinassets.261120
+_ASSET_PACKAGE = ApverNum(1286)
 
 if TYPE_CHECKING:
     import datetime
@@ -110,7 +110,7 @@ if TYPE_CHECKING:
                 purchased/awarded item; the placeholder is the item name (may be
                 raw text or a nested translated name).
 
-                English: "You got a {item}!"
+                English: "You got {item}!"
             """
 
     class StringsAssetsGroup:
@@ -191,7 +191,7 @@ if TYPE_CHECKING:
                 dialog (this state is nearly always seen by the author, since
                 dev/test versions only resolve for them).
 
-                English: "{detail} Fix the file in the source Workspace and try
+                English: "{detail} Fix the file in the source workspace and try
                 again."
             """
 
@@ -308,6 +308,15 @@ if TYPE_CHECKING:
                 English: "Error playing music: {music}"
             """
 
+        #: ::
+        #:
+        #:     Error screen-message shown shortly after launch when the device's
+        #:     audio couldn't be started at all; the game keeps running,
+        #:     silently.
+        #:
+        #:     English: "Unable to start audio; the game will have no sound."
+        unavailable: LangStr
+
     class StringsDeviceGroup:
         """
         ::
@@ -344,10 +353,9 @@ if TYPE_CHECKING:
             """
             ::
 
-                Short lowercase label identifying a numbered joystick axis by
-                index; used inline in axis-name displays such as the
-                controls-configuration UI. The {number} placeholder is the axis
-                index.
+                Short label identifying a numbered joystick axis by index; used
+                inline in axis-name displays such as the controls-configuration
+                UI. The {number} placeholder is the axis index.
 
                 English: "axis {number}"
             """
@@ -356,8 +364,8 @@ if TYPE_CHECKING:
             """
             ::
 
-                Short lowercase label identifying a numbered controller button
-                by index; used inline in button-name displays such as the
+                Short label identifying a numbered controller button by index;
+                used inline in button-name displays such as the
                 controls-configuration UI. The {number} placeholder is the
                 button index.
 
@@ -662,8 +670,8 @@ if TYPE_CHECKING:
         #:     Screen-message when connecting fails because the host runs a
         #:     NEWER game version (so updating locally will fix it).
         #:
-        #:     English: "Host is running a newer version. Update your game and
-        #:     try again."
+        #:     English: "Host is running a newer version of the game. Update to
+        #:     the latest version and try again."
         incompatible_newer_version_host: LangStr
 
         #: ::
@@ -727,6 +735,23 @@ if TYPE_CHECKING:
                 English: "Left {name}'s party."
             """
 
+        def no_server_contact(
+            self,
+            *,
+            t: datetime.timedelta | datetime.datetime,
+            now: datetime.datetime | None = None,
+        ) -> LangStr:
+            """
+            ::
+
+                Caption shown in the middle of the screen, under a 'connection
+                down' graphic, while connected to a game host (server) that has
+                stopped responding; {t} counts up live from when the host was
+                last heard from (e.g. '5s', '1m 5s').
+
+                English: "No server contact for {t}"
+            """
+
         def player_joined_party(self, *, name: str | LangStr) -> LangStr:
             """
             ::
@@ -761,8 +786,8 @@ if TYPE_CHECKING:
         #:     Screen-message when connecting to game servers is refused because
         #:     this app version is too old for them.
         #:
-        #:     English: "Server functionality is no longer supported in this
-        #:     version of the game; Please update to a newer version."
+        #:     English: "Connecting to servers is no longer supported in this
+        #:     version of the game; please update to a newer version."
         server_unsupported: LangStr
 
         #: ::
@@ -774,6 +799,42 @@ if TYPE_CHECKING:
         #:     English: "This is currently unavailable (no internet
         #:     connection?)"
         unavailable_no_connection: LangStr
+
+    class StringsOsGroup:
+        """
+        ::
+
+            Strings the operating system shows from the app's native resource
+            files (app name, native dialog text, permission prompts); generated
+            into Android strings.xml and Apple string catalogs at pin time.
+
+            See source for the full asset list.
+        """
+
+        def fatal_error(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Message in the native Android dialog shown when the app hits an
+                unrecoverable error and must close; technical error details are
+                appended below it. The placeholder is the support email address.
+                Generated into native OS resource files.
+
+                English: "Uh oh; something is missing or broken. Please try
+                reinstalling the app or contact {email} for help."
+            """
+
+        #: ::
+        #:
+        #:     Body text of the operating system's local-network permission
+        #:     prompt on Apple platforms (Info.plist
+        #:     NSLocalNetworkUsageDescription). The OS shows the app's name in
+        #:     the prompt's title, above this text. Generated into native OS
+        #:     resource files.
+        #:
+        #:     English: "Used to find and join games on your local network and
+        #:     to connect controllers."
+        local_network_usage: LangStr
 
     class StringsPluginsGroup:
         """
@@ -1030,6 +1091,18 @@ if TYPE_CHECKING:
                 English: "A kick vote has been started for {name}."
             """
 
+        def kick_votes_need_update(self, *, version: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message a game host sends a player whose game is too old
+                for kick votes when they try to kick someone; the placeholder is
+                the minimum game version number (such as 1.8.4).
+
+                English: "Kick votes need version {version} or newer; please
+                update."
+            """
+
         def kick_votes_needed(self, *, count: int) -> LangStr:
             """
             ::
@@ -1176,8 +1249,8 @@ if TYPE_CHECKING:
         #:
         #:     Limited-time offer to remove ads via a token pack.
         #:
-        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
-        #:     IN-GAME ADS."
+        #:     English: "LIMITED TIME OFFER: Purchase ANY token pack to remove
+        #:     in-game ads."
         remove_ads_token_offer: LangStr
 
         #: ::
@@ -1282,9 +1355,9 @@ if TYPE_CHECKING:
             """
             ::
 
-                Lowercase hint shown (with an error sound) when the player hits
-                the edge of a UI list; tells them how to move focus out of it.
-                The two placeholders are substituted with left/right arrow glyph
+                Hint shown (with an error sound) when the player hits the edge
+                of a UI list; tells them how to move focus out of it. The two
+                placeholders are substituted with left/right arrow glyph
                 characters.
 
                 English: "press {left} or {right} to exit list"
@@ -1311,6 +1384,15 @@ if TYPE_CHECKING:
         #:
         #:     English: "Copied to clipboard."
         copied_to_clipboard: LangStr
+
+        #: ::
+        #:
+        #:     Generic label for a button that confirms and finishes an edit
+        #:     (used by e.g. the native Android text-edit dialog's confirm
+        #:     button).
+        #:
+        #:     English: "Done"
+        done: LangStr
 
         #: ::
         #:
@@ -1438,7 +1520,7 @@ if TYPE_CHECKING:
         #:     Generic screen-message for a failure with no more specific
         #:     explanation available.
         #:
-        #:     English: "Unknown error"
+        #:     English: "unknown error"
         unknown_error: LangStr
 
         #: ::
@@ -1483,7 +1565,7 @@ if TYPE_CHECKING:
 
                 Error message that a workspace failed to sync.
 
-                English: "Error syncing Workspace {workspace}. See log for
+                English: "Error syncing workspace {workspace}. See log for
                 details."
             """
 
@@ -1493,8 +1575,8 @@ if TYPE_CHECKING:
 
                 Notice that a previously synced workspace is being reused.
 
-                English: "Can't sync Workspace '{workspace}'. Reusing previously
-                synced version."
+                English: "Can't sync workspace '{workspace}'. Reusing the
+                previously synced version."
             """
 
     class StringsGroup:
@@ -1514,6 +1596,7 @@ if TYPE_CHECKING:
         device: StringsDeviceGroup
         input: StringsInputGroup
         net: StringsNetGroup
+        os: StringsOsGroup
         plugins: StringsPluginsGroup
         replay: StringsReplayGroup
         scripts: StringsScriptsGroup
@@ -1577,8 +1660,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 135 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 130 more). Full list in source.
+    #: The ``strings`` group - 141 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 136 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1615,7 +1698,7 @@ _TREE = {
             'sign_in_needed_other_device': ('address',),
             'signing_in': (),
         },
-        'audio': {'music_play_error': ('music',)},
+        'audio': {'music_play_error': ('music',), 'unavailable': ()},
         'device': {'thermal_frame_rate_cap': ()},
         'input': {
             'axis': ('number',),
@@ -1657,12 +1740,14 @@ _TREE = {
             'invalid_address': (),
             'left_game': ('name',),
             'left_party': ('name',),
+            'no_server_contact': ('t',),
             'player_joined_party': ('name',),
             'player_left_party': ('name',),
             'secure_connection_failed': (),
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
+        'os': {'fatal_error': ('email',), 'local_network_usage': ()},
         'plugins': {
             'class_load_error': ('plugin', 'error'),
             'detected': (),
@@ -1689,6 +1774,7 @@ _TREE = {
             'kick_vote_failed': (),
             'kick_vote_not_enough_players': (),
             'kick_vote_started': ('name',),
+            'kick_votes_need_update': ('version',),
             'kick_votes_needed': ('count',),
             'kick_voting_disabled': (),
             'kick_with_chat': ('yes', 'no'),
@@ -1723,6 +1809,7 @@ _TREE = {
             'cancel': (),
             'clipboard_not_supported': (),
             'copied_to_clipboard': (),
+            'done': (),
             'error': (),
             'game_center': (),
             'google_play': (),
@@ -1773,7 +1860,10 @@ _TREE = {
         'soft_rect_vertical': 't',
     },
 }
-_DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
+_DISPLAY_KINDS = {
+    'strings/net/no_server_contact': {'t': 'millis(dir=past)'},
+    'strings/time/duration_value': {'t': 'millis'},
+}
 
 
 if not TYPE_CHECKING:

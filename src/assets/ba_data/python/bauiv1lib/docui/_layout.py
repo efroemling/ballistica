@@ -8,50 +8,57 @@ import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    pass
+    from typing import Literal
 
-#: Widest the content column gets for a small layout at small ui-scale
-#: (window units; the window itself stays full-screen).
-SMALL_COLUMN_MAX_WIDTH = 600.0
+# Layouts promise their pages content rects of at least the sizes in
+# bacommon (dui2.SMALL_CONTENT_WIDTH and friends); the geometry here is
+# built from those, and checked against them where screens decide (see
+# WIDE_VISIBLE_HEIGHT).
 
-#: A small layout's insets from backing to visible area at medium/large
-#: ui-scale (see window_insets()); tighter than the standard ones, as
-#: its rounder backing leaves less dead space at its edges.
+#: Height a window's title band takes off the top of its scroll area at
+#: medium/large ui-scale (see DocUIWindow).
+TITLE_BAND_HEIGHT = 43.0
+
+# A note on sizes: a layout's size here (see layout_geometry()) is its
+# window's *nominal* size, from which its visible area is inset (see
+# window_insets()) and around whose center everything is placed. These
+# were once the window backing's own size, and are tuned as such; the
+# backing art is now fit to the window's content instead (see
+# _frame.window_frames()), so they no longer set where the art goes.
+
+#: A small layout's insets from its nominal size to its visible area at
+#: medium/large ui-scale (see window_insets()); tighter than the
+#: standard ones.
 _SMALL_SIDE_INSETS = 100.0
 _SMALL_VERTICAL_INSETS = 66.0
 
-#: A small layout's backing at medium/large ui-scale: just wide enough
-#: that its scroll area is the small-ui column's width (so content lays
-#: out exactly as in that column), and a bit under 0.6x that tall --
-#: squat enough to get containers' rounder small-window backing.
-_SMALL_WIDTH = SMALL_COLUMN_MAX_WIDTH + _SMALL_SIDE_INSETS
-_SMALL_HEIGHT = _SMALL_WIDTH * 0.594
-
-#: A small-taller layout's historical backing height at large ui-scale
-#: (twice a small layout's height, scaled up a bit); small-tall layouts
-#: are sized from it. (Small-taller windows themselves now follow the
-#: screen's height; see layout_geometry().)
-_SMALL_TALLER_HEIGHT = _SMALL_HEIGHT * 2.0
-_SMALL_TALLER_LARGE_SCALE = 1.1
-
-#: A small-tall layout's backing height: midway between a small
-#: layout's and a small-taller's at large ui-scale, at every
-#: medium/large ui-scale (it fits medium's screen, so like the other
-#: layouts it is the same window at both, just scaled differently).
-_SMALL_TALL_HEIGHT = 0.5 * (
-    _SMALL_HEIGHT + _SMALL_TALLER_HEIGHT * _SMALL_TALLER_LARGE_SCALE
+#: A small layout's nominal size at medium/large ui-scale: just what
+#: gives its pages their promised content rect (the small-ui column's
+#: width, so content lays out exactly as in that column).
+_SMALL_WIDTH = dui2.SMALL_CONTENT_WIDTH + _SMALL_SIDE_INSETS
+_SMALL_HEIGHT = (
+    dui2.SMALL_CONTENT_HEIGHT + _SMALL_VERTICAL_INSETS + TITLE_BAND_HEIGHT
 )
 
-#: How much of the screen's height a small-taller window's backing takes
-#: at medium/large ui-scale (its height follows the screen; see
-#: layout_geometry()). Roughly the share of the screen the window reads
-#: as taking, as its art fills nearly all of its backing.
+#: A small-tall layout's height at every medium/large ui-scale: just
+#: what gives its pages their promised content height there (see
+#: :data:`bacommon.docui.v2.TALL_CONTENT_HEIGHT`; it fits medium's
+#: screen, so like the other layouts it is the same window at both, just
+#: scaled differently). (Once tuned as midway between a small layout's
+#: height and a small-taller's at large ui-scale.) Taller windows grow
+#: from it with the screen's height (see layout_geometry()).
+_SMALL_TALL_HEIGHT = (
+    dui2.TALL_CONTENT_HEIGHT + _SMALL_VERTICAL_INSETS + TITLE_BAND_HEIGHT
+)
+
+#: How much of each extra unit of screen height a small-taller (or
+#: wide-taller) window grows by at medium/large ui-scale (its height
+#: follows the screen; see _taller_height()).
 SMALL_TALLER_SCREEN_HEIGHT_FRACTION = 0.8
 
-#: How much of the screen's height and width a large window's backing
-#: takes at medium/large ui-scale (its size follows the screen; see
-#: layout_geometry()); on wide screens its height limits its width, so
-#: it keeps the standard backing.
+#: How much of the screen's height and width a large window takes at
+#: medium/large ui-scale (its size follows the screen; see
+#: layout_geometry()); on wide screens its height limits its width.
 LARGE_SCREEN_HEIGHT_FRACTION = 0.89
 LARGE_SCREEN_WIDTH_FRACTION = 0.98
 
@@ -74,9 +81,40 @@ MIN_VIRTUAL_SCREEN_HEIGHT = 720.0
 #: ones get more width).
 MIN_VIRTUAL_SCREEN_WIDTH = 1280.0
 
-#: Height a window's title band takes off the top of its scroll area at
-#: medium/large ui-scale (see DocUIWindow).
-TITLE_BAND_HEIGHT = 43.0
+#: How far a doc-ui popup window's fading scroll area reaches out past
+#: its content area at top and bottom (the popup grows to cover it, as
+#: windows do; see fade_scroll_extents()). Shorter than windows', as
+#: popups are small.
+POPUP_FADE_REACH = 20.0
+
+#: Where a doc-ui popup window's close button sits in from its left
+#: edge (its title band's left end).
+POPUP_CLOSE_BUTTON_INSET = 4.0
+
+#: Height of a doc-ui popup window's title band (title and close
+#: button), above its content area.
+POPUP_TITLE_BAND_HEIGHT = 50.0
+
+#: How far (virtual-screen units; horizontal, vertical) a doc-ui
+#: popup's bounds always stay in from the virtual screen's edges. A hard
+#: limit: popups are sized and placed within it (see ``popup_frame()``
+#: and the popup window's placement), so none sits partly off screen
+#: and there's always somewhere outside one to press to dismiss it.
+POPUP_EDGE_MARGIN = (100.0, 100.0)
+
+#: The longest a doc-ui scroll area's edge fades ever run: what its
+#: frame asks for on each side that fades (see ``WindowFrame``'s
+#: ``fade_lengths``). Generous on purpose; each is shortened (its whole
+#: ramp squeezed, never cut off) to end by the line where the page's
+#: resting content starts (see ``edge_fades()``), so in practice the
+#: page's insets and the frame's extends decide. Turn it down only if
+#: some fade is seen to look too long.
+DEFAULT_EDGE_FADE = 120.0
+
+#: A doc-ui popup window's close button: (scale, size), sitting in its
+#: title band's left end. A clean-layout button, so this is its art's
+#: size; it matches windows' close buttons.
+POPUP_CLOSE_BUTTON = (0.88, (64.0, 55.0))
 
 #: How much taller than the visible area a small-ui scroll area is (it
 #: runs full-screen; see DocUIWindow).
@@ -86,63 +124,56 @@ SMALL_UI_SCROLL_EXTRA = 1.0
 #: the scroll area runs under the toolbars (see page prep).
 SMALL_UI_TOOLBAR_CLEARANCE = 70.0
 
-#: How far right a viewer pane is nudged at small ui-scale, so its gap
-#: to the virtual bounds matches its gap to the page content (tuned by
-#: eye; see DocUIWindow).
-SMALL_UI_VIEWER_NUDGE_X = 20.0
+#: How far (virtual units) a viewer pane's outer edge stays in from
+#: the virtual screen bounds at small ui-scale (where it otherwise
+#: meets them).
+VIEWER_SCREEN_BUFFER = 25.0
 
-#: How far a viewer pane stays in from the top and bottom of the scroll
-#: area at small ui-scale, clearing the toolbars it runs under (less
-#: than page content's clearance, as the pane's own frame and rounded
-#: corners already read as spacing; tuned by eye).
-SMALL_UI_VIEWER_INSET_V = 40.0
-
-#: Page prep's base buffer above and below page content (all ui-scales).
-#: (Doc-ui scroll widgets lay out cleanly -- their content spans their
-#: full height -- so this is all the room there is.)
-PAGE_BASE_BUFFER = 27.0
-
-#: Where a button row's outermost buttons (at its default side padding)
-#: sit in from the column's edges, both sides.
-BUTTON_INSET = 28.0
-
-#: Where text (titles, labels, footnotes) sits in from the column's
-#: edges, both sides; buttons draw a few units inside their own bounds,
-#: so this lines text up with their visible edges. Control rows' (and
-#: fill rows') contents span from here to here too: labels start where
-#: text does, controls end at its mirror.
-TEXT_INSET = 33.0
 
 #: Where a button row's side padding starts in from the column's edges;
-#: its default padding takes its buttons on to :data:`BUTTON_INSET`.
+#: its default padding takes its buttons on to the page's h_inset.
+#: (The room between is inside its h-scroll, so button art reaching
+#: past its bounds isn't clipped.)
 BUTTON_ROW_EDGE_INSET = 18.0
 
-#: Wide and wider layouts' visible height at medium/large ui-scale:
-#: whatever gives their pages exactly the height they get at small
-#: ui-scale on the shortest screen, so a page that fits one fits all.
-#: (The small-ui one gains the scroll extra but pays toolbar clearance;
-#: the medium/large one pays the title band.)
-WIDE_VISIBLE_HEIGHT = (
-    MIN_VIRTUAL_SCREEN_HEIGHT / SMALL_UI_ROOT_SCALE
-    + SMALL_UI_SCROLL_EXTRA
-    - 2.0 * SMALL_UI_TOOLBAR_CLEARANCE
-    + TITLE_BAND_HEIGHT
+#: Content-rect height wide and wider layouts give their pages, at
+#: every ui-scale (see :data:`bacommon.docui.v2.WIDE_CONTENT_HEIGHT`).
+WIDE_CONTENT_HEIGHT = dui2.WIDE_CONTENT_HEIGHT
+
+#: Content-rect width wide layouts give their pages, at every ui-scale
+#: (see :data:`bacommon.docui.v2.WIDE_CONTENT_WIDTH`).
+WIDE_CONTENT_WIDTH = dui2.WIDE_CONTENT_WIDTH
+
+# At small ui-scale windows fill the screen, so the wide promises hold
+# there only because the narrowest and shortest screens give exactly
+# them (the height less toolbar clearance, plus the scroll extra);
+# change any of these numbers and the promises must change too.
+assert (
+    abs(MIN_VIRTUAL_SCREEN_WIDTH / SMALL_UI_ROOT_SCALE - WIDE_CONTENT_WIDTH)
+    < 0.001
+)
+assert (
+    abs(
+        MIN_VIRTUAL_SCREEN_HEIGHT / SMALL_UI_ROOT_SCALE
+        + SMALL_UI_SCROLL_EXTRA
+        - 2.0 * SMALL_UI_TOOLBAR_CLEARANCE
+        - WIDE_CONTENT_HEIGHT
+    )
+    < 0.001
 )
 
-#: Height wide and wider pages have for their rows (the scroll area's
-#: visible extent less page prep's base buffers), at every ui-scale.
-WIDE_PAGE_ROWS_HEIGHT = (
-    WIDE_VISIBLE_HEIGHT - TITLE_BAND_HEIGHT - 2.0 * PAGE_BASE_BUFFER
-)
+#: Wide and wider layouts' visible height at medium/large ui-scale:
+#: whatever gives their pages exactly the content height they get at
+#: small ui-scale on the shortest screen, so a page that fits one fits
+#: all. (The medium/large one pays the title band.)
+WIDE_VISIBLE_HEIGHT = WIDE_CONTENT_HEIGHT + TITLE_BAND_HEIGHT
 
 #: Wide and wider layouts' designed shape at medium/large ui-scale: a
-#: shared backing height (loosely after the classic play window, then
+#: shared nominal height (loosely after the classic play window, then
 #: tuned by eye) and insets (see window_insets()) a bit roomier than a
-#: small layout's so content (the back button especially) clears the
-#: rounder backing's edges, plus scroll-area side insets well outside
-#: the visible area, as their wide content is meant to show no scroll
-#: bounds (see window_scroll_overhang()). Both must stay under 0.6
-#: height/width for containers' rounder backing. These set the shape
+#: small layout's, plus scroll-area side insets well outside the
+#: visible area, as their wide content is meant to show no scroll
+#: bounds (see window_scroll_overhang()). These set the shape
 #: (proportions); the actual window units are these times
 #: _WIDE_UNIT_SCALE (see below). Widths follow further down.
 _WIDE_DESIGN_HEIGHT = 570.0
@@ -160,38 +191,31 @@ _WIDE_UNIT_SCALE = WIDE_VISIBLE_HEIGHT / (
     _WIDE_DESIGN_HEIGHT - _WIDE_DESIGN_VERTICAL_INSETS
 )
 
-#: Width wide pages have for their content (their scroll area's width),
-#: at every ui-scale: small ui-scale's on the narrowest screen. So wide
-#: pages can be designed to fill the screen exactly, everywhere.
-WIDE_PAGE_WIDTH = MIN_VIRTUAL_SCREEN_WIDTH / SMALL_UI_ROOT_SCALE
-
-#: Wide's backing width comes from WIDE_PAGE_WIDTH; wider's follows the
+#: Wide's nominal width comes from WIDE_CONTENT_WIDTH; wider's follows the
 #: screen (see WIDER_SCREEN_WIDTH_FRACTION), as its content is expected
 #: to overflow the screen anyway, so showing more of it at medium/large
 #: means less scrolling (at small ui-scale the two are the same, filling
 #: the screen).
 _WIDE_DESIGN_WIDTH = (
-    WIDE_PAGE_WIDTH / _WIDE_UNIT_SCALE + _WIDE_DESIGN_SCROLL_SIDE_INSETS
+    WIDE_CONTENT_WIDTH / _WIDE_UNIT_SCALE + _WIDE_DESIGN_SCROLL_SIDE_INSETS
 )
 
-#: Extra backing a wider window gets at medium/large beyond the above,
-#: at each side and at the bottom, with its insets grown to match so its
-#: visible and scroll areas (and thus its pages) stay exactly as they
-#: are: its long scrolling rows read better with more backing around
-#: them, and sat a bit low in it without the extra below.
+#: Extra a wider window gets at medium/large beyond the above, at each
+#: side and at the bottom, with its insets grown to match. (Back when
+#: these sized its backing, they gave its long scrolling rows more
+#: around them.) The sides narrow its visible area, as its width follows
+#: the screen regardless; the bottom only moves its content down a bit
+#: (see window_content_drop()).
 _WIDER_DESIGN_EXTRA_SIDE = 50.0
 _WIDER_DESIGN_EXTRA_BOTTOM = 40.0
 
-#: The same for a wide window: about 5% more backing width overall,
-#: keeping its content from crowding its edges, and some below, as its
-#: content otherwise sat low in its squat backing.
-_WIDE_DESIGN_EXTRA_SIDE = _WIDE_DESIGN_WIDTH * 0.025
+#: The same below a wide window: only moves its content down a bit (see
+#: window_content_drop()).
 _WIDE_DESIGN_EXTRA_BOTTOM = 28.0
 
 _WIDE_BASE_HEIGHT = _WIDE_DESIGN_HEIGHT * _WIDE_UNIT_SCALE
-_WIDE_EXTRA_SIDE = _WIDE_DESIGN_EXTRA_SIDE * _WIDE_UNIT_SCALE
 _WIDE_EXTRA_BOTTOM = _WIDE_DESIGN_EXTRA_BOTTOM * _WIDE_UNIT_SCALE
-_WIDE_WIDTH = _WIDE_DESIGN_WIDTH * _WIDE_UNIT_SCALE + 2.0 * _WIDE_EXTRA_SIDE
+_WIDE_WIDTH = _WIDE_DESIGN_WIDTH * _WIDE_UNIT_SCALE
 _WIDE_HEIGHT = _WIDE_BASE_HEIGHT + _WIDE_EXTRA_BOTTOM
 _WIDE_SIDE_INSETS = _WIDE_DESIGN_SIDE_INSETS * _WIDE_UNIT_SCALE
 _WIDE_VERTICAL_INSETS = _WIDE_DESIGN_VERTICAL_INSETS * _WIDE_UNIT_SCALE
@@ -199,7 +223,15 @@ _WIDER_EXTRA_SIDE = _WIDER_DESIGN_EXTRA_SIDE * _WIDE_UNIT_SCALE
 _WIDER_EXTRA_BOTTOM = _WIDER_DESIGN_EXTRA_BOTTOM * _WIDE_UNIT_SCALE
 _WIDER_HEIGHT = _WIDE_BASE_HEIGHT + _WIDER_EXTRA_BOTTOM
 
-#: How much of the screen's width a wider window's backing takes at
+#: A wide-tall window's nominal height (medium/large ui-scale): a wide
+#: window's, grown so its pages get the same promised content height
+#: as a small-tall window's (its insets and everything else stay
+#: wide's).
+_WIDE_TALL_HEIGHT = _WIDE_HEIGHT + (
+    dui2.TALL_CONTENT_HEIGHT - WIDE_CONTENT_HEIGHT
+)
+
+#: How much of the screen's width a wider window takes at
 #: medium/large ui-scale (its width follows the screen; see
 #: layout_geometry()): its long scrolling rows show as much at once as
 #: the screen allows. All the extra goes to its visible and scroll
@@ -210,9 +242,9 @@ WIDER_SCREEN_WIDTH_FRACTION = 0.85
 def window_content_drop(layout: dui2.WindowLayout) -> float:
     """How far below center a window's visible area sits (medium/large).
 
-    Moves the title, back button and scroll area down together; the
-    small layout's tight insets otherwise put its back button close to
-    the backing's top edge.
+    Moves the title, back button and scroll area down together on
+    screen. (Tuned back when it set where content sat in the window's
+    backing; the backing now fits content wherever it sits.)
     """
     match layout:
         case (
@@ -221,17 +253,23 @@ def window_content_drop(layout: dui2.WindowLayout) -> float:
             | dui2.WindowLayout.SMALL_TALLER
         ):
             return 3.0
-        case dui2.WindowLayout.WIDE:
-            # Their squat rounder backing otherwise reads top-heavy;
-            # less half the extra backing height, which the visible
-            # area (centered in the backing) would otherwise split
-            # with the top, so all of it lands below (see
-            # _WIDE_DESIGN_EXTRA_BOTTOM).
+        case (
+            dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
+        ):
+            # Less half the extra height below (see
+            # _WIDE_DESIGN_EXTRA_BOTTOM), which the visible area
+            # (centered) would otherwise split with the top.
             return 12.0 - 0.5 * _WIDE_EXTRA_BOTTOM
         case dui2.WindowLayout.WIDER:
             # As wide (see _WIDER_DESIGN_EXTRA_BOTTOM).
             return 12.0 - 0.5 * _WIDER_EXTRA_BOTTOM
-        case dui2.WindowLayout.LARGE | dui2.WindowLayout.VIEWER:
+        case (
+            dui2.WindowLayout.LARGE
+            | dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
+        ):
             return 0.0
         case _:
             assert_never(layout)
@@ -251,54 +289,62 @@ def title_lift(layout: dui2.WindowLayout, uiscale: bui.UIScale) -> float:
             | dui2.WindowLayout.SMALL_TALL
             | dui2.WindowLayout.SMALL_TALLER
             | dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
             | dui2.WindowLayout.WIDER
             | dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
         ):
             return 0.0
         case _:
             assert_never(layout)
 
 
-def backing_offset_x(
-    layout: dui2.WindowLayout, uiscale: bui.UIScale, width: float
-) -> float:
-    """How far to shift a window's backing art sideways (only the art).
+def window_backing_art(
+    layout: dui2.WindowLayout, uiscale: bui.UIScale
+) -> Literal['tall', 'squat']:
+    """Which window backing art a layout's window draws.
 
-    Containers place their backing art lopsidedly (it runs further past
-    their right edge than their left), which on a large window's broad
-    shape at medium/large ui-scale reads as sitting right of the window's
-    content -- and lets the back button crowd the art's left edge. A
-    fraction of the window's ``width``, as the skew grows with it.
+    (See :func:`bauiv1.containerwidget`'s ``background_art``.) Picked
+    per layout rather than left to the container: content-sized windows
+    can be shaped unlike the art they were designed around. Squat
+    layouts get the rounder art; small ui-scale windows fill the screen
+    and get the boxier one.
     """
     if uiscale is bui.UIScale.SMALL:
-        return 0.0
+        return 'tall'
     match layout:
-        case dui2.WindowLayout.LARGE:
-            return -0.01 * width
         case (
             dui2.WindowLayout.SMALL
-            | dui2.WindowLayout.SMALL_TALL
-            | dui2.WindowLayout.SMALL_TALLER
             | dui2.WindowLayout.WIDE
             | dui2.WindowLayout.WIDER
             | dui2.WindowLayout.VIEWER
         ):
-            return 0.0
+            return 'squat'
+        case (
+            dui2.WindowLayout.SMALL_TALL
+            | dui2.WindowLayout.SMALL_TALLER
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
+            | dui2.WindowLayout.LARGE
+            | dui2.WindowLayout.VIEWER_NARROW
+        ):
+            return 'tall'
         case _:
             assert_never(layout)
 
 
 def window_insets(layout: dui2.WindowLayout) -> tuple[float, float]:
-    """How much smaller a window's visible area is than its backing.
+    """How much smaller a window's visible area is than its nominal size.
 
     Returns (both sides together, top and bottom together) at
     medium/large ui-scale (at small ui-scale the screen limits the
     visible area instead).
     """
     match layout:
-        case dui2.WindowLayout.VIEWER:
-            # Its rounder backing wants a bit more room above and
-            # below its content (see layout_geometry).
+        case dui2.WindowLayout.VIEWER | dui2.WindowLayout.VIEWER_NARROW:
+            # A bit more above and below its content (see
+            # layout_geometry).
             return 150.0, 80.0 + 2.0 * _VIEWER_EXTRA_PAD_V
         case (
             dui2.WindowLayout.SMALL
@@ -306,9 +352,13 @@ def window_insets(layout: dui2.WindowLayout) -> tuple[float, float]:
             | dui2.WindowLayout.SMALL_TALLER
         ):
             return _SMALL_SIDE_INSETS, _SMALL_VERTICAL_INSETS
-        case dui2.WindowLayout.WIDE:
+        case (
+            dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
+        ):
             return (
-                _WIDE_SIDE_INSETS + 2.0 * _WIDE_EXTRA_SIDE,
+                _WIDE_SIDE_INSETS,
                 _WIDE_VERTICAL_INSETS + _WIDE_EXTRA_BOTTOM,
             )
         case dui2.WindowLayout.WIDER:
@@ -322,11 +372,16 @@ def window_insets(layout: dui2.WindowLayout) -> tuple[float, float]:
             assert_never(layout)
 
 
-#: Extra backing shown above and below the viewer layout's content
-#: (each), and how much of that comes from making its window taller
-#: (the rest comes out of its scroll area and viewer).
+#: Extra room above and below the viewer layout's content (each), and
+#: how much of that comes from making its window taller (the rest comes
+#: out of its scroll area and viewer).
 _VIEWER_EXTRA_PAD_V = 20.0
 _VIEWER_EXTRA_HEIGHT = 20.0
+
+#: A narrow viewer layout's window width (medium/large ui-scale) as a
+#: share of a viewer layout's. (Its column is
+#: :data:`bacommon.docui.v2.NARROW_CONTENT_WIDTH`.)
+_VIEWER_NARROW_WIDTH_SCALE = 0.9
 
 #: Medium ui-scale's standard window height (the viewer layout uses it
 #: at large too).
@@ -338,110 +393,43 @@ def window_scroll_overhang(layout: dui2.WindowLayout) -> float:
 
     Both sides together, at medium/large ui-scale. The title and back
     button stay within the visible area; wide and wider layouts run
-    their scroll area out past it, back toward the backing's edges, as
-    their wide content is meant to show no scroll bounds anyway.
+    their scroll area out past it, toward the window's edges, as their
+    wide content is meant to show no scroll bounds anyway. A
+    large layout's runs out just far enough that content's standard
+    indentation lines up with the back button's left edge.
     """
     match layout:
-        case dui2.WindowLayout.WIDE | dui2.WindowLayout.WIDER:
+        case (
+            dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
+            | dui2.WindowLayout.WIDER
+        ):
             return (
                 _WIDE_DESIGN_SIDE_INSETS - _WIDE_DESIGN_SCROLL_SIDE_INSETS
             ) * _WIDE_UNIT_SCALE
+        case dui2.WindowLayout.LARGE:
+            return 2.0 * _LARGE_SCROLL_OVERHANG_SIDE
         case (
             dui2.WindowLayout.SMALL
             | dui2.WindowLayout.SMALL_TALL
             | dui2.WindowLayout.SMALL_TALLER
-            | dui2.WindowLayout.LARGE
             | dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
         ):
             return 0.0
         case _:
             assert_never(layout)
 
 
-def back_button_nudge_x(layout: dui2.WindowLayout) -> float:
-    """How far right of a window's visible left edge its back button sits.
-
-    (Medium/large ui-scale; small uses the system back button.) The
-    viewer layout's window is squat enough to get the rounder backing,
-    whose top-left corner curves in further than the button's usual
-    spot.
-    """
-    match layout:
-        case dui2.WindowLayout.VIEWER:
-            return _VIEWER_BACK_NUDGE_X
-        case (
-            dui2.WindowLayout.SMALL
-            | dui2.WindowLayout.SMALL_TALL
-            | dui2.WindowLayout.SMALL_TALLER
-            | dui2.WindowLayout.WIDE
-            | dui2.WindowLayout.WIDER
-            | dui2.WindowLayout.LARGE
-        ):
-            return 0.0
-        case _:
-            assert_never(layout)
-
-
-#: See back_button_nudge_x().
-_VIEWER_BACK_NUDGE_X = 45.0
-
-#: The back button's base geometry (medium/large ui-scale): scale,
-#: size (close style, back style), and its bottom-left's offset from
-#: the window's visible top-left. These placed it; it read a little
-#: small, so back_button_geometry() grows it about its center.
-_BACK_BASE_SCALE = 0.8
-_BACK_CLOSE_SIZE = (50.0, 50.0)
-_BACK_BACK_SIZE = (60.0, 55.0)
-_BACK_BASE_OFFSET = (2.0, -33.0)
-_BACK_GROW = 1.1
-
-
-def back_button_geometry(
-    layout: dui2.WindowLayout, close_style: bool
-) -> tuple[float, tuple[float, float], tuple[float, float]]:
-    """A window's back button: (scale, size, bottom-left offset).
-
-    The offset is from the window's visible top-left corner (its
-    layout's nudge included), at medium/large ui-scale. ``close_style``
-    is whether it is a close (auxiliary window) rather than back button.
-    """
-    size = _BACK_CLOSE_SIZE if close_style else _BACK_BACK_SIZE
-    # Grown about its center: the bottom-left moves back by half the
-    # growth in each axis.
-    shift = tuple(
-        0.5 * dim * _BACK_BASE_SCALE * (_BACK_GROW - 1.0) for dim in size
-    )
-    return (
-        _BACK_BASE_SCALE * _BACK_GROW,
-        size,
-        (
-            _BACK_BASE_OFFSET[0] + back_button_nudge_x(layout) - shift[0],
-            _BACK_BASE_OFFSET[1] - shift[1],
-        ),
-    )
-
-
-def show_scroll_border(layout: dui2.WindowLayout) -> bool:
-    """Whether a layout's scroll area shows its border when scrollable.
-
-    (It never does when its content fits.) The viewer layout never
-    shows one: beside its framed viewer pane, a second outline just
-    reads as clutter.
-    """
-    match layout:
-        case dui2.WindowLayout.VIEWER:
-            return False
-        case (
-            dui2.WindowLayout.SMALL
-            | dui2.WindowLayout.SMALL_TALL
-            | dui2.WindowLayout.SMALL_TALLER
-            | dui2.WindowLayout.WIDE
-            | dui2.WindowLayout.WIDER
-            | dui2.WindowLayout.LARGE
-        ):
-            return True
-        case _:
-            assert_never(layout)
+#: Content's standard indentation from its scroll area's edge, about
+#: (near bacommon.docui.v2.DEFAULT_H_INSET): what a large layout's
+#: scroll area overhangs its visible area by on each side (see
+#: window_scroll_overhang()) and a fading small layout's back button is
+#: nudged in by (see _backbutton.back_button_nudge_x()), so content and
+#: back button line up either way.
+CONTENT_INDENT = 30.0
+_LARGE_SCROLL_OVERHANG_SIDE = CONTENT_INDENT
 
 
 def resizes_with_screen(
@@ -458,15 +446,18 @@ def resizes_with_screen(
     match layout:
         case (
             dui2.WindowLayout.SMALL_TALLER
+            | dui2.WindowLayout.WIDE_TALLER
             | dui2.WindowLayout.WIDER
             | dui2.WindowLayout.LARGE
         ):
             return True
         case (
             dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
             | dui2.WindowLayout.SMALL
             | dui2.WindowLayout.SMALL_TALL
             | dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
         ):
             return False
         case _:
@@ -517,21 +508,22 @@ def layout_geometry(
     uiscale: bui.UIScale,
     screen_size: tuple[float, float],
 ) -> tuple[float, float, float]:
-    """A layout's backing (width, height) and root scale at a ui-scale.
+    """A layout's nominal (width, height) and root scale at a ui-scale.
 
-    Medium's and large's large widths are as wide as their heights allow
-    while keeping the nicer window backing (containers switch to a
-    squatter, rounder one once height drops to 0.6x width); small is
-    sized to the small-ui column (see _SMALL_WIDTH), deliberately just
-    squat enough for that rounder one; wide and wider are fixed shapes
-    getting the rounder one too, their window units scaled so their pages
-    get the same height at every ui-scale (see WIDE_VISIBLE_HEIGHT). At
+    (Nominal: see the note on sizes at the top of this module.) Medium's
+    and large's large widths are as wide as their heights allow while
+    staying a bit over 0.6x as tall as wide (a shape once tied to which
+    backing art containers drew); small is sized to the small-ui column
+    (see _SMALL_WIDTH); wide and wider are fixed shapes, their window
+    units scaled so their pages get the same height at every ui-scale
+    (see WIDE_VISIBLE_HEIGHT). At
     small ui-scale every layout fills the screen (a small layout narrows
-    its content instead; see :func:`column_inset`). A small-taller
-    window's height at medium/large ui-scale follows the screen's
-    (``screen_size``, virtual units): a fixed share of it
-    (:data:`SMALL_TALLER_SCREEN_HEIGHT_FRACTION`), so it makes use of
-    tall screens; likewise a wider window's width
+    its content instead; see :func:`column_inset`). A small-taller (or
+    wide-taller) window's height at medium/large ui-scale grows with the
+    screen's (``screen_size``, virtual units), from its '-tall'
+    sibling's height on the shortest screen at medium ui-scale (see
+    _taller_height()), so it makes use of tall screens; likewise a
+    wider window's width as a fixed share of the screen's
     (:data:`WIDER_SCREEN_WIDTH_FRACTION`) and a large window's height
     and width (:data:`LARGE_SCREEN_HEIGHT_FRACTION`,
     :data:`LARGE_SCREEN_WIDTH_FRACTION`).
@@ -548,15 +540,14 @@ def layout_geometry(
             assert_never(uiscale)
     match layout:
         case dui2.WindowLayout.LARGE:
-            # Follows the screen both ways, but never squat enough to
-            # switch to the rounder backing (on wide screens its height
-            # limits its width).
+            # Follows the screen both ways, but never squatter than
+            # this (on wide screens its height limits its width).
             height = LARGE_SCREEN_HEIGHT_FRACTION * screen_size[1] / scale
             width = min(
                 LARGE_SCREEN_WIDTH_FRACTION * screen_size[0] / scale,
                 height / 0.601,
             )
-        case dui2.WindowLayout.VIEWER:
+        case dui2.WindowLayout.VIEWER | dui2.WindowLayout.VIEWER_NARROW:
             # The same window at medium and large (just scaled
             # differently, so a viewer never gets blown up big on
             # large screens): medium's standard height plus a bit, and
@@ -567,23 +558,26 @@ def layout_geometry(
             height = _MEDIUM_HEIGHT + _VIEWER_EXTRA_HEIGHT
             side_insets, vertical_insets = window_insets(layout)
             pane_height = height - vertical_insets - TITLE_BAND_HEIGHT
-            width = pane_height + SMALL_COLUMN_MAX_WIDTH + side_insets
+            width = pane_height + dui2.SMALL_CONTENT_WIDTH + side_insets
+            # A narrow viewer's window is narrower too.
+            if layout is dui2.WindowLayout.VIEWER_NARROW:
+                width *= _VIEWER_NARROW_WIDTH_SCALE
         case dui2.WindowLayout.SMALL:
             width, height = _SMALL_WIDTH, _SMALL_HEIGHT
         case dui2.WindowLayout.SMALL_TALL:
             width, height = _SMALL_WIDTH, _SMALL_TALL_HEIGHT
         case dui2.WindowLayout.SMALL_TALLER:
-            # (Never squat enough to switch to the rounder backing.)
             width = _SMALL_WIDTH
-            height = max(
-                0.6 * width,
-                SMALL_TALLER_SCREEN_HEIGHT_FRACTION * screen_size[1] / scale,
-            )
+            height = _taller_height(_SMALL_TALL_HEIGHT, screen_size[1], scale)
         case dui2.WindowLayout.WIDE:
             width, height = _WIDE_WIDTH, _WIDE_HEIGHT
+        case dui2.WindowLayout.WIDE_TALL:
+            width, height = _WIDE_WIDTH, _WIDE_TALL_HEIGHT
+        case dui2.WindowLayout.WIDE_TALLER:
+            width = _WIDE_WIDTH
+            height = _taller_height(_WIDE_TALL_HEIGHT, screen_size[1], scale)
         case dui2.WindowLayout.WIDER:
-            # (Never narrow enough to lose the rounder backing it's
-            # designed around.)
+            # (Never narrower than this.)
             height = _WIDER_HEIGHT
             width = max(
                 height / 0.59,
@@ -594,6 +588,23 @@ def layout_geometry(
     return width, height, scale
 
 
+def _taller_height(
+    tall_height: float, screen_height: float, scale: float
+) -> float:
+    """A '-taller' window's nominal height (medium/large ui-scale).
+
+    Grows with the screen's height (``screen_height``, virtual units;
+    :data:`SMALL_TALLER_SCREEN_HEIGHT_FRACTION` of each extra unit),
+    calibrated so the shortest case -- medium ui-scale on the shortest
+    screen -- comes out at its '-tall' sibling's ``tall_height``; it is
+    never shorter than that, and taller everywhere else.
+    """
+    shortest = MIN_VIRTUAL_SCREEN_HEIGHT / root_scale(bui.UIScale.MEDIUM)
+    return tall_height + SMALL_TALLER_SCREEN_HEIGHT_FRACTION * (
+        screen_height / scale - shortest
+    )
+
+
 def column_inset(
     layout: dui2.WindowLayout, uiscale: bui.UIScale, scroll_width: float
 ) -> float:
@@ -602,7 +613,7 @@ def column_inset(
     A small layout at small ui-scale keeps the full-screen window and
     scroll area but lays content out in a centered column of limited
     width, keeping labels near their values. A wide layout does the
-    same with a column of its page width (WIDE_PAGE_WIDTH): it's
+    same with a column of its content width (WIDE_CONTENT_WIDTH): it's
     designed to fit the narrowest screen, so on wider ones its content
     (left-aligned content included) sits centered, as it does in its
     medium/large window. Wider content runs the full screen width.
@@ -615,12 +626,17 @@ def column_inset(
             | dui2.WindowLayout.SMALL_TALL
             | dui2.WindowLayout.SMALL_TALLER
         ):
-            return max(0.0, 0.5 * (scroll_width - SMALL_COLUMN_MAX_WIDTH))
-        case dui2.WindowLayout.WIDE:
-            return max(0.0, 0.5 * (scroll_width - WIDE_PAGE_WIDTH))
+            return max(0.0, 0.5 * (scroll_width - dui2.SMALL_CONTENT_WIDTH))
+        case (
+            dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
+        ):
+            return max(0.0, 0.5 * (scroll_width - WIDE_CONTENT_WIDTH))
         case (
             dui2.WindowLayout.LARGE
             | dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
             | dui2.WindowLayout.WIDER
         ):
             return 0.0
@@ -628,24 +644,50 @@ def column_inset(
             assert_never(layout)
 
 
-def viewer_pane_width(layout: dui2.WindowLayout, scroll_width: float) -> float:
-    """Width taken from the left of the scroll area for a viewer pane.
+def default_scroll_edge_style(
+    layout: dui2.WindowLayout,
+) -> dui2.ScrollEdgeStyle:
+    """The scroll edge style a layout gets unless a window asks otherwise.
 
-    Zero for layouts without one. A viewer layout keeps a small layout's
-    column width for the page itself (at the right) and gives the rest
-    to the viewer, which doesn't scroll with the page.
+    (Medium/large ui-scale; small ui-scale always fades toward the
+    toolbars.)
     """
     match layout:
-        case dui2.WindowLayout.VIEWER:
-            return max(0.0, scroll_width - SMALL_COLUMN_MAX_WIDTH)
         case (
-            dui2.WindowLayout.LARGE
-            | dui2.WindowLayout.SMALL
+            dui2.WindowLayout.SMALL
             | dui2.WindowLayout.SMALL_TALL
             | dui2.WindowLayout.SMALL_TALLER
             | dui2.WindowLayout.WIDE
+            | dui2.WindowLayout.WIDE_TALL
+            | dui2.WindowLayout.WIDE_TALLER
             | dui2.WindowLayout.WIDER
+            | dui2.WindowLayout.LARGE
+            | dui2.WindowLayout.VIEWER
+            | dui2.WindowLayout.VIEWER_NARROW
         ):
-            return 0.0
+            return dui2.ScrollEdgeStyle.FADE
         case _:
             assert_never(layout)
+
+
+def fade_scroll_extents() -> tuple[float, float, float, float]:
+    """How far a fade-style scroll area reaches past an outline one's.
+
+    Returns (left, right, bottom, top), at medium/large ui-scale. With no
+    outline to look cramped against the window's edges, the scroll area
+    reaches out toward the top and bottom (up behind the title); content
+    gets inset by the same amounts, so it keeps exactly the space and
+    spot it would have with an outline, and fades only once scrolled
+    past where an outline would have clipped it. The sides don't reach
+    out (a viewer pane's edge couldn't, and both sides match): their
+    fades stay within the empty strip before content (the page's
+    horizontal inset).
+
+    The same in every layout; a window's backing art is fit around the
+    result (see ``_frame.window_frames()``).
+    """
+    return (0.0, 0.0, _FADE_EXTENT, _FADE_EXTENT)
+
+
+#: See fade_scroll_extents().
+_FADE_EXTENT = 40.0

@@ -56,6 +56,9 @@ struct CrashInfo {
   bool workspaces;
   bool custompy;
   bool userpy;
+  /// Not modded yet, but some check hadn't finished, so a false
+  /// 'modded' can't be read as clean.
+  bool modpending;
   /// Whether g_core was alive at fault time. Distinguishes "we know
   /// these flags are right" from "we could not tell" -- the same
   /// distinction the fatal-error path draws with its 'coregone' field,
@@ -85,7 +88,8 @@ struct CrashInfo {
 ///
 /// 2: added os_version.
 /// 3: added userpy.
-const uint32_t kCrashInfoFormatVersion = 3;
+/// 4: added modpending.
+const uint32_t kCrashInfoFormatVersion = 4;
 
 /// Minidump user-stream type carrying a CrashInfo. Must be above
 /// LastReservedStream (0xffff); the value itself is arbitrary.

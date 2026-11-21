@@ -473,7 +473,9 @@ void Connection::Error(const std::string& msg) {
     return;
   }
   errored_ = true;
-  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this, &msg] {
+  // Info: these are mostly ordinary outcomes (party full, version
+  // mismatch, kicked...), but worth having in any log window.
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kInfo, [this, &msg] {
     return "Connection errored ("
            + g_core->platform->DemangleCXXSymbol(typeid(*this).name()) + "): '"
            + msg + "'.";

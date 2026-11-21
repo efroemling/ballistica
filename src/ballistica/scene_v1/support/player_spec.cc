@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -121,6 +122,14 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
   }
+  return spec;
+}
+
+auto PlayerSpec::WithoutIcons() const -> PlayerSpec {
+  PlayerSpec spec{*this};
+  spec.name_ = Utils::StripIconChars(name_, "psnoic");
+  spec.short_name_ = Utils::StripIconChars(short_name_, "psnoic");
+  spec.v1_account_type_ = 0;  // kInvalid; draws no account icon.
   return spec;
 }
 

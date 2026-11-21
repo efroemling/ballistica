@@ -5,10 +5,12 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
@@ -175,6 +177,25 @@ auto NameDef::Parse(const JsonRef& block) -> std::optional<NameDef> {
     }
   }
   return d;
+}
+
+auto ShortenNameText(const std::string& text, int max_chars) -> std::string {
+  if (max_chars < 1) {
+    return text;
+  }
+  std::vector<uint32_t> chars = Utils::UnicodeFromUTF8(text, "snt1");
+  if (chars.size() <= static_cast<size_t>(max_chars)) {
+    return text;
+  }
+  chars.resize(static_cast<size_t>(max_chars));
+  return Utils::UTF8FromUnicode(chars) + "...";
+}
+
+auto NumberNameText(const std::string& text, int number) -> std::string {
+  if (number < 2) {
+    return text;
+  }
+  return text + " " + std::to_string(number);
 }
 
 }  // namespace ballistica::base

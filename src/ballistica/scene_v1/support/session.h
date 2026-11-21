@@ -19,7 +19,8 @@ class Session : public SceneV1Context {
   /// a modern seconds advance.
   virtual void Update(int time_advance_millisecs, double time_advance);
 
-  /// Note: this should be returned in microsecs.
+  /// Time until this session's next scheduled event, in microsecs, for
+  /// headless display-time pacing; empty if it has none.
   virtual auto TimeToNextEvent() -> std::optional<microsecs_t>;
 
   // If this returns false, the screen will be cleared as part of rendering.

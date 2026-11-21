@@ -325,6 +325,41 @@ static PyMethodDef PySetHaveLiveAccountValuesDef = {
     "values from the server.",
 };
 
+// ----------------------------- set_server_mode -------------------------------
+
+static auto PySetServerMode(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  int enabled{};
+
+  static const char* kwlist[] = {"enabled", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &enabled)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_classic->set_server_mode(enabled);
+
+  // The roster depends on it (a server leaves itself off).
+  if (auto* appmode = ClassicAppMode::GetActive()) {
+    appmode->UpdateGameRoster();
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetServerModeDef = {
+    "set_server_mode",             // name
+    (PyCFunction)PySetServerMode,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "set_server_mode(enabled: bool) -> None\n"
+    "\n"
+    "Inform the native layer whether we're in (dedicated) server mode.",
+};
+
 // --------------------- set_root_ui_chest_depictions --------------------------
 
 static auto PySetRootUIChestDepictions(PyObject* self, PyObject* args,
@@ -817,6 +852,7 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyGetAccountStateDef,
       PySetAccountStateDef,
       PySetHaveLiveAccountValuesDef,
+      PySetServerModeDef,
       PyReloadHooksDef,
   };
 }

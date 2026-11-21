@@ -5,10 +5,15 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::ui_v1 {
 
@@ -52,6 +57,14 @@ class RootWidget : public ContainerWidget {
   void OnLanguageChange() override;
   void UpdateLayout() override;
   void SetSquadSizeLabel(int val);
+
+  /// Text shown below the squad (party) button; nullptr for none.
+  void SetPartyNotice(std::shared_ptr<const base::LangStr> text);
+
+  /// Flash the squad (party) button for a while (0 to stop). Quick at
+  /// first, then a slower pulse.
+  void FlashPartyIcon(seconds_t duration);
+
   void SetAccountSignInState(bool signed_in, const std::string& name);
 
   /// Draw the account button as this depiction json (the account's
@@ -143,6 +156,8 @@ class RootWidget : public ContainerWidget {
   void StepChests_(base::RenderPass* renderpass, seconds_t dt);
   void StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt);
   void StepInbox_(base::RenderPass* renderpass, seconds_t dt);
+  void StepSquad_(base::RenderPass* renderpass, seconds_t dt);
+  void ApplySquadButtonColor_(float mult);
   void StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt);
   void StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
@@ -213,6 +228,7 @@ class RootWidget : public ContainerWidget {
   Text_* xp_text_{};
   Text_* inbox_count_text_{};
   Text_* inbox_announce_text_{};
+  Text_* party_notice_text_{};
   Text_* trophy_meter_annotation_text_{};
   Text_* back_button_text_{};
   seconds_t update_pause_total_time_{};
@@ -220,6 +236,8 @@ class RootWidget : public ContainerWidget {
   seconds_t update_time_{};
   seconds_t league_rank_anim_start_time_{};
   seconds_t inbox_anim_flash_time_{};
+  seconds_t squad_flash_start_time_{};
+  seconds_t squad_flash_end_time_{};
   seconds_t tickets_anim_start_time_{};
   seconds_t tickets_anim_end_time_{};
   seconds_t tokens_anim_start_time_{};
@@ -259,6 +277,8 @@ class RootWidget : public ContainerWidget {
   bool translations_dirty_{true};
   bool league_rank_animating_{};
   bool inbox_animating_{};
+  bool squad_animating_{};
+  bool party_window_open_{};
   bool inbox_count_is_max_vis_value_{};
   bool inbox_count_is_max_value_{};
   bool tickets_meter_live_display_dirty_{};

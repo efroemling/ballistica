@@ -1,6 +1,6 @@
 # ANGLE on Windows
 
-**Description:** How Windows builds get OpenGL ES 3 via ANGLE/D3D11 — the vcpkg supply pipeline, its gotcha catalog, and the C++/vcxproj/runtime wiring.
+**Description:** How Windows builds get OpenGL ES 3 via ANGLE/D3D11 — the vcpkg supply pipeline, its gotcha catalog, the C++/vcxproj/runtime wiring, and offscreen (pbuffer) rendering for display-less test runs.
 
 All non-VR Windows builds (Generic, Headless, GenericPlus, HeadlessPlus)
 render through ANGLE (Almost Native Graphics Layer Engine), which provides
@@ -98,9 +98,10 @@ Hard-won; all are baked into `buildanglewindows.ps1`, listed here so nobody
   desktop-GL manual function-pointer loading is needed.
 - **`src/ballistica/base/graphics/gl/gl_sys_windows.cc`** —
   `#pragma comment(lib, "libGLESv2.lib")` links ANGLE's GLES import lib.
-  It intentionally does **not** link `libEGL.lib`: the engine never calls
-  `egl*` itself — SDL creates and manages the EGL context. Both DLLs must
-  still be present at runtime (`libGLESv2.dll` depends on `libEGL.dll`).
+  It does **not** link `libEGL.lib`: normally SDL creates and manages the
+  EGL context. The one exception is offscreen rendering (below), whose
+  `offscreen_gl_windows.cc` links `libEGL.lib` itself. Both DLLs must be
+  present at runtime (`libGLESv2.dll` depends on `libEGL.dll`).
 - **`src/ballistica/base/app_adapter/app_adapter_sdl.cc`** — tells SDL to
   use ANGLE rather than `opengl32.dll`:
   `SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1")` plus
@@ -125,3 +126,44 @@ All non-Meta vcxproj files under `ballisticakit-windows/` (e.g.
 `src/assets/windows/{x64,Win32,ARM64}/`. Nothing loads them explicitly at
 startup beyond SDL's `SDL_GL_LoadLibrary(nullptr)` locating `libEGL.dll`
 per the ES-driver hint.
+
+## Offscreen rendering (`BA_OFFSCREEN_GL`)
+
+GUI builds can render without presenting to a window, for test runs on
+machines where Windows can't present at all. The case that motivated it:
+processes launched over ssh run in **session 0**, which has no desktop
+compositor. SDL still creates the window fine there, but every D3D11
+swap chain fails, so the windowed path dies with `Could not create GLES
+window surface`.
+
+With `BA_OFFSCREEN_GL=1`, `AppAdapterSDL` creates its window without
+`SDL_WINDOW_OPENGL` (it stays for events and sizing) and
+`OffscreenGLWindows` (`base/app_adapter/offscreen_gl_windows.cc`) makes
+its own ANGLE EGL display, a window-sized pbuffer, and a GLES 3 context.
+The renderer draws into the pbuffer as if it were the screen, so
+screenshots and everything above the adapter work unchanged. On a box
+with no GPU, D3D picks the Microsoft Basic Render Driver (WARP, a
+software rasterizer); `BA_OFFSCREEN_GL=warp` forces WARP on a machine
+that has a GPU. Window visibility is ignored in this mode (nobody sees
+the window), and vsync is off.
+
+Decisions and traps:
+
+- **Why not SDL's own `offscreen` video driver?** It finds an EGL device
+  via `eglQueryDevicesEXT` (`EGL_EXT_device_enumeration`), which ANGLE
+  doesn't implement, so it can't drive ANGLE at all.
+- **One frame in flight, enforced by a fence.** A swap chain's `Present`
+  caps how far the CPU can queue ahead of the GPU; a pbuffer has no such
+  cap. Without one, the CPU submitted hundreds of frames a second while
+  WARP drew far fewer, and the first `glFinish` (a screenshot readback)
+  stalled 20–35s draining the backlog. `OffscreenGLWindows::Swap()`
+  fences each frame and waits on the previous one.
+- **No fatal-error dialog in session 0.** `MessageBoxW` there is
+  invisible and blocks forever, so a fatal error hung the process until
+  something killed it. `PlatformWindows::CanShowBlockingFatalErrorDialog`
+  returns false in session 0 (whose window station can still claim to be
+  visible, so the session id is what's checked).
+
+Measured 2026-10-22 on a 32-thread, GPU-less EC2 box, debug build at
+1024x576: ~115 fps on the main menu, ~85–100 fps in an 8-player stress
+test.

@@ -28,6 +28,7 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
   // Return cloud-composed character json list if available; else nullptr.
   auto GetCloudCharacters() const -> PyObject* override;
   auto IsRemoteClient() const -> bool override;
+  auto IsV2Authed() const -> bool override;
 
  private:
   Object::WeakRef<ConnectionToClient> connection_to_client_;

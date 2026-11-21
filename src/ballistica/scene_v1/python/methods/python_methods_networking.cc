@@ -8,6 +8,7 @@
 
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/networking/network_reader.h"
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging.h"
@@ -18,6 +19,7 @@
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/huffman.h"
+#include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/scene_v1/support/zstd_packet_codec.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -113,6 +115,37 @@ static PyMethodDef PySetPublicPartyNameDef = {
     "set_public_party_name(name: str) -> None\n"
     "\n"
     "(internal)",
+};
+
+// ------------------------ set_host_allow_favorites ---------------------------
+
+static auto PySetHostAllowFavorites(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int allow;
+  static const char* kwlist[] = {"allow", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &allow)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  appmode->set_host_allow_favorites(allow);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostAllowFavoritesDef = {
+    "set_host_allow_favorites",            // name
+    (PyCFunction)PySetHostAllowFavorites,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "set_host_allow_favorites(allow: bool) -> None\n"
+    "\n"
+    "Set whether clients joining us may save us to their favorites.\n"
+    "\n"
+    "Turn this off when our address or port won't stay the same, since\n"
+    "a saved entry would stop working. Clients learn it as they\n"
+    "connect, so set it before anyone joins.",
 };
 
 // ----------------------- set_public_party_stats_url --------------------------
@@ -330,40 +363,6 @@ static PyMethodDef PySetAuthenticateClientsDef = {
     "unauthenticated. Affects connections made from then on.",
 };
 
-// ------------------------------- set_admins ----------------------------------
-
-static auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  PyObject* admins_obj;
-  static const char* kwlist[] = {"admins", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
-                                   const_cast<char**>(kwlist), &admins_obj)) {
-    return nullptr;
-  }
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-
-  auto admins = Python::GetStrings(admins_obj);
-  std::set<std::string> adminset;
-  for (auto&& admin : admins) {
-    adminset.insert(admin);
-  }
-  appmode->set_admin_public_ids(adminset);
-
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetAdminsDef = {
-    "set_admins",                  // name
-    (PyCFunction)PySetAdmins,      // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "set_admins(admins: list[str]) -> None\n"
-    "\n"
-    "(internal)",
-};
-
 // ----------------------- set_hosting_asset_packages --------------------------
 
 static auto PySetHostingAssetPackages(PyObject* self, PyObject* args,
@@ -440,37 +439,6 @@ static PyMethodDef PySetHostPasswordDef = {
     "(internal)\n"
     "\n"
     ":meta private:",
-};
-
-// --------------------- set_enable_default_kick_voting ------------------------
-
-static auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
-                                         PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  int enable;
-  static const char* kwlist[] = {"enable", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
-                                   const_cast<char**>(kwlist), &enable)) {
-    return nullptr;
-  }
-  assert(g_base->logic);
-
-  if (auto* appmode{classic::ClassicAppMode::GetActiveOrWarn()}) {
-    appmode->set_kick_voting_enabled(static_cast<bool>(enable));
-  }
-
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetEnableDefaultKickVotingDef = {
-    "set_enable_default_kick_voting",           // name
-    (PyCFunction)PySetEnableDefaultKickVoting,  // method
-    METH_VARARGS | METH_KEYWORDS,               // flags
-
-    "set_enable_default_kick_voting(enable: bool) -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // --------------------------- connect_to_party --------------------------------
@@ -644,8 +612,9 @@ static auto PyGetConnectionToHostInfo2(PyObject* self, PyObject* args,
     auto args =
         g_core->python->objs().Get(core::CorePython::ObjID::kEmptyTuple);
     auto keywds = PythonRef::Stolen(Py_BuildValue(
-        "{sssisOsO}", "name", hc->party_name().c_str(), "build_number",
-        hc->build_number(), "address", addr_obj.get(), "port", port_obj.get()));
+        "{sssisOsOsO}", "name", hc->party_name().c_str(), "build_number",
+        hc->build_number(), "address", addr_obj.get(), "port", port_obj.get(),
+        "allow_favorites", hc->allow_favorites() ? Py_True : Py_False));
     auto result = g_scene_v1->python->objs()
                       .Get(SceneV1Python::ObjID::kHostInfoClass)
                       .Call(args, keywds);
@@ -825,6 +794,95 @@ static PyMethodDef PyGetClientPingDef = {
     "Return the current ping (RTT in ms) for a connected client.\n"
     "Returns -1.0 if client_id is invalid.\n"};
 
+// Wrap a serialized bacommon.hostui.Message as a host-ui jmessage.
+static auto HostUIJMessage_(const std::string& message) -> std::string {
+  return "{\"t\":" + std::to_string(BA_JMESSAGE_HOST_UI) + ",\"d\":" + message
+         + "}";
+}
+
+// ------------------------- host_ui_send_to_client ----------------------------
+
+static auto PyHostUISendToClient(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int client_id;
+  const char* message;
+  static const char* kwlist[] = {"client_id", "message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "is",
+                                   const_cast<char**>(kwlist), &client_id,
+                                   &message)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  auto&& clients{appmode->connections()->connections_to_clients()};
+  auto iter{clients.find(client_id)};
+  if (iter == clients.end()) {
+    Py_RETURN_FALSE;
+  }
+  ConnectionToClient* connection = iter->second.get();
+  if (!connection->can_communicate()
+      || connection->build_number() < BA_HOST_UI_MIN_BUILD) {
+    Py_RETURN_FALSE;
+  }
+  connection->SendJMessage(HostUIJMessage_(message));
+  Py_RETURN_TRUE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHostUISendToClientDef = {
+    "host_ui_send_to_client",           // name
+    (PyCFunction)PyHostUISendToClient,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "host_ui_send_to_client(client_id: int, message: str) -> bool\n"
+    "\n"
+    "Send a serialized host-ui message to a connected client.\n"
+    "\n"
+    "Returns False (and sends nothing) if there is no such client or\n"
+    "it is too old to understand host-ui messages.\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- host_ui_send_to_host -----------------------------
+
+static auto PyHostUISendToHost(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* message;
+  static const char* kwlist[] = {"message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &message)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  ConnectionToHost* host = appmode->connections()->connection_to_host();
+  if (host == nullptr || !host->can_communicate()
+      || host->build_number() < BA_HOST_UI_MIN_BUILD) {
+    Py_RETURN_FALSE;
+  }
+  host->SendJMessage(HostUIJMessage_(message));
+  Py_RETURN_TRUE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHostUISendToHostDef = {
+    "host_ui_send_to_host",           // name
+    (PyCFunction)PyHostUISendToHost,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+
+    "host_ui_send_to_host(message: str) -> bool\n"
+    "\n"
+    "Send a serialized host-ui message to the host we are connected to.\n"
+    "\n"
+    "Returns False (and sends nothing) if we're not connected or the\n"
+    "host is too old to understand host-ui messages.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ----------------------------- get_game_port ---------------------------------
 
 static auto PyGetGamePort(PyObject* self, PyObject* args) -> PyObject* {
@@ -877,73 +935,31 @@ static PyMethodDef PySetMasterServerSourceDef = {
     "(internal)",
 };
 
-// ----------------------------- host_scan_cycle -------------------------------
+// ------------------------ player_spec_display_string -------------------------
 
-static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyPlayerSpecDisplayString(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->HostScanCycle();
-  std::vector<classic::ClassicAppMode::ScanResultsEntry> results =
-      appmode->GetScanResults();
-  PyObject* py_list = PyList_New(0);
-  for (auto&& i : results) {
-    PyObject* py_dict =
-        Py_BuildValue("{ss ss sO ss si si sO si si}",              // format
-                      "display_string", i.display_string.c_str(),  //
-                      "address", i.address.c_str(),                //
-                      "has_v2", i.has_v2 ? Py_True : Py_False,     //
-                      "party_name", i.party_name.c_str(),          //
-                      "party_size", i.party_size,                  //
-                      "party_max_size", i.party_max_size,          //
-                      "auth_required", i.auth_required ? Py_True : Py_False,  //
-                      "build_number", i.build_number,                         //
-                      "protocol_version", i.protocol_version);
-    PyList_Append(py_list, py_dict);
-    Py_DECREF(py_dict);
+  const char* spec{};
+  static const char* kwlist[] = {"spec", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &spec)) {
+    return nullptr;
   }
-  return py_list;
+  return PyUnicode_FromString(PlayerSpec(spec).GetDisplayString().c_str());
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyHostScanCycleDef = {
-    "host_scan_cycle",             // name
-    (PyCFunction)PyHostScanCycle,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyPlayerSpecDisplayStringDef = {
+    "player_spec_display_string",            // name
+    (PyCFunction)PyPlayerSpecDisplayString,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
 
-    "host_scan_cycle() -> list[dict[str, Any]]\n"
+    "player_spec_display_string(spec: str) -> str\n"
     "\n"
-    "Run a lan-scan cycle and return results gathered so far.\n"
-    "\n"
-    "Hosts answering only the old v1 query form have ``has_v2`` False\n"
-    "and carry defaults for the v2-only fields (``party_name``,\n"
-    "``party_size``, ``party_max_size``, ``auth_required``,\n"
-    "``build_number``, ``protocol_version``).\n"
-    "\n"
-    "(internal)\n"
+    "Return how a player-spec string displays (account icon + name).\n"
     "\n"
     ":meta private:",
-};
-
-// ---------------------------- end_host_scanning ------------------------------
-
-static auto PyEndHostScanning(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
-  appmode->EndHostScanning();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyEndHostScanningDef = {
-    "end_host_scanning",             // name
-    (PyCFunction)PyEndHostScanning,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-
-    "end_host_scanning() -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -1038,7 +1054,9 @@ static auto PyGetChatMessages(PyObject* self, PyObject* args, PyObject* keywds)
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : appmode->chat_messages()) {
-    PyList_Append(py_list, PyUnicode_FromString(i.c_str()));
+    // (PyList_Append doesn't steal the reference.)
+    PythonRef item(PyUnicode_FromString(i.c_str()), PythonRef::kSteal);
+    PyList_Append(py_list, item.get());
   }
   return py_list;
   BA_PYTHON_CATCH;
@@ -1052,6 +1070,43 @@ static PyMethodDef PyGetChatMessagesDef = {
     "get_chat_messages() -> list[str]\n"
     "\n"
     "(internal)",
+};
+
+// ----------------------- get_chat_message_senders ----------------------------
+
+static auto PyGetChatMessageSenders(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  PyObject* py_list = PyList_New(0);
+  for (auto&& i : appmode->chat_message_senders()) {
+    PythonRef item(PyUnicode_FromString(i.c_str()), PythonRef::kSteal);
+    PyList_Append(py_list, item.get());
+  }
+  return py_list;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetChatMessageSendersDef = {
+    "get_chat_message_senders",            // name
+    (PyCFunction)PyGetChatMessageSenders,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "get_chat_message_senders() -> list[str]\n"
+    "\n"
+    "Who sent each message :func:`get_chat_messages` returns.\n"
+    "\n"
+    "The names they show with, as the host attributed them; the list\n"
+    "lines up with that one.\n"
+    "\n"
+    ":meta private:",
 };
 
 // -----------------------------------------------------------------------------
@@ -1148,14 +1203,15 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPacketCompressionDictDef,
       PyPacketCompressionSelftestDef,
       PyHaveConnectedClientsDef,
-      PyEndHostScanningDef,
-      PyHostScanCycleDef,
+      PyPlayerSpecDisplayStringDef,
       PySetMasterServerSourceDef,
       PyGetGamePortDef,
       PyDisconnectFromHostDef,
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
       PyGetClientPingDef,
+      PyHostUISendToClientDef,
+      PyHostUISendToHostDef,
       PyGetConnectionToHostInfoDef,
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,
@@ -1163,19 +1219,19 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPublicPartyPublicAddressIPV4Def,
       PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
-      PySetAdminsDef,
       PySetHostingAssetPackagesDef,
       PySetHostPasswordDef,
-      PySetEnableDefaultKickVotingDef,
       PySetPublicPartyMaxSizeDef,
       PySetPublicPartyQueueEnabledDef,
       PyGetPublicPartyMaxSizeDef,
       PySetPublicPartyStatsURLDef,
       PySetPublicPartyNameDef,
+      PySetHostAllowFavoritesDef,
       PySetPublicPartyEnabledDef,
       PyGetPublicPartyEnabledDef,
       PyChatMessageDef,
       PyGetChatMessagesDef,
+      PyGetChatMessageSendersDef,
   };
 }
 

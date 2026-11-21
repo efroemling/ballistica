@@ -23,6 +23,7 @@ _DEBUG_BOUNDS_KINDS = (
     ('image_depictions', 'Image Depictions'),
     ('character_icon_depictions', 'Character Icons'),
     ('text', 'Text Quads'),
+    ('containers', 'Containers'),
 )
 
 
@@ -158,11 +159,16 @@ class DevConsoleTabUI(DevConsoleTab):
     def _debug_drawing_row(
         self, xoffs: float, y: float, bheight: float
     ) -> None:
-        """A labeled row of toggles, one per kind of debug drawing."""
+        """Labeled rows of toggles, one per kind of debug drawing.
+
+        Our own kinds on top; whatever the app-mode offers below (``y``
+        is that lower row's bottom).
+        """
+        top_y = y + bheight + 8.0
         self.text(
             'Debug Drawing',
             scale=0.6,
-            pos=(xoffs + 8, y + bheight + 15.0),
+            pos=(xoffs + 8, top_y + bheight + 15.0),
             h_align='left',
             v_align='center',
         )
@@ -177,7 +183,7 @@ class DevConsoleTabUI(DevConsoleTab):
             enabled = _babase.get_debug_bounds(kind)
             self.button(
                 f'{label} ON' if enabled else f'{label} OFF',
-                pos=(x, y),
+                pos=(x, top_y),
                 size=(bwidth, bheight),
                 label_scale=0.5,
                 call=partial(self.toggle_debug_bounds, kind),
@@ -186,7 +192,8 @@ class DevConsoleTabUI(DevConsoleTab):
             x += bstep
 
         # Plus whatever the app-mode offers (for ui we can't know about
-        # here).
+        # here), on a row of its own.
+        x = xoffs + 10.0
         toggles = _babase.app.mode.get_dev_console_ui_debug_draw_toggles()
         for toggle in toggles:
             enabled = toggle.get_call()

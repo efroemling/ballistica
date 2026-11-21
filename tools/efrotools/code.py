@@ -28,6 +28,34 @@ if TYPE_CHECKING:
 _PYLINT_CACHE_SCHEMA = 'v2-extdeps'
 
 
+def _pylint_cache_key(pylintrc: Path | str) -> str:
+    """Return the key folded into every pylint cache entry's hash.
+
+    Covers everything besides a file's own contents (and its tracked
+    deps) that can change pylint's verdict on it: the rc file, our
+    plugin, and the exact pylint, astroid and Python in use. Without
+    the versions, a dependency upgrade that adds or tightens checks
+    leaves every unchanged file cached as passing under the old
+    rules, so new findings surface only when a file happens to be
+    edited, or on a full run (2026-10: the astroid 4.0 -> 4.3 bump
+    hid three files' findings for days).
+    """
+    from importlib.metadata import version
+
+    from efrotools.util import get_files_hash
+
+    plugin = Path(__file__).parent / 'pylintplugins.py'
+    return ':'.join(
+        [
+            _PYLINT_CACHE_SCHEMA,
+            'pylint-' + version('pylint'),
+            'astroid-' + version('astroid'),
+            sys.version,
+            get_files_hash([pylintrc, plugin]),
+        ]
+    )
+
+
 def format_cpp_str(
     projroot: Path, text: str, filename: str = 'untitled.cc'
 ) -> str:
@@ -144,6 +172,11 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     filenames = [f for f in filenames if f not in code_blacklist]
     filenames = [f for f in filenames if not f.endswith('.mm')]
 
+    # Nothing to lint; and projects without C++ code needn't have
+    # cpplint installed at all, so don't go asking for its version.
+    if not filenames:
+        return
+
     cachepath = Path(projroot, '.cache/check_cpplint')
     if full and cachepath.exists():
         cachepath.unlink()
@@ -151,7 +184,11 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     cache = FileCache(cachepath)
 
     # Clear out entries and hashes for files that have changed/etc.
-    cache.update(filenames, '')
+    # Keyed on the cpplint version so an upgrade re-checks everything
+    # (see _pylint_cache_key() for why that matters).
+    from importlib.metadata import version
+
+    cache.update(filenames, 'cpplint-' + version('cpplint'))
     dirtyfiles = cache.get_dirty_files()
 
     if dirtyfiles:
@@ -204,6 +241,10 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         f'{Clr.GRN}CppLint: all {len(filenames)} files are passing.{Clr.RST}',
         flush=True,
     )
+
+
+#: Names of dirs holding codegen output (never checked in to git).
+GENERATED_DIR_NAMES = frozenset({'generated', '_generated'})
 
 
 def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
@@ -273,10 +314,20 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
         cachepath.unlink()
 
     cache = FileCache(cachepath)
-    filenames = get_script_filenames(projroot)
 
-    # Calc a config hash so we redo formatting after it changes.
-    confighash = get_string_hash(' '.join(black_base_args(projroot)))
+    # No generated files: formatting can run before codegen (or next to
+    # it under a parallel make), and rewriting codegen output would
+    # dirty the targets that depend on it. Generators that want
+    # formatted output format it themselves.
+    filenames = get_script_filenames(projroot, include_generated=False)
+
+    # Calc a config hash so we redo formatting after it changes (or
+    # after a black upgrade, which can change its output).
+    from importlib.metadata import version
+
+    confighash = get_string_hash(
+        ' '.join(['black-' + version('black'), *black_base_args(projroot)])
+    )
     cache.update(filenames, confighash)
 
     dirtyfiles = cache.get_dirty_files()
@@ -381,8 +432,18 @@ def _should_include_script(fnamefull: str) -> bool:
     return False
 
 
-def get_script_filenames(projroot: Path) -> list[str]:
-    """Return the Python filenames to lint-check or auto-format."""
+def get_script_filenames(
+    projroot: Path, *, include_generated: bool
+) -> list[str]:
+    """Return the project's Python filenames.
+
+    Pass True for ``include_generated`` only from steps that run after
+    codegen and want its output (linting, type checking). Anything that
+    runs as part of ``update``/``update-check`` must pass False: update
+    comes before codegen in the build order, so files under
+    ``generated``/``_generated`` dirs may not exist yet, or may be
+    mid-regeneration when a parallel check run reads them.
+    """
     from efrotools.project import getprojectconfig
 
     proot = f'{projroot}/'
@@ -392,7 +453,9 @@ def get_script_filenames(projroot: Path) -> list[str]:
     if places is None:
         raise RuntimeError('python_source_dirs not declared in config')
     for place in places:
-        for root, _dirs, files in os.walk(os.path.join(projroot, place)):
+        for root, dirs, files in os.walk(os.path.join(projroot, place)):
+            if not include_generated:
+                dirs[:] = [d for d in dirs if d not in GENERATED_DIR_NAMES]
             for fname in files:
                 fnamefull = os.path.join(root, fname)
                 # Skip symlinks (we conceivably operate on the original too)
@@ -475,7 +538,7 @@ def pylint(
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
         raise RuntimeError('pylintrc not found where expected')
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
 
     if any(' ' in name for name in filenames):
         raise RuntimeError('found space in path; unexpected')
@@ -575,7 +638,6 @@ def pylint_files(
     Returns the inner-call result dict when ``capture=True`` (with
     ``stdout``, ``msg_status``, etc.), or ``None`` in text mode.
     """
-    from efrotools.util import get_files_hash
     from efro.terminal import Clr
 
     # No-cache path: lint everything via the same ``_run_pylint``
@@ -610,12 +672,10 @@ def pylint_files(
     cache = FileCache(cache_path)
 
     # Clear out entries and hashes for files that have changed/etc.
-    # The schema tag is folded into the per-file hash so any future
-    # cache-entry shape change auto-invalidates pre-existing on-disk
-    # caches without needing a manual wipe.
-    cache.update(
-        filenames, f'{_PYLINT_CACHE_SCHEMA}:' + get_files_hash([pylintrc])
-    )
+    # Our cache key (schema tag, rc + plugin, linter versions) is folded
+    # into the per-file hash, so changing any of those invalidates every
+    # entry without needing a manual wipe.
+    cache.update(filenames, _pylint_cache_key(pylintrc))
 
     # Do a recursive dependency check and mark all files who are
     # either dirty or have a dependency that is dirty.
@@ -1053,7 +1113,7 @@ def zmypy(projroot: Path, full: bool) -> None:
     """Type check all of our scripts using mypy."""
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
     desc = '(full)' if full else '(incremental)'
     print(f'{Clr.BLU}Running Zmypy {desc}...{Clr.RST}', flush=True)
     starttime = time.monotonic()
@@ -1160,7 +1220,7 @@ def mypy(projroot: Path, full: bool, output_format: str = 'text') -> None:
     """
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
     desc = '(full)' if full else '(incremental)'
     if output_format == 'text':
         print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
@@ -1181,7 +1241,7 @@ def dmypy(projroot: Path) -> None:
     """Type check all of our scripts using mypy in daemon mode."""
     from efro.terminal import Clr
 
-    filenames = get_script_filenames(projroot)
+    filenames = get_script_filenames(projroot, include_generated=True)
 
     # Special case; explicitly kill the daemon.
     if '-stop' in sys.argv:

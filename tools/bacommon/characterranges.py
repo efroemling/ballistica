@@ -37,7 +37,7 @@ BASIC_SPAZ_RANGES: dict[str, Range] = {
     'idle_arm_stiffness': (0.2, 1.0),
     'arm_swing': (0.3, 0.6),
     'idle_sway': (0.02, 0.05),
-    'eye_scale': (0.5, 2.0),
+    'eye_scale': (0.1, 2.0),
     'eye_offset': (-0.5, 0.5),
     'eye_color': (0.0, 2.0),
     'eyeball_color': (0.0, 1.0),

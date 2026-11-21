@@ -27,6 +27,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/generic/json_facade.h"
@@ -594,6 +595,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           if (auto n = root["n"].as_string()) {
             party_name_ = Utils::GetValidUTF8(std::string(*n).c_str(), "bsmhi");
           }
+          // Whether we may save the host to favorites.
+          allow_favorites_ = root["f"].bool_or(true);
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got invalid json in hostinfo message: "
@@ -683,6 +686,13 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                                          + std::to_string(reason)
                                          + "); showing: " + msg);
                 g_base->ScreenMessage(msg, {1, 0, 0}, true);
+                break;
+              }
+              case BA_JMESSAGE_HOST_UI: {
+                // Host-defined ui; Python decodes and handles it.
+                g_scene_v1->python->HandleHostUIMessageFromHost(std::string(
+                    reinterpret_cast<const char*>(buffer.data() + 1),
+                    buffer.size() - 2));
                 break;
               }
               default:

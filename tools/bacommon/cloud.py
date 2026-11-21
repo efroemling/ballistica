@@ -659,6 +659,15 @@ class ResolveAssetPackageResponse(Response):
         IOAttrs('ep', soft_default=None, store_default=False),
     ] = None
 
+    #: When the resolved version's package is to be deleted by its
+    #: owner, or ``None`` (also from older servers). It still resolves
+    #: until then; after that, anything using it loses it. The client
+    #: says so in its local log (never as a log report), for modders.
+    pending_deletion_time: Annotated[
+        datetime.datetime | None,
+        IOAttrs('pdt', soft_default=None, store_default=False),
+    ] = None
+
 
 @ioprepped
 @dataclass
@@ -870,10 +879,14 @@ class ClientLogReportMessage(Message):
 
     #: Whether anything user-driven could have modified engine
     #: behavior this run as of this slice's send - the user ran
-    #: commands, workspaces are in use, or a custom app-scripts dir
-    #: is active (the same trio the fatal-error reporter sends).
-    #: Those flags only ever latch on within a run, so False means
-    #: clean-so-far. None from clients predating the field.
+    #: commands, workspaces are in use, a custom app-scripts dir is
+    #: active, or Python is present in the mods dir (the same four the
+    #: fatal-error reporter sends). Those flags only ever latch on
+    #: within a run, so True sticks. None means unknown: a 1.8.7+
+    #: client whose checks hadn't all finished (nothing had flagged it
+    #: yet), or a client predating the field. Before 1.8.7, clients
+    #: sent False while checks were still running, so only a 1.8.7+
+    #: False reliably means clean.
     modified: Annotated[bool | None, IOAttrs('md', soft_default=None)]
 
 

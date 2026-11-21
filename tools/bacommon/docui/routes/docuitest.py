@@ -13,6 +13,7 @@ from bacommon.docui.routes import (
     DocUIRoute,
     DocUILocalActionBase,
     DocUIState,
+    PopupRoute,
     family_members,
 )
 
@@ -36,6 +37,23 @@ class TestRoute(DocUIRoute):
         return dui2.WindowLayout.LARGE
 
 
+class ThemeVariant(Enum):
+    """A look test pages can show their content in.
+
+    The page-themes test pages show each; the root page's 'Layout Test
+    Options' pick one for its 'Layout Tests' pages.
+    """
+
+    DEFAULT = 'default'
+    POPUP_LOOK = 'popup_look'
+    BUTTON_COLOR = 'button_color'
+    ROLE_COLORS = 'role_colors'
+    TIGHT = 'tight'
+    ROOMY = 'roomy'
+    DARK = 'dark'
+    TEXT_STYLES = 'text_styles'
+
+
 @ioprepped
 @dataclass
 class Root(TestRoute, path='/'):
@@ -53,6 +71,32 @@ class Root(TestRoute, path='/'):
     test_action: Annotated[
         bool, IOAttrs('test_action', store_default=False)
     ] = False
+
+
+@ioprepped
+@dataclass
+class RootState(DocUIState, state_id='docuitest.root'):
+    """State for the root test page."""
+
+    #: The window layout picked in its 'Layout Test Options' (for rows
+    #: below to open their pages at), and at viewer layouts which side
+    #: the viewer pane sits on (None for no pane).
+    layout: Annotated[
+        dui2.WindowLayout,
+        IOAttrs('layout', enum_fallback=dui2.WindowLayout.WIDE_TALL),
+    ] = dui2.WindowLayout.WIDE_TALL
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
+    ] = None
+
+    #: The theme picked in its 'Layout Test Options' (for rows below to
+    #: show their pages in).
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
 
 @ioprepped
@@ -121,6 +165,25 @@ class Depictions(TestRoute, path='/depictions'):
 
 @ioprepped
 @dataclass
+class Viewers(TestRoute, path='/viewers'):
+    """Live viewer tests: good cases and bad data, one shown at a time.
+
+    The page's own controls switch cases, and the pane's style and
+    side (page state), in place.
+    """
+
+    #: Which case the viewer pane shows (a test-page case name; unknown
+    #: names show the first).
+    case: Annotated[str, IOAttrs('case', store_default=False)] = ''
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        return dui2.WindowLayout.VIEWER
+
+
+@ioprepped
+@dataclass
 class Names(TestRoute, path='/names'):
     """Name depiction tests (basic and capsule forms)."""
 
@@ -133,6 +196,21 @@ class NinePatch(TestRoute, path='/ninepatch'):
     """9-patch image tests (stretched and tile-fit, tinted)."""
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+
+@ioprepped
+@dataclass
+class Glyphs(TestRoute, path='/glyphs'):
+    """Custom glyphs against their measured bounds and anchor points."""
+
+
+@ioprepped
+@dataclass
+class GlyphsState(DocUIState, state_id='docuitest.glyphs'):
+    """What the glyphs test page draws over its glyphs."""
+
+    crosshairs: Annotated[bool, IOAttrs('crosshairs')] = True
+    bounds: Annotated[bool, IOAttrs('bounds')] = True
 
 
 @ioprepped
@@ -153,6 +231,19 @@ class Widgets(TestRoute, path='/widgets'):
     """Control rows and page state."""
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+    #: See :attr:`WindowLayouts.viewer_side`.
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
+    ] = None
+
+    #: See :attr:`WindowLayouts.theme`.
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
 
 class ControlRowKind(Enum):
@@ -182,16 +273,183 @@ class NavTest(TestRoute, path='/navtest'):
 
 @ioprepped
 @dataclass
+class Drill(TestRoute, path='/drill'):
+    """The top of a drill-down; shows what was found at the bottom.
+
+    Exploring opens levels in windows of their own, several deep;
+    picking something at the bottom closes all of them at once and
+    hands the pick back here (see
+    :meth:`~bacommon.docui.routes.DocUIRoute.close_to`).
+    """
+
+
+@ioprepped
+@dataclass
+class DrillLevel(TestRoute, path='/drill/level'):
+    """One level of the drill-down, each in a window of its own."""
+
+    #: How deep this is (1 is the first level below the top).
+    depth: Annotated[int, IOAttrs('depth')] = 1
+
+    #: Doors taken to get here, in order.
+    trail: Annotated[str, IOAttrs('trail')] = ''
+
+
+@ioprepped
+@dataclass
+class DrillState(DocUIState, state_id='docuitest.drill'):
+    """State for the drill-down's top page."""
+
+    #: What was picked at the bottom, handed back up (empty for
+    #: nothing yet).
+    found: Annotated[str, IOAttrs('found')] = ''
+
+
+@ioprepped
+@dataclass
+class PopupsState(DocUIState, state_id='docuitest.popups'):
+    """State for the popups test page, which its popups act on."""
+
+    #: A color picked in a popup (empty for none yet).
+    color: Annotated[str, IOAttrs('color')] = ''
+
+    #: Bumped by popups replacing the page.
+    count: Annotated[int, IOAttrs('count')] = 0
+
+    #: Set by the button opening a popup (handed along to it).
+    opened_with: Annotated[str, IOAttrs('opened')] = ''
+
+    #: Scroll edge style for the popups this page opens.
+    edge_style: Annotated[
+        dui2.ScrollEdgeStyle,
+        IOAttrs('edge', enum_fallback=dui2.ScrollEdgeStyle.FADE),
+    ] = dui2.ScrollEdgeStyle.FADE
+
+
+@ioprepped
+@dataclass
+class Popups(TestRoute, path='/popups'):
+    """Popup windows: opening them and what they can do to this page."""
+
+
+@ioprepped
+@dataclass
+class PopupsMain(TestRoute, PopupRoute[PopupsState], path='/popups/main'):
+    """The main test popup: acts on its parent every way there is."""
+
+    @override
+    @classmethod
+    def get_popup_size(cls) -> tuple[float, float]:
+        # Lots to show.
+        return (600.0, 400.0)
+
+
+@ioprepped
+@dataclass
+class PopupsOther(TestRoute, PopupRoute[PopupsState], path='/popups/other'):
+    """A second popup, swapped in for the first (and back)."""
+
+
+@ioprepped
+@dataclass
+class PopupsMainState(DocUIState, state_id='docuitest.popupsmain'):
+    """The main test popup's own state (apart from its parent's)."""
+
+    #: Bumped by the popup replacing its own page.
+    bumps: Annotated[int, IOAttrs('bumps')] = 0
+
+
+@ioprepped
+@dataclass
+class ThemesState(DocUIState, state_id='docuitest.themes'):
+    """State for the page-themes test pages (and their popups)."""
+
+    #: Backs the sample checkbox.
+    checked: Annotated[bool, IOAttrs('checked')] = False
+
+
+@ioprepped
+@dataclass
+class Themes(TestRoute, path='/themes'):
+    """Page themes: the same content shown with various look values."""
+
+    variant: Annotated[
+        ThemeVariant,
+        IOAttrs('variant', enum_fallback=ThemeVariant.DEFAULT),
+    ] = ThemeVariant.DEFAULT
+
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # A column, so insets and spacing are easy to compare.
+        return dui2.WindowLayout.WIDE_TALL
+
+
+@ioprepped
+@dataclass
+class ThemesPopup(TestRoute, PopupRoute[ThemesState], path='/themes/popup'):
+    """The page-themes sample content in a popup."""
+
+    variant: Annotated[
+        ThemeVariant,
+        IOAttrs('variant', enum_fallback=ThemeVariant.DEFAULT),
+    ] = ThemeVariant.DEFAULT
+
+    @override
+    @classmethod
+    def get_popup_size(cls) -> tuple[float, float]:
+        return (600.0, 400.0)
+
+
+@ioprepped
+@dataclass
 class Sections(TestRoute, path='/sections'):
     """Sections: headings, notes, backings and spacing between them."""
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+    #: See :attr:`WindowLayouts.viewer_side`.
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
+    ] = None
+
+    #: See :attr:`WindowLayouts.theme`.
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
     @override
     @classmethod
     def get_window_layout(cls) -> dui2.WindowLayout:
         # A column, like the settings pages sections mostly live in.
         return dui2.WindowLayout.SMALL_TALLER
+
+
+@ioprepped
+@dataclass
+class ButtonGrids(TestRoute, path='/buttongrids'):
+    """Grid button rows: columns, cells, alignment and navigation.
+
+    Browse to it at several layouts; grids reflow to fit each width.
+    """
+
+    debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+
+    #: See :attr:`WindowLayouts.viewer_side`.
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
+    ] = None
+
+    #: See :attr:`WindowLayouts.theme`.
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
 
 @ioprepped
@@ -204,23 +462,63 @@ class WindowLayouts(TestRoute, path='/windowlayouts'):
     """
 
     debug: Annotated[bool, IOAttrs('debug', store_default=False)] = False
+    #: The layout we're being browsed to at, for the page to name (the
+    #: browse sets the actual layout; this is just for show).
+    layout: Annotated[
+        dui2.WindowLayout | None, IOAttrs('layout', store_default=False)
+    ] = None
+
+    #: Which side the page's viewer pane (a turning punch powerup box)
+    #: sits on at viewer layouts, or None for a page with no viewer
+    #: (its rows then span the window). Ignored at other layouts.
+    viewer_side: Annotated[
+        dui2.ViewerSide | None, IOAttrs('vside', store_default=False)
+    ] = None
+
+    #: The theme to show the page in (its frame colors come with the
+    #: link that opens it).
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
 
 @ioprepped
 @dataclass
-class WideFit(TestRoute, path='/widefit'):
-    """A row exactly as big as wide pages get (browse at each layout).
+class LayoutFit(TestRoute, path='/layoutfit'):
+    """A row exactly as big as a layout promises (browse at that layout).
 
-    It should fill the page's height (wide and wider) and width (wide)
-    with no scrolling, at every ui-scale; with ``over`` / ``wide_over``
-    set it's a hair taller / wider, which should scroll. ``wider`` says
-    it's being shown in the wider layout, whose width follows the screen
-    (so there's no width to overflow).
+    ``layout`` says which layout it's being shown in. The row fills the
+    content rect the layout promises (see
+    :data:`bacommon.docui.v2.SMALL_CONTENT_WIDTH` and friends), less the
+    page's insets, and should never scroll; with ``over`` /
+    ``wide_over`` set it's a hair taller / wider, which should scroll
+    where the promise is exact (and may not where it's only a minimum).
+    Viewer layouts show a blank viewer pane, as their promises are for
+    a page beside one.
     """
 
     over: Annotated[bool, IOAttrs('over', store_default=False)] = False
     wide_over: Annotated[bool, IOAttrs('wo', store_default=False)] = False
-    wider: Annotated[bool, IOAttrs('wdr', store_default=False)] = False
+    layout: Annotated[
+        dui2.WindowLayout,
+        IOAttrs(
+            'lo',
+            store_default=False,
+            enum_fallback=dui2.WindowLayout.WIDE_TALL,
+        ),
+    ] = dui2.WindowLayout.WIDE_TALL
+
+    #: See :attr:`WindowLayouts.theme`. (The page keeps its own
+    #: vertical inset, which its row's size is figured from.)
+    theme: Annotated[
+        ThemeVariant,
+        IOAttrs(
+            'theme', store_default=False, enum_fallback=ThemeVariant.DEFAULT
+        ),
+    ] = ThemeVariant.DEFAULT
 
 
 class Flavor(Enum):
@@ -373,15 +671,25 @@ AnyTestRoute = (
     | TextWrapping
     | Animation
     | Depictions
+    | Viewers
     | Names
     | NinePatch
+    | Glyphs
     | EmptyPage
     | BoundsTests
     | Widgets
     | NavTest
+    | Drill
+    | DrillLevel
+    | Popups
+    | PopupsMain
+    | PopupsOther
+    | Themes
+    | ThemesPopup
     | Sections
+    | ButtonGrids
     | WindowLayouts
-    | WideFit
+    | LayoutFit
     | WebTestGet
     | WebTestPost
     | CloudMsgTestGet

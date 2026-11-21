@@ -32,9 +32,6 @@
 
 namespace ballistica::scene_v1 {
 
-// How long new clients have to wait before starting a kick vote.
-const int kNewClientKickVoteDelay = 60000;
-
 ConnectionToClient::ConnectionToClient(int id)
     : id_(id),
       protocol_version_{
@@ -244,10 +241,11 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           }
           if (JsonRef pspec = root["s"]) {
             if (auto s = pspec.as_string()) {
-              // Set peer-spec to what they pass us (note this is
-              // untrusted). With v2 auth we'll override this further down
-              // when we look at their token.
-              set_peer_spec(PlayerSpec(std::string(*s)));
+              // Set peer-spec to what they pass us. This is untrusted,
+              // so it gets no icons (it could claim any account or
+              // global profile). With v2 auth we'll override this
+              // further down when we look at their token.
+              set_peer_spec(PlayerSpec(std::string(*s)).WithoutIcons());
             } else {
               BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                           "Ignoring non-string peer-spec data.");
@@ -385,10 +383,6 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       if (!can_communicate()) {
         set_can_communicate(true);
 
-        // Don't allow fresh clients to start kick votes for a while.
-        next_kick_vote_allow_time_ =
-            g_core->AppTimeMillisecs() + kNewClientKickVoteDelay;
-
         // At this point we have their name, so lets announce their arrival.
         if (appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
           g_base->ScreenMessage(base::BuiltinStrings::Net::PlayerJoinedParty(
@@ -421,6 +415,11 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Add a name entry if we've got a public party name set.
           if (!appmode->public_party_name().empty()) {
             info_dict.Add("n", appmode->public_party_name());
+          }
+
+          // Only sent when off (clients assume allowed without it).
+          if (!appmode->host_allow_favorites()) {
+            info_dict.Add("f", false);
           }
           std::string info = builder.Write();
 
@@ -527,33 +526,42 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        // Validate the payload (nothing currently uses the parsed
-        // contents); it is the bytes between the type byte and the
+        // The payload is the bytes between the type byte and the
         // trailing null. Log-once only; this arrives from remote
         // clients, so per-packet logging would be a spam vector.
-        auto doc = JsonDoc::Parse(
-            std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
-                             buffer.size() - 2));
+        std::string_view payload(
+            reinterpret_cast<const char*>(buffer.data() + 1),
+            buffer.size() - 2);
+        auto doc = JsonDoc::Parse(payload);
         if (!doc.has_value()) {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got malformed jmessage packet (" + doc.error().message
                           + " at byte offset "
                           + std::to_string(doc.error().byte_offset) + ").");
+          break;
+        }
+        auto type = doc->root()["t"].as_double();
+        if (type.has_value()
+            && static_cast<int>(*type) == BA_JMESSAGE_HOST_UI) {
+          // Host-defined ui; Python decodes and handles it.
+          g_scene_v1->python->HandleHostUIMessageFromClient(
+              std::string(payload), id());
         }
       }
       break;
     }
 
     case BA_MESSAGE_KICK_VOTE: {
-      if (buffer.size() == 2) {
-        for (auto&& i : appmode->connections()->connections_to_clients()) {
-          ConnectionToClient* client = i.second.get();
-          if (client->id() == static_cast<int>(buffer[1])) {
-            appmode->StartKickVote(this, client);
-            break;
-          }
-        }
-      }
+      // Kick-vote requests from clients predating host-ui (build
+      // 23067). Kick voting now lives in Python and runs through
+      // host-ui pages, which those clients can't use; tell them why
+      // nothing happens instead of silently ignoring them. (Only they
+      // see it, so a client spamming this only floods itself.)
+      SendScreenMessage(
+          "Kick votes need version 1.8.4 or newer; please update.", 1, 0.5f, 0,
+          ConnectionSet::LangStrWireTagged(
+              base::BuiltinStrings::Session::KickVotesNeedUpdate(
+                  std::string("1.8.4"))));
       break;
     }
 
@@ -762,9 +770,6 @@ void ConnectionToClient::HandleMessagePacket(
               }
               b2[msg_len] = 0;
 
-              bool kick_vote_in_progress{};
-              kick_vote_in_progress = appmode->kick_vote_in_progress();
-
               // Clamp messages at a reasonable size
               // (yes, people used this to try and crash machines).
               if (b2.size() > 100) {
@@ -775,27 +780,17 @@ void ConnectionToClient::HandleMessagePacket(
                     1, 0, 0,
                     ConnectionSet::LangStrWireTagged(
                         base::BuiltinStrings::Session::ChatMessageTooLong()));
-              } else if (kick_vote_in_progress
-                         && (!strcmp(b2.data(), "1")
-                             || !strcmp(b2.data(), "2"))) {
-                // Special case - if there's a kick vote going on, take
-                // '1' or '2' to be votes.
-                // TODO(ericf): Disable this based on build-numbers once
-                // we've
-                //  got GUI voting working.
-                if (!kick_voted_) {
-                  kick_voted_ = true;
-                  kick_vote_choice_ = !strcmp(b2.data(), "1");
-                } else {
-                  SendScreenMessage(
-                      R"({"r":"votedAlreadyText"})", 1, 0, 0,
-                      ConnectionSet::LangStrWireTagged(
-                          base::BuiltinStrings::Session::VotedAlready()));
-                }
               } else {
+                // No icons in what anyone types, verified or not: only
+                // who sent a message is vouched for, and an icon in its
+                // text could make a line pass for someone else's (a
+                // V2 badge and another account's name, say). The
+                // sender's own name comes from us, icons and all.
+                std::string message = Utils::StripIconChars(b2.data(), "ctcch");
+
                 // Pass the message through any custom filtering we've
-                // got. If the filter tells us to ignore it, we're done.
-                std::string message = b2.data();
+                // got (which may add icons of its own; it's the host's).
+                // If the filter tells us to ignore it, we're done.
                 bool allow_message =
                     g_scene_v1->python->FilterChatMessage(&message, id());
                 if (!allow_message) {
@@ -957,38 +952,33 @@ void ConnectionToClient::HandleMessagePacket(
 auto ConnectionToClient::GetCombinedSpec() -> PlayerSpec {
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
-  // Look for players coming from this client-connection. If we find any,
-  // make a spec out of their name(s).
+  // A client with exactly one player in the game goes by that player's
+  // name. (Unverified players' names already have their icons stripped;
+  // see Player name handling in the lobby.)
   if (auto* hs = dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
-    std::string p_name_combined;
+    std::string only_name;
+    int count{};
     for (auto&& p : hs->players()) {
       auto* delegate = p->input_device_delegate();
       if (!p->GetName().empty() && p->name_is_real() && p->accepted()
           && delegate != nullptr && delegate->IsRemoteClient()) {
         if (auto* cid = dynamic_cast<ClientInputDeviceDelegate*>(delegate)) {
           ConnectionToClient* ctc = cid->connection_to_client();
-
-          // Add some basic info for each remote player.
           if (ctc != nullptr && ctc == this) {
-            if (!p_name_combined.empty()) {
-              p_name_combined += "/";
-            }
-            p_name_combined += p->GetName();
+            count++;
+            only_name = p->GetName();
           }
         }
       }
     }
-    if (p_name_combined.size() > classic::kMaxPartyNameCombinedSize) {
-      p_name_combined.resize(classic::kMaxPartyNameCombinedSize);
-      p_name_combined += "...";
-    }
-    if (!p_name_combined.empty()) {
-      return PlayerSpec::GetDummyPlayerSpec(p_name_combined);
+    if (count == 1) {
+      return PlayerSpec::GetDummyPlayerSpec(only_name);
     }
   }
 
-  // Welp, that didn't work.
-  // As a fallback, just use the peer spec (account name, etc.)
+  // With none or several, they go by their party-list name: their
+  // verified V2 account if they joined with v2 auth, else what they say
+  // they are with any icons stripped (see the handshake).
   return peer_spec();
 }
 
@@ -1041,18 +1031,21 @@ auto ConnectionToClient::ApplyV2AuthToken_(const std::string& token) -> bool {
   PythonRef profiles_ref;
   PythonRef classic_purchases_ref;
   PythonRef cloud_characters_ref;
+  PythonRef name_depiction_ref;
   if (result.ValueIsSequence()) {
     auto vals{result.ValueAsSequence()};
-    if (vals.size() == 5 && vals[0].ValueIsString() && vals[1].ValueIsString()
+    if (vals.size() == 6 && vals[0].ValueIsString() && vals[1].ValueIsString()
         && PyDict_Check(*vals[2])
         && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))
-        && (vals[4].ValueIsNone() || PyList_Check(*vals[4]))) {
+        && (vals[4].ValueIsNone() || PyList_Check(*vals[4]))
+        && (vals[5].ValueIsNone() || vals[5].ValueIsString())) {
       valid_format = true;
       account_id_ref = vals[0];
       account_tag_ref = vals[1];
       profiles_ref = vals[2];
       classic_purchases_ref = vals[3];  // list or Py_None
       cloud_characters_ref = vals[4];   // list or Py_None
+      name_depiction_ref = vals[5];     // str or Py_None
     }
   }
   if (!valid_format) {
@@ -1088,6 +1081,9 @@ auto ConnectionToClient::ApplyV2AuthToken_(const std::string& token) -> bool {
   // (the joiner's cloud profiles), or Py_None when the master
   // sent none.
   cloud_characters_ = cloud_characters_ref;
+  peer_account_name_depiction_ = name_depiction_ref.ValueIsNone()
+                                     ? std::string()
+                                     : name_depiction_ref.ValueAsString();
   g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
     return "ConnectionToClient(id=" + std::to_string(id())
            + "): v2-auth succeeded (account=" + peer_public_account_id_ + ").";
@@ -1122,15 +1118,6 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
     peer_public_account_id_ = "";
   }
   got_v1_auth_from_master_server_ = true;
-}
-
-auto ConnectionToClient::IsAdmin() const -> bool {
-  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
-  if (peer_public_account_id_.empty()) {
-    return false;
-  }
-  return (appmode->admin_public_ids().find(peer_public_account_id_)
-          != appmode->admin_public_ids().end());
 }
 
 }  // namespace ballistica::scene_v1

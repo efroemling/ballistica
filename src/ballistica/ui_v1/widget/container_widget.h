@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
+#include "ballistica/shared/math/vector3f.h"
 #include "ballistica/ui_v1/widget/widget.h"
 
 namespace ballistica::ui_v1 {
@@ -33,8 +35,16 @@ class ContainerWidget : public Widget {
   };
 
   void SetTransition(TransitionType t);
+  /// Make a button our cancel or start button (null for none). The old
+  /// one loses the role, and with it the role's colors (see
+  /// ButtonWidget::SetRole()).
   void SetCancelButton(ButtonWidget* button);
   void SetStartButton(ButtonWidget* button);
+
+  /// The colors our start and cancel buttons draw in when they have none
+  /// of their own. Applies to the current ones right away.
+  void SetStartButtonColor(const Vector3f& color);
+  void SetCancelButtonColor(const Vector3f& color);
   void SetOnCancelCall(PyObject* call_tuple);
 
   // Set a widget to selected (must already have been added to dialog). Pass
@@ -52,6 +62,39 @@ class ContainerWidget : public Widget {
   void set_background_offset(float x, float y) {
     background_offset_x_ = x;
     background_offset_y_ = y;
+  }
+
+  /// Scale our background art about its own center (x, y), without
+  /// changing anything else; for fine-tuning how the art fits a
+  /// particular window shape. Everything that follows the art (its
+  /// known-opaque rect, scroll fades blending toward it) follows this.
+  void set_background_scale(float x, float y) {
+    background_scale_x_ = x;
+    background_scale_y_ = y;
+  }
+
+  /// Lay our background art out cleanly: our bounds are exactly its
+  /// known-opaque area (see GetBackingOpaqueRect()), with the art
+  /// hanging out around them, rather than the art being placed around
+  /// our bounds by historical fudge factors. Also drops the scale
+  /// transition's center fudge, so we zoom about our true center.
+  void set_clean_layout(bool val) {
+    clean_layout_ = val;
+    bg_dirty_ = glow_dirty_ = true;
+  }
+
+  /// Which standard window backing art we draw.
+  enum class BackingArt : uint8_t {
+    /// Picked by our shape.
+    kAuto,
+    /// window_hsmall_vmed: boxier, for taller windows.
+    kTall,
+    /// window_hsmall_vsmall: rounder, for squatter windows.
+    kSquat,
+  };
+  void set_backing_art(BackingArt val) {
+    backing_art_ = val;
+    bg_dirty_ = true;
   }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
@@ -202,6 +245,28 @@ class ContainerWidget : public Widget {
     return 1.0f;
   }
 
+  /// Where and how our window backing draws, for children that redraw
+  /// pieces of it over themselves (ScrollWidget's fade edge style).
+  struct BackingDrawInfo {
+    base::TextureAsset* texture{};
+    /// The full backing quad, which the texture spans uniformly
+    /// (u left-to-right, v top-down). In the space our children's
+    /// positions are in, and before any transition scaling (which
+    /// applies to children and backing alike).
+    Rect rect;
+    /// Ready to pass to SetColor() (already premultiplied as needed).
+    float red{}, green{}, blue{}, alpha{};
+  };
+
+  /// Fill in our current backing draw info; returns false if we draw
+  /// no backing.
+  auto GetBackingDrawInfo(BackingDrawInfo* info) const -> bool;
+
+  /// Fill in the rect (in the space our children's positions are in)
+  /// known to lie within our backing's fully-opaque pixels; returns
+  /// false if we draw no backing or ours isn't calibrated for this.
+  auto GetBackingOpaqueRect(Rect* rect) const -> bool;
+
   auto CoversScreenOpaquely() const -> bool override;
 
  protected:
@@ -219,6 +284,11 @@ class ContainerWidget : public Widget {
   virtual void UpdateLayout() {}
   void CheckLayout();
 
+  /// The rect (in our space) our children are clipped to as we draw
+  /// them, if any. Only debug rects use this (see DebugRectWidget); the
+  /// clipping itself is up to each container's Draw().
+  virtual auto GetChildClipRect(Rect* rect) const -> bool { return false; }
+
   void set_modal_children(bool val) { modal_children_ = val; }
 
   auto width() const -> float { return width_; }
@@ -227,9 +297,37 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
+  /// Which standard window backing we draw at our current size, and
+  /// where its full quad sits (widget-local, before any background
+  /// offset or scale).
+  struct BackingLayout {
+    bool tall{};  // window_hsmall_vmed; otherwise window_hsmall_vsmall.
+    float quad_l{}, quad_b{}, quad_r{}, quad_t{};
+    // Legacy layouts fudge these until scaling in/out hits the exact
+    // target point; clean ones zoom about their true center.
+    float center_fudge_x{}, center_fudge_y{};
+  };
+  auto CalcBackingLayout_() const -> BackingLayout;
+
+  /// Containers taller than these (height / width) get the taller
+  /// backing art unless told otherwise (see CalcBackingLayout_()).
+  static constexpr float kLegacyTallAspect{0.6f};
+  static constexpr float kCleanLayoutTallAspect{0.59f};
+
+  /// The hand-calibrated known-opaque sub-rect of a standard backing, in
+  /// unit coords over its full quad (+-0.5 is the quad's edge).
+  static void BackingOpaqueUnitRect_(bool tall, float* l, float* b, float* r,
+                                     float* t);
+
+  /// Our backing quad (widget-local), with background offset and scale
+  /// applied; what we actually draw.
+  void GetPlacedBackingQuad_(const BackingLayout& layout, float* l, float* b,
+                             float* r, float* t) const;
+
   // Calc the widget-local bounds of the hand-calibrated known-opaque
-  // sub-rect of our window backing (see CoversScreenOpaquely());
-  // returns false for backing setups with no such calibration.
+  // sub-rect of our window backing as drawn (offset and scale applied;
+  // see CoversScreenOpaquely()); returns false for backing setups with
+  // no such calibration.
   auto GetCalibratedOpaqueRegion_(float* l, float* b, float* r, float* t) const
       -> bool;
 
@@ -246,6 +344,8 @@ class ContainerWidget : public Widget {
   Object::Ref<base::TextureAsset> tex_;
   Object::WeakRef<ButtonWidget> cancel_button_;
   Object::WeakRef<ButtonWidget> start_button_;
+  Vector3f start_button_color_{0.2f, 0.8f, 0.55f};
+  Vector3f cancel_button_color_{0.7f, 0.4f, 0.34f};
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
   Object::Ref<base::MeshAsset> bg_mesh_transparent_;
@@ -277,6 +377,8 @@ class ContainerWidget : public Widget {
   float bg_center_fudge_x_{};
   float background_offset_x_{};
   float background_offset_y_{};
+  float background_scale_x_{1.0f};
+  float background_scale_y_{1.0f};
   float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};
@@ -287,7 +389,9 @@ class ContainerWidget : public Widget {
   bool selection_loops_{true};
   bool is_main_window_stack_{};
   bool is_overlay_window_stack_{};
+  BackingArt backing_art_{BackingArt::kAuto};
   bool bg_dirty_{true};
+  bool clean_layout_{};
   bool glow_dirty_{true};
   bool transitioning_{};
   bool pressed_{};

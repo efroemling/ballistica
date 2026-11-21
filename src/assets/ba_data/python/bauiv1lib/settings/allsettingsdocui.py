@@ -253,11 +253,6 @@ def _button(
 
 def _open(target: Target, context: DocUILocalAction) -> None:
     # pylint: disable=cyclic-import
-    window = context.window
-
-    # No-op if we're not in control.
-    if not window.main_window_has_control():
-        return
     match target:
         case Target.CONTROLLERS:
             from bauiv1lib.settings.controls import (
@@ -265,63 +260,27 @@ def _open(target: Target, context: DocUILocalAction) -> None:
                 Root as ControlsRoot,
             )
 
-            window.main_window_replace(
-                lambda: ControlsSettingsController().create_window(
-                    ControlsRoot(),
-                    origin_widget=context.widget,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    ControlsSettingsController.get_window_extra_type_id()
-                ),
-            )
+            ControlsSettingsController().browse_from(context, ControlsRoot())
         case Target.GRAPHICS:
             from bauiv1lib.settings.graphics import (
                 GraphicsSettingsController,
                 Root as GraphicsRoot,
             )
 
-            window.main_window_replace(
-                lambda: GraphicsSettingsController().create_window(
-                    GraphicsRoot(),
-                    origin_widget=context.widget,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    GraphicsSettingsController.get_window_extra_type_id()
-                ),
-            )
+            GraphicsSettingsController().browse_from(context, GraphicsRoot())
         case Target.AUDIO:
             from bauiv1lib.settings.audio import (
                 AudioSettingsController,
                 Root as AudioRoot,
             )
 
-            window.main_window_replace(
-                lambda: AudioSettingsController().create_window(
-                    AudioRoot(),
-                    origin_widget=context.widget,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    AudioSettingsController.get_window_extra_type_id()
-                ),
-            )
+            AudioSettingsController().browse_from(context, AudioRoot())
         case Target.ADVANCED:
             from bauiv1lib.settings.advanced import (
                 AdvancedSettingsController,
                 Root as AdvancedRoot,
             )
 
-            window.main_window_replace(
-                lambda: AdvancedSettingsController().create_window(
-                    AdvancedRoot(),
-                    origin_widget=context.widget,
-                    auxiliary_style=False,
-                ),
-                extra_type_id=(
-                    AdvancedSettingsController.get_window_extra_type_id()
-                ),
-            )
+            AdvancedSettingsController().browse_from(context, AdvancedRoot())
         case _:
             assert_never(target)

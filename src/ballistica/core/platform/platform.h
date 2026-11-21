@@ -252,6 +252,13 @@ class Platform {
   /// clocks for the duration. Safe to call from any thread.
   virtual void SetOSGameLoadingState(bool loading);
 
+  /// Inform the platform whether the engine's local-network listener
+  /// (classic networking / the remote-app server) is currently up. On
+  /// Android this holds a wifi multicast lock while true so broadcast
+  /// scan queries reach us (many devices filter inbound broadcast
+  /// otherwise). No-op elsewhere. Main thread only.
+  virtual void SetLocalNetworkListening(bool listening);
+
 #pragma mark PERMISSIONS -------------------------------------------------------
 
   /// Request the permission asynchronously. If the permission cannot be
@@ -263,6 +270,11 @@ class Platform {
   /// Returns true if this permission has been granted (or if asking is not
   /// required for it).
   virtual auto HavePermission(Permission p) -> bool;
+
+  /// Returns true if requesting this permission can still bring up a
+  /// system prompt. False once the user has denied it for good, in which
+  /// case it can only be granted in system settings.
+  virtual auto CanRequestPermission(Permission p) -> bool;
 
 #pragma mark ANALYTICS ---------------------------------------------------------
 
@@ -388,6 +400,11 @@ class Platform {
   virtual void CloseSocket(int socket);
   virtual auto GetBroadcastAddrs() -> std::vector<uint32_t>;
   virtual auto SetSocketNonBlocking(int sd) -> bool;
+
+  /// Platform-specific setup for a long-lived UDP socket we receive on.
+  /// (Windows: stops ICMP 'port unreachable' replies to earlier sends
+  /// from failing later receives.)
+  virtual void ConfigureUDPSocket(int sd);
 
   /// Callback type for receiving network path availability state.
   using NetworkAvailabilityCallback = std::function<void(bool available)>;

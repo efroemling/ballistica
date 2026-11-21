@@ -200,13 +200,16 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
   // time we get here) and a server-side build->masterhash lookup that
   // only ever existed on the v1 master-server. These four cost
   // nothing and catch obvious tinkering, which is all we need to keep
-  // modded builds from drowning out real signal.
+  // modded builds from drowning out real signal. 'modpending' marks a
+  // false 'modded' that can't be trusted yet: some check hadn't finished
+  // (see CoreFeatureSet::ModdedCheckPending()).
   if (recorded != nullptr) {
     // Mirrored from the crashed process as it ran, so these are its
     // values rather than ours. core_alive answers the same question
     // 'coregone' does, but as of the moment of the fault.
     if (recorded->core_alive) {
       root.Add("modded", recorded->modded);
+      root.Add("modpending", recorded->modpending);
       root.Add("rancmds", recorded->rancmds);
       root.Add("workspaces", recorded->workspaces);
       root.Add("custompy", recorded->custompy);
@@ -215,13 +218,12 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace,
       root.Add("coregone", true);
     }
   } else if (g_core != nullptr) {
-    root.Add("modded", g_core->user_ran_commands || g_core->workspaces_in_use
-                           || g_core->using_custom_app_python_dir()
-                           || g_core->user_python_present);
-    root.Add("rancmds", g_core->user_ran_commands);
-    root.Add("workspaces", g_core->workspaces_in_use);
+    root.Add("modded", g_core->IsUserModified());
+    root.Add("modpending", g_core->ModdedCheckPending());
+    root.Add("rancmds", g_core->user_ran_commands());
+    root.Add("workspaces", g_core->workspaces_in_use());
     root.Add("custompy", g_core->using_custom_app_python_dir());
-    root.Add("userpy", g_core->user_python_present);
+    root.Add("userpy", g_core->user_python_present());
   } else {
     // Distinguish "we know it is clean" from "we could not tell".
     root.Add("coregone", true);
@@ -256,6 +258,19 @@ void PostPayload(const std::string& payload, std::atomic<int>* result,
         std::string(what) + " report failed: "
             + (response ? std::to_string(response->status)
                         : httplib::to_string(response.error())));
+  }
+
+  // Next-launch sends happen in a healthy process, so note how they
+  // went. The server answers 200 even when it drops a report (rate
+  // limits, bad input), saying so only in the body, so include that.
+  if (result == nullptr && g_core != nullptr) {
+    std::string outcome = response
+                              ? "status " + std::to_string(response->status)
+                                    + ", body " + Clamped(response->body, 200)
+                              : httplib::to_string(response.error());
+    g_core->logging->Log(LogName::kBaLifecycle,
+                         ok ? LogLevel::kInfo : LogLevel::kWarning,
+                         std::string(what) + " report sent (" + outcome + ").");
   }
 }
 

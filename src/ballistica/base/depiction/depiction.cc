@@ -3,6 +3,7 @@
 #include "ballistica/base/depiction/depiction.h"
 
 #include <algorithm>
+#include <cmath>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -156,11 +157,14 @@ void DepictionSuffix::Draw(const DepictionDrawContext& context,
     c.SetMaskUV2Texture(text_group_->GetElementMaskUV2Texture(e));
     float cmul = t->premultiplied() ? alpha : 1.0f;
     const float* ergb = text_group_->GetElementCanColor(e) ? color : nullptr;
+    // (The host's multiplier goes over either.)
+    const float* m = context.color_multiply;
     if (ergb) {
-      c.SetColor(ergb[0] * cmul, ergb[1] * cmul, ergb[2] * cmul, alpha);
+      c.SetColor(ergb[0] * cmul * m[0], ergb[1] * cmul * m[1],
+                 ergb[2] * cmul * m[2], alpha);
     } else {
       float plain = cmul * brightness;
-      c.SetColor(plain, plain, plain, alpha);
+      c.SetColor(plain * m[0], plain * m[1], plain * m[2], alpha);
     }
     c.SetFlatness(std::min(text_group_->GetElementMaxFlatness(e), 1.0f));
     {
@@ -192,6 +196,13 @@ auto DepictionDrawContext::StandardBrightness() const -> float {
   return disabled ? brightness * kDisabledBrightnessScale : brightness;
 }
 
+void DepictionDrawContext::StandardMultiplier(float* rgb) const {
+  float b = StandardBrightness();
+  for (int i = 0; i < 3; ++i) {
+    rgb[i] = b * color_multiply[i];
+  }
+}
+
 void DepictionDrawContext::StandardColor(float* rgb) const {
   if (!disabled) {
     return;
@@ -199,6 +210,21 @@ void DepictionDrawContext::StandardColor(float* rgb) const {
   float grey =
       kDisabledGreyScale * (0.3f * rgb[0] + 0.59f * rgb[1] + 0.11f * rgb[2]);
   rgb[0] = rgb[1] = rgb[2] = grey;
+}
+
+void DepictionDrawContext::StandardLayerColors(float* underlay, float* layer1,
+                                               float* layer2) const {
+  std::copy(underlay_color, underlay_color + 4, underlay);
+  std::copy(layer1_color, layer1_color + 4, layer1);
+  std::copy(layer2_color, layer2_color + 4, layer2);
+  StandardColor(underlay);
+  StandardColor(layer1);
+  StandardColor(layer2);
+  // The shader takes its underlay premultiplied.
+  float brightness = StandardBrightness();
+  for (int i = 0; i < 3; ++i) {
+    underlay[i] *= underlay[3] * brightness;
+  }
 }
 
 Depiction::Depiction(std::string type_id)
@@ -255,6 +281,8 @@ auto Depiction::SupportsHost(DepictionHost host) const -> bool { return true; }
 
 void Depiction::Update(millisecs_t now) {}
 
+auto Depiction::DrawsHostBacking() const -> bool { return false; }
+
 auto Depiction::GetInput() -> DepictionInput* { return nullptr; }
 
 auto Depiction::GetPythonControl() -> PyObject* { return nullptr; }
@@ -269,84 +297,126 @@ auto Depiction::GetIdleTime() const -> seconds_t {
   return g_base->logic->display_time() - last_shown_time_;
 }
 
-namespace {
-
-/// What a host shows for a depiction it can't draw: an outlined box
-/// with a question mark, like a browser's broken image. Says "something
-/// belongs here" without pretending to be it, and fills the same box
-/// the real thing would, so nothing around it shifts.
-class PlaceholderDepiction : public Depiction {
- public:
-  explicit PlaceholderDepiction(std::string type_id)
-      : Depiction(std::move(type_id)) {
-    text_group_.SetText("?", TextMesh::HAlign::kCenter,
-                        TextMesh::VAlign::kCenter);
+void DrawDepictionLoading(const DepictionDrawContext& context, float size) {
+  if (!context.transparent) {
+    return;
   }
+  const DepictionBox& b = context.box;
+  TextureAsset* spinner = g_base->assets->base_assets().depiction_spinner();
+  if (!spinner || b.width <= 0.0f || b.height <= 0.0f) {
+    return;
+  }
+  float alpha = 0.25f * context.StandardOpacity();
+  float cmul = spinner->premultiplied() ? alpha : 1.0f;
+  float mult[3];
+  context.StandardMultiplier(mult);
+  float side = std::min(b.width, b.height) * size;
+  auto turns = static_cast<float>(
+      std::fmod(static_cast<double>(g_core->AppTimeMillisecs()) / 1000.0, 1.0));
+  SimpleComponent c(context.pass);
+  c.SetTransparent(true);
+  c.SetTexture(spinner);
+  c.SetColor(cmul * mult[0], cmul * mult[1], cmul * mult[2], alpha);
+  {
+    auto xf = c.ScopedTransform();
+    c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
+    c.Scale(side, side, 1.0f);
+    c.Rotate(-360.0f * turns, 0.0f, 0.0f, 1.0f);
+    c.DrawMeshAsset(
+        g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
+  }
+  c.Submit();
+}
 
-  void Draw(const DepictionDrawContext& context) override {
-    if (!context.transparent) {
-      return;
-    }
-    const DepictionBox& b = context.box;
-    if (b.width <= 0.0f || b.height <= 0.0f) {
-      return;
-    }
-    float alpha = 0.4f * context.StandardOpacity();
-    float bright = context.StandardBrightness();
-    TextureAsset* white =
-        g_base->assets->SolidTexture(SolidTextureColor::kWhite);
+DepictionPlaceholder::DepictionPlaceholder()
+    : text_group_{Object::New<TextGroup>()} {
+  text_group_->SetText("?", TextMesh::HAlign::kCenter,
+                       TextMesh::VAlign::kCenter);
+}
 
-    // The outline, just inside the box (remade only when the box
-    // moves; we draw every frame).
-    float thickness = std::max(1.0f, std::min(b.width, b.height) * 0.03f);
-    if (!outline_.exists() || b.x != outline_box_.x || b.y != outline_box_.y
-        || b.width != outline_box_.width || b.height != outline_box_.height
-        || context.z != outline_z_) {
-      outline_ = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
-                                              b.height, thickness);
-      outline_box_ = b;
-      outline_z_ = context.z;
-    }
-    {
-      SimpleComponent c(context.pass);
-      c.SetTransparent(true);
-      c.SetTexture(white);
-      float cmul = white->premultiplied() ? alpha : 1.0f;
-      c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
-      c.DrawMesh(outline_.get());
-      c.Submit();
-    }
+DepictionPlaceholder::~DepictionPlaceholder() = default;
 
-    // The question mark, about half the box tall. (A line of small text
-    // is ~40 units tall at scale 1.)
-    float scale = std::min(b.width, b.height) * 0.5f / 40.0f;
+void DepictionPlaceholder::Draw(const DepictionDrawContext& context) {
+  if (!context.transparent) {
+    return;
+  }
+  DepictionBox b = context.box;
+  if (b.width <= 0.0f || b.height <= 0.0f) {
+    return;
+  }
+  if (context.small_placeholder) {
+    // A third of the shorter side: big enough to read as something
+    // broken, small enough not to read as the pane's frame.
+    float side = std::min(b.width, b.height) / 3.0f;
+    b = {b.x + (b.width - side) * 0.5f, b.y + (b.height - side) * 0.5f, side,
+         side};
+  }
+  float alpha = 0.4f * context.StandardOpacity();
+  float mult[3];
+  context.StandardMultiplier(mult);
+  TextureAsset* white = g_base->assets->SolidTexture(SolidTextureColor::kWhite);
+
+  // The outline, just inside the box (remade only when the box moves;
+  // we draw every frame).
+  float thickness = std::max(1.0f, std::min(b.width, b.height) * 0.03f);
+  if (!outline_.exists() || b.x != outline_box_.x || b.y != outline_box_.y
+      || b.width != outline_box_.width || b.height != outline_box_.height
+      || context.z != outline_z_) {
+    outline_ = Object::New<RectOutlineMesh>(b.x, b.y, context.z, b.width,
+                                            b.height, thickness);
+    outline_box_ = b;
+    outline_z_ = context.z;
+  }
+  {
     SimpleComponent c(context.pass);
     c.SetTransparent(true);
-    int elem_count = text_group_.GetElementCount();
-    for (int e = 0; e < elem_count; e++) {
-      TextureAsset* t = text_group_.GetElementTexture(e);
-      if (!t->preloaded()) {
-        continue;
-      }
-      c.SetTexture(t);
-      float cmul = t->premultiplied() ? alpha : 1.0f;
-      c.SetColor(bright * cmul, bright * cmul, bright * cmul, alpha);
-      c.SetFlatness(1.0f);
-      {
-        auto xf = c.ScopedTransform();
-        c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
-        c.Scale(scale, scale, 1.0f);
-        c.DrawMesh(text_group_.GetElementMesh(e));
-      }
-    }
+    c.SetTexture(white);
+    float cmul = white->premultiplied() ? alpha : 1.0f;
+    c.SetColor(mult[0] * cmul, mult[1] * cmul, mult[2] * cmul, alpha);
+    c.DrawMesh(outline_.get());
     c.Submit();
   }
 
+  // The question mark, about half the box tall. (A line of small text
+  // is ~40 units tall at scale 1.)
+  float scale = std::min(b.width, b.height) * 0.5f / 40.0f;
+  SimpleComponent c(context.pass);
+  c.SetTransparent(true);
+  int elem_count = text_group_->GetElementCount();
+  for (int e = 0; e < elem_count; e++) {
+    TextureAsset* t = text_group_->GetElementTexture(e);
+    if (!t->preloaded()) {
+      continue;
+    }
+    c.SetTexture(t);
+    float cmul = t->premultiplied() ? alpha : 1.0f;
+    c.SetColor(mult[0] * cmul, mult[1] * cmul, mult[2] * cmul, alpha);
+    c.SetFlatness(1.0f);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(b.x + b.width * 0.5f, b.y + b.height * 0.5f, context.z);
+      c.Scale(scale, scale, 1.0f);
+      c.DrawMesh(text_group_->GetElementMesh(e));
+    }
+  }
+  c.Submit();
+}
+
+namespace {
+
+/// What a host shows for a depiction it can't draw (see
+/// DepictionPlaceholder).
+class PlaceholderDepiction : public Depiction {
+ public:
+  explicit PlaceholderDepiction(std::string type_id)
+      : Depiction(std::move(type_id)) {}
+
+  void Draw(const DepictionDrawContext& context) override {
+    placeholder_.Draw(context);
+  }
+
  private:
-  TextGroup text_group_;
-  Object::Ref<RectOutlineMesh> outline_;
-  DepictionBox outline_box_;
-  float outline_z_{};
+  DepictionPlaceholder placeholder_;
 };
 
 auto Factories()

@@ -612,19 +612,21 @@ void Renderer::UpdateTextureViewTargets(FrameDef* frame_def) {
 
   if (!view_data()->output_render_target.exists()
       || view_data()->output_width != fview->width()
-      || view_data()->output_height != fview->height()) {
+      || view_data()->output_height != fview->height()
+      || view_data()->output_alpha != fview->transparent()) {
     view_data()->output_width = fview->width();
     view_data()->output_height = fview->height();
+    view_data()->output_alpha = fview->transparent();
     view_data()->output_render_target =
         NewFramebufferRenderTarget(fview->width(), fview->height(),
-                                   true,   // linear-interp
-                                   true,   // depth
-                                   true,   // tex
-                                   false,  // depth-tex
-                                   true,   // high-qual
-                                   false,  // msaa
-                                   false   // alpha
-        );                                 // NOLINT(whitespace/parens)
+                                   true,                 // linear-interp
+                                   true,                 // depth
+                                   true,                 // tex
+                                   false,                // depth-tex
+                                   true,                 // high-qual
+                                   false,                // msaa
+                                   fview->transparent()  // alpha
+        );  // NOLINT(whitespace/parens)
   }
 }
 
@@ -633,7 +635,9 @@ void Renderer::DrawWorldToTexture(FrameDef* frame_def) {
   RenderTarget* target = view_data()->output_render_target.get();
   assert(target);
 
-  if (view_data()->camera_render_target.exists()) {
+  // (The camera buffer has no alpha, so transparent views skip it and
+  // the depth effects it brings.)
+  if (view_data()->camera_render_target.exists() && !fview->transparent()) {
     DrawWorldToTextureThroughCamera_(frame_def);
     return;
   }
@@ -642,9 +646,12 @@ void Renderer::DrawWorldToTexture(FrameDef* frame_def) {
   SetDepthWriting(true);
   SetDepthTesting(true);
   SetDrawAtEqualDepth(false);
-  const Vector3f& clear_color = fview->clear_color();
-  target->DrawBegin(true, clear_color.x, clear_color.y, clear_color.z, 1.0f,
-                    true);
+  // (A transparent view starts fully transparent, premultiplied: all
+  // zero.)
+  const Vector3f clear_color =
+      fview->transparent() ? Vector3f{0.0f, 0.0f, 0.0f} : fview->clear_color();
+  target->DrawBegin(true, clear_color.x, clear_color.y, clear_color.z,
+                    fview->transparent() ? 0.0f : 1.0f, true);
 
   // These passes draw upside down (see RenderPass::draws_flipped()),
   // which turns front faces into back faces.

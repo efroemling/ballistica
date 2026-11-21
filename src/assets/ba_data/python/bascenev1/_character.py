@@ -56,6 +56,16 @@ def split_character(character_json: str) -> CharacterParts:
     )
 
 
+def plain_name_json(text: str) -> str:
+    """A name definition that is just some text, in the default look.
+
+    For names that come from nowhere richer (a profile's typed name, a
+    plain label); the inverse of :func:`name_text`. Hand it to a
+    :class:`bacommon.depiction.NameDepiction` to draw it.
+    """
+    return json.dumps({'b': {'t': text}}, separators=(',', ':'))
+
+
 def name_text(name_json: str | None) -> str | None:
     """A name definition's canonical plain text (None if unusable).
 
@@ -71,3 +81,26 @@ def name_text(name_json: str | None) -> str | None:
     basic = name.get('b') if isinstance(name, dict) else None
     text = basic.get('t') if isinstance(basic, dict) else None
     return text if isinstance(text, str) and text else None
+
+
+def name_glyph(name_json: str | None) -> str | None:
+    """A name definition's glyph-tier icon char, if it has one.
+
+    :meta private:
+
+    A global profile's name carries one; game text that shows full
+    names puts it before the name, as legacy global profiles always
+    have. (A capsule wins over a glyph when a name has both, so no
+    glyph then.)
+    """
+    if name_json is None:
+        return None
+    try:
+        name = json.loads(name_json)
+    except ValueError:
+        return None
+    if not isinstance(name, dict) or isinstance(name.get('c'), dict):
+        return None
+    glyph = name.get('g')
+    icon = glyph.get('i') if isinstance(glyph, dict) else None
+    return icon if isinstance(icon, str) and icon else None

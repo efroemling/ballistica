@@ -56,6 +56,9 @@ class SessionStream : public Object, public ClientControllerInterface {
   /// CommitFoldAnimCurve drops them and writes one kAddAnimCurve, and
   /// AbortFold replays them as they were (so a throw mid-animate leaves
   /// the stream exactly as the unfolded path would have).
+  /// The protocol we stream (the one we host).
+  auto protocol() const -> int { return protocol_; }
+
   auto CanFoldAnimCurve() const -> bool {
     return host_session_ != nullptr && fold_anim_curves_;
   }
@@ -153,6 +156,9 @@ class SessionStream : public Object, public ClientControllerInterface {
   // Make sure various components are part of our stream.
   auto IsValidScene(Scene* val) -> bool;
   auto IsValidNode(Node* val) -> bool;
+  // Validate an attr we're about to write (its node is ours; it can
+  // be sent on our protocol; see NodeAttributeUnbound::min_protocol).
+  void CheckAttr_(const NodeAttribute& attr);
   auto IsValidTexture(SceneTexture* val) -> bool;
   auto IsValidMesh(SceneMesh* val) -> bool;
   auto IsValidSound(SceneSound* val) -> bool;
@@ -241,6 +247,9 @@ class SessionStream : public Object, public ClientControllerInterface {
   int64_t stats_correction_messages_{};
   int64_t stats_shipped_bytes_{};
   int64_t stats_shipped_messages_{};
+
+  // The protocol we stream (the one we host; fixed at creation).
+  int protocol_{};
 
   // Protocol 45+ framing: varint command lengths and zigzag-varint
   // integers (see kProtocolVersionCompactStream). Fixed at creation

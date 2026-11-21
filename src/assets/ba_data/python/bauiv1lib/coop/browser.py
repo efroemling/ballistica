@@ -14,20 +14,29 @@ from bauiv1 import _builtinassets
 from bauiv1 import _commonassets, _classicassets, _classiccatalogassets
 from bauiv1 import _uiv1assets
 
-from bauiv1lib.utils import (
-    get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
-)
+from bauiv1lib.utils import TOOLBAR_SCROLL_FADE, get_screen_margins
 from bauiv1lib.league import league_display_name
 from bauiv1lib.connectivity import wait_for_connectivity
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     from bauiv1lib.coop.tournamentbutton import TournamentButton
 
 HARD_REQUIRES_PRO = False
+
+# Our scrolling content's vertical layout. Each section (campaign,
+# tournaments, practice) is a heading band with its heading centered in
+# it, then its rows. Rows are taller than their pitch by a bit of
+# headroom at their tops, so successive ones overlap there.
+_HEADING_HEIGHT = 46.0
+_ROW_HEIGHT = 205.0
+_ROW_PITCH = 200.0
+# How far up from the bottom of each row its buttons sit.
+_ROW_CONTENT_Y = 4.0
+# What the tournaments section holds in place of rows when there are no
+# tournaments (an 'unavailable' note).
+_NO_TOURNAMENTS_HEIGHT = 44.0
 
 
 class CoopBrowserWindow(bui.MainWindow):
@@ -153,21 +162,33 @@ class CoopBrowserWindow(bui.MainWindow):
         )
         self._scroll_bottom = yoffs - scroll_top_gap - self._scroll_height
 
+        # At medium/large, extend our scroll area's top up behind our
+        # title (a milder version of what small scale does), with a
+        # longer top fade keeping the title legible over content
+        # scrolled up there; our content gets padded by the same amount
+        # so it stays put.
+        self._scroll_top_extend = 0.0 if uiscale is bui.UIScale.SMALL else 40.0
+        self._scroll_height += self._scroll_top_extend
+
         # In small ui (where we cover the screen), extend our scroll
         # area (and the horizontal rows within it) out to cover any
-        # margins between the virtual rect and the visible screen
+        # side margins between the virtual rect and the visible screen
         # edges, insetting content by those same amounts so it stays
-        # put and only the scroll surfaces reach further out.
-        (
-            self._margin_left,
-            self._margin_right,
-            self._margin_bottom,
-            self._margin_top,
-        ) = (
+        # put and only the scroll surfaces reach further out. Our top
+        # and bottom stay at the virtual rect's, where our fades are
+        # calibrated against the titles and toolbars there.
+        self._margin_left, self._margin_right, _, _ = (
             get_screen_margins(scale)
             if uiscale is bui.UIScale.SMALL
             else (0.0, 0.0, 0.0, 0.0)
         )
+
+        # Where our rows' page-left/right buttons sit in from their
+        # ends: past any screen margins, and at medium/large clear of
+        # our scroll area's side fades.
+        page_button_inset = 0.0 if uiscale is bui.UIScale.SMALL else 30.0
+        self._row_button_inset_left = self._margin_left + page_button_inset
+        self._row_button_inset_right = self._margin_right + page_button_inset
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -181,6 +202,74 @@ class CoopBrowserWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
+        self._last_tournament_query_time: float | None = None
+        self._last_tournament_query_response_time: float | None = None
+        self._doing_tournament_query = False
+
+        self._selected_campaign_level = cfg.get(
+            'Selected Coop Campaign Level', None
+        )
+        self._selected_custom_level = cfg.get(
+            'Selected Coop Custom Level', None
+        )
+
+        if uiscale is bui.UIScale.SMALL:
+            tmaxw = 130 if bui.get_virtual_screen_size()[0] < 1320 else 175
+        else:
+            tmaxw = 300
+
+        # Don't want initial construction affecting our last-selected.
+        self._do_selection_callbacks = False
+
+        self._selected_row = cfg.get('Selected Coop Row', None)
+
+        self._subcontainerwidth = (
+            self._scroll_width + self._margin_left + self._margin_right
+        )
+        self._subcontainerheight = 0.0  # (Set in _refresh().)
+
+        # At small scale we sit under the toolbars, so our top and
+        # bottom fade over a longer stretch to clear them. (An inset
+        # would keep content fully hidden for a bit before fading in.)
+        vfade_inset = 0.0
+        vfade = TOOLBAR_SCROLL_FADE if uiscale is bui.UIScale.SMALL else 40.0
+
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            highlight=False,
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height,
+            ),
+            position=(
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
+                self._scroll_bottom,
+            ),
+            simple_culling_v=10.0,
+            claims_left_right=True,
+            selection_loops_to_parent=True,
+            border_opacity=0.4,
+            # Fade content into our backing as it nears the edges
+            # (clean layout and a fading bar let content run right out
+            # to them).
+            clean_layout=True,
+            fading_scrollbar=True,
+            edge_style='fade',
+            # (No side fades at small scale, where rows just scroll off
+            # the screen.)
+            edge_fade=(
+                0.0 if uiscale is bui.UIScale.SMALL else 40.0,
+                vfade,
+                0.0 if uiscale is bui.UIScale.SMALL else 40.0,
+                vfade + self._scroll_top_extend,
+            ),
+            edge_fade_inset=(0.0, vfade_inset, 0.0, vfade_inset),
+        )
+
+        # (Made after our scroll area, which can reach up behind it:
+        # presses go to the last-made widget wanting them.)
         if uiscale is bui.UIScale.SMALL:
             self._back_button = bui.get_special_widget('back_button')
             bui.containerwidget(
@@ -207,77 +296,10 @@ class CoopBrowserWindow(bui.MainWindow):
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
+            # Draw in front of our scroll area's fade.
+            bui.widget(edit=self._back_button, depth_range=(0.9, 1.0))
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
-            )
-
-        self._last_tournament_query_time: float | None = None
-        self._last_tournament_query_response_time: float | None = None
-        self._doing_tournament_query = False
-
-        self._selected_campaign_level = cfg.get(
-            'Selected Coop Campaign Level', None
-        )
-        self._selected_custom_level = cfg.get(
-            'Selected Coop Custom Level', None
-        )
-
-        if uiscale is bui.UIScale.SMALL:
-            tmaxw = 130 if bui.get_virtual_screen_size()[0] < 1320 else 175
-        else:
-            tmaxw = 300
-
-        # Don't want initial construction affecting our last-selected.
-        self._do_selection_callbacks = False
-
-        self._selected_row = cfg.get('Selected Coop Row', None)
-
-        self._subcontainerwidth = 800.0 + self._margin_left + self._margin_right
-        self._subcontainerheight = 1400.0
-
-        # Allow empty space at top when our toolbar overlaps scroll area.
-        if uiscale is bui.UIScale.SMALL:
-            self._subcontainerheight += 40
-
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            highlight=False,
-            size=(
-                self._scroll_width + self._margin_left + self._margin_right,
-                self._scroll_height + self._margin_bottom + self._margin_top,
-            ),
-            position=(
-                self._width * 0.5
-                - self._scroll_width * 0.5
-                - self._margin_left,
-                self._scroll_bottom - self._margin_bottom,
-            ),
-            simple_culling_v=10.0,
-            claims_left_right=True,
-            selection_loops_to_parent=True,
-            border_opacity=0.4,
-        )
-
-        # Splotches at the top to fade scrollable content as it hits
-        # toolbars. Note that we intentionally use the original
-        # un-margin-extended scroll geometry here; the fades were
-        # placed to coincide with toolbar elements, which don't move
-        # when we extend out into screen margins.
-        if uiscale is bui.UIScale.SMALL and bool(True):
-            fade_left = self._width * 0.5 - self._scroll_width * 0.5
-            scroll_fade_top(
-                self._root_widget,
-                fade_left,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                fade_left,
-                self._scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
             )
 
         # Title.
@@ -560,7 +582,7 @@ class CoopBrowserWindow(bui.MainWindow):
         next_widget_down = self._tournament_info_button
 
         h = self._margin_left
-        v2 = -2
+        v2 = _ROW_CONTENT_Y
         sel_color = (0.75, 0.85, 0.5)
         sel_color_hard = (0.4, 0.7, 0.2)
         un_sel_color = (0.5, 0.5, 0.5)
@@ -722,7 +744,6 @@ class CoopBrowserWindow(bui.MainWindow):
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.coop.gamebutton import GameButton
@@ -736,16 +757,44 @@ class CoopBrowserWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        tourney_row_height = 200
-        self._subcontainerheight = (
-            700
-            + self._tournament_button_count * tourney_row_height
-            # Grow to cover any screen margins; the margin_top shift on
-            # our start position below insets content to match, leaving
-            # margin_bottom of extra padding at the bottom.
-            + self._margin_bottom
-            + self._margin_top
+        small = bui.app.ui_v1.uiscale is bui.UIScale.SMALL
+        ntourneys = self._tournament_button_count
+
+        # Lay our sections out as depths down from our top (see
+        # _HEADING_HEIGHT and friends), then size ourself to fit them
+        # plus padding at the bottom: generous at small scale to clear
+        # the toolbars, just a little otherwise. (At the top we also
+        # leave room for the toolbar at small scale, or for wherever our
+        # scroll area reaches up behind our title otherwise.)
+        campaign_top = 37.0 + (40.0 if small else 0.0) + self._scroll_top_extend
+        tourneys_top = campaign_top + _HEADING_HEIGHT + _ROW_HEIGHT
+        practice_top = (
+            tourneys_top
+            + _HEADING_HEIGHT
+            + (
+                (ntourneys - 1) * _ROW_PITCH + _ROW_HEIGHT
+                if ntourneys > 0
+                else _NO_TOURNAMENTS_HEIGHT
+            )
         )
+        bottom_pad = 71.0 if small else 33.0
+        self._subcontainerheight = (
+            practice_top + _HEADING_HEIGHT + _ROW_HEIGHT + bottom_pad
+        )
+        height = self._subcontainerheight
+
+        def _heading_y(section_top: float) -> float:
+            return height - section_top - 0.5 * _HEADING_HEIGHT
+
+        def _row_y(section_top: float, index: int = 0) -> float:
+            # (Rows are positioned by their bottom edges.)
+            return (
+                height
+                - section_top
+                - _HEADING_HEIGHT
+                - index * _ROW_PITCH
+                - _ROW_HEIGHT
+            )
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
@@ -760,18 +809,11 @@ class CoopBrowserWindow(bui.MainWindow):
         )
 
         w_parent = self._subcontainer
-        h_base = 6 + self._margin_left
-
-        v = self._subcontainerheight - self._margin_top - 90
-
-        # Move down past toolbar when it overlaps us.
-        uiscale = bui.app.ui_v1.uiscale
-        if uiscale is bui.UIScale.SMALL:
-            v -= 40.0
+        heading_x = 33.0 + self._margin_left
 
         self._campaign_percent_text = bui.textwidget(
             parent=w_parent,
-            position=(h_base + 27, v + 30),
+            position=(heading_x, _heading_y(campaign_top)),
             size=(0, 0),
             text='',
             h_align='left',
@@ -784,22 +826,12 @@ class CoopBrowserWindow(bui.MainWindow):
         # non-selectable titles above our selectable button rows.
         row_v_show_buffer_top = 120
         row_v_show_buffer_bottom = 70
-        v -= 198
 
-        h_scroll = bui.hscrollwidget(
-            parent=w_parent,
-            size=(
-                self._scroll_width + self._margin_left + self._margin_right,
-                205,
-            ),
-            position=(-5, v),
-            simple_culling_h=70,
-            highlight=False,
-            border_opacity=0.0,
-            color=(0.45, 0.4, 0.5),
-            button_inset_left=self._margin_left,
-            button_inset_right=self._margin_right,
+        h_scroll = self._make_row_scroll(
+            w_parent,
+            _row_y(campaign_top),
             on_select_call=lambda: self._on_row_selected('campaign'),
+            simple_culling_h=70,
         )
         self._campaign_h_scroll = h_scroll
         bui.widget(
@@ -826,7 +858,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._tournament_buttons: list[TournamentButton] = []
 
-        v -= 53
+        tourneys_heading_y = _heading_y(tourneys_top)
         # FIXME shouldn't use hard-coded strings here.
         txt = _classicassets.strings.coop.tournaments
         t_width = bui.get_string_width(
@@ -836,7 +868,7 @@ class CoopBrowserWindow(bui.MainWindow):
         )
         bui.textwidget(
             parent=w_parent,
-            position=(h_base + 27, v + 30),
+            position=(heading_x, tourneys_heading_y),
             size=(0, 0),
             text=txt,
             h_align='left',
@@ -850,7 +882,10 @@ class CoopBrowserWindow(bui.MainWindow):
             label='?',
             size=(20, 20),
             text_scale=0.6,
-            position=(h_base + 27 + t_width * 1.1 + 15, v + 18),
+            position=(
+                heading_x + t_width * 1.1 + 15,
+                tourneys_heading_y - 12,
+            ),
             button_type='square',
             color=(0.6, 0.5, 0.65),
             textcolor=(0.7, 0.6, 0.75),
@@ -877,7 +912,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 )
             bui.textwidget(
                 parent=w_parent,
-                position=(h_base + 47, v),
+                position=(heading_x + 20, tourneys_heading_y - 30),
                 size=(0, 0),
                 text=unavailable_text,
                 h_align='left',
@@ -885,26 +920,13 @@ class CoopBrowserWindow(bui.MainWindow):
                 color=bui.app.ui_v1.title_color,
                 scale=0.9,
             )
-            v -= 40
-        v -= 198
 
         tournament_h_scroll = None
-        if self._tournament_button_count > 0:
-            for i in range(self._tournament_button_count):
-                tournament_h_scroll = h_scroll = bui.hscrollwidget(
-                    parent=w_parent,
-                    size=(
-                        self._scroll_width
-                        + self._margin_left
-                        + self._margin_right,
-                        205,
-                    ),
-                    position=(-5, v),
-                    highlight=False,
-                    border_opacity=0.0,
-                    color=(0.45, 0.4, 0.5),
-                    button_inset_left=self._margin_left,
-                    button_inset_right=self._margin_right,
+        if ntourneys > 0:
+            for i in range(ntourneys):
+                tournament_h_scroll = h_scroll = self._make_row_scroll(
+                    w_parent,
+                    _row_y(tourneys_top, i),
                     on_select_call=bui.CallStrict(
                         self._on_row_selected, 'tournament' + str(i + 1)
                     ),
@@ -926,15 +948,16 @@ class CoopBrowserWindow(bui.MainWindow):
                     parent=h_scroll,
                     size=(
                         self._scroll_width
-                        - 24
                         + self._margin_left
                         + self._margin_right,
                         200,
                     ),
                     background=False,
                 )
-                h = self._margin_left
-                v2 = -2
+                # (Tournament entries sit in a bit further than our
+                # other rows' buttons.)
+                h = self._margin_left + 12.0
+                v2 = _ROW_CONTENT_Y
                 is_last_sel = True
                 self._tournament_buttons.append(
                     TournamentButton(
@@ -945,13 +968,11 @@ class CoopBrowserWindow(bui.MainWindow):
                         on_pressed=bui.WeakCallPartial(self.run_tournament),
                     )
                 )
-                v -= 200
 
         # Custom Games. (called 'Practice' in UI these days).
-        v -= 50
         bui.textwidget(
             parent=w_parent,
-            position=(h_base + 27, v + 30 + 198),
+            position=(heading_x, _heading_y(practice_top)),
             size=(0, 0),
             text=_classicassets.strings.ui.practice,
             h_align='left',
@@ -986,19 +1007,12 @@ class CoopBrowserWindow(bui.MainWindow):
         if bui.app.classic.custom_coop_practice_games:
             items = bui.app.classic.custom_coop_practice_games + items
 
-        self._custom_h_scroll = custom_h_scroll = h_scroll = bui.hscrollwidget(
-            parent=w_parent,
-            size=(
-                self._scroll_width + self._margin_left + self._margin_right,
-                205,
-            ),
-            position=(-5, v),
-            highlight=False,
-            border_opacity=0.0,
-            color=(0.45, 0.4, 0.5),
-            button_inset_left=self._margin_left,
-            button_inset_right=self._margin_right,
-            on_select_call=bui.CallStrict(self._on_row_selected, 'custom'),
+        self._custom_h_scroll = custom_h_scroll = h_scroll = (
+            self._make_row_scroll(
+                w_parent,
+                _row_y(practice_top),
+                on_select_call=bui.CallStrict(self._on_row_selected, 'custom'),
+            )
         )
         bui.widget(
             edit=h_scroll,
@@ -1014,7 +1028,7 @@ class CoopBrowserWindow(bui.MainWindow):
         sc2 = bui.containerwidget(
             parent=h_scroll,
             size=(
-                max(self._scroll_width - 24, 30 + 200 * len(items))
+                max(self._scroll_width, 30 + 200 * len(items))
                 + self._margin_left
                 + self._margin_right,
                 200,
@@ -1024,7 +1038,7 @@ class CoopBrowserWindow(bui.MainWindow):
         h_spacing = 200
         self._custom_buttons: list[GameButton] = []
         h = self._margin_left
-        v2 = -2
+        v2 = _ROW_CONTENT_Y
         for item in items:
             is_last_sel = item == self._selected_custom_level
             self._custom_buttons.append(
@@ -1089,6 +1103,38 @@ class CoopBrowserWindow(bui.MainWindow):
         # There's probably several 'onSelected' callbacks pushed onto the
         # event queue.. we need to push ours too so we're enabled *after* them.
         bui.pushcall(self._enable_selectable_callback)
+
+    def _make_row_scroll(
+        self,
+        parent: bui.Widget,
+        v: float,
+        *,
+        on_select_call: Callable[[], None],
+        simple_culling_h: float | None = None,
+    ) -> bui.Widget:
+        """Make one of our horizontally-scrolling rows of buttons.
+
+        Rows span our scroll area's full width and clip exactly to it,
+        so their content runs out under its side fades. Content sits
+        right on the row's bottom edge (rows place their buttons
+        ``_ROW_CONTENT_Y`` up from it).
+        """
+        return bui.hscrollwidget(
+            parent=parent,
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                _ROW_HEIGHT,
+            ),
+            position=(0, v),
+            simple_culling_h=simple_culling_h,
+            highlight=False,
+            border_opacity=0.0,
+            color=(0.45, 0.4, 0.5),
+            button_inset_left=self._row_button_inset_left,
+            button_inset_right=self._row_button_inset_right,
+            on_select_call=on_select_call,
+            clean_layout=True,
+        )
 
     def _on_row_selected(self, row: str) -> None:
         if self._do_selection_callbacks:

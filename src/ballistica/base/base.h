@@ -98,6 +98,7 @@ class MeshIndexedObjectSplit;
 class MeshData;
 class MeshDataClientHandle;
 class MeshIndexBuffer16;
+class MeshIndexedDualTextureFull;
 class MeshIndexedSimpleFull;
 class MeshIndexedSmokeFull;
 class MeshRendererData;
@@ -198,6 +199,10 @@ enum class DebugBoundsType : uint8_t {
   /// Every text mesh's glyph quads, filled translucent red (so a glyph's
   /// art can be checked against where its quad actually lands).
   kText,
+  /// The bounds of every container drawing a window backing, outlined in
+  /// red (for clean-layout containers, exactly the backing's
+  /// known-opaque area).
+  kContainers,
 };
 
 enum class VSync : uint8_t { kUnset, kNever, kAlways, kAdaptive };
@@ -481,6 +486,8 @@ enum class ShadingType : uint8_t {
   kSimpleTexModulatedTransShadowFlatness,
   kSimpleTextureModulatedTransparentGlow,
   kSimpleTextureModulatedTransparentGlowMaskUV2,
+  kSimpleTextureModulatedTransparentUV2Fade,
+  kSimpleTextureModulatedTransparentLayeredMask,
   kObject,
   kObjectTransparent,
   kObjectLightShadowTransparent,
@@ -493,6 +500,7 @@ enum class ShadingType : uint8_t {
   kObjectLightShadowFacingRatio,
   kObjectLightShadowFacingRatioTransparent,
   kObjectReflectLightShadow,
+  kObjectReflectLightShadowTransparent,
   kObjectReflectLightShadowDoubleSided,
   kObjectReflectLightShadowColorized,
   kObjectReflectLightShadowAdd,
@@ -518,8 +526,8 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261014b
-inline constexpr const char* kBuiltinAssetsApvernum = "689";
+// Builtin asset-package: a-0.babuiltinassets.261120
+inline constexpr const char* kBuiltinAssetsApvernum = "1286";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesCircle,            // textures/circle
@@ -551,51 +559,51 @@ enum class BuiltinTextureID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinTextureID id) -> const char* {
   switch (id) {
     case BuiltinTextureID::kTexturesCircle:
-      return "689:textures/circle";
+      return "1286:textures/circle";
     case BuiltinTextureID::kTexturesCircleShadow:
-      return "689:textures/circle_shadow";
+      return "1286:textures/circle_shadow";
     case BuiltinTextureID::kTexturesCursor:
-      return "689:textures/cursor";
+      return "1286:textures/cursor";
     case BuiltinTextureID::kTexturesFontBig:
-      return "689:textures/font_big";
+      return "1286:textures/font_big";
     case BuiltinTextureID::kTexturesFontExtras:
-      return "689:textures/font_extras";
+      return "1286:textures/font_extras";
     case BuiltinTextureID::kTexturesFontExtras2:
-      return "689:textures/font_extras2";
+      return "1286:textures/font_extras2";
     case BuiltinTextureID::kTexturesFontExtras3:
-      return "689:textures/font_extras3";
+      return "1286:textures/font_extras3";
     case BuiltinTextureID::kTexturesFontExtras4:
-      return "689:textures/font_extras4";
+      return "1286:textures/font_extras4";
     case BuiltinTextureID::kTexturesFontExtras5:
-      return "689:textures/font_extras5";
+      return "1286:textures/font_extras5";
     case BuiltinTextureID::kTexturesFontSmall0:
-      return "689:textures/font_small0";
+      return "1286:textures/font_small0";
     case BuiltinTextureID::kTexturesFontSmall1:
-      return "689:textures/font_small1";
+      return "1286:textures/font_small1";
     case BuiltinTextureID::kTexturesFontSmall2:
-      return "689:textures/font_small2";
+      return "1286:textures/font_small2";
     case BuiltinTextureID::kTexturesFontSmall3:
-      return "689:textures/font_small3";
+      return "1286:textures/font_small3";
     case BuiltinTextureID::kTexturesFontSmall4:
-      return "689:textures/font_small4";
+      return "1286:textures/font_small4";
     case BuiltinTextureID::kTexturesFontSmall5:
-      return "689:textures/font_small5";
+      return "1286:textures/font_small5";
     case BuiltinTextureID::kTexturesFontSmall6:
-      return "689:textures/font_small6";
+      return "1286:textures/font_small6";
     case BuiltinTextureID::kTexturesFontSmall7:
-      return "689:textures/font_small7";
+      return "1286:textures/font_small7";
     case BuiltinTextureID::kTexturesHowdy:
-      return "689:textures/howdy";
+      return "1286:textures/howdy";
     case BuiltinTextureID::kTexturesShadow:
-      return "689:textures/shadow";
+      return "1286:textures/shadow";
     case BuiltinTextureID::kTexturesShadowSharp:
-      return "689:textures/shadow_sharp";
+      return "1286:textures/shadow_sharp";
     case BuiltinTextureID::kTexturesSoftRect2Mask:
-      return "689:textures/soft_rect2_mask";
+      return "1286:textures/soft_rect2_mask";
     case BuiltinTextureID::kTexturesSoftRectMask:
-      return "689:textures/soft_rect_mask";
+      return "1286:textures/soft_rect_mask";
     case BuiltinTextureID::kTexturesSoftRectVertical:
-      return "689:textures/soft_rect_vertical";
+      return "1286:textures/soft_rect_vertical";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }
@@ -613,13 +621,13 @@ enum class BuiltinSoundID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinSoundID id) -> const char* {
   switch (id) {
     case BuiltinSoundID::kAudioBlank:
-      return "689:audio/blank";
+      return "1286:audio/blank";
     case BuiltinSoundID::kAudioBlip:
-      return "689:audio/blip";
+      return "1286:audio/blip";
     case BuiltinSoundID::kAudioClick01:
-      return "689:audio/click01";
+      return "1286:audio/click01";
     case BuiltinSoundID::kAudioError:
-      return "689:audio/error";
+      return "1286:audio/error";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }
@@ -634,11 +642,11 @@ enum class BuiltinMeshID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinMeshID id) -> const char* {
   switch (id) {
     case BuiltinMeshID::kMeshesImage1x1:
-      return "689:meshes/image1x1";
+      return "1286:meshes/image1x1";
     case BuiltinMeshID::kMeshesVrFade:
-      return "689:meshes/vr_fade";
+      return "1286:meshes/vr_fade";
     case BuiltinMeshID::kMeshesVrOverlay:
-      return "689:meshes/vr_overlay";
+      return "1286:meshes/vr_overlay";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }
@@ -698,6 +706,15 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
   /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
+
+  /// Developer-build debugging aid for builds that run their own main
+  /// event loop (SDL and headless): go through the same deactivate +
+  /// suspend sequence a mobile app does when backgrounded, then freeze
+  /// for the given duration (main thread blocked while holding the GIL,
+  /// so Python threads stop too) before resuming. Lets
+  /// background/resume timing problems be reproduced locally. Can be
+  /// called from any thread; the suspend begins shortly after.
+  void DebugSimulateSuspend(seconds_t duration);
 
   auto app_suspended() const { return app_suspended_; }
 
@@ -960,6 +977,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
  private:
   BaseFeatureSet();
+
+  /// Stop and join our event-loop threads once shutdown completes, or
+  /// report an unclean shutdown and exit if any won't stop in time.
+  void StopEventLoopThreads_();
   void LogStartupMessage_();
   void PrintContextNonLogicThread_();
   void PrintContextForCallableLabel_(const char* label);
@@ -984,6 +1005,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool clipboard_is_supported_{};
   bool app_active_set_{};
   bool app_suspended_{};
+  /// App-time when SuspendApp() finished; UnsuspendApp() checks that
+  /// app-time didn't advance while we were suspended.
+  millisecs_t suspend_end_app_time_millisecs_{};
   bool shutdown_suppress_disallowed_{};
   bool tried_importing_plus_{};
   bool tried_importing_classic_{};

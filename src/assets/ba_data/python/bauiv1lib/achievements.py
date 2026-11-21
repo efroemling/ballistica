@@ -4,11 +4,7 @@
 
 from typing import TypedDict, override
 
-from bauiv1lib.utils import (
-    get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
-)
+from bauiv1lib.utils import apply_toolbar_scroll_fades, get_screen_margins
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
@@ -83,11 +79,12 @@ class AchievementsWindow(bui.MainWindow):
         target_width = min(self._width - 60, screensize[0] / scale)
         target_height = min(self._height - 70, screensize[1] / scale)
 
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds.
-        margin_left, margin_right, margin_bottom, margin_top = (
+        # In small ui we extend our scrollable area out into the side
+        # screen margins (space between the virtual bounds and the
+        # actual screen edges) while keeping content laid out within the
+        # virtual bounds. Our top and bottom stay at the virtual
+        # bounds', where our toolbar fades are calibrated.
+        margin_left, margin_right, _, _ = (
             get_screen_margins(scale)
             if uiscale is bui.UIScale.SMALL
             else (0.0, 0.0, 0.0, 0.0)
@@ -106,14 +103,18 @@ class AchievementsWindow(bui.MainWindow):
             scroll_height += 30
             scroll_bottom -= 3
 
+        # At medium/large, extend our scroll area's top up behind our
+        # title (a milder version of what small scale does), with a
+        # longer top fade keeping the title legible over content
+        # scrolled up there; our content gets padded by the same amount
+        # so it stays put.
+        scroll_top_extend = 0.0 if uiscale is bui.UIScale.SMALL else 40.0
+        scroll_height += scroll_top_extend
+
         # Extend the scroll area out into the screen margins (content
         # stays put; see below).
         scroll_x = self._width * 0.5 - scroll_width * 0.5 - margin_left
-        scroll_width, scroll_height, scroll_bottom = (
-            scroll_width + margin_left + margin_right,
-            scroll_height + margin_bottom + margin_top,
-            scroll_bottom - margin_bottom,
-        )
+        scroll_width += margin_left + margin_right
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -130,29 +131,6 @@ class AchievementsWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self.main_window_back
-            )
-            self._back_button = None
-        else:
-            self._back_button = bui.buttonwidget(
-                parent=self._root_widget,
-                id=f'{self.main_window_id_prefix}|back',
-                autoselect=True,
-                **_back_button_geometry(uiscale, auxiliary_style, yoffs),
-                label=(
-                    bui.SpecialChar.CLOSE
-                    if auxiliary_style
-                    else bui.SpecialChar.BACK
-                ).value,
-                button_type=None if auxiliary_style else 'backSmall',
-                on_activate_call=self.main_window_back,
-            )
-            bui.containerwidget(
-                edit=self._root_widget, cancel_button=self._back_button
-            )
-
         achievements = bui.app.classic.ach.achievements
         num_complete = len([a for a in achievements if a.complete])
 
@@ -164,38 +142,45 @@ class AchievementsWindow(bui.MainWindow):
             capture_arrows=True,
             simple_culling_v=10,
             border_opacity=0.4,
+            fading_scrollbar=True,
+            # Content fades into our backing at our top and bottom
+            # (nothing scrolls sideways, so no fades there).
+            edge_style='fade',
+            edge_fade=(0.0, 40.0, 0.0, 40.0 + scroll_top_extend),
+            # Arrows scroll us; past either end they move on to our
+            # neighbors (toolbars included, via autoselect). No
+            # selection glow (it clashes with our title overlap).
+            move_out_at_ends=True,
+            highlight=False,
         )
+
+        # (Made after our scroll area, which can reach up behind it:
+        # presses go to the last-made widget wanting them.)
+        self._back_button = self._make_back_button(
+            uiscale, auxiliary_style, yoffs
+        )
+
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
         )
-        bui.widget(edit=self._scrollwidget, autoselect=True)
-        if uiscale is bui.UIScale.SMALL:
-            bui.widget(
-                edit=self._scrollwidget,
-                left_widget=bui.get_special_widget('back_button'),
-            )
+
+        # Moving up out of our scroll area lands on our back button
+        # (the toolbar's in small ui); down finds the toolbars below
+        # (autoselect).
+        if self._back_button is None:
+            back_button = bui.get_special_widget('back_button')
+            bui.widget(edit=self._scrollwidget, left_widget=back_button)
+        else:
+            back_button = self._back_button
+            bui.widget(edit=back_button, down_widget=self._scrollwidget)
+        bui.widget(
+            edit=self._scrollwidget, autoselect=True, up_widget=back_button
+        )
 
         # With full-screen scrolling, fade content as it approaches
         # toolbars.
         if uiscale is bui.UIScale.SMALL:
-            # Note that we intentionally use the original
-            # un-margin-extended scroll geometry here; the fades were
-            # placed to coincide with toolbar elements, which don't
-            # move when we extend out into screen margins.
-            scroll_fade_top(
-                self._root_widget,
-                scroll_x + margin_left,
-                scroll_bottom + margin_bottom,
-                scroll_width - margin_left - margin_right,
-                scroll_height - margin_bottom - margin_top,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                scroll_x + margin_left,
-                scroll_bottom + margin_bottom,
-                scroll_width - margin_left - margin_right,
-                scroll_height - margin_bottom - margin_top,
-            )
+            apply_toolbar_scroll_fades(self._scrollwidget)
 
         # In small UI mode when the screen is narrow enough we need to
         # go with a smaller title to avoid it overlapping with toolbar
@@ -235,18 +220,27 @@ class AchievementsWindow(bui.MainWindow):
                 maxwidth=180,
                 color=bui.app.ui_v1.title_color,
             )
+        # Draw in front of our scroll area's fade.
+        bui.widget(edit=self._title_text, depth_range=(0.9, 1.0))
 
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._back_button
         )
 
+        # Our rows run down from our top (below any room left for the
+        # toolbar at small scale or for our extension up behind the
+        # title otherwise), with our points total last. Below that we
+        # keep enough room to clear the toolbars at small scale, but
+        # just a little otherwise.
         incr = 36
         sub_width = scroll_width - 25
-        sub_height = 85 + len(achievements) * incr + margin_bottom + margin_top
-
-        # For fullscreen scrollable, account for toolbar.
-        if uiscale is bui.UIScale.SMALL:
-            sub_height += 30
+        top_room = (30.0 if uiscale is bui.UIScale.SMALL else 0.0) + (
+            scroll_top_extend
+        )
+        total_bottom_pad = 65.0 if uiscale is bui.UIScale.SMALL else 30.0
+        sub_height = (
+            top_room + 20.0 + len(achievements) * incr + total_bottom_pad
+        )
 
         # Our scroll area is widened out into the screen margins, but
         # content should stay laid out within the virtual bounds; do
@@ -261,11 +255,7 @@ class AchievementsWindow(bui.MainWindow):
             background=False,
         )
 
-        basey = sub_height - margin_top
-
-        # For fullscreen scrollable, account for toolbar.
-        if uiscale is bui.UIScale.SMALL:
-            basey -= 30
+        basey = sub_height - top_room
 
         total_pts = 0
         for i, ach in enumerate(achievements):
@@ -417,6 +407,33 @@ class AchievementsWindow(bui.MainWindow):
             h_align='right',
             v_align='center',
         )
+
+    def _make_back_button(
+        self, uiscale: bui.UIScale, auxiliary_style: bool, yoffs: float
+    ) -> bui.Widget | None:
+        """Make our back/close button (small scale uses the toolbar's)."""
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            return None
+        btn = bui.buttonwidget(
+            parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|back',
+            autoselect=True,
+            **_back_button_geometry(uiscale, auxiliary_style, yoffs),
+            label=(
+                bui.SpecialChar.CLOSE
+                if auxiliary_style
+                else bui.SpecialChar.BACK
+            ).value,
+            button_type=None if auxiliary_style else 'backSmall',
+            on_activate_call=self.main_window_back,
+        )
+        # Draw in front of our scroll area's fade.
+        bui.widget(edit=btn, depth_range=(0.9, 1.0))
+        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+        return btn
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

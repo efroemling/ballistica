@@ -39,6 +39,14 @@ class ObjectComponent : public RenderComponent {
     reflection_ = r;
   }
 
+  /// Reflect this cube map rather than the built-in one a
+  /// ReflectionType picks (enough on its own to turn reflection on).
+  /// Null goes back to the type's.
+  void SetReflectionCubeMap(TextureAsset* t) {
+    EnsureConfiguring();
+    reflection_cube_map_ = t;
+  }
+
   void SetReflectionScale(float r, float g, float b) {
     EnsureConfiguring();
     reflection_scale_r_ = r;
@@ -139,6 +147,12 @@ class ObjectComponent : public RenderComponent {
  protected:
   void WriteConfig() override;
 
+  auto Reflects_() const -> bool {
+    return reflection_ != ReflectionType::kNone
+           || reflection_cube_map_.exists();
+  }
+  auto ReflectionCubeMap_() const -> TextureAsset*;
+
  protected:
   ReflectionType reflection_{ReflectionType::kNone};
   LightShadowType light_shadow_{LightShadowType::kObject};
@@ -172,6 +186,7 @@ class ObjectComponent : public RenderComponent {
   float reflection_scale_b_{1.0f};
   Object::Ref<TextureAsset> texture_;
   Object::Ref<TextureAsset> colorize_texture_;
+  Object::Ref<TextureAsset> reflection_cube_map_;
 };
 
 }  // namespace ballistica::base

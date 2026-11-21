@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicuiassets.261007`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicuiassets.261118a`` (bauiv1).
 
 Classic-specific ui text -- and any small art -- that both the game's own ui and
 server-rendered pages (store, inventory, profile editor, chests) show: the
@@ -10,7 +10,7 @@ so it stays small: strings, plus at most a little art.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 455
+# ba_meta require asset-package 1257
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -22,11 +22,29 @@ from bacommon.assetpackage import ApverNum
 
 from babase import LangStrDir
 
-# a-0.baclassicuiassets.261007
-_ASSET_PACKAGE = ApverNum(455)
+# a-0.baclassicuiassets.261118a
+_ASSET_PACKAGE = ApverNum(1257)
 
 if TYPE_CHECKING:
     from babase import LangStr
+
+    class StringsAccountGroup:
+        """
+        ::
+
+            Strings for pages about an account (the account information page
+            other pages link to).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Placeholder text on the account information page while it is
+        #:     being built.
+        #:
+        #:     English: "Under Construction"
+        under_construction: LangStr
 
     class StringsEconomyGroup:
         """
@@ -120,7 +138,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for the profile character.
+        #:     Field label for the profile character, in small text beside its
+        #:     control.
         #:
         #:     English: "character"
         character: LangStr
@@ -131,6 +150,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Character"
         character_label: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after saving a previewed character's colors.
+        #:
+        #:     English: "Character updated."
+        character_updated: LangStr
 
         def checking_availability(self, *, name: str | LangStr) -> LangStr:
             """
@@ -157,7 +183,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile color.
+        #:     Field label for the profile color, in small text beside its
+        #:     control.
         #:
         #:     English: "color"
         color: LangStr
@@ -218,6 +245,16 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when starting a global-profile upgrade while the profile's
+        #:     name is longer than a global profile's name may be (a starter
+        #:     profile's name can be).
+        #:
+        #:     English: "This name is too long for a global profile. Shorten it
+        #:     and save first."
+        global_name_too_long: LangStr
+
+        #: ::
+        #:
         #:     Parenthetical marker labeling a global profile.
         #:
         #:     English: "(global profile)"
@@ -233,7 +270,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile highlight color.
+        #:     Field label for the profile highlight color, in small text beside
+        #:     its control.
         #:
         #:     English: "highlight"
         highlight: LangStr
@@ -248,7 +286,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Lowercase field label for profile icon.
+        #:     Field label for the profile icon, in small text beside its
+        #:     control.
         #:
         #:     English: "icon"
         icon: LangStr
@@ -303,6 +342,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error when saving a profile whose name has nothing visible in it.
+        #:
+        #:     English: "Invalid name."
+        name_invalid: LangStr
+
+        #: ::
+        #:
         #:     Error when saving a profile whose name contains one of the game's
         #:     icon characters.
         #:
@@ -332,10 +378,33 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error page shown when a character preview has expired or is
+        #:     someone else's (deliberately not told apart).
+        #:
+        #:     English: "This preview has ended. Press play on the character's
+        #:     page to start another."
+        preview_ended: LangStr
+
+        #: ::
+        #:
         #:     Error when a profile name is already taken.
         #:
         #:     English: "A profile with that name already exists."
         profile_already_exists: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after deleting a profile.
+        #:
+        #:     English: "Profile deleted."
+        profile_deleted: LangStr
+
+        #: ::
+        #:
+        #:     Brief confirmation after saving a profile.
+        #:
+        #:     English: "Profile saved."
+        profile_saved: LangStr
 
         #: ::
         #:
@@ -453,7 +522,7 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Single-line parenthetical hint; keep the parentheses.
+        #:     Single-line parenthetical hint under the profile list heading.
         #:
         #:     English: "(custom player names and appearances for this account)"
         explanation: LangStr
@@ -535,16 +604,18 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        account: StringsAccountGroup
         economy: StringsEconomyGroup
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
 
-    #: The ``strings`` group - 59 strings (``economy``, ``profile``,
-    #: ``profiles``, and 56 more). Full list in source.
+    #: The ``strings`` group - 66 strings (``account``, ``economy``,
+    #: ``profile``, ``profiles``, and 62 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
     'strings': {
+        'account': {'under_construction': ()},
         'economy': {
             'received_tickets': ('count',),
             'watch_an_ad': (),
@@ -558,6 +629,7 @@ _TREE = {
             'cant_edit_here': (),
             'character': (),
             'character_label': (),
+            'character_updated': (),
             'checking_availability': ('name',),
             'choose_character': (),
             'choose_icon': (),
@@ -569,6 +641,7 @@ _TREE = {
             'delete_this_profile': (),
             'get_more_characters': (),
             'get_more_icons': (),
+            'global_name_too_long': (),
             'global_profile': (),
             'global_profile_info': (),
             'highlight': (),
@@ -580,11 +653,15 @@ _TREE = {
             'local_profile_info': (),
             'name_description': (),
             'name_edge_underscore': (),
+            'name_invalid': (),
             'name_no_icons': (),
             'name_not_empty': (),
             'not_enough_tickets': (),
             'nothing_selected': (),
+            'preview_ended': (),
             'profile_already_exists': (),
+            'profile_deleted': (),
+            'profile_saved': (),
             'profile_upgraded': (),
             'purchasing': (),
             'random_name': (),

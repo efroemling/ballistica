@@ -94,12 +94,14 @@ def test_page_display_items(
         page=dui2.Page(
             title=strs.items.display_items.spec,
             rows=[
+                dui2.TitleRow(strs.items.display_item_tests.spec),
+                dui2.SubtitleRow(
+                    LangStrSpecValue.literal(
+                        'top=FULL, center=COMPACT, bottom=ICON'
+                    )
+                ),
                 dui2.ButtonRow(
                     debug=debug,
-                    title=strs.items.display_item_tests.spec,
-                    subtitle=LangStrSpecValue.literal(
-                        'top=FULL, center=COMPACT, bottom=ICON'
-                    ),
                     buttons=[
                         _make_test_button(
                             1.0,

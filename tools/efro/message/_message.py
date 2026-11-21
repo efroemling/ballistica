@@ -105,7 +105,9 @@ class ErrorSysResponse(SysResponse):
         Be aware that this data does not get serialized and only
         exists on the local object.
         """
-        setattr(self, '_sr_local_exception', exc)
+        # Deliberately not a dataclass field, which would get
+        # serialized; it lives only on this local object.
+        self.__dict__['_sr_local_exception'] = exc
 
     def get_local_exception(self) -> Exception | None:
         """Fetch a local attached exception."""
@@ -124,7 +126,7 @@ class ErrorSysResponse(SysResponse):
         holding on to the exception longer than needed would leave
         cleanup to the cyclic garbage collector.
         """
-        setattr(self, '_sr_local_exception', None)
+        self.__dict__['_sr_local_exception'] = None
 
     class ErrorType(Enum):
         """Type of error that occurred while sending a message."""

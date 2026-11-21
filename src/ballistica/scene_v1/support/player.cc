@@ -8,6 +8,7 @@
 
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/name_def.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -469,7 +470,8 @@ void Player::SetName(const std::string& name, const std::string& full_name,
   HostSession* host_session = GetHostSession();
   BA_PRECONDITION(host_session);
   name_is_real_ = is_real;
-  name_ = host_session->GetUnusedPlayerName(this, name);
+  name_number_ = host_session->GetUnusedPlayerNameNumber(this, name);
+  name_ = base::NumberNameText(name, name_number_);
   full_name_ = full_name;
 
   // If we're already in the game and our name is changing, we need to update

@@ -345,7 +345,7 @@ class AccountViewerWindow(PopupWindow):
                         h_align='center',
                         v_align='center',
                         scale=0.9,
-                        color=bui.safecolor(tint_color, 0.7),
+                        color=bui.safecolor(tint_color),
                         shadow=1.0,
                         text=data['profileDisplayString'],
                         maxwidth=sub_width * maxwidth_scale * 0.75,

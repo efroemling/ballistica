@@ -337,6 +337,7 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
           ShadingType::kObjectLightShadowTransparent,
           ShadingType::kObjectLightShadowFacingRatioTransparent,
           ShadingType::kObjectReflectTransparent,
+          ShadingType::kObjectReflectLightShadowTransparent,
           ShadingType::kObjectReflectAddTransparent,
           ShadingType::kSimpleTextureModulatedTransparent,
           ShadingType::kSimpleTextureModulatedTransFlatness,
@@ -347,6 +348,8 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
           ShadingType::kSimpleTexModulatedTransShadowFlatness,
           ShadingType::kSimpleTextureModulatedTransparentGlow,
           ShadingType::kSimpleTextureModulatedTransparentGlowMaskUV2,
+          ShadingType::kSimpleTextureModulatedTransparentUV2Fade,
+          ShadingType::kSimpleTextureModulatedTransparentLayeredMask,
           ShadingType::kSmoke,
           ShadingType::kSprite};
 

@@ -14,9 +14,9 @@ from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
 from bauiv1 import _uiv1assets
 from bauiv1lib.utils import (
+    TOOLBAR_SCROLL_FADE,
+    apply_toolbar_scroll_fades,
     get_screen_margins,
-    scroll_fade_bottom,
-    scroll_fade_top,
 )
 from bauiv1lib.league import league_display_name
 from bauiv1lib.popup import PopupMenu
@@ -104,16 +104,12 @@ class LeagueRankWindow(bui.MainWindow):
             self._scroll_height += 53
             scroll_bottom -= 1
 
-        # In small ui we extend our scrollable area out into the screen
-        # margins (space between the virtual bounds and the actual
-        # screen edges) while keeping content laid out within the
-        # virtual bounds.
-        (
-            self._margin_left,
-            self._margin_right,
-            self._margin_bottom,
-            self._margin_top,
-        ) = (
+        # In small ui we extend our scrollable area out into the side
+        # screen margins (space between the virtual bounds and the
+        # actual screen edges) while keeping content laid out within the
+        # virtual bounds. Our top and bottom stay at the virtual
+        # bounds', where our toolbar fades are calibrated.
+        self._margin_left, self._margin_right, _, _ = (
             get_screen_margins(scale)
             if uiscale is bui.UIScale.SMALL
             else (0.0, 0.0, 0.0, 0.0)
@@ -175,42 +171,29 @@ class LeagueRankWindow(bui.MainWindow):
             highlight=False,
             size=(
                 self._scroll_width + self._margin_left + self._margin_right,
-                self._scroll_height + self._margin_bottom + self._margin_top,
+                self._scroll_height,
             ),
             position=(
                 self._width * 0.5
                 - self._scroll_width * 0.5
                 - self._margin_left,
-                scroll_bottom - self._margin_bottom,
+                scroll_bottom,
             ),
             center_small_content=True,
             center_small_content_horizontally=True,
             # Outside small ui our content always fits; no outline.
             border_opacity=0.4 if uiscale is bui.UIScale.SMALL else 0.0,
+            fading_scrollbar=True,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
         # With full-screen scrolling, fade content as it approaches
-        # toolbars. Note that we intentionally use the original
-        # un-margin-extended scroll geometry here; the fades were
-        # placed to coincide with toolbar elements, which don't move
-        # when we extend out into screen margins.
+        # toolbars (only half as far along the top, as our old blotches
+        # did there).
         if uiscale is bui.UIScale.SMALL:
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-                yscale=0.5,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
+            apply_toolbar_scroll_fades(
+                self._scrollwidget, top_fade=0.5 * TOOLBAR_SCROLL_FADE
             )
 
         self._title_text = bui.textwidget(
@@ -237,12 +220,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._subcontainer: bui.Widget | None = None
         self._subcontainerwidth = 1024.0
 
-        # Cover any screen margins our scroll area extends into;
-        # content itself stays within the virtual bounds (the layout
-        # in _refresh starts margin_top down from our top).
-        self._subcontainerheight = (
-            573.0 + self._margin_bottom + self._margin_top
-        )
+        self._subcontainerheight = 573.0
 
         # For fullscreen scrollable, account for toolbar. Elsewhere, drop
         # the empty space below our lowest content (the 'More...'
@@ -496,7 +474,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
         w_parent = self._subcontainer
-        v = self._subcontainerheight - self._margin_top - 20
+        v = self._subcontainerheight - 20
 
         v -= 0
 
@@ -1045,7 +1023,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._season = data['s'] if data is not None else None
 
-        v = self._subcontainerheight - self._margin_top - 20
+        v = self._subcontainerheight - 20
         # For fullscreen scrollable, account for toolbar.
         uiscale = bui.app.ui_v1.uiscale
         if uiscale is bui.UIScale.SMALL:

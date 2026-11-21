@@ -940,9 +940,12 @@ update-check: env-pre-update
 #                                                                              #
 ################################################################################
 
-# Bump any pinned version numbers to latest.
+# Bump any pinned version numbers to latest. (The flatpak build env is
+# derived from the main lockfile and the uv pin, so it follows them.)
 upgrade: env
 	@$(MAKE) venv-upgrade
+	@$(MAKE) flatpak-uv-upgrade
+	@$(MAKE) flatpak-build-env
 	@$(MAKE) python-site-packages
 	@$(MAKE) assetpins-latest
 	@$(PCOMMANDBATCH) echo GRN Upgrade-Project: SUCCESS!
@@ -1122,40 +1125,49 @@ test-ex-verbose: py_check_prepass
 # test-ex-splitN shards. Regenerate with test-ex-split-durations.
 TEST_EX_DURATIONS_PATH = pconfig/test_ex_durations
 
+# Shared pytest-split args for the test-ex-splitN shards. We use
+# least_duration (deal the slowest tests out across shards first)
+# rather than the default duration_based_chunks, which cuts the
+# collection order into contiguous slices and so piles neighboring
+# slow tests (e.g. app-run tests in test_base) into one shard.
+TEST_EX_SPLIT_ARGS = --splits 4 --splitting-algorithm least_duration \
+  --durations-path $(TEST_EX_DURATIONS_PATH)
+
 # Run a slice of the extended tests (pytest-split shard 1..4 of 4).
 # Lets multiple shards run concurrently across CI executors.
 test-ex-split1: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 1/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 1 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 1 $(TEST_TARGET)
 
 test-ex-split2: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 2/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 2 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 2 $(TEST_TARGET)
 
 test-ex-split3: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 3/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 3 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 3 $(TEST_TARGET)
 
 test-ex-split4: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 4/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 4 --group 4 \
-      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v $(TEST_EX_SPLIT_ARGS) --group 4 $(TEST_TARGET)
 
 # Run the full extended test suite and record per-test durations
 # at $(TEST_EX_DURATIONS_PATH) so future test-ex-splitN shards
-# can balance by historical runtime instead of test count.
+# can balance by historical runtime instead of test count. Starts
+# from scratch (--clean-durations) so deleted tests drop out, then
+# stamps the recording date; update-check fails once that stamp is
+# a few months old (see batools.testdurations). Run unsandboxed;
+# sandbox-failed tests record bogus (too-fast) times.
 test-ex-split-durations: py_check_prepass
 	@$(PCOMMANDBATCH) echo BLU Running extended tests \(recording durations\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --store-durations \
+	@$(PCOMMAND) pytest -v --store-durations --clean-durations \
       --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+	@$(PCOMMAND) stamp_test_durations
 
 # Run tests with any caching disabled.
 test-full: test
@@ -1553,6 +1565,19 @@ docker-clean:
 
 ################################################################################
 #                                                                              #
+#                                Linux Portable                                #
+#                                                                              #
+################################################################################
+
+# Self-contained Linux builds for Steam and the downloads page, built in
+# Valve's Steam Runtime SDK container (sniper on x86_64, Steam Runtime 4
+# on arm64) instead of against the build host's libraries. See
+# docs/initiatives/linux-portable-builds.md. (The cmake side,
+# -DPORTABLE=ON, is public; these targets lean on our build hosts.)
+
+
+################################################################################
+#                                                                              #
 #                                   Flatpak                                    #
 #                                                                              #
 ################################################################################
@@ -1594,11 +1619,21 @@ $(FLATPAK_ICON):
 flatpak-prebuilt-inputs: flatpak-prefetch
 	$(PCOMMAND) flatpak_prebuilt_inputs
 
+# Flatpak builds use Flathub's own packaged flatpak-builder
+# (org.flatpak.Builder, installed by flatpak-deps), not the distro's.
+# It bundles a current flatpak, which the manifest's conditional
+# finish-args (--device-if) need (1.17+; Ubuntu 26.04 ships 1.16), and
+# it's the tooling Flathub itself builds with. It installs dependencies
+# through flatpak's D-Bus services, so it needs a session bus; where
+# there is none (CI runners), dbus-run-session starts one for it.
+FLATPAK_BUILDER ?= $(if $(DBUS_SESSION_BUS_ADDRESS),,dbus-run-session) \
+ flatpak run org.flatpak.Builder
+
 # One-time setup for flatpak-linux, run by hand (or as its own CI step)
-# since it changes your user flatpak installation: installs the SDK,
-# runtime and extensions the manifest names, from the flathub remote,
-# so their versions live only in the manifest. Adding that remote is
-# left to you.
+# since it changes your user flatpak installation: installs (or updates)
+# org.flatpak.Builder plus the SDK, runtime and extensions the manifest
+# names, from the flathub remote, so their versions live only in the
+# manifest. Adding that remote is left to you.
 flatpak-deps:
 	@flatpak remote-list --user --columns=name | grep -qx flathub || { \
  echo "Error: no 'flathub' flatpak remote for your user. Add it with:"; \
@@ -1606,16 +1641,22 @@ flatpak-deps:
  "https://flathub.org/repo/flathub.flatpakrepo"; \
  echo "then re-run 'make flatpak-deps'."; \
  exit 1; }
-	flatpak-builder --user --install-deps-from=flathub --install-deps-only \
+	flatpak install --user --noninteractive --or-update flathub \
+	org.flatpak.Builder
+	$(FLATPAK_BUILDER) --user --install-deps-from=flathub --install-deps-only \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
 	pconfig/flatpak/net.froemling.bombsquad.yml
 
 # Needs the SDK etc. installed first; see flatpak-deps.
+# --disable-rofiles-fuse: the sandboxed org.flatpak.Builder can't start
+# rofiles-fuse on GitHub's x86_64 runners ("fusermount: file descriptor
+# 4 is not a socket"); it's only a guard against build commands
+# modifying cached files, so builds don't need it.
 flatpak-linux: flatpak-prefetch
 	mkdir build/flatpak -p
-	flatpak-builder --repo=./.cache/flatpak/repo \
-	--force-clean --keep-build-dirs \
+	$(FLATPAK_BUILDER) --repo=./.cache/flatpak/repo \
+	--force-clean --keep-build-dirs --disable-rofiles-fuse \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
 	pconfig/flatpak/net.froemling.bombsquad.yml
@@ -1638,6 +1679,11 @@ flatpak-build-env: env
  -c pconfig/requirements_lock.txt \
  pconfig/requirements_build.txt -o pconfig/requirements_build_lock.txt
 	$(PCOMMAND) generate_flatpak_build_env
+
+# Pin the latest uv release for flatpak builds (pconfig/flatpak/uv.json).
+# Part of 'make upgrade'; run flatpak-build-env afterward to use it.
+flatpak-uv-upgrade: env
+	$(PCOMMAND) flatpak_uv_upgrade
 
 flatpak-clean:
 	rm build/flatpak -rf

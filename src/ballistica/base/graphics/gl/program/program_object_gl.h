@@ -67,6 +67,11 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       color_add_location_ = glGetUniformLocation(program(), "colorAdd");
       assert(color_add_location_ != -1);
     }
+    if (flags & SHD_OBJ_TRANSPARENT) {
+      add_premultiplied_location_ =
+          glGetUniformLocation(program(), "addPremultiplied");
+      assert(add_premultiplied_location_ != -1);
+    }
     if (flags & SHD_COLORIZE) {
       SetTextureUnit("colorizeTex", kColorizeTexUnit);
       colorize_color_location_ =
@@ -112,6 +117,18 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       add_g_ = g;
       add_b_ = b;
       glUniform4f(color_add_location_, add_r_, add_g_, add_b_, 0.0f);
+    }
+  }
+
+  /// Transparent programs: whether this draw's color and texture are
+  /// premultiplied (1) or straight (0), so the terms added after the
+  /// base color scale with its alpha too (see GetFragmentCode).
+  void SetAddPremultiplied(float val) {
+    assert(flags_ & SHD_OBJ_TRANSPARENT);
+    assert(IsBound());
+    if (val != add_premultiplied_) {
+      add_premultiplied_ = val;
+      glUniform1f(add_premultiplied_location_, val);
     }
   }
 
@@ -291,6 +308,11 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
     if (flags & SHD_ADD) {
       s += "uniform " BA_GLSL_LOWP "vec4 colorAdd;\n";
     }
+    if (flags & SHD_OBJ_TRANSPARENT) {
+      // 1.0 when this draw's color and texture are premultiplied (see
+      // SetAddPremultiplied), else 0.0.
+      s += "uniform " BA_GLSL_LOWP "float addPremultiplied;\n";
+    }
     if (flags & SHD_REFLECTION) {
       s += "uniform " BA_GLSL_LOWP
            "samplerCube reflectionTex;\n" BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP
@@ -326,8 +348,24 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       s += "   " BA_GLSL_LOWP "float colorizeB = colorizeVal.g;\n";
       s += "   " BA_GLSL_LOWP "float colorizeC = colorizeVal.b;\n";
     }
-    s += "   " BA_GLSL_FRAGCOLOR " = (color * " BA_GLSL_TEXTURE2D
-         "(colorTex, vUV)";
+    // What the terms added after the base color (lighting offset,
+    // reflection, add color, vignette) scale by. Transparent draws
+    // blending premultiplied have a base color already scaled by its
+    // alpha, so those terms must be too (it's the straight result,
+    // premultiplied); straight-blended ones get alpha applied at blend
+    // time, as do opaque ones (where it's 1).
+    std::string add_k;
+    if (flags & SHD_OBJ_TRANSPARENT) {
+      s += "   " BA_GLSL_MEDIUMP "vec4 texel = " BA_GLSL_TEXTURE2D
+           "(colorTex, vUV);\n";
+      s += "   " BA_GLSL_MEDIUMP
+           "float addK = mix(1.0, color.a * texel.a, addPremultiplied);\n";
+      s += "   " BA_GLSL_FRAGCOLOR " = (color * texel";
+      add_k = " * addK";
+    } else {
+      s += "   " BA_GLSL_FRAGCOLOR " = (color * " BA_GLSL_TEXTURE2D
+           "(colorTex, vUV)";
+    }
     if (flags & SHD_FACING_RATIO) {
       // Darker edge-on, lighter face-on. Texture is normally the default
       // white one here so this is the whole base color.
@@ -344,19 +382,25 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
     if (flags & SHD_LIGHT_SHADOW) {
       if (flags & SHD_OBJ_TRANSPARENT) {
         s += " * vec4((2.0 * lightShadVal).rgb, 1) + "
-             "vec4((lightShadVal - 0.5).rgb,0)";
+             "vec4((lightShadVal - 0.5).rgb"
+             + add_k + ",0)";
       } else {
         s += " * (2.0 * lightShadVal) + (lightShadVal - 0.5)";
       }
     }
 
     // add glow and reflection
-    if (flags & SHD_REFLECTION)
-      s += " + (reflectMult*" BA_GLSL_TEXTURECUBE "(reflectionTex, vReflect))";
-    if (flags & SHD_ADD) s += " + colorAdd";
+    if (flags & SHD_REFLECTION) {
+      s += " + (reflectMult*" BA_GLSL_TEXTURECUBE "(reflectionTex, vReflect))"
+           + add_k;
+    }
+    if (flags & SHD_ADD) {
+      s += " + colorAdd" + add_k;
+    }
 
     // subtract vignette
-    s += " - vec4(" BA_GLSL_TEXTURE2DPROJ "(vignetteTex, vScreenCoord).rgb,0)";
+    s += " - vec4(" BA_GLSL_TEXTURE2DPROJ "(vignetteTex, vScreenCoord).rgb"
+         + add_k + ",0)";
 
     s += ";\n";
     // s +=  BA_GLSL_FRAGCOLOR " = 0.999 * " BA_GLSL_TEXTURE2DPROJ
@@ -378,6 +422,9 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
   float colorize3_r_, colorize3_g_, colorize3_b_, colorize3_a_;
   float add_r_, add_g_, add_b_;
   float r_mult_r_, r_mult_g_, r_mult_b_, r_mult_a_;
+  // (GL zero-initializes uniforms; this matches.)
+  float add_premultiplied_{};
+  GLint add_premultiplied_location_{};
   GLint color_location_;
   GLint colorize_color_location_;
   GLint colorize2_color_location_;

@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_SHARED_FOUNDATION_FATAL_ERROR_H_
 #define BALLISTICA_SHARED_FOUNDATION_FATAL_ERROR_H_
 
+#include <atomic>
+#include <ctime>
 #include <string>
 
 namespace ballistica {
@@ -32,8 +34,30 @@ class FatalErrorHandling {
   static auto HandleFatalError(bool clean_exit,
                                bool in_top_level_exception_handler) -> bool;
 
+  /// Report a shutdown that could not complete cleanly, then exit.
+  ///
+  /// For when the app is not dying of an error but still can't shut
+  /// down cleanly (a thread that won't stop, for instance) and must get
+  /// out without finalizing. The report goes out like a fatal error's --
+  /// live, or saved for the next launch if that fails -- with the
+  /// message prefixed ``UNCLEAN-SHUTDOWN:``, but no dialog is shown.
+  /// Then, like fatal errors, unmodified blessed builds abort() (so the
+  /// platform files a crash report, which on most platforms includes
+  /// every thread's stack -- the stuck thread's included) and other
+  /// builds exit with code 1. Exits via _Exit()/abort() rather than
+  /// exit() since other threads may still be running. Never returns.
+  [[noreturn]] static void DoUncleanShutdown(const std::string& message);
+
  private:
   static void DoBlockingFatalErrorDialog(const std::string& message);
+
+  /// Wait (up to wait_seconds after start_time) for a report started
+  /// with SendFatalErrorReport() to finish; if it did not succeed, save
+  /// it for the next launch to send.
+  static void FinishReportOrSaveForLater_(const std::atomic<int>& result,
+                                          time_t start_time, int wait_seconds,
+                                          const std::string& message,
+                                          const std::string& stack_trace);
   static bool reported_;
 };
 

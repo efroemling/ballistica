@@ -84,6 +84,13 @@ class Purchase(StoreRoute, path='/p'):
     purchase_id: Annotated[str, IOAttrs('i')]
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
+    @override
+    @classmethod
+    def get_window_layout(cls) -> dui2.WindowLayout:
+        # A short confirmation page (its confirm/result pages replace
+        # into the same window).
+        return dui2.WindowLayout.WIDE
+
 
 @ioprepped
 @dataclass
@@ -190,8 +197,8 @@ class ProfileCharacter(StoreRoute, path='/profile/character'):
     @override
     @classmethod
     def get_window_layout(cls) -> dui2.WindowLayout:
-        # A long row of character buttons; show as many as we can.
-        return dui2.WindowLayout.WIDER
+        # A grid of character buttons.
+        return dui2.WindowLayout.WIDE_TALL
 
 
 @ioprepped
@@ -207,8 +214,8 @@ class ProfileIcon(StoreRoute, path='/profile/icon'):
     @override
     @classmethod
     def get_window_layout(cls) -> dui2.WindowLayout:
-        # A long row of icon buttons; show as many as we can.
-        return dui2.WindowLayout.WIDER
+        # A grid of icon buttons.
+        return dui2.WindowLayout.WIDE_TALL
 
 
 @ioprepped
@@ -359,7 +366,34 @@ class ShowCloudProfiles(InventoryLocalAction, name='show_cloud_profiles'):
     """Switch the inventory to cloud profiles."""
 
 
+#: The first build that knows :class:`ShowStore`; older ones show an
+#: error for it, so don't send it to them.
+SHOW_STORE_BUILD = 23074
+
+
+@ioprepped
+@dataclass
+class ShowStore(InventoryLocalAction, name='show_store'):
+    """Open the store at its top level, on top of the current window.
+
+    The store is a different doc-ui domain than the inventory, so
+    inventory pages can't simply browse to it; backing out of the
+    store returns to the page it was opened from. Builds older than
+    :data:`SHOW_STORE_BUILD` don't know this action.
+    """
+
+    @override
+    @classmethod
+    def get_press_sound(cls) -> PressSound:
+        return PressSound.SWISH
+
+
 # All inventory local-actions.
 AnyInventoryLocalAction = (
-    NewProfile | EditProfile | SpawnBot | ShowLegacyProfiles | ShowCloudProfiles
+    NewProfile
+    | EditProfile
+    | SpawnBot
+    | ShowLegacyProfiles
+    | ShowCloudProfiles
+    | ShowStore
 )

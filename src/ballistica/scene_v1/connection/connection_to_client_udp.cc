@@ -6,11 +6,11 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 
 namespace ballistica::scene_v1 {
@@ -23,7 +23,7 @@ ConnectionToClientUDP::ConnectionToClientUDP(const SockAddr& addr,
       addr_(new SockAddr(addr)),
       client_instance_uuid_(std::move(client_name)),
       last_client_response_time_millisecs_(
-          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)),
+          core::Platform::TimeMonotonicMillisecs()),
       did_die_(false) {}
 
 ConnectionToClientUDP::~ConnectionToClientUDP() {
@@ -52,10 +52,13 @@ void ConnectionToClientUDP::SendGamePacketCompressed(
 
 void ConnectionToClientUDP::Update() {
   ConnectionToClient::Update();
-  auto current_time_millisecs =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+  // Real (monotonic) time, not app/display time: those pause while we're
+  // suspended (backgrounded) but the client's clock doesn't, so after a
+  // long suspend this drops connections the client has already given up
+  // on.
+  auto current_time_millisecs = core::Platform::TimeMonotonicMillisecs();
 
-  // If its been long enough since we've heard anything from the host,
+  // If its been long enough since we've heard anything from the client,
   // error.
   if (current_time_millisecs - last_client_response_time_millisecs_
       > (can_communicate() ? 30000u : 10000u)) {
@@ -68,9 +71,10 @@ void ConnectionToClientUDP::Update() {
 }
 void ConnectionToClientUDP::HandleGamePacket(
     const std::vector<uint8_t>& buffer) {
-  // keep track of when we last heard from the host for disconnect purposes
+  // Keep track of when we last heard from the client for disconnect
+  // purposes.
   last_client_response_time_millisecs_ =
-      static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+      core::Platform::TimeMonotonicMillisecs();
   ConnectionToClient::HandleGamePacket(buffer);
 }
 

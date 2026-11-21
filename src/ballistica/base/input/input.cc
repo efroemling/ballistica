@@ -1699,8 +1699,6 @@ void Input::UpdateGyro(microsecs_t time_microsecs,
   assert(g_base->InLogicThread());
   Vector3f tilt = gyro_vals_;
 
-  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
-
   // Guard against bad sensor data (and historically against torn reads from
   // a cross-thread write; samples now arrive on the logic thread via
   // PushGyroEvent, but the sanitize is cheap insurance against wonky gyros).
@@ -1714,9 +1712,10 @@ void Input::UpdateGyro(microsecs_t time_microsecs,
     i = std::min(100.0f, std::max(-100.0f, i));
   }
 
-  // Our math was calibrated for 60hz (16ms per frame);
-  // adjust for other framerates...
-  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
+  // Our math was calibrated for 60hz (16ms per frame); adjust for other
+  // framerates (from microseconds, so high framerates aren't quantized
+  // to whole milliseconds).
+  const float timescale = static_cast<float>(elapsed_microsecs) / 16000.0f;
 
   // If we've recently been told to suppress the gyro, zero these.
   // (prevents hitches when being restored, etc)
@@ -1730,11 +1729,72 @@ void Input::UpdateGyro(microsecs_t time_microsecs,
       tilt_smoothing * tilt_smoothed_ + (1.0f - tilt_smoothing) * tilt;
 
   tilt_vel_ = tilt_smoothed_ * 3.0f;
-  tilt_pos_ += tilt_vel_ * timescale;
 
-  // Technically this will behave slightly differently at different time
-  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
-  tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
+  // Integrate, but soften movement away from center past a point so
+  // sustained turns (spinning in a chair, say) can't wind tilt up without
+  // bound: outward motion scales down smoothly from full at kSoftStart to
+  // nothing at kHardLimit, while motion back toward center is untouched.
+  // At 60hz, 1 radian of device turn integrates to about 190 units, so
+  // these are roughly 30 and 60 degrees.
+  {
+    constexpr float kSoftStart{100.0f};
+    constexpr float kHardLimit{200.0f};
+    for (int i = 0; i < 3; ++i) {
+      const float pos = tilt_pos_.v[i];
+      const float delta = tilt_vel_.v[i] * timescale;
+      if (delta * pos <= 0.0f) {
+        tilt_pos_.v[i] = pos + delta;
+        continue;
+      }
+      const float t = std::clamp(
+          (std::abs(pos) - kSoftStart) / (kHardLimit - kSoftStart), 0.0f, 1.0f);
+      const float scale = 1.0f - t * t * (3.0f - 2.0f * t);
+      const float moved = std::abs(pos + delta * scale);
+      // Never let one big step carry it past the limit.
+      const float limited =
+          std::min(moved, std::max(std::abs(pos), kHardLimit));
+      tilt_pos_.v[i] = std::copysign(limited, pos);
+    }
+  }
+
+  // Only creep back toward neutral once the device has been at rest for a
+  // while, so a held lean stays put while it's being moved. Rest is when
+  // the rotation rate averaged over the last second or so is tiny; motion
+  // is the rate over the last tenth of a second passing a bar a bit
+  // higher, so even a small turn stops the creep quickly. Rates are in
+  // radians per second.
+  {
+    constexpr float kSlowWindow{1.0f};     // Seconds averaged for rest.
+    constexpr float kFastWindow{0.1f};     // Seconds averaged for motion.
+    constexpr float kRestBelow{0.05f};     // Long average below this: rest.
+    constexpr float kMotionAbove{0.08f};   // Short average above: moving.
+    constexpr float kCreepEaseIn{0.5f};    // Seconds to ease creep up.
+    constexpr float kCreepEaseOut{0.05f};  // Seconds to ease creep off.
+    const float seconds =
+        std::min(0.25f, static_cast<float>(elapsed_microsecs) / 1000000.0f);
+    const float rate = tilt.Length();
+    gyro_motion_slow_ +=
+        (rate - gyro_motion_slow_) * (1.0f - expf(-seconds / kSlowWindow));
+    gyro_motion_fast_ +=
+        (rate - gyro_motion_fast_) * (1.0f - expf(-seconds / kFastWindow));
+    if (gyro_at_rest_) {
+      if (gyro_motion_fast_ > kMotionAbove) {
+        gyro_at_rest_ = false;
+      }
+    } else if (gyro_motion_slow_ < kRestBelow) {
+      gyro_at_rest_ = true;
+    }
+    const float creep_target = gyro_at_rest_ ? 1.0f : 0.0f;
+    gyro_creep_ =
+        creep_target
+        + (gyro_creep_ - creep_target)
+              * expf(-seconds / (gyro_at_rest_ ? kCreepEaseIn : kCreepEaseOut));
+  }
+
+  // Leak back toward neutral: 1% per 60hz frame at full creep, compounded
+  // exactly for however long this frame was, so it eases back the same at
+  // any framerate.
+  tilt_pos_ *= powf(0.99f, timescale * gyro_creep_);
 
   // Some gyros seem wonky and either give us crazy big values or consistently
   // offset ones. Let's keep a running tally of magnitude that slowly drops

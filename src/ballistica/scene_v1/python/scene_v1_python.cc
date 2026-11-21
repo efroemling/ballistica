@@ -1337,6 +1337,34 @@ void SceneV1Python::HandleLocalChatMessage(const std::string& message) {
   objs().Get(ObjID::kHandleLocalChatMessageCall).Call(args);
 }
 
+void SceneV1Python::HandleHostUIMessageFromHost(const std::string& message) {
+  base::ScopedSetContext ssc(nullptr);
+
+  // Straight off the network; keep malformed text out of Python.
+  if (!Utils::IsValidUTF8(message)) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Ignoring host-ui message with invalid UTF8.");
+    return;
+  }
+  PythonRef args(Py_BuildValue("(s)", message.c_str()), PythonRef::kSteal);
+  objs().Get(ObjID::kHostUIMessageFromHostCall).Call(args);
+}
+
+void SceneV1Python::HandleHostUIMessageFromClient(const std::string& message,
+                                                  int client_id) {
+  base::ScopedSetContext ssc(nullptr);
+
+  // Straight off the network; keep malformed text out of Python.
+  if (!Utils::IsValidUTF8(message)) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Ignoring host-ui message with invalid UTF8.");
+    return;
+  }
+  PythonRef args(Py_BuildValue("(si)", message.c_str(), client_id),
+                 PythonRef::kSteal);
+  objs().Get(ObjID::kHostUIMessageFromClientCall).Call(args);
+}
+
 // Put together a node message with all args on the provided tuple (starting
 // with arg_offset) returns false on failure, true on success.
 void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,

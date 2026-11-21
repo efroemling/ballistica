@@ -4,6 +4,7 @@
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <functional>
 #include <iterator>
 #include <optional>
@@ -217,7 +218,34 @@ void AppAdapterApple::TerminateApp() {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::terminateApp();
 #else
-  AppAdapter::TerminateApp();
+  // iOS/tvOS apps never quit themselves (iPad's quit is a soft quit
+  // that only closes the window), so a completed shutdown means
+  // something outside asked the process to end -- a SIGTERM from the
+  // OS or a debugger/devicectl. Our shutdown work is done, so just
+  // exit, as NSApp.terminate does on macOS. (This used to hit the base
+  // class's 'unimplemented' fatal error.)
+  exit(0);
+#endif
+}
+
+auto AppAdapterApple::CanSoftQuit() -> bool {
+  // On iPad a soft quit closes our window, which is a standard action
+  // there (it is what the system window controls' close button does).
+  // iPhone and tvOS have no window concept and apps there must never quit
+  // themselves, so nothing for them.
+#if BA_PLATFORM_IOS
+  return BallisticaKit::UIKitFromCpp::isTablet();
+#else
+  return false;
+#endif
+}
+
+void AppAdapterApple::DoSoftQuit() {
+#if BA_PLATFORM_IOS
+  // (Swift hops to main itself.)
+  BallisticaKit::UIKitFromCpp::closeScene();
+#else
+  FatalError("Soft quit is not supported here.");
 #endif
 }
 

@@ -24,11 +24,11 @@ namespace ballistica::ui_v1 {
 /// depictions taking some (a live viewer's poke-to-jump, say): a
 /// depiction on a button must never swallow the button's press.
 ///
-/// Optional pane styling -- a backing color (drawn beneath the
-/// depiction, and all that shows while it has nothing) and a frame
-/// color for the green channel of the widget's mask -- is what lets a
-/// doc-ui viewer pane be a plain depiction host. Design:
-/// docs/initiatives/depictions.md.
+/// Optional pane styling -- a backing color (rgba; drawn beneath the
+/// depiction, and all that shows while it has nothing) and either a
+/// frame color for the green channel of the widget's (classic) mask or
+/// a layered mask's colors -- is what lets a doc-ui viewer pane be a
+/// plain depiction host. Design: docs/initiatives/depictions.md.
 class DepictionSlot {
  public:
   /// Host state and placement for one draw.
@@ -78,6 +78,12 @@ class DepictionSlot {
   /// GetContentBox), for checking that what it draws matches what it
   /// reports -- and so where a hit-tested host takes presses.
   void set_debug(bool val) { debug_ = val; }
+  /// Whether we show our depiction as an overlay (see
+  /// base::DepictionDrawContext::overlay).
+  void set_overlay(bool val) { overlay_ = val; }
+  /// Whether placeholders draw small in the middle of our box (see
+  /// base::DepictionDrawContext::small_placeholder).
+  void set_small_placeholder(bool val) { small_placeholder_ = val; }
   void set_frame_color(float r, float g, float b) {
     frame_color_[0] = r;
     frame_color_[1] = g;
@@ -98,11 +104,39 @@ class DepictionSlot {
   }
   void set_use_color_override(bool val) { use_color_override_ = val; }
 
-  void set_backing_color(float r, float g, float b) {
+  /// A multiplier on everything the depiction draws (see
+  /// base::DepictionDrawContext::color_multiply); the suffix too.
+  void set_color_multiply(float r, float g, float b) {
+    color_multiply_[0] = r;
+    color_multiply_[1] = g;
+    color_multiply_[2] = b;
+  }
+
+  void set_backing_color(float r, float g, float b, float a = 1.0f) {
     has_backing_ = true;
     backing_color_[0] = r;
     backing_color_[1] = g;
     backing_color_[2] = b;
+    backing_color_[3] = a;
+  }
+
+  /// Whether the widget's mask is a layered one (see
+  /// base::SimpleComponent::SetLayeredMask): the backing then goes
+  /// beneath the depiction within it, and these two colors paint over
+  /// both (by default black then white: shadows, then highlights). The
+  /// classic kind (frame_color in its green channel) otherwise.
+  void set_layered_mask(bool val) { layered_mask_ = val; }
+  void set_layer1_color(float r, float g, float b, float a) {
+    layer1_color_[0] = r;
+    layer1_color_[1] = g;
+    layer1_color_[2] = b;
+    layer1_color_[3] = a;
+  }
+  void set_layer2_color(float r, float g, float b, float a) {
+    layer2_color_[0] = r;
+    layer2_color_[1] = g;
+    layer2_color_[2] = b;
+    layer2_color_[3] = a;
   }
 
   void Draw(const DrawArgs& args);
@@ -130,6 +164,9 @@ class DepictionSlot {
 
  private:
   void DrawBacking_(const DrawArgs& args, const base::DepictionBox& box);
+  void DrawLayeredBacking_(const DrawArgs& args, const base::DepictionBox& box);
+  /// A draw context with our host state and styling (no box yet).
+  auto MakeContext_(const DrawArgs& args) const -> base::DepictionDrawContext;
   void DrawDebugBox_(const DrawArgs& args, const base::DepictionBox& box);
   void Release_();
 
@@ -142,10 +179,16 @@ class DepictionSlot {
   bool pressed_{};
   bool debug_{};
   float frame_color_[3]{1.0f, 1.0f, 1.0f};
+  bool overlay_{};
+  bool small_placeholder_{};
   bool has_backing_{};
-  float backing_color_[3]{};
+  float backing_color_[4]{0.0f, 0.0f, 0.0f, 1.0f};
+  bool layered_mask_{};
+  float layer1_color_[4]{0.0f, 0.0f, 0.0f, 1.0f};
+  float layer2_color_[4]{1.0f, 1.0f, 1.0f, 1.0f};
   bool use_color_override_{};
   float color_override_[3]{1.0f, 1.0f, 1.0f};
+  float color_multiply_[3]{1.0f, 1.0f, 1.0f};
   base::DepictionSuffix suffix_;
 };
 

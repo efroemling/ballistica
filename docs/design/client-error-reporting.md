@@ -20,6 +20,17 @@ All three land in Cloud Logging; `cloud_log_query` is the reader for
 each. Everything a client sends is **untrusted**: the fatal and crash
 channels are unauthenticated by design, and the server treats their
 contents as hints about what broke, never as facts about who sent it.
+`cloud_log_query` reflects that in how it prints every `baSrc=client`
+line:
+- each line gets a `[client-supplied]` prefix;
+- line breaks and invisible or direction-changing characters are
+  escaped (`\n`, `‮`, ...), so one entry can't forge extra log
+  lines;
+- the text is middle-truncated to a few hundred characters, keeping
+  the head and the server-added tail.
+
+Pass `--full-client-text` for the whole message, e.g. a complete stack
+trace.
 
 ## Fatal errors
 
@@ -73,7 +84,13 @@ Decisions, and why:
   the plus feature-set (often gone at fatal time) and a server-side
   build lookup that only ever existed on the v1 master server. When
   `g_core` itself is gone the report says `coregone=True` rather than
-  claiming a clean build.
+  claiming a clean build. Two of the signals come from checks that
+  take a while (the mods-dir scan; workspace state, settled at initial
+  sign-in), and `custompy` waits on baenv config, so a report from
+  before they finish can't be read as clean: those reports carry
+  `modpending=True` (builds 1.8.7+; `CoreFeatureSet::
+  ModdedCheckPending()`). The signals live behind `CoreFeatureSet`
+  setters, which also push them to Crashlytics as custom keys.
 
 ### Deferred delivery
 
@@ -104,6 +121,24 @@ back yet) looked exactly like the app silently vanishing.
 - A send that completes after the handler gave up on it produces one
   duplicate report; accepted.
 
+### Unclean shutdowns
+
+Not every bad exit is a fatal error. If the app can't shut down cleanly
+— today, the logic thread hasn't stopped 5 seconds after shutdown
+completes, so Python can't safely be finalized —
+`FatalErrorHandling::DoUncleanShutdown()` reports it through this same
+channel with the message prefixed `UNCLEAN-SHUTDOWN:` (live, else
+deferred like any fatal, so `DEFERRED: UNCLEAN-SHUTDOWN:` on a next
+launch). It shows no dialog: the user asked to quit, and the app does.
+Then, matching fatal errors, unmodified blessed builds `abort()` — the
+platform crash report that produces includes every thread's stack, the
+only way to see where the stuck thread was — and other builds exit 1
+(via `_Exit`, since other threads may still be running).
+
+Separately, the shutdown watchdog still turns a shutdown that hangs
+outright into a regular fatal error (`Timed out waiting for
+shutdown.`).
+
 ### Testing
 
 `BA_CRASH_TEST=1` fires a fatal before core is imported — the harshest
@@ -117,7 +152,14 @@ of prod. A shipped build can never be redirected by its environment.
 `tests/test_base/test_fatal_error_report.py` exercises the whole chain
 and polls Cloud Logging for its token. It runs **against prod** — that
 is the only fleet with both a plaintext route and Cloud Logging — so
-each run leaves one self-identifying entry there.
+each run leaves self-identifying entries there: the live pre-core
+fatal, plus next-launch delivery of a fatal error and of an unclean
+shutdown (`BA_CRASH_TEST=shutdown_logic_stall` stalls the logic thread
+at shutdown).
+
+`tests/test_base/test_fatal_report_delivery.py` covers the same
+live/next-launch × fatal/unclean matrix hermetically, against a local
+listener, so it needs no network or credentials.
 
 ## Native crashes
 
@@ -154,7 +196,7 @@ report is a fatal-error report carrying an extra `crash` block.
 | OS version | `CrashInfoSetOSVersion()`, right after core imports | Empty until then, or when the platform can't tell; omitted from the report when empty. Driver-level crashes often depend on the OS build as much as on the driver. On Windows it is the true version (`10.0.<build>.<revision>`; a build of 22000+ is Windows 11) |
 | Renderer identity | `CrashInfoSetRenderer()`, at GL context setup | The GL renderer and version strings, e.g. ANGLE version, backend, GPU, driver. The field most likely to reveal a GPU-driver crash, and one a field report has no other way to get |
 | App-state bits (1 = app-active, 2 = app-suspended), update count | `CrashInfoUpdateRuntime()`, each logic-thread display-time update | Per drawn frame with a GUI, ~10 Hz headless. Answers "was it even in the foreground?" and, with uptime, separates a startup crash from one twenty minutes in |
-| Modded signals, `core_alive` | Same | Mirrored as the app runs. `core_alive` answers the fatal channel's `coregone` question as of the fault, not as of sending |
+| Modded signals, `modpending`, `core_alive` | Same | Mirrored as the app runs. `core_alive` answers the fatal channel's `coregone` question as of the fault, not as of sending. `modpending` (format 4, 1.8.7+) as in the fatal channel. A crash before the first logic update finds them all still zero |
 | Fault code, fault address, faulting module + base, access type/address, crash time | The crash handler | Module + offset is the useful half: it survives ASLR and is what archived symbols resolve against |
 
 **Coupling:** `GetOSVersionString()` is also hashed into
@@ -320,12 +362,19 @@ What we feed it:
   `ReportFatalError` logs in builds after 23040. The same error is also
   reported through the [fatal errors](#fatal-errors) channel — expect
   both, and prefer ours for the message and build identity.
-- **Custom keys** via `Platform::SetDebugKey()`.
+- **Custom keys** via `Platform::SetDebugKey()` — the modded signals
+  and build blessing, plus `LastUpdateTime`.
 
-Two reading traps: the "device" on a report is whatever the device
+Three reading traps: the "device" on a report is whatever the device
 claims to be (bursts of one model within minutes of an upload are
-automated store testing, not players), and 32-bit ARM stacks often
-arrive entirely unsymbolicated.
+automated store testing, not players), 32-bit ARM stacks often arrive
+entirely unsymbolicated, and the ABI is often not stated
+(`UNKNOWN_ARCHITECTURE`). A bare `libmain.so` library path (rather
+than `split_config.<abi>.apk!libmain.so`) together with flagship-phone
+models on an implausibly old Android version is usually a PC emulator
+running the x86_64 build. Look at those addresses against the x86_64
+symbols, not ARM ones. Crashlytics issue 36fd92a1 (2026-10) looked
+like a symbol-archiving mismatch until checked against x86_64.
 
 ## Coverage gaps
 

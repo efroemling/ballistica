@@ -306,6 +306,13 @@ class Input {
   Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
   Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
   float gyro_mag_test_{};
+  // Recent rotation-rate magnitudes over a long and a short window, for
+  // deciding when the device is at rest (see UpdateGyro()).
+  float gyro_motion_slow_{};
+  float gyro_motion_fast_{};
+  // How strongly tilt is creeping back to neutral: 0 while the device is
+  // moving, easing up to 1 once it has rested a while.
+  float gyro_creep_{1.0f};
   microsecs_t last_suppress_gyro_time_{};
   int connect_print_timer_id_{};
   int disconnect_print_timer_id_{};
@@ -319,6 +326,7 @@ class Input {
   bool gyro_enabled_{true};
   bool camera_gyro_explicitly_disabled_{};
   bool gyro_broken_{};
+  bool gyro_at_rest_{true};
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};
   bool have_non_touch_inputs_{};

@@ -36,6 +36,9 @@ struct RenderViewRendererData : public Object {
   Object::Ref<RenderTarget> output_render_target;
   int output_width{};
   int output_height{};
+  // Whether output_render_target has an alpha channel (transparent
+  // views; see RenderView::transparent()).
+  bool output_alpha{};
 
   // Light and shadow get drawn into these and then projected onto the
   // world as it is drawn.

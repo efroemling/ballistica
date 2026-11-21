@@ -12,10 +12,11 @@
 #if BA_OPENGL_IS_ES
 
 // Link against ANGLE's GLES import lib so the engine's direct gl* calls
-// resolve to libGLESv2.dll. We intentionally do NOT link libEGL.lib: the
-// engine never calls egl* itself -- SDL creates and manages the EGL
-// context (via SDL_HINT_OPENGL_ES_DRIVER). Both DLLs (libEGL.dll, and
-// libGLESv2.dll which depends on it) must still be present alongside the
+// resolve to libGLESv2.dll. We don't link libEGL.lib here: normally SDL
+// creates and manages the EGL context (via SDL_HINT_OPENGL_ES_DRIVER). The
+// one exception is offscreen rendering (OffscreenGLWindows), which makes
+// its own EGL context and links libEGL.lib itself. Both DLLs (libEGL.dll,
+// and libGLESv2.dll which depends on it) must be present alongside the
 // executable at runtime.
 #pragma comment(lib, "libGLESv2.lib")
 

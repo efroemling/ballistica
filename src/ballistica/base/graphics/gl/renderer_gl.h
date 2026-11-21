@@ -126,7 +126,9 @@ class RendererGL : public Renderer {
     SHD_CONDITIONAL = 1 << 22,
     SHD_FLATNESS = 1 << 23,
     SHD_DEPTH_BUG_TEST = 1 << 24,
-    SHD_TEXT_GLOW = 1 << 25
+    SHD_TEXT_GLOW = 1 << 25,
+    SHD_UV2_FADE = 1 << 26,
+    SHD_LAYERED_MASK = 1 << 27
   };
 
   enum VertexAttr {
@@ -322,8 +324,10 @@ class RendererGL : public Renderer {
   ProgramSimpleGL* simple_tex_mod_text_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_prog_{};
   ProgramSimpleGL* simple_tex_mod_glow_maskuv2_prog_{};
+  ProgramSimpleGL* simple_tex_mod_uv2_fade_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_prog_{};
   ProgramSimpleGL* simple_tex_mod_colorized_masked_prog_{};
+  ProgramSimpleGL* simple_tex_mod_layered_mask_prog_{};
   ProgramObjectGL* obj_prog_{};
   ProgramObjectGL* obj_transparent_prog_{};
   ProgramObjectGL* obj_lightshad_transparent_prog_{};
@@ -336,6 +340,7 @@ class RendererGL : public Renderer {
   ProgramObjectGL* obj_lightshad_facing_prog_{};
   ProgramObjectGL* obj_lightshad_facing_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_prog_{};
+  ProgramObjectGL* obj_refl_lightshad_transparent_prog_{};
   ProgramObjectGL* obj_refl_lightshad_worldspace_prog_{};
   ProgramObjectGL* obj_refl_lightshad_colorize_prog_{};
   ProgramObjectGL* obj_refl_lightshad_add_prog_{};

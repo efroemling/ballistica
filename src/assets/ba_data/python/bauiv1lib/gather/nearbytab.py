@@ -3,7 +3,7 @@
 """Defines the nearby tab in the gather UI."""
 
 import weakref
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, assert_never
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
@@ -13,9 +13,8 @@ import bascenev1 as bs
 from bauiv1lib.gather import GatherTab
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from bauiv1lib.gather import GatherWindow
+    from bauiv1lib.localnetwork import LocalNetworkPermissionWarning
 
 
 class NetScanner:
@@ -43,26 +42,54 @@ class NetScanner:
         )
         bui.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
-        self._last_selected_host: dict[str, Any] | None = None
-        self._last_scan: list[dict[str, str]] | None = None
+        self._last_selected_key: str | None = None
+        self._last_rows: list[tuple[str, str]] | None = None
 
-        self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCallStrict(self._update), repeat=True
+        # Results arrive as hosts are found (or lost); discovery runs
+        # while this scan does.
+        self._scan: bs.NearbyScan | None = bs.app.nearby.scan(
+            {bs.NearbyService.GAME},
+            on_change=bui.WeakCallStrict(self._update),
         )
-        # Run two cycles pretty immediately - this should send out a
-        # "who's there" and update the list with any immediate-ish
-        # results so we may not have to wait a second to see things
-        # appear.
         self._update()
-        bui.apptimer(0.25, bui.WeakCallStrict(self._update))
+
+    def stop(self) -> None:
+        """Stop scanning."""
+        if self._scan is not None:
+            self._scan.stop()
+            self._scan = None
 
     def __del__(self) -> None:
-        bs.end_host_scanning()
+        self.stop()
 
-    def _on_select(self, host: dict[str, Any]) -> None:
-        self._last_selected_host = host
+    def _on_select(self, key: str) -> None:
+        self._last_selected_key = key
 
-    def _on_activate(self, host: dict[str, Any]) -> None:
+    def _on_activate(self, key: str) -> None:
+        if self._scan is None:
+            return
+        host = next((h for h in self._scan.hosts if h.key == key), None)
+        if host is None:
+            return
+        # Offer every plain-address route on the best one's port, best
+        # first; the join races them and uses whichever answers first
+        # (so a route that just went stale can't sink the join).
+        port = host.route.port
+        addresses: list[str] = []
+        for route in host.routes:
+            match route.type:
+                case bs.NearbyRouteType.UDP:
+                    if route.port == port:
+                        addresses.append(route.address)
+                case _:
+                    assert_never(route.type)
+        if not addresses:
+            return
+
+        # Repeat taps while a join to this host is underway are ignored
+        # there; only count/act on actual attempts.
+        if not bs.connect_to_party(addresses, port=port):
+            return
 
         bui.app.analytics.submit_event(
             ClassicAnalyticsEvent(
@@ -70,11 +97,10 @@ class NetScanner:
             )
         )
 
-        # Store UI location to return to when done.
+        # Store UI location to return to when done. (The connect itself
+        # happens asynchronously, after this.)
         if bs.app.classic is not None:
             bs.app.classic.save_ui_state()
-
-        bs.connect_to_party(host['address'])
 
     def _update(self) -> None:
         """(internal)"""
@@ -87,34 +113,46 @@ class NetScanner:
             )
             return
 
-        hosts = bs.host_scan_cycle()
-
-        # If nothing has changed since our last run, do nothing. If we
-        # do redundant rebuilds then we are likely to lose some clicks
-        # due to rebuilding after a click starts but before it ends.
-        if hosts == self._last_scan:
+        if self._scan is None:
             return
 
-        self._last_scan = hosts
+        # What we show for each host: its party name when it advertises
+        # one (newer hosts), otherwise its player name.
+        rows: list[tuple[str, str]] = []
+        for host in self._scan.hosts:
+            assert host.game is not None
+            rows.append(
+                (
+                    host.key,
+                    host.game.party_name
+                    or bs.player_spec_display_string(host.game.player_spec),
+                )
+            )
+
+        # If nothing we show has changed, do nothing (round-trip times
+        # move constantly). Redundant rebuilds are likely to lose some
+        # clicks by rebuilding after a click starts but before it ends.
+        if rows == self._last_rows:
+            return
+
+        self._last_rows = rows
 
         t_scale = 1.6
         for child in self._columnwidget.get_children():
             child.delete()
 
         # Grab this now this since adding widgets will change it.
-        last_selected_host = self._last_selected_host
-        for i, host in enumerate(hosts):
+        last_selected_key = self._last_selected_key
+        for i, (key, text) in enumerate(rows):
             txt3 = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width / t_scale, 30),
                 selectable=True,
                 color=(1, 1, 1),
-                on_select_call=bui.CallStrict(self._on_select, host),
-                on_activate_call=bui.CallStrict(self._on_activate, host),
+                on_select_call=bui.CallStrict(self._on_select, key),
+                on_activate_call=bui.CallStrict(self._on_activate, key),
                 click_activate=True,
-                # Show the host's party name when they're advertising
-                # one (v2 scan responses); otherwise their player name.
-                text=host['party_name'] or host['display_string'],
+                text=text,
                 literal=True,
                 h_align='left',
                 v_align='center',
@@ -126,7 +164,7 @@ class NetScanner:
             # But we need to suppress the warning from that.
             bui.widget(edit=txt3, allow_preserve_selection=False)
 
-            if host == last_selected_host:
+            if key == last_selected_key:
                 bui.containerwidget(
                     edit=self._columnwidget,
                     selected_child=txt3,
@@ -144,6 +182,7 @@ class NearbyGatherTab(GatherTab):
         self._idprefix = f'{window.main_window_id_prefix}|nearby'
         self._net_scanner: NetScanner | None = None
         self._container: bui.Widget | None = None
+        self._permission_warning: LocalNetworkPermissionWarning | None = None
 
     @override
     def on_activate(
@@ -156,10 +195,23 @@ class NearbyGatherTab(GatherTab):
         region_bottom: float,
     ) -> bui.Widget:
         # pylint: disable=too-many-positional-arguments
+        from bauiv1lib.localnetwork import (
+            WARNING_HEIGHT,
+            LocalNetworkPermissionWarning,
+            local_network_permission_missing,
+        )
+
         c_width = region_width
         c_height = region_height - 20
         sub_scroll_height = c_height - 85
         sub_scroll_width = 650
+
+        # Lacking local-network permission (Android 17+)? Shorten the
+        # list to make room for a warning below it. (Once granted, it
+        # stays shortened until the tab is rebuilt; harmless.)
+        show_permission_warning = local_network_permission_missing()
+        if show_permission_warning:
+            sub_scroll_height -= WARNING_HEIGHT
         self._container = bui.containerwidget(
             parent=parent_widget,
             position=(
@@ -199,8 +251,19 @@ class NearbyGatherTab(GatherTab):
         )
 
         bui.widget(edit=scrollw, autoselect=True, up_widget=tab_button)
+
+        if show_permission_warning:
+            self._permission_warning = LocalNetworkPermissionWarning(
+                parent=self._container,
+                position=(c_width * 0.5, v - WARNING_HEIGHT * 0.5),
+                width=sub_scroll_width,
+                idprefix=self._idprefix,
+            )
         return self._container
 
     @override
     def on_deactivate(self) -> None:
+        if self._net_scanner is not None:
+            self._net_scanner.stop()
         self._net_scanner = None
+        self._permission_warning = None

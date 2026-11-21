@@ -131,7 +131,20 @@ def _page() -> dui2.Response:
     """Build the page (called in a background thread)."""
     sistrs = _classicassets.strings.send_info
     submit = Submit().local()
-    field = replace(
+    rows: list[dui2.Row] = [
+        # What this is all about, above the field.
+        dui2.HeaderRow(
+            80.0,
+            decorations_center=[
+                dui2.Text(
+                    text=sistrs.send_info_description.spec,
+                    position=(0, 0),
+                    size=(560, 60),
+                    scale=0.8,
+                    color=(0.7, 0.7, 0.7, 1.0),
+                )
+            ],
+        ),
         SendInfoState.text_input_row(
             lambda s: s.description,
             label=_commonassets.strings.values.description.spec,
@@ -140,19 +153,7 @@ def _page() -> dui2.Response:
             # Typing and hitting return sends, as the button does.
             on_submit=submit,
         ),
-        # What this is all about, above the field.
-        header_height=80.0,
-        header_decorations_center=[
-            dui2.Text(
-                text=sistrs.send_info_description.spec,
-                position=(0, 0),
-                size=(560, 60),
-                scale=0.8,
-                color=(0.7, 0.7, 0.7, 1.0),
-            )
-        ],
-    )
-    rows: list[dui2.Row] = [field]
+    ]
     # A lone, deliberately narrow button centered under the field (a
     # fill row would stretch it across the column).
     rows.append(

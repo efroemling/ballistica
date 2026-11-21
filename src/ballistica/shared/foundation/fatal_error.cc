@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 
 #include "ballistica/core/core.h"
@@ -160,8 +161,14 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
     DoBlockingFatalErrorDialog(message);
   }
 
+  FinishReportOrSaveForLater_(result, starttime, 10, reportmsg, tracestr);
+}
+
+void FatalErrorHandling::FinishReportOrSaveForLater_(
+    const std::atomic<int>& result, time_t start_time, int wait_seconds,
+    const std::string& message, const std::string& stack_trace) {
   // Wait until the report has finished or a bit of time has passed.
-  while (time(nullptr) - starttime < 10) {
+  while (time(nullptr) - start_time < wait_seconds) {
     if (result != 0) {
       break;
     }
@@ -172,8 +179,44 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
   // we go down -- is saved for the next launch to deliver. (A send that
   // completes after this point just means one duplicate report.)
   if (result != 1) {
-    SavePendingFatalReport(reportmsg, tracestr);
+    SavePendingFatalReport(message, stack_trace);
   }
+}
+
+void FatalErrorHandling::DoUncleanShutdown(const std::string& message) {
+  std::string reportmsg = "UNCLEAN-SHUTDOWN: " + message;
+
+  // Straight to stderr and platform logs; Python-side logging may not
+  // be usable at this point.
+  fprintf(stderr, "%s\n", reportmsg.c_str());
+  fflush(stderr);
+  if (g_core && g_core->platform) {
+    g_core->platform->EmitPlatformLog("root", LogLevel::kError, reportmsg);
+
+    // Gives platform crash reporting (Crashlytics) the message to go
+    // with the abort() below.
+    g_core->platform->LowLevelDebugLog(reportmsg);
+  }
+
+  // A fatal error that already reported means this is fallout from it.
+  if (!reported_) {
+    reported_ = true;
+    std::atomic<int> result{};
+    auto starttime = time(nullptr);
+    // No stack trace; ours would just show this function. The useful
+    // stack is whatever thread is stuck, which only a platform crash
+    // report can capture.
+    SendFatalErrorReport(reportmsg, "", &result);
+    FinishReportOrSaveForLater_(result, starttime, 5, reportmsg, "");
+  }
+
+  fflush(stdout);
+  fflush(stderr);
+
+  if (g_base_soft && g_base_soft->IsUnmodifiedBlessedBuild()) {
+    abort();
+  }
+  std::_Exit(1);
 }
 
 void FatalErrorHandling::DoBlockingFatalErrorDialog(

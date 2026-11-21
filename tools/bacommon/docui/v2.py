@@ -82,6 +82,14 @@ class Request(DocUIRequest):
     #: if that is what fired it.
     trigger: Annotated[str | None, IOAttrs('t', store_default=False)] = None
 
+    #: For a request fired from a popup window (see :class:`Popup`),
+    #: the current state of the page the popup is over (its *parent*),
+    #: if that has any; :attr:`state` is then the popup page's own.
+    #: Clients fill this in; page authors never set it directly.
+    parent_state: Annotated[dict | None, IOAttrs('ps', store_default=False)] = (
+        None
+    )
+
     @override
     @classmethod
     def get_type_id(cls) -> DocUIRequestTypeID:
@@ -96,6 +104,7 @@ class ActionTypeID(Enum):
     LOCAL = 'l'
     MENU = 'm'
     POPUP_TEXT = 'pt'
+    POPUP = 'pw'
     UNKNOWN = 'u'
 
 
@@ -111,6 +120,7 @@ class Action(IOMultiType[ActionTypeID]):
     @classmethod
     def get_type(cls, type_id: ActionTypeID) -> type[Action]:
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-return-statements
         t = ActionTypeID
         if type_id is t.BROWSE:
             return Browse
@@ -122,6 +132,8 @@ class Action(IOMultiType[ActionTypeID]):
             return Menu
         if type_id is t.POPUP_TEXT:
             return PopupText
+        if type_id is t.POPUP:
+            return Popup
         if type_id is t.UNKNOWN:
             return UnknownAction
         assert_never(type_id)
@@ -181,19 +193,131 @@ class WindowLayout(Enum):
     #: at small ui-scale (full width, unlike a small layout).
     WIDE = 'w'
 
+    #: A wide layout's width, but taller at medium/large ui-scale
+    #: (about a small-tall layout's height); for wide content that
+    #: needs more room than a wide layout's height gives it. The same
+    #: as a wide layout at small ui-scale.
+    WIDE_TALL = 'wt'
+
+    #: A wide layout's width, but with a height following the screen's
+    #: at medium/large ui-scale (as a small-taller layout's does); for
+    #: lots of scrolling wide content. The same as a wide layout at
+    #: small ui-scale.
+    WIDE_TALLER = 'wtr'
+
     #: A wide layout's height, but wider at medium/large ui-scale; for
     #: content expected to be wider than the screen (a long row of
     #: items, say), where showing as much as possible means less
     #: scrolling. The same as a wide layout at small ui-scale.
     WIDER = 'wr'
 
-    #: The standard full-size window.
+    #: The standard full-size window, taking most of the screen (whatever
+    #: that turns out to be). It makes no guarantees about its content
+    #: size, so pages wanting a known size should pick another layout.
     LARGE = 'l'
+
+    #: A viewer layout with its column two thirds as wide, leaving more
+    #: of the room to its viewer pane (in a window 10% narrower at
+    #: medium/large ui-scale); for pages with few, simple controls
+    #: beside a big view.
+    VIEWER_NARROW = 'vn'
 
     #: A small layout's column at the right of a full-size window, the
     #: rest to its left reserved for a viewer pane (a live character
     #: view, say).
     VIEWER = 'v'
+
+    @property
+    def minimum_build_number(self) -> int:
+        """The earliest client build that knows this layout (0 for all).
+
+        Older clients fall back to another layout for one they don't
+        know, so check this before relying on a new one's shape.
+        """
+        match self:
+            case (
+                WindowLayout.SMALL
+                | WindowLayout.SMALL_TALL
+                | WindowLayout.SMALL_TALLER
+                | WindowLayout.WIDE
+                | WindowLayout.WIDER
+                | WindowLayout.LARGE
+                | WindowLayout.VIEWER
+            ):
+                return 0
+            case (
+                WindowLayout.WIDE_TALL
+                | WindowLayout.WIDE_TALLER
+                | WindowLayout.VIEWER_NARROW
+            ):
+                return 23064
+            case _:
+                assert_never(self)
+
+
+class ScrollEdgeStyle(Enum):
+    """How a doc-ui window's scroll area meets the window around it.
+
+    Chosen alongside the window's layout (see
+    :attr:`Browse.scroll_edge_style`); by default the layout decides.
+    Either way, content gets the same space and sits in the same place;
+    only how its edges look differs. (At small ui-scale, where windows
+    fill the screen, content always fades toward the toolbars.)
+    """
+
+    #: A soft outline around the scroll area (when it has anything to
+    #: scroll).
+    OUTLINE = 'o'
+
+    #: No outline; content fades into the window backing as it nears
+    #: the scroll area's edges, which reach out toward the window's own
+    #: (and up behind its title).
+    FADE = 'f'
+
+
+class ViewerStyle(Enum):
+    """Legacy: how a window's viewer pane looks, for builds 23064 and
+    23065 (see :attr:`Browse.viewer_style`).
+
+    Later builds take it from each page instead (see
+    :attr:`Page.viewer_frame_style`).
+    """
+
+    #: A framed pane with a backing of its own; its viewer draws within
+    #: the frame.
+    FRAMED = 'f'
+
+    #: No frame or backing; the viewer draws straight over the window.
+    OVERLAY = 'o'
+
+
+class ViewerFrameStyle(Enum):
+    """Whether a doc-ui window's viewer pane (if its page has one) is
+    framed.
+
+    Chosen by each page (see :attr:`Page.viewer_frame_style`); its
+    background (:attr:`Page.viewer_background_color`) works the same
+    in either.
+    """
+
+    #: Rounded, framed and shaded; the viewer and background draw
+    #: within the frame.
+    DEFAULT = 'd'
+
+    #: No frame or rounding; the viewer and background fill the pane's
+    #: rectangle.
+    NO_FRAME = 'n'
+
+
+class ViewerSide(Enum):
+    """Which side of a doc-ui window its viewer pane (if any) sits on.
+
+    Chosen by each page (see :attr:`Page.viewer_side`); the page's rows
+    get the rest of the window.
+    """
+
+    LEFT = 'l'
+    RIGHT = 'r'
 
 
 @ioprepped
@@ -214,14 +338,73 @@ class Browse(Action):
     #: handing state to a different page.
     state: Annotated[dict | None, IOAttrs('st', store_default=False)] = None
 
-    #: The new window's layout. Note that the wire default is LARGE
-    #: (an omitted value has always meant LARGE, and must keep doing
-    #: so for older clients and servers), but routes' own default is
-    #: WIDE (see :meth:`bacommon.docui.routes.DocUIRoute.browse`).
+    #: Whether the current window goes into the back history. Off, the
+    #: new window takes its place instead (scaling in as it scales out):
+    #: back from the new one goes wherever back from the current one
+    #: would have. For moving between peer pages without piling up
+    #: history (next/previous items, tab-like pages, a page that
+    #: shouldn't be returned to). Builds before :data:`TEXT_ROW_BUILD`
+    #: always add it.
+    add_to_history: Annotated[bool, IOAttrs('ah', store_default=False)] = True
+
+    #: The new window's layout; WIDE_TALL unless set, as for routes
+    #: (see :meth:`bacommon.docui.routes.DocUIRoute.get_window_layout`).
+    #: On the wire, though, an omitted value means LARGE, as it always
+    #: has (and must keep doing for older clients and servers), so any
+    #: other layout is always written out. A layout a client doesn't
+    #: know shows as WIDE_TALL, a middling shape that's rarely far off;
+    #: builds before 23074 show LARGE.
+    #
+    # TODO(2026-11-23): Once 23074+ is well distributed, drop this
+    # soft_default so the wire's omitted value means WIDE_TALL too
+    # (older clients would then read an omitted layout as LARGE). Same
+    # for bacommon.hostui.Button.layout; update
+    # test_window_layout_defaults_keep_wire_meaning to match.
     layout: Annotated[
         WindowLayout,
-        IOAttrs('lo', store_default=False, enum_fallback=WindowLayout.LARGE),
-    ] = WindowLayout.LARGE
+        IOAttrs(
+            'lo',
+            store_default=False,
+            soft_default=WindowLayout.LARGE,
+            enum_fallback=WindowLayout.WIDE_TALL,
+        ),
+    ] = WindowLayout.WIDE_TALL
+
+    #: The new window's scroll edge style, or None to let its layout
+    #: decide. Clients predating this ignore it (their layout decides).
+    scroll_edge_style: Annotated[
+        ScrollEdgeStyle | None,
+        IOAttrs(
+            'ses',
+            store_default=False,
+            enum_fallback=ScrollEdgeStyle.FADE,
+        ),
+    ] = None
+
+    #: (Legacy) The new window's viewer pane style, read only by builds
+    #: 23064 and 23065 (older ones ignore it and frame their panes).
+    #: From :data:`PAGE_DRIVEN_VIEWER_BUILD` on, each page picks its own
+    #: (:attr:`Page.viewer_frame_style`) and this is ignored.
+    viewer_style: Annotated[
+        ViewerStyle | None,
+        IOAttrs('vs', store_default=False, enum_fallback=ViewerStyle.FRAMED),
+    ] = None
+
+    #: The new window's backing color (rgb), or None for the usual. Part
+    #: of the window's *frame*: drawn before any page arrives (behind
+    #: its loading spinner) and kept for the window's whole life, so it
+    #: comes with the link rather than a page. Builds before
+    #: :data:`PAGE_LOOK_BUILD` ignore it.
+    background_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('bg', store_default=False)
+    ] = None
+
+    #: The color of the new window's close or back button (rgb), or None
+    #: for the usual. It is the window's *cancel* button (what
+    #: back/escape presses). Frame, as for :attr:`background_color`.
+    cancel_button_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('cbc', store_default=False)
+    ] = None
 
     @override
     @classmethod
@@ -296,6 +479,42 @@ class Local(Action):
         None
     )
 
+    #: With :attr:`close_window`, close back to the nearest earlier
+    #: window (of the same doc-ui controller) showing the page at this
+    #: path, rather than just one window back; for leaving a flow
+    #: several pages deep in one step (a purchase confirmation returning
+    #: to the listing it started from). That window then refreshes, with
+    #: :attr:`return_sets` applied to it if given. If no such window is
+    #: found, the client warns and closes just the one window. Clients
+    #: predating this field close just the one window too. Build it with
+    #: :meth:`bacommon.docui.routes.DocUIRoute.close_to`.
+    close_to: Annotated[str | None, IOAttrs('ct', store_default=False)] = None
+
+    #: In a popup window (see :class:`Popup`), with
+    #: :attr:`close_window`: once the popup has closed, run this action
+    #: on the page it was over (its *parent*) as if pressed there --
+    #: with the parent's state, from the button that opened the popup.
+    #: May be a :class:`Browse`, :class:`Replace` or :class:`Local`
+    #: (one without a ``parent_action`` of its own). Ignored outside a
+    #: popup. Build it with :class:`bacommon.docui.routes.PopupParent`.
+    parent_action: Annotated[
+        Action | None, IOAttrs('pa', store_default=False)
+    ] = None
+
+    #: In a popup window, with :attr:`close_window`: the state type id
+    #: the parent page's state must have for :attr:`parent_action` to
+    #: run (it sets keys of that type). On a mismatch the client warns
+    #: and just closes the popup.
+    parent_state_id: Annotated[
+        str | None, IOAttrs('psi', store_default=False)
+    ] = None
+
+    #: In a popup window, with :attr:`close_window`: refresh the parent
+    #: page once the popup has closed (with :attr:`return_sets` applied
+    #: to its state if given). Without this (or ``return_sets``),
+    #: closing a popup leaves its parent alone.
+    refresh_parent: Annotated[bool, IOAttrs('rp', store_default=False)] = False
+
     @override
     @classmethod
     def get_type_id(cls) -> ActionTypeID:
@@ -310,9 +529,10 @@ class MenuItem:
     label: Annotated[LangStrSpec | int, IOAttrs('l')]
 
     #: What picking this item does; anything a button's action can be
-    #: except another :class:`Menu` (menus don't nest). The menu makes
-    #: its own sound when something is picked, so the action's
-    #: ``default_sound`` is not played.
+    #: except another :class:`Menu` (menus don't nest). A pick sounds as
+    #: a press of the menu's button with this action would (its
+    #: ``default_sound`` included); the menu adds none of its own.
+    #: (Clients before 23073 play a menu swish instead.)
     action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
 
     #: Shown in the menu but greyed out and not pickable.
@@ -371,6 +591,108 @@ class PopupText(Action):
     @classmethod
     def get_type_id(cls) -> ActionTypeID:
         return ActionTypeID.POPUP_TEXT
+
+
+@ioprepped
+@dataclass
+class Popup(Action):
+    """Open a page in a popup window over the current one.
+
+    The page under it (the popup's *parent*) stays as it is. Popups are
+    transient: anything that would rebuild the parent's window (a
+    screen-size or language change, sign-in changes, leaving the
+    window) simply closes them.
+
+    In a popup, :class:`Replace` swaps the popup's own page and another
+    :class:`Popup` replaces the popup (popups don't stack). A plain
+    window-closing :class:`Local` closes the popup and leaves the
+    parent alone; :attr:`Local.parent_action`,
+    :attr:`Local.refresh_parent` and :attr:`Local.return_sets` act on
+    the parent as the popup closes. A :class:`Browse` is not allowed in
+    a popup (browse from the parent instead). Requests fired from a
+    popup carry the parent's state as :attr:`Request.parent_state`.
+
+    A press outside the popup closes it (leaving the parent alone), as
+    does back/escape. It appears at the button that opened it, kept
+    entirely within the screen's virtual bounds.
+
+    Like a :class:`Menu`, only a press can open one. Clients predating
+    this type (before :data:`POPUP_BUILD`) see an unknown action, so
+    gate pages offering popups on :func:`supports_popups`. Build it
+    with :meth:`bacommon.docui.routes.PopupRoute.popup`.
+    """
+
+    request: Annotated[Request, IOAttrs('r')]
+
+    #: Plays a swish.
+    default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
+
+    #: Values to assign into the pressing page's state before the
+    #: request goes out (that state goes along as the request's
+    #: :attr:`Request.parent_state`).
+    sets: Annotated[dict | None, IOAttrs('ss', store_default=False)] = None
+
+    #: The state type id the popup's page expects of its parent (the
+    #: page this action is on), if any; checked against that page's
+    #: state when it is validated.
+    parent_state_id: Annotated[
+        str | None, IOAttrs('psi', store_default=False)
+    ] = None
+
+    #: The popup's content area (width, height) -- the area its page
+    #: lays out in, in the same units as a window's (popups scale as
+    #: windows do at each ui-scale). At least :data:`POPUP_MIN_SIZE`
+    #: (smaller is raised to it). There's no fixed largest: a popup
+    #: that wouldn't fit on a client's screen (title and edges included,
+    #: and keeping a margin clear around it to press to dismiss it) is
+    #: shrunk to fit it there, its page then scrolling. So a tall
+    #: menu can show whole at a large ui-scale and scroll at a small
+    #: one.
+    size: Annotated[tuple[float, float], IOAttrs('sz')] = (500.0, 300.0)
+
+    #: Show the page's title along the popup's top. Without one (the
+    #: default) the content area reaches up into that space.
+    show_title: Annotated[bool, IOAttrs('stl', store_default=False)] = False
+
+    #: Show a close button at the popup's top left. Off by default,
+    #: since a press outside the popup, or back/escape, closes it
+    #: either way.
+    show_close_button: Annotated[bool, IOAttrs('scb', store_default=False)] = (
+        False
+    )
+
+    #: Dim what's behind the popup.
+    dim_background: Annotated[bool, IOAttrs('db', store_default=False)] = True
+
+    #: How the popup's scroll area meets the popup around it, as for
+    #: windows (see :class:`ScrollEdgeStyle`). Content gets the same
+    #: space either way; a fading one reaches out a little past it at
+    #: top and bottom, the popup growing to cover that (as windows do).
+    scroll_edge_style: Annotated[
+        ScrollEdgeStyle,
+        IOAttrs('ses', store_default=False, enum_fallback=ScrollEdgeStyle.FADE),
+    ] = ScrollEdgeStyle.FADE
+
+    #: The popup's backing color (rgb), or None for
+    #: :data:`POPUP_BACKGROUND_COLOR`. Kept while the popup is up,
+    #: through any pages it swaps in (see
+    #: :attr:`Browse.background_color`). Builds before
+    #: :data:`PAGE_LOOK_BUILD` ignore it (and use the usual window color).
+    background_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('bg', store_default=False)
+    ] = None
+
+    #: The color of the popup's close button (rgb), or None for
+    #: :data:`POPUP_BACKGROUND_COLOR`. Kept as for
+    #: :attr:`background_color`.
+    cancel_button_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('cbc', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.POPUP
 
 
 class HAlign(Enum):
@@ -558,6 +880,12 @@ class Text(Decoration):
     #: Show max-width/height bounds; useful during development.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
+    #: Draw with the big font -- bold display lettering with only A-Z
+    #: (upper and lower case share it), 0-9 and a little punctuation;
+    #: anything else draws as '?'. Clients before build
+    #: :data:`BIG_TEXT_BUILD` draw it with the regular font.
+    big: Annotated[bool, IOAttrs('bg', store_default=False)] = False
+
     #: An image fixed to the left end of the text.
     image_left: Annotated[
         TextImage | None, IOAttrs('il', store_default=False)
@@ -737,6 +1065,16 @@ class Depiction(Decoration):
         tuple[float, float, float] | None, IOAttrs('co', store_default=False)
     ] = None
 
+    #: Multiplies everything the depiction draws, its suffix and
+    #: loading standins included (rgba, alpha being opacity). Unlike
+    #: :attr:`color_override` it replaces nothing, so it dims or tints
+    #: any kind of depiction predictably. Clients before build 23075
+    #: ignore it.
+    color_multiply: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('cm', store_default=False),
+    ] = None
+
     @override
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
@@ -810,6 +1148,16 @@ class Button:
     ] = ButtonStyle.SQUARE
     default: Annotated[bool, IOAttrs('df', store_default=False)] = False
     selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
+
+    #: Where selection lands when navigation enters this button's row
+    #: (from the row above or below); the row's first button if none
+    #: has it. One per row. Unlike :attr:`selected` (where selection
+    #: starts on the whole page), this only matters on arriving at the
+    #: row. A scrolling row starts on it and then remembers whichever
+    #: button was last selected in it, as it does anyway; in a grid it
+    #: applies to its own line. Builds before :data:`TEXT_ROW_BUILD`
+    #: ignore it (selection lands on the first button).
+    row_selected: Annotated[bool, IOAttrs('rsel', store_default=False)] = False
 
     #: Drawn greyed out and not activatable (a press plays an error
     #: sound instead of running ``action``). Still selectable, so
@@ -886,6 +1234,11 @@ class RowTypeID(Enum):
     NUMBER_ROW = 'n'
     BUTTON_CONTROL_ROW = 'bc'
     SECTION = 'sc'
+    TITLE_ROW = 'tr'
+    SUBTITLE_ROW = 'sr'
+    FOOTNOTE_ROW = 'fr'
+    HEADER_ROW = 'hdr'
+    FOOTER_ROW = 'ftr'
     UNKNOWN = 'u'
 
 
@@ -901,6 +1254,8 @@ class Row(IOMultiType[RowTypeID]):
     @classmethod
     def get_type(cls, type_id: RowTypeID) -> type[Row]:
         # pylint: disable=cyclic-import
+        # (One case per row type.)
+        # pylint: disable=too-many-branches
         t = RowTypeID
         rowtype: type[Row]
         match type_id:
@@ -924,6 +1279,16 @@ class Row(IOMultiType[RowTypeID]):
                 rowtype = ButtonControlRow
             case t.SECTION:
                 rowtype = Section
+            case t.TITLE_ROW:
+                rowtype = TitleRow
+            case t.SUBTITLE_ROW:
+                rowtype = SubtitleRow
+            case t.FOOTNOTE_ROW:
+                rowtype = FootnoteRow
+            case t.HEADER_ROW:
+                rowtype = HeaderRow
+            case t.FOOTER_ROW:
+                rowtype = FooterRow
             case _:
                 assert_never(type_id)
         return rowtype
@@ -979,6 +1344,18 @@ class ButtonRowLayout(Enum):
     #: buttons); everything else about each button, height included, is
     #: its own. Like ``FIXED``, placed straight on the page.
     FILL = 'f'
+
+    #: Buttons in a grid of equal cells, as many columns as fit across
+    #: the width a ``FILL`` row spans (or :attr:`ButtonRow.grid_columns`
+    #: of them), wrapping onto as many lines as it takes. Cells are as
+    #: big as the row's biggest button (or as
+    #: :attr:`ButtonRow.grid_cell_width` /
+    #: :attr:`ButtonRow.grid_cell_height` say); smaller buttons center
+    #: in theirs and bigger ones shrink to fit. Up/down moves within a
+    #: column. Meant for buttons of about the same size: for very mixed
+    #: ones, use another layout. Builds older than this value show the
+    #: row as ``SCROLL``. Like ``FIXED``, placed straight on the page.
+    GRID = 'g'
 
 
 @ioprepped
@@ -1083,13 +1460,60 @@ class ButtonRow(Row):
         float | None, IOAttrs('fns', store_default=False)
     ] = None
 
-    #: Spacing between all buttons in the row.
+    #: Spacing between all buttons in the row (between a ``GRID`` row's
+    #: columns, and its lines unless :attr:`grid_line_spacing` is set).
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 15.0
+
+    #: How many columns a ``GRID`` row has; None for as many as fit. If
+    #: that many don't fit, the whole grid shrinks until it does.
+    #: Ignored by other layouts.
+    grid_columns: Annotated[int | None, IOAttrs('gco', store_default=False)] = (
+        None
+    )
+
+    #: Width of a ``GRID`` row's cells (at the scale buttons' sizes
+    #: are given in, padding included); None for its widest button's.
+    #: Ignored by other layouts.
+    grid_cell_width: Annotated[
+        float | None, IOAttrs('gcw', store_default=False)
+    ] = None
+
+    #: Height of a ``GRID`` row's cells; None for its tallest button's.
+    #: See :attr:`grid_cell_width`.
+    grid_cell_height: Annotated[
+        float | None, IOAttrs('gch', store_default=False)
+    ] = None
+
+    #: Smallest and largest a ``GRID`` row may scale (everything in it
+    #: at once: cells, buttons and gaps) to span its full width, so its
+    #: outer columns line up with a ``FILL`` row's edges (and the page's
+    #: text); 1.0 for both is no scaling. The grid takes whichever
+    #: column count spans the width at the scale nearest 1.0 within
+    #: these bounds: scaling up to fill the room beside the columns
+    #: that fit, or down to fit one more. If none can, it scales up as
+    #: far as :attr:`grid_max_scale` allows and falls short, aligned by
+    #: :attr:`content_align` (so a width that's not quite reachable
+    #: still gets as close as it can, and scale changes smoothly with
+    #: the width rather than jumping as an edge comes within reach).
+    #: Something like 0.9 and 1.1 lines most grids up without looking
+    #: stretched. A grid too wide to fit at all (one column, or
+    #: :attr:`grid_columns` of them) still shrinks to fit, however far
+    #: that takes it. Ignored by other layouts; builds older than these
+    #: fields ignore them.
+    grid_min_scale: Annotated[float, IOAttrs('gsmn', store_default=False)] = 1.0
+    grid_max_scale: Annotated[float, IOAttrs('gsmx', store_default=False)] = 1.0
+
+    #: Vertical spacing between a ``GRID`` row's lines; None for the
+    #: same as :attr:`button_spacing`, which is the horizontal spacing
+    #: between its columns. Ignored by other layouts.
+    grid_line_spacing: Annotated[
+        float | None, IOAttrs('gls', store_default=False)
+    ] = None
 
     #: Space around the buttons; None for the layout's default (see
     #: :meth:`get_padding`). Left/right are from the column's edges
     #: (``SCROLL`` and ``FIXED``) or from where control rows' contents
-    #: start/end (``FILL``).
+    #: start/end (``FILL`` and ``GRID``).
     padding_left: Annotated[
         float | None, IOAttrs('pl', store_default=False)
     ] = None
@@ -1118,6 +1542,27 @@ class ButtonRow(Row):
     #: ignore it. Every row type has one.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
 
+    #: Extra space between the title and the subtitle (no effect
+    #: without both). Builds older than this field ignore it. Every row
+    #: type has one.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+
+    #: Whether the title word-wraps to fit the column. When False it
+    #: stays a single line, shrunk as needed to fit -- the choice for
+    #: short labels that read better whole, and for time-varying text
+    #: (countdowns and such), which can't be wrapped. Builds older than
+    #: this field always wrap. Every row type has one, as does
+    #: :class:`Section`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+
+    #: Whether the subtitle word-wraps; see :attr:`title_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+
+    #: Whether the footnote word-wraps; see :attr:`title_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
+
     #: Extra space between the row's content and its footnote (no
     #: effect without one); the footnote's counterpart to
     #: :attr:`spacing_title`. Builds older than this field ignore it.
@@ -1131,7 +1576,9 @@ class ButtonRow(Row):
 
     #: Horizontal alignment of buttons when they don't fill the row's
     #: width (a ``SCROLL`` row with more than that simply scrolls; a
-    #: ``FIXED`` one shrinks to fit; ``FILL`` rows always fill it).
+    #: ``FIXED`` one shrinks to fit; ``FILL`` rows always fill it). A
+    #: ``GRID`` row aligns its grid as a whole; a short last line
+    #: starts at the grid's left so columns stay lined up.
     #: Overrides ``center_content`` when set. Builds older than this
     #: field ignore it (and thus left-align unless ``center_content`` is
     #: also set).
@@ -1148,8 +1595,9 @@ class ButtonRow(Row):
     #: plus this offset: the same point header and footer decorations
     #: at that x are placed from, which is the way to line a button up
     #: with band art regardless of the layout's width or insets.
-    #: Ignored by ``SCROLL`` and ``FILL`` rows. Builds older than this
-    #: field ignore it.
+    #: ``GRID`` rows shift their grid the same way. Ignored by
+    #: ``SCROLL`` and ``FILL`` rows. Builds older than this field
+    #: ignore it.
     content_offset: Annotated[float, IOAttrs('cxo', store_default=False)] = 0.0
 
     #: Horizontal alignment of the title and subtitle. Overrides
@@ -1179,8 +1627,11 @@ class ButtonRow(Row):
     def get_padding(self) -> tuple[float, float, float, float]:
         """Our (left, right, top, bottom) padding, defaults applied.
 
-        A scrolling row's bottom default leaves room for the strip its
-        scroll bar fades in over; the others need none.
+        A scrolling row's scroll bar fades in over a strip below its
+        padding, in the row spacing that follows (see
+        :attr:`Page.row_spacing`); no padding is spent on it. (Builds
+        before 23075 put that strip inside a scrolling row's bottom
+        padding, which defaulted to 16 there.)
         """
         left, right, top, bottom = self._default_padding(self.layout)
         return (
@@ -1195,12 +1646,12 @@ class ButtonRow(Row):
         layout: ButtonRowLayout,
     ) -> tuple[float, float, float, float]:
         match layout:
-            case ButtonRowLayout.SCROLL:
-                # (The room below is the strip the bar fades in over.)
-                return 10.0, 10.0, 4.0, 16.0
-            case ButtonRowLayout.FIXED:
-                return 10.0, 10.0, 4.0, 4.0
-            case ButtonRowLayout.FILL:
+            # (Side defaults put the outermost buttons where text and
+            # every other row's contents start. Builds before 2026-10-21
+            # used 10, putting them 5 further out.)
+            case ButtonRowLayout.SCROLL | ButtonRowLayout.FIXED:
+                return 15.0, 15.0, 4.0, 4.0
+            case ButtonRowLayout.FILL | ButtonRowLayout.GRID:
                 return 0.0, 0.0, 4.0, 4.0
             case _:
                 assert_never(layout)
@@ -1226,6 +1677,21 @@ class CheckboxRow(Row):
 
     label: Annotated[
         LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
+
+    #: The label's color/flatness/shadow; None for the page's label
+    #: style (see :attr:`TextStyles.label`), else the usual. Every
+    #: control row has them; builds before :data:`TEXT_ROW_BUILD`
+    #: ignore them.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
     ] = None
 
     #: Fired when the value changes, after the new value has been
@@ -1335,6 +1801,17 @@ class CheckboxRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1366,6 +1843,20 @@ class TextInputRow(Row):
 
     label: Annotated[
         LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
     ] = None
 
     #: What is being edited, for places that ask for text by way of a
@@ -1495,6 +1986,17 @@ class TextInputRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1545,6 +2047,20 @@ class ChoiceRow(Row):
 
     label: Annotated[
         LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
     ] = None
 
     #: Fired when a choice is picked, after the new value has been
@@ -1656,6 +2172,17 @@ class ChoiceRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1687,6 +2214,20 @@ class ColorRow(Row):
 
     label: Annotated[
         LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
     ] = None
 
     #: Fired when the picker closes with a changed color, after the new
@@ -1799,6 +2340,17 @@ class ColorRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -1840,6 +2392,20 @@ class SliderRow(Row):
     #: than to ``decimals`` places.
     as_percent: Annotated[bool, IOAttrs('ap', store_default=False)] = False
     decimals: Annotated[int, IOAttrs('dc', store_default=False)] = 2
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
+    ] = None
 
     #: Fired when a value is settled on -- the nub released after a
     #: drag, or a run of key/controller steps going quiet (half a
@@ -1962,6 +2528,17 @@ class SliderRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2009,6 +2586,20 @@ class NumberRow(Row):
     #: than to ``decimals`` places.
     as_percent: Annotated[bool, IOAttrs('ap', store_default=False)] = False
     decimals: Annotated[int, IOAttrs('dc', store_default=False)] = 0
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
+    ] = None
 
     #: Fired on each press that changes the value, after it has been
     #: written to the page's state. Without one, a changed value simply
@@ -2117,6 +2708,17 @@ class NumberRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2154,6 +2756,20 @@ class ButtonControlRow(Row):
 
     label: Annotated[
         LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
+
+    #: See :attr:`CheckboxRow.label_color`.
+    label_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('lc', store_default=False),
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
+    #: See :attr:`CheckboxRow.label_color`.
+    label_shadow: Annotated[
+        float | None, IOAttrs('lsh', store_default=False)
     ] = None
 
     #: The whole row shown dimmed, with its button disabled (as by
@@ -2255,6 +2871,17 @@ class ButtonControlRow(Row):
     spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
     #: See :attr:`ButtonRow.spacing_title`.
     spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+
+    #: See :attr:`ButtonRow.spacing_subtitle`.
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
     #: See :attr:`ButtonRow.spacing_footnote`.
     spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
         0.0
@@ -2275,15 +2902,18 @@ class SectionBacking:
     """A backing for a :class:`Section`, and the layout that goes with it.
 
     A backed section is a card: a rect of ``max_width`` at most (else
-    the column's full width), centered in the column, from the top of
+    the column's full width), kept ``margin`` in from the column's
+    edges (by default the page's side inset), centered in the column,
+    from the top of
     the section's heading (else its first row) to the bottom of its
     note (else its last row) plus ``padding_top``/``padding_bottom``.
     Its button rows clip at the rect's left and right edges, and its
     content lays out inside it as a page's does in its column: button
     rows' buttons ``content_inset`` in from those edges, text (heading
-    and note text, row titles, labels) and control and fill rows a few
-    units further in to line up with buttons' visible edges, and
-    centered things centered on the card. All of that holds whatever
+    and note text, row titles, labels) and control, fill and grid rows
+    there too (lining up with the buttons' bounds), and centered things
+    centered on the card. (Builds before 2026-10-21 put the text and
+    those rows 5 units further in.) All of that holds whatever
     width the section gets.
 
     The rect is drawn as ``texture`` (tinted by ``color``) or, with no
@@ -2312,18 +2942,337 @@ class SectionBacking:
         tuple[float, float], IOAttrs('vp', store_default=False)
     ] = (0.0, 0.0)
 
-    #: Widest the card gets; None to take the column's full width.
+    #: Widest the card gets; None to take the column's full width
+    #: (less :attr:`margin`).
     max_width: Annotated[float | None, IOAttrs('mw', store_default=False)] = (
         None
     )
 
+    #: How far in from the column's edges the card's sides keep (both
+    #: sides); None for the page's :attr:`Page.h_inset`, which keeps
+    #: them clear of a fading scroll area's side fades (those are that
+    #: wide). 0 runs the card edge to edge, as builds before
+    #: :data:`TEXT_ROW_BUILD` always do. With :attr:`max_width` the card
+    #: is the narrower of the two. A texture's soft margins (outside its
+    #: pins) still spill past the rect, into any fade.
+    margin: Annotated[float | None, IOAttrs('mg', store_default=False)] = None
+
     #: How far in from the card's edges its button rows' buttons sit
-    #: (both sides; a page's sit 28 in from its column's).
+    #: (both sides; a page's sit 33 in from its column's).
     content_inset: Annotated[float, IOAttrs('ci', store_default=False)] = 0.0
 
     #: Room inside the card above its first content and below its last.
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
+
+
+# (Abstract: its subclasses supply get_type_id(), and their fields;
+# dataclasses don't inherit fields here.)
+class TextRow(Row):  # pylint: disable=abstract-method
+    """Base for a row of text standing on its own between rows.
+
+    See :class:`TitleRow`, :class:`SubtitleRow` and
+    :class:`FootnoteRow` (:data:`AnyTextRow`). They draw exactly like
+    the title, subtitle and footnote a row can carry itself (its
+    ``title``, ``subtitle`` and ``footnote``), and replace those: with
+    ``attach`` on (the default), a title and/or subtitle directly
+    before a row and a footnote directly after it attach to that row
+    and lay out just as its own would. That means they hug it, tuck in
+    beside a control row's control, and come into view whenever it is
+    selected. A row that already has its own title (or subtitle, or
+    footnote) takes no attached one; that text stands alone instead.
+
+    A text row that doesn't attach (``attach`` off, or nothing there
+    to attach to) stands alone, spaced from both neighbors like a row,
+    and still comes into view with the next selectable row (a
+    footnote, with the previous one). Attaching only works in drawing
+    order -- header, title, subtitle, the row, footnote, footer -- so
+    one out of order stands alone too; the client logs a warning for
+    any with ``attach`` on that couldn't.
+
+    Builds before :data:`TEXT_ROW_BUILD` skip these rows entirely, so
+    don't rely on them for pages such builds may show.
+    """
+
+
+class TitleSize(Enum):
+    """How big a :class:`TitleRow` draws."""
+
+    #: A row title's size.
+    NORMAL = 'n'
+
+    #: A heading for a group of rows, the larger size of a section's
+    #: heading (see :attr:`TitleRow.size`).
+    HEADING = 'h'
+
+
+@ioprepped
+@dataclass
+class TitleRow(TextRow):
+    """A title on its own row; see :class:`TextRow`."""
+
+    text: Annotated[LangStrSpec | int, IOAttrs('t')]
+
+    #: How big it draws. A ``HEADING`` heads the rows after it rather
+    #: than labeling one: it never becomes a row's own title. With
+    #: ``attach`` on, a :class:`HeaderRow` directly before it and a
+    #: :class:`SubtitleRow` directly after join it as one heading,
+    #: which sits close above the next row and comes into view with it
+    #: (as a :class:`Section`'s does).
+    size: Annotated[
+        TitleSize,
+        IOAttrs('sz', store_default=False, enum_fallback=TitleSize.NORMAL),
+    ] = TitleSize.NORMAL
+
+    #: Whether to attach to the row this text sits beside (see above):
+    #: the row after it for a title or subtitle, the one before it for
+    #: a footnote.
+    attach: Annotated[bool, IOAttrs('at', store_default=False)] = True
+
+    #: Color/flatness/shadow; None for the defaults (those of a row's
+    #: own title, subtitle or footnote).
+    color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
+    ] = None
+    flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+
+    #: Whether the text word-wraps; see :attr:`ButtonRow.title_wrap`.
+    wrap: Annotated[bool, IOAttrs('w', store_default=False)] = True
+
+    #: Horizontal alignment; None for that of the row it attaches to
+    #: (left when standing alone). Texts attached to one row share an
+    #: alignment: the first one set among them.
+    align: Annotated[
+        HAlign | None,
+        IOAttrs('a', store_default=False, enum_fallback=HAlign.LEFT),
+    ] = None
+
+    #: Extra space above and below; may be negative. Between texts
+    #: attached to the same row, or between such a text and its row,
+    #: these widen (or narrow) that gap.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    #: Draw debug bounds.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.TITLE_ROW
+
+
+@ioprepped
+@dataclass
+class SubtitleRow(TextRow):
+    """A subtitle on its own row; see :class:`TextRow`.
+
+    Attached, it sits under its row's title, or alone above the row.
+    """
+
+    text: Annotated[LangStrSpec | int, IOAttrs('t')]
+
+    #: See :attr:`TitleRow.attach`.
+    attach: Annotated[bool, IOAttrs('at', store_default=False)] = True
+
+    #: See :attr:`TitleRow.color`.
+    color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
+    ] = None
+    #: See :attr:`TitleRow.flatness`.
+    flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+    #: See :attr:`TitleRow.shadow`.
+    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+
+    #: See :attr:`TitleRow.wrap`.
+    wrap: Annotated[bool, IOAttrs('w', store_default=False)] = True
+
+    #: See :attr:`TitleRow.align`.
+    align: Annotated[
+        HAlign | None,
+        IOAttrs('a', store_default=False, enum_fallback=HAlign.LEFT),
+    ] = None
+
+    #: See :attr:`TitleRow.spacing_top`.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    #: See :attr:`TitleRow.spacing_bottom`.
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    #: See :attr:`TitleRow.debug`.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.SUBTITLE_ROW
+
+
+@ioprepped
+@dataclass
+class FootnoteRow(TextRow):
+    """A footnote on its own row; see :class:`TextRow`.
+
+    Attached, it sits under the row before it.
+    """
+
+    text: Annotated[LangStrSpec | int, IOAttrs('t')]
+
+    #: See :attr:`TitleRow.attach`.
+    attach: Annotated[bool, IOAttrs('at', store_default=False)] = True
+
+    #: See :attr:`TitleRow.color`.
+    color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
+    ] = None
+    #: See :attr:`TitleRow.flatness`.
+    flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+    #: See :attr:`TitleRow.shadow`.
+    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+
+    #: See :attr:`TitleRow.wrap`.
+    wrap: Annotated[bool, IOAttrs('w', store_default=False)] = True
+
+    #: See :attr:`TitleRow.align`.
+    align: Annotated[
+        HAlign | None,
+        IOAttrs('a', store_default=False, enum_fallback=HAlign.LEFT),
+    ] = None
+
+    #: See :attr:`TitleRow.spacing_top`.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    #: See :attr:`TitleRow.spacing_bottom`.
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    #: See :attr:`TitleRow.debug`.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.FOOTNOTE_ROW
+
+
+#: The standalone text rows (see :class:`TextRow`).
+type AnyTextRow = TitleRow | SubtitleRow | FootnoteRow
+
+
+# (Abstract: its subclasses supply get_type_id(), and their fields;
+# dataclasses don't inherit fields here.)
+class BandRow(Row):  # pylint: disable=abstract-method
+    """Base for a band of decorations standing on its own between rows.
+
+    See :class:`HeaderRow` and :class:`FooterRow` (:data:`AnyBandRow`).
+    They draw exactly like the header and footer bands a row can carry
+    itself (its ``header_*`` and ``footer_*`` fields) and replace
+    those: with ``attach`` on (the default), a header directly above a
+    row (and above any title and subtitle attached to it) and a footer
+    directly below one (and below any attached footnote) attach to
+    that row and lay out just as its own would. A row that already has
+    a band there takes no attached one; that band stands alone
+    instead. An attached band's ``spacing_bottom`` (header) or
+    ``spacing_top`` (footer), the side facing its row, doesn't apply.
+
+    A band that doesn't attach (``attach`` off, or nothing there to
+    attach to) stands alone between rows, taking no room of its own
+    beyond its height: its neighbors' spacing decides how far off they
+    sit. It comes into view with the next selectable row (a footer,
+    with the previous one). As with text rows, one with ``attach`` on
+    that couldn't (out of order, say) stands alone and the client logs
+    a warning.
+
+    Builds before :data:`TEXT_ROW_BUILD` skip these rows entirely, so
+    don't rely on them for pages such builds may show.
+    """
+
+
+@ioprepped
+@dataclass
+class HeaderRow(BandRow):
+    """A header band on its own row; see :class:`BandRow`."""
+
+    #: The band's height (before :attr:`scale`).
+    height: Annotated[float, IOAttrs('h')]
+
+    #: Scales the band's height and everything in it.
+    scale: Annotated[float, IOAttrs('hs', store_default=False)] = 1.0
+
+    #: Decorations positioned relative to points on the band's
+    #: vertical midline: its left edge (inset like row titles), its
+    #: center and its right edge; as for
+    #: :attr:`ButtonRow.header_decorations_left` and friends.
+    decorations_left: Annotated[
+        list[Decoration] | None, IOAttrs('dl', store_default=False)
+    ] = None
+    decorations_center: Annotated[
+        list[Decoration] | None, IOAttrs('dc', store_default=False)
+    ] = None
+    decorations_right: Annotated[
+        list[Decoration] | None, IOAttrs('dr', store_default=False)
+    ] = None
+
+    #: Whether to attach to the row below (see :class:`BandRow`).
+    attach: Annotated[bool, IOAttrs('at', store_default=False)] = True
+
+    #: Extra space above and below; may be negative.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    #: Draw debug bounds.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.HEADER_ROW
+
+
+@ioprepped
+@dataclass
+class FooterRow(BandRow):
+    """A footer band on its own row; see :class:`BandRow`."""
+
+    #: See :attr:`HeaderRow.height`.
+    height: Annotated[float, IOAttrs('h')]
+
+    #: See :attr:`HeaderRow.scale`.
+    scale: Annotated[float, IOAttrs('hs', store_default=False)] = 1.0
+
+    #: See :attr:`HeaderRow.decorations_left`.
+    decorations_left: Annotated[
+        list[Decoration] | None, IOAttrs('dl', store_default=False)
+    ] = None
+    #: See :attr:`HeaderRow.decorations_left`.
+    decorations_center: Annotated[
+        list[Decoration] | None, IOAttrs('dc', store_default=False)
+    ] = None
+    #: See :attr:`HeaderRow.decorations_left`.
+    decorations_right: Annotated[
+        list[Decoration] | None, IOAttrs('dr', store_default=False)
+    ] = None
+
+    #: Whether to attach to the row above (see :class:`BandRow`).
+    attach: Annotated[bool, IOAttrs('at', store_default=False)] = True
+
+    #: See :attr:`HeaderRow.spacing_top`.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+    #: See :attr:`HeaderRow.spacing_top`.
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
+    #: See :attr:`HeaderRow.debug`.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.FOOTER_ROW
+
+
+#: The standalone band rows (see :class:`BandRow`).
+type AnyBandRow = HeaderRow | FooterRow
 
 
 @ioprepped
@@ -2339,11 +3288,24 @@ class Section(Row):
     rows a little apart from what comes before and after, so the
     grouping reads at a glance.
 
-    The heading is drawn like a row's own titles but a bit larger, so
-    it reads as heading the group rather than labeling one row; the
-    note likewise. Neither is selectable: selecting the section's first
+    The heading and note are text and band rows (see :class:`TextRow`)
+    at the start and end of :attr:`rows`: a ``HEADING``-size
+    :class:`TitleRow` (see :attr:`TitleRow.size`), with any
+    :class:`HeaderRow` before it and :class:`SubtitleRow` after it
+    joining it, and a :class:`FootnoteRow` (``attach`` off, so it notes
+    the whole group rather than one row) and :class:`FooterRow` at the
+    end. Neither is selectable: selecting the section's first
     selectable row scrolls its heading into view too, and its last its
     note.
+
+    The section's own heading and note fields (header band, ``title``,
+    ``subtitle``, ``footnote``, footer band, and their looks) are the
+    older way to say the same thing, for builds before
+    :data:`TEXT_ROW_BUILD`, which skip text rows. Newer builds lay
+    them out exactly as those rows placed at the start and end of
+    :attr:`rows` (``spacing_title``, ``spacing_subtitle`` and
+    ``spacing_footnote`` becoming those rows' spacing). They go away
+    with api 9; use the rows for pages only newer builds show.
 
     Sections don't nest; a section among a section's rows is ignored
     (the client logs an error). Builds older than this row type skip a
@@ -2424,6 +3386,27 @@ class Section(Row):
     footnote_shadow: Annotated[
         float | None, IOAttrs('fns', store_default=False)
     ] = None
+
+    #: See :attr:`ButtonRow.title_wrap`.
+    title_wrap: Annotated[bool, IOAttrs('tw', store_default=False)] = True
+    #: See :attr:`ButtonRow.subtitle_wrap`.
+    subtitle_wrap: Annotated[bool, IOAttrs('sw', store_default=False)] = True
+    #: See :attr:`ButtonRow.footnote_wrap`.
+    footnote_wrap: Annotated[bool, IOAttrs('fw', store_default=False)] = True
+
+    #: Extra space between the heading and the section's first row (the
+    #: heading's last text's ``spacing_bottom``), between the title and
+    #: subtitle (the subtitle's ``spacing_top``), and between the
+    #: section's last row and its footnote (the footnote's
+    #: ``spacing_top``). Builds before :data:`TEXT_ROW_BUILD` ignore
+    #: these.
+    spacing_title: Annotated[float, IOAttrs('stl', store_default=False)] = 0.0
+    spacing_subtitle: Annotated[float, IOAttrs('sst', store_default=False)] = (
+        0.0
+    )
+    spacing_footnote: Annotated[float, IOAttrs('sfn', store_default=False)] = (
+        0.0
+    )
 
     #: See :attr:`ButtonRow.footer_height`.
     footer_height: Annotated[float, IOAttrs('fh', store_default=False)] = 0.0
@@ -2515,6 +3498,119 @@ def is_control_row(
 
 @ioprepped
 @dataclass
+class TextStyle:
+    """How a kind of text looks by default on a page.
+
+    Each value None for the usual. An element's own value (a row's
+    ``title_color``, say) wins over these.
+    """
+
+    #: Color (rgba).
+    color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
+    ] = None
+
+    #: How flat it draws (0 fully shaded, 1 flat).
+    flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+
+    #: Shadow strength.
+    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
+class TextStyles:
+    """A page's default text looks, by kind; see :class:`TextStyle`.
+
+    Each None for the usual. Builds before :data:`TEXT_ROW_BUILD`
+    ignore these.
+    """
+
+    #: Row titles and :class:`TitleRow` (and section titles, which are
+    #: drawn larger but otherwise alike).
+    title: Annotated[TextStyle | None, IOAttrs('t', store_default=False)] = None
+
+    #: Row subtitles and :class:`SubtitleRow` (and section subtitles).
+    subtitle: Annotated[TextStyle | None, IOAttrs('s', store_default=False)] = (
+        None
+    )
+
+    #: Row footnotes and :class:`FootnoteRow` (and section notes).
+    footnote: Annotated[TextStyle | None, IOAttrs('f', store_default=False)] = (
+        None
+    )
+
+    #: Control rows' labels.
+    label: Annotated[TextStyle | None, IOAttrs('l', store_default=False)] = None
+
+    #: Button labels (their color and flatness; ``shadow`` doesn't apply
+    #: to buttons).
+    button: Annotated[TextStyle | None, IOAttrs('b', store_default=False)] = (
+        None
+    )
+
+
+@ioprepped
+@dataclass
+class Spacing:
+    """How much room a page leaves between its rows, by kind.
+
+    Each value is the room a kind of row wants beside it; between two
+    rows the larger of the two sides' values applies (they don't add
+    up). A row's top edge is its title if it has one (else its
+    subtitle, else the row itself), and its bottom edge its footnote if
+    it has one. Rows' own ``spacing_top`` and ``spacing_bottom`` add
+    on top. Nothing is left above a page's first row or below its last
+    (or inside a card's padding). None for each kind's default, or for
+    :attr:`Page.row_spacing` everywhere when the page sets that.
+
+    Builds before :data:`TEXT_ROW_BUILD` ignore this and space every
+    row by :attr:`Page.row_spacing`.
+    """
+
+    #: Above a row led by a title, and beside a standalone
+    #: :class:`TitleRow` (above an attached ``HEADING`` one only: it
+    #: keeps its own small gap to the row it heads); None for
+    #: :data:`DEFAULT_TITLE_SPACING`.
+    title: Annotated[float | None, IOAttrs('t', store_default=False)] = None
+
+    #: Above a row led by a subtitle (with no title), and beside a
+    #: standalone :class:`SubtitleRow`; None for
+    #: :data:`DEFAULT_SUBTITLE_SPACING`.
+    subtitle: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+
+    #: Below a row ending in a footnote, and beside a standalone
+    #: :class:`FootnoteRow`; None for :data:`DEFAULT_FOOTNOTE_SPACING`.
+    footnote: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+
+    #: Beside a :class:`ButtonRow` (any layout); None for
+    #: :data:`DEFAULT_BUTTON_ROW_SPACING`. A scrolling row's scroll bar
+    #: (when it shows) fades in over the 10 below it, which at the
+    #: default ends right where the next row begins; a page with
+    #: visibly scrolling rows may want a little more.
+    button_row: Annotated[float | None, IOAttrs('b', store_default=False)] = (
+        None
+    )
+
+    #: Beside a control row (checkbox, text input, choice, color,
+    #: slider, number, button control); None for
+    #: :data:`DEFAULT_CONTROL_ROW_SPACING`.
+    control_row: Annotated[float | None, IOAttrs('c', store_default=False)] = (
+        None
+    )
+
+    #: Between a :class:`Section` and its neighbors (the larger of this
+    #: and what the neighbor wants, as between rows; a section also
+    #: stands a little further apart from what precedes it). Inside, a
+    #: section's heading sits close above its first row and a card's
+    #: padding is all there is at its ends. None for
+    #: :data:`DEFAULT_SECTION_SPACING`.
+    section: Annotated[float | None, IOAttrs('sc', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
 class Page:
     """Doc-UI page version 2.
 
@@ -2536,15 +3632,54 @@ class Page:
     #: recognized as such and ignored.
     state: Annotated[dict | None, IOAttrs('st', store_default=False)] = None
 
-    #: What the window's viewer pane shows, for windows at the
-    #: :attr:`WindowLayout.VIEWER` layout (ignored elsewhere): usually a
+    #: What the window's viewer pane shows, for windows at a viewer
+    #: layout (:attr:`WindowLayout.VIEWER` or
+    #: :attr:`WindowLayout.VIEWER_NARROW`; ignored elsewhere): usually a
     #: :class:`bacommon.depiction.CharacterViewerDepiction`. The client
     #: keeps what the pane shows running across pages, so a page re-sent
     #: with a changed depiction (an editor's draft, say) updates the
-    #: picture in place. Without one the pane is left blank.
+    #: picture in place.
+    #:
+    #: Without one there is no pane: the page's rows get the window's
+    #: whole width, so lay them out for that (a confirmation centered in
+    #: the window, say). For an empty pane, send a
+    #: :class:`bacommon.depiction.BlankDepiction` (see
+    #: :func:`blank_viewer`). Builds before
+    #: :data:`PAGE_DRIVEN_VIEWER_BUILD` show a blank pane either way,
+    #: with the rows in their usual column beside it.
     viewer: Annotated[
         bacommon.depiction.Depiction | None, IOAttrs('v', store_default=False)
     ] = None
+
+    #: Whether the viewer pane (if any) is framed. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD` (their panes are framed).
+    viewer_frame_style: Annotated[
+        ViewerFrameStyle,
+        IOAttrs(
+            'vfs',
+            store_default=False,
+            enum_fallback=ViewerFrameStyle.DEFAULT,
+        ),
+    ] = ViewerFrameStyle.DEFAULT
+
+    #: What shows behind the viewer pane's content (rgba; any alpha
+    #: lets the window show through), framed or not. None for the frame
+    #: style's usual one: blending into the window when framed, clear
+    #: when not. Viewers able to keep transparency (a mesh viewer) draw
+    #: over it; others (a character's scene) cover it. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD`.
+    viewer_background_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('vbg', store_default=False),
+    ] = None
+
+    #: Which side the viewer pane (if any) sits on. Ignored by builds
+    #: before :data:`PAGE_DRIVEN_VIEWER_BUILD` (their panes are on the
+    #: left).
+    viewer_side: Annotated[
+        ViewerSide,
+        IOAttrs('vsd', store_default=False, enum_fallback=ViewerSide.LEFT),
+    ] = ViewerSide.LEFT
 
     #: Center content vertically when it's smaller than the available height.
     center_vertically: Annotated[bool, IOAttrs('cv', store_default=False)] = (
@@ -2556,17 +3691,238 @@ class Page:
     #: wheel, keys) and keeps the same layout; only the bar goes. Builds
     #: older than this field always show it.
     show_scrollbar: Annotated[bool, IOAttrs('ssb', store_default=False)] = True
-    row_spacing: Annotated[float, IOAttrs('s', store_default=False)] = 10.0
+
+    #: Empty space between every pair of rows alike, replacing the
+    #: per-kind defaults of :attr:`spacing` (whose own values still
+    #: win); None for those defaults. A scrolling button row's scroll
+    #: bar fades in over the 12 of it below that row, so less than that
+    #: lets the bar reach the next row. Builds before
+    #: :data:`TEXT_ROW_BUILD` use it (or :data:`DEFAULT_ROW_SPACING`)
+    #: everywhere. (Before :data:`PAGE_LOOK_BUILD` this was always a
+    #: number, 10 by default, and an omitted value still means 10 to
+    #: those builds; they also put the bar's strip inside the row
+    #: instead, so button rows sit the same distance apart on both.)
+    row_spacing: Annotated[float | None, IOAttrs('s', store_default=False)] = (
+        None
+    )
+
+    #: Room between rows by kind; None for the defaults (see
+    #: :class:`Spacing`).
+    spacing: Annotated[Spacing | None, IOAttrs('sp', store_default=False)] = (
+        None
+    )
+
+    #: Default text looks by kind; None for the usual (see
+    #: :class:`TextStyles`).
+    text: Annotated[TextStyles | None, IOAttrs('tx', store_default=False)] = (
+        None
+    )
+
+    #: How far content sits in from the sides of the page's column (the
+    #: horizontal inset): text, control rows, and button rows' outermost
+    #: buttons (at their default padding). None for
+    #: :data:`DEFAULT_H_INSET`. A fading scroll area's side fades shrink
+    #: to match, so content resting nearer the edge isn't faded. Builds
+    #: before :data:`PAGE_LOOK_BUILD` ignore it.
+    h_inset: Annotated[float | None, IOAttrs('hi', store_default=False)] = None
+
+    #: Empty space above the page's first row and below its last (the
+    #: vertical inset); None for :data:`DEFAULT_V_INSET`. A fading
+    #: scroll area's top and bottom fades shrink with it (to none past
+    #: the scroll area's own edge at 0), so content at rest isn't
+    #: faded; scrolled content still fades out beyond that edge. Small
+    #: enough and the top and bottom rows' button glow and selection
+    #: highlight get clipped.
+    #: Clearance for toolbars at small ui-scale is added on top.
+    #: Selecting a row scrolls what it must show at least this far in
+    #: from the scroll area's edges too, so it is never faded either.
+    #: Negative pulls content in toward the edges. Builds before
+    #: :data:`PAGE_LOOK_BUILD` ignore it (and use 27).
+    v_inset: Annotated[float | None, IOAttrs('vi', store_default=False)] = None
+
+    #: The color of the page's buttons that have no color of their own
+    #: (rgb), except its default button (see
+    #: :attr:`default_button_color`); None for the usual. Builds before
+    #: :data:`PAGE_LOOK_BUILD` ignore it.
+    button_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('bc', store_default=False)
+    ] = None
+
+    #: The color of the page's default button (rgb; see
+    #: :attr:`Button.default`) if it has none of its own; None for the
+    #: usual. Builds before :data:`PAGE_LOOK_BUILD` ignore it.
+    default_button_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('dbc', store_default=False)
+    ] = None
 
     #: If things disappear when scrolling up/down, turn this up.
     simple_culling_v: Annotated[float, IOAttrs('scv', store_default=False)] = (
         100.0
     )
 
-    padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
-    padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
-    padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
-    padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
+    # Retired wire keys; never reuse them here: 'pb', 'pl', 'pt', 'pr'
+    # (page padding, replaced by v_inset and h_inset; older servers
+    # may still send them, and clients ignore them as unknown).
+
+
+#: The first client build whose viewer panes follow their page. A page
+#: without a viewer gets no pane (and its rows the whole window), and
+#: :attr:`Page.viewer_frame_style`, :attr:`Page.viewer_background_color`,
+#: :attr:`Page.viewer_side` and
+#: :class:`bacommon.depiction.BlankDepiction` are understood. Lay out a
+#: viewer-less page for the narrow column beside a blank pane for older
+#: builds.
+PAGE_DRIVEN_VIEWER_BUILD = 23066
+
+#: The first client build that shows :class:`Popup` actions' popups
+#: (older ones see an unknown action). Gate any page offering a popup
+#: on this; see :func:`supports_popups`.
+POPUP_BUILD = 23073
+
+#: The first client build that draws :attr:`Text.big` text with the big
+#: font (older ones draw it with the regular font).
+BIG_TEXT_BUILD = 23073
+
+#: The first client build that understands the page-look fields
+#: (:attr:`Page.h_inset`, :attr:`Page.v_inset`,
+#: :attr:`Page.button_color`, :attr:`Page.default_button_color`, and
+#: the frame colors on :class:`Browse` and :class:`Popup`), gives
+#: popups a green frame, and
+#: puts a scrolling button row's scroll-bar strip in the row spacing
+#: below it. Older builds ignore those fields.
+PAGE_LOOK_BUILD = 23075
+
+#: The first client build that draws standalone text and band rows
+#: (:class:`TitleRow`, :class:`SubtitleRow`, :class:`FootnoteRow`,
+#: :class:`HeaderRow`, :class:`FooterRow`) and spaces rows by
+#: :attr:`Page.spacing`. Older builds skip those rows entirely and
+#: space rows evenly by :attr:`Page.row_spacing`.
+TEXT_ROW_BUILD = 23075
+
+#: Space between a page's rows unless it sets
+#: :attr:`Page.row_spacing`, for builds before :data:`TEXT_ROW_BUILD`
+#: (later ones space rows by kind; see :class:`Spacing`).
+DEFAULT_ROW_SPACING = 22.0
+
+#: Default :attr:`Spacing.title`.
+DEFAULT_TITLE_SPACING = 22.0
+
+#: Default :attr:`Spacing.subtitle`.
+DEFAULT_SUBTITLE_SPACING = 10.0
+
+#: Default :attr:`Spacing.footnote`.
+DEFAULT_FOOTNOTE_SPACING = 10.0
+
+#: Default :attr:`Spacing.button_row`.
+DEFAULT_BUTTON_ROW_SPACING = 10.0
+
+#: Default :attr:`Spacing.control_row`.
+DEFAULT_CONTROL_ROW_SPACING = 10.0
+
+#: Default :attr:`Spacing.section`.
+DEFAULT_SECTION_SPACING = 10.0
+
+#: How far a page's content sits in from its column's sides unless it
+#: sets :attr:`Page.h_inset`.
+DEFAULT_H_INSET = 33.0
+
+#: Space above a page's first row and below its last unless it sets
+#: :attr:`Page.v_inset`.
+DEFAULT_V_INSET = 27.0
+
+#: A popup's frame color (rgb) unless its :class:`Popup` says
+#: otherwise, after the classic popups' green. Part of the popup look.
+POPUP_BACKGROUND_COLOR = (0.45, 0.63, 0.15)
+
+#: A :attr:`Page.button_color` that suits
+#: :data:`POPUP_BACKGROUND_COLOR`; part of the popup look. Popup pages
+#: wanting the look set this and the other ``POPUP_*`` page values
+#: themselves.
+POPUP_BUTTON_COLOR = (0.52, 0.72, 0.22)
+
+#: A :attr:`Page.h_inset` tighter than the usual, so a popup of links
+#: reads as a menu; part of the popup look.
+POPUP_H_INSET = 20.0
+
+#: A :attr:`Page.row_spacing` tighter than the usual (room for a
+#: scrolling button row's bar plus 4); part of the popup look.
+POPUP_ROW_SPACING = 16.0
+
+#: Smallest content size (width, height) a :class:`Popup` may ask for.
+#: There's no largest: each client shrinks a popup that wouldn't fit on
+#: its screen (see :attr:`Popup.size`).
+POPUP_MIN_SIZE = (200.0, 100.0)
+
+# What window layouts promise pages. Each layout gives a page a
+# *content rect* to lay out in, at least this big at every ui-scale on
+# every screen (windows that fill the screen or follow its size get
+# more on bigger ones). A page's rows sit within it, in from its sides
+# by the page's :attr:`Page.h_inset` and from its top and bottom by its
+# :attr:`Page.v_inset`; so a row filling a small layout's height, say,
+# can be ``SMALL_CONTENT_HEIGHT - 2 * v_inset`` tall without scrolling.
+# (The scroll area may reach out past the content rect -- under a title
+# or toolbars, to screen edges -- but content is never placed there.)
+
+#: Content-rect width of :attr:`WindowLayout.SMALL`,
+#: :attr:`WindowLayout.SMALL_TALL` and :attr:`WindowLayout.SMALL_TALLER`
+#: pages, and of :attr:`WindowLayout.VIEWER` pages beside their viewer
+#: pane. Exactly this at every ui-scale.
+SMALL_CONTENT_WIDTH = 600.0
+
+#: Content-rect height of :attr:`WindowLayout.SMALL` pages (at least;
+#: more at small ui-scale, where windows fill the screen). Every other
+#: layout gives at least :data:`WIDE_CONTENT_HEIGHT`.
+SMALL_CONTENT_HEIGHT = 306.8
+
+#: Content-rect width of :attr:`WindowLayout.VIEWER_NARROW` pages beside
+#: their viewer pane. Exactly this at every ui-scale.
+NARROW_CONTENT_WIDTH = 400.0
+
+#: Content-rect width of :attr:`WindowLayout.WIDE`,
+#: :attr:`WindowLayout.WIDE_TALL` and :attr:`WindowLayout.WIDE_TALLER`
+#: pages, exactly, at every ui-scale (about 882.76); also the least
+#: :attr:`WindowLayout.WIDER` and :attr:`WindowLayout.LARGE` give. It is
+#: the narrowest screen's width at small ui-scale (where windows fill
+#: the screen), so wide pages can be designed to fill it exactly.
+WIDE_CONTENT_WIDTH = 1280.0 / 1.45
+
+#: Content-rect height of :attr:`WindowLayout.WIDE` and
+#: :attr:`WindowLayout.WIDER` pages, exactly, at every ui-scale (about
+#: 357.55; more at small ui-scale on taller screens); also the least
+#: every layout but :attr:`WindowLayout.SMALL` gives. It is what the
+#: shortest screen leaves at small ui-scale, clear of the toolbars.
+WIDE_CONTENT_HEIGHT = 720.0 / 1.45 + 1.0 - 140.0
+
+#: Content-rect height of :attr:`WindowLayout.SMALL_TALL` and
+#: :attr:`WindowLayout.WIDE_TALL` pages at medium/large ui-scale,
+#: exactly; :attr:`WindowLayout.SMALL_TALLER` and
+#: :attr:`WindowLayout.WIDE_TALLER` give at least this there, more on
+#: taller screens. (At small ui-scale, where windows fill the screen,
+#: all of these are the same as their base layouts: at least
+#: :data:`WIDE_CONTENT_HEIGHT`.) A page taller than this scrolls in a
+#: tall layout at medium/large ui-scale; one that is often taller is a
+#: candidate for a taller layout.
+TALL_CONTENT_HEIGHT = 556.28
+
+
+def supports_popups(engine_build_number: int) -> bool:
+    """Whether a client build can show :class:`Popup` popups."""
+    return engine_build_number >= POPUP_BUILD
+
+
+def blank_viewer(
+    engine_build_number: int,
+) -> bacommon.depiction.Depiction | None:
+    """An empty viewer pane for a page, for a client build.
+
+    A :class:`bacommon.depiction.BlankDepiction` (the pane then shows
+    just its background; see :attr:`Page.viewer_background_color`), or
+    None for builds before :data:`PAGE_DRIVEN_VIEWER_BUILD`, which
+    don't know that kind but show no viewer as a blank pane anyway.
+    """
+    if engine_build_number < PAGE_DRIVEN_VIEWER_BUILD:
+        return None
+    return bacommon.depiction.BlankDepiction()
 
 
 class ResponseStatus(Enum):

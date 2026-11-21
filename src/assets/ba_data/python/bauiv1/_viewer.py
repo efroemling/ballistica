@@ -21,6 +21,10 @@ MAX_VIEWERS = 2
 #: sitting around.
 MAX_IDLE_SECONDS = 5.0
 
+#: Seconds (of display time) within which a viewer counts as still
+#: being shown: a few frames' worth, even at low frame rates.
+JUST_SHOWN_SECONDS = 0.25
+
 
 class Viewer:
     """A live picture shown in ui; a little game scene, for instance.
@@ -116,11 +120,21 @@ class ViewerRegistry:
         assert babase.in_logic_thread()
         existing = self._viewers.pop(viewer_id, None)
         if existing is not None and existing is not viewer:
+            self._warn_if_shown(
+                viewer_id, existing, f'replaced by a {type(viewer).__name__}'
+            )
             self._shut_down(viewer_id, existing)
 
         while len(self._viewers) >= MAX_VIEWERS:
             oldest_id = max(self._viewers, key=self._idle_time)
-            self._shut_down(oldest_id, self._viewers.pop(oldest_id))
+            oldest = self._viewers.pop(oldest_id)
+            self._warn_if_shown(
+                oldest_id,
+                oldest,
+                f'bumped to make room for {viewer_id!r}'
+                f' (we keep at most {MAX_VIEWERS})',
+            )
+            self._shut_down(oldest_id, oldest)
 
         self._viewers[viewer_id] = viewer
         if self._upkeep_timer is None:
@@ -159,8 +173,30 @@ class ViewerRegistry:
                 self.remove(viewer_id)
 
     @staticmethod
+    def _warn_if_shown(viewer_id: str, viewer: Viewer, why: str) -> None:
+        # Retiring a viewer something is showing right now means two
+        # live panes are contending for our slots; whichever loses goes
+        # blank (or both keep bumping each other). That's a bug in how
+        # viewers get keyed or kept, so say so.
+        try:
+            idle = viewer.source.get_idle_time()
+        except Exception:
+            return
+        if idle < JUST_SHOWN_SECONDS:
+            logging.warning(
+                "Retiring viewer '%s' (a %s) while it is still being shown:"
+                ' %s. Whatever shows it will have to ask for another.',
+                viewer_id,
+                type(viewer).__name__,
+                why,
+            )
+
+    @staticmethod
     def _shut_down(viewer_id: str, viewer: Viewer) -> None:
         try:
+            # So anything still showing it asks for another rather than
+            # showing a dead one.
+            viewer.source.mark_retired()
             viewer.shutdown()
         except Exception:
             logging.exception("Error shutting down viewer '%s'.", viewer_id)

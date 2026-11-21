@@ -4,7 +4,9 @@
 #define BALLISTICA_SHARED_FOUNDATION_OBJECT_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -125,7 +127,15 @@ class Object {
 
   /// Increment the strong reference count for an Object. In most cases you
   /// should let Ref objects handle this for you and not call this directly.
-  void ObjectIncrementStrongRefCount() {
+  /// `via` names the reference type doing it, for error reporting.
+  void ObjectIncrementStrongRefCount(std::string_view via = {}) {
+    // Cheap check in all builds: a ref to an Object that has already
+    // been destroyed (or to garbage) otherwise surfaces as a mystery
+    // crash somewhere downstream.
+    if (object_canary_ != kObjectCanaryAlive) [[unlikely]] {
+      ObjectRefCheckFailed_("increment", via);
+      return;
+    }
 #if BA_DEBUG_BUILD
     ObjectUpdateForAcquire();
     ObjectThreadCheck();
@@ -147,7 +157,15 @@ class Object {
   /// Decrement the strong reference count for the Object, deleting it if it
   /// hits zero. In most cases you should let Ref objects handle this for
   /// you and not call this directly.
-  void ObjectDecrementStrongRefCount() {
+  void ObjectDecrementStrongRefCount(std::string_view via = {}) {
+    // See ObjectIncrementStrongRefCount(). A count already at zero means
+    // a double release; the object is gone or about to be.
+    bool bad{object_canary_ != kObjectCanaryAlive
+             || object_strong_ref_count_ <= 0};
+    if (bad) [[unlikely]] {
+      ObjectRefCheckFailed_("decrement", via);
+      return;
+    }
 #if BA_DEBUG_BUILD
     ObjectThreadCheck();
 #endif
@@ -626,7 +644,7 @@ class Object {
                         PyExcType::kReference);
       }
 
-      obj->ObjectIncrementStrongRefCount();
+      obj->ObjectIncrementStrongRefCount(static_type_name_constexpr<T>());
       obj_ = obj;
     }
 
@@ -635,7 +653,7 @@ class Object {
         auto* obj = obj_;
         // Invalidate ref *before* to avoid potential recursive-release.
         obj_ = nullptr;
-        obj->ObjectDecrementStrongRefCount();
+        obj->ObjectDecrementStrongRefCount(static_type_name_constexpr<T>());
       }
     }
     T* obj_{};
@@ -821,8 +839,19 @@ class Object {
   millisecs_t object_birth_time_{};
   bool object_printed_warning_{};
 #endif
+  // Set while the Object is alive and overwritten on destruction, in all
+  // builds; ref operations check it (see ObjectIncrementStrongRefCount()).
+  static constexpr uint32_t kObjectCanaryAlive{0x0B1EC7A1};
+  static constexpr uint32_t kObjectCanaryDead{0xDEADB1EC};
+
+  /// Report a failed ref check as a fatal error. Out of line and never
+  /// touches virtuals, since the object may be long gone.
+  BA_NOINLINE void ObjectRefCheckFailed_(const char* op,
+                                         std::string_view via) const;
+
   WeakRefBase* object_weak_refs_{};
   int object_strong_ref_count_{};
+  uint32_t object_canary_{kObjectCanaryAlive};
   BA_DISALLOW_CLASS_COPIES(Object);
 };  // Object
 

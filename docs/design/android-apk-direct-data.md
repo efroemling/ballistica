@@ -100,6 +100,21 @@ total device footprint still shrinks because nothing is extracted.
   `get_source()`.
 - There are no compiled extension modules in site-packages.
 
+### Meta-scan cache seed (store builds)
+
+The launch meta-scan (`ba_meta` tags) caches each module's outcome in
+`<cache>/metascan.json`, keyed for APK entries by size + CRC32 from the
+zip directory (see `bacommon.metascancache.ScanCache`). Store APKs also
+ship `ba_data/metascan_seed.json`, generated at staging from the exact
+staged files (`batools/metascanseed.py`, only for the `store` bundle
+profile), so a first launch with no cache yet doesn't read all the
+Python in the APK. Seed entries are content-keyed, so they can only
+match the files they came from; anything else is simply rescanned.
+Cache entries are keyed relative to the Python dir (alias `app`), so
+they survive the per-install `/data/app/~~...` path changing on
+updates. Bump `CACHE_FORMAT_VERSION` in `metascancache.py` whenever
+what a module's scan produces changes.
+
 ## Asset blobs from the APK
 
 ### AssetBlob: spans, not paths

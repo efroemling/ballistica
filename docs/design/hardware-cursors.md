@@ -42,6 +42,15 @@ true; `CreateHardwareCursor_` un-premultiplies (SDL wants straight alpha),
 base surface = 64px mip (`kHardwareCursorLogicalSize`), larger mips attach
 via `SDL_AddSurfaceAlternateImage` (high-DPI).
 
+**Exception: X11 with SDL < 3.4.20** (`SDLWantsPremultipliedCursorPixels_`,
+runtime `SDL_GetVersion()` check). Those SDLs copy pixels to Xcursor
+unchanged, but Xcursor expects premultiplied; un-premultiplied edge pixels
+show as a speckled bright fringe (seen on the Steam Deck, Steam runtime SDL
+3.4.18). There we pass the premultiplied pixels as-is. Fixed upstream in SDL
+PR #16537 (3.4.20+); SDL's Wayland backend already premultiplies. Gamescope
+screenshots omit the cursor plane, so check this by photographing the Deck
+screen.
+
 **The toggle is permanent** (decided 2026-07-06): flipping
 `kUseHardwareCursor` off is the desktop test lever for the engine
 software-cursor path (`Graphics::DrawCursor`), which stays load-bearing for

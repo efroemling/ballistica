@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _commonassets, _classicassets, _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -233,7 +233,7 @@ class _NotConfigurableWindow(bui.MainWindow):
             msg = _ctlstrs.configure_in_system_settings(device=device.name)
         elif device.is_controller_app:
             msg = _ctlstrs.remote_configured_in_app(
-                remote_app_name=_classicassets.strings.ui.remote_app_name
+                remote_app_name=_builtinassets.strings.ui.remote_app_name
             )
         else:
             msg = _ctlstrs.cant_configure_device(device=device.name)

@@ -455,15 +455,24 @@ def _macos_bare_dylibs(
     and the macOS Xcode targets -- link these as sibling dylibs with
     ``@rpath/<lib>.dylib`` ids (loaded/embedded like any other dylib). Universal
     arm64 + x86_64; ad-hoc signed (re-signed on embed by Xcode).
+
+    Where the variant produces dSYMs (release), per-arch
+    ``<lib>.dylib.<arch>.dSYM`` bundles land beside each dylib, matching its
+    UUIDs (kept per-arch since a universal libGLESv2 dSYM tops GitHub's
+    100 MB file limit; archives match dSYMs by UUID, not name). The
+    macOS Xcode targets copy these into their archives (an Xcode archive
+    only collects dSYMs for what it builds itself, or from
+    xcframeworks), so App Store submissions carry ANGLE's symbols.
     """
     if dest.exists():
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
     for lib in LIBS:
-        dylibs = [
-            angle / 'out' / variant / 'macos-arm64' / f'{lib}.dylib',
-            angle / 'out' / variant / 'macos-x64' / f'{lib}.dylib',
+        out_dirs = [
+            angle / 'out' / variant / 'macos-arm64',
+            angle / 'out' / variant / 'macos-x64',
         ]
+        dylibs = [d / f'{lib}.dylib' for d in out_dirs]
         binary = dest / f'{lib}.dylib'
         _run(
             ['lipo', '-create', '-output', str(binary)]
@@ -477,6 +486,12 @@ def _macos_bare_dylibs(
             env=env,
         )
         _ad_hoc_sign(binary, env)
+        # (UUIDs survive lipo, install_name_tool and signing, so these
+        # match the dylib just made.)
+        for out_dir, arch in zip(out_dirs, ('arm64', 'x86_64')):
+            dsym = _collect_dsym(out_dir, lib)
+            if dsym is not None:
+                shutil.copytree(dsym, dest / f'{lib}.dylib.{arch}.dSYM')
     print(f'  Created bare macOS dylibs in {dest.name}', flush=True)
 
 

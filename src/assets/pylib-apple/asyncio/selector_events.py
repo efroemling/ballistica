@@ -1115,7 +1115,9 @@ class _SelectorSocketTransport(_SelectorTransport):
                 self._loop._remove_writer(self._sock_fd)
                 if self._empty_waiter is not None:
                     self._empty_waiter.set_result(None)
-                if self._closing:
+                # gh-156512: don't let _call_connection_lost be called twice
+                if self._closing and not self._conn_lost:
+                    self._conn_lost += 1
                     self._call_connection_lost(None)
                 elif self._eof:
                     self._sock.shutdown(socket.SHUT_WR)
@@ -1157,7 +1159,9 @@ class _SelectorSocketTransport(_SelectorTransport):
                 self._loop._remove_writer(self._sock_fd)
                 if self._empty_waiter is not None:
                     self._empty_waiter.set_result(None)
-                if self._closing:
+                # gh-156512: don't let _call_connection_lost be called twice
+                if self._closing and not self._conn_lost:
+                    self._conn_lost += 1
                     self._call_connection_lost(None)
                 elif self._eof:
                     self._sock.shutdown(socket.SHUT_WR)
@@ -1183,7 +1187,11 @@ class _SelectorSocketTransport(_SelectorTransport):
             self._conn_lost += 1
             return
 
-        self._buffer.extend([memoryview(data) for data in list_of_data])
+        # gh-155888: an empty chunk can never be drained, so never buffer it
+        self._buffer.extend(
+            [memoryview(data) for data in list_of_data if data])
+        if not self._buffer:
+            return
         self._write_ready()
         # If the entire buffer couldn't be written, register a write handler
         if self._buffer:
@@ -1198,6 +1206,7 @@ class _SelectorSocketTransport(_SelectorTransport):
             super()._call_connection_lost(exc)
         finally:
             self._write_ready = None
+            self._read_ready_cb = None
             if self._empty_waiter is not None:
                 self._empty_waiter.set_exception(
                     ConnectionError("Connection is closed by peer"))

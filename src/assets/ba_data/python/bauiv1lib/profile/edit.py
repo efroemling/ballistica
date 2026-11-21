@@ -6,6 +6,8 @@
 import random
 from typing import cast, override, TYPE_CHECKING
 
+from bacommon.text import has_visible_chars
+
 from bauiv1lib.colorpicker import ColorPicker
 from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
@@ -1008,6 +1010,16 @@ class EditProfileWindow(
 
         if not new_name:
             bui.screenmessage(_classicuiassets.strings.profile.name_not_empty)
+            _builtinassets.audio.error.get().play()
+            return False
+
+        # A name with nothing that draws (say, only zero-width or
+        # direction-mark chars) would show up blank everywhere.
+        if not has_visible_chars(new_name):
+            bui.screenmessage(
+                _classicassets.strings.gather.invalid_name_error,
+                color=(1, 0, 0),
+            )
             _builtinassets.audio.error.get().play()
             return False
 

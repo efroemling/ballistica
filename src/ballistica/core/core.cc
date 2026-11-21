@@ -2,6 +2,7 @@
 
 #include "ballistica/core/core.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -99,6 +100,11 @@ void CoreFeatureSet::PostInit_() {
 
   // Should migrate this to classic.
   set_legacy_user_agent_string(platform->GetLegacyUserAgentString());
+
+  // Stamp the modded signals' crash-reporter keys right away, nearly
+  // all of them 'pending', so even an early crash reports what we
+  // didn't know yet rather than nothing.
+  UpdateModdedDebugKeys_();
 
   RunSanityChecks_();
 
@@ -210,6 +216,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
       && *ba_env_app_python_dir_
              != (app_python_dir_override.has_value() ? *app_python_dir_override
                                                      : standard_app_python_dir);
+  UpdateModdedDebugKeys_();
 
   // As a sanity check, die if the data dir we were given doesn't contain a
   // 'ba_data' dir — except on platforms serving bundled assets directly
@@ -424,6 +431,7 @@ void CoreFeatureSet::UpdateAppTime_() {
 void CoreFeatureSet::StartSuicideTimer(const std::string& action,
                                        millisecs_t delay) {
   if (!started_suicide_) {
+    suicide_deadline_ = Platform::TimeMonotonicMillisecs() + delay;
     new std::thread(WaitThenDie, delay, action);
     started_suicide_ = true;
   }
@@ -458,6 +466,21 @@ void CoreFeatureSet::UnregisterThread() {
   if (i != thread_info_map_.end()) {
     thread_info_map_.erase(i);
   }
+}
+
+auto CoreFeatureSet::OtherRegisteredThreadNames() -> std::vector<std::string> {
+  std::vector<std::string> names;
+  {
+    std::scoped_lock lock(thread_info_map_mutex_);
+    auto current = std::this_thread::get_id();
+    for (auto&& [thread_id, name] : thread_info_map_) {
+      if (thread_id != current) {
+        names.push_back(name);
+      }
+    }
+  }
+  std::sort(names.begin(), names.end());
+  return names;
 }
 
 auto CoreFeatureSet::CurrentThreadName() -> std::string {
@@ -497,6 +520,80 @@ auto CoreFeatureSet::HandOverInitialAppConfig() -> PyObject* {
   auto* out{initial_app_config_};
   initial_app_config_ = nullptr;
   return out;
+}
+
+void CoreFeatureSet::SetUserRanCommands() {
+  if (user_ran_commands_) {
+    return;
+  }
+  user_ran_commands_ = true;
+  UpdateModdedDebugKeys_();
+}
+
+void CoreFeatureSet::SetWorkspacesInUse(bool val) {
+  if (workspaces_in_use_ == val) {
+    return;
+  }
+  workspaces_in_use_ = val;
+  UpdateModdedDebugKeys_();
+}
+
+void CoreFeatureSet::SetWorkspacesStateKnown() {
+  if (workspaces_state_known_) {
+    return;
+  }
+  workspaces_state_known_ = true;
+  UpdateModdedDebugKeys_();
+}
+
+void CoreFeatureSet::SetUserPythonScanResult(bool present) {
+  if (user_python_scan_complete_ && user_python_present_ == present) {
+    return;
+  }
+  user_python_present_ = present;
+  user_python_scan_complete_ = true;
+  UpdateModdedDebugKeys_();
+}
+
+auto CoreFeatureSet::IsUserModified() const -> bool {
+  return user_ran_commands_ || workspaces_in_use_
+         || using_custom_app_python_dir_ || user_python_present_;
+}
+
+auto CoreFeatureSet::ModdedCheckPending() const -> bool {
+  return !IsUserModified()
+         && (!have_ba_env_vals_ || !user_python_scan_complete_
+             || !workspaces_state_known_);
+}
+
+void CoreFeatureSet::UpdateModdedDebugKeys_() {
+  // Key names and values are documented in
+  // docs/design/client-error-reporting.md (Crashlytics section); keep
+  // the two in sync.
+  auto flag = [](bool known, bool val) -> std::string {
+    return known ? (val ? "1" : "0") : "pending";
+  };
+  std::string modded =
+      IsUserModified() ? "1" : (ModdedCheckPending() ? "pending" : "0");
+  const std::pair<const char*, std::string> keys[] = {
+      {"modded", modded},
+      {"rancmds", flag(true, user_ran_commands_)},
+      {"custompy", flag(have_ba_env_vals_, using_custom_app_python_dir_)},
+      {"userpy", flag(user_python_scan_complete_, user_python_present_)},
+      {"workspaces", flag(workspaces_state_known_, workspaces_in_use_)},
+  };
+
+  // Setters can run on different threads (startup config on main,
+  // console commands on logic); the lock keeps the pushed-value cache
+  // and the pushes themselves in order.
+  std::scoped_lock lock(modded_debug_keys_mutex_);
+  for (auto&& [key, val] : keys) {
+    auto& pushed = pushed_modded_debug_keys_[key];
+    if (pushed != val) {
+      pushed = val;
+      platform->SetDebugKey(key, val);
+    }
+  }
 }
 
 }  // namespace ballistica::core
