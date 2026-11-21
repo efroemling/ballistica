@@ -613,7 +613,6 @@ class EditProfileWindow(
                     # Death sounds could possibly be a empty list due
                     # to the new SpazDef system; try picking one,
                     # and just pass if it fails.
-                    sound = None
                     try:
                         sound = random.choice(appearance.death_sounds)
                         spazappearance.ui_sound(sound).play()
