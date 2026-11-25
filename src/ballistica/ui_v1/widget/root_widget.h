@@ -80,7 +80,9 @@ class RootWidget : public ContainerWidget {
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
   void SetInboxState(int val, bool is_max, const std::string& announce_text);
-  void SetStoreStyle(const std::string& val);
+  /// Seasonal art for the store button: depiction json (empty for
+  /// none), drawn peeking over the top of the button.
+  void SetStoreDecoration(const std::string& depiction);
   /// Each slot's depiction json (empty to draw by appearance), in slot
   /// order.
   void SetChestDepictions(const std::vector<std::string>& depictions);
@@ -165,6 +167,7 @@ class RootWidget : public ContainerWidget {
   void UpdateTokensMeterTextColor_();
   void UpdateAccountButtonColor_();
   void UpdateAccountButtonLabel_();
+  void UpdateStoreDecorationTint_();
   void ShowTrophyMeterAnnotation_(const std::string& val,
                                   const Vector3f& color);
   void HideTrophyMeterAnnotation_();
@@ -186,7 +189,8 @@ class RootWidget : public ContainerWidget {
   std::string league_type_value_;
   std::string inbox_announce_text_str_;
   std::string open_me_text_;
-  std::string store_style_;
+  std::string store_decoration_json_;
+  bool store_ui_open_{};
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
   std::list<Image_> images_;

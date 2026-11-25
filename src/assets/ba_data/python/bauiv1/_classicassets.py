@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.261120`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.261125`` (bauiv1).
 
 All assets for classic bombsquad that have no narrower home. Character bodies
 live in BaClassicCharacterAssets, map geometry in BaClassicMapAssets, and the
@@ -9,7 +9,7 @@ names/icons/previews menus and the store present in BaClassicCatalogAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1287
+# ba_meta require asset-package 1418
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassicassets.261120
-_ASSET_PACKAGE = ApverNum(1287)
+# a-0.baclassicassets.261125
+_ASSET_PACKAGE = ApverNum(1418)
 
 if TYPE_CHECKING:
     import datetime
@@ -10005,9 +10005,6 @@ if TYPE_CHECKING:
         smoke: TextureHandle
         sparks: TextureHandle
         star: TextureHandle
-        store_character: TextureHandle
-        store_character_easter: TextureHandle
-        store_character_xmas: TextureHandle
         store_icon: TextureHandle
         ticket_roll: TextureHandle
         ticket_roll_big: TextureHandle
@@ -10041,9 +10038,9 @@ if TYPE_CHECKING:
     #: source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 155 assets (``achievement_boxer``,
+    #: The ``textures`` group - 152 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
-    #: ``achievement_empty``, ``achievement_flawless_victory``, and 150 more).
+    #: ``achievement_empty``, ``achievement_flawless_victory``, and 147 more).
     #: Full list in source.
     textures: TexturesGroup
 
@@ -11589,9 +11586,6 @@ _TREE = {
         'smoke': 't',
         'sparks': 't',
         'star': 't',
-        'store_character': 't',
-        'store_character_easter': 't',
-        'store_character_xmas': 't',
         'store_icon': 't',
         'ticket_roll': 't',
         'ticket_roll_big': 't',

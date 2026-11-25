@@ -322,7 +322,8 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIInboxState(int count, bool is_max,
                            const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
-  void SetRootUIStoreStyle(const char* val);
+  /// Seasonal art for the store button: depiction json (empty for none).
+  void SetRootUIStoreDecoration(const std::string& depiction);
   /// Each chest slot's depiction json (empty to draw by appearance).
   void SetRootUIChestDepictions(const std::vector<std::string>& depictions);
   void SetRootUIAccountDepiction(const std::string& json);
@@ -477,7 +478,7 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
   std::string root_ui_inbox_announce_text_;
-  std::string root_ui_store_style_;
+  std::string root_ui_store_decoration_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

@@ -547,11 +547,6 @@ SPEC = UIAssetSpec(
                     doc='Store glyph on the root ui bar.',
                 ),
                 Slot(
-                    name='store_character_xmas',
-                    kind=Kind.TEXTURE,
-                    doc='Seasonal store-button decoration.',
-                ),
-                Slot(
                     name='coin',
                     kind=Kind.TEXTURE,
                     doc='Coin (tickets currency) icon on the root ui bar.',

@@ -1942,18 +1942,14 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       BA_LOG_ONCE(LogName::kBaUI, LogLevel::kError,
                   "classic-store button missing when updating open states");
     }
-    // Store-decoration.
-    if (auto* img = store_decoration_) {
-      if (counts.find("classicstore") != counts.end()) {
-        img->widget->set_color(0.2f, 0.8f, 0.2f);
-        img->widget->set_flatness(0.7f);
-      } else {
-        img->widget->set_color(1.0f, 1.0f, 1.0f);
-        img->widget->set_flatness(0.0f);
-      }
+    // Store-decoration (drawn by its depiction, which takes the look
+    // through its tint control).
+    if (store_decoration_) {
+      store_ui_open_ = counts.find("classicstore") != counts.end();
+      UpdateStoreDecorationTint_();
     } else {
       BA_LOG_ONCE(LogName::kBaUI, LogLevel::kError,
-                  "classic-store button missing when updating open states");
+                  "classic-store decoration missing when updating open states");
     }
 
     // Inventory
@@ -2701,26 +2697,34 @@ void RootWidget::SetLeagueRankValues(const std::string& league_type,
   UpdateLeagueRankDisplay_();
 }
 
-void RootWidget::SetStoreStyle(const std::string& val) {
-  if (store_style_ == val) {
+void RootWidget::SetStoreDecoration(const std::string& depiction) {
+  if (store_decoration_json_ == depiction) {
     return;  // Unchanged.
   }
+  store_decoration_json_ = depiction;
 
   child_widgets_dirty_ = true;
 
   assert(store_decoration_);
-  if (val == "s") {
-    base::Assets::AssetListLock lock;
-    store_decoration_->widget->SetTexture(
-        g_ui_v1->assets().store_character_xmas.get());
-    store_decoration_->visible = true;
-  } else {
-    // Normal style.
-    if (val != "n" && val != "") {
-      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
-                  "Unsupported root-widget store-style: '" + val + "'");
+  store_decoration_->widget->GetDepictionSlot().SetDepiction(depiction);
+  store_decoration_->visible = !depiction.empty();
+
+  // A new depiction starts without our open-store look; re-apply it.
+  UpdateStoreDecorationTint_();
+}
+
+void RootWidget::UpdateStoreDecorationTint_() {
+  assert(store_decoration_);
+  if (auto* tint =
+          store_decoration_->widget->GetDepictionSlot().GetTintControl()) {
+    if (store_ui_open_) {
+      // The same flat green the store button goes while its window is
+      // up.
+      const float green[3]{0.2f, 0.8f, 0.2f};
+      tint->SetFlatColor(green, 0.7f);
+    } else {
+      tint->ClearFlatColor();
     }
-    store_decoration_->visible = false;
   }
 }
 

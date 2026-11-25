@@ -2880,17 +2880,28 @@ class AssetSubsystem(AppSubsystem):
         outcomes that a retry can't change (auth/access/too-old/content
         errors, unknown ids, bad dimensions) surface immediately.
 
-        The attempt budget covers a *stall*, not the whole build: a
-        failure that arrives after the server's build visibly advanced
-        since our previous failure starts the count over. A long cold
-        build on a struggling server can drop several polls along the
-        way without being in any real trouble, and giving up on it
-        throws away a build that is still getting somewhere (seen
-        2026-10-05 against an overloaded dev server). A hard ceiling on
-        total attempts keeps this finite whatever the server reports.
+        Retries are bounded by time, not by count: we keep retrying
+        while a stall is younger than :meth:`_resolve_stall_budget`
+        seconds. Quick failures (a closed endpoint) then get several
+        tries, while slow ones (a long node wait, a hung send) get few
+        or none, so an interactive user never sits through minutes of
+        retries. Headless servers get a much longer budget, since
+        nobody is waiting on them and giving up kills the whole hosted
+        game (seen 2026-11-22: prod hosted games died at boot after ~12s
+        of a transient transport outage).
+
+        The budget covers a *stall*, not the whole build: a failure that
+        arrives after the server's build visibly advanced since our
+        previous failure starts the clock over. A long cold build on a
+        struggling server can drop several polls along the way without
+        being in any real trouble, and giving up on it throws away a
+        build that is still getting somewhere (seen 2026-10-05 against
+        an overloaded dev server). A hard ceiling on total attempts
+        keeps this finite whatever the server reports.
         """
         attempt = 1
-        max_attempts = 3
+        budget = self._resolve_stall_budget()
+        stall_start = time.monotonic()
         total_attempts = 0
         max_total_attempts = 30
         # Units the server had reported done as of our last failure;
@@ -2931,22 +2942,27 @@ class AssetSubsystem(AppSubsystem):
                     and done > done_at_last_failure
                 ):
                     # The build moved since we last failed; this is a
-                    # fresh stall, not the same one continuing.
+                    # fresh stall, not the same one continuing. (Its
+                    # clock starts at this attempt's start, the last
+                    # moment we know things were moving.)
                     attempt = 1
+                    stall_start = start
                 done_at_last_failure = done
+                delay = min(2.0 * attempt, 10.0)
+                stalled = time.monotonic() - stall_start
                 if (
                     not transient
-                    or attempt >= max_attempts
+                    or stalled + delay > budget
                     or total_attempts >= max_total_attempts
                 ):
                     raise
-                delay = 2.0 * attempt
                 logger.info(
-                    '%s: transient resolve failure'
-                    ' (attempt %d of %d); retrying in %.0fs (%s).',
+                    '%s: transient resolve failure (attempt %d, stalled'
+                    ' %.0fs of %.0fs); retrying in %.0fs (%s).',
                     apvernum,
                     attempt,
-                    max_attempts,
+                    stalled,
+                    budget,
                     delay,
                     exc,
                 )
@@ -2955,6 +2971,13 @@ class AssetSubsystem(AppSubsystem):
                 strip_exception_tracebacks(exc)
                 await asyncio.sleep(delay)
                 attempt += 1
+
+    def _resolve_stall_budget(self) -> float:
+        """Seconds a resolve may stay stalled on transient failures.
+
+        See :meth:`_tier1_manifests_with_retries`.
+        """
+        return 120.0 if _babase.app.env.headless else 30.0
 
     async def _tier1_manifests(
         self, apvernum: ApverNum, language: Locale

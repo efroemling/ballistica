@@ -388,6 +388,33 @@ static PyMethodDef PySetRootUIChestDepictionsDef = {
     "Set each chest slot's depiction json (empty to draw by appearance).",
 };
 
+// --------------------- set_root_ui_store_decoration --------------------------
+
+static auto PySetRootUIStoreDecoration(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* depiction;
+  static const char* kwlist[] = {"depiction", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &depiction)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  ClassicAppMode::GetActiveOrThrow()->SetRootUIStoreDecoration(depiction);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIStoreDecorationDef = {
+    "set_root_ui_store_decoration",           // name
+    (PyCFunction)PySetRootUIStoreDecoration,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "set_root_ui_store_decoration(depiction: str) -> None\n"
+    "\n"
+    "Set the store button's seasonal art: depiction json (empty for none).",
+};
+
 // --------------------- set_root_ui_account_depiction -------------------------
 
 static auto PySetRootUIAccountDepiction(PyObject* self, PyObject* args,
@@ -454,7 +481,6 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   double chest_2_ad_allow_time;
   double chest_3_ad_allow_time;
   int gold_pass{};
-  const char* store_style;
 
   static const char* kwlist[] = {"tickets",
                                  "tokens",
@@ -488,10 +514,9 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "chest_1_ad_allow_time",
                                  "chest_2_ad_allow_time",
                                  "chest_3_ad_allow_time",
-                                 "store_style",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "iisiisssipspssssddddddddiiiidddds",
+          args, keywds, "iisiisssipspssssddddddddiiiidddd",
           const_cast<char**>(kwlist), &tickets, &tokens, &league_type,
           &league_number, &league_rank, &achievements_percent_text, &level_text,
           &xp_text, &inbox_count, &inbox_count_is_max, &inbox_announce_text,
@@ -502,7 +527,7 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
           &chest_3_unlock_time, &chest_0_unlock_tokens, &chest_1_unlock_tokens,
           &chest_2_unlock_tokens, &chest_3_unlock_tokens,
           &chest_0_ad_allow_time, &chest_1_ad_allow_time,
-          &chest_2_ad_allow_time, &chest_3_ad_allow_time, &store_style)) {
+          &chest_2_ad_allow_time, &chest_3_ad_allow_time)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -528,7 +553,6 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
       chest_0_unlock_tokens, chest_1_unlock_tokens, chest_2_unlock_tokens,
       chest_3_unlock_tokens, chest_0_ad_allow_time, chest_1_ad_allow_time,
       chest_2_ad_allow_time, chest_3_ad_allow_time);
-  appmode->SetRootUIStoreStyle(store_style);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -572,7 +596,6 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      chest_1_ad_allow_time: float,\n"
     "      chest_2_ad_allow_time: float,\n"
     "      chest_3_ad_allow_time: float,\n"
-    "      store_style: str,\n"
     ") -> None\n"
     "\n"
     "Pass values to the native layer for use in the root UI or elsewhere.",
@@ -845,6 +868,7 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeDeactivateDef,
       PySetRootUIAccountValuesDef,
       PySetRootUIChestDepictionsDef,
+      PySetRootUIStoreDecorationDef,
       PySetRootUIAccountDepictionDef,
       PyAnimateRootUIChestUnlockTimeDef,
       PyAnimateRootUITicketsDef,

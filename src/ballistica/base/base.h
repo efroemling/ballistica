@@ -523,8 +523,8 @@ enum class SystemDataID : uint8_t {};
 // hand-coded ``Builtin*OldID`` entries above retire one at a time as
 // their callsites migrate.
 
-// Builtin asset-package: a-0.babuiltinassets.261120
-inline constexpr const char* kBuiltinAssetsApvernum = "1286";
+// Builtin asset-package: a-0.babuiltinassets.261122
+inline constexpr const char* kBuiltinAssetsApvernum = "1345";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesCircle,            // textures/circle
@@ -556,51 +556,51 @@ enum class BuiltinTextureID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinTextureID id) -> const char* {
   switch (id) {
     case BuiltinTextureID::kTexturesCircle:
-      return "1286:textures/circle";
+      return "1345:textures/circle";
     case BuiltinTextureID::kTexturesCircleShadow:
-      return "1286:textures/circle_shadow";
+      return "1345:textures/circle_shadow";
     case BuiltinTextureID::kTexturesCursor:
-      return "1286:textures/cursor";
+      return "1345:textures/cursor";
     case BuiltinTextureID::kTexturesFontBig:
-      return "1286:textures/font_big";
+      return "1345:textures/font_big";
     case BuiltinTextureID::kTexturesFontExtras:
-      return "1286:textures/font_extras";
+      return "1345:textures/font_extras";
     case BuiltinTextureID::kTexturesFontExtras2:
-      return "1286:textures/font_extras2";
+      return "1345:textures/font_extras2";
     case BuiltinTextureID::kTexturesFontExtras3:
-      return "1286:textures/font_extras3";
+      return "1345:textures/font_extras3";
     case BuiltinTextureID::kTexturesFontExtras4:
-      return "1286:textures/font_extras4";
+      return "1345:textures/font_extras4";
     case BuiltinTextureID::kTexturesFontExtras5:
-      return "1286:textures/font_extras5";
+      return "1345:textures/font_extras5";
     case BuiltinTextureID::kTexturesFontSmall0:
-      return "1286:textures/font_small0";
+      return "1345:textures/font_small0";
     case BuiltinTextureID::kTexturesFontSmall1:
-      return "1286:textures/font_small1";
+      return "1345:textures/font_small1";
     case BuiltinTextureID::kTexturesFontSmall2:
-      return "1286:textures/font_small2";
+      return "1345:textures/font_small2";
     case BuiltinTextureID::kTexturesFontSmall3:
-      return "1286:textures/font_small3";
+      return "1345:textures/font_small3";
     case BuiltinTextureID::kTexturesFontSmall4:
-      return "1286:textures/font_small4";
+      return "1345:textures/font_small4";
     case BuiltinTextureID::kTexturesFontSmall5:
-      return "1286:textures/font_small5";
+      return "1345:textures/font_small5";
     case BuiltinTextureID::kTexturesFontSmall6:
-      return "1286:textures/font_small6";
+      return "1345:textures/font_small6";
     case BuiltinTextureID::kTexturesFontSmall7:
-      return "1286:textures/font_small7";
+      return "1345:textures/font_small7";
     case BuiltinTextureID::kTexturesHowdy:
-      return "1286:textures/howdy";
+      return "1345:textures/howdy";
     case BuiltinTextureID::kTexturesShadow:
-      return "1286:textures/shadow";
+      return "1345:textures/shadow";
     case BuiltinTextureID::kTexturesShadowSharp:
-      return "1286:textures/shadow_sharp";
+      return "1345:textures/shadow_sharp";
     case BuiltinTextureID::kTexturesSoftRect2Mask:
-      return "1286:textures/soft_rect2_mask";
+      return "1345:textures/soft_rect2_mask";
     case BuiltinTextureID::kTexturesSoftRectMask:
-      return "1286:textures/soft_rect_mask";
+      return "1345:textures/soft_rect_mask";
     case BuiltinTextureID::kTexturesSoftRectVertical:
-      return "1286:textures/soft_rect_vertical";
+      return "1345:textures/soft_rect_vertical";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }
@@ -618,13 +618,13 @@ enum class BuiltinSoundID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinSoundID id) -> const char* {
   switch (id) {
     case BuiltinSoundID::kAudioBlank:
-      return "1286:audio/blank";
+      return "1345:audio/blank";
     case BuiltinSoundID::kAudioBlip:
-      return "1286:audio/blip";
+      return "1345:audio/blip";
     case BuiltinSoundID::kAudioClick01:
-      return "1286:audio/click01";
+      return "1345:audio/click01";
     case BuiltinSoundID::kAudioError:
-      return "1286:audio/error";
+      return "1345:audio/error";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }
@@ -639,11 +639,11 @@ enum class BuiltinMeshID : uint16_t {
 inline auto BuiltinAssetRef(BuiltinMeshID id) -> const char* {
   switch (id) {
     case BuiltinMeshID::kMeshesImage1x1:
-      return "1286:meshes/image1x1";
+      return "1345:meshes/image1x1";
     case BuiltinMeshID::kMeshesVrFade:
-      return "1286:meshes/vr_fade";
+      return "1345:meshes/vr_fade";
     case BuiltinMeshID::kMeshesVrOverlay:
-      return "1286:meshes/vr_overlay";
+      return "1345:meshes/vr_overlay";
   }
   return "";  // Unreachable; the switch is exhaustive.
 }

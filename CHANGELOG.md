@@ -1,4 +1,4 @@
-### 1.8.10 (build 23095, api 9, 2026-11-21)
+### 1.8.10 (build 23098, api 9, 2026-11-24)
 - Fixed an error (and no cheer sound) when a tournament result message
   arrived.
 - Assets can now be loaded from 'textures', 'audio', 'meshes', and
@@ -17,6 +17,17 @@
   (PVRTC) textures has been removed; it was never really used. KTX2
   textures with modern formats like ASTC and BC7 are available through
   asset packages.
+- Asset-package resolves now retry transient network failures for a
+  set time instead of a set number of attempts: 30 seconds for
+  interactive clients and 2 minutes for headless servers, which
+  previously gave up and exited after about 12 seconds of a brief
+  connection outage at boot.
+- Server commands that arrive after the app has begun shutting down are
+  now ignored quietly instead of raising an error.
+- The seasonal art over the store button (Santa in December) is now
+  chosen and supplied by the server as a depiction, so new occasions can
+  be added without a client update. It also no longer disappears when
+  the root UI is rebuilt.
 
 ### 1.8.9 (build 23093, api 9, 2026-11-20)
 - Games are now hosted on protocol 57 by default, and 57 is the oldest

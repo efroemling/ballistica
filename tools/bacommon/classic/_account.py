@@ -50,10 +50,28 @@ class ClassicLiveAccountClientData:
         ASK_FOR_REVIEW = 'r'
 
     class StoreStyle(Enum):
-        """Special looks for the store."""
+        """Special looks for the store (legacy; builds before 23097).
+
+        Superseded by :attr:`store_decoration`, which builds 23097+
+        draw instead (they ignore this). Remove once those older builds
+        have aged out.
+        """
 
         NORMAL = 'n'
         SANTA = 's'
+
+    @dataclass
+    class StoreDecoration:
+        """Seasonal art drawn with the toolbar's store button.
+
+        Placement is fixed by the client for now (peeking over the top
+        of the store button); fields such as a position or size can
+        join here later without disturbing builds that predate them.
+        """
+
+        #: What to draw: a :class:`bacommon.depiction.Depiction` as json
+        #: (an :class:`~bacommon.depiction.ImageDepiction` today).
+        depiction: Annotated[str, IOAttrs('dp')]
 
     tickets: Annotated[int, IOAttrs('ti')]
 
@@ -101,6 +119,16 @@ class ClassicLiveAccountClientData:
 
     flags: Annotated[set[Flag], IOAttrs('f', soft_default_factory=set)]
 
+    #: Legacy store look for builds before 23097 (see
+    #: :class:`StoreStyle`); newer builds ignore it.
     store_style: Annotated[
         StoreStyle, IOAttrs('s', enum_fallback=StoreStyle.NORMAL)
+    ]
+
+    #: Seasonal art for the store button (builds 23097+), or None for
+    #: none. Picked fleet-wide by bamaster (its occasion table) and
+    #: passed along by basn.
+    store_decoration: Annotated[
+        StoreDecoration | None,
+        IOAttrs('sd', soft_default=None, store_default=False),
     ]

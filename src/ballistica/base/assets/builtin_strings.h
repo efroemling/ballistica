@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.261120"
+// Generated from: "a-0.babuiltinassets.261122"
 
 #include <memory>
 
@@ -560,6 +560,13 @@ class BuiltinStrings {
     /// English: "Used to find and join games on your local network and to
     /// connect controllers."
     static auto LocalNetworkUsage() -> std::shared_ptr<const LangStr>;
+
+    /// Subtitle under the app's name on its mods-folder entry in the Android
+    /// system file manager's list of storage locations. Generated into native
+    /// OS resource files.
+    ///
+    /// English: "Mods"
+    static auto ModsRootSummary() -> std::shared_ptr<const LangStr>;
   };
 
   class Plugins {

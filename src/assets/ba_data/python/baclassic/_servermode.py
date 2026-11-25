@@ -32,10 +32,26 @@ def _cmd(command_data: bytes) -> None:
     """Handle commands coming in from our server manager parent process."""
     import pickle
 
-    assert babase.app.classic is not None
-
     command = pickle.loads(command_data)
     assert isinstance(command, ServerCommand)
+
+    # The manager sends commands as soon as it launches us, so they can
+    # arrive after the app has already given up and begun shutting down
+    # (e.g. construct-mode failing to load assets). Classic mode never
+    # came up in that case, so there is nothing to apply them to; the
+    # failure that got us here has already been logged.
+    if babase.app.shutting_down:
+        logging.getLogger('ba.app').info(
+            'Ignoring server command %s; app is shutting down.',
+            type(command).__name__,
+        )
+        return
+
+    _handle_cmd(command)
+
+
+def _handle_cmd(command: ServerCommand) -> None:
+    assert babase.app.classic is not None
 
     if isinstance(command, StartServerModeCommand):
         assert babase.app.classic.server is None

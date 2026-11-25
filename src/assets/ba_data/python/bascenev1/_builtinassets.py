@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.261120`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.261122`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1286
+# ba_meta require asset-package 1345
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -23,8 +23,8 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.babuiltinassets.261120
-_ASSET_PACKAGE = ApverNum(1286)
+# a-0.babuiltinassets.261122
+_ASSET_PACKAGE = ApverNum(1345)
 
 if TYPE_CHECKING:
     import datetime
@@ -835,6 +835,15 @@ if TYPE_CHECKING:
         #:     English: "Used to find and join games on your local network and
         #:     to connect controllers."
         local_network_usage: LangStr
+
+        #: ::
+        #:
+        #:     Subtitle under the app's name on its mods-folder entry in the
+        #:     Android system file manager's list of storage locations.
+        #:     Generated into native OS resource files.
+        #:
+        #:     English: "Mods"
+        mods_root_summary: LangStr
 
     class StringsPluginsGroup:
         """
@@ -1660,8 +1669,8 @@ if TYPE_CHECKING:
     #: ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 141 strings (``account``, ``assets``, ``audio``,
-    #: ``device``, ``input``, and 136 more). Full list in source.
+    #: The ``strings`` group - 142 strings (``account``, ``assets``, ``audio``,
+    #: ``device``, ``input``, and 137 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 23 assets (``circle``, ``circle_shadow``,
@@ -1747,7 +1756,11 @@ _TREE = {
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
-        'os': {'fatal_error': ('email',), 'local_network_usage': ()},
+        'os': {
+            'fatal_error': ('email',),
+            'local_network_usage': (),
+            'mods_root_summary': (),
+        },
         'plugins': {
             'class_load_error': ('plugin', 'error'),
             'detected': (),

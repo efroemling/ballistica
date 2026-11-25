@@ -385,6 +385,10 @@ auto BuiltinStrings::Os::LocalNetworkUsage() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/os/local_network_usage");
 }
 
+auto BuiltinStrings::Os::ModsRootSummary() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/os/mods_root_summary");
+}
+
 auto BuiltinStrings::Plugins::ClassLoadError(LangStr::Sub plugin,
                                              LangStr::Sub error)
     -> std::shared_ptr<const LangStr> {

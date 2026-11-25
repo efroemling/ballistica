@@ -213,6 +213,7 @@ void ClassicAppMode::Reset_() {
           root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
       root_widget->SetChestDepictions(root_ui_chest_depictions_);
       root_widget->SetAccountDepiction(root_ui_account_depiction_);
+      root_widget->SetStoreDecoration(root_ui_store_decoration_);
       root_widget->SetHaveLiveValues(root_ui_have_live_values_);
     }
   }
@@ -1865,14 +1866,15 @@ void ClassicAppMode::SetRootUIInboxState(int count, bool is_max,
   }
 }
 
-void ClassicAppMode::SetRootUIStoreStyle(const char* val) {
-  // Store the value.
-  root_ui_store_style_ = val;
-
-  // Apply it to any existing UI.
+void ClassicAppMode::SetRootUIStoreDecoration(const std::string& depiction) {
+  assert(g_base->InLogicThread());
+  if (depiction == root_ui_store_decoration_) {
+    return;
+  }
+  root_ui_store_decoration_ = depiction;
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetStoreStyle(root_ui_store_style_);
+      root_widget->SetStoreDecoration(root_ui_store_decoration_);
     }
   }
 }

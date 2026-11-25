@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261118a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassiccatalogassets.261125`` (bauiv1).
 
 The catalog of classic content as menus and the store present it: map names and
 previews, game names and descriptions, co-op level names, and the currency and
@@ -14,7 +14,7 @@ on it.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package 1255
+# ba_meta require asset-package 1417
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -28,8 +28,8 @@ from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-# a-0.baclassiccatalogassets.261118a
-_ASSET_PACKAGE = ApverNum(1255)
+# a-0.baclassiccatalogassets.261125
+_ASSET_PACKAGE = ApverNum(1417)
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshHandle, SoundHandle, TextureHandle
@@ -944,6 +944,9 @@ if TYPE_CHECKING:
         rampage_preview: TextureHandle
         roundabout_preview: TextureHandle
         step_right_up_preview: TextureHandle
+        store_character: TextureHandle
+        store_character_easter: TextureHandle
+        store_character_xmas: TextureHandle
         the_pad_preview: TextureHandle
         tickets: TextureHandle
         tickets_purple: TextureHandle
@@ -965,9 +968,9 @@ if TYPE_CHECKING:
     #: list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 27 assets (``always_land_preview``,
+    #: The ``textures`` group - 30 assets (``always_land_preview``,
     #: ``big_g_preview``, ``bridgit_preview``, ``character_icon_mask``,
-    #: ``chest_icon``, and 22 more). Full list in source.
+    #: ``chest_icon``, and 25 more). Full list in source.
     textures: TexturesGroup
 
 _TREE = {
@@ -1122,6 +1125,9 @@ _TREE = {
         'rampage_preview': 't',
         'roundabout_preview': 't',
         'step_right_up_preview': 't',
+        'store_character': 't',
+        'store_character_easter': 't',
+        'store_character_xmas': 't',
         'the_pad_preview': 't',
         'tickets': 't',
         'tickets_purple': 't',

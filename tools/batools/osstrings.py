@@ -71,6 +71,7 @@ OS_STRINGS: list[OsString] = [
     OsString('fatal_error', 'strings/os/fatal_error', android=True),
     OsString('ok', 'strings/ui/ok', android=True),
     OsString('done', 'strings/ui/done', android=True),
+    OsString('mods_root_summary', 'strings/os/mods_root_summary', android=True),
     OsString(
         'local_network_usage',
         'strings/os/local_network_usage',

@@ -40,7 +40,6 @@ def make_ui_asset_set() -> bui.UIAssetSet:
         leaderboards_icon=tex.leaderboards_icon,
         inventory_icon=tex.inventory_icon,
         store_icon=tex.store_icon,
-        store_character_xmas=tex.store_character_xmas,
         currency_meter=msh.currency_meter,
         currency_plus_button=msh.currency_plus_button,
         toolbar_backing_top2=msh.toolbar_backing_top2,
