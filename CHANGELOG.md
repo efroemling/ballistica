@@ -1,3 +1,11 @@
+### 1.8.11 (build 23099, api 9, 2026-11-27)
+- At small ui-scale, doc-ui window titles now grow to fill the space
+  between the toolbar's meters (sized for the full toolbar, so they
+  don't change as toolbar configurations do), and they are a bit
+  brighter than before.
+- Nudged the toolbar's tickets meter a bit left so the gap between the
+  top-left and top-right toolbar groups is centered on the screen.
+
 ### 1.8.10 (build 23098, api 9, 2026-11-24)
 - Fixed an error (and no cheer sound) when a tournament result message
   arrived.

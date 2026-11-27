@@ -327,7 +327,10 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
         bd.pre_buffer = 50.0f;
         break;
       case MeterType_::kTickets:
-        bd.pre_buffer = 50.0f;
+        // A bit more, so the gap between the top-left and top-right
+        // groups sits centered on the screen (window titles sit there
+        // at small ui-scale).
+        bd.pre_buffer = 60.0f;
         break;
       case MeterType_::kTokens:
         bd.pre_buffer = 50.0f;
@@ -2197,6 +2200,50 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
   }
 
   child_widgets_dirty_ = have_dirty;
+}
+
+auto RootWidget::GetFullToolbarTopSpan() const -> std::pair<float, float> {
+  bool is_small{g_base->ui->uiscale() == UIScale::kSmall};
+
+  // Which buttons the full main-menu toolbar shows (mirroring the
+  // enabled-state rules in our update, minus anything transient).
+  auto shows = [this, is_small](const Button_* btn) {
+    if (!(static_cast<uint32_t>(ToolbarVisibility::kMenuFull)
+          & btn->visibility_mask)) {
+      return false;
+    }
+    if (!btn->allow_in_main_menu) {
+      return false;
+    }
+    if (btn == back_button_ && !is_small) {
+      return false;
+    }
+    return true;
+  };
+
+  // Walk each corner group inward as our layout does, noting the inner
+  // edge of its innermost button.
+  float xpos{};
+  float left_edge{};
+  for (auto* btn : top_left_buttons_) {
+    if (shows(btn)) {
+      xpos += btn->width * 0.5f + btn->pre_buffer;
+      left_edge = xpos + btn->width * 0.5f;
+      xpos = left_edge + btn->post_buffer;
+    }
+  }
+  xpos = 0.0f;
+  float right_edge{};
+  for (auto* btn : top_right_buttons_) {
+    if (shows(btn)) {
+      xpos -= btn->width * 0.5f + btn->pre_buffer;
+      right_edge = xpos - btn->width * 0.5f;
+      xpos = right_edge - btn->post_buffer;
+    }
+  }
+  float half_width{width() * 0.5f};
+  return {-half_width + base_scale_ * left_edge,
+          half_width + base_scale_ * right_edge};
 }
 
 void RootWidget::UpdateLayout() {

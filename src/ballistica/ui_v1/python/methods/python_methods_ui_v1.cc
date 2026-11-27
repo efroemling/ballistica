@@ -4420,6 +4420,36 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     "Return special widgets located in system toolbars.",
 };
 
+// ------------------------- get_toolbar_top_span ------------------------------
+
+static auto PyGetToolbarTopSpan(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  RootWidget* root_widget = g_ui_v1->root_widget();
+  BA_PRECONDITION(root_widget);
+  auto [left, right] = root_widget->GetFullToolbarTopSpan();
+  return Py_BuildValue("(dd)", static_cast<double>(left),
+                       static_cast<double>(right));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetToolbarTopSpanDef = {
+    "get_toolbar_top_span",            // name
+    (PyCFunction)PyGetToolbarTopSpan,  // method
+    METH_NOARGS,                       // flags
+
+    "get_toolbar_top_span() -> tuple[float, float]\n"
+    "\n"
+    "The clear span along the top of the screen between the toolbars.\n"
+    "\n"
+    "Left and right edges, relative to the screen's center, in virtual\n"
+    "units. Always as laid out for the full main-menu toolbar, whatever\n"
+    "is showing now, so things sized to fit it stay put as toolbar\n"
+    "configurations change.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------------- get_selected_widget -------------------------------
 
 static auto PyGetSelectedWidget(PyObject* self) -> PyObject* {
@@ -4810,6 +4840,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyUIOpenStateChangeDef,
       PyRootUIBackPressDef,
       PyGetSpecialWidgetDef,
+      PyGetToolbarTopSpanDef,
       PyGetSelectedWidgetDef,
       PyPlaySwishDef,
       PyWidgetByIDDef,

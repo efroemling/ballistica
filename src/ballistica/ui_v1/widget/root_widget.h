@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/ui_v1/widget/container_widget.h"
@@ -103,6 +104,14 @@ class RootWidget : public ContainerWidget {
   void SetHaveLiveValues(bool have_live_values);
 
   auto bottom_left_height() const { return bottom_left_height_; }
+
+  /// The clear span along the top of the screen between the top-left
+  /// and top-right button groups (left and right edges, relative to the
+  /// screen's center, in virtual units). Always as laid out for the
+  /// full main-menu toolbar, whatever is showing now, so things sized
+  /// to fit it (window titles at small ui-scale) stay put as toolbar
+  /// configurations change.
+  auto GetFullToolbarTopSpan() const -> std::pair<float, float>;
 
   /// Temporarily pause automatic updates to allow explicit animation. Make
   /// sure each call to this is matched by a call to ResumeUpdates. Note

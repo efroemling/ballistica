@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from bauiv1lib.docui._controller import DocUIController
     from bauiv1lib.docui._popupwindow import DocUIPopupWindow
     from bauiv1lib.docui._panes import PageGeometries, PaneMode
+    from bauiv1lib.docui._frame import WindowFrame
     from bauiv1lib.docui._scrollrestore import (
         ScrollSnapshot,
         ScrollRestoreMode,
@@ -56,6 +57,12 @@ if TYPE_CHECKING:
 
 # Our scroll snapshot's key in a window's shared state.
 _SCROLL_STATE_KEY = 'docui_scroll'
+
+#: Our title's color: a touch brighter than the shared
+#: :attr:`~bauiv1.UIV1AppSubsystem.title_color` (which headings and
+#: labels use too), so it reads clearly as the window's name (among the
+#: toolbar's meters, at small ui-scale).
+_TITLE_COLOR = (0.85, 0.84, 0.88)
 
 
 class DocUIWindow(bui.MainWindow, DocUIPageHost):
@@ -261,10 +268,20 @@ class DocUIWindow(bui.MainWindow, DocUIPageHost):
             position=(frame.vis_center[0], title_y),
             size=(0, 0),
             text='',
-            color=ui.title_color,
-            scale=0.9 if uiscale is bui.UIScale.SMALL else 1.0,
-            # Make sure we avoid overlapping meters in small mode.
-            maxwidth=(130 if uiscale is bui.UIScale.SMALL else 200),
+            color=_TITLE_COLOR,
+            # At small ui-scale we sit among the toolbar's meters, as big
+            # as fits between them (up to a height that suits the band).
+            scale=_SMALL_TITLE_SCALE if uiscale is bui.UIScale.SMALL else 1.0,
+            maxwidth=(
+                _small_title_maxwidth(frame)
+                if uiscale is bui.UIScale.SMALL
+                else 200
+            ),
+            max_height=(
+                _SMALL_TITLE_MAX_HEIGHT
+                if uiscale is bui.UIScale.SMALL
+                else None
+            ),
             h_align='center',
             v_align='center',
         )
@@ -785,3 +802,36 @@ class DocUIWindow(bui.MainWindow, DocUIPageHost):
         ctp = type(self.controller)
         out = f'{ctp.__module__}.{ctp.__qualname__}:{base_id}'
         return out
+
+
+#: Room kept clear on each side of a small-ui-scale title, between it
+#: and the toolbar buttons beside it (screen units).
+_SMALL_TITLE_SIDE_GAP = 20.0
+
+#: A small-ui-scale title's scale: big, so it shrinks to fill the room
+#: between the toolbar's meters (see :func:`_small_title_maxwidth`)...
+_SMALL_TITLE_SCALE = 1.5
+
+#: ...up to this tall (window units), so short ones don't loom.
+_SMALL_TITLE_MAX_HEIGHT = 34.0
+
+
+def _small_title_maxwidth(frame: WindowFrame) -> float:
+    """How wide a window's title may get at small ui-scale.
+
+    There it sits in the toolbar band, so it gets the clear span between
+    the toolbar's top-left and top-right button groups. That's the span
+    for the full toolbar whatever is showing now, so a title keeps its
+    size as toolbar configurations change. The title is centered on the
+    window, which needn't be centered on that span: it gets twice its
+    room on its tighter side.
+    """
+    left, right = bui.get_toolbar_top_span()
+    # Our title's center, relative to the screen's (screen units).
+    center = (
+        frame.stack_offset[0]
+        + (frame.vis_center[0] - 0.5 * frame.width) * frame.root_scale
+    )
+    room = min(center - left, right - center) - _SMALL_TITLE_SIDE_GAP
+    # (In window units, and never nothing.)
+    return max(50.0, 2.0 * room / frame.root_scale)
