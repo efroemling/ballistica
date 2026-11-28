@@ -1,4 +1,4 @@
-### 1.8.11 (build 23099, api 9, 2026-11-27)
+### 1.8.11 (build 23100, api 9, 2026-11-27)
 - At small ui-scale, doc-ui window titles now grow to fill the space
   between the toolbar's meters (sized for the full toolbar, so they
   don't change as toolbar configurations do), and they are a bit
